@@ -1,0 +1,111 @@
+<?xml version="1.0"?>
+
+<!--
+  ~ Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
+  ~
+  ~ This file is part of JCVI VICS.
+  ~
+  ~ JCVI VICS is free software; you can redistribute it and/or modify it
+  ~ under the terms and conditions of the Artistic License 2.0.  For
+  ~ details, see the full text of the license in the file LICENSE.txt.  No
+  ~ other rights are granted.  Any and all third party software rights to
+  ~ remain with the original developer.
+  ~
+  ~ JCVI VICS is distributed in the hope that it will be useful in
+  ~ bioinformatics applications, but it is provided "AS IS" and WITHOUT
+  ~ ANY EXPRESS OR IMPLIED WARRANTIES including but not limited to
+  ~ implied warranties of merchantability or fitness for any particular
+  ~ purpose.  For details, see the full text of the license in the file
+  ~ LICENSE.txt.
+  ~
+  ~ You should have received a copy of the Artistic License 2.0 along with
+  ~ JCVI VICS.  If not, the license can be obtained from
+  ~ "http://www.perlfoundation.org/artistic_license_2_0."
+  -->
+
+<project name="jacs-all" default="build-all" basedir=".">
+	<!-- Common properties -->
+	<property name="project.root" value="${basedir}/.."/>
+
+	<!-- Reuse some of the generic module code for the local buildprocess dirs -->
+	<import file="build-module.xml"/>
+
+    <!-- Macro (target) to run a named target on all sub-modules -->
+	<macrodef name="iterate-modules">
+		<attribute name="target"/>
+		<sequential>
+			<subant target="@{target}">
+                <filelist dir="${project.root}">
+                    <!-- This order satisfies dependecies -->
+                    <file name="model/build.xml"/>
+                    <file name="shared/build.xml"/>
+                    <file name="compute/build.xml"/>
+                    <file name="jacs/build.xml"/>
+                </filelist>
+			</subant>
+		</sequential>
+	</macrodef>
+
+    <!-- Build-all: runs 'build' on all sub-modules, in order of dependency -->
+    <target name="build-all" description="Runs 'build' on all sub-modules">
+        <subant target="build" verbose="true">
+            <filelist dir="${project.root}">
+                <!-- This order satisfies dependecies -->
+                <file name="model/build.xml"/>
+                <file name="shared/build.xml"/>
+                <file name="compute/build.xml"/>
+                <file name="jacs/build.xml"/>
+            </filelist>
+        </subant>
+    </target>
+
+	<!-- Clean-all: runs 'clean' on all sub-modules -->
+	<target name="clean-all" description="Runs 'clean' on all sub-modules">
+		<iterate-modules target="clean"/>
+	</target>
+
+    <!-- Clean-tests: runs 'clean-reports' on all sub-modules -->
+    <target name="clean-all-reports" description="Runs 'clean-reports all sub-modules">
+        <iterate-modules target="clean-reports"/>
+    </target>
+
+    <!-- Deploy-all: runs 'deploy' on all sub-modules -->
+    <target name="deploy-all" description="Runs 'deploy' on all sub-modules">
+        <iterate-modules target="deploy"/>
+    </target>
+
+	<!-- Test-all: runs 'run-tests' on all sub-modules and generates an aggregate report -->
+    <target name="test-all" depends="clean-reports, make-reports-dir" description="Runs 'run-tests' on all sub-modules">
+		<subant target="run-tests" verbose="true">
+			<!-- Override modules so they won't fail if a test fails/errors.  We'll do that at the end of all the modules -->
+			<property name="fail.build.on.test.failure" value="false"/>
+			<property name="fail.build.on.test.error" value="false"/>
+
+			<!--<fileset dir="${project.root}" includes="*/build.xml"/>-->
+			<filelist dir="${project.root}">
+                <!-- Works -->
+                <file name="shared/build.xml"/>
+                <file name="model/build.xml"/>
+                <!--<file name="compute/build.xml"/>-->
+
+                <!-- Needs work -->
+                <!--<file name="jacs/build.xml"/>-->
+			</filelist>
+		</subant>
+
+		<!-- Aggregate all the tests into a summary report - ${project.root}/index.html -->
+		<junitreport todir="${test.reports.dir}">
+			<fileset dir="${project.root}">
+				<include name="*/build/test/reports/*.xml"/>
+			</fileset>
+			<report format="frames" todir="${test.reports.dir}"/>
+		</junitreport>
+
+		 <!-- Now fail if any module's tests produced errors or failures -->
+		<property name="fail.build.on.test.failure" value="true"/>
+		<property name="fail.build.on.test.error" value="true"/>
+		<!--<antcall target="fail-build-if-test-problems"/>-->
+        <!-- TODO: still doesn't work.  Perhaps test.error/test.failure aren't carried to this point? -->
+		<!--<fail-build-if-test-problems-macrodef failBuildOnTestError="true" failBuildOnTestFailure="true"/>-->
+	</target>
+</project>

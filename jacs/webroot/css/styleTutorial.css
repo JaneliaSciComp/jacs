@@ -1,0 +1,111 @@
+
+/*
+ * Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
+ *
+ * This file is part of JCVI VICS.
+ *
+ * JCVI VICS is free software; you can redistribute it and/or modify it
+ * under the terms and conditions of the Artistic License 2.0.  For
+ * details, see the full text of the license in the file LICENSE.txt.  No
+ * other rights are granted.  Any and all third party software rights to
+ * remain with the original developer.
+ *
+ * JCVI VICS is distributed in the hope that it will be useful in
+ * bioinformatics applications, but it is provided "AS IS" and WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTIES including but not limited to
+ * implied warranties of merchantability or fitness for any particular
+ * purpose.  For details, see the full text of the license in the file
+ * LICENSE.txt.
+ *
+ * You should have received a copy of the Artistic License 2.0 along with
+ * JCVI VICS.  If not, the license can be obtained from
+ * "http://www.perlfoundation.org/artistic_license_2_0."
+ */
+
+body, p, td, table, tr, .bodytext, .stepfield {
+	font-family: Verdana, arial, sans-serif;
+	font-size: 11px;
+	line-height: 16px;
+	color: #000000;
+	font-weight: normal;
+}
+
+
+.wiki-content p, .commentblock p {
+    margin: 16px 0px 16px 0px;
+    padding: 0px;
+}
+
+
+.pagetitle {
+	font-size: 22px;
+	font-weight: bold;
+	font-family: Arial, sans-serif;
+	color: #003366;
+}
+
+
+.preformatted {
+ 	border: 1px dashed #3c78b5;
+    font-size: 11px;
+	font-family: Courier;
+    margin: 10px;
+	line-height: 13px;
+}
+
+.preformattedContent {
+    background-color: #f0f0f0;
+    padding: 3px;
+}
+
+.panel {
+ 	border: 1px dashed #3c78b5;
+    margin: 10px;
+    margin-top: 0px;
+}
+
+.panelHeader {
+    background-color: #f0f0f0;
+ 	border-bottom: 1px dashed #3c78b5;
+    padding: 3px;
+	text-align: center;
+}
+
+.panelContent {
+    background-color: #f0f0f0;
+    padding: 5px;
+}
+
+
+
+
+h1 {
+	font-size: 24px;
+	line-height: normal;
+	font-weight: bold;
+	background-color: #f0f0f0;
+	color: #003366;
+ 	border-bottom: 1px solid #3c78b5;
+	padding: 2px;
+	margin: 36px 0px 4px 0px;
+}
+
+h2 {
+	font-size: 18px;
+	line-height: normal;
+	font-weight: bold;
+	background-color: #f0f0f0;
+ 	border-bottom: 1px solid #3c78b5;
+	padding: 2px;
+	margin: 27px 0px 4px 0px;
+}
+
+
+h3 {
+	font-size: 14px;
+	line-height: normal;
+	font-weight: bold;
+	background-color: #f0f0f0;
+	padding: 2px;
+	margin: 21px 0px 4px 0px;
+}

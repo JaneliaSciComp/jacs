@@ -1,0 +1,251 @@
+/*
+ * Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
+ *
+ * This file is part of JCVI VICS.
+ *
+ * JCVI VICS is free software; you can redistribute it and/or modify it
+ * under the terms and conditions of the Artistic License 2.0.  For
+ * details, see the full text of the license in the file LICENSE.txt.  No
+ * other rights are granted.  Any and all third party software rights to
+ * remain with the original developer.
+ *
+ * JCVI VICS is distributed in the hope that it will be useful in
+ * bioinformatics applications, but it is provided "AS IS" and WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTIES including but not limited to
+ * implied warranties of merchantability or fitness for any particular
+ * purpose.  For details, see the full text of the license in the file
+ * LICENSE.txt.
+ *
+ * You should have received a copy of the Artistic License 2.0 along with
+ * JCVI VICS.  If not, the license can be obtained from
+ * "http://www.perlfoundation.org/artistic_license_2_0."
+ */
+
+package org.janelia.it.jacs.compute.engine.data;
+
+import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.engine.def.ActionDef;
+import org.janelia.it.jacs.compute.engine.def.ProcessDef;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+
+/**
+ * The class encapsulates the running state of process
+ */
+public class ProcessData implements IProcessData {
+    private Map<String, Object> processObjects = new TreeMap<String, Object>();
+
+    public void putItem(String key, Object value) {
+        processObjects.put(key, value);
+    }
+
+    public Object getItem(String key) {
+        Object value = processObjects.get(key);
+        if (value instanceof String) {
+            String valueStr = (String) value;
+            // If the value is wrapped in $V{} then we're interested in the value's value in processData
+            if (valueStr.startsWith("$V{")) {
+                return getItem(valueStr.substring(valueStr.indexOf("$V{") + 3, valueStr.length() - 1));
+            }
+            else {
+                return valueStr;
+            }
+        }
+        else {
+            return value;
+        }
+    }
+
+    public Object getMandatoryItem(String key) throws MissingDataException {
+        Object item = getItem(key);
+        if (item == null) {
+            throw new MissingDataException("Missing mandatory data item: " + key);
+        }
+        return item;
+    }
+
+    public void removeItem(String key) {
+        processObjects.remove(key);
+    }
+
+    public Long getProcessId() throws MissingDataException {
+        return (Long) getMandatoryItem(IProcessData.PROCESS_ID);
+    }
+
+    public void setProcessId(Long id) {
+        putItem(IProcessData.PROCESS_ID, id);
+    }
+
+    public List getProcessIds() {
+        Object obj = getItem(IProcessData.PROCESS_ID);
+        if (obj instanceof List) {
+            return (List) obj;
+        }
+        else {
+            return null;
+        }
+    }
+
+    public void setProcessIds(List<Long> ids) {
+        putItem(IProcessData.PROCESS_ID, ids);
+    }
+
+    public ProcessDef getProcessDef() throws MissingDataException {
+        return (ProcessDef) getMandatoryItem(IProcessData.PROCESS_DEFINITION);
+    }
+
+    public void setProcessDef(ProcessDef processDef) {
+        putItem(IProcessData.PROCESS_DEFINITION, processDef);
+    }
+
+    public ActionDef getProcessedAction() throws MissingDataException {
+        return (ActionDef) getMandatoryItem(IProcessData.PROCESSED_ACTION);
+    }
+
+    public void setProcessedAction(ActionDef actionDef) {
+        putItem(IProcessData.PROCESSED_ACTION, actionDef);
+    }
+
+    public ActionDef getActionToProcess() throws MissingDataException {
+        return (ActionDef) getMandatoryItem(IProcessData.ACTION_TO_PROCESS);
+    }
+
+    public void setActionToProcess(ActionDef actionDef) {
+        putItem(IProcessData.ACTION_TO_PROCESS, actionDef);
+    }
+
+    public Set<Map.Entry<String, Object>> entrySet() {
+        return processObjects.entrySet();
+    }
+
+    public void clear() {
+        processObjects.clear();
+    }
+
+    public Long getLong(String key) {
+        Object itemValue = getItem(key);
+        if (itemValue == null) {
+            return null;
+        }
+        else if (itemValue instanceof Long) {
+            return (Long) itemValue;
+        }
+        else if (itemValue instanceof String) {
+            try {
+                return Long.parseLong((String) itemValue);
+            }
+            catch (NumberFormatException e) {
+                throw new IllegalArgumentException(key + " property is not a long");
+            }
+        }
+        else {
+            throw new IllegalArgumentException(key + " property is not a long");
+        }
+    }
+
+    public Integer getInt(String key) {
+        Object itemValue = getItem(key);
+        if (itemValue == null) {
+            return null;
+        }
+        else if (itemValue instanceof Integer) {
+            return (Integer) itemValue;
+        }
+        else if (itemValue instanceof String) {
+            try {
+                return Integer.parseInt((String) itemValue);
+            }
+            catch (NumberFormatException e) {
+                throw new IllegalArgumentException(key + " property is not an int");
+            }
+        }
+        else {
+            throw new IllegalArgumentException(key + " property is not an int");
+        }
+    }
+
+    public Float getFloat(String key) {
+        Object itemValue = getItem(key);
+        if (itemValue == null) {
+            return null;
+        }
+        else if (itemValue instanceof Float) {
+            return (Float) itemValue;
+        }
+        else if (itemValue instanceof String) {
+            try {
+                return Float.parseFloat((String) itemValue);
+            }
+            catch (NumberFormatException e) {
+                throw new IllegalArgumentException(key + " property is not a float");
+            }
+        }
+        else {
+            throw new IllegalArgumentException(key + " property is not a float");
+        }
+    }
+
+    public Double getDouble(String key) {
+        Object itemValue = getItem(key);
+        if (itemValue == null) {
+            return null;
+        }
+        else if (itemValue instanceof Double) {
+            return (Double) itemValue;
+        }
+        else if (itemValue instanceof String) {
+            try {
+                return Double.parseDouble((String) itemValue);
+            }
+            catch (NumberFormatException e) {
+                throw new IllegalArgumentException(key + " property is not a double");
+            }
+        }
+        else {
+            throw new IllegalArgumentException(key + " property is not a double");
+        }
+    }
+
+    public Boolean getBoolean(String key) {
+        Object itemValue = getItem(key);
+        if (itemValue == null) {
+            return false;
+        }
+        else if (itemValue instanceof String) {
+            return Boolean.valueOf((String) itemValue);
+        }
+        else {
+            throw new IllegalArgumentException(key + " property is not a boolean");
+        }
+    }
+
+    public String getString(String key) {
+        Object obj = getItem(key);
+        if (obj == null) {
+            return null;
+        }
+        else if (obj instanceof String) {
+            return (String) obj;
+        }
+        else {
+            throw new IllegalArgumentException(key + " property value is not a String");
+        }
+    }
+
+    public void copyFrom(Map<String, Object> processConfiguration) {
+        if (processConfiguration != null) {
+            processObjects.putAll(processConfiguration);
+        }
+    }
+
+    public Logger getLogger() {
+        return (Logger) processObjects.get("LOGGER");
+    }
+
+    public String toString() {
+        return "ProcessData: " + processObjects.toString();
+    }
+}

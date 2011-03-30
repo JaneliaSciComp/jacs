@@ -1,0 +1,132 @@
+/*
+ * Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
+ *
+ * This file is part of JCVI VICS.
+ *
+ * JCVI VICS is free software; you can redistribute it and/or modify it
+ * under the terms and conditions of the Artistic License 2.0.  For
+ * details, see the full text of the license in the file LICENSE.txt.  No
+ * other rights are granted.  Any and all third party software rights to
+ * remain with the original developer.
+ *
+ * JCVI VICS is distributed in the hope that it will be useful in
+ * bioinformatics applications, but it is provided "AS IS" and WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTIES including but not limited to
+ * implied warranties of merchantability or fitness for any particular
+ * purpose.  For details, see the full text of the license in the file
+ * LICENSE.txt.
+ *
+ * You should have received a copy of the Artistic License 2.0 along with
+ * JCVI VICS.  If not, the license can be obtained from
+ * "http://www.perlfoundation.org/artistic_license_2_0."
+ */
+
+package org.janelia.it.jacs.compute.engine.service;
+
+import org.jboss.annotation.ejb.ResourceAdapter;
+import org.jboss.logging.Logger;
+import org.janelia.it.jacs.compute.engine.util.JmsUtil;
+import org.janelia.it.jacs.compute.jtc.AsyncMessageInterface;
+import org.janelia.it.jacs.compute.service.common.grid.submit.GridProcessResult;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.shared.utils.IOUtils;
+import org.quartz.Job;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+
+import javax.ejb.ActivationConfigProperty;
+import javax.ejb.MessageDriven;
+import javax.jms.ObjectMessage;
+import java.io.InputStream;
+import java.util.Map;
+import java.util.Set;
+
+@MessageDriven(activationConfig = {
+        // crontTrigger starts with seconds.  Below should run every 1 minutes
+        @ActivationConfigProperty(propertyName = "cronTrigger", propertyValue = "0 0/1 * * * ?")
+})
+@ResourceAdapter("quartz-ra.rar")
+
+/**
+ * Created by IntelliJ IDEA.
+ * NOTE: This timer service used to clean up every 5 minutes but that was causing Process pipe proliferation problems, so
+ * I reduced it to 1 minute and forces Process.destroy() in the GridSubmitHelperMap class.
+ *
+ * User: lkagan
+ * Date: Sep 4, 2009
+ * Time: 4:29:34 PM
+ *
+ */
+public class GridSubmitAndWaitMonitorMDB implements Job {
+    private static final Logger logger = Logger.getLogger(GridSubmitAndWaitMonitorMDB.class);
+
+    public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
+        Set<String> keySet = GridSubmitHelperMap.getInstance().getDataMapKeys();
+        try {
+            // iterate over all monitored processes
+            for (String submissionKey : keySet) {
+                Map<String, Object> submissionData = GridSubmitHelperMap.getInstance().getFromDataMap(submissionKey);
+                Process proc = (Process) submissionData.get(GridSubmitHelperMap.PROCESS_OBJECT);
+                if (proc != null) {
+                    // check if it's exited or not
+                    try {
+                        int exitVal = proc.exitValue();
+                        if (exitVal != 0) {
+                            // try to get error from error stream
+                            InputStream shellErr = proc.getErrorStream(); // this is actual process output!
+                            String errorText = IOUtils.readInputStream(shellErr);
+                            logger.error("Detected child process exited with error " + exitVal + ". Will attempt to report error");
+                            // error in the proccess - it might not have posted a message - have to do it here
+                            GridProcessResult gpr = new GridProcessResult(-1L, false);
+                            gpr.setGridSubmissionKey(submissionKey);
+                            gpr.setError(errorText);
+                            if (!postFinishedMessage(gpr)) {
+                                // remove it from the monitoring set - it a ZOMBIE!
+                                GridSubmitHelperMap.getInstance().removeFromDataMap(submissionKey);
+                            }
+                        }
+
+                    }
+                    catch (IllegalThreadStateException e) {
+                        // this exception is thrown if the proccess has not yet completed
+                        // perfectly good case for us
+                    }
+                }
+                else {
+                    logger.info("Null process entered into monitored set. Removing now");
+                    GridSubmitHelperMap.getInstance().removeFromDataMap(submissionKey);
+                }
+            }
+        }
+        catch (Exception e) {
+            logger.error("ERROR in child process monitor.", e);
+        }
+        if (null != keySet && keySet.size() > 0) {
+            logger.info("Child process monitor scanned " + keySet.size() + " processes");
+            StringBuffer sbuf = new StringBuffer();
+            sbuf.append("Process(es): ");
+            for (String s : keySet) {
+                sbuf.append(s).append(", ");
+            }
+            logger.info(sbuf.toString());
+        }
+    }
+
+    private boolean postFinishedMessage(GridProcessResult gpr) {
+        try {
+            String queueName = SystemConfigurationProperties.getString("ComputeServer.GridSubmitter.ReturnQueue");
+            AsyncMessageInterface messageInterface = JmsUtil.createAsyncMessageInterface();
+            messageInterface.startMessageSession(queueName, messageInterface.localConnectionType);
+            ObjectMessage msg = messageInterface.createObjectMessage();
+            msg.setObject(gpr);
+            messageInterface.sendMessageWithinTransaction(msg);
+            messageInterface.commit();
+            messageInterface.endMessageSession();
+        }
+        catch (Exception e) {
+            logger.error("ZOMBIE PROCESS: Unable to post return message.", e);
+            return false;
+        }
+        return true;
+    }
+}

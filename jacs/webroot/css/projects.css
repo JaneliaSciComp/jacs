@@ -1,0 +1,52 @@
+/*
+ * Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
+ *
+ * This file is part of JCVI VICS.
+ *
+ * JCVI VICS is free software; you can redistribute it and/or modify it
+ * under the terms and conditions of the Artistic License 2.0.  For
+ * details, see the full text of the license in the file LICENSE.txt.  No
+ * other rights are granted.  Any and all third party software rights to
+ * remain with the original developer.
+ *
+ * JCVI VICS is distributed in the hope that it will be useful in
+ * bioinformatics applications, but it is provided "AS IS" and WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTIES including but not limited to
+ * implied warranties of merchantability or fitness for any particular
+ * purpose.  For details, see the full text of the license in the file
+ * LICENSE.txt.
+ *
+ * You should have received a copy of the Artistic License 2.0 along with
+ * JCVI VICS.  If not, the license can be obtained from
+ * "http://www.perlfoundation.org/artistic_license_2_0."
+ */
+
+/*
+* Browse by project page
+*/
+.BrowseProjectTitle {
+    font-weight: bold;
+    font-style: italic;
+    text-align: center;
+    font-size: 14px;
+    padding: 0px 0px 6px 0px;
+}
+.BrowseProjectContentSpacer {
+    padding: 0;
+    margin: 0;
+    font-size: 8px;
+}
+.ProjectsSuggestBox  { width: 330px; } /*added*/
+.ProjectInfoPopup {
+    margin-top: 3px;
+    width: 700px;
+}
+.ProjectSubsetMessage {
+   margin: -9px 18px 0 0;
+}
+.ProjectTitlePanel {
+    width: 100%;
+    background-color: #E6EFF8; /* NYTimes blue */
+    margin: 2px 0 10px 0;
+    padding: 5px 10px 0 5px;
+}

@@ -1,0 +1,215 @@
+/*
+ * Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
+ *
+ * This file is part of JCVI VICS.
+ *
+ * JCVI VICS is free software; you can redistribute it and/or modify it
+ * under the terms and conditions of the Artistic License 2.0.  For
+ * details, see the full text of the license in the file LICENSE.txt.  No
+ * other rights are granted.  Any and all third party software rights to
+ * remain with the original developer.
+ *
+ * JCVI VICS is distributed in the hope that it will be useful in
+ * bioinformatics applications, but it is provided "AS IS" and WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTIES including but not limited to
+ * implied warranties of merchantability or fitness for any particular
+ * purpose.  For details, see the full text of the license in the file
+ * LICENSE.txt.
+ *
+ * You should have received a copy of the Artistic License 2.0 along with
+ * JCVI VICS.  If not, the license can be obtained from
+ * "http://www.perlfoundation.org/artistic_license_2_0."
+ */
+
+package org.janelia.it.jacs.compute.service.common;
+
+import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.access.ComputeDAO;
+import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.compute.engine.data.MissingDataException;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.shared.utils.FileUtil;
+
+import java.io.File;
+import java.io.IOException;
+
+/**
+ * Created by IntelliJ IDEA.
+ * User: tsafford
+ * Date: Jun 18, 2007
+ * Time: 9:00:45 AM
+ */
+public class ProcessDataHelper {
+
+    /**
+     * This method allows grid services to get the "result" directory which is used as the storehouse
+     * for all grid processing.
+     *
+     * @param processData - data object which is getting manipulated for the result file node
+     * @return FileNode - object which represents a directory on the filestore
+     * @throws org.janelia.it.jacs.compute.engine.data.MissingDataException
+     *          - data could not be found
+     */
+    public static FileNode getResultFileNode(IProcessData processData) throws MissingDataException {
+        FileNode resultFileNode = (FileNode) processData.getItem(ProcessDataConstants.RESULT_FILE_NODE);
+        if (resultFileNode == null) {
+            Long resultNodeId = (Long) processData.getMandatoryItem(ProcessDataConstants.RESULT_FILE_NODE_ID);
+            try {
+                resultFileNode = (FileNode) new ComputeDAO(getLoggerForTask(processData, ProcessDataHelper.class)).genericLoad(FileNode.class, resultNodeId);
+                processData.putItem(ProcessDataConstants.RESULT_FILE_NODE, resultFileNode);
+            }
+            catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return resultFileNode;
+    }
+
+    public static Task getTask(IProcessData processData) throws MissingDataException {
+        Long taskId;
+        Task task = (Task) processData.getItem(IProcessData.TASK);
+        // If the task is not in the data "session", ask for the id
+        if (task == null) {
+            taskId = (Long) processData.getMandatoryItem(IProcessData.PROCESS_ID);
+        }
+        /**
+         * If the task object is in the data "session", grab its id as we want a fresh one anyway
+         * this may be redundant but we probably shouldn't expect objects from the db to exist in processData as
+         * some services could take extremely long times
+         */
+        else {
+            taskId = task.getObjectId();
+        }
+        try {
+            task = new ComputeDAO(getLoggerForTask(processData, ProcessDataHelper.class)).getTaskWithMessagesAndParameters(taskId);
+            processData.putItem(IProcessData.TASK, task);
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return task;
+    }
+
+    public static FileNode getRootFileNode(IProcessData processData) throws MissingDataException, IOException {
+        Logger logger = getLoggerForTask(processData, ProcessDataHelper.class);
+        Task task = getRootTask(getTask(processData), logger);
+        // If no session exists, return null
+        if (null == task /*|| !(task instanceof SessionTask)*/) {
+            return null;
+        }
+        // else return the session node
+        Node tmpSessionNode = new ComputeDAO(logger).getResultNodeByTaskId(task.getObjectId());
+        if (null == tmpSessionNode/* || !(tmpSessionNode instanceof SessionFileNode)*/) {
+            return null;
+        }
+        return (FileNode) tmpSessionNode;
+    }
+
+
+    public static String getSessionRelativePath(IProcessData processData) throws MissingDataException, IOException {
+        FileNode tmpNode = getRootFileNode(processData);
+        if (null != tmpNode && !"".equals(new File(tmpNode.getDirectoryPath()).getName())) {
+            String tmpRootSubdir = tmpNode.getSubDirectory();
+            String tmpRootDir = tmpNode.getObjectId().toString();
+            return tmpRootSubdir + File.separator + tmpRootDir;
+        }
+        return null;
+    }
+
+    /**
+     * Recursive method to get the root sesison task, if one exists
+     *
+     * @param tmpTask - task we're looking for a parent of
+     * @param logger  handle to the logger used for this action
+     * @return the parent task if one exists
+     */
+    private static Task getRootTask(Task tmpTask, Logger logger) {
+        Task tmpRootTask;
+        if (null != tmpTask.getParentTaskId()) {
+            tmpRootTask = getRootTask(new ComputeDAO(logger).getTaskById(tmpTask.getParentTaskId()), logger);
+        }
+        else {
+            tmpRootTask = tmpTask;
+        }
+        if (null != tmpRootTask /*&& tmpRootTask instanceof SessionTask*/) {
+            return /*(SessionTask)*/tmpRootTask;
+        }
+        return null;
+    }
+
+    /**
+     * This method provides a handle to the task-specific log file
+     *
+     * @param processData the collection of parameters relating to the task at-hand
+     * @param loggerClass class to log for if the local logging flag is not present
+     * @return returns the logger for the
+     * @throws org.janelia.it.jacs.compute.engine.data.MissingDataException
+     *                             error that it can't find the data requested
+     * @throws java.io.IOException error trying to get reference to the desired file
+     */
+    public static Logger getLoggerForTask(IProcessData processData, Class loggerClass) throws MissingDataException, IOException {
+        String uniqueTaskIdentifier = (processData.getMandatoryItem(IProcessData.PROCESS_ID)).toString();
+        return getLoggerForTask(uniqueTaskIdentifier, loggerClass);
+    }
+
+    /**
+     * This method provides a handle to the task-specific log file
+     *
+     * @param uniqueTaskIdentifier the specific task identifier we're processing for
+     * @param loggerClass          class to log for if the local logging flag is not present
+     * @return returns the logger for the
+     * @throws org.janelia.it.jacs.compute.engine.data.MissingDataException
+     *                             error that it can't find the data requested
+     * @throws java.io.IOException error trying to get reference to the desired file
+     */
+    public static Logger getLoggerForTask(String uniqueTaskIdentifier, Class loggerClass) throws MissingDataException, IOException {
+        //        Logger tmpLogger = Logger.getLogger("task"+uniqueTaskIdentifier);
+//        if (null==tmpLogger.getAppender("task"+uniqueTaskIdentifier)) {
+//            FileAppender tmpAppender = new FileAppender(new PatternLayout("%d %-5p [%c:%C{1}] - %m%n"),
+//                getTmpLogFilePathForTask(uniqueTaskIdentifier), true);
+//            tmpAppender.setName("task"+uniqueTaskIdentifier);
+//            System.out.println("Added appender "+tmpAppender.getName());
+//            tmpLogger.addAppender(tmpAppender);
+//        }
+//        if (null==tmpLogger.getAppender(loggerClass.toString())) {
+//            Appender tmpAppender = returnLogger.getAppender(loggerClass.toString());
+//            if (null!=tmpAppender) {
+//                System.out.println("Added appender "+tmpAppender.getName());
+//                tmpLogger.addAppender(tmpAppender);}
+//        }
+//        returnLogger = tmpLogger;
+        return Logger.getLogger(loggerClass);
+    }
+
+    public static String getTmpLogFilePathForTask(String uniqueTaskIdentifier) {
+        String finalPath;
+        String tmpPath = SystemConfigurationProperties.getString("Logs.Dir");
+        finalPath = tmpPath + File.separator + "task" + uniqueTaskIdentifier + ".log";
+        return finalPath;
+    }
+
+    /**
+     * This method should copy the process log over to the result directory, should one exist.
+     *
+     * @param processData the map of the objects used to process
+     * @throws org.janelia.it.jacs.compute.engine.data.MissingDataException
+     *                             could not find required data
+     * @throws java.io.IOException problem trying to access the log file
+     */
+    protected void copyLogs(IProcessData processData) throws MissingDataException, IOException {
+        // Grab the Task
+        Task task = ProcessDataHelper.getTask(processData);
+        FileNode resultNode = ProcessDataHelper.getRootFileNode(processData);
+        if (null != resultNode) {
+            File sourceFile = new File(ProcessDataHelper.getTmpLogFilePathForTask(task.getObjectId().toString()));
+            File destFile = new File(resultNode.getDirectoryPath() + File.separator + sourceFile.getName());
+            FileUtil.copyFile(sourceFile, destFile);
+        }
+    }
+
+
+}

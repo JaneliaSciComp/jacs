@@ -1,0 +1,159 @@
+/*
+ * Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
+ *
+ * This file is part of JCVI VICS.
+ *
+ * JCVI VICS is free software; you can redistribute it and/or modify it
+ * under the terms and conditions of the Artistic License 2.0.  For
+ * details, see the full text of the license in the file LICENSE.txt.  No
+ * other rights are granted.  Any and all third party software rights to
+ * remain with the original developer.
+ *
+ * JCVI VICS is distributed in the hope that it will be useful in
+ * bioinformatics applications, but it is provided "AS IS" and WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTIES including but not limited to
+ * implied warranties of merchantability or fitness for any particular
+ * purpose.  For details, see the full text of the license in the file
+ * LICENSE.txt.
+ *
+ * You should have received a copy of the Artistic License 2.0 along with
+ * JCVI VICS.  If not, the license can be obtained from
+ * "http://www.perlfoundation.org/artistic_license_2_0."
+ */
+
+.HeaderLogo {
+    cursor: pointer;
+    margin: 1px 1px 2px 1px;
+}
+.HeaderPanel {
+    background-color: darkgreen;
+}
+.HeaderLinkPanel {
+    margin: 4px 0 0 20px; /* pushes the links over */
+}
+.HeaderLink {
+    color: white;
+    font-size: 9pt;
+    font-style: normal;
+    font-weight: normal;
+    text-decoration: underline;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.HeaderLinkSeparator {
+    color: white;
+    padding: 0px 8px 0px 8px;
+    font-size: 9pt;
+    vertical-align: middle;
+}
+.HeaderHelpImage {
+    margin-right: 4px;
+}
+.HeaderSearchPanelLoggedIn     { margin: 0px 0px 0px 140px; }
+.HeaderSearchPanelLoggedInMac  { margin: 0px 0px 0px 210px; }
+.HeaderSearchPanelLoggedOut    { margin: 0px 0px 0px 180px; }
+.HeaderSearchPanelLoggedOutMac { margin: 0px 0px 0px 150px; }
+.HeaderSearchButton {
+    font-size: 10pt;
+}
+.HeaderSearchTextBox {
+    font-size: 10pt;
+    background-color: #f7f9fb; /* light blue background behind logo */
+}
+.HeaderSearchButtonSpacer {
+    width: 4px;
+}
+.HeaderAdvancedSearchLink {
+    color: white;
+    font-size: 9pt;
+    text-decoration: underline;
+    cursor: pointer;
+    white-space: nowrap;
+    margin-left: 147px;
+}
+.HeaderAdvancedSearchLinkMac {
+    color: white;
+    font-size: 9pt;
+    text-decoration: underline;
+    cursor: pointer;
+    white-space: nowrap;
+    margin-left: 180px;
+}
+.HeaderMenuBar { /* the menu item that houses the drop-down (looks like a button) */
+    background-color: darkgreen;
+    border-bottom: darkgreen solid 1px;
+    border-left: darkgreen solid 1px;
+    border-top: darkgreen solid 1px;
+    border-right: darkgreen solid 1px;
+    margin: 0 340px 0 40px;
+    padding: 0;
+}
+.HeaderMenuBarIE       { margin-top: 1px; }
+.HeaderMenuBarFF2      { margin-top: 1px; }
+.HeaderMenuBarFF3      { margin-top: 1px; }
+.HeaderMenuBarFF2Mac   { margin-top: 1px; }
+.HeaderMenuBarFF3Mac   { margin-top: 1px; }
+.HeaderMenuBarFF2Linux { margin-top: 1px; }
+.HeaderMenuBarFF3Linux { margin-top: 1px; }
+.HeaderMenuBarPopup { /* wrapper around the popup part of the menu */
+    background-color: darkgreen; /* NYTimes blue */
+    border-left:   1px solid cornflowerblue;
+    border-right:  1px solid cornflowerblue;
+    border-bottom: 1px solid cornflowerblue;
+    padding: 1px;
+    margin-top: 2px; /* pushes popup down to top of header bar */
+}
+.HeaderTopLevelMenuItem {
+    background-color: darkgreen; /* NYTimes blue */
+    padding: 1px 20px 1px 20px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    white-space: nowrap;
+    color: white;
+}
+/* TODO: make this dependent style so we only have to specify the diffs */
+.HeaderTopLevelMenuItemHover {
+    padding: 1px 20px 1px 20px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    white-space: nowrap;
+    color: darkgreen;
+    background-color: white;  /* research tab blue; */
+}
+/* TODO: remove this */
+.HeaderMenuBar .gwt-MenuItem-selected {  /* top level menu item when selected/hovered over  */
+    color: darkgreen;
+    background-color: white;  /* research tab blue; */
+}
+.HeaderMenuItem  {
+    background-color: darkgreen; /* NYTimes blue */
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+    color: white;
+    padding: 3px 15px 3px 5px;
+    margin: 2px;
+}
+/* TODO: make this dependent style so we only have to specify the diffs */
+.HeaderMenuItemHover  {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+    padding: 3px 15px 3px 5px;
+    color: darkgreen;
+    background-color: white; /* research tab blue */
+    margin: 2px;
+}
+/* TODO: remove this */
+.gwt-MenuBar .HeaderMenuItem-selected { /* menu item in dropdown when selected */
+    color: white;
+    font-size: 11px;
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: darkgreen; /* research tab blue */
+}

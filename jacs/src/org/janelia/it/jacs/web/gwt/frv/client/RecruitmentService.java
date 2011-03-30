@@ -1,0 +1,75 @@
+/*
+ * Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
+ *
+ * This file is part of JCVI VICS.
+ *
+ * JCVI VICS is free software; you can redistribute it and/or modify it
+ * under the terms and conditions of the Artistic License 2.0.  For
+ * details, see the full text of the license in the file LICENSE.txt.  No
+ * other rights are granted.  Any and all third party software rights to
+ * remain with the original developer.
+ *
+ * JCVI VICS is distributed in the hope that it will be useful in
+ * bioinformatics applications, but it is provided "AS IS" and WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTIES including but not limited to
+ * implied warranties of merchantability or fitness for any particular
+ * purpose.  For details, see the full text of the license in the file
+ * LICENSE.txt.
+ *
+ * You should have received a copy of the Artistic License 2.0 along with
+ * JCVI VICS.  If not, the license can be obtained from
+ * "http://www.perlfoundation.org/artistic_license_2_0."
+ */
+
+package org.janelia.it.jacs.web.gwt.frv.client;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.rpc.RemoteService;
+import com.google.gwt.user.client.rpc.ServiceDefTarget;
+import org.janelia.it.jacs.shared.processors.recruitment.AnnotationTableData;
+import org.janelia.it.jacs.shared.processors.recruitment.ProjectData;
+import org.janelia.it.jacs.shared.processors.recruitment.SampleData;
+import org.janelia.it.jacs.shared.tasks.RecruitableJobInfo;
+import org.janelia.it.jacs.web.gwt.common.client.model.tasks.LegendItem;
+import org.janelia.it.jacs.web.gwt.common.client.service.GWTServiceException;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+/**
+ * Created by IntelliJ IDEA.
+ * User: tsafford
+ * Date: Mar 19, 2008
+ * Time: 5:09:02 PM
+ */
+public interface RecruitmentService extends RemoteService {
+    /**
+     * Utility/Convenience class.
+     * Use RecruitmentService.App.getInstance() to access static instance of RecruitmentServiceAsync
+     */
+    public static class App {
+        private static RecruitmentServiceAsync ourInstance = null;
+
+        public static synchronized RecruitmentServiceAsync getInstance() {
+            if (ourInstance == null) {
+                ourInstance = (RecruitmentServiceAsync) GWT.create(RecruitmentService.class);
+                ((ServiceDefTarget) ourInstance).setServiceEntryPoint(GWT.getModuleBaseURL() + "org.janelia.it.jacs.web.gwt.frv.Frv/RecruitmentService");
+            }
+            return ourInstance;
+        }
+    }
+
+    public String runRecruitmentJob(RecruitableJobInfo job) throws GWTServiceException;
+
+    public LegendItem[] getLegend(String nodeId);
+
+    public String getAnnotationInfoForSelection(String nodeId, long ntPosition, String annotationFilter);
+
+    public List<AnnotationTableData> getAnnotationInfoForRange(String nodeId, long ntStartPosition, long ntStopPosition, String annotationFilter);
+
+    public HashMap<ProjectData, ArrayList<SampleData>> getRVSampleData();
+
+    public void runUserBlastRecruitment(String queryNodeId) throws GWTServiceException;
+
+}

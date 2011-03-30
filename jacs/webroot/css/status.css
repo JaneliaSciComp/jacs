@@ -1,0 +1,112 @@
+/*
+ * Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
+ *
+ * This file is part of JCVI VICS.
+ *
+ * JCVI VICS is free software; you can redistribute it and/or modify it
+ * under the terms and conditions of the Artistic License 2.0.  For
+ * details, see the full text of the license in the file LICENSE.txt.  No
+ * other rights are granted.  Any and all third party software rights to
+ * remain with the original developer.
+ *
+ * JCVI VICS is distributed in the hope that it will be useful in
+ * bioinformatics applications, but it is provided "AS IS" and WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTIES including but not limited to
+ * implied warranties of merchantability or fitness for any particular
+ * purpose.  For details, see the full text of the license in the file
+ * LICENSE.txt.
+ *
+ * You should have received a copy of the Artistic License 2.0 along with
+ * JCVI VICS.  If not, the license can be obtained from
+ * "http://www.perlfoundation.org/artistic_license_2_0."
+ */
+
+/*
+ * Job Status styles
+ */
+.jobRunning { font-style: italic; font-size:  9pt; }
+.jobError   { color: red;         font-size: 9pt; }
+.jobErrorPopperUpperText {
+    font-size: 9pt;
+    vertical-align: middle;
+    color: red;
+    border-bottom: 1px dashed red;
+}
+.jobErrorPopperUpperHover {
+    cursor: pointer;
+    font-size: 9pt;
+    color: black;
+    background-color: #D7F0FF;
+    border-bottom: 1px dashed blue;
+}
+.jobCompletedOKText {
+    font-size: 9pt;
+    vertical-align: middle;
+    color: green;
+}
+.jobCompletedWithErrorsText {
+    font-size: 9pt;
+    vertical-align: middle;
+    color: red;
+}
+.jobWithErrorPopperUpperText {
+    cursor: pointer;
+    font-size: 9pt;
+    vertical-align: middle;
+    color: red;
+    border-bottom: 1px solid red;
+}
+.jobWithErrorPopperUpperHover {
+    cursor: pointer;
+    font-size: 9pt;
+    color: black;
+    border-bottom: 1px blue;
+}
+.jobWithErrorPopperUpperClick {
+    cursor: pointer;
+    font-size: 9pt;
+    color: red;
+    border-bottom: 1px solid red;
+}
+.jobDetailsHitTableHint {
+    margin-top: 5px;
+}
+.jobDetailsNumSitesPanel {
+    margin: 8px 0px 5px 0px;
+    white-space: nowrap;
+}
+.largeBlastJobPopperUpperNoteText {
+    font-size: 9pt;
+    vertical-align: middle;
+    color: black;
+    width: 21em;
+}
+.largeBlastJobNumHitsText {
+    font-size: 9pt;
+}
+.largeBlastJobNumHitsHoverText {
+    cursor: pointer;
+    font-size: 9pt;
+    color: black;
+    background-color: #D7F0FF;
+}
+
+/* Blast hit alignment colors */
+.alignmentMatch     { background-color: #DEEDDE; }
+.alignmentSimilar   { background-color: #FFF0B3; }
+.alignmentStopCodon { background-color: #999999; color: white; }
+.blastAlignmentLegendPanel {
+    border-top: 1px solid #CCCCCC;
+    padding: 2px 5px 2px 5px;
+    margin: 2px;
+    white-space: nowrap;
+}
+.blastAlignmentLegendColorBlock { /* added to the alignment color */
+    border: 1px solid #DDDDDD;
+}
+.blastHitsTitledBox {
+    width: 250px;
+}
+.sequenceAlignmentTitledBox {
+    width: 100%;
+}
