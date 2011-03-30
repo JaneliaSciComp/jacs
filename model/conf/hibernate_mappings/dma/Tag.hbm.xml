@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
+  ~
+  ~ This file is part of JCVI VICS.
+  ~
+  ~ JCVI VICS is free software; you can redistribute it and/or modify it
+  ~ under the terms and conditions of the Artistic License 2.0.  For
+  ~ details, see the full text of the license in the file LICENSE.txt.  No
+  ~ other rights are granted.  Any and all third party software rights to
+  ~ remain with the original developer.
+  ~
+  ~ JCVI VICS is distributed in the hope that it will be useful in
+  ~ bioinformatics applications, but it is provided "AS IS" and WITHOUT
+  ~ ANY EXPRESS OR IMPLIED WARRANTIES including but not limited to
+  ~ implied warranties of merchantability or fitness for any particular
+  ~ purpose.  For details, see the full text of the license in the file
+  ~ LICENSE.txt.
+  ~
+  ~ You should have received a copy of the Artistic License 2.0 along with
+  ~ JCVI VICS.  If not, the license can be obtained from
+  ~ "http://www.perlfoundation.org/artistic_license_2_0."
+  -->
+
+<!DOCTYPE hibernate-mapping PUBLIC
+    "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+    "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping schema="flyportal"
+				   package="org.janelia.it.jacs.model.dma"
+                   default-access="property"                            
+                   auto-import="true">
+
+  <class name="Tag" table="dma_tag">
+        <id name="id" column="tag_id">
+            <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
+        </id>
+
+        <property name="name" type="string"/>
+        <property name="description" type="string"/>
+
+        <many-to-one name="classification" class="org.janelia.it.jacs.model.dma.Classification" cascade="all"
+                    column="classification_id" />
+
+        <set name="entities" table="dma_tag_entity" lazy="true" inverse="true" cascade="save-update">
+            <key column="tag_id"/>
+            <many-to-many class="org.janelia.it.jacs.model.genomics.BaseSequenceEntity" column="entity_id"/>
+        </set>
+
+        <set name="blastNodes" table="dma_tag_node" lazy="true" inverse="true" cascade="save-update">
+            <key column="tag_id"/>
+            <many-to-many class="org.janelia.it.jacs.model.user_data.Node" column="node_id"/>
+        </set>
+
+  </class>
+</hibernate-mapping>

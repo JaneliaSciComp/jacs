@@ -1,0 +1,284 @@
+create or replace function camera.countTag(pTagId in bigint) returns integer as $$
+declare rec record;
+begin
+  for rec in select * from camera.analyzetags(pTagId)
+  loop
+    return rec.seq_count;
+  end loop;
+end $$ language plpgsql;
+--------------------------------------------------------
+/*
+ * clear staging schema
+ */
+ truncate imp_assembly,imp_bio_material,imp_bio_material_sample,imp_bio_sample,imp_collection_observation,imp_dma_tag,imp_fasta,imp_library,imp_node,imp_sequence;
+--------------------------------------------------------
+-- Alaskan Soil Metadata and samples
+--------------------------------------------------------
+/*
+ * create PROJECT level DMA_TAG
+ */
+insert into imp_dma_tag(tag_id,name,description,save_tag,entity_sql,can_join)
+  values(nextval('camera.seq_doc_id')),'CAM_PROJ_AlaskanSoil','project CAM_PROJ_AlaskanSoil',false,
+'select se.entity_id from bio_material bm inner join bio_material_sample bms on bms.material_id=bm.material_id inner join bio_sample bs on bs.sample_id=bms.sample_id inner join sequence_entity se on se.sample_id=bs.sample_id and not se.obs_flag and se.owner_id=60 where bm.project_symbol=''CAM_PROJ_AlaskanSoil'' union select se.entity_id from assembly a inner join sequence_entity se on se.assembly_id=a.assembly_id and not se.obs_flag and se.owner_id=60 where a.project=''CAM_PROJ_AlaskanSoil''',true);
+/*
+ * get site data
+
+project_symbol
+CAM_PROJ_AlaskanSoil
+
+material_acc
+CAM_SITE_AlaskanSoil
+
+material_id
+1250591351154672949 (from ID generator)
+
+collection_start_time
+no data
+
+collection_stop_time
+no data
+
+collection_site_id
+1250591351158867253 (from id generator)
+
+region
+Alaska
+
+location
+Bonanza Creek LTER
+
+site_comment
+no data
+
+site_habitat
+soil
+
+latitude
+64.13 = 64d7'48"N  (from google)
+
+longitude
+-148.0 = 148dW     (from google)
+
+country
+USA
+
+depth
+no data
+
+collection_host_id,
+n/a
+
+host_details
+n/a
+
+host_organism
+n/a
+ *
+ * save site data to staging
+ */
+insert into imp_bio_material
+  (project_symbol,material_acc,material_id,collection_start_time,collection_stop_time,
+   collection_site_id,region,location,site_comment,site_habitat,latitude,longitude,country,depth,
+   collection_host_id,host_organism,host_details)
+values
+  ('CAM_PROJ_AlaskanSoil','CAM_SITE_AlaskanSoil',1250591351154672949,null,null,
+   1250591351158867253,'Alaska','Bonanza Creek LTER',null,'soil','64d7''48"N','148dW','USA',null,
+   null,null,null);
+/*
+ * calculate defline extensions for site data
+ */
+update imp_bio_material bm
+set site_defline=
+'/site_id_n='||bm.material_acc||
+' /location_n="'||bm.location||'"'||
+' /region_n="'||bm.region||'"'||
+' /country_n="'||bm.country||'"'||
+appendrows('select ''/''||observation_type||''_n="''||trim('' '' from coalesce(value,'''')||coalesce(''  ''||units,'''')||coalesce('' (''||comment||'')'','''')||''"'') from imp_collection_observation where material_acc='''||bm.material_acc||''' order by 1',' ');
+
+/*
+ * collect sample data
+sample_acc
+CAM_SMPL_AlaskanSoil
+
+sample_id
+1250591351163061557
+
+sample_name
+AlaskanSoil
+
+sample_title
+AlaskaSoil - Alaskan Soil Metagenome
+
+filter_min
+no data
+
+filter_max
+no data
+
+intellectual_property_notice
+no data
+ *
+ * save sample data to staging
+ */
+insert into imp_bio_sample
+  (sample_acc,sample_id,sample_name,sample_title,filter_min,filter_max,intellectual_property_notice)
+values
+  ('CAM_SMPL_AlaskanSoil',1250591351163061557,'AlaskanSoil','AlaskaSoil - Alaskan Soil Metagenome',null,null,null);
+/*
+ * save associations between samples and sites
+ * use site_num to order the sites for the sample_defline, 1=1st, 2=2nd, ...nth site for sample
+ */
+insert into imp_bio_material_sample
+  (sample_id,site_num,material_id)
+values
+  (1250591351163061557,1,1250591351154672949);
+/*
+ * calculate defline extension for sample data
+ */
+update imp_bio_sample bs set sample_defline='/sample_id='||sample_acc||' /sample_name='||sample_name||' /number_of_sites='||(select count(*) from imp_bio_material_sample bms where bms.sample_id=bs.sample_id)||' '||appendrows('select replace(site_defline,''_n='',''_''||bms.site_num||''='') from imp_bio_material_sample bms inner join imp_bio_material bm on bm.material_id=bms.material_id where bms.sample_id='||sample_id||' order by bms.site_num',' ');/*
+/*
+ * generate DMA_TAGS for samples
+ */
+insert into imp_dma_tag(tag_id,name,description,save_tag,entity_sql,can_join)
+  select nextval('camera.seq_doc_id'),sample_acc,'sample '||sample_acc,false,'select se.entity_id from bio_sample bs inner join sequence_entity se on se.sample_id=bs.sample_id where bs.sample_acc='''||sample_acc||''' and not se.obs_flag and se.owner_id=60',true
+  from imp_bio_sample;
+/*
+ * collect library data
+library_acc
+CAM_LIB_AlaskanSoil
+
+library_id
+1250591351163061556 (from ID generator)
+
+sample_acc
+CAM_SMPL_AlaskaSoil
+
+number_of_reads
+1033 (grep fasta file)
+
+sequencing_technology
+PCR
+
+min_insert_size
+n/a
+
+max_insert_size
+n/a
+ *
+ * save library data to staging
+ */
+insert into imp_library
+  (library_acc,library_id,sample_acc,number_of_reads,sequencing_technology,min_insert_size,max_insert_size)
+values
+  ('CAM_LIB_AlaskanSoil',1250591351163061556,'CAM_SMPL_AlaskaSoil',1033,'PCR',null,null);
+/*
+ * collect assembly data
+ */
+no data
+/*
+ * generate DMA_TAGs for assemblies
+ */
+insert into imp_dma_tag(tag_id,name,description,save_tag,entity_sql,can_join)
+  select nextval('camera.seq_doc_id'),assembly_acc,'assembly '||assembly_acc,false,'select se.entity_id from assembly a inner join sequence_entity se on se.assembly_id=a.assembly_id where a.assembly_acc='''||assembly_acc||''' and not se.obs_flag and se.owner_id=60',true
+  from imp_assembly;
+/*
+ * blast and download nodes
+ */
+insert into imp_node
+  (node_id,name,description,sequence_type,is_assembled_data,is_blastable,metagenome_tag,seqtype_tag)
+values
+  (1250591351163061582,'AlaskanSoil: 16s Sequences (N)','AlaskanSoil: 16s Sequences (N)','nucleotide',false,true,'cam_smpl_alaskansoil','16s');
+/*
+ * transform fasta file and use copy command to load the imp_sequence_engtity table
+*/
+/*
+ * move data from staging to production
+ */
+--
+-- site
+insert into camera.collection_site(site_id,location,region,comment,site_description,site_type_code)
+  select collection_site_id,location,region,site_comment,site_habitat,1 from imp_bio_material where project_symbol=:project;
+
+insert into camera.geo_point(location_id,longitude,latitude,depth,country)
+  select collection_site_id,longitude,latitude,depth,country from imp_bio_material where project_symbol=:project;
+
+insert into camera.bio_material(material_acc,material_id,project_symbol,collection_site_id,collection_host_id,collection_start_time,collection_stop_time)
+  select material_acc,material_id,project_symbol,collection_site_id,collection_host_id,collection_start_time,collection_stop_time
+  from imp_bio_material where project_symbol=:project;
+
+insert into camera.collection_observation(material_id,observation_type,value,units,comment,lo_value,hi_value)
+  select m.material_id,o.observation_type,o.value,o.units,o.comment,o.lo_value,o.hi_value
+  from imp_bio_material m inner join imp_collection_observation o on o.material_acc=m.material_acc
+  where m.project_symbol=:project;
+--
+-- sample
+insert into camera.bio_sample(sample_acc,sample_id,sample_name,sample_title,filter_min,filter_max,intellectual_property_notice)
+  select s.sample_acc,s.sample_id,s.sample_name,s.sample_title,s.filter_min,s.filter_max,s.intellectual_property_notice
+  from imp_bio_material m,
+  inner join imp_bio_material_sample ms on ms.material_id=m.material_id
+  inner join imp_bio_sample s on s.sample_id=ms.sample_id
+  where m.project_symbol=:project;
+
+insert into camera.bio_material_sample(material_id,sample_id)
+  select ms.material_id,ms.sample_id
+  from imp_bio_material m
+  inner join imp_bio_material_sample ms on ms.material_id=m.material_id
+  where m.project_symbol=:project;
+
+insert into camera.library(library_acc,library_id,sample_acc,number_of_reads,sequencing_technology,min_insert_size,max_insert_size)
+  select l.library_acc,l.library_id,l.sample_acc,l.number_of_reads,l.sequencing_technology,l.min_insert_size,l.max_insert_size
+  from imp_bio_material m
+  inner join imp_bio_material_sample ms on ms.material_id=m.material_id
+  inner join imp_bio_sample s on s.sample_id=ms.sample_id
+  inner join imp_library l on l.sample_acc=s.sample_acc
+  where m.project_symbol=:project;
+
+insert into camera.assembly(assembly_acc,assembly_id,description,project,sample_acc,organism,taxon_id)
+  select a.assembly_acc,a.assembly_id,a.description,a.project,a.sample_acc,a.organism,
+         (select taxon_id from camera.taxonomy_synonym ts where ts.name=a.organism)
+from imp_assembly a
+where a.project=:project;
+--
+-- blast and download nodes
+insert into camera.node(node_id,name,description,node_type,data_source_id,is_assembled_data,user_id,sequence_type)
+  select node_id,name,description,case when is_blastable then 4 else 12 end,0,is_assembled_data,60,sequence_type from imp_node;
+--
+-- sequences
+insert into camera.sequence_entity
+  (entity_id,sequence_id,camera_acc,owner_id,obs_flag,source_id,
+   defline,ncbi_gi_number,external_source,external_acc,
+   entity_type_code,type,sequence_length,
+   assembly_acc,assembly_id,library_acc,library_id,sample_acc,sample_id)
+select s.entity_id,s.entity_id-1,split_part(s.defline,' ',1),60,false,1,
+   s.defline||coalesce(' '||bs.sample_defline,''),get_def_tag(s.defline,'/gi=',' ')::integer,split_part(s.defline,'_',1),get_def_tag(s.defline,'/accession=',' '),
+   case lower(s.seq_type) when 'read' then 3 when 'scaffold' then 2 when '16s' then 8 end, case lower(s.seq_type) when '16s' then '16s' end,length(sequence),
+   a.assembly_acc,a.assembly_id,l.library_acc,l.library_id,bs.sample_acc,bs.sample_id
+from imp_sequence s
+left outer join imp_assembly a on a.assembly_acc=s.assembly_acc
+left outer join imp_library l on l.library_acc=s.library_acc
+left outer join imp_bio_sample bs on bs.sample_acc=s.sample_acc;
+
+insert into camera.bio_sequence(sequence_id,sequence_type_code,sequence_md5,sequence)
+  select entity_id-1,2,md5(sequence),sequence from imp_sequence;
+--
+-- dma tags
+insert into camera.dma_tag(tag_id,name,description,save_tag,entity_sql,can_join)
+  select tag_id,name,description,save_tag,entity_sql,can_join from imp_dma_tag;
+select countTag(tag_id) from imp_dma_tag;
+--
+-- node definitions
+insert into dma_tag_node(node_id,tag_id)
+  select i.node_id,t.tag_id from imp_node i inner join dma_tag t on t.name=lower(i.metagenome_tag);
+insert into dma_tag_node(node_id,tag_id)
+  select i.node_id,t.tag_id from imp_node i inner join dma_tag t on t.name=lower(i.seqtype_tag);
+
+--
+-- refresh materisalized views
+begin transaction;
+truncate sample_site;
+insert into sample_site select * from sample_site_view;
+truncate sample_detail;
+insert into sample_detail select * from sample_detail_view;
+end transaction;
+--
+-- update concatenated DMA nodes (e.g. All Metagenomic Reads)
