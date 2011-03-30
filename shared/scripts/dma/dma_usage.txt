@@ -1,0 +1,81 @@
+
+
+
+DMA Parameters
+=====================
+During testing:
+e.g. dma.sh fi=/db/cameradb/panda_run/syncpanda/CAMERA/ eei=all iei=true si=false generatebdb=all truncate=sequence_entity
+e.g. dma.sh fi=/db/cameradb/panda_run/syncpanda/CAMERA/ eei=all iei=true si=true generatebdb=all truncate=sequence_entity,bio_sequence
+Final run:
+e.g. dma.sh fi=/db/cameradb/panda_run/syncpanda/CAMERA/ eei=all iei=true si=false generatebdb=all createscratch=true truncate=sequence_entity,bio_sequence
+
+fi
+---
+Fasta Import
+    e.g. fi=/db/cameradb/panda_run/syncpanda/CAMERA/nuc,/db/cameradb/panda_run/syncpanda/CAMERA/pep/panda_pep_01.niaa
+        where the value is a list of directories (containing fasta files) and/or list of fasta files
+
+eei
+---
+External Entity Import
+    e.g. eei=all
+            All external entities will be imported from scratch tables
+    e.g. eei>=1147136012095324865
+            All external entities equal to and greater than 123123123123 will be imported from scratch tables.
+            Useful if something went wrong in previous run.
+    e.g. eei>1431285004
+            All external entities greater than 123123123123 will be imported from scratch tables.
+            Useful if something went wrong in previous run.
+
+iei
+---
+Interal Entity Import
+    e.g. iei=true
+            All interal entities will be imported from scratch tables
+    e.g. iei=false
+            Interal entities will not be imported
+
+si
+--
+Sequence Import.
+    e.g. si=false (default)
+        External_Sequence and Internal_Sequence scratch tables will NOT be created (if createscratch=true)
+        External_Sequence and Internal_Sequence records will NOT be imported into Bio_Sequence table as the records are assumed
+        to preexist.  DO NOT INCLUDE bio_sequence table in truncate parameter
+    e.g. si=true
+        External_Sequence and Internal_Sequence scratch tables will be created (if createscratch=true)
+        External_Sequence and Internal_Sequence records will be imported into Bio_Sequence table as the records are assumed
+        not to exist. INCLUDE bio_sequence table in truncate parameter
+
+generatebdb
+-----------
+Generate Blast Datasets
+"dma.blastDBFormatDbPath" in jacs.properties specifies destination of blast dataset output
+    e.g. generatebdb=all
+        This will regenerate all the blast datasets.
+    e.g. generatebdb=101010102323,234234234234324
+        where the value is a list of BlastDatabaseFileNode ids
+
+truncate
+--------
+List of tables to truncate
+    e.g. truncate=sequence_entity,bio_sequence
+
+recreateindexes
+---------------
+Whether or not to drop and recreate indexes.  Commands are specified in drop_indexes.sql and create_indexes.sql.
+    e.g. recreateindexes=true
+
+createscratch
+-------------
+Whether or not to create the scratch tables.  Commands are specified in create_scratch_tables.sql.
+BEWARE: external/internal entity/sequence tables will be dropped
+    e.g. createscratch=true
+
+chckexistee
+--------
+Check for pre-existing external entities during fasta/panda import.  It is false by default for better performance
+but you would need to set it to true if you're reprocessing a fasta file (that errored out half-way through)
+    e.g. chckexistee=true
+
+
