@@ -23,7 +23,7 @@
 
 <process name="UploadGtfFile" startEvent="pending" processor="queue/gtfFileUploadLauncher" updateProcessStatus="on_success">
     <sequence>
-        <operation name="Upload Gtf File" processor="org.jcvi.vics.compute.service.common.file.UploadGtfFileService">
+        <operation name="Upload Gtf File" processor="org.janelia.it.jacs.compute.service.common.file.UploadGtfFileService">
         </operation>
     </sequence>
 </process>

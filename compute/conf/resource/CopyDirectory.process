@@ -23,7 +23,7 @@
 
 <process name="CopyDirectory" updateProcessStatus="on_success">
     <sequence>
-        <operation name="Copy Directory" processor="org.jcvi.vics.compute.service.common.file.FileService">
+        <operation name="Copy Directory" processor="org.janelia.it.jacs.compute.service.common.file.FileService">
            <input name="mode" value="copy" />
         </operation>
     </sequence>

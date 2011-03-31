@@ -24,7 +24,7 @@
 <process name="Auto Gene Curation" startEvent="pending" updateProcessStatus="on_success">
     <sequence name="Auto Gene Curation" waitForAsync="true" startEvent="running">
         <operation name="Auto Gene Curation" processor="queue/gridSubmitAndWait">
-            <input name="iservice" value="org.jcvi.vics.compute.service.prokAnnotation.AutoGeneCurationService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.prokAnnotation.AutoGeneCurationService"/>
         </operation>
      </sequence>
 </process>

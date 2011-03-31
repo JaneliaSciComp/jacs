@@ -23,7 +23,7 @@
 
 <process name="UploadGenezillaIsoFile" startEvent="pending" processor="queue/genezillaIsoFileUploadLauncher" updateProcessStatus="on_success">
     <sequence>
-        <operation name="UploadGenezillaIsoFile" processor="org.jcvi.vics.compute.service.common.file.UploadGenezillaIsoFileService">
+        <operation name="UploadGenezillaIsoFile" processor="org.janelia.it.jacs.compute.service.common.file.UploadGenezillaIsoFileService">
         </operation>
     </sequence>
 </process>

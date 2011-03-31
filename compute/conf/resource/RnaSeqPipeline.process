@@ -23,7 +23,7 @@
 
 <process name="RnaSeqPipelineService" startEvent="pending" processor="queue/rnaSeqPipelineLauncher" updateProcessStatus="on_success">
     <sequence>
-        <operation name="Rna Seq Pipeline Service" processor="org.jcvi.vics.compute.service.rnaSeq.RnaSeqPipelineService">
+        <operation name="Rna Seq Pipeline Service" processor="org.janelia.it.jacs.compute.service.rnaSeq.RnaSeqPipelineService">
         </operation>
     </sequence>
 </process>

@@ -23,6 +23,6 @@
 
 <process name="FrvDataOnlyNonGrid" updateProcessStatus="on_success">  <!-- Executed by ProcessLauncher Pojo -->
     <sequence>
-        <operation name="Recruitment Regenerate Data Only - Non Grid" processor="org.jcvi.vics.compute.service.recruitment.FrvNonGridDataOnlyService"/>
+        <operation name="Recruitment Regenerate Data Only - Non Grid" processor="org.janelia.it.jacs.compute.service.recruitment.FrvNonGridDataOnlyService"/>
     </sequence>
 </process>

@@ -24,7 +24,7 @@
 <process name="Press DB" startEvent="pending" updateProcessStatus="on_success">
     <sequence name="Press DB" waitForAsync="true" startEvent="running">
         <operation name="Press DB" processor="queue/gridSubmitAndWait">
-            <input name="iservice" value="org.jcvi.vics.compute.service.prokAnnotation.PressDbService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.prokAnnotation.PressDbService"/>
         </operation>
      </sequence>
 </process>

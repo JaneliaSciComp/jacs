@@ -24,7 +24,7 @@
 <process name="Prok HMM3 Search" startEvent="pending" updateProcessStatus="on_success">
     <sequence name="Prok HMMER3 Search" waitForAsync="true" startEvent="running">
         <operation name="Prok HMMER3 Search" processor="queue/gridSubmitAndWait">
-            <input name="iservice" value="org.jcvi.vics.compute.service.prokAnnotation.ProkHmmer3SearchService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.prokAnnotation.ProkHmmer3SearchService"/>
         </operation>
      </sequence>
 </process>

@@ -23,7 +23,7 @@
 
 <process name="SimpleOrfCaller"  startEvent="pending" processor="queue/simpleOrfCallerLauncher" updateProcessStatus="on_success">
     <sequence name="simpleOrfCallerQueue">
-        <operation name="simpleOrfCaller" processor="org.jcvi.vics.compute.service.metageno.orf.SimpleOrfCallerService">
+        <operation name="simpleOrfCaller" processor="org.janelia.it.jacs.compute.service.metageno.orf.SimpleOrfCallerService">
         </operation>
     </sequence>
 </process>

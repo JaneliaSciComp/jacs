@@ -23,6 +23,6 @@
 
 <process name="FrvDataFastaNonGrid" updateProcessStatus="on_success">  <!-- Executed by ProcessLauncher Pojo -->
     <sequence>
-        <operation name="Recruitment Data Fasta Construction - Non Grid" processor="org.jcvi.vics.compute.service.recruitment.FrvDataFastaNonGridService"/>
+        <operation name="Recruitment Data Fasta Construction - Non Grid" processor="org.janelia.it.jacs.compute.service.recruitment.FrvDataFastaNonGridService"/>
     </sequence>
 </process>

@@ -24,7 +24,7 @@
 <process name="Skew Update" startEvent="pending" updateProcessStatus="on_success">
     <sequence name="Skew Update" waitForAsync="true" startEvent="running">
         <operation name="Skew Update" processor="queue/gridSubmitAndWait">
-            <input name="iservice" value="org.jcvi.vics.compute.service.prokAnnotation.SkewUpdateService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.prokAnnotation.SkewUpdateService"/>
         </operation>
      </sequence>
 </process>

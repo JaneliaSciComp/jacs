@@ -26,20 +26,20 @@
     <sequence name="Recruitment Sampling Processing" >
         <operation name="Execute GenomeProjectRecruitmentSampling job" processor="compute/GenomeProjectRecruitmentSamplingSLSB/local" />
         <operation name="Create Recruitment Viewer File Node and Insert Data" processor="compute/CreateRecruitmentViewerFileNodeSLSB/local"/>
-        <operation name="Convert Blast Output" processor="org.jcvi.vics.compute.service.recruitment.BlastXmlToFrvTabService">
+        <operation name="Convert Blast Output" processor="org.janelia.it.jacs.compute.service.recruitment.BlastXmlToFrvTabService">
             <input name="percentIdCutoff" value="0.7"/>
         </operation>
-        <operation name="Recruitment Statistics Generation" processor="org.jcvi.vics.compute.service.recruitment.FrvStatisticsGenerationService"/>
-        <operation name="Initiate Recruitment" processor="org.jcvi.vics.compute.service.recruitment.FrvRecruitFromStatisticsService" />
-        <operation name="Monitor recruitment runs" processor="org.jcvi.vics.compute.service.recruitment.ChildProcessMonitor" />
+        <operation name="Recruitment Statistics Generation" processor="org.janelia.it.jacs.compute.service.recruitment.FrvStatisticsGenerationService"/>
+        <operation name="Initiate Recruitment" processor="org.janelia.it.jacs.compute.service.recruitment.FrvRecruitFromStatisticsService" />
+        <operation name="Monitor recruitment runs" processor="org.janelia.it.jacs.compute.service.recruitment.ChildProcessMonitor" />
         <!-- Probably not the best to encode the dir name (below) in the process file - BlastResults -->
-        <operation name="Delete Blast Dirs" processor="org.jcvi.vics.compute.service.common.file.FileService" async="true" haltOnError="false" updateProcessStatus="never">
+        <operation name="Delete Blast Dirs" processor="org.janelia.it.jacs.compute.service.common.file.FileService" async="true" haltOnError="false" updateProcessStatus="never">
               <input name="mode" value="delete" />
               <input name="sourceDir" value="$V{RESULT_DIR}" />
               <input name="sourceFilePattern" value="BlastResults" />
               <input name="RESULT_DIR" />
         </operation>
-        <operation name="Delete Fasta Dirs" processor="org.jcvi.vics.compute.service.common.file.FileService" async="true" haltOnError="false" updateProcessStatus="never">
+        <operation name="Delete Fasta Dirs" processor="org.janelia.it.jacs.compute.service.common.file.FileService" async="true" haltOnError="false" updateProcessStatus="never">
               <input name="mode" value="delete" />
               <input name="sourceDir" value="$V{RESULT_DIR}" />
               <input name="sourceFilePattern" value="FastaFiles" />

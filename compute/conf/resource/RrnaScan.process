@@ -23,7 +23,7 @@
 
 <process name="RrnaScan"  startEvent="pending" processor="queue/rrnaScanLauncher" updateProcessStatus="on_success">
     <sequence name="rrnaScanQueue">
-        <operation name="rRNAscan" processor="org.jcvi.vics.compute.service.metageno.RrnaScanService">
+        <operation name="rRNAscan" processor="org.janelia.it.jacs.compute.service.metageno.RrnaScanService">
         </operation>
     </sequence>
 </process>

@@ -24,7 +24,7 @@
 <process name="Lipoprotein Update" startEvent="pending" updateProcessStatus="on_success">
     <sequence name="Liptprotein Update" waitForAsync="true" startEvent="running">
         <operation name="Liptprotein Update" processor="queue/gridSubmitAndWait">
-            <input name="iservice" value="org.jcvi.vics.compute.service.prokAnnotation.LipoproteinUpdateService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.prokAnnotation.LipoproteinUpdateService"/>
         </operation>
      </sequence>
 </process>

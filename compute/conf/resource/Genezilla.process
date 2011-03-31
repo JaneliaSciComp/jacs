@@ -24,7 +24,7 @@
 <process name="Genezilla"  startEvent="pending" processor="queue/genezillaLauncher" updateProcessStatus="on_success">
     <sequence name="GenezillaSubmitJob" waitForAsync="true" startEvent="running">
         <operation name="GenezillaOperation"  processor="queue/gridSubmitAndWait" async="true">
-            <input name="iservice" value="org.jcvi.vics.compute.service.tools.GenezillaService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.tools.GenezillaService"/>
         </operation>
     </sequence>
 </process>

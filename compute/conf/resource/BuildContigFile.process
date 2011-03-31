@@ -24,7 +24,7 @@
 <process name="Build Contig File" startEvent="pending" updateProcessStatus="on_success">
     <sequence name="Build Contig File" waitForAsync="true" startEvent="running">
         <operation name="Build Contig File" processor="queue/gridSubmitAndWait">
-            <input name="iservice" value="org.jcvi.vics.compute.service.prokAnnotation.BuildContigFileService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.prokAnnotation.BuildContigFileService"/>
         </operation>
      </sequence>
 </process>

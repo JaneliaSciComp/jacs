@@ -24,7 +24,7 @@
 <process name="Fasta2Bsml"  startEvent="pending" processor="queue/fasta2bsmlLauncher" updateProcessStatus="on_success">
     <sequence name="Fasta2BsmlSubmitJob" waitForAsync="true" startEvent="running">
         <operation name="Fasta2BsmlOperation"  processor="queue/gridSubmitAndWait" async="true">
-            <input name="iservice" value="org.jcvi.vics.compute.service.tools.Fasta2BsmlService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.tools.Fasta2BsmlService"/>
         </operation>
     </sequence>
 </process>

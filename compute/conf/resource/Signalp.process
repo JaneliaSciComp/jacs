@@ -24,7 +24,7 @@
 <process name="Signalp"  startEvent="pending" processor="queue/signalpLauncher" updateProcessStatus="on_success">
     <sequence name="SignalpSubmitJob" waitForAsync="true" startEvent="running">
         <operation name="SignalpOperation"  processor="queue/gridSubmitAndWait" async="true">
-            <input name="iservice" value="org.jcvi.vics.compute.service.tools.SignalpService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.tools.SignalpService"/>
         </operation>
     </sequence>
 </process>

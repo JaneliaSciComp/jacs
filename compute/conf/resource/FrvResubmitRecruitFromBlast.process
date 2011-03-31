@@ -23,7 +23,7 @@
 
 <process name="FrvResubmitRecruitFromBlast" updateProcessStatus="on_success">  <!-- Executed by ProcessLauncher Pojo -->
     <sequence>
-        <operation name="Convert Blast Output" processor="org.jcvi.vics.compute.service.recruitment.BlastXmlToFrvTabService"/>
-        <operation name="Recruitment Viewer Read Recruitment" processor="org.jcvi.vics.compute.service.recruitment.FrvRecruitFromBlastResubmissionService"/>
+        <operation name="Convert Blast Output" processor="org.janelia.it.jacs.compute.service.recruitment.BlastXmlToFrvTabService"/>
+        <operation name="Recruitment Viewer Read Recruitment" processor="org.janelia.it.jacs.compute.service.recruitment.FrvRecruitFromBlastResubmissionService"/>
     </sequence>
 </process>

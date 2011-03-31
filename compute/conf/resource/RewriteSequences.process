@@ -24,7 +24,7 @@
 <process name="Rewrite Sequences" startEvent="pending" updateProcessStatus="on_success">
     <sequence name="Rewrite Sequences" waitForAsync="true" startEvent="running">
         <operation name="Rewrite Sequences" processor="queue/gridSubmitAndWait">
-            <input name="iservice" value="org.jcvi.vics.compute.service.prokAnnotation.RewriteSequencesService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.prokAnnotation.RewriteSequencesService"/>
         </operation>
      </sequence>
 </process>

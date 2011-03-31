@@ -23,7 +23,7 @@
 
 <process name="Metagene"  startEvent="pending" processor="queue/metageneLauncher" updateProcessStatus="on_success">
     <sequence name="metageneQueue">
-        <operation name="metagene" processor="org.jcvi.vics.compute.service.metageno.MetageneService">
+        <operation name="metagene" processor="org.janelia.it.jacs.compute.service.metageno.MetageneService">
         </operation>
     </sequence>
 </process>

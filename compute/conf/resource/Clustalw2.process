@@ -24,7 +24,7 @@
 <process name="Clustalw2"  startEvent="pending" processor="queue/clustalw2Launcher" updateProcessStatus="on_success">
     <sequence name="Clustalw2SubmitJob" waitForAsync="true" startEvent="running">
         <operation name="Clustalw2Operation"  processor="queue/gridSubmitAndWait" async="true">
-            <input name="iservice" value="org.jcvi.vics.compute.service.tools.Clustalw2Service"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.tools.Clustalw2Service"/>
         </operation>
     </sequence>
 </process>

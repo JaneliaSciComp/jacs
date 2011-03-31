@@ -23,22 +23,22 @@
 
 <process name="Inspect Peptide Mapper Pipeline" startEvent="pending" updateProcessStatus="on_success" processor="queue/inspectLauncher">
     <sequence name="inspectLauncher">
-        <operation name="Create Inspect Result Node" processor="org.jcvi.vics.compute.service.inspect.InspectResultFileNodeService" >
+        <operation name="Create Inspect Result Node" processor="org.janelia.it.jacs.compute.service.inspect.InspectResultFileNodeService" >
             <output name="RESULT_FILE_NODE_ID"/>          
             <output name="RESULT_FILE_NODE"/>
         </operation>
-        <operation name="Inspect Data Preparation" processor="org.jcvi.vics.compute.service.inspect.InspectDataPrepService" />
+        <operation name="Inspect Data Preparation" processor="org.janelia.it.jacs.compute.service.inspect.InspectDataPrepService" />
         <sequence name="Submit Inspect Job" startEvent="running" waitForAsync="true">
             <operation name="Submit Job" processor="queue/gridSubmitAndWait">
-                <input name="iservice" value="org.jcvi.vics.compute.service.inspect.InspectSubmitJobService"/>
+                <input name="iservice" value="org.janelia.it.jacs.compute.service.inspect.InspectSubmitJobService"/>
                 <input name="RESULT_FILE_NODE_ID"/>
                 <input name="RESULT_FILE_NODE"/>
             </operation>
         </sequence>
-        <operation name="Calculate p-value" processor="org.jcvi.vics.compute.service.inspect.InspectPValueService" />
+        <operation name="Calculate p-value" processor="org.janelia.it.jacs.compute.service.inspect.InspectPValueService" />
         <sequence name="Run MSGF Scoring" waitForAsync="true">
             <operation name="Run MSGF Scoring" processor="queue/gridSubmitAndWait">
-                <input name="iservice" value="org.jcvi.vics.compute.service.inspect.InspectMSGFService"/>
+                <input name="iservice" value="org.janelia.it.jacs.compute.service.inspect.InspectMSGFService"/>
                 <input name="RESULT_FILE_NODE_ID"/>
                 <input name="RESULT_FILE_NODE"/>
             </operation>

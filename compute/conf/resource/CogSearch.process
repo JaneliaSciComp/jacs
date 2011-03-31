@@ -24,7 +24,7 @@
 <process name="Cog Search" startEvent="pending" updateProcessStatus="on_success">
     <sequence name="Cog Search" waitForAsync="true" startEvent="running">
         <operation name="Cog Search" processor="queue/gridSubmitAndWait">
-            <input name="iservice" value="org.jcvi.vics.compute.service.prokAnnotation.CogSearchService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.prokAnnotation.CogSearchService"/>
         </operation>
      </sequence>
 </process>

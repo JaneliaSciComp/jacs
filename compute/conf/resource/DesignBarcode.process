@@ -24,13 +24,13 @@
 <process name="Design Barcode" startEvent="pending" updateProcessStatus="on_success"
          processor="queue/barcodeLauncher">
     <sequence name="barcodeLauncher">
-        <operation name="Create Barcode Designer Result Node" processor="org.jcvi.vics.compute.service.barcodeDesign.CreateBarcodeDesignResultFileNodeService">
+        <operation name="Create Barcode Designer Result Node" processor="org.janelia.it.jacs.compute.service.barcodeDesign.CreateBarcodeDesignResultFileNodeService">
             <output name="RESULT_FILE_NODE_ID"/>          
             <output name="RESULT_FILE_NODE"/>
         </operation>
         <sequence name="Submit Barcode Design Job" waitForAsync="true">
             <operation name="Submit Job" processor="queue/gridSubmitAndWait">
-                <input name="iservice" value="org.jcvi.vics.compute.service.barcodeDesign.BarcodeDesignSubmitJobService"/>
+                <input name="iservice" value="org.janelia.it.jacs.compute.service.barcodeDesign.BarcodeDesignSubmitJobService"/>
                 <input name="RESULT_FILE_NODE_ID"/>
                 <input name="RESULT_FILE_NODE"/>
             </operation>

@@ -24,6 +24,6 @@
 <process name="ProkAnnotationLocalDirectoryImport"  startEvent="pending"
          updateProcessStatus="on_success" processor="queue/prokDirImportLauncher">  <!-- Executed by ProcessLauncher Pojo -->
     <sequence name="prokDirImportLauncher">
-        <operation name="Create Prok Annotation File Node" processor="org.jcvi.vics.compute.service.prokAnnotation.CreateProkAnnotationResultFileNodeService" />
+        <operation name="Create Prok Annotation File Node" processor="org.janelia.it.jacs.compute.service.prokAnnotation.CreateProkAnnotationResultFileNodeService" />
     </sequence>
 </process>

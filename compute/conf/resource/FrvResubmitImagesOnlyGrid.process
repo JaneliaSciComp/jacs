@@ -26,7 +26,7 @@
         <!-- Now, call the grid and generate the images -->
         <sequence name="FRV Image Service" waitForAsync="true" startEvent="running">
             <operation name="Submit Job" processor="queue/gridSubmitAndWait">
-                <input name="iservice" value="org.jcvi.vics.compute.service.recruitment.FrvImageResubmissionService"/>
+                <input name="iservice" value="org.janelia.it.jacs.compute.service.recruitment.FrvImageResubmissionService"/>
                 <input name="RESULT_FILE_NODE_ID"/>
             </operation>
          </sequence>

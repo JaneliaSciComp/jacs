@@ -23,6 +23,6 @@
 
 <process name="GPUpdateService" startEvent="pending" processor="queue/GPUpdateLauncher" updateProcessStatus="on_success">
     <sequence>
-        <operation name="Genome Project Update" processor="org.jcvi.vics.compute.service.genomeProject.UpdateGenomeProjectService" />
+        <operation name="Genome Project Update" processor="org.janelia.it.jacs.compute.service.genomeProject.UpdateGenomeProjectService" />
     </sequence>
 </process>

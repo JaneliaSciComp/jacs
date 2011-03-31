@@ -24,7 +24,7 @@
 <!-- this is a very quick task - we can use default process MDB -->
 <process name="CancelTask"  startEvent="pending" async="true" updateProcessStatus="on_success">
     <sequence name="cancelJobs">
-        <operation name="Cancel Jobs" processor="org.jcvi.vics.compute.engine.util.TaskCancelUtil">
+        <operation name="Cancel Jobs" processor="org.janelia.it.jacs.compute.engine.util.TaskCancelUtil">
         </operation>
     </sequence>
 </process>

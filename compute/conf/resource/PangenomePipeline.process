@@ -24,7 +24,7 @@
 <process name="PangenomePipeline"  startEvent="pending" processor="queue/pangenomeLauncher" updateProcessStatus="on_success">
     <sequence name="Pangenome" waitForAsync="true" startEvent="running">
         <operation name="PangenomePipelineOperation"  processor="queue/gridSubmitAndWait" async="true">
-            <input name="iservice" value="org.jcvi.vics.compute.service.pangenome.PangenomePipelineService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.pangenome.PangenomePipelineService"/>
         </operation>
     </sequence>
 </process>

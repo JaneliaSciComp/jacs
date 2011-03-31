@@ -24,6 +24,6 @@
 <process name="CreateSession" updateProcessStatus="on_success" >
     <sequence startEvent="pending">
         <operation name="Create Session Results Location"
-                   processor="org.jcvi.vics.compute.service.common.file.CreateSessionResultFileNodeService" />
+                   processor="org.janelia.it.jacs.compute.service.common.file.CreateSessionResultFileNodeService" />
     </sequence>
 </process>

@@ -24,7 +24,7 @@
 <process name="Gip" startEvent="pending" updateProcessStatus="on_success">
     <sequence name="Gip" waitForAsync="true" startEvent="running">
         <operation name="Gip" processor="queue/gridSubmitAndWait">
-            <input name="iservice" value="org.jcvi.vics.compute.service.prokAnnotation.GipService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.prokAnnotation.GipService"/>
         </operation>
      </sequence>
 </process>

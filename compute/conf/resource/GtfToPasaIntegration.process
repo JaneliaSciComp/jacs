@@ -23,7 +23,7 @@
 
 <process name="GtfToPasaIntegrationService" startEvent="pending" processor="queue/gtfToPasaIntegrationLauncher" updateProcessStatus="on_success">
     <sequence>
-        <operation name="Gtf To Pasa Integration Service" processor="org.jcvi.vics.compute.service.rnaSeq.GtfToPasaIntegrationService">
+        <operation name="Gtf To Pasa Integration Service" processor="org.janelia.it.jacs.compute.service.rnaSeq.GtfToPasaIntegrationService">
         </operation>
     </sequence>
 </process>

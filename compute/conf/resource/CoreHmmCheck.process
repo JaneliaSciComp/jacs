@@ -24,7 +24,7 @@
 <process name="Core HMM Check" startEvent="pending" updateProcessStatus="on_success">
     <sequence name="Core HMM Check" waitForAsync="true" startEvent="running">
         <operation name="Core HMM Check" processor="queue/gridSubmitAndWait">
-            <input name="iservice" value="org.jcvi.vics.compute.service.prokAnnotation.CoreHmmCheckService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.prokAnnotation.CoreHmmCheckService"/>
         </operation>
      </sequence>
 </process>

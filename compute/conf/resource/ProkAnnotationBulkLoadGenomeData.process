@@ -24,6 +24,6 @@
 <process name="ProkAnnotationBulkLoadGenomeData"  startEvent="pending" updateProcessStatus="on_success" >  <!-- Executed by ProcessLauncher Pojo -->
     <sequence name="prokBulkNcbiLoadLauncher">
         <operation name="Execute multiple calls to load_genomes_setup script and get data from NCBI"
-                   processor="org.jcvi.vics.compute.service.prokAnnotation.BulkLoadNcbiGenomeSetupService"/>
+                   processor="org.janelia.it.jacs.compute.service.prokAnnotation.BulkLoadNcbiGenomeSetupService"/>
     </sequence>
 </process>

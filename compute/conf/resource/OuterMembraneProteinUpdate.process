@@ -24,7 +24,7 @@
 <process name="Outer Membrane Protein Update" startEvent="pending" updateProcessStatus="on_success">
     <sequence name="Outer Membrane Protein Update" waitForAsync="true" startEvent="running">
         <operation name="Outer Membrane Protein Update" processor="queue/gridSubmitAndWait">
-            <input name="iservice" value="org.jcvi.vics.compute.service.prokAnnotation.OuterMembraneProteinUpdateService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.prokAnnotation.OuterMembraneProteinUpdateService"/>
         </operation>
      </sequence>
 </process>

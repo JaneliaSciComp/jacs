@@ -24,6 +24,6 @@
 <process name="ProkAnnotationLocalDirectoryImport"  startEvent="pending" updateProcessStatus="on_success">
     <!-- Want this a POJO with synchronous execution  -->
     <sequence name="prokDirUpdateLauncher">
-        <operation name="Create Prok Annotation File Node" processor="org.jcvi.vics.compute.service.prokAnnotation.ProkDirectoryUpdateService" />
+        <operation name="Create Prok Annotation File Node" processor="org.janelia.it.jacs.compute.service.prokAnnotation.ProkDirectoryUpdateService" />
     </sequence>
 </process>

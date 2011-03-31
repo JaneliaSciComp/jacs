@@ -23,14 +23,14 @@
 
 <process name="BlastWithGridMerge" startEvent="pending" processor="queue/blastLauncher">
     <sequence name="BlastLauncher">
-        <operation name="Create Blast Result File Node" processor="org.jcvi.vics.compute.service.blast.persist.results.initial.CreateBlastResultFileNodeService">
+        <operation name="Create Blast Result File Node" processor="org.janelia.it.jacs.compute.service.blast.persist.results.initial.CreateBlastResultFileNodeService">
             <output name="RESULT_FILE_NODE_ID"/>
             <output name="RESULT_FILE_NODE_DIR" />
         </operation>
-        <operation name="Create Fasta Input"  processor="org.jcvi.vics.compute.service.blast.fastasplit.BlastMultiFastaSplitterService">
+        <operation name="Create Fasta Input"  processor="org.janelia.it.jacs.compute.service.blast.fastasplit.BlastMultiFastaSplitterService">
             <input name="RESULT_FILE_NODE_ID"/>
         </operation>
-        <operation name="Create Output Directories" processor="org.jcvi.vics.compute.service.blast.submit.CreateBlastOutputDirsService">
+        <operation name="Create Output Directories" processor="org.janelia.it.jacs.compute.service.blast.submit.CreateBlastOutputDirsService">
             <input name="RESULT_FILE_NODE_ID"/>
             <output name="BLAST_QUERY_OUTPUT_FILE_MAP"/>
             <output name="BLAST_DEST_OUTPUT_DIR"/>
@@ -38,7 +38,7 @@
         </operation>
         <sequence name="BlastSubmitJob" waitForAsync="true" startEvent="running">
             <operation name="Submit Job" processor="queue/gridSubmitAndWait">
-                <input name="iservice" value="org.jcvi.vics.compute.service.blast.submit.BlastSubmitJobService"/>
+                <input name="iservice" value="org.janelia.it.jacs.compute.service.blast.submit.BlastSubmitJobService"/>
                 <input name="RESULT_FILE_NODE_ID"/>
                 <input name="BLAST_QUERY_OUTPUT_FILE_MAP"/>
                 <input name="BLAST_DEST_OUTPUT_DIR"/>
@@ -47,7 +47,7 @@
          </sequence>
         <sequence name="Merge Blast Results" waitForAsync="true" startEvent="merging">
             <operation name="Merge Sort Results"  processor="queue/gridSubmitAndWait">
-                <input name="iservice" value="org.jcvi.vics.compute.service.blast.merge.GridMergeSortResultsService"/>
+                <input name="iservice" value="org.janelia.it.jacs.compute.service.blast.merge.GridMergeSortResultsService"/>
                 <input name="RESULT_FILE_NODE_ID"/>
                 <input name="BLAST_QUERY_OUTPUT_FILE_MAP"/>
                 <input name="BLAST_DEST_OUTPUT_DIR"/>
@@ -57,33 +57,33 @@
         </sequence>
         <sequence name="Persist Blast Results" waitForAsync="true" startEvent="format">
             <operation name="Persist Blast XML Results" processor="queue/gridSubmitAndWait">
-                <input name="iservice" value="org.jcvi.vics.compute.service.blast.persist.results.finall.PersistFinalXMLResultsGridService"/>
+                <input name="iservice" value="org.janelia.it.jacs.compute.service.blast.persist.results.finall.PersistFinalXMLResultsGridService"/>
                 <input name="BLAST_DEST_OUTPUT_DIR"/>
                 <input name="TOTAL_BLAST_HITS"/>
                 <input name="RESULT_FILE_NODE_ID"/>
             </operation>
         </sequence>
-        <operation name="Zip Blast Results" processor="org.jcvi.vics.compute.service.common.zip.ZipService" updateProcessStatus="on_success">
+        <operation name="Zip Blast Results" processor="org.janelia.it.jacs.compute.service.common.zip.ZipService" updateProcessStatus="on_success">
             <input name="mode" value="compress" />
             <input name="sourceDir" value="$V{RESULT_FILE_NODE_DIR}" />
             <input name="sourceFilePattern" value="blastResults\.[\w]*" />
             <input name="zipFileDestDir" value="$V{RESULT_FILE_NODE_DIR}" />
             <input name="zipFileName" value="blastResults.zip" />
         </operation>
-        <operation name="Delete Output Dirs" processor="org.jcvi.vics.compute.service.common.file.FileService" async="true" haltOnError="false" updateProcessStatus="never">
+        <operation name="Delete Output Dirs" processor="org.janelia.it.jacs.compute.service.common.file.FileService" async="true" haltOnError="false" updateProcessStatus="never">
               <input name="mode" value="delete" />
               <input name="sourceDir" value="$V{RESULT_FILE_NODE_DIR}" />
               <input name="sourceFilePattern" value="r_[\w\.]*" />
               <input name="RESULT_FILE_NODE_DIR" />
         </operation>
-        <operation name="Delete Input Fasta File" processor="org.jcvi.vics.compute.service.common.file.FileService" async="true" haltOnError="false" updateProcessStatus="never">
+        <operation name="Delete Input Fasta File" processor="org.janelia.it.jacs.compute.service.common.file.FileService" async="true" haltOnError="false" updateProcessStatus="never">
               <input name="mode" value="delete" />
               <input name="sourceDir" value="$V{RESULT_FILE_NODE_DIR}" />
               <input name="sourceFilePattern" value="[\w\.]*.fasta" />
               <input name="RESULT_FILE_NODE_DIR" />
         </operation>
         <!-- Hopefully, delete of a* in the blast result directory is not too stupid -->
-        <operation name="Delete Split Fasta Files" processor="org.jcvi.vics.compute.service.common.file.FileService" async="true" haltOnError="false" updateProcessStatus="never">
+        <operation name="Delete Split Fasta Files" processor="org.janelia.it.jacs.compute.service.common.file.FileService" async="true" haltOnError="false" updateProcessStatus="never">
               <input name="mode" value="delete" />
               <input name="sourceDir" value="$V{RESULT_FILE_NODE_DIR}" />
               <input name="sourceFilePattern" value="a[\S]*" />

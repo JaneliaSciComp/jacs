@@ -24,7 +24,7 @@
 <process name="Jocs"  startEvent="pending" processor="queue/jocsLauncher" updateProcessStatus="on_success">
     <sequence name="JocsSubmitJob" waitForAsync="true" startEvent="running">
         <operation name="JocsOperation"  processor="queue/gridSubmitAndWait" async="true">
-            <input name="iservice" value="org.jcvi.vics.compute.service.tools.JocsService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.tools.JocsService"/>
         </operation>
     </sequence>
 </process>

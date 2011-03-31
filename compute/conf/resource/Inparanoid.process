@@ -24,7 +24,7 @@
 <process name="Inparanoid"  startEvent="pending" processor="queue/inparanoidLauncher" updateProcessStatus="on_success">
     <sequence name="Inparanoid" waitForAsync="true" startEvent="running">
         <operation name="InparanoidOperation"  processor="queue/gridSubmitAndWait" async="true">
-            <input name="iservice" value="org.jcvi.vics.compute.service.pangenome.InparanoidService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.pangenome.InparanoidService"/>
         </operation>
     </sequence>
 </process>

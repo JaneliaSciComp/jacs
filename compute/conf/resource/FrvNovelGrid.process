@@ -24,14 +24,14 @@
 <process name="FrvNovelGrid" processor="queue/rvImportLauncher" updateProcessStatus="on_success">  <!-- Executed by ProcessLauncher Pojo -->
     <sequence >
         <!-- Make a result node for the FRV images to go into -->
-        <operation name="Create RecruitmentResultFileNode" processor="org.jcvi.vics.compute.service.recruitment.CreateRecruitmentResultFileNodeService" />
+        <operation name="Create RecruitmentResultFileNode" processor="org.janelia.it.jacs.compute.service.recruitment.CreateRecruitmentResultFileNodeService" />
         <!-- Now, call the grid and generate the images -->
         <sequence name="FRV Image Service" waitForAsync="true" startEvent="running">
             <operation name="Submit Job" processor="queue/gridSubmitAndWait">
-                <input name="iservice" value="org.jcvi.vics.compute.service.recruitment.FrvImageService"/>
+                <input name="iservice" value="org.janelia.it.jacs.compute.service.recruitment.FrvImageService"/>
                 <input name="RESULT_FILE_NODE_ID"/>
             </operation>
          </sequence>
-        <operation name="Set DB Values" processor="org.jcvi.vics.compute.service.recruitment.PersistRecruitmentValuesService"/>
+        <operation name="Set DB Values" processor="org.janelia.it.jacs.compute.service.recruitment.PersistRecruitmentValuesService"/>
     </sequence>
 </process>

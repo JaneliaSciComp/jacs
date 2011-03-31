@@ -24,7 +24,7 @@
 <process name="Link to NT Features" startEvent="pending" updateProcessStatus="on_success">
     <sequence name="Link to NT Features" waitForAsync="true" startEvent="running">
         <operation name="Link to NT Features" processor="queue/gridSubmitAndWait">
-            <input name="iservice" value="org.jcvi.vics.compute.service.prokAnnotation.LinkToNtFeaturesService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.prokAnnotation.LinkToNtFeaturesService"/>
         </operation>
      </sequence>
 </process>

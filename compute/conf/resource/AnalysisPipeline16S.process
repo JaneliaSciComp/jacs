@@ -23,13 +23,13 @@
 
 <process name="16S/18S Analysis Pipeline" startEvent="pending" updateProcessStatus="on_success" processor="queue/ahp16sLauncher">
     <sequence name="apLauncher">
-        <operation name="Create 16S/18S Analysis Pipeline Result Node" processor="org.jcvi.vics.compute.service.ap16s.CreateAP16SResultFileNodeService">
+        <operation name="Create 16S/18S Analysis Pipeline Result Node" processor="org.janelia.it.jacs.compute.service.ap16s.CreateAP16SResultFileNodeService">
             <output name="RESULT_FILE_NODE_ID"/>          
             <output name="RESULT_FILE_NODE"/>
         </operation>
         <sequence name="Submit 16S Job" startEvent="running" waitForAsync="true">
             <operation name="Submit Job" processor="queue/gridSubmitAndWait">
-                <input name="iservice" value="org.jcvi.vics.compute.service.ap16s.AnalysisPipeline16SSubmitJobService"/>
+                <input name="iservice" value="org.janelia.it.jacs.compute.service.ap16s.AnalysisPipeline16SSubmitJobService"/>
                 <input name="RESULT_FILE_NODE_ID"/>
                 <input name="RESULT_FILE_NODE"/>
             </operation>

@@ -24,7 +24,7 @@
 <process name="ProkAnnotationBulk"  startEvent="pending" updateProcessStatus="on_success">  <!-- Executed by ProcessLauncher Pojo -->
     <sequence name="prokAnnotationBulkLauncher">
         <operation name="Execute (in bulk mode) commands from LOAD_GENBANK_GENOME_README file"
-                   processor="org.jcvi.vics.compute.service.prokAnnotation.ProkAnnotationBulkService" />
+                   processor="org.janelia.it.jacs.compute.service.prokAnnotation.ProkAnnotationBulkService" />
     </sequence>
 </process>
         

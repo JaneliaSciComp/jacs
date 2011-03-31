@@ -23,7 +23,7 @@
 
 <process name="MetaGenoCombinedOrfAnno"  startEvent="pending" processor="queue/metaGenoCombinedOrfAnnoLauncher" updateProcessStatus="on_success">
     <sequence name="metaGenoCombinedOrfAnnoQueue">
-        <operation name="setup" processor="org.jcvi.vics.compute.service.metageno.MetaGenoCombinedOrfAnnoService">
+        <operation name="setup" processor="org.janelia.it.jacs.compute.service.metageno.MetaGenoCombinedOrfAnnoService">
         </operation>
     </sequence>
 </process>

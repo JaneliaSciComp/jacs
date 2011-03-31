@@ -24,7 +24,7 @@
 <process name="Legacy2Bsml"  startEvent="pending" processor="queue/legacy2bsmlLauncher" updateProcessStatus="on_success">
     <sequence name="Legacy2BsmlSubmitJob" waitForAsync="true" startEvent="running">
         <operation name="Legacy2BsmlOperation"  processor="queue/gridSubmitAndWait" async="true">
-            <input name="iservice" value="org.jcvi.vics.compute.service.tools.Legacy2BsmlService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.tools.Legacy2BsmlService"/>
         </operation>
     </sequence>
 </process>

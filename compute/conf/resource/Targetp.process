@@ -24,7 +24,7 @@
 <process name="Targetp"  startEvent="pending" processor="queue/targetpLauncher" updateProcessStatus="on_success">
     <sequence name="TargetpSubmitJob" waitForAsync="true" startEvent="running">
         <operation name="TargetpOperation"  processor="queue/gridSubmitAndWait" async="true">
-            <input name="iservice" value="org.jcvi.vics.compute.service.tools.TargetpService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.tools.TargetpService"/>
         </operation>
     </sequence>
 </process>

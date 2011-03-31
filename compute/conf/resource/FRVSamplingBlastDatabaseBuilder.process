@@ -23,7 +23,7 @@
 
 <process name="FRVSamplingBlastDatabaseBuilder" startEvent="pending" processor="queue/blastDBLauncher" updateProcessStatus="on_success">
     <sequence >
-        <operation name="Build the sampling fasta" processor="org.jcvi.vics.compute.service.recruitment.CreateFrvSamplingDBFastaService"/>
-        <operation name="Create Sampling Blast Database" processor="org.jcvi.vics.compute.service.recruitment.CreateFrvSamplingBlastDBService" />
+        <operation name="Build the sampling fasta" processor="org.janelia.it.jacs.compute.service.recruitment.CreateFrvSamplingDBFastaService"/>
+        <operation name="Create Sampling Blast Database" processor="org.janelia.it.jacs.compute.service.recruitment.CreateFrvSamplingBlastDBService" />
     </sequence>
 </process>

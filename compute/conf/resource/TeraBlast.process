@@ -23,6 +23,6 @@
 
 <process name="TeraBlast" startEvent="pending" processor="queue/TeraBlastLauncher" updateProcessStatus="on_success">
     <sequence >
-        <operation name="TeraBlast" processor="org.jcvi.vics.compute.service.timeLogic.TeraBlastService" />
+        <operation name="TeraBlast" processor="org.janelia.it.jacs.compute.service.timeLogic.TeraBlastService" />
     </sequence>
 </process>

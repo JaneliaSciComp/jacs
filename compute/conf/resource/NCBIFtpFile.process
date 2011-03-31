@@ -23,7 +23,7 @@
 
 <process name="NCBIFtpFile">  <!-- Executed by ProcessLauncher Pojo -->
     <sequence>
-        <operation name="NCBI Ftp File Action" processor="org.jcvi.vics.compute.service.common.file.FtpFileService" updateProcessStatus="on_success">
+        <operation name="NCBI Ftp File Action" processor="org.janelia.it.jacs.compute.service.common.file.FtpFileService" updateProcessStatus="on_success">
             <input name="mode" value="FETCH" />
             <input name="ftpServer" value="ftp.ncbi.nih.gov" />
             <input name="ftpPort" value="21" />

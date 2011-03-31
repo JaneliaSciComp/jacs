@@ -24,7 +24,7 @@
 <process name="Fgenesh"  startEvent="pending" processor="queue/fgeneshLauncher" updateProcessStatus="on_success">
     <sequence name="FgeneshSubmitJob" waitForAsync="true" startEvent="running">
         <operation name="FgeneshOperation"  processor="queue/gridSubmitAndWait" async="true">
-            <input name="iservice" value="org.jcvi.vics.compute.service.tools.FgeneshService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.tools.FgeneshService"/>
         </operation>
     </sequence>
 </process>

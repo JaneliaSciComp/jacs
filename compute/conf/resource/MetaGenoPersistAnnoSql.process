@@ -23,7 +23,7 @@
 
 <process name="MetaGenoPersistAnnoSql"  startEvent="pending" processor="queue/metaGenoPersistAnnoSqlLauncher" updateProcessStatus="on_success">
     <sequence name="metaGenoPersistAnnoSqlQueue">
-        <operation name="metaGenoPersistAnnoSql" processor="org.jcvi.vics.compute.service.metageno.anno.MetaGenoPersistAnnoSqlService">
+        <operation name="metaGenoPersistAnnoSql" processor="org.janelia.it.jacs.compute.service.metageno.anno.MetaGenoPersistAnnoSqlService">
         </operation>
     </sequence>
 </process>

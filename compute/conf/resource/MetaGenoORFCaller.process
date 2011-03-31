@@ -23,11 +23,11 @@
 
 <process name="MetaGenoORFPipeline" startEvent="pending" processor="queue/metaGenoOrfLauncher" updateProcessStatus="on_success">
     <sequence name="metaGenoOrfCaller" >
-        <operation name="setup" processor="org.jcvi.vics.compute.service.metageno.orf.MetaGenoOrfCallerSetupService">
+        <operation name="setup" processor="org.janelia.it.jacs.compute.service.metageno.orf.MetaGenoOrfCallerSetupService">
             <input name="SETUP_TYPE" value="START"/>
             <output name="META_GENO_ORF_CALLER_RESULT_NODE"/>
         </operation>
-        <operation name="splitFasta" processor="org.jcvi.vics.compute.service.metageno.MetaGenoFastaSplitterService">
+        <operation name="splitFasta" processor="org.janelia.it.jacs.compute.service.metageno.MetaGenoFastaSplitterService">
             <input name="FASTA_ENTRIES_PER_PIPELINE" value="20000"/>
             <output name="MG_INPUT_ARRAY"/>
             <output name="TOTAL_BASE_COUNT"/>
@@ -35,7 +35,7 @@
         <sequence forEach="MG_INPUT_ARRAY" waitForAsync="true">
             <sequence processor="queue/metaGenoOrfPipelineLauncher">
                 <sequence waitForAsync="true">
-                    <operation name="setup" processor="org.jcvi.vics.compute.service.metageno.orf.MetaGenoOrfCallerSetupService">
+                    <operation name="setup" processor="org.janelia.it.jacs.compute.service.metageno.orf.MetaGenoOrfCallerSetupService">
                         <input name="SETUP_TYPE" value="PIPELINE"/>
                         <output name="TRNA_SCAN_TASK"/>
                         <output name="RRNA_SCAN_TASK"/>
@@ -45,7 +45,7 @@
                 </sequence>
                 <sequence waitForAsync="true">
                     <operation name="tRNAscan"  processor="queue/gridSubmitAndWait">
-                        <input name="iservice" value="org.jcvi.vics.compute.service.metageno.TrnaScanService"/>
+                        <input name="iservice" value="org.janelia.it.jacs.compute.service.metageno.TrnaScanService"/>
                         <input name="MG_INPUT_ARRAY"/>
                         <input name="TRNA_SCAN_TASK"/>
                         <output name="MG_INPUT_ARRAY"/>
@@ -53,7 +53,7 @@
                 </sequence>
                 <sequence waitForAsync="true">
                     <operation name="rRNAscan"  processor="queue/gridSubmitAndWait">
-                        <input name="iservice" value="org.jcvi.vics.compute.service.metageno.RrnaScanService"/>
+                        <input name="iservice" value="org.janelia.it.jacs.compute.service.metageno.RrnaScanService"/>
                         <input name="MG_INPUT_ARRAY"/>
                         <input name="RRNA_SCAN_TASK"/>
                         <input name="TOTAL_BASE_COUNT"/>
@@ -62,7 +62,7 @@
                 </sequence>
                 <sequence waitForAsync="true">
                     <operation name="simpleOrfCaller"  processor="queue/gridSubmitAndWait">
-                        <input name="iservice" value="org.jcvi.vics.compute.service.metageno.orf.SimpleOrfCallerService"/>
+                        <input name="iservice" value="org.janelia.it.jacs.compute.service.metageno.orf.SimpleOrfCallerService"/>
                         <input name="MG_INPUT_ARRAY"/>
                         <input name="SIMPLE_ORF_CALLER_TASK"/>
                         <output name="SIMPLE_ORF_NT_OUTPUT_FILE"/>
@@ -71,33 +71,33 @@
                 </sequence>
                 <sequence waitForAsync="true">
                     <operation name="metagene"  processor="queue/gridSubmitAndWait">
-                        <input name="iservice" value="org.jcvi.vics.compute.service.metageno.MetageneService"/>
+                        <input name="iservice" value="org.janelia.it.jacs.compute.service.metageno.MetageneService"/>
                         <input name="MG_INPUT_ARRAY"/>
                         <input name="METAGENE_TASK"/>
                         <output name="METAGENE_RESULT_NODE_ID"/>
                         <output name="METAGENE_BTAB_FILE"/>
                     </operation>
                 </sequence>
-                <operation name="clrFilter" processor="org.jcvi.vics.compute.service.metageno.orf.MetaGenoClrRangeFilterService">
+                <operation name="clrFilter" processor="org.janelia.it.jacs.compute.service.metageno.orf.MetaGenoClrRangeFilterService">
                     <input name="SIMPLE_ORF_NT_OUTPUT_FILE"/>
                     <input name="SIMPLE_ORF_AA_OUTPUT_FILE"/>
                     <input name="META_GENO_ORF_CALLER_RESULT_NODE"/>
                     <output name="ORF_PEP_CLR_FAA_FILE"/>
                     <output name="ORF_CLR_FNA_FILE"/>
                 </operation>
-                <operation name="orfBtab" processor="org.jcvi.vics.compute.service.metageno.orf.MetaGenoOrfBtabService">
+                <operation name="orfBtab" processor="org.janelia.it.jacs.compute.service.metageno.orf.MetaGenoOrfBtabService">
                     <input name="META_GENO_ORF_CALLER_RESULT_NODE"/>
                     <input name="ORF_PEP_CLR_FAA_FILE"/>
                     <input name="ORF_CLR_FNA_FILE"/>
                     <output name="ORF_BTAB_FILE"/>
                 </operation>
-                <operation name="metageneMap" processor="org.jcvi.vics.compute.service.metageno.orf.MetaGenoOrfMetageneMapService">
+                <operation name="metageneMap" processor="org.janelia.it.jacs.compute.service.metageno.orf.MetaGenoOrfMetageneMapService">
                     <input name="ORF_BTAB_FILE"/>
                     <input name="METAGENE_BTAB_FILE"/>
                 </operation>
             </sequence>
         </sequence>
-        <operation name="orfResults" processor="org.jcvi.vics.compute.service.metageno.orf.MetaGenoOrfResultsService">
+        <operation name="orfResults" processor="org.janelia.it.jacs.compute.service.metageno.orf.MetaGenoOrfResultsService">
             <input name="META_GENO_ORF_CALLER_RESULT_NODE"/>            
         </operation>
     </sequence>

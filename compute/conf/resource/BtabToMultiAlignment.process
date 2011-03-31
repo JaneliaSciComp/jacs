@@ -23,6 +23,6 @@
 
 <process name="Btab to Multi Alignment" startEvent="pending" updateProcessStatus="on_success">
     <sequence>
-        <operation name="Btab to Multi Alignment" processor="org.jcvi.vics.compute.service.prokAnnotation.BtabToMultiAlignmentService"/>
+        <operation name="Btab to Multi Alignment" processor="org.janelia.it.jacs.compute.service.prokAnnotation.BtabToMultiAlignmentService"/>
     </sequence>
 </process>

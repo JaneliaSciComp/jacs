@@ -24,7 +24,7 @@
 <process name="Tmhmm"  startEvent="pending" processor="queue/TmhmmLauncher" updateProcessStatus="on_success">
     <sequence name="TmhmmSubmitJob" waitForAsync="true" startEvent="running">
         <operation name="TmhmmOperation"  processor="queue/gridSubmitAndWait" async="true">
-            <input name="iservice" value="org.jcvi.vics.compute.service.tools.TmhmmService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.tools.TmhmmService"/>
         </operation>
     </sequence>
 </process>

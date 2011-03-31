@@ -23,7 +23,7 @@
 
 <process name="UploadRnaSeqReferenceGenome" updateProcessStatus="on_success">
     <sequence>
-        <operation name="Upload RnaSeq Reference Genome" processor="org.jcvi.vics.compute.service.rnaSeq.UploadRnaSeqReferenceGenomeService">
+        <operation name="Upload RnaSeq Reference Genome" processor="org.janelia.it.jacs.compute.service.rnaSeq.UploadRnaSeqReferenceGenomeService">
            <input name="mode" value="upload" />
         </operation>
     </sequence>

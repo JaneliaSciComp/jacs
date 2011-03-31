@@ -23,30 +23,30 @@
 
 <process name="BlastOnTeraGrid" startEvent="pending" processor="queue/blastLauncher" updateProcessStatus="on_success" >
     <sequence name="blastLauncher" >
-        <operation name="Create Blast Result File Node" processor="org.jcvi.vics.compute.service.blast.persist.results.initial.CreateBlastResultFileNodeService">
+        <operation name="Create Blast Result File Node" processor="org.janelia.it.jacs.compute.service.blast.persist.results.initial.CreateBlastResultFileNodeService">
             <output name="RESULT_FILE_NODE_ID"/>
             <output name="RESULT_FILE_NODE_DIR" />
         </operation>
-        <operation name="Blast Submission To TeraGrid" processor="org.jcvi.vics.compute.service.common.grid.submit.teragrid.BlastTeraGridSubmitJobService"/>
+        <operation name="Blast Submission To TeraGrid" processor="org.janelia.it.jacs.compute.service.common.grid.submit.teragrid.BlastTeraGridSubmitJobService"/>
         <!--<sequence name="BlastSubmitJob" waitForAsync="true" startEvent="running">-->
             <!--<operation name="Submit Job" processor="queue/gridSubmitAndWait">-->
-                <!--<input name="iservice" value="org.jcvi.vics.compute.service.common.grid.submit.teragrid.BlastTeraGridSubmitJobService"/>-->
+                <!--<input name="iservice" value="org.janelia.it.jacs.compute.service.common.grid.submit.teragrid.BlastTeraGridSubmitJobService"/>-->
                 <!--<input name="RESULT_FILE_NODE_ID"/>-->
                 <!--<input name="BLAST_QUERY_OUTPUT_FILE_MAP"/>-->
                 <!--<input name="BLAST_DEST_OUTPUT_DIR"/>-->
                 <!--<input name="BLAST_QUERY_FILES"/>-->
             <!--</operation>-->
          <!--</sequence>-->
-        <!--<operation name="Split Results" processor="org.jcvi.vics.compute.service.blast.teragrid.SplitXmlResults" />        -->
+        <!--<operation name="Split Results" processor="org.janelia.it.jacs.compute.service.blast.teragrid.SplitXmlResults" />        -->
         <!--<sequence name="Persist Blast Results" waitForAsync="true">-->
             <!--<operation name="Persist Blast XML Results" processor="queue/gridSubmitAndWait">-->
-                <!--<input name="iservice" value="org.jcvi.vics.compute.service.blast.persist.results.finall.PersistFinalXMLResultsGridService"/>-->
+                <!--<input name="iservice" value="org.janelia.it.jacs.compute.service.blast.persist.results.finall.PersistFinalXMLResultsGridService"/>-->
                 <!--<input name="BLAST_DEST_OUTPUT_DIR"/>-->
                 <!--<input name="TOTAL_BLAST_HITS"/>-->
                 <!--<input name="RESULT_FILE_NODE_ID"/>-->
             <!--</operation>-->
         <!--</sequence>-->
-        <!--<operation name="Zip Blast Results" processor="org.jcvi.vics.compute.service.common.zip.ZipService" updateProcessStatus="on_success">-->
+        <!--<operation name="Zip Blast Results" processor="org.janelia.it.jacs.compute.service.common.zip.ZipService" updateProcessStatus="on_success">-->
             <!--<input name="mode" value="compress" />-->
             <!--<input name="sourceDir" value="$V{RESULT_FILE_NODE_DIR}" />-->
             <!--<input name="sourceFilePattern" value="blastResults\.[\w]*" />-->

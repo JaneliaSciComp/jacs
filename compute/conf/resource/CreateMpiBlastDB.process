@@ -23,10 +23,10 @@
 
 <process name="CreateMpiBlastDB" startEvent="pending" processor="queue/blastDBLauncher" updateProcessStatus="on_success">
     <sequence >
-        <operation name="CreateNodes" processor="org.jcvi.vics.compute.service.blast.createDB.CreateMpiBlastDBFileNodeService" />
+        <operation name="CreateNodes" processor="org.janelia.it.jacs.compute.service.blast.createDB.CreateMpiBlastDBFileNodeService" />
         <sequence name="Create MPI Blast Database" waitForAsync="true" startEvent="running">
             <operation name="Submit Job" processor="queue/gridSubmitAndWait">
-                <input name="iservice" value="org.jcvi.vics.compute.service.blast.createDB.CreateMpiBlastDBService"/>
+                <input name="iservice" value="org.janelia.it.jacs.compute.service.blast.createDB.CreateMpiBlastDBService"/>
                 <input name="RESULT_FILE_NODE_ID"/>
             </operation>
          </sequence>

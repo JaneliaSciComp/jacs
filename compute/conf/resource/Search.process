@@ -23,19 +23,19 @@
 
 <process name="Search"  startEvent="pending" processor="queue/searchLauncher" >
     <sequence name="searchLauncher">
-        <operation name="Setup Search" processor="org.jcvi.vics.compute.service.search.SearchSetup" />
+        <operation name="Setup Search" processor="org.janelia.it.jacs.compute.service.search.SearchSetup" />
         <sequence name="Run Searches" startEvent="running" waitForAsync="true" updateProcessStatus="on_success">
-            <operation name="Run Fast Search By Category" async="true" processor="org.jcvi.vics.compute.service.search.SearchByCategory">
+            <operation name="Run Fast Search By Category" async="true" processor="org.janelia.it.jacs.compute.service.search.SearchByCategory">
                 <input name="SEARCH_FAST_CATEGORIES"/>
                 <input name="SEARCH_TYPE" value="fast"/>
                 <!--<input name="PROTEIN_SEARCH" value="false"/>-->
             </operation>
-            <operation name="Run Slow Search By Category" async="true" processor="org.jcvi.vics.compute.service.search.SearchByCategory">
+            <operation name="Run Slow Search By Category" async="true" processor="org.janelia.it.jacs.compute.service.search.SearchByCategory">
                 <input name="SEARCH_SLOW_CATEGORIES"/>
                 <input name="SEARCH_TYPE" value="slow"/>
                 <!--<input name="PROTEIN_SEARCH" value="false"/>-->
             </operation>
-            <operation name="Run Protein Search By Category" async="true" processor="org.jcvi.vics.compute.service.search.GridSearchByCategory">
+            <operation name="Run Protein Search By Category" async="true" processor="org.janelia.it.jacs.compute.service.search.GridSearchByCategory">
                 <input name="SEARCH_GRID_CATEGORIES"/>
                 <input name="SEARCH_TYPE" value="grid"/>
                 <!--<input name="SEARCH_CATEGORY"/>-->

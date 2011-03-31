@@ -24,7 +24,7 @@
 <process name="Set DB" startEvent="pending" updateProcessStatus="on_success">
     <sequence name="Set DB" waitForAsync="true" startEvent="running">
         <operation name="Set DB" processor="queue/gridSubmitAndWait">
-            <input name="iservice" value="org.jcvi.vics.compute.service.prokAnnotation.SetDbService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.prokAnnotation.SetDbService"/>
         </operation>
      </sequence>
 </process>

@@ -24,26 +24,26 @@
 <process name="FrvDataAndAnnotationsNonGrid">  <!-- Executed by ProcessLauncher Pojo -->
     <!-- ***** NOTE: This process is not currently in-use!!!!!  ***** -->
     <sequence>
-        <operation name="Recruitment Regenerate Data And Annotations - Non Grid" processor="org.jcvi.vics.compute.service.recruitment.FrvNonGridDataPrepService">
+        <operation name="Recruitment Regenerate Data And Annotations - Non Grid" processor="org.janelia.it.jacs.compute.service.recruitment.FrvNonGridDataPrepService">
             <output name="dataHelper"/>
         </operation>
-        <operation async="true" name="Recruitment Regenerate Data And Annotations - Non Grid" processor="org.jcvi.vics.compute.service.recruitment.FrvNonGridDataAndAnnotationService"
+        <operation async="true" name="Recruitment Regenerate Data And Annotations - Non Grid" processor="org.janelia.it.jacs.compute.service.recruitment.FrvNonGridDataAndAnnotationService"
                    updateProcessStatus="on_success">
             <input name="dataHelper"/>
             <input name="zoomLevelStart" value="0"/>
             <input name="zoomLevelStop"  value="1"/>
         </operation>
-        <operation async="true" name="asdf2" processor="org.jcvi.vics.compute.service.recruitment.FrvNonGridZoomSpecificImageService" >
+        <operation async="true" name="asdf2" processor="org.janelia.it.jacs.compute.service.recruitment.FrvNonGridZoomSpecificImageService" >
             <input name="dataHelper"/>
             <input name="zoomLevelStart" value="2"/>
             <input name="zoomLevelStop" value="2"/>
         </operation>
-        <operation async="true" name="asdf3" processor="org.jcvi.vics.compute.service.recruitment.FrvNonGridZoomSpecificImageService" >
+        <operation async="true" name="asdf3" processor="org.janelia.it.jacs.compute.service.recruitment.FrvNonGridZoomSpecificImageService" >
             <input name="dataHelper"/>
             <input name="zoomLevelStart" value="3"/>
             <input name="zoomLevelStop" value="3"/>
         </operation>
-        <operation async="true" name="asdf4" processor="org.jcvi.vics.compute.service.recruitment.FrvNonGridZoomSpecificImageService" >
+        <operation async="true" name="asdf4" processor="org.janelia.it.jacs.compute.service.recruitment.FrvNonGridZoomSpecificImageService" >
             <input name="dataHelper"/>
             <input name="zoomLevelStart" value="4"/>
             <input name="zoomLevelStop" value="4"/>

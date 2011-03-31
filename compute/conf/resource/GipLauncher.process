@@ -24,7 +24,7 @@
 <process name="Gip Launcher" startEvent="pending" updateProcessStatus="on_success">
     <sequence name="Gip Launcher" waitForAsync="true" startEvent="running">
         <operation name="Gip Launcher" processor="queue/gridSubmitAndWait">
-            <input name="iservice" value="org.jcvi.vics.compute.service.prokAnnotation.GipLauncherService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.prokAnnotation.GipLauncherService"/>
         </operation>
      </sequence>
 </process>

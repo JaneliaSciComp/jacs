@@ -24,7 +24,7 @@
 <process name="Priam" startEvent="pending" processor="queue/priamLauncher" updateProcessStatus="on_success">
     <sequence name="priamQueue" waitForAsync="true">
            <operation name="Priam"  processor="queue/gridSubmitAndWait">
-              <input name="iservice" value="org.jcvi.vics.compute.service.metageno.anno.PriamEcService"/>
+              <input name="iservice" value="org.janelia.it.jacs.compute.service.metageno.anno.PriamEcService"/>
            </operation>
     </sequence>
 </process>

@@ -24,7 +24,7 @@
 <process name="GCContentLoader" startEvent="pending" updateProcessStatus="on_success">
     <sequence name="GC Content Loader" waitForAsync="true" startEvent="running">
         <operation name="GC Content Loader" processor="queue/gridSubmitAndWait">
-            <input name="iservice" value="org.jcvi.vics.compute.service.prokAnnotation.GcContentLoaderService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.prokAnnotation.GcContentLoaderService"/>
         </operation>
      </sequence>
 </process>

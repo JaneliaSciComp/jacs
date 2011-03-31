@@ -24,7 +24,7 @@
 <process name="Prosite Search" startEvent="pending" updateProcessStatus="on_success">
     <sequence name="Prosite Search" waitForAsync="true" startEvent="running">
         <operation name="Prosite Search" processor="queue/gridSubmitAndWait">
-            <input name="iservice" value="org.jcvi.vics.compute.service.prokAnnotation.PrositeSearchService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.prokAnnotation.PrositeSearchService"/>
         </operation>
      </sequence>
 </process>

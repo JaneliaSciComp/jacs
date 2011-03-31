@@ -23,7 +23,7 @@
 
 <process name="UploadFastqDirectory" startEvent="pending" processor="queue/fastqUploadLauncher" updateProcessStatus="on_success">
     <sequence>
-        <operation name="Upload Fastq Directory" processor="org.jcvi.vics.compute.service.common.file.UploadFastqDirectoryService">
+        <operation name="Upload Fastq Directory" processor="org.janelia.it.jacs.compute.service.common.file.UploadFastqDirectoryService">
         </operation>
     </sequence>
 </process>

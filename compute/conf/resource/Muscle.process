@@ -24,7 +24,7 @@
 <process name="Muscle"  startEvent="pending" processor="queue/muscleLauncher" updateProcessStatus="on_success">
     <sequence name="Muscle" waitForAsync="true" startEvent="running">
         <operation name="MuscleOperation"  processor="queue/gridSubmitAndWait" async="true">
-            <input name="iservice" value="org.jcvi.vics.compute.service.tools.MuscleService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.tools.MuscleService"/>
         </operation>
     </sequence>
 </process>

@@ -23,7 +23,7 @@
 
 <process name="UploadSamFile" startEvent="pending" processor="queue/samFileUploadLauncher" updateProcessStatus="on_success">
     <sequence>
-        <operation name="Upload Sam File" processor="org.jcvi.vics.compute.service.common.file.UploadSamFileService">
+        <operation name="Upload Sam File" processor="org.janelia.it.jacs.compute.service.common.file.UploadSamFileService">
         </operation>
     </sequence>
 </process>

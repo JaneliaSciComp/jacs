@@ -23,9 +23,9 @@
 
 <process name="FileExport" startEvent="pending" processor="queue/exportLauncher">
     <sequence name="exportLauncher">
-        <operation name="Setup Export" processor="org.jcvi.vics.compute.service.export.FileExportSetup" />
+        <operation name="Setup Export" processor="org.janelia.it.jacs.compute.service.export.FileExportSetup" />
         <sequence name="Run Export" startEvent="running" waitForAsync="true" updateProcessStatus="on_success">
-            <operation name="Run Export Task" async="true" processor="org.jcvi.vics.compute.service.export.FileExportService"/>
+            <operation name="Run Export Task" async="true" processor="org.janelia.it.jacs.compute.service.export.FileExportService"/>
         </sequence>
     </sequence>
 </process>

@@ -23,6 +23,6 @@
 
 <process name="CreateBlastDB" startEvent="pending" processor="queue/blastDBLauncher" updateProcessStatus="on_success">
     <sequence>
-        <operation name="Create Blast Database" processor="org.jcvi.vics.compute.service.blast.createDB.CreateBlastDBService" />
+        <operation name="Create Blast Database" processor="org.janelia.it.jacs.compute.service.blast.createDB.CreateBlastDBService" />
     </sequence>
 </process>

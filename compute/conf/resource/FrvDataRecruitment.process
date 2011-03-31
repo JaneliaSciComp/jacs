@@ -25,8 +25,8 @@
     <!-- This process creates a file node for the raw data and then reduces a default set of recruited reads. -->
     <sequence name="FRV Data Recruitment">
         <operation name="Create Recruitment Viewer File Node and Insert Data" processor="compute/CreateRecruitmentViewerFileNodeSLSB/local"/>
-        <operation name="Convert Blast Output" processor="org.jcvi.vics.compute.service.recruitment.BlastXmlToFrvTabService"/>
-        <operation name="Recruit Data From Blast Output" processor="org.jcvi.vics.compute.service.recruitment.FRVRecruitFromBlastService"/>
-        <operation name="Recruitment Statistics Generation" processor="org.jcvi.vics.compute.service.recruitment.FrvStatisticsGenerationService"/>
+        <operation name="Convert Blast Output" processor="org.janelia.it.jacs.compute.service.recruitment.BlastXmlToFrvTabService"/>
+        <operation name="Recruit Data From Blast Output" processor="org.janelia.it.jacs.compute.service.recruitment.FRVRecruitFromBlastService"/>
+        <operation name="Recruitment Statistics Generation" processor="org.janelia.it.jacs.compute.service.recruitment.FrvStatisticsGenerationService"/>
     </sequence>
 </process>

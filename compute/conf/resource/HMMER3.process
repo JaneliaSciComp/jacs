@@ -23,11 +23,11 @@
 
 <process name="HMMER3" startEvent="pending" updateProcessStatus="on_success" processor="queue/hmmLauncher" >
     <sequence name="hmmer3Launcher" >
-        <operation name="Create Hmmer Result Node" processor="org.jcvi.vics.compute.service.hmmer3.HMMER3CreateResultNodeService">
+        <operation name="Create Hmmer Result Node" processor="org.janelia.it.jacs.compute.service.hmmer3.HMMER3CreateResultNodeService">
             <output name="RESULT_FILE_NODE_ID"/>
             <output name="RESULT_FILE_NODE"/>
         </operation>
-        <operation name="Create Fasta Input"  processor="org.jcvi.vics.compute.service.hmmer3.HMMER3MultiFastaSplitterService">
+        <operation name="Create Fasta Input"  processor="org.janelia.it.jacs.compute.service.hmmer3.HMMER3MultiFastaSplitterService">
             <input name="RESULT_FILE_NODE"/>
             <output name="INPUT_FILE"/>
             <output name="MAX_RESULTS_PER_JOB"/>
@@ -39,14 +39,14 @@
             <output name="PER_INPUT_ENTRY_SIZE_MULTIPLIER"/>
             <output name="POST_SPLIT_INPUT_FILE_LIST"/>
         </operation>
-        <operation name="Create Output Directories" processor="org.jcvi.vics.compute.service.common.file.CreateOutputDirsService">
+        <operation name="Create Output Directories" processor="org.janelia.it.jacs.compute.service.common.file.CreateOutputDirsService">
             <input name="RESULT_FILE_NODE"/>
             <output name="OUTPUT_DIR_LIST"/>
             <output name="INPUT_OUTPUT_DIR_MAP"/>
         </operation>
         <sequence name="Submit HMM to grid" waitForAsync="true">
             <operation name="Submit Job" processor="queue/gridSubmitAndWait" startEvent="running">
-                <input name="iservice" value="org.jcvi.vics.compute.service.hmmer3.HMMER3SubmitJobService"/>
+                <input name="iservice" value="org.janelia.it.jacs.compute.service.hmmer3.HMMER3SubmitJobService"/>
                 <input name="RESULT_FILE_NODE"/>
                 <input name="PARTITION_LIST"/>
                 <input name="POST_SPLIT_INPUT_FILE_LIST"/>
@@ -55,7 +55,7 @@
                 <output name="INPUT_OUTPUT_FILE_LIST_MAP"/>
             </operation>
         </sequence>
-        <operation name="Merge Results" startEvent="postprocess" processor="org.jcvi.vics.compute.service.hmmer3.HMMER3MergeService">
+        <operation name="Merge Results" startEvent="postprocess" processor="org.janelia.it.jacs.compute.service.hmmer3.HMMER3MergeService">
             <input name="POST_SPLIT_INPUT_FILE_LIST"/>
             <input name="INPUT_OUTPUT_FILE_LIST_MAP"/>
             <input name="RESULT_FILE_NODE"/>

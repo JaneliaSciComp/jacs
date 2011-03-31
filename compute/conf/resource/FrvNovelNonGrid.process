@@ -24,9 +24,9 @@
 <process name="FrvNovelNonGrid"  processor="queue/rvImportLauncher">  <!-- Executed by ProcessLauncher Pojo -->
     <sequence>
         <!-- Make a result node for the FRV images to go into -->
-        <operation name="Create RecruitmentResultFileNode" processor="org.jcvi.vics.compute.service.recruitment.CreateRecruitmentResultFileNodeService" />
+        <operation name="Create RecruitmentResultFileNode" processor="org.janelia.it.jacs.compute.service.recruitment.CreateRecruitmentResultFileNodeService" />
         <!-- Now, (DO NOT call the grid) generate the images -->
-        <operation name="Recruitment Viewer Read Recruitment" processor="org.jcvi.vics.compute.service.recruitment.FrvNonGridImageService"
+        <operation name="Recruitment Viewer Read Recruitment" processor="org.janelia.it.jacs.compute.service.recruitment.FrvNonGridImageService"
                    startEvent="running" updateProcessStatus="on_success"/>
     </sequence>
 </process>

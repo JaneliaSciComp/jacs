@@ -24,7 +24,7 @@
 <process name="PrositeScan"  startEvent="pending" processor="queue/prositeScanLauncher" updateProcessStatus="on_success">
     <sequence name="PrositeScanSubmitJob" waitForAsync="true" startEvent="running">
         <operation name="PrositeScanOperation"  processor="queue/gridSubmitAndWait" async="true">
-            <input name="iservice" value="org.jcvi.vics.compute.service.tools.PrositeScanService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.tools.PrositeScanService"/>
         </operation>
     </sequence>
 </process>

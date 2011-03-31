@@ -24,7 +24,7 @@
 <process name="Build Sequence File" startEvent="pending" updateProcessStatus="on_success">
     <sequence name="Build Sequence File" waitForAsync="true" startEvent="running">
         <operation name="Build Sequence File" processor="queue/gridSubmitAndWait">
-            <input name="iservice" value="org.jcvi.vics.compute.service.prokAnnotation.BuildSequenceFileService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.prokAnnotation.BuildSequenceFileService"/>
         </operation>
      </sequence>
 </process>

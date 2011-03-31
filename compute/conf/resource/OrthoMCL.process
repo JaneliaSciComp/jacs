@@ -24,7 +24,7 @@
 <process name="OrthoMCL"  startEvent="pending" processor="queue/orthoMCLLauncher" updateProcessStatus="on_success">
     <sequence name="OrthoMCL" waitForAsync="true" startEvent="running">
         <operation name="OrthoMCLOperation"  processor="queue/gridSubmitAndWait" async="true">
-            <input name="iservice" value="org.jcvi.vics.compute.service.pangenome.OrthoMCLService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.pangenome.OrthoMCLService"/>
         </operation>
     </sequence>
 </process>

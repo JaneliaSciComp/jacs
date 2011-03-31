@@ -24,7 +24,7 @@
 <process name="Build Peptide File" startEvent="pending" updateProcessStatus="on_success">
     <sequence name="Build Peptide File" waitForAsync="true" startEvent="running">
         <operation name="Build Peptide File" processor="queue/gridSubmitAndWait">
-            <input name="iservice" value="org.jcvi.vics.compute.service.prokAnnotation.BuildPeptideFileService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.prokAnnotation.BuildPeptideFileService"/>
         </operation>
      </sequence>
 </process>

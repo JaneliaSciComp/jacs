@@ -24,7 +24,7 @@
 <process name="Trf"  startEvent="pending" processor="queue/trfLauncher" updateProcessStatus="on_success">
     <sequence name="TrfSubmitJob" waitForAsync="true" startEvent="running">
         <operation name="TrfOperation"  processor="queue/gridSubmitAndWait" async="true">
-            <input name="iservice" value="org.jcvi.vics.compute.service.tools.TrfService"/>
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.tools.TrfService"/>
         </operation>
     </sequence>
 </process>

@@ -23,10 +23,10 @@
 
 <process name="TeragridSimpleBlast" startEvent="pending" processor="queue/teragridSimpleBlastLauncher" updateProcessStatus="on_success">
     <sequence name="TeragridSimpleBlastSequence">
-        <operation name="Create Blast Result File Node" processor="org.jcvi.vics.compute.service.blast.persist.results.initial.CreateBlastResultFileNodeService">
+        <operation name="Create Blast Result File Node" processor="org.janelia.it.jacs.compute.service.blast.persist.results.initial.CreateBlastResultFileNodeService">
             <output name="RESULT_FILE_NODE_ID"/>
             <output name="RESULT_FILE_NODE_DIR" />
         </operation>
-        <operation name="teragridBlast" processor="org.jcvi.vics.compute.service.blast.TeragridSimpleBlastService"/>
+        <operation name="teragridBlast" processor="org.janelia.it.jacs.compute.service.blast.TeragridSimpleBlastService"/>
     </sequence>
 </process>

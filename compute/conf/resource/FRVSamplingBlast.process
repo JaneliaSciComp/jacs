@@ -23,12 +23,12 @@
 
 <process name="FRVSamplingBlast" startEvent="pending" processor="queue/frvBlastLauncher" updateProcessStatus="on_success">
     <sequence name="blastLauncher"  >
-        <operation name="Create Blast Result File Node" processor="org.jcvi.vics.compute.service.blast.persist.results.initial.CreateBlastResultFileNodeService">
+        <operation name="Create Blast Result File Node" processor="org.janelia.it.jacs.compute.service.blast.persist.results.initial.CreateBlastResultFileNodeService">
             <output name="RESULT_FILE_NODE_ID"/>
             <output name="RESULT_FILE_NODE_DIR" />
         </operation>
-        <operation name="Prepare Sampling Parameters" processor="org.jcvi.vics.compute.service.recruitment.SamplingBlastConfigService"/>
-        <operation name="Create Output Directories" processor="org.jcvi.vics.compute.service.blast.submit.CreateBlastOutputDirsService">
+        <operation name="Prepare Sampling Parameters" processor="org.janelia.it.jacs.compute.service.recruitment.SamplingBlastConfigService"/>
+        <operation name="Create Output Directories" processor="org.janelia.it.jacs.compute.service.blast.submit.CreateBlastOutputDirsService">
             <input name="RESULT_FILE_NODE_ID"/>
             <output name="BLAST_QUERY_OUTPUT_FILE_MAP"/>
             <output name="BLAST_DEST_OUTPUT_DIR"/>
@@ -36,7 +36,7 @@
         </operation>
         <sequence name="BlastSubmitJob" waitForAsync="true" startEvent="running">
             <operation name="Submit Job" processor="queue/gridSubmitAndWait">
-                <input name="iservice" value="org.jcvi.vics.compute.service.blast.submit.BlastSubmitJobService"/>
+                <input name="iservice" value="org.janelia.it.jacs.compute.service.blast.submit.BlastSubmitJobService"/>
                 <input name="RESULT_FILE_NODE_ID"/>
                 <input name="BLAST_QUERY_OUTPUT_FILE_MAP"/>
                 <input name="BLAST_DEST_OUTPUT_DIR"/>
