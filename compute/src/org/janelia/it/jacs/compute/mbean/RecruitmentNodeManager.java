@@ -346,7 +346,7 @@ public class RecruitmentNodeManager implements RecruitmentNodeManagerMBean {
             // The query used is
             // select b.sample_acc, b.sample_title, b.sample_name, ss.project, ss.project_name, min(l.min_insert_size ) as min_insert_size, max(l.max_insert_size) as max_insert_size from bio_sample b, sample_site ss, library l where ss.sample_name = b.sample_name and b.sample_acc = l.sample_acc group by b.sample_acc, b.sample_title, b.sample_name, ss.project, ss.project_name order by b.sample_acc
             List sampleList = EJBFactory.getLocalComputeBean().getSampleInfo();
-            String perlPath = EJBFactory.getLocalComputeBean().getSystemConfigurationProperty("Perl.ModuleBase");
+            String perlPath = EJBFactory.getLocalComputeBean().getSystemConfigurationProperty("Executables.ModuleBase");
             String basePath = EJBFactory.getLocalComputeBean().getSystemConfigurationProperty("RecruitmentViewer.PerlBaseDir");
             String sampleInfoName = EJBFactory.getLocalComputeBean().getSystemConfigurationProperty("RecruitmentViewer.SampleFile.Name");
             File sampleFile = new File(perlPath + basePath + File.separator + sampleInfoName);

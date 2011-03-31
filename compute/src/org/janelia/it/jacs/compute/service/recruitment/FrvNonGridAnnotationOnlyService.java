@@ -45,7 +45,7 @@ public class FrvNonGridAnnotationOnlyService extends FrvNonGridServiceBase {
     protected void recruit() throws IOException, ParameterException, InterruptedException {
 //        Placed in process def
         logger.debug("\nFrvNonGridAnnotationOnlyService recruit started");
-        String basePath = SystemConfigurationProperties.getString("Perl.ModuleBase") +
+        String basePath = SystemConfigurationProperties.getString("Executables.ModuleBase") +
                 SystemConfigurationProperties.getString("RecruitmentViewer.PerlBaseDir");
         String sampleInfoName = SystemConfigurationProperties.getString("RecruitmentViewer.SampleFile.Name");
         String pathToAnnotationFile = null;

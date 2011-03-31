@@ -58,7 +58,7 @@ public class FrvImageService extends SubmitDrmaaJobService {
     public static final String JAVA_PATH = SystemConfigurationProperties.getString("Java.Path");
     public static final String JAVA_MAX_MEMORY = SystemConfigurationProperties.getString("RecruitmentViewer.JavaMaxMemory");
     public static final String GRID_JAR_PATH = SystemConfigurationProperties.getFilePath("Grid.Lib.Path", "Grid.Jar.Name");
-    public static final String RECRUITMENT_BASE_PATH = SystemConfigurationProperties.getString("Perl.ModuleBase") +
+    public static final String RECRUITMENT_BASE_PATH = SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("RecruitmentViewer.PerlBaseDir");
     public static final String RECRUITMENT_SAMPLE_FILE_NAME = SystemConfigurationProperties.getString("RecruitmentViewer.SampleFile.Name");
     public static final String RECRUITMENT_DATA_HELPER = SystemConfigurationProperties.getString("RecruitmentViewer.processor");

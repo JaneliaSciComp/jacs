@@ -61,7 +61,7 @@ public class LoadNcbiGenomeSetupService implements IService {
             this.task = (ProkaryoticAnnotationLoadGenomeDataTask) ProcessDataHelper.getTask(processData);
             String targetDatabase = task.getJobName();
             targetGenomeDirectory = task.getParameter(FtpFileTask.PARAM_targetDirectory);
-            String scriptBaseDir = SystemConfigurationProperties.getString("Perl.ModuleBase") + SystemConfigurationProperties.getString("ProkAnnotation.PerlBaseDir");
+            String scriptBaseDir = SystemConfigurationProperties.getString("Executables.ModuleBase") + SystemConfigurationProperties.getString("ProkAnnotation.PerlBaseDir");
             computeBean = EJBFactory.getRemoteComputeBean();
             // Step 1 - Get the files from NCBI
             computeBean.addEventToTask(task.getObjectId(), new Event("Grabbing the files from NCBI", new Date(), "Calling NCBI"));

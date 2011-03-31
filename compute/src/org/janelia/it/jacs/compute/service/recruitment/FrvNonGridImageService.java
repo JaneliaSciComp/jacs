@@ -127,7 +127,7 @@ public class FrvNonGridImageService implements IService {
 //        Placed in process def
         logger.debug("\nFrvNonGridImageService recruit started");
         // Leaving jobIncrementStop at the default of 1
-        String basePath = SystemConfigurationProperties.getString("Perl.ModuleBase") +
+        String basePath = SystemConfigurationProperties.getString("Executables.ModuleBase") +
                 SystemConfigurationProperties.getString("RecruitmentViewer.PerlBaseDir");
         String sampleInfoName = SystemConfigurationProperties.getString("RecruitmentViewer.SampleFile.Name");
         String pathToAnnotationFile = null;

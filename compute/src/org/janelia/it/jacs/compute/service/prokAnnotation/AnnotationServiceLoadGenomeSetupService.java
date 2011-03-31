@@ -65,7 +65,7 @@ public class AnnotationServiceLoadGenomeSetupService implements IService {
             String sourceDirectory = task.getParameter(ProkaryoticAnnotationServiceLoadGenomeDataTask.PARAM_sourceDirectory);
             dataDate = task.getParameter(ProkaryoticAnnotationServiceLoadGenomeDataTask.PARAM_dateString);
             computeBean = EJBFactory.getRemoteComputeBean();
-            String scriptBaseDir = SystemConfigurationProperties.getString("Perl.ModuleBase") + SystemConfigurationProperties.getString("ProkAnnotation.PerlBaseDir");
+            String scriptBaseDir = SystemConfigurationProperties.getString("Executables.ModuleBase") + SystemConfigurationProperties.getString("ProkAnnotation.PerlBaseDir");
 
             // Step 1 - Get the originalDataFiles from JCVI local dir
             computeBean.addEventToTask(task.getObjectId(), new Event("Grabbing the originalDataFiles from JCVI Directory", new Date(), "Getting originalDataFiles"));

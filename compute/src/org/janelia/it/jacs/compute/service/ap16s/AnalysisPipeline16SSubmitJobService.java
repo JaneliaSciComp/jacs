@@ -129,7 +129,7 @@ public class AnalysisPipeline16SSubmitJobService extends SubmitDrmaaJobService {
     private void createShellScript(String outputFilenamePrefix, FileWriter writer, String finalQualityConfigPath)
             throws IOException, ParameterException, MissingDataException, InterruptedException, ServiceException {
         // original perl path /usr/local/devel/DAS/software/16sDataAnalysis/bin/
-        String basePath = SystemConfigurationProperties.getString("Perl.ModuleBase");
+        String basePath = SystemConfigurationProperties.getString("Executables.ModuleBase");
 
         String pipelineCmd = basePath + SystemConfigurationProperties.getString("AP16S.PipelineCmd");
         String classifierCmd = basePath + SystemConfigurationProperties.getString("AP16S.ClassifierCmd");

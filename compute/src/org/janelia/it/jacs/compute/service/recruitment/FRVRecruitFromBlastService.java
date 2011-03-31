@@ -54,7 +54,7 @@ public class FRVRecruitFromBlastService implements IService {
     public void execute(IProcessData processData) throws ServiceException {
         try {
             init(processData);
-            String perlModulePath = SystemConfigurationProperties.getString("Perl.ModuleBase") + SystemConfigurationProperties.getString("RecruitmentViewer.PerlBaseDir");
+            String perlModulePath = SystemConfigurationProperties.getString("Executables.ModuleBase") + SystemConfigurationProperties.getString("RecruitmentViewer.PerlBaseDir");
             String perlBinPath = SystemConfigurationProperties.getString("Perl.Path");
             String perlRecruitmentProgram = SystemConfigurationProperties.getString("RecruitmentViewer.PerlRecruitmentProgram.Name");
             String cmdPrefix = "export PATH=$PATH:" + perlModulePath + ";export PERL5LIB=$PERL5LIB:" + perlModulePath + ";";

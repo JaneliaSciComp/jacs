@@ -97,7 +97,7 @@ public class ProkaryoticAnnotationService implements IService {
             SystemCall call = new SystemCall(logger);
             String tmpCommand = task.getParameter(ProkaryoticAnnotationTask.PARAM_customCommand);
             String perlPath = SystemConfigurationProperties.getString("Perl.Path");
-            String basePath= SystemConfigurationProperties.getString("Perl.ModuleBase")+SystemConfigurationProperties.getString("ProkAnnotation.PerlBaseDir");
+            String basePath= SystemConfigurationProperties.getString("Executables.ModuleBase")+SystemConfigurationProperties.getString("ProkAnnotation.PerlBaseDir");
             String fullCmd=perlPath+" "+basePath+tmpCommand;
             fullCmd="export PATH=$PATH:"+basePath+";export PERL5LIB=$PERL5LIB:"+basePath+";"+fullCmd;
 

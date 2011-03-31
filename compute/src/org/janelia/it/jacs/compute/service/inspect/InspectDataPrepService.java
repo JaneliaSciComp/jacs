@@ -52,7 +52,7 @@ public class InspectDataPrepService implements IService {
             String ldLib = "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/packages/boost-1.43.0/lib;";
             String pythonPath = SystemConfigurationProperties.getString("Python.Path");
             // todo Need to not call this thing a perl path
-            String codePath = SystemConfigurationProperties.getString("Perl.ModuleBase");
+            String codePath = SystemConfigurationProperties.getString("Executables.ModuleBase");
             // Example archive path /usr/local/archive/projects/PGP/Arthrobacter.FB24/
             String pipelineCmd = ldLib + pythonPath + " "+ codePath +SystemConfigurationProperties.getString("InspectPrep.Cmd");
             String fullCmd = pipelineCmd + " -t "+ task.getParameter(InspectTask.PARAM_archiveFilePath)+" -s "+resultFileNode.getDirectoryPath();

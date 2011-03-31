@@ -50,7 +50,7 @@ import java.util.HashSet;
  */
 public class BtabToMultiAlignmentService implements IService {
     protected static final String perlPath = SystemConfigurationProperties.getString("Perl.Path");
-    protected static final String basePath = SystemConfigurationProperties.getString("Perl.ModuleBase") + SystemConfigurationProperties.getString("ProkAnnotation.PerlBaseDir");
+    protected static final String basePath = SystemConfigurationProperties.getString("Executables.ModuleBase") + SystemConfigurationProperties.getString("ProkAnnotation.PerlBaseDir");
 
     protected Task _task;
     protected String _databaseUser;

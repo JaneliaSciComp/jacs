@@ -49,7 +49,7 @@ import java.util.HashSet;
 public abstract class ProkAnnotationBaseService extends SubmitDrmaaJobService {
     private static final String temporaryDirectory = SystemConfigurationProperties.getString("computeserver.ScratchDir");
     protected static final String perlPath = SystemConfigurationProperties.getString("Perl.Path");
-    protected static final String basePath = SystemConfigurationProperties.getString("Perl.ModuleBase") +
+    protected static final String basePath = SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("ProkAnnotation.PerlBaseDir");
 
     protected String _databaseUser;

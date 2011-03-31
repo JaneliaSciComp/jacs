@@ -99,7 +99,7 @@ public class BarcodeDesignSubmitJobService extends SubmitDrmaaJobService {
         }
 
         String perlPath = SystemConfigurationProperties.getString("Perl.Path");
-        String basePath = SystemConfigurationProperties.getString("Perl.ModuleBase");
+        String basePath = SystemConfigurationProperties.getString("Executables.ModuleBase");
         String pipelineCmd = perlPath + " " + basePath + SystemConfigurationProperties.getString("BarcodeDesign.Cmd");
         SystemConfigurationProperties properties = SystemConfigurationProperties.getInstance();
         String tmpDirectoryName = properties.getProperty("Upload.ScratchDir");

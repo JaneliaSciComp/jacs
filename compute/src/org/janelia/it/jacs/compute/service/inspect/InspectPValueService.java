@@ -67,7 +67,7 @@ public class InspectPValueService implements IService {
             String ldLib = "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/packages/boost-1.43.0/lib:/usr/local/packages/atlas/lib;";
             String pythonPath = SystemConfigurationProperties.getString("Python.Path");
             // todo Need to not call this thing a perl path
-            String codePath = SystemConfigurationProperties.getString("Perl.ModuleBase");
+            String codePath = SystemConfigurationProperties.getString("Executables.ModuleBase");
             // Example archive path /usr/local/archive/projects/PGP/Arthrobacter.FB24/
             String pipelineCmd = ldLib + pythonPath + " "+ codePath +SystemConfigurationProperties.getString("Inspect.PValueCmd");
             String fullCmd = pipelineCmd +" -r "+pepNovoDir.getAbsolutePath() +" -w . -p 0.1 -S 0.5 -1 -H &> pvalue.log";

@@ -59,7 +59,7 @@ import java.util.Set;
 public class FrvExportProcessor extends ExportProcessor {
     public static final int DATABASE_QUERY_CHUNK_SIZE = SystemConfigurationProperties.getInt("RecruitmentViewer.DatabaseQueryChunkSize");//500;
     public static final String SAMPLE_FILE_NAME = SystemConfigurationProperties.getString("RecruitmentViewer.SampleFile.Name");
-    public static final String BASE_FILE_PATH = SystemConfigurationProperties.getString("Perl.ModuleBase") +
+    public static final String BASE_FILE_PATH = SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("RecruitmentViewer.PerlBaseDir");
     private ComputeDAO computeDAO;
 

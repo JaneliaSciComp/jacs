@@ -55,7 +55,7 @@ public class SegmentAndOverlapFastaService implements IService {
             // Prep for execution
             Logger logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             task = ProcessDataHelper.getTask(processData);
-            String scriptBaseDir = SystemConfigurationProperties.getString("Perl.ModuleBase") + SystemConfigurationProperties.getString("RecruitmentViewer.PerlBaseDir");
+            String scriptBaseDir = SystemConfigurationProperties.getString("Executables.ModuleBase") + SystemConfigurationProperties.getString("RecruitmentViewer.PerlBaseDir");
 
             // Split up the Fasta file into a striped version
 

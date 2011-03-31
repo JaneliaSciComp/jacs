@@ -92,7 +92,7 @@ public class InspectSubmitJobService extends SubmitDrmaaJobService {
 
     private void createShellScript(FileWriter writer)
             throws IOException, ParameterException, MissingDataException, InterruptedException, ServiceException {
-        String codePath = SystemConfigurationProperties.getString("Perl.ModuleBase");
+        String codePath = SystemConfigurationProperties.getString("Executables.ModuleBase");
         String pipelineCmd = codePath+SystemConfigurationProperties.getString("Inspect.Cmd");
 
         StringBuffer script = new StringBuffer();

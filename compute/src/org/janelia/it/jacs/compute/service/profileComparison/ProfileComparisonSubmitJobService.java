@@ -68,7 +68,7 @@ public class ProfileComparisonSubmitJobService extends SubmitDrmaaJobService {
         }
 
         String perlPath = SystemConfigurationProperties.getString("Perl.Path");
-        String basePath = SystemConfigurationProperties.getString("Perl.ModuleBase");
+        String basePath = SystemConfigurationProperties.getString("Executables.ModuleBase");
         String pipelineCmd = perlPath + " " + basePath + SystemConfigurationProperties.getString("ProfileComparison.PerlBase") +
                 SystemConfigurationProperties.getString("ProfileComparison.Cmd");
         String tmpDirectoryName = SystemConfigurationProperties.getString("Upload.ScratchDir");
