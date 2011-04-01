@@ -35,12 +35,12 @@ import java.io.Serializable;
  */
 public class DataSource implements Serializable, IsSerializable {
 
-    public static final DataSource UNKNOWN = new DataSource((long) -1, "Unknown", null);
-    public static final DataSource CAMERA = new DataSource((long) 0, "CAMERA", null);
-    public static final DataSource TIGR = new DataSource((long) 1, "TIGR", null);
-    public static final DataSource NCBI = new DataSource((long) 2, "NCBI", null);
+    public static final DataSource UNKNOWN  = new DataSource((long) -1, "Unknown", null);
+    public static final DataSource CAMERA   = new DataSource((long) 0, "CAMERA", null);
+    public static final DataSource TIGR     = new DataSource((long) 1, "TIGR", null);
+    public static final DataSource NCBI     = new DataSource((long) 2, "NCBI", null);
     public static final DataSource Ensemble = new DataSource((long) 3, "Ensemble", null);
-
+    public static final DataSource HHMI     = new DataSource((long) 4, "HHMI", null);
     private Long sourceId;
     private String sourceName;
     private String dataVersion;

@@ -31,6 +31,7 @@ import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SimpleJobStatusLogger;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.status.GridJobStatus;
 
 import java.io.File;
@@ -91,8 +92,6 @@ public class SimpleGridJobRunner {
         logger = ProcessDataHelper.getLoggerForTask(taskId.toString(), this.getClass());
         logger.info("SimpleGridJobRunner constructed with taskId=" + taskId);
         this.taskId = taskId;
-        String SGE_CELL = System.getenv("SGE_CELL");
-        logger.info("SimpleGridJobRunner with timeout mod using SGE_CELL=" + SGE_CELL);
         drmaa = new DrmaaHelper(logger);
         String uniqueId = TimebasedIdentifierGenerator.generate(1L).toString();
         scriptFile = new File(workingDir, uniqueId + ".sh");
@@ -110,7 +109,7 @@ public class SimpleGridJobRunner {
         if (numThreads > 1) {
             jt.setNativeSpecification("-pe threaded " + numThreads);
         }
-        if (!SGE_CELL.equals("camsge")) {
+        if (SystemConfigurationProperties.getBoolean("Grid.RequiresProjectCode")) {
             jt.setNativeSpecification("-P " + projectCode);
         }
         else {

@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/local/perl
 
 #
 # Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
@@ -66,7 +66,7 @@
     1;
 
 
-eval "exec /usr/local/bin/perl -S $0 $*"
+eval "exec /usr/local/perl -S $0 $*"
     if $running_under_some_shell;
 
 use strict;
@@ -112,9 +112,9 @@ sub system_calls{
     
 
 
-    my $blast_comd="/usr/local/bin/perl $blast_program -B $blast_dir  -O $output_dir";
+    my $blast_comd="/usr/local/perl $blast_program -B $blast_dir  -O $output_dir";
 
-    my $builder_comd="/usr/local/bin/perl $rec_program -B $output_dir -O  $output_dir -P $path";
+    my $builder_comd="/usr/local/perl $rec_program -B $output_dir -O  $output_dir -P $path";
 
       
     system ($blast_comd);

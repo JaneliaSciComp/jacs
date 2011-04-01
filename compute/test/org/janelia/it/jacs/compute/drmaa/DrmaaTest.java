@@ -150,9 +150,6 @@ public class DrmaaTest
         if (pid == null)
             System.exit(2);
 
-        String sgeCell = System.getenv("SGE_CELL");
-        System.out.println("DRMAA using SGE_CELL=" + sgeCell);
-
         delay = Integer.parseInt(args[0]);
 
         DrmaaTest dt = new DrmaaTest();

@@ -1,4 +1,4 @@
-#!/usr/local/bin/bash
+#!/bin/bash
 
 #
 # Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.

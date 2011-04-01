@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/local/perl
 
 #
 # Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
@@ -66,7 +66,7 @@
     1;
 
 
-eval "exec /usr/local/bin/perl -S $0 $*"
+eval "exec /usr/local/perl -S $0 $*"
     if $running_under_some_shell;
 
 
@@ -352,7 +352,7 @@ foreach my $key(keys %combined_record){
 
 close(OUTPUT);
 
-my $cmd ="/usr/local/bin/perl $path/mate_check.pl -site $path/sample.info -layout $com_site_file -btab - | sort -T $output_dir -k 3,3n > $output_dir/combinedPlusSitePlusMate.hits";
+my $cmd ="/usr/local/perl $path/mate_check.pl -site $path/sample.info -layout $com_site_file -btab - | sort -T $output_dir -k 3,3n > $output_dir/combinedPlusSitePlusMate.hits";
 
 system ($cmd);
 

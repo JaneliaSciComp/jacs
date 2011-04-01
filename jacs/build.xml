@@ -793,7 +793,7 @@
 
         <!-- rebuild jacs.properties -->
         <!-- need to copy to circumvent bug in FileSet type - ordering of includes alphabetically, and not in order specified -->
-        <copy file="/conf/jacs.properties" tofile="${temp.dir}/000-jacs.properties" />
+        <copy file="${jacs.properties.dir}/jacs.properties" tofile="${temp.dir}/000-jacs.properties" />
         <copy file="${jacs.properties.dir}/${deployment-specific.properties.file}" tofile="${temp.dir}/${deployment-specific.properties.file}" />
     	<properties file="${temp.dir}/jacs.properties">
           <header>

@@ -181,8 +181,13 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
             jt.setJobName(task.getOwner().replaceAll("\\W", "_") + "_" + getGridServicePrefixName());
             // setNativeSpecification(jt);
             setQueue(jt);
-            if (!sgeCell.equals("camsge")) {
+            // Check if the SGE grid requires project info
+            if (SystemConfigurationProperties.getBoolean("Grid.RequiresProjectCode")) {
                 setProject(jt);
+            }
+            // Check if the SGE grid requires account info
+            if (SystemConfigurationProperties.getBoolean("Grid.RequiresAccountInfo")) {
+                setAccount(jt);
             }
         }
         finally {
@@ -336,6 +341,21 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         if (project != null && project.length() > 0) {
             logger.info("setProject = -P " + project);
             jt.setNativeSpecification("-P " + project);
+        }
+    }
+
+    /**
+     * This method is intended for adding native commands for sge to specify account
+     * "-A <account(userlogin)>"
+     *
+     * @param jt SerializableJobTemplate
+     * @throws org.ggf.drmaa.DrmaaException - Drmaa had an issue setting the specification
+     */
+    protected void setAccount(SerializableJobTemplate jt) throws DrmaaException {
+        String account = task.getOwner();
+        if (account != null && account.length() > 0) {
+            logger.info("setaccount = -A " + account);
+            jt.setNativeSpecification("-A " + account);
         }
     }
 

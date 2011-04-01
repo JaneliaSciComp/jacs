@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -w
+#!/usr/local/perl -w
 
 #
 # Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
