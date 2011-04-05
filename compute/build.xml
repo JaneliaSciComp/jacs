@@ -280,8 +280,8 @@
         <copy file="${basedir}/../model/build/jars/jacs-model.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
         <copy file="${basedir}/../jacs/conf/container_descriptor/hibernate.cfg.xml" todir="${build.jars.dir}/gcdml-dir/jar" />
 
-        <copy file="${common.dir}/PostgreSQL-8.1/jdbc/postgresql-8.1-404.jdbc3.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
-        <copy file="${common.dir}/MySQL-5.1.5/mysql-connector-java-5.1.5-bin.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
+        <!--<copy file="${common.dir}/PostgreSQL-8.1/jdbc/postgresql-8.1-404.jdbc3.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
+        <copy file="${common.dir}/MySQL/mysql-connector-java-5.1.15-bin.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
 
         <copy file="${build.jars.dir}/compute.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
         <copy file="/conf/jacs.properties" todir="${build.jars.dir}/gcdml-dir" />
@@ -338,7 +338,7 @@
             <param name="deployment-specific.properties.dir" value="${jacs.properties.dir}"/>
             <param name="deployment-specific.properties.file" value="${deployment-specific.properties.file.name}"/>
             <param name="server.username" value="saffordt" />
-            <param name="jboss.home" value="/groups/scicomp/vicsData/servers/${server.address}/jboss-4.2.3.GA" />
+            <param name="jboss.home" value="/groups/scicomp/jacsData/servers/${server.address}/jboss-4.2.3.GA" />
         </antcall>
     </target>
 

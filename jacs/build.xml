@@ -102,8 +102,7 @@
             <fileset dir="${gwt.home}" includes="**/*.jar" />
             <fileset dir="${build.jars.dir}" includes="${gwt.common.jar.name}"/> <!-- include our "common" gwt module -->
             <fileset dir="${common.module}/Hibernate-3.2/" includes="*.jar"/>
-            <fileset file="${common.module}/PostgreSQL-8.1/jdbc/postgresql-8.1-404.jdbc3.jar"/>
-            <fileset file="${common.module}/MySQL-5.1.5/mysql-connector-java-5.1.5-bin.jar"/>
+            <fileset file="${common.module}/MySQL/mysql-connector-java-5.1.15-bin.jar"/>
             <fileset dir="${common.module}/JAXB-2.1.5/" includes="*.jar"/>
             <fileset dir="${shared.module}/conf/" includes="jacs.properties"/>
             <pathelement location="${common.module}/GWT/${gwt.dev.jar.name}" />  <!-- includes apache commons stuff -->
@@ -403,11 +402,11 @@
             <lib dir="${common.dir}/JAXB-2.1.5">
                 <include name="*.jar"/>
             </lib>
-            <lib dir="${common.module}/PostgreSQL-8.1/jdbc">
-                <include name="postgresql-8.1-404.jdbc3.jar"/>
-            </lib>
-            <lib dir="${common.module}/MySQL-5.1.5">
-                <include name="mysql-connector-java-5.1.5-bin.jar"/>
+            <!--<lib dir="${common.module}/PostgreSQL-8.1/jdbc">-->
+                <!--<include name="postgresql-8.1-404.jdbc3.jar"/>-->
+            <!--</lib>-->
+            <lib dir="${common.module}/MySQL">
+                <include name="mysql-connector-java-5.1.15-bin.jar"/>
             </lib>
             <lib dir="${common.module}/Hibernate-3.2">
                 <include name="antlr-2.7.6.jar"/>
@@ -772,7 +771,7 @@
             <param name="deployment-specific.properties.file" value="${deployment-specific.properties.file.name}"/>
             <param name="server.username" value="saffordt" />
             <param name="server.address" value="${server.address}" />
-            <param name="tomcat.home" value="/groups/scicomp/vicsData/servers/${server.address}/apache-tomcat-7.0.5" />
+            <param name="tomcat.home" value="/groups/scicomp/jacsData/servers/${server.address}/apache-tomcat-7.0.5" />
         </antcall>
     </target>
 

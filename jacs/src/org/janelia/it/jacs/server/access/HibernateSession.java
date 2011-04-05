@@ -37,7 +37,7 @@ import javax.naming.InitialContext;
  */
 public class HibernateSession {
 
-    private static final String HIBERNATE_SESSION_FACTORY = "java:/hibernate/CameraSessionFactory";
+    private static final String HIBERNATE_SESSION_FACTORY = "java:/hibernate/ComputeSessionFactory";
     private static Logger logger = Logger.getLogger(HibernateSession.class);
 
     public static Session getHibernateSession() {

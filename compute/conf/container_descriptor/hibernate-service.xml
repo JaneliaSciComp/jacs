@@ -26,7 +26,7 @@
            name="jboss.har:service=CameraHibernate">
         <attribute name="DatasourceName">java:/ComputeServer_DataSource</attribute>
 		<attribute name="Dialect">org.hibernate.dialect.MySQLDialect</attribute>
-        <attribute name="SessionFactoryName">java:/hibernate/CameraSessionFactory</attribute>
+        <attribute name="SessionFactoryName">java:/hibernate/ComputeSessionFactory</attribute>
         <attribute name="CacheProviderClass">org.hibernate.cache.HashtableCacheProvider</attribute>
 		<!--<attribute name="Hbm2ddlAuto">update</attribute>-->
 		<attribute name="ShowSqlEnabled">false</attribute>

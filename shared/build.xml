@@ -64,8 +64,8 @@
             <!--<fileset dir="${shared.module}/testfiles/" includes="**/*.*"/>-->
             <fileset file="${common.module}/GWT/gwt-user.jar"/>
             <fileset dir="${common.module}/Hibernate-3.2/" includes="*.jar"/>
-            <fileset file="${common.module}/MySQL-5.1.5/mysql-connector-java-5.1.5-bin.jar"/>
-            <fileset file="${common.module}/PostgreSQL-8.1/jdbc/postgresql-8.1-404.jdbc3.jar"/>
+            <fileset file="${common.module}/MySQL/mysql-connector-java-5.1.15-bin.jar"/>
+            <!--<fileset file="${common.module}/PostgreSQL-8.1/jdbc/postgresql-8.1-404.jdbc3.jar"/>-->
             <!--<pathelement location="${common.module}/JBoss-Server-4.2.3.GA/log4j.jar"/>-->
 
             <fileset dir="${common.module}/JAXB-2.1.5/" includes="*.jar"/>
@@ -203,8 +203,8 @@
         <delete file="${build.jars.dir}/dma.tar" />
         <mkdir dir="${build.jars.dir}/tar-dir/jar" />
         <copy file="${model.module}/build/jars/jacs-model.jar" todir="${build.jars.dir}/tar-dir/jar" />
-        <copy file="${common.dir}/PostgreSQL-8.1/jdbc/postgresql-8.1-404.jdbc3.jar" todir="${build.jars.dir}/tar-dir/jar" />
-        <copy file="${common.dir}/MySQL-5.1.5/mysql-connector-java-5.1.5-bin.jar" todir="${build.jars.dir}/tar-dir/jar" />
+        <!--<copy file="${common.dir}/PostgreSQL-8.1/jdbc/postgresql-8.1-404.jdbc3.jar" todir="${build.jars.dir}/tar-dir/jar" />-->
+        <copy file="${common.dir}/MySQL/mysql-connector-java-5.1.15-bin.jar" todir="${build.jars.dir}/tar-dir/jar" />
         <copy file="${common.dir}/GWT/gwt-user.jar" todir="${build.jars.dir}/tar-dir/jar" />
         <copy file="${build.jars.dir}/jacs-shared.jar" todir="${build.jars.dir}/tar-dir/jar" />
         <copy file="${basedir}/../shared/conf/dma.properties" todir="${build.jars.dir}/tar-dir/conf" />
