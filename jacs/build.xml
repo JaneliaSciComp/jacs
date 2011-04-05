@@ -371,13 +371,6 @@
     <target name="build-war" depends="setup, make-build-war-dir" description="builds the war file">
         <delete file="${build.war.dir}/${war.name}" />
 
-        <condition property="webxmlfile" value="web.jaas.xml">
-            <not><isset property="webxmlfile"/></not>
-        </condition>
-        <echo message="webxmlfile=${webxmlfile}"/>
-        <!-- swap in correct web.xml file -->
-        <copy file="${webroot.dir}/WEB-INF/${webxmlfile}" tofile="${webroot.dir}/WEB-INF/web.xml" overwrite="true"/>
-
         <war destfile="${build.war.dir}/${war.name}" webxml="${webroot.dir}/WEB-INF/web.xml" update="false">
             <!-- All the libs -->
             <lib dir="${lib.dir}">

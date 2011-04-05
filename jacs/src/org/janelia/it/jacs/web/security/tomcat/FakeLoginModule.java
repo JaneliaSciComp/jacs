@@ -66,7 +66,7 @@ public class FakeLoginModule implements LoginModule {
         if (!subject.getPrincipals().contains(principal))
             subject.getPrincipals().add(principal);
         // add role principals
-        // NOTE!!!!!!!!: This role better be in the web.xml file that is used!  (web.jaas.xml in this case)
+        // NOTE!!!!!!!!: This role better be in the web.xml file!
         subject.getPrincipals().add(new JacsRolePrincipal("user"));
         committed = true;
         log.info("commit succesful");
