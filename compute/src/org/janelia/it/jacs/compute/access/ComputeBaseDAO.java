@@ -65,7 +65,7 @@ public class ComputeBaseDAO {
 
     private SessionFactory getSessionFactory() {
         try {
-            sessionFactory = (SessionFactory) createInitialContext().lookup("java:/hibernate/CameraSessionFactory");
+            sessionFactory = (SessionFactory) createInitialContext().lookup("java:/hibernate/ComputeSessionFactory");
             return sessionFactory;
         }
         catch (Exception e) {
