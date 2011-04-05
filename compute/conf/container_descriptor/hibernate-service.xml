@@ -23,7 +23,7 @@
 
 <server>
     <mbean code="org.jboss.hibernate.jmx.Hibernate"
-           name="jboss.har:service=CameraHibernate">
+           name="jboss.har:service=ComputeHibernate">
         <attribute name="DatasourceName">java:/ComputeServer_DataSource</attribute>
 		<attribute name="Dialect">org.hibernate.dialect.MySQLDialect</attribute>
         <attribute name="SessionFactoryName">java:/hibernate/ComputeSessionFactory</attribute>
