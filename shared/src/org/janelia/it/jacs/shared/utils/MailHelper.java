@@ -62,7 +62,7 @@ public class MailHelper {
             Message message = new MimeMessage(session);
             message.setFrom(new InternetAddress(from));
             message.setRecipient(Message.RecipientType.TO, new InternetAddress(to));
-            message.setSubject(subject);
+            message.setSubject("[JACS] " + subject);
             message.setText(bodyText);
 
             //

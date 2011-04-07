@@ -187,7 +187,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
             }
             // Check if the SGE grid requires account info
             if (SystemConfigurationProperties.getBoolean("Grid.RequiresAccountInfo")) {
-//                setAccount(jt);
+                setAccount(jt);
             }
         }
         finally {
