@@ -158,7 +158,7 @@ public class QueueMessage extends BaseMessage implements IProcessData {
     }
 
     public Throwable getProcessingException() {
-        return (Exception) getItem(IProcessData.PROCESSING_EXCEPTION);
+        return (Throwable) getItem(IProcessData.PROCESSING_EXCEPTION);
     }
 
     public void setProcessingException(Throwable processingException) {

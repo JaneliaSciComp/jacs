@@ -323,9 +323,27 @@
 
     <!-- deploys to app server area -->
     <target name="deploy-[your-server]-dev" depends="setup" description="Deploy ear and jars to development server">
-        <input message="Please enter server name (i.e. camdev2):" addproperty="server.address" />
-        <!--<input message="Please enter password for saffordt:" addproperty="server.password" />-->
+        <condition property="host.provided">
+            <isset property="user.server.machine"/>
+        </condition>
+        <antcall target="setHost"/>
+        <antcall target='getHost'/>
+    </target>
 
+    <target name="getHost" unless="host.provided" description="Ping the user for a host">
+        <input message="Please enter server name or set your user.server.machine property:" addproperty="server.address" />
+        <!--<input message="Please enter password for saffordt:" addproperty="server.password" />-->
+        <antcall target="deploy-server"/>
+    </target>
+
+    <target name="setHost" if="host.provided" description="Set the known host value">
+        <echo message="Setting the host to ${user.server.machine}, provided by the user.properties file"/>
+        <property name="server.address" value="${user.server.machine}"/>
+        <echo message="server.address is now ${server.address}"/>
+        <antcall target="deploy-server"/>
+    </target>
+
+    <target name="deploy-server" description="Push the server code to the host provided">
         <echo message="Checking ${jacs.properties.dir}/${server.address}.properties for existance" />
         <condition property="deployment-specific.properties.file.name"
                    value="${server.address}.properties"
@@ -399,12 +417,13 @@
 
          <!--stop jboss server and give it time to shutdown-->
         <sequential >
-            <echo message="Shutting down JBoss...(~/bin/stopjboss.sh ${jboss.home} ${FromPropFile.computeserver.ejb.service})" />
+            <echo message="Shutting down JBoss...(/groups/scicomp/jacsData/bin/stopjboss.sh ${jboss.home} ${FromPropFile.computeserver.ejb.service})" />
             <exec executable="${ssh}" description="Shutting down Jboss"
-                  outputproperty="exec.output">
-                <arg line="${ssh.common.params} ~/bin/stopjboss.sh ${jboss.home} ${FromPropFile.computeserver.ejb.service}"/>
+                  outputproperty="exec.output" errorproperty="exec.error">
+                <arg line="${ssh.common.params} /groups/scicomp/jacsData/bin/stopjboss.sh ${jboss.home} ${FromPropFile.computeserver.ejb.service}"/>
             </exec>
             <echo message="Done : ${exec.output}"  />
+            <echo message="Done : ${exec.error}"  />
         </sequential>
 
         <property name="Grid.Jar.Path" value="${FromPropFile.Grid.Lib.Path}/${FromPropFile.Grid.Jar.Name}"/>
@@ -443,11 +462,12 @@
 
          <!--restart JBoss -->
         <echo message="Starting JBoss" />
-        <exec executable="${ssh}" description="Starting Jboss (~/bin/startjboss.sh ${jboss.home} default)"
-              outputproperty="exec.output">
-            <arg line="${ssh.common.params} ~/bin/startjboss.sh ${jboss.home} default"/>
+        <exec executable="${ssh}" description="Starting Jboss (/groups/scicomp/jacsData/bin/startjboss.sh ${jboss.home} default)"
+              outputproperty="exec.output" errorproperty="exec.error">
+            <arg line="${ssh.common.params} /groups/scicomp/jacsData/bin/startjboss.sh ${jboss.home} default"/>
         </exec>
-        <echo message=" Done : ${exec.output}"  />
+        <echo message="Done : ${exec.output}"  />
+        <echo message="Done : ${exec.error}"  />
 
          <!--remove temp files -->
          <delete dir="${temp.dir}"/>

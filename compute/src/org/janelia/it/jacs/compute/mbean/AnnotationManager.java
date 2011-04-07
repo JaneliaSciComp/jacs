@@ -24,10 +24,16 @@
 package org.janelia.it.jacs.compute.mbean;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.annotation.Annotation;
+import org.janelia.it.jacs.model.tasks.Event;
+import org.janelia.it.jacs.model.tasks.TaskParameter;
+import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorTask;
+import org.janelia.it.jacs.model.user_data.Node;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 /**
  * Created by IntelliJ IDEA.
@@ -62,6 +68,20 @@ public class AnnotationManager implements AnnotationManagerMBean {
     public void editAnnotation(String owner, String uniqueIdentifier, String namespace, String term, String value,
                                String comment, String conditional){
         EJBFactory.getRemoteAnnotationBean().editAnnotation(owner, uniqueIdentifier, namespace, term, value, comment, conditional);
+    }
+
+    @Override
+    public void testNeuronSep() {
+        try {
+            NeuronSeparatorTask neuTask = new NeuronSeparatorTask(new HashSet<Node>(), "saffordt", new ArrayList<Event>(),
+                    new HashSet<TaskParameter>());
+            neuTask.setJobName("Neuron Separator Test");
+            neuTask = (NeuronSeparatorTask)EJBFactory.getLocalComputeBean().saveOrUpdateTask(neuTask);
+            EJBFactory.getLocalComputeBean().submitJob("NeuronSeparation", neuTask.getObjectId());
+        }
+        catch (DaoException e) {
+            e.printStackTrace();
+        }
     }
 
 }

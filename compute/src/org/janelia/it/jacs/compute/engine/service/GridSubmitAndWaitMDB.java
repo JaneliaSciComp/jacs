@@ -137,7 +137,7 @@ public class GridSubmitAndWaitMDB extends BaseServiceMDB {
                     }
                 }
                 throw new ServiceException("GRID JOB FAILURES: operation " + operationToProcess.getName() +
-                        " for task " + task.getObjectId() + " resulted in error '" + gpr.getError() + "'");
+                        " for task " + uniqueKey + " resulted in error '" + gpr.getError() + "'");
             }
             forwardOrReply(queueMessage, operationToProcess);
         }

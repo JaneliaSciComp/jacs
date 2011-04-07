@@ -116,7 +116,7 @@ public abstract class SubmitTeraGridJobService implements SubmitJobService {
 
     protected Process submitAsynchronousJob() throws Exception {
         if (logger.isInfoEnabled()) {
-            logger.info("Preparing " + task.getTaskName() + " (task id = " + this.task.getObjectId() + " for asyncronous DRMAA submission");
+            logger.info("Preparing " + task.getTaskName() + " (task id = " + this.task.getObjectId() + " for asyncronous DRMAA submission)");
         }
         FileWriter writer = new FileWriter(new File(resultFileNode.getDirectoryPath() + File.separator + "tgScript.sh"));
         try {

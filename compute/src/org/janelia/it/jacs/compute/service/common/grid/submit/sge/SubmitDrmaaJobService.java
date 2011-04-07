@@ -187,7 +187,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
             }
             // Check if the SGE grid requires account info
             if (SystemConfigurationProperties.getBoolean("Grid.RequiresAccountInfo")) {
-                setAccount(jt);
+//                setAccount(jt);
             }
         }
         finally {
@@ -199,7 +199,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
 
     protected Process submitAsynchronousJob(String submissionKey) throws Exception {
         if (logger.isInfoEnabled()) {
-            logger.info("Preparing " + task.getTaskName() + " (task id = " + this.task.getObjectId() + " for asyncronous DRMAA submission");
+            logger.info("Preparing " + task.getTaskName() + " (task id = " + this.task.getObjectId() + " for asyncronous DRMAA submission)");
         }
 
         DrmaaHelper drmaa = new DrmaaHelper(logger);

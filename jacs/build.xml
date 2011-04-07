@@ -750,8 +750,27 @@
     <!--</target>-->
 
     <target name="deploy-[your-server]-dev" depends="setup" description="Deploy ear and jars to development server">
-        <input message="Please enter server name (i.e. saffordt-ws1):" addproperty="server.address" />
+        <condition property="host.provided">
+            <isset property="user.server.machine"/>
+        </condition>
+        <antcall target="setHost"/>
+        <antcall target='getHost'/>
+    </target>
 
+    <target name="getHost" unless="host.provided" description="Ping the user for a host">
+        <input message="Please enter server name, or set your user.server.machine property:" addproperty="server.address" />
+        <!--<input message="Please enter password for saffordt:" addproperty="server.password" />-->
+        <antcall target="deploy-server"/>
+    </target>
+
+    <target name="setHost" if="host.provided" description="Set the known host value">
+        <echo message="Setting the host to ${user.server.machine}, provided by the user.properties file"/>
+        <property name="server.address" value="${user.server.machine}"/>
+        <echo message="server.address is now ${server.address}"/>
+        <antcall target="deploy-server"/>
+    </target>
+
+    <target name="deploy-server" description="Push the server code to the host provided">
         <echo message="Checking ${jacs.properties.dir}/${server.address}.properties for existance" />
         <condition property="deployment-specific.properties.file.name"
                    value="${server.address}.properties"
@@ -812,7 +831,7 @@
             <echo message="Shutting down Tomcat..." />
             <exec executable="${ssh}" description="Shutting down Tomcat"
                   outputproperty="exec.output">
-                <arg line="${ssh.common.params} ~/bin/stoptomcat.sh ${tomcat.home}"/>
+                <arg line="${ssh.common.params} /groups/scicomp/jacsData/bin/stoptomcat.sh ${tomcat.home}"/>
             </exec>
             <echo message="Done : ${exec.output}"  />
         </sequential>
@@ -837,10 +856,10 @@
         </exec>
 
          <!--restart tomcat -->
-        <echo message="Starting Tomcat (~/bin/starttomcat.sh ${tomcat.home})" />
+        <echo message="Starting Tomcat (/groups/scicomp/jacsData/bin/starttomcat.sh ${tomcat.home})" />
         <exec executable="${ssh}" description="Starting Tomcat"
               outputproperty="exec.output">
-            <arg line="${ssh.common.params} ~/bin/starttomcat.sh ${tomcat.home}"/>
+            <arg line="${ssh.common.params} /groups/scicomp/jacsData/bin/starttomcat.sh ${tomcat.home}"/>
         </exec>
 
          <!--remove temp files -->
