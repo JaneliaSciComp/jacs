@@ -29,6 +29,7 @@ import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorTask;
 import org.janelia.it.jacs.model.vo.ParameterException;
 
 import java.io.File;
@@ -80,7 +81,9 @@ public class NeuronSeparatorSubmitJobService extends SubmitDrmaaJobService {
             throws IOException, ParameterException, MissingDataException, InterruptedException, ServiceException {
         String basePath = SystemConfigurationProperties.getString("Executables.ModuleBase");
 
-        String pipelineCmd = basePath + SystemConfigurationProperties.getString("NeuSep.PipelineCmd");
+        String pipelineCmd = basePath + SystemConfigurationProperties.getString("NeuSep.PipelineCmd")+" "+
+                task.getParameter(NeuronSeparatorTask.PARAM_inputFilePath)+" "+resultFileNode.getDirectoryPath()+
+                File.separator;
 //        SystemConfigurationProperties properties = SystemConfigurationProperties.getInstance();
 //        String tmpDirectoryName = properties.getProperty("Upload.ScratchDir");
 

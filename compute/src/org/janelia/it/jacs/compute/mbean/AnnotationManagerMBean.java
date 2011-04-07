@@ -36,5 +36,5 @@ public interface AnnotationManagerMBean {
     public String getAnnotationsForUser(String owner);
     public void editAnnotation(String owner, String uniqueIdentifier, String namespace, String term, String value,
                                String comment, String conditional);
-    public void testNeuronSep();
+    public void testNeuronSep(String inputFilePath);
 }

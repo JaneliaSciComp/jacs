@@ -70,12 +70,12 @@ public class AnnotationManager implements AnnotationManagerMBean {
         EJBFactory.getRemoteAnnotationBean().editAnnotation(owner, uniqueIdentifier, namespace, term, value, comment, conditional);
     }
 
-    @Override
-    public void testNeuronSep() {
+    public void testNeuronSep(String inputFilePath) {
         try {
             NeuronSeparatorTask neuTask = new NeuronSeparatorTask(new HashSet<Node>(), "saffordt", new ArrayList<Event>(),
                     new HashSet<TaskParameter>());
             neuTask.setJobName("Neuron Separator Test");
+            neuTask.setParameter(NeuronSeparatorTask.PARAM_inputFilePath, inputFilePath);
             neuTask = (NeuronSeparatorTask)EJBFactory.getLocalComputeBean().saveOrUpdateTask(neuTask);
             EJBFactory.getLocalComputeBean().submitJob("NeuronSeparation", neuTask.getObjectId());
         }

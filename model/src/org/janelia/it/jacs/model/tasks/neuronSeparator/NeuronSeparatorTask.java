@@ -29,6 +29,7 @@ import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.model.vo.ParameterVO;
+import org.janelia.it.jacs.model.vo.TextParameterVO;
 
 import java.util.List;
 import java.util.Set;
@@ -45,6 +46,7 @@ public class NeuronSeparatorTask extends Task {
     // Sample input file
 
     // Parameter Keys
+    transient public static final String PARAM_inputFilePath = "input file path";
 
     // Default values - default overrides
 
@@ -58,7 +60,7 @@ public class NeuronSeparatorTask extends Task {
     }
 
     private void setDefaultValues() {
-//        setParameter(PARAM_fragmentFiles, "");
+        setParameter(PARAM_inputFilePath, "");
         this.taskName = TASK_NAME;
     }
 
@@ -68,6 +70,9 @@ public class NeuronSeparatorTask extends Task {
         String value = getParameter(key);
         if (value == null)
             return null;
+        if (key.equals(PARAM_inputFilePath)) {
+            return new TextParameterVO(value, 400);
+        }
         // No match
         return null;
     }
