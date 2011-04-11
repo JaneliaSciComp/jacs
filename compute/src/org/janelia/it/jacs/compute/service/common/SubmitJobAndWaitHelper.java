@@ -26,6 +26,8 @@ package org.janelia.it.jacs.compute.service.common;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.model.tasks.Event;
+import org.janelia.it.jacs.model.tasks.Task;
 
 /**
  * Created by IntelliJ IDEA.
@@ -64,17 +66,13 @@ public class SubmitJobAndWaitHelper {
     protected void waitForTask(Long taskId) throws Exception {
         ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
         String[] taskStatus = null;
-        while (taskStatus == null || !isTaskComplete(taskStatus[0])) {
+        while (taskStatus == null || !Task.isDone(taskStatus[0])) {
             taskStatus = computeBean.getTaskStatus(taskId);
             Thread.sleep(WAIT_INTERVAL_IN_SECONDS * 1000);
         }
-        if (!taskStatus[0].equals("completed")) {
+        if (!taskStatus[0].equals(Event.COMPLETED_EVENT)) {
             throw new Exception("Task " + taskId + " finished with non-complete status=" + taskStatus[0]);
         }
-    }
-
-    private boolean isTaskComplete(String status) {
-        return status.equals("completed") || status.equals("error");
     }
 
 }

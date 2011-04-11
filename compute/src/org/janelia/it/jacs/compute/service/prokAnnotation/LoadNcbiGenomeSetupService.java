@@ -32,6 +32,7 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Event;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.prokAnnotation.ProkaryoticAnnotationLoadGenomeDataTask;
 import org.janelia.it.jacs.model.tasks.utility.FtpFileTask;
 import org.janelia.it.jacs.model.user_data.genome.GenomeProjectFileNode;
@@ -75,7 +76,7 @@ public class LoadNcbiGenomeSetupService implements IService {
             loadTask = (FtpFileTask) computeBean.saveOrUpdateTask(loadTask);
             computeBean.submitJob("NCBIFtpFile", loadTask.getObjectId());
             String status = waitAndVerifyCompletion(loadTask.getObjectId());
-            if (!"completed".equals(status)) {
+            if (!Event.COMPLETED_EVENT.equals(status)) {
                 logger.error("\n\n\nERROR: the NCBI Ftp job has not actually completed!\nStatus is " + status);
             }
 
@@ -250,16 +251,12 @@ public class LoadNcbiGenomeSetupService implements IService {
     private String waitAndVerifyCompletion(Long taskId) throws Exception {
         org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
         String[] statusTypeAndValue = computeBean.getTaskStatus(taskId);
-        while (!isTaskComplete(statusTypeAndValue[0])) {
+        while (!Task.isDone(statusTypeAndValue[0])) {
             Thread.sleep(5000);
             statusTypeAndValue = computeBean.getTaskStatus(taskId);
         }
         logger.debug(statusTypeAndValue[1]);
         return statusTypeAndValue[0];
-    }
-
-    private boolean isTaskComplete(String status) {
-        return status.equals("completed") || status.equals("error");
     }
 
     private class MyGenbankFileComparator implements Comparator {

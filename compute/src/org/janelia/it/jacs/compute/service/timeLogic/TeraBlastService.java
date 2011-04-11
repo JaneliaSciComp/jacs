@@ -29,6 +29,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.access.TextFileIO;
+import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.blast.TeraBlastTask;
 import org.janelia.it.jacs.model.tasks.blast.IBlastOutputFormatTask;
 import org.janelia.it.jacs.model.tasks.blast.BlastTask;
@@ -350,7 +351,7 @@ public class TeraBlastService implements IService {
             File statusLog = new File ( configurationDirectory.getAbsolutePath(), dcShowLogFileName );
             statusLog.createNewFile();
             statusLog.setWritable( true );
-            while ( ! ( status.equals("completed") || status.equals("error") ) ) {
+            while (!Task.isDone(status)) {
                 Thread.sleep(waitTime[waitMarker]);
                 waitTotal += waitTime[waitMarker];
                 if ( waitMarker < 4 && waitTotal > waitMilestone[waitMarker] ) {
@@ -375,7 +376,7 @@ public class TeraBlastService implements IService {
                     }
                     Thread.sleep( 5 * 60000 );
                 } else if ( ! status.equals(newStatus) ) {
-                    if ( ! newStatus.equals("completed")) {
+                    if ( ! newStatus.equals(Event.COMPLETED_EVENT)) {
                         EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(),newStatus,newMessage, nowTimeStamp());
                     }
                     status = newStatus;
@@ -391,7 +392,7 @@ public class TeraBlastService implements IService {
                 }
             }
 
-            if ( status.equals("error") ) {
+            if ( status.equals(Event.ERROR_EVENT) ) {
                 throw new Exception("decypher error: ".concat(message));
             }
             statusLog.delete();
@@ -820,7 +821,7 @@ public class TeraBlastService implements IService {
     private void logError(Exception e) {
         if ( task != null ) {
             try {
-                EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(),"error",e.getMessage(), nowTimeStamp());
+                EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(),Event.ERROR_EVENT,e.getMessage(), nowTimeStamp());
                 EJBFactory.getLocalComputeBean().addTaskNote(task.getObjectId(),"error: " + e.getMessage());
             } catch (Exception ignored) {
             }
@@ -837,7 +838,7 @@ public class TeraBlastService implements IService {
             SystemCall system = new SystemCall( logger );
             system.emulateCommandLine( "dc_get -purge -job " + decypherJobId + " > /dev/null", true );
 
-            EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(),"completed","result location: " + resultDirectory.getAbsolutePath(),nowTimeStamp());
+            EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(), Event.COMPLETED_EVENT,"result location: " + resultDirectory.getAbsolutePath(),nowTimeStamp());
             if ( numHits == 1 ) {
                 EJBFactory.getLocalComputeBean().addTaskNote(task.getObjectId(),"completed: 1 hit");
             } else {

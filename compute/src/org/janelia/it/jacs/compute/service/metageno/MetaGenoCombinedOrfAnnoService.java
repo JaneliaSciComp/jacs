@@ -137,17 +137,13 @@ public class MetaGenoCombinedOrfAnnoService implements IService {
 
     protected void waitForTask(Long taskId) throws Exception {
         String[] taskStatus = null;
-        while (taskStatus == null || !isTaskComplete(taskStatus[0])) {
+        while (taskStatus == null || !Task.isDone(taskStatus[0])) {
             taskStatus = computeBean.getTaskStatus(taskId);
             Thread.sleep(5000);
         }
-        if (!taskStatus[0].equals("completed")) {
+        if (!taskStatus[0].equals(Event.COMPLETED_EVENT)) {
             throw new Exception("Task " + taskId + " finished with non-complete status=" + taskStatus[0]);
         }
-    }
-
-    private boolean isTaskComplete(String status) {
-        return status.equals("completed") || status.equals("error");
     }
 
     protected void setParentTaskToErrorStatus(Task parentTask, String message) {

@@ -51,8 +51,8 @@ public class ProkAnnotationLocalDirectoryImportTask extends Task {
     public static final String PATH_TO_SOURCE_DATA = "pathToSourceData";
     public static final String GENOME_PROJECT_STATUS = "genomeProjectStatus";
 
-    public static final String COMPLETED_GENOME_PROJECT_STATUS = "completed";
-    public static final String UNFINISHED_GENOME_PROJECT_STATUS = "unfinished";
+//    public static final String COMPLETED_GENOME_PROJECT_STATUS = "completed";
+//    public static final String UNFINISHED_GENOME_PROJECT_STATUS = "unfinished";
 
     public ProkAnnotationLocalDirectoryImportTask() {
         super();

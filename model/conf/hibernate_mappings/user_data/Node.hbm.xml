@@ -596,6 +596,12 @@
                       select-before-update="false">
             </subclass>
 
+            <subclass name="org.janelia.it.jacs.model.user_data.colorSeparator.ColorSeparatorResultNode" discriminator-value="ColorSeparatorResultNode"
+                      dynamic-update="true"
+                      dynamic-insert="true"
+                      select-before-update="false">
+            </subclass>
+
             <subclass name="org.janelia.it.jacs.model.user_data.inspect.InspectResultNode" discriminator-value="InspectResultNode"
                       dynamic-update="true"
                       dynamic-insert="true"

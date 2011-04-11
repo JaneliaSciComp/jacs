@@ -21,18 +21,15 @@
   ~ "http://www.perlfoundation.org/artistic_license_2_0."
   -->
 
-<process name="Neuron Separation Pipeline" startEvent="pending" updateProcessStatus="on_success" processor="queue/neuronSeparatorLauncher">
-    <sequence name="neuronSepLauncher">
+<process name="Neuron Separation Complete Pipeline" startEvent="pending" updateProcessStatus="on_success" processor="queue/neuronSeparatorPipelineLauncher">
+    <sequence name="neuronPipelineSepLauncher">
         <operation name="Create Neuron Separation Result Node" processor="org.janelia.it.jacs.compute.service.neuronSeparator.CreateNeuronSeparatorResultFileNodeService">
-            <output name="RESULT_FILE_NODE_ID"/>          
+            <output name="RESULT_FILE_NODE_ID"/>
             <output name="RESULT_FILE_NODE"/>
         </operation>
-        <sequence name="Submit NeuSep Job" startEvent="running" waitForAsync="true">
-            <operation name="Submit Job" processor="queue/gridSubmitAndWait">
-                <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.NeuronSeparatorSubmitJobService"/>
-                <input name="RESULT_FILE_NODE_ID"/>
-                <input name="RESULT_FILE_NODE"/>
-            </operation>
-        </sequence>
+        <operation name="Manage the Neuron Separation Pipeline" processor="org.janelia.it.jacs.compute.service.neuronSeparator.NeuronSeparationPipelineService">
+            <output name="RESULT_FILE_NODE_ID"/>
+            <output name="RESULT_FILE_NODE"/>
+        </operation>
     </sequence>
 </process>

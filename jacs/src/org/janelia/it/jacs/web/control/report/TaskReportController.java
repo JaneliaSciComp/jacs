@@ -152,7 +152,7 @@ public class TaskReportController extends BaseCommandController {
             try {
                 TaskReportInfo taskReportInfo = new TaskReportInfo(task);
                 taskInfoList.add(taskReportInfo);
-                if ("completed".equals(taskReportInfo.getLastStatus().getEventType())) {
+                if (Event.COMPLETED_EVENT.equals(taskReportInfo.getLastStatus().getEventType())) {
                     stats.addReportItem(taskReportInfo);
                 }
                 cleanHibernateCache(task);

@@ -230,18 +230,14 @@ public abstract class MgAnnoBaseService implements IService {
     protected Node waitForTask(Long taskId) throws Exception {
         ComputeBeanRemote computeBean = getComputeBean();
         String[] taskStatus = null;
-        while (taskStatus == null || !isTaskComplete(taskStatus[0])) {
+        while (taskStatus == null || !Task.isDone(taskStatus[0])) {
             taskStatus = computeBean.getTaskStatus(taskId);
             Thread.sleep(5000);
         }
-        if (!taskStatus[0].equals("completed")) {
+        if (!taskStatus[0].equals(Event.COMPLETED_EVENT)) {
             throw new Exception("Task " + taskId + " finished with non-complete status=" + taskStatus[0]);
         }
         return computeBean.getResultNodeByTaskId(taskId);
-    }
-
-    private boolean isTaskComplete(String status) {
-        return status.equals("completed") || status.equals("error");
     }
 
 }

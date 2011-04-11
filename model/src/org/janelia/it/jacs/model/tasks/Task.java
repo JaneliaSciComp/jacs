@@ -316,6 +316,9 @@ public abstract class Task implements java.io.Serializable, IsSerializable {
     }
 
     public static List<String> listOfStringsFromCsvString(String listString) {
+        if (null==listString||"".equals(listString)) {
+            return new ArrayList<String>();
+        }
         String[] listArr = listString.split(",");
         ArrayList<String> list = new ArrayList<String>();
         for (String aListArr : listArr) {

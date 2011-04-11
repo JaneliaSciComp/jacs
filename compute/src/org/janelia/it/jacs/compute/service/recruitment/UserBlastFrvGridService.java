@@ -170,7 +170,7 @@ public class UserBlastFrvGridService implements IService {
             computeBean.saveEvent(task.getObjectId(), Event.RUNNING_EVENT, Event.RUNNING_EVENT, new Date());
             computeBean.submitJob("FRVBlast", blastNTask.getObjectId());
             String status = waitAndVerifyCompletion(blastNTask.getObjectId());
-            if (!"completed".equals(status)) {
+            if (!Event.COMPLETED_EVENT.equals(status)) {
                 System.out.println("\n\n\nERROR: the blast job has not actually completed!\nStatus is " + status);
                 throw new ServiceException("Error running the UserBlastFrvGridService FRVBlast");
             }
@@ -211,7 +211,7 @@ public class UserBlastFrvGridService implements IService {
             computeBean.saveEvent(task.getObjectId(), Event.GENERATING_IMAGES_EVENT, Event.GENERATING_IMAGES_EVENT, new Date());
             computeBean.submitJob("FrvNovelGrid", filterDataTask.getObjectId());
             String imageStatus = waitAndVerifyCompletion(filterDataTask.getObjectId());
-            if (!"completed".equals(imageStatus)) {
+            if (!Event.COMPLETED_EVENT.equals(imageStatus)) {
                 System.out.println("\n\n\nERROR: the filter job has not actually completed!\nStatus is " + status);
                 throw new ServiceException("Error running the UserBlastFrvGridService FrvNovelGrid");
             }
@@ -242,17 +242,12 @@ public class UserBlastFrvGridService implements IService {
     private String waitAndVerifyCompletion(Long taskId) throws Exception {
         org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
         String[] statusTypeAndValue = computeBean.getTaskStatus(taskId);
-        while (!isTaskComplete(statusTypeAndValue[0])) {
+        while (!Task.isDone(statusTypeAndValue[0])) {
             Thread.sleep(5000);
             statusTypeAndValue = computeBean.getTaskStatus(taskId);
         }
         System.out.println(statusTypeAndValue[1]);
         return statusTypeAndValue[0];
     }
-
-    private boolean isTaskComplete(String status) {
-        return status.equals("completed") || status.equals("error");
-    }
-
 
 }

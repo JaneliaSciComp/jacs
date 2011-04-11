@@ -24,9 +24,10 @@
 package org.janelia.it.jacs.compute.launcher.scheduler;
 
 import org.apache.log4j.Logger;
-import org.jboss.annotation.ejb.ResourceAdapter;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.tasks.Task;
+import org.jboss.annotation.ejb.ResourceAdapter;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -116,16 +117,12 @@ public class GenomeProjectUpdaterMDB implements Job {
     private String waitAndVerifyCompletion(Long taskId) throws Exception {
         org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
         String[] statusTypeAndValue = computeBean.getTaskStatus(taskId);
-        while (!isTaskComplete(statusTypeAndValue[0])) {
+        while (!Task.isDone(statusTypeAndValue[0])) {
             Thread.sleep(5000);
             statusTypeAndValue = computeBean.getTaskStatus(taskId);
         }
         log.debug(statusTypeAndValue[1]);
         return statusTypeAndValue[0];
-    }
-
-    private boolean isTaskComplete(String status) {
-        return status.equals("completed") || status.equals("error");
     }
 
 }

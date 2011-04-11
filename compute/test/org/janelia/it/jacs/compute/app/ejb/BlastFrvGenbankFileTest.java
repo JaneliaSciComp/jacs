@@ -26,6 +26,8 @@ package org.janelia.it.jacs.compute.app.ejb;
 import org.janelia.it.jacs.compute.ComputeTestCase;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.mbean.RecruitmentNodeManager;
+import org.janelia.it.jacs.model.tasks.Event;
+import org.janelia.it.jacs.model.tasks.Task;
 
 /**
  * Created by IntelliJ IDEA.
@@ -62,23 +64,19 @@ public class BlastFrvGenbankFileTest extends ComputeTestCase {
             org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
             String[] statusTypeAndValue = computeBean.getTaskStatus(taskId);
             int sanityCheck=300; // five-minutes
-            while (!isTaskComplete(statusTypeAndValue[0])) {
+            while (!Task.isDone(statusTypeAndValue[0])) {
                 sanityCheck--;
                 if (sanityCheck<=0)
                     throw new Exception("Test exceeded maximum permitted time");
                 Thread.sleep(1000);
                 statusTypeAndValue = computeBean.getTaskStatus(taskId);
             }
-            if (!statusTypeAndValue[0].equals("completed"))
+            if (!statusTypeAndValue[0].equals(Event.COMPLETED_EVENT))
                 throw new Exception("Task finished with status other than complete="+statusTypeAndValue[0]);
         } catch (Exception ex) {
             ex.printStackTrace();
             fail(ex.toString());
         }
-    }
-
-    private boolean isTaskComplete(String status) {
-        return status.equals("completed") || status.equals("error");
     }
 
 }

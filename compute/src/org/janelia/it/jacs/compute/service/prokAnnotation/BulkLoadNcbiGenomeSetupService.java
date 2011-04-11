@@ -31,6 +31,7 @@ import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.prokAnnotation.ProkaryoticAnnotationBulkLoadGenomeDataTask;
 import org.janelia.it.jacs.model.tasks.prokAnnotation.ProkaryoticAnnotationLoadGenomeDataTask;
 
@@ -100,16 +101,12 @@ public class BulkLoadNcbiGenomeSetupService implements IService {
     private String waitAndVerifyCompletion(Long taskId) throws Exception {
         ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
         String[] statusTypeAndValue = computeBean.getTaskStatus(taskId);
-        while (!isTaskComplete(statusTypeAndValue[0])) {
+        while (!Task.isDone(statusTypeAndValue[0])) {
             Thread.sleep(5000);
             statusTypeAndValue = computeBean.getTaskStatus(taskId);
         }
         logger.debug(statusTypeAndValue[1]);
         return statusTypeAndValue[0];
-    }
-
-    private boolean isTaskComplete(String status) {
-        return status.equals("completed") || status.equals("error");
     }
 
 }

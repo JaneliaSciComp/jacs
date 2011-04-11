@@ -30,6 +30,7 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.blast.BlastNTask;
 import org.janelia.it.jacs.model.tasks.recruitment.GenomeProjectRecruitmentSamplingTask;
@@ -69,7 +70,7 @@ public class GenomeProjectRecruitmentSamplingService implements IService {
             builderTask = (RecruitmentSamplingBlastDatabaseBuilderTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(builderTask);
             EJBFactory.getLocalComputeBean().submitJob("FRVSamplingBlastDatabaseBuilder", builderTask.getObjectId());
             String builderStatus = waitAndVerifyCompletion(builderTask.getObjectId());
-            if (!"completed".equals(builderStatus)) {
+            if (!Event.COMPLETED_EVENT.equals(builderStatus)) {
                 System.out.println("\n\n\nERROR: the blast sampling db builder job has not actually completed!\nStatus is " + builderStatus);
                 throw new ServiceException("FRVSamplingBlastDatabaseBuilder did not complete successfully.");
             }
@@ -108,7 +109,7 @@ public class GenomeProjectRecruitmentSamplingService implements IService {
             EJBFactory.getRemoteComputeBean().saveEvent(task.getObjectId(), "Running Blast", "Running Blast", new Date());
             EJBFactory.getRemoteComputeBean().submitJob("FRVSamplingBlast", blastNTask.getObjectId());
             String status = waitAndVerifyCompletion(blastNTask.getObjectId());
-            if (!"completed".equals(status)) {
+            if (!Event.COMPLETED_EVENT.equals(status)) {
                 System.out.println("\n\n\nERROR: the blast job has not actually completed!\nStatus is " + status);
                 throw new ServiceException("FRVSamplingBlast did not complete successfully.");
             }
@@ -125,17 +126,12 @@ public class GenomeProjectRecruitmentSamplingService implements IService {
 
     private String waitAndVerifyCompletion(Long taskId) throws Exception {
         String[] statusTypeAndValue = EJBFactory.getRemoteComputeBean().getTaskStatus(taskId);
-        while (!isTaskComplete(statusTypeAndValue[0])) {
+        while (!Task.isDone(statusTypeAndValue[0])) {
             Thread.sleep(5000);
             statusTypeAndValue = EJBFactory.getRemoteComputeBean().getTaskStatus(taskId);
         }
         System.out.println(statusTypeAndValue[1]);
         return statusTypeAndValue[0];
-    }
-
-
-    private boolean isTaskComplete(String status) {
-        return status.equals("completed") || status.equals("error");
     }
 
 

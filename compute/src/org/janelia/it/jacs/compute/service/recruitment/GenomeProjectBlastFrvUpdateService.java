@@ -167,7 +167,7 @@ public class GenomeProjectBlastFrvUpdateService implements IService {
             // SUBMITTING BLAST JOB
             EJBFactory.getRemoteComputeBean().submitJob("FRVBlast", blastNTask.getObjectId());
             String status = waitAndVerifyCompletion(blastNTask.getObjectId());
-            if (!"completed".equals(status)) {
+            if (!Event.COMPLETED_EVENT.equals(status)) {
                 logger.error("\n\n\nERROR: the blast job has not actually completed!\nStatus is " + status);
                 throw new ServiceException("Error running the GenomeProjectBlastFrvUpdateService FRVBlast");
             }
@@ -238,17 +238,12 @@ public class GenomeProjectBlastFrvUpdateService implements IService {
 
     private String waitAndVerifyCompletion(Long taskId) throws Exception {
         String[] statusTypeAndValue = EJBFactory.getRemoteComputeBean().getTaskStatus(taskId);
-        while (!isTaskComplete(statusTypeAndValue[0])) {
+        while (!Task.isDone(statusTypeAndValue[0])) {
             Thread.sleep(5000);
             statusTypeAndValue = EJBFactory.getRemoteComputeBean().getTaskStatus(taskId);
         }
         logger.debug(statusTypeAndValue[1]);
         return statusTypeAndValue[0];
-    }
-
-
-    private boolean isTaskComplete(String status) {
-        return status.equals("completed") || status.equals("error");
     }
 
 

@@ -29,9 +29,12 @@ import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
+import org.janelia.it.jacs.model.tasks.colorSeparator.ColorSeparatorTask;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorTask;
 import org.janelia.it.jacs.model.user_data.Node;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -78,6 +81,33 @@ public class AnnotationManager implements AnnotationManagerMBean {
             neuTask.setParameter(NeuronSeparatorTask.PARAM_inputFilePath, inputFilePath);
             neuTask = (NeuronSeparatorTask)EJBFactory.getLocalComputeBean().saveOrUpdateTask(neuTask);
             EJBFactory.getLocalComputeBean().submitJob("NeuronSeparation", neuTask.getObjectId());
+        }
+        catch (DaoException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void testColorSep(String inputFileDirectory) {
+        try {
+            File tmpFile = new File(inputFileDirectory);
+            File[] tmpFiles = tmpFile.listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File file, String name) {
+                    return (name.indexOf(".seg_")>0);
+                }
+            });
+            StringBuffer sbuf = new StringBuffer();
+            for (int i = 0; i < tmpFiles.length; i++) {
+                File file = tmpFiles[i];
+                sbuf.append(file.getAbsolutePath());
+                if ((i+1)<tmpFiles.length) { sbuf.append(","); }
+            }
+            ColorSeparatorTask colorTask = new ColorSeparatorTask(new HashSet<Node>(), "saffordt", new ArrayList<Event>(),
+                    new HashSet<TaskParameter>());
+            colorTask.setJobName("Color Separator Test");
+            colorTask.setParameter(ColorSeparatorTask.PARAM_inputFileList, sbuf.toString());
+            colorTask = (ColorSeparatorTask)EJBFactory.getLocalComputeBean().saveOrUpdateTask(colorTask);
+            EJBFactory.getLocalComputeBean().submitJob("ColorSeparation", colorTask.getObjectId());
         }
         catch (DaoException e) {
             e.printStackTrace();

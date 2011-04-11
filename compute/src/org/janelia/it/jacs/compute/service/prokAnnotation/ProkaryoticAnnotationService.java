@@ -308,17 +308,13 @@ public class ProkaryoticAnnotationService implements IService {
         tmpTask.setParameter(ProkPipelineBaseTask.PARAM_project, task.getParameter(ProkaryoticAnnotationTask.PARAM_project));
     }
 
-    private boolean isTaskComplete(String status) {
-        return status.equals("completed") || status.equals("error");
-    }
-
     protected void waitForTask(Long taskId) throws Exception {
         String[] taskStatus = null;
-        while (taskStatus == null || !isTaskComplete(taskStatus[0])) {
+        while (taskStatus == null || !Task.isDone(taskStatus[0])) {
             taskStatus = computeBean.getTaskStatus(taskId);
             Thread.sleep(5000);
         }
-        if (!taskStatus[0].equals("completed")) {
+        if (!taskStatus[0].equals(Event.COMPLETED_EVENT)) {
             throw new Exception("Task " + taskId + " finished with non-complete status=" + taskStatus[0]);
         }
     }

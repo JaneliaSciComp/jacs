@@ -165,7 +165,7 @@ public class BlastTaskReportController extends BaseCommandController {
 //                }
 //                taskReportInfo.setResultNodes(null);
                 taskInfoList.add(taskReportInfo);
-                if ("completed".equals(taskReportInfo.getLastStatus().getEventType())) {
+                if (Event.COMPLETED_EVENT.equals(taskReportInfo.getLastStatus().getEventType())) {
                     stats.addReportItem(taskReportInfo);
                 }
                 cleanHibernateCache(task);

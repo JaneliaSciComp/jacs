@@ -21,7 +21,7 @@
  * "http://www.perlfoundation.org/artistic_license_2_0."
  */
 
-package org.janelia.it.jacs.model.user_data.neuronSeparator;
+package org.janelia.it.jacs.model.user_data.colorSeparator;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 import org.janelia.it.jacs.model.tasks.Task;
@@ -38,28 +38,27 @@ import java.io.Serializable;
  * Date: Dec 15, 2008
  * Time: 3:32:11 PM
  */
-public class NeuronSeparatorResultNode extends FileNode implements IsSerializable, Serializable {
+public class ColorSeparatorResultNode extends FileNode implements IsSerializable, Serializable {
 
-    public transient static final String TAG_SEGMENTATION_PATH = "segmentationPath";
-    public static final String SEGMENTATION_DIR = "segmentation";
+    public transient static final String TAG_QUALITY_CONFIG = "qualityConfig.params";
+
 
     /**
      * constructor
      */
-    public NeuronSeparatorResultNode() {
+    public ColorSeparatorResultNode() {
     }
 
-    public NeuronSeparatorResultNode(String owner, Task task, String name, String description, String visibility,
-                                     String relativeSessionPath) {
+    public ColorSeparatorResultNode(String owner, Task task, String name, String description, String visibility,
+                                    String relativeSessionPath) {
         super(owner, task, name, description, visibility, Node.DIRECTORY_DATA_TYPE, relativeSessionPath);
     }
 
     public String getSubDirectory() {
-        return "NeuronSeparator";
+        return "ColorSeparator";
     }
 
     public String getFilePathByTag(String tag) {
-        if (tag.equals(TAG_SEGMENTATION_PATH)) return getFilePath(SEGMENTATION_DIR);
         return getOutputFilePath(tag);
     }
 

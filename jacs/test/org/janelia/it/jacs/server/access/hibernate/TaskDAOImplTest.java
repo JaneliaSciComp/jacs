@@ -216,7 +216,7 @@ public class TaskDAOImplTest extends JacswebTestCase {
         if (jobId != null)
             assertEquals(jobInfo.getJobId(), jobId);
         assertEquals(jobInfo.getJobname(), "gf");
-        assertEquals(jobInfo.getStatus(),  "completed");
+        assertEquals(jobInfo.getStatus(),  Event.COMPLETED_EVENT);
         assertEquals(jobInfo.getProgram(), "blastn");
     }
 

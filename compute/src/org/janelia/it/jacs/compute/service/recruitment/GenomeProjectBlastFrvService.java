@@ -30,6 +30,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.blast.BlastNTask;
 import org.janelia.it.jacs.model.tasks.genomeProject.GenomeProjectImportTask;
@@ -138,7 +139,7 @@ public class GenomeProjectBlastFrvService implements IService {
             // SUBMITTING BLAST JOB - Async operation so wait for task to complete
             EJBFactory.getRemoteComputeBean().submitJob("FRVBlast", blastNTask.getObjectId());
             String status = waitAndVerifyCompletion(blastNTask.getObjectId());
-            if (!"completed".equals(status)) {
+            if (!Event.COMPLETED_EVENT.equals(status)) {
                 logger.error("\n\n\nERROR: the blast job has not actually completed!\nStatus is " + status);
                 throw new ServiceException("Error running the GenomeProjectBlastFrvService FRVBlast");
             }
@@ -189,16 +190,12 @@ public class GenomeProjectBlastFrvService implements IService {
     private String waitAndVerifyCompletion(Long taskId) throws Exception {
         org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
         String[] statusTypeAndValue = computeBean.getTaskStatus(taskId);
-        while (!isTaskComplete(statusTypeAndValue[0])) {
+        while (!Task.isDone(statusTypeAndValue[0])) {
             Thread.sleep(5000);
             statusTypeAndValue = computeBean.getTaskStatus(taskId);
         }
         logger.debug(statusTypeAndValue[1]);
         return statusTypeAndValue[0];
-    }
-
-    private boolean isTaskComplete(String status) {
-        return status.equals("completed") || status.equals("error");
     }
 
 }

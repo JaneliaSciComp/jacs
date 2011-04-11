@@ -27,6 +27,8 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.tasks.Event;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.genomeProject.GenomeProjectUpdateTask;
 import org.janelia.it.jacs.model.tasks.recruitment.FRVSamplingFastaGenerationTask;
 import org.janelia.it.jacs.model.user_data.Node;
@@ -68,7 +70,7 @@ public class GenomeProjectNodeManager implements GenomeProjectNodeManagerMBean {
             gpUpdateBacterialTask = (GenomeProjectUpdateTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(gpUpdateBacterialTask);
             EJBFactory.getLocalComputeBean().submitJob("GenomeProjectUpdate", gpUpdateBacterialTask.getObjectId());
             String status = waitAndVerifyCompletion(gpUpdateBacterialTask.getObjectId());
-            if (!"completed".equals(status)) {
+            if (!Event.COMPLETED_EVENT.equals(status)) {
                 System.out.println("\n\n\nERROR: the Genome Project job has not actually completed!\nStatus is " + status);
                 messageBody += "There was a problem updating the " + GenomeProjectUpdateTask.PROJECT_MODE_BACTERIAL + "Genome Projects\n";
             }
@@ -82,7 +84,7 @@ public class GenomeProjectNodeManager implements GenomeProjectNodeManagerMBean {
             gpUpdateViralTask = (GenomeProjectUpdateTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(gpUpdateViralTask);
             EJBFactory.getLocalComputeBean().submitJob("GenomeProjectUpdate", gpUpdateViralTask.getObjectId());
             status = waitAndVerifyCompletion(gpUpdateViralTask.getObjectId());
-            if (!"completed".equals(status)) {
+            if (!Event.COMPLETED_EVENT.equals(status)) {
                 System.out.println("\n\n\nERROR: the Genome Project job has not actually completed!\nStatus is " + status);
                 messageBody += "There was a problem updating the " + GenomeProjectUpdateTask.PROJECT_MODE_VIRAL + "Genome Projects\n";
             }
@@ -96,7 +98,7 @@ public class GenomeProjectNodeManager implements GenomeProjectNodeManagerMBean {
             gpUpdateDraftTask = (GenomeProjectUpdateTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(gpUpdateDraftTask);
             EJBFactory.getLocalComputeBean().submitJob("GenomeProjectUpdate", gpUpdateDraftTask.getObjectId());
             status = waitAndVerifyCompletion(gpUpdateDraftTask.getObjectId());
-            if (!"completed".equals(status)) {
+            if (!Event.COMPLETED_EVENT.equals(status)) {
                 System.out.println("\n\n\nERROR: the Genome Project job has not actually completed!\nStatus is " + status);
                 messageBody += "There was a problem updating the " + GenomeProjectUpdateTask.PROJECT_MODE_DRAFT_BACTERIAL + "Genome Projects\n";
             }
@@ -113,7 +115,7 @@ public class GenomeProjectNodeManager implements GenomeProjectNodeManagerMBean {
             fastaTask = (FRVSamplingFastaGenerationTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(fastaTask);
             EJBFactory.getLocalComputeBean().submitJob("FRVSamplingFastaGeneration", fastaTask.getObjectId());
             status = waitAndVerifyCompletion(fastaTask.getObjectId());
-            if (!"completed".equals(status)) {
+            if (!Event.COMPLETED_EVENT.equals(status)) {
                 System.out.println("\n\n\nERROR: the FRV Sampling Fasta generation is not complete.\nStatus is " + status);
                 messageBody += "There was a problem updating the FRV Sampling FASTA\n";
             }
@@ -219,16 +221,12 @@ public class GenomeProjectNodeManager implements GenomeProjectNodeManagerMBean {
     private String waitAndVerifyCompletion(Long taskId) throws Exception {
         org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
         String[] statusTypeAndValue = computeBean.getTaskStatus(taskId);
-        while (!isTaskComplete(statusTypeAndValue[0])) {
+        while (!Task.isDone(statusTypeAndValue[0])) {
             Thread.sleep(5000);
             statusTypeAndValue = computeBean.getTaskStatus(taskId);
         }
         LOGGER.debug(statusTypeAndValue[1]);
         return statusTypeAndValue[0];
-    }
-
-    private boolean isTaskComplete(String status) {
-        return status.equals("completed") || status.equals("error");
     }
 
     /**

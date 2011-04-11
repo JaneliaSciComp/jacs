@@ -30,6 +30,7 @@ import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.TaskServiceProperties;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.blast.BlastTask;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultFileNode;
@@ -147,7 +148,7 @@ public abstract class BlastTestBase extends TestCase {
 
     protected String waitAndVerifyCompletion(Long taskId) throws Exception {
         String[] statusTypeAndValue = computeBean.getTaskStatus(taskId);
-        while (!isTaskComplete(statusTypeAndValue[0])) {
+        while (!Task.isDone(statusTypeAndValue[0])) {
             Thread.sleep(5000);
             statusTypeAndValue = computeBean.getTaskStatus(taskId);
         }
@@ -157,16 +158,12 @@ public abstract class BlastTestBase extends TestCase {
 
     private void waitAndVerifySuccessfulCompletion(Long taskId) throws Exception {
         String status = waitAndVerifyCompletion(taskId);
-        assertEquals("completed", status);
+        assertEquals(Event.COMPLETED_EVENT, status);
     }
 
     protected void verifyErrorCompletion() throws Exception {
         String status = waitAndVerifyCompletion(taskId);
-        assertEquals("error", status);
-    }
-
-    private boolean isTaskComplete(String status) {
-        return status.equals("completed") || status.equals("error");
+        assertEquals(Event.ERROR_EVENT, status);
     }
 
     protected void validateHits() throws Exception {

@@ -72,9 +72,6 @@ public class SearchTask extends Task {
     transient public static final String PARAM_matchFlags = "matchFlags";
 
     // Status for asynchronous thread management
-    transient public static final String SEARCH_STATUS_RUNNING = "running";
-    transient public static final String SEARCH_STATUS_ERROR = "error";
-    transient public static final String SEARCH_STATUS_COMPLETED = "completed";
     // currently supported topics
     transient private static final String[] SUPPORTED_TOPICS = {
             TOPIC_ACCESSION,
@@ -180,30 +177,30 @@ public class SearchTask extends Task {
         }
     }
 
-    public String getSearchTopicsAsCSV() {
-        MultiSelectVO searchTopicsParam;
-        List searchTopics = null;
-        try {
-            searchTopicsParam = ((MultiSelectVO) getParameterVO(PARAM_searchTopic));
-            if (searchTopicsParam != null) {
-                searchTopics = searchTopicsParam.getActualUserChoices();
-            }
-        }
-        catch (Exception ignore) {
-        }
-        String csvTopics = "all";
-        if (searchTopics != null && searchTopics.size() > 0) {
-            StringBuffer topicsBuffer = new StringBuffer();
-            for (Object searchTopic : searchTopics) {
-                if (topicsBuffer.length() > 0) {
-                    topicsBuffer.append(',');
-                }
-                topicsBuffer.append((String) searchTopic);
-            }
-            csvTopics = topicsBuffer.toString();
-        }
-        return csvTopics;
-    }
+//    public String getSearchTopicsAsCSV() {
+//        MultiSelectVO searchTopicsParam;
+//        List searchTopics = null;
+//        try {
+//            searchTopicsParam = ((MultiSelectVO) getParameterVO(PARAM_searchTopic));
+//            if (searchTopicsParam != null) {
+//                searchTopics = searchTopicsParam.getActualUserChoices();
+//            }
+//        }
+//        catch (Exception ignore) {
+//        }
+//        String csvTopics = "all";
+//        if (searchTopics != null && searchTopics.size() > 0) {
+//            StringBuffer topicsBuffer = new StringBuffer();
+//            for (Object searchTopic : searchTopics) {
+//                if (topicsBuffer.length() > 0) {
+//                    topicsBuffer.append(',');
+//                }
+//                topicsBuffer.append((String) searchTopic);
+//            }
+//            csvTopics = topicsBuffer.toString();
+//        }
+//        return csvTopics;
+//    }
 
     public int getMatchFlags() {
         TextParameterVO matchFlagsParam = null;

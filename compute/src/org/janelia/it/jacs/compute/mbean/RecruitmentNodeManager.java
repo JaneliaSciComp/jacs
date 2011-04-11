@@ -1240,7 +1240,7 @@ public class RecruitmentNodeManager implements RecruitmentNodeManagerMBean {
             while(scanner.hasNextLine()){
                 String[] pieces = scanner.nextLine().split("\t");
                 String[] status = EJBFactory.getLocalComputeBean().getTaskStatus(Long.valueOf(pieces[1]));
-                if ("error".equals(status[0])) {
+                if (Event.ERROR_EVENT.equals(status[0])) {
                     System.out.println("Status of task "+pieces[1]+" : "+status[0]+". Resubmitting...");
                     if (restartJobs) {
                         EJBFactory.getRemoteComputeBean().addEventToTask(Long.valueOf(pieces[1]), new Event(Event.RESUBMIT_EVENT, new Date(), Event.RESUBMIT_EVENT));
