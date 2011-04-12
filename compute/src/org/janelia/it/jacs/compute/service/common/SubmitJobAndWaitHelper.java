@@ -28,6 +28,7 @@ import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.user_data.Node;
 
 /**
  * Created by IntelliJ IDEA.
@@ -46,7 +47,7 @@ public class SubmitJobAndWaitHelper {
         this.taskId = taskId;
     }
 
-    public void startAndWaitTillDone() throws Exception {
+    public Node startAndWaitTillDone() throws Exception {
         if (taskId == null || taskId == 0) {
             throw new Exception("taskId must be non-null and have non-zero value");
         }
@@ -60,10 +61,10 @@ public class SubmitJobAndWaitHelper {
         logger.info("computeBean.submitJob() processName=" + processName + " taskId=" + taskId);
         computeBean.submitJob(processName, taskId);
         logger.info("starting waitForTask for taskId=" + taskId);
-        waitForTask(taskId);
+        return waitForTask(taskId);
     }
 
-    protected void waitForTask(Long taskId) throws Exception {
+    protected Node waitForTask(Long taskId) throws Exception {
         ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
         String[] taskStatus = null;
         while (taskStatus == null || !Task.isDone(taskStatus[0])) {
@@ -73,6 +74,7 @@ public class SubmitJobAndWaitHelper {
         if (!taskStatus[0].equals(Event.COMPLETED_EVENT)) {
             throw new Exception("Task " + taskId + " finished with non-complete status=" + taskStatus[0]);
         }
+        return computeBean.getResultNodeByTaskId(taskId);
     }
 
 }

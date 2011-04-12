@@ -28,12 +28,14 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.common.SubmitJobAndWaitHelper;
 import org.janelia.it.jacs.compute.service.metageno.MetaGenoPerlConfig;
 import org.janelia.it.jacs.compute.service.metageno.SimpleGridJobRunner;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.blast.BlastPTask;
 import org.janelia.it.jacs.model.tasks.blast.BlastTask;
 import org.janelia.it.jacs.model.tasks.blast.TeragridSimpleBlastTask;
+import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultFileNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
@@ -63,17 +65,15 @@ public class PandaBlastpService extends MgAnnoBaseService {
             logger.info(getClass().getName() + " execute() start");
 
             Long blastTaskId;
-
+            BlastResultFileNode resultNode;
             //execute BLAST
+            //create BLAST file node that stores all blast outputs
             if (useTeraGrid) {
-                blastTaskId = setupAndStartTgBlastp();
+                resultNode = (BlastResultFileNode) setupAndStartTgBlastp();
             }
             else {
-                blastTaskId = setupAndStartBlastp();
+                resultNode = (BlastResultFileNode) setupAndStartBlastp();
             }
-
-            //create BLAST file node that stores all blast outputs
-            BlastResultFileNode resultNode = (BlastResultFileNode) waitForTask(blastTaskId);
 
             //get paths of btab and xml files
             String resultFilePath = resultNode.getFilePathByTag(BlastResultFileNode.TAG_BTAB);
@@ -126,7 +126,7 @@ public class PandaBlastpService extends MgAnnoBaseService {
         setup(getClass().getSimpleName(), ".blastp_out");
     }
 
-    protected Long setupAndStartBlastp() throws Exception {
+    protected Node setupAndStartBlastp() throws Exception {
         
         BlastPTask blastpTask = new BlastPTask();
 
@@ -164,11 +164,11 @@ public class PandaBlastpService extends MgAnnoBaseService {
         //submit blastp task
         ComputeBeanRemote computeBean = getComputeBean();
         blastpTask = (BlastPTask) computeBean.saveOrUpdateTask(blastpTask);
-        computeBean.submitJob("BlastWithGridMerge", blastpTask.getObjectId());
-        return blastpTask.getObjectId();
+        SubmitJobAndWaitHelper jobHelper = new SubmitJobAndWaitHelper("BlastWithGridMerge", blastpTask.getObjectId());
+        return jobHelper.startAndWaitTillDone();
     }
 
-    protected Long setupAndStartTgBlastp() throws Exception {
+    protected Node setupAndStartTgBlastp() throws Exception {
         TeragridSimpleBlastTask blastpTask = new TeragridSimpleBlastTask();
         blastpTask.setOwner(parentTask.getOwner());
 
@@ -193,8 +193,8 @@ public class PandaBlastpService extends MgAnnoBaseService {
         blastpTask.setParentTaskId(parentTask.getObjectId());
         ComputeBeanRemote computeBean = getComputeBean();
         blastpTask = (TeragridSimpleBlastTask) computeBean.saveOrUpdateTask(blastpTask);
-        computeBean.submitJob("TeragridSimpleBlast", blastpTask.getObjectId());
-        return blastpTask.getObjectId();
+        SubmitJobAndWaitHelper jobHelper = new SubmitJobAndWaitHelper("TeragridSimpleBlast", blastpTask.getObjectId());
+        return jobHelper.startAndWaitTillDone();
     }
 
 }

@@ -36,7 +36,6 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.metageno.MetaGenoAnnotationTask;
-import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.metageno.MetaGenoAnnotationResultNode;
 
 import java.io.File;
@@ -225,19 +224,6 @@ public abstract class MgAnnoBaseService implements IService {
 
     protected ComputeBeanRemote getComputeBean() {
         return EJBFactory.getRemoteComputeBean();
-    }
-
-    protected Node waitForTask(Long taskId) throws Exception {
-        ComputeBeanRemote computeBean = getComputeBean();
-        String[] taskStatus = null;
-        while (taskStatus == null || !Task.isDone(taskStatus[0])) {
-            taskStatus = computeBean.getTaskStatus(taskId);
-            Thread.sleep(5000);
-        }
-        if (!taskStatus[0].equals(Event.COMPLETED_EVENT)) {
-            throw new Exception("Task " + taskId + " finished with non-complete status=" + taskStatus[0]);
-        }
-        return computeBean.getResultNodeByTaskId(taskId);
     }
 
 }

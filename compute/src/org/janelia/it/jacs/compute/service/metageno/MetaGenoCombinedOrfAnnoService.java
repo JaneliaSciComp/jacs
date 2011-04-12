@@ -32,6 +32,7 @@ import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.common.SubmitJobAndWaitHelper;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.metageno.MetaGenoAnnotationTask;
@@ -80,8 +81,8 @@ public class MetaGenoCombinedOrfAnnoService implements IService {
             orfTask.setParameter(MetaGenoOrfCallerTask.PARAM_project, project);
             orfTask.setParentTaskId(combinedTask.getObjectId());
             orfTask = (MetaGenoOrfCallerTask) computeBean.saveOrUpdateTask(orfTask);
-            computeBean.submitJob("MetaGenoORFCaller", orfTask.getObjectId());
-            waitForTask(orfTask.getObjectId());
+            SubmitJobAndWaitHelper orfJobHelper = new SubmitJobAndWaitHelper("MetaGenoORFCaller", orfTask.getObjectId());
+            orfJobHelper.startAndWaitTillDone();
 
             // Step 2: Create input node from orf result
             MetaGenoOrfCallerResultNode orfResultNode = (MetaGenoOrfCallerResultNode) computeBean.getResultNodeByTaskId(orfTask.getObjectId());
@@ -100,9 +101,8 @@ public class MetaGenoCombinedOrfAnnoService implements IService {
             annoTask.setParameter(MetaGenoAnnotationTask.PARAM_project, project);
             annoTask.setParentTaskId(combinedTask.getObjectId());
             annoTask = (MetaGenoAnnotationTask) computeBean.saveOrUpdateTask(annoTask);
-            computeBean.submitJob("MetaGenoAnnotation", annoTask.getObjectId());
-            waitForTask(annoTask.getObjectId());
-
+            SubmitJobAndWaitHelper jobHelper = new SubmitJobAndWaitHelper("MetaGenoAnnotation", annoTask.getObjectId());
+            jobHelper.startAndWaitTillDone();
             logger.info(getClass().getName() + " execute() finish");
         }
         catch (Exception e) {
@@ -133,17 +133,6 @@ public class MetaGenoCombinedOrfAnnoService implements IService {
             throw new MissingDataException(e.getMessage());
         }
         sessionName = ProcessDataHelper.getSessionRelativePath(processData);
-    }
-
-    protected void waitForTask(Long taskId) throws Exception {
-        String[] taskStatus = null;
-        while (taskStatus == null || !Task.isDone(taskStatus[0])) {
-            taskStatus = computeBean.getTaskStatus(taskId);
-            Thread.sleep(5000);
-        }
-        if (!taskStatus[0].equals(Event.COMPLETED_EVENT)) {
-            throw new Exception("Task " + taskId + " finished with non-complete status=" + taskStatus[0]);
-        }
     }
 
     protected void setParentTaskToErrorStatus(Task parentTask, String message) {

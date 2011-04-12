@@ -7,8 +7,8 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.common.SubmitJobAndWaitHelper;
 import org.janelia.it.jacs.model.tasks.Event;
-import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.colorSeparator.ColorSeparatorTask;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorTask;
@@ -25,13 +25,12 @@ import java.util.Date;
  * Time: 11:44:08 PM
  */
 public class NeuronSeparationPipelineService implements IService {
-    private Logger logger;
     private NeuronSeparatorPipelineTask task;
     private ComputeBeanRemote computeBean;
 
     public void execute(IProcessData processData) throws ServiceException {
         try {
-            logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
+            Logger logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             this.task = (NeuronSeparatorPipelineTask) ProcessDataHelper.getTask(processData);
             computeBean = EJBFactory.getRemoteComputeBean();
             logger.debug("\n\nExecuting Neuron Separation...\n\n");
@@ -43,8 +42,8 @@ public class NeuronSeparationPipelineService implements IService {
             neuSepTask.setJobName("Neuron Separation");
             computeBean.addEventToTask(task.getObjectId(), new Event("Running Neuron Separation Step", new Date(), "Neuron Separation"));
             neuSepTask = (NeuronSeparatorTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(neuSepTask);
-            EJBFactory.getLocalComputeBean().submitJob("NeuronSeparation", neuSepTask.getObjectId());
-            waitForTask(neuSepTask.getObjectId());
+            SubmitJobAndWaitHelper jobHelper = new SubmitJobAndWaitHelper("NeuronSeparation", neuSepTask.getObjectId());
+            jobHelper.startAndWaitTillDone();
             computeBean.addEventToTask(task.getObjectId(), new Event("Completed Step:" + neuSepTask.getDisplayName(), new Date(), neuSepTask.getDisplayName()));
             logger.debug("\n\nNeuron Separation executed successfully.\n\n");
 
@@ -72,8 +71,8 @@ public class NeuronSeparationPipelineService implements IService {
             colorSepTask.setParameter(ColorSeparatorTask.PARAM_inputFileList, sbuf.toString());
             computeBean.addEventToTask(task.getObjectId(), new Event("Running Color Separation Step", new Date(), "Color Separation"));
             colorSepTask = (ColorSeparatorTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(colorSepTask);
-            EJBFactory.getLocalComputeBean().submitJob("ColorSeparation", colorSepTask.getObjectId());
-            waitForTask(colorSepTask.getObjectId());
+            SubmitJobAndWaitHelper colorJobHelper = new SubmitJobAndWaitHelper("ColorSeparation", colorSepTask.getObjectId());
+            colorJobHelper.startAndWaitTillDone();
             computeBean.addEventToTask(task.getObjectId(), new Event("Completed Step:" + colorSepTask.getDisplayName(), new Date(), colorSepTask.getDisplayName()));
             logger.debug("\n\nColor Separation executed successfully.\n\n");
 
@@ -90,17 +89,6 @@ public class NeuronSeparationPipelineService implements IService {
                 System.err.println("Error trying to log the error message.");
             }
             throw new ServiceException("Error running the Neuron Separation NeuronSeparationPipelineService:" + e.getMessage(), e);
-        }
-    }
-
-    protected void waitForTask(Long taskId) throws Exception {
-        String[] taskStatus = null;
-        while (taskStatus == null || !Task.isDone(taskStatus[0])) {
-            taskStatus = computeBean.getTaskStatus(taskId);
-            Thread.sleep(5000);
-        }
-        if (!taskStatus[0].equals(Event.COMPLETED_EVENT)) {
-            throw new Exception("Task " + taskId + " finished with non-complete status=" + taskStatus[0]);
         }
     }
 

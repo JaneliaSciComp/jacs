@@ -30,6 +30,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.common.SubmitJobAndWaitHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
@@ -289,8 +290,8 @@ public class ProkaryoticAnnotationService implements IService {
             Task tmpTask = sectionTask.getTask();
             setBaseValues(tmpTask);
             tmpTask = EJBFactory.getLocalComputeBean().saveOrUpdateTask(tmpTask);
-            EJBFactory.getLocalComputeBean().submitJob(sectionTask.getProcessFile(), tmpTask.getObjectId());
-            waitForTask(tmpTask.getObjectId());
+            SubmitJobAndWaitHelper jobHelper = new SubmitJobAndWaitHelper(sectionTask.getProcessFile(), tmpTask.getObjectId());
+            jobHelper.startAndWaitTillDone();
             computeBean.addEventToTask(task.getObjectId(), new Event("Completed Step:" + tmpTask.getDisplayName(), new Date(), tmpTask.getDisplayName()));
         }
         computeBean.addEventToTask(task.getObjectId(), new Event("Completed Step:" + sectionStep, new Date(), sectionStep));
@@ -306,17 +307,6 @@ public class ProkaryoticAnnotationService implements IService {
         tmpTask.setParameter(ProkPipelineBaseTask.PARAM_DB_PASSWORD, task.getParameter(ProkaryoticAnnotationTask.PARAM_sybasePassword));
         tmpTask.setParameter(ProkPipelineBaseTask.PARAM_DIRECTORY, task.getParameter(ProkaryoticAnnotationTask.PARAM_targetDirectory));
         tmpTask.setParameter(ProkPipelineBaseTask.PARAM_project, task.getParameter(ProkaryoticAnnotationTask.PARAM_project));
-    }
-
-    protected void waitForTask(Long taskId) throws Exception {
-        String[] taskStatus = null;
-        while (taskStatus == null || !Task.isDone(taskStatus[0])) {
-            taskStatus = computeBean.getTaskStatus(taskId);
-            Thread.sleep(5000);
-        }
-        if (!taskStatus[0].equals(Event.COMPLETED_EVENT)) {
-            throw new Exception("Task " + taskId + " finished with non-complete status=" + taskStatus[0]);
-        }
     }
 
     private class SectionStep {

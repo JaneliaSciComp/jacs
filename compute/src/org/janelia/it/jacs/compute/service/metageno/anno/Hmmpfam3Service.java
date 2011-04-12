@@ -28,6 +28,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.common.SubmitJobAndWaitHelper;
 import org.janelia.it.jacs.compute.service.metageno.MetaGenoPerlConfig;
 import org.janelia.it.jacs.compute.service.metageno.SimpleGridJobRunner;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
@@ -125,10 +126,10 @@ public class Hmmpfam3Service extends MgAnnoBaseService {
             hmmpfamTask.setParentTaskId(parentTask.getObjectId());
             ComputeBeanRemote computeBean = getComputeBean();
             hmmpfamTask = (HMMER3Task) computeBean.saveOrUpdateTask(hmmpfamTask);
-            computeBean.submitJob("HMMER3", hmmpfamTask.getObjectId());
+            SubmitJobAndWaitHelper jobHelper = new SubmitJobAndWaitHelper("HMMER3", hmmpfamTask.getObjectId());
+            HMMER3ResultFileNode resultNode = (HMMER3ResultFileNode) jobHelper.startAndWaitTillDone();
 
             //get results
-            HMMER3ResultFileNode resultNode = (HMMER3ResultFileNode) waitForTask(hmmpfamTask.getObjectId());
             String resultFilePath = resultNode.getFilePathByTag(HMMER3ResultFileNode.TAG_OUTPUT_FILE);
             logger.info("Fetching HMM results from "+resultFilePath);
             FileUtil.copyFileUsingSystemCall(resultFilePath, resultFile.getAbsolutePath());
