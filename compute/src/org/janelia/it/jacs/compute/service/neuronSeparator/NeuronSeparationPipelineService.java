@@ -1,7 +1,6 @@
 package org.janelia.it.jacs.compute.service.neuronSeparator;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
@@ -26,13 +25,11 @@ import java.util.Date;
  */
 public class NeuronSeparationPipelineService implements IService {
     private NeuronSeparatorPipelineTask task;
-    private ComputeBeanRemote computeBean;
 
     public void execute(IProcessData processData) throws ServiceException {
         try {
             Logger logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             this.task = (NeuronSeparatorPipelineTask) ProcessDataHelper.getTask(processData);
-            computeBean = EJBFactory.getRemoteComputeBean();
             logger.debug("\n\nExecuting Neuron Separation...\n\n");
 
             // Run the Neuron Separation...
@@ -40,11 +37,12 @@ public class NeuronSeparationPipelineService implements IService {
             neuSepTask.setOwner(task.getOwner());
             neuSepTask.setParentTaskId(task.getObjectId());
             neuSepTask.setJobName("Neuron Separation");
-            computeBean.addEventToTask(task.getObjectId(), new Event("Running Neuron Separation Step", new Date(), "Neuron Separation"));
-            neuSepTask = (NeuronSeparatorTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(neuSepTask);
+            neuSepTask.setParameter(NeuronSeparatorTask.PARAM_inputFilePath, task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputFilePath));
+            EJBFactory.getRemoteComputeBean().addEventToTask(task.getObjectId(), new Event("Running Neuron Separation Step", new Date(), "Neuron Separation"));
+            neuSepTask = (NeuronSeparatorTask) EJBFactory.getRemoteComputeBean().saveOrUpdateTask(neuSepTask);
             SubmitJobAndWaitHelper jobHelper = new SubmitJobAndWaitHelper("NeuronSeparation", neuSepTask.getObjectId());
             jobHelper.startAndWaitTillDone();
-            computeBean.addEventToTask(task.getObjectId(), new Event("Completed Step:" + neuSepTask.getDisplayName(), new Date(), neuSepTask.getDisplayName()));
+            EJBFactory.getRemoteComputeBean().addEventToTask(task.getObjectId(), new Event("Completed Step:" + neuSepTask.getDisplayName(), new Date(), neuSepTask.getDisplayName()));
             logger.debug("\n\nNeuron Separation executed successfully.\n\n");
 
             // Run the Color Separation...
@@ -53,7 +51,7 @@ public class NeuronSeparationPipelineService implements IService {
             colorSepTask.setParentTaskId(task.getObjectId());
             colorSepTask.setJobName("Color Separation");
             // Get the output from the previous step and use as input here
-            NeuronSeparatorResultNode tmpNode = (NeuronSeparatorResultNode) ProcessDataHelper.getResultFileNode(processData);
+            NeuronSeparatorResultNode tmpNode = (NeuronSeparatorResultNode) EJBFactory.getRemoteComputeBean().getResultNodeByTaskId(neuSepTask.getObjectId());
             String segDirPath = tmpNode.getFilePathByTag(NeuronSeparatorResultNode.TAG_SEGMENTATION_PATH);
             File tmpFile = new File(segDirPath);
             File[] tmpFiles = tmpFile.listFiles(new FilenameFilter() {
@@ -69,11 +67,11 @@ public class NeuronSeparationPipelineService implements IService {
                 if ((i+1)<tmpFiles.length) { sbuf.append(","); }
             }
             colorSepTask.setParameter(ColorSeparatorTask.PARAM_inputFileList, sbuf.toString());
-            computeBean.addEventToTask(task.getObjectId(), new Event("Running Color Separation Step", new Date(), "Color Separation"));
-            colorSepTask = (ColorSeparatorTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(colorSepTask);
+            EJBFactory.getRemoteComputeBean().addEventToTask(task.getObjectId(), new Event("Running Color Separation Step", new Date(), "Color Separation"));
+            colorSepTask = (ColorSeparatorTask) EJBFactory.getRemoteComputeBean().saveOrUpdateTask(colorSepTask);
             SubmitJobAndWaitHelper colorJobHelper = new SubmitJobAndWaitHelper("ColorSeparation", colorSepTask.getObjectId());
             colorJobHelper.startAndWaitTillDone();
-            computeBean.addEventToTask(task.getObjectId(), new Event("Completed Step:" + colorSepTask.getDisplayName(), new Date(), colorSepTask.getDisplayName()));
+            EJBFactory.getRemoteComputeBean().addEventToTask(task.getObjectId(), new Event("Completed Step:" + colorSepTask.getDisplayName(), new Date(), colorSepTask.getDisplayName()));
             logger.debug("\n\nColor Separation executed successfully.\n\n");
 
             // Run the Consolidator Tool...
@@ -83,7 +81,7 @@ public class NeuronSeparationPipelineService implements IService {
         }
         catch (Exception e) {
             try {
-                computeBean.addEventToTask(task.getObjectId(), new Event("ERROR running the Neuron Separation Pipeline:" + e.getMessage(), new Date(), Event.ERROR_EVENT));
+                EJBFactory.getRemoteComputeBean().addEventToTask(task.getObjectId(), new Event("ERROR running the Neuron Separation Pipeline:" + e.getMessage(), new Date(), Event.ERROR_EVENT));
             }
             catch (Exception e1) {
                 System.err.println("Error trying to log the error message.");

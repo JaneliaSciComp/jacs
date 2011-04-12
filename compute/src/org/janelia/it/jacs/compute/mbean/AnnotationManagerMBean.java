@@ -38,4 +38,5 @@ public interface AnnotationManagerMBean {
                                String comment, String conditional);
     public void testNeuronSep(String inputFilePath);
     public void testColorSep(String inputFilePath);
+    public void testNeuronSepPipeline(String inputFilePath);
 }

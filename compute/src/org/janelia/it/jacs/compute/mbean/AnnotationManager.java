@@ -30,6 +30,7 @@ import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.colorSeparator.ColorSeparatorTask;
+import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorTask;
 import org.janelia.it.jacs.model.user_data.Node;
 
@@ -114,4 +115,17 @@ public class AnnotationManager implements AnnotationManagerMBean {
         }
     }
 
+    public void testNeuronSepPipeline(String inputFilePath) {
+        try {
+            NeuronSeparatorPipelineTask neuTask = new NeuronSeparatorPipelineTask(new HashSet<Node>(), "saffordt", new ArrayList<Event>(),
+                    new HashSet<TaskParameter>());
+            neuTask.setJobName("Neuron Separator Pipeline Test");
+            neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_inputFilePath, inputFilePath);
+            neuTask = (NeuronSeparatorPipelineTask)EJBFactory.getLocalComputeBean().saveOrUpdateTask(neuTask);
+            EJBFactory.getLocalComputeBean().submitJob("NeuronSeparationPipeline", neuTask.getObjectId());
+        }
+        catch (DaoException e) {
+            e.printStackTrace();
+        }
+    }
 }

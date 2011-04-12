@@ -84,6 +84,7 @@ public class ColorSeparatorSubmitJobService extends SubmitDrmaaJobService {
             finally {
                 configWriter.close();
             }
+            index++;
 
         }
         createShellScript(writer);
@@ -99,7 +100,7 @@ public class ColorSeparatorSubmitJobService extends SubmitDrmaaJobService {
             throws IOException, ParameterException, MissingDataException, InterruptedException, ServiceException {
         String basePath = SystemConfigurationProperties.getString("Executables.ModuleBase");
 
-        int numColors = 20;
+        int numColors = 5;
         // Cmdline: ColorSep 'image_name' 'number of colors' 'destination_folder'
         String pipelineCmd = basePath + SystemConfigurationProperties.getString("ColorSep.PipelineCmd")+" "+
                 "$INPUT_PATH"+" "+numColors+" $OUTPUT_PATH";

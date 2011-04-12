@@ -27,7 +27,6 @@ import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.user_data.Node;
-import org.janelia.it.jacs.model.vo.MultiSelectVO;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.model.vo.ParameterVO;
 import org.janelia.it.jacs.model.vo.TextParameterVO;
@@ -48,7 +47,6 @@ public class NeuronSeparatorPipelineTask extends Task {
 
     // Parameter Keys - SUbset of the params needed by the child tasks of this pipeline
     transient public static final String PARAM_inputFilePath = "input file path";
-    transient public static final String PARAM_inputFileList = "list of input files";
 
     // Default values - default overrides
 
@@ -63,7 +61,6 @@ public class NeuronSeparatorPipelineTask extends Task {
 
     private void setDefaultValues() {
         setParameter(PARAM_inputFilePath, "");
-        setParameter(PARAM_inputFileList, "");
         this.taskName = TASK_NAME;
     }
 
@@ -75,9 +72,6 @@ public class NeuronSeparatorPipelineTask extends Task {
             return null;
         if (key.equals(PARAM_inputFilePath)) {
             return new TextParameterVO(value, 400);
-        }
-        if (key.equals(PARAM_inputFileList)) {
-            return new MultiSelectVO(listOfStringsFromCsvString(value), listOfStringsFromCsvString(value));
         }
         // No match
         return null;
