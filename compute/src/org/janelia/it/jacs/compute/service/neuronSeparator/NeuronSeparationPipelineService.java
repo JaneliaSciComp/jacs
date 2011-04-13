@@ -7,11 +7,14 @@ import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.SubmitJobAndWaitHelper;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.colorSeparator.ColorSeparatorTask;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorTask;
+import org.janelia.it.jacs.model.user_data.colorSeparator.ColorSeparatorResultNode;
 import org.janelia.it.jacs.model.user_data.neuronSeparator.NeuronSeparatorResultNode;
+import org.janelia.it.jacs.shared.utils.SystemCall;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -31,7 +34,7 @@ public class NeuronSeparationPipelineService implements IService {
             Logger logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             this.task = (NeuronSeparatorPipelineTask) ProcessDataHelper.getTask(processData);
             logger.debug("\n\nExecuting Neuron Separation...\n\n");
-
+            NeuronSeparatorResultNode parentNode = (NeuronSeparatorResultNode) ProcessDataHelper.getResultFileNode(processData);
             // Run the Neuron Separation...
             NeuronSeparatorTask neuSepTask = new NeuronSeparatorTask();
             neuSepTask.setOwner(task.getOwner());
@@ -75,9 +78,16 @@ public class NeuronSeparationPipelineService implements IService {
             logger.debug("\n\nColor Separation executed successfully.\n\n");
 
             // Run the Consolidator Tool...
-//            String cmdLine = "./v3d64 -cmd consolidate-color-separator-output "+inputDirPath + outputFile;
-//            SystemCall
-//
+            ColorSeparatorResultNode colorNode = (ColorSeparatorResultNode) EJBFactory.getRemoteComputeBean().getResultNodeByTaskId(colorSepTask.getObjectId());
+            // todo this should be a separate process running on the grid
+            String cmdLine = "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64:/groups/scicomp/jacsData/servers/saffordt-ws1/executables/v3d/v3d_main/common_lib/lib/;"+SystemConfigurationProperties.getString("Executables.ModuleBase")+"/v3d/v3d/v3d -cmd consolidate-color-separator-output "
+                    +colorNode.getDirectoryPath()+" "+parentNode.getDirectoryPath()+File.separator+"final.mask";
+            SystemCall call = new SystemCall(logger);
+            int exitCode = call.emulateCommandLine(cmdLine, true);
+            if (0!=exitCode) {
+                throw new ServiceException("The NeuronSeparationPipelineService consolidator step did not exit properly.");
+            }
+
         }
         catch (Exception e) {
             try {
