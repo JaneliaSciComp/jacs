@@ -105,6 +105,7 @@ public class SystemPageHeader {
         }));
 
         SimpleMenu pipelineMenu = new SimpleMenu(getMenuLabel("Pipelines"), new SimpleMenuItem[]{});
+        pipelineMenu.addItem(new SimpleMenuItem("Neuron Separator", new OpenInSameWindowCommand(UrlBuilder.getNeuronSeparatorPipeline())));
         pipelineMenu.addItem(new SimpleMenuItem("16S/18S Small Sub-Unit Analysis", new OpenInSameWindowCommand(UrlBuilder.getAnalysisPipeline16SUrl())));
         pipelineMenu.addItem(new SimpleMenuItem(Constants.BARCODE_LABEL, new OpenInSameWindowCommand(UrlBuilder.getBarcodeDesignerUrl())));
         pipelineMenu.addItem(new SimpleMenuItem(Constants.FR_LABEL, new OpenInSameWindowCommand(UrlBuilder.getFRPipelineUrl())));

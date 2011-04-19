@@ -68,6 +68,7 @@ public class Constants {
     public static final String JOBS_ICT_LABEL = "Inter-Site Comparison Tool";
     public static final String JOBS_CPD_LABEL = "Primer Design For Closure";
     public static final String BARCODE_LABEL = "Barcode Designer and Deconvolution";
+    public static final String NEURON_SEPARATOR_LABEL = "Neuron Separator";
     public static final String FR_LABEL = "Fragment Recruitment";
     public static final String PROFILE_COMPARISON_LABEL = "Profile Comparison Tools";
     public static final String JOBS_MG_ANNOT_LABEL = "Metagenomics Annotation";

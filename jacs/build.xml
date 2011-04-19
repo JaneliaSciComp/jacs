@@ -168,6 +168,10 @@
             <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/barcode/BarCodeDesigner.gwt.xml" />-->
         <!--</antcall>-->
         <!--<antcall target="gwt-compile-module">-->
+            <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.neuronSeparator.NeuronSeparator" />-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/neuronSeparator/NeuronSeparator.gwt.xml" />-->
+        <!--</antcall>-->
+        <!--<antcall target="gwt-compile-module">-->
             <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.matrix.ProfileComparison" />-->
             <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/matrix/ProfileComparison.gwt.xml" />-->
         <!--</antcall>-->
@@ -554,6 +558,13 @@
             <param name="module.path" value="org.janelia.it.jacs.web.gwt.barcode.BarCodeDesigner"/>
             <param name="url.target" value="BarCodeDesigner"/>
             <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/barcode/BarCodeDesigner.gwt.xml" />
+        </antcall>
+    </target>
+    <target name="deploy-neuronSeparator" depends="setup">
+        <antcall target="deploy-gwt-module">
+            <param name="module.path" value="org.janelia.it.jacs.web.gwt.neuronSeparator.client.NeuronSeparator"/>
+            <param name="url.target" value="NeuronSeparator"/>
+            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/neuronSeparator/NeuronSeparator.gwt.xml" />
         </antcall>
     </target>
     <target name="deploy-mgAnnotation" depends="setup">

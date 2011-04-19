@@ -112,6 +112,10 @@ public class EntryPointController extends MultiActionController {
         return checkedEntryPoint(request, response, "BarCodeDesigner");
     }
 
+    public ModelAndView neuronSeparator(HttpServletRequest request, HttpServletResponse response) {
+        return checkedEntryPoint(request, response, "NeuronSeparator");
+    }
+
     public ModelAndView profileComparison(HttpServletRequest request, HttpServletResponse response) {
         return checkedEntryPoint(request, response, "ProfileComparison");
     }

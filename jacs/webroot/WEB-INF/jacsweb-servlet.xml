@@ -179,6 +179,7 @@
                          <prop key="/gwt/IntersiteComparisonTool/IntersiteComparisonTool.htm">ict</prop>
                          <prop key="/gwt/MapTest/MapTest.htm">mapTest</prop>
                          <prop key="/gwt/MgAnnot/MgAnnotation.htm">mgAnnotation</prop>
+                         <prop key="/gwt/NeuronSeparator/NeuronSeparator.htm">neuronSeparator</prop>
                          <prop key="/gwt/ProfileComparison/ProfileComparison.htm">profileComparison</prop>
                          <prop key="/gwt/ProjectSamplesPage/ProjectSamplesPage.*">projectSamples</prop>
                          <prop key="/gwt/ProkAnnot/ProkAnnotation.htm">prokAnnotation</prop>

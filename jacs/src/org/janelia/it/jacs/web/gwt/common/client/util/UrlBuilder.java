@@ -145,4 +145,8 @@ public class UrlBuilder {
     public static String getInspectUrl() {
         return GWT_BASE_URL + "Inspect/Inspect.htm";
     }
+
+    public static String getNeuronSeparatorPipeline() {
+        return GWT_BASE_URL + "NeuronSeparator/NeuronSeparator.htm";
+    }
 }

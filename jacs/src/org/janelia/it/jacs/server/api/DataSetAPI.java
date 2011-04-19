@@ -39,6 +39,7 @@ import org.janelia.it.jacs.model.tasks.blast.CreateBlastDatabaseTask;
 import org.janelia.it.jacs.model.tasks.blast.CreateRecruitmentBlastDatabaseTask;
 import org.janelia.it.jacs.model.tasks.metageno.MetaGenoAnnotationTask;
 import org.janelia.it.jacs.model.tasks.metageno.MetaGenoOrfCallerTask;
+import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.tasks.profileComparison.ProfileComparisonTask;
 import org.janelia.it.jacs.model.tasks.prokAnnotation.*;
 import org.janelia.it.jacs.model.tasks.recruitment.GenomeProjectRecruitmentSamplingTask;
@@ -353,6 +354,9 @@ public class DataSetAPI {
             }
             else if (newTask instanceof BarcodeDesignerTask) {
                 processName = "DesignBarcode";
+            }
+            else if (newTask instanceof NeuronSeparatorPipelineTask) {
+                processName = "NeuronSeparatorPipeline";
             }
             else if (newTask instanceof GenomeProjectRecruitmentSamplingTask) {
                 processName = "GenomeProjectRecruitmentSampling";
