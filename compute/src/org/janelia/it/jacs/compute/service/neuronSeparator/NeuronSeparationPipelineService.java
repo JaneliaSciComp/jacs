@@ -35,6 +35,7 @@ public class NeuronSeparationPipelineService implements IService {
             this.task = (NeuronSeparatorPipelineTask) ProcessDataHelper.getTask(processData);
             logger.debug("\n\nExecuting Neuron Separation...\n\n");
             NeuronSeparatorResultNode parentNode = (NeuronSeparatorResultNode) ProcessDataHelper.getResultFileNode(processData);
+
             // Run the Neuron Separation...
             NeuronSeparatorTask neuSepTask = new NeuronSeparatorTask();
             neuSepTask.setOwner(task.getOwner());

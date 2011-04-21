@@ -36,7 +36,7 @@ public class Constants {
     // URLs
     //
     public static final String VICSWEB_DOMAIN = "www.jcvi.org";
-    public static final String SERVLET_CONTEXT = "/vics"; // duplicates jacs.properties but can't get there (synchronously) from GWT
+    public static final String SERVLET_CONTEXT = "/jacs"; // duplicates jacs.properties but can't get there (synchronously) from GWT
     public static final String IMAGES_DIRECTORY = SERVLET_CONTEXT + "/images";
 
     //

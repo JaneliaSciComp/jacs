@@ -273,7 +273,7 @@ public class DownloadByPubPage extends BaseEntryPoint {
         String publicationAccession = selectedPublication.getAccessionNumber();
         Location location = WindowUtils.getLocation();
         String href = location.getHref();
-        int i = href.lastIndexOf("/vics");
+        int i = href.lastIndexOf("/jacs");
         String shortUrl = href.substring(0, i) + "/jacs/id?" + publicationAccession;
         setBookmarkUrl(shortUrl, Constants.ROOT_PANEL_NAME);
     }

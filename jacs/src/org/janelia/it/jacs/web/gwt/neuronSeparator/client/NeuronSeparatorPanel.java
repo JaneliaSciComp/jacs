@@ -36,14 +36,11 @@ import org.janelia.it.jacs.web.gwt.common.client.service.DataServiceAsync;
 import org.janelia.it.jacs.web.gwt.common.client.submit.SubmitJob;
 import org.janelia.it.jacs.web.gwt.common.client.ui.LoadingLabel;
 import org.janelia.it.jacs.web.gwt.common.client.ui.RoundedButton;
-import org.janelia.it.jacs.web.gwt.common.client.ui.SelectionListener;
 import org.janelia.it.jacs.web.gwt.common.client.ui.link.HelpActionLink;
 import org.janelia.it.jacs.web.gwt.common.client.ui.table.comparables.FormattedDate;
 import org.janelia.it.jacs.web.gwt.common.client.util.HtmlUtils;
 import org.janelia.it.jacs.web.gwt.common.client.util.StringUtils;
 import org.janelia.it.jacs.web.gwt.common.client.util.SystemProps;
-
-import java.util.ArrayList;
 
 /**
  * @author Todd Safford
@@ -55,6 +52,7 @@ public class NeuronSeparatorPanel extends Composite {
 
     private TitledBox _mainPanel;
     private TextBox _jobNameTextBox;
+    private TextBox _inputPathTextBox;
     private RoundedButton _submitButton;
     private RoundedButton _clearButton;
     private LoadingLabel _statusMessage;
@@ -108,11 +106,8 @@ public class NeuronSeparatorPanel extends Composite {
         grid.setWidget(tmpIndex, 0, new HTMLPanel("<span class='prompt'>Job Name:</span><span class='requiredInformation'>*</span>"));
         grid.setWidget(tmpIndex, 1, getJobNameWidget());
 
-        grid.setWidget(++tmpIndex, 0, new HTMLPanel("<span class='prompt'>Primer FASTA File:</span><span class='requiredInformation'>*</span>"));
-        grid.setWidget(tmpIndex, 1, getPrimerUploadPanel());
-
-        grid.setWidget(++tmpIndex, 0, new HTMLPanel("<span class='prompt'>Amplicon FASTA File:</span><span class='requiredInformation'>*</span>"));
-        grid.setWidget(tmpIndex, 1, getAmpliconUploadPanel());
+        grid.setWidget(++tmpIndex, 0, new HTMLPanel("<span class='prompt'>Path To Input File</span><span class='requiredInformation'>*</span>"));
+        grid.setWidget(tmpIndex, 1, getInputPathWidget());
 
         grid.getCellFormatter().setVerticalAlignment(3, 0, VerticalPanel.ALIGN_TOP);
 
@@ -138,54 +133,6 @@ public class NeuronSeparatorPanel extends Composite {
 
         _mainPanel.add(contentPanel);
         _submitButton.setEnabled(false);
-    }
-
-    private Panel getPrimerUploadPanel() {
-        ArrayList<FileChooserPanel.FILE_TYPE> types = new ArrayList<FileChooserPanel.FILE_TYPE>();
-        types.add(FileChooserPanel.FILE_TYPE.mpfa);
-        types.add(FileChooserPanel.FILE_TYPE.seq);
-        types.add(FileChooserPanel.FILE_TYPE.ffn);
-        types.add(FileChooserPanel.FILE_TYPE.fa);
-        types.add(FileChooserPanel.FILE_TYPE.faa);
-        types.add(FileChooserPanel.FILE_TYPE.fna);
-        types.add(FileChooserPanel.FILE_TYPE.fsa);
-        types.add(FileChooserPanel.FILE_TYPE.fasta);
-        _primerFileChooserPanel = new FileChooserPanel(new SelectionListener() {
-            public void onSelect(String value) {
-                _uploadedPrimerFilePath = value;
-                _submitButton.setEnabled(true);
-            }
-
-            public void onUnSelect(String value) {
-                _uploadedPrimerFilePath = null;
-                _submitButton.setEnabled(false);
-            }
-        }, types);
-        return _primerFileChooserPanel;
-    }
-
-    private Panel getAmpliconUploadPanel() {
-        ArrayList<FileChooserPanel.FILE_TYPE> types = new ArrayList<FileChooserPanel.FILE_TYPE>();
-        types.add(FileChooserPanel.FILE_TYPE.mpfa);
-        types.add(FileChooserPanel.FILE_TYPE.seq);
-        types.add(FileChooserPanel.FILE_TYPE.ffn);
-        types.add(FileChooserPanel.FILE_TYPE.fa);
-        types.add(FileChooserPanel.FILE_TYPE.faa);
-        types.add(FileChooserPanel.FILE_TYPE.fna);
-        types.add(FileChooserPanel.FILE_TYPE.fsa);
-        types.add(FileChooserPanel.FILE_TYPE.fasta);
-        _ampliconFileChooserPanel = new FileChooserPanel(new SelectionListener() {
-            public void onSelect(String value) {
-                _uploadedAmpliconFilePath = value;
-                _submitButton.setEnabled(true);
-            }
-
-            public void onUnSelect(String value) {
-                _uploadedAmpliconFilePath = null;
-                _submitButton.setEnabled(false);
-            }
-        }, types);
-        return _ampliconFileChooserPanel;
     }
 
     private Widget getPrimerStatusMessage() {
@@ -217,6 +164,13 @@ public class NeuronSeparatorPanel extends Composite {
         _jobNameTextBox.setVisibleLength(64);
         updateJobNameWidget();
 
+        return _jobNameTextBox;
+    }
+
+    private Widget getInputPathWidget() {
+        _inputPathTextBox = new TextBox();
+        _inputPathTextBox.setMaxLength(64);
+        _inputPathTextBox.setVisibleLength(64);
         return _jobNameTextBox;
     }
 

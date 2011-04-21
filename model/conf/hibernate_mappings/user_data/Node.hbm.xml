@@ -1,28 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!--
-  ~ Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
-  ~
-  ~ This file is part of JCVI VICS.
-  ~
-  ~ JCVI VICS is free software; you can redistribute it and/or modify it
-  ~ under the terms and conditions of the Artistic License 2.0.  For
-  ~ details, see the full text of the license in the file LICENSE.txt.  No
-  ~ other rights are granted.  Any and all third party software rights to
-  ~ remain with the original developer.
-  ~
-  ~ JCVI VICS is distributed in the hope that it will be useful in
-  ~ bioinformatics applications, but it is provided "AS IS" and WITHOUT
-  ~ ANY EXPRESS OR IMPLIED WARRANTIES including but not limited to
-  ~ implied warranties of merchantability or fitness for any particular
-  ~ purpose.  For details, see the full text of the license in the file
-  ~ LICENSE.txt.
-  ~
-  ~ You should have received a copy of the Artistic License 2.0 along with
-  ~ JCVI VICS.  If not, the license can be obtained from
-  ~ "http://www.perlfoundation.org/artistic_license_2_0."
-  -->
-
 <!DOCTYPE hibernate-mapping PUBLIC
         "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
         "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
@@ -419,783 +396,8 @@
                               unique="false"/>
             </subclass>
 
-            <subclass name="org.janelia.it.jacs.model.user_data.hmmer.HmmerPfamDatabaseNode" discriminator-value="HmmerPfamDatabaseNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                    <property name="numberOfHmms"
-                              type="java.lang.Integer"
-                              access="property"
-                              column="num_hmms"
-                              not-null="true"
-                              generated="never"
-                              update="true"
-                              insert="true"
-                              lazy="false"
-                              optimistic-lock="false"
-                              unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.hmmer.HmmerPfamResultNode" discriminator-value="HmmerPfamResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                   <property name="hitCount"
-                              type="java.lang.Long"
-                              access="property"
-                              column="blast_hit_count"
-                              not-null="false"
-                              generated="never"
-                              update="true"
-                              insert="true"
-                              lazy="false"
-                              optimistic-lock="false"
-                              unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.hmmer3.Hmmer3DatabaseNode" discriminator-value="Hmmer3DatabaseNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                    <property name="numberOfHmms"
-                              type="java.lang.Integer"
-                              access="property"
-                              column="num_hmms"
-                              not-null="true"
-                              generated="never"
-                              update="true"
-                              insert="true"
-                              lazy="false"
-                              optimistic-lock="false"
-                              unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.metageno.TrnaScanResultNode"
-                      discriminator-value="TrnascanResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.metageno.RrnaScanResultNode"
-                      discriminator-value="RrnascanResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.metageno.SimpleOrfCallerResultNode"
-                      discriminator-value="SimpleOrfCallerResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.metageno.MetageneResultNode"
-                      discriminator-value="MetageneResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.metageno.MetaGenoOrfCallerResultNode"
-                      discriminator-value="MetaGenoOrfCallerResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.metageno.MetaGenoAnnotationResultNode"
-                      discriminator-value="MetaGenoAnnotationResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.psiBlast.PsiBlastResultNode" discriminator-value="PsiBlastResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.ap16s.AnalysisPipeline16SResultNode" discriminator-value="AnalysisPipeline16SResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.neuronSeparator.NeuronSeparatorResultNode" discriminator-value="NeuronSeparatorResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.colorSeparator.ColorSeparatorResultNode" discriminator-value="ColorSeparatorResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.inspect.InspectResultNode" discriminator-value="InspectResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.barcodeDesign.BarcodeDesignResultNode" discriminator-value="BarcodeDesignResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.profileComparison.ProfileComparisonResultNode" discriminator-value="ProfileComparisonResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.pangenome.PangenomePipelineResultFileNode" discriminator-value="PangenomePipelineResultFileNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.pangenome.InparanoidResultFileNode" discriminator-value="InparanoidResultFileNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.pangenome.OrthoMCLResultFileNode" discriminator-value="OrthoMCLResultFileNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.pangenome.SybilClusteringResultFileNode" discriminator-value="SybilClusteringResultFileNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.pangenome.FoutsClusteringResultFileNode" discriminator-value="FoutsClusteringResultFileNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.tools.MuscleResultFileNode" discriminator-value="MuscleResultFileNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.hmmer3.HMMER3ResultFileNode" discriminator-value="HMMER3ResultFileNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.reversePsiBlast.ReversePsiBlastDatabaseNode" discriminator-value="ReversePsiBlastDatabaseNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="sequenceCount"
-                          type="java.lang.Integer"
-                          access="property"
-                          column="sequence_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.metageno.PriamResultNode"
-                      discriminator-value="PriamResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.tools.CddSearchResultNode"
-                      discriminator-value="CddSearchResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.rnaSeq.TophatResultNode"
-                      discriminator-value="TophatResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="FastqDirectoryNode" discriminator-value="FastqDirectoryNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="isPairedData"
-                          type="java.lang.String"
-                          access="property"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false">
-                    <column name="sequence_type"
-                            sql-type="varchar(20)"/>
-                </property>
-                <property name="sequenceCount"
-                          type="java.lang.Integer"
-                          access="property"
-                          column="sequence_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="SamFileNode" discriminator-value="SamFileNode"
-                          dynamic-update="true"
-                          dynamic-insert="true"
-                          select-before-update="false">
-                    <property name="sequenceCount"
-                              type="java.lang.Integer"
-                              access="property"
-                              column="sequence_count"
-                              not-null="false"
-                              generated="never"
-                              update="true"
-                              insert="true"
-                              lazy="false"
-                              optimistic-lock="false"
-                              unique="false"/>
-            </subclass>
-
-            <subclass name="GtfFileNode" discriminator-value="GtfFileNode"
-                          dynamic-update="true"
-                          dynamic-insert="true"
-                          select-before-update="false">
-                    <property name="sequenceCount"
-                              type="java.lang.Integer"
-                              access="property"
-                              column="sequence_count"
-                              not-null="false"
-                              generated="never"
-                              update="true"
-                              insert="true"
-                              lazy="false"
-                              optimistic-lock="false"
-                              unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.tools.GenezillaIsoFileNode"
-                      discriminator-value="GenezillaIsoFileNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                    <property name="sequenceCount"
-                              type="java.lang.Integer"
-                              access="property"
-                              column="sequence_count"
-                              not-null="false"
-                              generated="never"
-                              update="true"
-                              insert="true"
-                              lazy="false"
-                              optimistic-lock="false"
-                              unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.rnaSeq.CufflinksResultNode"
-                      discriminator-value="CufflinksResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.tools.SignalpResultNode"
-                      discriminator-value="SignalpResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.eukAnnotation.EAPResultNode"
-                      discriminator-value="EAPResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.tools.EvidenceModelerResultNode"
-                      discriminator-value="EvidenceModelerResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-             <subclass name="org.janelia.it.jacs.model.user_data.sift.SiftProteinSubstitutionResultNode"
-                      discriminator-value="SiftProteinSubstitutionResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.tools.ExonerateResultNode"
-                      discriminator-value="ExonerateResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.tools.AugustusResultNode"
-                      discriminator-value="AugustusResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.tools.TrfResultNode"
-                      discriminator-value="TrfResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.tools.RepeatMaskerResultNode"
-                      discriminator-value="RepeatMaskerResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.tools.InterProScanResultNode"
-                              discriminator-value="InterProScanResultNode"
-                              dynamic-update="true"
-                              dynamic-insert="true"
-                              select-before-update="false">
-                        <property name="hitCount"
-                                  type="java.lang.Long"
-                                  access="property"
-                                  column="blast_hit_count"
-                                  not-null="false"
-                                  generated="never"
-                                  update="true"
-                                  insert="true"
-                                  lazy="false"
-                                  optimistic-lock="false"
-                                  unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.tools.PrositeScanResultNode"
-                      discriminator-value="PrositeScanResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.tools.TargetpResultNode"
-                      discriminator-value="TargetpResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.tools.TmhmmResultNode"
-                      discriminator-value="TmhmmResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.tools.FgeneshResultNode"
-                      discriminator-value="FgeneshResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.tools.GenezillaResultNode"
-                      discriminator-value="GenezillaResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.rnaSeq.RnaSeqPipelineResultNode"
-                      discriminator-value="RnaSeqPipelineResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.pasa.PasaResultNode"
-                      discriminator-value="PasaResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.tools.Clustalw2ResultNode"
-                      discriminator-value="Clustalw2ResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.tools.Legacy2BsmlResultNode"
-                      discriminator-value="Legacy2BsmlResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.tools.JaccardResultNode"
-                      discriminator-value="JaccardResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.tools.JocsResultNode"
-                      discriminator-value="JocsResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
-
-            <subclass name="org.janelia.it.jacs.model.user_data.tools.Fasta2BsmlResultNode"
-                      discriminator-value="Fasta2BsmlResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-                <property name="hitCount"
-                          type="java.lang.Long"
-                          access="property"
-                          column="blast_hit_count"
-                          not-null="false"
-                          generated="never"
-                          update="true"
-                          insert="true"
-                          lazy="false"
-                          optimistic-lock="false"
-                          unique="false"/>
-            </subclass>
         </subclass>
 
-        <!--Want to end file node here-->
-        <subclass name="org.janelia.it.jacs.model.user_data.search.SearchResultNode" discriminator-value="SearchResultNode"
-                  dynamic-update="false"
-                  dynamic-insert="false"
-                  select-before-update="false">
-        </subclass>
         <subclass name="org.janelia.it.jacs.model.user_data.blast.BlastDatasetNode" discriminator-value="BlastDatasetNode"
                   dynamic-update="true"
                   dynamic-insert="true"
@@ -1224,7 +426,781 @@
             </set>
         </subclass>
 
+        <subclass name="org.janelia.it.jacs.model.user_data.hmmer.HmmerPfamDatabaseNode" discriminator-value="HmmerPfamDatabaseNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+                <property name="numberOfHmms"
+                          type="java.lang.Integer"
+                          access="property"
+                          column="num_hmms"
+                          not-null="true"
+                          generated="never"
+                          update="true"
+                          insert="true"
+                          lazy="false"
+                          optimistic-lock="false"
+                          unique="false"/>
+        </subclass>
 
+        <subclass name="org.janelia.it.jacs.model.user_data.hmmer.HmmerPfamResultNode" discriminator-value="HmmerPfamResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+               <property name="hitCount"
+                          type="java.lang.Long"
+                          access="property"
+                          column="blast_hit_count"
+                          not-null="false"
+                          generated="never"
+                          update="true"
+                          insert="true"
+                          lazy="false"
+                          optimistic-lock="false"
+                          unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.hmmer3.Hmmer3DatabaseNode" discriminator-value="Hmmer3DatabaseNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+                <property name="numberOfHmms"
+                          type="java.lang.Integer"
+                          access="property"
+                          column="num_hmms"
+                          not-null="true"
+                          generated="never"
+                          update="true"
+                          insert="true"
+                          lazy="false"
+                          optimistic-lock="false"
+                          unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.metageno.TrnaScanResultNode"
+                  discriminator-value="TrnascanResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.metageno.RrnaScanResultNode"
+                  discriminator-value="RrnascanResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.metageno.SimpleOrfCallerResultNode"
+                  discriminator-value="SimpleOrfCallerResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.metageno.MetageneResultNode"
+                  discriminator-value="MetageneResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.metageno.MetaGenoOrfCallerResultNode"
+                  discriminator-value="MetaGenoOrfCallerResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.metageno.MetaGenoAnnotationResultNode"
+                  discriminator-value="MetaGenoAnnotationResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.psiBlast.PsiBlastResultNode" discriminator-value="PsiBlastResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.ap16s.AnalysisPipeline16SResultNode" discriminator-value="AnalysisPipeline16SResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+        </subclass>
+
+            <subclass name="org.janelia.it.jacs.model.user_data.neuronSeparator.NeuronSeparatorResultNode" discriminator-value="NeuronSeparatorResultNode"
+                      dynamic-update="true"
+                      dynamic-insert="true"
+                      select-before-update="false">
+            </subclass>
+
+            <subclass name="org.janelia.it.jacs.model.user_data.colorSeparator.ColorSeparatorResultNode" discriminator-value="ColorSeparatorResultNode"
+                      dynamic-update="true"
+                      dynamic-insert="true"
+                      select-before-update="false">
+            </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.inspect.InspectResultNode" discriminator-value="InspectResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.barcodeDesign.BarcodeDesignResultNode" discriminator-value="BarcodeDesignResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.profileComparison.ProfileComparisonResultNode" discriminator-value="ProfileComparisonResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+        </subclass>
+        
+        <subclass name="org.janelia.it.jacs.model.user_data.pangenome.PangenomePipelineResultFileNode" discriminator-value="PangenomePipelineResultFileNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.pangenome.InparanoidResultFileNode" discriminator-value="InparanoidResultFileNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.pangenome.OrthoMCLResultFileNode" discriminator-value="OrthoMCLResultFileNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.pangenome.SybilClusteringResultFileNode" discriminator-value="SybilClusteringResultFileNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.pangenome.FoutsClusteringResultFileNode" discriminator-value="FoutsClusteringResultFileNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.tools.MuscleResultFileNode" discriminator-value="MuscleResultFileNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.hmmer3.HMMER3ResultFileNode" discriminator-value="HMMER3ResultFileNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.reversePsiBlast.ReversePsiBlastDatabaseNode" discriminator-value="ReversePsiBlastDatabaseNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="sequenceCount"
+                      type="java.lang.Integer"
+                      access="property"
+                      column="sequence_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.search.SearchResultNode" discriminator-value="SearchResultNode"
+                  dynamic-update="false"
+                  dynamic-insert="false"
+                  select-before-update="false">
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.metageno.PriamResultNode"
+                  discriminator-value="PriamResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.tools.CddSearchResultNode"
+                  discriminator-value="CddSearchResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+        
+        <subclass name="org.janelia.it.jacs.model.user_data.rnaSeq.TophatResultNode"
+                  discriminator-value="TophatResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="FastqDirectoryNode" discriminator-value="FastqDirectoryNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="isPairedData"
+                      type="java.lang.String"
+                      access="property"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false">
+                <column name="sequence_type"
+                        sql-type="varchar(20)"/>
+            </property>
+            <property name="sequenceCount"
+                      type="java.lang.Integer"
+                      access="property"
+                      column="sequence_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="SamFileNode" discriminator-value="SamFileNode"
+                      dynamic-update="true"
+                      dynamic-insert="true"
+                      select-before-update="false">
+                <property name="sequenceCount"
+                          type="java.lang.Integer"
+                          access="property"
+                          column="sequence_count"
+                          not-null="false"
+                          generated="never"
+                          update="true"
+                          insert="true"
+                          lazy="false"
+                          optimistic-lock="false"
+                          unique="false"/>
+        </subclass>
+
+        <subclass name="GtfFileNode" discriminator-value="GtfFileNode"
+                      dynamic-update="true"
+                      dynamic-insert="true"
+                      select-before-update="false">
+                <property name="sequenceCount"
+                          type="java.lang.Integer"
+                          access="property"
+                          column="sequence_count"
+                          not-null="false"
+                          generated="never"
+                          update="true"
+                          insert="true"
+                          lazy="false"
+                          optimistic-lock="false"
+                          unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.tools.GenezillaIsoFileNode"
+                  discriminator-value="GenezillaIsoFileNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+                <property name="sequenceCount"
+                          type="java.lang.Integer"
+                          access="property"
+                          column="sequence_count"
+                          not-null="false"
+                          generated="never"
+                          update="true"
+                          insert="true"
+                          lazy="false"
+                          optimistic-lock="false"
+                          unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.rnaSeq.CufflinksResultNode"
+                  discriminator-value="CufflinksResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.tools.SignalpResultNode"
+                  discriminator-value="SignalpResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.eukAnnotation.EAPResultNode"
+                  discriminator-value="EAPResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.tools.EvidenceModelerResultNode"
+                  discriminator-value="EvidenceModelerResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+         <subclass name="org.janelia.it.jacs.model.user_data.sift.SiftProteinSubstitutionResultNode"
+                  discriminator-value="SiftProteinSubstitutionResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.tools.ExonerateResultNode"
+                  discriminator-value="ExonerateResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.tools.AugustusResultNode"
+                  discriminator-value="AugustusResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+        
+        <subclass name="org.janelia.it.jacs.model.user_data.tools.TrfResultNode"
+                  discriminator-value="TrfResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.tools.RepeatMaskerResultNode"
+                  discriminator-value="RepeatMaskerResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.tools.InterProScanResultNode"
+                          discriminator-value="InterProScanResultNode"
+                          dynamic-update="true"
+                          dynamic-insert="true"
+                          select-before-update="false">
+                    <property name="hitCount"
+                              type="java.lang.Long"
+                              access="property"
+                              column="blast_hit_count"
+                              not-null="false"
+                              generated="never"
+                              update="true"
+                              insert="true"
+                              lazy="false"
+                              optimistic-lock="false"
+                              unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.tools.PrositeScanResultNode"
+                  discriminator-value="PrositeScanResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.tools.TargetpResultNode"
+                  discriminator-value="TargetpResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.tools.TmhmmResultNode"
+                  discriminator-value="TmhmmResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.tools.FgeneshResultNode"
+                  discriminator-value="FgeneshResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.tools.GenezillaResultNode"
+                  discriminator-value="GenezillaResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.rnaSeq.RnaSeqPipelineResultNode"
+                  discriminator-value="RnaSeqPipelineResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.pasa.PasaResultNode"
+                  discriminator-value="PasaResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.tools.Clustalw2ResultNode"
+                  discriminator-value="Clustalw2ResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.tools.Legacy2BsmlResultNode"
+                  discriminator-value="Legacy2BsmlResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.tools.JaccardResultNode"
+                  discriminator-value="JaccardResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.tools.JocsResultNode"
+                  discriminator-value="JocsResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
+
+        <subclass name="org.janelia.it.jacs.model.user_data.tools.Fasta2BsmlResultNode"
+                  discriminator-value="Fasta2BsmlResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+            <property name="hitCount"
+                      type="java.lang.Long"
+                      access="property"
+                      column="blast_hit_count"
+                      not-null="false"
+                      generated="never"
+                      update="true"
+                      insert="true"
+                      lazy="false"
+                      optimistic-lock="false"
+                      unique="false"/>
+        </subclass>
     </class>
 
 </hibernate-mapping>
