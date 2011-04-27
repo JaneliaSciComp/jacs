@@ -131,7 +131,7 @@
     <!-- Runs the GWT compiler to convert client (browser) Java into JS for all modules -->
     <target name="gwt-compile" depends="setup, make-gwt-build-dir" description="Generate clientside content with GWT"
             unless="skip.GWT.compilation">
-        <parallel threadcount="4">
+        <parallel threadcount="3">
             <!-- Package up the common code module-->
             <antcall target="gwt-package-common"/>
 
