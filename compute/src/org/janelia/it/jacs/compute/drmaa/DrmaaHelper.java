@@ -118,7 +118,6 @@ public class DrmaaHelper {
 
     public SerializableJobTemplate createJobTemplate(SerializableJobTemplate existingTemplate) throws DrmaaException {
         synchronized (sunSession) {
-            existingTemplate.setNativeSpecification("-ac web_service=CAMERA");
             JobTemplate jt = sunSession.createJobTemplate();
             existingTemplate.setDrmaaJobTemplate(jt);
             return existingTemplate;

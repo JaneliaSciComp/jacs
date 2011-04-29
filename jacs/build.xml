@@ -300,6 +300,10 @@
 
     <!-- Not to be called directly.  Requires parameter ${gwt.module.name} -->
     <target name="gwt-compile-module" depends="set-common-properties">
+        <condition property="draft.flag" value="${user.gwt.draft}" else="">
+            <isset property="user.gwt.draft"/>
+        </condition>
+        <echo message="${draft.flag} equals draft.flag"/>
         <condition property="compile.flag" value="${user.gwt.browser.specific.compile}" else="${gwt.compiler.default}">
             <isset property="user.gwt.browser.specific.compile"/>
         </condition>
@@ -328,6 +332,7 @@
             <arg value="-style" />
             <!-- NOTE: using "DETAILED" style causes Java heap space errors -->
             <arg value="${gwt-javascript-style}" />
+            <arg value="${draft.flag}" />
             <!--<arg value="DETAILED" />-->
             <!-- TODO: auto-detect all GWT modules -->
             <arg value="${gwt.module.name}" />
