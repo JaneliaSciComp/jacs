@@ -36,5 +36,5 @@ import java.util.ArrayList;
 public interface AdminService extends RemoteService {
     public String createUser(String login, String name);
 
-    public ArrayList getDiskUsageReport();
+    public ArrayList<String> getDiskUsageReport();
 }

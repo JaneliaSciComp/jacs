@@ -23,9 +23,12 @@
 
 package org.janelia.it.jacs.shared.tasks;
 
-import java.io.File;
+import com.google.gwt.user.client.rpc.IsSerializable;
 
-public class GenbankFileInfo implements Comparable {
+import java.io.File;
+import java.io.Serializable;
+
+public class GenbankFileInfo implements Comparable, IsSerializable, Serializable {
     private Long genomeProjectNodeId;
     private File genbankFile;
     private Long length;

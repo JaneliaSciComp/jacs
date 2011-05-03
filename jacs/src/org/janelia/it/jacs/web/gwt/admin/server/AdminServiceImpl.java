@@ -109,7 +109,7 @@ public class AdminServiceImpl extends JcviGWTSpringController implements AdminSe
         return "Creation of user " + login + " failed.";
     }
 
-    public ArrayList getDiskUsageReport() {
+    public ArrayList<String> getDiskUsageReport() {
         Scanner scanner = null;
         try {
             ArrayList<DiskInfo> diskUsage = new ArrayList<DiskInfo>();

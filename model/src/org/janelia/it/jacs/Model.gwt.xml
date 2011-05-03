@@ -32,7 +32,9 @@
     <source path="model/genomics"/>
     <source path="model/metadata"/>
     <source path="model/prokPipeline"/>
-    <source path="model/tasks"/>
+    <source path="model/tasks">
+        <exclude name="tools/AugustusTask.java"/>
+    </source>
     <source path="model/user_data">
         <include name="DataNode.java"/>
         <exclude name="FileNode.java"/>
@@ -48,7 +50,7 @@
         <exclude name="BlastResultNode.java"/>
         <exclude name="BlastResultFileNode.java"/>
         <exclude name="BlastDatasetNode.java"/>
-        <exclude name="MpiBlastDatabaseFileNode"/>
+        <exclude name="MpiBlastDatabaseFileNode.java"/>
     </source>
 
     <source path="model/user_data/metageno">
@@ -63,11 +65,7 @@
     </source>
 
     <source path="model/user_data/search"/>
-    <source path="model/user_data/search"/>
-    <source path="model/vo">
-
-        <!--<exclude name="TextParameterVO.java" />-->
-    </source>
+    <source path="model/vo"/>
     <source path="model/search"/>
     <inherits name="com.google.gwt.user.User"/>
 </module>
