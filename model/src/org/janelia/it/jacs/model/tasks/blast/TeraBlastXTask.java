@@ -34,7 +34,7 @@ public class TeraBlastXTask extends BlastXTask implements TeraBlastTask {
 
     public TeraBlastXTask() {
         super();
-        this.taskName = this.getClass().getSimpleName();
+        this.taskName = this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1);
     }
 
     public String getParameterFile() {

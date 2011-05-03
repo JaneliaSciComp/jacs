@@ -100,7 +100,7 @@ public class NeuronSeparatorPanel extends Composite {
         _optionsPanel.displayParams(_neusepPipelineTask);
 
 
-        Grid grid = new Grid((projectCodeRequired) ? 6 : 5, 2);
+        Grid grid = new Grid((projectCodeRequired) ? 5 : 4, 2);
         grid.setCellSpacing(3);
         int tmpIndex = 0;
         grid.setWidget(tmpIndex, 0, new HTMLPanel("<span class='prompt'>Job Name:</span><span class='requiredInformation'>*</span>"));

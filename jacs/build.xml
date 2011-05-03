@@ -71,7 +71,7 @@
             <pathelement location="${common.module}/GWT/gwt-widgets-0.2.0.jar" />
             <pathelement location="${common.module}/GWT/gwt-sl-1.0.jar" />
             <pathelement location="${common.module}/GWT/gwt-dnd-3.0.1.jar" />
-            <pathelement location="${common.module}/GWT/gwt-math-server-2.1" />
+            <pathelement location="${common.module}/GWT/gwt-java-math-1.0.9.jar" />
             <pathelement location="${common.module}/GWT/${gwt.dev.jar.name}" />  <!-- includes apache commons stuff -->
 
             <pathelement location="${compute.module}/build/jars/compute-client.jar"/>

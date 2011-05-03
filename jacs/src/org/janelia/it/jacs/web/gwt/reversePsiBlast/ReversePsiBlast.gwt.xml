@@ -22,7 +22,7 @@
   -->
 
 <module rename-to="ReversePsiBlast">
-    <inherits name="com.googlecode.gwt.math.Math"></inherits>
+    <inherits name="net.zschech.gwt.math.Math"></inherits>
     <inherits name="com.google.gwt.user.User"/>
     <inherits name="org.gwtwidgets.WidgetLibrary"/>
     <inherits name="org.janelia.it.jacs.Model"/>

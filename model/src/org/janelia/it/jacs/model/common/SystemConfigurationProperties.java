@@ -29,6 +29,7 @@ import org.apache.log4j.Logger;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
@@ -52,7 +53,7 @@ import java.util.Set;
  * @author smurphy
  * @author tnabeel
  */
-public class SystemConfigurationProperties extends Properties implements IsSerializable {
+public class SystemConfigurationProperties extends Properties implements Serializable,IsSerializable {
     private static Set<String> fileNames = new HashSet<String>();
 
     static {

@@ -22,7 +22,7 @@
   -->
 
 <module>
-    <inherits name="com.googlecode.gwt.math.Math"></inherits>
+    <inherits name="net.zschech.gwt.math.Math"></inherits>
     <source path="model/collections"/>
     <source path="model/common">
         <exclude name="SystemConfigurationProperties.java"/>
@@ -33,10 +33,10 @@
     <source path="model/metadata"/>
     <source path="model/prokPipeline"/>
     <source path="model/tasks"/>
-    <source path="model/tasks/grid"/>
     <source path="model/user_data">
         <include name="DataNode.java"/>
         <exclude name="FileNode.java"/>
+        <exclude name="DownloadableFileNode.java"/>
         <include name="Node.java"/>
         <include name="User.java"/>
         <include name="DataSource.java"/>
@@ -48,6 +48,7 @@
         <exclude name="BlastResultNode.java"/>
         <exclude name="BlastResultFileNode.java"/>
         <exclude name="BlastDatasetNode.java"/>
+        <exclude name="MpiBlastDatabaseFileNode"/>
     </source>
 
     <source path="model/user_data/metageno">

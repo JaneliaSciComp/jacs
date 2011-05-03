@@ -65,16 +65,16 @@ public class DiskUsagePanel extends TitledPanel {
                     _logger.error("Disk usage information is null");
                     return;
                 }
-                ArrayList diskInfo = (ArrayList) o;
+                ArrayList<String> diskInfo = (ArrayList<String>) o;
                 addInformation(diskInfo);
             }
         });
         realize();
     }
 
-    private void addInformation(ArrayList diskInfo) {
-        for (Object s : diskInfo) {
-            String[] pieces = ((String) s).split("\t");
+    private void addInformation(ArrayList<String> diskInfo) {
+        for (String s : diskInfo) {
+            String[] pieces = s.split("\t");
             int numRows = usageTable.getRowCount();
             usageTable.setWidget(numRows, 0, HtmlUtils.getHtml(pieces[0], "nowrapText"));
             usageTable.setWidget(numRows, 1, HtmlUtils.getHtml(pieces[1], "nowrapText"));
