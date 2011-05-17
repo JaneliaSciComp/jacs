@@ -122,4 +122,6 @@ public interface ComputeBeanRemote {
     public GenericServiceDefinitionNode getGenericServiceDefinitionByName(String serviceName) throws Exception;
 
     public void validateFile(String filePath) throws Exception;
+    public List<Task> getUserTasks(String userLogin) throws Exception;
+    public List<Task> getUserTasksByType(String simpleName, String userName) throws RemoteException;
 }
