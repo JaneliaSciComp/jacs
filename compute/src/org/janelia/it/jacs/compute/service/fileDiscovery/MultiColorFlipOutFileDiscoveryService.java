@@ -3,7 +3,6 @@ package org.janelia.it.jacs.compute.service.fileDiscovery;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
-import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.fileDiscovery.MultiColorFlipOutFileDiscoveryTask;
 
 import java.util.ArrayList;
