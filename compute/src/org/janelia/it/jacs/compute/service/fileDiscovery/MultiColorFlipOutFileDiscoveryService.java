@@ -22,28 +22,33 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
     private MultiColorFlipOutFileDiscoveryTask task;
     private String sessionName;
     private static String DIRECTORY_PARAM_PREFIX = "DIRECTORY_";
+    private org.apache.log4j.Logger logger;
+    List<String> directoryPathList = new ArrayList<String>();
 
     public void execute(IProcessData processData) {
         try {
-            this.task = (MultiColorFlipOutFileDiscoveryTask)ProcessDataHelper.getTask(processData);
+            logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
+            task = (MultiColorFlipOutFileDiscoveryTask) ProcessDataHelper.getTask(processData);
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
             Set<Map.Entry<String, Object>> entrySet = processData.entrySet();
-            List<String> directoryPathList = new ArrayList<String>();
             for (Map.Entry<String, Object> entry : entrySet) {
                 String paramName = entry.getKey();
                 if (paramName.startsWith(DIRECTORY_PARAM_PREFIX)) {
-                    directoryPathList.add((String)entry.getValue());
+                    directoryPathList.add((String) entry.getValue());
                 }
             }
-            String taskInputDirectoryList=task.getParameter(MultiColorFlipOutFileDiscoveryTask.PARAM_inputDirectoryList);
-            if (taskInputDirectoryList!=null) {
-                String[] directoryArray=taskInputDirectoryList.split(",");
+            String taskInputDirectoryList = task.getParameter(MultiColorFlipOutFileDiscoveryTask.PARAM_inputDirectoryList);
+            if (taskInputDirectoryList != null) {
+                String[] directoryArray = taskInputDirectoryList.split(",");
                 for (String d : directoryArray) {
                     directoryPathList.add(d.trim());
                 }
             }
-        }
-        catch (Exception e) {
+            for (String directoryPath : directoryPathList) {
+                logger.info(" MultiColorFlipOutFileDiscoveryService - directory="+directoryPath);
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage());
         }
     }
 }
