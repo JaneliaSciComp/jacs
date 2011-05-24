@@ -241,6 +241,10 @@
                  discriminator-value="fasta2BsmlTask">
     </subclass>
 
+    <subclass name="org.janelia.it.jacs.model.tasks.fileDiscovery.MultiColorFlipOutFileDiscoveryTask" extends="org.janelia.it.jacs.model.tasks.Task"
+                  discriminator-value="multiColorFlipOutFileDiscoveryTask">
+    </subclass>
+
     <class name="Event"
            table="task_event">
         <composite-id>
