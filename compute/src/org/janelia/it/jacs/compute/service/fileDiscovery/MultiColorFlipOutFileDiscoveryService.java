@@ -41,7 +41,10 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             if (taskInputDirectoryList != null) {
                 String[] directoryArray = taskInputDirectoryList.split(",");
                 for (String d : directoryArray) {
-                    directoryPathList.add(d.trim());
+                    String trimmedPath=d.trim();
+                    if (trimmedPath.length()>0) {
+                        directoryPathList.add(d.trim());
+                    }
                 }
             }
             for (String directoryPath : directoryPathList) {
