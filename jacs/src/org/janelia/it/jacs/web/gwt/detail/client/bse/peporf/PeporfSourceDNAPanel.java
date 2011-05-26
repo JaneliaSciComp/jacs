@@ -64,8 +64,8 @@ public class PeporfSourceDNAPanel extends PeporfEntityPanel {
         SequenceDetailsTableBuilder baseBuilder = parentPanel.getBaseEntityTableBuilder();
         BaseSequenceEntity bse = baseBuilder.getBaseEntity();
         int baseTypeCode = bse.getEntityType().getCode();
-        if (baseTypeCode != EntityType.ENTITY_CODE_PROTEIN &&
-                baseTypeCode != EntityType.ENTITY_CODE_ORF) {
+        if (baseTypeCode != EntityTypeGenomic.ENTITY_CODE_PROTEIN &&
+                baseTypeCode != EntityTypeGenomic.ENTITY_CODE_ORF) {
             setVisible(false);
             return;
         }
@@ -74,7 +74,7 @@ public class PeporfSourceDNAPanel extends PeporfEntityPanel {
         Nucleotide naEntity = null;
         sequenceBegin = 0;
         sequenceEnd = 0;
-        if (baseTypeCode == EntityType.ENTITY_CODE_PROTEIN) {
+        if (baseTypeCode == EntityTypeGenomic.ENTITY_CODE_PROTEIN) {
             Protein protein = (Protein) bse;
             if (protein.getDnaBegin() != null) {
                 sequenceBegin = protein.getDnaBegin();

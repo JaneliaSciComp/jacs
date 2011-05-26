@@ -39,7 +39,7 @@ public class Read extends Nucleotide implements Serializable, IsSerializable {
     private Set<Read> mates = new HashSet<Read>(0);
 
     public Read() {
-        super(EntityType.READ);
+        super(EntityTypeGenomic.READ);
     }
 
     public String getTraceAcc() {

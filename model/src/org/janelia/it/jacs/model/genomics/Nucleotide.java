@@ -36,10 +36,10 @@ import java.io.Serializable;
 public class Nucleotide extends BaseSequenceEntity implements Serializable, IsSerializable {
 
     public Nucleotide() {
-        super(EntityType.NUCLEOTIDE);
+        super(EntityTypeGenomic.NUCLEOTIDE);
     }
 
-    protected Nucleotide(EntityType entityType) {
+    protected Nucleotide(EntityTypeGenomic entityType) {
         super(entityType);
     }
 

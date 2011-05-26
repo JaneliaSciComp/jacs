@@ -24,7 +24,7 @@
 package org.janelia.it.jacs.shared.dma.test;
 
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.genomics.EntityType;
+import org.janelia.it.jacs.model.genomics.EntityTypeGenomic;
 import org.janelia.it.jacs.model.genomics.SequenceType;
 import org.janelia.it.jacs.shared.dma.entity.SequenceInfo;
 import org.janelia.it.jacs.shared.dma.reporter.DmaLogger;
@@ -142,12 +142,12 @@ public class FastaInputCreater {
             case SequenceType.SEQTYPE_CODE_NUCLEIC_ACID:
                 dataType = SequenceInfo.DATA_TYPE_GENOMIC;
                 switch (entityTypeCode) {
-                    case EntityType.ENTITY_CODE_NUCLEOTIDE:
+                    case EntityTypeGenomic.ENTITY_CODE_NUCLEOTIDE:
                         break;
-                    case EntityType.ENTITY_CODE_CHROMOSOME:
+                    case EntityTypeGenomic.ENTITY_CODE_CHROMOSOME:
                         assemblyStatus = SequenceInfo.ASSEMBLY_STATUS_FINISHED;
                         break;
-                    case EntityType.ENTITY_CODE_SCAFFOLD:
+                    case EntityTypeGenomic.ENTITY_CODE_SCAFFOLD:
                         assemblyStatus = SequenceInfo.ASSEMBLY_STATUS_DRAFT;
                         break;
                 }

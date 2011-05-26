@@ -739,7 +739,7 @@ public class FeatureDAOImplTest extends JacswebTestCase {
         //assertNull(read.getDescription());
 
         // Entity type
-        EntityType entityType = read.getEntityType();
+        EntityTypeGenomic entityType = read.getEntityType();
         assertEquals("Read", entityType.getName());
         assertEquals("READ", entityType.getAbbrev());
         assertEquals("Read", entityType.getDescription());

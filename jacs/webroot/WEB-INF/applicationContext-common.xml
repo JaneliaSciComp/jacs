@@ -107,6 +107,10 @@
         <property name="sessionFactory" ref="sessionFactory"/>
     </bean>
 
+    <bean id="entityDAO" class="org.janelia.it.jacs.server.access.hibernate.EntityDAOImpl">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+
     <bean id="downloadDAO" class="org.janelia.it.jacs.server.access.hibernate.DownloadDAOImpl">
         <property name="sessionFactory" ref="sessionFactory"/>
     </bean>
@@ -204,6 +208,10 @@
 
     <bean name="userAPI" class="org.janelia.it.jacs.server.api.UserAPI">
         <property name="userDAO" ref="userDAO"/>
+    </bean>
+
+    <bean name="entityAPI" class="org.janelia.it.jacs.server.api.EntityAPI">
+        <property name="entityDAO" ref="entityDAO"/>
     </bean>
 
     <bean name="searchDAOFactory" class="org.janelia.it.jacs.server.api.SearchDAOFactory">

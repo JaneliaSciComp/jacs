@@ -27,7 +27,7 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 
 public class GenericDNA extends GenericNA implements IsSerializable {
     public GenericDNA() {
-        //super(EntityType.READ);
+        //super(EntityTypeGenomic.READ);
         super();
     }
 }

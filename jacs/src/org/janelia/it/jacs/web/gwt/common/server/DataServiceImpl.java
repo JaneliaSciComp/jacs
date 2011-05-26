@@ -26,6 +26,7 @@ package org.janelia.it.jacs.web.gwt.common.server;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
 import org.janelia.it.jacs.model.common.*;
+import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.genomics.SequenceType;
 import org.janelia.it.jacs.model.prokPipeline.ProkGenomeVO;
 import org.janelia.it.jacs.model.tasks.Task;
@@ -36,13 +37,11 @@ import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.blast.Blastable;
 import org.janelia.it.jacs.model.user_data.prokAnnotation.ProkAnnotationResultFileNode;
-import org.janelia.it.jacs.server.access.FileNodeDAO;
-import org.janelia.it.jacs.server.access.NodeDAO;
-import org.janelia.it.jacs.server.access.TaskDAO;
-import org.janelia.it.jacs.server.access.UserDAO;
+import org.janelia.it.jacs.server.access.*;
 import org.janelia.it.jacs.server.access.hibernate.DaoException;
 import org.janelia.it.jacs.server.api.BlastAPI;
 import org.janelia.it.jacs.server.api.DataSetAPI;
+import org.janelia.it.jacs.server.api.EntityAPI;
 import org.janelia.it.jacs.server.api.UserAPI;
 import org.janelia.it.jacs.server.utils.SystemException;
 import org.janelia.it.jacs.shared.node.NodeFactory;
@@ -70,10 +69,12 @@ public class DataServiceImpl extends JcviGWTSpringController implements DataServ
     private BlastAPI blastAPI = new BlastAPI();
     private DataSetAPI dataSetAPI = new DataSetAPI();
     private UserAPI userAPI = new UserAPI();
+    private EntityAPI entityAPI = new EntityAPI();
     private FileNodeDAO _fileNodeDAO;
     private NodeDAO nodeDAO;
     private TaskDAO taskDAO;
     private UserDAO userDAO;
+    private EntityDAO entityDAO;
 
     public void setBlastAPI(BlastAPI blastAPI) {
         this.blastAPI = blastAPI;
@@ -85,6 +86,10 @@ public class DataServiceImpl extends JcviGWTSpringController implements DataServ
 
     public void setUserAPI(org.janelia.it.jacs.server.api.UserAPI userAPI) {
         this.userAPI = userAPI;
+    }
+
+    public void setEntityAPI(EntityAPI entityAPI) {
+        this.entityAPI = entityAPI;
     }
 
     public void setFileNodeDAO(FileNodeDAO fileNodeDAO) {
@@ -101,6 +106,10 @@ public class DataServiceImpl extends JcviGWTSpringController implements DataServ
 
     public void setUserDAO(UserDAO userDAO) {
         this.userDAO = userDAO;
+    }
+
+    public void setEntityDAO(EntityDAO entityDAO) {
+        this.entityDAO = entityDAO;
     }
 
     public BlastTask getBlastTaskById(Long taskId) throws GWTServiceException {
@@ -358,8 +367,7 @@ public class DataServiceImpl extends JcviGWTSpringController implements DataServ
 
     public UserDataNodeVO[] getPagedBlastableNodesForUser(String searchString, String sequenceType, int startIndex, int numRows, SortArgument[] sortArgs) {
         try {
-            return dataSetAPI.getPagedBlastableNodesForUser(searchString, sequenceType, startIndex, numRows, sortArgs,
-                    getSessionUser().getUserLogin());
+            return dataSetAPI.getPagedBlastableNodesForUser(searchString, sequenceType, startIndex, numRows, sortArgs, getSessionUser().getUserLogin());
         }
         catch (Exception e) {
             logger.error("Error: ", e);
@@ -508,6 +516,43 @@ public class DataServiceImpl extends JcviGWTSpringController implements DataServ
     public UserDataNodeVO[] getPagedNodesForUserByName(String nodeClassName, int startIndex, int numRows, SortArgument[] sortArgs) {
         try {
             return dataSetAPI.getPagedNodesForUserByName(nodeClassName, startIndex, numRows, sortArgs, getSessionUser().getUserLogin());
+        }
+        catch (Exception e) {
+            logger.error("Error: ", e);
+            return null;
+        }
+    }
+
+    public List<String> getEntityTypeNames() throws GWTServiceException {
+        try {
+            List<EntityType> tmpEntityTypes = entityDAO.findAllEntityTypes();
+            ArrayList<String> tmpEntityTypeNames = new ArrayList<String>();
+            for (EntityType tmpEntityType : tmpEntityTypes) {
+                tmpEntityTypeNames.add(tmpEntityType.getName());
+            }
+            Collections.sort(tmpEntityTypeNames);
+            return tmpEntityTypeNames;
+        }
+        catch (DaoException e) {
+            logger.error("Exception: " + e.getMessage());
+            throw new GWTServiceException("getEntityTypes Failed");
+        }
+    }
+
+    public Integer getNumEntityTypes(String searchString) throws GWTServiceException {
+        try {
+            return entityAPI.getNumEntityTypes(searchString);
+        }
+        catch (Exception e) {
+            logger.error("Error: ", e);
+            return null;
+        }
+    }
+
+    public List<EntityType> getPagedEntityTypes(String searchString, int startIndex, int numRows, SortArgument[] sortArgs)
+            throws GWTServiceException {
+        try {
+            return entityAPI.getPagedEntityTypes(searchString, startIndex, numRows, sortArgs);
         }
         catch (Exception e) {
             logger.error("Error: ", e);

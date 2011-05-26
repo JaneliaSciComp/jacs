@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- Generated May 26, 2011 10:42:24 AM by Hibernate Tools 3.2.1.GA -->
+<hibernate-mapping schema="flyportal"
+				   package="org.janelia.it.jacs.model.entity"
+                   default-access="property"
+                   default-lazy="false"
+                   auto-import="true"
+                   default-cascade="none"
+                  >
+    <class name="Entity" table="entity" catalog="flyportal">
+        <id name="id" type="string">
+            <column name="ID" length="60" />
+            <generator class="assigned" />
+        </id>
+        <many-to-one name="user" class="org.janelia.it.jacs.model.user_data.User" fetch="select">
+            <column name="user_id" />
+        </many-to-one>
+        <many-to-one name="entityStatus" class="EntityStatus" fetch="select">
+            <column name="status" length="60" />
+        </many-to-one>
+        <many-to-one name="entityType" class="EntityType" fetch="select">
+            <column name="entity_type_id" length="60" />
+        </many-to-one>
+        <property name="creationDate" type="timestamp">
+            <column name="creation_date" length="19" />
+        </property>
+        <property name="updatedDate" type="timestamp">
+            <column name="updated_date" length="19" />
+        </property>
+        <set name="entityDatas" inverse="true">
+            <key>
+                <column name="entity_id" length="60" />
+            </key>
+            <one-to-many class="EntityData" />
+        </set>
+    </class>
+</hibernate-mapping>

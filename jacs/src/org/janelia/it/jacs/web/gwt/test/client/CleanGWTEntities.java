@@ -24,6 +24,7 @@
 package org.janelia.it.jacs.web.gwt.test.client;
 
 import com.google.gwt.core.client.EntryPoint;
+import org.janelia.it.jacs.model.genomics.EntityTypeGenomic;
 import org.janelia.it.jacs.model.tasks.blast.*;
 import org.janelia.it.jacs.model.user_data.blast.Blastable;
 
@@ -72,7 +73,7 @@ public class CleanGWTEntities implements EntryPoint {
     private org.janelia.it.jacs.model.genomics.AASequence aaSequence;
     private org.janelia.it.jacs.model.genomics.BioSequence biosequence;
     private org.janelia.it.jacs.model.genomics.Chromosome chromosome;
-    private org.janelia.it.jacs.model.genomics.EntityType entitytype;
+    private EntityTypeGenomic entitytype;
     private org.janelia.it.jacs.model.genomics.Peptide peptide;
     private org.janelia.it.jacs.model.genomics.Nucleotide nucleotide;
     private org.janelia.it.jacs.model.genomics.ORF orf;

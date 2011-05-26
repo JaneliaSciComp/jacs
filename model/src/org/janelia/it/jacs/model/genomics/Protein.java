@@ -47,7 +47,7 @@ public class Protein extends Peptide implements IsSerializable, Serializable {
     * constructor
     */
     public Protein() {
-        super(EntityType.PROTEIN);
+        super(EntityTypeGenomic.PROTEIN);
     }
 
     /*

@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- Generated May 26, 2011 10:42:24 AM by Hibernate Tools 3.2.1.GA -->
+<hibernate-mapping schema="flyportal"
+				   package="org.janelia.it.jacs.model.entity"
+                   default-access="property"
+                   default-lazy="false"
+                   auto-import="true"
+                   default-cascade="none"
+                  >
+    <class name="EntityType" table="entityType" catalog="flyportal">
+        <id name="id" type="string">
+            <column name="ID" length="60" />
+            <generator class="assigned" />
+        </id>
+        <property name="sequence" type="java.lang.Long">
+            <column name="SEQUENCE" precision="18" scale="0" />
+        </property>
+        <property name="name" type="string">
+            <column name="name" length="60" unique="true" />
+        </property>
+        <property name="style" type="string">
+            <column name="style" length="60" />
+        </property>
+        <property name="description" type="string">
+            <column name="DESCRIPTION" length="65535" />
+        </property>
+        <property name="iconurl" type="string">
+            <column name="ICONURL" />
+        </property>
+    </class>
+</hibernate-mapping>

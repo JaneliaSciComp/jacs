@@ -36,7 +36,7 @@ abstract public class BaseSequenceEntity implements IsSerializable {
     //protected User owner;
     private String description;
     private String descriptionFormatted;
-    //protected EntityType entityType;
+    //protected EntityTypeGenomic entityType;
     //protected BioSequence bioSequence;
     private Integer seqLength;
     private String defline;
@@ -45,7 +45,7 @@ abstract public class BaseSequenceEntity implements IsSerializable {
     public BaseSequenceEntity() {
     }
 
-    //public BaseSequenceEntity(EntityType entityType) {
+    //public BaseSequenceEntity(EntityTypeGenomic entityType) {
     //    this.entityType = entityType;
     //    this.bioSequence = new BioSequence(entityType.getSequenceType());
     //    this.seqLength = new Integer(this.bioSequence.getLength());
@@ -124,7 +124,7 @@ abstract public class BaseSequenceEntity implements IsSerializable {
         return seqLength;
     }
 
-    //public EntityType getEntityType() {
+    //public EntityTypeGenomic getEntityType() {
     //    return entityType;
     //}
     //
@@ -207,7 +207,7 @@ abstract public class BaseSequenceEntity implements IsSerializable {
         this.seqLength = seqLength;
     }
 
-    //protected void setEntityType(EntityType entityType) {
+    //protected void setEntityType(EntityTypeGenomic entityType) {
     //    this.entityType = entityType;
     //}
     //protected void setBioSequence(BioSequence bioSequence) {

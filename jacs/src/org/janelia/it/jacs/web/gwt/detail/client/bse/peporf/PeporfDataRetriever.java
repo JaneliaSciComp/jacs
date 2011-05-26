@@ -276,7 +276,7 @@ public class PeporfDataRetriever {
         populatePeptidePanel();
         populateOrfPanel();
         populateNaPanel();
-        if (bseCode == EntityType.ENTITY_CODE_PEPTIDE || bseCode == EntityType.ENTITY_CODE_PROTEIN) {
+        if (bseCode == EntityTypeGenomic.ENTITY_CODE_PEPTIDE || bseCode == EntityTypeGenomic.ENTITY_CODE_PROTEIN) {
             populateAnnotationPanel();
         }
         else {
@@ -290,16 +290,16 @@ public class PeporfDataRetriever {
     private void establishEntityContext() {
         bse = (BaseSequenceEntity) peporfPanel.getEntity();
         int bseCode = bse.getEntityType().getCode();
-        if (bseCode == EntityType.ENTITY_CODE_PEPTIDE) {
+        if (bseCode == EntityTypeGenomic.ENTITY_CODE_PEPTIDE) {
             pep = (Peptide) bse;
         }
-        else if (bseCode == EntityType.ENTITY_CODE_PROTEIN) {
+        else if (bseCode == EntityTypeGenomic.ENTITY_CODE_PROTEIN) {
             pep = (Peptide) bse;
             pro = (Protein) pep;
             orf = pro.getOrfEntity();
             nuc = pro.getDnaEntity();
         }
-        else if (bseCode == EntityType.ENTITY_CODE_ORF) {
+        else if (bseCode == EntityTypeGenomic.ENTITY_CODE_ORF) {
             orf = (ORF) bse;
             pro = orf.getProteinEntity();
             pep = pro;

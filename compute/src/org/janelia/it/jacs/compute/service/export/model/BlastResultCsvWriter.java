@@ -26,7 +26,7 @@ package org.janelia.it.jacs.compute.service.export.model;
 import org.janelia.it.jacs.compute.service.export.writers.ExportWriter;
 import org.janelia.it.jacs.model.genomics.BaseSequenceEntity;
 import org.janelia.it.jacs.model.genomics.BlastHit;
-import org.janelia.it.jacs.model.genomics.EntityType;
+import org.janelia.it.jacs.model.genomics.EntityTypeGenomic;
 import org.janelia.it.jacs.model.metadata.Sample;
 
 import java.io.IOException;
@@ -87,8 +87,8 @@ public class BlastResultCsvWriter {
                 return UNKNOWN_SUBJECT_TYPE;
             }
             else {
-                if (bse.getEntityType().equals(EntityType.PROTEIN) ||
-                        bse.getEntityType().equals(EntityType.PEPTIDE)) {
+                if (bse.getEntityType().equals(EntityTypeGenomic.PROTEIN) ||
+                        bse.getEntityType().equals(EntityTypeGenomic.PEPTIDE)) {
                     return PROTEIN_SUBJECT_TYPE;
                 }
                 else {

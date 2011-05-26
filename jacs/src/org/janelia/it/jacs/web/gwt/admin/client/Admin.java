@@ -28,6 +28,7 @@ import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import org.janelia.it.jacs.web.gwt.admin.client.panels.DiskUsagePanel;
+import org.janelia.it.jacs.web.gwt.admin.client.panels.EntityTypePanel;
 import org.janelia.it.jacs.web.gwt.admin.client.panels.UserBrowserPanel;
 import org.janelia.it.jacs.web.gwt.common.client.BaseEntryPoint;
 import org.janelia.it.jacs.web.gwt.common.client.Constants;
@@ -71,8 +72,10 @@ public class Admin extends BaseEntryPoint {
 
         UserBrowserPanel dataPanel = new UserBrowserPanel();
         DiskUsagePanel usagepanel = new DiskUsagePanel();
+        EntityTypePanel entityPanel = new EntityTypePanel();
         tabs.add(dataPanel, "User Browser");
         tabs.add(usagepanel, "Disk Usage");
+        tabs.add(entityPanel, "Entity Types");
 
         if (0 < tabs.getWidgetCount()) {
             tabs.selectTab(0);

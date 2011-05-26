@@ -38,7 +38,7 @@ abstract public class BaseSequenceEntity implements Serializable, IsSerializable
     * system attributes
     */
     private Long entityId;
-    private EntityType entityType;
+    private EntityTypeGenomic entityType;
     protected User owner;
     private Integer sourceId = 0;
     private Boolean obsFlag = Boolean.FALSE;
@@ -72,10 +72,10 @@ abstract public class BaseSequenceEntity implements Serializable, IsSerializable
     * constructors
     */
     public BaseSequenceEntity() {
-        this.entityType = EntityType.UNKNOWN;
+        this.entityType = EntityTypeGenomic.UNKNOWN;
     }
 
-    protected BaseSequenceEntity(EntityType entityType) {
+    protected BaseSequenceEntity(EntityTypeGenomic entityType) {
         this.entityType = entityType;
     }
 
@@ -102,11 +102,11 @@ abstract public class BaseSequenceEntity implements Serializable, IsSerializable
         this.cameraAcc = cameraAcc;
     }
 
-    public EntityType getEntityType() {
+    public EntityTypeGenomic getEntityType() {
         return entityType;
     }
 
-    protected void setEntityType(EntityType entityType) {
+    protected void setEntityType(EntityTypeGenomic entityType) {
         this.entityType = entityType;
     }
 

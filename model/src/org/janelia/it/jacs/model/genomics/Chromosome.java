@@ -32,7 +32,7 @@ public class Chromosome extends Nucleotide implements IsSerializable, Serializab
     private String type;
 
     public Chromosome() {
-        super(EntityType.CHROMOSOME);
+        super(EntityTypeGenomic.CHROMOSOME);
     }
 
     public String getType() {

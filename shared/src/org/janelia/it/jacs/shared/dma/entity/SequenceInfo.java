@@ -25,7 +25,7 @@ package org.janelia.it.jacs.shared.dma.entity;
 
 import org.janelia.it.jacs.model.dma.Tag;
 import org.janelia.it.jacs.model.genomics.DefLineFormat;
-import org.janelia.it.jacs.model.genomics.EntityType;
+import org.janelia.it.jacs.model.genomics.EntityTypeGenomic;
 import org.janelia.it.jacs.model.genomics.SequenceType;
 
 import java.util.*;
@@ -71,7 +71,7 @@ public class SequenceInfo {
     private int giNumber;
     private int seqLength = -1;
 
-    private EntityType entityType;
+    private EntityTypeGenomic entityType;
     private SequenceType seqType;
     private String assemblyAcc;
     private AssemblyStatus assemblyStatus;
@@ -209,23 +209,23 @@ public class SequenceInfo {
             this.seqType = SequenceType.NA;
 //            switch (assemblyStatus) {
 //                case draft:
-//                    this.entityType = EntityType.SCAFFOLD;
+//                    this.entityType = EntityTypeGenomic.SCAFFOLD;
 //                    break;
 //                case finished:
-//                    this.entityType = EntityType.CHROMOSOME;
+//                    this.entityType = EntityTypeGenomic.CHROMOSOME;
 //                    break;
 //                default:
-//                    this.entityType = EntityType.GENE;
+//                    this.entityType = EntityTypeGenomic.GENE;
 //            }
-            this.entityType = EntityType.NUCLEOTIDE;
+            this.entityType = EntityTypeGenomic.NUCLEOTIDE;
         }
         else if (dataType.equals(DATA_TYPE_PROTEIN)) {
             this.seqType = SequenceType.AA;
-            this.entityType = EntityType.PROTEIN;
+            this.entityType = EntityTypeGenomic.PROTEIN;
         }
         else if (dataType.equals(DATA_TYPE_PEPTIDE)) {
             this.seqType = SequenceType.AA;
-            this.entityType = EntityType.PEPTIDE;
+            this.entityType = EntityTypeGenomic.PEPTIDE;
         }
         else {
             throw new IllegalArgumentException("data_type:" + dataType + " unrecognized in /KEYWORKDS; deflineMap=" + deflineMap);

@@ -26,7 +26,7 @@ package org.janelia.it.jacs.web.gwt.detail.client.bse.peporf;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.Panel;
 import org.janelia.it.jacs.model.genomics.BaseSequenceEntity;
-import org.janelia.it.jacs.model.genomics.EntityType;
+import org.janelia.it.jacs.model.genomics.EntityTypeGenomic;
 import org.janelia.it.jacs.model.genomics.ORF;
 import org.janelia.it.jacs.model.genomics.Protein;
 import org.janelia.it.jacs.web.gwt.common.client.panel.RoundedTabPanel;
@@ -172,14 +172,14 @@ public class PeporfPanel extends BSEntityPanel {
         else {
             BaseSequenceEntity bse = tableBuilder.getBaseEntity();
             logger.debug("PeporfPabel getDetailTypeLabel getting entity type...");
-            EntityType bseType = bse.getEntityType();
+            EntityTypeGenomic bseType = bse.getEntityType();
             logger.debug("PeporfPanel getDetailTypeLabel getting type code...");
             int bseCode = bseType.getCode();
-            if (bseCode == EntityType.ENTITY_CODE_PROTEIN ||
-                    bseCode == EntityType.ENTITY_CODE_PEPTIDE) {
+            if (bseCode == EntityTypeGenomic.ENTITY_CODE_PROTEIN ||
+                    bseCode == EntityTypeGenomic.ENTITY_CODE_PEPTIDE) {
                 return PEPTIDE_DETAIL_TYPE;
             }
-            else if (bseCode == EntityType.ENTITY_CODE_ORF) {
+            else if (bseCode == EntityTypeGenomic.ENTITY_CODE_ORF) {
                 return ORF_DETAIL_TYPE;
             }
             else {
@@ -249,7 +249,7 @@ public class PeporfPanel extends BSEntityPanel {
     private boolean peptideHasOrf() {
         boolean hasOrf = false;
         BaseSequenceEntity bse = getBaseEntityTableBuilder().getBaseEntity();
-        if (bse.getEntityType().getCode() == EntityType.ENTITY_CODE_PROTEIN) {
+        if (bse.getEntityType().getCode() == EntityTypeGenomic.ENTITY_CODE_PROTEIN) {
             Protein protein = (Protein) bse;
             String orfAcc = protein.getOrfAcc();
             if (orfAcc != null && orfAcc.length() > 0) {
@@ -263,11 +263,11 @@ public class PeporfPanel extends BSEntityPanel {
         boolean hasSourceDNA = false;
         BaseSequenceEntity bse = getBaseEntityTableBuilder().getBaseEntity();
         String naAcc = null;
-        if (bse.getEntityType().getCode() == EntityType.ENTITY_CODE_PROTEIN) {
+        if (bse.getEntityType().getCode() == EntityTypeGenomic.ENTITY_CODE_PROTEIN) {
             Protein protein = (Protein) bse;
             naAcc = protein.getDnaAcc();
         }
-        else if (bse.getEntityType().getCode() == EntityType.ENTITY_CODE_ORF) {
+        else if (bse.getEntityType().getCode() == EntityTypeGenomic.ENTITY_CODE_ORF) {
             ORF orf = (ORF) bse;
             naAcc = orf.getDnaAcc();
         }

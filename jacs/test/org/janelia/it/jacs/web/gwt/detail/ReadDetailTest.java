@@ -32,7 +32,7 @@ import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.collection.GWTEntityCleaner;
 import org.janelia.it.jacs.model.genomics.BioSequence;
-import org.janelia.it.jacs.model.genomics.EntityType;
+import org.janelia.it.jacs.model.genomics.EntityTypeGenomic;
 import org.janelia.it.jacs.model.genomics.Read;
 import org.janelia.it.jacs.model.metadata.BioMaterial;
 import org.janelia.it.jacs.model.metadata.Library;
@@ -242,7 +242,7 @@ public class ReadDetailTest extends TestCase {
         //assertNull(read.getDescription());
 
         // Entity type
-        EntityType entityType = read.getEntityType();
+        EntityTypeGenomic entityType = read.getEntityType();
         assertEquals("Read", entityType.getName());
         assertEquals("READ", entityType.getAbbrev());
         assertEquals("", entityType.getDescription());

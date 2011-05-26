@@ -26,7 +26,7 @@ package org.janelia.it.jacs.web.gwt.detail.client.bse.xlink;
 import com.google.gwt.user.client.ui.Widget;
 import org.janelia.it.jacs.model.common.SortArgument;
 import org.janelia.it.jacs.model.genomics.BseEntityDetail;
-import org.janelia.it.jacs.model.genomics.EntityType;
+import org.janelia.it.jacs.model.genomics.EntityTypeGenomic;
 import org.janelia.it.jacs.web.gwt.common.client.ui.table.SortableTable;
 import org.janelia.it.jacs.web.gwt.common.client.ui.table.TableCell;
 import org.janelia.it.jacs.web.gwt.common.client.ui.table.TableRow;
@@ -143,7 +143,7 @@ public class CorrelatedFeaturesPanelBuilder extends BaseCorrelatedEntitiesPanelB
         BseEntityDetail bseDetail = (BseEntityDetail) data;
         TableRow row = new TableRow();
         row.setValue(ID_COLUMN, new TableCell(bseDetail.getAcc(), createEntityLinkColumnValue(bseDetail.getAcc())));
-        if (EntityType.ENTITY_CODE_NON_CODING_RNA == bseDetail.getEntityTypeCode()) {
+        if (EntityTypeGenomic.ENTITY_CODE_NON_CODING_RNA == bseDetail.getEntityTypeCode()) {
             if (bseDetail.getType() == null) row.setValue(TYPE_COLUMN, new TableCell("RNA"));
             else row.setValue(TYPE_COLUMN, new TableCell(bseDetail.getType()));
         }
@@ -152,9 +152,9 @@ public class CorrelatedFeaturesPanelBuilder extends BaseCorrelatedEntitiesPanelB
         }
         row.setValue(LENGTH_COLUMN, new TableCell(bseDetail.getLength()));
         switch (bseDetail.getEntityTypeCode().intValue()) {
-            case EntityType.ENTITY_CODE_PROTEIN:
-            case EntityType.ENTITY_CODE_ORF:
-            case EntityType.ENTITY_CODE_NON_CODING_RNA:
+            case EntityTypeGenomic.ENTITY_CODE_PROTEIN:
+            case EntityTypeGenomic.ENTITY_CODE_ORF:
+            case EntityTypeGenomic.ENTITY_CODE_NON_CODING_RNA:
                 setBseEntityDetailFields(bseDetail, row);
         }
         return row;

@@ -43,7 +43,7 @@
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
         </id>
         <discriminator column="entity_type_code" type="java.lang.Integer"/>
-        <many-to-one name="entityType" class="EntityType" column="entity_type_code" cascade="none" lazy="proxy"
+        <many-to-one name="entityType" class="org.janelia.it.jacs.model.genomics.EntityTypeGenomic" column="entity_type_code" cascade="none" lazy="proxy"
             insert="false" update="false"/>
         <many-to-one name="owner" class="org.janelia.it.jacs.model.user_data.User" lazy="proxy" cascade="none" column="owner_id"/>
         <property name="sourceId" column="source_id" type="java.lang.Integer" not-null="true" unique="false"/>

@@ -98,7 +98,8 @@ public class UserVerificationInterceptor extends HandlerInterceptorAdapter {
 
         try {
             sessionUser = obtainUser(userLogin, userLogin, principal);
-            if (httpServletRequest.isUserInRole("jacs-admin"))
+            // todo WHen LDAP is fixed, put this back in
+//            if (httpServletRequest.isUserInRole("jacs-admin"))
                 sessionUser.setAdministrator(true);
         }
         catch (Exception e) {

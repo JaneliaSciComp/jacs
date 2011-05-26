@@ -24,7 +24,7 @@
 package org.janelia.it.jacs.web.gwt.detail.client.bse.peporf;
 
 import org.janelia.it.jacs.model.genomics.BaseSequenceEntity;
-import org.janelia.it.jacs.model.genomics.EntityType;
+import org.janelia.it.jacs.model.genomics.EntityTypeGenomic;
 import org.janelia.it.jacs.model.genomics.ORF;
 import org.janelia.it.jacs.model.genomics.Protein;
 import org.janelia.it.jacs.web.gwt.common.client.service.log.Logger;
@@ -54,13 +54,13 @@ public class PeporfPeptidePanel extends PeporfEntityPanel {
         BaseSequenceEntity bse = baseBuilder.getBaseEntity();
         int baseTypeCode = bse.getEntityType().getCode();
         RowIndex rowIndex = null;
-        if (baseTypeCode == EntityType.ENTITY_CODE_PROTEIN ||
-                baseTypeCode == EntityType.ENTITY_CODE_PEPTIDE) {
+        if (baseTypeCode == EntityTypeGenomic.ENTITY_CODE_PROTEIN ||
+                baseTypeCode == EntityTypeGenomic.ENTITY_CODE_PEPTIDE) {
             tableBuilder = baseBuilder;
             String pepAcc = parentPanel.getAcc();
             rowIndex = tableBuilder.populateCAMERAAccNo(pepAcc, PeporfPanel.PEPTIDE_DETAIL_TYPE, null);
         }
-        else if (baseTypeCode == EntityType.ENTITY_CODE_ORF) {
+        else if (baseTypeCode == EntityTypeGenomic.ENTITY_CODE_ORF) {
             ORF orf = (ORF) bse;
             String peptideAcc = orf.getProteinAcc();
             if (peptideAcc == null || peptideAcc.length() == 0) {

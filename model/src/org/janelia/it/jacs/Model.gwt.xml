@@ -29,6 +29,7 @@
         <exclude name="ParameterVOMapUserType.java"/>
     </source>
     <source path="model/download"/>
+    <source path="model/entity"/>
     <source path="model/genomics"/>
     <source path="model/metadata"/>
     <source path="model/prokPipeline"/>

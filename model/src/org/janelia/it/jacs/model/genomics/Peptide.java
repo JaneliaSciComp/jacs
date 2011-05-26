@@ -36,10 +36,10 @@ import java.io.Serializable;
 public class Peptide extends BaseSequenceEntity implements IsSerializable, Serializable {
 
     public Peptide() {
-        super(EntityType.PEPTIDE);
+        super(EntityTypeGenomic.PEPTIDE);
     }
 
-    protected Peptide(EntityType entityType) {
+    protected Peptide(EntityTypeGenomic entityType) {
         super(entityType);
     }
 

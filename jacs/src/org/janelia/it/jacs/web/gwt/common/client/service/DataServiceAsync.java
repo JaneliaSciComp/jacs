@@ -61,9 +61,8 @@ public interface DataServiceAsync {
 
     public void getUserLogins(AsyncCallback asyncCallback);
 
-    public void getPagedUsers(String searchString, int startIndex, int numRows, SortArgument[] sortArgs, AsyncCallback asyncCallback);
-
     public void getNumUsers(String searchString, AsyncCallback asyncCallback);
+    public void getPagedUsers(String searchString, int startIndex, int numRows, SortArgument[] sortArgs, AsyncCallback asyncCallback);
 
     public void getReversePsiBlastDatasets(AsyncCallback asyncCallback);
 
@@ -78,6 +77,9 @@ public interface DataServiceAsync {
     public void validateFilePath(String filePath, AsyncCallback asyncCallback);
 
     public void getNumNodesForUserByName(String nodeClassName, AsyncCallback asyncCallback);
-
     public void getPagedNodesForUserByName(String nodeClassName, int startIndex, int numRows, SortArgument[] sortArgs, AsyncCallback callback);
+
+    public void getEntityTypeNames(AsyncCallback asyncCallback);
+    public void getNumEntityTypes(String searchString, AsyncCallback asyncCallback);
+    public void getPagedEntityTypes(String searchString, int startIndex, int numRows, SortArgument[] sortArgs, AsyncCallback asyncCallback);
 }

@@ -42,7 +42,7 @@ public class NonCodingRNA extends Nucleotide implements IsSerializable, Serializ
     * constructor
     */
     public NonCodingRNA() {
-        super(EntityType.NON_CODING_RNA);
+        super(EntityTypeGenomic.NON_CODING_RNA);
     }
 
     /*

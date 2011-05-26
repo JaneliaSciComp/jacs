@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.model.annotation;
 
+import com.google.gwt.user.client.rpc.IsSerializable;
+
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -9,7 +12,7 @@ import java.util.Date;
  * Time: 3:48 PM
  *
  */
-public class Annotation {
+public class Annotation implements IsSerializable, Serializable{
 
     private long uniqueIdentifier;
     private String namespace;

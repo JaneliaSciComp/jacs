@@ -33,7 +33,7 @@ import java.io.Serializable;
  * Date: Nov 6, 2006
  * Time: 3:17:48 PM
  */
-public class EntityType implements Serializable, IsSerializable {
+public class EntityTypeGenomic implements Serializable, IsSerializable {
 
     public static final int ENTITY_CODE_UNKNOWN = -1;
     public static final int ENTITY_CODE_NUCLEOTIDE = 0;
@@ -47,16 +47,16 @@ public class EntityType implements Serializable, IsSerializable {
     public static final int ENTITY_CODE_NON_CODING_RNA = 8;
 
 
-    public static final EntityType UNKNOWN = new EntityType(ENTITY_CODE_UNKNOWN, "Unknown", "UNK", "", SequenceType.UNKNOWN);
-    public static final EntityType NUCLEOTIDE = new EntityType(ENTITY_CODE_NUCLEOTIDE, "Nucleotide", "NUC", "", SequenceType.NA);
-    public static final EntityType CHROMOSOME = new EntityType(ENTITY_CODE_CHROMOSOME, "Chromosome", "CHR", "", SequenceType.NA);
-    public static final EntityType SCAFFOLD = new EntityType(ENTITY_CODE_SCAFFOLD, "Scaffold", "SCAF", "", SequenceType.NA);
-    public static final EntityType READ = new EntityType(ENTITY_CODE_READ, "Read", "READ", "", SequenceType.NA);
-    public static final EntityType GENE = new EntityType(ENTITY_CODE_GENE, "Gene", "Gene", "", SequenceType.NA);
-    public static final EntityType ORF = new EntityType(ENTITY_CODE_ORF, "ORF", "ORF", "", SequenceType.NA);
-    public static final EntityType PROTEIN = new EntityType(ENTITY_CODE_PROTEIN, "Protein", "PRO", "", SequenceType.AA);
-    public static final EntityType PEPTIDE = new EntityType(ENTITY_CODE_PEPTIDE, "Peptide", "PEP", "", SequenceType.AA);
-    public static final EntityType NON_CODING_RNA = new EntityType(ENTITY_CODE_NON_CODING_RNA, "ncRNA", "ncRNA", "", SequenceType.NA);
+    public static final EntityTypeGenomic UNKNOWN = new EntityTypeGenomic(ENTITY_CODE_UNKNOWN, "Unknown", "UNK", "", SequenceType.UNKNOWN);
+    public static final EntityTypeGenomic NUCLEOTIDE = new EntityTypeGenomic(ENTITY_CODE_NUCLEOTIDE, "Nucleotide", "NUC", "", SequenceType.NA);
+    public static final EntityTypeGenomic CHROMOSOME = new EntityTypeGenomic(ENTITY_CODE_CHROMOSOME, "Chromosome", "CHR", "", SequenceType.NA);
+    public static final EntityTypeGenomic SCAFFOLD = new EntityTypeGenomic(ENTITY_CODE_SCAFFOLD, "Scaffold", "SCAF", "", SequenceType.NA);
+    public static final EntityTypeGenomic READ = new EntityTypeGenomic(ENTITY_CODE_READ, "Read", "READ", "", SequenceType.NA);
+    public static final EntityTypeGenomic GENE = new EntityTypeGenomic(ENTITY_CODE_GENE, "Gene", "Gene", "", SequenceType.NA);
+    public static final EntityTypeGenomic ORF = new EntityTypeGenomic(ENTITY_CODE_ORF, "ORF", "ORF", "", SequenceType.NA);
+    public static final EntityTypeGenomic PROTEIN = new EntityTypeGenomic(ENTITY_CODE_PROTEIN, "Protein", "PRO", "", SequenceType.AA);
+    public static final EntityTypeGenomic PEPTIDE = new EntityTypeGenomic(ENTITY_CODE_PEPTIDE, "Peptide", "PEP", "", SequenceType.AA);
+    public static final EntityTypeGenomic NON_CODING_RNA = new EntityTypeGenomic(ENTITY_CODE_NON_CODING_RNA, "ncRNA", "ncRNA", "", SequenceType.NA);
 
 
     private int code;
@@ -65,10 +65,10 @@ public class EntityType implements Serializable, IsSerializable {
     private String description;
     private SequenceType sequenceType;
 
-    public EntityType() {
+    public EntityTypeGenomic() {
     }
 
-    public EntityType(int code, String name, String abbrev, String description, SequenceType sequenceType) {
+    public EntityTypeGenomic(int code, String name, String abbrev, String description, SequenceType sequenceType) {
         this.code = code;
         this.name = name;
         this.abbrev = abbrev;

@@ -35,7 +35,7 @@
                    default-cascade="none"
                   >
 
-    <class name="EntityType" table="entity_type" mutable="false">
+    <class name="org.janelia.it.jacs.model.genomics.EntityTypeGenomic" table="entity_type" mutable="false">
 
         <id name="code" type="int" access="property"/>
         <property name="name" type="string" not-null="true" unique="true" column="name"/>

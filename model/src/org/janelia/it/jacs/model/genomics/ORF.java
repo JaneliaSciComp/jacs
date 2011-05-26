@@ -46,7 +46,7 @@ public class ORF extends Nucleotide implements IsSerializable, Serializable {
     * constructor
     */
     public ORF() {
-        super(EntityType.ORF);
+        super(EntityTypeGenomic.ORF);
     }
 /*
  * getters/setters

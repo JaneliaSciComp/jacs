@@ -30,6 +30,6 @@ import java.io.Serializable;
 public class Scaffold extends Nucleotide implements IsSerializable, Serializable {
 
     public Scaffold() {
-        super(EntityType.SCAFFOLD);
+        super(EntityTypeGenomic.SCAFFOLD);
     }
 }

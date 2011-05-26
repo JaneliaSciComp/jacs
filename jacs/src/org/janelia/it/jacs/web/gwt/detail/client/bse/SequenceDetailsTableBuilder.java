@@ -160,8 +160,8 @@ public class SequenceDetailsTableBuilder {
 
     public RowIndex populateEntityDetails(RowIndex rowIndex) {
         BaseSequenceEntity bse = getBaseEntity();
-        EntityType seqType = bse.getEntityType();
-        logger.debug("SequenceDetailsTableBuilder.pop EntityType=" + seqType.getName());
+        EntityTypeGenomic seqType = bse.getEntityType();
+        logger.debug("SequenceDetailsTableBuilder.pop EntityTypeGenomic=" + seqType.getName());
 
         if (rowIndex == null) {
             rowIndex = getNextRowIndex();
@@ -263,7 +263,7 @@ public class SequenceDetailsTableBuilder {
         /****************************************************************************************
          * chromosome specific attributes
          */
-        if (seqType.getCode() == EntityType.CHROMOSOME.getCode()) {
+        if (seqType.getCode() == EntityTypeGenomic.CHROMOSOME.getCode()) {
             logger.debug("SequenceDetailsTableBuilder populate chromosome details");
             Chromosome chromosome = (Chromosome) bse;
             TableUtil.addTextRow(entityDetailsTable, rowIndex, "Chromosome Type", chromosome.getType());
@@ -271,14 +271,14 @@ public class SequenceDetailsTableBuilder {
         /****************************************************************************************
          * scaffold specific attributes
          */
-        else if (seqType.getCode() == EntityType.SCAFFOLD.getCode()) {
+        else if (seqType.getCode() == EntityTypeGenomic.SCAFFOLD.getCode()) {
             logger.debug("SequenceDetailsTableBuilder populate scaffold details");
             Scaffold scaffold = (Scaffold) bse;
         }
         /****************************************************************************************
          * read specific attributes
          */
-        else if (seqType.getCode() == EntityType.READ.getCode()) {
+        else if (seqType.getCode() == EntityTypeGenomic.READ.getCode()) {
             logger.debug("SequenceDetailsTableBuilder populate read details");
             Read read = (Read) bse;
             if (read.getMates() != null && read.getMates().size() > 0) {
@@ -300,7 +300,7 @@ public class SequenceDetailsTableBuilder {
         /****************************************************************************************
          * orf specific attributes
          */
-        else if (seqType.getCode() == EntityType.ORF.getCode()) {
+        else if (seqType.getCode() == EntityTypeGenomic.ORF.getCode()) {
             logger.debug("SequenceDetailsTableBuilder populate ORF details");
             ORF orf = (ORF) bse;
 
@@ -368,14 +368,14 @@ public class SequenceDetailsTableBuilder {
         /****************************************************************************************
          * peptide specific attributes
          */
-        else if (seqType.getCode() == EntityType.PEPTIDE.getCode()) {
+        else if (seqType.getCode() == EntityTypeGenomic.PEPTIDE.getCode()) {
             logger.debug("SequenceDetailsTableBuilder populate peptide details");
             // for now we don't do anything specific for peptides
         }
         /****************************************************************************************
          * protein specific attributes
          */
-        else if (seqType.getCode() == EntityType.PROTEIN.getCode()) {
+        else if (seqType.getCode() == EntityTypeGenomic.PROTEIN.getCode()) {
             logger.debug("SequenceDetailsTableBuilder populate protein details");
             Protein protein = (Protein) bse;
             String proteinOrfAcc = protein.getOrfAcc();
@@ -447,7 +447,7 @@ public class SequenceDetailsTableBuilder {
         /****************************************************************************************
          * RNA specific attributes
          */
-        else if (seqType.getCode() == EntityType.NON_CODING_RNA.getCode()) {
+        else if (seqType.getCode() == EntityTypeGenomic.NON_CODING_RNA.getCode()) {
             logger.debug("SequenceDetailsTableBuilder populate NC-RNA");
             NonCodingRNA ncRNA = (NonCodingRNA) bse;
 
