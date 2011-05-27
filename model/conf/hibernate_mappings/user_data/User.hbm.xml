@@ -34,7 +34,7 @@
                    auto-import="true"
                    default-cascade="none"
                   >
-    <class name="org.janelia.it.jacs.model.user_data.User" table="camera_user"
+    <class name="org.janelia.it.jacs.model.user_data.User" table="user_accounts"
            lazy="true">
 
         <id name="userId" access="field" column="user_id" type="java.lang.Long">

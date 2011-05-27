@@ -10,9 +10,8 @@
                    default-cascade="none"
                   >
     <class name="EntityData" table="entityData" catalog="flyportal">
-        <id name="id" type="string">
-            <column name="ID" length="60" />
-            <generator class="assigned" />
+        <id name="id" access="field" column="task_id" type="java.lang.Long">
+            <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
         </id>
         <many-to-one name="entityAttribute" class="EntityAttribute" fetch="select">
             <column name="entity_att_id" length="60" />
@@ -21,7 +20,7 @@
             <column name="entity_id" length="60" />
         </many-to-one>
         <many-to-one name="user" class="org.janelia.it.jacs.model.user_data.User" fetch="select">
-            <column name="user" />
+            <column name="user_login" />
         </many-to-one>
         <property name="val" type="string">
             <column name="val" />

@@ -21,7 +21,7 @@
  * "http://www.perlfoundation.org/artistic_license_2_0."
  */
 
-package org.janelia.it.jacs.shared.dma.formatdb;
+package org.janelia.it.jacs.shared.blast;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.shared.fasta.FastaFile;

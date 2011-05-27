@@ -41,7 +41,7 @@ public class UserDAO extends ComputeBaseDAO {
     }
 
     public String getEmailByUserName(String requestingUser) {
-        String sql = "select email from camera_user where user_login = '" + requestingUser + "'";
+        String sql = "select email from user_accounts where user_login = '" + requestingUser + "'";
         Query query = getCurrentSession().createSQLQuery(sql);
         List<String> returnList = query.list();
 
