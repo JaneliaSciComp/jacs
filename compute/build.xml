@@ -285,7 +285,6 @@
 
         <copy file="${build.jars.dir}/compute.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
         <copy file="/conf/jacs.properties" todir="${build.jars.dir}/gcdml-dir" />
-        <copy file="${basedir}/../shared/conf/dma.properties" todir="${build.jars.dir}/gcdml-dir" />
         <copy file="${basedir}/../shared/build/jars/gcdml-shared.jar" todir="${build.jars.dir}/gcdml-dir" />
 
         <tar destfile="${build.jars.dir}/commandline-gcdml.tar" basedir="${build.jars.dir}/gcdml-dir" />
