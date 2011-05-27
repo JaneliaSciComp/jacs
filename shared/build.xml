@@ -199,60 +199,6 @@
 
     <target name="buildMinusGridJar" depends="setup,jaxb-code-generate,jar"/>
 
-    <target name="tar-dma" depends="buildMinusGridJar">
-        <delete file="${build.jars.dir}/dma.tar" />
-        <mkdir dir="${build.jars.dir}/tar-dir/jar" />
-        <copy file="${model.module}/build/jars/jacs-model.jar" todir="${build.jars.dir}/tar-dir/jar" />
-        <!--<copy file="${common.dir}/PostgreSQL-8.1/jdbc/postgresql-8.1-404.jdbc3.jar" todir="${build.jars.dir}/tar-dir/jar" />-->
-        <copy file="${common.dir}/MySQL/mysql-connector-java-5.1.15-bin.jar" todir="${build.jars.dir}/tar-dir/jar" />
-        <copy file="${common.dir}/GWT/gwt-user.jar" todir="${build.jars.dir}/tar-dir/jar" />
-        <copy file="${build.jars.dir}/jacs-shared.jar" todir="${build.jars.dir}/tar-dir/jar" />
-        <copy file="${basedir}/../shared/conf/dma.properties" todir="${build.jars.dir}/tar-dir/conf" />
-        <copy file="/conf/jacs.properties" todir="${build.jars.dir}/tar-dir/conf" />
-        <copy todir="${build.jars.dir}/tar-dir/jar">
-            <fileset dir="${common.dir}/Hibernate-3.2">
-                <include name="antlr-2.7.6.jar" />
-                <include name="asm.jar" />
-                <include name="cglib-2.1.3.jar" />
-                <include name="commons-logging-1.0.4.jar" />
-                <include name="hibernate3.jar" />
-            </fileset>
-            <fileset dir="${common.dir}/Spring">
-                <include name="log4j-1.2.14.jar" />
-                <include name="dom4j-1.6.1.jar" />
-                <include name="commons-collections-2.1.1.jar" />
-                <include name="jta.jar" />
-            </fileset>
-        </copy>
-        <fixcrlf srcdir="${basedir}/scripts/dma/" includes="**/*.sh" eol="lf" eof="remove" />
-        <copy todir="${build.jars.dir}/tar-dir/conf">
-            <fileset dir="${basedir}/scripts/dma/">
-                <include name="*.sql" />
-                <include name="*.txt" />
-                <include name="*.xml" />
-            </fileset>
-        </copy>
-        <copy todir="${build.jars.dir}/tar-dir">
-            <fileset dir="${basedir}/scripts/dma/">
-                <include name="*.sh" />
-            </fileset>
-        </copy>
-        <tar destfile="${build.jars.dir}/dma.tar" basedir="${build.jars.dir}/tar-dir" />
-        <delete dir="${build.jars.dir}/tar-dir" />
-    </target>
-
-    <target name="deploy-dma-tar" depends="tar-dma" >
-        <property file="../buildprocess/config/${user.name}.properties" />
-        <property name="ssh.common.params" value="${ssh.options} ${ssh.password.option} ${dma.password} ${dma.username}@${dma.server.address}"/>
-        <property name="scp.common.params" value="${scp.options} ${ssh.password.option} ${dma.password}"/>
-        <exec executable="${scp}" description="Copy dma-tar">
-            <arg line="${scp.common.params} ${build.jars.dir}/dma.tar ${dma.username}@${dma.server.address}:${dma.dir}"/>
-        </exec>
-        <exec executable="${ssh}" description="Untar dma-tar">
-            <arg line="${ssh.common.params} tar -C ${dma.dir} -xvf ${dma.dir}/dma.tar"/>
-        </exec>
-    </target>
-
     <target name="jar-gcdml-code">
         <delete file="${build.jars.dir}/gcdml-shared.jar" />
         <jar destfile="${build.jars.dir}/gcdml-shared.jar">
@@ -261,7 +207,6 @@
             </fileset>
             <fileset dir="${basedir}/../shared/conf">
                 <include name="jacs.properties"/>
-                <include name="dma.properties"/>
             </fileset>
         </jar>
     </target>

@@ -7,7 +7,7 @@ import org.springframework.dao.DataAccessException;
 import java.util.List;
 
 public interface EntityDAO extends DAO {
-    EntityType createEntityType(String id, Long sequence, String name, String style, String description, String iconurl) throws DaoException;
+    EntityType createEntityType(Long id, Long sequence, String name, String style, String description, String iconurl) throws DaoException;
     EntityType getEntityTypeByName(String targetEntityType) throws DaoException;
 
     List<EntityType> findAllEntityTypes() throws DataAccessException, DaoException;

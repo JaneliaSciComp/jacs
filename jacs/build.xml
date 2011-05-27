@@ -227,10 +227,10 @@
                 <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.test.CleanGWTEntities" />-->
                 <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/test/CleanGWTEntities.gwt.xml" />-->
             <!--</antcall>-->
-            <antcall target="gwt-compile-module">
-              <param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.admin.Admin" />
-              <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/admin/Admin.gwt.xml" />
-            </antcall>
+            <!--<antcall target="gwt-compile-module">-->
+              <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.admin.Admin" />-->
+              <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/admin/Admin.gwt.xml" />-->
+            <!--</antcall>-->
             <!--<antcall target="gwt-compile-module">-->
                 <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.rnaSeq.RnaSeq"/>-->
                 <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/rnaSeq/RnaSeq.gwt.xml"/>-->

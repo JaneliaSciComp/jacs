@@ -23,10 +23,7 @@
 
 package org.janelia.it.jacs.model.user_data;
 
-import org.janelia.it.jacs.model.dma.Tag;
 import org.janelia.it.jacs.model.tasks.Task;
-
-import java.util.Set;
 
 /**
  * Represents a downloadable fasta file node
@@ -40,7 +37,6 @@ public class DownloadableFastaFileNode extends DownloadableFileNode {
     private Integer sequenceCount;
     private String sequenceType;
     private DataSource dataSource = DataSource.UNKNOWN;
-    private Set<Tag> dmaTags;
 
     public DownloadableFastaFileNode() {
     }
@@ -117,11 +113,4 @@ public class DownloadableFastaFileNode extends DownloadableFileNode {
         return getName().hashCode();
     }
 
-    public Set<Tag> getDmaTags() {
-        return dmaTags;
-    }
-
-    public void setDmaTags(Set<Tag> dmaTags) {
-        this.dmaTags = dmaTags;
-    }
 }

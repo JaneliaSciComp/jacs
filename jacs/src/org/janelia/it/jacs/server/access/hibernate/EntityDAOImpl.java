@@ -41,7 +41,7 @@ public class EntityDAOImpl extends DaoBaseImpl implements EntityDAO {
         return (EntityType) result.get(0);
     }
 
-    public EntityType createEntityType(String id, Long sequence, String name, String style, String description, String iconurl) throws DaoException {
+    public EntityType createEntityType(Long id, Long sequence, String name, String style, String description, String iconurl) throws DaoException {
         EntityType entityType;
         try {
             if (null == name || "".equals(name.trim())) {

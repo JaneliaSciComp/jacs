@@ -226,11 +226,6 @@
                              foreign-key="node_fk_data_source"
                              index="node_fk_data_source"/>
 
-                    <set name="dmaTags" table="dma_tag_node" lazy="true">
-                        <key column="node_id"/>
-                        <many-to-many class="org.janelia.it.jacs.model.dma.Tag" column="tag_id"/>
-                    </set>
-
                     <subclass name="org.janelia.it.jacs.model.user_data.blast.BlastDatabaseFileNode" discriminator-value="BlastDatabaseFileNode"
                               dynamic-update="true"
                               dynamic-insert="true"
