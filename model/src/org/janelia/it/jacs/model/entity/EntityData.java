@@ -26,7 +26,7 @@ public class EntityData  implements java.io.Serializable, IsSerializable {
     public EntityData(Long id) {
         this.id = id;
     }
-    public EntityData(Long id, EntityAttribute entityAttribute, Entity entity, User User, String val, Date creationDate, Date updatedDate) {
+    public EntityData(Long id, EntityAttribute entityAttribute, Entity entity, User user, String val, Date creationDate, Date updatedDate) {
        this.id = id;
        this.entityAttribute = entityAttribute;
        this.entity = entity;
