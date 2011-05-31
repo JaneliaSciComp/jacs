@@ -6,7 +6,7 @@
 <process name="MultiColor FlipOut File Discovery Pipeline" startEvent="pending" updateProcessStatus="on_success" processor="queue/multiColorFlipOutFileDiscoveryLauncher">
     <sequence name="multiColorFlipOutFileDiscovery">
         <operation name="Discovery Files for MultiColor FlipOut Project" processor="org.janelia.it.jacs.compute.service.fileDiscovery.MultiColorFlipOutFileDiscoveryService">
-            <input name="DIRECTORY_1" value="/groups/rubin/data1/rubinlab/flylight/singleNeuronPilotData"/>
+            <input name="DIRECTORY_1" value="/groups/rubin/data1/rubinlab/FlyLight/SingleNeuronPilotData"/>
         </operation>
     </sequence>
 </process>
