@@ -10,11 +10,11 @@
                    default-cascade="none"
                   >
     <class name="EntityType" table="entityType" catalog="flyportal">
-        <id name="id" access="field" column="task_id" type="java.lang.Long">
+        <id name="id" access="field" column="id" type="java.lang.Long">
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
         </id>
         <property name="sequence" type="java.lang.Long">
-            <column name="SEQUENCE" precision="18" scale="0" />
+            <column name="sequence" precision="18" scale="0" />
         </property>
         <property name="name" type="string">
             <column name="name" length="60" unique="true" />
@@ -23,10 +23,10 @@
             <column name="style" length="60" />
         </property>
         <property name="description" type="string">
-            <column name="DESCRIPTION" length="65535" />
+            <column name="description" length="65535" />
         </property>
         <property name="iconurl" type="string">
-            <column name="ICONURL" />
+            <column name="iconurl" />
         </property>
     </class>
 </hibernate-mapping>

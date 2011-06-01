@@ -10,26 +10,32 @@
                    default-cascade="none"
                   >
     <class name="EntityData" table="entityData" catalog="flyportal">
-        <id name="id" access="field" column="task_id" type="java.lang.Long">
+        <id name="id" access="field" column="id" type="java.lang.Long">
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
         </id>
         <many-to-one name="entityAttribute" class="EntityAttribute" fetch="select">
             <column name="entity_att_id" length="60" />
         </many-to-one>
-        <many-to-one name="entity" class="Entity" fetch="select">
-            <column name="entity_id" length="60" />
+        <many-to-one name="parent_entity" class="Entity" fetch="select">
+            <column name="parent_entity_id" length="60" />
+        </many-to-one>
+        <many-to-one name="child_entity" class="Entity" fetch="select">
+            <column name="child_entity_id" length="60" />
         </many-to-one>
         <many-to-one name="user" class="org.janelia.it.jacs.model.user_data.User" fetch="select">
             <column name="user_login" />
         </many-to-one>
-        <property name="val" type="string">
-            <column name="val" />
+        <property name="value" type="string">
+            <column name="value" />
         </property>
         <property name="creationDate" type="timestamp">
             <column name="creation_date" length="19" />
         </property>
         <property name="updatedDate" type="timestamp">
             <column name="updated_date" length="19" />
+        </property>
+        <property name="orderIndex" type="java.lang.Integer">
+            <column name="orderIndex" length='11' />
         </property>
     </class>
 </hibernate-mapping>

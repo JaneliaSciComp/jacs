@@ -10,7 +10,7 @@
                    default-cascade="none"
                   >
     <class name="EntityAttribute" table="entityAttribute" catalog="flyportal">
-        <id name="id" access="field" column="task_id" type="java.lang.Long">
+        <id name="id" access="field" column="id" type="java.lang.Long">
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
         </id>
         <property name="name" type="string">
@@ -23,7 +23,7 @@
             <column name="style" length="60" />
         </property>
         <property name="description" type="string">
-            <column name="DESCRIPTION" length="65535" />
+            <column name="description" length="65535" />
         </property>
     </class>
 </hibernate-mapping>
