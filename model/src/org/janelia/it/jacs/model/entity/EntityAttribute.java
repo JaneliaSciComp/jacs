@@ -10,7 +10,7 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 public class EntityAttribute  implements java.io.Serializable, IsSerializable {
      private Long id;
      private String name;
-     private String vals;
+     private String possibleValues;
      private String style;
      private String description;
 
@@ -21,10 +21,10 @@ public class EntityAttribute  implements java.io.Serializable, IsSerializable {
     public EntityAttribute(Long id) {
         this.id = id;
     }
-    public EntityAttribute(Long id, String name, String vals, String style, String description) {
+    public EntityAttribute(Long id, String name, String possibleValues, String style, String description) {
        this.id = id;
        this.name = name;
-       this.vals = vals;
+       this.possibleValues = possibleValues;
        this.style = style;
        this.description = description;
     }
@@ -43,12 +43,12 @@ public class EntityAttribute  implements java.io.Serializable, IsSerializable {
     public void setName(String name) {
         this.name = name;
     }
-    public String getVals() {
-        return this.vals;
+    public String getPossibleValues() {
+        return this.possibleValues;
     }
     
-    public void setVals(String vals) {
-        this.vals = vals;
+    public void setPossibleValues(String values) {
+        this.possibleValues = values;
     }
     public String getStyle() {
         return this.style;

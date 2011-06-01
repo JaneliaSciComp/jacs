@@ -13,8 +13,8 @@ import java.util.Date;
 public class EntityData implements java.io.Serializable, IsSerializable {
     private Long id;
     private EntityAttribute entityAttribute;
-    private Entity parent_entity;
-    private Entity child_entity;
+    private Entity parentEntity;
+    private Entity childEntity;
     private User user;
     private String value;
     private Date creationDate;
@@ -28,12 +28,12 @@ public class EntityData implements java.io.Serializable, IsSerializable {
         this.id = id;
     }
 
-    public EntityData(Long id, EntityAttribute entityAttribute, Entity parent_entity, Entity child_entity, User user,
+    public EntityData(Long id, EntityAttribute entityAttribute, Entity parentEntity, Entity childEntity, User user,
                       String value, Date creationDate, Date updatedDate, Integer orderIndex) {
         this.id = id;
         this.entityAttribute = entityAttribute;
-        this.parent_entity = parent_entity;
-        this.child_entity = child_entity;
+        this.parentEntity = parentEntity;
+        this.childEntity = childEntity;
         this.user = user;
         this.value = value;
         this.creationDate = creationDate;
@@ -90,20 +90,20 @@ public class EntityData implements java.io.Serializable, IsSerializable {
     }
 
 
-    public Entity getParent_entity() {
-        return parent_entity;
+    public Entity getParentEntity() {
+        return parentEntity;
     }
 
-    public void setParent_entity(Entity parent_entity) {
-        this.parent_entity = parent_entity;
+    public void setParentEntity(Entity parentEntity) {
+        this.parentEntity = parentEntity;
     }
 
-    public Entity getChild_entity() {
-        return child_entity;
+    public Entity getChildEntity() {
+        return childEntity;
     }
 
-    public void setChild_entity(Entity child_entity) {
-        this.child_entity = child_entity;
+    public void setChildEntity(Entity childEntity) {
+        this.childEntity = childEntity;
     }
 
     public Integer getOrderIndex() {
