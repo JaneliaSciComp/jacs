@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.api;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.model.entity.Entity;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
@@ -11,6 +12,7 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Stateless(name = "AnnotationEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
@@ -80,4 +82,15 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             _logger.error("Unexopected error while trying to update Annotation "+uniqueIdentifier+" for user "+owner);
         }
     }
+
+    public List<Entity> getEntitiesWithFilePath(String filePath) {
+        try {
+            List<Entity> matchingEntities = _annotationDAO.getEntitiesWithFilePath(filePath);
+            return matchingEntities;
+        } catch (Exception e) {
+            _logger.error("Unexpected error finding Entities matching path = " + filePath);
+        }
+        return null;
+    }
+
 }

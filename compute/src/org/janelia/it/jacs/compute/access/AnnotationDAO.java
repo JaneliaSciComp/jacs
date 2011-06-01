@@ -3,9 +3,14 @@ package org.janelia.it.jacs.compute.access;
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
+import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.criterion.Expression;
+import org.hibernate.loader.custom.Return;
 import org.janelia.it.jacs.model.annotation.Annotation;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.tasks.Task;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -76,4 +81,19 @@ public class AnnotationDAO extends ComputeBaseDAO {
     public void updateAnnotation(Annotation targetAnnotation) {
         getSession().saveOrUpdate(targetAnnotation);
     }
+
+    public List<Entity> getEntitiesWithFilePath(String filePath) {
+        Session session = getCurrentSession();
+        Criteria c = session.createCriteria(EntityData.class);
+        c.add(Expression.eq("value", filePath));
+        List<EntityData> entityDataList = (List<EntityData>)c.list();
+        if (entityDataList==null || entityDataList.size()==0)
+            return new ArrayList<Entity>(); // no matches
+        List<Entity> resultList = new ArrayList<Entity>();
+        for (EntityData ed : entityDataList) {
+            resultList.add(ed.getParentEntity());
+        }
+        return resultList;
+    }
+
 }

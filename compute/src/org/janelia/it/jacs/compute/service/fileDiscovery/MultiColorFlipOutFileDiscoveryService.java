@@ -1,10 +1,15 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
+import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
+import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
+import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.tasks.fileDiscovery.MultiColorFlipOutFileDiscoveryTask;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,12 +29,14 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
     private static String DIRECTORY_PARAM_PREFIX = "DIRECTORY_";
     private org.apache.log4j.Logger logger;
     List<String> directoryPathList = new ArrayList<String>();
+    AnnotationBeanRemote annotationBean;
 
     public void execute(IProcessData processData) {
         try {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             task = (MultiColorFlipOutFileDiscoveryTask) ProcessDataHelper.getTask(processData);
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
+            annotationBean = EJBFactory.getRemoteAnnotationBean();
             Set<Map.Entry<String, Object>> entrySet = processData.entrySet();
             for (Map.Entry<String, Object> entry : entrySet) {
                 String paramName = entry.getKey();
@@ -48,11 +55,47 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
                 }
             }
             for (String directoryPath : directoryPathList) {
-                logger.info(" MultiColorFlipOutFileDiscoveryService - directory="+directoryPath);
+                logger.info(" MultiColorFlipOutFileDiscoveryService including directory = "+directoryPath);
             }
+            processDirectories();
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
     }
+
+    protected void processDirectories() {
+        for (String directoryPath : directoryPathList) {
+            File dir = new File(directoryPath);
+            if (!dir.exists()) {
+                logger.error("Directory "+dir.getAbsolutePath()+" does not exist - skipping");
+            }
+            else if (!dir.isDirectory()) {
+                logger.error(("File " + dir.getAbsolutePath()+ " is not a directory - skipping"));
+            } else {
+                processDirectory(dir);
+            }
+        }
+    }
+
+    protected void processDirectory(File dir) {
+        File[] dirContents = dir.listFiles();
+        for (File file : dirContents) {
+            if (file.isDirectory()) {
+                processDirectory(file);
+            } else {
+                logger.info("Found file = " + file.getAbsolutePath());
+                if (file.getName().toUpperCase().endsWith(".LSM")) {
+                    considerNewLsmEntity(file);
+                }
+            }
+        }
+    }
+
+    protected void considerNewLsmEntity(File file) {
+        logger.info("Considering LSM file = " + file.getAbsolutePath());
+        List<Entity> possibleLsmFiles = annotationBean.getEntitiesWithFilePath(file.getAbsolutePath());
+
+    }
+
 }
 
