@@ -16,6 +16,9 @@
         <many-to-one name="user" class="org.janelia.it.jacs.model.user_data.User" fetch="select">
             <column name="user_login" />
         </many-to-one>
+        <property name="name" type="string">
+            <column name="name" length="4000" />
+        </property>
         <many-to-one name="entityStatus" class="EntityStatus" fetch="select">
             <column name="status" length="60" />
         </many-to-one>

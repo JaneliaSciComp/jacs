@@ -14,6 +14,7 @@ import java.util.Set;
  */
 public class Entity  implements java.io.Serializable, IsSerializable {
      private Long id;
+     private String name;
      private User user;
      private EntityStatus entityStatus;
      private EntityType entityType;
@@ -28,8 +29,10 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     public Entity(Long id) {
         this.id = id;
     }
-    public Entity(Long id, User user, EntityStatus entityStatus, EntityType entityType, Date creationDate, Date updatedDate, Set entityDatas) {
+    public Entity(Long id, String name, User user, EntityStatus entityStatus, EntityType entityType, Date creationDate,
+                  Date updatedDate, Set entityDatas) {
        this.id = id;
+       this.name = name;
        this.user = user;
        this.entityStatus = entityStatus;
        this.entityType = entityType;
@@ -88,9 +91,13 @@ public class Entity  implements java.io.Serializable, IsSerializable {
         this.entityDatas = entityDatas;
     }
 
+    public String getName() {
+        return name;
+    }
 
-
-
+    public void setName(String name) {
+        this.name = name;
+    }
 }
 
 
