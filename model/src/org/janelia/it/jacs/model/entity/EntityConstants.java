@@ -10,12 +10,12 @@ package org.janelia.it.jacs.model.entity;
 public class EntityConstants {
 
     // Entity Status
-    transient public final String DEPRECATED_STATUS = "DEPRECATED_STATUS";
+    transient public static final String DEPRECATED_STATUS = "DEPRECATED_STATUS";
 
     // Entity Types
-    transient public final String LSM_STACK_TYPE = "LSM_STACK_TYPE";
+    transient public static final String LSM_STACK_TYPE = "LSM_STACK_TYPE";
 
     // Entity Data Attributes
-    transient public final String FILE_PATH_ATTR = "FILE_PATH_ATTR";
+    transient public static final String FILE_PATH_ATTR = "FILE_PATH_ATTR";
 
 }
