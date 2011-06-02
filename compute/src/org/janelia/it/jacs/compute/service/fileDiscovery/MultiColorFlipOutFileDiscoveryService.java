@@ -122,17 +122,11 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         lsmStack.setName(file.getName());
         lsmStack = annotationBean.saveOrUpdateEntity(lsmStack);
         Set<EntityData> eds = lsmStack.getEntityData();
-        Set<EntityAttribute> lsmAttributeSet = lsmEntityType.getAttributes();
-        EntityAttribute filePathAttribute = null;
-        for (EntityAttribute ea : lsmAttributeSet) {
-            if (ea.getName().equals(EntityConstants.ATTRIBUTE_FILE_PATH)) {
-                filePathAttribute=ea;
-            }
-        }
-        if (filePathAttribute==null) {
-            throw new Exception("Could not find EntityAttribute with name " + EntityConstants.ATTRIBUTE_FILE_PATH + " for EntityType = " + lsmEntityType.getName());
-        }
         EntityData ed = new EntityData();
+        EntityAttribute filePathAttribute = lsmStack.getAttributeByName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        if (filePathAttribute==null) {
+            throw new Exception("Expected to find ATTRIBUTE_FILE_PATH in lsmStack");
+        }
         ed.setEntityAttribute(filePathAttribute);
         ed.setValue(file.getAbsolutePath());
         ed.setParentEntity(lsmStack);

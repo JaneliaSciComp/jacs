@@ -7,6 +7,7 @@ import org.janelia.it.jacs.model.user_data.User;
 
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 
 /**
@@ -98,6 +99,18 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     public void setName(String name) {
         this.name = name;
     }
+
+    // Utility method
+    public EntityAttribute getAttributeByName(String name) {
+        Set<EntityAttribute> attributeSet = entityType.getAttributes();
+        for (EntityAttribute ea : attributeSet) {
+            if (ea.getName().equals(name)) {
+                return ea;
+            }
+        }
+        return null;
+    }
+
 }
 
 
