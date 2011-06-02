@@ -154,4 +154,24 @@ public class AnnotationDAO extends ComputeBaseDAO {
             throw new DaoException(e);
         }
     }
+
+    public EntityAttribute getEntityAttributeByName(String name) throws DaoException {
+        try {
+            Session session = getCurrentSession();
+            Criteria c = session.createCriteria(EntityAttribute.class);
+            c.add(Expression.eq("name", name));
+            List l = c.list();
+            if (l==null || l.size()==0) {
+                return null; // no result
+            } else if (l.size()>1) {
+                throw new DaoException("Unexpectedly found more than one EntityAttribute with name = " + name);
+            } else {
+                EntityAttribute ea = (EntityAttribute)l.get(0);
+                return ea;
+            }
+        } catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+
 }

@@ -150,4 +150,24 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
         return false;
     }
+
+    public Entity saveOrUpdateEntity(Entity entity) {
+        try {
+            _annotationDAO.saveOrUpdate(entity);
+            return entity;
+        } catch (DaoException e) {
+            _logger.error("Error trying to save or update Entity");
+        }
+        return null;
+    }
+
+    public EntityAttribute getEntityAttributeByName(String name) {
+        try {
+            return _annotationDAO.getEntityAttributeByName(name);
+        } catch (DaoException e) {
+            _logger.error("Error trying to get EntityAttribute by name = " + name);
+        }
+        return null;
+    }
+
 }

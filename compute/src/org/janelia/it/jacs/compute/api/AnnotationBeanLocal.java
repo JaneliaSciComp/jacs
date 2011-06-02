@@ -2,6 +2,7 @@ package org.janelia.it.jacs.compute.api;
 
 import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityAttribute;
 
 import javax.ejb.Local;
 import java.util.ArrayList;
@@ -10,6 +11,8 @@ import java.util.List;
 @Local
 public interface AnnotationBeanLocal {
 
+    public Entity saveOrUpdateEntity(Entity entity);
+    public EntityAttribute getEntityAttributeByName(String name);
     public String addAnnotation(String owner, String namespace, String term, String value, String comment, String conditional);
     public void deleteAnnotation(String owner, String uniqueIdentifier);
     public ArrayList<Annotation> getAnnotationsForUser(String owner);
