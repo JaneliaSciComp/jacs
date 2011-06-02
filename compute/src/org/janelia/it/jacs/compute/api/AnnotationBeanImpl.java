@@ -106,7 +106,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     public void createOntologyRoot(String userLogin, String rootName) {
         try {
             User tmpUser = _computeDAO.getUserByName(userLogin);
-            EntityType tmpType = _annotationDAO.getEntityType(EntityConstants.TYPE_ONTOLOGY_ROOT);
+            EntityType tmpType = _annotationDAO.getEntityType(EntityConstants.TYPE_ONTOLOGY_ROOT_ID);
             Entity newOntologyRoot = new Entity(null, rootName, tmpUser, null, tmpType, new Date(), new Date(), null);
             _annotationDAO.saveOrUpdate(newOntologyRoot);
         }
@@ -118,7 +118,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     public void createOntologyTerm(String userLogin, String ontologyTermParentId, String termName) {
         try {
             User tmpUser = _computeDAO.getUserByName(userLogin);
-            EntityType tmpElementType = _annotationDAO.getEntityType(EntityConstants.TYPE_ONTOLOGY_ELEMENT);
+            EntityType tmpElementType = _annotationDAO.getEntityType(EntityConstants.TYPE_ONTOLOGY_ELEMENT_ID);
             // Create and save the new entity
             Entity newOntologyElement = new Entity(null, termName, tmpUser, null, tmpElementType, new Date(), new Date(), null);
             _annotationDAO.saveOrUpdate(newOntologyElement);
