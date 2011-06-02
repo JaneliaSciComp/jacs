@@ -9,7 +9,7 @@
                    auto-import="true"
                    default-cascade="none"
                   >
-    <class name="Entity" table="entity" catalog="flyportal">
+    <class name="Entity" table="entity">
         <id name="id" access="field" column="id" type="java.lang.Long">
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
         </id>
@@ -31,7 +31,7 @@
         <property name="updatedDate" type="timestamp">
             <column name="updated_date" length="19" />
         </property>
-        <set name="entityDatas" inverse="true">
+        <set name="entityData" inverse="true">
             <key>
                 <column name="entity_id" length="60" />
             </key>

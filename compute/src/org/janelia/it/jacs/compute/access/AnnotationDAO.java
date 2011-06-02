@@ -3,19 +3,19 @@ package org.janelia.it.jacs.compute.access;
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.criterion.Expression;
-import org.hibernate.loader.custom.Return;
 import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.entity.EntityType;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class AnnotationDAO extends ComputeBaseDAO {
+
     public AnnotationDAO(Logger logger) {
         super(logger);
     }
@@ -39,7 +39,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
             List l = c.list();
             if (l.size()>1) {
                 // This should never happen
-                throw new DaoException("Cannot complete delete when there are more than one annotation with that identifier.");
+                throw new DaoException("Cannot complete deletion when there are more than one annotation with that identifier.");
             }
             if (l.size()==1) {
                 Annotation tmpAnnotation = (Annotation)l.get(0);
@@ -96,4 +96,62 @@ public class AnnotationDAO extends ComputeBaseDAO {
         return resultList;
     }
 
+    public EntityType getEntityType(Long entityTypeConstant) {
+        Session session = getCurrentSession();
+        Criteria c = session.createCriteria(EntityType.class);
+        c.add(Expression.eq("id", entityTypeConstant));
+        List<EntityType> entityTypes = (List<EntityType>) c.list();
+        if (entityTypes.size()==1) {
+            return entityTypes.get(0);
+        }
+        return null;
+    }
+
+    public Entity getEntityById(String targetId) {
+        Session session = getCurrentSession();
+        Criteria c = session.createCriteria(Entity.class);
+        c.add(Expression.eq("id", targetId));
+        List<Entity> entities = (List<Entity>) c.list();
+        if (entities.size()==1) {
+            return entities.get(0);
+        }
+        return null;
+    }
+
+    public EntityAttribute getEntityAttribute(long entityAttributeConstant) {
+        Session session = getCurrentSession();
+        Criteria c = session.createCriteria(EntityAttribute.class);
+        c.add(Expression.eq("id", entityAttributeConstant));
+        List<EntityAttribute> attributes = (List<EntityAttribute>) c.list();
+        if (attributes.size()==1) {
+            return attributes.get(0);
+        }
+        return null;
+    }
+
+    public boolean deleteOntologyTerm(String userLogin, String ontologyTermId) throws DaoException {
+        try {
+            Session session = getCurrentSession();
+            Criteria c = session.createCriteria(Entity.class);
+            c.add(Expression.eq("id", Long.valueOf(ontologyTermId)));
+            List l = c.list();
+            if (l.size()>1) {
+                // This should never happen
+                throw new DaoException("Cannot complete deletion when there are more than one entity with that identifier.");
+            }
+            if (l.size()==1) {
+                Entity tmpEntity = (Entity)l.get(0);
+                if (!tmpEntity.getUser().getUserLogin().equals(userLogin)) {
+                    throw new DaoException("Cannot delete the entity as the requestor doesn't own the item.");
+                }
+                // Child Entity items should be deleted by cascade
+                session.delete(l.get(0));
+            }
+            System.out.println("The entity has been deleted.");
+            return true;
+        }
+        catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
 }

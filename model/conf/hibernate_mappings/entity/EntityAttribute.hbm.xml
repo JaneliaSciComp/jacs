@@ -9,7 +9,7 @@
                    auto-import="true"
                    default-cascade="none"
                   >
-    <class name="EntityAttribute" table="entityAttribute" catalog="flyportal">
+    <class name="EntityAttribute" table="entityAttribute">
         <id name="id" access="field" column="id" type="java.lang.Long">
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
         </id>

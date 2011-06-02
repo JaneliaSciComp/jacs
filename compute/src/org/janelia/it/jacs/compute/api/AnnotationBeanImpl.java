@@ -1,7 +1,10 @@
 package org.janelia.it.jacs.compute.api;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.compute.access.ComputeDAO;
+import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.model.entity.*;
+import org.janelia.it.jacs.model.user_data.User;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
@@ -25,6 +28,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     public static final String MDB_PROVIDER_URL_PROP = "AsyncMessageInterface.ProviderURL";
 
     private AnnotationDAO _annotationDAO = new AnnotationDAO(_logger);
+    private ComputeDAO _computeDAO = new ComputeDAO(_logger);
 
     public AnnotationBeanImpl() {
     }
@@ -93,4 +97,57 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         return null;
     }
 
+
+    /**
+     * Ontology Section
+     */
+
+    public void createOntologyRoot(String userLogin, String rootName) {
+        try {
+            User tmpUser = _computeDAO.getUserByName(userLogin);
+            EntityType tmpType = _annotationDAO.getEntityType(EntityConstants.TYPE_ONTOLOGY_ROOT);
+            Entity newOntologyRoot = new Entity(null, rootName, tmpUser, null, tmpType, new Date(), new Date(), null);
+            _annotationDAO.saveOrUpdate(newOntologyRoot);
+        }
+        catch (DaoException e) {
+            _logger.error("Error trying to create a new Ontology Root ("+rootName+") for user "+userLogin,e);
+        }
+    }
+
+    public void createOntologyTerm(String userLogin, String ontologyTermParentId, String termName) {
+        try {
+            User tmpUser = _computeDAO.getUserByName(userLogin);
+            EntityType tmpElementType = _annotationDAO.getEntityType(EntityConstants.TYPE_ONTOLOGY_ELEMENT);
+            // Create and save the new entity
+            Entity newOntologyElement = new Entity(null, termName, tmpUser, null, tmpElementType, new Date(), new Date(), null);
+            _annotationDAO.saveOrUpdate(newOntologyElement);
+            // Associate the entity to the parent
+            EntityAttribute ontologyElementAttribute = _annotationDAO.getEntityAttribute(EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT_ID);
+            Entity parentOntologyElement = _annotationDAO.getEntityById(ontologyTermParentId);
+            EntityData newData = new EntityData(null, ontologyElementAttribute, parentOntologyElement, newOntologyElement,
+                    tmpUser,  null, new Date(), new Date(), null);
+            _annotationDAO.saveOrUpdate(newData);
+        }
+        catch (DaoException e) {
+            _logger.error("Error trying to create a new Ontology Term ("+termName+") for user "+userLogin,e);
+        }
+    }
+
+    public boolean removeOntologyTerm(String userLogin, String ontologyTermId) {
+        try {
+            boolean success = _annotationDAO.deleteOntologyTerm(userLogin, ontologyTermId);
+            if (success) {
+                _logger.debug("Deleted term "+ontologyTermId+" for user "+userLogin);
+                return true;
+            }
+            else {
+                _logger.error("Unable to delete term "+ontologyTermId+" for user "+userLogin);
+                return false;
+            }
+        }
+        catch (DaoException e) {
+            _logger.error("Error trying to delete the Ontology Term ("+ontologyTermId+") for user "+userLogin,e);
+        }
+        return false;
+    }
 }

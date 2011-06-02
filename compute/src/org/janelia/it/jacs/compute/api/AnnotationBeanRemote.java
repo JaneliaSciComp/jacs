@@ -16,4 +16,8 @@ public interface AnnotationBeanRemote {
     public void editAnnotation(String owner, String uniqueIdentifier, String namespace, String term, String value,
                                String comment, String conditional);
     public List<Entity> getEntitiesWithFilePath(String filePath);
+
+    public void createOntologyTerm(String userLogin, String ontologyTermParentId, String termName);
+    public void createOntologyRoot(String userLogin, String rootName);
+    public boolean removeOntologyTerm(String userLogin, String ontologyTermId);
 }

@@ -36,7 +36,7 @@ public class EntityDAOImpl extends DaoBaseImpl implements EntityDAO {
             }
         }
         catch (Exception e) {
-            throw handleException(e, "EntityDAOImpl - getEntityTypeByName");
+            throw handleException(e, "EntityDAOImpl - getEntityType");
         }
         return (EntityType) result.get(0);
     }
