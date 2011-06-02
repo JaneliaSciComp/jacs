@@ -108,19 +108,17 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
     }
 
     protected void createLsmStackFromFile(File file) throws Exception {
-        User systemUser = computeBean.getUserByName("system");
-        if (systemUser==null) {
-            throw new Exception("Could not find system user");
-        }
+        User user = computeBean.getUserByName(task.getOwner());
         EntityType lsmEntityType = annotationBean.getEntityTypeByName(EntityConstants.LSM_STACK_TYPE);
         if (lsmEntityType==null) {
             throw new Exception("Could not find EntityType = " + EntityConstants.LSM_STACK_TYPE);
         }
         Entity lsmStack = new Entity();
-        lsmStack.setUser(systemUser);
+        lsmStack.setUser(user);
         lsmStack.setEntityType(lsmEntityType);
         Date createDate = new Date();
         lsmStack.setCreationDate(createDate);
+        lsmStack.setUpdatedDate(createDate);
         lsmStack.setName(file.getName());
         lsmStack = annotationBean.saveOrUpdateEntity(lsmStack);
         Set<EntityData> eds = lsmStack.getEntityData();
@@ -138,7 +136,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         ed.setEntityAttribute(filePathAttribute);
         ed.setValue(file.getAbsolutePath());
         ed.setParentEntity(lsmStack);
-        ed.setUser(systemUser);
+        ed.setUser(user);
         ed.setCreationDate(createDate);
         eds.add(ed);
         annotationBean.saveOrUpdateEntity(lsmStack);
