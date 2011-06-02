@@ -6,14 +6,12 @@ import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
-import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.tasks.fileDiscovery.MultiColorFlipOutFileDiscoveryTask;
+import org.janelia.it.jacs.model.user_data.User;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -30,6 +28,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
     private org.apache.log4j.Logger logger;
     List<String> directoryPathList = new ArrayList<String>();
     AnnotationBeanRemote annotationBean;
+    ComputeBeanRemote computeBean;
 
     public void execute(IProcessData processData) {
         try {
@@ -37,6 +36,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             task = (MultiColorFlipOutFileDiscoveryTask) ProcessDataHelper.getTask(processData);
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
             annotationBean = EJBFactory.getRemoteAnnotationBean();
+            computeBean = EJBFactory.getRemoteComputeBean();
             Set<Map.Entry<String, Object>> entrySet = processData.entrySet();
             for (Map.Entry<String, Object> entry : entrySet) {
                 String paramName = entry.getKey();
@@ -63,7 +63,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         }
     }
 
-    protected void processDirectories() {
+    protected void processDirectories() throws Exception {
         for (String directoryPath : directoryPathList) {
             File dir = new File(directoryPath);
             if (!dir.exists()) {
@@ -77,7 +77,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         }
     }
 
-    protected void processDirectory(File dir) {
+    protected void processDirectory(File dir) throws Exception {
         File[] dirContents = dir.listFiles();
         for (File file : dirContents) {
             if (file.isDirectory()) {
@@ -91,10 +91,57 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         }
     }
 
-    protected void considerNewLsmEntity(File file) {
+    protected void considerNewLsmEntity(File file) throws Exception {
         logger.info("Considering LSM file = " + file.getAbsolutePath());
         List<Entity> possibleLsmFiles = annotationBean.getEntitiesWithFilePath(file.getAbsolutePath());
+        List<Entity> lsmStacks = new ArrayList<Entity>();
+        for (Entity entity : possibleLsmFiles) {
+            if (entity.getEntityType().getName().equals(EntityConstants.LSM_STACK_TYPE)) {
+                lsmStacks.add(entity);
+            }
+        }
+        if (lsmStacks.size()>0) {
+            logger.info("File is already represented as LSM_STACK_TYPE = " + file.getAbsolutePath());
+        } else {
+            createLsmStackFromFile(file);
+        }
+    }
 
+    protected void createLsmStackFromFile(File file) throws Exception {
+        User systemUser = computeBean.getUserByName("system");
+        if (systemUser==null) {
+            throw new Exception("Could not find system user");
+        }
+        EntityType lsmEntityType = annotationBean.getEntityTypeByName(EntityConstants.LSM_STACK_TYPE);
+        if (lsmEntityType==null) {
+            throw new Exception("Could not find EntityType = " + EntityConstants.LSM_STACK_TYPE);
+        }
+        Entity lsmStack = new Entity();
+        lsmStack.setUser(systemUser);
+        lsmStack.setEntityType(lsmEntityType);
+        Date createDate = new Date();
+        lsmStack.setCreationDate(createDate);
+        lsmStack.setName(file.getName());
+        lsmStack = annotationBean.saveOrUpdateEntity(lsmStack);
+        Set<EntityData> eds = lsmStack.getEntityData();
+        Set<EntityAttribute> lsmAttributeSet = annotationBean.getEntityAttributesByEntityType(lsmEntityType);
+        EntityAttribute filePathAttribute = null;
+        for (EntityAttribute ea : lsmAttributeSet) {
+            if (ea.getName().equals(EntityConstants.FILE_PATH_ATTR)) {
+                filePathAttribute=ea;
+            }
+        }
+        if (filePathAttribute==null) {
+            throw new Exception("Could not find EntityAttribute with name " + EntityConstants.FILE_PATH_ATTR + " for EntityType = " + lsmEntityType.getName());
+        }
+        EntityData ed = new EntityData();
+        ed.setEntityAttribute(filePathAttribute);
+        ed.setValue(file.getAbsolutePath());
+        ed.setParentEntity(lsmStack);
+        ed.setUser(systemUser);
+        ed.setCreationDate(createDate);
+        eds.add(ed);
+        annotationBean.saveOrUpdateEntity(lsmStack);
     }
 
 }
