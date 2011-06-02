@@ -7,9 +7,9 @@ import org.hibernate.Session;
 import org.hibernate.criterion.Expression;
 import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.entity.*;
+import org.janelia.it.jacs.model.tasks.export.SampleExportTask;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class AnnotationDAO extends ComputeBaseDAO {
 
@@ -199,17 +199,18 @@ public class AnnotationDAO extends ComputeBaseDAO {
             //========== Status ============
             createEntityStatus(EntityConstants.STATUS_DEPRECATED);
 
-            //========== Type ============
-            createEntityType(EntityConstants.TYPE_LSM_STACK);
-            createEntityType(EntityConstants.TYPE_ONTOLOGY_ELEMENT);
-            createEntityType(EntityConstants.TYPE_ONTOLOGY_ROOT);
-
             //========== Attribute ============
             createEntityAttribute(EntityConstants.ATTRIBUTE_FILE_PATH);
             createEntityAttribute(EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT);
 
-            //========== Attribute ============
+            //========== Type ============
+            Set<String> lsmAttributeNameSet = new HashSet<String>();
+            lsmAttributeNameSet.add(EntityConstants.ATTRIBUTE_FILE_PATH);
+            createEntityType(EntityConstants.TYPE_LSM_STACK, lsmAttributeNameSet);
 
+            createEntityType(EntityConstants.TYPE_ONTOLOGY_ELEMENT, null);
+
+            createEntityType(EntityConstants.TYPE_ONTOLOGY_ROOT, null);
 
         } catch (Exception e) {
             throw new DaoException(e);
@@ -234,7 +235,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
-     protected void createEntityType(String name) {
+     protected void createEntityType(String name, Set<String> attributeNameSet) {
         Session session = getCurrentSession();
 
         Criteria c = session.createCriteria(EntityType.class);
@@ -248,6 +249,10 @@ public class AnnotationDAO extends ComputeBaseDAO {
         if (!containsType) {
             EntityType entityType = new EntityType();
             entityType.setName(name);
+            if (attributeNameSet!=null) {
+                Set<EntityAttribute> attributeSet = getEntityAttributesByName(attributeNameSet);
+                entityType.setAttributes(attributeSet);
+            }
             session.save(entityType);
         }
     }
@@ -268,6 +273,21 @@ public class AnnotationDAO extends ComputeBaseDAO {
             entityAttribute.setName(name);
             session.save(entityAttribute);
         }
+    }
+
+    protected Set<EntityAttribute> getEntityAttributesByName(Set<String> names) {
+        Session session = getCurrentSession();
+
+        Criteria c = session.createCriteria(EntityAttribute.class);
+        List<EntityAttribute> attributeList = (List<EntityAttribute>)c.list();
+
+        Set<EntityAttribute> resultSet = new HashSet<EntityAttribute>();
+        for (EntityAttribute ea : attributeList) {
+            if (names.contains(ea.getName())) {
+                resultSet.add(ea);
+            }
+        }
+        return resultSet;
     }
 
 
