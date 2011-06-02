@@ -9,16 +9,28 @@ package org.janelia.it.jacs.model.entity;
  */
 public class EntityConstants {
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // During development, this file needs to by synced with the MBean WorkstationDataManager setupEntityTypes() method.
+    //
+    // Eventually, a code-generation Ant task will sync this file with the database, by both adding to this file
+    // from the database, and also adding to the database from this file.
+    //
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     // Entity Status
-    transient public static final String DEPRECATED_STATUS = "DEPRECATED_STATUS";
+    public static final String STATUS_DEPRECATED = "STATUS_DEPRECATED";
 
     // Entity Types
-    transient public static final String LSM_STACK_TYPE = "LSM_STACK_TYPE";
-    public static final long TYPE_ONTOLOGY_ROOT = 1;
-    public static final long TYPE_ONTOLOGY_ELEMENT = 2;
+    public static final String TYPE_LSM_STACK = "TYPE_LSM_STACK";
+    public static final String TYPE_ONTOLOGY_ROOT = "TYPE_ONTOLOGY_ROOT";
+    public static final String TYPE_ONTOLOGY_ELEMENT = "TYPE_ONTOLOGY_ELEMENT";
+
+    public static final long TYPE_ONTOLOGY_ROOT_ID = 1;
+    public static final long TYPE_ONTOLOGY_ELEMENT_ID = 2;
 
     // Entity Data Attributes
-    transient public static final String FILE_PATH_ATTR = "FILE_PATH_ATTR";
+    public static final String ATTRIBUTE_FILE_PATH = "ATTRIBUTE_FILE_PATH";
+    public static final String ATTRIBUTE_ONTOLOGY_ELEMENT = "ATTRIBUTE_ONTOLOGY_ELEMENT";
 
     public static final long ATTRIBUTE_ONTOLOGY_ELEMENT_ID = 1;
 }
