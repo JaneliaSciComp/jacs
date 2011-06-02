@@ -6,10 +6,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.criterion.Expression;
 import org.janelia.it.jacs.model.annotation.Annotation;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityAttribute;
-import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.model.entity.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -193,16 +190,83 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
+    // This method should be cross-synchronized with the EntityConstants class until we write the code-generation
+    // service to do this automatically.
+
     public void setupEntityTypes() throws DaoException {
         try {
-            Session session = getCurrentSession();
 
-            // Attributes
+            //========== Status ============
+            createEntityStatus(EntityConstants.STATUS_DEPRECATED);
 
+            //========== Type ============
+            createEntityType(EntityConstants.TYPE_LSM_STACK);
+            createEntityType(EntityConstants.TYPE_ONTOLOGY_ELEMENT);
+            createEntityType(EntityConstants.TYPE_ONTOLOGY_ROOT);
+
+            //========== Attribute ============
+            createEntityAttribute(EntityConstants.ATTRIBUTE_FILE_PATH);
+            createEntityAttribute(EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT);
+
+            //========== Attribute ============
 
 
         } catch (Exception e) {
             throw new DaoException(e);
+        }
+    }
+
+    protected void createEntityStatus(String name) {
+        Session session = getCurrentSession();
+
+        Criteria c = session.createCriteria(EntityStatus.class);
+        List<EntityStatus> entityStatusList = (List<EntityStatus>)c.list();
+
+        boolean containsStatus = false;
+        for (EntityStatus es : entityStatusList) {
+            if (es.getName().equals(name))
+                containsStatus=true;
+        }
+        if (!containsStatus) {
+            EntityStatus entityStatus = new EntityStatus();
+            entityStatus.setName(name);
+            session.save(entityStatus);
+        }
+    }
+
+     protected void createEntityType(String name) {
+        Session session = getCurrentSession();
+
+        Criteria c = session.createCriteria(EntityType.class);
+        List<EntityType> entityTypeList = (List<EntityType>)c.list();
+
+        boolean containsType = false;
+        for (EntityType et : entityTypeList) {
+            if (et.getName().equals(name))
+                containsType=true;
+        }
+        if (!containsType) {
+            EntityType entityType = new EntityType();
+            entityType.setName(name);
+            session.save(entityType);
+        }
+    }
+
+    protected void createEntityAttribute(String name) {
+        Session session = getCurrentSession();
+
+        Criteria c = session.createCriteria(EntityAttribute.class);
+        List<EntityAttribute> entityAttributeList = (List<EntityAttribute>)c.list();
+
+        boolean containsAttribute = false;
+        for (EntityAttribute ea : entityAttributeList) {
+            if (ea.getName().equals(name))
+                containsAttribute=true;
+        }
+        if (!containsAttribute) {
+            EntityAttribute entityAttribute = new EntityAttribute();
+            entityAttribute.setName(name);
+            session.save(entityAttribute);
         }
     }
 
