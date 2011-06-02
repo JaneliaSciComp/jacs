@@ -208,9 +208,13 @@ public class AnnotationDAO extends ComputeBaseDAO {
             lsmAttributeNameSet.add(EntityConstants.ATTRIBUTE_FILE_PATH);
             createEntityType(EntityConstants.TYPE_LSM_STACK, lsmAttributeNameSet);
 
-            createEntityType(EntityConstants.TYPE_ONTOLOGY_ELEMENT, null);
+            Set<String> ontologyElementAttributeNameSet = new HashSet<String>();
+            ontologyElementAttributeNameSet.add(EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT);
+            createEntityType(EntityConstants.TYPE_ONTOLOGY_ELEMENT, ontologyElementAttributeNameSet);
 
-            createEntityType(EntityConstants.TYPE_ONTOLOGY_ROOT, null);
+            Set<String> ontologyRootAttributeNameSet = new HashSet<String>();
+            ontologyRootAttributeNameSet.add(EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT);
+            createEntityType(EntityConstants.TYPE_ONTOLOGY_ROOT, ontologyRootAttributeNameSet);
 
         } catch (Exception e) {
             throw new DaoException(e);
