@@ -4,11 +4,7 @@
 <!-- Generated May 26, 2011 10:42:24 AM by Hibernate Tools 3.2.1.GA -->
 <hibernate-mapping schema="flyportal"
 				   package="org.janelia.it.jacs.model.entity"
-                   default-access="property"
-                   default-lazy="false"
-                   auto-import="true"
-                   default-cascade="none"
-                  >
+                   >
     <class name="EntityType" table="entityType" >
         <id name="id" access="field" column="id" type="java.lang.Long">
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
@@ -16,7 +12,7 @@
         <property name="sequence" type="java.lang.Long">
             <column name="sequence" precision="18" scale="0" />
         </property>
-        <property name="name" type="string">
+        <property name="name" type="string" not-null="true" >
             <column name="name" length="60" unique="true" />
         </property>
         <property name="style" type="string">
@@ -28,5 +24,9 @@
         <property name="iconurl" type="string">
             <column name="iconurl" />
         </property>
+        <set name="attributes" table="entityTypeAttribute">
+            <key column="entity_type_id"/>
+            <many-to-many column="entity_att_id" class="EntityAttribute"/>
+        </set>
     </class>
 </hibernate-mapping>

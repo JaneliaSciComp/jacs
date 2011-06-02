@@ -4,16 +4,12 @@
 <!-- Generated May 26, 2011 10:42:24 AM by Hibernate Tools 3.2.1.GA -->
 <hibernate-mapping schema="flyportal"
 				   package="org.janelia.it.jacs.model.entity"
-                   default-access="property"
-                   default-lazy="false"
-                   auto-import="true"
-                   default-cascade="none"
-                  >
+                   >
     <class name="EntityStatus" table="entityStatus" >
         <id name="id" access="field" column="id" type="java.lang.Long">
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
         </id>
-        <property name="name" type="string">
+        <property name="name" type="string" not-null="true" >
             <column name="name" length="60" unique="true" />
         </property>
     </class>

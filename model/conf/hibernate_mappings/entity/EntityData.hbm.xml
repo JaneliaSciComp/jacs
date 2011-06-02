@@ -4,16 +4,12 @@
 <!-- Generated May 26, 2011 10:42:24 AM by Hibernate Tools 3.2.1.GA -->
 <hibernate-mapping schema="flyportal"
 				   package="org.janelia.it.jacs.model.entity"
-                   default-access="property"
-                   default-lazy="false"
-                   auto-import="true"
-                   default-cascade="none"
-                  >
+                   >
     <class name="EntityData" table="entityData" >
         <id name="id" access="field" column="id" type="java.lang.Long">
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
         </id>
-        <many-to-one name="entityAttribute" class="EntityAttribute" fetch="select">
+        <many-to-one name="entityAttribute" class="EntityAttribute" fetch="select" not-null="true" >
             <column name="entity_att_id" length="60" />
         </many-to-one>
         <many-to-one name="parentEntity" class="Entity" fetch="select">
@@ -22,8 +18,7 @@
         <many-to-one name="childEntity" class="Entity" fetch="select">
             <column name="child_entity_id" length="60" />
         </many-to-one>
-        <many-to-one name="user" class="org.janelia.it.jacs.model.user_data.User" fetch="select">
-            <column name="user_login" />
+        <many-to-one name="user" class="org.janelia.it.jacs.model.user_data.User" column="user_id" fetch="select" not-null="true" update="false" insert="false">
         </many-to-one>
         <property name="value" type="string">
             <column name="value" />

@@ -1,14 +1,14 @@
 package org.janelia.it.jacs.compute.api;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.user_data.User;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
-import org.janelia.it.jacs.compute.access.AnnotationDAO;
-import org.janelia.it.jacs.model.annotation.Annotation;
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -16,7 +16,6 @@ import javax.ejb.TransactionAttributeType;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 @Stateless(name = "AnnotationEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
@@ -110,7 +109,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             Entity newOntologyRoot = new Entity(null, rootName, tmpUser, null, tmpType, new Date(), new Date(), null);
             _annotationDAO.saveOrUpdate(newOntologyRoot);
         }
-        catch (DaoException e) {
+        catch (Exception e) {
             _logger.error("Error trying to create a new Ontology Root ("+rootName+") for user "+userLogin,e);
         }
     }
@@ -129,7 +128,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
                     tmpUser,  null, new Date(), new Date(), null);
             _annotationDAO.saveOrUpdate(newData);
         }
-        catch (DaoException e) {
+        catch (Exception e) {
             _logger.error("Error trying to create a new Ontology Term ("+termName+") for user "+userLogin,e);
         }
     }
@@ -146,7 +145,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
                 return false;
             }
         }
-        catch (DaoException e) {
+        catch (Exception e) {
             _logger.error("Error trying to delete the Ontology Term ("+ontologyTermId+") for user "+userLogin,e);
         }
         return false;
@@ -162,29 +161,11 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         return null;
     }
 
-    public EntityAttribute getEntityAttributeByName(String name) {
-        try {
-            return _annotationDAO.getEntityAttributeByName(name);
-        } catch (DaoException e) {
-            _logger.error("Error trying to get EntityAttribute by name = " + name);
-        }
-        return null;
-    }
-
     public EntityType getEntityTypeByName(String name) {
         try {
             return _annotationDAO.getEntityTypeByName(name);
         } catch (DaoException e) {
             _logger.error("Error trying to get EntityType by name = " + name);
-        }
-        return null;
-    }
-
-    public Set<EntityAttribute> getEntityAttributesByEntityType(EntityType entityType) {
-        try {
-            return _annotationDAO.getEntityAttributesByEntityType(entityType);
-        } catch (DaoException e) {
-            _logger.error("Error trying to get EntityAttributes by EntityType name = " + entityType.getName());
         }
         return null;
     }

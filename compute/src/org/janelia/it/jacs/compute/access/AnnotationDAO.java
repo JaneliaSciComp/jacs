@@ -6,12 +6,13 @@ import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.criterion.Expression;
 import org.janelia.it.jacs.model.annotation.Annotation;
-import org.janelia.it.jacs.model.entity.*;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityAttribute;
+import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.entity.EntityType;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class AnnotationDAO extends ComputeBaseDAO {
 
@@ -187,44 +188,6 @@ public class AnnotationDAO extends ComputeBaseDAO {
                 EntityType et = (EntityType)l.get(0);
                 return et;
             }
-        } catch (Exception e) {
-            throw new DaoException(e);
-        }
-    }
-
-    public Set<EntityAttribute> getEntityAttributesByEntityType(EntityType entityType) throws DaoException {
-         try {
-            Session session = getCurrentSession();
-            if (entityType.getId()==null || entityType.getId()==0) {
-                Criteria c = session.createCriteria(EntityType.class);
-                c.add(Expression.eq("name", entityType.getName()));
-                List l = c.list();
-                if (l==null || l.size()==0) {
-                    throw new Exception("Could not find EntityType with name = " + entityType.getName());
-                }
-                entityType = (EntityType)l.get(0);
-            }
-            Long entityTypeId = entityType.getId();
-            Criteria c2 = session.createCriteria(EntityTypeAttribute.class);
-            c2.add(Expression.eq("entityTypeId", entityTypeId));
-            List l2 = c2.list();
-            if (l2==null || l2.size()==0) {
-                _logger.info("Could not find any entries in EntityTypeAttribute for EntityType name = " + entityType.getName() + " id = " + entityTypeId);
-                return null; // no matches for EntityTypeId
-            }
-            Set<EntityAttribute> resultSet = new HashSet<EntityAttribute>();
-            for (Object o : l2) {
-                EntityTypeAttribute eta = (EntityTypeAttribute)o;
-                Criteria c3 = session.createCriteria(EntityAttribute.class);
-                c3.add(Expression.eq("id", eta.getEntityAttId()));
-                List l3 = c3.list();
-                if (l3.size()!=1) {
-                    throw new Exception("Expected to find precisely one match in EntityAttribute for EntityAttributeId = " + eta.getEntityAttId());
-                }
-                EntityAttribute ea = (EntityAttribute)l3.get(0);
-                resultSet.add(ea);
-            }
-            return resultSet;
         } catch (Exception e) {
             throw new DaoException(e);
         }
