@@ -13,4 +13,6 @@ public interface WorkstationDataManagerMBean {
 
     public void runMultiColorFlipOutFileDiscoveryService();
 
+    public void setupEntityTypes();
+
 }

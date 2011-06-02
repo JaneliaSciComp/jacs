@@ -96,7 +96,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         List<Entity> possibleLsmFiles = annotationBean.getEntitiesWithFilePath(file.getAbsolutePath());
         List<Entity> lsmStacks = new ArrayList<Entity>();
         for (Entity entity : possibleLsmFiles) {
-            if (entity.getEntityType().getName().equals(EntityConstants.LSM_STACK_TYPE)) {
+            if (entity.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK)) {
                 lsmStacks.add(entity);
             }
         }
@@ -109,9 +109,9 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
 
     protected void createLsmStackFromFile(File file) throws Exception {
         User user = computeBean.getUserByName(task.getOwner());
-        EntityType lsmEntityType = annotationBean.getEntityTypeByName(EntityConstants.LSM_STACK_TYPE);
+        EntityType lsmEntityType = annotationBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK);
         if (lsmEntityType==null) {
-            throw new Exception("Could not find EntityType = " + EntityConstants.LSM_STACK_TYPE);
+            throw new Exception("Could not find EntityType = " + EntityConstants.TYPE_LSM_STACK);
         }
         Entity lsmStack = new Entity();
         lsmStack.setUser(user);
@@ -125,12 +125,12 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         Set<EntityAttribute> lsmAttributeSet = annotationBean.getEntityAttributesByEntityType(lsmEntityType);
         EntityAttribute filePathAttribute = null;
         for (EntityAttribute ea : lsmAttributeSet) {
-            if (ea.getName().equals(EntityConstants.FILE_PATH_ATTR)) {
+            if (ea.getName().equals(EntityConstants.ATTRIBUTE_FILE_PATH)) {
                 filePathAttribute=ea;
             }
         }
         if (filePathAttribute==null) {
-            throw new Exception("Could not find EntityAttribute with name " + EntityConstants.FILE_PATH_ATTR + " for EntityType = " + lsmEntityType.getName());
+            throw new Exception("Could not find EntityAttribute with name " + EntityConstants.ATTRIBUTE_FILE_PATH + " for EntityType = " + lsmEntityType.getName());
         }
         EntityData ed = new EntityData();
         ed.setEntityAttribute(filePathAttribute);

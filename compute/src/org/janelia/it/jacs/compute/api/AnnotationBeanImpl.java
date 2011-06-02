@@ -189,5 +189,13 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         return null;
     }
 
+    public void setupEntityTypes() {
+        try {
+            _annotationDAO.setupEntityTypes();
+        } catch (DaoException e) {
+            _logger.error("Error calling annotationDAO.setupEntityTypes()");
+        }
+    }
+
 
 }

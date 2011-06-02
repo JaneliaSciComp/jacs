@@ -27,4 +27,6 @@ public interface AnnotationBeanRemote {
     public void createOntologyTerm(String userLogin, String ontologyTermParentId, String termName);
     public void createOntologyRoot(String userLogin, String rootName);
     public boolean removeOntologyTerm(String userLogin, String ontologyTermId);
+
+    public void setupEntityTypes();
 }

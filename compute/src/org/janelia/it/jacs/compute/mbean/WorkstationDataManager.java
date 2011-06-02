@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.mbean;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
@@ -29,6 +30,15 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             task.setJobName("MultiColor FlipOut File Discovery Task");
             task = (MultiColorFlipOutFileDiscoveryTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("MultiColorFlipOutFileDiscovery", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void setupEntityTypes() {
+        try {
+            AnnotationBeanRemote annotationBean = EJBFactory.getRemoteAnnotationBean();
+            annotationBean.setupEntityTypes();
         } catch (Exception ex) {
             ex.printStackTrace();
         }

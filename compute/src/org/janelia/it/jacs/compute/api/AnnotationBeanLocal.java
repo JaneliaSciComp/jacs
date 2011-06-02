@@ -29,4 +29,6 @@ public interface AnnotationBeanLocal {
     public void createOntologyRoot(String userLogin, String rootName);
     public boolean removeOntologyTerm(String userLogin, String ontologyTermId);
 
+    public void setupEntityTypes();
+
 }

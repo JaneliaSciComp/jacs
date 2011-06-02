@@ -230,5 +230,18 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
+    public void setupEntityTypes() throws DaoException {
+        try {
+            Session session = getCurrentSession();
+
+            // Attributes
+
+
+
+        } catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+
 
 }
