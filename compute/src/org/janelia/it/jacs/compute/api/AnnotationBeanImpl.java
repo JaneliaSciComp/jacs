@@ -103,16 +103,18 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
      * Ontology Section
      */
 
-    public void createOntologyRoot(String userLogin, String rootName) {
+    public Entity createOntologyRoot(String userLogin, String rootName) {
         try {
             User tmpUser = _computeDAO.getUserByName(userLogin);
             EntityType tmpType = _annotationDAO.getEntityType(EntityConstants.TYPE_ONTOLOGY_ROOT_ID);
             Entity newOntologyRoot = new Entity(null, rootName, tmpUser, null, tmpType, new Date(), new Date(), null);
             _annotationDAO.saveOrUpdate(newOntologyRoot);
+            return newOntologyRoot;
         }
         catch (Exception e) {
             _logger.error("Error trying to create a new Ontology Root ("+rootName+") for user "+userLogin,e);
         }
+        return null;
     }
 
     public void createOntologyTerm(String userLogin, String ontologyTermParentId, String termName) {
@@ -167,6 +169,16 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             return _annotationDAO.getEntityTypeByName(name);
         } catch (DaoException e) {
             _logger.error("Error trying to get EntityType by name = " + name);
+        }
+        return null;
+    }
+
+    public Entity getUserEntityById(String userLogin, long entityId) {
+        try {
+            return _annotationDAO.getUserEntityById(userLogin, entityId);
+        }
+        catch (DaoException e) {
+            _logger.error("Error trying to get the entities of id "+entityId+" for user "+userLogin);
         }
         return null;
     }

@@ -353,4 +353,27 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
+    public Entity getUserEntityById(String userLogin, long entityId) throws DaoException {
+        try {
+            Session session = getCurrentSession();
+            Criteria c = session.createCriteria(Entity.class);
+            c.add(Expression.eq("id", entityId));
+            List<Entity> returnList = c.list();
+            if (returnList.size()==1) {
+                Entity tmpEntity = returnList.get(0);
+                if (tmpEntity.getUser().getUserLogin().equals(userLogin)) {
+                    return tmpEntity;
+                }
+                else {
+                    throw new Exception("User "+userLogin+" does not own item "+entityId);
+                }
+            }
+            else if (returnList.size()>1) {
+                throw new DaoException("Found more than one item which had the same entity id.");
+            }
+        } catch (Exception e) {
+            throw new DaoException(e);
+        }
+        return null;
+    }
 }

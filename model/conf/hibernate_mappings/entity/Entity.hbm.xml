@@ -25,11 +25,9 @@
         <property name="updatedDate" type="timestamp">
             <column name="updated_date" length="19" />
         </property>
-        <set name="entityData" inverse="true">
-            <key>
-                <column name="entity_id" length="60" />
-            </key>
-            <one-to-many class="EntityData" />
+        <set name="entityData" inverse="true" lazy="false" table="entityData">
+            <key column="id" />
+            <many-to-many column="parent_entity_id" class="EntityData" />
         </set>
     </class>
 </hibernate-mapping>

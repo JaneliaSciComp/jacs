@@ -16,6 +16,7 @@ public interface AnnotationBeanLocal {
     public EntityType getEntityTypeByName(String name);
     public java.util.List<Entity> getUserEntitiesByType(String userLogin, long entityTypeId);
     public Set<Entity> getEntitiesByName(String name);
+    public Entity getUserEntityById(String userLogin, long entityId);
 
     public String addAnnotation(String owner, String namespace, String term, String value, String comment, String conditional);
     public void deleteAnnotation(String owner, String uniqueIdentifier);
@@ -25,7 +26,7 @@ public interface AnnotationBeanLocal {
     public List<Entity> getEntitiesWithFilePath(String filePath);
 
     public void createOntologyTerm(String userLogin, String ontologyTermParentId, String termName);
-    public void createOntologyRoot(String userLogin, String rootName);
+    public Entity createOntologyRoot(String userLogin, String rootName);
     public boolean removeOntologyTerm(String userLogin, String ontologyTermId);
 
     public void setupEntityTypes();

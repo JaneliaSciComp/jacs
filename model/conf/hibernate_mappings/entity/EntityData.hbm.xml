@@ -12,10 +12,10 @@
         <many-to-one name="entityAttribute" class="EntityAttribute" fetch="select" not-null="true" >
             <column name="entity_att_id" length="60" />
         </many-to-one>
-        <many-to-one name="parentEntity" class="Entity" fetch="select">
+        <many-to-one name="parentEntity" class="Entity" fetch="select" lazy="false">
             <column name="parent_entity_id" length="60" />
         </many-to-one>
-        <many-to-one name="childEntity" class="Entity" fetch="select">
+        <many-to-one name="childEntity" class="Entity" fetch="select" lazy="false">
             <column name="child_entity_id" length="60" />
         </many-to-one>
         <many-to-one name="user" class="org.janelia.it.jacs.model.user_data.User" column="user_id" fetch="select" not-null="true" update="false" insert="false">
