@@ -126,6 +126,27 @@ public class Entity  implements java.io.Serializable, IsSerializable {
         return true;
     }
 
+    // This method will return non-null only in the case in which
+    // there is a single matching EntityData to the given attribute
+    // name AND the value of this entity data is a non-null String
+    // rather than an Entity
+
+    public String getValueByAttributeName(String attributeName) {
+        Set<EntityData> matchingData=new HashSet<EntityData>();
+        for (EntityData ed : entityData) {
+            if (ed.getEntityAttribute().getName().matches(attributeName)) {
+                matchingData.add(ed);
+            }
+        }
+        if (matchingData.size()==1) {
+            EntityData ed=matchingData.iterator().next();
+            if (ed.getChildEntity()==null && ed.getValue()!=null) {
+                return ed.getValue();
+            }
+        }
+        return null;
+    }
+
 }
 
 

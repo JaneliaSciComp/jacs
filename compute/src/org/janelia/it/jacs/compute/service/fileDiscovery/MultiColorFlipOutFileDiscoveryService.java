@@ -102,8 +102,22 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             else if (!dir.isDirectory()) {
                 logger.error(("File " + dir.getAbsolutePath()+ " is not a directory - skipping"));
             } else {
-
+                createOrVerifyDirAsTopFolderEntity(dir);
                 processDirectory(dir);
+            }
+        }
+    }
+
+    protected void createOrVerifyDirAsTopFolderEntity(File dir) throws Exception {
+        Set<String> topFolderPaths=new HashSet<String>();
+        Set<EntityData> data=topLevelFolder.getEntityData();
+        for (EntityData ed : data) {
+            if (ed.getChildEntity()!=null &&
+                ed.getChildEntity().getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+                String folderPath = ed.getChildEntity().getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                if (folderPath==null) {
+                    throw new Exception("Unexpectedly could not find ATTRIBUTE_FILE_PATH for entity id="+ed.getChildEntity().getId());
+                }
             }
         }
     }
