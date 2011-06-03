@@ -15,4 +15,6 @@ public interface WorkstationDataManagerMBean {
 
     public void setupEntityTypes();
 
+    public void createOrVerifySystemUser();
+
 }

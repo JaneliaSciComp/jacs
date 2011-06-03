@@ -68,6 +68,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             createOrVerifyRootEntity();
             processDirectories();
         } catch (Exception e) {
+            e.printStackTrace();
             logger.error(e.getMessage());
         }
     }
@@ -79,8 +80,10 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             throw new Exception("Unexpectedly found more than one existing folder for MultiColorFlipOutFileDiscoveryService with name="+topLevelFolderName);
         }
         if (topLevelFolders!=null && topLevelFolders.size()==1) {
+            logger.info("Found existing topLevelFolder, name=" + topLevelFolder.getName());
             topLevelFolder=topLevelFolders.iterator().next();
         } else if (topLevelFolder==null || topLevelFolders.size()==0) {
+            logger.info("Creating new topLevelFolder with name="+topLevelFolderName);
             topLevelFolder=new Entity();
             Date createDate = new Date();
             topLevelFolder.setCreationDate(createDate);
@@ -90,7 +93,9 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             EntityType folderType=annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER);
             topLevelFolder.setEntityType(folderType);
             topLevelFolder.addAttributeAsTag(EntityConstants.ATTRIBUTE_COMMON_ROOT);
+            logger.info("Calling saveOrUpdateEntity for topLevelFolder Entity");
             annotationBean.saveOrUpdateEntity(topLevelFolder);
+            logger.info("Done calling saveOrUpdateEntity for topLevelFolder Entity");
         }
     }
 
