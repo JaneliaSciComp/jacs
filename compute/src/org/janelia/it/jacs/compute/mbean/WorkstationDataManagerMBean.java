@@ -17,4 +17,6 @@ public interface WorkstationDataManagerMBean {
 
     public void createOrVerifySystemUser();
 
+    public void deleteEntityById(String entityId);
+
 }

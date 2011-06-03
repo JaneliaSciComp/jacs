@@ -67,5 +67,15 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
+    public void deleteEntityById(String entityId) {
+     try {
+         Long id=new Long(entityId);
+         AnnotationBeanRemote annotationBean=EJBFactory.getRemoteAnnotationBean();
+         annotationBean.deleteEntityById(id);
+     } catch (Exception ex) {
+         ex.printStackTrace();
+     }
+    }
+
 
 }
