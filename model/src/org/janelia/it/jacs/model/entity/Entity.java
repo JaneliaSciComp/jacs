@@ -5,6 +5,7 @@ package org.janelia.it.jacs.model.entity;
 import com.google.gwt.user.client.rpc.IsSerializable;
 import org.janelia.it.jacs.model.user_data.User;
 
+import javax.xml.crypto.Data;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -118,6 +119,7 @@ public class Entity  implements java.io.Serializable, IsSerializable {
             return false;
         } else {
             EntityData tag = new EntityData();
+            tag.setParentEntity(this);
             tag.setEntityAttribute(attribute);
             tag.setUser(user);
             tag.setValue(attribute.getName());
@@ -146,6 +148,40 @@ public class Entity  implements java.io.Serializable, IsSerializable {
         }
         return null;
     }
+
+    // This is the sister method of the above 'getValueByAttributeName'
+    // which does the inverse.
+
+    public boolean setValueByAttributeName(String attributeName, String value) {
+        Set<EntityData> matchingData=new HashSet<EntityData>();
+        for (EntityData ed : entityData) {
+            if (ed.getEntityAttribute().getName().matches(attributeName)) {
+                matchingData.add(ed);
+            }
+        }
+        if (matchingData.size()==0) {
+            // Ok, we will add this
+            EntityAttribute attribute=getAttributeByName(attributeName);
+            if (attribute==null) {
+                return false;
+            }
+            EntityData ed=new EntityData();
+            ed.setParentEntity(this);
+            ed.setEntityAttribute(attribute);
+            ed.setValue(value);
+            ed.setUser(user);
+            this.entityData.add(ed);
+            return true;
+        } else if (matchingData.size()==1) {
+            // Update the value of the existing entry
+            EntityData ed=matchingData.iterator().next();
+            ed.setValue(value);
+            return true;
+        }
+        // More than one EntityData matching the attribute - do nothing
+        return false;
+    }
+
 
 }
 
