@@ -77,7 +77,10 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         // We expect there to be a single folder in the system with this name
         Set<Entity> topLevelFolders = annotationBean.getEntitiesByName(topLevelFolderName);
         if (topLevelFolders!=null && topLevelFolders.size()>1) {
-            throw new Exception("Unexpectedly found more than one existing folder for MultiColorFlipOutFileDiscoveryService with name="+topLevelFolderName);
+            for (Entity e : topLevelFolders) {
+                logger.info("Found topLevelFolder entityId="+e.getId());
+            }
+            throw new Exception("Unexpectedly found " + topLevelFolders.size()+" folders for MultiColorFlipOutFileDiscoveryService with name="+topLevelFolderName);
         }
         if (topLevelFolders!=null && topLevelFolders.size()==1) {
             logger.info("Found existing topLevelFolder, name=" + topLevelFolder.getName());
