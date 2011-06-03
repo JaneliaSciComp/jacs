@@ -376,4 +376,26 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
         return null;
     }
+
+    public boolean deleteEntityById(Long entityId) throws DaoException {
+        try {
+            Session session = getCurrentSession();
+            Criteria c = session.createCriteria(Entity.class);
+            c.add(Expression.eq("id", Long.valueOf(entityId)));
+            List l = c.list();
+            if (l.size()>1) {
+                // This should never happen
+                throw new DaoException("Cannot complete deletion when there are more than one entity with id="+entityId);
+            }
+            if (l.size()==1) {
+                Entity entity = (Entity)l.get(0);
+                session.delete(l.get(0));
+            }
+            System.out.println("The entity id="+entityId+" has been deleted.");
+            return true;
+        } catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+
 }

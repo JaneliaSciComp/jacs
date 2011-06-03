@@ -210,6 +210,14 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         return null;
     }
 
+    public boolean deleteEntityById(Long entityId) {
+          try {
+            return _annotationDAO.deleteEntityById(entityId);
+        } catch (DaoException e) {
+            _logger.error("Error trying to get delete Entity id="+entityId);
+        }
+        return false;
+    }
 
 
 }
