@@ -182,6 +182,32 @@ public class Entity  implements java.io.Serializable, IsSerializable {
         return false;
     }
 
+    public void addChildEntity(Entity entity) {
+        EntityData ed=new EntityData();
+        ed.setParentEntity(this);
+        ed.setChildEntity(entity);
+        ed.setUser(user);
+        Date createDate = new Date();
+        ed.setCreationDate(createDate);
+        ed.setUpdatedDate(createDate);
+        EntityAttribute attribute=getAttributeByName(EntityConstants.ATTRIBUTE_ENTITY);
+        ed.setEntityAttribute(attribute);
+        this.entityData.add(ed);
+    }
+
+    public void addChildEntity(Entity entity, String attributeName) {
+        EntityData ed=new EntityData();
+        ed.setParentEntity(this);
+        ed.setChildEntity(entity);
+        ed.setUser(user);
+        Date createDate = new Date();
+        ed.setCreationDate(createDate);
+        ed.setUpdatedDate(createDate);
+        EntityAttribute attribute=getAttributeByName(attributeName);
+        ed.setEntityAttribute(attribute);
+        this.entityData.add(ed);
+    }
+
 
 }
 
