@@ -229,8 +229,11 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
         boolean containsStatus = false;
         for (EntityStatus es : entityStatusList) {
-            if (es.getName().equals(name))
+            if (es.getName().equals(name)) {
+                _logger.info("Found EntityStatus name=" + name + " id="+es.getId());
                 containsStatus=true;
+            }
+
         }
         if (!containsStatus) {
             EntityStatus entityStatus = new EntityStatus();
@@ -239,26 +242,33 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
-     protected void createEntityType(String name, Set<String> attributeNameSet) {
+    protected void createEntityType(String name, Set<String> attributeNameSet) {
         Session session = getCurrentSession();
 
         Criteria c = session.createCriteria(EntityType.class);
         List<EntityType> entityTypeList = (List<EntityType>)c.list();
+        EntityType entityType=null;
 
         boolean containsType = false;
         for (EntityType et : entityTypeList) {
-            if (et.getName().equals(name))
+            if (et.getName().equals(name)) {
+                _logger.info("Found EntityType name="+name+" id="+et.getId());
                 containsType=true;
+                entityType = et;
+            }
         }
         if (!containsType) {
-            EntityType entityType = new EntityType();
+            entityType = new EntityType();
             entityType.setName(name);
-            if (attributeNameSet!=null) {
-                Set<EntityAttribute> attributeSet = getEntityAttributesByName(attributeNameSet);
-                entityType.setAttributes(attributeSet);
-            }
-            session.save(entityType);
+            entityType = (EntityType)session.save(entityType);
+            _logger.info("Created EntityType name="+name+" id="+entityType.getId());
         }
+        Set<EntityAttribute> currentAttributeSet=entityType.getAttributes();
+        if (attributeNameSet!=null) {
+            Set<EntityAttribute> attributeSet = getEntityAttributesByName(attributeNameSet);
+            entityType.setAttributes(attributeSet);
+        }
+        session.save(entityType);
     }
 
     protected void createEntityAttribute(String name) {
@@ -269,8 +279,10 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
         boolean containsAttribute = false;
         for (EntityAttribute ea : entityAttributeList) {
-            if (ea.getName().equals(name))
+            if (ea.getName().equals(name)) {
+                _logger.info("Found EntityAttribute name="+name+" id="+ea.getId());
                 containsAttribute=true;
+            }
         }
         if (!containsAttribute) {
             EntityAttribute entityAttribute = new EntityAttribute();

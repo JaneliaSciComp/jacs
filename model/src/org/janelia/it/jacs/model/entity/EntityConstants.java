@@ -25,12 +25,16 @@ public class EntityConstants {
     public static final String TYPE_ONTOLOGY_ROOT = "TYPE_ONTOLOGY_ROOT";
     public static final String TYPE_ONTOLOGY_ELEMENT = "TYPE_ONTOLOGY_ELEMENT";
 
-    public static final long TYPE_ONTOLOGY_ROOT_ID = 1;
-    public static final long TYPE_ONTOLOGY_ELEMENT_ID = 2;
+    public static final long TYPE_ONTOLOGY_ROOT_ID = 1616533546980081843L;
+    //public static final long TYPE_ONTOLOGY_ROOT_ID = 1;
+
+    public static final long TYPE_ONTOLOGY_ELEMENT_ID = 1616533546954916019L;
+    //public static final long TYPE_ONTOLOGY_ELEMENT_ID = 2;
 
     // Entity Data Attributes
     public static final String ATTRIBUTE_FILE_PATH = "ATTRIBUTE_FILE_PATH";
     public static final String ATTRIBUTE_ONTOLOGY_ELEMENT = "ATTRIBUTE_ONTOLOGY_ELEMENT";
 
-    public static final long ATTRIBUTE_ONTOLOGY_ELEMENT_ID = 1;
+    public static final long ATTRIBUTE_ONTOLOGY_ELEMENT_ID = 1616533546833281203L;
+    //public static final long ATTRIBUTE_ONTOLOGY_ELEMENT_ID = 1;
 }
