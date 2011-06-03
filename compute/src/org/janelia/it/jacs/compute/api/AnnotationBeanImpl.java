@@ -16,6 +16,7 @@ import javax.ejb.TransactionAttributeType;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 @Stateless(name = "AnnotationEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
@@ -187,6 +188,16 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             _logger.error("Error calling annotationDAO.setupEntityTypes()");
         }
     }
+
+    public Set<Entity> getEntitiesByName(String name) {
+        try {
+            return _annotationDAO.getEntitiesByName(name);
+        } catch (DaoException e) {
+            _logger.error("Error trying to get EntityType by name = " + name);
+        }
+        return null;
+    }
+
 
 
 }

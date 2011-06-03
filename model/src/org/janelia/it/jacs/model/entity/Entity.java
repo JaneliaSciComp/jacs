@@ -99,7 +99,8 @@ public class Entity  implements java.io.Serializable, IsSerializable {
         this.name = name;
     }
 
-    // Utility method
+    // Utility methods
+
     public EntityAttribute getAttributeByName(String name) {
         Set<EntityAttribute> attributeSet = entityType.getAttributes();
         for (EntityAttribute ea : attributeSet) {
@@ -108,6 +109,21 @@ public class Entity  implements java.io.Serializable, IsSerializable {
             }
         }
         return null;
+    }
+
+    public boolean addAttributeAsTag(String attributeName) {
+        Set<EntityData> data=this.getEntityData();
+        EntityAttribute attribute = this.getAttributeByName(attributeName);
+        if (attribute==null) {
+            return false;
+        } else {
+            EntityData tag = new EntityData();
+            tag.setEntityAttribute(attribute);
+            tag.setUser(user);
+            tag.setValue(attribute.getName());
+            data.add(tag);
+        }
+        return true;
     }
 
 }

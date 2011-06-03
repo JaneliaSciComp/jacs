@@ -335,4 +335,22 @@ public class AnnotationDAO extends ComputeBaseDAO {
             throw handleException(e, "getUserEntitiesByName");
         }
     }
+
+    public Set<Entity> getEntitiesByName(String name) throws DaoException {
+        try {
+            Session session = getCurrentSession();
+            Criteria c = session.createCriteria(Entity.class);
+            c.add(Expression.eq("name", name));
+            List l = c.list();
+            Set<Entity> resultSet = new HashSet<Entity>();
+            for (Object o : l) {
+                Entity e = (Entity)o;
+                resultSet.add(e);
+            }
+            return resultSet;
+        } catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+
 }

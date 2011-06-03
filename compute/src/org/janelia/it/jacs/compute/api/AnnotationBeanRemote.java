@@ -3,10 +3,12 @@ package org.janelia.it.jacs.compute.api;
 import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityType;
+import org.omg.CosNaming.NamingContextExtPackage.StringNameHelper;
 
 import javax.ejb.Remote;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Remote
 public interface AnnotationBeanRemote {
@@ -14,6 +16,7 @@ public interface AnnotationBeanRemote {
     public Entity saveOrUpdateEntity(Entity entity);
     public EntityType getEntityTypeByName(String name);
     public java.util.List<Entity> getUserEntitiesByType(String userLogin, long entityTypeId);
+    public Set<Entity> getEntitiesByName(String name);
 
     public String addAnnotation(String owner, String namespace, String term, String value, String comment, String conditional);
     public void deleteAnnotation(String owner, String uniqueIdentifier);

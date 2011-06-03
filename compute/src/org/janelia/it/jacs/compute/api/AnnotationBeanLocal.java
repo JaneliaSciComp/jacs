@@ -7,6 +7,7 @@ import org.janelia.it.jacs.model.entity.EntityType;
 import javax.ejb.Local;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Local
 public interface AnnotationBeanLocal {
@@ -14,6 +15,7 @@ public interface AnnotationBeanLocal {
     public Entity saveOrUpdateEntity(Entity entity);
     public EntityType getEntityTypeByName(String name);
     public java.util.List<Entity> getUserEntitiesByType(String userLogin, long entityTypeId);
+    public Set<Entity> getEntitiesByName(String name);
 
     public String addAnnotation(String owner, String namespace, String term, String value, String comment, String conditional);
     public void deleteAnnotation(String owner, String uniqueIdentifier);

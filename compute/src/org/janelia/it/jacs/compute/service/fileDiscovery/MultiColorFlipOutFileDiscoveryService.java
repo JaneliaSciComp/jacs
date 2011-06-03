@@ -24,11 +24,15 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
 
     private MultiColorFlipOutFileDiscoveryTask task;
     private String sessionName;
+    private static String TOP_LEVEL_FOLDER_NAME_PARAM = "TOP_LEVEL_FOLDER_NAME";
     private static String DIRECTORY_PARAM_PREFIX = "DIRECTORY_";
     private org.apache.log4j.Logger logger;
     List<String> directoryPathList = new ArrayList<String>();
     AnnotationBeanRemote annotationBean;
     ComputeBeanRemote computeBean;
+    String topLevelFolderName;
+    Entity topLevelFolder;
+    User user;
 
     public void execute(IProcessData processData) {
         try {
@@ -37,11 +41,14 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
             annotationBean = EJBFactory.getRemoteAnnotationBean();
             computeBean = EJBFactory.getRemoteComputeBean();
+            user = computeBean.getUserByName(task.getOwner());
             Set<Map.Entry<String, Object>> entrySet = processData.entrySet();
             for (Map.Entry<String, Object> entry : entrySet) {
                 String paramName = entry.getKey();
                 if (paramName.startsWith(DIRECTORY_PARAM_PREFIX)) {
                     directoryPathList.add((String) entry.getValue());
+                } else if (paramName.equals(TOP_LEVEL_FOLDER_NAME_PARAM)) {
+                    topLevelFolderName=(String)entry.getValue();
                 }
             }
             String taskInputDirectoryList = task.getParameter(MultiColorFlipOutFileDiscoveryTask.PARAM_inputDirectoryList);
@@ -57,9 +64,32 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             for (String directoryPath : directoryPathList) {
                 logger.info(" MultiColorFlipOutFileDiscoveryService including directory = "+directoryPath);
             }
+            createOrVerifyRootEntity();
             processDirectories();
         } catch (Exception e) {
             logger.error(e.getMessage());
+        }
+    }
+
+    protected void createOrVerifyRootEntity() throws Exception {
+        // We expect there to be a single folder in the system with this name
+        Set<Entity> topLevelFolders = annotationBean.getEntitiesByName(topLevelFolderName);
+        if (topLevelFolders!=null && topLevelFolders.size()>1) {
+            throw new Exception("Unexpectedly found more than one existing folder for MultiColorFlipOutFileDiscoveryService with name="+topLevelFolderName);
+        }
+        if (topLevelFolders!=null && topLevelFolders.size()==1) {
+            topLevelFolder=topLevelFolders.iterator().next();
+        } else if (topLevelFolder==null || topLevelFolders.size()==0) {
+            Entity folder=new Entity();
+            Date createDate = new Date();
+            folder.setCreationDate(createDate);
+            folder.setUpdatedDate(createDate);
+            folder.setUser(user);
+            folder.setName(topLevelFolderName);
+            EntityType folderType=annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER);
+            folder.setEntityType(folderType);
+            folder.addAttributeAsTag(EntityConstants.ATTRIBUTE_COMMON_ROOT);
+            annotationBean.saveOrUpdateEntity(folder);
         }
     }
 
@@ -72,6 +102,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             else if (!dir.isDirectory()) {
                 logger.error(("File " + dir.getAbsolutePath()+ " is not a directory - skipping"));
             } else {
+
                 processDirectory(dir);
             }
         }
@@ -108,7 +139,6 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
     }
 
     protected void createLsmStackFromFile(File file) throws Exception {
-        User user = computeBean.getUserByName(task.getOwner());
         EntityType lsmEntityType = annotationBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK);
         if (lsmEntityType==null) {
             throw new Exception("Could not find EntityType = " + EntityConstants.TYPE_LSM_STACK);
