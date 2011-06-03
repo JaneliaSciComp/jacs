@@ -35,6 +35,7 @@ public class EntityConstants {
     // Entity Data Attributes
     public static final String ATTRIBUTE_FILE_PATH = "ATTRIBUTE_FILE_PATH";
     public static final String ATTRIBUTE_ONTOLOGY_ELEMENT = "ATTRIBUTE_ONTOLOGY_ELEMENT";
+    public static final String ATTRIBUTE_COMMON_ROOT = "ATTRIBUTE_COMMON_ROOT"; // Will cause folder to appear at top of Common tree pane
 
     public static final long ATTRIBUTE_ONTOLOGY_ELEMENT_ID = 1616533546833281203L;
     //public static final long ATTRIBUTE_ONTOLOGY_ELEMENT_ID = 1;
