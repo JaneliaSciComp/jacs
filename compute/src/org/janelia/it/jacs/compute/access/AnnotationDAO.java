@@ -206,6 +206,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
             createEntityAttribute(EntityConstants.ATTRIBUTE_FILE_PATH);
             createEntityAttribute(EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT);
             createEntityAttribute(EntityConstants.ATTRIBUTE_COMMON_ROOT);
+            createEntityAttribute(EntityConstants.ATTRIBUTE_ENTITY);
 
             //========== Type ============
             Set<String> lsmAttributeNameSet = new HashSet<String>();
@@ -223,6 +224,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
             Set<String> folderAttributeNameSet = new HashSet<String>();
             folderAttributeNameSet.add(EntityConstants.ATTRIBUTE_FILE_PATH);
             folderAttributeNameSet.add(EntityConstants.ATTRIBUTE_COMMON_ROOT);
+            folderAttributeNameSet.add(EntityConstants.ATTRIBUTE_ENTITY);
             createEntityType(EntityConstants.TYPE_FOLDER, folderAttributeNameSet);
 
         } catch (Exception e) {
