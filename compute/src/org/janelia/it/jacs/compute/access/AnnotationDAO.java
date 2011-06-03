@@ -221,6 +221,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
             createEntityType(EntityConstants.TYPE_FOLDER, folderAttributeNameSet);
 
         } catch (Exception e) {
+            e.printStackTrace();
             throw new DaoException(e);
         }
     }
@@ -257,14 +258,14 @@ public class AnnotationDAO extends ComputeBaseDAO {
         for (EntityType et : entityTypeList) {
             if (et.getName().equals(name)) {
                 _logger.info("Found EntityType name="+name+" id="+et.getId());
-                containsType=true;
                 entityType = et;
+                containsType=true;
             }
         }
         if (!containsType) {
             entityType = new EntityType();
             entityType.setName(name);
-            entityType = (EntityType)session.save(entityType);
+            session.saveOrUpdate(entityType);
             _logger.info("Created EntityType name="+name+" id="+entityType.getId());
         }
         Set<EntityAttribute> currentAttributeSet=entityType.getAttributes();
