@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
+import org.apache.xerces.impl.dv.dtd.ENTITYDatatypeValidator;
 import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -95,6 +96,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
 
     protected void processDirectories() throws Exception {
         for (String directoryPath : directoryPathList) {
+            logger.info("Processing dir="+directoryPath);
             File dir = new File(directoryPath);
             if (!dir.exists()) {
                 logger.error("Directory "+dir.getAbsolutePath()+" does not exist - skipping");
@@ -102,41 +104,71 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             else if (!dir.isDirectory()) {
                 logger.error(("File " + dir.getAbsolutePath()+ " is not a directory - skipping"));
             } else {
-                createOrVerifyDirAsTopFolderEntity(dir);
-                processDirectory(dir);
+                Entity folder = verifyOrCreateChildFolderFromDir(topLevelFolder, dir);
+                processFolder(folder);
+                annotationBean.saveOrUpdateEntity(folder);
             }
         }
     }
 
-    protected void createOrVerifyDirAsTopFolderEntity(File dir) throws Exception {
-        Set<String> topFolderPaths=new HashSet<String>();
-        Set<EntityData> data=topLevelFolder.getEntityData();
+    protected Entity verifyOrCreateChildFolderFromDir(Entity parentFolder, File dir) throws Exception {
+        Entity folder=null;
+        Set<EntityData> data=parentFolder.getEntityData();
         for (EntityData ed : data) {
             if (ed.getChildEntity()!=null &&
-                ed.getChildEntity().getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+                    ed.getChildEntity().getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
                 String folderPath = ed.getChildEntity().getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                 if (folderPath==null) {
                     throw new Exception("Unexpectedly could not find ATTRIBUTE_FILE_PATH for entity id="+ed.getChildEntity().getId());
                 }
+                if (folderPath.equals(dir.getAbsolutePath())) {
+                    if (folder!=null) {
+                        throw new Exception("Unexpectedly found multiple child folders with path=" + dir.getAbsolutePath()+" for parent folder id="+parentFolder.getId());
+                    }
+                    folder = ed.getChildEntity();
+                }
             }
         }
+        if (folder!=null) {
+            logger.info("Found folder="+folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+            return folder;
+        } else {
+            // We need to create a new folder
+            folder = new Entity();
+            Date createDate = new Date();
+            folder.setCreationDate(createDate);
+            folder.setUpdatedDate(createDate);
+            folder.setUser(user);
+            folder.setName(dir.getAbsolutePath());
+            EntityType folderType=annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER);
+            folder.setEntityType(folderType);
+            folder.setValueByAttributeName(EntityConstants.TYPE_FOLDER, dir.getAbsolutePath());
+            parentFolder.addChildEntity(folder);
+            annotationBean.saveOrUpdateEntity(parentFolder);
+            logger.info("Created new folder with path="+folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+        }
+        return folder;
     }
 
-    protected void processDirectory(File dir) throws Exception {
+    protected void processFolder(Entity folder) throws Exception {
+        File dir=new File(folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+        logger.info("Processing folder="+dir.getAbsolutePath());
         File[] dirContents = dir.listFiles();
         for (File file : dirContents) {
             if (file.isDirectory()) {
-                processDirectory(file);
+                Entity subfolder=verifyOrCreateChildFolderFromDir(folder, file);
+                processFolder(subfolder);
             } else {
                 logger.info("Found file = " + file.getAbsolutePath());
                 if (file.getName().toUpperCase().endsWith(".LSM")) {
-                    considerNewLsmEntity(file);
+                    Entity lsmStack = verifyOrCreateLsmStack(file);
+                    folder.addChildEntity(lsmStack);
                 }
             }
         }
     }
 
-    protected void considerNewLsmEntity(File file) throws Exception {
+    protected Entity verifyOrCreateLsmStack(File file) throws Exception {
         logger.info("Considering LSM file = " + file.getAbsolutePath());
         List<Entity> possibleLsmFiles = annotationBean.getEntitiesWithFilePath(file.getAbsolutePath());
         List<Entity> lsmStacks = new ArrayList<Entity>();
@@ -145,14 +177,17 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
                 lsmStacks.add(entity);
             }
         }
-        if (lsmStacks.size()>0) {
-            logger.info("File is already represented as LSM_STACK_TYPE = " + file.getAbsolutePath());
+        if (lsmStacks.size()==0) {
+            return createLsmStackFromFile(file);
+        } else if (lsmStacks.size()==1) {
+            logger.info("Found lsm stack = " + lsmStacks.get(0).getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+            return lsmStacks.get(0);
         } else {
-            createLsmStackFromFile(file);
+            throw new Exception("Unexpectedly found " + lsmStacks.size() + " lsm stacks for file="+file.getAbsolutePath());
         }
     }
 
-    protected void createLsmStackFromFile(File file) throws Exception {
+    protected Entity createLsmStackFromFile(File file) throws Exception {
         EntityType lsmEntityType = annotationBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK);
         if (lsmEntityType==null) {
             throw new Exception("Could not find EntityType = " + EntityConstants.TYPE_LSM_STACK);
@@ -164,20 +199,10 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         lsmStack.setCreationDate(createDate);
         lsmStack.setUpdatedDate(createDate);
         lsmStack.setName(file.getName());
+        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
         lsmStack = annotationBean.saveOrUpdateEntity(lsmStack);
-        Set<EntityData> eds = lsmStack.getEntityData();
-        EntityData ed = new EntityData();
-        EntityAttribute filePathAttribute = lsmStack.getAttributeByName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        if (filePathAttribute==null) {
-            throw new Exception("Expected to find ATTRIBUTE_FILE_PATH in lsmStack");
-        }
-        ed.setEntityAttribute(filePathAttribute);
-        ed.setValue(file.getAbsolutePath());
-        ed.setParentEntity(lsmStack);
-        ed.setUser(user);
-        ed.setCreationDate(createDate);
-        eds.add(ed);
-        annotationBean.saveOrUpdateEntity(lsmStack);
+        logger.info("Created lsm stack = " +lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+        return lsmStack;
     }
 
 }
