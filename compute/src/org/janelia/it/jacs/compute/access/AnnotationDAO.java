@@ -3,13 +3,16 @@ package org.janelia.it.jacs.compute.access;
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
+import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.criterion.Expression;
 import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.entity.*;
-import org.janelia.it.jacs.model.tasks.export.SampleExportTask;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class AnnotationDAO extends ComputeBaseDAO {
 
@@ -312,4 +315,20 @@ public class AnnotationDAO extends ComputeBaseDAO {
     }
 
 
+    public List<Entity> getUserEntitiesByName(String userLogin, long entityTypeId) throws DaoException {
+        try {
+            StringBuffer hql = new StringBuffer("select clazz from Entity clazz");
+            if (null != userLogin) {
+                hql.append("  where clazz.user.userLogin='").append(userLogin).append("'");
+            }
+            hql.append(" and clazz.entityType.id="+entityTypeId);
+            if (_logger.isDebugEnabled()) _logger.debug("hql=" + hql);
+            Query query = getCurrentSession().createQuery(hql.toString());
+            return query.list();
+        }
+        catch (Exception e) {
+            // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
+            throw handleException(e, "getUserEntitiesByName");
+        }
+    }
 }

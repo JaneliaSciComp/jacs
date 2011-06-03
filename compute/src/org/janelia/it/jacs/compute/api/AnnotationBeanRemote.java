@@ -13,6 +13,8 @@ public interface AnnotationBeanRemote {
 
     public Entity saveOrUpdateEntity(Entity entity);
     public EntityType getEntityTypeByName(String name);
+    public java.util.List<Entity> getUserEntitiesByType(String userLogin, long entityTypeId);
+
     public String addAnnotation(String owner, String namespace, String term, String value, String comment, String conditional);
     public void deleteAnnotation(String owner, String uniqueIdentifier);
     public ArrayList<Annotation> getAnnotationsForUser(String owner);

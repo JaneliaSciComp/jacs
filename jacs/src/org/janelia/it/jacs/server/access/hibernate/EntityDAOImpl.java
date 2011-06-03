@@ -7,12 +7,14 @@ import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.Expression;
 import org.hibernate.criterion.Projections;
 import org.janelia.it.jacs.model.common.SortArgument;
+import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.server.access.EntityDAO;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public class EntityDAOImpl extends DaoBaseImpl implements EntityDAO {
@@ -41,13 +43,14 @@ public class EntityDAOImpl extends DaoBaseImpl implements EntityDAO {
         return (EntityType) result.get(0);
     }
 
-    public EntityType createEntityType(Long id, Long sequence, String name, String style, String description, String iconurl) throws DaoException {
+    public EntityType createEntityType(Long id, Long sequence, String name, String style, String description, String iconurl,
+                                       HashSet<EntityAttribute> attributes) throws DaoException {
         EntityType entityType;
         try {
             if (null == name || "".equals(name.trim())) {
                 throw new DaoException(new Exception(), "Cannot create an Entity Type with an empty or missing name.");
             }
-            entityType = new EntityType(id, sequence, name, style, description, iconurl);
+            entityType = new EntityType(id, sequence, name, style, description, iconurl, attributes);
             getHibernateTemplate().save(entityType);
             logger.info("Entity Type is :" + entityType.getName());
         }

@@ -7,7 +7,6 @@ import org.janelia.it.jacs.model.user_data.User;
 
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Random;
 import java.util.Set;
 
 /**
@@ -21,7 +20,7 @@ public class Entity  implements java.io.Serializable, IsSerializable {
      private EntityType entityType;
      private Date creationDate;
      private Date updatedDate;
-     private Set entityData = new HashSet(0);
+     private Set<EntityData> entityData = new HashSet<EntityData>(0);
 
     public Entity() {
     }
@@ -31,7 +30,7 @@ public class Entity  implements java.io.Serializable, IsSerializable {
         this.id = id;
     }
     public Entity(Long id, String name, User user, EntityStatus entityStatus, EntityType entityType, Date creationDate,
-                  Date updatedDate, Set entityData) {
+                  Date updatedDate, Set<EntityData> entityData) {
        this.id = id;
        this.name = name;
        this.user = user;
@@ -84,11 +83,11 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     public void setUpdatedDate(Date updatedDate) {
         this.updatedDate = updatedDate;
     }
-    public Set getEntityData() {
+    public Set<EntityData> getEntityData() {
         return this.entityData;
     }
     
-    public void setEntityData(Set entityData) {
+    public void setEntityData(Set<EntityData> entityData) {
         this.entityData = entityData;
     }
 

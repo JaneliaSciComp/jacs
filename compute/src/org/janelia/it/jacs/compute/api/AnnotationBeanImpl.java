@@ -170,6 +170,16 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         return null;
     }
 
+    public java.util.List<Entity> getUserEntitiesByType(String userLogin, long entityTypeId) {
+        try {
+            return _annotationDAO.getUserEntitiesByName(userLogin, entityTypeId);
+        }
+        catch (DaoException e) {
+            _logger.error("Error trying to get the entities of type "+entityTypeId+" for user "+userLogin);
+        }
+        return null;
+    }
+
     public void setupEntityTypes() {
         try {
             _annotationDAO.setupEntityTypes();
