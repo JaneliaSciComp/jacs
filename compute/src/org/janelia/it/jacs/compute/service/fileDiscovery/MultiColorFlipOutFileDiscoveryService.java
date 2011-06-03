@@ -80,16 +80,16 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         if (topLevelFolders!=null && topLevelFolders.size()==1) {
             topLevelFolder=topLevelFolders.iterator().next();
         } else if (topLevelFolder==null || topLevelFolders.size()==0) {
-            Entity folder=new Entity();
+            topLevelFolder=new Entity();
             Date createDate = new Date();
-            folder.setCreationDate(createDate);
-            folder.setUpdatedDate(createDate);
-            folder.setUser(user);
-            folder.setName(topLevelFolderName);
+            topLevelFolder.setCreationDate(createDate);
+            topLevelFolder.setUpdatedDate(createDate);
+            topLevelFolder.setUser(user);
+            topLevelFolder.setName(topLevelFolderName);
             EntityType folderType=annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER);
-            folder.setEntityType(folderType);
-            folder.addAttributeAsTag(EntityConstants.ATTRIBUTE_COMMON_ROOT);
-            annotationBean.saveOrUpdateEntity(folder);
+            topLevelFolder.setEntityType(folderType);
+            topLevelFolder.addAttributeAsTag(EntityConstants.ATTRIBUTE_COMMON_ROOT);
+            annotationBean.saveOrUpdateEntity(topLevelFolder);
         }
     }
 
