@@ -147,7 +147,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             folder.setName(dir.getAbsolutePath());
             EntityType folderType=annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER);
             folder.setEntityType(folderType);
-            folder.setValueByAttributeName(EntityConstants.TYPE_FOLDER, dir.getAbsolutePath());
+            folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, dir.getAbsolutePath());
             parentFolder.addChildEntity(folder);
             annotationBean.saveOrUpdateEntity(parentFolder);
             logger.info("Created new folder with path="+folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
