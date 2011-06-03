@@ -85,7 +85,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         if (topLevelFolders!=null && topLevelFolders.size()==1) {
             logger.info("Found existing topLevelFolder, name=" + topLevelFolder.getName());
             topLevelFolder=topLevelFolders.iterator().next();
-        } else if (topLevelFolder==null || topLevelFolders.size()==0) {
+        } else if (topLevelFolders==null || topLevelFolders.size()==0) {
             logger.info("Creating new topLevelFolder with name="+topLevelFolderName);
             topLevelFolder=new Entity();
             Date createDate = new Date();
