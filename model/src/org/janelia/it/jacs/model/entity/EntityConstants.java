@@ -24,6 +24,7 @@ public class EntityConstants {
     public static final String TYPE_LSM_STACK = "TYPE_LSM_STACK";
     public static final String TYPE_ONTOLOGY_ROOT = "TYPE_ONTOLOGY_ROOT";
     public static final String TYPE_ONTOLOGY_ELEMENT = "TYPE_ONTOLOGY_ELEMENT";
+    public static final String TYPE_FOLDER = "TYPE_FOLDER";
 
     public static final long TYPE_ONTOLOGY_ROOT_ID = 1616533546980081843L;
     //public static final long TYPE_ONTOLOGY_ROOT_ID = 1;

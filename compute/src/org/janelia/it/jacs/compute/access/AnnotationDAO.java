@@ -216,6 +216,10 @@ public class AnnotationDAO extends ComputeBaseDAO {
             ontologyRootAttributeNameSet.add(EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT);
             createEntityType(EntityConstants.TYPE_ONTOLOGY_ROOT, ontologyRootAttributeNameSet);
 
+            Set<String> folderAttributeNameSet = new HashSet<String>();
+            folderAttributeNameSet.add(EntityConstants.ATTRIBUTE_FILE_PATH);
+            createEntityType(EntityConstants.TYPE_FOLDER, folderAttributeNameSet);
+
         } catch (Exception e) {
             throw new DaoException(e);
         }
