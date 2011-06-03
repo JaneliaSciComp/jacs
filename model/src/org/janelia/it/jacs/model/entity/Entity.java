@@ -195,7 +195,7 @@ public class Entity  implements java.io.Serializable, IsSerializable {
         this.entityData.add(ed);
     }
 
-    public void addChildEntity(Entity entity, String attributeName) {
+    public boolean addChildEntity(Entity entity, String attributeName) {
         EntityData ed=new EntityData();
         ed.setParentEntity(this);
         ed.setChildEntity(entity);
@@ -204,8 +204,13 @@ public class Entity  implements java.io.Serializable, IsSerializable {
         ed.setCreationDate(createDate);
         ed.setUpdatedDate(createDate);
         EntityAttribute attribute=getAttributeByName(attributeName);
-        ed.setEntityAttribute(attribute);
-        this.entityData.add(ed);
+        if (attribute!=null) {
+            ed.setEntityAttribute(attribute);
+            this.entityData.add(ed);
+            return true;
+        } else {
+            return false;
+        }
     }
 
 
