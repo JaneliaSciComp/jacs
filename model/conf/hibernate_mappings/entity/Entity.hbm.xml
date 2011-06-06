@@ -26,8 +26,8 @@
             <column name="updated_date" length="19" />
         </property>
         <set name="entityData" inverse="true" lazy="false" table="entityData">
-            <key column="id" />
-            <many-to-many column="parent_entity_id" class="EntityData" />
+            <key column="parent_entity_id" />
+            <many-to-many column="id" class="EntityData" />
         </set>
     </class>
 </hibernate-mapping>

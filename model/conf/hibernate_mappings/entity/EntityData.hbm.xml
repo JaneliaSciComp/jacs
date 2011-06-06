@@ -18,7 +18,7 @@
         <many-to-one name="childEntity" class="Entity" fetch="select" lazy="false">
             <column name="child_entity_id" length="60" />
         </many-to-one>
-        <many-to-one name="user" class="org.janelia.it.jacs.model.user_data.User" column="user_id" fetch="select" not-null="true" update="false" insert="false">
+        <many-to-one name="user" class="org.janelia.it.jacs.model.user_data.User" column="user_id">
         </many-to-one>
         <property name="value" type="string">
             <column name="value" />
