@@ -110,7 +110,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
     public Entity getEntityById(String targetId) {
         Session session = getCurrentSession();
         Criteria c = session.createCriteria(Entity.class);
-        c.add(Expression.eq("id", targetId));
+        c.add(Expression.eq("id", Long.valueOf(targetId)));
         List<Entity> entities = (List<Entity>) c.list();
         if (entities.size()==1) {
             return entities.get(0);
