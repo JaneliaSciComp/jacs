@@ -83,8 +83,8 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             throw new Exception("Unexpectedly found " + topLevelFolders.size()+" folders for MultiColorFlipOutFileDiscoveryService with name="+topLevelFolderName);
         }
         if (topLevelFolders!=null && topLevelFolders.size()==1) {
+            topLevelFolder = topLevelFolders.iterator().next();
             logger.info("Found existing topLevelFolder, name=" + topLevelFolder.getName());
-            topLevelFolder=topLevelFolders.iterator().next();
         } else if (topLevelFolders==null || topLevelFolders.size()==0) {
             logger.info("Creating new topLevelFolder with name="+topLevelFolderName);
             topLevelFolder=new Entity();
@@ -97,9 +97,10 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             topLevelFolder.setEntityType(folderType);
             topLevelFolder.addAttributeAsTag(EntityConstants.ATTRIBUTE_COMMON_ROOT);
             logger.info("Calling saveOrUpdateEntity for topLevelFolder Entity");
-            annotationBean.saveOrUpdateEntity(topLevelFolder);
+            topLevelFolder = annotationBean.saveOrUpdateEntity(topLevelFolder);
             logger.info("Done calling saveOrUpdateEntity for topLevelFolder Entity");
         }
+        logger.info("Using topLevelFolder id="+topLevelFolder.getId());
     }
 
     protected void processDirectories() throws Exception {
@@ -120,6 +121,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
     }
 
     protected Entity verifyOrCreateChildFolderFromDir(Entity parentFolder, File dir) throws Exception {
+        logger.info("verifyOrCreateChildFolderFromDir() called with parentFolder id="+parentFolder.getId());
         Entity folder=null;
         Set<EntityData> data=parentFolder.getEntityData();
         for (EntityData ed : data) {
@@ -151,8 +153,12 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             EntityType folderType=annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER);
             folder.setEntityType(folderType);
             folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, dir.getAbsolutePath());
+            folder=annotationBean.saveOrUpdateEntity(folder);
+            logger.info("After saving new folder, id="+folder.getId());
             parentFolder.addChildEntity(folder);
+            logger.info("Before updating parentFolder id="+parentFolder.getId());
             annotationBean.saveOrUpdateEntity(parentFolder);
+            logger.info("After updating parentFolder id="+parentFolder.getId());
             logger.info("Created new folder with path="+folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         }
         return folder;
@@ -160,7 +166,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
 
     protected void processFolder(Entity folder) throws Exception {
         File dir=new File(folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-        logger.info("Processing folder="+dir.getAbsolutePath());
+        logger.info("Processing folder="+dir.getAbsolutePath()+" id="+folder.getId());
         File[] dirContents = dir.listFiles();
         for (File file : dirContents) {
             if (file.isDirectory()) {
@@ -170,7 +176,9 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
                 logger.info("Found file = " + file.getAbsolutePath());
                 if (file.getName().toUpperCase().endsWith(".LSM")) {
                     Entity lsmStack = verifyOrCreateLsmStack(file);
+                    annotationBean.saveOrUpdateEntity(lsmStack);
                     folder.addChildEntity(lsmStack);
+                    annotationBean.saveOrUpdateEntity(folder);
                 }
             }
         }
