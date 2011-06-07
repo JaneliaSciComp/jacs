@@ -13,10 +13,10 @@
         <property name="name" type="string">
             <column name="name" length="4000" />
         </property>
-        <many-to-one name="entityStatus" class="EntityStatus" fetch="select">
+        <many-to-one name="entityStatus" class="EntityStatus">
             <column name="status" length="60" />
         </many-to-one>
-        <many-to-one name="entityType" class="EntityType" fetch="select">
+        <many-to-one name="entityType" class="EntityType" >
             <column name="entity_type_id" not-null="true" />
         </many-to-one>
         <property name="creationDate" type="timestamp">
@@ -25,8 +25,8 @@
         <property name="updatedDate" type="timestamp">
             <column name="updated_date" length="19" />
         </property>
-        <set name="entityData" inverse="true" lazy="false" table="entityData">
-            <key column="parent_entity_id" />
+        <set name="entityData" cascade="all,delete-orphan" inverse="true" lazy="false" table="entityData">
+            <key column="parent_entity_id" not-null="true"/>
             <many-to-many column="id" class="EntityData" />
         </set>
     </class>

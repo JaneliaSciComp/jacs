@@ -24,7 +24,7 @@
         <property name="iconurl" type="string">
             <column name="iconurl" />
         </property>
-        <set name="attributes" lazy="false" table="entityTypeAttribute">
+        <set name="attributes" lazy="false" cascade="none" table="entityTypeAttribute">
             <key column="entity_type_id"/>
             <many-to-many column="entity_att_id" class="EntityAttribute"/>
         </set>
