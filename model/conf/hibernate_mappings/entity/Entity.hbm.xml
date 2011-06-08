@@ -27,7 +27,7 @@
         </property>
         <set name="entityData" cascade="all,delete-orphan" inverse="true" lazy="false" table="entityData">
             <key column="parent_entity_id" not-null="true"/>
-            <many-to-many column="id" class="EntityData" />
+            <one-to-many class="EntityData" />
         </set>
     </class>
 </hibernate-mapping>

@@ -157,7 +157,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             logger.info("After saving new folder, id="+folder.getId());
             parentFolder.addChildEntity(folder);
             logger.info("Before updating parentFolder id="+parentFolder.getId());
-            annotationBean.saveOrUpdateEntity(parentFolder);
+            //annotationBean.saveOrUpdateEntity(parentFolder);
             logger.info("After updating parentFolder id="+parentFolder.getId());
             logger.info("Created new folder with path="+folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         }
@@ -172,13 +172,12 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             if (file.isDirectory()) {
                 Entity subfolder=verifyOrCreateChildFolderFromDir(folder, file);
                 processFolder(subfolder);
+                annotationBean.saveOrUpdateEntity(subfolder);
             } else {
                 logger.info("Found file = " + file.getAbsolutePath());
                 if (file.getName().toUpperCase().endsWith(".LSM")) {
                     Entity lsmStack = verifyOrCreateLsmStack(file);
-                    annotationBean.saveOrUpdateEntity(lsmStack);
                     folder.addChildEntity(lsmStack);
-                    annotationBean.saveOrUpdateEntity(folder);
                 }
             }
         }
