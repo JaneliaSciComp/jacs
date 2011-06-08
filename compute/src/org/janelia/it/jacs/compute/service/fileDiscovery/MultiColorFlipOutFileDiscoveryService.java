@@ -67,6 +67,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             }
             createOrVerifyRootEntity();
             processDirectories();
+            annotationBean.saveOrUpdateEntity(topLevelFolder);
         } catch (Exception e) {
             e.printStackTrace();
             logger.error(e.getMessage());
@@ -122,9 +123,17 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
 
     protected Entity verifyOrCreateChildFolderFromDir(Entity parentFolder, File dir) throws Exception {
         logger.info("verifyOrCreateChildFolderFromDir() called with parentFolder id="+parentFolder.getId());
+        logger.info("Looking for Entity matching Folder path="+dir.getAbsolutePath());
         Entity folder=null;
         Set<EntityData> data=parentFolder.getEntityData();
         for (EntityData ed : data) {
+            long childId=0;
+            String entityTypeName="<not specified>";
+            if (ed.getChildEntity()!=null) {
+                childId=ed.getChildEntity().getId();
+                entityTypeName=ed.getChildEntity().getEntityType().getName();
+            }
+            logger.info("Checking EntityData entry with value="+ed.getValue()+" childEntityId="+childId+" entityType="+entityTypeName);
             if (ed.getChildEntity()!=null &&
                     ed.getChildEntity().getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
                 String folderPath = ed.getChildEntity().getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
@@ -137,12 +146,15 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
                     }
                     folder = ed.getChildEntity();
                 }
+            } else {
+                logger.info("EntityData does not qualify as Folder");
             }
         }
         if (folder!=null) {
             logger.info("Found folder="+folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
             return folder;
         } else {
+            logger.info("Could not find matching folder, so creating new one");
             // We need to create a new folder
             folder = new Entity();
             Date createDate = new Date();

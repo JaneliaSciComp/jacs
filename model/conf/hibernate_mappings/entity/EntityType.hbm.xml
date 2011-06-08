@@ -12,16 +12,16 @@
         <property name="sequence" type="java.lang.Long">
             <column name="sequence" precision="18" scale="0" />
         </property>
-        <property name="name" type="string" not-null="true" >
+        <property name="name" type="string" not-null="true" lazy="false">
             <column name="name" length="60" unique="true" />
         </property>
-        <property name="style" type="string">
+        <property name="style" type="string" lazy="false">
             <column name="style" length="60" />
         </property>
-        <property name="description" type="string">
+        <property name="description" type="string" lazy="false">
             <column name="description" length="65535" />
         </property>
-        <property name="iconurl" type="string">
+        <property name="iconurl" type="string" lazy="false">
             <column name="iconurl" />
         </property>
         <set name="attributes" lazy="false" cascade="none" table="entityTypeAttribute">

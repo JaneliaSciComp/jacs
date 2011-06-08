@@ -9,14 +9,14 @@
         <id name="id" access="field" column="id" type="java.lang.Long">
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
         </id>
-        <many-to-one name="user" class="org.janelia.it.jacs.model.user_data.User" column="user_id" not-null="true" />
-        <property name="name" type="string">
+        <many-to-one name="user" class="org.janelia.it.jacs.model.user_data.User" column="user_id" not-null="true" lazy="false"/>
+        <property name="name" type="string" lazy="false">
             <column name="name" length="4000" />
         </property>
-        <many-to-one name="entityStatus" class="EntityStatus">
+        <many-to-one name="entityStatus" class="EntityStatus" lazy="false">
             <column name="status" length="60" />
         </many-to-one>
-        <many-to-one name="entityType" class="EntityType" >
+        <many-to-one name="entityType" class="EntityType" lazy="false">
             <column name="entity_type_id" not-null="true" />
         </many-to-one>
         <property name="creationDate" type="timestamp">
