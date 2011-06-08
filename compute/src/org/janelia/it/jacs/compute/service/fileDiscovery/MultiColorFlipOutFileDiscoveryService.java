@@ -188,14 +188,14 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             } else {
                 logger.info("Found file = " + file.getAbsolutePath());
                 if (file.getName().toUpperCase().endsWith(".LSM")) {
-                    Entity lsmStack = verifyOrCreateLsmStack(file);
-                    folder.addChildEntity(lsmStack);
+                    verifyOrCreateLsmStack(folder, file);
                 }
             }
         }
     }
 
-    protected Entity verifyOrCreateLsmStack(File file) throws Exception {
+    protected void verifyOrCreateLsmStack(Entity folder, File file) throws Exception {
+        Entity lsmStack=null;
         logger.info("Considering LSM file = " + file.getAbsolutePath());
         List<Entity> possibleLsmFiles = annotationBean.getEntitiesWithFilePath(file.getAbsolutePath());
         List<Entity> lsmStacks = new ArrayList<Entity>();
@@ -205,10 +205,25 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             }
         }
         if (lsmStacks.size()==0) {
-            return createLsmStackFromFile(file);
+            lsmStack = createLsmStackFromFile(file);
+            folder.addChildEntity(lsmStack);
         } else if (lsmStacks.size()==1) {
             logger.info("Found lsm stack = " + lsmStacks.get(0).getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-            return lsmStacks.get(0);
+            lsmStack = lsmStacks.get(0);
+            // Make sure the folder already contains it
+            boolean hasLsmStack=false;
+            for (EntityData ed : folder.getEntityData()) {
+                if (ed.getChildEntity()!=null && ed.getChildEntity().getId().equals(lsmStack.getId())) {
+                    hasLsmStack=true;
+                    break;
+                }
+            }
+            if (!hasLsmStack) {
+                logger.info("Although the lsm stack already exists, it does not seem to be part of the folder so we are adding it");
+                folder.addChildEntity(lsmStack);
+            } else {
+                logger.info("The folder already contains the lsm stack so we do not need to add it again");
+            }
         } else {
             throw new Exception("Unexpectedly found " + lsmStacks.size() + " lsm stacks for file="+file.getAbsolutePath());
         }
