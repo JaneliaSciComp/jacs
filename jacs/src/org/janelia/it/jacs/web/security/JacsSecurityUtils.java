@@ -34,11 +34,11 @@ import javax.servlet.http.HttpServletRequest;
  * Time: 4:39:56 PM
  */
 public class JacsSecurityUtils {
-    public final static String USER_OBJECT_ATTR_NAME = "GAMA_SSO_USER_OBJECT";
+    public final static String USER_OBJECT_ATTR_NAME = "USER_OBJECT";
 
     public static boolean isAuthenticated(HttpServletRequest request) {
         User u = getSessionUser(request);
-        return (u != null && u.getUserLogin() != null && !u.getUserLogin().equals(JacsOpenAccessGamaSsoFilter.CAMERA_ANONYMOUS_USER_ID));
+        return (u != null && u.getUserLogin() != null && !u.getUserLogin().equals("__CAMERA__ANONYMOUS__"));
     }
 
     public static boolean isAdmin(HttpServletRequest request) {

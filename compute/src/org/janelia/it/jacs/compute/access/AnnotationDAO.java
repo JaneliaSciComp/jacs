@@ -36,18 +36,15 @@ public class AnnotationDAO extends ComputeBaseDAO {
             Session session = getCurrentSession();
             Criteria c = session.createCriteria(Annotation.class);
             c.add(Expression.eq("id", Long.valueOf(uniqueIdentifier)));
-            List l = c.list();
-            if (l.size()>1) {
+            Annotation tmpAnnotation = (Annotation) c.uniqueResult();
+            if (null == tmpAnnotation) {
                 // This should never happen
                 throw new DaoException("Cannot complete deletion when there are more than one annotation with that identifier.");
             }
-            if (l.size()==1) {
-                Annotation tmpAnnotation = (Annotation)l.get(0);
-                if (!tmpAnnotation.getOwner().equals(owner)) {
-                    throw new DaoException("Cannot delete the annotation as the requestor doesn't own the annotation.");
-                }
-                session.delete(l.get(0));
+            if (!tmpAnnotation.getOwner().equals(owner)) {
+                throw new DaoException("Cannot delete the annotation as the requestor doesn't own the annotation.");
             }
+            session.delete(tmpAnnotation);
             System.out.println("The annotation has been deleted.");
             return true;
         }
@@ -62,17 +59,17 @@ public class AnnotationDAO extends ComputeBaseDAO {
             Criteria c = session.createCriteria(Annotation.class);
             c.add(Expression.eq("owner", owner));
             List l = c.list();
-            if (l==null || l.size() == 0) return new ArrayList<Annotation>();
+            if (l == null || l.size() == 0) return new ArrayList<Annotation>();
             return (ArrayList<Annotation>) l;
         }
         catch (HibernateException e) {
-            throw new DaoException("Unable to get Annotations for user "+owner, e);
+            throw new DaoException("Unable to get Annotations for user " + owner, e);
         }
     }
 
-    public Annotation getAnnotationById(String owner, String uniqueIdentifier){
+    public Annotation getAnnotationById(String owner, String uniqueIdentifier) {
         Annotation tmpAnnotation = (Annotation) getCurrentSession().get(Annotation.class, uniqueIdentifier);
-        if (null!=tmpAnnotation && tmpAnnotation.getOwner().equals(owner)) {
+        if (null != tmpAnnotation && tmpAnnotation.getOwner().equals(owner)) {
             return tmpAnnotation;
         }
         return null;
@@ -86,9 +83,8 @@ public class AnnotationDAO extends ComputeBaseDAO {
         Session session = getCurrentSession();
         Criteria c = session.createCriteria(EntityData.class);
         c.add(Expression.eq("value", filePath));
-        List<EntityData> entityDataList = (List<EntityData>)c.list();
-        if (entityDataList==null || entityDataList.size()==0)
-            return new ArrayList<Entity>(); // no matches
+        List<EntityData> entityDataList = (List<EntityData>) c.list();
+        if (entityDataList == null || entityDataList.size() == 0) return new ArrayList<Entity>(); // no matches
         List<Entity> resultList = new ArrayList<Entity>();
         for (EntityData ed : entityDataList) {
             resultList.add(ed.getParentEntity());
@@ -100,9 +96,9 @@ public class AnnotationDAO extends ComputeBaseDAO {
         Session session = getCurrentSession();
         Criteria c = session.createCriteria(EntityType.class);
         c.add(Expression.eq("id", entityTypeConstant));
-        List<EntityType> entityTypes = (List<EntityType>) c.list();
-        if (entityTypes.size()==1) {
-            return entityTypes.get(0);
+        EntityType entityType = (EntityType) c.uniqueResult();
+        if (null != entityType) {
+            return entityType;
         }
         return null;
     }
@@ -111,9 +107,9 @@ public class AnnotationDAO extends ComputeBaseDAO {
         Session session = getCurrentSession();
         Criteria c = session.createCriteria(Entity.class);
         c.add(Expression.eq("id", Long.valueOf(targetId)));
-        List<Entity> entities = (List<Entity>) c.list();
-        if (entities.size()==1) {
-            return entities.get(0);
+        Entity entity = (Entity) c.uniqueResult();
+        if (null != entity) {
+            return entity;
         }
         return null;
     }
@@ -122,9 +118,9 @@ public class AnnotationDAO extends ComputeBaseDAO {
         Session session = getCurrentSession();
         Criteria c = session.createCriteria(EntityAttribute.class);
         c.add(Expression.eq("id", entityAttributeConstant));
-        List<EntityAttribute> attributes = (List<EntityAttribute>) c.list();
-        if (attributes.size()==1) {
-            return attributes.get(0);
+        EntityAttribute attribute = (EntityAttribute) c.uniqueResult();
+        if (null != attribute) {
+            return attribute;
         }
         return null;
     }
@@ -134,19 +130,16 @@ public class AnnotationDAO extends ComputeBaseDAO {
             Session session = getCurrentSession();
             Criteria c = session.createCriteria(Entity.class);
             c.add(Expression.eq("id", Long.valueOf(ontologyTermId)));
-            List l = c.list();
-            if (l.size()>1) {
+            Entity entity = (Entity) c.uniqueResult();
+            if (null == entity) {
                 // This should never happen
-                throw new DaoException("Cannot complete deletion when there are more than one entity with that identifier.");
+                throw new DaoException("Cannot complete deletion when there are no entities with that identifier.");
             }
-            if (l.size()==1) {
-                Entity tmpEntity = (Entity)l.get(0);
-                if (!tmpEntity.getUser().getUserLogin().equals(userLogin)) {
-                    throw new DaoException("Cannot delete the entity as the requestor doesn't own the item.");
-                }
-                // Child Entity items should be deleted by cascade
-                session.delete(l.get(0));
+            if (!entity.getUser().getUserLogin().equals(userLogin)) {
+                throw new DaoException("Cannot delete the entity as the requestor doesn't own the item.");
             }
+            // Child Entity items should be deleted by cascade
+            session.delete(entity);
             System.out.println("The entity has been deleted.");
             return true;
         }
@@ -160,35 +153,22 @@ public class AnnotationDAO extends ComputeBaseDAO {
             Session session = getCurrentSession();
             Criteria c = session.createCriteria(EntityAttribute.class);
             c.add(Expression.eq("name", name));
-            List l = c.list();
-            if (l==null || l.size()==0) {
-                return null; // no result
-            } else if (l.size()>1) {
-                throw new DaoException("Unexpectedly found more than one EntityAttribute with name = " + name);
-            } else {
-                EntityAttribute ea = (EntityAttribute)l.get(0);
-                return ea;
-            }
-        } catch (Exception e) {
+            // SHould be using uniqueResult
+            return (EntityAttribute) c.uniqueResult();
+        }
+        catch (Exception e) {
             throw new DaoException(e);
         }
     }
 
     public EntityType getEntityTypeByName(String name) throws DaoException {
-         try {
+        try {
             Session session = getCurrentSession();
             Criteria c = session.createCriteria(EntityType.class);
             c.add(Expression.eq("name", name));
-            List l = c.list();
-            if (l==null || l.size()==0) {
-                return null; // no result
-            } else if (l.size()>1) {
-                throw new DaoException("Unexpectedly found more than one EntityType with name = " + name);
-            } else {
-                EntityType et = (EntityType)l.get(0);
-                return et;
-            }
-        } catch (Exception e) {
+            return (EntityType) c.uniqueResult();
+        }
+        catch (Exception e) {
             throw new DaoException(e);
         }
     }
@@ -227,30 +207,22 @@ public class AnnotationDAO extends ComputeBaseDAO {
             folderAttributeNameSet.add(EntityConstants.ATTRIBUTE_ENTITY);
             createEntityType(EntityConstants.TYPE_FOLDER, folderAttributeNameSet);
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             e.printStackTrace();
             throw new DaoException(e);
         }
     }
 
     protected void createEntityStatus(String name) {
-        Session session = getCurrentSession();
-
-        Criteria c = session.createCriteria(EntityStatus.class);
-        List<EntityStatus> entityStatusList = (List<EntityStatus>)c.list();
-
-        boolean containsStatus = false;
-        for (EntityStatus es : entityStatusList) {
-            if (es.getName().equals(name)) {
-                _logger.info("Found EntityStatus name=" + name + " id="+es.getId());
-                containsStatus=true;
-            }
-
-        }
-        if (!containsStatus) {
+        try {
+            Session session = getCurrentSession();
             EntityStatus entityStatus = new EntityStatus();
             entityStatus.setName(name);
             session.save(entityStatus);
+        }
+        catch (HibernateException e) {
+            e.printStackTrace();
         }
     }
 
@@ -258,25 +230,25 @@ public class AnnotationDAO extends ComputeBaseDAO {
         Session session = getCurrentSession();
 
         Criteria c = session.createCriteria(EntityType.class);
-        List<EntityType> entityTypeList = (List<EntityType>)c.list();
-        EntityType entityType=null;
+        List<EntityType> entityTypeList = (List<EntityType>) c.list();
+        EntityType entityType = null;
 
         boolean containsType = false;
         for (EntityType et : entityTypeList) {
             if (et.getName().equals(name)) {
-                _logger.info("Found EntityType name="+name+" id="+et.getId());
+                _logger.info("Found EntityType name=" + name + " id=" + et.getId());
                 entityType = et;
-                containsType=true;
+                containsType = true;
             }
         }
         if (!containsType) {
             entityType = new EntityType();
             entityType.setName(name);
             session.saveOrUpdate(entityType);
-            _logger.info("Created EntityType name="+name+" id="+entityType.getId());
+            _logger.info("Created EntityType name=" + name + " id=" + entityType.getId());
         }
-        Set<EntityAttribute> currentAttributeSet=entityType.getAttributes();
-        if (attributeNameSet!=null) {
+        Set<EntityAttribute> currentAttributeSet = entityType.getAttributes();
+        if (attributeNameSet != null) {
             Set<EntityAttribute> attributeSet = getEntityAttributesByName(attributeNameSet);
             entityType.setAttributes(attributeSet);
         }
@@ -284,22 +256,14 @@ public class AnnotationDAO extends ComputeBaseDAO {
     }
 
     protected void createEntityAttribute(String name) {
-        Session session = getCurrentSession();
-
-        Criteria c = session.createCriteria(EntityAttribute.class);
-        List<EntityAttribute> entityAttributeList = (List<EntityAttribute>)c.list();
-
-        boolean containsAttribute = false;
-        for (EntityAttribute ea : entityAttributeList) {
-            if (ea.getName().equals(name)) {
-                _logger.info("Found EntityAttribute name="+name+" id="+ea.getId());
-                containsAttribute=true;
-            }
-        }
-        if (!containsAttribute) {
+        try {
+            Session session = getCurrentSession();
             EntityAttribute entityAttribute = new EntityAttribute();
             entityAttribute.setName(name);
             session.save(entityAttribute);
+        }
+        catch (HibernateException e) {
+            e.printStackTrace();
         }
     }
 
@@ -307,7 +271,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
         Session session = getCurrentSession();
 
         Criteria c = session.createCriteria(EntityAttribute.class);
-        List<EntityAttribute> attributeList = (List<EntityAttribute>)c.list();
+        List<EntityAttribute> attributeList = (List<EntityAttribute>) c.list();
 
         Set<EntityAttribute> resultSet = new HashSet<EntityAttribute>();
         for (EntityAttribute ea : attributeList) {
@@ -325,7 +289,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
             if (null != userLogin) {
                 hql.append("  where clazz.user.userLogin='").append(userLogin).append("'");
             }
-            hql.append(" and clazz.entityType.id="+entityTypeId);
+            hql.append(" and clazz.entityType.id=" + entityTypeId);
             if (_logger.isDebugEnabled()) _logger.debug("hql=" + hql);
             Query query = getCurrentSession().createQuery(hql.toString());
             return query.list();
@@ -344,11 +308,12 @@ public class AnnotationDAO extends ComputeBaseDAO {
             List l = c.list();
             Set<Entity> resultSet = new HashSet<Entity>();
             for (Object o : l) {
-                Entity e = (Entity)o;
+                Entity e = (Entity) o;
                 resultSet.add(e);
             }
             return resultSet;
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new DaoException(e);
         }
     }
@@ -358,23 +323,17 @@ public class AnnotationDAO extends ComputeBaseDAO {
             Session session = getCurrentSession();
             Criteria c = session.createCriteria(Entity.class);
             c.add(Expression.eq("id", entityId));
-            List<Entity> returnList = c.list();
-            if (returnList.size()==1) {
-                Entity tmpEntity = returnList.get(0);
-                if (tmpEntity.getUser().getUserLogin().equals(userLogin)) {
-                    return tmpEntity;
-                }
-                else {
-                    throw new Exception("User "+userLogin+" does not own item "+entityId);
-                }
+            Entity tmpEntity = (Entity) c.uniqueResult();
+            if (tmpEntity.getUser().getUserLogin().equals(userLogin)) {
+                return tmpEntity;
             }
-            else if (returnList.size()>1) {
-                throw new DaoException("Found more than one item which had the same entity id.");
+            else {
+                throw new Exception("User " + userLogin + " does not own item " + entityId);
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new DaoException(e);
         }
-        return null;
     }
 
     public boolean deleteEntityById(Long entityId) throws DaoException {
@@ -382,18 +341,12 @@ public class AnnotationDAO extends ComputeBaseDAO {
             Session session = getCurrentSession();
             Criteria c = session.createCriteria(Entity.class);
             c.add(Expression.eq("id", Long.valueOf(entityId)));
-            List l = c.list();
-            if (l.size()>1) {
-                // This should never happen
-                throw new DaoException("Cannot complete deletion when there are more than one entity with id="+entityId);
-            }
-            if (l.size()==1) {
-                Entity entity = (Entity)l.get(0);
-                session.delete(l.get(0));
-            }
-            System.out.println("The entity id="+entityId+" has been deleted.");
+            Entity entity = (Entity) c.uniqueResult();
+            session.delete(entity);
+            System.out.println("The entity id=" + entityId + " has been deleted.");
             return true;
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new DaoException(e);
         }
     }

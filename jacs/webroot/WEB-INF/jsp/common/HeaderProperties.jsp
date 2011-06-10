@@ -38,7 +38,7 @@
         headerValues["HomeAboutURL"]     = "<%=properties.getProperty("Header.HomeAboutURL")    %>";
         headerValues["HomeEducationURL"] = "<%=properties.getProperty("Header.HomeEducationURL")    %>";
         headerValues["HomeCommunityURL"] = "<%=properties.getProperty("Header.HomeCommunityURL")    %>";
-        headerValues["LoginURL"]    = "<%=properties.getProperty("gama.sso.loginpage")%>";
+        headerValues["LoginURL"]    = "<%=properties.getProperty("Header.LoginURL")%>";
         headerValues["LogoutURL"]   = "<%=properties.getProperty("Header.LogOutLink") %>";
         headerValues["RegisterURL"] = "<%=properties.getProperty("Header.RegisterURL")%>";
         headerValues["ContactURL"]  = "<%=properties.getProperty("Header.ContactURL") %>";

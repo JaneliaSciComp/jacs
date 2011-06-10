@@ -25,7 +25,6 @@ package org.janelia.it.jacs.web.control;
 
 import com.sun.security.auth.UserPrincipal;
 import org.janelia.it.jacs.model.user_data.User;
-import org.janelia.it.jacs.web.security.JacsOpenAccessGamaSsoFilter;
 
 import javax.servlet.http.HttpServletRequest;
 import java.security.Principal;
@@ -40,11 +39,10 @@ public class OpenAccessUserVerificationInterceptor extends UserVerificationInter
     private static final Long ANONYMOUS_USER_DB_ID = new Long(100L);
 
     protected User obtainUser(String userLoginId, String userName) throws Exception {
-        if (JacsOpenAccessGamaSsoFilter.CAMERA_ANONYMOUS_USER_ID.equals(userLoginId)) {
+        if ("__CAMERA__ANONYMOUS__".equals(userLoginId)) {
             return super.obtainUser(userLoginId, "Public Access User", ANONYMOUS_USER_DB_ID);
 //            User u = new User();
 //            u.setUserId(ANONYMOUS_USER_DB_ID);
-//            u.setUserLogin(JacsOpenAccessGamaSsoFilter.CAMERA_ANONYMOUS_USER_ID);
 //            return u;
         }
         else
@@ -61,7 +59,7 @@ public class OpenAccessUserVerificationInterceptor extends UserVerificationInter
         }
         if (p == null) {
             // generate one out of thin air to allow anonymous access
-            p = new UserPrincipal(JacsOpenAccessGamaSsoFilter.CAMERA_ANONYMOUS_USER_ID);
+            p = new UserPrincipal("__CAMERA__ANONYMOUS__");
         }
 
         return p;

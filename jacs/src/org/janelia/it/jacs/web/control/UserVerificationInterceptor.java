@@ -28,7 +28,6 @@ import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.server.access.UserDAO;
 import org.janelia.it.jacs.server.access.hibernate.DaoException;
-import org.janelia.it.jacs.web.security.JacsOpenAccessGamaSsoFilter;
 import org.janelia.it.jacs.web.security.JacsSecurityUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
@@ -83,9 +82,9 @@ public class UserVerificationInterceptor extends HandlerInterceptorAdapter {
                  *  only in the first case we will keep user session intact.
                  */
 
-                if (!sessionUser.getUserLogin().equals(JacsOpenAccessGamaSsoFilter.CAMERA_ANONYMOUS_USER_ID)) {
+                if (!sessionUser.getUserLogin().equals("__CAMERA__ANONYMOUS__")) {
                     // authentication takes precedence - must reload user
-                    logger.error("Caught mismatch between GAMA principal (" + userLogin + ") and session user (" + sessionUser.getUserLogin() + ")");
+                    logger.error("Caught mismatch between principal (" + userLogin + ") and session user (" + sessionUser.getUserLogin() + ")");
                     // invalidate session, and send user to home page
                     httpServletRequest.getSession().invalidate();
                     sessionUser = null;
