@@ -794,7 +794,7 @@
         <echo message="Overlay properties file: ${deployment-specific.properties.file.name}" />
         <antcall target="deploy-tomcat-app">
             <param name="deployment-specific.properties.file" value="${deployment-specific.properties.file.name}"/>
-            <param name="server.username" value="saffordt" />
+            <param name="server.username" value="${user.server.login}" />
             <param name="server.address" value="${server.address}" />
             <param name="tomcat.home" value="/groups/scicomp/jacsData/servers/${server.address}/apache-tomcat-7.0.5" />
         </antcall>

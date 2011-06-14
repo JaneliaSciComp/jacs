@@ -354,7 +354,7 @@
         <antcall target="deploy-jboss-app">
             <param name="deployment-specific.properties.dir" value="${jacs.properties.dir}"/>
             <param name="deployment-specific.properties.file" value="${deployment-specific.properties.file.name}"/>
-            <param name="server.username" value="saffordt" />
+            <param name="server.username" value="${user.server.login}" />
             <param name="jboss.home" value="/groups/scicomp/jacsData/servers/${server.address}/jboss-4.2.3.GA" />
         </antcall>
     </target>
