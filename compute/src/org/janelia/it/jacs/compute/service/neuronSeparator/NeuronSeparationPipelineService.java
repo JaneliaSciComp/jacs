@@ -81,8 +81,12 @@ public class NeuronSeparationPipelineService implements IService {
             // Run the Consolidator Tool...
             ColorSeparatorResultNode colorNode = (ColorSeparatorResultNode) EJBFactory.getRemoteComputeBean().getResultNodeByTaskId(colorSepTask.getObjectId());
             // todo this should be a separate process running on the grid
-            String cmdLine = "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64:/groups/scicomp/jacsData/servers/saffordt-ws1/executables/v3d/v3d_main/common_lib/lib/;"+SystemConfigurationProperties.getString("Executables.ModuleBase")+"/v3d/v3d/v3d -cmd consolidate-color-separator-output "
-                    +colorNode.getDirectoryPath()+" "+parentNode.getDirectoryPath()+File.separator+"final.mask";
+            String cmdLine =
+                    "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64:/groups/scicomp/jacsData/servers/saffordt-ws1/executables/v3d/v3d_main/common_lib/lib/;"+
+                            SystemConfigurationProperties.getString("Executables.ModuleBase")+
+                            "/v3d/v3d/v3d -cmd consolidate-color-separator-output -i "+
+                            colorNode.getDirectoryPath()+" -o "+
+                            parentNode.getDirectoryPath()+File.separator+"final.mask";
             SystemCall call = new SystemCall(logger);
             int exitCode = call.emulateCommandLine(cmdLine, true);
             if (0!=exitCode) {
