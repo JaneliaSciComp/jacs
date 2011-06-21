@@ -266,14 +266,14 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
     }
 
     protected void launchColorSeparationPipeline(LsmPair lsmPair) throws Exception {
-
-        Entity lsmStack = lsmPair.lsmEntity1; // placeholder
         if (!neuronSeparatorTestFlag) {
-            String lsmFilePath=lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+            String lsm1FilePath=lsmPair.lsmEntity1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+            String lsm2FilePath=lsmPair.lsmEntity2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
             NeuronSeparatorTask neuTask = new NeuronSeparatorTask(
                     new HashSet<Node>(), user.getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>());
-            neuTask.setJobName("Neuron Separator for MultiColorFlipOutFileDiscovery input="+lsmFilePath);
-            neuTask.setParameter(NeuronSeparatorTask.PARAM_inputTifFilePath, lsmFilePath);
+            String lsmFilePaths=lsm1FilePath+" , "+lsm2FilePath;
+            neuTask.setJobName("Neuron Separator for MultiColorFlipOutFileDiscovery lsm file paths="+lsmFilePaths);
+            neuTask.setParameter(NeuronSeparatorTask.PARAM_inputLsmFilePathList, lsmFilePaths);
             neuTask = (NeuronSeparatorTask)EJBFactory.getLocalComputeBean().saveOrUpdateTask(neuTask);
             EJBFactory.getRemoteComputeBean().submitJob("NeuronSeparation", neuTask.getObjectId());
             Thread.sleep(2000);

@@ -41,7 +41,7 @@ public class NeuronSeparationPipelineService implements IService {
             neuSepTask.setOwner(task.getOwner());
             neuSepTask.setParentTaskId(task.getObjectId());
             neuSepTask.setJobName("Neuron Separation");
-            neuSepTask.setParameter(NeuronSeparatorTask.PARAM_inputFilePath, task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputFilePath));
+            neuSepTask.setParameter(NeuronSeparatorTask.PARAM_inputTifFilePath, task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputFilePath));
             EJBFactory.getRemoteComputeBean().addEventToTask(task.getObjectId(), new Event("Running Neuron Separation Step", new Date(), "Neuron Separation"));
             neuSepTask = (NeuronSeparatorTask) EJBFactory.getRemoteComputeBean().saveOrUpdateTask(neuSepTask);
             SubmitJobAndWaitHelper jobHelper = new SubmitJobAndWaitHelper("NeuronSeparation", neuSepTask.getObjectId());
