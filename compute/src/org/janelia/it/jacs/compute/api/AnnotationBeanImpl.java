@@ -221,5 +221,13 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         return false;
     }
 
+    public Set<Entity> getParentEntities(long entityId) {
+        try {
+            return _annotationDAO.getParentEntities(entityId);
+        } catch (DaoException e) {
+            _logger.error("Error trying to get parent entities for id="+entityId+" message: "+e.getMessage());
+        }
+        return null;
+    }
 
 }

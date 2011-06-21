@@ -225,9 +225,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         if (lsmStacks.size()==0) {
             lsmStack = createLsmStackFromFile(file);
             folder.addChildEntity(lsmStack);
-            logger.info("Launching color-separation pipeline on new lsmStack for MultiColorFlipOutFileDiscoveryService");
-            launchColorSeparationPipeline(lsmStack);
-        } else if (lsmStacks.size()==1) {
+         } else if (lsmStacks.size()==1) {
             logger.info("Found lsm stack = " + lsmStacks.get(0).getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
             lsmStack = lsmStacks.get(0);
             // Make sure the folder already contains it
@@ -267,7 +265,9 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         return lsmStack;
     }
 
-    protected void launchColorSeparationPipeline(Entity lsmStack) throws Exception {
+    protected void launchColorSeparationPipeline(LsmPair lsmPair) throws Exception {
+
+        Entity lsmStack = lsmPair.lsmEntity1; // placeholder
         if (!neuronSeparatorTestFlag) {
             String lsmFilePath=lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
             NeuronSeparatorTask neuTask = new NeuronSeparatorTask(
@@ -323,12 +323,31 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         // We will consider each pair, and if the lsm members of the pair do not have a parent which
         // is a SingleNeuronSeparatorPipeline entity, the pair will be submitted for processing with
         // this pipeline.
-
-
-
-
-
-        annotationBean.saveOrUpdateEntity(folder);
+        for (LsmPair lsmPair : lsmPairs) {
+            Set<Entity> lsm1Parents=annotationBean.getParentEntities(lsmPair.lsmEntity1.getId());
+            Set<Entity> lsm2Parents=annotationBean.getParentEntities(lsmPair.lsmEntity2.getId());
+            long lsm1ResultId=0;
+            long lsm2ResultId=0;
+            for (Entity e : lsm1Parents) {
+                if (e.getEntityType().getName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
+                    lsm1ResultId=e.getId();
+                    break;
+                }
+            }
+            for (Entity e : lsm2Parents) {
+                if (e.getEntityType().getName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
+                    lsm2ResultId=e.getId();
+                    break;
+                }
+            }
+            if (lsm1ResultId!=0 && (lsm1ResultId==lsm2ResultId)) {
+                // We already have a result
+                logger.info("Found prior result, skipping lsm pair { " +lsmPair.lsmEntity1.getId()+" ,"+lsmPair.lsmEntity2.getId() + "} " +
+                    " prior result id="+lsm1ResultId);
+            } else {
+                launchColorSeparationPipeline(lsmPair);
+            }
+        }
     }
 
     private Set<LsmPair> findLsmPairs(List<Entity> lsmStackList) throws Exception {

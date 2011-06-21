@@ -18,6 +18,7 @@ public interface AnnotationBeanLocal {
     public Set<Entity> getEntitiesByName(String name);
     public Entity getUserEntityById(String userLogin, long entityId);
     public boolean deleteEntityById(Long entityId);
+    public Set<Entity> getParentEntities(long entityId);
 
 
     public String addAnnotation(String owner, String namespace, String term, String value, String comment, String conditional);

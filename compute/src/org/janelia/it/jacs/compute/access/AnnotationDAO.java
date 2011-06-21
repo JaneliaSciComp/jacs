@@ -207,6 +207,11 @@ public class AnnotationDAO extends ComputeBaseDAO {
             folderAttributeNameSet.add(EntityConstants.ATTRIBUTE_ENTITY);
             createEntityType(EntityConstants.TYPE_FOLDER, folderAttributeNameSet);
 
+            Set<String> neuronSeparationAttributeNameSet = new HashSet<String>();
+            neuronSeparationAttributeNameSet.add(EntityConstants.ATTRIBUTE_FILE_PATH);
+            neuronSeparationAttributeNameSet.add(EntityConstants.ATTRIBUTE_INPUT);
+            createEntityType(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, neuronSeparationAttributeNameSet);
+
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -347,6 +352,22 @@ public class AnnotationDAO extends ComputeBaseDAO {
             return true;
         }
         catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+
+    public Set<Entity> getParentEntities(long entityId) throws DaoException {
+        try {
+            Session session = getCurrentSession();
+            StringBuffer hql = new StringBuffer("select clazz from EntityData clazz where clazz.childEntity.id='").append(entityId).append("'");
+            Query query = session.createQuery(hql.toString());
+            List<EntityData> edList = (List<EntityData>)query.list();
+            Set<Entity> eSet=new HashSet<Entity>();
+            for (EntityData ed : edList) {
+                eSet.add(ed.getParentEntity());
+            }
+            return eSet;
+        } catch (Exception e) {
             throw new DaoException(e);
         }
     }

@@ -25,6 +25,7 @@ public class EntityConstants {
     public static final String TYPE_ONTOLOGY_ROOT = "TYPE_ONTOLOGY_ROOT";
     public static final String TYPE_ONTOLOGY_ELEMENT = "TYPE_ONTOLOGY_ELEMENT";
     public static final String TYPE_FOLDER = "TYPE_FOLDER";
+    public static final String TYPE_NEURON_SEPARATOR_PIPELINE_RESULT = "TYPE_NEURON_SEPARATOR_PIPELINE_RESULT";
 
     public static final long TYPE_ONTOLOGY_ROOT_ID = 1616533546980081843L;
     //public static final long TYPE_ONTOLOGY_ROOT_ID = 1;
@@ -37,6 +38,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ONTOLOGY_ELEMENT = "ATTRIBUTE_ONTOLOGY_ELEMENT";
     public static final String ATTRIBUTE_COMMON_ROOT = "ATTRIBUTE_COMMON_ROOT"; // Will cause folder to appear at top of Common tree pane
     public static final String ATTRIBUTE_ENTITY = "ATTRIBUTE_ENTITY"; // A generic attribute so that a folder can contain any entity
+    public static final String ATTRIBUTE_INPUT = "ATTRIBUTE_INPUT";
 
     public static final long ATTRIBUTE_ONTOLOGY_ELEMENT_ID = 1616533546833281203L;
     //public static final long ATTRIBUTE_ONTOLOGY_ELEMENT_ID = 1;
