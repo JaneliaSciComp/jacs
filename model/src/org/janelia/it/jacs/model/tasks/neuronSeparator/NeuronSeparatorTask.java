@@ -46,7 +46,8 @@ public class NeuronSeparatorTask extends Task {
     // Sample input file
 
     // Parameter Keys
-    transient public static final String PARAM_inputFilePath = "input file path";
+    transient public static final String PARAM_inputTifFilePath = "input tif file path";
+    transient public static final String PARAM_inputLsmFilePathList = "input lsm file path list";
 
     // Default values - default overrides
 
@@ -60,7 +61,8 @@ public class NeuronSeparatorTask extends Task {
     }
 
     private void setDefaultValues() {
-        setParameter(PARAM_inputFilePath, "");
+        setParameter(PARAM_inputTifFilePath, "");
+        setParameter(PARAM_inputLsmFilePathList, "");
         this.taskName = TASK_NAME;
     }
 
@@ -70,8 +72,11 @@ public class NeuronSeparatorTask extends Task {
         String value = getParameter(key);
         if (value == null)
             return null;
-        if (key.equals(PARAM_inputFilePath)) {
+        if (key.equals(PARAM_inputTifFilePath)) {
             return new TextParameterVO(value, 400);
+        }
+        if (key.equals(PARAM_inputLsmFilePathList)) {
+            return new TextParameterVO(value, 1000);
         }
         // No match
         return null;

@@ -273,7 +273,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             NeuronSeparatorTask neuTask = new NeuronSeparatorTask(
                     new HashSet<Node>(), user.getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>());
             neuTask.setJobName("Neuron Separator for MultiColorFlipOutFileDiscovery input="+lsmFilePath);
-            neuTask.setParameter(NeuronSeparatorTask.PARAM_inputFilePath, lsmFilePath);
+            neuTask.setParameter(NeuronSeparatorTask.PARAM_inputTifFilePath, lsmFilePath);
             neuTask = (NeuronSeparatorTask)EJBFactory.getLocalComputeBean().saveOrUpdateTask(neuTask);
             EJBFactory.getRemoteComputeBean().submitJob("NeuronSeparation", neuTask.getObjectId());
             Thread.sleep(2000);
