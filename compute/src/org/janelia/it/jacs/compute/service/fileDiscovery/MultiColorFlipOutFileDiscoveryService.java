@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
 import org.apache.xerces.impl.dv.dtd.ENTITYDatatypeValidator;
+import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -8,11 +9,19 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.entity.*;
+import org.janelia.it.jacs.model.tasks.Event;
+import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.fileDiscovery.MultiColorFlipOutFileDiscoveryTask;
+import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
+import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorTask;
+import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
+import org.janelia.it.jacs.model.user_data.neuronSeparator.NeuronSeparatorResultNode;
 
 import java.io.File;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,6 +43,13 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
     String topLevelFolderName;
     Entity topLevelFolder;
     User user;
+    boolean neuronSeparatorTestFlag=false;
+
+    public class LsmPair {
+        public LsmPair() {}
+        public Entity lsmEntity1;
+        public Entity lsmEntity2;
+    }
 
     public void execute(IProcessData processData) {
         try {
@@ -66,7 +82,9 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
                 logger.info(" MultiColorFlipOutFileDiscoveryService including directory = "+directoryPath);
             }
             createOrVerifyRootEntity();
-            processDirectories();
+            processDirectoriesForLsm();
+            annotationBean.saveOrUpdateEntity(topLevelFolder);
+            processFolderForSingleNeuronStackSets(topLevelFolder);
             annotationBean.saveOrUpdateEntity(topLevelFolder);
         } catch (Exception e) {
             e.printStackTrace();
@@ -104,7 +122,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         logger.info("Using topLevelFolder id="+topLevelFolder.getId());
     }
 
-    protected void processDirectories() throws Exception {
+    protected void processDirectoriesForLsm() throws Exception {
         for (String directoryPath : directoryPathList) {
             logger.info("Processing dir="+directoryPath);
             File dir = new File(directoryPath);
@@ -115,7 +133,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
                 logger.error(("File " + dir.getAbsolutePath()+ " is not a directory - skipping"));
             } else {
                 Entity folder = verifyOrCreateChildFolderFromDir(topLevelFolder, dir);
-                processFolder(folder);
+                processFolderForLsm(folder);
                 annotationBean.saveOrUpdateEntity(folder);
             }
         }
@@ -176,14 +194,14 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         return folder;
     }
 
-    protected void processFolder(Entity folder) throws Exception {
+    protected void processFolderForLsm(Entity folder) throws Exception {
         File dir=new File(folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         logger.info("Processing folder="+dir.getAbsolutePath()+" id="+folder.getId());
         File[] dirContents = dir.listFiles();
         for (File file : dirContents) {
             if (file.isDirectory()) {
                 Entity subfolder=verifyOrCreateChildFolderFromDir(folder, file);
-                processFolder(subfolder);
+                processFolderForLsm(subfolder);
                 annotationBean.saveOrUpdateEntity(subfolder);
             } else {
                 logger.info("Found file = " + file.getAbsolutePath());
@@ -207,6 +225,8 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         if (lsmStacks.size()==0) {
             lsmStack = createLsmStackFromFile(file);
             folder.addChildEntity(lsmStack);
+            logger.info("Launching color-separation pipeline on new lsmStack for MultiColorFlipOutFileDiscoveryService");
+            launchColorSeparationPipeline(lsmStack);
         } else if (lsmStacks.size()==1) {
             logger.info("Found lsm stack = " + lsmStacks.get(0).getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
             lsmStack = lsmStacks.get(0);
@@ -245,6 +265,121 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         lsmStack = annotationBean.saveOrUpdateEntity(lsmStack);
         logger.info("Created lsm stack = " +lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         return lsmStack;
+    }
+
+    protected void launchColorSeparationPipeline(Entity lsmStack) throws Exception {
+        if (!neuronSeparatorTestFlag) {
+            String lsmFilePath=lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+            NeuronSeparatorTask neuTask = new NeuronSeparatorTask(
+                    new HashSet<Node>(), user.getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>());
+            neuTask.setJobName("Neuron Separator for MultiColorFlipOutFileDiscovery input="+lsmFilePath);
+            neuTask.setParameter(NeuronSeparatorTask.PARAM_inputFilePath, lsmFilePath);
+            neuTask = (NeuronSeparatorTask)EJBFactory.getLocalComputeBean().saveOrUpdateTask(neuTask);
+            EJBFactory.getRemoteComputeBean().submitJob("NeuronSeparation", neuTask.getObjectId());
+            Thread.sleep(2000);
+            NeuronSeparatorResultNode resultNode = (NeuronSeparatorResultNode)EJBFactory.getRemoteComputeBean().getResultNodeByTaskId(neuTask.getObjectId());
+            logger.info("MultiColorFlipOutFileDiscoveryService assuming NeuronSeparator output node path="+resultNode.getDirectoryPath());
+            neuronSeparatorTestFlag=true;
+        }
+    }
+
+    protected void processFolderForSingleNeuronStackSets(Entity folder) throws Exception {
+        //
+        // In this method, we will start in the top-level folder, and recursively search each subfolder.
+        // Within a given folder, we will find the set of lsm files (if any).
+        // For each lsm file, we will try to find a filename-based unique match, indicating they may
+        // be pairs of a single imaging run.
+        // If a unique match is not found, then the files are not included in a set.
+        // Each matched pair of files will be considered a candidate set. A search will be done to
+        // see if the members are part of an already-existing set.
+        // If the pair is not already part of a set, then:
+        //   (1) a new SingleNeuronStackSet will be created
+        //   (2) the v3d cmd tool will be used to generate a combined signal tif file
+        //   (3) the signal tif file will be used as input to the SingleNeuronSeparatorPipeline for processing
+
+        // Check that this entity is a folder
+        if (!folder.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+            throw new Exception("Expected folder entity type but received type="+folder.getEntityType().getName());
+        }
+
+        // Scan through children:
+        //   * For child folders, recursively call this function
+        //   * For lsm files, add to list for analysis
+        List<Entity> lsmStackList=new ArrayList<Entity>();
+        for (EntityData ed : folder.getEntityData()) {
+            Entity child=ed.getChildEntity();
+            if (child!=null) {
+                if (child.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK)) {
+                    lsmStackList.add(child);
+                } else if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)){
+                    processFolderForSingleNeuronStackSets(child);
+                }
+            }
+        }
+
+        // At this point we have a collection of lsm files in this folder - we will analyze for pairs
+        Set<LsmPair> lsmPairs = findLsmPairs(lsmStackList);
+
+        // We will consider each pair, and if the lsm members of the pair do not have a parent which
+        // is a SingleNeuronSeparatorPipeline entity, the pair will be submitted for processing with
+        // this pipeline.
+
+
+
+
+
+        annotationBean.saveOrUpdateEntity(folder);
+    }
+
+    private Set<LsmPair> findLsmPairs(List<Entity> lsmStackList) throws Exception {
+        Set<LsmPair> pairSet=new HashSet<LsmPair>();
+        Pattern lsmPattern=Pattern.compile("(\\S+)\\_L(\\d+)(.*\\.lsm)");
+        Set<Entity> alreadyPaired=new HashSet<Entity>();
+        for (Entity lsm1 : lsmStackList) {
+            if (!alreadyPaired.contains(lsm1)) {
+                String lsm1Filename=lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                if (lsm1Filename==null || lsm1Filename.length()==0) {
+                    throw new Exception("lsm id="+lsm1.getId()+" unexpectedly does not have an ATTRIBUTE_FILE_PATH");
+                }
+                Matcher lsm1Matcher=lsmPattern.matcher(lsm1Filename);
+                if (lsm1Matcher.matches() && lsm1Matcher.groupCount()==3) {
+                    String lsm1Prefix=lsm1Matcher.group(1);
+                    String lsm1Index=lsm1Matcher.group(2);
+                    String lsm1Suffix=lsm1Matcher.group(3);
+                    Set<Entity> possibleMatches=new HashSet<Entity>();
+                    for (Entity lsm2 : lsmStackList) {
+                        if (!alreadyPaired.contains(lsm2)) {
+                            String lsm2Filename=lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                            if (lsm2Filename==null || lsm2Filename.length()==0) {
+                                throw new Exception("lsm id="+lsm2.getId()+" unexpectedly does not have an ATTRIBUTE_FILE_PATH");
+                            }
+                            if (!lsm1Filename.equals(lsm2Filename)) {
+                                // Obviously we do not want to pair something to itself
+                                Matcher lsm2Matcher=lsmPattern.matcher(lsm2Filename);
+                                if (lsm2Matcher.matches() && lsm2Matcher.groupCount()==3) {
+                                    String lsm2Prefix=lsm2Matcher.group(1);
+                                    String lsm2Index=lsm2Matcher.group(2);
+                                    String lsm2Suffix=lsm2Matcher.group(3);
+                                    if (lsm1Prefix.equals(lsm2Prefix) && lsm1Suffix.equals(lsm2Suffix)) {
+                                        possibleMatches.add(lsm2);
+                                    }
+                                }
+                            }
+                        }
+                        if (possibleMatches.size()==1) {
+                            // We have a unique match
+                            alreadyPaired.add(lsm1);
+                            alreadyPaired.add(lsm2);
+                            LsmPair pair=new LsmPair();
+                            pair.lsmEntity1=lsm1;
+                            pair.lsmEntity2=lsm2;
+                            pairSet.add(pair);
+                        }
+                    }
+                }
+            }
+        }
+        return pairSet;
     }
 
 }

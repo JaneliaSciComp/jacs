@@ -81,8 +81,8 @@ public class NeuronSeparatorSubmitJobService extends SubmitDrmaaJobService {
             throws IOException, ParameterException, MissingDataException, InterruptedException, ServiceException {
         String basePath = SystemConfigurationProperties.getString("Executables.ModuleBase");
 
-        String pipelineCmd = basePath + SystemConfigurationProperties.getString("NeuSep.PipelineCmd")+" "+
-                task.getParameter(NeuronSeparatorTask.PARAM_inputFilePath)+" "+resultFileNode.getDirectoryPath()+
+        String pipelineCmd = basePath + SystemConfigurationProperties.getString("NeuSep.PipelineCmd")+" \""+
+                task.getParameter(NeuronSeparatorTask.PARAM_inputFilePath)+"\" "+resultFileNode.getDirectoryPath()+
                 File.separator;
 //        SystemConfigurationProperties properties = SystemConfigurationProperties.getInstance();
 //        String tmpDirectoryName = properties.getProperty("Upload.ScratchDir");
