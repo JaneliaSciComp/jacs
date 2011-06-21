@@ -82,7 +82,7 @@ public class NeuronSeparatorSubmitJobService extends SubmitDrmaaJobService {
         String basePath = SystemConfigurationProperties.getString("Executables.ModuleBase");
 
         String pipelineCmd = basePath + SystemConfigurationProperties.getString("NeuSep.PipelineCmd")+" \""+
-                task.getParameter(NeuronSeparatorTask.PARAM_inputFilePath)+"\" "+resultFileNode.getDirectoryPath()+
+                task.getParameter(NeuronSeparatorTask.PARAM_inputTifFilePath)+"\" "+resultFileNode.getDirectoryPath()+
                 File.separator;
 //        SystemConfigurationProperties properties = SystemConfigurationProperties.getInstance();
 //        String tmpDirectoryName = properties.getProperty("Upload.ScratchDir");
