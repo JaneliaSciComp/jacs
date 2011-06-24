@@ -20,6 +20,9 @@ public interface AnnotationBeanRemote {
     public boolean deleteEntityById(Long entityId);
     public Set<Entity> getParentEntities(long entityId);
 
+    public List<EntityType> getEntityTypes();
+    public List<Entity> getEntitiesByType(long entityTypeId);
+    
     public String addAnnotation(String owner, String namespace, String term, String value, String comment, String conditional);
     public void deleteAnnotation(String owner, String uniqueIdentifier);
     public ArrayList<Annotation> getAnnotationsForUser(String owner);
@@ -27,7 +30,7 @@ public interface AnnotationBeanRemote {
                                String comment, String conditional);
     public List<Entity> getEntitiesWithFilePath(String filePath);
 
-    public void createOntologyTerm(String userLogin, String ontologyTermParentId, String termName);
+    public Entity createOntologyTerm(String userLogin, String ontologyTermParentId, String termName);
     public Entity createOntologyRoot(String userLogin, String rootName);
     public boolean removeOntologyTerm(String userLogin, String ontologyTermId);
 

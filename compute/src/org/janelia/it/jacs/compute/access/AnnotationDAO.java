@@ -288,13 +288,27 @@ public class AnnotationDAO extends ComputeBaseDAO {
     }
 
 
+    public List<EntityType> getAllEntityTypes() throws DaoException {
+        try {
+            StringBuffer hql = new StringBuffer("select clazz from EntityType clazz");
+            if (_logger.isDebugEnabled()) _logger.debug("hql=" + hql);
+            Query query = getCurrentSession().createQuery(hql.toString());
+            return query.list();
+        }
+        catch (Exception e) {
+            // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
+            throw handleException(e, "getAllEntityTypes");
+        }
+    }
+
+
     public List<Entity> getUserEntitiesByName(String userLogin, long entityTypeId) throws DaoException {
         try {
             StringBuffer hql = new StringBuffer("select clazz from Entity clazz");
+            hql.append(" where clazz.entityType.id=" + entityTypeId);
             if (null != userLogin) {
-                hql.append("  where clazz.user.userLogin='").append(userLogin).append("'");
+                hql.append(" and clazz.user.userLogin='").append(userLogin).append("'");
             }
-            hql.append(" and clazz.entityType.id=" + entityTypeId);
             if (_logger.isDebugEnabled()) _logger.debug("hql=" + hql);
             Query query = getCurrentSession().createQuery(hql.toString());
             return query.list();

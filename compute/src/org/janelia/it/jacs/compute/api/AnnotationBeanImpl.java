@@ -117,7 +117,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         return null;
     }
 
-    public void createOntologyTerm(String userLogin, String ontologyTermParentId, String termName) {
+    public Entity createOntologyTerm(String userLogin, String ontologyTermParentId, String termName) {
         try {
             User tmpUser = _computeDAO.getUserByName(userLogin);
             EntityType tmpElementType = _annotationDAO.getEntityType(EntityConstants.TYPE_ONTOLOGY_ELEMENT_ID);
@@ -130,10 +130,12 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             EntityData newData = new EntityData(null, ontologyElementAttribute, parentOntologyElement, newOntologyElement,
                     tmpUser,  null, new Date(), new Date(), null);
             _annotationDAO.saveOrUpdate(newData);
+            return newOntologyElement;
         }
         catch (Exception e) {
             _logger.error("Error trying to create a new Ontology Term ("+termName+") for user "+userLogin,e);
         }
+        return null;
     }
 
     public boolean removeOntologyTerm(String userLogin, String ontologyTermId) {
@@ -191,6 +193,30 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
         catch (DaoException e) {
             _logger.error("Error trying to get the entities of type "+entityTypeId+" for user "+userLogin);
+        }
+        return null;
+    }
+
+    public List<EntityType> getEntityTypes() {
+        try {
+            List<EntityType> returnList = _annotationDAO.getAllEntityTypes();
+            System.out.println("Entity types returned:"+returnList.size());
+            return returnList;
+        }
+        catch (DaoException e) {
+            _logger.error("Error trying to get the entity types");
+        }
+        return null;
+    }
+
+    public List<Entity> getEntitiesByType(long entityTypeId) {
+        try {
+            List<Entity> returnList = _annotationDAO.getUserEntitiesByName(null, entityTypeId);
+            System.out.println("Entities returned:"+returnList.size());
+            return returnList;
+        }
+        catch (DaoException e) {
+            _logger.error("Error trying to get the entities of type "+entityTypeId);
         }
         return null;
     }
