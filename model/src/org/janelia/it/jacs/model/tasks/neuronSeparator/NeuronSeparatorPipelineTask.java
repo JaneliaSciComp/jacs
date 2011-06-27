@@ -45,8 +45,8 @@ public class NeuronSeparatorPipelineTask extends Task {
     transient public static final String DISPLAY_NAME = "Neuron Separation Pipeline";
     // Sample input file
 
-    // Parameter Keys - SUbset of the params needed by the child tasks of this pipeline
-    transient public static final String PARAM_inputFilePath = "input file path";
+    // Parameter Keys - Subset of the params needed by the child tasks of this pipeline
+    transient public static final String PARAM_inputLsmFilePathList = "input lsm file path list";
 
     // Default values - default overrides
 
@@ -60,7 +60,7 @@ public class NeuronSeparatorPipelineTask extends Task {
     }
 
     private void setDefaultValues() {
-        setParameter(PARAM_inputFilePath, "");
+        setParameter(PARAM_inputLsmFilePathList, "");
         this.taskName = TASK_NAME;
     }
 
@@ -70,8 +70,8 @@ public class NeuronSeparatorPipelineTask extends Task {
         String value = getParameter(key);
         if (value == null)
             return null;
-        if (key.equals(PARAM_inputFilePath)) {
-            return new TextParameterVO(value, 400);
+        if (key.equals(PARAM_inputLsmFilePathList)) {
+            return new TextParameterVO(value,1000);
         }
         // No match
         return null;
