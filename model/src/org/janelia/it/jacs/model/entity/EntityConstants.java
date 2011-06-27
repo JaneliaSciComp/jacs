@@ -5,7 +5,6 @@ package org.janelia.it.jacs.model.entity;
  * User: murphys
  * Date: 6/1/11
  * Time: 9:58 AM
- * To change this template use File | Settings | File Templates.
  */
 public class EntityConstants {
 
@@ -18,28 +17,36 @@ public class EntityConstants {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Entity Status
-    public static final String STATUS_DEPRECATED = "STATUS_DEPRECATED";
+    public static final String STATUS_DEPRECATED = "Deprecated";
+    public static final String STATUS_VALID      = "Valid";
 
     // Entity Types
-    public static final String TYPE_LSM_STACK = "TYPE_LSM_STACK";
-    public static final String TYPE_ONTOLOGY_ROOT = "TYPE_ONTOLOGY_ROOT";
-    public static final String TYPE_ONTOLOGY_ELEMENT = "TYPE_ONTOLOGY_ELEMENT";
-    public static final String TYPE_FOLDER = "TYPE_FOLDER";
+    public static final String TYPE_ANNOTATION          = "Annotation";
+    public static final String TYPE_LSM_STACK           = "LSM Stack";
+    public static final String TYPE_ONTOLOGY_ROOT       = "Ontology Root";
+    public static final String TYPE_ONTOLOGY_ELEMENT    = "Ontology Element";
+    public static final String TYPE_FOLDER              = "Folder";
     public static final String TYPE_NEURON_SEPARATOR_PIPELINE_RESULT = "TYPE_NEURON_SEPARATOR_PIPELINE_RESULT";
 
     public static final long TYPE_ONTOLOGY_ROOT_ID = 1616533546980081843L;
-    //public static final long TYPE_ONTOLOGY_ROOT_ID = 1;
-
     public static final long TYPE_ONTOLOGY_ELEMENT_ID = 1616533546954916019L;
-    //public static final long TYPE_ONTOLOGY_ELEMENT_ID = 2;
 
     // Entity Data Attributes
-    public static final String ATTRIBUTE_FILE_PATH = "ATTRIBUTE_FILE_PATH";
-    public static final String ATTRIBUTE_ONTOLOGY_ELEMENT = "ATTRIBUTE_ONTOLOGY_ELEMENT";
-    public static final String ATTRIBUTE_COMMON_ROOT = "ATTRIBUTE_COMMON_ROOT"; // Will cause folder to appear at top of Common tree pane
-    public static final String ATTRIBUTE_ENTITY = "ATTRIBUTE_ENTITY"; // A generic attribute so that a folder can contain any entity
+    public static final String ATTRIBUTE_FILE_PATH          = "File Path";
+    public static final String ATTRIBUTE_ONTOLOGY_ELEMENT   = "Ontology Element";
+    public static final String ATTRIBUTE_COMMON_ROOT        = "Common Root"; // Will cause folder to appear at top of Common tree pane
+    public static final String ATTRIBUTE_ENTITY             = "Entity"; // A generic attribute so that a folder can contain any entity
+    public static final String ATTRIBUTE_ONTOLOGY_TERM_TYPE = "Ontology Term Type";
+
+    // Store the value of an ontology entity as an entity data item for an annotation entity
+    public static final String ATTRIBUTE_ONTOLOGY_TERM      = "Ontology Term";
+    public static final String ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID  = "Annotation Ontology Key Entity Id";
+    public static final String ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_ENTITY_ID= "Annotation Ontology Value Entity Id";
+    public static final String ATTRIBUTE_ANNOTATION_ONTOLOGY_ROOT_ID        = "Annotation Ontology Root Id";
+    public static final String ATTRIBUTE_ANNOTATION_SESSION_ID              = "Annotation Session Id";
     public static final String ATTRIBUTE_INPUT = "ATTRIBUTE_INPUT";
 
     public static final long ATTRIBUTE_ONTOLOGY_ELEMENT_ID = 1616533546833281203L;
     //public static final long ATTRIBUTE_ONTOLOGY_ELEMENT_ID = 1;
+
 }
