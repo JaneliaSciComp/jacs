@@ -1,6 +1,8 @@
 package org.janelia.it.jacs.compute.service.neuronSeparator;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
+import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
@@ -8,10 +10,15 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.SubmitJobAndWaitHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.colorSeparator.ColorSeparatorTask;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorTask;
+import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.colorSeparator.ColorSeparatorResultNode;
 import org.janelia.it.jacs.model.user_data.neuronSeparator.NeuronSeparatorResultNode;
 import org.janelia.it.jacs.shared.utils.SystemCall;
@@ -27,14 +34,25 @@ import java.util.Date;
  * Time: 11:44:08 PM
  */
 public class NeuronSeparationPipelineService implements IService {
+    Logger logger;
     private NeuronSeparatorPipelineTask task;
+    NeuronSeparatorResultNode parentNode;
+    AnnotationBeanRemote annotationBean;
+    ComputeBeanRemote computeBean;
+    Date createDate;
+    User user;
+    Entity neuronSeparatorPipelineResultEntity;
 
     public void execute(IProcessData processData) throws ServiceException {
         try {
-            Logger logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
+            logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             this.task = (NeuronSeparatorPipelineTask) ProcessDataHelper.getTask(processData);
             logger.debug("\n\nExecuting Neuron Separation...\n\n");
-            NeuronSeparatorResultNode parentNode = (NeuronSeparatorResultNode) ProcessDataHelper.getResultFileNode(processData);
+            parentNode = (NeuronSeparatorResultNode) ProcessDataHelper.getResultFileNode(processData);
+            annotationBean=EJBFactory.getRemoteAnnotationBean();
+            computeBean=EJBFactory.getRemoteComputeBean();
+            createDate=new Date();
+            user=computeBean.getUserByName(task.getOwner());
 
             // todo this should be a separate process running on the grid
             String cmdLine = "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64:" +
@@ -47,7 +65,26 @@ public class NeuronSeparationPipelineService implements IService {
             if (0!=exitCode) {
                 throw new ServiceException("The NeuronSeparationPipelineService consolidator step did not exit properly.");
             }
+            createResultEntity();
 
+            EntityType tif2D=annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_2D);
+            EntityType tif3D=annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_3D);
+            EntityType tif3DLabel=annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_3D_LABEL_MASK);
+
+            File resultDir=new File(parentNode.getDirectoryPath());
+            File[] resultFiles = resultDir.listFiles();
+            for (File result : resultFiles) {
+                if (result.getName().equals("ConsolidatedSignal.tif")) {
+                    initEntity(tif3D, result.getAbsolutePath());
+                } else if (result.getName().equals("ConsolidatedLabel.tif")) {
+                    initEntity(tif3DLabel, result.getAbsolutePath());
+                } else if (result.getName().startsWith("neuronSeparatorPipeline.PR.neuron") && result.getName().endsWith(".tif")) {
+                    initEntity(tif2D, result.getAbsolutePath());
+                } else {
+                    throw new Exception("Do not recognize result file for Neuron Separator Pipeline="+result.getAbsolutePath());
+                }
+                logger.info("Added child entity as file="+result.getAbsolutePath());
+            }
         }
         catch (Exception e) {
             try {
@@ -72,6 +109,39 @@ public class NeuronSeparationPipelineService implements IService {
             }
         }
         return sb.toString();
+    }
+
+    void createResultEntity() throws Exception {
+        neuronSeparatorPipelineResultEntity = new Entity();
+        EntityType neuSepType=annotationBean.getEntityTypeByName(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
+        neuronSeparatorPipelineResultEntity.setUser(user);
+        neuronSeparatorPipelineResultEntity.setEntityType(neuSepType);
+        neuronSeparatorPipelineResultEntity.setCreationDate(createDate);
+        neuronSeparatorPipelineResultEntity.setUpdatedDate(createDate);
+        neuronSeparatorPipelineResultEntity=annotationBean.saveOrUpdateEntity(neuronSeparatorPipelineResultEntity);
+        neuronSeparatorPipelineResultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, parentNode.getDirectoryPath());
+        annotationBean.saveOrUpdateEntity(neuronSeparatorPipelineResultEntity);
+
+        logger.info("Saved neuronSeparatorPipelineResultEntity id="+neuronSeparatorPipelineResultEntity.getId());
+    }
+
+    Entity initEntity(EntityType type, String filePath) throws Exception {
+        Entity entity=new Entity();
+        entity.setUser(user);
+        entity.setCreationDate(createDate);
+        entity.setUpdatedDate(createDate);
+        entity.setEntityType(type);
+        entity=annotationBean.saveOrUpdateEntity(entity);
+        entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, filePath);
+        entity=annotationBean.saveOrUpdateEntity(entity);
+        addToParent(entity);
+        return entity;
+    }
+
+    void addToParent(Entity entity) throws Exception {
+        EntityData ed = neuronSeparatorPipelineResultEntity.addChildEntity(entity);
+        computeBean.genericSave(ed);
+        neuronSeparatorPipelineResultEntity=annotationBean.saveOrUpdateEntity(neuronSeparatorPipelineResultEntity);
     }
 
 }

@@ -26,7 +26,10 @@ public class EntityConstants {
     public static final String TYPE_ONTOLOGY_ROOT       = "Ontology Root";
     public static final String TYPE_ONTOLOGY_ELEMENT    = "Ontology Element";
     public static final String TYPE_FOLDER              = "Folder";
-    public static final String TYPE_NEURON_SEPARATOR_PIPELINE_RESULT = "TYPE_NEURON_SEPARATOR_PIPELINE_RESULT";
+    public static final String TYPE_NEURON_SEPARATOR_PIPELINE_RESULT = "Neuron Separator Pipeline Result";
+    public static final String TYPE_TIF_2D              = "Tif 2D Image";
+    public static final String TYPE_TIF_3D              = "Tif 3D Image";
+    public static final String TYPE_TIF_3D_LABEL_MASK   = "Tif 3D Label Mask";
 
     public static final long TYPE_ONTOLOGY_ROOT_ID = 1616533546980081843L;
     public static final long TYPE_ONTOLOGY_ELEMENT_ID = 1616533546954916019L;

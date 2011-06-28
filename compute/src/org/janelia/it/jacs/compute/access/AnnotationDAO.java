@@ -9,10 +9,7 @@ import org.hibernate.criterion.Expression;
 import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.entity.*;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class AnnotationDAO extends ComputeBaseDAO {
 
@@ -212,6 +209,18 @@ public class AnnotationDAO extends ComputeBaseDAO {
             neuronSeparationAttributeNameSet.add(EntityConstants.ATTRIBUTE_INPUT);
             createEntityType(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, neuronSeparationAttributeNameSet);
 
+            Set<String> tif2DImageAttributeSet = new HashSet<String>();
+            tif2DImageAttributeSet.add(EntityConstants.ATTRIBUTE_FILE_PATH);
+            createEntityType(EntityConstants.TYPE_TIF_2D, tif2DImageAttributeSet);
+
+            Set<String> tif3DImageAttributeSet = new HashSet<String>();
+            tif3DImageAttributeSet.add(EntityConstants.ATTRIBUTE_FILE_PATH);
+            createEntityType(EntityConstants.TYPE_TIF_3D, tif3DImageAttributeSet);
+
+            Set<String> tif3DLabelMaskAttributeSet = new HashSet<String>();
+            tif3DLabelMaskAttributeSet.add(EntityConstants.ATTRIBUTE_FILE_PATH);
+            createEntityType(EntityConstants.TYPE_TIF_3D_LABEL_MASK, tif3DLabelMaskAttributeSet);
+
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -222,9 +231,20 @@ public class AnnotationDAO extends ComputeBaseDAO {
     protected void createEntityStatus(String name) {
         try {
             Session session = getCurrentSession();
-            EntityStatus entityStatus = new EntityStatus();
-            entityStatus.setName(name);
-            session.save(entityStatus);
+            Criteria c = session.createCriteria(EntityStatus.class);
+            List<EntityStatus> entityStatusList = (List<EntityStatus>) c.list();
+
+            boolean containsStatus = false;
+            for (EntityStatus status : entityStatusList) {
+                if (status.getName().equals(name)) {
+                    containsStatus=true;
+                }
+            }
+            if (!containsStatus) {
+                EntityStatus entityStatus = new EntityStatus();
+                entityStatus.setName(name);
+                session.save(entityStatus);
+            }
         }
         catch (HibernateException e) {
             e.printStackTrace();
@@ -263,9 +283,19 @@ public class AnnotationDAO extends ComputeBaseDAO {
     protected void createEntityAttribute(String name) {
         try {
             Session session = getCurrentSession();
-            EntityAttribute entityAttribute = new EntityAttribute();
-            entityAttribute.setName(name);
-            session.save(entityAttribute);
+            Criteria c = session.createCriteria(EntityAttribute.class);
+            List<EntityAttribute> attributeList = (List<EntityAttribute>) c.list();
+            boolean containsAttribute=false;
+            for (EntityAttribute ea : attributeList) {
+                if (ea.getName().equals(name)) {
+                    containsAttribute=true;
+                }
+            }
+            if (!containsAttribute) {
+                EntityAttribute entityAttribute = new EntityAttribute();
+                entityAttribute.setName(name);
+                session.save(entityAttribute);
+            }
         }
         catch (HibernateException e) {
             e.printStackTrace();
