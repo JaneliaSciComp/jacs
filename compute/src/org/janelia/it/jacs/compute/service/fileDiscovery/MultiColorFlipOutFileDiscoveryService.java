@@ -367,6 +367,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
                     String lsm1Prefix=lsm1Matcher.group(1);
                     String lsm1Index=lsm1Matcher.group(2);
                     String lsm1Suffix=lsm1Matcher.group(3);
+                    //logger.info("findLsmPairs: filename="+lsm1Filename+" prefix="+lsm1Prefix+" index="+lsm1Index+" suffix="+lsm1Suffix);
                     Set<Entity> possibleMatches=new HashSet<Entity>();
                     for (Entity lsm2 : lsmStackList) {
                         if (!alreadyPaired.contains(lsm2)) {
@@ -387,16 +388,18 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
                                 }
                             }
                         }
-                        if (possibleMatches.size()==1) {
-                            // We have a unique match
-                            alreadyPaired.add(lsm1);
-                            alreadyPaired.add(lsm2);
-                            LsmPair pair=new LsmPair();
-                            pair.lsmEntity1=lsm1;
-                            pair.lsmEntity2=lsm2;
-                            pairSet.add(pair);
-                        }
                     }
+                    if (possibleMatches.size()==1) {
+                        // We have a unique match
+                        Entity lsm2=possibleMatches.iterator().next();
+                        alreadyPaired.add(lsm1);
+                        alreadyPaired.add(lsm2);
+                        LsmPair pair=new LsmPair();
+                        pair.lsmEntity1=lsm1;
+                        pair.lsmEntity2=lsm2;
+                        pairSet.add(pair);
+                    }
+
                 }
             }
         }
