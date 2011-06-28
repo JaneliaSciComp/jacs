@@ -120,7 +120,7 @@ public class AnnotationManager implements AnnotationManagerMBean {
             NeuronSeparatorPipelineTask neuTask = new NeuronSeparatorPipelineTask(new HashSet<Node>(), "saffordt", new ArrayList<Event>(),
                     new HashSet<TaskParameter>());
             neuTask.setJobName("Neuron Separator Pipeline Test");
-            neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_inputFilePath, inputFilePath);
+            neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmFilePathList, inputFilePath);
             neuTask = (NeuronSeparatorPipelineTask)EJBFactory.getLocalComputeBean().saveOrUpdateTask(neuTask);
             EJBFactory.getLocalComputeBean().submitJob("NeuronSeparationPipeline", neuTask.getObjectId());
         }
