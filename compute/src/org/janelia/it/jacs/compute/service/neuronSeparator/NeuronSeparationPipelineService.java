@@ -38,9 +38,10 @@ public class NeuronSeparationPipelineService implements IService {
 
             // todo this should be a separate process running on the grid
             String cmdLine = "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64:" +
-                    SystemConfigurationProperties.getString("Executables.ModuleBase")+"/genelib/mylib;"+
-                    SystemConfigurationProperties.getString("Executables.ModuleBase")+"/singleNeuronTools/genelib/mylib/sampsepNA "+
-                    parentNode.getDirectoryPath()+" neuronSeparatorPipeline "+ task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmFilePathList);
+                    SystemConfigurationProperties.getString("Executables.ModuleBase")+"genelib/mylib;"+
+                    SystemConfigurationProperties.getString("Executables.ModuleBase")+"singleNeuronTools/genelib/mylib/sampsepNA "+
+                    parentNode.getDirectoryPath()+" neuronSeparatorPipeline "+ addQuotesToCsvString(task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmFilePathList));
+            logger.info("NeuronSeparatorPipelineTask cmdLine="+cmdLine);
             SystemCall call = new SystemCall(logger);
             int exitCode = call.emulateCommandLine(cmdLine, true);
             if (0!=exitCode) {
@@ -57,6 +58,20 @@ public class NeuronSeparationPipelineService implements IService {
             }
             throw new ServiceException("Error running the Neuron Separation NeuronSeparationPipelineService:" + e.getMessage(), e);
         }
+    }
+
+    String addQuotesToCsvString(String csvString) {
+        String[] clist=csvString.split(",");
+        StringBuffer sb=new StringBuffer();
+        for (int i=0;i<clist.length;i++) {
+            sb.append("\"");
+            sb.append(clist[i].trim());
+            sb.append("\"");
+            if (i<clist.length-1) {
+                sb.append(" ");
+            }
+        }
+        return sb.toString();
     }
 
 }
