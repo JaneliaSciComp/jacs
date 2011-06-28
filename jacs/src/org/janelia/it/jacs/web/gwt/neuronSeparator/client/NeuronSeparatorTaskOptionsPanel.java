@@ -36,6 +36,6 @@ import org.janelia.it.jacs.web.gwt.common.client.panel.user.TaskOptionsPanel;
 public class NeuronSeparatorTaskOptionsPanel extends TaskOptionsPanel {
     protected boolean displayParameter(String parameterKeyName, ParameterVO tmpParam) {
         return super.displayParameter(parameterKeyName, tmpParam) && !(
-                NeuronSeparatorPipelineTask.PARAM_inputFilePath.equalsIgnoreCase(parameterKeyName));
+                NeuronSeparatorPipelineTask.PARAM_inputLsmFilePathList.equalsIgnoreCase(parameterKeyName));
     }
 }

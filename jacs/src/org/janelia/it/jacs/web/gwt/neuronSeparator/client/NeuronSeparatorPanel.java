@@ -217,7 +217,7 @@ public class NeuronSeparatorPanel extends Composite {
         if (projectCodeRequired) {
             _neusepPipelineTask.setParameter(Task.PARAM_project, _projectCodePanel.getProjectCode());
         }
-        _neusepPipelineTask.setParameter(NeuronSeparatorPipelineTask.PARAM_inputFilePath, _uploadedPrimerFilePath);
+        _neusepPipelineTask.setParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmFilePathList, _uploadedPrimerFilePath);
         if (_finalOutputPanel.overrideFinalOutputPath()) {
             _neusepPipelineTask.setParameter(Task.PARAM_finalOutputDirectory, _finalOutputPanel.getFinalOutputDestination());
         }
