@@ -26,6 +26,7 @@ import org.janelia.it.jacs.shared.utils.SystemCall;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.Date;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -120,7 +121,7 @@ public class NeuronSeparationPipelineService implements IService {
         neuronSeparatorPipelineResultEntity.setUpdatedDate(createDate);
         neuronSeparatorPipelineResultEntity=annotationBean.saveOrUpdateEntity(neuronSeparatorPipelineResultEntity);
         neuronSeparatorPipelineResultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, parentNode.getDirectoryPath());
-        annotationBean.saveOrUpdateEntity(neuronSeparatorPipelineResultEntity);
+        neuronSeparatorPipelineResultEntity=annotationBean.saveOrUpdateEntity(neuronSeparatorPipelineResultEntity);
 
         logger.info("Saved neuronSeparatorPipelineResultEntity id="+neuronSeparatorPipelineResultEntity.getId());
     }

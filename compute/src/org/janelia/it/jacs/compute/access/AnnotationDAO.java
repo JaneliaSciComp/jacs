@@ -207,6 +207,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
             Set<String> neuronSeparationAttributeNameSet = new HashSet<String>();
             neuronSeparationAttributeNameSet.add(EntityConstants.ATTRIBUTE_FILE_PATH);
             neuronSeparationAttributeNameSet.add(EntityConstants.ATTRIBUTE_INPUT);
+            neuronSeparationAttributeNameSet.add(EntityConstants.ATTRIBUTE_ENTITY);
             createEntityType(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, neuronSeparationAttributeNameSet);
 
             Set<String> tif2DImageAttributeSet = new HashSet<String>();
