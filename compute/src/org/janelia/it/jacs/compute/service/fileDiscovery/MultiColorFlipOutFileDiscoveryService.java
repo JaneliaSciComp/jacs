@@ -43,7 +43,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
     String topLevelFolderName;
     Entity topLevelFolder;
     User user;
-    boolean neuronSeparatorTestFlag=false;
+    //boolean neuronSeparatorTestFlag=false;
 
     public class LsmPair {
         public LsmPair() {}
@@ -268,7 +268,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
     }
 
     protected void launchColorSeparationPipeline(LsmPair lsmPair) throws Exception {
-        if (!neuronSeparatorTestFlag) {
+        //if (!neuronSeparatorTestFlag) {
             String lsm1FilePath=lsmPair.lsmEntity1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
             String lsm2FilePath=lsmPair.lsmEntity2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
             NeuronSeparatorPipelineTask neuTask = new NeuronSeparatorPipelineTask(
@@ -283,8 +283,8 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             Thread.sleep(2000);
             NeuronSeparatorResultNode resultNode = (NeuronSeparatorResultNode)EJBFactory.getRemoteComputeBean().getResultNodeByTaskId(neuTask.getObjectId());
             logger.info("MultiColorFlipOutFileDiscoveryService assuming NeuronSeparator output node path="+resultNode.getDirectoryPath());
-            neuronSeparatorTestFlag=true;
-        }
+           // neuronSeparatorTestFlag=true;
+        //}
     }
 
     protected void processFolderForSingleNeuronStackSets(Entity folder) throws Exception {
