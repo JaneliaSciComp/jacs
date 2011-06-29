@@ -50,6 +50,20 @@ public class EntityConstants {
     public static final String ATTRIBUTE_INPUT = "ATTRIBUTE_INPUT";
 
     public static final long ATTRIBUTE_ONTOLOGY_ELEMENT_ID = 1616533546833281203L;
-    //public static final long ATTRIBUTE_ONTOLOGY_ELEMENT_ID = 1;
+
+
+    
+
+    // Entity Type Names
+    public static final String TYPE_NAME_ONTOLOGY_ROOT = "Ontology Root";
+    public static final String TYPE_NAME_ONTOLOGY_ELEMENT = "Ontology Element";
+
+    // Entity Attribute Names
+    public static final String ATTR_NAME_ONTOLOGY_ELEMENT = "Ontology Element";
+    public static final String ATTR_NAME_ONTOLOGY_TERM_TYPE = "Ontology Term Type";
+    public static final String ATTR_NAME_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER = "Ontology Term Type Interval Lower Bound";
+    public static final String ATTR_NAME_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER = "Ontology Term Type Interval Upper Bound";
+
+
 
 }

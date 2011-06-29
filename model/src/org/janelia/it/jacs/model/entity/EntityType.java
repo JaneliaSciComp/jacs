@@ -4,7 +4,11 @@ package org.janelia.it.jacs.model.entity;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -86,6 +90,17 @@ public class EntityType  implements java.io.Serializable, IsSerializable {
 
     public void setAttributes(Set<EntityAttribute> attributes) {
         this.attributes = attributes;
+    }
+    
+    public List<EntityAttribute> getOrderedAttributes() {
+    	List<EntityAttribute> attrs = new ArrayList<EntityAttribute>(getAttributes());
+        Collections.sort(attrs, new Comparator<EntityAttribute>() {
+			@Override
+			public int compare(EntityAttribute o1, EntityAttribute o2) {
+				return o1.getName().compareTo(o2.getName());
+			}
+		});
+        return attrs;
     }
 }
 

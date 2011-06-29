@@ -5,9 +5,12 @@ package org.janelia.it.jacs.model.entity;
 import com.google.gwt.user.client.rpc.IsSerializable;
 import org.janelia.it.jacs.model.user_data.User;
 
-import javax.xml.crypto.Data;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -128,6 +131,20 @@ public class Entity  implements java.io.Serializable, IsSerializable {
         return true;
     }
 
+    public Entity getEntityByAttributeName(String attributeName) {
+        Set<EntityData> matchingData=new HashSet<EntityData>();
+        for (EntityData ed : entityData) {
+            if (ed.getEntityAttribute().getName().matches(attributeName)) {
+                matchingData.add(ed);
+            }
+        }
+        if (matchingData.size()==1) {
+            EntityData ed=matchingData.iterator().next();
+            return ed.getChildEntity();
+        }
+        return null;
+    }
+
     // This method will return non-null only in the case in which
     // there is a single matching EntityData to the given attribute
     // name AND the value of this entity data is a non-null String
@@ -214,6 +231,28 @@ public class Entity  implements java.io.Serializable, IsSerializable {
         } else {
             return null;
         }
+    }
+    
+    public List<EntityData> getOrderedEntityData() {
+    	List<EntityData> orderedData = new ArrayList<EntityData>(getEntityData());
+    	Collections.sort(orderedData, new Comparator<EntityData>() {
+
+			@Override
+			public int compare(EntityData o1, EntityData o2) {
+				if (o1.getOrderIndex() == null) {
+					if (o2.getOrderIndex() == null) {
+						return o1.getId().compareTo(o2.getId());
+					}
+					return -1;
+				}
+				else if (o2.getOrderIndex() == null) {
+					return 1;
+				}
+				return o1.getOrderIndex().compareTo(o2.getOrderIndex());
+			}
+    		
+		});
+    	return orderedData;
     }
 
 
