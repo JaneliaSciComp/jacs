@@ -9,7 +9,7 @@
         <id name="id" access="field" column="id" type="java.lang.Long">
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
         </id>
-        <many-to-one name="entityAttribute" class="EntityAttribute" cascade="none" fetch="select" not-null="true" >
+        <many-to-one name="entityAttribute" class="EntityAttribute" cascade="none" fetch="select" not-null="true" lazy="false">
             <column name="entity_att_id" length="60" />
         </many-to-one>
         <many-to-one name="parentEntity" class="Entity" cascade="none" fetch="select" lazy="false">
