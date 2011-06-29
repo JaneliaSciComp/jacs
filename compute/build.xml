@@ -472,4 +472,7 @@
          <delete dir="${temp.dir}"/>
     </target>
 
+    <target name="build-and-deploy" depends="build,deploy-[your-server]-dev" description="Build and deploy">
+	</target>
+    
 </project>
