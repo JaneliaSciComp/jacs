@@ -57,6 +57,9 @@ public class NeuronSeparationPipelineService implements IService {
             createDate=new Date();
             user=computeBean.getUserByName(task.getOwner());
 
+            logger.info("Starting NeuronSeparationPipelineService with taskId="+task.getObjectId()+
+                    " resultNodeId="+parentNode.getObjectId()+" resultDir="+parentNode.getDirectoryPath());
+
             String lsmFileList=task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmFilePathList);
             String lsmEntityList=task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmEntityIdList);
 
