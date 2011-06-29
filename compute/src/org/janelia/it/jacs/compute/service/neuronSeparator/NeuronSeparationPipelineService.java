@@ -24,6 +24,7 @@ import org.janelia.it.jacs.model.user_data.neuronSeparator.NeuronSeparatorResult
 import org.janelia.it.jacs.shared.utils.SystemCall;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.util.Date;
 import java.util.Set;
@@ -99,6 +100,8 @@ public class NeuronSeparationPipelineService implements IService {
             EntityType tif3D=annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_3D);
             EntityType tif3DLabel=annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_3D_LABEL_MASK);
 
+            createLsmFilePaths();
+
             File resultDir=new File(parentNode.getDirectoryPath());
             File[] resultFiles = resultDir.listFiles();
             for (File result : resultFiles) {
@@ -108,6 +111,8 @@ public class NeuronSeparationPipelineService implements IService {
                     initEntity(tif3DLabel, result.getAbsolutePath());
                 } else if (result.getName().startsWith("neuronSeparatorPipeline.PR.neuron") && result.getName().endsWith(".tif")) {
                     initEntity(tif2D, result.getAbsolutePath());
+                } else if (result.getName().equals("lsmFilePaths.txt")) {
+                  // do nothing - ignore this file
                 } else {
                     throw new Exception("Do not recognize result file for Neuron Separator Pipeline="+result.getAbsolutePath());
                 }
@@ -180,6 +185,14 @@ public class NeuronSeparationPipelineService implements IService {
         EntityData ed = neuronSeparatorPipelineResultEntity.addChildEntity(entity);
         //computeBean.genericSave(ed);
         neuronSeparatorPipelineResultEntity=annotationBean.saveOrUpdateEntity(neuronSeparatorPipelineResultEntity);
+    }
+
+    void createLsmFilePaths() throws Exception {
+        File lsmPathFile=new File(parentNode.getDirectoryPath()+"/"+"lsmFilePaths.txt");
+        FileWriter fw=new FileWriter(lsmPathFile);
+        fw.write(lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)+"\n");
+        fw.write(lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)+"\n");
+        fw.close();
     }
 
 }
