@@ -55,7 +55,6 @@ public class ClusterProteinAnnotationExportTask extends ExportTask {
         if (accessionList != null && accessionList.get(0) != null)
             filename += ("_" + accessionList.get(0));
         setParameter(PARAM_SUGGESTED_FILENAME, formatSuggestedFilename(filename + "." + exportFormatType));
-        this.taskName = "Sequence Export Task";
         this.taskName = "Cluster Protein Annotation Export Task";
     }
 

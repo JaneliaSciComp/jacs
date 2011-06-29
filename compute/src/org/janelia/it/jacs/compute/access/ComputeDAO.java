@@ -60,6 +60,8 @@ import java.util.*;
  */
 
 public class ComputeDAO extends ComputeBaseDAO {
+    private static int MAX_MESSAGE_SIZE = 10000;
+
     public ComputeDAO(Logger logger) {
         super(logger);
     }
@@ -396,6 +398,11 @@ public class ComputeDAO extends ComputeBaseDAO {
     }
 
     public void addEventToTask(Long taskId, Event event) throws DaoException {
+        // Is the stack trace is thrown into the event description, trunkcate it.  Data should never be put in the event
+        // description.
+        if (event.getDescription().length()>MAX_MESSAGE_SIZE) {
+            event.setDescription(event.getDescription().substring(0, MAX_MESSAGE_SIZE));
+        }
         Task tmpTask = getTaskById(taskId);
         tmpTask.addEvent(event);
         saveOrUpdate(tmpTask);

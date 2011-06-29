@@ -26,6 +26,8 @@ package org.janelia.it.jacs.compute.access;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 
+import java.util.Arrays;
+
 /**
  * @author Tareq Nabeel
  */
@@ -62,7 +64,7 @@ public class DaoException extends ComputeException {
     public DaoException(Exception e, String actionWhichProducedError) {
         super(actionWhichProducedError, e);
         logger.error("There was an exception performing - " + actionWhichProducedError + "\nOriginal exception: " +
-                e.getStackTrace().toString());
+                Arrays.toString(e.getStackTrace()));
     }
 
 }
