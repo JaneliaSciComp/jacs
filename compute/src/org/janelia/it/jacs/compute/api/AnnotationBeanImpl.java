@@ -245,6 +245,16 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         return null;
     }
 
+    public Entity getEntityById(String targetId) {
+        try {
+            return _annotationDAO.getEntityById(targetId);
+        }
+        catch (Exception e) {
+            _logger.error("Error trying to get the entities of id "+targetId);
+        }
+        return null;
+    }
+
     public Entity getUserEntityById(String userLogin, long entityId) {
         try {
             return _annotationDAO.getUserEntityById(userLogin, entityId);

@@ -273,9 +273,11 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             String lsm2FilePath=lsmPair.lsmEntity2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
             NeuronSeparatorPipelineTask neuTask = new NeuronSeparatorPipelineTask(
                     new HashSet<Node>(), user.getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>());
-            String lsmFilePaths=lsm1FilePath+" , "+lsm2FilePath;
+            // Rather than use the file parameter, we will use the entity parameter since we want to add these
+            // as children to the result entity
+            String lsmEntityIds=lsmPair.lsmEntity1.getId()+" , "+lsmPair.lsmEntity2.getId();
+            neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmEntityIdList, lsmEntityIds);
             neuTask.setJobName("Neuron Separator for MultiColorFlipOutFileDiscovery");
-            neuTask.setParameter(NeuronSeparatorTask.PARAM_inputLsmFilePathList, lsmFilePaths);
             neuTask = (NeuronSeparatorPipelineTask)EJBFactory.getLocalComputeBean().saveOrUpdateTask(neuTask);
             EJBFactory.getRemoteComputeBean().submitJob("NeuronSeparationPipeline", neuTask.getObjectId());
             Thread.sleep(2000);

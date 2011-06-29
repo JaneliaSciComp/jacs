@@ -17,6 +17,7 @@ public interface AnnotationBeanLocal {
     public EntityType getEntityTypeByName(String name);
     public java.util.List<Entity> getUserEntitiesByType(String userLogin, long entityTypeId);
     public Set<Entity> getEntitiesByName(String name);
+    public Entity getEntityById(String targetId);
     public Entity getUserEntityById(String userLogin, long entityId);
     public boolean deleteEntityById(Long entityId);
     public Set<Entity> getParentEntities(long entityId);

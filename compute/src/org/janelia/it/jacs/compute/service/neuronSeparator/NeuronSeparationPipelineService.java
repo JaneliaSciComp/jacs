@@ -43,6 +43,8 @@ public class NeuronSeparationPipelineService implements IService {
     Date createDate;
     User user;
     Entity neuronSeparatorPipelineResultEntity;
+    Entity lsm1;
+    Entity lsm2;
 
     public void execute(IProcessData processData) throws ServiceException {
         try {
@@ -55,11 +57,33 @@ public class NeuronSeparationPipelineService implements IService {
             createDate=new Date();
             user=computeBean.getUserByName(task.getOwner());
 
+            String lsmFileList=task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmFilePathList);
+            String lsmEntityList=task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmEntityIdList);
+
+            if ( !(lsmFileList==null || lsmFileList.trim().length()==0) &&
+                 !(lsmEntityList==null || lsmEntityList.trim().length()==0)) {
+                throw new Exception("Only one of PARAM_inputLsmFilePathList or PARAM_inputLsmEntityIdList should be populated");
+            }
+
+            String fileList="";
+
+            if (lsmFileList!=null && lsmFileList.length()>0) {
+                fileList=lsmFileList;
+            } else {
+                String[] lsmList=lsmEntityList.split(",");
+                if (lsmList.length!=2) {
+                    throw new Exception("Expected two files in lsmEntityList="+lsmEntityList);
+                }
+                lsm1=annotationBean.getEntityById(lsmList[0].trim());
+                lsm2=annotationBean.getEntityById(lsmList[1].trim());
+                fileList=lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH) + " , " + lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+            }
+
             // todo this should be a separate process running on the grid
             String cmdLine = "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64:" +
                     SystemConfigurationProperties.getString("Executables.ModuleBase")+"genelib/mylib;"+
                     SystemConfigurationProperties.getString("Executables.ModuleBase")+"singleNeuronTools/genelib/mylib/sampsepNA -nr -pj "+
-                    parentNode.getDirectoryPath()+" neuronSeparatorPipeline "+ addQuotesToCsvString(task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmFilePathList));
+                    parentNode.getDirectoryPath()+" neuronSeparatorPipeline "+ addQuotesToCsvString(fileList);
             logger.info("NeuronSeparatorPipelineTask cmdLine="+cmdLine);
             SystemCall call = new SystemCall(logger);
             int exitCode = call.emulateCommandLine(cmdLine, true);
@@ -123,6 +147,16 @@ public class NeuronSeparationPipelineService implements IService {
         neuronSeparatorPipelineResultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, parentNode.getDirectoryPath());
         neuronSeparatorPipelineResultEntity=annotationBean.saveOrUpdateEntity(neuronSeparatorPipelineResultEntity);
 
+        if (lsm1!=null) {
+            logger.info("Adding lsm1 as child entity for neuronSeparatorPipelineResultEntity");
+            addToParent(lsm1);
+        }
+
+        if (lsm2!=null) {
+            logger.info("Adding lsm2 as child entity for neuronSeparatorPipelineResultEntity");
+            addToParent(lsm2);
+        }
+
         logger.info("Saved neuronSeparatorPipelineResultEntity id="+neuronSeparatorPipelineResultEntity.getId());
     }
 
@@ -141,7 +175,7 @@ public class NeuronSeparationPipelineService implements IService {
 
     void addToParent(Entity entity) throws Exception {
         EntityData ed = neuronSeparatorPipelineResultEntity.addChildEntity(entity);
-        computeBean.genericSave(ed);
+        //computeBean.genericSave(ed);
         neuronSeparatorPipelineResultEntity=annotationBean.saveOrUpdateEntity(neuronSeparatorPipelineResultEntity);
     }
 
