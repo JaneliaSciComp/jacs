@@ -112,7 +112,9 @@ public class NeuronSeparationPipelineService implements IService {
                 } else if (result.getName().startsWith("neuronSeparatorPipeline.PR.neuron") && result.getName().endsWith(".tif")) {
                     initEntity(tif2D, result.getAbsolutePath());
                 } else if (result.getName().equals("lsmFilePaths.txt")) {
-                  // do nothing - ignore this file
+                    // do nothing - ignore this file
+                } else if (result.getName().equals("neuronSeparatorPipeline.neu")) {
+                    // ignore
                 } else {
                     throw new Exception("Do not recognize result file for Neuron Separator Pipeline="+result.getAbsolutePath());
                 }
