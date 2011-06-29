@@ -321,7 +321,9 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         }
 
         // At this point we have a collection of lsm files in this folder - we will analyze for pairs
+        logger.info("Checking for lsm pairs in folder="+folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         Set<LsmPair> lsmPairs = findLsmPairs(lsmStackList);
+        logger.info("Found " + lsmPairs.size() + " pairs in folder="+folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
 
         // We will consider each pair, and if the lsm members of the pair do not have a parent which
         // is a SingleNeuronSeparatorPipeline entity, the pair will be submitted for processing with
@@ -355,7 +357,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
 
     private Set<LsmPair> findLsmPairs(List<Entity> lsmStackList) throws Exception {
         Set<LsmPair> pairSet=new HashSet<LsmPair>();
-        Pattern lsmPattern=Pattern.compile("(\\S+)\\_L(\\d+)(.*\\.lsm)");
+        Pattern lsmPattern=Pattern.compile("(.+)\\_L(\\d+)(.*\\.lsm)");
         Set<Entity> alreadyPaired=new HashSet<Entity>();
         for (Entity lsm1 : lsmStackList) {
             if (!alreadyPaired.contains(lsm1)) {
@@ -385,6 +387,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
                                     String lsm2Suffix=lsm2Matcher.group(3);
                                     Integer lsm1IndexInt=null;
                                     Integer lsm2IndexInt=null;
+
                                     boolean indexMatch=false;
                                     try {
                                         lsm1IndexInt=new Integer(lsm1Index.trim());
@@ -400,7 +403,12 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
                                         indexMatch=true;
                                     }
                                     if (indexMatch && lsm1Prefix.equals(lsm2Prefix) && lsm1Suffix.equals(lsm2Suffix)) {
+                                        //logger.info("Possible match = TRUE for " + lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH) + " , " +
+                                        //lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
                                         possibleMatches.add(lsm2);
+                                    } else {
+                                        //logger.info("Possible match = FALSE for " + lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH) + " , " +
+                                        //lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
                                     }
                                 }
                             }

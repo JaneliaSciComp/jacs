@@ -84,7 +84,7 @@ public class NeuronSeparationPipelineService implements IService {
             }
 
             // todo this should be a separate process running on the grid
-            String cmdLine = "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64:" +
+            String cmdLine = "cd "+parentNode.getDirectoryPath()+";export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64:" +
                     SystemConfigurationProperties.getString("Executables.ModuleBase")+"genelib/mylib;"+
                     SystemConfigurationProperties.getString("Executables.ModuleBase")+"singleNeuronTools/genelib/mylib/sampsepNA -nr -pj "+
                     parentNode.getDirectoryPath()+" neuronSeparatorPipeline "+ addQuotesToCsvString(fileList);
