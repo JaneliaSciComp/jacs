@@ -383,7 +383,23 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
                                     String lsm2Prefix=lsm2Matcher.group(1);
                                     String lsm2Index=lsm2Matcher.group(2);
                                     String lsm2Suffix=lsm2Matcher.group(3);
-                                    if (lsm1Prefix.equals(lsm2Prefix) && lsm1Suffix.equals(lsm2Suffix)) {
+                                    Integer lsm1IndexInt=null;
+                                    Integer lsm2IndexInt=null;
+                                    boolean indexMatch=false;
+                                    try {
+                                        lsm1IndexInt=new Integer(lsm1Index.trim());
+                                        lsm2IndexInt=new Integer(lsm2Index.trim());
+                                    } catch (Exception ex) {
+                                        indexMatch=true;
+                                    }
+                                    if ( !indexMatch &&
+                                            (
+                                                    (lsm1IndexInt%2==0 && lsm2IndexInt==lsm1IndexInt-1) ||
+                                                            (lsm2IndexInt%2==0 && lsm1IndexInt==lsm2IndexInt-1))
+                                            ) {
+                                        indexMatch=true;
+                                    }
+                                    if (indexMatch && lsm1Prefix.equals(lsm2Prefix) && lsm1Suffix.equals(lsm2Suffix)) {
                                         possibleMatches.add(lsm2);
                                     }
                                 }
@@ -399,6 +415,8 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
                         pair.lsmEntity1=lsm1;
                         pair.lsmEntity2=lsm2;
                         pairSet.add(pair);
+                        logger.info("Adding lsm pair: " + lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH) + " , " +
+                            lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
                     }
 
                 }
