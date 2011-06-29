@@ -6,6 +6,9 @@ import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.entity.*;
+import org.janelia.it.jacs.model.ontology.Category;
+import org.janelia.it.jacs.model.ontology.Interval;
+import org.janelia.it.jacs.model.ontology.OntologyTermType;
 import org.janelia.it.jacs.model.user_data.User;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
@@ -13,25 +16,48 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Stateless(name = "AnnotationEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 50, timeout = 10000)
+@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 1, timeout = 10000)
 public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRemote {
+	
     private Logger _logger = Logger.getLogger(this.getClass());
+    
     public static final String APP_VERSION = "jacs.version";
     public static final String SEARCH_EJB_PROP = "AnnotationEJB.Name";
     public static final String MDB_PROVIDER_URL_PROP = "AsyncMessageInterface.ProviderURL";
 
-    private AnnotationDAO _annotationDAO = new AnnotationDAO(_logger);
-    private ComputeDAO _computeDAO = new ComputeDAO(_logger);
+    private final AnnotationDAO _annotationDAO = new AnnotationDAO(_logger);
+    private final ComputeDAO _computeDAO = new ComputeDAO(_logger);
 
-    public AnnotationBeanImpl() {
+    private final Map<String, EntityType> entityByName = new HashMap<String, EntityType>();
+    private final Map<String, EntityAttribute> attrByName = new HashMap<String, EntityAttribute>();
+
+    private void preloadData() {
+
+        try {
+            if (entityByName.isEmpty()) {
+                System.out.println("  Preloading entity types...");
+                for(EntityType entityType : _annotationDAO.getAllEntityTypes()) {
+                    System.out.println("    Loaded entity type: "+entityType.getName());
+                    entityByName.put(entityType.getName(), entityType);
+                }
+            }
+
+            if (attrByName.isEmpty()) {
+                System.out.println("  Preloading attribute types...");
+                for(EntityAttribute entityAttr : _annotationDAO.getAllEntityAttributes()) {
+                    System.out.println("    Loaded entity attr: "+entityAttr.getName());
+                    attrByName.put(entityAttr.getName(), entityAttr);
+                }
+            }
+        }
+        catch (Exception e) {
+            _logger.error("Unexpected error occurred while trying preload models.", e);
+        }
     }
 
     public String addAnnotation(String owner, String namespace, String term, String value, String comment, String conditional){
@@ -98,17 +124,25 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         return null;
     }
 
-
     /**
      * Ontology Section
      */
 
     public Entity createOntologyRoot(String userLogin, String rootName) {
         try {
+            preloadData();
+
             User tmpUser = _computeDAO.getUserByName(userLogin);
-            EntityType tmpType = _annotationDAO.getEntityType(EntityConstants.TYPE_ONTOLOGY_ROOT_ID);
+            EntityType tmpType = entityByName.get(EntityConstants.TYPE_NAME_ONTOLOGY_ROOT);
             Entity newOntologyRoot = new Entity(null, rootName, tmpUser, null, tmpType, new Date(), new Date(), null);
             _annotationDAO.saveOrUpdate(newOntologyRoot);
+
+            // Add the type
+            EntityAttribute ontologyTypeAttribute = attrByName.get(EntityConstants.ATTR_NAME_ONTOLOGY_TERM_TYPE);
+            EntityData termData = new EntityData(null, ontologyTypeAttribute, newOntologyRoot, null,
+                    tmpUser, Category.class.getSimpleName(), new Date(), new Date(), null);
+            _annotationDAO.saveOrUpdate(termData);
+
             return newOntologyRoot;
         }
         catch (Exception e) {
@@ -117,19 +151,55 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         return null;
     }
 
-    public Entity createOntologyTerm(String userLogin, String ontologyTermParentId, String termName) {
+    public Entity createOntologyTerm(String userLogin, String ontologyTermParentId, String termName, OntologyTermType type, Integer orderIndex) {
         try {
+            preloadData();
+
             User tmpUser = _computeDAO.getUserByName(userLogin);
-            EntityType tmpElementType = _annotationDAO.getEntityType(EntityConstants.TYPE_ONTOLOGY_ELEMENT_ID);
+            EntityType tmpElementType = entityByName.get(EntityConstants.TYPE_NAME_ONTOLOGY_ELEMENT);
+
             // Create and save the new entity
             Entity newOntologyElement = new Entity(null, termName, tmpUser, null, tmpElementType, new Date(), new Date(), null);
             _annotationDAO.saveOrUpdate(newOntologyElement);
+
             // Associate the entity to the parent
-            EntityAttribute ontologyElementAttribute = _annotationDAO.getEntityAttribute(EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT_ID);
+            EntityAttribute ontologyElementAttribute = attrByName.get(EntityConstants.ATTR_NAME_ONTOLOGY_ELEMENT);
             Entity parentOntologyElement = _annotationDAO.getEntityById(ontologyTermParentId);
+            
+            // If no order index is given then we add in last place
+            if (orderIndex == null) {
+            	int max = 0;
+            	for(EntityData data : parentOntologyElement.getEntityData()) {
+            		if (data.getOrderIndex() != null && data.getOrderIndex() > max) max = data.getOrderIndex(); 
+            	}
+            	orderIndex = max + 1;
+            }
+            
             EntityData newData = new EntityData(null, ontologyElementAttribute, parentOntologyElement, newOntologyElement,
-                    tmpUser,  null, new Date(), new Date(), null);
+                    tmpUser,  null, new Date(), new Date(), orderIndex);
             _annotationDAO.saveOrUpdate(newData);
+
+            // Add the type
+            EntityAttribute ontologyTypeAttribute = attrByName.get(EntityConstants.ATTR_NAME_ONTOLOGY_TERM_TYPE);
+            EntityData termData = new EntityData(null, ontologyTypeAttribute, newOntologyElement, null,
+                    tmpUser,  type.getClass().getSimpleName(), new Date(), new Date(), null);
+            _annotationDAO.saveOrUpdate(termData);
+
+            // Add the type-specific parameters
+            if (type instanceof Interval) {
+
+                Interval interval = (Interval)type;
+                EntityAttribute intervalLowerAttribute = attrByName.get(EntityConstants.ATTR_NAME_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER);
+                EntityData lowerData = new EntityData(null, intervalLowerAttribute, newOntologyElement, null,
+                        tmpUser, interval.getLowerBound().toString(), new Date(), new Date(), null);
+                _annotationDAO.saveOrUpdate(lowerData);
+
+                EntityAttribute intervalUpperAttribute = attrByName.get(EntityConstants.ATTR_NAME_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER);
+                EntityData upperData = new EntityData(null, intervalUpperAttribute, newOntologyElement, null,
+                        tmpUser, interval.getUpperBound().toString(), new Date(), new Date(), null);
+                _annotationDAO.saveOrUpdate(upperData);
+            }
+            
             return newOntologyElement;
         }
         catch (Exception e) {

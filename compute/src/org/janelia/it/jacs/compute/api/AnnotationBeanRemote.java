@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.api;
 import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.model.ontology.OntologyTermType;
 
 import javax.ejb.Remote;
 import java.util.ArrayList;
@@ -30,7 +31,7 @@ public interface AnnotationBeanRemote {
                                String comment, String conditional);
     public List<Entity> getEntitiesWithFilePath(String filePath);
 
-    public Entity createOntologyTerm(String userLogin, String ontologyTermParentId, String termName);
+    public Entity createOntologyTerm(String userLogin, String ontologyTermParentId, String termName, OntologyTermType type, Integer orderIndex);
     public Entity createOntologyRoot(String userLogin, String rootName);
     public boolean removeOntologyTerm(String userLogin, String ontologyTermId);
 

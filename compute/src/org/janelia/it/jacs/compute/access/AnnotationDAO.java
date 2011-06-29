@@ -179,11 +179,16 @@ public class AnnotationDAO extends ComputeBaseDAO {
             //========== Status ============
             createEntityStatus(EntityConstants.STATUS_DEPRECATED);
 
+        	System.out.println("Creating new entity attributes");
+            createEntityAttribute(EntityConstants.ATTR_NAME_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER);
+            createEntityAttribute(EntityConstants.ATTR_NAME_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER);
             //========== Attribute ============
             createEntityAttribute(EntityConstants.ATTRIBUTE_FILE_PATH);
             createEntityAttribute(EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT);
             createEntityAttribute(EntityConstants.ATTRIBUTE_COMMON_ROOT);
             createEntityAttribute(EntityConstants.ATTRIBUTE_ENTITY);
+            createEntityAttribute(EntityConstants.ATTR_NAME_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER);
+            createEntityAttribute(EntityConstants.ATTR_NAME_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER);
 
             //========== Type ============
             Set<String> lsmAttributeNameSet = new HashSet<String>();
@@ -332,6 +337,18 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
+    public List<EntityAttribute> getAllEntityAttributes() throws DaoException {
+        try {
+            StringBuffer hql = new StringBuffer("select clazz from EntityAttribute clazz");
+            if (_logger.isDebugEnabled()) _logger.debug("hql=" + hql);
+            Query query = getCurrentSession().createQuery(hql.toString());
+            return query.list();
+        }
+        catch (Exception e) {
+            // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
+            throw handleException(e, "getAllEntityAttributes");
+        }
+    }
 
     public List<Entity> getUserEntitiesByName(String userLogin, long entityTypeId) throws DaoException {
         try {
