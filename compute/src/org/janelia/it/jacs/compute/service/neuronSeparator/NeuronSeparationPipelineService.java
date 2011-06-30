@@ -37,7 +37,7 @@ import java.util.Set;
  */
 public class NeuronSeparationPipelineService implements IService {
 
-    static final int TIMEOUT_SECONDS = 600;  // 10 minutes
+    static final int TIMEOUT_SECONDS = 900;  // 15 minutes
 
     Logger logger;
     private NeuronSeparatorPipelineTask task;
