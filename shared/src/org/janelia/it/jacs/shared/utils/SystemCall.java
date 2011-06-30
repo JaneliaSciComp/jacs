@@ -212,7 +212,11 @@ public class SystemCall {
      * @throws InterruptedException - error used to stop the wait state
      */
     public int emulateCommandLine(String desiredCommandLine, boolean isUnixStyleSystem) throws IOException, InterruptedException {
-        return this.emulateCommandLine(desiredCommandLine, isUnixStyleSystem, null, null);
+        return this.emulateCommandLine(desiredCommandLine, isUnixStyleSystem, null, null, 0);
+    }
+
+    public int emulateCommandLine(String desiredCommandLine, boolean isUnixStyleSystem, int timeoutSeconds) throws IOException, InterruptedException {
+        return this.emulateCommandLine(desiredCommandLine, isUnixStyleSystem, null, null, timeoutSeconds);
     }
 
     /**
@@ -229,7 +233,7 @@ public class SystemCall {
      * @throws IOException          - error executing the thread
      * @throws InterruptedException - error used to stop the wait state
      */
-    public int emulateCommandLine(String desiredCommandLine, boolean isUnixStyleSystem, String[] envVariables, File directory) throws IOException, InterruptedException {
+    public int emulateCommandLine(String desiredCommandLine, boolean isUnixStyleSystem, String[] envVariables, File directory, int timeoutSeconds) throws IOException, InterruptedException {
         String[] args = new String[]{"", "", ""};
         if (logger.isDebugEnabled()) {
             logger.debug("Executing: " + desiredCommandLine);
@@ -261,7 +265,23 @@ public class SystemCall {
             outputGobbler.start();
 
             // any error??? make sure execution produces a real exit value
-            exitVal = proc.waitFor();
+            if (timeoutSeconds==0) {
+                exitVal = proc.waitFor();
+            } else {
+                Date startTime=new Date();
+                boolean finishOnTime=false;
+                while( (new Date().getTime() - startTime.getTime()) < timeoutSeconds*1000) {
+                    Thread.sleep(1000);
+                    try {
+                        exitVal=proc.exitValue();
+                        finishOnTime=true;
+                    } catch (IllegalThreadStateException e) {}
+                }
+                if (!finishOnTime) {
+                    logger.error("Process exceeded maximum timeout of " + timeoutSeconds + " seconds");
+                    exitVal=1;
+                }
+            }
             if (logger.isDebugEnabled()) {
                 logger.debug("ExitValue: " + exitVal);
             }
