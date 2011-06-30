@@ -284,6 +284,7 @@ public class SystemCall {
                 }
                 if (!finishOnTime) {
                     logger.error("Process exceeded maximum timeout of " + timeoutSeconds + " seconds");
+                    proc.destroy();
                     exitVal=1;
                 }
             }
