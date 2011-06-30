@@ -34,7 +34,6 @@ import javax.ejb.ActivationConfigProperty;
  * User: smurphy
  * Date: Feb 4, 2010
  * Time: 3:29:47 PM
- * To change this template use File | Settings | File Templates.
  */
 
 @MessageDriven(name="TeraBlastLauncherMDB", activationConfig = {

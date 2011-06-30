@@ -38,7 +38,6 @@ import org.janelia.it.jacs.web.gwt.common.client.service.log.Logger;
  * User: smurphy
  * Date: Aug 31, 2010
  * Time: 3:38:29 PM
- * To change this template use File | Settings | File Templates.
  */
 public class SubmitRnaSeqPipelineJob {
     private static Logger _logger = Logger.getLogger("org.janelia.it.jacs.web.gwt.rnaSeq.client.SubmitRnaSeqPipelineJob");

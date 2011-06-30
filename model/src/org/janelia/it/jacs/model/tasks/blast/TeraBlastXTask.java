@@ -28,7 +28,6 @@ package org.janelia.it.jacs.model.tasks.blast;
  * User: jhoover
  * Date: Aug 5, 2010
  * Time: 11:51:40 AM
- * To change this template use File | Settings | File Templates.
  */
 public class TeraBlastXTask extends BlastXTask implements TeraBlastTask {
 

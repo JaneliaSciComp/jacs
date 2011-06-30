@@ -32,8 +32,7 @@ import org.janelia.it.jacs.model.tasks.Task;
  * User: smurphy
  * Date: Feb 2, 2010
  * Time: 2:54:38 PM
- * To change this template use File | Settings | File Templates.
- * <p/>
+* * <p/>
  * This node is for the FASTQ standard:
  * <p/>
  * http://en.wikipedia.org/wiki/FASTQ_format

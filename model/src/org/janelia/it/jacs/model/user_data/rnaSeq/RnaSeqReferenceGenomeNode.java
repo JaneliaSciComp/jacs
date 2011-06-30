@@ -31,7 +31,6 @@ import org.janelia.it.jacs.model.user_data.FastaFileNode;
  * User: smurphy
  * Date: Aug 18, 2010
  * Time: 5:11:10 PM
- * To change this template use File | Settings | File Templates.
  */
 public class RnaSeqReferenceGenomeNode extends FastaFileNode {
 

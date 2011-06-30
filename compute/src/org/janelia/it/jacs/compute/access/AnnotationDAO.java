@@ -73,6 +73,10 @@ public class AnnotationDAO extends ComputeBaseDAO {
         return null;
     }
 
+    public ArrayList<Annotation> getAnnotationsForUserBySession(String owner, String sessionId) {
+        return null;
+    }
+
     public void updateAnnotation(Annotation targetAnnotation) {
         getSession().saveOrUpdate(targetAnnotation);
     }
@@ -341,7 +345,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
             Set<EntityAttribute> attributeSet = getEntityAttributesByName(attributeNameSet);
             entityType.setAttributes(attributeSet);
         }
-        session.save(entityType);
+        session.saveOrUpdate(entityType);
     }
 
     protected void createEntityAttribute(String name) {
@@ -461,6 +465,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
+    // todo This probably needs to be changed to account for the Entity Data first
     public boolean deleteEntityById(Long entityId) throws DaoException {
         try {
             Session session = getCurrentSession();

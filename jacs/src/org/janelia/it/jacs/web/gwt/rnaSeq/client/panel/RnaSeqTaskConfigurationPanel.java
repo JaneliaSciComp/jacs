@@ -35,7 +35,6 @@ import org.janelia.it.jacs.web.gwt.common.client.service.log.Logger;
  * User: smurphy
  * Date: Jul 20, 2010
  * Time: 10:43:10 PM
- * To change this template use File | Settings | File Templates.
  */
 public class RnaSeqTaskConfigurationPanel extends Composite implements UserNodeManagementPanel.NodeSelectedAction {
     private static Logger _logger = Logger.getLogger("org.janelia.it.jacs.web.gwt.rnaSeq.client.panel.RnaSeqTaskConfigurationPanel");

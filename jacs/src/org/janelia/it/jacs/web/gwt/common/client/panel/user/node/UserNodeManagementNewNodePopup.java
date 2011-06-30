@@ -30,7 +30,6 @@ import org.janelia.it.jacs.web.gwt.common.client.popup.BasePopupPanel;
  * User: smurphy
  * Date: Aug 13, 2010
  * Time: 11:45:03 AM
- * To change this template use File | Settings | File Templates.
  */
 public abstract class UserNodeManagementNewNodePopup extends BasePopupPanel {
 

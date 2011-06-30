@@ -30,7 +30,6 @@ import org.janelia.it.jacs.web.gwt.common.client.panel.user.TaskOptionsPanel;
  * User: smurphy
  * Date: Jul 23, 2010
  * Time: 11:22:19 AM
- * To change this template use File | Settings | File Templates.
  */
 public class RnaSeqPipelineTaskOptionsPanel extends TaskOptionsPanel {
 

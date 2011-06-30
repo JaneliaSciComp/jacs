@@ -11,7 +11,6 @@ import javax.ejb.MessageDriven;
  * User: murphys
  * Date: 5/24/11
  * Time: 12:55 PM
- * To change this template use File | Settings | File Templates.
  */
 
 @MessageDriven(name = "MultiColorFlipOutFileDiscoveryLauncherMDB", activationConfig = {

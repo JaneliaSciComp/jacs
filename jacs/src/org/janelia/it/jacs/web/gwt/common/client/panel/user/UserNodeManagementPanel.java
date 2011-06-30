@@ -68,7 +68,6 @@ import java.util.List;
  * User: smurphy
  * Date: Jun 14, 2010
  * Time: 2:21:08 PM
- * To change this template use File | Settings | File Templates.
  */
 public class UserNodeManagementPanel extends VerticalPanel {
     private static Logger _logger = Logger.getLogger("org.janelia.it.jacs.web.gwt.common.client.panel.user.UserNodeManagementPanel");

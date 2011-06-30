@@ -51,7 +51,6 @@ import java.util.Set;
  * User: smurphy
  * Date: Feb 2, 2010
  * Time: 3:28:24 PM
- * To change this template use File | Settings | File Templates.
  * <p/>
  * This service uploads directories containing a set of FASTQ files, typically
  * from an Illumina run.

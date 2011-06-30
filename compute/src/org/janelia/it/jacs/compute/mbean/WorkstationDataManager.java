@@ -18,7 +18,6 @@ import java.util.HashSet;
  * User: murphys
  * Date: 5/24/11
  * Time: 10:37 AM
- * To change this template use File | Settings | File Templates.
  */
 public class WorkstationDataManager implements WorkstationDataManagerMBean {
 

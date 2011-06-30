@@ -42,7 +42,6 @@ import org.janelia.it.jacs.web.gwt.common.client.util.HtmlUtils;
  * User: smurphy
  * Date: Aug 20, 2010
  * Time: 4:50:26 PM
- * To change this template use File | Settings | File Templates.
  */
 public class UserNodeManagementRnaSeqReferenceGenomeNodePopup extends UserNodeManagementNewNodePopup {
     private static Logger _logger = Logger.getLogger("org.janelia.it.jacs.web.gwt.common.client.panel.user.node.UserNodeManagementRnaSeqReferenceGenomeNodePopup");

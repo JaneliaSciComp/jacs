@@ -42,7 +42,6 @@ import org.janelia.it.jacs.web.gwt.common.client.util.HtmlUtils;
  * User: smurphy
  * Date: Aug 13, 2010
  * Time: 2:42:35 PM
- * To change this template use File | Settings | File Templates.
  */
 public class UserNodeManagementFastqNodePopup extends UserNodeManagementNewNodePopup {
     private static Logger _logger = Logger.getLogger("org.janelia.it.jacs.web.gwt.common.client.panel.user.node.UserNodeManagementFastqNodePopup");

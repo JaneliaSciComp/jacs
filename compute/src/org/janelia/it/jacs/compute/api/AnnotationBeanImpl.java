@@ -98,6 +98,16 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         return null;
     }
 
+    public ArrayList<Annotation> getAnnotationsForUserBySession(String owner, String sessionId){
+        try {
+            return _annotationDAO.getAnnotationsForUserBySession(owner, sessionId);
+        }
+        catch (Exception e) {
+            _logger.error("Unexpected error occurred while trying to get annotations for user "+owner, e);
+        }
+        return null;
+    }
+
     public void editAnnotation(String owner, String uniqueIdentifier, String namespace, String term, String value,
                                String comment, String conditional){
         try {

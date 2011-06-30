@@ -34,7 +34,6 @@ import javax.ejb.MessageDriven;
  * User: smurphy
  * Date: Aug 20, 2010
  * Time: 1:18:45 PM
- * To change this template use File | Settings | File Templates.
  */
 
 @MessageDriven(name = "UploadRnaSeqReferenceGenomeLauncherMDB", activationConfig = {

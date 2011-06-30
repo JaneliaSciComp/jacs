@@ -39,7 +39,6 @@ import java.util.Set;
  * User: smurphy
  * Date: Aug 18, 2010
  * Time: 5:37:49 PM
- * To change this template use File | Settings | File Templates.
  */
 public class UploadRnaSeqReferenceGenomeTask extends Task {
 

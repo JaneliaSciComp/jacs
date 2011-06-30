@@ -40,8 +40,7 @@ import java.util.regex.Pattern;
  * User: smurphy
  * Date: Feb 3, 2010
  * Time: 10:32:54 AM
- * To change this template use File | Settings | File Templates.
- * <p/>
+* * <p/>
  * <p/>
  * This utility deals with directories containing a set of FASTQ files, typically
  * from an Illumina run.

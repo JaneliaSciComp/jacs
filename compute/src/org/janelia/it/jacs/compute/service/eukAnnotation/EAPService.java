@@ -48,7 +48,6 @@ import java.util.Set;
  * User: jinman
  * Date: Jul 26, 2010
  * Time: 12:41:05 PM
- * To change this template use File | Settings | File Templates.
  */
 public class EAPService extends SubmitDrmaaJobService {
 

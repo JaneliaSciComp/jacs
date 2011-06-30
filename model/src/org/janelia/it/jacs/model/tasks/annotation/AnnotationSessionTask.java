@@ -39,15 +39,12 @@ import java.util.Set;
  * Time: 3:03:13 PM
  */
 public class AnnotationSessionTask extends Task {
-    transient public static final String TASK_NAME = "annotSession";
-    transient public static final String DISPLAY_NAME = "Annotation Session";
+    transient public static final String TASK_NAME      = "annotSession";
+    transient public static final String DISPLAY_NAME   = "Annotation Session";
 
     // Parameter Keys
-    transient public static final String PARAM_annotatioNode        = "annotation node";
-    transient public static final String PARAM_annotationValues     = "annotation values";
-    transient public static final String PARAM_annotationCategories = "annotation categories";
-    transient public static final String PARAM_annotationRecords    = "annotation records";
-
+    transient public static final String PARAM_annotationKeys   = "annotation keys";
+    transient public static final String PARAM_annotationTargets= "annotation targets";
 
     public AnnotationSessionTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet) {
         super(inputNodes, owner, events, taskParameterSet);
@@ -59,10 +56,8 @@ public class AnnotationSessionTask extends Task {
     }
 
     private void setDefaultValues() {
-        setParameter(PARAM_annotatioNode, "");
-        setParameter(PARAM_annotationCategories, "");
-        setParameter(PARAM_annotationValues, "");
-        setParameter(PARAM_annotationRecords, "");
+        setParameter(PARAM_annotationKeys, "");
+        setParameter(PARAM_annotationTargets, "");
         this.taskName = TASK_NAME;
     }
 
@@ -72,11 +67,8 @@ public class AnnotationSessionTask extends Task {
         String value = getParameter(key);
         if (value == null)
             return null;
-        if (key.equals(PARAM_annotatioNode)||key.equals(PARAM_annotationCategories)||key.equals(PARAM_annotationValues)) {
-            return new TextParameterVO(value, 800);
-        }
-        if (key.equals(PARAM_annotationRecords)) {
-            return new TextParameterVO(value, 4000);
+        if (key.equals(PARAM_annotationKeys)||key.equals(PARAM_annotationTargets)) {
+            return new TextParameterVO(value);
         }
 
         // No match

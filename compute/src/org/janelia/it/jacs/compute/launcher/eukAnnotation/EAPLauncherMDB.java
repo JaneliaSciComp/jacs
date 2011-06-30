@@ -34,7 +34,6 @@ import javax.ejb.ActivationConfigProperty;
  * User: jinman
  * Date: Jul 26, 2010
  * Time: 12:41:45 PM
- * To change this template use File | Settings | File Templates.
  */
 
 @MessageDriven(name="EAPLauncherMDB", activationConfig = {

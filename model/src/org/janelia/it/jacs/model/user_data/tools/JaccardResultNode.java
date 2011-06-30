@@ -32,7 +32,6 @@ import org.janelia.it.jacs.model.tasks.Task;
  * User: ekelsey
  * Date: Aug 13, 2010
  * Time: 2:07:27 PM
- * To change this template use File | Settings | File Templates.
  */
 public class JaccardResultNode extends FileNode {
 

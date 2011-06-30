@@ -28,7 +28,6 @@ import java.util.regex.Pattern;
  * User: murphys
  * Date: 5/24/11
  * Time: 12:23 PM
- * To change this template use File | Settings | File Templates.
  */
 public class MultiColorFlipOutFileDiscoveryService implements IService {
 

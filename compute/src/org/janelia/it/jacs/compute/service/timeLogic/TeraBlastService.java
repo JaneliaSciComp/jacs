@@ -52,7 +52,6 @@ import java.util.*;
  * User: jhoover
  * Date: Aug 5, 2010
  * Time: 10:24:08 AM
- * To change this template use File | Settings | File Templates.
  */
 public class TeraBlastService implements IService {
 
