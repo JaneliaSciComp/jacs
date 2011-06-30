@@ -131,40 +131,41 @@ public class Entity  implements java.io.Serializable, IsSerializable {
         return true;
     }
 
-    public Entity getEntityByAttributeName(String attributeName) {
-        Set<EntityData> matchingData=new HashSet<EntityData>();
-        for (EntityData ed : entityData) {
-            if (ed.getEntityAttribute().getName().matches(attributeName)) {
-                matchingData.add(ed);
-            }
-        }
-        if (matchingData.size()==1) {
-            EntityData ed=matchingData.iterator().next();
-            return ed.getChildEntity();
-        }
-        return null;
-    }
+	/**
+	 * Returns the set of EntityData objects with the given attribute name.
+	 */
+	public EntityData getEntityDataByAttributeName(String attributeName) {
+		Set<EntityData> matchingData = new HashSet<EntityData>();
+		for (EntityData ed : entityData) {
+			if (ed.getEntityAttribute().getName().matches(attributeName)) {
+				matchingData.add(ed);
+			}
+		}
+		if (matchingData.size() == 1) {
+			EntityData ed = matchingData.iterator().next();
+			return ed;
+		}
+		if (matchingData.size() > 1) {
+			System.out.println("Warning: expected single EntityData for "+attributeName+" in Entity#"+getId()+" but got "+matchingData.size());
+		}
+		return null;
+	}
 
-    // This method will return non-null only in the case in which
-    // there is a single matching EntityData to the given attribute
-    // name AND the value of this entity data is a non-null String
-    // rather than an Entity
+	/**
+	 * Returns the entity referenced by the given attribute, if it exists and there is only one.
+	 */
+	public Entity getEntityByAttributeName(String attributeName) {
+		EntityData ed = getEntityDataByAttributeName(attributeName);
+		return ed.getChildEntity();
+	}
 
-    public String getValueByAttributeName(String attributeName) {
-        Set<EntityData> matchingData=new HashSet<EntityData>();
-        for (EntityData ed : entityData) {
-            if (ed.getEntityAttribute().getName().matches(attributeName)) {
-                matchingData.add(ed);
-            }
-        }
-        if (matchingData.size()==1) {
-            EntityData ed=matchingData.iterator().next();
-            if (ed.getChildEntity()==null && ed.getValue()!=null) {
-                return ed.getValue();
-            }
-        }
-        return null;
-    }
+	/**
+	 * Returns the value of the given attribute, if it exists and there is only one.
+	 */
+	public String getValueByAttributeName(String attributeName) {
+		EntityData ed = getEntityDataByAttributeName(attributeName);
+		return ed.getValue();
+	}
 
     // This is the sister method of the above 'getValueByAttributeName'
     // which does the inverse.
