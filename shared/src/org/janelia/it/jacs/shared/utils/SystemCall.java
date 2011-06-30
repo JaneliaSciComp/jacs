@@ -270,7 +270,7 @@ public class SystemCall {
             } else {
                 Date startTime=new Date();
                 boolean finishOnTime=false;
-                while( (new Date().getTime() - startTime.getTime()) < timeoutSeconds*1000) {
+                while(!finishOnTime && (new Date().getTime() - startTime.getTime()) < timeoutSeconds*1000) {
                     Thread.sleep(1000);
                     try {
                         exitVal=proc.exitValue();
