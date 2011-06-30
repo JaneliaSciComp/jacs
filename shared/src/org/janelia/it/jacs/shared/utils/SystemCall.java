@@ -219,6 +219,11 @@ public class SystemCall {
         return this.emulateCommandLine(desiredCommandLine, isUnixStyleSystem, null, null, timeoutSeconds);
     }
 
+    public int emulateCommandLine(String desiredCommandLine, boolean isUnixStyleSystem, String[] envVariables, File directory) throws IOException, InterruptedException {
+        return this.emulateCommandLine(desiredCommandLine, isUnixStyleSystem, envVariables, directory, 0);
+    }
+
+
     /**
      * This method is used when the developer wants to run a command line, verbatim.
      * OS-specific character sequences on the command line must be processed specially, and this method
