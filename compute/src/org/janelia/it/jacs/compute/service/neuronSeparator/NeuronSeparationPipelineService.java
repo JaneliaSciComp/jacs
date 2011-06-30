@@ -36,6 +36,9 @@ import java.util.Set;
  * Time: 11:44:08 PM
  */
 public class NeuronSeparationPipelineService implements IService {
+
+    static final int TIMEOUT_SECONDS = 120;
+
     Logger logger;
     private NeuronSeparatorPipelineTask task;
     NeuronSeparatorResultNode parentNode;
@@ -90,7 +93,7 @@ public class NeuronSeparationPipelineService implements IService {
                     parentNode.getDirectoryPath()+" neuronSeparatorPipeline "+ addQuotesToCsvString(fileList);
             logger.info("NeuronSeparatorPipelineTask cmdLine="+cmdLine);
             SystemCall call = new SystemCall(logger);
-            int exitCode = call.emulateCommandLine(cmdLine, true);
+            int exitCode = call.emulateCommandLine(cmdLine, true, TIMEOUT_SECONDS);
             if (0!=exitCode) {
                 throw new ServiceException("The NeuronSeparationPipelineService consolidator step did not exit properly.");
             }
