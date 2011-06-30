@@ -5,6 +5,7 @@ import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.hibernate.criterion.Expression;
 import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.entity.*;
@@ -123,8 +124,9 @@ public class AnnotationDAO extends ComputeBaseDAO {
     }
 
     public boolean deleteOntologyTerm(String userLogin, String ontologyTermId) throws DaoException {
+        Session session = getCurrentSession();
+        Transaction tx = session.beginTransaction();
         try {
-            Session session = getCurrentSession();
             Criteria c = session.createCriteria(Entity.class);
             c.add(Expression.eq("id", Long.valueOf(ontologyTermId)));
             Entity entity = (Entity) c.uniqueResult();
@@ -135,16 +137,72 @@ public class AnnotationDAO extends ComputeBaseDAO {
             if (!entity.getUser().getUserLogin().equals(userLogin)) {
                 throw new DaoException("Cannot delete the entity as the requestor doesn't own the item.");
             }
-            // Child Entity items should be deleted by cascade
-            session.delete(entity);
-            System.out.println("The entity has been deleted.");
-            return true;
+            
+            Set<EntityData> toDelete = new HashSet<EntityData>();
+            
+            // Delete parent EDs first
+            for(Entity parent : getParentEntities(entity.getId())) {
+            	for(EntityData ed : parent.getEntityData()) {
+            		if (ed.getChildEntity() != null && ed.getChildEntity().getId().equals(entity.getId())) {
+            			// This ED points to the term to be deleted. We must delete the ED first to avoid violating constraints.
+            			toDelete.add(ed);
+            		}
+            	}
+            }
+
+        	System.out.println("Will delete Entity "+entity.getName());
+        	
+            for(EntityData ed : toDelete) {
+            	System.out.println("  Deleting parent EntityData "+ed.getId());
+            	ed.getParentEntity().getEntityData().remove(ed);
+            	session.delete(ed);
+            }
+
+            // Now delete the node and all its ancestors
+            for(Entity ancestor : getAncestors(entity)) {
+            	System.out.println("  Deleting ancestor Entity "+ancestor.getName());
+                session.delete(ancestor);
+            }
+            
         }
         catch (Exception e) {
+        	e.printStackTrace();
+        	tx.rollback();
             throw new DaoException(e);
         }
+        finally {
+            try {
+            	session.flush();
+            	tx.commit();
+            	session.close();
+            }
+            catch (Exception ex) {
+            	ex.printStackTrace();
+                throw new DaoException(ex);
+            }
+        }
+
+        System.out.println("The entity and all of its ancestors have been deleted.");
+        return true;
     }
 
+    /**
+     * Returns a list of ancestors of the given Entity in a preorder traversal.
+     * @param entity
+     */
+    private List<Entity> getAncestors(Entity entity) {
+    	
+    	List<Entity> ancestors = new ArrayList<Entity>();
+    	ancestors.add(entity);
+    	for(EntityData ed : entity.getEntityData()) {
+    		if (ed.getChildEntity() != null) {
+    			ancestors.addAll(getAncestors(ed.getChildEntity()));
+    		}
+    	}
+    	return ancestors;
+    }
+    
+    
     public EntityAttribute getEntityAttributeByName(String name) throws DaoException {
         try {
             Session session = getCurrentSession();
