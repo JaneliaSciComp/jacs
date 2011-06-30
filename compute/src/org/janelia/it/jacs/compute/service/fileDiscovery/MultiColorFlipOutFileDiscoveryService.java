@@ -186,9 +186,9 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             folder=annotationBean.saveOrUpdateEntity(folder);
             logger.info("After saving new folder, id="+folder.getId());
             EntityData ed=parentFolder.addChildEntity(folder);
-            computeBean.genericSave(ed);
+            //computeBean.genericSave(ed);
             logger.info("Before updating parentFolder id="+parentFolder.getId());
-            //annotationBean.saveOrUpdateEntity(parentFolder);
+            annotationBean.saveOrUpdateEntity(parentFolder);
             logger.info("After updating parentFolder id="+parentFolder.getId());
             logger.info("Created new folder with path="+folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         }
