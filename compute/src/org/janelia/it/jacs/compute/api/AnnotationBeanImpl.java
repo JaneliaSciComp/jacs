@@ -299,6 +299,29 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         return null;
     }
 
+    public List<Entity> getCommonRootEntitiesByType(long entityTypeId) {
+        try {
+            List<Entity> returnList = new ArrayList<Entity>();
+            List<Entity> tmpList = _annotationDAO.getUserEntitiesByName(null, entityTypeId);
+            // todo This is a little brute-force and could probably have a better query
+            for (Entity entity : tmpList) {
+                for (EntityData entityData : entity.getEntityData()) {
+                    if (EntityConstants.ATTRIBUTE_COMMON_ROOT.equals(entityData.getEntityAttribute().getName())) {
+                        returnList.add(entity);
+                        break;
+                    }
+                }
+            }
+
+            System.out.println("Entities returned:"+returnList.size());
+            return returnList;
+        }
+        catch (DaoException e) {
+            _logger.error("Error trying to get the entities of type "+entityTypeId);
+        }
+        return null;
+    }
+
     public List<Entity> getEntitiesByType(long entityTypeId) {
         try {
             List<Entity> returnList = _annotationDAO.getUserEntitiesByName(null, entityTypeId);

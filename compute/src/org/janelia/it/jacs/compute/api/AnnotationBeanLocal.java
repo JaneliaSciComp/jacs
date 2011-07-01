@@ -24,6 +24,7 @@ public interface AnnotationBeanLocal {
 
     public List<EntityType> getEntityTypes();
     public List<Entity> getEntitiesByType(long entityTypeId);
+    public List<Entity> getCommonRootEntitiesByType(long entityTypeId);
 
     public String addAnnotation(String owner, String namespace, String term, String value, String comment, String conditional);
     public void deleteAnnotation(String owner, String uniqueIdentifier);

@@ -257,6 +257,10 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     }
 
 
+    @Override
+    public String toString() {
+        return getName();
+    }
 }
 
 
