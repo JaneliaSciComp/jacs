@@ -33,6 +33,7 @@ public class EntityConstants {
 
     public static final long TYPE_ONTOLOGY_ROOT_ID = 1616533546980081843L;
     public static final long TYPE_ONTOLOGY_ELEMENT_ID = 1616533546954916019L;
+    public static final long TYPE_FOLDER_ID = 1616540598318137523L;
 
     // Entity Data Attributes
     public static final String ATTRIBUTE_FILE_PATH          = "File Path";
