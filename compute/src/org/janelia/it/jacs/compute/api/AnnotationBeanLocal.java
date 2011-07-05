@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.api;
 
+import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityType;
@@ -36,7 +37,8 @@ public interface AnnotationBeanLocal {
     public Entity createOntologyTerm(String userLogin, String ontologyTermParentId, String termName, OntologyTermType type, Integer orderIndex);
     public Entity createOntologyRoot(String userLogin, String rootName);
     public boolean removeOntologyTerm(String userLogin, String ontologyTermId);
-
+    public Entity cloneEntityTree(Entity sourceRoot, String targetUserLogin, String targetRootName) throws DaoException;
+    
     public void setupEntityTypes();
 
 }

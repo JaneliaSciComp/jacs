@@ -1,6 +1,8 @@
 package org.janelia.it.jacs.compute.api;
 
 import org.apache.log4j.Logger;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
@@ -235,7 +237,69 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
         return false;
     }
+   
+    public Entity cloneEntityTree(Entity sourceRoot, String targetUserLogin, String targetRootName) throws DaoException {
 
+        Session session = _annotationDAO.getCurrentSession();
+        Transaction tx = session.beginTransaction();
+
+        if (null == sourceRoot) {
+            throw new DaoException("Cannot find the source ontology.");
+        }
+
+        User targetUser = _annotationDAO.getUserByName(targetUserLogin);
+
+        if (targetUser == null) {
+            throw new DaoException("Cannot find the target user.");
+        }
+
+        try {
+            return cloneEntityTree(tx, sourceRoot, targetUser, targetRootName, true);
+        }
+        catch (Exception e) {
+        	tx.rollback();
+            _logger.error("Error trying to clone the Ontology ("+sourceRoot.getId()+")",e);
+            throw new DaoException(e);
+        }
+        finally {
+            try {
+            	session.flush();
+                tx.commit();
+            	session.close();
+            }
+            catch (Exception ex) {
+                _logger.error("Error trying to clone the Ontology ("+sourceRoot.getId()+")",ex);
+                throw new DaoException(ex);
+            }
+        }
+    }
+
+    private Entity cloneEntityTree(Transaction tx, Entity source, User targetUser, String targetName, boolean isRoot) throws DaoException {
+
+    	// TODO: detect cycles
+
+        // Create new ontology element
+        Entity newOntologyElement = new Entity(null, targetName, targetUser, null, source.getEntityType(), new Date(), new Date(), null);
+    	_annotationDAO.saveOrUpdate(newOntologyElement);
+
+        // Add the children 
+    	for(EntityData ed : source.getEntityData()) {
+
+    		Entity newChildEntity = null;
+    		Entity childEntity = ed.getChildEntity();
+    		if (childEntity != null) {
+    			newChildEntity = cloneEntityTree(tx, childEntity, targetUser, childEntity.getName(), false);	
+    		}
+
+            EntityData newEd = new EntityData(null, ed.getEntityAttribute(), newOntologyElement, newChildEntity,
+            		targetUser, ed.getValue(), new Date(), new Date(), ed.getOrderIndex());
+
+        	_annotationDAO.saveOrUpdate(newEd);
+    	}
+
+    	return newOntologyElement;
+    }
+    
     public Entity saveOrUpdateEntity(Entity entity) {
         try {
             _annotationDAO.saveOrUpdate(entity);
