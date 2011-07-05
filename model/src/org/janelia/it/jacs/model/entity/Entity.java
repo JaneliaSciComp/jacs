@@ -164,6 +164,7 @@ public class Entity  implements java.io.Serializable, IsSerializable {
 	 */
 	public String getValueByAttributeName(String attributeName) {
 		EntityData ed = getEntityDataByAttributeName(attributeName);
+		if (ed == null) return null;
 		return ed.getValue();
 	}
 
