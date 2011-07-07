@@ -12,16 +12,21 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 
 /**
+ * An precise interval on the real number line. 
+ * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class Interval extends OntologyTermType {
 
-    private Number lowerBound;
-    private Number upperBound;
+    private BigDecimal lowerBound;
+    private BigDecimal upperBound;
 
     public void init(String lowerBoundStr, String upperBoundStr) {
         lowerBound = new BigDecimal(lowerBoundStr);
         upperBound = new BigDecimal(upperBoundStr);
+        if (lowerBound.compareTo(upperBound) >= 0) {
+        	throw new IllegalArgumentException("Lower bound must be less than upper bound");
+        }
     }
 
     public void init(Entity entity) {
@@ -38,11 +43,11 @@ public class Interval extends OntologyTermType {
     	return "Interval";
     }
     
-    public Number getLowerBound() {
+    public BigDecimal getLowerBound() {
         return lowerBound;
     }
 
-    public Number getUpperBound() {
+    public BigDecimal getUpperBound() {
         return upperBound;
     }
 

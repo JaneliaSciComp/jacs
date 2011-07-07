@@ -200,7 +200,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
                 _annotationDAO.saveOrUpdate(lowerData);
 
                 EntityData upperData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER, tmpUser);
-                lowerData.setValue(interval.getUpperBound().toString());
+                upperData.setValue(interval.getUpperBound().toString());
                 _annotationDAO.saveOrUpdate(upperData);
             }
             
