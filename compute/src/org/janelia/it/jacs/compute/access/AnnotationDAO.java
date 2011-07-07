@@ -154,39 +154,33 @@ public class AnnotationDAO extends ComputeBaseDAO {
             	}
             }
 
-        	System.out.println("Will delete Entity "+entity.getName());
+            _logger.info("Will delete Entity "+entity.getName());
         	
             for(EntityData ed : toDelete) {
-            	System.out.println("  Deleting parent EntityData "+ed.getId());
+            	_logger.info("  Deleting parent EntityData "+ed.getId());
             	ed.getParentEntity().getEntityData().remove(ed);
             	session.delete(ed);
             }
 
             // Now delete the node and all its ancestors
             for(Entity ancestor : getAncestors(entity)) {
-            	System.out.println("  Deleting ancestor Entity "+ancestor.getName());
+            	_logger.info("  Deleting ancestor Entity "+ancestor.getName());
                 session.delete(ancestor);
             }
-            
+
+        	session.flush();
+        	tx.commit();
         }
         catch (Exception e) {
-        	e.printStackTrace();
         	tx.rollback();
+        	_logger.error("Error deleting ontology term "+ontologyTermId,e);
             throw new DaoException(e);
         }
         finally {
-            try {
-            	session.flush();
-            	tx.commit();
-            	session.close();
-            }
-            catch (Exception ex) {
-            	ex.printStackTrace();
-                throw new DaoException(ex);
-            }
+            if (session != null) session.close();
         }
 
-        System.out.println("The entity and all of its ancestors have been deleted.");
+        _logger.info("The entity and all of its ancestors have been deleted.");
         return true;
     }
 

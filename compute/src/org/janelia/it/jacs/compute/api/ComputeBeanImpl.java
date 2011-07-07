@@ -23,10 +23,18 @@
 
 package org.janelia.it.jacs.compute.api;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.*;
+
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+
 import org.apache.log4j.Logger;
-import org.hibernate.SQLQuery;
-import org.jboss.annotation.ejb.PoolClass;
-import org.jboss.annotation.ejb.TransactionTimeout;
+import org.hibernate.*;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
@@ -50,15 +58,8 @@ import org.janelia.it.jacs.model.user_data.reversePsiBlast.ReversePsiBlastDataba
 import org.janelia.it.jacs.model.user_data.tools.GenericServiceDefinitionNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.MailHelper;
-
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.*;
+import org.jboss.annotation.ejb.PoolClass;
+import org.jboss.annotation.ejb.TransactionTimeout;
 
 /**
  * This class implements service calls used by remote clients of Compute server.  It also contains service
@@ -153,6 +154,31 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
 
     public User getUserByName(String name) {
         return computeDAO.getUserByName(name);
+    }
+    
+    public void removePreferenceCategory(String categoryName) throws DaoException {
+
+        Session session = null;
+        Transaction tx = null;
+        
+        try {
+            session = computeDAO.getCurrentSession();
+            tx = session.beginTransaction();
+            // Hard coding SQL is bad, but Hibernate doesn't make it easy to delete from a component map
+    		Query query = session.createSQLQuery("delete from user_preference_map where category='"+categoryName+"'");
+    		int num = query.executeUpdate();
+        	logger.info("Deleted "+num+" preferences in category "+categoryName);
+        	session.flush();
+            tx.commit();
+        }
+        catch (Exception e) {
+        	tx.rollback();
+        	logger.error("Error trying to remove preference category "+categoryName,e);
+            throw new DaoException(e);
+        }
+        finally {
+        	if (session != null) session.close();
+        }
     }
 
     public Node getBlastDatabaseFileNodeByName(String name) {

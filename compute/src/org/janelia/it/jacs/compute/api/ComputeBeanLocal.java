@@ -51,6 +51,7 @@ public interface ComputeBeanLocal {
      public Task saveOrUpdateTask(Task task) throws DaoException;
      public String[] getTaskStatus(long taskId) throws DaoException;
      public User getUserByName(String name);
+     public void removePreferenceCategory(String categoryName) throws DaoException;
      public boolean buildUserFilestoreDirectory(String userLoginName);
      public Event saveEvent(Long taskId, String eventType, String description, Date timestamp) throws DaoException;
      public void setTaskNote(long taskId, String note) throws DaoException;

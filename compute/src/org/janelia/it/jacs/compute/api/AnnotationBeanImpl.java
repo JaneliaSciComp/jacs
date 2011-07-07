@@ -243,7 +243,11 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         try {
             session = _annotationDAO.getCurrentSession();
             tx = session.beginTransaction();
-            return cloneEntityTree(tx, sourceRoot, targetUser, targetRootName, true);
+            Entity cloned = cloneEntityTree(tx, sourceRoot, targetUser, targetRootName, true);
+        	session.flush();
+            tx.commit();
+            return cloned;
+            
         }
         catch (Exception e) {
         	tx.rollback();
@@ -251,15 +255,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             throw new DaoException(e);
         }
         finally {
-            try {
-            	session.flush();
-                tx.commit();
-            	session.close();
-            }
-            catch (Exception ex) {
-                _logger.error("Error trying to clone the Ontology ("+sourceRoot.getId()+")",ex);
-                throw new DaoException(ex);
-            }
+            if (session != null) session.close();
         }
     }
 
@@ -308,6 +304,9 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             EntityData publicEd = newData(clonedEntity, EntityConstants.ATTRIBUTE_IS_PUBLIC, sourceRoot.getUser());
             publicEd.setValue("true");
             _annotationDAO.saveOrUpdate(publicEd);
+
+        	session.flush();
+            tx.commit();
             
             return clonedEntity;
         }
@@ -317,15 +316,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             throw new DaoException(e);
         }
         finally {
-            try {
-            	session.flush();
-                tx.commit();
-            	session.close();
-            }
-            catch (Exception ex) {
-                _logger.error("Error trying to clone the Ontology ("+sourceRoot.getId()+")",ex);
-                throw new DaoException(ex);
-            }
+            if (session != null) session.close();
         }
     }
     
@@ -345,6 +336,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             return query.list();
         }
         catch (Exception e) {
+            _logger.error("Error trying to get public ontologies",e);
             throw new DaoException(e, "getPrivateOntologies");
         }
     }
@@ -369,6 +361,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             return query.list();
         }
         catch (Exception e) {
+            _logger.error("Error trying to get private ontologies for "+userLogin,e);
             throw new DaoException(e, "getPrivateOntologies");
         }
     }

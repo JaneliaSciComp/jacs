@@ -66,6 +66,7 @@ public interface ComputeBeanRemote {
     public void setTaskNote(long taskId, String note) throws DaoException;
     public void addTaskNote(long taskId, String note) throws DaoException;
     public User getUserByName(String name) throws RemoteException;
+    public void removePreferenceCategory(String categoryName) throws DaoException;
     public Event saveEvent(Long taskId, String eventType, String description, Date timestamp) throws DaoException, RemoteException;
     public void genericSave(Object object) throws DaoException, RemoteException;
     public Object genericLoad(Class c, Long id) throws DaoException, RemoteException;
