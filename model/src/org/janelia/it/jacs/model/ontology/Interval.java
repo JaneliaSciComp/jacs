@@ -25,8 +25,8 @@ public class Interval extends OntologyTermType {
     }
 
     public void init(Entity entity) {
-        String lowerBoundStr = entity.getValueByAttributeName(EntityConstants.ATTR_NAME_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER);
-        String upperBoundStr = entity.getValueByAttributeName(EntityConstants.ATTR_NAME_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER);
+        String lowerBoundStr = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER);
+        String upperBoundStr = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER);
         init(lowerBoundStr, upperBoundStr);
     }
 

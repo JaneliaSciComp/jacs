@@ -237,32 +237,35 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
     public void setupEntityTypes() throws DaoException {
         try {
-
+            
             //========== Status ============
             createEntityStatus(EntityConstants.STATUS_DEPRECATED);
 
-        	System.out.println("Creating new entity attributes");
-            createEntityAttribute(EntityConstants.ATTR_NAME_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER);
-            createEntityAttribute(EntityConstants.ATTR_NAME_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER);
             //========== Attribute ============
             createEntityAttribute(EntityConstants.ATTRIBUTE_FILE_PATH);
             createEntityAttribute(EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT);
             createEntityAttribute(EntityConstants.ATTRIBUTE_COMMON_ROOT);
             createEntityAttribute(EntityConstants.ATTRIBUTE_ENTITY);
-            createEntityAttribute(EntityConstants.ATTR_NAME_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER);
-            createEntityAttribute(EntityConstants.ATTR_NAME_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER);
+            createEntityAttribute(EntityConstants.ATTRIBUTE_IS_PUBLIC);
+            createEntityAttribute(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER);
+            createEntityAttribute(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER);
 
             //========== Type ============
             Set<String> lsmAttributeNameSet = new HashSet<String>();
             lsmAttributeNameSet.add(EntityConstants.ATTRIBUTE_FILE_PATH);
             createEntityType(EntityConstants.TYPE_LSM_STACK, lsmAttributeNameSet);
-
+            
             Set<String> ontologyElementAttributeNameSet = new HashSet<String>();
             ontologyElementAttributeNameSet.add(EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT);
+            ontologyElementAttributeNameSet.add(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE);
+            ontologyElementAttributeNameSet.add(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER);
+            ontologyElementAttributeNameSet.add(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER);
             createEntityType(EntityConstants.TYPE_ONTOLOGY_ELEMENT, ontologyElementAttributeNameSet);
 
             Set<String> ontologyRootAttributeNameSet = new HashSet<String>();
             ontologyRootAttributeNameSet.add(EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT);
+            ontologyRootAttributeNameSet.add(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE);
+            ontologyRootAttributeNameSet.add(EntityConstants.ATTRIBUTE_IS_PUBLIC);
             createEntityType(EntityConstants.TYPE_ONTOLOGY_ROOT, ontologyRootAttributeNameSet);
 
             Set<String> folderAttributeNameSet = new HashSet<String>();

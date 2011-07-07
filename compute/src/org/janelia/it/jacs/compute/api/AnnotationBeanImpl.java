@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.api;
 
 import org.apache.log4j.Logger;
+import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
@@ -142,17 +143,13 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
 
     public Entity createOntologyRoot(String userLogin, String rootName) {
         try {
-            preloadData();
-
             User tmpUser = _computeDAO.getUserByName(userLogin);
-            EntityType tmpType = entityByName.get(EntityConstants.TYPE_NAME_ONTOLOGY_ROOT);
-            Entity newOntologyRoot = new Entity(null, rootName, tmpUser, null, tmpType, new Date(), new Date(), null);
+            Entity newOntologyRoot = newEntity(EntityConstants.TYPE_ONTOLOGY_ROOT, rootName, tmpUser);
             _annotationDAO.saveOrUpdate(newOntologyRoot);
 
             // Add the type
-            EntityAttribute ontologyTypeAttribute = attrByName.get(EntityConstants.ATTR_NAME_ONTOLOGY_TERM_TYPE);
-            EntityData termData = new EntityData(null, ontologyTypeAttribute, newOntologyRoot, null,
-                    tmpUser, Category.class.getSimpleName(), new Date(), new Date(), null);
+            EntityData termData = newData(newOntologyRoot, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE, tmpUser);
+            termData.setValue(Category.class.getSimpleName());
             _annotationDAO.saveOrUpdate(termData);
 
             return newOntologyRoot;
@@ -165,17 +162,12 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
 
     public Entity createOntologyTerm(String userLogin, String ontologyTermParentId, String termName, OntologyTermType type, Integer orderIndex) {
         try {
-            preloadData();
-
             User tmpUser = _computeDAO.getUserByName(userLogin);
-            EntityType tmpElementType = entityByName.get(EntityConstants.TYPE_NAME_ONTOLOGY_ELEMENT);
 
             // Create and save the new entity
-            Entity newOntologyElement = new Entity(null, termName, tmpUser, null, tmpElementType, new Date(), new Date(), null);
+            Entity newOntologyElement = newEntity(EntityConstants.TYPE_ONTOLOGY_ELEMENT, termName, tmpUser);
             _annotationDAO.saveOrUpdate(newOntologyElement);
 
-            // Associate the entity to the parent
-            EntityAttribute ontologyElementAttribute = attrByName.get(EntityConstants.ATTR_NAME_ONTOLOGY_ELEMENT);
             Entity parentOntologyElement = _annotationDAO.getEntityById(ontologyTermParentId);
             
             // If no order index is given then we add in last place
@@ -186,29 +178,29 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             	}
             	orderIndex = max + 1;
             }
-            
-            EntityData newData = new EntityData(null, ontologyElementAttribute, parentOntologyElement, newOntologyElement,
-                    tmpUser,  null, new Date(), new Date(), orderIndex);
-            _annotationDAO.saveOrUpdate(newData);
+
+            // Associate the entity to the parent
+            EntityData childData = newData(parentOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT, tmpUser);
+            childData.setChildEntity(newOntologyElement);
+            childData.setOrderIndex(orderIndex);
+            _annotationDAO.saveOrUpdate(childData);
 
             // Add the type
-            EntityAttribute ontologyTypeAttribute = attrByName.get(EntityConstants.ATTR_NAME_ONTOLOGY_TERM_TYPE);
-            EntityData termData = new EntityData(null, ontologyTypeAttribute, newOntologyElement, null,
-                    tmpUser,  type.getClass().getSimpleName(), new Date(), new Date(), null);
+            EntityData termData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE, tmpUser);
+            termData.setValue(type.getClass().getSimpleName());
             _annotationDAO.saveOrUpdate(termData);
 
             // Add the type-specific parameters
             if (type instanceof Interval) {
 
                 Interval interval = (Interval)type;
-                EntityAttribute intervalLowerAttribute = attrByName.get(EntityConstants.ATTR_NAME_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER);
-                EntityData lowerData = new EntityData(null, intervalLowerAttribute, newOntologyElement, null,
-                        tmpUser, interval.getLowerBound().toString(), new Date(), new Date(), null);
+
+                EntityData lowerData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER, tmpUser);
+                lowerData.setValue(interval.getLowerBound().toString());
                 _annotationDAO.saveOrUpdate(lowerData);
 
-                EntityAttribute intervalUpperAttribute = attrByName.get(EntityConstants.ATTR_NAME_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER);
-                EntityData upperData = new EntityData(null, intervalUpperAttribute, newOntologyElement, null,
-                        tmpUser, interval.getUpperBound().toString(), new Date(), new Date(), null);
+                EntityData upperData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER, tmpUser);
+                lowerData.setValue(interval.getUpperBound().toString());
                 _annotationDAO.saveOrUpdate(upperData);
             }
             
@@ -240,20 +232,17 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
    
     public Entity cloneEntityTree(Entity sourceRoot, String targetUserLogin, String targetRootName) throws DaoException {
 
-        Session session = _annotationDAO.getCurrentSession();
-        Transaction tx = session.beginTransaction();
-
-        if (null == sourceRoot) {
-            throw new DaoException("Cannot find the source ontology.");
-        }
-
         User targetUser = _annotationDAO.getUserByName(targetUserLogin);
-
         if (targetUser == null) {
             throw new DaoException("Cannot find the target user.");
         }
 
+        Session session = null;
+        Transaction tx = null;
+        
         try {
+            session = _annotationDAO.getCurrentSession();
+            tx = session.beginTransaction();
             return cloneEntityTree(tx, sourceRoot, targetUser, targetRootName, true);
         }
         catch (Exception e) {
@@ -274,10 +263,11 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
     }
 
+	// TODO: detect cycles
     private Entity cloneEntityTree(Transaction tx, Entity source, User targetUser, String targetName, boolean isRoot) throws DaoException {
 
-    	// TODO: detect cycles
-
+        EntityAttribute tmpAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_IS_PUBLIC);
+        
         // Create new ontology element
         Entity newOntologyElement = new Entity(null, targetName, targetUser, null, source.getEntityType(), new Date(), new Date(), null);
     	_annotationDAO.saveOrUpdate(newOntologyElement);
@@ -285,6 +275,9 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         // Add the children 
     	for(EntityData ed : source.getEntityData()) {
 
+    		// Never clone "Is Public" attributes. Entities are cloned privately. 
+    		if (ed.getEntityAttribute().getId().equals(tmpAttr.getId())) continue;
+    		
     		Entity newChildEntity = null;
     		Entity childEntity = ed.getChildEntity();
     		if (childEntity != null) {
@@ -300,21 +293,92 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     	return newOntologyElement;
     }
     
+    public Entity publishOntology(Entity sourceRoot, String targetRootName) throws DaoException {
+
+        Session session = null;
+        Transaction tx = null;
+
+        try {
+            session = _annotationDAO.getCurrentSession();
+            tx = session.beginTransaction();
+            
+            Entity clonedEntity = cloneEntityTree(tx, sourceRoot, sourceRoot.getUser(), targetRootName, true);
+
+            // Add the public tag
+            EntityData publicEd = newData(clonedEntity, EntityConstants.ATTRIBUTE_IS_PUBLIC, sourceRoot.getUser());
+            publicEd.setValue("true");
+            _annotationDAO.saveOrUpdate(publicEd);
+            
+            return clonedEntity;
+        }
+        catch (Exception e) {
+        	tx.rollback();
+            _logger.error("Error trying to clone the Ontology ("+sourceRoot.getId()+")",e);
+            throw new DaoException(e);
+        }
+        finally {
+            try {
+            	session.flush();
+                tx.commit();
+            	session.close();
+            }
+            catch (Exception ex) {
+                _logger.error("Error trying to clone the Ontology ("+sourceRoot.getId()+")",ex);
+                throw new DaoException(ex);
+            }
+        }
+    }
+    
+    public List<Entity> getPublicOntologies() throws DaoException {
+
+        try {
+            EntityType tmpType = getEntityTypeByName(EntityConstants.TYPE_ONTOLOGY_ROOT);
+            EntityAttribute tmpAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_IS_PUBLIC);
+            
+            StringBuffer hql = new StringBuffer("select clazz from Entity clazz");
+            hql.append(" where clazz.entityType.id=?");
+            hql.append(" and exists (from EntityData as attr where attr.parentEntity = clazz and attr.entityAttribute.id = ?)");
+            if (_logger.isDebugEnabled()) _logger.debug("hql=" + hql);
+            Query query = _annotationDAO.getCurrentSession().createQuery(hql.toString());
+            query.setLong(0, tmpType.getId());
+            query.setLong(1, tmpAttr.getId());
+            return query.list();
+        }
+        catch (Exception e) {
+            throw new DaoException(e, "getPrivateOntologies");
+        }
+    }
+    
+    public List<Entity> getPrivateOntologies(String userLogin) throws DaoException {
+    	
+        try {
+            EntityType tmpType = getEntityTypeByName(EntityConstants.TYPE_ONTOLOGY_ROOT);
+            EntityAttribute tmpAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_IS_PUBLIC);
+            
+            StringBuffer hql = new StringBuffer("select clazz from Entity clazz");
+            hql.append(" where clazz.entityType.id=?");
+            if (null != userLogin) {
+                hql.append(" and clazz.user.userLogin=?");
+            }
+            hql.append(" and not exists (from EntityData as attr where attr.parentEntity = clazz and attr.entityAttribute.id = ?)");
+            if (_logger.isDebugEnabled()) _logger.debug("hql=" + hql);
+            Query query = _annotationDAO.getCurrentSession().createQuery(hql.toString());
+            query.setLong(0, tmpType.getId());
+            query.setString(1, userLogin);
+            query.setLong(2, tmpAttr.getId());
+            return query.list();
+        }
+        catch (Exception e) {
+            throw new DaoException(e, "getPrivateOntologies");
+        }
+    }
+    
     public Entity saveOrUpdateEntity(Entity entity) {
         try {
             _annotationDAO.saveOrUpdate(entity);
             return entity;
         } catch (DaoException e) {
             _logger.error("Error trying to save or update Entity");
-        }
-        return null;
-    }
-
-    public EntityType getEntityTypeByName(String name) {
-        try {
-            return _annotationDAO.getEntityTypeByName(name);
-        } catch (DaoException e) {
-            _logger.error("Error trying to get EntityType by name = " + name);
         }
         return null;
     }
@@ -433,4 +497,23 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         return null;
     }
 
+    public EntityType getEntityTypeByName(String entityTypeName) {
+    	preloadData();
+        return entityByName.get(entityTypeName);	
+    }
+    
+    public EntityAttribute getEntityAttributeByName(String attrName) {
+    	preloadData();
+        return attrByName.get(attrName);	
+    }
+    
+    private Entity newEntity(String entityTypeName, String value, User owner) {
+        EntityType tmpType = getEntityTypeByName(entityTypeName);
+        return new Entity(null, value, owner, null, tmpType, new Date(), new Date(), null);	
+    }
+    
+    private EntityData newData(Entity parent, String attrName, User owner) {
+        EntityAttribute ontologyTypeAttribute = getEntityAttributeByName(attrName);
+        return new EntityData(null, ontologyTypeAttribute, parent, null, owner, null, new Date(), new Date(), null);
+    }
 }

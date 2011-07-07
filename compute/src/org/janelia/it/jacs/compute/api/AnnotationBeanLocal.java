@@ -38,6 +38,9 @@ public interface AnnotationBeanLocal {
     public Entity createOntologyRoot(String userLogin, String rootName);
     public boolean removeOntologyTerm(String userLogin, String ontologyTermId);
     public Entity cloneEntityTree(Entity sourceRoot, String targetUserLogin, String targetRootName) throws DaoException;
+    public Entity publishOntology(Entity sourceRoot, String targetRootName) throws DaoException;
+    public List<Entity> getPublicOntologies() throws DaoException;
+    public List<Entity> getPrivateOntologies(String userLogin) throws DaoException;
     
     public void setupEntityTypes();
 

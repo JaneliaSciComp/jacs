@@ -16,7 +16,7 @@ public interface AnnotationBeanRemote {
 
     public Entity saveOrUpdateEntity(Entity entity);
     public EntityType getEntityTypeByName(String name);
-    public java.util.List<Entity> getUserEntitiesByType(String userLogin, long entityTypeId);
+    public List<Entity> getUserEntitiesByType(String userLogin, long entityTypeId);
     public Set<Entity> getEntitiesByName(String name);
     public Entity getEntityById(String targetId);
     public Entity getUserEntityById(String userLogin, long entityId);
@@ -38,6 +38,9 @@ public interface AnnotationBeanRemote {
     public Entity createOntologyRoot(String userLogin, String rootName);
     public boolean removeOntologyTerm(String userLogin, String ontologyTermId);
     public Entity cloneEntityTree(Entity sourceRoot, String targetUserLogin, String targetRootName) throws DaoException;
+    public Entity publishOntology(Entity sourceRoot, String targetRootName) throws DaoException;
+    public List<Entity> getPublicOntologies() throws DaoException;
+    public List<Entity> getPrivateOntologies(String userLogin) throws DaoException;
     
     public void setupEntityTypes();
 }
