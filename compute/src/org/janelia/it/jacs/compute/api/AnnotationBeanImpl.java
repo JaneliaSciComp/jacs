@@ -24,7 +24,7 @@ import java.util.*;
 @Stateless(name = "AnnotationEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 1, timeout = 10000)
+@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 15, timeout = 10000)
 public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRemote {
 	
     private Logger _logger = Logger.getLogger(this.getClass());
@@ -39,6 +39,8 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     private final Map<String, EntityType> entityByName = new HashMap<String, EntityType>();
     private final Map<String, EntityAttribute> attrByName = new HashMap<String, EntityAttribute>();
 
+    // TODO: This is not great because it has to preload for each instance in the pool. 
+    // It would be better to have a global cache, but how to do it without Singleton beans from EJB 3.1?
     private void preloadData() {
 
         try {
