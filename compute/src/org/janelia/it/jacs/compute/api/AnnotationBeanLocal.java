@@ -1,22 +1,23 @@
 package org.janelia.it.jacs.compute.api;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import javax.ejb.Local;
+
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.ontology.OntologyTermType;
 
-import javax.ejb.Local;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
 @Local
 public interface AnnotationBeanLocal {
 
     public Entity saveOrUpdateEntity(Entity entity);
     public EntityType getEntityTypeByName(String name);
-    public java.util.List<Entity> getUserEntitiesByType(String userLogin, long entityTypeId);
+    public List<Entity> getUserEntitiesByType(String userLogin, long entityTypeId);
     public Set<Entity> getEntitiesByName(String name);
     public Entity getEntityById(String targetId);
     public Entity getUserEntityById(String userLogin, long entityId);
@@ -41,7 +42,11 @@ public interface AnnotationBeanLocal {
     public Entity publishOntology(Entity sourceRoot, String targetRootName) throws DaoException;
     public List<Entity> getPublicOntologies() throws DaoException;
     public List<Entity> getPrivateOntologies(String userLogin) throws DaoException;
-    
+
+	public Entity createOntologyAnnotation(String userLogin, String sessionId, String targetEntityId,
+			String keyEntityId, String keyString, String valueEntityId, String valueString, String tag)
+			throws DaoException;
+
     public void setupEntityTypes();
 
 }

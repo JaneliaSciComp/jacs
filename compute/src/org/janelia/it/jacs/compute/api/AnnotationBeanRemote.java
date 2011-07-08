@@ -41,6 +41,10 @@ public interface AnnotationBeanRemote {
     public Entity publishOntology(Entity sourceRoot, String targetRootName) throws DaoException;
     public List<Entity> getPublicOntologies() throws DaoException;
     public List<Entity> getPrivateOntologies(String userLogin) throws DaoException;
-    
+
+	public Entity createOntologyAnnotation(String userLogin, String sessionId, String targetEntityId,
+			String keyEntityId, String keyString, String valueEntityId, String valueString, String tag)
+			throws DaoException;
+
     public void setupEntityTypes();
 }

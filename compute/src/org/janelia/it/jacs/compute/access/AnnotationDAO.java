@@ -243,6 +243,13 @@ public class AnnotationDAO extends ComputeBaseDAO {
             createEntityAttribute(EntityConstants.ATTRIBUTE_IS_PUBLIC);
             createEntityAttribute(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER);
             createEntityAttribute(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER);
+            createEntityAttribute(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
+            createEntityAttribute(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_TERM);
+            createEntityAttribute(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_ROOT_ID);
+            createEntityAttribute(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_ENTITY_ID);
+            createEntityAttribute(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM);
+            createEntityAttribute(EntityConstants.ATTRIBUTE_ANNOTATION_SESSION_ID);
+            createEntityAttribute(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
 
             //========== Type ============
             Set<String> lsmAttributeNameSet = new HashSet<String>();

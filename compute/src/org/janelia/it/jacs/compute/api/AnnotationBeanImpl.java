@@ -367,7 +367,77 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             throw new DaoException(e, "getPrivateOntologies");
         }
     }
-    
+
+	public Entity createOntologyAnnotation(String userLogin, String sessionId, String targetEntityId, String keyEntityId, String keyString,
+			String valueEntityId, String valueString, String tag) throws DaoException {
+
+        try {
+        	// TODO: enable this sanity check
+//        	Entity targetEntity = getEntityById(targetEntityId);
+//        	if (targetEntity == null) {
+//        		throw new IllegalArgumentException("Target entity with id="+targetEntityId+" not found");
+//        	}
+        	
+            User tmpUser = _computeDAO.getUserByName(userLogin);
+        	if (tmpUser == null) {
+        		throw new IllegalArgumentException("User "+userLogin+" not found");
+        	}
+        	
+            Entity newAnnotation = newEntity(EntityConstants.TYPE_ANNOTATION, tag, tmpUser);
+            _annotationDAO.saveOrUpdate(newAnnotation);
+
+			// Add the target id
+			EntityData targetIdData = newData(newAnnotation, 
+					EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID, tmpUser);
+			targetIdData.setValue(targetEntityId);
+			_annotationDAO.saveOrUpdate(targetIdData);
+				
+			// Add the key string
+			EntityData keyData = newData(newAnnotation,
+					EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_TERM, tmpUser);
+			keyData.setValue(keyString);
+			_annotationDAO.saveOrUpdate(keyData);
+
+			// Add the value string
+			EntityData valueData = newData(newAnnotation,
+					EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM, tmpUser);
+			valueData.setValue(valueString);
+			_annotationDAO.saveOrUpdate(valueData);
+			
+			// Add the key entity
+            if (keyEntityId != null) {
+            	Entity keyEntity = getEntityById(keyEntityId);
+				EntityData keyEntityData = newData(newAnnotation,
+						EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID, tmpUser);
+				keyEntityData.setChildEntity(keyEntity);
+				_annotationDAO.saveOrUpdate(keyEntityData);
+            }
+
+			// Add the value entity
+            if (valueEntityId != null) {
+            	Entity valueEntity = getEntityById(valueEntityId);
+				EntityData valueEntityData = newData(newAnnotation,
+						EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_ENTITY_ID, tmpUser);
+				valueEntityData.setChildEntity(valueEntity);
+				_annotationDAO.saveOrUpdate(valueEntityData);
+            }
+            
+			// Add the session id
+            if (sessionId != null) {
+				EntityData sessionIdData = newData(newAnnotation,
+						EntityConstants.ATTRIBUTE_ANNOTATION_SESSION_ID, tmpUser);
+				sessionIdData.setValue(sessionId);
+				_annotationDAO.saveOrUpdate(sessionIdData);
+            }
+            
+            return newAnnotation;
+        }
+        catch (Exception e) {
+            _logger.error("Error trying to create a new Ontology Annotation for user "+userLogin,e);
+            throw new DaoException(e, "createOntologyAnnotation");
+        }
+	}
+
     public Entity saveOrUpdateEntity(Entity entity) {
         try {
             _annotationDAO.saveOrUpdate(entity);
