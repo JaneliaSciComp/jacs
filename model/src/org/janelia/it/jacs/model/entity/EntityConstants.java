@@ -48,7 +48,10 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER   = "Ontology Term Type Interval Upper Bound";
     public static final String ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID   = "Annotation Ontology Key Entity Id";
     public static final String ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_ENTITY_ID = "Annotation Ontology Value Entity Id";
+    public static final String ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_TERM        = "Annotation Ontology Key Term";
+    public static final String ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM      = "Annotation Ontology Value Term";
     public static final String ATTRIBUTE_ANNOTATION_ONTOLOGY_ROOT_ID         = "Annotation Ontology Root Id";
+    public static final String ATTRIBUTE_ANNOTATION_TARGET_ID                = "Annotation Target Id";
     public static final String ATTRIBUTE_ANNOTATION_SESSION_ID               = "Annotation Session Id";
     public static final String ATTRIBUTE_INPUT                               = "ATTRIBUTE_INPUT";
     
