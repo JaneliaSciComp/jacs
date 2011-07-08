@@ -112,6 +112,8 @@ public class NeuronSeparationPipelineService implements IService {
                     initEntity(tif3D, result.getAbsolutePath());
                 } else if (result.getName().equals("ConsolidatedLabel.tif")) {
                     initEntity(tif3DLabel, result.getAbsolutePath());
+                } else if (result.getName().equals("Reference.tif")) {
+                    initEntity(tif3D, result.getAbsolutePath());
                 } else if (result.getName().startsWith("neuronSeparatorPipeline.PR.neuron") && result.getName().endsWith(".tif")) {
                     initEntity(tif2D, result.getAbsolutePath());
                 } else if (result.getName().equals("lsmFilePaths.txt")) {
