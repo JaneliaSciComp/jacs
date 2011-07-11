@@ -506,6 +506,10 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
         return null;
     }
+    
+    public Entity getEntityTree(Long id) {
+    	return populateDescendants(getEntityById(id.toString()));
+    }
 
     public Entity getUserEntityById(String userLogin, long entityId) {
         try {
@@ -549,7 +553,6 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             for (Entity entity : tmpList) {
                 for (EntityData entityData : entity.getEntityData()) {
                     if (EntityConstants.ATTRIBUTE_COMMON_ROOT.equals(entityData.getEntityAttribute().getName())) {
-                    	populateDescendants(entity);
                         returnList.add(entity);
                         break;
                     }

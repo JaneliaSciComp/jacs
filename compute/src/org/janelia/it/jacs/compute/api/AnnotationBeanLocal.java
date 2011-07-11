@@ -20,6 +20,7 @@ public interface AnnotationBeanLocal {
     public List<Entity> getUserEntitiesByType(String userLogin, long entityTypeId);
     public Set<Entity> getEntitiesByName(String name);
     public Entity getEntityById(String targetId);
+    public Entity getEntityTree(Long id);
     public Entity getUserEntityById(String userLogin, long entityId);
     public boolean deleteEntityById(Long entityId);
     public Set<Entity> getParentEntities(long entityId);
