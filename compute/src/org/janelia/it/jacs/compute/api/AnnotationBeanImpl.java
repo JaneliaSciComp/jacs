@@ -138,7 +138,25 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
         return null;
     }
+    
+    public Entity getFolderTree(Long id) throws DaoException {
 
+        try {
+            Entity root = getEntityById(id.toString());
+            if (root == null) return null;
+
+            if (root.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+            	throw new DaoException("Entity (id="+id+") is not a folder");
+            }
+            
+            return populateDescendants(root);
+        }
+        catch (Exception e) {
+            _logger.error("Error trying to get public ontologies",e);
+            throw new DaoException(e, "getPrivateOntologies");
+        }
+    }
+    
     /**
      * Ontology Section
      */
@@ -232,8 +250,13 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         return false;
     }
    
-    public Entity cloneEntityTree(Entity sourceRoot, String targetUserLogin, String targetRootName) throws DaoException {
+    public Entity cloneEntityTree(Long sourceRootId, String targetUserLogin, String targetRootName) throws DaoException {
 
+    	Entity sourceRoot = getEntityById(sourceRootId.toString());    	
+    	if (sourceRoot == null) {
+    		throw new DaoException("Cannot find the source root.");
+    	}
+    	
         User targetUser = _annotationDAO.getUserByName(targetUserLogin);
         if (targetUser == null) {
             throw new DaoException("Cannot find the target user.");
@@ -291,8 +314,13 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     	return newOntologyElement;
     }
     
-    public Entity publishOntology(Entity sourceRoot, String targetRootName) throws DaoException {
+    public Entity publishOntology(Long sourceRootId, String targetRootName) throws DaoException {
 
+    	Entity sourceRoot = getEntityById(sourceRootId.toString());    	
+    	if (sourceRoot == null) {
+    		throw new DaoException("Cannot find the source root.");
+    	}
+    	
         Session session = null;
         Transaction tx = null;
 
@@ -321,6 +349,27 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             if (session != null) session.close();
         }
     }
+
+    public Entity getOntologyTree(String userLogin, Long id) throws DaoException {
+
+        try {
+            Entity root = getEntityById(id.toString());
+            if (root == null) return null;
+
+            if (!root.getUser().getUserLogin().equals(userLogin)) {
+            	if (root.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PUBLIC) == null) {
+            		throw new DaoException("User '"+userLogin+"' does not have access to this private ontology");
+            	}
+            }
+            
+            return populateDescendants(root);
+        }
+        catch (Exception e) {
+            _logger.error("Error trying to get public ontologies",e);
+            throw new DaoException(e, "getPrivateOntologies");
+        }
+    }
+    
     
     public List<Entity> getPublicOntologies() throws DaoException {
 
@@ -500,6 +549,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             for (Entity entity : tmpList) {
                 for (EntityData entityData : entity.getEntityData()) {
                     if (EntityConstants.ATTRIBUTE_COMMON_ROOT.equals(entityData.getEntityAttribute().getName())) {
+                    	populateDescendants(entity);
                         returnList.add(entity);
                         break;
                     }
@@ -580,5 +630,20 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     private EntityData newData(Entity parent, String attrName, User owner) {
         EntityAttribute ontologyTypeAttribute = getEntityAttributeByName(attrName);
         return new EntityData(null, ontologyTypeAttribute, parent, null, owner, null, new Date(), new Date(), null);
+    }
+    
+    /**
+     * Iterate recursively through all children in the Entity graph in order to preload them.
+     * @param entity
+     * @return
+     */
+    private Entity populateDescendants(Entity entity) {
+    	for(EntityData ed : entity.getEntityData()) {
+    		Entity child = ed.getChildEntity();
+    		if (child != null) {
+    			populateDescendants(child);
+    		}
+    	}
+    	return entity;
     }
 }

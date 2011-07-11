@@ -1,8 +1,5 @@
 package org.janelia.it.jacs.model.ontology;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 
@@ -13,8 +10,6 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
  */
 public class OntologyRoot extends OntologyElement {
 
-	private final Map<Long,OntologyElement> map = new HashMap<Long,OntologyElement>();
-	
 	private boolean isPublic;
 
 	public OntologyRoot(Entity entity) {
@@ -32,19 +27,5 @@ public class OntologyRoot extends OntologyElement {
 
 	public void setPublic(boolean isPublic) {
 		this.isPublic = isPublic;
-	}
-
-	public OntologyElement getElementById(Long id) {
-		if (map.isEmpty()) {
-			populateIdMap(this);
-		}
-		return map.get(id);
-	}
-	
-	private void populateIdMap(OntologyElement currNode) {
-		map.put(currNode.getId(), currNode);
-		for(OntologyElement child : currNode.getChildren()) {
-			populateIdMap(child);
-		}
 	}
 }

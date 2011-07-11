@@ -152,14 +152,6 @@ public class Entity  implements java.io.Serializable, IsSerializable {
 	}
 
 	/**
-	 * Returns the entity referenced by the given attribute, if it exists and there is only one.
-	 */
-	public Entity getEntityByAttributeName(String attributeName) {
-		EntityData ed = getEntityDataByAttributeName(attributeName);
-		return ed.getChildEntity();
-	}
-
-	/**
 	 * Returns the value of the given attribute, if it exists and there is only one.
 	 */
 	public String getValueByAttributeName(String attributeName) {

@@ -6,7 +6,7 @@
 				   package="org.janelia.it.jacs.model.entity"
                    >
     <class name="Entity" table="entity">
-        <id name="id" access="field" column="id" type="java.lang.Long">
+        <id name="id" column="id" type="java.lang.Long">
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
         </id>
         <many-to-one name="user" class="org.janelia.it.jacs.model.user_data.User" column="user_id" not-null="true" lazy="false"/>

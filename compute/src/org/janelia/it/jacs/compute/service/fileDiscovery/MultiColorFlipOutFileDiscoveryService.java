@@ -1,27 +1,26 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
-import org.apache.xerces.impl.dv.dtd.ENTITYDatatypeValidator;
-import org.janelia.it.jacs.compute.access.DaoException;
+import java.io.File;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
-import org.janelia.it.jacs.model.entity.*;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.fileDiscovery.MultiColorFlipOutFileDiscoveryTask;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
-import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
-import org.janelia.it.jacs.model.user_data.neuronSeparator.NeuronSeparatorResultNode;
-
-import java.io.File;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -102,8 +101,11 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         }
         if (topLevelFolders!=null && topLevelFolders.size()==1) {
             topLevelFolder = topLevelFolders.iterator().next();
+            // This is the folder we want, now load the entire folder hierarchy
+            topLevelFolder = annotationBean.getFolderTree(topLevelFolder.getId());
             logger.info("Found existing topLevelFolder, name=" + topLevelFolder.getName());
-        } else if (topLevelFolders==null || topLevelFolders.size()==0) {
+        } 
+        else if (topLevelFolders==null || topLevelFolders.size()==0) {
             logger.info("Creating new topLevelFolder with name="+topLevelFolderName);
             topLevelFolder=new Entity();
             Date createDate = new Date();

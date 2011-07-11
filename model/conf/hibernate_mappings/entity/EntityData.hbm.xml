@@ -6,16 +6,16 @@
 				   package="org.janelia.it.jacs.model.entity"
                    >
     <class name="EntityData" table="entityData" >
-        <id name="id" access="field" column="id" type="java.lang.Long">
+        <id name="id" column="id" type="java.lang.Long">
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
         </id>
         <many-to-one name="entityAttribute" class="EntityAttribute" cascade="none" fetch="select" not-null="true" lazy="false">
             <column name="entity_att_id" length="60" />
         </many-to-one>
-        <many-to-one name="parentEntity" class="Entity" cascade="none" fetch="select" lazy="false">
+        <many-to-one name="parentEntity" class="Entity" cascade="none" fetch="select" lazy="proxy">
             <column name="parent_entity_id" length="60" />
         </many-to-one>
-        <many-to-one name="childEntity" class="Entity" cascade="none" fetch="select" lazy="false">
+        <many-to-one name="childEntity" class="Entity" cascade="none" fetch="select" lazy="proxy">
             <column name="child_entity_id" length="60" />
         </many-to-one>
         <many-to-one name="user" class="org.janelia.it.jacs.model.user_data.User" cascade="none" fetch="select" lazy="false">

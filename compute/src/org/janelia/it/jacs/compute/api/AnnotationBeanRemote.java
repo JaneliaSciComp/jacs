@@ -33,12 +33,14 @@ public interface AnnotationBeanRemote {
     public void editAnnotation(String owner, String uniqueIdentifier, String namespace, String term, String value,
                                String comment, String conditional);
     public List<Entity> getEntitiesWithFilePath(String filePath);
-
+    public Entity getFolderTree(Long id) throws DaoException;
+    
     public Entity createOntologyTerm(String userLogin, String ontologyTermParentId, String termName, OntologyElementType type, Integer orderIndex);
     public Entity createOntologyRoot(String userLogin, String rootName);
     public boolean removeOntologyTerm(String userLogin, String ontologyTermId);
-    public Entity cloneEntityTree(Entity sourceRoot, String targetUserLogin, String targetRootName) throws DaoException;
-    public Entity publishOntology(Entity sourceRoot, String targetRootName) throws DaoException;
+    public Entity cloneEntityTree(Long sourceRootId, String targetUserLogin, String targetRootName) throws DaoException;
+    public Entity publishOntology(Long sourceRootId, String targetRootName) throws DaoException;
+    public Entity getOntologyTree(String userLogin, Long id) throws DaoException;
     public List<Entity> getPublicOntologies() throws DaoException;
     public List<Entity> getPrivateOntologies(String userLogin) throws DaoException;
 

@@ -24,7 +24,7 @@ public class OntologyElement {
     // Derived properties
     private String name;
     private OntologyElementType type;
-    private List<OntologyElement> children = new ArrayList<OntologyElement>();
+    private List<OntologyElement> children;
     
 	public OntologyElement(Entity entity, OntologyElement parentElement) {
 		this.entity = entity;
@@ -39,11 +39,6 @@ public class OntologyElement {
         if (typeName != null) {
             type = OntologyElementType.createTypeByName(typeName);
             if (type != null) type.init(entity);
-        }
-        
-        for(EntityData ed : entity.getList(EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT)) {
-        	Entity child = ed.getChildEntity();
-        	if (child != null) children.add(new OntologyElement(child, this));
         }
         
 	}
@@ -72,7 +67,30 @@ public class OntologyElement {
 		return type;
 	}
 	
+	/**
+	 * This method allows for testing to see if there are children, before loading them.
+	 * @return
+	 */
+	public boolean hasChildren() {
+        for(EntityData ed : entity.getList(EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT)) {
+        	Entity child = ed.getChildEntity();
+        	if (child != null) return true;
+        }
+        return false;
+	}
+	
+	/**
+	 * Returns the child elements. Before calling this method, the underlying children entities must have been loaded.
+	 * @return
+	 */
 	public List<OntologyElement> getChildren() {
+        if (children == null) {
+        	children = new ArrayList<OntologyElement>();
+            for(EntityData ed : entity.getList(EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT)) {
+            	Entity child = ed.getChildEntity();
+            	if (child != null) children.add(new OntologyElement(child, this));
+            }
+        }
 		return children;
 	}
 
@@ -88,4 +106,11 @@ public class OntologyElement {
     public int hashCode() {
         return entity.getId().hashCode();
     }
+
+	@Override
+	public String toString() {
+		return getName();
+	}
+    
+    
 }
