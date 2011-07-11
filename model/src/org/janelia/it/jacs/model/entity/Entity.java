@@ -234,7 +234,20 @@ public class Entity  implements java.io.Serializable, IsSerializable {
             return null;
         }
     }
-    
+
+	/**
+	 * Returns the an ordered list of EntityData objects with the given attribute name.
+	 */
+	public List<EntityData> getList(String attributeName) {
+		List<EntityData> matchingData = new ArrayList<EntityData>();
+		for (EntityData ed : getOrderedEntityData()) {
+			if (ed.getEntityAttribute().getName().matches(attributeName)) {
+				matchingData.add(ed);
+			}
+		}
+		return matchingData;
+	}
+	
     public List<EntityData> getOrderedEntityData() {
     	List<EntityData> orderedData = new ArrayList<EntityData>(getEntityData());
     	Collections.sort(orderedData, new Comparator<EntityData>() {

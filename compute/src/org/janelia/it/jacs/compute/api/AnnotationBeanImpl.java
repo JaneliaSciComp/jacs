@@ -9,9 +9,9 @@ import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.entity.*;
-import org.janelia.it.jacs.model.ontology.Category;
-import org.janelia.it.jacs.model.ontology.Interval;
-import org.janelia.it.jacs.model.ontology.OntologyTermType;
+import org.janelia.it.jacs.model.ontology.types.Category;
+import org.janelia.it.jacs.model.ontology.types.Interval;
+import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
 import org.janelia.it.jacs.model.user_data.User;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
@@ -162,7 +162,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         return null;
     }
 
-    public Entity createOntologyTerm(String userLogin, String ontologyTermParentId, String termName, OntologyTermType type, Integer orderIndex) {
+    public Entity createOntologyTerm(String userLogin, String ontologyTermParentId, String termName, OntologyElementType type, Integer orderIndex) {
         try {
             User tmpUser = _computeDAO.getUserByName(userLogin);
 

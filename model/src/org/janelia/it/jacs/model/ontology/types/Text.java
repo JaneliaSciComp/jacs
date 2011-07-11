@@ -4,24 +4,24 @@
  * Date: 6/22/11
  * Time: 6:10 PM
  */
-package org.janelia.it.jacs.model.ontology;
+package org.janelia.it.jacs.model.ontology.types;
 
 import org.janelia.it.jacs.model.entity.Entity;
 
 /**
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class Enum extends OntologyTermType {
+public class Text extends OntologyElementType {
 
     public void init(Entity entity) {
 
     }
     
     public boolean allowsChildren() {
-        return true;
+        return false;
     }
 
     public String getName() {
-    	return "Enumeration";
+    	return "Text";
     }
 }

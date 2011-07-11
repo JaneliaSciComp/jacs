@@ -4,21 +4,23 @@
  * Date: 6/27/11
  * Time: 10:03 AM
  */
-package org.janelia.it.jacs.model.ontology;
+package org.janelia.it.jacs.model.ontology.types;
 
 import org.janelia.it.jacs.model.entity.Entity;
 
 /**
+ * The type of an ontology element. 
+ * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public abstract class OntologyTermType implements java.io.Serializable {
+public abstract class OntologyElementType implements java.io.Serializable {
     
-    private static String ONTOLOGY_TERM_TYPES_PACKAGE = OntologyTermType.class.getPackage().getName();
+    private static String ONTOLOGY_TERM_TYPES_PACKAGE = OntologyElementType.class.getPackage().getName();
 
-    public static OntologyTermType createTypeByName(String className) {
+    public static OntologyElementType createTypeByName(String className) {
 
         try {
-            return (OntologyTermType)Class.forName(ONTOLOGY_TERM_TYPES_PACKAGE+"."+className).newInstance();
+            return (OntologyElementType)Class.forName(ONTOLOGY_TERM_TYPES_PACKAGE+"."+className).newInstance();
         }
         catch (Exception ex) {
             System.err.println("Could not instantiate term type: "+className);

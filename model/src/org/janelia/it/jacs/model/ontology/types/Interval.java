@@ -4,7 +4,7 @@
  * Date: 6/22/11
  * Time: 6:10 PM
  */
-package org.janelia.it.jacs.model.ontology;
+package org.janelia.it.jacs.model.ontology.types;
 
 import java.math.BigDecimal;
 
@@ -16,7 +16,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class Interval extends OntologyTermType {
+public class Interval extends OntologyElementType {
 
     private BigDecimal lowerBound;
     private BigDecimal upperBound;
