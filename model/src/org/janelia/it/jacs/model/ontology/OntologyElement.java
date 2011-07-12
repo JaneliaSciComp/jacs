@@ -29,10 +29,14 @@ public class OntologyElement {
 	public OntologyElement(Entity entity, OntologyElement parentElement) {
 		this.entity = entity;
 		this.parentElement = parentElement;
-		
-		// Derive additional properties which are mutable
-		// TODO: implement saving changes to these properties
-		
+		init();
+	}
+	
+	/**
+	 * This should be called whenever the underlying entity changes, so that the derived properties can be recomputed.
+	 */
+	public void init() {
+
 		this.name = entity.getName();
 
         String typeName = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE);
@@ -41,8 +45,20 @@ public class OntologyElement {
             if (type != null) type.init(entity);
         }
         
+        // Only reinitialize children if they've already been initialized already
+        if (children != null) {
+        	initChildren();
+        }
 	}
 
+	public void initChildren() {
+    	children = new ArrayList<OntologyElement>();
+        for(EntityData ed : entity.getList(EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT)) {
+        	Entity child = ed.getChildEntity();
+        	if (child != null) children.add(new OntologyElement(child, this));
+        }
+	}
+	
 	public Long getId() {
 		return entity.getId();
 	}
@@ -85,15 +101,34 @@ public class OntologyElement {
 	 */
 	public List<OntologyElement> getChildren() {
         if (children == null) {
-        	children = new ArrayList<OntologyElement>();
-            for(EntityData ed : entity.getList(EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT)) {
-            	Entity child = ed.getChildEntity();
-            	if (child != null) children.add(new OntologyElement(child, this));
-            }
+        	initChildren();
         }
 		return children;
 	}
 
+	/**
+	 * Remove the given child from both the underlying Entity and the derived OntologyElement model.
+	 * @param child
+	 */
+	public void removeChild(OntologyElement child) {
+		List<OntologyElement> children = getChildren();
+		children.remove(child);
+		
+		EntityData toDelete = null;
+		for(EntityData ed : entity.getEntityData()) {
+			if (ed.getChildEntity() != null && ed.getChildEntity().equals(child.getEntity())) {
+				toDelete = ed;
+			}
+		}
+		if (toDelete == null) {
+			System.out.println("Could not find EntityData to delete for "+child.getName());
+		}
+		else {
+			entity.getEntityData().remove(toDelete);
+		}
+		
+	}
+	
 	@Override
     public boolean equals(Object o) {
         if (this == o) return true;

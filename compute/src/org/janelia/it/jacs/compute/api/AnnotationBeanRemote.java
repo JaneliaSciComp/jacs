@@ -1,15 +1,16 @@
 package org.janelia.it.jacs.compute.api;
 
-import org.janelia.it.jacs.compute.access.DaoException;
-import org.janelia.it.jacs.model.annotation.Annotation;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityType;
-import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
-
-import javax.ejb.Remote;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import javax.ejb.Remote;
+
+import org.janelia.it.jacs.model.annotation.Annotation;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
 
 @Remote
 public interface AnnotationBeanRemote {
@@ -34,20 +35,20 @@ public interface AnnotationBeanRemote {
     public void editAnnotation(String owner, String uniqueIdentifier, String namespace, String term, String value,
                                String comment, String conditional);
     public List<Entity> getEntitiesWithFilePath(String filePath);
-    public Entity getFolderTree(Long id) throws DaoException;
+    public Entity getFolderTree(Long id) throws ComputeException;
     
-    public Entity createOntologyTerm(String userLogin, String ontologyTermParentId, String termName, OntologyElementType type, Integer orderIndex);
-    public Entity createOntologyRoot(String userLogin, String rootName);
-    public boolean removeOntologyTerm(String userLogin, String ontologyTermId);
-    public Entity cloneEntityTree(Long sourceRootId, String targetUserLogin, String targetRootName) throws DaoException;
-    public Entity publishOntology(Long sourceRootId, String targetRootName) throws DaoException;
-    public Entity getOntologyTree(String userLogin, Long id) throws DaoException;
-    public List<Entity> getPublicOntologies() throws DaoException;
-    public List<Entity> getPrivateOntologies(String userLogin) throws DaoException;
+    public Entity createOntologyRoot(String userLogin, String rootName) throws ComputeException;
+    public EntityData createOntologyTerm(String userLogin, Long ontologyTermParentId, String termName, OntologyElementType type, Integer orderIndex) throws ComputeException;
+    public void removeOntologyTerm(String userLogin, Long ontologyTermId) throws ComputeException;
+    public Entity cloneEntityTree(Long sourceRootId, String targetUserLogin, String targetRootName) throws ComputeException;
+    public Entity publishOntology(Long sourceRootId, String targetRootName) throws ComputeException;
+    public Entity getOntologyTree(String userLogin, Long id) throws ComputeException;
+    public List<Entity> getPublicOntologies() throws ComputeException;
+    public List<Entity> getPrivateOntologies(String userLogin) throws ComputeException;
 
 	public Entity createOntologyAnnotation(String userLogin, String sessionId, String targetEntityId,
 			String keyEntityId, String keyString, String valueEntityId, String valueString, String tag)
-			throws DaoException;
+			throws ComputeException;
 
     public void setupEntityTypes();
 }
