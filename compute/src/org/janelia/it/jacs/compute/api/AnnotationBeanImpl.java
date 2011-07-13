@@ -344,7 +344,6 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
     }
     
-    
     public List<Entity> getPublicOntologies() throws ComputeException {
 
         try {
