@@ -591,6 +591,16 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
         return null;
     }
+    
+    public Set<EntityData> getParentEntityDatas(long entityId) {
+
+        try {
+            return _annotationDAO.getParentEntityDatas(entityId);
+        } catch (DaoException e) {
+            _logger.error("Error trying to get parent entity data for id="+entityId+" message: "+e.getMessage());
+        }
+        return null;
+    }
 
     public EntityType getEntityTypeByName(String entityTypeName) {
     	preloadData();

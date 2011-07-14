@@ -24,7 +24,8 @@ public interface AnnotationBeanRemote {
     public Entity getUserEntityById(String userLogin, long entityId);
     public boolean deleteEntityById(Long entityId);
     public Set<Entity> getParentEntities(long entityId);
-
+    public Set<EntityData> getParentEntityDatas(long entityId);
+    
     public List<EntityType> getEntityTypes();
     public List<Entity> getEntitiesByType(long entityTypeId);
     public List<Entity> getCommonRootEntitiesByType(long entityTypeId);
