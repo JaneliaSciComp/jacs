@@ -46,6 +46,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
 
     private class LsmPair {
         public LsmPair() {}
+        public String name;
         public Entity lsmEntity1;
         public Entity lsmEntity2;
     }
@@ -374,7 +375,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         sample.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_SAMPLE));
         sample.setCreationDate(createDate);
         sample.setUpdatedDate(createDate);
-        sample.setName("Sample");
+        sample.setName(lsmPair.name);
         sample = annotationBean.saveOrUpdateEntity(sample);
         logger.info("Saved sample as "+sample.getId());
         
@@ -386,7 +387,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         lsmStackPair.setName("Scans");
         lsmStackPair = annotationBean.saveOrUpdateEntity(lsmStackPair);
         logger.info("Saved LSM stack pair as "+lsmStackPair.getId());
-        addToParent(sample, lsmStackPair);
+        addToParent(sample, lsmStackPair, 0);
         addToParent(lsmStackPair, lsmPair.lsmEntity1);
         addToParent(lsmStackPair, lsmPair.lsmEntity2);
         
@@ -396,7 +397,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
     private Set<LsmPair> findLsmPairs(List<Entity> lsmStackList) throws Exception {
     	
         Set<LsmPair> pairSet = new HashSet<LsmPair>();
-        Pattern lsmPattern = Pattern.compile("(.+)\\_L(\\d+)(.*\\.lsm)");
+        Pattern lsmPattern = Pattern.compile("(.+)\\_L(\\d+)((.*\\).lsm)");
         Set<Entity> alreadyPaired = new HashSet<Entity>();
         
         for (Entity lsm1 : lsmStackList) {
@@ -413,7 +414,10 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
                 String lsm1Prefix = lsm1Matcher.group(1);
                 String lsm1Index = lsm1Matcher.group(2);
                 String lsm1Suffix = lsm1Matcher.group(3);
+                String lsm1SuffixNoExt = lsm1Matcher.group(4);
                 //logger.info("findLsmPairs: filename="+lsm1Filename+" prefix="+lsm1Prefix+" index="+lsm1Index+" suffix="+lsm1Suffix);
+                
+                String combinedName = lsm1Prefix + "_L" + lsm1Index + "-L";
                 
                 Set<Entity> possibleMatches = new HashSet<Entity>();
                 for (Entity lsm2 : lsmStackList) {
@@ -455,6 +459,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
                                 //logger.info("Possible match = TRUE for " + lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH) + " , " +
                                 //lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
                                 possibleMatches.add(lsm2);
+                                combinedName += lsm2Index;
                             } 
                             else {
                                 //logger.info("Possible match = FALSE for " + lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH) + " , " +
@@ -472,8 +477,9 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
                     LsmPair pair = new LsmPair();
                     pair.lsmEntity1 = lsm1;
                     pair.lsmEntity2 = lsm2;
+                    pair.name = combinedName+lsm1SuffixNoExt;
                     pairSet.add(pair);
-                    logger.info("Adding lsm pair: " + lsm1.getId() + ", " + lsm2.getId());
+                    logger.info("Adding lsm pair: " + combinedName);
                 }
 
             }
@@ -502,9 +508,14 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
 //            runNeuronSeperator = false;
         }
     }
-    
+
     private void addToParent(Entity parent, Entity entity) throws Exception {
+    	addToParent(parent, entity, null);
+    }
+    
+    private void addToParent(Entity parent, Entity entity, Integer index) throws Exception {
         EntityData ed = parent.addChildEntity(entity);
+        ed.setOrderIndex(index);
         computeBean.genericSave(ed);
         logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+" as child of "+parent.getEntityType().getName()+"#"+entity.getId());
     }
