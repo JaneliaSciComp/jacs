@@ -50,6 +50,7 @@ public class NeuronSeparatorPipelineTask extends Task {
     // Note: Only one of these parameters should be populated
     transient public static final String PARAM_inputLsmFilePathList = "input lsm file path list";
     transient public static final String PARAM_inputLsmEntityIdList = "input lsm entity id list";
+    transient public static final String PARAM_outputSampleEntityId = "output sample entity id";
 
     // Default values - default overrides
 
@@ -65,6 +66,7 @@ public class NeuronSeparatorPipelineTask extends Task {
     private void setDefaultValues() {
         setParameter(PARAM_inputLsmFilePathList, "");
         setParameter(PARAM_inputLsmEntityIdList, "");
+        setParameter(PARAM_outputSampleEntityId, "");
         this.taskName = TASK_NAME;
     }
 
@@ -77,7 +79,10 @@ public class NeuronSeparatorPipelineTask extends Task {
         if (key.equals(PARAM_inputLsmFilePathList)) {
             return new TextParameterVO(value,1000);
         }
-        if (key.equals(PARAM_inputLsmEntityIdList)) {
+        else if (key.equals(PARAM_inputLsmEntityIdList)) {
+            return new TextParameterVO(value, 1000);
+        }
+        else if (key.equals(PARAM_outputSampleEntityId)) {
             return new TextParameterVO(value, 1000);
         }
         // No match
