@@ -110,7 +110,7 @@ public class NeuronSeparationPipelineService implements IService {
             createLsmMetadataFile(lsm2);
             
             Entity resultEntity = createResultEntity(lsm1, lsm2);
-            addToParent(sample, resultEntity);
+            addToParent(sample, resultEntity, 1);
             
             EntityType tif2D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_2D);
             EntityType tif3D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_3D);
@@ -120,22 +120,34 @@ public class NeuronSeparationPipelineService implements IService {
             
             File resultDir = new File(parentNode.getDirectoryPath());
             for (File resultFile : resultDir.listFiles()) {
-                if (resultFile.getName().equals("ConsolidatedSignal.tif")) {
+            	String filename = resultFile.getName();
+            	
+                if (filename.equals("ConsolidatedSignal.tif")) {
                     addResultItem(resultEntity, tif3D, resultFile);
                 } 
-                else if (resultFile.getName().equals("ConsolidatedLabel.tif")) {
+                else if (filename.equals("ConsolidatedLabel.tif")) {
                     addResultItem(resultEntity, tif3DLabel, resultFile);
                 } 
-                else if (resultFile.getName().equals("Reference.tif")) {
+                else if (filename.equals("Reference.tif")) {
                     addResultItem(resultEntity, tif3D, resultFile);
                 } 
-                else if (resultFile.getName().startsWith("neuronSeparatorPipeline.PR.neuron") && resultFile.getName().endsWith(".tif")) {
-                    addResultItem(resultEntity, tif2D, resultFile);
+                else if (filename.startsWith("neuronSeparatorPipeline.PR.neuron") && filename.endsWith(".tif")) {
+                	String mipNum = filename.substring("neuronSeparatorPipeline.PR.neuron".length(), filename.lastIndexOf('.'));
+                	
+                	Integer index = null;
+                	try {
+                		index = Integer.parseInt(mipNum);	
+                	}
+                	catch (NumberFormatException e) {
+                		logger.warn("Error parsing number from MIP filename: "+mipNum);
+                	}
+                	
+                    addResultItem(resultEntity, tif2D, resultFile, index);
                 } 
-                else if (resultFile.getName().equals("lsmFilePaths.txt")) {
+                else if (filename.equals("lsmFilePaths.txt")) {
                     // do nothing - ignore this file
                 } 
-                else if (resultFile.getName().equals("neuronSeparatorPipeline.neu")) {
+                else if (filename.equals("neuronSeparatorPipeline.neu")) {
                     // ignore
                 } 
                 else {
@@ -193,8 +205,12 @@ public class NeuronSeparationPipelineService implements IService {
 
         return resultEntity;
     }
-
+    
     private Entity addResultItem(Entity resultEntity, EntityType type, File file) throws Exception {
+    	return addResultItem(resultEntity, type, file, null);
+    }
+    
+    private Entity addResultItem(Entity resultEntity, EntityType type, File file, Integer index) throws Exception {
         Entity entity = new Entity();
         entity.setUser(user);
         entity.setCreationDate(createDate);
@@ -204,7 +220,7 @@ public class NeuronSeparationPipelineService implements IService {
         entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
         entity = annotationBean.saveOrUpdateEntity(entity);
         logger.info("Saved "+type.getName()+" as "+entity.getId());
-        addToParent(resultEntity, entity);
+        addToParent(resultEntity, entity, index);
         return entity;
     }
 
