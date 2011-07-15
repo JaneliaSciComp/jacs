@@ -105,6 +105,9 @@ public class NeuronSeparationPipelineService implements IService {
             if (0!=exitCode) {
                 throw new ServiceException("The NeuronSeparationPipelineService consolidator step did not exit properly.");
             }
+
+            createLsmMetadataFile(lsm1);
+            createLsmMetadataFile(lsm2);
             
             Entity resultEntity = createResultEntity(lsm1, lsm2);
             addToParent(sample, resultEntity);
@@ -221,7 +224,30 @@ public class NeuronSeparationPipelineService implements IService {
         EntityData ed = parent.addChildEntity(entity);
         ed.setOrderIndex(index);
         computeBean.genericSave(ed);
-        logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+" as child of "+parent.getEntityType().getName()+"#"+entity.getId());
+        logger.info("Added " + entity.getEntityType().getName() + "#" + entity.getId() + " as child of " + parent.getEntityType().getName() + "#" + entity.getId());
+    }
+
+    private void createLsmMetadataFile(Entity lsm) throws Exception {
+        String lsmFilePath=lsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        File lsmFile=new File(lsmFilePath);
+        if (!lsmFile.exists()) {
+            throw new Exception("Could not find lsm file="+lsmFile.getAbsolutePath());
+        }
+        File lsmDataFile=new File(parentNode.getDirectoryPath()+"/"+removeWhitespace(lsmFile.getName())+".metadata");
+        String cmdLine = "cd " + parentNode.getDirectoryPath() + ";perl " +
+                SystemConfigurationProperties.getString("Executables.ModuleBase") + "lsm_metadata_dump.pl " +
+                lsmFilePath + " " + lsmDataFile.getAbsolutePath();
+        logger.info("createLsmMetadataFile cmdLine=" + cmdLine);
+
+        SystemCall call = new SystemCall(logger);
+        int exitCode = call.emulateCommandLine(cmdLine, true, 120 /* seconds */);
+        if (0 != exitCode) {
+            throw new Exception("The NeuronSeparationPipelineService createLsmMetadata step did not exit properly.");
+        }
+    }
+
+    private String removeWhitespace(String s) {
+        return s.replaceAll("\\s+","");
     }
 
 }
