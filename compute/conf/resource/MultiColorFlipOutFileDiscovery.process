@@ -7,7 +7,7 @@
     <sequence name="multiColorFlipOutFileDiscovery">
         <operation name="Discovery Files for MultiColor FlipOut Project" processor="org.janelia.it.jacs.compute.service.fileDiscovery.MultiColorFlipOutFileDiscoveryService">
             <input name="TOP_LEVEL_FOLDER_NAME" value="FlyLight Single Neuron Pilot Data"/>
-            <input name="DIRECTORY_1" value="/groups/rubin/data1/rubinlab/FlyLight/SingleNeuronPilotData"/>
+            <input name="DIRECTORY_1" value="/groups/flylight/flylight/SingleNeuronPilotData"/>
         </operation>
     </sequence>
 </process>
