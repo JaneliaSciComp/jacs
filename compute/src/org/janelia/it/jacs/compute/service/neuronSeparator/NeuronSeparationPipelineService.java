@@ -114,8 +114,6 @@ public class NeuronSeparationPipelineService implements IService {
             EntityType tif3DLabel = annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_3D_LABEL_MASK);
 
             createLsmFilePaths(lsm1, lsm2);
-
-            int neuronIndex = 3;
             
             File resultDir = new File(parentNode.getDirectoryPath());
             for (File resultFile : resultDir.listFiles()) {
@@ -178,6 +176,9 @@ public class NeuronSeparationPipelineService implements IService {
         resultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, parentNode.getDirectoryPath());
         resultEntity = annotationBean.saveOrUpdateEntity(resultEntity);
         logger.info("Saved pipeline result entity as "+resultEntity.getId());
+        
+        // TODO: maybe the LSM inputs should be saved as attributes of the result entity, but not as generic entity children
+        // for now you can go up a level to the Sample and then the LSM Stack Pair
         
 //        if (lsm1!=null) {
 //            addToParent(resultEntity, lsm1);
