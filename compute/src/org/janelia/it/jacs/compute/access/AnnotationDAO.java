@@ -83,15 +83,10 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
     public List<Entity> getEntitiesWithFilePath(String filePath) {
         Session session = getCurrentSession();
-        Criteria c = session.createCriteria(EntityData.class);
-        c.add(Expression.eq("value", filePath));
-        List<EntityData> entityDataList = (List<EntityData>) c.list();
-        if (entityDataList == null || entityDataList.size() == 0) return new ArrayList<Entity>(); // no matches
-        List<Entity> resultList = new ArrayList<Entity>();
-        for (EntityData ed : entityDataList) {
-            resultList.add(ed.getParentEntity());
-        }
-        return resultList;
+        StringBuffer hql = new StringBuffer("select clazz.parentEntity from EntityData clazz where value=?");
+        Query query = session.createQuery(hql.toString()).setString(0, filePath);
+        List<Entity> entityList = (List<Entity>) query.list();
+        return entityList;
     }
 
     public EntityType getEntityType(Long entityTypeConstant) {
@@ -287,6 +282,14 @@ public class AnnotationDAO extends ComputeBaseDAO {
             tif3DLabelMaskAttributeSet.add(EntityConstants.ATTRIBUTE_FILE_PATH);
             createEntityType(EntityConstants.TYPE_TIF_3D_LABEL_MASK, tif3DLabelMaskAttributeSet);
 
+            Set<String> sampleAttributeSet = new HashSet<String>();
+            sampleAttributeSet.add(EntityConstants.ATTRIBUTE_ENTITY);
+            createEntityType(EntityConstants.TYPE_SAMPLE, sampleAttributeSet);
+        	
+            Set<String> lsmStackPairAttributeSet = new HashSet<String>();
+            lsmStackPairAttributeSet.add(EntityConstants.ATTRIBUTE_ENTITY);
+            createEntityType(EntityConstants.TYPE_LSM_STACK_PAIR, lsmStackPairAttributeSet);
+            
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -493,14 +496,9 @@ public class AnnotationDAO extends ComputeBaseDAO {
     public Set<Entity> getParentEntities(long entityId) throws DaoException {
         try {
             Session session = getCurrentSession();
-            StringBuffer hql = new StringBuffer("select clazz from EntityData clazz where clazz.childEntity.id='").append(entityId).append("'");
+            StringBuffer hql = new StringBuffer("select clazz.parentEntity from EntityData clazz where clazz.childEntity.id='").append(entityId).append("'");
             Query query = session.createQuery(hql.toString());
-            List<EntityData> edList = (List<EntityData>)query.list();
-            Set<Entity> eSet=new HashSet<Entity>();
-            for (EntityData ed : edList) {
-                eSet.add(ed.getParentEntity());
-            }
-            return eSet;
+            return new HashSet(query.list());
         } catch (Exception e) {
             throw new DaoException(e);
         }

@@ -144,7 +144,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             Entity root = getEntityById(id.toString());
             if (root == null) return null;
 
-            if (root.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+            if (!root.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
             	throw new DaoException("Entity (id="+id+") is not a folder");
             }
             
@@ -353,7 +353,6 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             StringBuffer hql = new StringBuffer("select clazz from Entity clazz");
             hql.append(" where clazz.entityType.id=?");
             hql.append(" and exists (from EntityData as attr where attr.parentEntity = clazz and attr.entityAttribute.id = ?)");
-            if (_logger.isDebugEnabled()) _logger.debug("hql=" + hql);
             Query query = _annotationDAO.getCurrentSession().createQuery(hql.toString());
             query.setLong(0, tmpType.getId());
             query.setLong(1, tmpAttr.getId());
@@ -377,7 +376,6 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
                 hql.append(" and clazz.user.userLogin=?");
             }
             hql.append(" and not exists (from EntityData as attr where attr.parentEntity = clazz and attr.entityAttribute.id = ?)");
-            if (_logger.isDebugEnabled()) _logger.debug("hql=" + hql);
             Query query = _annotationDAO.getCurrentSession().createQuery(hql.toString());
             query.setLong(0, tmpType.getId());
             query.setString(1, userLogin);

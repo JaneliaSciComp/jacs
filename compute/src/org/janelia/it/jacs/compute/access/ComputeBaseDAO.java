@@ -306,6 +306,15 @@ public class ComputeBaseDAO {
         }
     }
 
+    public void genericDelete(Object object) throws DaoException {
+        try {
+            getCurrentSession().delete(object);
+        }
+        catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+
     public Object genericCreateAndReturn(Object object) throws DaoException {
         try {
             getCurrentSession().save(object);

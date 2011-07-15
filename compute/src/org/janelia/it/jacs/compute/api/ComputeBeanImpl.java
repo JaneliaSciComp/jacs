@@ -197,10 +197,15 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return computeDAO.getNodeById(nodeId);
     }
 
-    public void genericSave(Object object) throws DaoException {
+    public Object genericSave(Object object) throws DaoException {
         computeDAO.genericSave(object);
+        return object;
     }
 
+    public void genericDelete(Object object) throws DaoException {
+        computeDAO.genericDelete(object);
+    }
+    
     public Node createNode(Node node) throws DaoException {
         return (Node) computeDAO.genericCreateAndReturn(node);
     }

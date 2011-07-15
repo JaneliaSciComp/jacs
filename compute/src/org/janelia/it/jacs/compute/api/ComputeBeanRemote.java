@@ -68,7 +68,8 @@ public interface ComputeBeanRemote {
     public User getUserByName(String name) throws RemoteException;
     public void removePreferenceCategory(String categoryName) throws DaoException;
     public Event saveEvent(Long taskId, String eventType, String description, Date timestamp) throws DaoException, RemoteException;
-    public void genericSave(Object object) throws DaoException, RemoteException;
+    public Object genericSave(Object object) throws DaoException, RemoteException;
+    public void genericDelete(Object object) throws DaoException;
     public Object genericLoad(Class c, Long id) throws DaoException, RemoteException;
     public boolean buildUserFilestoreDirectory(String userLoginName) throws RemoteException;
     public void submitJob(String processDefName,long taskId) throws RemoteException; //Note: Used by Blast API

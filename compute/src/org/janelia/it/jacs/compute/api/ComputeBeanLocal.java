@@ -56,7 +56,8 @@ public interface ComputeBeanLocal {
      public Event saveEvent(Long taskId, String eventType, String description, Date timestamp) throws DaoException;
      public void setTaskNote(long taskId, String note) throws DaoException;
      public void addTaskNote(long taskId, String note) throws DaoException;
-     public void genericSave(Object object) throws DaoException;
+     public Object genericSave(Object object) throws DaoException;
+     public void genericDelete(Object object) throws DaoException;
      public Object genericLoad(Class c, Long id) throws DaoException;
      public BlastResultNode getBlastHitResultDataNodeByTaskId(Long taskId);
      public Long getBlastHitCountByTaskId(Long taskId) throws DaoException;
