@@ -49,6 +49,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         public String name;
         public Entity lsmEntity1;
         public Entity lsmEntity2;
+        public Integer lowIndex;
     }
     
     public void execute(IProcessData processData) {
@@ -315,40 +316,25 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
 
         // At this point we have a collection of lsm files in this folder - we will analyze for pairs
         logger.info("Checking for LSM pairs in folder "+folder.getName());
-        Set<LsmPair> lsmPairs = findLsmPairs(lsmStackList);
+        List<LsmPair> lsmPairs = new ArrayList<LsmPair>(findLsmPairs(lsmStackList));
         logger.info("    Found " + lsmPairs.size() + " pairs");
 
+        // Assume that a folder contains one slide's worth of LSM pairs, and sort by the LSM index
+        Collections.sort(lsmPairs, new Comparator<LsmPair>() {
+			public int compare(LsmPair o1, LsmPair o2) {
+				return o1.lowIndex.compareTo(o2.lowIndex);
+			}
+		});
+        
         // We will consider each pair, and if the lsm members of the pair do not have a parent which
         // is an LSM Stack Pair entity, the pair will be submitted for processing with
         // this pipeline.
+        int i = 0;
         for (LsmPair lsmPair : lsmPairs) {
-//            Set<Entity> lsm1Parents = annotationBean.getParentEntities(lsmPair.lsmEntity1.getId());
-//            Set<Entity> lsm2Parents = annotationBean.getParentEntities(lsmPair.lsmEntity2.getId());
-//            Long lsm1ResultId = null;
-//            Long lsm2ResultId = null;
-//            for (Entity e : lsm1Parents) {
-//                if (e.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK_PAIR)) {
-//                    lsm1ResultId = e.getId();
-//                    break;
-//                }
-//            }
-//            for (Entity e : lsm2Parents) {
-//                if (e.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK_PAIR)) {
-//                    lsm2ResultId = e.getId();
-//                    break;
-//                }
-//            }
-//            if (lsm1ResultId != null && (lsm1ResultId==lsm2ResultId)) {
-//                // We already have a result
-//                logger.info("Found prior result, skipping LSM pair " +lsmPair.lsmEntity1.getId()+","+lsmPair.lsmEntity2.getId() + " prior result id="+lsm1ResultId);
-//            } else {
-//                launchColorSeparationPipeline(lsmPair);
-//            }
-        	
-        	// Remove the two LSM Stacks from the original folder, and put them under their own paired folder
 
     		logger.info("Moving paired LSM stacks to their own Sample entity");
-    		
+
+        	// Remove the two LSM Stacks from the original folder, and put them under their own paired folder
         	Set<EntityData> datas = annotationBean.getParentEntityDatas(lsmPair.lsmEntity1.getId());
         	for(EntityData data : datas) {
         		computeBean.genericDelete(data);
@@ -362,7 +348,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         	}
         	
         	Entity sample = createSample(lsmPair);
-            addToParent(folder, sample);
+            addToParent(folder, sample, i++);
         	
         	launchColorSeparationPipeline(sample, lsmPair);
         }
@@ -388,8 +374,8 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         lsmStackPair = annotationBean.saveOrUpdateEntity(lsmStackPair);
         logger.info("Saved LSM stack pair as "+lsmStackPair.getId());
         addToParent(sample, lsmStackPair, 0);
-        addToParent(lsmStackPair, lsmPair.lsmEntity1);
-        addToParent(lsmStackPair, lsmPair.lsmEntity2);
+        addToParent(lsmStackPair, lsmPair.lsmEntity1, 0);
+        addToParent(lsmStackPair, lsmPair.lsmEntity2, 1);
         
         return sample;
     }
@@ -397,7 +383,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
     private Set<LsmPair> findLsmPairs(List<Entity> lsmStackList) throws Exception {
     	
         Set<LsmPair> pairSet = new HashSet<LsmPair>();
-        Pattern lsmPattern = Pattern.compile("(.+)\\_L(\\d+)((.*\\).lsm)");
+        Pattern lsmPattern = Pattern.compile("(.+)\\_L(\\d+)((.*)\\.lsm)");
         Set<Entity> alreadyPaired = new HashSet<Entity>();
         
         for (Entity lsm1 : lsmStackList) {
@@ -408,17 +394,26 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             if (lsm1Filename==null || lsm1Filename.length()==0) {
                 throw new Exception("LSM id="+lsm1.getId()+" unexpectedly does not have an ATTRIBUTE_FILE_PATH");
             }
-            
+
             Matcher lsm1Matcher = lsmPattern.matcher(lsm1Filename);
-            if (lsm1Matcher.matches() && lsm1Matcher.groupCount()==3) {
+            if (lsm1Matcher.matches() && lsm1Matcher.groupCount()==4) {
                 String lsm1Prefix = lsm1Matcher.group(1);
                 String lsm1Index = lsm1Matcher.group(2);
                 String lsm1Suffix = lsm1Matcher.group(3);
                 String lsm1SuffixNoExt = lsm1Matcher.group(4);
-                //logger.info("findLsmPairs: filename="+lsm1Filename+" prefix="+lsm1Prefix+" index="+lsm1Index+" suffix="+lsm1Suffix);
+//                logger.info("  findLsmPairs: prefix="+lsm1Prefix+" index="+lsm1Index+" suffix="+lsm1Suffix+" lsuffixNoExt="+lsm1SuffixNoExt);
                 
-                String combinedName = lsm1Prefix + "_L" + lsm1Index + "-L";
-                
+                String combinedName = lsm1Prefix.substring(lsm1Prefix.lastIndexOf("/")+1) + "_L" + lsm1Index + "-L";
+
+                Integer lsm1IndexInt = null;
+                try {
+                    lsm1IndexInt = new Integer(lsm1Index.trim());
+                } 
+                catch (NumberFormatException ex) {
+                	logger.warn("File index ("+lsm1Index+") was not an integer for file: "+lsm1Filename);
+                	continue;
+                }
+
                 Set<Entity> possibleMatches = new HashSet<Entity>();
                 for (Entity lsm2 : lsmStackList) {
                 	
@@ -426,45 +421,43 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
                     
                     String lsm2Filename = lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                     if (lsm2Filename==null || lsm2Filename.length()==0) {
-                        throw new Exception("lsm id="+lsm2.getId()+" unexpectedly does not have an ATTRIBUTE_FILE_PATH");
+                        throw new Exception("LSM (id="+lsm2.getId()+") unexpectedly does not have an ATTRIBUTE_FILE_PATH");
                     }
                     
-                    if (!lsm1Filename.equals(lsm2Filename)) {
-                        // Obviously we do not want to pair something to itself
-                        Matcher lsm2Matcher = lsmPattern.matcher(lsm2Filename);
-                        if (lsm2Matcher.matches() && lsm2Matcher.groupCount()==3) {
-                            String lsm2Prefix=lsm2Matcher.group(1);
-                            String lsm2Index=lsm2Matcher.group(2);
-                            String lsm2Suffix=lsm2Matcher.group(3);
-                            
-                            Integer lsm1IndexInt=null;
-                            Integer lsm2IndexInt=null;
+                    // Obviously we do not want to pair something to itself
+                    if (lsm1Filename.equals(lsm2Filename)) continue;
+                    
+                    Matcher lsm2Matcher = lsmPattern.matcher(lsm2Filename);
+                    if (lsm2Matcher.matches() && lsm2Matcher.groupCount()==4) {
+                        String lsm2Prefix=lsm2Matcher.group(1);
+                        String lsm2Index=lsm2Matcher.group(2);
+                        String lsm2Suffix=lsm2Matcher.group(3);
+//                        logger.info("    findLsmPairs: prefix="+lsm2Prefix+" index="+lsm2Index+" suffix="+lsm2Suffix);
+                        
+                        Integer lsm2IndexInt=null;
 
-                            boolean indexMatch=false;
-                            try {
-                                lsm1IndexInt = new Integer(lsm1Index.trim());
-                                lsm2IndexInt = new Integer(lsm2Index.trim());
-                            } 
-                            catch (Exception ex) {
-                                indexMatch = true;
-                            }
-                            
-                            if ( !indexMatch && 
-                            		((lsm1IndexInt%2==0 && lsm2IndexInt==lsm1IndexInt-1) || 
-                            				(lsm2IndexInt%2==0 && lsm1IndexInt==lsm2IndexInt-1))) {
-                                indexMatch=true;
-                            }
-                            
-                            if (indexMatch && lsm1Prefix.equals(lsm2Prefix) && lsm1Suffix.equals(lsm2Suffix)) {
-                                //logger.info("Possible match = TRUE for " + lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH) + " , " +
-                                //lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-                                possibleMatches.add(lsm2);
-                                combinedName += lsm2Index;
-                            } 
-                            else {
-                                //logger.info("Possible match = FALSE for " + lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH) + " , " +
-                                //lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-                            }
+                        try {
+                            lsm2IndexInt = new Integer(lsm2Index.trim());
+                        } 
+                        catch (Exception ex) {
+                        	logger.warn("File index ("+lsm2Index+") was not an integer for file: "+lsm2Filename);
+                        	continue;
+                        }
+
+                        boolean indexMatch=false;
+                        if (lsm2IndexInt%2==0 && lsm1IndexInt==lsm2IndexInt-1) {
+                            indexMatch = true;
+                        }
+                        
+                        if (indexMatch && lsm1Prefix.equals(lsm2Prefix) && lsm1Suffix.equals(lsm2Suffix)) {
+                            //logger.info("Possible match = TRUE for " + lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH) + " , " +
+                            //lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+                            possibleMatches.add(lsm2);
+                            combinedName += lsm2Index;
+                        } 
+                        else {
+                            //logger.info("Possible match = FALSE for " + lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH) + " , " +
+                            //lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
                         }
                     }
                 }
@@ -478,6 +471,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
                     pair.lsmEntity1 = lsm1;
                     pair.lsmEntity2 = lsm2;
                     pair.name = combinedName+lsm1SuffixNoExt;
+                    pair.lowIndex = lsm1IndexInt;
                     pairSet.add(pair);
                     logger.info("Adding lsm pair: " + combinedName);
                 }
@@ -489,22 +483,14 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
 
     protected void launchColorSeparationPipeline(Entity sample, LsmPair lsmPair) throws Exception {
         if (runNeuronSeperator) {
-            //String lsm1FilePath=lsmPair.lsmEntity1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-            //String lsm2FilePath=lsmPair.lsmEntity2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-
-            NeuronSeparatorPipelineTask neuTask = new NeuronSeparatorPipelineTask(
-                    new HashSet<Node>(), user.getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>());
-
-            // Rather than use the file parameter, we will use the entity parameter since we want to add these
-            // as children to the result entity
+            NeuronSeparatorPipelineTask neuTask = new NeuronSeparatorPipelineTask(new HashSet<Node>(), 
+            		user.getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>());
             String lsmEntityIds = lsmPair.lsmEntity1.getId()+" , "+lsmPair.lsmEntity2.getId();
             neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmEntityIdList, lsmEntityIds);
-            String sampleEntityId = sample.getId().toString();
-            neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_outputSampleEntityId, sampleEntityId);
+            neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_outputSampleEntityId, sample.getId().toString());
             neuTask.setJobName("Neuron Separator for MultiColorFlipOutFileDiscovery");
             EJBFactory.getLocalComputeBean().saveOrUpdateTask(neuTask);
             EJBFactory.getRemoteComputeBean().submitJob("NeuronSeparationPipeline", neuTask.getObjectId());
-            
 //            runNeuronSeperator = false;
         }
     }
