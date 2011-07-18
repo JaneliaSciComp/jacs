@@ -1,16 +1,18 @@
 package org.janelia.it.jacs.compute.access;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
 import org.hibernate.Query;
 import org.hibernate.Session;
-import org.hibernate.Transaction;
 import org.hibernate.criterion.Expression;
 import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.entity.*;
-
-import java.util.*;
 
 public class AnnotationDAO extends ComputeBaseDAO {
 
@@ -137,44 +139,65 @@ public class AnnotationDAO extends ComputeBaseDAO {
             }
 
             _logger.info("Will delete tree rooted at Entity "+entity.getName());
-            deleteEntityTree(entity);
+            return deleteEntityTree(userLogin, entity);
         }
         catch (Exception e) {
         	_logger.error("Error deleting ontology term "+ontologyTermId,e);
             throw new DaoException(e);
         }
-
-        _logger.info("The entity and all of its ancestors have been deleted.");
-        return true;
     }
 
-    public void deleteEntityTree(Entity entity) throws DaoException {
-    	deleteEntityTree(entity, 0);
+    /**
+     * Delete the given entities and all children entities underneath it. Only deletes entities belonging to the given
+     * owner.
+     * @param owner The owner to operate as.
+     * @param entity The "root" entity at which to begin recursive deletion.
+     * @return True if entire tree was successfully deleted. False if there were any entities that could not be deleted.
+     * @throws DaoException
+     */
+    public boolean deleteEntityTree(String owner, Entity entity) throws DaoException {
+    	return deleteEntityTree(owner, entity, 0);
     }
     
-    private void deleteEntityTree(Entity entity, int level) throws DaoException {
+    private boolean deleteEntityTree(String owner, Entity entity, int level) throws DaoException {
 
+    	
     	StringBuffer indent = new StringBuffer();
 		for (int i = 0; i < level; i++) {
 			indent.append("  ");
 		}
-        
+		
+		// Null check
+    	if (entity == null) {
+    		_logger.warn(indent+"Cannot delete null entity");
+    		return false;
+    	}
+		
+		// Ownership check
+    	if (!entity.getUser().getUserLogin().equals(owner)) {
+    		_logger.info(indent+"Cannot delete entity because owner ("+entity.getUser().getUserLogin()+") does not match invoker ("+owner+")");
+    		return false;
+    	}
+    	
+    	boolean success = true;
+    	
         // Delete all ancestors first
         for(EntityData ed : entity.getOrderedEntityData()) {
         	Entity child = ed.getChildEntity();
         	if (child != null) {
-        		deleteEntityTree(child, level+1);
-            	_logger.info(indent+"Deleting "+entity.getName()+"'s link to child: "+ed.getId());
-        	}
-        	else {
-            	_logger.info(indent+"Deleting "+entity.getName()+"'s simple attribute: "+ed.getId());
+        		if (!deleteEntityTree(owner, child, level+1)) {
+        			success = false;
+        		}
         	}
         	// We have to manually remove the EntityData from its parent, otherwise we get this error: 
         	// "deleted object would be re-saved by cascade (remove deleted object from associations)"
+        	_logger.info(indent+"Deleting "+entity.getName()+"'s child: "+ed.getId());
         	ed.getParentEntity().getEntityData().remove(ed);
     		getCurrentSession().delete(ed);
         }
        
+        // TODO: if someone else is linking to this entity, should we still delete it? 
+        
         // Delete all parent EDs
         for(EntityData ed : getParentEntityDatas(entity.getId())) {
     		if (ed.getChildEntity() != null && ed.getChildEntity().getId().equals(entity.getId())) {
@@ -188,6 +211,8 @@ public class AnnotationDAO extends ComputeBaseDAO {
         // Finally we can delete the entity itself
     	_logger.info(indent+"Deleting "+entity.getName());
         getCurrentSession().delete(entity);
+        
+        return success;
     }
     
     public EntityAttribute getEntityAttributeByName(String name) throws DaoException {
