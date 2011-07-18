@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.compute.service.neuronSeparator;
 
+import java.io.File;
+import java.util.Date;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
@@ -9,7 +12,6 @@ import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.recruitment.CreateRecruitmentFileNodeException;
-import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -17,11 +19,6 @@ import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.neuronSeparator.NeuronSeparatorResultNode;
-import org.janelia.it.jacs.shared.utils.SystemCall;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.util.Date;
 
 /**
  * @author Todd Safford
@@ -49,11 +46,9 @@ public class NeuronSeparatorResultsService implements IService {
             if (sample == null) {
                 throw new ServiceException("Must provide Sample entity.");
             }
-
-            String[]lsmFilePaths = NeuronSeparatorHelper.getLSMFilePaths(task);
-            createLsmMetadataFile(lsmFilePaths[0]);
-            createLsmMetadataFile(lsmFilePaths[1]);
-
+            
+            // Create the result entity and populate with the output files
+            
             Entity resultEntity = createResultEntity();
             addToParent(sample, resultEntity, 1);
 
@@ -61,12 +56,12 @@ public class NeuronSeparatorResultsService implements IService {
             EntityType tif3D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_3D);
             EntityType tif3DLabel = annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_3D_LABEL_MASK);
 
-            createLsmFilePaths(lsmFilePaths[0], lsmFilePaths[1]);
-
             File resultDir = new File(parentNode.getDirectoryPath());
             for (File resultFile : resultDir.listFiles()) {
             	String filename = resultFile.getName();
 
+            	if (resultFile.isDirectory()) continue;
+            	
                 if (filename.equals("ConsolidatedSignal.tif")) {
                     addResultItem(resultEntity, tif3D, resultFile);
                 }
@@ -89,16 +84,23 @@ public class NeuronSeparatorResultsService implements IService {
 
                     addResultItem(resultEntity, tif2D, resultFile, index);
                 }
-                else if (filename.equals("lsmFilePaths.txt")) {
-                    // do nothing - ignore this file
-                }
                 else if (filename.equals("neuronSeparatorPipeline.neu")) {
                     // ignore
                 }
+                else if (filename.endsWith(".metadata")) {
+                    // ignore metadata files
+                }
+                else if (filename.endsWith(".txt")) {
+                    // ignore text files
+                }
+                else if (filename.endsWith(".oos") || filename.endsWith(".log")) {
+                    // ignore log files
+                }
                 else {
-                    throw new Exception("Unrecognized result file: "+resultFile.getAbsolutePath());
+                    logger.warn("Unrecognized result file: "+resultFile.getAbsolutePath());
                 }
             }
+            
         }
         catch (Exception e) {
             throw new CreateRecruitmentFileNodeException(e);
@@ -116,17 +118,6 @@ public class NeuronSeparatorResultsService implements IService {
         resultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, parentNode.getDirectoryPath());
         resultEntity = annotationBean.saveOrUpdateEntity(resultEntity);
         logger.info("Saved pipeline result entity as "+resultEntity.getId());
-
-        // TODO: maybe the LSM inputs should be saved as attributes of the result entity, but not as generic entity children
-        // for now you can go up a level to the Sample and then the LSM Stack Pair
-
-//        if (lsm1!=null) {
-//            addToParent(resultEntity, lsm1);
-//        }
-//
-//        if (lsm2!=null) {
-//            addToParent(resultEntity, lsm2);
-//        }
 
         return resultEntity;
     }
@@ -149,43 +140,11 @@ public class NeuronSeparatorResultsService implements IService {
         return entity;
     }
 
-    // todo This dependency should be managed and the job should run on the grid as part of the grid job script
-    private void createLsmFilePaths(String lsm1Path, String lsm2Path) throws Exception {
-        File lsmPathFile = new File(parentNode.getDirectoryPath()+"/"+"lsmFilePaths.txt");
-        FileWriter fw = new FileWriter(lsmPathFile);
-        fw.write(lsm1Path+"\n");
-        fw.write(lsm2Path+"\n");
-        fw.close();
-    }
-
     private void addToParent(Entity parent, Entity entity, Integer index) throws Exception {
         EntityData ed = parent.addChildEntity(entity);
         ed.setOrderIndex(index);
         EJBFactory.getLocalComputeBean().genericSave(ed);
         logger.info("Added " + entity.getEntityType().getName() + "#" + entity.getId() + " as child of " + parent.getEntityType().getName() + "#" + entity.getId());
-    }
-
-    // todo This dependency should be managed and the job should run on the grid as part of the grid job script
-    private void createLsmMetadataFile(String lsmPath) throws Exception {
-        File lsmFile=new File(lsmPath);
-        if (!lsmFile.exists()) {
-            throw new Exception("Could not find lsm file="+lsmFile.getAbsolutePath());
-        }
-        File lsmDataFile=new File(parentNode.getDirectoryPath()+"/"+removeWhitespace(lsmFile.getName())+".metadata");
-        String cmdLine = "cd " + parentNode.getDirectoryPath() + ";perl " +
-                SystemConfigurationProperties.getString("Executables.ModuleBase") + "lsm_metadata_dump.pl " +
-                lsmPath + " " + lsmDataFile.getAbsolutePath();
-        logger.info("createLsmMetadataFile cmdLine=" + cmdLine);
-
-        SystemCall call = new SystemCall(logger);
-        int exitCode = call.emulateCommandLine(cmdLine, true, 120 /* seconds */);
-        if (0 != exitCode) {
-            throw new Exception("The NeuronSeparationPipelineService createLsmMetadata step did not exit properly.");
-        }
-    }
-
-    private String removeWhitespace(String s) {
-        return s.replaceAll("\\s+","");
     }
 
 }

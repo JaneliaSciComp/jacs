@@ -1,5 +1,9 @@
 package org.janelia.it.jacs.compute.service.neuronSeparator;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -9,10 +13,6 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.user_data.neuronSeparator.NeuronSeparatorResultNode;
 import org.janelia.it.jacs.model.vo.ParameterException;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -55,17 +55,45 @@ public class NeuronSeparationPipelineService extends SubmitDrmaaJobService {
                 SystemConfigurationProperties.getString("Executables.ModuleBase")+"genelib/mylib;"+
                 SystemConfigurationProperties.getString("Executables.ModuleBase")+"singleNeuronTools/genelib/mylib/sampsepNA -nr -pj "+
                 parentNode.getDirectoryPath()+" neuronSeparatorPipeline "+ addQuotesToCsvString(fileList) + " >neuSepOutput.txt 2>&1 ";
-        logger.info("NeuronSeparatorPipelineTask cmdLine=" + cmdLine);
 
         StringBuffer script = new StringBuffer();
         script.append("set -o errexit\n");
         script.append(cmdLine).append("\n");
+
+        String[] lsmFilePaths = NeuronSeparatorHelper.getLSMFilePaths(task);
+    	String lsmFilePathsFilename = parentNode.getDirectoryPath()+"/"+"lsmFilePaths.txt";
+        script.append("echo '"+lsmFilePaths[0]+"' > "+lsmFilePathsFilename).append("\n");
+        script.append("echo '"+lsmFilePaths[1]+"' >> "+lsmFilePathsFilename).append("\n");
+    
+        script.append(getScriptToCreateLsmMetadataFile(parentNode, lsmFilePaths[0])).append("\n");
+        script.append(getScriptToCreateLsmMetadataFile(parentNode, lsmFilePaths[1])).append("\n");
+
+        logger.info("NeuronSeparatorPipelineService script=\n" + script);
+        
         writer.write(script.toString());
     }
 
     @Override
     public Integer getJobTimeoutSeconds() {
         return TIMEOUT_SECONDS;
+    }
+
+    private String getScriptToCreateLsmMetadataFile(NeuronSeparatorResultNode parentNode, String lsmPath) throws ServiceException {
+
+        File lsmFile = new File(lsmPath);
+        if (!lsmFile.exists()) {
+            throw new ServiceException("Could not find LSM file "+lsmFile.getAbsolutePath());
+        }
+        File lsmDataFile=new File(parentNode.getDirectoryPath()+"/"+removeWhitespace(lsmFile.getName())+".metadata");
+        String cmdLine = "cd " + parentNode.getDirectoryPath() + ";perl " +
+                SystemConfigurationProperties.getString("Executables.ModuleBase") + "singleNeuronTools/lsm_metadata_dump.pl " +
+                addQuotes(lsmPath) + " " + addQuotes(lsmDataFile.getAbsolutePath());
+
+        return cmdLine;
+    }
+
+    private String addQuotes(String s) {
+    	return "\""+s+"\"";
     }
 
     private String addQuotesToCsvString(String csvString) {
@@ -81,5 +109,8 @@ public class NeuronSeparationPipelineService extends SubmitDrmaaJobService {
         }
         return sb.toString();
     }
-
+    
+    private String removeWhitespace(String s) {
+        return s.replaceAll("\\s+","");
+    }
 }
