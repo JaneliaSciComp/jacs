@@ -23,6 +23,7 @@ public interface AnnotationBeanRemote {
     public Entity getEntityTree(Long id);
     public Entity getUserEntityById(String userLogin, long entityId);
     public boolean deleteEntityById(Long entityId);
+    public boolean deleteEntityTree(String userLogin, long entityId) throws ComputeException;
     public Set<Entity> getParentEntities(long entityId);
     public Set<EntityData> getParentEntityDatas(long entityId);
     

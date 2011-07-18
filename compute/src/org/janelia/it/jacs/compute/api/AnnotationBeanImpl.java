@@ -573,14 +573,25 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     }
 
     public boolean deleteEntityById(Long entityId) {
-          try {
+         try {
             return _annotationDAO.deleteEntityById(entityId);
         } catch (DaoException e) {
             _logger.error("Error trying to get delete Entity id="+entityId);
         }
         return false;
     }
-
+    
+    public boolean deleteEntityTree(String userLogin, long entityId) throws ComputeException {
+    	try {
+            Entity entity = _annotationDAO.getEntityById(""+entityId);
+    		return _annotationDAO.deleteEntityTree(userLogin, entity);
+    	}
+        catch (Exception e) {
+            _logger.error("Error deleting entity tree for user "+userLogin,e);
+            throw new ComputeException("Error deleting entity tree for user "+userLogin,e);
+        }
+    }
+    
     public Set<Entity> getParentEntities(long entityId) {
         try {
             return _annotationDAO.getParentEntities(entityId);
