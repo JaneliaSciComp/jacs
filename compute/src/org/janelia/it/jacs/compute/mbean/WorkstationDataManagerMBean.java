@@ -10,7 +10,7 @@ package org.janelia.it.jacs.compute.mbean;
 
 public interface WorkstationDataManagerMBean {
 
-    public void runMultiColorFlipOutFileDiscoveryService();
+    public void runMultiColorFlipOutFileDiscoveryService(String user);
 
     public void setupEntityTypes();
 

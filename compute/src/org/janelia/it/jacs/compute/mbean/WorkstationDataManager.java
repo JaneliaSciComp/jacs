@@ -26,9 +26,9 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     public WorkstationDataManager() {
     }
 
-    public void runMultiColorFlipOutFileDiscoveryService() {
+    public void runMultiColorFlipOutFileDiscoveryService(String user) {
         try {
-            MultiColorFlipOutFileDiscoveryTask task = new MultiColorFlipOutFileDiscoveryTask(new HashSet<Node>(), "system", new ArrayList<Event>(), new HashSet<TaskParameter>());
+            MultiColorFlipOutFileDiscoveryTask task = new MultiColorFlipOutFileDiscoveryTask(new HashSet<Node>(), user, new ArrayList<Event>(), new HashSet<TaskParameter>());
             task.setJobName("MultiColor FlipOut File Discovery Task");
             task = (MultiColorFlipOutFileDiscoveryTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("MultiColorFlipOutFileDiscovery", task.getObjectId());

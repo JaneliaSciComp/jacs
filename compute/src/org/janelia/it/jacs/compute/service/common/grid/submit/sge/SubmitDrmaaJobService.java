@@ -174,6 +174,9 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
             jt.setRemoteCommand("bash");
             jt.setArgs(Arrays.asList(jobScript.getAbsolutePath()));
             jt.setWorkingDirectory(resultFileNode.getDirectoryPath());
+            if (null!= getJobTimeoutSeconds()) {
+                jt.setHardRunDurationLimit(getJobTimeoutSeconds());
+            }
             jt.setInputPath(":" + getSGEConfigurationDirectory() + File.separator + getGridServicePrefixName() + "Configuration." + JobTemplate.PARAMETRIC_INDEX);
             jt.setErrorPath(":" + getSGEErrorDirectory() + File.separator + getGridServicePrefixName() + "Error." + JobTemplate.PARAMETRIC_INDEX);
             jt.setOutputPath(":" + getSGEOutputDirectory() + File.separator + getGridServicePrefixName() + "Output." + JobTemplate.PARAMETRIC_INDEX);
@@ -439,6 +442,10 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         if (stdGridErrorMsgSet.size() > 0) {
             EJBFactory.getLocalComputeBean().saveTaskMessages(task.getObjectId(), stdGridErrorMsgSet);
         }
+    }
+
+    public Integer getJobTimeoutSeconds() {
+        return null;
     }
 
     class StdErrorFilenameFilter implements FilenameFilter {
