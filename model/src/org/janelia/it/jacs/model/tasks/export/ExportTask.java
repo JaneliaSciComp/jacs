@@ -57,7 +57,7 @@ public abstract class ExportTask extends Task implements IsSerializable, Seriali
     public ExportTask(String exportFormatType, List<String> accessionList,
                       List<SortArgument> exportAttributeList) {
         setParameter(PARAM_EXPORT_FORMAT_TYPE, exportFormatType);
-        setParameter(PARAM_ACCESSION_LIST, csvStringFromList(accessionList));
+        setParameter(PARAM_ACCESSION_LIST, csvStringFromCollection(accessionList));
         setParameter(PARAM_SUGGESTED_COMPRESSION_TYPE, COMPRESSION_NONE);
         setParameter(PARAM_EXPORT_ATTRIBUTE_LIST, csvStringFromSortArgumentList(exportAttributeList));
     }

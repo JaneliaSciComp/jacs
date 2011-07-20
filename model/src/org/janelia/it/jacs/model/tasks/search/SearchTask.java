@@ -170,10 +170,10 @@ public class SearchTask extends Task {
 
     public void setSearchTopics(List<String> searchTopics) {
         if (searchTopics != null && searchTopics.contains(TOPIC_ALL)) {
-            setParameter(PARAM_searchTopic, csvStringFromList(getAllSupportedTopics()));
+            setParameter(PARAM_searchTopic, csvStringFromCollection(getAllSupportedTopics()));
         }
         else {
-            setParameter(PARAM_searchTopic, csvStringFromList(searchTopics));
+            setParameter(PARAM_searchTopic, csvStringFromCollection(searchTopics));
         }
     }
 

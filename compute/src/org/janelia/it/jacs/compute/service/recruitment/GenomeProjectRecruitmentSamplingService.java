@@ -64,7 +64,7 @@ public class GenomeProjectRecruitmentSamplingService implements IService {
 
             // Make sure the db nodes are sampling blast db's
             RecruitmentSamplingBlastDatabaseBuilderTask builderTask = new RecruitmentSamplingBlastDatabaseBuilderTask(null,
-                    task.getOwner(), null, null, Task.csvStringFromList(newBlastDBList), task.getJobName(), task.getJobName());
+                    task.getOwner(), null, null, Task.csvStringFromCollection(newBlastDBList), task.getJobName(), task.getJobName());
             builderTask.setJobName(task.getJobName());
             builderTask.setParentTaskId(task.getObjectId());
             builderTask = (RecruitmentSamplingBlastDatabaseBuilderTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(builderTask);
@@ -89,7 +89,7 @@ public class GenomeProjectRecruitmentSamplingService implements IService {
             BlastNTask blastNTask = new BlastNTask();
             blastNTask.setParameter(BlastNTask.PARAM_query, fastaFileNode.getObjectId().toString());
             // todo Need an explicit check for all the db node's existence in db and filestore!!!!!!!!!!!!!!!
-            blastNTask.setParameter(BlastNTask.PARAM_subjectDatabases, Task.csvStringFromList(newBlastDBList));
+            blastNTask.setParameter(BlastNTask.PARAM_subjectDatabases, Task.csvStringFromCollection(newBlastDBList));
             blastNTask.setParameter(BlastNTask.PARAM_databaseAlignments, "10000");
             blastNTask.setParameter(BlastNTask.PARAM_lowerCaseFiltering, "true");
             blastNTask.setParameter(BlastNTask.PARAM_evalue, "-4");

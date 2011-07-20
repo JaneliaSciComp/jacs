@@ -98,7 +98,7 @@ public class CreateTaskService implements IService {
         dbList.add(String.valueOf(node.getObjectId()));
         ms.setPotentialChoices(dbList);
         ms.setActualUserChoices(dbList);
-        blastTask.setParameter(BlastNTask.PARAM_subjectDatabases, Task.csvStringFromList(ms.getActualUserChoices()));
+        blastTask.setParameter(BlastNTask.PARAM_subjectDatabases, Task.csvStringFromCollection(ms.getActualUserChoices()));
     }
 
     private void setBlastParameters() {

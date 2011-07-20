@@ -70,7 +70,7 @@ public class GenomeProjectImportTask extends Task {
         setParameter(PARAM_PATH_TO_SOURCE_DATA, pathToSourceDir);
         setParameter(PARAM_GENOME_PROJECT_NAME, genomeProjectName);
         setParameter(PARAM_GENOME_PROJECT_STATUS, projectStatus);
-        setParameter(PARAM_GENBANK_FILE_LIST, csvStringFromList(genbankFileNames));
+        setParameter(PARAM_GENBANK_FILE_LIST, csvStringFromCollection(genbankFileNames));
         this.taskName = "Genome Project Import Task";
     }
 

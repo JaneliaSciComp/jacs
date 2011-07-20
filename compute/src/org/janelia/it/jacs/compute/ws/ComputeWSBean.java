@@ -209,7 +209,7 @@ public class ComputeWSBean extends BaseWSBean {
         if (null != workSessionId && !"".equals(workSessionId)) {
             blastnTask.setParentTaskId(Long.valueOf(workSessionId));
         }
-        blastnTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromList(ms.getActualUserChoices()));
+        blastnTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromCollection(ms.getActualUserChoices()));
         blastnTask.setParameter(BlastTask.PARAM_databaseAlignments, Integer.toString(databaseAlignmentsPerQuery));
         blastnTask.setParameter(BlastTask.PARAM_filter, filter);
         blastnTask.setParameter(BlastTask.PARAM_evalue, Integer.toString(eValueExponent));
@@ -291,7 +291,7 @@ public class ComputeWSBean extends BaseWSBean {
         if (null != workSessionId && !"".equals(workSessionId)) {
             blastnTask.setParentTaskId(Long.valueOf(workSessionId));
         }
-        blastnTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromList(ms.getActualUserChoices()));
+        blastnTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromCollection(ms.getActualUserChoices()));
         blastnTask.setParameter(BlastTask.PARAM_databaseAlignments, Integer.toString(databaseAlignmentsPerQuery));
         blastnTask.setParameter(BlastTask.PARAM_filter, filter);
         blastnTask.setParameter(BlastTask.PARAM_evalue, Integer.toString(eValueExponent));
@@ -371,7 +371,7 @@ public class ComputeWSBean extends BaseWSBean {
         if (null != workSessionId && !"".equals(workSessionId)) {
             megaBlastTask.setParentTaskId(Long.valueOf(workSessionId));
         }
-        megaBlastTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromList(ms.getActualUserChoices()));
+        megaBlastTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromCollection(ms.getActualUserChoices()));
         megaBlastTask.setParameter(BlastTask.PARAM_databaseAlignments, Integer.toString(databaseAlignmentsPerQuery));
         megaBlastTask.setParameter(BlastTask.PARAM_filter, filter);
         megaBlastTask.setParameter(BlastTask.PARAM_evalue, Integer.toString(eValueExponent));
@@ -448,7 +448,7 @@ public class ComputeWSBean extends BaseWSBean {
         if (null != workSessionId && !"".equals(workSessionId)) {
             tBlastXTask.setParentTaskId(Long.valueOf(workSessionId));
         }
-        tBlastXTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromList(ms.getActualUserChoices()));
+        tBlastXTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromCollection(ms.getActualUserChoices()));
         tBlastXTask.setParameter(BlastTask.PARAM_databaseAlignments, Integer.toString(databaseAlignmentsPerQuery));
         tBlastXTask.setParameter(BlastTask.PARAM_filter, filter);
         tBlastXTask.setParameter(BlastTask.PARAM_evalue, Integer.toString(eValueExponent));
@@ -523,7 +523,7 @@ public class ComputeWSBean extends BaseWSBean {
         if (null != workSessionId && !"".equals(workSessionId)) {
             tBlastXTask.setParentTaskId(Long.valueOf(workSessionId));
         }
-        tBlastXTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromList(ms.getActualUserChoices()));
+        tBlastXTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromCollection(ms.getActualUserChoices()));
         tBlastXTask.setParameter(BlastTask.PARAM_databaseAlignments, Integer.toString(databaseAlignmentsPerQuery));
         tBlastXTask.setParameter(BlastTask.PARAM_filter, filter);
         tBlastXTask.setParameter(BlastTask.PARAM_evalue, Integer.toString(eValueExponent));
@@ -599,7 +599,7 @@ public class ComputeWSBean extends BaseWSBean {
         if (null != workSessionId && !"".equals(workSessionId)) {
             tBlastNTask.setParentTaskId(Long.valueOf(workSessionId));
         }
-        tBlastNTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromList(ms.getActualUserChoices()));
+        tBlastNTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromCollection(ms.getActualUserChoices()));
         tBlastNTask.setParameter(BlastTask.PARAM_databaseAlignments, Integer.toString(databaseAlignmentsPerQuery));
         tBlastNTask.setParameter(BlastTask.PARAM_filter, filter);
         tBlastNTask.setParameter(BlastTask.PARAM_evalue, Integer.toString(eValueExponent));
@@ -674,7 +674,7 @@ public class ComputeWSBean extends BaseWSBean {
         if (null != workSessionId && !"".equals(workSessionId)) {
             tBlastNTask.setParentTaskId(Long.valueOf(workSessionId));
         }
-        tBlastNTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromList(ms.getActualUserChoices()));
+        tBlastNTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromCollection(ms.getActualUserChoices()));
         tBlastNTask.setParameter(BlastTask.PARAM_databaseAlignments, Integer.toString(databaseAlignmentsPerQuery));
         tBlastNTask.setParameter(BlastTask.PARAM_filter, filter);
         tBlastNTask.setParameter(BlastTask.PARAM_evalue, Integer.toString(eValueExponent));
@@ -749,7 +749,7 @@ public class ComputeWSBean extends BaseWSBean {
         if (null != workSessionId && !"".equals(workSessionId)) {
             blastpTask.setParentTaskId(Long.valueOf(workSessionId));
         }
-        blastpTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromList(ms.getActualUserChoices()));
+        blastpTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromCollection(ms.getActualUserChoices()));
         blastpTask.setParameter(BlastTask.PARAM_databaseAlignments, Integer.toString(databaseAlignmentsPerQuery));
         blastpTask.setParameter(BlastTask.PARAM_filter, filter);
         blastpTask.setParameter(BlastTask.PARAM_evalue, Integer.toString(eValueExponent));
@@ -823,7 +823,7 @@ public class ComputeWSBean extends BaseWSBean {
         if (null != workSessionId && !"".equals(workSessionId)) {
             blastpTask.setParentTaskId(Long.valueOf(workSessionId));
         }
-        blastpTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromList(ms.getActualUserChoices()));
+        blastpTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromCollection(ms.getActualUserChoices()));
         blastpTask.setParameter(BlastTask.PARAM_databaseAlignments, Integer.toString(databaseAlignmentsPerQuery));
         blastpTask.setParameter(BlastTask.PARAM_filter, filter);
         blastpTask.setParameter(BlastTask.PARAM_evalue, Integer.toString(eValueExponent));
@@ -899,7 +899,7 @@ public class ComputeWSBean extends BaseWSBean {
         if (null != workSessionId && !"".equals(workSessionId)) {
             blastxTask.setParentTaskId(Long.valueOf(workSessionId));
         }
-        blastxTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromList(ms.getActualUserChoices()));
+        blastxTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromCollection(ms.getActualUserChoices()));
         blastxTask.setParameter(BlastTask.PARAM_databaseAlignments, Integer.toString(databaseAlignmentsPerQuery));
         blastxTask.setParameter(BlastTask.PARAM_filter, filter);
         blastxTask.setParameter(BlastTask.PARAM_evalue, Integer.toString(eValueExponent));
@@ -977,7 +977,7 @@ public class ComputeWSBean extends BaseWSBean {
         if (null != workSessionId && !"".equals(workSessionId)) {
             blastxTask.setParentTaskId(Long.valueOf(workSessionId));
         }
-        blastxTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromList(ms.getActualUserChoices()));
+        blastxTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromCollection(ms.getActualUserChoices()));
         blastxTask.setParameter(BlastTask.PARAM_databaseAlignments, Integer.toString(databaseAlignmentsPerQuery));
         blastxTask.setParameter(BlastTask.PARAM_filter, filter);
         blastxTask.setParameter(BlastTask.PARAM_evalue, Integer.toString(eValueExponent));
@@ -3642,7 +3642,7 @@ public class ComputeWSBean extends BaseWSBean {
             rpsblastTask.setParentTaskId(Long.valueOf(workSessionId));
         }
         rpsblastTask.setParameter(ReversePsiBlastTask.PARAM_evalue, Integer.toString(eValueExponent));
-        rpsblastTask.setParameter(ReversePsiBlastTask.PARAM_subjectDatabases, Task.csvStringFromList(ms.getActualUserChoices()));
+        rpsblastTask.setParameter(ReversePsiBlastTask.PARAM_subjectDatabases, Task.csvStringFromCollection(ms.getActualUserChoices()));
         rpsblastTask.setParameter(ReversePsiBlastTask.PARAM_blastExtensionDropoff, Integer.toString(blastExtensionDropoffBits));
         rpsblastTask.setParameter(ReversePsiBlastTask.PARAM_believeQueryDefline, Boolean.toString(believeDefline));
         rpsblastTask.setParameter(ReversePsiBlastTask.PARAM_giInDeflines, Boolean.toString(showGIsInDeflines));

@@ -119,7 +119,7 @@ public class BlastAPITest extends JacswebTestCase {
         ArrayList<String> dbList = new ArrayList<String>();
         dbList.add(String.valueOf(subjectNode.getObjectId()));
         ms.setActualUserChoices(dbList);
-        blastTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromList(ms.getActualUserChoices()));
+        blastTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromCollection(ms.getActualUserChoices()));
         blastTask = (BlastTask)blastAPI.computeBean.saveOrUpdateTask(blastTask);
         return blastTask;
     }

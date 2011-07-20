@@ -127,7 +127,7 @@ public class FrvRecruitFromStatisticsService implements IService {
                     // Figure out what exactly to blast
                     String summary = "";
                     if (targetDbIdSet.size()>0) {
-                        String blastDBCommaList = Task.csvStringFromList(new ArrayList<String>(targetDbIdSet));
+                        String blastDBCommaList = Task.csvStringFromCollection(new ArrayList<String>(targetDbIdSet));
                         summary+=", Recruiting "+tmpGbkFileName+" against "+blastDBCommaList+"...";
                         // For each Genbank file, run blast, import recruitment file node, and recruitment result file node
                         GenbankFileInfo genbankFileInfo = genbankFiles.get(tmpGbkFileName);

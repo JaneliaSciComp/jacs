@@ -327,14 +327,14 @@ public abstract class Task implements java.io.Serializable, IsSerializable {
         return list;
     }
 
-    public static String csvStringFromList(List list) {
+    public static String csvStringFromCollection(Collection<String> collection) {
         StringBuffer sb = new StringBuffer("");
-        if (list != null) {
-            for (int i = 0; i < list.size(); i++) {
-                String s = (String) list.get(i);
-                if (i != 0)
-                    sb.append(",");
-                sb.append(s);
+        if (collection != null) {
+            Iterator iterator = collection.iterator();
+            while (iterator.hasNext()) {
+                String next = (String)iterator.next();
+                sb.append(next);
+                if (iterator.hasNext()) { sb.append(","); }
             }
         }
         return sb.toString();

@@ -148,7 +148,7 @@ public class GenomeProjectBlastFrvUpdateService implements IService {
             BlastNTask blastNTask = new BlastNTask();
             blastNTask.setParameter(BlastNTask.PARAM_query, oldFastaFileNode.getObjectId().toString());
             // todo Need an explicit check for all the db node's existence in db and filestore!!!!!!!!!!!!!!!
-            blastNTask.setParameter(BlastNTask.PARAM_subjectDatabases, Task.csvStringFromList(finalBlastDBCommaList));
+            blastNTask.setParameter(BlastNTask.PARAM_subjectDatabases, Task.csvStringFromCollection(finalBlastDBCommaList));
             blastNTask.setParameter(BlastNTask.PARAM_databaseAlignments, "10000");
             blastNTask.setParameter(BlastNTask.PARAM_lowerCaseFiltering, "true");
             blastNTask.setParameter(BlastNTask.PARAM_evalue, "-4");
@@ -216,13 +216,13 @@ public class GenomeProjectBlastFrvUpdateService implements IService {
             // Update the blast db list - Get Fresh data as the object transactions could be expired
             oldBlastDBList.addAll(finalBlastDBCommaList);
             oldRecruitmentTask = (RecruitmentViewerRecruitmentTask) EJBFactory.getRemoteComputeBean().getTaskById(oldRecruitmentTaskId);
-            oldRecruitmentTask.setParameter(RecruitmentViewerTask.BLAST_DATABASE_IDS, Task.csvStringFromList(oldBlastDBList));
+            oldRecruitmentTask.setParameter(RecruitmentViewerTask.BLAST_DATABASE_IDS, Task.csvStringFromCollection(oldBlastDBList));
             EJBFactory.getRemoteComputeBean().saveOrUpdateTask(oldRecruitmentTask);
 
             // STEP 4: Filter the recruited results
             // Need to make sure all known samples are in the re-imaging attempt - Get Fresh data as the object transactions could be expired
             //RecruitmentViewerFilterDataTask oldFilterDataTask = (RecruitmentViewerFilterDataTask) EJBFactory.getRemoteComputeBean().getTaskById(Long.valueOf(oldFRVFilterTaskID));
-            EJBFactory.getRemoteComputeBean().setTaskParameter(Long.valueOf(oldFRVFilterTaskID), RecruitmentViewerFilterDataTask.SAMPLE_LIST, Task.csvStringFromList(EJBFactory.getRemoteComputeBean().getAllSampleNamesAsList()));
+            EJBFactory.getRemoteComputeBean().setTaskParameter(Long.valueOf(oldFRVFilterTaskID), RecruitmentViewerFilterDataTask.SAMPLE_LIST, Task.csvStringFromCollection(EJBFactory.getRemoteComputeBean().getAllSampleNamesAsList()));
             EJBFactory.getRemoteComputeBean().setTaskParameter(Long.valueOf(oldFRVFilterTaskID), Task.PARAM_project, task.getParameter(Task.PARAM_project));
             EJBFactory.getRemoteComputeBean().addEventToTask(Long.valueOf(oldFRVFilterTaskID), new Event("Combining data and resubmitting filter task", new Date(), Event.RESUBMIT_EVENT));
             // SUBMITTING THE DATA FILTER JOB

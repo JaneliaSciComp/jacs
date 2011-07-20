@@ -84,7 +84,7 @@ public class BlastTest implements BlastTestMBean {
 
             ms.setPotentialChoices(dbList);
             ms.setActualUserChoices(dbList);
-            blastNTask.setParameter(BlastNTask.PARAM_subjectDatabases, Task.csvStringFromList(ms.getActualUserChoices()));
+            blastNTask.setParameter(BlastNTask.PARAM_subjectDatabases, Task.csvStringFromCollection(ms.getActualUserChoices()));
             blastNTask.setOwner("sreenath");
             org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
             computeBean.saveOrUpdateTask(blastNTask);
@@ -118,7 +118,7 @@ public class BlastTest implements BlastTestMBean {
                 ms.setActualUserChoices(dbList);
                 blastTask.setParameter(TBlastNTask.PARAM_databaseAlignments, String.valueOf(numOfAlinments));
                 blastTask.setParameter(TBlastNTask.PARAM_evalue, "-3");
-                blastTask.setParameter(TBlastNTask.PARAM_subjectDatabases, Task.csvStringFromList(ms.getActualUserChoices()));
+                blastTask.setParameter(TBlastNTask.PARAM_subjectDatabases, Task.csvStringFromCollection(ms.getActualUserChoices()));
                 blastTask.setParameter(TBlastNTask.PARAM_project, "08020");
                 blastTask.setParameter(TBlastNTask.PARAM_finalGappedDropoff, "0");
                 blastTask.setParameter(TBlastNTask.PARAM_gappedAlignmentDropoff, "0");
@@ -155,7 +155,7 @@ public class BlastTest implements BlastTestMBean {
             dbList.add("1054893807616655712");
             ms.setPotentialChoices(dbList);
             ms.setActualUserChoices(dbList);
-            blastNTask.setParameter(BlastNTask.PARAM_subjectDatabases, Task.csvStringFromList(ms.getActualUserChoices()));
+            blastNTask.setParameter(BlastNTask.PARAM_subjectDatabases, Task.csvStringFromCollection(ms.getActualUserChoices()));
             blastNTask.setOwner("smurphy");
             org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
             computeBean.saveOrUpdateTask(blastNTask);
@@ -183,7 +183,7 @@ public class BlastTest implements BlastTestMBean {
 
             ms.setPotentialChoices(dbList);
             ms.setActualUserChoices(dbList);
-            blastNTask.setParameter(BlastNTask.PARAM_subjectDatabases, Task.csvStringFromList(ms.getActualUserChoices()));
+            blastNTask.setParameter(BlastNTask.PARAM_subjectDatabases, Task.csvStringFromCollection(ms.getActualUserChoices()));
             blastNTask.setParameter(BlastNTask.PARAM_databaseAlignments, "5000");
             blastNTask.setParameter(BlastNTask.PARAM_lowerCaseFiltering, "false");
             blastNTask.setParameter(BlastNTask.PARAM_evalue, "-4");

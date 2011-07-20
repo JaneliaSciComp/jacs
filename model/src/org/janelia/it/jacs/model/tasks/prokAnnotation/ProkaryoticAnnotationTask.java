@@ -183,7 +183,7 @@ public class ProkaryoticAnnotationTask extends Task {
     }
 
     public void setActionList(List<String> actions) {
-        setParameter(PARAM_actionSet, Task.csvStringFromList(actions));
+        setParameter(PARAM_actionSet, Task.csvStringFromCollection(actions));
     }
 
     public boolean isParameterRequired(String parameterKeyName) {

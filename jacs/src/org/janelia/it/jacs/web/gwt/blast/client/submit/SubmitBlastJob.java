@@ -108,7 +108,7 @@ public class SubmitBlastJob {
                 return;
             }
             blastTask.setParameter(BlastTask.PARAM_query, queryNodeId);
-            blastTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromList(_blastData.getSubjectDatasetIdsList()));
+            blastTask.setParameter(BlastTask.PARAM_subjectDatabases, Task.csvStringFromCollection(_blastData.getSubjectDatasetIdsList()));
             _logger.debug("Saved the query Node, now running Blast Job");
             _blastService.runBlastJob(blastTask, new AsyncCallback() {
                 public void onFailure(Throwable throwable) {

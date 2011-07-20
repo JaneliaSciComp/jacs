@@ -189,7 +189,7 @@ public class BlastRunner {
         dbList.add(String.valueOf(datasetNodeId));
         //ms.setPotentialChoices(dbList);
         ms.setActualUserChoices(dbList);
-        blastTask.setParameter(BlastNTask.PARAM_subjectDatabases, Task.csvStringFromList(ms.getActualUserChoices()));
+        blastTask.setParameter(BlastNTask.PARAM_subjectDatabases, Task.csvStringFromCollection(ms.getActualUserChoices()));
     }
 
     private void loadCommandLineArguments(String args[]) {

@@ -68,7 +68,7 @@ public class RecruitmentViewerFilterDataTask extends RecruitmentViewerTask {
         setParameter(REF_BEGIN_COORD, Double.toString(referenceBeginCoordinate));
         setParameter(REF_END_COORD, Double.toString(referenceEndCoordinate));
         setParameter(NUM_HITS, numHits.toString());
-        String sampleListString = csvStringFromList(sampleList);
+        String sampleListString = csvStringFromCollection(sampleList);
         setParameter(SAMPLE_LIST, sampleListString);
         setParameter(MATE_BITS, mateBits);
         setParameter(ANNOTATION_FILTER_STRING, annotationFilterString);
