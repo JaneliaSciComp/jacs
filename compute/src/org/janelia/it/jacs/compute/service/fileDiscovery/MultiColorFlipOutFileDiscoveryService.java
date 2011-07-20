@@ -208,6 +208,11 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         File dir = new File(folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         logger.info("Processing folder="+dir.getAbsolutePath()+" id="+folder.getId());
         
+        if (!dir.canRead()) {
+        	logger.info("Cannot read from folder "+dir.getAbsolutePath());
+        	return;
+        }
+        
         for (File file : dir.listFiles()) {
             if (file.isDirectory()) {
                 Entity subfolder = verifyOrCreateChildFolderFromDir(folder, file);
