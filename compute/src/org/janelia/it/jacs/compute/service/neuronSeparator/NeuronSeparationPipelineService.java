@@ -84,7 +84,7 @@ public class NeuronSeparationPipelineService extends SubmitDrmaaJobService {
         if (!lsmFile.exists()) {
             throw new ServiceException("Could not find LSM file "+lsmFile.getAbsolutePath());
         }
-        File lsmDataFile=new File(parentNode.getDirectoryPath()+"/"+removeWhitespace(lsmFile.getName())+".metadata");
+        File lsmDataFile=new File(parentNode.getDirectoryPath()+"/"+createLsmMetadataFilename(lsmFile)+".metadata");
         String cmdLine = "cd " + parentNode.getDirectoryPath() + ";perl " +
                 SystemConfigurationProperties.getString("Executables.ModuleBase") + "singleNeuronTools/lsm_metadata_dump.pl " +
                 addQuotes(lsmPath) + " " + addQuotes(lsmDataFile.getAbsolutePath());
@@ -110,7 +110,7 @@ public class NeuronSeparationPipelineService extends SubmitDrmaaJobService {
         return sb.toString();
     }
     
-    private String removeWhitespace(String s) {
-        return s.replaceAll("\\s+","");
+    private String createLsmMetadataFilename(File lsmFile) {
+        return lsmFile.getName().replaceAll("\\s+","_");
     }
 }
