@@ -41,15 +41,11 @@ import java.util.Set;
  * Date: May 4, 2009
  * Time: 2:53:19 PM
  * This class is a facade for DRMAA JobTemplate. It is needed for serialization purposes
- * All values are stored in the map, and flushed into rela jobTemplate before it is used in submission
+ * All values are stored in the map, and flushed into related jobTemplate before it is used in submission.
+ * NOTE: Many methods are not supported by SGE but are reflected in the API; for example setHardRunDurationLimit()
  */
 public class SerializableJobTemplate implements Serializable {
 
-
-//    public SerializableJobTemplate(JobTemplate jt) throws IllegalAccessException, InvocationTargetException
-//    {
-//       copyProperties(this, jt);
-//    }
 
     private Map<String, Object> attributeMap = new HashMap<String, Object>();
 
@@ -106,7 +102,6 @@ public class SerializableJobTemplate implements Serializable {
                 }
             }
         }
-//        copyProperties(drmaaJobTemplate, this);
     }
 
     public String toString() {
@@ -124,88 +119,60 @@ public class SerializableJobTemplate implements Serializable {
         }
     }
 
-    private void setValue(Object val) {
-        // get calling method
-        // first method on the stack is getStackTrace, second setValue, third is what we need
-        StackTraceElement[] ste = Thread.currentThread().getStackTrace();
-        if (ste != null && ste.length > 2) {
-            String methodName = ste[2].getMethodName();
-            // cut 'set' out
-            attributeMap.put(methodName.substring(3), val);
-        }
-        else {
-            // error
-        }
+    private void setValue(String sgeMethodName, Object val) {
+        attributeMap.put(sgeMethodName, val);
     }
 
-    private Object getValue() {
-        // get calling method
-        StackTraceElement[] ste = Thread.currentThread().getStackTrace();
-        if (ste != null && ste.length > 2) {
-            String methodName = ste[2].getMethodName();
-            // cut 'get' out
-            return attributeMap.get(methodName.substring(3));
-        }
-        else
-            return null;
+    private Object getValue(String targetKey) {
+        return attributeMap.get(targetKey);
     }
 
     public void setRemoteCommand(String s) {
-        setValue(s);
+        setValue("RemoteCommand", s);
     }
 
     public String getRemoteCommand() {
-        return (String) getValue();
+        return (String) getValue("RemoteCommand");
     }
 
     public void setArgs(List list) {
-        setValue(list);
-//        args = list;
+        setValue("Args", list);
     }
 
     public List getArgs() {
-        return (List) getValue();
-//        return args;
+        return (List) getValue("Args");
     }
 
     public void setJobSubmissionState(int i) {
-        setValue(i);
-//        jobSubmissionState = i;
+        setValue("JobSubmissionState", i);
     }
 
     public int getJobSubmissionState() {
-        return (Integer) getValue();
-//        return jobSubmissionState;
+        return (Integer) getValue("JobSubmissionState");
     }
 
     public void setJobEnvironment(Map map) {
-        setValue(map);
-//        jobEnvironment = map;
+        setValue("JobEnvironment", map);
     }
 
     public Map getJobEnvironment() {
-        return (Map) getValue();
-//        return jobEnvironment;
+        return (Map) getValue("JobEnvironment");
     }
 
     public void setWorkingDirectory(String s) {
-        setValue(s);
-//        workingDirectory = s;
+        setValue("WorkingDirectory", s);
     }
 
     public String getWorkingDirectory() {
-        return (String) getValue();
-//        return workingDirectory;
+        return (String) getValue("WorkingDirectory");
     }
 
     public void setJobCategory(String s) {
-        setValue(s);
-//        jobCategory = s;
+        setValue("JobCategory", s);
     }
 
     public String getJobCategory() {
-        return (String) getValue();
-//        return jobCategory;
+        return (String) getValue("JobCategory");
     }
 
     public void setNativeSpecification(String s) {
@@ -226,191 +193,124 @@ public class SerializableJobTemplate implements Serializable {
             realValue = attributeMap.get("NativeSpecification") + " " + s;
         else
             realValue = s;
-        setValue(realValue);
+        setValue("NativeSpecification", realValue);
 
     }
 
     public String getNativeSpecification() {
-        return (String) getValue();
-//        return nativeSpecification;
+        return (String) getValue("NativeSpecification");
     }
 
     public void setEmail(Set set) {
-        setValue(set);
-//        email = set;
+        setValue("Email", set);
     }
 
     public Set getEmail() {
-        return (Set) getValue();
-//        return email;
+        return (Set) getValue("Email");
     }
 
     public void setBlockEmail(boolean b) {
-        setValue(b);
-//        blockEmail = b;
+        setValue("BlockEmail", b);
     }
 
     public boolean getBlockEmail() {
-        return (Boolean) getValue();
-//        return blockEmail;
+        return (Boolean) getValue("BlockEmail");
     }
 
     public void setStartTime(PartialTimestamp partialTimestamp) {
-        setValue(partialTimestamp);
-//        startTime = partialTimestamp;
+        setValue("StartTime", partialTimestamp);
     }
 
     public PartialTimestamp getStartTime() {
-        return (PartialTimestamp) getValue();
-//        return startTime;
+        return (PartialTimestamp) getValue("StartTime");
     }
 
     public void setJobName(String s) {
-        setValue(s);
-//        jobName = s;
+        setValue("JobName", s);
     }
 
     public String getJobName() {
-        return (String) getValue();
-//        return jobName;
+        return (String) getValue("JobName");
     }
 
     public void setInputPath(String s) {
-        setValue(s);
-//        inputPath = s;
+        setValue("InputPath", s);
     }
 
     public String getInputPath() {
-        return (String) getValue();
-//        return inputPath;
+        return (String) getValue("InputPath");
     }
 
     public void setOutputPath(String s) {
-        setValue(s);
-//        outputPath = s;
+        setValue("OutputPath", s);
     }
 
     public String getOutputPath() {
-        return (String) getValue();
-//        return outputPath;
+        return (String) getValue("OutputPath");
     }
 
     public void setErrorPath(String s) {
-        setValue(s);
-//        errorPath = s;
+        setValue("ErrorPath", s);
     }
 
     public String getErrorPath() {
-        return (String) getValue();
-//        return errorPath;
+        return (String) getValue("ErrorPath");
     }
 
     public void setJoinFiles(boolean b) {
-        setValue(b);
-//        joinFiles = b;
+        setValue("JoinFiles", b);
     }
 
     public boolean getJoinFiles() {
-        return (Boolean) getValue();
-//        return joinFiles;
+        return (Boolean) getValue("JoinFiles");
     }
 
     public void setTransferFiles(FileTransferMode fileTransferMode) {
-        setValue(fileTransferMode);
-//        transferFiles = fileTransferMode;
+        setValue("TransferFiles", fileTransferMode);
     }
 
     public FileTransferMode getTransferFiles() {
-        return (FileTransferMode) getValue();
-//        return transferFiles;
+        return (FileTransferMode) getValue("TransferFiles");
     }
 
     public void setDeadlineTime(PartialTimestamp partialTimestamp) {
-        setValue(partialTimestamp);
-//        deadlineTime = partialTimestamp;
+        setValue("DeadlineTime", partialTimestamp);
     }
 
     public PartialTimestamp getDeadlineTime() {
-        return (PartialTimestamp) getValue();
-//        return deadlineTime;
+        return (PartialTimestamp) getValue("DeadlineTime");
     }
 
     public void setHardWallclockTimeLimit(long l) {
-        setValue(l);
-//        hardWallclockTimeLimit = l;
+        setValue("HardWallclockTimeLimit", l);
     }
 
     public long getHardWallclockTimeLimit() {
-        return (Long) getValue();
-//        return hardWallclockTimeLimit;
+        return (Long) getValue("HardWallclockTimeLimit");
     }
 
     public void setSoftWallclockTimeLimit(long l) {
-        setValue(l);
-//        softWallclockTimeLimit = l;
+        setValue("SoftWallclockTimeLimit", l);
     }
 
     public long getSoftWallclockTimeLimit() {
-        return (Long) getValue();
-//        return softWallclockTimeLimit;
+        return (Long) getValue("SoftWallclockTimeLimit");
     }
 
     public void setHardRunDurationLimit(long l) {
-        setValue(l);
-//        hardRunDurationLimit = l;
+        setValue("HardRunDurationLimit", l);
     }
 
     public long getHardRunDurationLimit() {
-        return (Long) getValue();
-//        return hardRunDurationLimit;
+        return (Long) getValue("HardRunDurationLimit");
     }
 
     public void setSoftRunDurationLimit(long l) {
-        setValue(l);
-//        softRunDurationLimit = l;
+        setValue("SoftRunDurationLimit", l);
     }
 
     public long getSoftRunDurationLimit() {
-        return (Long) getValue();
-//        return softRunDurationLimit;
-    }
-
-//    private Set attributeNames;
-//    // leave it at package access level
-//    void setAttributeNames(Set set)
-//    {
-//        attributeNames = set;
-//    }
-//    public Set getAttributeNames()  {
-//        return attributeNames;
-//    }
-
-
-    static private void copyProperties(Object target, Object src) {
-        // list all getters on the source
-        Method[] srcMethods = src.getClass().getMethods();
-        for (Method srcM : srcMethods) {
-            // check if a getter
-            if (srcM.getName().startsWith("get")) {
-                // figure out the attribute name
-                String attrName = srcM.getName().substring(3);
-                // copy value
-                try {
-                    // figure out parameter types
-                    Class paramType = srcM.getReturnType();
-                    // find setter
-                    Method targetM = target.getClass().getMethod("set" + attrName, paramType);
-
-                    // execute copy
-                    Object value = srcM.invoke(src);
-                    if (value != null)
-                        targetM.invoke(target, value);
-                }
-                catch (Exception e) {
-                    //System.err.println("Unable to copy attribute '" + attrName + "'. Error:" + e.getMessage());
-                }
-            }
-        }
+        return (Long) getValue("SoftRunDurationLimit");
     }
 
 }
