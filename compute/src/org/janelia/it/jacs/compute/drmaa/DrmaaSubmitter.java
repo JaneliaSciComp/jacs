@@ -66,6 +66,7 @@ public class DrmaaSubmitter {
     public static final String OPT_RETURN_BY = "return";
     public static final String OPT_RETURN_VIA_QUEUE_VAL = "queue";
     public static final String OPT_RETURN_VIA_SYSTEM_VAL = "system";
+    public static final String OPT_TIMEOUT_SECONDS = "timeout";
     public static final String DELIMETER = "=";
 
     protected static final int MAX_JOBS_IN_ARRAY = SystemConfigurationProperties.getInt("Grid.MaxNumberOfJobs");
@@ -139,10 +140,7 @@ public class DrmaaSubmitter {
         try {
             DrmaaSubmitter ds = new DrmaaSubmitter(params);
             Set<String> jobs = ds.submitJob();
-            String mainJobID = jobs.iterator().next();
-            if (jobs.size() > 1) {
-                mainJobID = mainJobID.substring(0, mainJobID.lastIndexOf('.')) + ".N";
-            }
+            String mainJobID = DrmaaHelper.getMainJobId(jobs);
             // now wait for jobs to be completed
             // Instantiate Status Logger
             JobStatusLogger jsl;
@@ -155,7 +153,7 @@ public class DrmaaSubmitter {
             jsl.bulkAdd(jobs, ds.sgeQueueName, GridJobStatus.JobState.QUEUED);
 
             logger.info("******** " + jobs.size() + " jobs (" + mainJobID + ") submitted to grid **********");
-            boolean gridActionSuccessful = ds.drmaa.waitForJobs(jobs, "Computing results: ", jsl, params.loopSleep);
+            boolean gridActionSuccessful = ds.drmaa.waitForJobs(jobs, "Computing results: ", jsl, params.loopSleep, params.timeoutInSeconds);
             GridProcessResult gpr = new GridProcessResult(params.taskId, gridActionSuccessful);
             gpr.setGridSubmissionKey(params.submissionKey);
             if (!gridActionSuccessful) {
@@ -231,6 +229,7 @@ class SubmitterParams {
 
     // task id for status updates
     long taskId = -1;
+    int timeoutInSeconds=-1;
 
     // notification Method for reporting back
     String notificationMethod = DrmaaSubmitter.OPT_RETURN_VIA_SYSTEM_VAL;
@@ -268,6 +267,9 @@ class SubmitterParams {
             }
             else if (DrmaaSubmitter.OPT_SUBMISSION_KEY.equalsIgnoreCase(nameValuePair[0])) {
                 submissionKey = nameValuePair[1];
+            }
+            else if (DrmaaSubmitter.OPT_TIMEOUT_SECONDS.equalsIgnoreCase(nameValuePair[0])) {
+                timeoutInSeconds = Integer.valueOf(nameValuePair[1]);
             }
             else if (DrmaaSubmitter.OPT_TASK_ID.equalsIgnoreCase(nameValuePair[0])) {
                 try {

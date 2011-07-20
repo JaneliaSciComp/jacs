@@ -174,9 +174,6 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
             jt.setRemoteCommand("bash");
             jt.setArgs(Arrays.asList(jobScript.getAbsolutePath()));
             jt.setWorkingDirectory(resultFileNode.getDirectoryPath());
-            if (null!= getJobTimeoutSeconds()) {
-                jt.setHardRunDurationLimit(getJobTimeoutSeconds());
-            }
             jt.setInputPath(":" + getSGEConfigurationDirectory() + File.separator + getGridServicePrefixName() + "Configuration." + JobTemplate.PARAMETRIC_INDEX);
             jt.setErrorPath(":" + getSGEErrorDirectory() + File.separator + getGridServicePrefixName() + "Error." + JobTemplate.PARAMETRIC_INDEX);
             jt.setOutputPath(":" + getSGEOutputDirectory() + File.separator + getGridServicePrefixName() + "Output." + JobTemplate.PARAMETRIC_INDEX);
@@ -221,7 +218,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         logger.info("Running runBulkJobs with nativeSpec=" + jt.getNativeSpecification());
         Process proc = drmaa.runBulkJobsThroughShell(
                 task.getObjectId(), task.getOwner(), resultFileNode.getDirectoryPath(),
-                jt, 1, jobIncrementStop, 1);
+                jt, 1, jobIncrementStop, 1, getJobTimeoutSeconds());
 
         drmaa.deleteJobTemplate(jt);
 
@@ -268,7 +265,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         logger.info("******** " + jobSet.size() + " jobs submitted to grid **********");
 
         // now wait for completion
-        boolean gridActionSuccessful = drmaa.waitForJobs(jobSet, "Computing results for " + resultFileNode.getObjectId(), jsl, -1);
+        boolean gridActionSuccessful = drmaa.waitForJobs(jobSet, "Computing results for " + resultFileNode.getObjectId(), jsl, -1, getJobTimeoutSeconds());
         if (!gridActionSuccessful) {
             String err = "Error ' \" + drmaa.getError() + \" ' executing grid jobs.";
             logger.error("err");
@@ -444,8 +441,8 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         }
     }
 
-    public Integer getJobTimeoutSeconds() {
-        return null;
+    public int getJobTimeoutSeconds() {
+        return -1;
     }
 
     class StdErrorFilenameFilter implements FilenameFilter {

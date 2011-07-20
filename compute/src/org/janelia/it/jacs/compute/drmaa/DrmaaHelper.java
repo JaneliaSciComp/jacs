@@ -27,9 +27,9 @@ import org.apache.log4j.Logger;
 import org.ggf.drmaa.*;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.status.GridJobStatus;
+import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.IOUtils;
 import org.janelia.it.jacs.shared.utils.SystemCall;
-import org.janelia.it.jacs.shared.utils.FileUtil;
 
 import java.io.*;
 import java.util.*;
@@ -54,7 +54,6 @@ public class DrmaaHelper {
     private static final String DRMAA_SUBMITTER_SCRIPT_PATH = SystemConfigurationProperties.getFilePath("Local.Lib.Path", "Drmaa.Submitter.Script.Name");
     public static final String ROOT_SERVER_DIR_PROP = "ServerRoot.Dir";
     private static HashSet<String> _projectCodes = new HashSet<String>();
-
     //Map<String, Integer> currentStatusMap = new HashMap<String, Integer>();
     private Map<String, Integer> currentStatusMap = new HashMap<String, Integer>();
 
@@ -81,16 +80,21 @@ public class DrmaaHelper {
     public static GridJobStatus.JobState translateStatusCode(int drmaaStatus) {
         GridJobStatus.JobState newState;
 
-        if (drmaaStatus == Session.DONE)
+        if (drmaaStatus == Session.DONE) {
             newState = GridJobStatus.JobState.DONE;
-        else if (drmaaStatus == Session.QUEUED_ACTIVE)
+        }
+        else if (drmaaStatus == Session.QUEUED_ACTIVE) {
             newState = GridJobStatus.JobState.QUEUED;
-        else if (drmaaStatus == Session.RUNNING)
+        }
+        else if (drmaaStatus == Session.RUNNING) {
             newState = GridJobStatus.JobState.RUNNING;
-        else if (drmaaStatus == Session.FAILED)
+        }
+        else if (drmaaStatus == Session.FAILED) {
             newState = GridJobStatus.JobState.FAILED;
-        else
+        }
+        else {
             newState = GridJobStatus.JobState.UNKNOWN;
+        }
 
         return newState;
     }
@@ -148,7 +152,7 @@ public class DrmaaHelper {
     }
 
     public Process runJobThroughShell(long taskId, String userId, String workingDir, SerializableJobTemplate jobTemplate) throws IOException, InterruptedException, DrmaaException {
-        return runBulkJobsThroughShell(taskId, userId, workingDir, jobTemplate, -1, -1, -1);
+        return runBulkJobsThroughShell(taskId, userId, workingDir, jobTemplate, -1, -1, -1, -1);
     }
 
     public String runJob(SerializableJobTemplate jobTemplate) throws DrmaaException {
@@ -159,8 +163,8 @@ public class DrmaaHelper {
     }
 
     public Process runBulkJobsThroughShell(long taskId, String userId, String workingDir,
-                                           SerializableJobTemplate jobTemplate, int start, int end, int incr) throws IOException, InterruptedException, DrmaaException {
-        return runJobThroughShell(taskId, workingDir, jobTemplate, start, end, incr);
+                                           SerializableJobTemplate jobTemplate, int start, int end, int incr, int timeoutInSeconds) throws IOException, InterruptedException, DrmaaException {
+        return runJobThroughShell(taskId, workingDir, jobTemplate, start, end, incr, timeoutInSeconds);
     }
 
     public Set<String> runBulkJobs(SerializableJobTemplate jt, int start, int end, int incr) throws DrmaaException {
@@ -183,7 +187,7 @@ public class DrmaaHelper {
     private boolean waitForJob(String jobId, String logPrefix, JobStatusLogger statusLogger, int statusPoolPeriod) throws Exception {
         Set<String> jobSet = new HashSet<String>();
         jobSet.add(jobId);
-        return waitForJobs(jobSet, logPrefix, statusLogger, statusPoolPeriod);
+        return waitForJobs(jobSet, logPrefix, statusLogger, statusPoolPeriod, -1);
     }
                                                     
 //    public boolean waitForJobs(Set<String> jobSet, String logPrefix) throws InterruptedException {
@@ -193,17 +197,21 @@ public class DrmaaHelper {
     /**
      * Method to wait for the jobs to finish on the Sun Grid
      *
+     *
      * @param jobSet           set of jobs to watch on the grid
      * @param logPrefix        prefix string for the log file
      * @param statusLogger     logger of the status of the grid job
      * @param statusPoolPeriod - milliseconds. if < 0 - use default increasing pooling period
+     * @param timeoutInSeconds the amount of time to wait for this job before killing it. -1 waits forever
      * @return boolean boolean whether the job failed or succeeded
      * @throws InterruptedException interrupt for the waiting action
      */
-    public boolean waitForJobs(Set<String> jobSet, String logPrefix, JobStatusLogger statusLogger, int statusPoolPeriod) throws InterruptedException {
+    public boolean waitForJobs(Set<String> jobSet, String logPrefix, JobStatusLogger statusLogger, int statusPoolPeriod,
+                               int timeoutInSeconds) throws Exception {
         //String logPrefix = "Computing results for " +resultNode.getObjectId() + " - Grid status: ";
+        Date startTime=null;
         int jobStatus;
-
+        String mainJobID = getMainJobId(jobSet);
         // changedJobs - map of jobs that changed it's status since last check
         Map<String, GridJobStatus.JobState> changedJobs = null;
         int dynamicCheckInterval = MIN_STATUS_CHECK_INTERVAL; // start with 2 seconds
@@ -213,7 +221,19 @@ public class DrmaaHelper {
             currentStatusMap.put(id, Session.QUEUED_ACTIVE);
 
         while (currentStatusMap.size() > 0) {
-
+            // If timeout is set, check for expiration
+            try {
+                if (0<timeoutInSeconds) {
+                    Date elapsedDate = new Date();
+                    if (null!=startTime && ((elapsedDate.getTime()-startTime.getTime())/1000)>timeoutInSeconds) {
+                        sunSession.control(mainJobID, Session.TERMINATE);
+                        throw new Exception("The grid job ("+mainJobID+") exceeded the timeout specified: "+timeoutInSeconds+" seconds.");
+                    }
+                }
+            }
+            catch (DrmaaException e) {
+                logger.error("Unable to verify the timeout mechanism.  Continuing...");
+            }
             // sleep for a short while then restart loop
             int nappingTime = (statusPoolPeriod > 0) ? statusPoolPeriod : dynamicCheckInterval;
             if (logger.isDebugEnabled())
@@ -256,6 +276,10 @@ public class DrmaaHelper {
                             newState = " has been QUEUED";
                             break;
                         case Session.RUNNING:
+                            // Initialize the startTime, once, when the first element goes Running
+                            if (null==startTime) {
+                                startTime = new Date();
+                            }
                             newState = " has been sent to GRID";
                             break;
                         case Session.FAILED:
@@ -317,6 +341,14 @@ public class DrmaaHelper {
         if (logger.isDebugEnabled())
             logger.debug(logPrefix + " - all parts are done");
         return true;
+    }
+
+    public static String getMainJobId(Set<String> jobSet) {
+        String mainJobID = jobSet.iterator().next();
+        if (jobSet.size() > 1) {
+            mainJobID = mainJobID.substring(0, mainJobID.lastIndexOf('.')) + ".N";
+        }
+        return mainJobID;
     }
 
     public String getError() {
@@ -427,8 +459,7 @@ public class DrmaaHelper {
     }
 
 
-    private Process runJobThroughShell(long taskId, String workingDir,
-                                       SerializableJobTemplate jobTemplate, int start, int end, int incr) throws IOException, InterruptedException, DrmaaException {
+    private Process runJobThroughShell(long taskId, String workingDir, SerializableJobTemplate jobTemplate, int start, int end, int incr, int timeoutInSeconds) throws IOException, InterruptedException, DrmaaException {
         // serialize template
         File jtFile = File.createTempFile("DrmaaTemplate", ".oos", new File(workingDir));
 //        jtFile.deleteOnExit();
@@ -449,6 +480,9 @@ public class DrmaaHelper {
         if (start >= 0 && end > 0 && incr > 0) {
             clParams.add(DrmaaSubmitter.OPT_JOB_ARRAY_PARAMS + DrmaaSubmitter.DELIMETER + start + "," + end + "," + incr);
         }
+        if (0<timeoutInSeconds) {
+            clParams.add(DrmaaSubmitter.OPT_TIMEOUT_SECONDS+DrmaaSubmitter.DELIMETER+timeoutInSeconds);
+        }
 
 //        scriptWriter.write(JAVA_PATH + " -cp " + DRMAA_SUBMITTER_JAR_PATH +
 //                " " + DRMAA_SUBMITTER + " " + jtFile.getAbsolutePath() );
@@ -464,6 +498,7 @@ public class DrmaaHelper {
         cmdList.add(JAVA_PATH);
         cmdList.add(DRMAA_SUBMITTER_JAR_PATH);
         cmdList.add("org.janelia.it.jacs.compute.drmaa.DrmaaSubmitter");
+
 
         cmdList.addAll(clParams);
 

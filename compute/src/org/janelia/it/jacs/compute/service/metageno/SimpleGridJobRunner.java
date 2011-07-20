@@ -136,7 +136,7 @@ public class SimpleGridJobRunner {
         jsl.bulkAdd(jobSet, queue, GridJobStatus.JobState.QUEUED);
         drmaa.deleteJobTemplate(jt);
         logger.info("******** " + jobSet.size() + " jobs submitted to grid **********");
-        boolean gridActionSuccessful = drmaa.waitForJobs(jobSet, "Computing results for task=" + taskId, jsl, -1);
+        boolean gridActionSuccessful = drmaa.waitForJobs(jobSet, "Computing results for task=" + taskId, jsl, -1, -1);
         if (!gridActionSuccessful) {
             logger.warn("\nThere was an error with the grid execution.\n");
         }

@@ -74,7 +74,7 @@ public class NeuronSeparationPipelineService extends SubmitDrmaaJobService {
     }
 
     @Override
-    public Integer getJobTimeoutSeconds() {
+    public int getJobTimeoutSeconds() {
         return TIMEOUT_SECONDS;
     }
 
