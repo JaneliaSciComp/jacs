@@ -584,7 +584,8 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     public boolean deleteEntityTree(String userLogin, long entityId) throws ComputeException {
     	try {
             Entity entity = _annotationDAO.getEntityById(""+entityId);
-    		return _annotationDAO.deleteEntityTree(userLogin, entity);
+    		_annotationDAO.deleteEntityTree(userLogin, entity);
+    		return true;
     	}
         catch (Exception e) {
             _logger.error("Error deleting entity tree for user "+userLogin,e);
@@ -595,8 +596,19 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     public Set<Entity> getParentEntities(long entityId) {
         try {
             return _annotationDAO.getParentEntities(entityId);
-        } catch (DaoException e) {
+        } 
+        catch (DaoException e) {
             _logger.error("Error trying to get parent entities for id="+entityId+" message: "+e.getMessage());
+        }
+        return null;
+    }
+
+    public Set<Entity> getChildEntities(long entityId) {
+        try {
+            return _annotationDAO.getChildEntities(entityId);
+        } 
+        catch (DaoException e) {
+            _logger.error("Error trying to get child entities for id="+entityId+" message: "+e.getMessage());
         }
         return null;
     }
@@ -605,7 +617,8 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
 
         try {
             return _annotationDAO.getParentEntityDatas(entityId);
-        } catch (DaoException e) {
+        } 
+        catch (DaoException e) {
             _logger.error("Error trying to get parent entity data for id="+entityId+" message: "+e.getMessage());
         }
         return null;

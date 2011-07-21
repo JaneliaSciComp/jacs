@@ -139,7 +139,8 @@ public class AnnotationDAO extends ComputeBaseDAO {
             }
 
             _logger.info("Will delete tree rooted at Entity "+entity.getName());
-            return deleteEntityTree(userLogin, entity);
+            deleteEntityTree(userLogin, entity);
+            return true;
         }
         catch (Exception e) {
         	_logger.error("Error deleting ontology term "+ontologyTermId,e);
@@ -149,19 +150,17 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
     /**
      * Delete the given entities and all children entities underneath it. Only deletes entities belonging to the given
-     * owner.
+     * owner. 
      * @param owner The owner to operate as.
      * @param entity The "root" entity at which to begin recursive deletion.
-     * @return True if entire tree was successfully deleted. False if there were any entities that could not be deleted.
      * @throws DaoException
      */
-    public boolean deleteEntityTree(String owner, Entity entity) throws DaoException {
-    	return deleteEntityTree(owner, entity, 0);
+    public void deleteEntityTree(String owner, Entity entity) throws DaoException {
+    	deleteEntityTree(owner, entity, true, false, 0);
     }
     
-    private boolean deleteEntityTree(String owner, Entity entity, int level) throws DaoException {
+    private void deleteEntityTree(String owner, Entity entity, boolean ignoreRefs, boolean ignoreAncestorRefs, int level) throws DaoException {
 
-    	
     	StringBuffer indent = new StringBuffer();
 		for (int i = 0; i < level; i++) {
 			indent.append("  ");
@@ -170,24 +169,25 @@ public class AnnotationDAO extends ComputeBaseDAO {
 		// Null check
     	if (entity == null) {
     		_logger.warn(indent+"Cannot delete null entity");
-    		return false;
+    		return;
     	}
 		
 		// Ownership check
     	if (!entity.getUser().getUserLogin().equals(owner)) {
     		_logger.info(indent+"Cannot delete entity because owner ("+entity.getUser().getUserLogin()+") does not match invoker ("+owner+")");
-    		return false;
+    		return;
     	}
     	
-    	boolean success = true;
-    	
+    	// Reference check - does this entity have more than one parent pointing to it?
+    	Set<EntityData> eds = getParentEntityDatas(entity.getId());
+    	boolean moreThanOneParent = eds.size() > 1;
+        if (moreThanOneParent && !ignoreRefs) return;
+        
         // Delete all ancestors first
-        for(EntityData ed : entity.getOrderedEntityData()) {
+        for(EntityData ed : new ArrayList<EntityData>(entity.getEntityData())) {
         	Entity child = ed.getChildEntity();
         	if (child != null) {
-        		if (!deleteEntityTree(owner, child, level+1)) {
-        			success = false;
-        		}
+        		deleteEntityTree(owner, child, ignoreAncestorRefs, ignoreAncestorRefs, level+1);
         	}
         	// We have to manually remove the EntityData from its parent, otherwise we get this error: 
         	// "deleted object would be re-saved by cascade (remove deleted object from associations)"
@@ -195,24 +195,18 @@ public class AnnotationDAO extends ComputeBaseDAO {
         	ed.getParentEntity().getEntityData().remove(ed);
     		getCurrentSession().delete(ed);
         }
-       
-        // TODO: if someone else is linking to this entity, should we still delete it? 
         
         // Delete all parent EDs
-        for(EntityData ed : getParentEntityDatas(entity.getId())) {
-    		if (ed.getChildEntity() != null && ed.getChildEntity().getId().equals(entity.getId())) {
-    			// This ED points to the term to be deleted. We must delete the ED first to avoid violating constraints.
-            	_logger.info(indent+"Deleting "+entity.getName()+"'s link to parent: "+ed.getId());
-            	ed.getParentEntity().getEntityData().remove(ed);
-        		getCurrentSession().delete(ed);
-    		}
+        for(EntityData ed : eds) {
+			// This ED points to the term to be deleted. We must delete the ED first to avoid violating constraints.
+        	_logger.info(indent+"Deleting "+entity.getName()+"'s link to parent: "+ed.getId());
+        	ed.getParentEntity().getEntityData().remove(ed);
+    		getCurrentSession().delete(ed);
         }
         
         // Finally we can delete the entity itself
     	_logger.info(indent+"Deleting "+entity.getName());
         getCurrentSession().delete(entity);
-        
-        return success;
     }
     
     public EntityAttribute getEntityAttributeByName(String name) throws DaoException {
@@ -521,8 +515,19 @@ public class AnnotationDAO extends ComputeBaseDAO {
     public Set<Entity> getParentEntities(long entityId) throws DaoException {
         try {
             Session session = getCurrentSession();
-            StringBuffer hql = new StringBuffer("select clazz.parentEntity from EntityData clazz where clazz.childEntity.id='").append(entityId).append("'");
-            Query query = session.createQuery(hql.toString());
+            StringBuffer hql = new StringBuffer("select clazz.parentEntity from EntityData clazz where clazz.childEntity.id=?");
+            Query query = session.createQuery(hql.toString()).setLong(0, entityId);
+            return new HashSet(query.list());
+        } catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+    
+    public Set<Entity> getChildEntities(long entityId) throws DaoException {
+        try {
+            Session session = getCurrentSession();
+            StringBuffer hql = new StringBuffer("select clazz.childEntity from EntityData clazz where clazz.parentEntity.id=?");
+            Query query = session.createQuery(hql.toString()).setLong(0, entityId);
             return new HashSet(query.list());
         } catch (Exception e) {
             throw new DaoException(e);
