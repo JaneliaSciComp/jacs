@@ -6,6 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -241,7 +242,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         if (lsmStacks.size() == 0) {
             lsmStack = createLsmStackFromFile(file);
             addToParent(parentFolder, lsmStack);
-         } 
+        } 
         else if (lsmStacks.size() == 1) {
             lsmStack = lsmStacks.get(0);
             
@@ -255,11 +256,9 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             }
             
             if (!hasLsmStack) {
-                logger.info("LSM already exists");
-                // We can't do this check anymore because the LSMs are moved out of the folder and into the Sample later on
-            	// TODO: check to make sure the LSM stack is a descendant of the folder. Or maybe just remove this check completely.
-            	//logger.info("Although the LSM stack already exists, it does not seem to be part of the folder so we are adding it");
-                //addToParent(parentFolder, lsmStack);
+                // LSM exists but in a different folder, so add it to this one
+                //lsmStack = createLsmStackFromFile(file);
+                addToParent(parentFolder, lsmStack);
             } 
             else {
                 logger.info("The folder already contains the LSM stack so we do not need to add it again");
@@ -340,17 +339,8 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
     		logger.info("Moving paired LSM stacks to their own Sample entity");
 
         	// Remove the two LSM Stacks from the original folder, and put them under their own paired folder
-        	Set<EntityData> datas = annotationBean.getParentEntityDatas(lsmPair.lsmEntity1.getId());
-        	for(EntityData data : datas) {
-        		computeBean.genericDelete(data);
-        		logger.info("Deleted old parent link "+data.getId()+" for LSM stack "+lsmPair.lsmEntity1.getId());
-        	}
-        	
-        	datas = annotationBean.getParentEntityDatas(lsmPair.lsmEntity2.getId());
-        	for(EntityData data : datas) {
-        		computeBean.genericDelete(data);
-        		logger.info("Deleted old parent link "+data.getId()+" for LSM stack "+lsmPair.lsmEntity2.getId());
-        	}
+    		removeEntityFromFolder(lsmPair.lsmEntity1, folder);
+    		removeEntityFromFolder(lsmPair.lsmEntity2, folder);
         	
         	Entity sample = createSample(lsmPair);
             addToParent(folder, sample, i++);
@@ -359,6 +349,17 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         }
     }
 
+    private void removeEntityFromFolder(Entity entity, Entity folder) throws DaoException {
+
+    	Set<EntityData> datas = annotationBean.getParentEntityDatas(entity.getId());
+    	for(EntityData data : datas) {
+    		if (data.getParentEntity().getId().equals(folder.getId())) {
+        		computeBean.genericDelete(data);
+        		logger.info("Deleted parent link "+data.getId()+" for "+entity.getId());	
+    		}
+    	}
+    }
+    
     protected Entity createSample(LsmPair lsmPair) throws Exception {
 
         Entity sample = new Entity();
