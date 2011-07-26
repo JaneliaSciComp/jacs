@@ -1,11 +1,5 @@
 package org.janelia.it.jacs.compute.api;
 
-import java.util.*;
-
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-
 import org.apache.log4j.Logger;
 import org.hibernate.Query;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
@@ -19,6 +13,11 @@ import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
 import org.janelia.it.jacs.model.user_data.User;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
+
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import java.util.*;
 
 @Stateless(name = "AnnotationEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
@@ -44,17 +43,17 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
 
         try {
             if (entityByName.isEmpty()) {
-                System.out.println("  Preloading entity types...");
+                _logger.debug("  Preloading entity types...");
                 for(EntityType entityType : _annotationDAO.getAllEntityTypes()) {
-                    System.out.println("    Loaded entity type: "+entityType.getName());
+                    _logger.debug("    Loaded entity type: "+entityType.getName());
                     entityByName.put(entityType.getName(), entityType);
                 }
             }
 
             if (attrByName.isEmpty()) {
-                System.out.println("  Preloading attribute types...");
+                _logger.debug("  Preloading attribute types...");
                 for(EntityAttribute entityAttr : _annotationDAO.getAllEntityAttributes()) {
-                    System.out.println("    Loaded entity attr: "+entityAttr.getName());
+                    _logger.debug("    Loaded entity attr: "+entityAttr.getName());
                     attrByName.put(entityAttr.getName(), entityAttr);
                 }
             }
@@ -81,10 +80,25 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         try {
             boolean deleteSuccessful = _annotationDAO.deleteAnnotation(owner, uniqueIdentifier);
             if (deleteSuccessful) {
-                System.out.println("Deleted annotation "+uniqueIdentifier+" for user "+owner);
+                _logger.debug("Deleted annotation "+uniqueIdentifier+" for user "+owner);
             }
             else {
-                System.out.println("DID NOT delete annotation "+uniqueIdentifier+" for user "+owner);
+                _logger.debug("DID NOT delete annotation "+uniqueIdentifier+" for user "+owner);
+            }
+        }
+        catch (Exception e) {
+            _logger.error("Unexpected error while trying to delete annotation "+uniqueIdentifier+" for user "+owner);
+        }
+    }
+
+    public void deleteAnnotationSession(String owner, String uniqueIdentifier){
+        try {
+            boolean deleteSuccessful = _annotationDAO.deleteAnnotationSession(owner, uniqueIdentifier);
+            if (deleteSuccessful) {
+                _logger.debug("Deleted annotation session"+uniqueIdentifier+" for user "+owner);
+            }
+            else {
+                _logger.debug("DID NOT delete annotation "+uniqueIdentifier+" for user "+owner);
             }
         }
         catch (Exception e) {
@@ -499,7 +513,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     public java.util.List<Entity> getUserEntitiesByType(String userLogin, long entityTypeId) {
         try {
             List<Entity> returnList = _annotationDAO.getUserEntitiesByName(userLogin, entityTypeId);
-            System.out.println("Entities returned:"+returnList.size());
+            _logger.debug("Entities returned:"+returnList.size());
             return returnList;
         }
         catch (DaoException e) {
@@ -511,7 +525,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     public List<EntityType> getEntityTypes() {
         try {
             List<EntityType> returnList = _annotationDAO.getAllEntityTypes();
-            System.out.println("Entity types returned:"+returnList.size());
+            _logger.debug("Entity types returned:"+returnList.size());
             return returnList;
         }
         catch (DaoException e) {
@@ -534,7 +548,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
                 }
             }
 
-            System.out.println("Entities returned:"+returnList.size());
+            _logger.debug("Entities returned:"+returnList.size());
             return returnList;
         }
         catch (DaoException e) {
@@ -546,7 +560,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     public List<Entity> getEntitiesByType(long entityTypeId) {
         try {
             List<Entity> returnList = _annotationDAO.getUserEntitiesByName(null, entityTypeId);
-            System.out.println("Entities returned:"+returnList.size());
+            _logger.debug("Entities returned:"+returnList.size());
             return returnList;
         }
         catch (DaoException e) {

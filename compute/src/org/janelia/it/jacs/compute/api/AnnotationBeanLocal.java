@@ -1,16 +1,15 @@
 package org.janelia.it.jacs.compute.api;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
-import javax.ejb.Local;
-
 import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
+
+import javax.ejb.Local;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 @Local
 public interface AnnotationBeanLocal {
@@ -34,6 +33,7 @@ public interface AnnotationBeanLocal {
 
     public String addAnnotation(String owner, String namespace, String term, String value, String comment, String conditional);
     public void deleteAnnotation(String owner, String uniqueIdentifier);
+    public void deleteAnnotationSession(String owner, String uniqueIdentifier);
     public ArrayList<Annotation> getAnnotationsForUser(String owner);
     public void editAnnotation(String owner, String uniqueIdentifier, String namespace, String term, String value,
                                String comment, String conditional);

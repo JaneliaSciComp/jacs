@@ -1,10 +1,5 @@
 package org.janelia.it.jacs.compute.access;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
@@ -13,6 +8,12 @@ import org.hibernate.Session;
 import org.hibernate.criterion.Expression;
 import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.entity.*;
+import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class AnnotationDAO extends ComputeBaseDAO {
 
@@ -45,7 +46,30 @@ public class AnnotationDAO extends ComputeBaseDAO {
                 throw new DaoException("Cannot delete the annotation as the requestor doesn't own the annotation.");
             }
             session.delete(tmpAnnotation);
-            System.out.println("The annotation has been deleted.");
+            _logger.debug("The annotation has been deleted.");
+            return true;
+        }
+        catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+
+    // This should be more generic!  Pass the Entity class and that should be it
+    public boolean deleteAnnotationSession(String owner, String uniqueIdentifier) throws DaoException {
+        try {
+            Session session = getCurrentSession();
+            Criteria c = session.createCriteria(AnnotationSessionTask.class);
+            c.add(Expression.eq("id", Long.valueOf(uniqueIdentifier)));
+            AnnotationSessionTask tmpAnnotation = (AnnotationSessionTask) c.uniqueResult();
+            if (null == tmpAnnotation) {
+                // This should never happen
+                throw new DaoException("Cannot complete deletion when there are more than one annotation sessions with that identifier.");
+            }
+            if (!tmpAnnotation.getOwner().equals(owner)) {
+                throw new DaoException("Cannot delete the annotation session as the requestor doesn't own the annotation.");
+            }
+            session.delete(tmpAnnotation);
+            _logger.debug("The annotation session has been deleted.");
             return true;
         }
         catch (Exception e) {
@@ -493,7 +517,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
             c.add(Expression.eq("id", Long.valueOf(entityId)));
             Entity entity = (Entity) c.uniqueResult();
             session.delete(entity);
-            System.out.println("The entity id=" + entityId + " has been deleted.");
+            _logger.debug("The entity id=" + entityId + " has been deleted.");
             return true;
         }
         catch (Exception e) {

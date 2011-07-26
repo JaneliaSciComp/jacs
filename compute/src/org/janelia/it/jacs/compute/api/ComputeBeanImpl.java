@@ -23,23 +23,17 @@
 
 package org.janelia.it.jacs.compute.api;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.*;
-
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-
 import org.apache.log4j.Logger;
-import org.hibernate.*;
+import org.hibernate.Query;
+import org.hibernate.SQLQuery;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 import org.janelia.it.jacs.compute.engine.launcher.ProcessManager;
+import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
@@ -56,10 +50,20 @@ import org.janelia.it.jacs.model.user_data.hmmer.HmmerPfamDatabaseNode;
 import org.janelia.it.jacs.model.user_data.recruitment.RecruitmentResultFileNode;
 import org.janelia.it.jacs.model.user_data.reversePsiBlast.ReversePsiBlastDatabaseNode;
 import org.janelia.it.jacs.model.user_data.tools.GenericServiceDefinitionNode;
+import org.janelia.it.jacs.shared.utils.ControlledVocabElement;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.MailHelper;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
+
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * This class implements service calls used by remote clients of Compute server.  It also contains service
@@ -741,4 +745,8 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         }
     }
 
+
+    public ControlledVocabElement[] getControlledVocab(Long objectId, int vocabIndex) throws ServiceException {
+        throw new ServiceException ("Controlled Vocab is a future piece, currently unsupported.");
+    }
 }

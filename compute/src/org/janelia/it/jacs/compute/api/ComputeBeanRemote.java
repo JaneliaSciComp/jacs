@@ -24,6 +24,7 @@
 package org.janelia.it.jacs.compute.api;
 
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.blast.BlastTask;
@@ -36,6 +37,7 @@ import org.janelia.it.jacs.model.user_data.hmmer.HmmerPfamDatabaseNode;
 import org.janelia.it.jacs.model.user_data.recruitment.RecruitmentResultFileNode;
 import org.janelia.it.jacs.model.user_data.reversePsiBlast.ReversePsiBlastDatabaseNode;
 import org.janelia.it.jacs.model.user_data.tools.GenericServiceDefinitionNode;
+import org.janelia.it.jacs.shared.utils.ControlledVocabElement;
 
 import javax.ejb.Remote;
 import java.io.IOException;
@@ -126,4 +128,5 @@ public interface ComputeBeanRemote {
     public void validateFile(String filePath) throws Exception;
     public List<Task> getUserTasks(String userLogin) throws Exception;
     public List<Task> getUserTasksByType(String simpleName, String userName) throws RemoteException;
+    public ControlledVocabElement[] getControlledVocab(Long objectId, int vocabIndex) throws ServiceException;
 }
