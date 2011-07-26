@@ -20,6 +20,7 @@ public interface AnnotationBeanLocal {
     public Set<Entity> getEntitiesByName(String name);
     public Entity getEntityById(String targetId);
     public Entity getEntityTree(Long id);
+    public Entity getCachedEntityTree(Long id);
     public Entity getUserEntityById(String userLogin, long entityId);
     public boolean deleteEntityById(Long entityId);
     public boolean deleteEntityTree(String userLogin, long entityId) throws ComputeException;
