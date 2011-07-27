@@ -53,6 +53,7 @@ public interface AnnotationBeanLocal {
 	public Entity createOntologyAnnotation(String userLogin, String sessionId, String targetEntityId,
 			String keyEntityId, String keyString, String valueEntityId, String valueString, String tag)
 			throws ComputeException;
+	public void removeAllOntologyAnnotationsForSession(String userLogin, String sessionId) throws ComputeException;
 
     public void setupEntityTypes();
 

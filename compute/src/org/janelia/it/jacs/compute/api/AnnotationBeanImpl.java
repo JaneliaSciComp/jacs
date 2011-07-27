@@ -477,6 +477,16 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
 	}
 
+	public void removeAllOntologyAnnotationsForSession(String userLogin, String sessionId) throws ComputeException {
+        try {
+            _annotationDAO.removeAllOntologyAnnotationsForSession(userLogin, sessionId);
+        } 
+        catch (DaoException e) {
+            _logger.error("Error trying to save or update Entity");
+            throw new ComputeException("Error trying to save or update Entity",e);
+        }
+	}
+	
     public Entity saveOrUpdateEntity(Entity entity) {
         try {
             _annotationDAO.saveOrUpdate(entity);

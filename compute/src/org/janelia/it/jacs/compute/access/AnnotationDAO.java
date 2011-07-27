@@ -558,4 +558,27 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
+	public void removeAllOntologyAnnotationsForSession(String userLogin, String sessionId) throws DaoException {
+
+        try {
+            Session session = getCurrentSession();
+            StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed where " +
+            		"ed.parentEntity.user.userLogin = ? " +
+            		"and ed.entityAttribute.id = ? " +
+            		"and ed.value = ? ");
+            Query query = session.createQuery(hql.toString());
+            query.setString(0, userLogin);
+            query.setString(1, EntityConstants.ATTRIBUTE_ANNOTATION_SESSION_ID);
+            query.setString(2, sessionId);
+            for(Object o : query.list()) {
+            	Entity entity = (Entity)o;
+            	_logger.info("Removing annotation "+entity.getId());
+        		getCurrentSession().delete(entity);
+            }
+        } 
+        catch (Exception e) {
+            throw new DaoException(e);
+        }
+	}
+
 }
