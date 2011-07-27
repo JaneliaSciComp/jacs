@@ -1,16 +1,15 @@
 package org.janelia.it.jacs.compute.api;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
-import javax.ejb.Remote;
-
 import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
+
+import javax.ejb.Remote;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 @Remote
 public interface AnnotationBeanRemote {
@@ -38,6 +37,7 @@ public interface AnnotationBeanRemote {
     public ArrayList<Annotation> getAnnotationsForUser(String owner);
     public void editAnnotation(String owner, String uniqueIdentifier, String namespace, String term, String value,
                                String comment, String conditional);
+    public List<Entity> getAnnotationsForEntities(String username, List<Entity> entities);
     public List<Entity> getEntitiesWithFilePath(String filePath);
     public Entity getFolderTree(Long id) throws ComputeException;
     

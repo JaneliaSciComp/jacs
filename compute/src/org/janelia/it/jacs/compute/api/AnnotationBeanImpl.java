@@ -36,7 +36,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
 
     private final Map<String, EntityType> entityByName = new HashMap<String, EntityType>();
     private final Map<String, EntityAttribute> attrByName = new HashMap<String, EntityAttribute>();
-    private final Map<Long, Entity> entityTrees = new HashMap<Long, Entity>();
+    private static final Map<Long, Entity> entityTrees = new HashMap<Long, Entity>();
 
     // TODO: This is not great because it has to preload for each instance in the pool. 
     // It would be better to have a global cache, but how to do it without Singleton beans from EJB 3.1?
@@ -126,6 +126,21 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
         return null;
     }
+
+    public List<Entity> getAnnotationsForEntities(String username, List<Entity> entities){
+        try {
+            List<String> entityIds = new ArrayList<String>();
+            for (Entity entity : entities) {
+                entityIds.add(entity.getId().toString());
+            }
+            return _annotationDAO.getAnnotationsByEntityId(username, entityIds);
+        }
+        catch (Exception e) {
+            _logger.error("Unexpected error occurred while trying to get annotations for user, by entity id "+username, e);
+        }
+        return null;
+    }
+
 
     public void editAnnotation(String owner, String uniqueIdentifier, String namespace, String term, String value,
                                String comment, String conditional){

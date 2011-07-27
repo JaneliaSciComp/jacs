@@ -1,11 +1,9 @@
 package org.janelia.it.jacs.compute.access;
 
 import org.apache.log4j.Logger;
-import org.hibernate.Criteria;
-import org.hibernate.HibernateException;
-import org.hibernate.Query;
-import org.hibernate.Session;
+import org.hibernate.*;
 import org.hibernate.criterion.Expression;
+import org.hibernate.criterion.Restrictions;
 import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
@@ -558,27 +556,46 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
-	public void removeAllOntologyAnnotationsForSession(String userLogin, String sessionId) throws DaoException {
+    // todo This really needs to be more discriminating by Annotation Entities
+    public List<Entity> getAnnotationsByEntityId(String username, List<String> entityIds) throws DaoException {
+        try {
+            if (null==entityIds || 0==entityIds.size()) { new ArrayList<Entity>(); }
+            Session session = getCurrentSession();
+            Criteria c = session.createCriteria(EntityData.class).setFetchMode("parentEntity", FetchMode.EAGER);
+            c.add(Restrictions.in("value", entityIds));
+            List<EntityData> annotationData = c.list();
+            List<Entity> annotations = new ArrayList<Entity>();
+            for (EntityData entityData : annotationData) {
+                annotations.add(entityData.getParentEntity());
+            }
+            return annotations;
+        } catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+
+    public void removeAllOntologyAnnotationsForSession(String userLogin, String sessionId) throws DaoException {
 
         try {
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed where " +
-            		"ed.parentEntity.user.userLogin = ? " +
-            		"and ed.entityAttribute.id = ? " +
-            		"and ed.value = ? ");
+                    "ed.parentEntity.user.userLogin = ? " +
+                    "and ed.entityAttribute.id = ? " +
+                    "and ed.value = ? ");
             Query query = session.createQuery(hql.toString());
             query.setString(0, userLogin);
             query.setString(1, EntityConstants.ATTRIBUTE_ANNOTATION_SESSION_ID);
             query.setString(2, sessionId);
             for(Object o : query.list()) {
-            	Entity entity = (Entity)o;
-            	_logger.info("Removing annotation "+entity.getId());
-        		getCurrentSession().delete(entity);
+                Entity entity = (Entity)o;
+                _logger.info("Removing annotation "+entity.getId());
+                getCurrentSession().delete(entity);
             }
-        } 
+        }
         catch (Exception e) {
             throw new DaoException(e);
         }
-	}
+    }
+
 
 }
