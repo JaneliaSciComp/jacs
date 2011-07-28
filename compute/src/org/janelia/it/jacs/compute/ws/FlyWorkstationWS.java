@@ -17,8 +17,9 @@ public interface FlyWorkstationWS extends Remote {
                             @WebParam(name = "comment") String comment,
                             @WebParam(name = "conditional") String conditional) throws RemoteException;
 
-    String deleteAnnotation(@WebParam(name = "owner") String owner,
-                             @WebParam(name = "uniqueIdentifier") String uniqueIdentifier) throws RemoteException;
+    public String deleteAnnotation(@WebParam(name = "owner") String owner,
+                                   @WebParam(name = "annotatedEntityId") String annotatedEntityId,
+                                   @WebParam(name = "tag") String tag) throws RemoteException;
 
     String getAnnotationsForUser(@WebParam(name = "owner") String owner) throws RemoteException;
 

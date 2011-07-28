@@ -32,7 +32,7 @@ package org.janelia.it.jacs.compute.mbean;
 public interface AnnotationManagerMBean {
 
     public String addAnnotation(String owner, String namespace, String term, String value, String comment, String conditional);
-    public void deleteAnnotation(String owner, String uniqueIdentifier);
+    public void deleteAnnotation(String owner, String annotatedEntityId, String tag);
     public String getAnnotationsForUser(String owner);
     public void editAnnotation(String owner, String uniqueIdentifier, String namespace, String term, String value,
                                String comment, String conditional);

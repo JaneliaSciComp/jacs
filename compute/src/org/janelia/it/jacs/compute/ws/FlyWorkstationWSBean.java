@@ -44,16 +44,17 @@ public class FlyWorkstationWSBean extends BaseWSBean {
     }
 
     public String deleteAnnotation(@WebParam(name = "owner") String owner,
-                                   @WebParam(name = "uniqueIdentifier") String uniqueIdentifier){
+                                   @WebParam(name = "annotatedEntityId") String annotatedEntityId,
+                                   @WebParam(name = "tag") String tag){
         logger.debug("Web Services - deleteAnnotation() acknowledged");
         StringBuffer sbuf = new StringBuffer("");
         try {
             AnnotationBeanRemote annotationBean = EJBFactory.getRemoteAnnotationBean();
-            annotationBean.deleteAnnotation(owner, uniqueIdentifier);
-            sbuf.append("Annotation id=").append(uniqueIdentifier).append(" successfully deleted.\n");
+            annotationBean.deleteAnnotation(owner, annotatedEntityId, tag);
+            sbuf.append("Annotated Entity id=").append(annotatedEntityId).append(" successfully deleted tag "+tag+".\n");
         }
         catch (Exception e) {
-            String error = "There was a problem deleting annotation " + owner+ ":" + uniqueIdentifier + " : " + e.getMessage();
+            String error = "There was a problem deleting annotation for item " + owner+ ":" + annotatedEntityId + " : " + e.getMessage();
             logger.error(error, e);
             sbuf = new StringBuffer(error + "\n");
         }
