@@ -613,5 +613,19 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
+	public List<Entity> getEntitiesInList(String entityIds) throws DaoException {
+
+        try {
+            Session session = getCurrentSession();
+            StringBuffer hql = new StringBuffer("select e from Entity e where " +
+                    "e.id in ("+entityIds+") ");
+            Query query = session.createQuery(hql.toString());
+            return query.list();
+        }
+        catch (Exception e) {
+            throw new DaoException(e);
+        }
+	}
+
 
 }

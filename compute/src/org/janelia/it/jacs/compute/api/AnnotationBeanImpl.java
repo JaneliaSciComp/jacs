@@ -10,6 +10,8 @@ import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.ontology.types.Category;
 import org.janelia.it.jacs.model.ontology.types.Interval;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
+import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
 import org.janelia.it.jacs.model.user_data.User;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
@@ -141,6 +143,37 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         return null;
     }
 
+    public List<Entity> getEntitiesForSession(Long sessionId) throws ComputeException {
+        try {
+            Task task = _annotationDAO.getTaskById(sessionId);
+            if (task == null) {
+                throw new Exception("Session not found");
+            }
+        	
+            String entityIds = task.getParameter(AnnotationSessionTask.PARAM_annotationTargets);
+            return _annotationDAO.getEntitiesInList(entityIds);
+        }
+        catch (Exception e) {
+            _logger.error("Unexpected error occurred while trying to get entities in session "+sessionId, e);
+            throw new ComputeException("Coud not get entities in session",e);
+        }
+    }
+    
+    public List<Entity> getCategoriesForSession(Long sessionId)  throws ComputeException {
+        try {
+            Task task = _annotationDAO.getTaskById(sessionId);
+            if (task == null) {
+                throw new Exception("Session not found");
+            }
+        	
+            String entityIds = task.getParameter(AnnotationSessionTask.PARAM_annotationCategories);
+            return _annotationDAO.getEntitiesInList(entityIds);
+        }
+        catch (Exception e) {
+            _logger.error("Unexpected error occurred while trying to get categories in session "+sessionId, e);
+            throw new ComputeException("Coud not get categories in session",e);
+        }
+    }
 
     public void editAnnotation(String owner, String uniqueIdentifier, String namespace, String term, String value,
                                String comment, String conditional){
