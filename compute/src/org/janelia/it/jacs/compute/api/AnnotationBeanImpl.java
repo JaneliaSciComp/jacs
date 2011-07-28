@@ -151,7 +151,12 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             }
         	
             String entityIds = task.getParameter(AnnotationSessionTask.PARAM_annotationTargets);
-            return _annotationDAO.getEntitiesInList(entityIds);
+            if (entityIds == null || "".equals(entityIds)) {
+            	return new ArrayList<Entity>();
+            }
+            else {
+            	return _annotationDAO.getEntitiesInList(entityIds);	
+            }
         }
         catch (Exception e) {
             _logger.error("Unexpected error occurred while trying to get entities in session "+sessionId, e);
@@ -167,7 +172,12 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             }
         	
             String entityIds = task.getParameter(AnnotationSessionTask.PARAM_annotationCategories);
-            return _annotationDAO.getEntitiesInList(entityIds);
+            if (entityIds == null || "".equals(entityIds)) {
+            	return new ArrayList<Entity>();
+            }
+            else {
+            	return _annotationDAO.getEntitiesInList(entityIds);	
+            }
         }
         catch (Exception e) {
             _logger.error("Unexpected error occurred while trying to get categories in session "+sessionId, e);
