@@ -77,9 +77,9 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         return null;
     }
 
-    public void deleteAnnotation(String owner, String uniqueIdentifier){
+    public void deleteAnnotation(String owner, String uniqueIdentifier, String tag){
         try {
-            boolean deleteSuccessful = _annotationDAO.deleteAnnotation(owner, uniqueIdentifier);
+            boolean deleteSuccessful = _annotationDAO.deleteAnnotation(owner, uniqueIdentifier, tag);
             if (deleteSuccessful) {
                 _logger.debug("Deleted annotation "+uniqueIdentifier+" for user "+owner);
             }

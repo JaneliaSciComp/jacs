@@ -30,20 +30,36 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
-    public boolean deleteAnnotation(String owner, String uniqueIdentifier) throws DaoException {
+
+    /**
+     * This method gets the annotations for an entity and then removes the one that matches the value annotated.
+     * This would be better if we had the annotation entity id, though.
+     * @param owner person who annotated the entity
+     * @param annotatedEntityId the id of the entity that the annotation is for
+     * @param tag the value of the annotation that is to be removed
+     * @return returns boolean of success
+     * @throws DaoException error trying to delete the annotation
+     */
+    public boolean deleteAnnotation(String owner, String annotatedEntityId, String tag) throws DaoException {
         try {
-            Session session = getCurrentSession();
-            Criteria c = session.createCriteria(Annotation.class);
-            c.add(Expression.eq("id", Long.valueOf(uniqueIdentifier)));
-            Annotation tmpAnnotation = (Annotation) c.uniqueResult();
+            if (null==tag || "".equals(tag)) { return false; }
+            ArrayList<String> tmpIds = new ArrayList<String>();
+            tmpIds.add(annotatedEntityId);
+            List<Entity> tmpAnnotations = getAnnotationsByEntityId(owner, tmpIds);
+            Entity tmpAnnotation=null;
+            for (Entity annotation : tmpAnnotations) {
+                if (annotation.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM).getParentEntity().getName().equals(tag)) {
+                    tmpAnnotation = annotation;
+                }
+            }
             if (null == tmpAnnotation) {
                 // This should never happen
                 throw new DaoException("Cannot complete deletion when there are more than one annotation with that identifier.");
             }
-            if (!tmpAnnotation.getOwner().equals(owner)) {
+            if (!tmpAnnotation.getUser().getUserLogin().equals(owner)) {
                 throw new DaoException("Cannot delete the annotation as the requestor doesn't own the annotation.");
             }
-            session.delete(tmpAnnotation);
+            getCurrentSession().delete(tmpAnnotation);
             _logger.debug("The annotation has been deleted.");
             return true;
         }
