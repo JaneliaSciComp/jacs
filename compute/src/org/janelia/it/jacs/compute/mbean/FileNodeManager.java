@@ -109,7 +109,7 @@ public class FileNodeManager implements FileNodeManagerMBean {
             pf.setResidueType(type);
             BlastDatabaseFileNode bdfn = new BlastDatabaseFileNode(User.SYSTEM_USER_LOGIN, null/*createtask*/, name, description,
                     DEFAULT_VISIBILITY, type, null);
-            bdfn.setDataSource(DataSource.HHMI);
+            bdfn.setDataSource(DataSource.getDataSourceByName(SystemConfigurationProperties.getString("Datasource.Default")));
             bdfn.setPartitionCount(0); // this is necessary for initialization, to be modified below
             bdfn = (BlastDatabaseFileNode) EJBFactory.getRemoteComputeBean().saveOrUpdateNode(bdfn);
             logger.info("new BlastDatabaseFileNode id=" + bdfn.getObjectId());
@@ -147,7 +147,7 @@ public class FileNodeManager implements FileNodeManagerMBean {
             String type = (isNucleotide) ? BlastDatabaseFileNode.NUCLEOTIDE : BlastDatabaseFileNode.PEPTIDE;
             BlastDatabaseFileNode bdfn = new BlastDatabaseFileNode(User.SYSTEM_USER_LOGIN, null/*createtask*/, name, description,
                     DEFAULT_VISIBILITY, type, null);
-            bdfn.setDataSource(DataSource.HHMI);
+            bdfn.setDataSource(DataSource.getDataSourceByName(SystemConfigurationProperties.getString("Datasource.Default")));
             bdfn.setPartitionCount(partitionCount); // this is necessary for initialization, to be modified below
             bdfn.setLength(length);
             bdfn = (BlastDatabaseFileNode) EJBFactory.getRemoteComputeBean().saveOrUpdateNode(bdfn);

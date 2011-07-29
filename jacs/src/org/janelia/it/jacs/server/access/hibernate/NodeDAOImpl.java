@@ -517,7 +517,7 @@ public class NodeDAOImpl extends DaoBaseImpl implements NodeDAO {
         String sequenceType = null;
         String nodeOwner = null;
         String numSequences = "";
-        DataSource dataSource = DataSource.HHMI;
+        DataSource dataSource=null;
         boolean isAssembled = Boolean.FALSE;
         if (subjectNode instanceof BlastDatabaseFileNode) {
             BlastDatabaseFileNode bn = (BlastDatabaseFileNode) subjectNode;

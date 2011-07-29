@@ -82,4 +82,13 @@ public class DataSource implements Serializable, IsSerializable {
     public void setDataVersion(String dataVersion) {
         this.dataVersion = dataVersion;
     }
+
+    public static DataSource getDataSourceByName(String name){
+        if (DataSource.HHMI.getSourceName().equals(name)) {return DataSource.HHMI;}
+        else if (DataSource.CAMERA.getSourceName().equals(name)) {return DataSource.CAMERA;}
+        else if (DataSource.TIGR.getSourceName().equals(name)) {return DataSource.TIGR;}
+        else if (DataSource.NCBI.getSourceName().equals(name)) {return DataSource.NCBI;}
+        else if (DataSource.Ensemble.getSourceName().equals(name)) {return DataSource.Ensemble;}
+        return DataSource.UNKNOWN;
+    }
 }
