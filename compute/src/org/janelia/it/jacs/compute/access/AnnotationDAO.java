@@ -1,17 +1,19 @@
 package org.janelia.it.jacs.compute.access;
 
-import org.apache.log4j.Logger;
-import org.hibernate.*;
-import org.hibernate.criterion.Expression;
-import org.hibernate.criterion.Restrictions;
-import org.janelia.it.jacs.model.annotation.Annotation;
-import org.janelia.it.jacs.model.entity.*;
-import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.apache.log4j.Logger;
+import org.hibernate.Criteria;
+import org.hibernate.HibernateException;
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.hibernate.criterion.Expression;
+import org.janelia.it.jacs.model.annotation.Annotation;
+import org.janelia.it.jacs.model.entity.*;
+import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
 
 public class AnnotationDAO extends ComputeBaseDAO {
 
@@ -43,8 +45,8 @@ public class AnnotationDAO extends ComputeBaseDAO {
     public boolean deleteAnnotation(String owner, String annotatedEntityId, String tag) throws DaoException {
         try {
             if (null==tag || "".equals(tag)) { return false; }
-            ArrayList<String> tmpIds = new ArrayList<String>();
-            tmpIds.add(annotatedEntityId);
+            ArrayList<Long> tmpIds = new ArrayList<Long>();
+            tmpIds.add(Long.parseLong(annotatedEntityId));
             List<Entity> tmpAnnotations = getAnnotationsByEntityId(owner, tmpIds);
             Entity tmpAnnotation=null;
             for (Entity annotation : tmpAnnotations) {
@@ -572,40 +574,57 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
-    // todo This really needs to be more discriminating by Annotation Entities
-    public List<Entity> getAnnotationsByEntityId(String username, List<String> entityIds) throws DaoException {
+    public List<Entity> getAnnotationsByEntityId(String username, List<Long> entityIds) throws DaoException {
         try {
-            if (null==entityIds || 0==entityIds.size()) { new ArrayList<Entity>(); }
+        	StringBuffer entityCommaList = new StringBuffer();
+        	for(Long id : entityIds) {
+        		if (entityCommaList.length()>0) entityCommaList.append(",");
+        		entityCommaList.append(id);
+        	}
+        	
             Session session = getCurrentSession();
-            Criteria c = session.createCriteria(EntityData.class).setFetchMode("parentEntity", FetchMode.EAGER);
-            c.add(Restrictions.in("value", entityIds));
-            List<EntityData> annotationData = c.list();
-            List<Entity> annotations = new ArrayList<Entity>();
-            for (EntityData entityData : annotationData) {
-                annotations.add(entityData.getParentEntity());
-            }
-            return annotations;
+            StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed where " +
+                    "ed.entityAttribute.name = ? " +
+                    "and ed.value in ("+entityCommaList+") ");
+            Query query = session.createQuery(hql.toString());
+            query.setString(0, EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
+            // TODO: check userLogin if the session is private
+            return query.list();
         } catch (Exception e) {
             throw new DaoException(e);
         }
     }
 
-    public void removeAllOntologyAnnotationsForSession(String userLogin, String sessionId) throws DaoException {
+	public List<Entity> getAnnotationsForSession(String userLogin, long sessionId) throws DaoException {
 
         try {
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed where " +
-                    "ed.parentEntity.user.userLogin = ? " +
-                    "and ed.entityAttribute.id = ? " +
+                    "ed.entityAttribute.name = ? " +
                     "and ed.value = ? ");
             Query query = session.createQuery(hql.toString());
-            query.setString(0, userLogin);
-            query.setString(1, EntityConstants.ATTRIBUTE_ANNOTATION_SESSION_ID);
-            query.setString(2, sessionId);
-            for(Object o : query.list()) {
+            query.setString(0, EntityConstants.ATTRIBUTE_ANNOTATION_SESSION_ID);
+            query.setString(1, ""+sessionId);
+            // TODO: check userLogin if the session is private
+            return query.list();
+        }
+        catch (Exception e) {
+            throw new DaoException(e);
+        }
+	}
+
+    public void removeAllOntologyAnnotationsForSession(String userLogin, long sessionId) throws DaoException {
+
+        try {
+            for(Object o : getAnnotationsForSession(userLogin, sessionId)) {
                 Entity entity = (Entity)o;
-                _logger.info("Removing annotation "+entity.getId());
-                getCurrentSession().delete(entity);
+                if (!entity.getUser().getUserLogin().equals(userLogin)) {
+                	_logger.info("Cannot remove annotation "+entity.getId()+" not owned by "+userLogin);
+                }
+                else {
+                	_logger.info("Removing annotation "+entity.getId());
+                    getCurrentSession().delete(entity);	
+                }
             }
         }
         catch (Exception e) {
@@ -626,6 +645,5 @@ public class AnnotationDAO extends ComputeBaseDAO {
             throw new DaoException(e);
         }
 	}
-
 
 }

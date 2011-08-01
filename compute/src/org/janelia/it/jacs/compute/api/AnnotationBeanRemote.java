@@ -38,9 +38,14 @@ public interface AnnotationBeanRemote {
     public ArrayList<Annotation> getAnnotationsForUser(String owner);
     public void editAnnotation(String owner, String uniqueIdentifier, String namespace, String term, String value,
                                String comment, String conditional);
-    public List<Entity> getAnnotationsForEntities(String username, List<Entity> entities);
-    public List<Entity> getEntitiesForSession(Long sessionId) throws ComputeException;
-    public List<Entity> getCategoriesForSession(Long sessionId) throws ComputeException;
+    
+    public List<Entity> getAnnotationsForEntities(String username, List<Long> entityIds) throws ComputeException;
+    public List<Entity> getAnnotationsForEntity(String username, long entityId) throws ComputeException;
+    
+    public List<Entity> getAnnotationsForSession(String username, long sessionId) throws ComputeException;
+    public List<Entity> getEntitiesForSession(String username, long sessionId) throws ComputeException;
+    public List<Entity> getCategoriesForSession(String username, long sessionId) throws ComputeException;
+    
     public List<Entity> getEntitiesWithFilePath(String filePath);
     public Entity getFolderTree(Long id) throws ComputeException;
     
@@ -56,7 +61,7 @@ public interface AnnotationBeanRemote {
 	public Entity createOntologyAnnotation(String userLogin, String sessionId, String targetEntityId,
 			String keyEntityId, String keyString, String valueEntityId, String valueString, String tag)
 			throws ComputeException;
-	public void removeAllOntologyAnnotationsForSession(String userLogin, String sessionId) throws ComputeException;
+	public void removeAllOntologyAnnotationsForSession(String userLogin, long sessionId) throws ComputeException;
 
     public void setupEntityTypes();
 }

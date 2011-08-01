@@ -1,5 +1,11 @@
 package org.janelia.it.jacs.compute.api;
 
+import java.util.*;
+
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+
 import org.apache.log4j.Logger;
 import org.hibernate.Query;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
@@ -15,11 +21,6 @@ import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
 import org.janelia.it.jacs.model.user_data.User;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
-
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import java.util.*;
 
 @Stateless(name = "AnnotationEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
@@ -129,21 +130,37 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         return null;
     }
 
-    public List<Entity> getAnnotationsForEntities(String username, List<Entity> entities){
+    public List<Entity> getAnnotationsForEntities(String username, List<Long> entityIds) throws ComputeException {
         try {
-            List<String> entityIds = new ArrayList<String>();
-            for (Entity entity : entities) {
-                entityIds.add(entity.getId().toString());
-            }
             return _annotationDAO.getAnnotationsByEntityId(username, entityIds);
         }
         catch (Exception e) {
-            _logger.error("Unexpected error occurred while trying to get annotations for user, by entity id "+username, e);
+            _logger.error("Unexpected error occurred while trying to get annotations for entities "+username, e);
+            throw new ComputeException("Coud not get annotations for entities ",e);
         }
-        return null;
     }
 
-    public List<Entity> getEntitiesForSession(Long sessionId) throws ComputeException {
+    public List<Entity> getAnnotationsForEntity(String username, long entityId) throws ComputeException {
+    	List<Long> entityIds = new ArrayList<Long>();
+    	entityIds.add(entityId);
+    	return getAnnotationsForEntities(username, entityIds);
+    }
+
+    public List<Entity> getAnnotationsForSession(String username, long sessionId) throws ComputeException {
+        try {
+            Task task = _annotationDAO.getTaskById(sessionId);
+            if (task == null) {
+                throw new Exception("Session not found");
+            }
+        	return _annotationDAO.getAnnotationsForSession(username, sessionId);
+        }
+        catch (Exception e) {
+            _logger.error("Unexpected error occurred while trying to get annotations in session "+sessionId, e);
+            throw new ComputeException("Coud not get annotations in session",e);
+        }
+    }
+    
+    public List<Entity> getEntitiesForSession(String username, long sessionId) throws ComputeException {
         try {
             Task task = _annotationDAO.getTaskById(sessionId);
             if (task == null) {
@@ -163,8 +180,8 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             throw new ComputeException("Coud not get entities in session",e);
         }
     }
-    
-    public List<Entity> getCategoriesForSession(Long sessionId)  throws ComputeException {
+	
+    public List<Entity> getCategoriesForSession(String username, long sessionId) throws ComputeException {
         try {
             Task task = _annotationDAO.getTaskById(sessionId);
             if (task == null) {
@@ -197,7 +214,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             _annotationDAO.updateAnnotation(targetAnnotation);
         }
         catch (Exception e) {
-            _logger.error("Unexopected error while trying to update Annotation "+uniqueIdentifier+" for user "+owner);
+            _logger.error("Unexpected error while trying to update Annotation "+uniqueIdentifier+" for user "+owner);
         }
     }
 
@@ -535,7 +552,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
 	}
 
-	public void removeAllOntologyAnnotationsForSession(String userLogin, String sessionId) throws ComputeException {
+	public void removeAllOntologyAnnotationsForSession(String userLogin, long sessionId) throws ComputeException {
         try {
             _annotationDAO.removeAllOntologyAnnotationsForSession(userLogin, sessionId);
         } 
