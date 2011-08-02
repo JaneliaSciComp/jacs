@@ -576,6 +576,9 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
     public List<Entity> getAnnotationsByEntityId(String username, List<Long> entityIds) throws DaoException {
         try {
+        	if (entityIds.isEmpty()) {
+        		return new ArrayList<Entity>();
+        	}
         	StringBuffer entityCommaList = new StringBuffer();
         	for(Long id : entityIds) {
         		if (entityCommaList.length()>0) entityCommaList.append(",");
@@ -633,8 +636,10 @@ public class AnnotationDAO extends ComputeBaseDAO {
     }
 
 	public List<Entity> getEntitiesInList(String entityIds) throws DaoException {
-
         try {
+        	if (entityIds == null || "".equals(entityIds)) {
+        		return new ArrayList<Entity>();
+        	}
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select e from Entity e where " +
                     "e.id in ("+entityIds+") ");
