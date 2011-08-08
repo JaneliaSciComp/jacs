@@ -14,7 +14,8 @@ import java.util.Set;
 @Local
 public interface AnnotationBeanLocal {
 
-    public Entity saveOrUpdateEntity(Entity entity);
+    public Entity saveOrUpdateEntity(Entity entity) throws ComputeException;
+    public EntityData saveOrUpdateEntityData(EntityData newData) throws ComputeException;
     public EntityType getEntityTypeByName(String name);
     public List<Entity> getUserEntitiesByType(String userLogin, long entityTypeId);
     public Set<Entity> getEntitiesByName(String name);
@@ -26,13 +27,12 @@ public interface AnnotationBeanLocal {
     public boolean deleteEntityTree(String userLogin, long entityId) throws ComputeException;
     public Set<Entity> getParentEntities(long entityId);
     public Set<Entity> getChildEntities(long entityId);
-    public Set<EntityData> getParentEntityDatas(long entityId);
+    public Set<EntityData> getParentEntityDatas(long childEntityId);
     
     public List<EntityType> getEntityTypes();
     public List<Entity> getEntitiesByType(long entityTypeId);
     public List<Entity> getCommonRootEntitiesByType(long entityTypeId);
 
-    public String addAnnotation(String owner, String namespace, String term, String value, String comment, String conditional);
     public void deleteAnnotation(String owner, String uniqueIdentifier, String tag);
     public void deleteAnnotationSession(String owner, String uniqueIdentifier);
     public ArrayList<Annotation> getAnnotationsForUser(String owner);
@@ -43,8 +43,8 @@ public interface AnnotationBeanLocal {
     public List<Entity> getAnnotationsForEntity(String username, long entityId) throws ComputeException;
     
     public List<Entity> getAnnotationsForSession(String username, long sessionId) throws ComputeException;
-    public List<Entity> getEntitiesForSession(String username, long sessionId) throws ComputeException;
-    public List<Entity> getCategoriesForSession(String username, long sessionId) throws ComputeException;
+    public List<Entity> getEntitiesForAnnotationSession(String username, long sessionId) throws ComputeException;
+    public List<Entity> getCategoriesForAnnotationSession(String username, long sessionId) throws ComputeException;
     
     public List<Entity> getEntitiesWithFilePath(String filePath);
     public Entity getFolderTree(Long id) throws ComputeException;

@@ -49,6 +49,7 @@ public interface ComputeBeanLocal {
      public void saveTaskMessages(long taskId, Set<TaskMessage> messages) throws DaoException;
      public Node saveOrUpdateNode(Node node) throws DaoException;
      public Task saveOrUpdateTask(Task task) throws DaoException;
+     public User saveOrUpdateUser(User user) throws DaoException;
      public String[] getTaskStatus(long taskId) throws DaoException;
      public User getUserByName(String name);
      public void removePreferenceCategory(String categoryName) throws DaoException;

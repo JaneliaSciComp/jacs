@@ -160,6 +160,11 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return computeDAO.getUserByName(name);
     }
     
+    public User saveOrUpdateUser(User user) throws DaoException{
+        computeDAO.saveOrUpdate(user);
+        return user;
+    }
+
     public void removePreferenceCategory(String categoryName) throws DaoException {
 
         Session session = null;

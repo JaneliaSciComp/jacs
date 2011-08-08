@@ -1,10 +1,5 @@
 package org.janelia.it.jacs.compute.access;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
@@ -15,23 +10,16 @@ import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 public class AnnotationDAO extends ComputeBaseDAO {
 
     public AnnotationDAO(Logger logger) {
         super(logger);
     }
-
-    public Annotation addAnnotation(Annotation newAnnotation) throws DaoException {
-        try {
-            Session session = getCurrentSession();
-            session.saveOrUpdate(newAnnotation);
-            return newAnnotation;
-        }
-        catch (Exception e) {
-            throw new DaoException(e);
-        }
-    }
-
 
     /**
      * This method gets the annotations for an entity and then removes the one that matches the value annotated.
@@ -541,11 +529,11 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
     
-    public Set<EntityData> getParentEntityDatas(long entityId) throws DaoException {
+    public Set<EntityData> getParentEntityDatas(long childEntityId) throws DaoException {
         try {
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select clazz from EntityData clazz where clazz.childEntity.id=?");
-            Query query = session.createQuery(hql.toString()).setLong(0, entityId);
+            Query query = session.createQuery(hql.toString()).setLong(0, childEntityId);
             return new HashSet(query.list());
         } catch (Exception e) {
             throw new DaoException(e);

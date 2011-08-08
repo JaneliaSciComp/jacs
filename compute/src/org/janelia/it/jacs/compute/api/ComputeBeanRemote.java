@@ -57,6 +57,7 @@ public interface ComputeBeanRemote {
     public String getAppVersion() throws RemoteException;
     public Node saveOrUpdateNode(Node node) throws DaoException, RemoteException;
     public Task saveOrUpdateTask(Task task) throws DaoException, RemoteException;
+    public User saveOrUpdateUser(User user) throws DaoException;
     public Node getResultNodeByTaskId(long taskId) throws DaoException, RemoteException;
     public List<Node> getResultNodesByTaskId(long taskId) throws DaoException, RemoteException;
     public Node getBlastDatabaseFileNodeByName(String name) throws RemoteException;
@@ -70,9 +71,6 @@ public interface ComputeBeanRemote {
     public User getUserByName(String name) throws RemoteException;
     public void removePreferenceCategory(String categoryName) throws DaoException;
     public Event saveEvent(Long taskId, String eventType, String description, Date timestamp) throws DaoException, RemoteException;
-    public Object genericSave(Object object) throws DaoException, RemoteException;
-    public void genericDelete(Object object) throws DaoException;
-    public Object genericLoad(Class c, Long id) throws DaoException, RemoteException;
     public boolean buildUserFilestoreDirectory(String userLoginName) throws RemoteException;
     public void submitJob(String processDefName,long taskId) throws RemoteException; //Note: Used by Blast API
     public Long submitJob(String processDefName,Map<String, Object> processConfiguration)throws RemoteException; // Note: Used by test

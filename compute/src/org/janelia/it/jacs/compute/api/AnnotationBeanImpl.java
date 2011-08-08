@@ -1,11 +1,5 @@
 package org.janelia.it.jacs.compute.api;
 
-import java.util.*;
-
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-
 import org.apache.log4j.Logger;
 import org.hibernate.Query;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
@@ -21,6 +15,11 @@ import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
 import org.janelia.it.jacs.model.user_data.User;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
+
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import java.util.*;
 
 @Stateless(name = "AnnotationEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
@@ -65,19 +64,6 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         catch (Exception e) {
             _logger.error("Unexpected error occurred while trying preload models.", e);
         }
-    }
-
-    public String addAnnotation(String owner, String namespace, String term, String value, String comment, String conditional){
-        Annotation tmpAnnotation = new Annotation(0, owner, namespace, term, value, comment, conditional, owner,
-                new Date(System.currentTimeMillis()), null, false);
-        try {
-            Annotation newAnnotation = _annotationDAO.addAnnotation(tmpAnnotation);
-            return Long.toString(newAnnotation.getUniqueIdentifier());
-        }
-        catch (Exception e) {
-            _logger.error("Unexpected error occurred while trying to add an annotation.", e);
-        }
-        return null;
     }
 
     public void deleteAnnotation(String owner, String uniqueIdentifier, String tag){
@@ -160,7 +146,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
     }
     
-    public List<Entity> getEntitiesForSession(String username, long sessionId) throws ComputeException {
+    public List<Entity> getEntitiesForAnnotationSession(String username, long sessionId) throws ComputeException {
         try {
             Task task = _annotationDAO.getTaskById(sessionId);
             if (task == null) {
@@ -181,7 +167,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
     }
 	
-    public List<Entity> getCategoriesForSession(String username, long sessionId) throws ComputeException {
+    public List<Entity> getCategoriesForAnnotationSession(String username, long sessionId) throws ComputeException {
         try {
             Task task = _annotationDAO.getTaskById(sessionId);
             if (task == null) {
@@ -557,19 +543,29 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             _annotationDAO.removeAllOntologyAnnotationsForSession(userLogin, sessionId);
         } 
         catch (DaoException e) {
-            _logger.error("Error trying to save or update Entity");
-            throw new ComputeException("Error trying to save or update Entity",e);
+            _logger.error("Error trying to removeAllOntologyAnnotationsForSession");
+            throw new ComputeException("Error trying to removeAllOntologyAnnotationsForSession",e);
         }
 	}
 	
-    public Entity saveOrUpdateEntity(Entity entity) {
+    public Entity saveOrUpdateEntity(Entity entity) throws ComputeException {
         try {
             _annotationDAO.saveOrUpdate(entity);
             return entity;
         } catch (DaoException e) {
             _logger.error("Error trying to save or update Entity");
+            throw new ComputeException("Error trying to save or update Entity",e);
         }
-        return null;
+    }
+
+    public EntityData saveOrUpdateEntityData(EntityData newData) throws ComputeException {
+        try {
+            _annotationDAO.saveOrUpdate(newData);
+            return newData;
+        } catch (DaoException e) {
+            _logger.error("Error trying to save or update EntityData");
+            throw new ComputeException("Error trying to save or update EntityData",e);
+        }
     }
 
     public Entity getEntityById(String targetId) {

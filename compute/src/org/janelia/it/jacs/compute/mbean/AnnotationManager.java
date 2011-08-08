@@ -52,10 +52,6 @@ public class AnnotationManager implements AnnotationManagerMBean {
     public AnnotationManager() {
     }
 
-    public String addAnnotation(String owner, String namespace, String term, String value, String comment, String conditional){
-        return EJBFactory.getRemoteAnnotationBean().addAnnotation(owner, namespace, term, value, comment, conditional);
-    }
-
     public void deleteAnnotation(String owner, String annotatedEntityId, String tag){
         EJBFactory.getRemoteAnnotationBean().deleteAnnotation(owner, annotatedEntityId, tag);
     }

@@ -21,6 +21,7 @@ import java.util.ArrayList;
 @PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 1, timeout = 10000)
 public class FlyWorkstationWSBean extends BaseWSBean {
 
+    // todo The Web service layer needs to be flushed out
     public String addAnnotation(@WebParam(name = "owner") String owner,
                                 @WebParam(name = "namespace") String namespace,
                                 @WebParam(name = "term") String term,
@@ -31,7 +32,7 @@ public class FlyWorkstationWSBean extends BaseWSBean {
         StringBuffer sbuf = new StringBuffer("");
         try {
             AnnotationBeanRemote annotationBean = EJBFactory.getRemoteAnnotationBean();
-            String annotationId = annotationBean.addAnnotation(owner, namespace, term, value, comment, conditional);
+            String annotationId = "";// add annotation here
             sbuf.append("Annotation id=").append(annotationId).append(" successfully added.\n");
         }
         catch (Exception e) {
