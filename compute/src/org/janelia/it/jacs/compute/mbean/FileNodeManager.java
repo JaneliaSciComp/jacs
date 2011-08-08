@@ -130,7 +130,7 @@ public class FileNodeManager implements FileNodeManagerMBean {
             pf.partition();
             bdfn.setPartitionCount(new Integer("" + pf.getNumPartitions()));
             bdfn.setLength(pf.getNumResidues());
-            EJBFactory.getRemoteComputeBean().genericSave(bdfn);
+            EJBFactory.getRemoteComputeBean().saveOrUpdateNode(bdfn);
         }
         catch (Throwable t) {
             t.printStackTrace();
@@ -206,7 +206,7 @@ public class FileNodeManager implements FileNodeManagerMBean {
         if (fileNodeManagerUser == null) {
             fileNodeManagerUser = new User(User.SYSTEM_USER_LOGIN, User.SYSTEM_USER_LOGIN + "Fullname",
                     new HashSet<Node>(), new HashSet<Task>());
-            EJBFactory.getRemoteComputeBean().genericSave(fileNodeManagerUser);
+            EJBFactory.getRemoteComputeBean().saveOrUpdateUser(fileNodeManagerUser);
         }
         return fileNodeManagerUser;
     }
@@ -233,7 +233,7 @@ public class FileNodeManager implements FileNodeManagerMBean {
                     DEFAULT_VISIBILITY, type, null);
             bdfn.setLength(new Long(length));
             bdfn.setPartitionCount(new Integer(partitionNumber));
-            EJBFactory.getRemoteComputeBean().genericSave(bdfn);
+            EJBFactory.getRemoteComputeBean().saveOrUpdateNode(bdfn);
             if (logger.isInfoEnabled()) logger.info("Created Empty Blastable Database of name: " + name);
         }
         catch (Exception ex) {

@@ -96,6 +96,16 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
     }
 
+    public void removeEntityFromFolder(EntityData folderEntityData) throws ComputeException {
+        try {
+            _annotationDAO.genericDelete(folderEntityData);
+        }
+        catch (Exception e) {
+            _logger.error("Unexpected error while trying to delete folder entity data "+folderEntityData.getId());
+            throw new ComputeException("Unexpected error while trying to delete folder entity data "+folderEntityData.getId(),e);
+        }
+    }
+
     public ArrayList<Annotation> getAnnotationsForUser(String owner){
         try {
             return _annotationDAO.getAnnotationsForUser(owner);

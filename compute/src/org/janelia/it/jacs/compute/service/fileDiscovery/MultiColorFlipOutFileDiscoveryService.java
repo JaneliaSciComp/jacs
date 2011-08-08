@@ -1,12 +1,6 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
-import java.io.File;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -22,6 +16,11 @@ import org.janelia.it.jacs.model.tasks.fileDiscovery.MultiColorFlipOutFileDiscov
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
+
+import java.io.File;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -349,12 +348,11 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         }
     }
 
-    private void removeEntityFromFolder(Entity entity, Entity folder) throws DaoException {
-
+    private void removeEntityFromFolder(Entity entity, Entity folder) throws Exception {
     	Set<EntityData> datas = annotationBean.getParentEntityDatas(entity.getId());
     	for(EntityData data : datas) {
     		if (data.getParentEntity().getId().equals(folder.getId())) {
-        		computeBean.genericDelete(data);
+        		annotationBean.removeEntityFromFolder(data);
         		logger.info("Deleted parent link "+data.getId()+" for "+entity.getId());	
     		}
     	}
@@ -508,7 +506,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
     private void addToParent(Entity parent, Entity entity, Integer index) throws Exception {
         EntityData ed = parent.addChildEntity(entity);
         ed.setOrderIndex(index);
-        computeBean.genericSave(ed);
+        annotationBean.saveOrUpdateEntityData(ed);
         logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+" as child of "+parent.getEntityType().getName()+"#"+entity.getId());
     }
 }

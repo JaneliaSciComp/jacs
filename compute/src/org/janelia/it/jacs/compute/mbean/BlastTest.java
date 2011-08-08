@@ -253,7 +253,7 @@ public class BlastTest implements BlastTestMBean {
             BlastNTask b1 = new BlastNTask();
             EJBFactory.getRemoteComputeBean().saveOrUpdateTask(b1);
             // Then, read a createtask and compare
-            BlastNTask b2 = (BlastNTask) (EJBFactory.getRemoteComputeBean().genericLoad(BlastNTask.class, b1.getObjectId()));
+            BlastNTask b2 = (BlastNTask) (EJBFactory.getLocalComputeBean().genericLoad(BlastNTask.class, b1.getObjectId()));
             Set keySet = b2.getParameterKeySet();
             System.err.println("PVOMUT Debug - value of createtask after query:");
             for (Object o : keySet) {
