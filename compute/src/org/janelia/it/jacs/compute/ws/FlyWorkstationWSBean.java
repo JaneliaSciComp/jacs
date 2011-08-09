@@ -1,17 +1,19 @@
 package org.janelia.it.jacs.compute.ws;
 
-import org.jboss.annotation.ejb.PoolClass;
-import org.jboss.annotation.ejb.TransactionTimeout;
-import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
-import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.model.annotation.Annotation;
+import java.util.ArrayList;
 
 import javax.ejb.Remote;
 import javax.ejb.Stateless;
 import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
-import java.util.ArrayList;
+
+import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
+import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.model.annotation.Annotation;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.jboss.annotation.ejb.PoolClass;
+import org.jboss.annotation.ejb.TransactionTimeout;
 
 @SOAPBinding(style = SOAPBinding.Style.RPC)
 @Stateless(name = "FlyWorkstationWS")
@@ -104,4 +106,34 @@ public class FlyWorkstationWSBean extends BaseWSBean {
         logger.debug("Web Services - editAnnotation() complete");
         return sbuf.toString();
     }
+    
+    public Entity getEntity(@WebParam(name = "entityId") String entityId) {
+        logger.debug("Web Services - getEntity() acknowledged");
+        Entity entity = null;
+        try {
+            AnnotationBeanRemote annotationBean = EJBFactory.getRemoteAnnotationBean();
+            entity = annotationBean.getEntityById(entityId);
+            logger.debug("Web Services - getEntity() complete");
+        }
+        catch (Exception e) {
+            logger.error("There was a problem getting entity "+entityId, e);
+        }
+        return entity;
+    }
+    
+    public Entity getOntologyTree(@WebParam(name = "userLogin") String userLogin, 
+    							  @WebParam(name = "rootId") String rootId) {
+        logger.debug("Web Services - getOntologyTree() acknowledged");
+        Entity entity = null;
+        try {
+            AnnotationBeanRemote annotationBean = EJBFactory.getRemoteAnnotationBean();
+            entity = annotationBean.getOntologyTree(userLogin,Long.parseLong(rootId));
+            logger.debug("Web Services - getOntologyTree() complete");
+        }
+        catch (Exception e) {
+            logger.error("There was a problem getting ontology "+rootId, e);
+        }
+        return entity;
+    }
+    
 }
