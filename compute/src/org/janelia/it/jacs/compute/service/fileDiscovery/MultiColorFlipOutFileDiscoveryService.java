@@ -34,6 +34,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
     private static final String DIRECTORY_PARAM_PREFIX = "DIRECTORY_";
 
     private boolean runNeuronSeperator = true;
+    private boolean runNeuronSeperatorOnGrid = false;
     
     private Logger logger;
     private MultiColorFlipOutFileDiscoveryTask task;
@@ -61,6 +62,8 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             computeBean = EJBFactory.getRemoteComputeBean();
             user = computeBean.getUserByName(task.getOwner());
             createDate = new Date();
+            
+            runNeuronSeperatorOnGrid = "true".equals(task.getParameter(MultiColorFlipOutFileDiscoveryTask.PARAM_runSeperationOnGrid));
             
             String topLevelFolderName = null;
             
@@ -487,16 +490,24 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
 
     protected void launchColorSeparationPipeline(Entity sample, LsmPair lsmPair) throws Exception {
         if (runNeuronSeperator) {
-            NeuronSeparatorPipelineTask neuTask = new NeuronSeparatorPipelineTask(new HashSet<Node>(), 
+
+        	NeuronSeparatorPipelineTask neuTask = new NeuronSeparatorPipelineTask(new HashSet<Node>(), 
             		user.getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>());
             String lsmEntityIds = lsmPair.lsmEntity1.getId()+" , "+lsmPair.lsmEntity2.getId();
             neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmEntityIdList, lsmEntityIds);
             neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_outputSampleEntityId, sample.getId().toString());
-            neuTask.setJobName("Neuron Separator for MultiColorFlipOutFileDiscovery");
             EJBFactory.getLocalComputeBean().saveOrUpdateTask(neuTask);
-            EJBFactory.getRemoteComputeBean().submitJob("NeuronSeparationPipeline", neuTask.getObjectId());
-//            runNeuronSeperator = false;
+            
+            if (runNeuronSeperatorOnGrid) {
+	            neuTask.setJobName("Neuron Separator for MultiColorFlipOutFileDiscovery, task id="+neuTask.getObjectId());
+	            EJBFactory.getRemoteComputeBean().submitJob("NeuronSeparationPipeline", neuTask.getObjectId());
+            }
+            else {
+	            neuTask.setJobName("Local Neuron Separator for MultiColorFlipOutFileDiscovery, task id="+neuTask.getObjectId());
+	            EJBFactory.getRemoteComputeBean().submitJob("NeuronSeparationPipelineLocal", neuTask.getObjectId());
+            }
         }
+        
     }
 
     private void addToParent(Entity parent, Entity entity) throws Exception {

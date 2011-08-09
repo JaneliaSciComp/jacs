@@ -9,8 +9,9 @@ package org.janelia.it.jacs.compute.mbean;
 
 
 public interface WorkstationDataManagerMBean {
+	
 
-    public void runMultiColorFlipOutFileDiscoveryService(String user);
+    public void runMultiColorFlipOutFileDiscoveryService(String user, boolean runSeperationOnGrid);
 
     public void setupEntityTypes();
 

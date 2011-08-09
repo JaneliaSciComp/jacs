@@ -1,15 +1,16 @@
 package org.janelia.it.jacs.model.tasks.fileDiscovery;
 
+import java.util.List;
+import java.util.Set;
+
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.model.vo.BooleanParameterVO;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.model.vo.ParameterVO;
 import org.janelia.it.jacs.model.vo.TextParameterVO;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,12 +26,15 @@ public class MultiColorFlipOutFileDiscoveryTask extends Task {
 
     // Parameter Keys
     transient public static final String PARAM_inputDirectoryList = "list of input directories";
+    transient public static final String PARAM_runSeperationOnGrid = "run color seperation tasks on the grid";
 
     // Default values - default overrides
 
-    public MultiColorFlipOutFileDiscoveryTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet) {
+    public MultiColorFlipOutFileDiscoveryTask(Set<Node> inputNodes, String owner, List<Event> events, 
+    		Set<TaskParameter> taskParameterSet, boolean runLocalSeperation) {
         super(inputNodes, owner, events, taskParameterSet);
         setDefaultValues();
+        setParameter(PARAM_runSeperationOnGrid, Boolean.toString(runLocalSeperation));
     }
 
     public MultiColorFlipOutFileDiscoveryTask() {
@@ -39,6 +43,7 @@ public class MultiColorFlipOutFileDiscoveryTask extends Task {
 
     private void setDefaultValues() {
         setParameter(PARAM_inputDirectoryList, "");
+        setParameter(PARAM_runSeperationOnGrid, "false");
         this.taskName = TASK_NAME;
     }
 
@@ -50,6 +55,9 @@ public class MultiColorFlipOutFileDiscoveryTask extends Task {
             return null;
         if (key.equals(PARAM_inputDirectoryList)) {
             return new TextParameterVO(value, 4000);
+        }
+        if (key.equals(PARAM_runSeperationOnGrid)) {
+            return new BooleanParameterVO(Boolean.parseBoolean(value));
         }
         // No match
         return null;
