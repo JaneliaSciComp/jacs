@@ -1,12 +1,16 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
+import java.io.File;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
-import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
-import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.*;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.neuronSeparator.NeuronSeparatorHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -16,11 +20,6 @@ import org.janelia.it.jacs.model.tasks.fileDiscovery.MultiColorFlipOutFileDiscov
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
-
-import java.io.File;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -32,14 +31,24 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
 
     private static final String TOP_LEVEL_FOLDER_NAME_PARAM = "TOP_LEVEL_FOLDER_NAME";
     private static final String DIRECTORY_PARAM_PREFIX = "DIRECTORY_";
-
+    private static final String LINKING_FOLDER = "LINKING_FOLDER";
+    
+    private enum NeuronSepMode {
+    	LOCAL,
+    	REMOTE,
+    	GRID
+    }
+    
+    private NeuronSepMode mode = NeuronSepMode.REMOTE;
+    
+    private String linkingDir;
+    private boolean refresh = true;
     private boolean runNeuronSeperator = true;
-    private boolean runNeuronSeperatorOnGrid = false;
     
     private Logger logger;
     private MultiColorFlipOutFileDiscoveryTask task;
-    private AnnotationBeanRemote annotationBean;
-    private ComputeBeanRemote computeBean;
+    private AnnotationBeanLocal annotationBean;
+    private ComputeBeanLocal computeBean;
     private User user;
     private Date createDate;
     
@@ -48,9 +57,11 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
     private class LsmPair {
         public LsmPair() {}
         public String name;
+        public Integer lowIndex;
+        public File lsmFile1;
+        public File lsmFile2;
         public Entity lsmEntity1;
         public Entity lsmEntity2;
-        public Integer lowIndex;
     }
     
     public void execute(IProcessData processData) {
@@ -58,12 +69,11 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         	
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             task = (MultiColorFlipOutFileDiscoveryTask) ProcessDataHelper.getTask(processData);
-            annotationBean = EJBFactory.getRemoteAnnotationBean();
-            computeBean = EJBFactory.getRemoteComputeBean();
+            annotationBean = EJBFactory.getLocalAnnotationBean();
+            computeBean = EJBFactory.getLocalComputeBean();
             user = computeBean.getUserByName(task.getOwner());
             createDate = new Date();
-            
-            runNeuronSeperatorOnGrid = "true".equals(task.getParameter(MultiColorFlipOutFileDiscoveryTask.PARAM_runSeperationOnGrid));
+            refresh = "true".equals(task.getParameter(MultiColorFlipOutFileDiscoveryTask.PARAM_refresh));
             
             String topLevelFolderName = null;
             
@@ -72,11 +82,15 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
                 String paramName = entry.getKey();
                 if (paramName.startsWith(DIRECTORY_PARAM_PREFIX)) {
                     directoryPathList.add((String) entry.getValue());
-                } else if (paramName.equals(TOP_LEVEL_FOLDER_NAME_PARAM)) {
-                    topLevelFolderName=(String)entry.getValue();
+                } 
+                else if (paramName.equals(TOP_LEVEL_FOLDER_NAME_PARAM)) {
+                    topLevelFolderName = (String)entry.getValue();
+                }
+                else if (paramName.equals(LINKING_FOLDER)) {
+                	linkingDir = (String)entry.getValue();
                 }
             }
-            
+
             if (topLevelFolderName == null) {
             	throw new Exception("No TOP_LEVEL_FOLDER_NAME parameter provided");
             }
@@ -102,7 +116,6 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             
             Entity topLevelFolder = createOrVerifyRootEntity(topLevelFolderName);
             processDirectoriesForLsm(topLevelFolder);
-            processFolderForSingleNeuronStackSets(topLevelFolder);
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -112,24 +125,22 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
 
     protected Entity createOrVerifyRootEntity(String topLevelFolderName) throws Exception {
     	
-    	Entity topLevelFolder = null;
-        // We expect there to be a single folder in the system with this name
         Set<Entity> topLevelFolders = annotationBean.getEntitiesByName(topLevelFolderName);
-        
-        if (topLevelFolders!=null && topLevelFolders.size()>1) {
-            for (Entity e : topLevelFolders) {
-                logger.info("Found topLevelFolder entityId="+e.getId());
-            }
-            throw new Exception("Unexpectedly found " + topLevelFolders.size()+" folders for MultiColorFlipOutFileDiscoveryService with name="+topLevelFolderName);
+
+    	Entity topLevelFolder = null;
+        if (topLevelFolders!=null) {
+        	// Only accept the current user's top level folder
+	        for(Entity entity : topLevelFolders) {
+	        	if (entity.getUser().getUserLogin().equals(user.getUserLogin())) {
+	                // This is the folder we want, now load the entire folder hierarchy
+	                topLevelFolder = annotationBean.getFolderTree(entity.getId());
+	                logger.info("Found existing topLevelFolder, name=" + topLevelFolder.getName());
+	        		break;
+	        	}
+	        }
         }
-        
-        if (topLevelFolders!=null && topLevelFolders.size()==1) {
-            topLevelFolder = topLevelFolders.iterator().next();
-            // This is the folder we want, now load the entire folder hierarchy
-            topLevelFolder = annotationBean.getFolderTree(topLevelFolder.getId());
-            logger.info("Found existing topLevelFolder, name=" + topLevelFolder.getName());
-        } 
-        else if (topLevelFolders==null || topLevelFolders.size()==0) {
+         
+        if (topLevelFolder == null) {
             logger.info("Creating new topLevelFolder with name="+topLevelFolderName);
             topLevelFolder = new Entity();
             topLevelFolder.setCreationDate(createDate);
@@ -141,6 +152,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             topLevelFolder = annotationBean.saveOrUpdateEntity(topLevelFolder);
             logger.info("Saved top level folder as "+topLevelFolder.getId());
         }
+        
         logger.info("Using topLevelFolder with id="+topLevelFolder.getId());
         return topLevelFolder;
     }
@@ -216,6 +228,8 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         	return;
         }
         
+        List<File> lsmFileList = new ArrayList<File>();
+        
         for (File file : dir.listFiles()) {
             if (file.isDirectory()) {
                 Entity subfolder = verifyOrCreateChildFolderFromDir(folder, file);
@@ -223,184 +237,107 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             } 
             else {
                 if (file.getName().toUpperCase().endsWith(".LSM")) {
-                    verifyOrCreateLsmStack(folder, file);
+                	lsmFileList.add(file);
                 }
-            }
-        }
-    }
-
-    protected void verifyOrCreateLsmStack(Entity parentFolder, File file) throws Exception {
-    	
-        Entity lsmStack = null;
-        logger.info("Considering LSM file " + file.getName());
-        List<Entity> possibleLsmFiles = annotationBean.getEntitiesWithFilePath(file.getAbsolutePath());
-        List<Entity> lsmStacks = new ArrayList<Entity>();
-        for (Entity entity : possibleLsmFiles) {
-            if (entity.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK)) {
-                lsmStacks.add(entity);
             }
         }
         
-        if (lsmStacks.size() == 0) {
-            lsmStack = createLsmStackFromFile(file);
-            addToParent(parentFolder, lsmStack);
-        } 
-        else if (lsmStacks.size() == 1) {
-            lsmStack = lsmStacks.get(0);
-            
-            // Make sure the folder already contains it
-            boolean hasLsmStack=false;
-            for (EntityData ed : parentFolder.getEntityData()) {
-                if (ed.getChildEntity()!=null && ed.getChildEntity().getId().equals(lsmStack.getId())) {
-                    hasLsmStack = true;
-                    break;
-                }
-            }
-            
-            if (!hasLsmStack) {
-                // LSM exists but in a different folder, so add it to this one
-                //lsmStack = createLsmStackFromFile(file);
-                addToParent(parentFolder, lsmStack);
-            } 
-            else {
-                logger.info("The folder already contains the LSM stack so we do not need to add it again");
-            }
-            
-        } 
-        else {
-            logger.warn("Unexpectedly found " + lsmStacks.size() + " lsm stacks for file="+file.getAbsolutePath());
-        }
+        processLsmStacksIntoSamples(folder, lsmFileList);
     }
 
-    protected Entity createLsmStackFromFile(File file) throws Exception {
-        Entity lsmStack = new Entity();
-        lsmStack.setUser(user);
-        lsmStack.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK));
-        lsmStack.setCreationDate(createDate);
-        lsmStack.setUpdatedDate(createDate);
-        lsmStack.setName(file.getName());
-        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
-        lsmStack = annotationBean.saveOrUpdateEntity(lsmStack);
-        logger.info("Saved LSM stack as "+lsmStack.getId());
-        return lsmStack;
-    }
+    private void processLsmStacksIntoSamples(Entity folder, List<File> lsmStackList) throws Exception {
 
-    protected void processFolderForSingleNeuronStackSets(Entity folder) throws Exception {
-
-        // In this method, we will start in the top-level folder, and recursively search each subfolder.
-        // Within a given folder, we will find the set of lsm files (if any).
-        // For each lsm file, we will try to find a filename-based unique match, indicating they may
-        // be pairs of a single imaging run.
-        // If a unique match is not found, then the files are not included in a set.
-        // Each matched pair of files will be considered a candidate set. A search will be done to
-        // see if the members are part of an already-existing set.
-        // If the pair is not already part of a set, then:
-        //   (1) a new SingleNeuronStackSet will be created
-        //   (2) the v3d cmd tool will be used to generate a combined signal tif file
-        //   (3) the signal tif file will be used as input to the SingleNeuronSeparatorPipeline for processing
-
-        // Check that this entity is a folder
-        if (!folder.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
-            throw new Exception("Expected folder entity type but received type="+folder.getEntityType().getName());
-        }
-
-        // Scan through children:
-        //   * For child folders, recursively call this function
-        //   * For lsm files, add to list for analysis
-        List<Entity> lsmStackList=new ArrayList<Entity>();
-        for (EntityData ed : folder.getEntityData()) {
-            Entity child = 	ed.getChildEntity();
-            if (child!=null) {
-                if (child.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK)) {
-                    lsmStackList.add(child);
-                } 
-                else if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
-                    processFolderForSingleNeuronStackSets(child);
-                }
-            }
-        }
-
-        // At this point we have a collection of lsm files in this folder - we will analyze for pairs
         logger.info("Checking for LSM pairs in folder "+folder.getName());
-        List<LsmPair> lsmPairs = new ArrayList<LsmPair>(findLsmPairs(lsmStackList));
-        logger.info("    Found " + lsmPairs.size() + " pairs");
-
-        // Assume that a folder contains one slide's worth of LSM pairs, and sort by the LSM index
-        Collections.sort(lsmPairs, new Comparator<LsmPair>() {
-			public int compare(LsmPair o1, LsmPair o2) {
-				return o1.lowIndex.compareTo(o2.lowIndex);
-			}
-		});
+        List<LsmPair> lsmPairs = findLsmPairs(lsmStackList);
+        logger.info("Found " + lsmPairs.size() + " pairs");
         
-        // We will consider each pair, and if the lsm members of the pair do not have a parent which
-        // is an LSM Stack Pair entity, the pair will be submitted for processing with
-        // this pipeline.
         int i = 0;
         for (LsmPair lsmPair : lsmPairs) {
 
-    		logger.info("Moving paired LSM stacks to their own Sample entity");
-
-        	// Remove the two LSM Stacks from the original folder, and put them under their own paired folder
-    		removeEntityFromFolder(lsmPair.lsmEntity1, folder);
-    		removeEntityFromFolder(lsmPair.lsmEntity2, folder);
+        	logger.info("Processing LSM Pair: "+lsmPair.name);
         	
-        	Entity sample = createSample(lsmPair);
-            addToParent(folder, sample, i++);
+        	Entity oldSample = findExistingSample(folder, lsmPair);
+            String linkName = getSymbolicLinkName(lsmPair.lsmFile1);
+        	File symbolicLink = new File(linkingDir, linkName);
+            
+        	try {
+        		if (oldSample != null && !refresh) {
+                   	// We're only doing an incremental update, so skip this pair since it already has results
+                	logger.info("  Existing sample exists (id="+oldSample.getId()+"), skipping.");
+                	continue;
+	        	}
+	        	
+	        	// Create the sample
+	        	Entity sample = createSample(lsmPair, symbolicLink);
+	            addToParent(folder, sample, i++);
+	        	launchColorSeparationPipeline(oldSample, sample, lsmPair, symbolicLink);
+        	}
+        	catch (ComputeException e) {
+        		logger.warn("Could not delete existing sample for regeneration, id="+oldSample.getId(),e);
+        	}
         	
-        	launchColorSeparationPipeline(sample, lsmPair);
         }
     }
 
-    private void removeEntityFromFolder(Entity entity, Entity folder) throws Exception {
-    	Set<EntityData> datas = annotationBean.getParentEntityDatas(entity.getId());
-    	for(EntityData data : datas) {
-    		if (data.getParentEntity().getId().equals(folder.getId())) {
-        		annotationBean.removeEntityFromFolder(data);
-        		logger.info("Deleted parent link "+data.getId()+" for "+entity.getId());	
-    		}
-    	}
+    private String getSymbolicLinkName(File lsmFile1) throws Exception {
+    	String location = lsmFile1.getAbsolutePath();
+        for (String directoryPath : directoryPathList) {
+        	location = location.replaceFirst(directoryPath, "");
+        }
+        return location.replaceFirst("^\\/", "").replaceAll("\\/", "_D_").replaceAll(" ", "_");
     }
     
-    protected Entity createSample(LsmPair lsmPair) throws Exception {
+    /**
+     * Find and return the child Sample entity which contains the given LSM Pair. 
+     */
+    private Entity findExistingSample(Entity folder, LsmPair lsmPair) {
 
-        Entity sample = new Entity();
-        sample.setUser(user);
-        sample.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_SAMPLE));
-        sample.setCreationDate(createDate);
-        sample.setUpdatedDate(createDate);
-        sample.setName(lsmPair.name);
-        sample = annotationBean.saveOrUpdateEntity(sample);
-        logger.info("Saved sample as "+sample.getId());
-        
-    	Entity lsmStackPair = new Entity();
-        lsmStackPair.setUser(user);
-        lsmStackPair.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK_PAIR));
-        lsmStackPair.setCreationDate(createDate);
-        lsmStackPair.setUpdatedDate(createDate);
-        lsmStackPair.setName("Scans");
-        lsmStackPair = annotationBean.saveOrUpdateEntity(lsmStackPair);
-        logger.info("Saved LSM stack pair as "+lsmStackPair.getId());
-        addToParent(sample, lsmStackPair, 0);
-        addToParent(lsmStackPair, lsmPair.lsmEntity1, 0);
-        addToParent(lsmStackPair, lsmPair.lsmEntity2, 1);
-        
-        return sample;
-    }
+    	for(EntityData ed : folder.getEntityData()) {
+			Entity sampleFolder = ed.getChildEntity();
+    		if (sampleFolder == null) continue;
+    		if (!EntityConstants.TYPE_SAMPLE.equals(sampleFolder.getEntityType().getName())) continue;
 
-    private Set<LsmPair> findLsmPairs(List<Entity> lsmStackList) throws Exception {
+	    	for(EntityData sed : sampleFolder.getEntityData()) {
+    			Entity lsmStackPair = sed.getChildEntity();
+	    		if (lsmStackPair == null) continue;
+	    		if (!EntityConstants.TYPE_LSM_STACK_PAIR.equals(lsmStackPair.getEntityType().getName())) continue;
+
+				boolean found1 = false;
+				boolean found2 = false;
+				
+    	    	for(EntityData led : lsmStackPair.getEntityData()) {
+    				Entity lsmStack = led.getChildEntity();
+    	    		if (lsmStack == null) continue;
+    	    		if (!EntityConstants.TYPE_LSM_STACK.equals(lsmStack.getEntityType().getName())) continue;
+    	    		
+	    			if (lsmPair.lsmFile1.getName().equals(lsmStack.getName())) {
+	    				found1 = true;
+	    			}
+	    			else if (lsmPair.lsmFile2.getName().equals(lsmStack.getName())) {
+	    				found2 = true;
+	    			}
+    	    	}
+
+    	    	if (found1 && found2) {
+    	    		return sampleFolder;
+    	    	}
+    		}
+    	}
     	
-        Set<LsmPair> pairSet = new HashSet<LsmPair>();
+    	return null;
+    }
+    
+    private List<LsmPair> findLsmPairs(List<File> lsmStackList) throws Exception {
+    	
+        List<LsmPair> pairs = new ArrayList<LsmPair>();
         Pattern lsmPattern = Pattern.compile("(.+)\\_L(\\d+)((.*)\\.lsm)");
-        Set<Entity> alreadyPaired = new HashSet<Entity>();
+        Set<File> alreadyPaired = new HashSet<File>();
         
-        for (Entity lsm1 : lsmStackList) {
+        for (File lsm1 : lsmStackList) {
         	
             if (alreadyPaired.contains(lsm1)) continue;
             	
-            String lsm1Filename = lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-            if (lsm1Filename==null || lsm1Filename.length()==0) {
-                throw new Exception("LSM id="+lsm1.getId()+" unexpectedly does not have an ATTRIBUTE_FILE_PATH");
-            }
+            String lsm1Filename = lsm1.getAbsolutePath();
 
             Matcher lsm1Matcher = lsmPattern.matcher(lsm1Filename);
             if (lsm1Matcher.matches() && lsm1Matcher.groupCount()==4) {
@@ -421,15 +358,12 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
                 	continue;
                 }
 
-                Set<Entity> possibleMatches = new HashSet<Entity>();
-                for (Entity lsm2 : lsmStackList) {
+                Set<File> possibleMatches = new HashSet<File>();
+                for (File lsm2 : lsmStackList) {
                 	
                 	if (alreadyPaired.contains(lsm2)) continue;
                     
-                    String lsm2Filename = lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                    if (lsm2Filename==null || lsm2Filename.length()==0) {
-                        throw new Exception("LSM (id="+lsm2.getId()+") unexpectedly does not have an ATTRIBUTE_FILE_PATH");
-                    }
+                    String lsm2Filename = lsm2.getAbsolutePath();
                     
                     // Obviously we do not want to pair something to itself
                     if (lsm1Filename.equals(lsm2Filename)) continue;
@@ -457,54 +391,112 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
                         }
                         
                         if (indexMatch && lsm1Prefix.equals(lsm2Prefix) && lsm1Suffix.equals(lsm2Suffix)) {
-                            //logger.info("Possible match = TRUE for " + lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH) + " , " +
-                            //lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
                             possibleMatches.add(lsm2);
                             combinedName += lsm2Index;
                         } 
-                        else {
-                            //logger.info("Possible match = FALSE for " + lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH) + " , " +
-                            //lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-                        }
                     }
                 }
                 
                 if (possibleMatches.size() == 1) {
                     // We have a unique match
-                    Entity lsm2 = possibleMatches.iterator().next();
+                	File lsm2 = possibleMatches.iterator().next();
                     alreadyPaired.add(lsm1);
                     alreadyPaired.add(lsm2);
                     LsmPair pair = new LsmPair();
-                    pair.lsmEntity1 = lsm1;
-                    pair.lsmEntity2 = lsm2;
+                    pair.lsmFile1 = lsm1;
+                    pair.lsmFile2 = lsm2;
                     pair.name = combinedName+lsm1SuffixNoExt;
                     pair.lowIndex = lsm1IndexInt;
-                    pairSet.add(pair);
+                    pairs.add(pair);
                     logger.info("Adding lsm pair: " + combinedName);
                 }
 
             }
         }
-        return pairSet;
+        
+        // Assume that a folder contains one slide's worth of LSM pairs, and sort by the LSM index
+        Collections.sort(pairs, new Comparator<LsmPair>() {
+			public int compare(LsmPair o1, LsmPair o2) {
+				return o1.lowIndex.compareTo(o2.lowIndex);
+			}
+		});
+        
+        return pairs;
     }
 
-    protected void launchColorSeparationPipeline(Entity sample, LsmPair lsmPair) throws Exception {
+    protected Entity createSample(LsmPair lsmPair, File link) throws Exception {
+
+    	lsmPair.lsmEntity1 = createLsmStackFromFile(lsmPair.lsmFile1);
+    	lsmPair.lsmEntity2 = createLsmStackFromFile(lsmPair.lsmFile2);
+		
+        Entity sample = new Entity();
+        sample.setUser(user);
+        sample.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_SAMPLE));
+        sample.setCreationDate(createDate);
+        sample.setUpdatedDate(createDate);
+        sample.setName(lsmPair.name);
+        sample = annotationBean.saveOrUpdateEntity(sample);
+        logger.info("Saved sample as "+sample.getId());
+        
+    	Entity lsmStackPair = new Entity();
+        lsmStackPair.setUser(user);
+        lsmStackPair.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK_PAIR));
+        lsmStackPair.setCreationDate(createDate);
+        lsmStackPair.setUpdatedDate(createDate);
+        lsmStackPair.setName("Scans");
+        lsmStackPair = annotationBean.saveOrUpdateEntity(lsmStackPair);
+        logger.info("Saved LSM stack pair as "+lsmStackPair.getId());
+        addToParent(sample, lsmStackPair, 0);
+        addToParent(lsmStackPair, lsmPair.lsmEntity1, 0);
+        addToParent(lsmStackPair, lsmPair.lsmEntity2, 1);
+        
+        return sample;
+    }
+
+    private Entity createLsmStackFromFile(File file) throws Exception {
+        Entity lsmStack = new Entity();
+        lsmStack.setUser(user);
+        lsmStack.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK));
+        lsmStack.setCreationDate(createDate);
+        lsmStack.setUpdatedDate(createDate);
+        lsmStack.setName(file.getName());
+        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
+        lsmStack = annotationBean.saveOrUpdateEntity(lsmStack);
+        logger.info("Saved LSM stack as "+lsmStack.getId());
+        return lsmStack;
+    }
+    
+    private void launchColorSeparationPipeline(Entity oldSample, Entity sample, LsmPair lsmPair, File symbolicLink) throws Exception {
         if (runNeuronSeperator) {
 
         	NeuronSeparatorPipelineTask neuTask = new NeuronSeparatorPipelineTask(new HashSet<Node>(), 
             		user.getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>());
             String lsmEntityIds = lsmPair.lsmEntity1.getId()+" , "+lsmPair.lsmEntity2.getId();
             neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmEntityIdList, lsmEntityIds);
+            neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_symbolLinkName, symbolicLink.getAbsolutePath());
             neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_outputSampleEntityId, sample.getId().toString());
-            EJBFactory.getLocalComputeBean().saveOrUpdateTask(neuTask);
-            
-            if (runNeuronSeperatorOnGrid) {
-	            neuTask.setJobName("Neuron Separator for MultiColorFlipOutFileDiscovery, task id="+neuTask.getObjectId());
-	            EJBFactory.getRemoteComputeBean().submitJob("NeuronSeparationPipeline", neuTask.getObjectId());
+            if (oldSample != null) {
+            	neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_oldSampleEntityId, oldSample.getId().toString());
             }
-            else {
+            computeBean.saveOrUpdateTask(neuTask);
+            
+            switch(mode) {
+            case GRID:
+            	// TODO: this deletion should happen when the task is ready to run, not when its queued
+                NeuronSeparatorHelper.deleteExistingNeuronSeparationResult(neuTask);
+	            neuTask.setJobName("Grid Neuron Separator for MultiColorFlipOutFileDiscovery, task id="+neuTask.getObjectId());
+	            computeBean.submitJob("NeuronSeparationPipeline", neuTask.getObjectId());
+            	break;
+            	
+            case LOCAL:
 	            neuTask.setJobName("Local Neuron Separator for MultiColorFlipOutFileDiscovery, task id="+neuTask.getObjectId());
-	            EJBFactory.getRemoteComputeBean().submitJob("NeuronSeparationPipelineLocal", neuTask.getObjectId());
+	            computeBean.submitJob("NeuronSeparationPipelineLocal", neuTask.getObjectId());
+	            break;
+	            
+            case REMOTE:
+	            neuTask.setJobName("Remote Neuron Separator for MultiColorFlipOutFileDiscovery, task id="+neuTask.getObjectId());
+	            computeBean.submitJob("NeuronSeparationPipelineRemote", neuTask.getObjectId());
+            	break;
             }
         }
         

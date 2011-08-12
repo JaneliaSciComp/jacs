@@ -19,14 +19,13 @@ import java.util.HashSet;
  */
 public class WorkstationDataManager implements WorkstationDataManagerMBean {
 
-    private static final Logger logger = Logger.getLogger(WorkstationDataManager.class);
-
     public WorkstationDataManager() {
     }
 
-    public void runMultiColorFlipOutFileDiscoveryService(String user, boolean runSeperationOnGrid) {
+    public void runMultiColorFlipOutFileDiscoveryService(String user, boolean refresh) {
         try {
-            MultiColorFlipOutFileDiscoveryTask task = new MultiColorFlipOutFileDiscoveryTask(new HashSet<Node>(), user, new ArrayList<Event>(), new HashSet<TaskParameter>(), runSeperationOnGrid);
+            MultiColorFlipOutFileDiscoveryTask task = new MultiColorFlipOutFileDiscoveryTask(new HashSet<Node>(), user, 
+            		new ArrayList<Event>(), new HashSet<TaskParameter>(), refresh);
             task.setJobName("MultiColor FlipOut File Discovery Task");
             task = (MultiColorFlipOutFileDiscoveryTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("MultiColorFlipOutFileDiscovery", task.getObjectId());
@@ -34,7 +33,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
-
+    
     public void setupEntityTypes() {
         try {
             AnnotationBeanRemote annotationBean = EJBFactory.getRemoteAnnotationBean();

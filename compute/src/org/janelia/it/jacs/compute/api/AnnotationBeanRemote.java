@@ -2,6 +2,7 @@ package org.janelia.it.jacs.compute.api;
 
 import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
@@ -17,6 +18,7 @@ public interface AnnotationBeanRemote {
     public Entity saveOrUpdateEntity(Entity entity) throws ComputeException;
     public EntityData saveOrUpdateEntityData(EntityData newData) throws ComputeException;
     public EntityType getEntityTypeByName(String name);
+	public EntityAttribute getEntityAttributeByName(String name);
     public List<Entity> getUserEntitiesByType(String userLogin, long entityTypeId);
     public Set<Entity> getEntitiesByName(String name);
     public Entity getEntityById(String targetId);

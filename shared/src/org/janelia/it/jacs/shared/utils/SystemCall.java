@@ -58,13 +58,27 @@ public class SystemCall {
     private File scratchDir = null;
     private String shellPath = null;
     private String streamDirector = null;
-
+    
+    private StringBuffer stderr;
+    private StringBuffer stdout;
+    
     private Random random = new Random();
 
     public SystemCall(Logger logger) {
         this.logger = logger;
     }
+    
+    public SystemCall(Logger logger, StringBuffer stdout, StringBuffer stderr) {
+        this.logger = logger;
+        this.stdout = stdout;
+        this.stderr = stderr;
+    }
 
+    public SystemCall(StringBuffer stdout, StringBuffer stderr) {
+        this.stdout = stdout;
+        this.stderr = stderr;
+    }
+    
     public SystemCall(Properties props, File scratchParentDir, Logger logger) {
         this.logger = logger;
         configure(props, scratchParentDir);
@@ -103,7 +117,7 @@ public class SystemCall {
         if (scratchDir == null) {
             this.scratchDir = new File(scratchParent, getNextIDString());
         }
-        logger.info("Creating scratchDir=" + scratchDir.getAbsolutePath());
+        if (logger!=null) logger.info("Creating scratchDir=" + scratchDir.getAbsolutePath());
         if (!this.scratchDir.exists()) {
             if (!scratchDir.mkdirs()) {
                 throw new RuntimeException("Could not create scratch directory " + this.scratchDir.getAbsolutePath());
@@ -116,7 +130,7 @@ public class SystemCall {
                 throw new RuntimeException("Could not verify new scratch directory=" + this.scratchDir.getAbsolutePath());
             }
             else {
-                logger.info("New scratch directory verified=" + scratchDir.getAbsolutePath());
+            	if (logger!=null) logger.info("New scratch directory verified=" + scratchDir.getAbsolutePath());
             }
 
         }
@@ -124,7 +138,7 @@ public class SystemCall {
 
     public int execute(String call, boolean captureOutput) throws IOException, InterruptedException {
         if (scratchDir.exists()) {
-//            logger.info("SystemCall execute verified scratchDir="+scratchDir.getAbsolutePath());
+//            if (logger!=null) logger.info("SystemCall execute verified scratchDir="+scratchDir.getAbsolutePath());
         }
         else {
             throw new IOException("Could not verify scratchDir=" + scratchDir.getAbsolutePath());
@@ -158,7 +172,7 @@ public class SystemCall {
         if (tries > 1)
             System.err.println("Note: system required " + tries + " 100msec wait periods for system_exec file");
         String execString = shellPath + " " + tmpFile.getAbsolutePath();
-        logger.info("SystemCall executing script shell=" + shellPath + " path=" + tmpFile.getAbsolutePath());
+        if (logger!=null) logger.info("SystemCall executing script shell=" + shellPath + " path=" + tmpFile.getAbsolutePath());
         Process process = null;
         int exitVal;
         try {
@@ -240,7 +254,7 @@ public class SystemCall {
      */
     public int emulateCommandLine(String desiredCommandLine, boolean isUnixStyleSystem, String[] envVariables, File directory, int timeoutSeconds) throws IOException, InterruptedException {
         String[] args = new String[]{"", "", ""};
-        if (logger.isDebugEnabled()) {
+        if (logger != null && logger.isDebugEnabled()) {
             logger.debug("Executing: " + desiredCommandLine);
         }
         if (isUnixStyleSystem) {
@@ -283,12 +297,12 @@ public class SystemCall {
                     } catch (IllegalThreadStateException e) {}
                 }
                 if (!finishOnTime) {
-                    logger.error("Process exceeded maximum timeout of " + timeoutSeconds + " seconds");
+                	if (logger!=null) logger.error("Process exceeded maximum timeout of " + timeoutSeconds + " seconds");
                     proc.destroy();
                     exitVal=1;
                 }
             }
-            if (logger.isDebugEnabled()) {
+            if (logger != null && logger.isDebugEnabled()) {
                 logger.debug("ExitValue: " + exitVal);
             }
         }
@@ -331,7 +345,13 @@ public class SystemCall {
                 br = new BufferedReader(isr);
                 String line;
                 while ((line = br.readLine()) != null) {
-                    if (logger.isDebugEnabled()) {
+                    if (logger != null && logger.isDebugEnabled()) {
+                    	if ("OUTPUT".equals(type) && stdout != null) {
+                    		stdout.append(line).append("\n");
+                    	}
+                    	else if ("ERROR".equals(type) && stderr != null) {
+                    		stderr.append(line).append("\n");
+                    	}
                         logger.debug(type + ">" + line);
                     }
                 }
@@ -339,7 +359,7 @@ public class SystemCall {
             catch (IOException ioe) {
                 // ioe.printStackTrace(); this was causing occasional harmless output
                 if (!ioe.getMessage().equalsIgnoreCase("Stream closed")) {
-                    logger.error("IOException: " + ioe.getMessage() + " (not stream closed) in SystemCall StreamGobbler type=" + type);
+                	if (logger!=null) logger.error("IOException: " + ioe.getMessage() + " (not stream closed) in SystemCall StreamGobbler type=" + type);
                 }
             }
             finally {
@@ -348,7 +368,7 @@ public class SystemCall {
                         br.close();
                     }
                     catch (IOException e) {
-                        logger.error("Error trying to close the SystemCall buffered stream reader. " + e.getMessage());
+                    	if (logger!=null) logger.error("Error trying to close the SystemCall buffered stream reader. " + e.getMessage());
                     }
                 }
             }

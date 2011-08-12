@@ -40,8 +40,6 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     private final Map<String, EntityAttribute> attrByName = new HashMap<String, EntityAttribute>();
     private static final Map<Long, Entity> entityTrees = new HashMap<Long, Entity>();
 
-    // TODO: This is not great because it has to preload for each instance in the pool. 
-    // It would be better to have a global cache, but how to do it without Singleton beans from EJB 3.1?
     private void preloadData() {
 
         try {

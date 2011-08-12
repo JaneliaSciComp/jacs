@@ -26,15 +26,15 @@ public class MultiColorFlipOutFileDiscoveryTask extends Task {
 
     // Parameter Keys
     transient public static final String PARAM_inputDirectoryList = "list of input directories";
-    transient public static final String PARAM_runSeperationOnGrid = "run color seperation tasks on the grid";
+    transient public static final String PARAM_refresh = "regenerate results";
 
     // Default values - default overrides
 
     public MultiColorFlipOutFileDiscoveryTask(Set<Node> inputNodes, String owner, List<Event> events, 
-    		Set<TaskParameter> taskParameterSet, boolean runLocalSeperation) {
+    		Set<TaskParameter> taskParameterSet, boolean refresh) {
         super(inputNodes, owner, events, taskParameterSet);
         setDefaultValues();
-        setParameter(PARAM_runSeperationOnGrid, Boolean.toString(runLocalSeperation));
+        setParameter(PARAM_refresh, Boolean.toString(refresh));
     }
 
     public MultiColorFlipOutFileDiscoveryTask() {
@@ -43,7 +43,7 @@ public class MultiColorFlipOutFileDiscoveryTask extends Task {
 
     private void setDefaultValues() {
         setParameter(PARAM_inputDirectoryList, "");
-        setParameter(PARAM_runSeperationOnGrid, "false");
+        setParameter(PARAM_refresh, "true");
         this.taskName = TASK_NAME;
     }
 
@@ -56,7 +56,7 @@ public class MultiColorFlipOutFileDiscoveryTask extends Task {
         if (key.equals(PARAM_inputDirectoryList)) {
             return new TextParameterVO(value, 4000);
         }
-        if (key.equals(PARAM_runSeperationOnGrid)) {
+        if (key.equals(PARAM_refresh)) {
             return new BooleanParameterVO(Boolean.parseBoolean(value));
         }
         // No match

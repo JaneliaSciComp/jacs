@@ -205,12 +205,17 @@ public class AnnotationDAO extends ComputeBaseDAO {
     		_logger.info(indent+"Cannot delete entity because owner ("+entity.getUser().getUserLogin()+") does not match invoker ("+owner+")");
     		return;
     	}
+
+    	_logger.info(indent+"Deleting "+entity.getName());
     	
     	// Reference check - does this entity have more than one parent pointing to it?
     	Set<EntityData> eds = getParentEntityDatas(entity.getId());
     	boolean moreThanOneParent = eds.size() > 1;
-        if (moreThanOneParent && !ignoreRefs) return;
-        
+        if (moreThanOneParent && !ignoreRefs) {
+        	_logger.info(indent+"  Cannot delete "+entity.getName()+" because more than one parent is pointing to it");
+        	return;
+        }
+
         // Delete all ancestors first
         for(EntityData ed : new ArrayList<EntityData>(entity.getEntityData())) {
         	Entity child = ed.getChildEntity();
@@ -219,7 +224,6 @@ public class AnnotationDAO extends ComputeBaseDAO {
         	}
         	// We have to manually remove the EntityData from its parent, otherwise we get this error: 
         	// "deleted object would be re-saved by cascade (remove deleted object from associations)"
-        	_logger.info(indent+"Deleting "+entity.getName()+"'s child: "+ed.getId());
         	ed.getParentEntity().getEntityData().remove(ed);
     		getCurrentSession().delete(ed);
         }
@@ -227,13 +231,11 @@ public class AnnotationDAO extends ComputeBaseDAO {
         // Delete all parent EDs
         for(EntityData ed : eds) {
 			// This ED points to the term to be deleted. We must delete the ED first to avoid violating constraints.
-        	_logger.info(indent+"Deleting "+entity.getName()+"'s link to parent: "+ed.getId());
         	ed.getParentEntity().getEntityData().remove(ed);
     		getCurrentSession().delete(ed);
         }
         
         // Finally we can delete the entity itself
-    	_logger.info(indent+"Deleting "+entity.getName());
         getCurrentSession().delete(entity);
     }
     

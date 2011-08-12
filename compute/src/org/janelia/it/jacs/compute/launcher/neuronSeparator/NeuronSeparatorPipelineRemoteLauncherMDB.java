@@ -39,11 +39,11 @@ import javax.ejb.MessageDriven;
  *
  * @author Tareq Nabeel
  */
-@MessageDriven(name = "NeuronSeparatorPipelineLauncherMDB", activationConfig = {
+@MessageDriven(name = "NeuronSeparatorPipelineRemoteLauncherMDB", activationConfig = {
         @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
         @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/neuronSeparatorPipelineLauncher"),
+        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/neuronSeparatorPipelineRemoteLauncher"),
         @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "20"),
 //    @ActivationConfigProperty(propertyName="MaxMessages", propertyValue="30"),
         @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
@@ -51,6 +51,6 @@ import javax.ejb.MessageDriven;
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
 @PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 20, timeout = 10000)
-public class NeuronSeparatorPipelineLauncherMDB extends SeriesLauncherMDB {
+public class NeuronSeparatorPipelineRemoteLauncherMDB extends SeriesLauncherMDB {
 
 }

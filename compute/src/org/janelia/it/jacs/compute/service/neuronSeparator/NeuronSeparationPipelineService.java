@@ -9,7 +9,6 @@ import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
-import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.user_data.neuronSeparator.NeuronSeparatorResultNode;
 import org.janelia.it.jacs.model.vo.ParameterException;
@@ -50,22 +49,10 @@ public class NeuronSeparationPipelineService extends SubmitDrmaaJobService {
 
         logger.info("Starting NeuronSeparationPipelineService with taskId=" + task.getObjectId() + " resultNodeId=" + parentNode.getObjectId() + " resultDir=" + parentNode.getDirectoryPath());
 
-        String fileList = NeuronSeparatorHelper.getFileListString(task);
-        String[] lsmFilePaths = NeuronSeparatorHelper.getLSMFilePaths(task);
-    	String lsmFilePathsFilename = parentNode.getDirectoryPath()+"/"+"lsmFilePaths.txt";
-        
         StringBuffer script = new StringBuffer();
         script.append("set -o errexit\n");
-        script.append("cd "+parentNode.getDirectoryPath()+";export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64:" +
-                SystemConfigurationProperties.getString("Executables.ModuleBase")+"singleNeuronTools/genelib/mylib;"+
-                SystemConfigurationProperties.getString("Executables.ModuleBase")+"singleNeuronTools/genelib/mylib/sampsepNA -nr -pj "+
-                parentNode.getDirectoryPath()+" neuronSeparatorPipeline "+ NeuronSeparatorHelper.addQuotesToCsvString(fileList) + " >neuSepOutput.txt 2>&1").append("\n");
-        script.append("echo '"+lsmFilePaths[0]+"' > "+lsmFilePathsFilename).append("\n");
-        script.append("echo '"+lsmFilePaths[1]+"' >> "+lsmFilePathsFilename).append("\n");
-        script.append(NeuronSeparatorHelper.getScriptToCreateLsmMetadataFile(parentNode, lsmFilePaths[0])).append("\n");
-        script.append(NeuronSeparatorHelper.getScriptToCreateLsmMetadataFile(parentNode, lsmFilePaths[1])).append("\n");
-
-        logger.info("NeuronSeparatorPipelineService script=\n" + script);
+        script.append(NeuronSeparatorHelper.getNeuronSeparationCommands(task, parentNode, "mylib", "\n"));
+        logger.info("NeuronSeparationCommands=\n" + script);
         
         writer.write(script.toString());
     }

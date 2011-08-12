@@ -4,14 +4,16 @@ import java.io.File;
 import java.util.Date;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
-import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
+import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
+import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.recruitment.CreateRecruitmentFileNodeException;
+import org.janelia.it.jacs.compute.util.FileUtils;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -19,15 +21,23 @@ import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.neuronSeparator.NeuronSeparatorResultNode;
+import org.janelia.it.jacs.shared.utils.SystemCall;
 
 /**
+ * Process the results of a Neuron Separation task and create the required entities, symbolic links, and other 
+ * auxiliary files.
+ * 
  * @author Todd Safford
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class NeuronSeparatorResultsService implements IService {
 
+    private static final String REMOTE_SERVER = SystemConfigurationProperties.getString("Remote.Work.Server.Mac");
+    
     private Logger logger;
     private NeuronSeparatorResultNode parentNode;
-    private AnnotationBeanRemote annotationBean;
+    private AnnotationBeanLocal annotationBean;
+    private ComputeBeanLocal computeBean;
     private Date createDate;
     private User user;
 
@@ -36,19 +46,44 @@ public class NeuronSeparatorResultsService implements IService {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             NeuronSeparatorPipelineTask task = (NeuronSeparatorPipelineTask) ProcessDataHelper.getTask(processData);
             parentNode = (NeuronSeparatorResultNode) ProcessDataHelper.getResultFileNode(processData);
-            annotationBean = EJBFactory.getRemoteAnnotationBean();
-            ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
+            annotationBean = EJBFactory.getLocalAnnotationBean();
+            computeBean = EJBFactory.getLocalComputeBean();
             createDate = new Date();
             user = computeBean.getUserByName(task.getOwner());
+            String oldSampleEntityId = task.getParameter(NeuronSeparatorPipelineTask.PARAM_oldSampleEntityId);
             String sampleEntityId = task.getParameter(NeuronSeparatorPipelineTask.PARAM_outputSampleEntityId);
+            String symbolicLinkName = task.getParameter(NeuronSeparatorPipelineTask.PARAM_symbolLinkName);
             Entity sample = annotationBean.getEntityById(sampleEntityId.trim());
 
             if (sample == null) {
                 throw new ServiceException("Must provide Sample entity.");
             }
+
+        	logger.info("Processing results for sample "+sample.getName());
+        	
+            // Create the other files that are necessary
+
+            String cmdLine = NeuronSeparatorHelper.getPostNeuronSeparationCommands(task, parentNode, " ; ");
+
+            StringBuffer stdout = new StringBuffer();
+            StringBuffer stderr = new StringBuffer();
+            SystemCall call = new SystemCall(logger, stdout, stderr);
+            int exitCode = call.emulateCommandLine(cmdLine.toString(), true, 60);
+            
+        	File outFile = new File(parentNode.getDirectoryPath(), "stdout");
+        	if (stdout.length() > 0) FileUtils.writeStringToFile(outFile, stdout.toString(), true);
+
+            File errFile = new File(parentNode.getDirectoryPath(), "stderr");
+            if (stderr.length() > 0) FileUtils.writeStringToFile(errFile, stderr.toString(), true);
+            
+            if (0!=exitCode) {
+                File exitCodeFile = new File(parentNode.getDirectoryPath(), "neuSepExitCode.txt");
+                FileUtils.writeStringToFile(exitCodeFile, ""+exitCode);
+            	throw new ServiceException("NeuronSeparatorResultsService failed with exitCode "+exitCode+" for resultDir="+parentNode.getDirectoryPath());
+            }
             
             // Create the result entity and populate with the output files
-            
+        	
             Entity resultEntity = createResultEntity();
             addToParent(sample, resultEntity, 1);
 
@@ -84,30 +119,81 @@ public class NeuronSeparatorResultsService implements IService {
 
                     addResultItem(resultEntity, tif2D, resultFile, index);
                 }
-                else if (filename.equals("neuronSeparatorPipeline.neu")) {
-                    // ignore
-                }
-                else if (filename.endsWith(".metadata")) {
-                    // ignore metadata files
-                }
-                else if (filename.endsWith(".txt")) {
-                    // ignore text files
-                }
-                else if (filename.endsWith(".oos") || filename.endsWith(".log")) {
-                    // ignore log files
-                }
                 else {
-                    logger.warn("Unrecognized result file: "+resultFile.getAbsolutePath());
+                    // ignore other files
                 }
             }
+
+            File symbolicLink = new File(symbolicLinkName);
             
+            // Create the user-space symbolic link to the result directory
+            if (symbolicLink.exists()) {
+            	try {
+            		symbolicLink.delete();	
+                	logger.info("  Deleted existing link to result directory: "+symbolicLink.getAbsolutePath());
+            	}
+            	catch (Exception e) {
+                	logger.info("  Could not delete existing link to result directory: "+symbolicLink.getAbsolutePath(),e);
+            	}
+            }
+
+        	String target = NeuronSeparatorHelper.covertPathsToVolumeMounted(resultDir.getAbsolutePath());
+        	String link = NeuronSeparatorHelper.covertPathsToRemoteServer(symbolicLink.getAbsolutePath());
+            try {
+            	createLink(target, link);	
+            	logger.info("  Created symbolic link for results at: "+symbolicLink.getAbsolutePath());
+            }
+            catch (Exception e) {
+            	logger.info("  Could not create symbolic link for results at "+symbolicLink.getAbsolutePath()
+            			+" because: "+e.getMessage());
+            }
+            
+            // TODO: migrate the annotations from the old sample (oldSampleEntityId) to the new sample (sampleEntityId)
+
+
+        	// Delete the old sample 
+            // TODO: refactor in the future to reuse the old sample and just add a new result entity below it, without 
+            // deleting
+            if (oldSampleEntityId != null) {
+            	logger.info("  Deleting sample entity tree");
+            	EJBFactory.getLocalAnnotationBean().deleteEntityTree(user.getUserLogin(), new Long(oldSampleEntityId));
+            }
+        	
         }
         catch (Exception e) {
             throw new CreateRecruitmentFileNodeException(e);
         }
     }
-
-    private Entity createResultEntity() throws Exception {
+    
+    /**
+     * Create a symbolic link using the REMOTE_SERVER. This is useful for creating OS X symbolic links which 
+     * function as aliases.
+     * @param target
+     * @param symbolicLink
+     * @throws Exception
+     */
+    private void createLink(String target, String symbolicLink) throws Exception {
+    	if (REMOTE_SERVER == null || "".equals(REMOTE_SERVER)) {
+    		throw new Exception("Cannot create symbolic link: no REMOTE_SERVER defined in system configuration.");
+    	}
+    	String escapedTarget = escapeFilepathForCommandLine(target);
+    	String escapedSymbolicLink = escapeFilepathForCommandLine(symbolicLink);
+    	String cmdLine = "ssh "+REMOTE_SERVER+" ln -s "+escapedTarget+ " "+escapedSymbolicLink;
+        SystemCall call = new SystemCall(logger);
+        int exitCode = call.emulateCommandLine(cmdLine.toString(), true, 30);
+        if (0!=exitCode) {
+        	throw new Exception("Could not create symlink");
+        }
+    }
+    
+    /**
+     * Escapes special characters in a file path for use in a shell command.
+     */
+    private String escapeFilepathForCommandLine(String path) {
+    	return path.replaceAll("(\\W)", "\\\\$1").replaceAll("\\\\/", "/");
+    }
+    
+	private Entity createResultEntity() throws Exception {
         Entity resultEntity = new Entity();
         resultEntity.setUser(user);
         resultEntity.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT));
@@ -143,7 +229,7 @@ public class NeuronSeparatorResultsService implements IService {
     private void addToParent(Entity parent, Entity entity, Integer index) throws Exception {
         EntityData ed = parent.addChildEntity(entity);
         ed.setOrderIndex(index);
-        EJBFactory.getLocalComputeBean().genericSave(ed);
+        computeBean.genericSave(ed);
         logger.info("Added " + entity.getEntityType().getName() + "#" + entity.getId() + " as child of " + parent.getEntityType().getName() + "#" + entity.getId());
     }
 

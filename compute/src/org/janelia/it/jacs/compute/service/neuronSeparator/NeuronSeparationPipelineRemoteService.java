@@ -10,15 +10,19 @@ import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.util.FileUtils;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.user_data.neuronSeparator.NeuronSeparatorResultNode;
 import org.janelia.it.jacs.shared.utils.SystemCall;
 
-public class NeuronSeparationPipelineLocalService implements IService {
+public class NeuronSeparationPipelineRemoteService implements IService {
 
     private static final int TIMEOUT_SECONDS = 7200;  // 2 hours
 
+    private static final String REMOTE_SERVER = SystemConfigurationProperties.getString("Remote.Work.Server.Mac");
+    private static final String REMOTE_SCRIPT = "runsep.mac.sh";
+    
     private Logger logger;
     private NeuronSeparatorPipelineTask task;
     private NeuronSeparatorResultNode parentNode;
@@ -30,24 +34,29 @@ public class NeuronSeparationPipelineLocalService implements IService {
             task = (NeuronSeparatorPipelineTask) ProcessDataHelper.getTask(processData);
             parentNode = (NeuronSeparatorResultNode) ProcessDataHelper.getResultFileNode(processData);
 
-            logger.info("Starting NeuronSeparationPipelineLocalService with taskId="+task.getObjectId()+" resultNodeId="+parentNode.getObjectId()+" resultDir="+parentNode.getDirectoryPath());
+            logger.info("Starting NeuronSeparationPipelineRemoteService with taskId="+task.getObjectId()+" resultNodeId="+parentNode.getObjectId()+" resultDir="+parentNode.getDirectoryPath());
 
             NeuronSeparatorHelper.deleteExistingNeuronSeparationResult(task);
             
-            String cmdLine = NeuronSeparatorHelper.getNeuronSeparationCommands(task, parentNode, "mylib.fedora", " ; ");
-
+            String script = NeuronSeparatorHelper.getNeuronSeparationCommands(task, parentNode, "mylib.mac", " ; ");
+        	File scriptFile = new File(parentNode.getDirectoryPath(), REMOTE_SCRIPT);
+        	FileUtils.writeStringToFile(scriptFile, NeuronSeparatorHelper.covertPathsToRemoteServer(script));
+            
+            String cmdLine = "ssh "+REMOTE_SERVER+" sh "+NeuronSeparatorHelper.covertPathsToRemoteServer(scriptFile.getAbsolutePath());
+            
             StringBuffer stdout = new StringBuffer();
             StringBuffer stderr = new StringBuffer();
             SystemCall call = new SystemCall(logger, stdout, stderr);
             int exitCode = call.emulateCommandLine(cmdLine.toString(), true, TIMEOUT_SECONDS);
 
         	File outFile = new File(parentNode.getDirectoryPath(), "stdout");
-        	FileUtils.writeStringToFile(outFile, stdout.toString());
+        	if (stdout.length() > 0) FileUtils.writeStringToFile(outFile, stdout.toString());
+
+            File errFile = new File(parentNode.getDirectoryPath(), "stderr");
+            if (stderr.length() > 0) FileUtils.writeStringToFile(errFile, stderr.toString());
             
             if (0!=exitCode) {
-                File errFile = new File(parentNode.getDirectoryPath(), "stderr");
-                FileUtils.writeStringToFile(errFile, stderr.toString());
-            	throw new ServiceException("NeuronSeparationPipelineLocalService failed with exitCode "+exitCode+" for resultDir="+parentNode.getDirectoryPath());
+            	throw new ServiceException("NeuronSeparationPipelineRemoteService failed with exitCode "+exitCode+" for resultDir="+parentNode.getDirectoryPath());
             }
         }
         catch (Exception e) {
@@ -63,5 +72,6 @@ public class NeuronSeparationPipelineLocalService implements IService {
             throw new ServiceException("Error running the Neuron Separation NeuronSeparationPipelineService:" + e.getMessage(), e);
         }
     }
+    
 
 }
