@@ -19,7 +19,6 @@ import org.janelia.it.jacs.shared.utils.SystemCall;
 public class NeuronSeparationPipelineRemoteService implements IService {
 
     private static final int TIMEOUT_SECONDS = 7200;  // 2 hours
-
     private static final String REMOTE_SERVER = SystemConfigurationProperties.getString("Remote.Work.Server.Mac");
     private static final String REMOTE_SCRIPT = "runsep.mac.sh";
     
@@ -35,8 +34,6 @@ public class NeuronSeparationPipelineRemoteService implements IService {
             parentNode = (NeuronSeparatorResultNode) ProcessDataHelper.getResultFileNode(processData);
 
             logger.info("Starting NeuronSeparationPipelineRemoteService with taskId="+task.getObjectId()+" resultNodeId="+parentNode.getObjectId()+" resultDir="+parentNode.getDirectoryPath());
-
-            NeuronSeparatorHelper.deleteExistingNeuronSeparationResult(task);
             
             String script = NeuronSeparatorHelper.getNeuronSeparationCommands(task, parentNode, "mylib.mac", " ; ");
         	File scriptFile = new File(parentNode.getDirectoryPath(), REMOTE_SCRIPT);
@@ -46,7 +43,7 @@ public class NeuronSeparationPipelineRemoteService implements IService {
             
             StringBuffer stdout = new StringBuffer();
             StringBuffer stderr = new StringBuffer();
-            SystemCall call = new SystemCall(logger, stdout, stderr);
+            SystemCall call = new SystemCall(stdout, stderr);
             int exitCode = call.emulateCommandLine(cmdLine.toString(), true, TIMEOUT_SECONDS);
 
         	File outFile = new File(parentNode.getDirectoryPath(), "stdout");
@@ -56,6 +53,8 @@ public class NeuronSeparationPipelineRemoteService implements IService {
             if (stderr.length() > 0) FileUtils.writeStringToFile(errFile, stderr.toString());
             
             if (0!=exitCode) {
+                File exitCodeFile = new File(parentNode.getDirectoryPath(), "neuSepExitCode.txt");
+                FileUtils.writeStringToFile(exitCodeFile, ""+exitCode);
             	throw new ServiceException("NeuronSeparationPipelineRemoteService failed with exitCode "+exitCode+" for resultDir="+parentNode.getDirectoryPath());
             }
         }
@@ -72,6 +71,5 @@ public class NeuronSeparationPipelineRemoteService implements IService {
             throw new ServiceException("Error running the Neuron Separation NeuronSeparationPipelineService:" + e.getMessage(), e);
         }
     }
-    
 
 }

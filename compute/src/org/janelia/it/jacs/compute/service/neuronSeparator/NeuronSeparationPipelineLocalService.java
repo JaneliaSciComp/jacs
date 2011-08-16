@@ -18,6 +18,7 @@ import org.janelia.it.jacs.shared.utils.SystemCall;
 public class NeuronSeparationPipelineLocalService implements IService {
 
     private static final int TIMEOUT_SECONDS = 7200;  // 2 hours
+    private static final String REMOTE_SCRIPT = "runsep.fedora.sh";
 
     private Logger logger;
     private NeuronSeparatorPipelineTask task;
@@ -32,21 +33,26 @@ public class NeuronSeparationPipelineLocalService implements IService {
 
             logger.info("Starting NeuronSeparationPipelineLocalService with taskId="+task.getObjectId()+" resultNodeId="+parentNode.getObjectId()+" resultDir="+parentNode.getDirectoryPath());
 
-            NeuronSeparatorHelper.deleteExistingNeuronSeparationResult(task);
+            String script = NeuronSeparatorHelper.getNeuronSeparationCommands(task, parentNode, "mylib.fedora", " ; ");
+        	File scriptFile = new File(parentNode.getDirectoryPath(), REMOTE_SCRIPT);
+        	FileUtils.writeStringToFile(scriptFile, NeuronSeparatorHelper.covertPathsToRemoteServer(script));
             
-            String cmdLine = NeuronSeparatorHelper.getNeuronSeparationCommands(task, parentNode, "mylib.fedora", " ; ");
-
+        	String cmdLine = script;
+        	
             StringBuffer stdout = new StringBuffer();
             StringBuffer stderr = new StringBuffer();
-            SystemCall call = new SystemCall(logger, stdout, stderr);
+            SystemCall call = new SystemCall(stdout, stderr);
             int exitCode = call.emulateCommandLine(cmdLine.toString(), true, TIMEOUT_SECONDS);
 
         	File outFile = new File(parentNode.getDirectoryPath(), "stdout");
-        	FileUtils.writeStringToFile(outFile, stdout.toString());
+        	if (stdout.length() > 0) FileUtils.writeStringToFile(outFile, stdout.toString());
+
+            File errFile = new File(parentNode.getDirectoryPath(), "stderr");
+            if (stderr.length() > 0) FileUtils.writeStringToFile(errFile, stderr.toString());
             
             if (0!=exitCode) {
-                File errFile = new File(parentNode.getDirectoryPath(), "stderr");
-                FileUtils.writeStringToFile(errFile, stderr.toString());
+                File exitCodeFile = new File(parentNode.getDirectoryPath(), "neuSepExitCode.txt");
+                FileUtils.writeStringToFile(exitCodeFile, ""+exitCode);
             	throw new ServiceException("NeuronSeparationPipelineLocalService failed with exitCode "+exitCode+" for resultDir="+parentNode.getDirectoryPath());
             }
         }

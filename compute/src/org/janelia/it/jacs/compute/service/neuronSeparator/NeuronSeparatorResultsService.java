@@ -33,6 +33,7 @@ import org.janelia.it.jacs.shared.utils.SystemCall;
 public class NeuronSeparatorResultsService implements IService {
 
     private static final String REMOTE_SERVER = SystemConfigurationProperties.getString("Remote.Work.Server.Mac");
+    private static final String REMOTE_LINKING_SCRIPT = "symlink.mac.sh";
     
     private Logger logger;
     private NeuronSeparatorResultNode parentNode;
@@ -50,7 +51,6 @@ public class NeuronSeparatorResultsService implements IService {
             computeBean = EJBFactory.getLocalComputeBean();
             createDate = new Date();
             user = computeBean.getUserByName(task.getOwner());
-            String oldSampleEntityId = task.getParameter(NeuronSeparatorPipelineTask.PARAM_oldSampleEntityId);
             String sampleEntityId = task.getParameter(NeuronSeparatorPipelineTask.PARAM_outputSampleEntityId);
             String symbolicLinkName = task.getParameter(NeuronSeparatorPipelineTask.PARAM_symbolLinkName);
             Entity sample = annotationBean.getEntityById(sampleEntityId.trim());
@@ -77,8 +77,6 @@ public class NeuronSeparatorResultsService implements IService {
             if (stderr.length() > 0) FileUtils.writeStringToFile(errFile, stderr.toString(), true);
             
             if (0!=exitCode) {
-                File exitCodeFile = new File(parentNode.getDirectoryPath(), "neuSepExitCode.txt");
-                FileUtils.writeStringToFile(exitCodeFile, ""+exitCode);
             	throw new ServiceException("NeuronSeparatorResultsService failed with exitCode "+exitCode+" for resultDir="+parentNode.getDirectoryPath());
             }
             
@@ -148,17 +146,8 @@ public class NeuronSeparatorResultsService implements IService {
             			+" because: "+e.getMessage());
             }
             
-            // TODO: migrate the annotations from the old sample (oldSampleEntityId) to the new sample (sampleEntityId)
+            // TODO: migrate the annotations from the previous result
 
-
-        	// Delete the old sample 
-            // TODO: refactor in the future to reuse the old sample and just add a new result entity below it, without 
-            // deleting
-            if (oldSampleEntityId != null) {
-            	logger.info("  Deleting sample entity tree");
-            	EJBFactory.getLocalAnnotationBean().deleteEntityTree(user.getUserLogin(), new Long(oldSampleEntityId));
-            }
-        	
         }
         catch (Exception e) {
             throw new CreateRecruitmentFileNodeException(e);
@@ -176,21 +165,35 @@ public class NeuronSeparatorResultsService implements IService {
     	if (REMOTE_SERVER == null || "".equals(REMOTE_SERVER)) {
     		throw new Exception("Cannot create symbolic link: no REMOTE_SERVER defined in system configuration.");
     	}
-    	String escapedTarget = escapeFilepathForCommandLine(target);
-    	String escapedSymbolicLink = escapeFilepathForCommandLine(symbolicLink);
-    	String cmdLine = "ssh "+REMOTE_SERVER+" ln -s "+escapedTarget+ " "+escapedSymbolicLink;
-        SystemCall call = new SystemCall(logger);
-        int exitCode = call.emulateCommandLine(cmdLine.toString(), true, 30);
+    	
+    	String script = "ln -s "+escapeFilepathForCommandLine(target)+ " "+escapeFilepathForCommandLine(symbolicLink);
+
+    	File scriptFile = new File(parentNode.getDirectoryPath(), REMOTE_LINKING_SCRIPT);
+    	FileUtils.writeStringToFile(scriptFile, script);
+
+        String cmdLine = "ssh "+REMOTE_SERVER+" sh "+NeuronSeparatorHelper.covertPathsToRemoteServer(scriptFile.getAbsolutePath());
+        
+        StringBuffer stdout = new StringBuffer();
+        StringBuffer stderr = new StringBuffer();
+        SystemCall call = new SystemCall(logger, stdout, stderr);
+        int exitCode = call.emulateCommandLine(cmdLine, true, 20);
+        
+    	File outFile = new File(parentNode.getDirectoryPath(), "stdout");
+    	if (stdout.length() > 0) FileUtils.writeStringToFile(outFile, stdout.toString(), true);
+
+        File errFile = new File(parentNode.getDirectoryPath(), "stderr");
+        if (stderr.length() > 0) FileUtils.writeStringToFile(errFile, stderr.toString(), true);
+        
         if (0!=exitCode) {
         	throw new Exception("Could not create symlink");
         }
     }
     
     /**
-     * Escapes special characters in a file path for use in a shell command.
+     * Escapes special characters in a file path for use in a shell command. Does not escape /'s or $'s. 
      */
     private String escapeFilepathForCommandLine(String path) {
-    	return path.replaceAll("(\\W)", "\\\\$1").replaceAll("\\\\/", "/");
+    	return path.replaceAll("(\\W)", "\\\\$1").replaceAll("\\\\/", "/").replaceAll("\\\\\\$", "\\$");
     }
     
 	private Entity createResultEntity() throws Exception {

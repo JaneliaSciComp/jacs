@@ -41,59 +41,58 @@ public class NeuronSeparatorHelper {
 		 replaceAll(flylightPathLinux, flylightPathMac);
     }
     
-    public static void deleteExistingNeuronSeparationResult(NeuronSeparatorPipelineTask task) throws Exception {
-    	
-    	// Get task parameters
-        String oldSampleEntityId = task.getParameter(NeuronSeparatorPipelineTask.PARAM_oldSampleEntityId);
-        String symbolicLinkName = task.getParameter(NeuronSeparatorPipelineTask.PARAM_symbolLinkName);
-
-        if (oldSampleEntityId == null || "".equals(oldSampleEntityId)) {
-        	return;
-        }
-        
-    	logger.warn("Deleting existing separation result for sample "+oldSampleEntityId);
-    	
-    	if (symbolicLinkName != null) {
-            // Delete the symbolic link to the generated data
-        	File symbolicLink = new File(symbolicLinkName);
-            if (symbolicLink.exists()) {
-            	logger.info("  Deleting existing symlink at "+symbolicLink);
-            	symbolicLink.delete();	
-            }
-            else {
-            	logger.warn("  Existing sample has no symbolic link");
-            }
-    	}
-        
-        // Delete the generated data
-        Entity oldSample = EJBFactory.getLocalAnnotationBean().getEntityTree(new Long(oldSampleEntityId.trim()));
-    	for(EntityData sed : oldSample.getEntityData()) {
-			Entity resultEntity = sed.getChildEntity();
-    		if (resultEntity == null) continue;
-    		if (!EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT.equals(resultEntity.getEntityType().getName())) continue;
-    		
-        	File sampleDir = new File(resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-            if (sampleDir.exists()) {
-            	logger.info("  Deleting existing data at "+sampleDir.getAbsolutePath());
-            	FileUtils.deleteDirectory(sampleDir);
-            }
-            else {
-            	logger.warn("  Existing sample has no data to refresh");
-            }
-    	}
-    }
+//    public static void deleteExistingNeuronSeparationResult(NeuronSeparatorPipelineTask task) throws Exception {
+//    	
+//    	// Get task parameters
+//        String oldSampleEntityId = task.getParameter(NeuronSeparatorPipelineTask.PARAM_oldSampleEntityId);
+//        String symbolicLinkName = task.getParameter(NeuronSeparatorPipelineTask.PARAM_symbolLinkName);
+//
+//        if (oldSampleEntityId == null || "".equals(oldSampleEntityId)) {
+//        	return;
+//        }
+//        
+//    	logger.warn("Deleting existing separation result for sample "+oldSampleEntityId);
+//    	
+//    	if (symbolicLinkName != null) {
+//            // Delete the symbolic link to the generated data
+//        	File symbolicLink = new File(symbolicLinkName);
+//            if (symbolicLink.exists()) {
+//            	logger.info("  Deleting existing symlink at "+symbolicLink);
+//            	symbolicLink.delete();	
+//            }
+//            else {
+//            	logger.warn("  Existing sample has no symbolic link");
+//            }
+//    	}
+//        
+//        // Delete the generated data
+//        Entity oldSample = EJBFactory.getLocalAnnotationBean().getEntityTree(new Long(oldSampleEntityId.trim()));
+//    	for(EntityData sed : oldSample.getEntityData()) {
+//			Entity resultEntity = sed.getChildEntity();
+//    		if (resultEntity == null) continue;
+//    		if (!EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT.equals(resultEntity.getEntityType().getName())) continue;
+//    		
+//        	File sampleDir = new File(resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+//            if (sampleDir.exists()) {
+//            	logger.info("  Deleting existing data at "+sampleDir.getAbsolutePath());
+//            	FileUtils.deleteDirectory(sampleDir);
+//            }
+//            else {
+//            	logger.warn("  Existing sample has no data to refresh");
+//            }
+//    	}
+//    }
     
 	public static String getNeuronSeparationCommands(NeuronSeparatorPipelineTask task, 
 			NeuronSeparatorResultNode parentNode, String mylibDir, String commandDelim) throws ServiceException {
 
 		StringBuffer cmdLine = new StringBuffer();
-
         String fileList = NeuronSeparatorHelper.getFileListString(task);
     	
 		cmdLine.append("cd "+parentNode.getDirectoryPath()+";export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64:" +
                 SystemConfigurationProperties.getString("Executables.ModuleBase")+"singleNeuronTools/genelib/"+mylibDir+";"+
                 SystemConfigurationProperties.getString("Executables.ModuleBase")+"singleNeuronTools/genelib/"+mylibDir+"/sampsepNA -nr -pj "+
-                parentNode.getDirectoryPath()+" neuronSeparatorPipeline "+ NeuronSeparatorHelper.addQuotesToCsvString(fileList) + " >neuSepOutput.txt 2>&1").append(commandDelim);
+                parentNode.getDirectoryPath()+" neuronSeparatorPipeline "+ NeuronSeparatorHelper.addQuotesToCsvString(fileList)).append(commandDelim);
         
         return cmdLine.toString();
 	}

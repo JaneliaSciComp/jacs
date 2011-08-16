@@ -88,6 +88,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
                 }
                 else if (paramName.equals(LINKING_FOLDER)) {
                 	linkingDir = (String)entry.getValue();
+                	linkingDir = linkingDir.replaceAll("%USER%", user.getUserLogin());
                 }
             }
 
@@ -256,24 +257,26 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
 
         	logger.info("Processing LSM Pair: "+lsmPair.name);
         	
-        	Entity oldSample = findExistingSample(folder, lsmPair);
+        	Entity sample = findExistingSample(folder, lsmPair);
             String linkName = getSymbolicLinkName(lsmPair.lsmFile1);
         	File symbolicLink = new File(linkingDir, linkName);
             
         	try {
-        		if (oldSample != null && !refresh) {
+        		if (sample == null) {
+    	        	// Create the sample
+    	            sample = createSample(lsmPair, symbolicLink);
+    	            addToParent(folder, sample, i++);
+        		}
+        		else if (!refresh) {
                    	// We're only doing an incremental update, so skip this pair since it already has results
-                	logger.info("  Existing sample exists (id="+oldSample.getId()+"), skipping.");
+                	logger.info("  Existing sample exists (id="+sample.getId()+"), skipping.");
                 	continue;
 	        	}
-	        	
-	        	// Create the sample
-	        	Entity sample = createSample(lsmPair, symbolicLink);
-	            addToParent(folder, sample, i++);
-	        	launchColorSeparationPipeline(oldSample, sample, lsmPair, symbolicLink);
+        		
+	        	launchColorSeparationPipeline(sample, lsmPair, symbolicLink);
         	}
         	catch (ComputeException e) {
-        		logger.warn("Could not delete existing sample for regeneration, id="+oldSample.getId(),e);
+        		logger.warn("Could not delete existing sample for regeneration, id="+sample.getId(),e);
         	}
         	
         }
@@ -288,7 +291,8 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
     }
     
     /**
-     * Find and return the child Sample entity which contains the given LSM Pair. 
+     * Find and return the child Sample entity which contains the given LSM Pair. Also populates the LSM entities in the 
+     * given lsmPair.
      */
     private Entity findExistingSample(Entity folder, LsmPair lsmPair) {
 
@@ -311,9 +315,11 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
     	    		if (!EntityConstants.TYPE_LSM_STACK.equals(lsmStack.getEntityType().getName())) continue;
     	    		
 	    			if (lsmPair.lsmFile1.getName().equals(lsmStack.getName())) {
+	    				lsmPair.lsmEntity1 = lsmStack;
 	    				found1 = true;
 	    			}
 	    			else if (lsmPair.lsmFile2.getName().equals(lsmStack.getName())) {
+	    				lsmPair.lsmEntity2 = lsmStack;
 	    				found2 = true;
 	    			}
     	    	}
@@ -466,7 +472,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         return lsmStack;
     }
     
-    private void launchColorSeparationPipeline(Entity oldSample, Entity sample, LsmPair lsmPair, File symbolicLink) throws Exception {
+    private void launchColorSeparationPipeline(Entity sample, LsmPair lsmPair, File symbolicLink) throws Exception {
         if (runNeuronSeperator) {
 
         	NeuronSeparatorPipelineTask neuTask = new NeuronSeparatorPipelineTask(new HashSet<Node>(), 
@@ -475,15 +481,10 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmEntityIdList, lsmEntityIds);
             neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_symbolLinkName, symbolicLink.getAbsolutePath());
             neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_outputSampleEntityId, sample.getId().toString());
-            if (oldSample != null) {
-            	neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_oldSampleEntityId, oldSample.getId().toString());
-            }
             computeBean.saveOrUpdateTask(neuTask);
             
             switch(mode) {
             case GRID:
-            	// TODO: this deletion should happen when the task is ready to run, not when its queued
-                NeuronSeparatorHelper.deleteExistingNeuronSeparationResult(neuTask);
 	            neuTask.setJobName("Grid Neuron Separator for MultiColorFlipOutFileDiscovery, task id="+neuTask.getObjectId());
 	            computeBean.submitJob("NeuronSeparationPipeline", neuTask.getObjectId());
             	break;

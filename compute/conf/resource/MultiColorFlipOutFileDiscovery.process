@@ -8,7 +8,7 @@
         <operation name="Discovery Files for MultiColor FlipOut Project" processor="org.janelia.it.jacs.compute.service.fileDiscovery.MultiColorFlipOutFileDiscoveryService">
             <input name="TOP_LEVEL_FOLDER_NAME" value="FlyLight Single Neuron Pilot Data"/>
             <input name="DIRECTORY_1" value="/groups/flylight/flylight/SingleNeuronPilotData"/>
-            <input name="LINKING_FOLDER" value="/groups/scicomp/jacsData/flylight/SingleNeuronPilotData"/>
+            <input name="LINKING_FOLDER" value="/groups/scicomp/jacsData/flylight/%USER%/SingleNeuronPilotData"/>
         </operation>
     </sequence>
 </process>
