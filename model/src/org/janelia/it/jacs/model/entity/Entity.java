@@ -139,6 +139,9 @@ public class Entity  implements java.io.Serializable, IsSerializable {
             tag.setParentEntity(this);
             tag.setEntityAttribute(attribute);
             tag.setUser(user);
+            Date createDate = new Date();
+            tag.setCreationDate(createDate);
+            tag.setUpdatedDate(createDate);
             tag.setValue(attribute.getName());
             data.add(tag);
         }
@@ -254,10 +257,19 @@ public class Entity  implements java.io.Serializable, IsSerializable {
 		return matchingData;
 	}
 	
+	public Integer getMaxOrderIndex() {
+		int max = 0;
+		for(EntityData ed : entityData) {
+			if (ed.getOrderIndex() > max) {
+				max = ed.getOrderIndex();
+			}
+		}
+		return max;
+	}
+	
     public List<EntityData> getOrderedEntityData() {
     	List<EntityData> orderedData = new ArrayList<EntityData>(getEntityData());
     	Collections.sort(orderedData, new Comparator<EntityData>() {
-
 			@Override
 			public int compare(EntityData o1, EntityData o2) {
 				if (o1.getOrderIndex() == null) {

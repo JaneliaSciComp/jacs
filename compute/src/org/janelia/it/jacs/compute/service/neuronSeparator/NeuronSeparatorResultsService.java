@@ -83,7 +83,8 @@ public class NeuronSeparatorResultsService implements IService {
             // Create the result entity and populate with the output files
         	
             Entity resultEntity = createResultEntity();
-            addToParent(sample, resultEntity, 1);
+            
+            addToParent(sample, resultEntity, sample.getMaxOrderIndex()+1);
 
             EntityType tif2D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_2D);
             EntityType tif3D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_3D);
