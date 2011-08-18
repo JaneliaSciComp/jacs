@@ -260,7 +260,7 @@ public class Entity  implements java.io.Serializable, IsSerializable {
 	public Integer getMaxOrderIndex() {
 		int max = 0;
 		for(EntityData ed : entityData) {
-			if (ed.getOrderIndex() > max) {
+			if (ed.getOrderIndex() != null && ed.getOrderIndex() > max) {
 				max = ed.getOrderIndex();
 			}
 		}
