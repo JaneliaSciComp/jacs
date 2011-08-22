@@ -122,7 +122,7 @@
         <delete file="${build.jars.dir}/${grid.jar.name}" />
         <!-- unjar dependencies -->
         <mkdir dir="${build.unzipped.dir}" />
-        <unjar src="${basedir}/lib/lucene-core-2.3.1.jar" dest="${build.unzipped.dir}" overwrite="true"/>
+        <unjar src="${common.dir}/Lucene-2.3.1/lucene-core-2.3.1.jar" dest="${build.unzipped.dir}" overwrite="true"/>
         <unjar src="${common.dir}/Spring/log4j-1.2.14.jar" dest="${build.unzipped.dir}" overwrite="true"/>
         <unjar src="${common.dir}/GWT/gwt-user.jar" dest="${build.unzipped.dir}" overwrite="true"/>
         <unjar src="${common.dir}/JAXB-2.1.5/jaxb-api.jar" dest="${build.unzipped.dir}" overwrite="true"/>

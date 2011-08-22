@@ -306,7 +306,7 @@
         <!-- Add jars (not in ${lib.dir}) required for compiling src -->
 		<path id="compile.classpath.additional">
 			<pathelement location="${model.module}/build/jars/jacs-model.jar"/>
-            <pathelement location="${shared.module}/lib/lucene-core-2.3.1.jar"/>
+            <pathelement location="${common.dir}/Lucene-2.3.1/lucene-core-2.3.1.jar"/>
 			<pathelement location="${common.module}/build/jars/jacs-shared.jar"/>
             <fileset dir="${basedir}/../common" includes="**/*.jar"/>
         </path>
