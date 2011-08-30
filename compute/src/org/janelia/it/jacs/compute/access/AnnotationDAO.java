@@ -462,10 +462,10 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
-    public List<Entity> getUserEntitiesByName(String userLogin, long entityTypeId) throws DaoException {
+    public List<Entity> getUserEntitiesByTypeName(String userLogin, String entityTypeName) throws DaoException {
         try {
             StringBuffer hql = new StringBuffer("select clazz from Entity clazz");
-            hql.append(" where clazz.entityType.id=" + entityTypeId);
+            hql.append(" where clazz.entityType.name='").append(entityTypeName).append("'");
             if (null != userLogin) {
                 hql.append(" and clazz.user.userLogin='").append(userLogin).append("'");
             }
@@ -475,7 +475,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
         catch (Exception e) {
             // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
-            throw handleException(e, "getUserEntitiesByName");
+            throw handleException(e, "getUserEntitiesByTypeName");
         }
     }
 

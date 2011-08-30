@@ -33,11 +33,6 @@ public class EntityConstants {
     public static final String TYPE_TIF_3D                           = "Tif 3D Image";
     public static final String TYPE_TIF_3D_LABEL_MASK                = "Tif 3D Label Mask";
 
-    public static final long TYPE_ONTOLOGY_ROOT_ID = 1616533546980081843L;
-    public static final long TYPE_ONTOLOGY_ELEMENT_ID = 1616533546954916019L;
-    public static final long TYPE_FOLDER_ID = 1616540598318137523L;
-    public static final long TYPE_NEURON_SEPARATOR_PIPELINE_RESULT_ID = 1625678340947968179L;
-
     // Entity Data Attributes
     public static final String ATTRIBUTE_FILE_PATH                           = "File Path";
     public static final String ATTRIBUTE_ONTOLOGY_ELEMENT                    = "Ontology Element";
@@ -57,6 +52,4 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ANNOTATION_SESSION_ID               = "Annotation Session Id";
     public static final String ATTRIBUTE_INPUT                               = "ATTRIBUTE_INPUT";
     
-    public static final long ATTRIBUTE_ONTOLOGY_ELEMENT_ID = 1616533546833281203L;
-
 }

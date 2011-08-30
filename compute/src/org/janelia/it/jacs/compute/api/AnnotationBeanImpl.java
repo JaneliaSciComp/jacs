@@ -614,18 +614,6 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         return null;
     }
 
-    public java.util.List<Entity> getUserEntitiesByType(String userLogin, long entityTypeId) {
-        try {
-            List<Entity> returnList = _annotationDAO.getUserEntitiesByName(userLogin, entityTypeId);
-            _logger.debug("Entities returned:"+returnList.size());
-            return returnList;
-        }
-        catch (DaoException e) {
-            _logger.error("Error trying to get the entities of type "+entityTypeId+" for user "+userLogin);
-        }
-        return null;
-    }
-
     public List<EntityType> getEntityTypes() {
         try {
             List<EntityType> returnList = _annotationDAO.getAllEntityTypes();
@@ -638,10 +626,10 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         return null;
     }
 
-    public List<Entity> getCommonRootEntitiesByType(long entityTypeId) {
+    public List<Entity> getCommonRootEntitiesByTypeName(String entityTypeName) {
         try {
             List<Entity> returnList = new ArrayList<Entity>();
-            List<Entity> tmpList = _annotationDAO.getUserEntitiesByName(null, entityTypeId);
+            List<Entity> tmpList = _annotationDAO.getUserEntitiesByTypeName(null, entityTypeName);
             // todo This is a little brute-force and could probably have a better query
             for (Entity entity : tmpList) {
                 for (EntityData entityData : entity.getEntityData()) {
@@ -656,19 +644,19 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             return returnList;
         }
         catch (DaoException e) {
-            _logger.error("Error trying to get the entities of type "+entityTypeId);
+            _logger.error("Error trying to get the entities of type "+entityTypeName);
         }
         return null;
     }
 
-    public List<Entity> getEntitiesByType(long entityTypeId) {
+    public List<Entity> getEntitiesByTypeName(String entityTypeName) {
         try {
-            List<Entity> returnList = _annotationDAO.getUserEntitiesByName(null, entityTypeId);
+            List<Entity> returnList = _annotationDAO.getUserEntitiesByTypeName(null, entityTypeName);
             _logger.debug("Entities returned:"+returnList.size());
             return returnList;
         }
         catch (DaoException e) {
-            _logger.error("Error trying to get the entities of type "+entityTypeId);
+            _logger.error("Error trying to get the entities of type "+entityTypeName);
         }
         return null;
     }

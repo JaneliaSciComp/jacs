@@ -19,7 +19,6 @@ public interface AnnotationBeanRemote {
     public EntityData saveOrUpdateEntityData(EntityData newData) throws ComputeException;
     public EntityType getEntityTypeByName(String name);
 	public EntityAttribute getEntityAttributeByName(String name);
-    public List<Entity> getUserEntitiesByType(String userLogin, long entityTypeId);
     public Set<Entity> getEntitiesByName(String name);
     public Entity getEntityById(String targetId);
     public Entity getEntityTree(Long id);
@@ -33,8 +32,8 @@ public interface AnnotationBeanRemote {
     public Set<EntityData> getParentEntityDatas(long childEntityId);
     
     public List<EntityType> getEntityTypes();
-    public List<Entity> getEntitiesByType(long entityTypeId);
-    public List<Entity> getCommonRootEntitiesByType(long entityTypeId);
+    public List<Entity> getEntitiesByTypeName(String entityTypeName);
+    public List<Entity> getCommonRootEntitiesByTypeName(String entityTypeName);
 
     public void deleteAnnotation(String owner, String uniqueIdentifier, String tag);
     public void deleteAnnotationSession(String owner, String uniqueIdentifier);
