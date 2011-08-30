@@ -6,7 +6,6 @@ import org.hibernate.HibernateException;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.criterion.Expression;
-import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
 
@@ -79,36 +78,6 @@ public class AnnotationDAO extends ComputeBaseDAO {
         catch (Exception e) {
             throw new DaoException(e);
         }
-    }
-
-    public ArrayList<Annotation> getAnnotationsForUser(String owner) throws DaoException {
-        try {
-            Session session = getCurrentSession();
-            Criteria c = session.createCriteria(Annotation.class);
-            c.add(Expression.eq("owner", owner));
-            List l = c.list();
-            if (l == null || l.size() == 0) return new ArrayList<Annotation>();
-            return (ArrayList<Annotation>) l;
-        }
-        catch (HibernateException e) {
-            throw new DaoException("Unable to get Annotations for user " + owner, e);
-        }
-    }
-
-    public Annotation getAnnotationById(String owner, String uniqueIdentifier) {
-        Annotation tmpAnnotation = (Annotation) getCurrentSession().get(Annotation.class, uniqueIdentifier);
-        if (null != tmpAnnotation && tmpAnnotation.getOwner().equals(owner)) {
-            return tmpAnnotation;
-        }
-        return null;
-    }
-
-    public ArrayList<Annotation> getAnnotationsForUserBySession(String owner, String sessionId) {
-        return null;
-    }
-
-    public void updateAnnotation(Annotation targetAnnotation) {
-        getSession().saveOrUpdate(targetAnnotation);
     }
 
     public List<Entity> getEntitiesWithFilePath(String filePath) {
@@ -604,6 +573,11 @@ public class AnnotationDAO extends ComputeBaseDAO {
         catch (Exception e) {
             throw new DaoException(e);
         }
+	}
+
+	public void removeOntologyAnnotation(String userLogin, long annotationId) throws DaoException {
+        Entity entity = getUserEntityById(userLogin, annotationId);
+        getCurrentSession().delete(entity);	
 	}
 
     public void removeAllOntologyAnnotationsForSession(String userLogin, long sessionId) throws DaoException {

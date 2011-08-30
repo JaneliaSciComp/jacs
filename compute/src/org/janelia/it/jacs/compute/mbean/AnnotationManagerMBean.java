@@ -31,10 +31,6 @@ package org.janelia.it.jacs.compute.mbean;
  */
 public interface AnnotationManagerMBean {
 
-    public void deleteAnnotation(String owner, String annotatedEntityId, String tag);
-    public String getAnnotationsForUser(String owner);
-    public void editAnnotation(String owner, String uniqueIdentifier, String namespace, String term, String value,
-                               String comment, String conditional);
     public void testNeuronSep(String inputFilePath);
     public void testColorSep(String inputFilePath);
     public void testNeuronSepPipeline(String inputFilePath);

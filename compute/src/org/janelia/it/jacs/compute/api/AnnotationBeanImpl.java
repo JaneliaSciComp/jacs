@@ -1,12 +1,18 @@
 package org.janelia.it.jacs.compute.api;
 
+import java.util.*;
+
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+
 import org.apache.log4j.Logger;
 import org.hibernate.Query;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
-import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.entity.*;
+import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.ontology.types.Category;
 import org.janelia.it.jacs.model.ontology.types.Interval;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
@@ -15,11 +21,6 @@ import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
 import org.janelia.it.jacs.model.user_data.User;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
-
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import java.util.*;
 
 @Stateless(name = "AnnotationEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
@@ -64,36 +65,6 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
     }
 
-    public void deleteAnnotation(String owner, String uniqueIdentifier, String tag){
-        try {
-            boolean deleteSuccessful = _annotationDAO.deleteAnnotation(owner, uniqueIdentifier, tag);
-            if (deleteSuccessful) {
-                _logger.debug("Deleted annotation "+uniqueIdentifier+" for user "+owner);
-            }
-            else {
-                _logger.debug("DID NOT delete annotation "+uniqueIdentifier+" for user "+owner);
-            }
-        }
-        catch (Exception e) {
-            _logger.error("Unexpected error while trying to delete annotation "+uniqueIdentifier+" for user "+owner);
-        }
-    }
-
-    public void deleteAnnotationSession(String owner, String uniqueIdentifier){
-        try {
-            boolean deleteSuccessful = _annotationDAO.deleteAnnotationSession(owner, uniqueIdentifier);
-            if (deleteSuccessful) {
-                _logger.debug("Deleted annotation session"+uniqueIdentifier+" for user "+owner);
-            }
-            else {
-                _logger.debug("DID NOT delete annotation "+uniqueIdentifier+" for user "+owner);
-            }
-        }
-        catch (Exception e) {
-            _logger.error("Unexpected error while trying to delete annotation "+uniqueIdentifier+" for user "+owner);
-        }
-    }
-
     public void removeEntityFromFolder(EntityData folderEntityData) throws ComputeException {
         try {
             _annotationDAO.genericDelete(folderEntityData);
@@ -102,26 +73,6 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             _logger.error("Unexpected error while trying to delete folder entity data "+folderEntityData.getId());
             throw new ComputeException("Unexpected error while trying to delete folder entity data "+folderEntityData.getId(),e);
         }
-    }
-
-    public ArrayList<Annotation> getAnnotationsForUser(String owner){
-        try {
-            return _annotationDAO.getAnnotationsForUser(owner);
-        }
-        catch (Exception e) {
-            _logger.error("Unexpected error occurred while trying to get annotations for user "+owner, e);
-        }
-        return null;
-    }
-
-    public ArrayList<Annotation> getAnnotationsForUserBySession(String owner, String sessionId){
-        try {
-            return _annotationDAO.getAnnotationsForUserBySession(owner, sessionId);
-        }
-        catch (Exception e) {
-            _logger.error("Unexpected error occurred while trying to get annotations for user "+owner, e);
-        }
-        return null;
     }
 
     public List<Entity> getAnnotationsForEntities(String username, List<Long> entityIds) throws ComputeException {
@@ -193,22 +144,6 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         catch (Exception e) {
             _logger.error("Unexpected error occurred while trying to get categories in session "+sessionId, e);
             throw new ComputeException("Coud not get categories in session",e);
-        }
-    }
-
-    public void editAnnotation(String owner, String uniqueIdentifier, String namespace, String term, String value,
-                               String comment, String conditional){
-        try {
-            Annotation targetAnnotation = _annotationDAO.getAnnotationById(owner, uniqueIdentifier);
-            targetAnnotation.setNamespace(namespace);
-            targetAnnotation.setTerm(term);
-            targetAnnotation.setValue(value);
-            targetAnnotation.setComment(comment);
-            targetAnnotation.setConditional(conditional);
-            _annotationDAO.updateAnnotation(targetAnnotation);
-        }
-        catch (Exception e) {
-            _logger.error("Unexpected error while trying to update Annotation "+uniqueIdentifier+" for user "+owner);
         }
     }
 
@@ -472,8 +407,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
     }
 
-	public Entity createOntologyAnnotation(String userLogin, String sessionId, String targetEntityId, String keyEntityId, String keyString,
-			String valueEntityId, String valueString, String tag) throws ComputeException {
+	public Entity createOntologyAnnotation(String userLogin, OntologyAnnotation annotation) throws ComputeException {
 
         try {
         	// TODO: enable this sanity check
@@ -487,6 +421,10 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         		throw new IllegalArgumentException("User "+userLogin+" not found");
         	}
         	
+        	String tag = (annotation.getValueString() == null) ? 
+        				annotation.getKeyString() : 
+        				annotation.getKeyString() + " = " + annotation.getValueString();
+            
             Entity newAnnotation = newEntity(EntityConstants.TYPE_ANNOTATION, tag, tmpUser);
             
             Set<EntityData> eds = new HashSet<EntityData>();
@@ -495,24 +433,24 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
 			// Add the target id
 			EntityData targetIdData = newData(newAnnotation, 
 					EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID, tmpUser);
-			targetIdData.setValue(targetEntityId);
+			targetIdData.setValue(""+annotation.getTargetEntityId());
 			eds.add(targetIdData);
 				
 			// Add the key string
 			EntityData keyData = newData(newAnnotation,
 					EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_TERM, tmpUser);
-			keyData.setValue(keyString);
+			keyData.setValue(annotation.getKeyString());
 			eds.add(keyData);
 
 			// Add the value string
 			EntityData valueData = newData(newAnnotation,
 					EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM, tmpUser);
-			valueData.setValue(valueString);
+			valueData.setValue(annotation.getValueString());
 			eds.add(valueData);
 			
 			// Add the key entity
-            if (keyEntityId != null) {
-            	Entity keyEntity = getEntityById(keyEntityId);
+            if (annotation.getKeyEntityId() != null) {
+            	Entity keyEntity = getEntityById(annotation.getKeyEntityId());
 				EntityData keyEntityData = newData(newAnnotation,
 						EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID, tmpUser);
 				keyEntityData.setChildEntity(keyEntity);
@@ -520,8 +458,8 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             }
 
 			// Add the value entity
-            if (valueEntityId != null) {
-            	Entity valueEntity = getEntityById(valueEntityId);
+            if (annotation.getValueEntityId() != null) {
+            	Entity valueEntity = getEntityById(annotation.getValueEntityId());
 				EntityData valueEntityData = newData(newAnnotation,
 						EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_ENTITY_ID, tmpUser);
 				valueEntityData.setChildEntity(valueEntity);
@@ -529,10 +467,10 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             }
             
 			// Add the session id
-            if (sessionId != null) {
+            if (annotation.getSessionId() != null) {
 				EntityData sessionIdData = newData(newAnnotation,
 						EntityConstants.ATTRIBUTE_ANNOTATION_SESSION_ID, tmpUser);
-				sessionIdData.setValue(sessionId);
+				sessionIdData.setValue(""+annotation.getSessionId());
 				eds.add(sessionIdData);
             }
             
@@ -546,6 +484,16 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
 	}
 
+	public void removeOntologyAnnotation(String userLogin, long annotationId) throws ComputeException {
+        try {
+            _annotationDAO.removeOntologyAnnotation(userLogin, annotationId);
+        } 
+        catch (DaoException e) {
+            _logger.error("Error trying to removeAnnotation");
+            throw new ComputeException("Error trying to removeAnnotation",e);
+        }
+	}
+	
 	public void removeAllOntologyAnnotationsForSession(String userLogin, long sessionId) throws ComputeException {
         try {
             _annotationDAO.removeAllOntologyAnnotationsForSession(userLogin, sessionId);
@@ -576,12 +524,22 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
     }
 
-    public Entity getEntityById(String targetId) {
+    public Entity getEntityById(Long id) {
         try {
-            return _annotationDAO.getEntityById(targetId);
+            return _annotationDAO.getEntityById(""+id);
         }
         catch (Exception e) {
-            _logger.error("Error trying to get the entity with id "+targetId,e);
+            _logger.error("Error trying to get the entity with id "+id,e);
+        }
+        return null;
+    }
+    
+    public Entity getEntityById(String id) {
+        try {
+            return _annotationDAO.getEntityById(id);
+        }
+        catch (Exception e) {
+            _logger.error("Error trying to get the entity with id "+id,e);
         }
         return null;
     }

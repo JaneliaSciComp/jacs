@@ -23,21 +23,20 @@
 
 package org.janelia.it.jacs.compute.mbean;
 
+import java.io.File;
+import java.io.FilenameFilter;
+import java.util.ArrayList;
+import java.util.HashSet;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.model.annotation.Annotation;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.colorSeparator.ColorSeparatorTask;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorTask;
 import org.janelia.it.jacs.model.user_data.Node;
-
-import java.io.File;
-import java.io.FilenameFilter;
-import java.util.ArrayList;
-import java.util.HashSet;
 
 /**
  * Created by IntelliJ IDEA.
@@ -50,24 +49,6 @@ public class AnnotationManager implements AnnotationManagerMBean {
     private static final Logger LOGGER = Logger.getLogger(AnnotationManager.class);
 
     public AnnotationManager() {
-    }
-
-    public void deleteAnnotation(String owner, String annotatedEntityId, String tag){
-        EJBFactory.getRemoteAnnotationBean().deleteAnnotation(owner, annotatedEntityId, tag);
-    }
-
-    public String getAnnotationsForUser(String owner){
-        StringBuffer sbuf = new StringBuffer();
-        ArrayList<Annotation> tmpAnnotations =  EJBFactory.getRemoteAnnotationBean().getAnnotationsForUser(owner);
-        for (Annotation tmpAnnotation : tmpAnnotations) {
-            sbuf.append(tmpAnnotation.toString()).append("\n");
-        }
-        return sbuf.toString();
-    }
-
-    public void editAnnotation(String owner, String uniqueIdentifier, String namespace, String term, String value,
-                               String comment, String conditional){
-        EJBFactory.getRemoteAnnotationBean().editAnnotation(owner, uniqueIdentifier, namespace, term, value, comment, conditional);
     }
 
     public void testNeuronSep(String inputFilePath) {

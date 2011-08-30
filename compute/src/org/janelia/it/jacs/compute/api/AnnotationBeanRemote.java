@@ -1,16 +1,16 @@
 package org.janelia.it.jacs.compute.api;
 
-import org.janelia.it.jacs.model.annotation.Annotation;
+import java.util.List;
+import java.util.Set;
+
+import javax.ejb.Remote;
+
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
-
-import javax.ejb.Remote;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 @Remote
 public interface AnnotationBeanRemote {
@@ -34,12 +34,6 @@ public interface AnnotationBeanRemote {
     public List<EntityType> getEntityTypes();
     public List<Entity> getEntitiesByTypeName(String entityTypeName);
     public List<Entity> getCommonRootEntitiesByTypeName(String entityTypeName);
-
-    public void deleteAnnotation(String owner, String uniqueIdentifier, String tag);
-    public void deleteAnnotationSession(String owner, String uniqueIdentifier);
-    public ArrayList<Annotation> getAnnotationsForUser(String owner);
-    public void editAnnotation(String owner, String uniqueIdentifier, String namespace, String term, String value,
-                               String comment, String conditional);
     
     public List<Entity> getAnnotationsForEntities(String username, List<Long> entityIds) throws ComputeException;
     public List<Entity> getAnnotationsForEntity(String username, long entityId) throws ComputeException;
@@ -60,9 +54,8 @@ public interface AnnotationBeanRemote {
     public List<Entity> getPublicOntologies() throws ComputeException;
     public List<Entity> getPrivateOntologies(String userLogin) throws ComputeException;
 
-	public Entity createOntologyAnnotation(String userLogin, String sessionId, String targetEntityId,
-			String keyEntityId, String keyString, String valueEntityId, String valueString, String tag)
-			throws ComputeException;
+	public Entity createOntologyAnnotation(String userLogin, OntologyAnnotation annotation) throws ComputeException;
+	public void removeOntologyAnnotation(String userLogin, long annotationId) throws ComputeException;
 	public void removeAllOntologyAnnotationsForSession(String userLogin, long sessionId) throws ComputeException;
 
     public void setupEntityTypes();
