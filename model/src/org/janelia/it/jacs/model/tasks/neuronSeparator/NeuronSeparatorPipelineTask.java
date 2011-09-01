@@ -48,6 +48,7 @@ public class NeuronSeparatorPipelineTask extends Task {
     // Parameter Keys - Subset of the params needed by the child tasks of this pipeline
 
     // Note: Only one of these parameters should be populated
+    transient public static final String PARAM_inputStitchedStackId = "input stitched stack id";
     transient public static final String PARAM_inputLsmFilePathList = "input lsm file path list";
     transient public static final String PARAM_inputLsmEntityIdList = "input lsm entity id list";
     transient public static final String PARAM_outputSampleEntityId = "output sample entity id";
@@ -65,6 +66,7 @@ public class NeuronSeparatorPipelineTask extends Task {
     }
 
     private void setDefaultValues() {
+        setParameter(PARAM_inputStitchedStackId, "");
         setParameter(PARAM_inputLsmFilePathList, "");
         setParameter(PARAM_inputLsmEntityIdList, "");
         setParameter(PARAM_outputSampleEntityId, "");
@@ -78,6 +80,9 @@ public class NeuronSeparatorPipelineTask extends Task {
         String value = getParameter(key);
         if (value == null)
             return null;
+        if (key.equals(PARAM_inputStitchedStackId)) {
+            return new TextParameterVO(value,1000);
+        }
         if (key.equals(PARAM_inputLsmFilePathList)) {
             return new TextParameterVO(value,1000);
         }

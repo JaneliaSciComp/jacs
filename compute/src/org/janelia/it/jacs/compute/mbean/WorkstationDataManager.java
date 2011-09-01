@@ -5,6 +5,7 @@ import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
+import org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOStitchedFileDiscoveryTask;
 import org.janelia.it.jacs.model.tasks.fileDiscovery.MultiColorFlipOutFileDiscoveryTask;
 import org.janelia.it.jacs.model.user_data.Node;
 
@@ -29,6 +30,19 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             task.setJobName("MultiColor FlipOut File Discovery Task");
             task = (MultiColorFlipOutFileDiscoveryTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("MultiColorFlipOutFileDiscovery", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+    }
+
+    public void runMCFOStitchedFileDiscoveryService(String user, boolean refresh) {
+        try {
+            MCFOStitchedFileDiscoveryTask task = new MCFOStitchedFileDiscoveryTask(new HashSet<Node>(), user,
+                    new ArrayList<Event>(), new HashSet<TaskParameter>(), refresh);
+            task.setJobName("MultiColor FlipOut Stitched File Discovery Task");
+            task = (MCFOStitchedFileDiscoveryTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("MCFOStitchedFileDiscovery", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }

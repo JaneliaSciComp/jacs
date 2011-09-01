@@ -91,56 +91,81 @@ public class NeuronSeparatorHelper {
     	
 		cmdLine.append("cd "+parentNode.getDirectoryPath()+";export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64:" +
                 SystemConfigurationProperties.getString("Executables.ModuleBase")+"singleNeuronTools/genelib/"+mylibDir+";"+
-                SystemConfigurationProperties.getString("Executables.ModuleBase")+"singleNeuronTools/genelib/"+mylibDir+"/sampsepNA -nr -pj "+
+                SystemConfigurationProperties.getString("Executables.ModuleBase")+"singleNeuronTools/genelib/"+mylibDir+"/sampsepNALoadRaw16 -nr -pj "+
                 parentNode.getDirectoryPath()+" neuronSeparatorPipeline "+ NeuronSeparatorHelper.addQuotesToCsvString(fileList)).append(commandDelim);
         
         return cmdLine.toString();
 	}
 
-	public static String getPostNeuronSeparationCommands(NeuronSeparatorPipelineTask task, 
-			NeuronSeparatorResultNode parentNode, String commandDelim) throws ServiceException {
+    public static String getPostNeuronSeparationCommands(NeuronSeparatorPipelineTask task,
+                                                         NeuronSeparatorResultNode parentNode, String commandDelim) throws ServiceException {
 
-		StringBuffer cmdLine = new StringBuffer();
+        StringBuffer cmdLine = new StringBuffer();
 
-        String[] lsmFilePaths = NeuronSeparatorHelper.getLSMFilePaths(task);
-    	String lsmFilePathsFilename = parentNode.getDirectoryPath()+"/"+"lsmFilePaths.txt";
-    	
-		cmdLine.append("echo '"+lsmFilePaths[0]+"' > "+lsmFilePathsFilename).append(commandDelim);
-		cmdLine.append("echo '"+lsmFilePaths[1]+"' >> "+lsmFilePathsFilename).append(commandDelim);
-		cmdLine.append(NeuronSeparatorHelper.getScriptToCreateLsmMetadataFile(parentNode, lsmFilePaths[0])).append(commandDelim);
-		cmdLine.append(NeuronSeparatorHelper.getScriptToCreateLsmMetadataFile(parentNode, lsmFilePaths[1])).append(commandDelim);
-        
+        String inputLsmEntityIdList=task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmEntityIdList);
+        if (inputLsmEntityIdList != null && inputLsmEntityIdList.length() > 0) {
+
+            String[] lsmFilePaths = NeuronSeparatorHelper.getFilePaths(task);
+            String lsmFilePathsFilename = parentNode.getDirectoryPath() + "/" + "lsmFilePaths.txt";
+
+            cmdLine.append("echo '" + lsmFilePaths[0] + "' > " + lsmFilePathsFilename).append(commandDelim);
+            cmdLine.append("echo '" + lsmFilePaths[1] + "' >> " + lsmFilePathsFilename).append(commandDelim);
+            cmdLine.append(NeuronSeparatorHelper.getScriptToCreateLsmMetadataFile(parentNode, lsmFilePaths[0])).append(commandDelim);
+            cmdLine.append(NeuronSeparatorHelper.getScriptToCreateLsmMetadataFile(parentNode, lsmFilePaths[1])).append(commandDelim);
+
+        }
+
         return cmdLine.toString();
-	}
+    }
 	
     public static String getFileListString(NeuronSeparatorPipelineTask task) throws ServiceException {
-        String[] lsmPaths = getLSMFilePaths(task);
-        return lsmPaths[0] + " , " + lsmPaths[1];
+        String[] filePaths = getFilePaths(task);
+        if (filePaths.length==0) {
+            throw new ServiceException("Must have non-zero files as input to neuron separator");
+        } else if (filePaths.length==1) {
+            return filePaths[0];
+        } else {
+            StringBuffer sb=new StringBuffer();
+            sb.append(filePaths[0]);
+            for (int i=1;i<filePaths.length;i++) {
+                sb.append(" , " + filePaths[i]);
+            }
+            return sb.toString();
+        }
     }
 
-    public static String[] getLSMFilePaths(NeuronSeparatorPipelineTask task) throws ServiceException {
+    public static String[] getFilePaths(NeuronSeparatorPipelineTask task) throws ServiceException {
         AnnotationBeanLocal annotationBean = EJBFactory.getLocalAnnotationBean();
-        String lsmEntityList = task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmEntityIdList);
+        String lsmEntityIdList = task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmEntityIdList);
+        String stitchedEntityId = task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputStitchedStackId);
 
-        if (lsmEntityList==null || lsmEntityList.trim().length()==0) {
-            throw new ServiceException("PARAM_inputLsmEntityIdList must be populated");
+        if (lsmEntityIdList!=null && lsmEntityIdList.trim().length()>0) {
+            Entity lsm1;
+            Entity lsm2;
+            String[] lsmList = lsmEntityIdList.split(",");
+            if (lsmList.length!=2) {
+                throw new ServiceException("Expected two files in lsmEntityList="+lsmEntityIdList);
+            }
+            lsm1 = annotationBean.getEntityById(lsmList[0].trim());
+            lsm2 = annotationBean.getEntityById(lsmList[1].trim());
+            if (lsm1 == null || lsm2 == null) {
+                throw new ServiceException("Must provide two LSM stack entities.");
+            }
+            String[] returnList = new String[2];
+            returnList[0] = lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+            returnList[1] = lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+            return returnList;
+        } else if (stitchedEntityId!=null && stitchedEntityId.trim().length()>0) {
+            Entity stitchedStack = annotationBean.getEntityById(stitchedEntityId);
+            if (stitchedStack==null) {
+                throw new ServiceException("Must provide valid stitched stack entity id");
+            }
+            String[] returnList = new String[1];
+            returnList[0] = stitchedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+            return returnList;
+        } else {
+            throw new ServiceException("PARAM_inputLsmEntityIdList or PARAM_inputStitchedStackId must be populated");
         }
-
-        Entity lsm1;
-        Entity lsm2;
-        String[] lsmList = lsmEntityList.split(",");
-        if (lsmList.length!=2) {
-            throw new ServiceException("Expected two files in lsmEntityList="+lsmEntityList);
-        }
-        lsm1 = annotationBean.getEntityById(lsmList[0].trim());
-        lsm2 = annotationBean.getEntityById(lsmList[1].trim());
-        if (lsm1 == null || lsm2 == null) {
-            throw new ServiceException("Must provide two LSM stack entities.");
-        }
-        String[] returnList = new String[2];
-        returnList[0] = lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        returnList[1] = lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        return returnList;
     }
 
     public static String getScriptToCreateLsmMetadataFile(NeuronSeparatorResultNode parentNode, String lsmPath) throws ServiceException {

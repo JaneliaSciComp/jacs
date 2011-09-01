@@ -1,0 +1,14 @@
+<!--
+~ The convention for adding additional directories is to add input parameters with names 'DIRECTORY_1', 'DIRECTORY_2', etc.
+~
+-->
+
+<process name="MultiColor FlipOut Stitched File Discovery Pipeline" startEvent="pending" updateProcessStatus="on_success" processor="queue/mcfoStitchedFileDiscoveryLauncher">
+    <sequence name="mcfoStitchedFileDiscovery">
+        <operation name="Discovery Files for MultiColor FlipOut Stitched Project" processor="org.janelia.it.jacs.compute.service.fileDiscovery.MCFOStitchedFileDiscoveryService">
+            <input name="TOP_LEVEL_FOLDER_NAME" value="FlyLight Single Neuron Stitched Data"/>
+            <input name="DIRECTORY_1" value="/groups/flylight/flylight/flip/SecData/stitch"/>
+            <input name="LINKING_FOLDER" value="/groups/scicomp/jacsData/flylight/%USER%/SingleNeuronStitchedData"/>
+        </operation>
+    </sequence>
+</process>

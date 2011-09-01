@@ -44,12 +44,14 @@ public class NeuronSeparationPipelineRemoteService implements IService {
             StringBuffer stdout = new StringBuffer();
             StringBuffer stderr = new StringBuffer();
             SystemCall call = new SystemCall(stdout, stderr);
+
             int exitCode = call.emulateCommandLine(cmdLine.toString(), true, TIMEOUT_SECONDS);
 
         	File outFile = new File(parentNode.getDirectoryPath(), "stdout");
         	if (stdout.length() > 0) FileUtils.writeStringToFile(outFile, stdout.toString());
 
             File errFile = new File(parentNode.getDirectoryPath(), "stderr");
+
             if (stderr.length() > 0) FileUtils.writeStringToFile(errFile, stderr.toString());
             
             if (0!=exitCode) {

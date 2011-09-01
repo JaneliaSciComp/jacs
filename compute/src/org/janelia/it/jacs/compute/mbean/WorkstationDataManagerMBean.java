@@ -12,6 +12,8 @@ public interface WorkstationDataManagerMBean {
 
     public void runMultiColorFlipOutFileDiscoveryService(String user, boolean refresh);
 
+    public void runMCFOStitchedFileDiscoveryService(String user, boolean refresh);
+
     public void setupEntityTypes();
 
     public void deleteEntityById(String entityId);

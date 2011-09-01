@@ -32,6 +32,7 @@ public class EntityConstants {
     public static final String TYPE_TIF_2D                           = "Tif 2D Image";
     public static final String TYPE_TIF_3D                           = "Tif 3D Image";
     public static final String TYPE_TIF_3D_LABEL_MASK                = "Tif 3D Label Mask";
+    public static final String TYPE_STITCHED_V3D_RAW                 = "Stitched V3D Raw Stack";
 
     // Entity Data Attributes
     public static final String ATTRIBUTE_FILE_PATH                           = "File Path";

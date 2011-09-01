@@ -245,6 +245,10 @@
                   discriminator-value="multiColorFlipOutFileDiscoveryTask">
     </subclass>
 
+    <subclass name="org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOStitchedFileDiscoveryTask" extends="org.janelia.it.jacs.model.tasks.Task"
+                  discriminator-value="mcfoStitchedFileDiscoveryTask">
+    </subclass>
+
     <class name="Event"
            table="task_event">
         <composite-id>

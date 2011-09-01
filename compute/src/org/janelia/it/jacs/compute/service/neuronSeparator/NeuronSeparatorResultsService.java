@@ -42,7 +42,7 @@ public class NeuronSeparatorResultsService implements IService {
     private Date createDate;
     private User user;
 
-    public void execute(IProcessData processData) throws CreateRecruitmentFileNodeException {
+    public void execute(IProcessData processData) throws ServiceException {
         try {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             NeuronSeparatorPipelineTask task = (NeuronSeparatorPipelineTask) ProcessDataHelper.getTask(processData);
@@ -65,19 +65,23 @@ public class NeuronSeparatorResultsService implements IService {
 
             String cmdLine = NeuronSeparatorHelper.getPostNeuronSeparationCommands(task, parentNode, " ; ");
 
-            StringBuffer stdout = new StringBuffer();
-            StringBuffer stderr = new StringBuffer();
-            SystemCall call = new SystemCall(logger, stdout, stderr);
-            int exitCode = call.emulateCommandLine(cmdLine.toString(), true, 60);
-            
-        	File outFile = new File(parentNode.getDirectoryPath(), "stdout");
-        	if (stdout.length() > 0) FileUtils.writeStringToFile(outFile, stdout.toString(), true);
+            if (cmdLine!=null && cmdLine.length()>0) {
 
-            File errFile = new File(parentNode.getDirectoryPath(), "stderr");
-            if (stderr.length() > 0) FileUtils.writeStringToFile(errFile, stderr.toString(), true);
-            
-            if (0!=exitCode) {
-            	throw new ServiceException("NeuronSeparatorResultsService failed with exitCode "+exitCode+" for resultDir="+parentNode.getDirectoryPath());
+                StringBuffer stdout = new StringBuffer();
+                StringBuffer stderr = new StringBuffer();
+                SystemCall call = new SystemCall(logger, stdout, stderr);
+                int exitCode = call.emulateCommandLine(cmdLine.toString(), true, 60);
+
+                File outFile = new File(parentNode.getDirectoryPath(), "stdout");
+                if (stdout.length() > 0) FileUtils.writeStringToFile(outFile, stdout.toString(), true);
+
+                File errFile = new File(parentNode.getDirectoryPath(), "stderr");
+                if (stderr.length() > 0) FileUtils.writeStringToFile(errFile, stderr.toString(), true);
+
+                if (0 != exitCode) {
+                    throw new ServiceException("NeuronSeparatorResultsService failed with exitCode " + exitCode + " for resultDir=" + parentNode.getDirectoryPath());
+                }
+
             }
             
             // Create the result entity and populate with the output files
@@ -97,6 +101,9 @@ public class NeuronSeparatorResultsService implements IService {
             	if (resultFile.isDirectory()) continue;
             	
                 if (filename.equals("ConsolidatedSignal.tif")) {
+                    addResultItem(resultEntity, tif3D, resultFile);
+                }
+                else if (filename.startsWith("Signal_") && filename.endsWith(".tif")) {
                     addResultItem(resultEntity, tif3D, resultFile);
                 }
                 else if (filename.equals("ConsolidatedLabel.tif")) {
@@ -124,6 +131,8 @@ public class NeuronSeparatorResultsService implements IService {
             }
 
             File symbolicLink = new File(symbolicLinkName);
+
+            logger.info("Preparing to verify or create symbolicLink="+symbolicLink);
             
             // Create the user-space symbolic link to the result directory
             if (symbolicLink.exists()) {
@@ -138,6 +147,9 @@ public class NeuronSeparatorResultsService implements IService {
 
         	String target = NeuronSeparatorHelper.covertPathsToVolumeMounted(resultDir.getAbsolutePath());
         	String link = NeuronSeparatorHelper.covertPathsToRemoteServer(symbolicLink.getAbsolutePath());
+
+            logger.info("Creating symbolic link with target="+target +" link="+link);
+
             try {
             	createLink(target, link);	
             	logger.info("  Created symbolic link for results at: "+symbolicLink.getAbsolutePath());
@@ -151,7 +163,7 @@ public class NeuronSeparatorResultsService implements IService {
 
         }
         catch (Exception e) {
-            throw new CreateRecruitmentFileNodeException(e);
+            throw new ServiceException(e);
         }
     }
     
