@@ -53,7 +53,9 @@ public class NeuronSeparatorResultsService implements IService {
             user = computeBean.getUserByName(task.getOwner());
             String sampleEntityId = task.getParameter(NeuronSeparatorPipelineTask.PARAM_outputSampleEntityId);
             String symbolicLinkName = task.getParameter(NeuronSeparatorPipelineTask.PARAM_symbolLinkName);
-            Entity sample = annotationBean.getEntityById(sampleEntityId.trim());
+            Entity sample = annotationBean.getEntityTree(new Long(sampleEntityId.trim()));
+
+            boolean evidenceOfSuccessfulCompletion=false;
 
             if (sample == null) {
                 throw new ServiceException("Must provide Sample entity.");
@@ -63,7 +65,7 @@ public class NeuronSeparatorResultsService implements IService {
         	
             // Create the other files that are necessary
 
-            String cmdLine = NeuronSeparatorHelper.getPostNeuronSeparationCommands(task, parentNode, " ; ");
+            String cmdLine = NeuronSeparatorHelper.getPostNeuronSeparationCommands(task, parentNode, sample, " ; ");
 
             if (cmdLine!=null && cmdLine.length()>0) {
 
@@ -107,6 +109,7 @@ public class NeuronSeparatorResultsService implements IService {
                     addResultItem(resultEntity, tif3D, resultFile);
                 }
                 else if (filename.equals("ConsolidatedLabel.tif")) {
+                    evidenceOfSuccessfulCompletion=true;
                     addResultItem(resultEntity, tif3DLabel, resultFile);
                 }
                 else if (filename.equals("Reference.tif")) {
@@ -148,17 +151,22 @@ public class NeuronSeparatorResultsService implements IService {
         	String target = NeuronSeparatorHelper.covertPathsToVolumeMounted(resultDir.getAbsolutePath());
         	String link = NeuronSeparatorHelper.covertPathsToRemoteServer(symbolicLink.getAbsolutePath());
 
-            logger.info("Creating symbolic link with target="+target +" link="+link);
+            if (evidenceOfSuccessfulCompletion) {
 
-            try {
-            	createLink(target, link);	
-            	logger.info("  Created symbolic link for results at: "+symbolicLink.getAbsolutePath());
+                logger.info("Creating symbolic link with target=" + target + " link=" + link);
+
+                try {
+                    createLink(target, link);
+                    logger.info("  Created symbolic link for results at: " + symbolicLink.getAbsolutePath());
+                } catch (Exception e) {
+                    logger.info("  Could not create symbolic link for results at " + symbolicLink.getAbsolutePath()
+                            + " because: " + e.getMessage());
+                }
+
+            } else {
+                logger.info("Skipping generation of link due to lack of evidence of pipeline success");
             }
-            catch (Exception e) {
-            	logger.info("  Could not create symbolic link for results at "+symbolicLink.getAbsolutePath()
-            			+" because: "+e.getMessage());
-            }
-            
+
             // TODO: migrate the annotations from the previous result
 
         }

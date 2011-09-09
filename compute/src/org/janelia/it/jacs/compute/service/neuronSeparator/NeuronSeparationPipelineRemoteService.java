@@ -48,11 +48,21 @@ public class NeuronSeparationPipelineRemoteService implements IService {
             int exitCode = call.emulateCommandLine(cmdLine.toString(), true, TIMEOUT_SECONDS);
 
         	File outFile = new File(parentNode.getDirectoryPath(), "stdout");
-        	if (stdout.length() > 0) FileUtils.writeStringToFile(outFile, stdout.toString());
+        	if (stdout.length() > 0) {
+                logger.info("Writing to stdout file="+outFile.getAbsolutePath());
+                FileUtils.writeStringToFile(outFile, stdout.toString());
+            } else {
+                logger.info("stdout has 0 size - skipping output to file="+outFile.getAbsolutePath());
+            }
 
             File errFile = new File(parentNode.getDirectoryPath(), "stderr");
 
-            if (stderr.length() > 0) FileUtils.writeStringToFile(errFile, stderr.toString());
+            if (stderr.length() > 0) {
+                logger.info("Writing to stderr file="+errFile.getAbsolutePath());
+                FileUtils.writeStringToFile(errFile, stderr.toString());
+            } else {
+                logger.info("stderr has 0 size - skipping output to file="+errFile.getAbsolutePath());
+            }
             
             if (0!=exitCode) {
                 File exitCodeFile = new File(parentNode.getDirectoryPath(), "neuSepExitCode.txt");

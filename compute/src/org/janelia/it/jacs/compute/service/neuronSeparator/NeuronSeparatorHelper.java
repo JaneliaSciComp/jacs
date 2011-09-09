@@ -11,6 +11,7 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.user_data.neuronSeparator.NeuronSeparatorResultNode;
 
@@ -98,21 +99,45 @@ public class NeuronSeparatorHelper {
 	}
 
     public static String getPostNeuronSeparationCommands(NeuronSeparatorPipelineTask task,
-                                                         NeuronSeparatorResultNode parentNode, String commandDelim) throws ServiceException {
+                                                         NeuronSeparatorResultNode parentNode, Entity sample, String commandDelim) throws ServiceException {
 
         StringBuffer cmdLine = new StringBuffer();
 
         String inputLsmEntityIdList=task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmEntityIdList);
+
+        String lsmFilePathsFilename = parentNode.getDirectoryPath() + "/" + "lsmFilePaths.txt";
+
+        // In this case, we assume a tiled input in which two lsm files are input
+        logger.info("starting getPostNeuronSeparationCommands()");
         if (inputLsmEntityIdList != null && inputLsmEntityIdList.length() > 0) {
+            logger.info("Found inputLsmEntityIdList to process - creating lsmFilePaths");
 
             String[] lsmFilePaths = NeuronSeparatorHelper.getFilePaths(task);
-            String lsmFilePathsFilename = parentNode.getDirectoryPath() + "/" + "lsmFilePaths.txt";
 
             cmdLine.append("echo '" + lsmFilePaths[0] + "' > " + lsmFilePathsFilename).append(commandDelim);
             cmdLine.append("echo '" + lsmFilePaths[1] + "' >> " + lsmFilePathsFilename).append(commandDelim);
             cmdLine.append(NeuronSeparatorHelper.getScriptToCreateLsmMetadataFile(parentNode, lsmFilePaths[0])).append(commandDelim);
             cmdLine.append(NeuronSeparatorHelper.getScriptToCreateLsmMetadataFile(parentNode, lsmFilePaths[1])).append(commandDelim);
 
+        } else {
+            logger.info("Assuming raw input - checking for lsm child entities");
+        // In this case, we expect a raw input, suggestive of a stitched sample. We will look for lsm files as part of the
+        // sample entity tree, and process these.
+            for (EntityData child : sample.getEntityData()) {
+                Entity childEntity = child.getChildEntity();
+                logger.info("Considering entity type="+childEntity.getEntityType().getName());
+                if (childEntity.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK)) {
+                    logger.info("Creating cmd entries for file="+childEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+                    String appendString = "' > ";
+                    if (cmdLine.length()>0) {
+                        appendString = "' >> ";
+                    }
+                    cmdLine.append("echo '" + childEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH) + appendString + lsmFilePathsFilename).append(commandDelim);
+                    cmdLine.append(NeuronSeparatorHelper.getScriptToCreateLsmMetadataFile(parentNode, childEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH))).append(commandDelim);
+                } else {
+                    logger.info("Disregarding the child entity");
+                }
+            }
         }
 
         return cmdLine.toString();

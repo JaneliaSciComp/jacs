@@ -11,6 +11,7 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOStitchedFileDiscoveryTask;
@@ -217,9 +218,17 @@ public class MCFOStitchedFileDiscoveryService implements IService {
 
         File stitchedDir = null;
 
+        List<File> lsmList = new ArrayList<File>();
+
+        EntityType lsmType = annotationBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK);
+
         for (File file : dir.listFiles()) {
+            logger.info("MCFOStitchedFileDiscoveryService - considering file="+file.getAbsolutePath());
             if (file.isDirectory() && file.getName().equals("stitched")) {
                 stitchedDir = file;
+            } else if (file.getName().endsWith(".lsm")) {
+                logger.info("Adding lsm file="+file.getAbsolutePath());
+                lsmList.add(file);
             }
         }
 
@@ -248,6 +257,11 @@ public class MCFOStitchedFileDiscoveryService implements IService {
                     addToParent(folder, sample, 0);
                 } else {
                     stitchedStack = getStitchedStackFromSample(sample);
+                }
+
+                for (File file : lsmList) {
+                    logger.info("Adding lsm file to sample parent entity="+file.getAbsolutePath());
+                    createFileBasedEntity(sample, lsmType, file, null);
                 }
 
                 launchColorSeparationPipeline(sample, stitchedStack, symbolicLink);
@@ -367,4 +381,19 @@ public class MCFOStitchedFileDiscoveryService implements IService {
         annotationBean.saveOrUpdateEntityData(ed);
         logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+" as child of "+parent.getEntityType().getName()+"#"+entity.getId());
     }
+
+    private Entity createFileBasedEntity(Entity parentEntity, EntityType type, File file, Integer index) throws Exception {
+        Entity entity = new Entity();
+        entity.setUser(user);
+        entity.setCreationDate(createDate);
+        entity.setUpdatedDate(createDate);
+        entity.setEntityType(type);
+        entity.setName(file.getName());
+        entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
+        entity = annotationBean.saveOrUpdateEntity(entity);
+        logger.info("Saved "+type.getName()+" as "+entity.getId());
+        addToParent(parentEntity, entity, index);
+        return entity;
+    }
+
 }
