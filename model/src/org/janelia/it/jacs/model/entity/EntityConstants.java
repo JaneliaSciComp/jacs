@@ -33,6 +33,7 @@ public class EntityConstants {
     public static final String TYPE_TIF_3D                           = "Tif 3D Image";
     public static final String TYPE_TIF_3D_LABEL_MASK                = "Tif 3D Label Mask";
     public static final String TYPE_STITCHED_V3D_RAW                 = "Stitched V3D Raw Stack";
+    public static final String TYPE_NEURON_FRAGMENT                  = "Neuron Fragment";
 
     // Entity Data Attributes
     public static final String ATTRIBUTE_FILE_PATH                           = "File Path";
@@ -51,6 +52,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ANNOTATION_ONTOLOGY_ROOT_ID         = "Annotation Ontology Root Id";
     public static final String ATTRIBUTE_ANNOTATION_TARGET_ID                = "Annotation Target Id";
     public static final String ATTRIBUTE_ANNOTATION_SESSION_ID               = "Annotation Session Id";
+    public static final String ATTRIBUTE_NUMBER                              = "Number";
     public static final String ATTRIBUTE_INPUT                               = "ATTRIBUTE_INPUT";
     
 }

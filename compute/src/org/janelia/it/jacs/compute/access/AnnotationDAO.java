@@ -341,7 +341,59 @@ public class AnnotationDAO extends ComputeBaseDAO {
             e.printStackTrace();
         }
     }
+    
+    public EntityType createNewEntityType(String name) throws DaoException {
+        Session session = getCurrentSession();
+    	
+    	try {
+	    	EntityType entityType = new EntityType();
+	    	entityType.setName(name);
+	        session.saveOrUpdate(entityType);
+            _logger.info("Created new EntityType " + name);
+            
+	        return entityType;
+    	}
+    	catch (Exception e) {
+    		throw new DaoException(e);
+    	}
+    }
 
+    public EntityAttribute addAttributeToEntityType(EntityType entityType, String attrName) throws DaoException  {
+
+        Session session = getCurrentSession();
+        EntityAttribute entityAttr = null;
+        
+    	try {
+	    	entityAttr = new EntityAttribute();
+	    	entityAttr.setName(attrName);
+	        session.saveOrUpdate(entityAttr);
+            _logger.info("Created new EntityAttribute " + attrName);
+	        
+    	}
+    	catch (Exception e) {
+    		throw new DaoException(e);
+    	}
+    	
+        addAttributeToEntityType(entityType, entityAttr);
+        return entityAttr;
+    }
+    
+    public EntityAttribute addAttributeToEntityType(EntityType entityType, EntityAttribute entityAttr) throws DaoException  {
+
+        Session session = getCurrentSession();
+    	
+    	try {
+	        entityType.getAttributes().add(entityAttr);
+	        session.saveOrUpdate(entityType);
+            _logger.info("Added EntityAttribute " + entityAttr.getName() + " to EntityType "+entityType.getName());
+	        
+	        return entityAttr;
+    	}
+    	catch (Exception e) {
+    		throw new DaoException(e);
+    	}
+    }
+    
     protected void createEntityType(String name, Set<String> attributeNameSet) {
         Session session = getCurrentSession();
 

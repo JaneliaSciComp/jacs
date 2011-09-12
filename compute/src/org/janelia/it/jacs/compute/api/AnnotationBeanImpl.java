@@ -37,9 +37,9 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     private final AnnotationDAO _annotationDAO = new AnnotationDAO(_logger);
     private final ComputeDAO _computeDAO = new ComputeDAO(_logger);
 
-    private final Map<String, EntityType> entityByName = new HashMap<String, EntityType>();
-    private final Map<String, EntityAttribute> attrByName = new HashMap<String, EntityAttribute>();
-    private static final Map<Long, Entity> entityTrees = new HashMap<Long, Entity>();
+    private static final Map<String, EntityType> entityByName = Collections.synchronizedMap(new HashMap<String, EntityType>());
+    private static final Map<String, EntityAttribute> attrByName = Collections.synchronizedMap(new HashMap<String, EntityAttribute>());
+    private static final Map<Long, Entity> entityTrees = Collections.synchronizedMap(new HashMap<Long, Entity>());
 
     private void preloadData() {
 
@@ -687,7 +687,46 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
         return null;
     }
+    
+    public EntityType createNewEntityType(String entityTypeName) throws ComputeException {
+    	if (getEntityTypeByName(entityTypeName) != null) {
+    		throw new ComputeException("Entity type "+entityTypeName+" already exists");
+    	}
+    	try {
+    		EntityType entityType = _annotationDAO.createNewEntityType(entityTypeName);	
+    		entityByName.put(entityTypeName, entityType);
+    		return entityType;
+    	}
+    	catch (DaoException e) {
+            _logger.error("Could not create entity type "+entityTypeName,e);
+    		throw new ComputeException("Could not create entity type "+entityTypeName,e);
+    	}
+    }
 
+    public EntityAttribute createNewEntityAttr(String entityTypeName, String attrName) throws ComputeException {
+    	EntityType entityType = getEntityTypeByName(entityTypeName);
+    	if (entityType == null) {
+    		throw new ComputeException("Entity type "+entityTypeName+" does not exist");
+    	}
+    	EntityAttribute entityAttr = getEntityAttributeByName(attrName);
+    	if (entityAttr != null) {
+    		entityAttr = _annotationDAO.addAttributeToEntityType(entityType, entityAttr);	
+    		return entityAttr;
+    	}
+    	else {
+        	try {
+        		entityAttr = _annotationDAO.addAttributeToEntityType(entityType, attrName);	
+        		attrByName.put(attrName, entityAttr);
+        		return entityAttr;
+        	}
+        	catch (DaoException e) {
+                _logger.error("Could not create entity attr "+attrName,e);
+        		throw new ComputeException("Could not create entity attr "+attrName,e);
+        	}
+    	}
+
+    }
+    
     public EntityType getEntityTypeByName(String entityTypeName) {
     	preloadData();
         return entityByName.get(entityTypeName);	

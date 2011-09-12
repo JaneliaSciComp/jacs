@@ -58,6 +58,8 @@ public interface AnnotationBeanLocal {
 	public void removeOntologyAnnotation(String userLogin, long annotationId) throws ComputeException;
 	public void removeAllOntologyAnnotationsForSession(String userLogin, long sessionId) throws ComputeException;
 
+    public EntityType createNewEntityType(String entityTypeName) throws ComputeException;
+    public EntityAttribute createNewEntityAttr(String entityTypeName, String attrName) throws ComputeException;
     public void setupEntityTypes();
 
 }
