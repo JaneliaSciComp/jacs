@@ -39,7 +39,7 @@ public class NeuronSeparationPipelineRemoteService implements IService {
         	File scriptFile = new File(parentNode.getDirectoryPath(), REMOTE_SCRIPT);
         	FileUtils.writeStringToFile(scriptFile, NeuronSeparatorHelper.covertPathsToRemoteServer(script));
             
-            String cmdLine = "ssh "+REMOTE_SERVER+" sh "+NeuronSeparatorHelper.covertPathsToRemoteServer(scriptFile.getAbsolutePath());
+            String cmdLine = "ssh "+REMOTE_SERVER+" sh  "+NeuronSeparatorHelper.covertPathsToRemoteServer(scriptFile.getAbsolutePath());
             
             StringBuffer stdout = new StringBuffer();
             StringBuffer stderr = new StringBuffer();
