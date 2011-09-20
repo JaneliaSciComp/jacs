@@ -6,7 +6,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.*;
+import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
+import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
+import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
@@ -210,7 +213,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, dir.getAbsolutePath());
             folder = annotationBean.saveOrUpdateEntity(folder);
             logger.info("Saved folder as "+folder.getId());
-            addToParent(parentFolder, folder);
+            NeuronSeparatorHelper.addToParent(parentFolder, folder, null, EntityConstants.ATTRIBUTE_ENTITY);
         }
         else {
             logger.info("Found folder with id="+folder.getId());
@@ -265,7 +268,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         		if (sample == null) {
     	        	// Create the sample
     	            sample = createSample(lsmPair, symbolicLink);
-    	            addToParent(folder, sample, i++);
+    	            NeuronSeparatorHelper.addToParent(folder, sample, i++, EntityConstants.ATTRIBUTE_ENTITY);
         		}
         		else if (!refresh) {
                    	// We're only doing an incremental update, so skip this pair since it already has results
@@ -452,9 +455,9 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
         lsmStackPair.setName("Scans");
         lsmStackPair = annotationBean.saveOrUpdateEntity(lsmStackPair);
         logger.info("Saved LSM stack pair as "+lsmStackPair.getId());
-        addToParent(sample, lsmStackPair, 0);
-        addToParent(lsmStackPair, lsmPair.lsmEntity1, 0);
-        addToParent(lsmStackPair, lsmPair.lsmEntity2, 1);
+        NeuronSeparatorHelper.addToParent(sample, lsmStackPair, 0, EntityConstants.ATTRIBUTE_ENTITY);
+        NeuronSeparatorHelper.addToParent(lsmStackPair, lsmPair.lsmEntity1, 0, EntityConstants.ATTRIBUTE_ENTITY);
+        NeuronSeparatorHelper.addToParent(lsmStackPair, lsmPair.lsmEntity2, 1, EntityConstants.ATTRIBUTE_ENTITY);
         
         return sample;
     }
@@ -501,16 +504,5 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             }
         }
         
-    }
-
-    private void addToParent(Entity parent, Entity entity) throws Exception {
-    	addToParent(parent, entity, null);
-    }
-    
-    private void addToParent(Entity parent, Entity entity, Integer index) throws Exception {
-        EntityData ed = parent.addChildEntity(entity);
-        ed.setOrderIndex(index);
-        annotationBean.saveOrUpdateEntityData(ed);
-        logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+" as child of "+parent.getEntityType().getName()+"#"+entity.getId());
     }
 }

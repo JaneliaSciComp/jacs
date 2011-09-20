@@ -38,32 +38,16 @@ public class NeuronSeparationPipelineRemoteService implements IService {
             String script = NeuronSeparatorHelper.getNeuronSeparationCommands(task, parentNode, "mylib.mac", " ; ");
         	File scriptFile = new File(parentNode.getDirectoryPath(), REMOTE_SCRIPT);
         	FileUtils.writeStringToFile(scriptFile, NeuronSeparatorHelper.covertPathsToRemoteServer(script));
-            
-            String cmdLine = "ssh "+REMOTE_SERVER+" sh  "+NeuronSeparatorHelper.covertPathsToRemoteServer(scriptFile.getAbsolutePath());
-            
-            StringBuffer stdout = new StringBuffer();
-            StringBuffer stderr = new StringBuffer();
-            SystemCall call = new SystemCall(stdout, stderr);
-
-            int exitCode = call.emulateCommandLine(cmdLine.toString(), true, TIMEOUT_SECONDS);
 
         	File outFile = new File(parentNode.getDirectoryPath(), "stdout");
-        	if (stdout.length() > 0) {
-                logger.info("Writing to stdout file="+outFile.getAbsolutePath());
-                FileUtils.writeStringToFile(outFile, stdout.toString());
-            } else {
-                logger.info("stdout has 0 size - skipping output to file="+outFile.getAbsolutePath());
-            }
-
             File errFile = new File(parentNode.getDirectoryPath(), "stderr");
-
-            if (stderr.length() > 0) {
-                logger.info("Writing to stderr file="+errFile.getAbsolutePath());
-                FileUtils.writeStringToFile(errFile, stderr.toString());
-            } else {
-                logger.info("stderr has 0 size - skipping output to file="+errFile.getAbsolutePath());
-            }
+            String cmdLine = "ssh "+REMOTE_SERVER+" sh "+
+            	NeuronSeparatorHelper.covertPathsToRemoteServer(scriptFile.getAbsolutePath()) +
+            	" 1>>"+outFile.getAbsolutePath()+" 2>>"+errFile.getAbsolutePath();
             
+            SystemCall call = new SystemCall();
+
+            int exitCode = call.emulateCommandLine(cmdLine.toString(), true, TIMEOUT_SECONDS);
             if (0!=exitCode) {
                 File exitCodeFile = new File(parentNode.getDirectoryPath(), "neuSepExitCode.txt");
                 FileUtils.writeStringToFile(exitCodeFile, ""+exitCode);

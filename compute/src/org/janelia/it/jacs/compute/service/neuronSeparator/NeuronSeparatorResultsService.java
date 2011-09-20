@@ -11,12 +11,10 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
-import org.janelia.it.jacs.compute.service.recruitment.CreateRecruitmentFileNodeException;
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.user_data.User;
@@ -65,21 +63,14 @@ public class NeuronSeparatorResultsService implements IService {
         	
             // Create the other files that are necessary
 
-            String cmdLine = NeuronSeparatorHelper.getPostNeuronSeparationCommands(task, parentNode, sample, " ; ");
+            File outFile = new File(parentNode.getDirectoryPath(), "stdout");
+            File errFile = new File(parentNode.getDirectoryPath(), "stderr");
+            String cmdLine = NeuronSeparatorHelper.getPostNeuronSeparationCommands(task, parentNode, sample, " ; ") +
+            	" 1>>"+outFile.getAbsolutePath()+" 2>>"+errFile.getAbsolutePath();
 
             if (cmdLine!=null && cmdLine.length()>0) {
-
-                StringBuffer stdout = new StringBuffer();
-                StringBuffer stderr = new StringBuffer();
-                SystemCall call = new SystemCall(logger, stdout, stderr);
+                SystemCall call = new SystemCall();
                 int exitCode = call.emulateCommandLine(cmdLine.toString(), true, 60);
-
-                File outFile = new File(parentNode.getDirectoryPath(), "stdout");
-                if (stdout.length() > 0) FileUtils.writeStringToFile(outFile, stdout.toString(), true);
-
-                File errFile = new File(parentNode.getDirectoryPath(), "stderr");
-                if (stderr.length() > 0) FileUtils.writeStringToFile(errFile, stderr.toString(), true);
-
                 if (0 != exitCode) {
                     throw new ServiceException("NeuronSeparatorResultsService failed with exitCode " + exitCode + " for resultDir=" + parentNode.getDirectoryPath());
                 }
@@ -89,13 +80,18 @@ public class NeuronSeparatorResultsService implements IService {
             // Create the result entity and populate with the output files
         	
             Entity resultEntity = createResultEntity();
+            NeuronSeparatorHelper.addToParent(sample, resultEntity, sample.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_RESULT);
             
-            addToParent(sample, resultEntity, sample.getMaxOrderIndex()+1);
-
+            Entity filesFolder = createSupportingFilesFolder();
+            NeuronSeparatorHelper.addToParent(resultEntity, filesFolder, 0, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
+            
+            Entity fragmentsFolder = createFolderEntity("Neuron Fragments");
+            NeuronSeparatorHelper.addToParent(resultEntity, fragmentsFolder, 1, EntityConstants.ATTRIBUTE_NEURON_FRAGMENTS);
+            
             EntityType tif2D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_2D);
             EntityType tif3D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_3D);
             EntityType tif3DLabel = annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_3D_LABEL_MASK);
-
+            
             File resultDir = new File(parentNode.getDirectoryPath());
             for (File resultFile : resultDir.listFiles()) {
             	String filename = resultFile.getName();
@@ -103,17 +99,17 @@ public class NeuronSeparatorResultsService implements IService {
             	if (resultFile.isDirectory()) continue;
             	
                 if (filename.equals("ConsolidatedSignal.tif")) {
-                    addResultItem(resultEntity, tif3D, resultFile);
+                    addResultItem(filesFolder, tif3D, resultFile);
                 }
                 else if (filename.startsWith("Signal_") && filename.endsWith(".tif")) {
-                    addResultItem(resultEntity, tif3D, resultFile);
+                    addResultItem(filesFolder, tif3D, resultFile);
                 }
                 else if (filename.equals("ConsolidatedLabel.tif")) {
                     evidenceOfSuccessfulCompletion=true;
-                    addResultItem(resultEntity, tif3DLabel, resultFile);
+                    addResultItem(filesFolder, tif3DLabel, resultFile);
                 }
                 else if (filename.equals("Reference.tif")) {
-                    addResultItem(resultEntity, tif3D, resultFile);
+                    addResultItem(filesFolder, tif3D, resultFile);
                 }
                 else if (filename.startsWith("neuronSeparatorPipeline.PR.neuron") && filename.endsWith(".tif")) {
                 	String mipNum = filename.substring("neuronSeparatorPipeline.PR.neuron".length(), filename.lastIndexOf('.'));
@@ -126,7 +122,8 @@ public class NeuronSeparatorResultsService implements IService {
                 		logger.warn("Error parsing number from MIP filename: "+mipNum);
                 	}
 
-                    addResultItem(resultEntity, tif2D, resultFile, index);
+                	Entity fragmentEntity = createFragmentEntity(tif2D, resultFile, index);
+                	NeuronSeparatorHelper.addToParent(fragmentsFolder, fragmentEntity, index, EntityConstants.ATTRIBUTE_ENTITY);
                 }
                 else {
                     // ignore other files
@@ -164,7 +161,7 @@ public class NeuronSeparatorResultsService implements IService {
                 }
 
             } else {
-                logger.info("Skipping generation of link due to lack of evidence of pipeline success");
+                logger.warn("Skipping generation of link due to lack of evidence of pipeline success");
             }
 
             // TODO: migrate the annotations from the previous result
@@ -216,7 +213,61 @@ public class NeuronSeparatorResultsService implements IService {
     private String escapeFilepathForCommandLine(String path) {
     	return path.replaceAll("(\\W)", "\\\\$1").replaceAll("\\\\/", "/").replaceAll("\\\\\\$", "\\$");
     }
+
+	private Entity createFragmentEntity(EntityType tif2D, File file, Integer index) throws Exception {
+		
+        Entity fragmentEntity = new Entity();
+        fragmentEntity.setUser(user);
+        fragmentEntity.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_NEURON_FRAGMENT));
+        fragmentEntity.setCreationDate(createDate);
+        fragmentEntity.setUpdatedDate(createDate);
+        fragmentEntity.setName("Neuron Fragment "+index);
+        fragmentEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER, index.toString());
+        
+        fragmentEntity = annotationBean.saveOrUpdateEntity(fragmentEntity);
+        logger.info("Saved fragment entity as "+fragmentEntity.getId());
+
+        Entity fileEntity = new Entity();
+        fileEntity.setUser(user);
+        fileEntity.setCreationDate(createDate);
+        fileEntity.setUpdatedDate(createDate);
+        fileEntity.setEntityType(tif2D);
+        fileEntity.setName(file.getName());
+        fileEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
+        fileEntity = annotationBean.saveOrUpdateEntity(fileEntity);
+        NeuronSeparatorHelper.addToParent(fragmentEntity, fileEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
+
+        logger.info("Saved fragment MIP as "+fileEntity.getId());
+        
+        return fragmentEntity;
+    }
+	
+    protected Entity createSupportingFilesFolder() throws Exception {
+        Entity filesFolder = new Entity();
+        filesFolder.setUser(user);
+        filesFolder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
+        filesFolder.setCreationDate(createDate);
+        filesFolder.setUpdatedDate(createDate);
+        filesFolder.setName("Supporting Files");
+        filesFolder = annotationBean.saveOrUpdateEntity(filesFolder);
+        logger.info("Saved supporting files folder as "+filesFolder.getId());
+        return filesFolder;
+    }
     
+	private Entity createFolderEntity(String name) throws Exception {
+        Entity fragmentsEntity = new Entity();
+        fragmentsEntity.setUser(user);
+        fragmentsEntity.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+        fragmentsEntity.setCreationDate(createDate);
+        fragmentsEntity.setUpdatedDate(createDate);
+        fragmentsEntity.setName(name);
+
+        fragmentsEntity = annotationBean.saveOrUpdateEntity(fragmentsEntity);
+        logger.info("Saved folder '"+name+"' as "+fragmentsEntity.getId());
+        
+        return fragmentsEntity;
+    }
+	
 	private Entity createResultEntity() throws Exception {
         Entity resultEntity = new Entity();
         resultEntity.setUser(user);
@@ -233,10 +284,6 @@ public class NeuronSeparatorResultsService implements IService {
     }
 
     private Entity addResultItem(Entity resultEntity, EntityType type, File file) throws Exception {
-    	return addResultItem(resultEntity, type, file, null);
-    }
-
-    private Entity addResultItem(Entity resultEntity, EntityType type, File file, Integer index) throws Exception {
         Entity entity = new Entity();
         entity.setUser(user);
         entity.setCreationDate(createDate);
@@ -246,15 +293,8 @@ public class NeuronSeparatorResultsService implements IService {
         entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
         entity = annotationBean.saveOrUpdateEntity(entity);
         logger.info("Saved "+type.getName()+" as "+entity.getId());
-        addToParent(resultEntity, entity, index);
+        NeuronSeparatorHelper.addToParent(resultEntity, entity, null, EntityConstants.ATTRIBUTE_ENTITY);
         return entity;
-    }
-
-    private void addToParent(Entity parent, Entity entity, Integer index) throws Exception {
-        EntityData ed = parent.addChildEntity(entity);
-        ed.setOrderIndex(index);
-        computeBean.genericSave(ed);
-        logger.info("Added " + entity.getEntityType().getName() + "#" + entity.getId() + " as child of " + parent.getEntityType().getName() + "#" + entity.getId());
     }
 
 }

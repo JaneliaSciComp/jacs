@@ -6,12 +6,10 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.user_data.neuronSeparator.NeuronSeparatorResultNode;
 
@@ -41,48 +39,6 @@ public class NeuronSeparatorHelper {
         return s.replaceAll(jacsDataPathLinux, jacsDataPathMac).
 		 replaceAll(flylightPathLinux, flylightPathMac);
     }
-    
-//    public static void deleteExistingNeuronSeparationResult(NeuronSeparatorPipelineTask task) throws Exception {
-//    	
-//    	// Get task parameters
-//        String oldSampleEntityId = task.getParameter(NeuronSeparatorPipelineTask.PARAM_oldSampleEntityId);
-//        String symbolicLinkName = task.getParameter(NeuronSeparatorPipelineTask.PARAM_symbolLinkName);
-//
-//        if (oldSampleEntityId == null || "".equals(oldSampleEntityId)) {
-//        	return;
-//        }
-//        
-//    	logger.warn("Deleting existing separation result for sample "+oldSampleEntityId);
-//    	
-//    	if (symbolicLinkName != null) {
-//            // Delete the symbolic link to the generated data
-//        	File symbolicLink = new File(symbolicLinkName);
-//            if (symbolicLink.exists()) {
-//            	logger.info("  Deleting existing symlink at "+symbolicLink);
-//            	symbolicLink.delete();	
-//            }
-//            else {
-//            	logger.warn("  Existing sample has no symbolic link");
-//            }
-//    	}
-//        
-//        // Delete the generated data
-//        Entity oldSample = EJBFactory.getLocalAnnotationBean().getEntityTree(new Long(oldSampleEntityId.trim()));
-//    	for(EntityData sed : oldSample.getEntityData()) {
-//			Entity resultEntity = sed.getChildEntity();
-//    		if (resultEntity == null) continue;
-//    		if (!EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT.equals(resultEntity.getEntityType().getName())) continue;
-//    		
-//        	File sampleDir = new File(resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-//            if (sampleDir.exists()) {
-//            	logger.info("  Deleting existing data at "+sampleDir.getAbsolutePath());
-//            	FileUtils.deleteDirectory(sampleDir);
-//            }
-//            else {
-//            	logger.warn("  Existing sample has no data to refresh");
-//            }
-//    	}
-//    }
     
 	public static String getNeuronSeparationCommands(NeuronSeparatorPipelineTask task, 
 			NeuronSeparatorResultNode parentNode, String mylibDir, String commandDelim) throws ServiceException {
@@ -227,6 +183,14 @@ public class NeuronSeparatorHelper {
     
     public static String createLsmMetadataFilename(File lsmFile) {
         return lsmFile.getName().replaceAll("\\s+","_");
+    }
+    
+    public static void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
+        EntityData ed = parent.addChildEntity(entity, attrName);
+        ed.setOrderIndex(index);
+        EJBFactory.getLocalAnnotationBean().saveOrUpdateEntityData(ed);
+        logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
+        		" as child of "+parent.getEntityType().getName()+"#"+parent.getId());
     }
     
 }

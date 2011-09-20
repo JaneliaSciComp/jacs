@@ -3,11 +3,14 @@ package org.janelia.it.jacs.compute.service.fileDiscovery;
 import java.io.File;
 import java.util.*;
 
+import javax.resource.spi.IllegalStateException;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.*;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.neuronSeparator.NeuronSeparatorHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -197,7 +200,7 @@ public class MCFOStitchedFileDiscoveryService implements IService {
             folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, dir.getAbsolutePath());
             folder = annotationBean.saveOrUpdateEntity(folder);
             logger.info("Saved folder as "+folder.getId());
-            addToParent(parentFolder, folder);
+            NeuronSeparatorHelper.addToParent(parentFolder, folder, null, EntityConstants.ATTRIBUTE_ENTITY);
         }
         else {
             logger.info("Found folder with id="+folder.getId());
@@ -236,7 +239,7 @@ public class MCFOStitchedFileDiscoveryService implements IService {
             Entity sample = findExistingSample(folder);
             String linkName = dir.getName();
             File symbolicLink = new File(linkingDir, linkName);
-
+            
             try {
 
                 if (sample!=null && !refresh) {
@@ -252,16 +255,21 @@ public class MCFOStitchedFileDiscoveryService implements IService {
                         logger.info("Could not locate stack file - skipping folder="+dir.getAbsolutePath());
                         return;
                     }
+                    
+                    sample = createSample(sampleName, symbolicLink);
+                    NeuronSeparatorHelper.addToParent(folder, sample, 0, EntityConstants.ATTRIBUTE_ENTITY);
+                    
                     stitchedStack = createStitchedStackFromFile(stackFile);
-                    sample = createSample(stitchedStack, sampleName, symbolicLink);
-                    addToParent(folder, sample, 0);
-                } else {
+                    addSampleSupportingFile(sample, stitchedStack);
+                } 
+                else {
                     stitchedStack = getStitchedStackFromSample(sample);
                 }
 
                 for (File file : lsmList) {
                     logger.info("Adding lsm file to sample parent entity="+file.getAbsolutePath());
-                    createFileBasedEntity(sample, lsmType, file, null);
+                    Entity lsmEntity = createFileBasedEntity(lsmType, file);
+                    addSampleSupportingFile(sample, lsmEntity);
                 }
 
                 launchColorSeparationPipeline(sample, stitchedStack, symbolicLink);
@@ -278,7 +286,9 @@ public class MCFOStitchedFileDiscoveryService implements IService {
     }
 
     private Entity getStitchedStackFromSample(Entity sample) throws Exception {
-        for (EntityData ed : sample.getEntityData()) {
+    	Entity supportingFiles = getSampleSupportingFiles(sample);
+    	if (supportingFiles==null) throw new IllegalStateException("Sample "+sample.getId()+" has no supporting files child");
+        for (EntityData ed : supportingFiles.getEntityData()) {
             Entity child = ed.getChildEntity();
             if (child == null) continue;
             if (!EntityConstants.TYPE_STITCHED_V3D_RAW.equals(child.getEntityType().getName())) continue;
@@ -325,8 +335,7 @@ public class MCFOStitchedFileDiscoveryService implements IService {
     	return null;
     }
 
-    protected Entity createSample(Entity stack, String name, File link) throws Exception {
-		
+    protected Entity createSample(String name, File link) throws Exception {
         Entity sample = new Entity();
         sample.setUser(user);
         sample.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_SAMPLE));
@@ -335,13 +344,10 @@ public class MCFOStitchedFileDiscoveryService implements IService {
         sample.setName(name);
         sample = annotationBean.saveOrUpdateEntity(sample);
         logger.info("Saved sample as "+sample.getId());
-
-        addToParent(sample, stack, 0);
-        
         return sample;
     }
 
-      private Entity createStitchedStackFromFile(File file) throws Exception {
+    private Entity createStitchedStackFromFile(File file) throws Exception {
         Entity stitchedStack = new Entity();
         stitchedStack.setUser(user);
         stitchedStack.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_STITCHED_V3D_RAW));
@@ -352,6 +358,55 @@ public class MCFOStitchedFileDiscoveryService implements IService {
         stitchedStack = annotationBean.saveOrUpdateEntity(stitchedStack);
         logger.info("Saved stitched stack as "+stitchedStack.getId());
         return stitchedStack;
+    }
+    
+    private Entity createFileBasedEntity(EntityType type, File file) throws Exception {
+    	
+        Entity entity = new Entity();
+        entity.setUser(user);
+        entity.setCreationDate(createDate);
+        entity.setUpdatedDate(createDate);
+        entity.setEntityType(type);
+        entity.setName(file.getName());
+        entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
+        entity = annotationBean.saveOrUpdateEntity(entity);
+        logger.info("Saved "+type.getName()+" as "+entity.getId());
+        return entity;
+    }
+    
+    private void addSampleSupportingFile(Entity sample, Entity fileEntity) throws Exception {
+
+    	Entity supportingFiles = getSampleSupportingFiles(sample);
+    	
+    	if (supportingFiles == null) {
+    		supportingFiles = createSupportingFilesFolder();
+    		NeuronSeparatorHelper.addToParent(sample, supportingFiles, 0, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
+    	}
+    	
+    	NeuronSeparatorHelper.addToParent(supportingFiles, fileEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
+    }
+    
+    protected Entity createSupportingFilesFolder() throws Exception {
+        Entity filesFolder = new Entity();
+        filesFolder.setUser(user);
+        filesFolder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
+        filesFolder.setCreationDate(createDate);
+        filesFolder.setUpdatedDate(createDate);
+        filesFolder.setName("Supporting Files");
+        filesFolder = annotationBean.saveOrUpdateEntity(filesFolder);
+        logger.info("Saved supporting files folder as "+filesFolder.getId());
+        return filesFolder;
+    }
+    
+    private Entity getSampleSupportingFiles(Entity sample) {
+    	Entity supportingFiles = null;
+    	for(EntityData ed : sample.getEntityData()) {
+    		Entity child = ed.getChildEntity();
+    		if (child != null && child.getEntityType().getName().equals(EntityConstants.TYPE_SUPPORTING_DATA)) {
+    			supportingFiles = child;
+    		}	
+    	}
+    	return supportingFiles;
     }
 
     private void launchColorSeparationPipeline(Entity sample, Entity stitchedStack, File symbolicLink) throws Exception {
@@ -370,30 +425,4 @@ public class MCFOStitchedFileDiscoveryService implements IService {
         }
         
     }
-
-    private void addToParent(Entity parent, Entity entity) throws Exception {
-    	addToParent(parent, entity, null);
-    }
-    
-    private void addToParent(Entity parent, Entity entity, Integer index) throws Exception {
-        EntityData ed = parent.addChildEntity(entity);
-        ed.setOrderIndex(index);
-        annotationBean.saveOrUpdateEntityData(ed);
-        logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+" as child of "+parent.getEntityType().getName()+"#"+entity.getId());
-    }
-
-    private Entity createFileBasedEntity(Entity parentEntity, EntityType type, File file, Integer index) throws Exception {
-        Entity entity = new Entity();
-        entity.setUser(user);
-        entity.setCreationDate(createDate);
-        entity.setUpdatedDate(createDate);
-        entity.setEntityType(type);
-        entity.setName(file.getName());
-        entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
-        entity = annotationBean.saveOrUpdateEntity(entity);
-        logger.info("Saved "+type.getName()+" as "+entity.getId());
-        addToParent(parentEntity, entity, index);
-        return entity;
-    }
-
 }

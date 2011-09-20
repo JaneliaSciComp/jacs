@@ -64,6 +64,9 @@ public class SystemCall {
     
     private Random random = new Random();
 
+    public SystemCall() {
+    }
+    
     public SystemCall(Logger logger) {
         this.logger = logger;
     }

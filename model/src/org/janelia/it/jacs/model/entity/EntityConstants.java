@@ -26,6 +26,7 @@ public class EntityConstants {
     public static final String TYPE_ONTOLOGY_ROOT                    = "Ontology Root";
     public static final String TYPE_ONTOLOGY_ELEMENT                 = "Ontology Element";
     public static final String TYPE_FOLDER                           = "Folder";
+    public static final String TYPE_SUPPORTING_DATA                  = "Supporting Data";
     public static final String TYPE_SAMPLE                           = "Sample";
     public static final String TYPE_LSM_STACK_PAIR                   = "LSM Stack Pair";
     public static final String TYPE_NEURON_SEPARATOR_PIPELINE_RESULT = "Neuron Separator Pipeline Result";
@@ -53,6 +54,9 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ANNOTATION_TARGET_ID                = "Annotation Target Id";
     public static final String ATTRIBUTE_ANNOTATION_SESSION_ID               = "Annotation Session Id";
     public static final String ATTRIBUTE_NUMBER                              = "Number";
+    public static final String ATTRIBUTE_RESULT                              = "Result";
+    public static final String ATTRIBUTE_SUPPORTING_FILES                    = "Supporting Files";
+    public static final String ATTRIBUTE_NEURON_FRAGMENTS                    = "Neuron Fragments";
     public static final String ATTRIBUTE_INPUT                               = "ATTRIBUTE_INPUT";
     
 }
