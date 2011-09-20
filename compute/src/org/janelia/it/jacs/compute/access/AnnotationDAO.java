@@ -383,7 +383,13 @@ public class AnnotationDAO extends ComputeBaseDAO {
         Session session = getCurrentSession();
     	
     	try {
-	        entityType.getAttributes().add(entityAttr);
+    		Set<EntityAttribute> attrs = entityType.getAttributes();
+    		if (attrs == null) {
+    			attrs = new HashSet<EntityAttribute>();
+    			entityType.setAttributes(attrs);
+    		}
+    		
+    		attrs.add(entityAttr);
 	        session.saveOrUpdate(entityType);
             _logger.info("Added EntityAttribute " + entityAttr.getName() + " to EntityType "+entityType.getName());
 	        
