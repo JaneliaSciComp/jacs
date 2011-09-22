@@ -104,6 +104,14 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     public Set<EntityData> getEntityData() {
         return this.entityData;
     }
+
+    public Set<Entity> getChildren() {
+    	Set<Entity> children = new HashSet<Entity>();
+    	for(EntityData ed : entityData) {
+        	if (ed.getChildEntity() != null) children.add(ed.getChildEntity());
+    	}
+    	return children;
+    }
     
     public void setEntityData(Set<EntityData> entityData) {
         this.entityData = entityData;
