@@ -117,7 +117,11 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             	return new ArrayList<Entity>();
             }
             else {
-            	return _annotationDAO.getEntitiesInList(entityIds);	
+            	List<Entity> entities =_annotationDAO.getEntitiesInList(entityIds);	
+            	for(Entity entity : entities) {
+            		populateDescendants(entity);
+            	}
+            	return entities;
             }
         }
         catch (Exception e) {

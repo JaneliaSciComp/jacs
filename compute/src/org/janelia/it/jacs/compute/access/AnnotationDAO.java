@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.compute.access;
 
+import java.util.*;
+
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
@@ -8,11 +10,6 @@ import org.hibernate.Session;
 import org.hibernate.criterion.Expression;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public class AnnotationDAO extends ComputeBaseDAO {
 
@@ -670,7 +667,21 @@ public class AnnotationDAO extends ComputeBaseDAO {
             StringBuffer hql = new StringBuffer("select e from Entity e where " +
                     "e.id in ("+entityIds+") ");
             Query query = session.createQuery(hql.toString());
-            return query.list();
+            List<Entity> results = query.list();
+            
+            // Resort the results in the order that the ids were given
+            
+            Map<String,Entity> map = new HashMap<String,Entity>();
+            for(Entity entity : results) {
+            	map.put(entity.getId().toString(), entity);
+            }
+            
+            List<Entity> sortedList = new ArrayList<Entity>();
+            for(String entityId : entityIds.split("\\s+,\\s+")) {
+            	sortedList.add(map.get(entityId));
+            }
+            
+            return sortedList;
         }
         catch (Exception e) {
             throw new DaoException(e);
