@@ -21,6 +21,8 @@ public class NeuronSeparationPipelineRemoteService implements IService {
     private static final int TIMEOUT_SECONDS = 7200;  // 2 hours
     private static final String REMOTE_SERVER = SystemConfigurationProperties.getString("Remote.Work.Server.Mac");
     private static final String REMOTE_SCRIPT = "runsep.mac.sh";
+    private static final String STDOUT_FILE = "runsep.out";
+    private static final String STDERR_FILE = "runsep.err";
     
     private Logger logger;
     private NeuronSeparatorPipelineTask task;
@@ -39,8 +41,8 @@ public class NeuronSeparationPipelineRemoteService implements IService {
         	File scriptFile = new File(parentNode.getDirectoryPath(), REMOTE_SCRIPT);
         	FileUtils.writeStringToFile(scriptFile, NeuronSeparatorHelper.covertPathsToRemoteServer(script));
 
-        	File outFile = new File(parentNode.getDirectoryPath(), "stdout");
-            File errFile = new File(parentNode.getDirectoryPath(), "stderr");
+        	File outFile = new File(parentNode.getDirectoryPath(), STDOUT_FILE);
+            File errFile = new File(parentNode.getDirectoryPath(), STDERR_FILE);
             String cmdLine = "ssh "+REMOTE_SERVER+" sh "+
             	NeuronSeparatorHelper.covertPathsToRemoteServer(scriptFile.getAbsolutePath()) +
             	" 1>>"+outFile.getAbsolutePath()+" 2>>"+errFile.getAbsolutePath();

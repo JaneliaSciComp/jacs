@@ -32,6 +32,8 @@ public class NeuronSeparatorResultsService implements IService {
 
     private static final String REMOTE_SERVER = SystemConfigurationProperties.getString("Remote.Work.Server.Mac");
     private static final String REMOTE_LINKING_SCRIPT = "symlink.mac.sh";
+    private static final String STDOUT_FILE = "postsep.out";
+    private static final String STDERR_FILE = "postsep.err";
     
     private Logger logger;
     private NeuronSeparatorResultNode parentNode;
@@ -63,10 +65,10 @@ public class NeuronSeparatorResultsService implements IService {
         	
             // Create the other files that are necessary
 
-            File outFile = new File(parentNode.getDirectoryPath(), "stdout");
-            File errFile = new File(parentNode.getDirectoryPath(), "stderr");
+            File outFile = new File(parentNode.getDirectoryPath(), STDOUT_FILE);
+            File errFile = new File(parentNode.getDirectoryPath(), STDERR_FILE);
             String cmdLine = NeuronSeparatorHelper.getPostNeuronSeparationCommands(task, parentNode, sample, " ; ") +
-            	" 1>>"+outFile.getAbsolutePath()+" 2>>"+errFile.getAbsolutePath();
+            	" 1>"+outFile.getAbsolutePath()+" 2>"+errFile.getAbsolutePath();
 
             if (cmdLine!=null && cmdLine.length()>0) {
                 SystemCall call = new SystemCall();
@@ -74,7 +76,6 @@ public class NeuronSeparatorResultsService implements IService {
                 if (0 != exitCode) {
                     throw new ServiceException("NeuronSeparatorResultsService failed with exitCode " + exitCode + " for resultDir=" + parentNode.getDirectoryPath());
                 }
-
             }
             
             // Create the result entity and populate with the output files
