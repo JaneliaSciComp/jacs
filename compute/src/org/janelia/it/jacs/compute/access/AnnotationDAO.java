@@ -677,8 +677,11 @@ public class AnnotationDAO extends ComputeBaseDAO {
             }
             
             List<Entity> sortedList = new ArrayList<Entity>();
-            for(String entityId : entityIds.split("\\s+,\\s+")) {
-            	sortedList.add(map.get(entityId));
+            for(String entityId : entityIds.split("\\s*,\\s*")) {
+            	Entity entity = map.get(entityId);
+            	if (entity != null) {
+            		sortedList.add(entity);
+            	}
             }
             
             return sortedList;
