@@ -67,7 +67,7 @@
     AppVersionResolver appVersionResolver = (AppVersionResolver) ctx.getBean("appVersionResolver");
     String appVersion = appVersionResolver.getAppVersion(true); // get full version for dev and integration
 //    String appVersion = appVersionResolver.getAppVersion(deploymentCtx < 4); // get full version for dev and integration
-
+    String helpdesk = properties.getProperty("System.ErrorMessageDestination");
 %>
 
   <table align="center" cellpadding="0" cellspacing="0" border="0">
@@ -80,7 +80,7 @@
             href="mailto:saffordt@janelia.hhmi.org">
             Help desk</a> --%>
          <a class="smallFooterLink"
-            href="mailto:ihelpdesk@jcvi.org">
+            href="mailto:<%=helpdesk%>">
             Help desk</a>
 
        <span class="smallLinkSeparator">&nbsp;|&nbsp;</span>
