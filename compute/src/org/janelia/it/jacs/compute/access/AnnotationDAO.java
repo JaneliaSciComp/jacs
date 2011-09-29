@@ -691,4 +691,23 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
 	}
 
+    
+    /**
+     * Searches the tree for the given entity and returns its ancestor of a given type, or null if the entity or 
+     * ancestor does not exist.
+     * @param entity
+     * @param type
+     * @return
+     */
+    public Entity getAncestorWithType(Entity entity, String type) throws DaoException {
+
+    	if (entity.getEntityType().getName().equals(type)) return entity;
+    	
+    	for(Entity parent : getParentEntities(entity.getId())) {
+    		Entity ancestor = getAncestorWithType(parent, type);
+    		if (ancestor != null) return ancestor;
+    	}
+    	
+    	return null;
+    }
 }

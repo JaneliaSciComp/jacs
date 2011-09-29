@@ -740,6 +740,17 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     	preloadData();
         return attrByName.get(attrName);	
     }
+
+    public Entity getAncestorWithType(Entity entity, String type) throws ComputeException {
+
+    	try {
+    		return _annotationDAO.getAncestorWithType(entity, type);
+    	}
+    	catch (DaoException e) {
+            _logger.error("Error finding ancestor of type "+type+" for "+entity.getId(),e);
+    		throw new ComputeException("Error finding ancestor of type "+type+" for "+entity.getId(),e);
+    	}
+    }
     
     private Entity newEntity(String entityTypeName, String value, User owner) {
         EntityType tmpType = getEntityTypeByName(entityTypeName);

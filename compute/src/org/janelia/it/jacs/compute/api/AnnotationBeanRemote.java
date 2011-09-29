@@ -61,4 +61,6 @@ public interface AnnotationBeanRemote {
     public EntityType createNewEntityType(String entityTypeName) throws ComputeException;
     public EntityAttribute createNewEntityAttr(String entityTypeName, String attrName) throws ComputeException;
     public void setupEntityTypes();
+    
+    public Entity getAncestorWithType(Entity entity, String type) throws ComputeException;
 }
