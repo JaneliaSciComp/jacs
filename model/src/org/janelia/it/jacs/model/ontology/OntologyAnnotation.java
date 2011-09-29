@@ -1,9 +1,6 @@
 package org.janelia.it.jacs.model.ontology;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.*;
 
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -36,6 +33,9 @@ public class OntologyAnnotation implements java.io.Serializable {
 	
 	@XmlElement
 	private String valueString;
+	
+	@XmlTransient
+	private Entity entity;
 
 	public OntologyAnnotation() {		 
 	}
@@ -53,6 +53,7 @@ public class OntologyAnnotation implements java.io.Serializable {
 
 	public void init(Entity annotation) {
         
+		this.entity = annotation;
 		this.id = annotation.getId();
 		this.keyString = annotation.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_TERM);
         this.valueString = annotation.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM);
@@ -81,7 +82,15 @@ public class OntologyAnnotation implements java.io.Serializable {
 	private boolean isEmpty(String s) {
 		return (s == null || "".equals(s));
 	}
-
+	
+	public Entity getEntity() {
+		return entity;
+	}
+	
+	public String getOwner() {
+		return entity.getUser() == null ? null : entity.getUser().getUserLogin();
+	}
+	
 	public Long getId() {
 		return id;
 	}
@@ -136,5 +145,10 @@ public class OntologyAnnotation implements java.io.Serializable {
 
 	public void setValueString(String valueString) {
 		this.valueString = valueString;
+	}
+
+	@Override
+	public String toString() {
+		return entity.getName();
 	}
 }
