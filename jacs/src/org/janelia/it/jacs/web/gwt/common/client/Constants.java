@@ -71,10 +71,12 @@ public class Constants {
     public static final String NEURON_SEPARATOR_LABEL = "Neuron Separator";
     public static final String FR_LABEL = "Fragment Recruitment";
     public static final String PROFILE_COMPARISON_LABEL = "Profile Comparison Tools";
+    public static final String GECI_IP_LABEL = "GECI Image Processing";
     public static final String JOBS_MG_ANNOT_LABEL = "Metagenomics Annotation";
     public static final String JOBS_PROK_ANNOT_LABEL = "Prokaryotic Annotation";
     public static final String JOBS_EUK_ANNOT_LABEL = "Eukaryotic Annotation";
     public static final String RNA_SEQ_PIPELINE_LABEL = "RNA-Seq Pipeline";
+    public static final String ZLATIC_LAB_LABEL = "Zlatic Lab";
 
     public static final String JOBS_NEW_JOB_LABEL = "BLAST Wizard";
     public static final String JOBS_NEW_CLUSTER_JOB_LABEL = "BLAST Protein Clusters";

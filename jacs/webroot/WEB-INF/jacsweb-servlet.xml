@@ -124,37 +124,6 @@
             <bean class="org.springframework.web.servlet.mvc.multiaction.PropertiesMethodNameResolver">
                 <property name="mappings">
                      <props>
-                         <!-- Old URL's.  Remove by version 4.0-->
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.admin.Admin/Admin.htm">admin</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.advancedblast.AdvancedBlast/AdvancedBlast.htm">advancedblast</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.ap16s.AnalysisPipeline16S/AnalysisPipeline16S.htm">ap16s</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.barcode.BarCodeDesigner/BarCodeDesigner.htm">barcode</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.blast.Blast/Blast.htm">blast</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.download.BrowseProjectsPage/BrowseProjectsPage.*">browseProjects</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.cpd.ClosurePrimerDesign/ClosurePrimerDesign.htm">cpd</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.dpd.DegeneratePrimerDesign/DegeneratePrimerDesign.htm">dpd</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.detail.DetailPage/DetailPage.htm">detail</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.download.DownloadByPubPage/DownloadByPubPage.*">downloadByPub</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.download.DownloadNewFilesPage/DownloadNewFilesPage.htm">downloadNewFiles</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.admin.editproject.EditProject/EditProject.htm">editProject</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.admin.editpublication.EditPublication/EditPublication.htm">editPublication</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.eukAnnot.EukAnnot/EukAnnotation.htm">eukAnnotation</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.frv.Frv/Frv.htm">frv</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.header.Header/Header.htm">header</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.home.Home/Home.htm">home</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.ict.IntersiteComparisonTool/IntersiteComparisonTool.htm">ict</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.map.MapTest/MapTest.htm">mapTest</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.mgAnnot.MgAnnot/MgAnnotation.htm">mgAnnotation</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.matrix.ProfileComparison/ProfileComparison.htm">profileComparison</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.download.ProjectSamplesPage/ProjectSamplesPage.*">projectSamples</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.prokAnnot.ProkAnnot/ProkAnnotation.htm">prokAnnotation</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.psiBlast.PsiBlast/PsiBlast.htm">psiBlast</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.reversePsiBlast.ReversePsiBlast/ReversePsiBlast.htm">reversePsiBlast</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.search.Search/Search.*">search</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.status.Status/Status.htm">status</prop>
-                         <prop key="/gwt/org.janelia.it.jacs.web.gwt.test.Test/Test.*">testmethod</prop>
-
-                         <!-- New URL's-->
                          <prop key="/gwt/Admin/Admin.htm">admin</prop>
                          <prop key="/gwt/AdvancedBlast/AdvancedBlast.htm">advancedblast</prop>
                          <prop key="/gwt/AnalysisPipeline16S/AnalysisPipeline16S.htm">ap16s</prop>
@@ -173,6 +142,7 @@
                          <prop key="/gwt/EukAnnot/EukAnnotation.htm">eukAnnotation</prop>
                          <prop key="/gwt/FRData/FRData.htm">frdata</prop>
                          <prop key="/gwt/FRV/Frv.htm">frv</prop>
+                         <prop key="/gwt/GeciImageProcessing/GeciImageProcessing.htm">geciImageProcessing</prop>
                          <prop key="/gwt/Header/Header.htm">header</prop>
                          <prop key="/gwt/Home/Home.htm">home</prop>
                          <prop key="/gwt/Inspect/Inspect.htm">inspect</prop>
@@ -188,9 +158,9 @@
                          <prop key="/gwt/RnaSeq/RnaSeq.htm">rnaSeq</prop>
                          <prop key="/gwt/Search/Search.*">search</prop>
                          <prop key="/gwt/Status/Status.htm">status</prop>
+                         <prop key="/gwt/ZlaticLab/ZlaticLab.htm">zlaticLab</prop>
                          <prop key="/styleTutorial.htm">styleTutorial</prop>
                          <prop key="/gwt/Test/Test.*">testmethod</prop>
-
                      </props>
                 </property>
             </bean>

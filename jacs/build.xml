@@ -129,7 +129,7 @@
     </target>
 
     <!-- Runs the GWT compiler to convert client (browser) Java into JS for all modules -->
-    <target name="gwt-compile" depends="setup, make-gwt-build-dir" description="Generate clientside content with GWT"
+    <target name="gwt-compile" depends="setup, make-gwt-build-dir" description="Generate client side content with GWT"
             unless="skip.GWT.compilation">
         <parallel threadcount="3">
             <!-- Package up the common code module-->
@@ -158,6 +158,14 @@
             <!--<antcall target="gwt-compile-module">-->
                 <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.status.Status" />-->
                 <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/status/Status.gwt.xml" />-->
+            <!--</antcall>-->
+            <!--<antcall target="gwt-compile-module">-->
+                <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.geci.GeciImageProcessing" />-->
+                <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/geci/GeciImageProcessing.gwt.xml" />-->
+            <!--</antcall>-->
+            <!--<antcall target="gwt-compile-module">-->
+                <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.zlatic.ZlaticLab" />-->
+                <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/zlatic/ZlaticLab.gwt.xml" />-->
             <!--</antcall>-->
             <!--<antcall target="gwt-compile-module">-->
               <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.admin.Admin" />-->
@@ -581,6 +589,20 @@
             <param name="module.path" value="org.janelia.it.jacs.web.gwt.matrix.ProfileComparison"/>
             <param name="url.target" value="ProfileComparison"/>
             <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/matrix/ProfileComparison.gwt.xml" />
+        </antcall>
+    </target>
+    <target name="deploy-geciImageProcessing" depends="setup">
+        <antcall target="deploy-gwt-module">
+            <param name="module.path" value="org.janelia.it.jacs.web.gwt.geci.GeciImageProcessing"/>
+            <param name="url.target" value="GeciImageProcessing"/>
+            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/geci/GeciImageProcessing.gwt.xml" />
+        </antcall>
+    </target>
+    <target name="deploy-zlaticLab" depends="setup">
+        <antcall target="deploy-gwt-module">
+            <param name="module.path" value="org.janelia.it.jacs.web.gwt.zlatic.ZlaticLab"/>
+            <param name="url.target" value="ZlaticLab"/>
+            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/zlatic/ZlatciLab.gwt.xml" />
         </antcall>
     </target>
     <target name="deploy-intersiteComparisonTool" depends="setup">

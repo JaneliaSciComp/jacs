@@ -40,9 +40,6 @@ import java.io.Serializable;
  */
 public class ProfileComparisonResultNode extends FileNode implements IsSerializable, Serializable {
 
-    //public transient static final String TAG_BARCODE_OUTPUT="Barcodes.tsv";
-    //public transient static final String TAG_GENERATION_PROFILE_OUTPUT="GenerationProfile.tsv";
-
     /**
      * constructor
      */

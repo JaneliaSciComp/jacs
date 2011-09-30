@@ -130,6 +130,14 @@ public class UrlBuilder {
         return GWT_BASE_URL + "ProfileComparison/ProfileComparison.htm";
     }
 
+    public static String getGeciImageProcessingUrl() {
+        return GWT_BASE_URL + "GeciImageProcessing/GeciImageProcessing.htm";
+    }
+
+    public static String getZlaticLabUrl() {
+        return GWT_BASE_URL + "ZlaticLab/ZlaticLab.htm";
+    }
+
     public static String getDiskUsageReportUrl() {
         return GWT_BASE_URL + "Admin/Admin.htm";
     }

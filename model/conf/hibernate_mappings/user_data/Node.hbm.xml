@@ -615,6 +615,18 @@
                       select-before-update="false">
             </subclass>
 
+            <subclass name="org.janelia.it.jacs.model.user_data.geci.GeciImageProcessingResultNode" discriminator-value="GeciImageProcessingResultNode"
+                      dynamic-update="true"
+                      dynamic-insert="true"
+                      select-before-update="false">
+            </subclass>
+
+            <subclass name="org.janelia.it.jacs.model.user_data.zlatic.ZlaticLabResultNode" discriminator-value="ZlaticLabResultNode"
+                      dynamic-update="true"
+                      dynamic-insert="true"
+                      select-before-update="false">
+            </subclass>
+
             <subclass name="org.janelia.it.jacs.model.user_data.pangenome.PangenomePipelineResultFileNode" discriminator-value="PangenomePipelineResultFileNode"
                       dynamic-update="true"
                       dynamic-insert="true"

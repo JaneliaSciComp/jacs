@@ -121,6 +121,11 @@ public class SystemPageHeader {
 //                new SimpleMenuItem("Primer Design For Closure",   new OpenInSameWindowCommand(UrlBuilder.getClosurePrimerDesignUrl())),
         menubar.addMenu(pipelineMenu);
 
+        menubar.addMenu(new SimpleMenu(getMenuLabel("Projects"), new SimpleMenuItem[]{
+                new SimpleMenuItem("GECI Image Processing", new OpenInSameWindowCommand(UrlBuilder.getGeciImageProcessingUrl())),
+                new SimpleMenuItem("Zlatic Lab", new OpenInSameWindowCommand(UrlBuilder.getZlaticLabUrl())),
+        }));
+
         menubar.addMenu(new SimpleMenu(getMenuLabel("Example Functionality"), new SimpleMenuItem[]{
                 new SimpleMenuItem("Browse Projects", new OpenInSameWindowCommand(UrlBuilder.getProjectsUrl())),
                 new SimpleMenuItem("Browse Publications", new OpenInSameWindowCommand(UrlBuilder.getPubsUrl())),
