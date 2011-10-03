@@ -283,6 +283,30 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     	return orderedData;
     }
 
+    /**
+     * Get all the descendants (including self) which are of a certain type. Depends on the subtree of entities 
+     * "below" this one being loaded.
+     *
+     * @param entity
+     * @param typeName
+     * @return
+     */
+    public List<Entity> getDescendantsOfType(String typeName) {
+
+        List<Entity> items = new ArrayList<Entity>();
+        if (typeName.equals(getEntityType().getName())) {
+            items.add(this);
+        }
+
+        for (EntityData entityData : getOrderedEntityData()) {
+            Entity child = entityData.getChildEntity();
+            if (child != null) {
+                items.addAll(child.getDescendantsOfType(typeName));
+            }
+        }
+
+        return items;
+    }
 
     @Override
     public String toString() {
