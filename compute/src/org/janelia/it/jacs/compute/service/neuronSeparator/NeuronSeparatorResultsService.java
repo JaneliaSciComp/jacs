@@ -86,7 +86,7 @@ public class NeuronSeparatorResultsService implements IService {
             Entity filesFolder = createSupportingFilesFolder();
             NeuronSeparatorHelper.addToParent(resultEntity, filesFolder, 0, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
             
-            Entity fragmentsFolder = createFolderEntity("Neuron Fragments");
+            Entity fragmentsFolder = createFragmentCollection();
             NeuronSeparatorHelper.addToParent(resultEntity, fragmentsFolder, 1, EntityConstants.ATTRIBUTE_NEURON_FRAGMENTS);
             
             EntityType tif2D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_2D);
@@ -265,6 +265,20 @@ public class NeuronSeparatorResultsService implements IService {
 
         fragmentsEntity = annotationBean.saveOrUpdateEntity(fragmentsEntity);
         logger.info("Saved folder '"+name+"' as "+fragmentsEntity.getId());
+        
+        return fragmentsEntity;
+    }
+
+	private Entity createFragmentCollection() throws Exception {
+        Entity fragmentsEntity = new Entity();
+        fragmentsEntity.setUser(user);
+        fragmentsEntity.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION));
+        fragmentsEntity.setCreationDate(createDate);
+        fragmentsEntity.setUpdatedDate(createDate);
+        fragmentsEntity.setName("Neuron Fragments");
+
+        fragmentsEntity = annotationBean.saveOrUpdateEntity(fragmentsEntity);
+        logger.info("Saved fragment collection as "+fragmentsEntity.getId());
         
         return fragmentsEntity;
     }

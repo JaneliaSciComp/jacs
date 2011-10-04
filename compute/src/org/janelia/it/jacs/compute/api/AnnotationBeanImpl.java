@@ -768,6 +768,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
      * @return
      */
     private Entity populateDescendants(Entity entity) {
+    	if (entity == null) return null;
     	for(EntityData ed : entity.getEntityData()) {
     		Entity child = ed.getChildEntity();
     		if (child != null) {
