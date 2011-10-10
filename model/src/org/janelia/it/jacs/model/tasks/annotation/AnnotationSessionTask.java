@@ -46,6 +46,7 @@ public class AnnotationSessionTask extends Task {
     transient public static final String PARAM_sessionName = "session name";
     transient public static final String PARAM_annotationCategories = "annotation categories";
     transient public static final String PARAM_annotationTargets     = "annotation targets";
+    transient public static final String PARAM_completedTargets     = "completed targets";
 
     public AnnotationSessionTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet) {
         super(inputNodes, owner, events, taskParameterSet);
@@ -60,6 +61,7 @@ public class AnnotationSessionTask extends Task {
         setParameter(PARAM_sessionName, "");
         setParameter(PARAM_annotationCategories, "");
         setParameter(PARAM_annotationTargets, "");
+        setParameter(PARAM_completedTargets, "");
         this.taskName = TASK_NAME;
     }
 
@@ -69,7 +71,10 @@ public class AnnotationSessionTask extends Task {
         String value = getParameter(key);
         if (value == null)
             return null;
-        if (key.equals(PARAM_sessionName)||key.equals(PARAM_annotationCategories)||key.equals(PARAM_annotationTargets)) {
+        if (key.equals(PARAM_sessionName)
+        		||key.equals(PARAM_annotationCategories)
+        		||key.equals(PARAM_annotationTargets)
+        		||key.equals(PARAM_completedTargets)) {
             return new TextParameterVO(value);
         }
 

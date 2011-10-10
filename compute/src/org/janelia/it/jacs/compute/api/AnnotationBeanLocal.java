@@ -41,6 +41,7 @@ public interface AnnotationBeanLocal {
     public List<Entity> getAnnotationsForSession(String username, long sessionId) throws ComputeException;
     public List<Entity> getEntitiesForAnnotationSession(String username, long sessionId) throws ComputeException;
     public List<Entity> getCategoriesForAnnotationSession(String username, long sessionId) throws ComputeException;
+    public Set<Long> getCompletedEntityIds(long sessionId) throws ComputeException;
     
     public List<Entity> getEntitiesWithFilePath(String filePath);
     public Entity getFolderTree(Long id) throws ComputeException;

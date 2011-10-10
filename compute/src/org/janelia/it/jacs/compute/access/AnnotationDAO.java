@@ -8,15 +8,49 @@ import org.hibernate.HibernateException;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.criterion.Expression;
+import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.model.entity.*;
+import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
+import org.janelia.it.jacs.model.ontology.types.Category;
+import org.janelia.it.jacs.model.ontology.types.Interval;
+import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
+import org.janelia.it.jacs.model.user_data.User;
 
 public class AnnotationDAO extends ComputeBaseDAO {
+
+    private static final Map<String, EntityType> entityByName = Collections.synchronizedMap(new HashMap<String, EntityType>());
+    private static final Map<String, EntityAttribute> attrByName = Collections.synchronizedMap(new HashMap<String, EntityAttribute>());
 
     public AnnotationDAO(Logger logger) {
         super(logger);
     }
 
+    private void preloadData() {
+
+        try {
+            if (entityByName.isEmpty()) {
+                _logger.debug("  Preloading entity types...");
+                for(EntityType entityType : getAllEntityTypes()) {
+                    _logger.debug("    Loaded entity type: "+entityType.getName());
+                    entityByName.put(entityType.getName(), entityType);
+                }
+            }
+
+            if (attrByName.isEmpty()) {
+                _logger.debug("  Preloading attribute types...");
+                for(EntityAttribute entityAttr : getAllEntityAttributes()) {
+                    _logger.debug("    Loaded entity attr: "+entityAttr.getName());
+                    attrByName.put(entityAttr.getName(), entityAttr);
+                }
+            }
+        }
+        catch (Exception e) {
+            _logger.error("Unexpected error occurred while trying preload models.", e);
+        }
+    }
+    
     /**
      * This method gets the annotations for an entity and then removes the one that matches the value annotated.
      * This would be better if we had the annotation entity id, though.
@@ -96,15 +130,19 @@ public class AnnotationDAO extends ComputeBaseDAO {
         return null;
     }
 
-    public Entity getEntityById(String targetId) {
+    public Entity getEntityById(Long targetId) {
         Session session = getCurrentSession();
         Criteria c = session.createCriteria(Entity.class);
-        c.add(Expression.eq("id", Long.valueOf(targetId)));
+        c.add(Expression.eq("id",targetId));
         Entity entity = (Entity) c.uniqueResult();
         if (null != entity) {
             return entity;
         }
         return null;
+    }
+    
+    public Entity getEntityById(String targetId) {
+        return getEntityById(Long.valueOf(targetId));
     }
 
     public EntityAttribute getEntityAttribute(long entityAttributeConstant) {
@@ -205,7 +243,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
         getCurrentSession().delete(entity);
     }
     
-    public EntityAttribute getEntityAttributeByName(String name) throws DaoException {
+    public EntityAttribute fetchEntityAttributeByName(String name) throws DaoException {
         try {
             Session session = getCurrentSession();
             Criteria c = session.createCriteria(EntityAttribute.class);
@@ -218,7 +256,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
-    public EntityType getEntityTypeByName(String name) throws DaoException {
+    public EntityType fetchEntityTypeByName(String name) throws DaoException {
         try {
             Session session = getCurrentSession();
             Criteria c = session.createCriteria(EntityType.class);
@@ -340,6 +378,9 @@ public class AnnotationDAO extends ComputeBaseDAO {
     }
     
     public EntityType createNewEntityType(String name) throws DaoException {
+    	if (getEntityTypeByName(name) != null) {
+    		throw new DaoException("Entity type "+name+" already exists");
+    	}
         Session session = getCurrentSession();
     	
     	try {
@@ -347,7 +388,8 @@ public class AnnotationDAO extends ComputeBaseDAO {
 	    	entityType.setName(name);
 	        session.saveOrUpdate(entityType);
             _logger.info("Created new EntityType " + name);
-            
+
+    		entityByName.put(name, entityType);
 	        return entityType;
     	}
     	catch (Exception e) {
@@ -364,6 +406,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 	    	entityAttr = new EntityAttribute();
 	    	entityAttr.setName(attrName);
 	        session.saveOrUpdate(entityAttr);
+    		attrByName.put(attrName, entityAttr);
             _logger.info("Created new EntityAttribute " + attrName);
 	        
     	}
@@ -373,6 +416,23 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	
         addAttributeToEntityType(entityType, entityAttr);
         return entityAttr;
+    }
+    
+    public EntityAttribute createNewEntityAttr(String entityTypeName, String attrName) throws ComputeException {
+    	EntityType entityType = getEntityTypeByName(entityTypeName);
+    	if (entityType == null) {
+    		throw new ComputeException("Entity type "+entityTypeName+" does not exist");
+    	}
+    	EntityAttribute entityAttr = getEntityAttributeByName(attrName);
+    	if (entityAttr != null) {
+    		entityAttr = addAttributeToEntityType(entityType, entityAttr);	
+    		return entityAttr;
+    	}
+    	else {
+    		entityAttr = addAttributeToEntityType(entityType, attrName);	
+    		return entityAttr;
+    	}
+
     }
     
     public EntityAttribute addAttributeToEntityType(EntityType entityType, EntityAttribute entityAttr) throws DaoException  {
@@ -618,6 +678,13 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
 	public List<Entity> getAnnotationsForSession(String userLogin, long sessionId) throws DaoException {
 
+        Task task = getTaskById(sessionId);
+        if (task == null) 
+            throw new DaoException("Session not found");
+        
+		if (!(task instanceof AnnotationSessionTask)) 
+			throw new DaoException("Task is not an annotation session");
+		
         try {
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed where " +
@@ -634,9 +701,408 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
 	}
 
-	public void removeOntologyAnnotation(String userLogin, long annotationId) throws DaoException {
+    public List<Entity> getEntitiesForAnnotationSession(String username, long sessionId) throws ComputeException {
+        
+        Task task = getTaskById(sessionId);
+        if (task == null) 
+            throw new DaoException("Session not found");
+        
+		if (!(task instanceof AnnotationSessionTask)) 
+			throw new DaoException("Task is not an annotation session");
+    	
+        String entityIds = task.getParameter(AnnotationSessionTask.PARAM_annotationTargets);
+        if (entityIds == null || "".equals(entityIds)) {
+        	return new ArrayList<Entity>();
+        }
+        else {
+        	List<Entity> entities = getEntitiesInList(entityIds);	
+        	for(Entity entity : entities) {
+        		populateDescendants(entity);
+        	}
+        	return entities;
+        }
+    }
+	
+    public List<Entity> getCategoriesForAnnotationSession(String username, long sessionId) throws ComputeException {
+        
+        Task task = getTaskById(sessionId);
+        if (task == null) 
+            throw new DaoException("Session not found");
+        
+		if (!(task instanceof AnnotationSessionTask)) 
+			throw new DaoException("Task is not an annotation session");
+    	
+        String entityIds = task.getParameter(AnnotationSessionTask.PARAM_annotationCategories);
+        if (entityIds == null || "".equals(entityIds)) {
+        	return new ArrayList<Entity>();
+        }
+        else {
+        	return getEntitiesInList(entityIds);	
+        }
+    }
+
+    public Set<Long> getCompletedEntityIds(long sessionId) throws ComputeException {
+    
+        Task task = getTaskById(sessionId);
+        if (task == null) 
+            throw new DaoException("Session not found");
+        
+		if (!(task instanceof AnnotationSessionTask)) 
+			throw new DaoException("Task is not an annotation session");
+        
+        Set<Long> completedEntityIds = new HashSet<Long>();
+        String entityIds = task.getParameter(AnnotationSessionTask.PARAM_completedTargets);
+        if (entityIds == null || "".equals(entityIds)) return completedEntityIds;
+        
+        for(String id : entityIds.split("\\s*,\\s*")) {
+			try {
+				completedEntityIds.add(Long.parseLong(id));
+			} 
+			catch (NumberFormatException e) {
+				_logger.warn("Error parsing id in AnnotationSessionTask.PARAM_completedTargets: "+id,e);
+			}
+        }
+        
+        return completedEntityIds;
+    }
+    
+	private void updateAnnotationSession(long sessionId) throws ComputeException {
+
+		Task task = getTaskById(sessionId);
+        if (task == null) 
+            throw new DaoException("Session not found");
+        
+		if (!(task instanceof AnnotationSessionTask)) 
+			throw new DaoException("Task is not an annotation session");
+		
+		List<Entity> categories = getCategoriesForAnnotationSession(task.getOwner(), sessionId);
+		List<Entity> annotations = getAnnotationsForSession(task.getOwner(), sessionId);
+	
+        Map<String, List<Entity>> map = new HashMap<String, List<Entity>>();
+        for (Entity annotation : annotations) {
+            EntityData ed = annotation.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
+            if (ed == null) continue;
+            String entityId = ed.getValue();
+            List<Entity> entityAnnots = map.get(entityId);
+            if (entityAnnots == null) {
+                entityAnnots = new ArrayList<Entity>();
+                map.put(entityId, entityAnnots);
+            }
+            entityAnnots.add(annotation);
+        }
+	    
+        Set<String> completed = new HashSet<String>();
+        
+        for(String entityId : map.keySet()) {
+        	List<Entity> entityAnnotations = map.get(entityId);
+        	
+        	Set<Long> termIds = new HashSet<Long>();
+
+			for(Entity annotation : entityAnnotations) {
+				EntityData keyTermED = annotation.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
+				if (keyTermED==null) continue;
+				Entity keyTerm = keyTermED.getChildEntity();
+				if (keyTerm==null) continue;
+				Long termId = keyTerm.getId();
+    			String termType = keyTerm.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE);
+				
+				if ("Tag".equals(termType)) {
+					Entity parent = null;
+					for(Entity p : getParentEntities(termId)) {
+						String parentTypeName = p.getEntityType().getName();
+						if (parentTypeName.equals(EntityConstants.TYPE_ONTOLOGY_ELEMENT) 
+								|| parentTypeName.equals(EntityConstants.TYPE_ONTOLOGY_ROOT)) {
+							parent = p;
+							break;
+						}
+					}
+					if (parent != null) termId = parent.getId();
+				}
+				
+				termIds.add(termId);
+			}
+        	
+        	
+        	// Ensure this entity is annotated with a term in each category
+        	int c = 0;
+    		for(Entity category : categories) {
+				if (termIds.contains(category.getId())) {
+					c++;
+				}
+    		}	
+    		
+    		if (c == categories.size()) {
+    			completed.add(entityId);
+    		}
+        }
+        
+        StringBuffer buf = new StringBuffer();
+        for(String entityId : completed) {
+        	if (buf.length()>0) buf.append(",");
+        	buf.append(entityId);
+        }
+		
+        task.setParameter(AnnotationSessionTask.PARAM_completedTargets, buf.toString());
+        saveOrUpdate(task);
+	}
+	
+    public List<Entity> getPublicOntologies() throws ComputeException {
+
+        EntityType tmpType = getEntityTypeByName(EntityConstants.TYPE_ONTOLOGY_ROOT);
+        EntityAttribute tmpAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_IS_PUBLIC);
+        
+        StringBuffer hql = new StringBuffer("select clazz from Entity clazz");
+        hql.append(" where clazz.entityType.id=?");
+        hql.append(" and exists (from EntityData as attr where attr.parentEntity = clazz and attr.entityAttribute.id = ?)");
+        Query query = getCurrentSession().createQuery(hql.toString());
+        query.setLong(0, tmpType.getId());
+        query.setLong(1, tmpAttr.getId());
+        return query.list();
+    }
+    
+    public List<Entity> getPrivateOntologies(String userLogin) throws ComputeException {
+    	
+        EntityType tmpType = getEntityTypeByName(EntityConstants.TYPE_ONTOLOGY_ROOT);
+        EntityAttribute tmpAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_IS_PUBLIC);
+        
+        StringBuffer hql = new StringBuffer("select clazz from Entity clazz");
+        hql.append(" where clazz.entityType.id=?");
+        if (null != userLogin) {
+            hql.append(" and clazz.user.userLogin=?");
+        }
+        hql.append(" and not exists (from EntityData as attr where attr.parentEntity = clazz and attr.entityAttribute.id = ?)");
+        Query query = getCurrentSession().createQuery(hql.toString());
+        query.setLong(0, tmpType.getId());
+        query.setString(1, userLogin);
+        query.setLong(2, tmpAttr.getId());
+        return query.list();
+    }
+    
+    public Entity createOntologyRoot(String userLogin, String rootName) throws ComputeException {
+        
+        User tmpUser = getUserByName(userLogin);
+        Entity newOntologyRoot = newEntity(EntityConstants.TYPE_ONTOLOGY_ROOT, rootName, tmpUser);
+        saveOrUpdate(newOntologyRoot);
+
+        // Add the type
+        EntityData termData = newData(newOntologyRoot, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE, tmpUser);
+        termData.setValue(Category.class.getSimpleName());
+        saveOrUpdate(termData);
+
+        return newOntologyRoot;
+    }
+
+    public EntityData createOntologyTerm(String userLogin, Long ontologyTermParentId, String termName, OntologyElementType type, Integer orderIndex) throws ComputeException {
+
+        User tmpUser = getUserByName(userLogin);
+        Entity parentOntologyElement = getEntityById(ontologyTermParentId.toString());
+
+        // Check first to see if it's necessary to coerce the parent's type
+        EntityData parentTypeED = parentOntologyElement.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE);
+        _logger.info("Parent's type is "+parentTypeED.getValue());
+        if (parentTypeED!=null && "Tag".equals(parentTypeED.getValue())) {
+            // Adding a child to a Tag, so it must be coerced into a Category
+        	parentTypeED.setValue(Category.class.getSimpleName());
+            saveOrUpdate(parentTypeED);
+        }
+        
+        // Create and save the new entity
+        Entity newOntologyElement = newEntity(EntityConstants.TYPE_ONTOLOGY_ELEMENT, termName, tmpUser);
+
+        // If no order index is given then we add in last place
+        if (orderIndex == null) {
+        	int max = 0;
+        	for(EntityData data : parentOntologyElement.getEntityData()) {
+        		if (data.getOrderIndex() != null && data.getOrderIndex() > max) max = data.getOrderIndex(); 
+        	}
+        	orderIndex = max + 1;
+        }
+
+        Set<EntityData> eds = new HashSet<EntityData>();
+        newOntologyElement.setEntityData(eds);
+        
+        // Add the type
+        EntityData termData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE, tmpUser);
+        termData.setValue(type.getClass().getSimpleName());
+        eds.add(termData);
+
+        // Add the type-specific parameters
+        if (type instanceof Interval) {
+
+            Interval interval = (Interval)type;
+
+            EntityData lowerData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER, tmpUser);
+            lowerData.setValue(interval.getLowerBound().toString());
+            eds.add(lowerData);
+
+            EntityData upperData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER, tmpUser);
+            upperData.setValue(interval.getUpperBound().toString());
+            eds.add(upperData);
+        }
+
+        // Save the new element
+        saveOrUpdate(newOntologyElement);
+        
+        // Associate the entity to the parent
+        EntityData childData = newData(parentOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT, tmpUser);
+        childData.setChildEntity(newOntologyElement);
+        childData.setOrderIndex(orderIndex);
+        saveOrUpdate(childData);
+        
+        return childData;
+    }
+    
+    public Entity cloneEntityTree(Long sourceRootId, String targetUserLogin, String targetRootName) throws ComputeException {
+
+    	Entity sourceRoot = getEntityById(sourceRootId.toString());    	
+    	if (sourceRoot == null) {
+    		throw new DaoException("Cannot find the source root.");
+    	}
+    	
+        User targetUser = getUserByName(targetUserLogin);
+        if (targetUser == null) {
+            throw new DaoException("Cannot find the target user.");
+        }
+
+    
+        Entity cloned = cloneEntityTree(sourceRoot, targetUser, targetRootName, true);
+        return cloned;
+    }
+
+	// TODO: detect cycles
+    private Entity cloneEntityTree(Entity source, User targetUser, String targetName, boolean isRoot) throws DaoException {
+
+        EntityAttribute tmpAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_IS_PUBLIC);
+        
+        // Create new ontology element
+        Entity newOntologyElement = new Entity(null, targetName, targetUser, null, source.getEntityType(), new Date(), new Date(), null);
+        saveOrUpdate(newOntologyElement);
+
+        // Add the children 
+    	for(EntityData ed : source.getEntityData()) {
+
+    		// Never clone "Is Public" attributes. Entities are cloned privately. 
+    		if (ed.getEntityAttribute().getId().equals(tmpAttr.getId())) continue;
+    		
+    		Entity newChildEntity = null;
+    		Entity childEntity = ed.getChildEntity();
+    		if (childEntity != null) {
+    			newChildEntity = cloneEntityTree(childEntity, targetUser, childEntity.getName(), false);	
+    		}
+
+            EntityData newEd = new EntityData(null, ed.getEntityAttribute(), newOntologyElement, newChildEntity,
+            		targetUser, ed.getValue(), new Date(), new Date(), ed.getOrderIndex());
+
+            saveOrUpdate(newEd);
+    	}
+
+    	return newOntologyElement;
+    }
+
+    public Entity publishOntology(Long sourceRootId, String targetRootName) throws ComputeException {
+
+    	Entity sourceRoot = getEntityById(sourceRootId.toString());    	
+    	if (sourceRoot == null) {
+    		throw new DaoException("Cannot find the source root.");
+    	}
+	
+        Entity clonedEntity = cloneEntityTree(sourceRoot, sourceRoot.getUser(), targetRootName, true);
+
+        // Add the public tag
+        EntityData publicEd = newData(clonedEntity, EntityConstants.ATTRIBUTE_IS_PUBLIC, sourceRoot.getUser());
+        publicEd.setValue("true");
+        saveOrUpdate(publicEd);
+        
+        return clonedEntity;
+    }
+    
+	public Entity createOntologyAnnotation(String userLogin, OntologyAnnotation annotation) throws ComputeException {
+
+        try {
+        	// TODO: enable this sanity check
+//        	Entity targetEntity = getEntityById(targetEntityId);
+//        	if (targetEntity == null) {
+//        		throw new IllegalArgumentException("Target entity with id="+targetEntityId+" not found");
+//        	}
+        	
+            User tmpUser = getUserByName(userLogin);
+        	if (tmpUser == null) {
+        		throw new IllegalArgumentException("User "+userLogin+" not found");
+        	}
+        	
+        	String tag = (annotation.getValueString() == null) ? 
+        				annotation.getKeyString() : 
+        				annotation.getKeyString() + " = " + annotation.getValueString();
+            
+            Entity newAnnotation = newEntity(EntityConstants.TYPE_ANNOTATION, tag, tmpUser);
+            
+            Set<EntityData> eds = new HashSet<EntityData>();
+            newAnnotation.setEntityData(eds);
+            
+			// Add the target id
+			EntityData targetIdData = newData(newAnnotation, 
+					EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID, tmpUser);
+			targetIdData.setValue(""+annotation.getTargetEntityId());
+			eds.add(targetIdData);
+				
+			// Add the key string
+			EntityData keyData = newData(newAnnotation,
+					EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_TERM, tmpUser);
+			keyData.setValue(annotation.getKeyString());
+			eds.add(keyData);
+
+			// Add the value string
+			EntityData valueData = newData(newAnnotation,
+					EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM, tmpUser);
+			valueData.setValue(annotation.getValueString());
+			eds.add(valueData);
+			
+			// Add the key entity
+            if (annotation.getKeyEntityId() != null) {
+            	Entity keyEntity = getEntityById(annotation.getKeyEntityId());
+				EntityData keyEntityData = newData(newAnnotation,
+						EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID, tmpUser);
+				keyEntityData.setChildEntity(keyEntity);
+				eds.add(keyEntityData);
+            }
+
+			// Add the value entity
+            if (annotation.getValueEntityId() != null) {
+            	Entity valueEntity = getEntityById(annotation.getValueEntityId());
+				EntityData valueEntityData = newData(newAnnotation,
+						EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_ENTITY_ID, tmpUser);
+				valueEntityData.setChildEntity(valueEntity);
+				eds.add(valueEntityData);
+            }
+            
+			// Add the session id
+            if (annotation.getSessionId() != null) {
+				EntityData sessionIdData = newData(newAnnotation,
+						EntityConstants.ATTRIBUTE_ANNOTATION_SESSION_ID, tmpUser);
+				sessionIdData.setValue(""+annotation.getSessionId());
+				eds.add(sessionIdData);
+            }
+            
+            saveOrUpdate(newAnnotation);
+            
+            // Notify the session 
+            updateAnnotationSession(annotation.getSessionId());
+            
+            return newAnnotation;
+        }
+        catch (Exception e) {
+            _logger.error("Error creating ontology annotation for user "+userLogin,e);
+            throw new ComputeException("Error creating ontology annotation for user "+userLogin,e);
+        }
+	}
+
+	public void removeOntologyAnnotation(String userLogin, long annotationId) throws ComputeException {
         Entity entity = getUserEntityById(userLogin, annotationId);
         getCurrentSession().delete(entity);	
+        
+        // Notify the session 
+        String sessionId = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_SESSION_ID);
+        if (sessionId != null) updateAnnotationSession(Long.parseLong(sessionId));
 	}
 
     public void removeAllOntologyAnnotationsForSession(String userLogin, long sessionId) throws DaoException {
@@ -652,6 +1118,8 @@ public class AnnotationDAO extends ComputeBaseDAO {
                     getCurrentSession().delete(entity);	
                 }
             }
+            // Notify the session 
+            updateAnnotationSession(sessionId);
         }
         catch (Exception e) {
             throw new DaoException(e);
@@ -691,6 +1159,21 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
 	}
 
+    /**
+     * Iterate recursively through all children in the Entity graph in order to preload them.
+     * @param entity
+     * @return
+     */
+    public Entity populateDescendants(Entity entity) {
+    	if (entity == null) return null;
+    	for(EntityData ed : entity.getEntityData()) {
+    		Entity child = ed.getChildEntity();
+    		if (child != null) {
+    			populateDescendants(child);
+    		}
+    	}
+    	return entity;
+    }
     
     /**
      * Searches the tree for the given entity and returns its ancestor of a given type, or null if the entity or 
@@ -710,4 +1193,25 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	
     	return null;
     }
+
+    public EntityType getEntityTypeByName(String entityTypeName) {
+    	preloadData();
+        return entityByName.get(entityTypeName);	
+    }
+    
+    public EntityAttribute getEntityAttributeByName(String attrName) {
+    	preloadData();
+        return attrByName.get(attrName);	
+    }
+    
+    private Entity newEntity(String entityTypeName, String value, User owner) {
+        EntityType tmpType = getEntityTypeByName(entityTypeName);
+        return new Entity(null, value, owner, null, tmpType, new Date(), new Date(), null);	
+    }
+    
+    private EntityData newData(Entity parent, String attrName, User owner) {
+        EntityAttribute ontologyTypeAttribute = getEntityAttributeByName(attrName);
+        return new EntityData(null, ontologyTypeAttribute, parent, null, owner, null, new Date(), new Date(), null);
+    }
+    
 }
