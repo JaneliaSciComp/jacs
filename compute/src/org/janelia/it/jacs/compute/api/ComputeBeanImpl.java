@@ -613,6 +613,14 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return computeDAO.getRecruitmentFilterTaskByUserPipelineId(objectId);
     }
 
+    public List<Task> getUserParentTasks(String userLogin) {
+    	List<Task> tasks = computeDAO.getUserParentTasksByOwner(userLogin);
+        for(Task task : tasks) {
+        	task.getEvents().size();
+        }
+        return tasks;
+    }
+    
     public List<Task> getUserTasks(String userLogin) {
     	List<Task> tasks = computeDAO.getUserTasks(userLogin);
         for(Task task : tasks) {
@@ -729,6 +737,21 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
             }
             t.setTaskDeleted(true);
             computeDAO.saveOrUpdate(t);
+        }
+    }
+    
+    public void cancelTaskById(Long taskId) throws Exception {
+        // First get entire task tree with this task as parent task
+        List<Long> taskList = getTaskTreeIdList(taskId);
+        for (Long tid : taskList) {
+            Task t = computeDAO.getTaskById(tid);
+            if (!t.getLastEvent().getEventType().equals(Event.CANCELED_EVENT)) {
+                Event event = new Event();
+                event.setEventType(Event.CANCELED_EVENT);
+                event.setTimestamp(new Date());
+                t.addEvent(event);
+                computeDAO.saveOrUpdate(t);
+            }
         }
     }
 

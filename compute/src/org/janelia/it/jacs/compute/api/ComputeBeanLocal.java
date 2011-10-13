@@ -87,7 +87,8 @@ public interface ComputeBeanLocal {
     public void setSystemDataRelatedToGiNumberObsolete(String giNumber) throws DaoException;
     public List<HmmerPfamDatabaseNode> getHmmerPfamDatabases();
 
-    public List<Task> getUserTasks(String userLogin);
+    public List<Task> getUserTasks(String userLogin) throws Exception;
+    public List<Task> getUserParentTasks(String userLogin) throws Exception;
     public List<Task> getUserTasksByType(String simpleName, String userName);
     public List<Event> getEventsForTask(long taskId) throws DaoException; 
 
@@ -104,6 +105,7 @@ public interface ComputeBeanLocal {
     public void validateBlastTaskQueryDatabaseMatch(BlastTask blastTask) throws Exception;
 
     public void deleteTaskById(Long taskId) throws Exception;
+    public void cancelTaskById(Long taskId) throws Exception;
     public boolean deleteNode(String username, Long nodeId, boolean clearFromFilestoreIfAppropriate);
 
     public Task getTaskById(long taskId);

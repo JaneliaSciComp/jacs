@@ -663,8 +663,14 @@ public class ComputeDAO extends ComputeBaseDAO {
     }
 
 
+    public List<Task> getUserParentTasksByOwner(String userLogin) {
+        String hql = "select clazz from Task clazz where clazz.owner='" + userLogin + "' and clazz.taskDeleted=false and clazz.parentTaskId is null order by clazz.objectId";
+        Query query = sessionFactory.getCurrentSession().createQuery(hql);
+        return query.list();
+    }
+
     public List<Task> getUserTasks(String userLogin) {
-        String hql = "select clazz from Task clazz where clazz.owner='" + userLogin + "' order by clazz.objectId";
+        String hql = "select clazz from Task clazz where clazz.owner='" + userLogin + "' and clazz.taskDeleted=false order by clazz.objectId";
         Query query = sessionFactory.getCurrentSession().createQuery(hql);
         return query.list();
     }
