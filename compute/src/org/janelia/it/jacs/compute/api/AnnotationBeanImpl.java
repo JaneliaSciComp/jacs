@@ -7,18 +7,11 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 
 import org.apache.log4j.Logger;
-import org.hibernate.Query;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
-import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
-import org.janelia.it.jacs.model.ontology.types.Category;
-import org.janelia.it.jacs.model.ontology.types.Interval;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
-import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
-import org.janelia.it.jacs.model.user_data.User;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 
@@ -217,6 +210,10 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     }
     
     public List<Entity> getPrivateOntologies(String userLogin) throws ComputeException {
+    	if (userLogin == null || "".equals(userLogin)) {
+    		throw new ComputeException("Cannot get private ontologies for null user");
+    	}
+    	
         try {
             return _annotationDAO.getPrivateOntologies(userLogin);
         }
