@@ -255,7 +255,7 @@ public abstract class Task implements java.io.Serializable, IsSerializable {
      * @return boolean as to processing done or not
      */
     public static boolean isDone(String event) {
-        return event.equals(Event.COMPLETED_EVENT) || event.equals(Event.ERROR_EVENT);
+        return event.equals(Event.COMPLETED_EVENT) || event.equals(Event.ERROR_EVENT) || event.equals(Event.CANCELED_EVENT);
     }
 
     /**
