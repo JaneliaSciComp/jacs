@@ -21,9 +21,8 @@
   ~ "http://www.perlfoundation.org/artistic_license_2_0."
   -->
 
-<!-- this is a very quick task - we can use default process MDB -->
-<process name="CancelTask"  startEvent="pending" async="true" updateProcessStatus="on_success">
-    <sequence name="cancelJobs">
-        <operation name="Cancel Jobs" processor="org.janelia.it.jacs.compute.engine.util.TaskCancelUtil"/>
+<process name="Continuous Execution" startEvent="pending" async="true" updateProcessStatus="on_success">
+    <sequence name="Continuous Execution">
+        <operation name="Continuous Execution" processor="org.janelia.it.jacs.compute.service.utility.ContinuousExecutionService"/>
     </sequence>
 </process>

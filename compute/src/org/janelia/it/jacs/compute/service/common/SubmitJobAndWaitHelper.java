@@ -37,7 +37,7 @@ import org.janelia.it.jacs.model.user_data.Node;
  * Time: 12:46:08 PM
  */
 public class SubmitJobAndWaitHelper {
-    public final int WAIT_INTERVAL_IN_SECONDS = 5;
+    int waitIntervalInSeconds = 5;
     String processName;
     Long taskId;
     Logger logger;
@@ -69,7 +69,7 @@ public class SubmitJobAndWaitHelper {
         String[] taskStatus = null;
         while (taskStatus == null || !Task.isDone(taskStatus[0])) {
             taskStatus = computeBean.getTaskStatus(taskId);
-            Thread.sleep(WAIT_INTERVAL_IN_SECONDS * 1000);
+            Thread.sleep(waitIntervalInSeconds * 1000);
         }
         if (!taskStatus[0].equals(Event.COMPLETED_EVENT)) {
             throw new Exception("Task " + taskId + " finished with non-complete status=" + taskStatus[0]);
@@ -77,4 +77,7 @@ public class SubmitJobAndWaitHelper {
         return computeBean.getResultNodeByTaskId(taskId);
     }
 
+    public void setWaitIntervalInSeconds(int waitIntervalInSeconds) {
+        this.waitIntervalInSeconds = waitIntervalInSeconds;
+    }
 }
