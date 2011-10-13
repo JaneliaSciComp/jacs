@@ -87,11 +87,11 @@ public interface ComputeBeanLocal {
     public void setSystemDataRelatedToGiNumberObsolete(String giNumber) throws DaoException;
     public List<HmmerPfamDatabaseNode> getHmmerPfamDatabases();
 
+    public List<Task> getUserTasks(String userLogin);
     public List<Task> getUserTasksByType(String simpleName, String userName);
+    public List<Event> getEventsForTask(long taskId) throws DaoException; 
 
     public Task getRecruitmentFilterTaskByUserPipelineId(Long objectId) throws DaoException;
-
-    public List<Task> getUserTasks(String userLogin);
 
     public void setParentTaskId(Long parentTaskId, Long childTaskId) throws DaoException;
 

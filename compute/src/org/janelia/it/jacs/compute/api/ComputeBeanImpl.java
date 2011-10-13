@@ -23,6 +23,16 @@
 
 package org.janelia.it.jacs.compute.api;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.*;
+
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+
 import org.apache.log4j.Logger;
 import org.hibernate.Query;
 import org.hibernate.SQLQuery;
@@ -55,15 +65,6 @@ import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.MailHelper;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
-
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.*;
 
 /**
  * This class implements service calls used by remote clients of Compute server.  It also contains service
@@ -613,9 +614,19 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     }
 
     public List<Task> getUserTasks(String userLogin) {
-        return computeDAO.getUserTasks(userLogin);
+    	List<Task> tasks = computeDAO.getUserTasks(userLogin);
+        for(Task task : tasks) {
+        	task.getEvents().size();
+        }
+        return tasks;
     }
 
+    public List<Event> getEventsForTask(long taskId) throws DaoException {
+    	Task task = getTaskById(taskId);
+    	if (task == null) throw new DaoException("No such task with id "+taskId);
+    	return task.getEvents();
+    }
+    
     public void setParentTaskId(Long parentTaskId, Long childTaskId) throws DaoException {
         computeDAO.setParentTaskId(parentTaskId, childTaskId);
     }
