@@ -30,10 +30,6 @@ import org.janelia.it.jacs.model.user_data.User;
  */
 public class MCFOStitchedFileDiscoveryService implements IService {
 
-    private static final String TOP_LEVEL_FOLDER_NAME_PARAM = "TOP_LEVEL_FOLDER_NAME";
-    private static final String DIRECTORY_PARAM_PREFIX = "DIRECTORY_";
-    private static final String LINKING_FOLDER = "LINKING_FOLDER";
-
     private String linkingDir;
     private boolean refresh = true;
     private boolean runNeuronSeperator = true;
@@ -58,27 +54,9 @@ public class MCFOStitchedFileDiscoveryService implements IService {
             createDate = new Date();
             refresh = "true".equals(task.getParameter(MCFOStitchedFileDiscoveryTask.PARAM_refresh));
             
-            String topLevelFolderName = null;
-            
-            Set<Map.Entry<String, Object>> entrySet = processData.entrySet();
-            for (Map.Entry<String, Object> entry : entrySet) {
-                String paramName = entry.getKey();
-                if (paramName.startsWith(DIRECTORY_PARAM_PREFIX)) {
-                    directoryPathList.add((String) entry.getValue());
-                } 
-                else if (paramName.equals(TOP_LEVEL_FOLDER_NAME_PARAM)) {
-                    topLevelFolderName = (String)entry.getValue();
-                }
-                else if (paramName.equals(LINKING_FOLDER)) {
-                	linkingDir = (String)entry.getValue();
-                	linkingDir = linkingDir.replaceAll("%USER%", user.getUserLogin());
-                }
-            }
-
-            if (topLevelFolderName == null) {
-            	throw new Exception("No TOP_LEVEL_FOLDER_NAME parameter provided");
-            }
-            
+            String topLevelFolderName = task.getParameter(MCFOStitchedFileDiscoveryTask.PARAM_topLevelFolderName);
+            linkingDir = task.getParameter(MCFOStitchedFileDiscoveryTask.PARAM_linkingDirectoryName);
+        	
             String taskInputDirectoryList = task.getParameter(MCFOStitchedFileDiscoveryTask.PARAM_inputDirectoryList);
             if (taskInputDirectoryList != null) {
                 String[] directoryArray = taskInputDirectoryList.split(",");

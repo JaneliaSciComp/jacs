@@ -19,6 +19,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
+import org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOStitchedFileDiscoveryTask;
 import org.janelia.it.jacs.model.tasks.fileDiscovery.MultiColorFlipOutFileDiscoveryTask;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.user_data.Node;
@@ -31,10 +32,6 @@ import org.janelia.it.jacs.model.user_data.User;
  * Time: 12:23 PM
  */
 public class MultiColorFlipOutFileDiscoveryService implements IService {
-
-    private static final String TOP_LEVEL_FOLDER_NAME_PARAM = "TOP_LEVEL_FOLDER_NAME";
-    private static final String DIRECTORY_PARAM_PREFIX = "DIRECTORY_";
-    private static final String LINKING_FOLDER = "LINKING_FOLDER";
     
     private enum NeuronSepMode {
     	LOCAL,
@@ -76,30 +73,12 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             computeBean = EJBFactory.getLocalComputeBean();
             user = computeBean.getUserByName(task.getOwner());
             createDate = new Date();
-            refresh = "true".equals(task.getParameter(MultiColorFlipOutFileDiscoveryTask.PARAM_refresh));
+            refresh = "true".equals(task.getParameter(MCFOStitchedFileDiscoveryTask.PARAM_refresh));
             
-            String topLevelFolderName = null;
-            
-            Set<Map.Entry<String, Object>> entrySet = processData.entrySet();
-            for (Map.Entry<String, Object> entry : entrySet) {
-                String paramName = entry.getKey();
-                if (paramName.startsWith(DIRECTORY_PARAM_PREFIX)) {
-                    directoryPathList.add((String) entry.getValue());
-                } 
-                else if (paramName.equals(TOP_LEVEL_FOLDER_NAME_PARAM)) {
-                    topLevelFolderName = (String)entry.getValue();
-                }
-                else if (paramName.equals(LINKING_FOLDER)) {
-                	linkingDir = (String)entry.getValue();
-                	linkingDir = linkingDir.replaceAll("%USER%", user.getUserLogin());
-                }
-            }
-
-            if (topLevelFolderName == null) {
-            	throw new Exception("No TOP_LEVEL_FOLDER_NAME parameter provided");
-            }
-            
-            String taskInputDirectoryList = task.getParameter(MultiColorFlipOutFileDiscoveryTask.PARAM_inputDirectoryList);
+            String topLevelFolderName = task.getParameter(MCFOStitchedFileDiscoveryTask.PARAM_topLevelFolderName);
+            linkingDir = task.getParameter(MCFOStitchedFileDiscoveryTask.PARAM_linkingDirectoryName);
+        	
+            String taskInputDirectoryList = task.getParameter(MCFOStitchedFileDiscoveryTask.PARAM_inputDirectoryList);
             if (taskInputDirectoryList != null) {
                 String[] directoryArray = taskInputDirectoryList.split(",");
                 for (String d : directoryArray) {

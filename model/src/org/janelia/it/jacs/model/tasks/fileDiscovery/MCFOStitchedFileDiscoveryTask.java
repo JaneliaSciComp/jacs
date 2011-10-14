@@ -17,7 +17,6 @@ import java.util.Set;
  * User: murphys
  * Date: 8/29/11
  * Time: 4:24 PM
- * To change this template use File | Settings | File Templates.
  */
 public class MCFOStitchedFileDiscoveryTask extends Task {
 
@@ -27,14 +26,20 @@ public class MCFOStitchedFileDiscoveryTask extends Task {
 
     // Parameter Keys
     transient public static final String PARAM_inputDirectoryList = "list of input directories";
+    transient public static final String PARAM_topLevelFolderName = "top level folder name";
+    transient public static final String PARAM_linkingDirectoryName = "linking folder name";
     transient public static final String PARAM_refresh = "regenerate results";
 
     // Default values - default overrides
 
     public MCFOStitchedFileDiscoveryTask(Set<Node> inputNodes, String owner, List<Event> events,
-    		Set<TaskParameter> taskParameterSet, boolean refresh) {
+    		Set<TaskParameter> taskParameterSet, String inputDirList, String topLevelFolderName, 
+    		String linkingDirName, boolean refresh) {
         super(inputNodes, owner, events, taskParameterSet);
         setDefaultValues();
+        setParameter(PARAM_inputDirectoryList, inputDirList);
+        setParameter(PARAM_topLevelFolderName, topLevelFolderName);
+        setParameter(PARAM_linkingDirectoryName, linkingDirName);
         setParameter(PARAM_refresh, Boolean.toString(refresh));
     }
 
@@ -44,6 +49,8 @@ public class MCFOStitchedFileDiscoveryTask extends Task {
 
     private void setDefaultValues() {
         setParameter(PARAM_inputDirectoryList, "");
+        setParameter(PARAM_topLevelFolderName, "");
+        setParameter(PARAM_linkingDirectoryName, "");
         setParameter(PARAM_refresh, "true");
         this.taskName = TASK_NAME;
     }
@@ -55,6 +62,12 @@ public class MCFOStitchedFileDiscoveryTask extends Task {
         if (value == null)
             return null;
         if (key.equals(PARAM_inputDirectoryList)) {
+            return new TextParameterVO(value, 4000);
+        }
+        if (key.equals(PARAM_topLevelFolderName)) {
+            return new TextParameterVO(value, 4000);
+        }
+        if (key.equals(PARAM_linkingDirectoryName)) {
             return new TextParameterVO(value, 4000);
         }
         if (key.equals(PARAM_refresh)) {

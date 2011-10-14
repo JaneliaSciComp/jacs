@@ -150,7 +150,10 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     }
 
     public Task getTaskById(long taskId) {
-        return computeDAO.getTaskById(taskId);
+        Task task = computeDAO.getTaskById(taskId);
+        // Init lazy-loading events
+        task.getEvents().size();
+        return task;
     }
 
     public Task getTaskWithMessages(long taskId) {
@@ -616,6 +619,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     public List<Task> getUserParentTasks(String userLogin) {
     	List<Task> tasks = computeDAO.getUserParentTasksByOwner(userLogin);
         for(Task task : tasks) {
+        	// Init lazy-loading events
         	task.getEvents().size();
         }
         return tasks;
@@ -624,6 +628,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     public List<Task> getUserTasks(String userLogin) {
     	List<Task> tasks = computeDAO.getUserTasks(userLogin);
         for(Task task : tasks) {
+        	// Init lazy-loading events
         	task.getEvents().size();
         }
         return tasks;

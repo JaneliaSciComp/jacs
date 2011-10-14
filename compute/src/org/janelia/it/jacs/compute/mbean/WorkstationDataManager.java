@@ -20,26 +20,34 @@ import java.util.HashSet;
  */
 public class WorkstationDataManager implements WorkstationDataManagerMBean {
 
+	
     public WorkstationDataManager() {
     }
 
     public void runMultiColorFlipOutFileDiscoveryService(String user, boolean refresh) {
         try {
-            MultiColorFlipOutFileDiscoveryTask task = new MultiColorFlipOutFileDiscoveryTask(new HashSet<Node>(), user, 
-            		new ArrayList<Event>(), new HashSet<TaskParameter>(), refresh);
+        	String topLevelFolderName = "FlyLight Single Neuron Pilot Data";
+        	String inputDirList = "/groups/flylight/flylight/SingleNeuronPilotData";
+    		String linkingDirName = "/groups/scicomp/jacsData/flylight/"+user+"/SingleNeuronPilotData";
+            MultiColorFlipOutFileDiscoveryTask task = new MultiColorFlipOutFileDiscoveryTask(new HashSet<Node>(), 
+            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), inputDirList, topLevelFolderName, 
+            		linkingDirName, refresh);
             task.setJobName("MultiColor FlipOut File Discovery Task");
             task = (MultiColorFlipOutFileDiscoveryTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("MultiColorFlipOutFileDiscovery", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-
     }
 
     public void runMCFOStitchedFileDiscoveryService(String user, boolean refresh) {
         try {
-            MCFOStitchedFileDiscoveryTask task = new MCFOStitchedFileDiscoveryTask(new HashSet<Node>(), user,
-                    new ArrayList<Event>(), new HashSet<TaskParameter>(), refresh);
+        	String topLevelFolderName = "FlyLight Single Neuron Stitched Data";
+        	String inputDirList = "/groups/flylight/flylight/flip/SecData/stitch";
+    		String linkingDirName = "/groups/scicomp/jacsData/flylight/"+user+"/SingleNeuronStitchedData";
+            MCFOStitchedFileDiscoveryTask task = new MCFOStitchedFileDiscoveryTask(new HashSet<Node>(), 
+            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), inputDirList, topLevelFolderName, 
+            		linkingDirName, refresh);
             task.setJobName("MultiColor FlipOut Stitched File Discovery Task");
             task = (MCFOStitchedFileDiscoveryTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("MCFOStitchedFileDiscovery", task.getObjectId());
