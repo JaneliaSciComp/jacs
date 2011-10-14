@@ -66,5 +66,11 @@ public class ContinuousExecutionTask extends Task {
         return DISPLAY_NAME;
     }
 
-
+    public boolean isStillEnabled() {
+        return Boolean.valueOf(getParameter(ContinuousExecutionTask.PARAM_ENABLED_STATE));
+    }
+    
+    public void setEnabled(boolean isEnabled) {
+        setParameter(ContinuousExecutionTask.PARAM_ENABLED_STATE, Boolean.toString(isEnabled));
+    }
 }

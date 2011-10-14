@@ -37,13 +37,13 @@ public class ContinuousExecutionService implements IService {
                 // Get the task from the database - things may have changed
                 task = (ContinuousExecutionTask) EJBFactory.getLocalComputeBean().getTaskById(task.getObjectId());
                 // Check the enabled state
-                if (!isStillEnabled()) {
+                if (!task.isStillEnabled()) {
                     break;
                 }
 
                 // Format the new Task and try again.  If the original is good, use it
                 Task subTask = originalSubtask;
-                if (Task.isDone(subTask.getLastEvent().getEventType())) {
+                if (subTask.isDone()) {
                     subTask = Task.clone(subTask);
                     subTask.setObjectId(null);
                 }
@@ -95,9 +95,4 @@ public class ContinuousExecutionService implements IService {
         currentSubtaskProcess = task.getParameter(ContinuousExecutionTask.PARAM_SUBTASK_PROCESS);
         statusCheckDelayInSeconds = Integer.valueOf(task.getParameter(ContinuousExecutionTask.PARAM_SUBTASK_STATUS_TIMER));
     }
-
-    private boolean isStillEnabled() {
-        return Boolean.valueOf(task.getParameter(ContinuousExecutionTask.PARAM_ENABLED_STATE));
-    }
-
 }
