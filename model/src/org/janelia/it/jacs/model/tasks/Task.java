@@ -228,12 +228,13 @@ public abstract class Task implements java.io.Serializable, IsSerializable {
         StringBuffer buf = new StringBuffer();
         buf.append("Task{objectId=").append(objectId != null ? objectId.toString() : "null").append(", taskName=").append(taskName);
         buf.append('\n');
-        for (Node inputNode : inputNodes) {
-            buf.append("Node=").append(inputNode.getName()).append("\n");
-        }
-        for (Event event : events) {
-            buf.append("Event=").append(event.toString()).append("\n");
-        }
+        // TODO: The following breaks if the session is closed since these properties are lazy
+//        for (Node inputNode : inputNodes) {
+//            buf.append("Node=").append(inputNode.getName()).append("\n");
+//        }
+//        for (Event event : events) {
+//            buf.append("Event=").append(event.toString()).append("\n");
+//        }
         buf.append("User=").append(this.getOwner());
         return buf.toString();
     }
