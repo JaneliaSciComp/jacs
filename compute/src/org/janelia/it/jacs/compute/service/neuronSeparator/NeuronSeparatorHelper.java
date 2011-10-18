@@ -23,21 +23,30 @@ public class NeuronSeparatorHelper {
 
 	private static final Logger logger = Logger.getLogger(NeuronSeparatorHelper.class);
 	
-    private static final String jacsDataPathLinux = SystemConfigurationProperties.getString("JacsData.Dir.Linux");
-    private static final String jacsDataPathMac = SystemConfigurationProperties.getString("JacsData.Dir.Mac");
-    private static final String jacsDataPathRemote = SystemConfigurationProperties.getString("JacsData.Dir.Remote.Work.Server.Mac");
-    private static final String flylightPathLinux = SystemConfigurationProperties.getString("FlyLight.Dir.Linux");
-    private static final String flylightPathMac = SystemConfigurationProperties.getString("FlyLight.Dir.Mac");
-    private static final String flylightPathRemote = SystemConfigurationProperties.getString("FlyLight.Dir.Remote.Work.Server.Mac");
+	// TODO: this path translation should be made into some sort of robust service
+	
+    private static final String jacsDataPathLinux = SystemConfigurationProperties.getString("JacsData.Dir.Linux","").trim();
+    private static final String jacsDataPathMac = SystemConfigurationProperties.getString("JacsData.Dir.Mac","").trim();
+    private static final String jacsDataPathRemote = SystemConfigurationProperties.getString("JacsData.Dir.Remote.Work.Server.Mac","").trim();
+    
+    private static final String flylightPathLinux = SystemConfigurationProperties.getString("FlyLight.Dir.Linux","").trim();
+    private static final String flylightPathMac = SystemConfigurationProperties.getString("FlyLight.Dir.Mac","").trim();
+    private static final String flylightPathRemote = SystemConfigurationProperties.getString("FlyLight.Dir.Remote.Work.Server.Mac","").trim();
+    
+    private static final String rubinlabPathLinux = SystemConfigurationProperties.getString("RubinLab.Dir.Linux","").trim();
+    private static final String rubinlabPathMac = SystemConfigurationProperties.getString("RubinLab.Dir.Mac","").trim();
+    private static final String rubinlabPathRemote = SystemConfigurationProperties.getString("RubinLab.Dir.Remote.Work.Server.Mac","").trim();
     
     public static String covertPathsToRemoteServer(String s) {
         return s.replaceAll(jacsDataPathLinux, jacsDataPathRemote).
-        		 replaceAll(flylightPathLinux, flylightPathRemote);
+        		 replaceAll(flylightPathLinux, flylightPathRemote).
+        		 replaceAll(rubinlabPathLinux, rubinlabPathRemote);
     }
 
     public static String covertPathsToVolumeMounted(String s) {
         return s.replaceAll(jacsDataPathLinux, jacsDataPathMac).
-		 replaceAll(flylightPathLinux, flylightPathMac);
+		 		 replaceAll(flylightPathLinux, flylightPathMac).
+		 		 replaceAll(rubinlabPathLinux, rubinlabPathMac);
     }
     
 	public static String getNeuronSeparationCommands(NeuronSeparatorPipelineTask task, 
