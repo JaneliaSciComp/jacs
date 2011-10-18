@@ -6,13 +6,6 @@
  */
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
-import java.io.File;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.resource.spi.IllegalStateException;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
@@ -32,6 +25,12 @@ import org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOUnifiedFileDiscoveryTas
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
+
+import javax.resource.spi.IllegalStateException;
+import java.io.File;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * File discovery service for stitched and non-stitched data.
@@ -215,7 +214,8 @@ public class MCFOUnifiedFileDiscoveryService implements IService {
         	return;
         }
 
-        // Does this a directory contain a "stitched" subdirectory? 
+        // Does this a directory contain a "stitched" subdirectory?
+        // todo Why not just format the File handle and check existence?
         boolean stitched = false;
         for (File file : dir.listFiles()) {
             if (file.isDirectory()) {

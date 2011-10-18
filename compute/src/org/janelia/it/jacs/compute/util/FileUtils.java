@@ -1,8 +1,8 @@
 package org.janelia.it.jacs.compute.util;
 
-import java.io.*;
-
 import org.apache.log4j.Logger;
+
+import java.io.*;
 
 /**
  * Some methods for dealing with files and directories.
@@ -31,7 +31,7 @@ public class FileUtils {
     	BufferedWriter out = null;
     	try {
     		out = new BufferedWriter(new FileWriter(file, append));
-            out.write(s.toString());
+            out.write(s);
     	} 
     	catch (Exception e) {
     		logger.error("Could not write to file: "+file.getAbsolutePath(),e);
@@ -151,19 +151,15 @@ public class FileUtils {
         if (file == null) {
             throw new NullPointerException("File must not be null");
         }
-        File fileInCanonicalDir = null;
+        File fileInCanonicalDir;
         if (file.getParent() == null) {
             fileInCanonicalDir = file;
         } else {
             File canonicalDir = file.getParentFile().getCanonicalFile();
             fileInCanonicalDir = new File(canonicalDir, file.getName());
         }
-        
-        if (fileInCanonicalDir.getCanonicalFile().equals(fileInCanonicalDir.getAbsoluteFile())) {
-            return false;
-        } else {
-            return true;
-        }
+
+        return !fileInCanonicalDir.getCanonicalFile().equals(fileInCanonicalDir.getAbsoluteFile());
     }
     
 }

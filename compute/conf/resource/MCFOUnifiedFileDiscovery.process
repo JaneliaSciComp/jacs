@@ -1,4 +1,8 @@
 <process name="MultiColor FlipOut File Discovery Pipeline" startEvent="pending" updateProcessStatus="on_success" processor="queue/mcfoUnifiedFileDiscoveryLauncher">
+
+    <sequence name="Bulk V3D Service Processing">
+        <operation name="Bulk V3D Service Processing" processor="org.janelia.it.jacs.compute.service.v3d.V3DBulkProcessingService" />
+    </sequence>
     <sequence name="mcfoUnifiedFileDiscovery">
         <operation name="Discover Files for MultiColor FlipOut Project" processor="org.janelia.it.jacs.compute.service.fileDiscovery.MCFOUnifiedFileDiscoveryService">
         </operation>
