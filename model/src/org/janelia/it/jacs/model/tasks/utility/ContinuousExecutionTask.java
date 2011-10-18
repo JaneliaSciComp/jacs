@@ -20,11 +20,11 @@ public class ContinuousExecutionTask extends Task {
 
     public static final String DISPLAY_NAME = "Continuous Execution Task";
     public static final String PARAM_ENABLED_STATE  = "enabled state";
-    public static final String PARAM_LOOP_TIMER     = "loop timer";  // Loop timer in minutes
+    public static final String PARAM_LOOP_TIMER_MINS     = "loop timer";  // Loop timer in minutes
     public static final String PARAM_SUBTASK_ID     = "subtask id";  // used as the primer
     public static final String PARAM_SUBTASK_PROCESS= "subtask process";
     // How many seconds between checking for completion
-    public static final String PARAM_SUBTASK_STATUS_TIMER = "subtask status timer interval";
+    public static final String PARAM_SUBTASK_STATUS_TIMER_SECS = "subtask status timer interval";
 
     public ContinuousExecutionTask() {
         super();
@@ -36,10 +36,10 @@ public class ContinuousExecutionTask extends Task {
         super(inputNodes, owner, events, taskParameterSet);
         this.taskName = DISPLAY_NAME;
         setParameter(PARAM_ENABLED_STATE, Boolean.toString(isEnabled));
-        setParameter(PARAM_LOOP_TIMER, Integer.toString(loopTimerInMinutes));
+        setParameter(PARAM_LOOP_TIMER_MINS, Integer.toString(loopTimerInMinutes));
         setParameter(PARAM_SUBTASK_ID, Long.toString(subtaskId));
         setParameter(PARAM_SUBTASK_PROCESS, subtaskProcess);
-        setParameter(PARAM_SUBTASK_STATUS_TIMER, Integer.toString(statusCheckDelayInSeconds));
+        setParameter(PARAM_SUBTASK_STATUS_TIMER_SECS, Integer.toString(statusCheckDelayInSeconds));
     }
 
     public ParameterVO getParameterVO(String key) throws ParameterException {
@@ -48,7 +48,7 @@ public class ContinuousExecutionTask extends Task {
         String value = getParameter(key);
         if (value == null)
             return null;
-        if (key.equals(PARAM_LOOP_TIMER)||key.equals(PARAM_SUBTASK_ID)||key.equals(PARAM_SUBTASK_STATUS_TIMER)) {
+        if (key.equals(PARAM_LOOP_TIMER_MINS)||key.equals(PARAM_SUBTASK_ID)||key.equals(PARAM_SUBTASK_STATUS_TIMER_SECS)) {
             return new LongParameterVO(Long.valueOf(value));
         }
         else if (key.equals(PARAM_ENABLED_STATE)) {
