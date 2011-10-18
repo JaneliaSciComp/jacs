@@ -463,6 +463,7 @@ public class MultiColorFlipOutFileDiscoveryService implements IService {
             neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmEntityIdList, lsmEntityIds);
             neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_symbolLinkName, symbolicLink.getAbsolutePath());
             neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_outputSampleEntityId, sample.getId().toString());
+            neuTask.setParentTaskId(task.getObjectId());
             computeBean.saveOrUpdateTask(neuTask);
             
             switch(mode) {

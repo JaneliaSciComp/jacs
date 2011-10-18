@@ -396,6 +396,7 @@ public class MCFOStitchedFileDiscoveryService implements IService {
             neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_inputStitchedStackId, stackId);
             neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_symbolLinkName, symbolicLink.getAbsolutePath());
             neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_outputSampleEntityId, sample.getId().toString());
+            neuTask.setParentTaskId(task.getObjectId());
             computeBean.saveOrUpdateTask(neuTask);
 
 	        neuTask.setJobName("Remote Neuron Separator for MCFOStitchedFileDiscovery, task id="+neuTask.getObjectId());
