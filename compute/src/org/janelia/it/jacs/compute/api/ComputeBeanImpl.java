@@ -49,6 +49,7 @@ import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskMessage;
 import org.janelia.it.jacs.model.tasks.blast.*;
+import org.janelia.it.jacs.model.tasks.utility.ContinuousExecutionTask;
 import org.janelia.it.jacs.model.user_data.FastaFileNode;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
@@ -148,7 +149,22 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     public String[] getTaskStatus(long taskId) throws DaoException {
         return computeDAO.getTaskStatus(taskId);
     }
-
+    
+    public void stopContinuousExecution(long taskId) throws ServiceException {
+    	Task task = getTaskById(taskId);
+    	if (task==null) throw new ServiceException("No such task with id "+taskId);
+    	if (!(task instanceof ContinuousExecutionTask)) throw new ServiceException("This task is not a ContinuousExecutionTask: "+taskId);
+    	ContinuousExecutionTask cet = (ContinuousExecutionTask)task;
+    	cet.setEnabled(false);
+    	try {
+        	// This saves the enabled flash as well
+        	computeDAO.createEvent(cet, Event.CANCELED_EVENT, "Ended continuous execution", new Date());	
+    	}
+    	catch (DaoException e) {
+    		throw new ServiceException(e);
+    	}
+    }
+    
     public Task getTaskById(long taskId) {
         Task task = computeDAO.getTaskById(taskId);
         // Init lazy-loading events

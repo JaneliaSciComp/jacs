@@ -23,6 +23,15 @@
 
 package org.janelia.it.jacs.compute.api;
 
+import java.io.IOException;
+import java.rmi.RemoteException;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+
+import javax.ejb.Remote;
+
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.tasks.Event;
@@ -38,14 +47,6 @@ import org.janelia.it.jacs.model.user_data.recruitment.RecruitmentResultFileNode
 import org.janelia.it.jacs.model.user_data.reversePsiBlast.ReversePsiBlastDatabaseNode;
 import org.janelia.it.jacs.model.user_data.tools.GenericServiceDefinitionNode;
 import org.janelia.it.jacs.shared.utils.ControlledVocabElement;
-
-import javax.ejb.Remote;
-import java.io.IOException;
-import java.rmi.RemoteException;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.HashSet;
 
 /**
  * Remote interface to ComputeBeanImpl
@@ -125,6 +126,7 @@ public interface ComputeBeanRemote {
     public GenericServiceDefinitionNode getGenericServiceDefinitionByName(String serviceName) throws Exception;
 
     public void validateFile(String filePath) throws Exception;
+    public void stopContinuousExecution(long taskId) throws ServiceException;
     public List<Task> getUserTasks(String userLogin) throws Exception;
     public List<Task> getUserParentTasks(String userLogin) throws Exception;
     public List<Task> getUserTasksByType(String simpleName, String userName) throws RemoteException;

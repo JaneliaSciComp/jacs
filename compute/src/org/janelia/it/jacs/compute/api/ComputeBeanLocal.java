@@ -23,8 +23,13 @@
 
 package org.janelia.it.jacs.compute.api;
 
+import java.util.*;
+
+import javax.ejb.Local;
+
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.engine.def.ProcessDef;
+import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskMessage;
@@ -33,9 +38,6 @@ import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultNode;
 import org.janelia.it.jacs.model.user_data.hmmer.HmmerPfamDatabaseNode;
-
-import javax.ejb.Local;
-import java.util.*;
 
 /**
  * Local interface to ComputeBeanImpl
@@ -108,6 +110,7 @@ public interface ComputeBeanLocal {
     public void cancelTaskById(Long taskId) throws Exception;
     public boolean deleteNode(String username, Long nodeId, boolean clearFromFilestoreIfAppropriate);
 
+    public void stopContinuousExecution(long taskId) throws ServiceException;
     public Task getTaskById(long taskId);
     public List<Long> getTaskTreeIdList(Long taskId) throws Exception;
     public HashSet<String> getProjectCodes() throws Exception;
