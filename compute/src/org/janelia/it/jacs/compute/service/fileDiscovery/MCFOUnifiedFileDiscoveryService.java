@@ -129,12 +129,12 @@ public class MCFOUnifiedFileDiscoveryService implements IService {
     protected Entity createOrVerifyRootEntity(String topLevelFolderName) throws Exception {
     	
         Set<Entity> topLevelFolders = annotationBean.getEntitiesByName(topLevelFolderName);
-
     	Entity topLevelFolder = null;
         if (topLevelFolders!=null) {
         	// Only accept the current user's top level folder
 	        for(Entity entity : topLevelFolders) {
-	        	if (entity.getUser().getUserLogin().equals(user.getUserLogin())) {
+	        	if (entity.getUser().getUserLogin().equals(user.getUserLogin()) 
+	        			&& entity.getEntityType().getName().equals(annotationBean.getEntitiesByTypeName(EntityConstants.TYPE_FOLDER))) {
 	                // This is the folder we want, now load the entire folder hierarchy
 	                topLevelFolder = annotationBean.getFolderTree(entity.getId());
 	                logger.info("Found existing topLevelFolder, name=" + topLevelFolder.getName());
@@ -214,18 +214,8 @@ public class MCFOUnifiedFileDiscoveryService implements IService {
         	return;
         }
 
-        // Does this a directory contain a "stitched" subdirectory?
-        // todo Why not just format the File handle and check existence?
-        boolean stitched = false;
-        for (File file : dir.listFiles()) {
-            if (file.isDirectory()) {
-                if (file.getName().equals("stitched")) {
-                	stitched = true;
-                }
-            }
-        }
-        
-        if (stitched) {
+        File stitchedDir = new File(dir, "stitched"); 
+        if (stitchedDir.exists() && stitchedDir.isDirectory()) {
             logger.info("Processing folder as stitched data="+dir.getAbsolutePath());
             processStitchedFolder(folder);
         }

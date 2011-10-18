@@ -27,6 +27,7 @@ import org.janelia.it.jacs.model.user_data.User;
  * User: murphys
  * Date: 5/24/11
  * Time: 12:23 PM
+ * @deprecated replaced by MCFOUnifiedFileDiscoveryService, will be deleted in the future
  */
 public class MCFOStitchedFileDiscoveryService implements IService {
 
