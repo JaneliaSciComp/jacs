@@ -46,6 +46,7 @@ public class ContinuousExecutionService implements IService {
                 if (subTask.isDone()) {
                     subTask = Task.clone(subTask);
                     subTask.setObjectId(null);
+                    subTask.setEvents(null);
                 }
                 subTask.setParentTaskId(task.getObjectId());
                 subTask = EJBFactory.getLocalComputeBean().saveOrUpdateTask(subTask);
@@ -53,23 +54,27 @@ public class ContinuousExecutionService implements IService {
                 logger.debug("Submitting a new subtask");
                 SubmitJobAndWaitHelper jobHelper = new SubmitJobAndWaitHelper(currentSubtaskProcess, subTask.getObjectId());
                 jobHelper.setWaitIntervalInSeconds(statusCheckDelayInSeconds);
-                EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(), Event.SUBTASKRUNNING_EVENT, "Starting subexecution:" + subTask.getDisplayName(), new Date());
+                EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(), Event.SUBTASKRUNNING_EVENT, 
+                		"Starting subexecution:" + subTask.getDisplayName(), new Date());
                 jobHelper.startAndWaitTillDone();
 
                 // If the last subtask event was an error, stop and
                 subTask = EJBFactory.getLocalComputeBean().getTaskById(subTask.getObjectId());
                 if (Event.ERROR_EVENT.equals(subTask.getLastEvent().getEventType())) {
-                    EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(), Event.ERROR_EVENT, "Subtask failed:"
-                            + subTask.getObjectId(), new Date());
-                    throw new ServiceException("Subtask ("+ originalSubtask.getObjectId() +") for continuous execution task="+task.getObjectId()+", user="+task.getOwner()+
+                    EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(), Event.ERROR_EVENT, 
+                    		"Subtask failed:"+ subTask.getObjectId(), new Date());
+                    throw new ServiceException("Subtask ("+ originalSubtask.getObjectId() +
+                    		") for continuous execution task="+task.getObjectId()+", user="+task.getOwner()+
                             " did not complete successfully.");
                 }
                 else {
-                    // Your subtask was successful.  Congrats.  You get to wait an try again.
-                    EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(), Event.SUBTASKCOMPLETED_EVENT, "Completed subexecution:"
-                            + subTask.getDisplayName(), new Date());
-
-                    Thread.sleep(loopTimerInMinutes);
+                    // Your subtask was successful.  Congrats.  You get to wait and try again.
+                    EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(), Event.SUBTASKCOMPLETED_EVENT, 
+                    		"Completed subexecution:"+ subTask.getDisplayName(), new Date());
+                    EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(), Event.PENDING_EVENT, 
+                    		"Waiting "+loopTimerInMinutes+" minutes for next subexecution", new Date());
+                    
+                    Thread.sleep(loopTimerInMinutes*1000*60);
                 }
             }
         }
@@ -89,10 +94,10 @@ public class ContinuousExecutionService implements IService {
     private void init(IProcessData processData) throws MissingDataException, IOException {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         task = (ContinuousExecutionTask) ProcessDataHelper.getTask(processData);
-        loopTimerInMinutes = Integer.valueOf(task.getParameter(ContinuousExecutionTask.PARAM_LOOP_TIMER));
+        loopTimerInMinutes = Integer.valueOf(task.getParameter(ContinuousExecutionTask.PARAM_LOOP_TIMER_MINS));
         long originalSubtaskId = Long.valueOf(task.getParameter(ContinuousExecutionTask.PARAM_SUBTASK_ID));
         originalSubtask = EJBFactory.getLocalComputeBean().getTaskById(originalSubtaskId);
         currentSubtaskProcess = task.getParameter(ContinuousExecutionTask.PARAM_SUBTASK_PROCESS);
-        statusCheckDelayInSeconds = Integer.valueOf(task.getParameter(ContinuousExecutionTask.PARAM_SUBTASK_STATUS_TIMER));
+        statusCheckDelayInSeconds = Integer.valueOf(task.getParameter(ContinuousExecutionTask.PARAM_SUBTASK_STATUS_TIMER_SECS));
     }
 }
