@@ -1086,7 +1086,9 @@ public class AnnotationDAO extends ComputeBaseDAO {
             saveOrUpdate(newAnnotation);
             
             // Notify the session 
-            updateAnnotationSession(annotation.getSessionId());
+            if (annotation.getSessionId() != null) {
+            	updateAnnotationSession(annotation.getSessionId());
+            }
             
             return newAnnotation;
         }
