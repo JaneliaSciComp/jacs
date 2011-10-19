@@ -5,8 +5,11 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.v3d.V3DPipelineTask;
+import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.model.user_data.GenericFileNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
 import java.io.File;
@@ -23,6 +26,7 @@ import java.util.Scanner;
  * Time: 10:18:16 PM
  */
 public class V3DPipelineService extends SubmitDrmaaJobService {
+    private static final String temporaryDirectory = SystemConfigurationProperties.getString("computeserver.ScratchDir");
     protected Logger _logger;
 
     protected void init(IProcessData processData) throws Exception {
@@ -32,6 +36,10 @@ public class V3DPipelineService extends SubmitDrmaaJobService {
         if (this.task == null) {
             this.task = ProcessDataHelper.getTask(processData);
         }
+        // Permit the resultNode to be defined elsewhere
+        resultFileNode = new GenericFileNode(task.getOwner(), task, "","", FileNode.VISIBILITY_PRIVATE,
+                FileNode.DIRECTORY_DATA_TYPE, null);
+        resultFileNode.setPathOverride(temporaryDirectory+File.separator+task.getObjectId());
         this.jobSet = new HashSet<String>();
         // ensure the SGE dirs exist
         FileUtil.ensureDirExists(getSGEConfigurationDirectory());
