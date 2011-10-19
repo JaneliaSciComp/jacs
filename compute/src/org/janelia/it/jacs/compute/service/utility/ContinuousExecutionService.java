@@ -71,7 +71,7 @@ public class ContinuousExecutionService implements IService {
                     // Your subtask was successful.  Congrats.  You get to wait and try again.
                     EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(), Event.SUBTASKCOMPLETED_EVENT, 
                     		"Completed subexecution:"+ subTask.getDisplayName(), new Date());
-                    EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(), Event.PENDING_EVENT, 
+                    EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(), "waiting", 
                     		"Waiting "+loopTimerInMinutes+" minutes for next subexecution", new Date());
                     
                     Thread.sleep(loopTimerInMinutes*1000*60);
