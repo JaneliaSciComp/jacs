@@ -20,6 +20,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.tasks.Event;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOUnifiedFileDiscoveryTask;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
@@ -59,6 +60,8 @@ public class MCFOUnifiedFileDiscoveryService implements IService {
     private Date createDate;
     
     private List<String> directoryPathList = new ArrayList<String>();
+    private HashSet<String> nsTaskIdSet = new HashSet<String>();
+    private HashSet<String> nsCompletionSet = new HashSet<String>();
 
     private class LsmPair {
         public LsmPair() {}
@@ -118,7 +121,9 @@ public class MCFOUnifiedFileDiscoveryService implements IService {
                     Entity folder = verifyOrCreateChildFolderFromDir(topLevelFolder, dir);
                     processFolderForData(folder);
                 }
-            }
+            } 
+            
+            waitAndVerifyCompletion();
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -134,7 +139,7 @@ public class MCFOUnifiedFileDiscoveryService implements IService {
         	// Only accept the current user's top level folder
 	        for(Entity entity : topLevelFolders) {
 	        	if (entity.getUser().getUserLogin().equals(user.getUserLogin()) 
-	        			&& entity.getEntityType().getName().equals(annotationBean.getEntitiesByTypeName(EntityConstants.TYPE_FOLDER))) {
+	        			&& entity.getEntityType().getName().equals(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER).getName())) {
 	                // This is the folder we want, now load the entire folder hierarchy
 	                topLevelFolder = annotationBean.getFolderTree(entity.getId());
 	                logger.info("Found existing topLevelFolder, name=" + topLevelFolder.getName());
@@ -702,6 +707,7 @@ public class MCFOUnifiedFileDiscoveryService implements IService {
     }
     
     private void launchNeuronSeparator(NeuronSeparatorPipelineTask neuTask) {
+        nsTaskIdSet.add(neuTask.getObjectId().toString());
         switch(mode) {
         case GRID:
             neuTask.setJobName("Grid Neuron Separator for MCFOUnifiedFileDiscovery, task id="+neuTask.getObjectId());
@@ -718,5 +724,37 @@ public class MCFOUnifiedFileDiscoveryService implements IService {
             computeBean.submitJob("NeuronSeparationPipelineRemote", neuTask.getObjectId());
         	break;
         }
+    }
+    
+    private void waitAndVerifyCompletion() throws Exception {
+        boolean allComplete = false;
+        if (nsTaskIdSet.size()!=0) {
+            logger.debug("\n\nWaiting for processing of "+nsTaskIdSet.size()+" Neuron Separation pipelines.");
+            EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(), "Waiting for Neuron Separation Processing",
+                    "Waiting for Neuron Separation Processing", new Date());
+        }
+        else {
+//            logger.debug("No V3D pipelines processing."); // Would be too verbose every 5 seconds
+            return;
+        }
+        while (!allComplete && nsTaskIdSet.size()>0) {
+            for (String tmpTaskId : nsTaskIdSet) {
+                if (!nsCompletionSet.contains(tmpTaskId)) {
+                    String[] statusTypeAndValue = EJBFactory.getLocalComputeBean().getTaskStatus(Long.valueOf(tmpTaskId));
+                    if (Task.isDone(statusTypeAndValue[0])) {
+                        nsCompletionSet.add(tmpTaskId);
+                    }
+                }
+                if (nsTaskIdSet.size()==nsCompletionSet.size()) {
+                    allComplete = true;
+                }
+                else {
+                    Thread.sleep(5000);
+                }
+            }
+        }
+        logger.debug("\n\nNeuron separation pipeline processing complete.");
+        EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(), "Neuron Separation Processing Complete",
+                "Neuron Separation Processing Complete", new Date());
     }
 }
