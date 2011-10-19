@@ -103,7 +103,7 @@ public class V3DBulkProcessingService implements IService {
         File[] childFiles = dir.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File file, String s) {
-                return file.isFile()&&s.toLowerCase().endsWith(".lsm");
+                return s.toLowerCase().endsWith(".lsm");
             }
         });
         if (childFiles.length==2){
