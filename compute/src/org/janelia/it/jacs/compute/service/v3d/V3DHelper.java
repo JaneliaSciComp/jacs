@@ -70,9 +70,8 @@ public class V3DHelper {
     public static String getV3DGridCommandPrefix() {
         // todo This is a little sketchy.  Get V3D to run headless for plug-ins!!!
         int randomPort = ((int)(998.0 * Math.random()) + 1);
-        return "/usr/bin/Xvfb :910 -screen 0 1x1x24 -sp\n" +
-               "/usr/lib64/xserver/SecurityPolicy -fp /usr/share/X11/fonts/misc &\n" +
-               "MYPID=$! export DISPLAY=\"localhost:"+randomPort+"\"\n";
+        return "/usr/bin/Xvfb :910 -screen 0 1x1x24 -sp /usr/lib64/xserver/SecurityPolicy -fp /usr/share/X11/fonts/misc &\n" +
+               "MYPID=$!\nexport DISPLAY=\"localhost:"+randomPort+"\"\n";
     }
 
     public static String getV3DGridCommandSuffix() {
