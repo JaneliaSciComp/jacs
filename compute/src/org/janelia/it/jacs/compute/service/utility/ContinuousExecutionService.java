@@ -1,5 +1,10 @@
 package org.janelia.it.jacs.compute.service.utility;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
@@ -10,10 +15,8 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.SubmitJobAndWaitHelper;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.tasks.TaskMessage;
 import org.janelia.it.jacs.model.tasks.utility.ContinuousExecutionTask;
-
-import java.io.IOException;
-import java.util.Date;
 
 /**
  * This service is intended to provide a means for users to fire off continuously running pipelines.
@@ -34,31 +37,42 @@ public class ContinuousExecutionService implements IService {
         try {
             init(processData);
             while(true) {
-                // Get the task from the database - things may have changed
+                // Get the tasks from the database - things may have changed
+            	originalSubtask = (ContinuousExecutionTask) EJBFactory.getLocalComputeBean().getTaskById(originalSubtask.getObjectId());
                 task = (ContinuousExecutionTask) EJBFactory.getLocalComputeBean().getTaskById(task.getObjectId());
                 // Check the enabled state
                 if (!task.isStillEnabled()) {
                     break;
                 }
+                
+                logger.debug("Preparing to run subtask again. Last event was: "+originalSubtask.getLastEvent().getEventType());
 
                 // Format the new Task and try again.  If the original is good, use it
                 Task subTask = originalSubtask;
                 if (subTask.isDone()) {
+                    logger.debug("Cloning subtask="+subTask.getObjectId());
                     subTask = Task.clone(subTask);
                     subTask.setObjectId(null);
-                    subTask.setEvents(null);
+                    subTask.setEvents(new ArrayList<Event>());
+                    subTask.setMessages(new HashSet<TaskMessage>());
+                    subTask.setTaskDeleted(false);
                 }
+                else {
+                    logger.debug("Reusing subtask="+subTask.getObjectId());
+                }
+                
                 subTask.setParentTaskId(task.getObjectId());
                 subTask = EJBFactory.getLocalComputeBean().saveOrUpdateTask(subTask);
+                
                 // save task to the db and submit
-                logger.debug("Submitting a new subtask");
+                logger.debug("Submitting subtask="+subTask.getObjectId());
                 SubmitJobAndWaitHelper jobHelper = new SubmitJobAndWaitHelper(currentSubtaskProcess, subTask.getObjectId());
                 jobHelper.setWaitIntervalInSeconds(statusCheckDelayInSeconds);
                 EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(), Event.SUBTASKRUNNING_EVENT, 
                 		"Starting subexecution:" + subTask.getDisplayName(), new Date());
                 jobHelper.startAndWaitTillDone();
 
-                // If the last subtask event was an error, stop and
+                // If the last subtask event was an error
                 subTask = EJBFactory.getLocalComputeBean().getTaskById(subTask.getObjectId());
                 if (Event.ERROR_EVENT.equals(subTask.getLastEvent().getEventType())) {
                     EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(), Event.ERROR_EVENT, 
@@ -74,6 +88,7 @@ public class ContinuousExecutionService implements IService {
                     EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(), "waiting", 
                     		"Waiting "+loopTimerInMinutes+" minutes for next subexecution", new Date());
                     
+                    logger.debug("Subtask is done, sleeping for "+loopTimerInMinutes+" minutes");
                     Thread.sleep(loopTimerInMinutes*1000*60);
                 }
             }

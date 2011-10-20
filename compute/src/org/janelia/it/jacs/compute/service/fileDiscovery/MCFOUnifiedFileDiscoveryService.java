@@ -126,7 +126,6 @@ public class MCFOUnifiedFileDiscoveryService implements IService {
             waitAndVerifyCompletion();
             
         } catch (Exception e) {
-            e.printStackTrace();
             logger.error(e.getMessage());
         }
     }
