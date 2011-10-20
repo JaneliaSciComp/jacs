@@ -29,8 +29,8 @@ public class V3DHelper {
             }
 
             if (inputFile1.exists()&&inputFile2.exists()&&outputFile.getParentFile().exists()) {
-                return V3D_BASE_CMD+" -x libblend_multiscanstacks.so -f multiscanblend -p \"#k 1\" -i" + inputFilePath1
-                        + " " +inputFilePath2+ " -o" + outputFilePath;
+                return V3D_BASE_CMD+" -x libblend_multiscanstacks.so -f multiscanblend -p \"#k 1\" -i '" + inputFilePath1
+                        + "' '" +inputFilePath2+ "' -o '" + outputFilePath+"'";
             }
             else {
                 throw new Exception("Cannot format ");
@@ -60,7 +60,7 @@ public class V3DHelper {
         File inputDirectory = new File(inputDirectoryPath);
 
         if (inputDirectory.exists()) {
-            return V3D_BASE_CMD+" -x ifusion.so -f iblender -i '"+inputDirectoryPath+"' -o "+outputFilePath+" -p \"#s 1\"";
+            return V3D_BASE_CMD+" -x ifusion.so -f iblender -i '"+inputDirectoryPath+"' -o '"+outputFilePath+"' -p \"#s 1\"";
         }
         else {
             throw new ServiceException("Cannot format the command for the V3D Blender Command");
