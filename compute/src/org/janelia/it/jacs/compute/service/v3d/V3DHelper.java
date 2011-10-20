@@ -14,7 +14,8 @@ import java.io.File;
  */
 public class V3DHelper {
 
-    protected static final String V3D_BASE_CMD = SystemConfigurationProperties.getString("Executables.ModuleBase") +
+    protected static final String V3D_BASE_CMD = "export LD_LIBRARY_PATH=/usr/local/lib64/:$LD_LIBRARY_PATH\n"+
+            SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("V3D.CMD");
 
     public static String getFormattedMergeCommand(String inputFilePath1, String inputFilePath2, String outputFilePath) throws Exception {
