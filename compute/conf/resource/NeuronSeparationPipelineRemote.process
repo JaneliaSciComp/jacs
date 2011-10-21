@@ -30,8 +30,6 @@
         <operation name="Manage the Neuron Separation Pipeline" processor="org.janelia.it.jacs.compute.service.neuronSeparator.NeuronSeparationPipelineRemoteService">
             <output name="RESULT_FILE_NODE_ID"/>
             <output name="RESULT_FILE_NODE"/>
-            <output name="RESULT_FILE_NODE_ID"/>
-            <output name="RESULT_FILE_NODE"/>
         </operation>
         <operation name="Save results from the Neuron Separation Pipeline" processor="org.janelia.it.jacs.compute.service.neuronSeparator.NeuronSeparatorResultsService"/>
     </sequence>
