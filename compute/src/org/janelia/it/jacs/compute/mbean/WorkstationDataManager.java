@@ -1,16 +1,14 @@
 package org.janelia.it.jacs.compute.mbean;
 
-import org.apache.log4j.Logger;
+import java.util.ArrayList;
+import java.util.HashSet;
+
 import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
-import org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOStitchedFileDiscoveryTask;
-import org.janelia.it.jacs.model.tasks.fileDiscovery.MultiColorFlipOutFileDiscoveryTask;
+import org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOUnifiedFileDiscoveryTask;
 import org.janelia.it.jacs.model.user_data.Node;
-
-import java.util.ArrayList;
-import java.util.HashSet;
 
 /**
  * Created by IntelliJ IDEA.
@@ -29,12 +27,12 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         	String topLevelFolderName = "FlyLight Single Neuron Pilot Data";
         	String inputDirList = "/groups/flylight/flylight/SingleNeuronPilotData";
     		String linkingDirName = "/groups/scicomp/jacsData/flylight/"+user+"/SingleNeuronPilotData";
-            MultiColorFlipOutFileDiscoveryTask task = new MultiColorFlipOutFileDiscoveryTask(new HashSet<Node>(), 
+    		MCFOUnifiedFileDiscoveryTask task = new MCFOUnifiedFileDiscoveryTask(new HashSet<Node>(), 
             		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), inputDirList, topLevelFolderName, 
             		linkingDirName, refresh);
             task.setJobName("MultiColor FlipOut File Discovery Task");
-            task = (MultiColorFlipOutFileDiscoveryTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("MultiColorFlipOutFileDiscovery", task.getObjectId());
+            task = (MCFOUnifiedFileDiscoveryTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("MCFOUnifiedFileDiscovery", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -45,12 +43,12 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         	String topLevelFolderName = "FlyLight Single Neuron Stitched Data";
         	String inputDirList = "/groups/flylight/flylight/flip/SecData/stitch";
     		String linkingDirName = "/groups/scicomp/jacsData/flylight/"+user+"/SingleNeuronStitchedData";
-            MCFOStitchedFileDiscoveryTask task = new MCFOStitchedFileDiscoveryTask(new HashSet<Node>(), 
+    		MCFOUnifiedFileDiscoveryTask task = new MCFOUnifiedFileDiscoveryTask(new HashSet<Node>(), 
             		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), inputDirList, topLevelFolderName, 
             		linkingDirName, refresh);
-            task.setJobName("MultiColor FlipOut Stitched File Discovery Task");
-            task = (MCFOStitchedFileDiscoveryTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("MCFOStitchedFileDiscovery", task.getObjectId());
+            task.setJobName("MultiColor FlipOut Unified File Discovery Task");
+            task = (MCFOUnifiedFileDiscoveryTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("MCFOUnifiedFileDiscovery", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -74,6 +72,4 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
          ex.printStackTrace();
      }
     }
-
-
 }
