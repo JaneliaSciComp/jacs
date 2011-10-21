@@ -23,28 +23,35 @@
 
 package org.janelia.it.jacs.compute.service.neuronSeparator;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
 import org.ggf.drmaa.DrmaaException;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
-import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorTask;
+import org.janelia.it.jacs.compute.util.FileUtils;
+import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
+import org.janelia.it.jacs.model.user_data.neuronSeparator.NeuronSeparatorResultNode;
 import org.janelia.it.jacs.model.vo.ParameterException;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.
  * User: tsafford
  * Date: Dec 15, 2008
  * Time: 3:47:21 PM
+ * @deprecated I'm pretty sure this is not used by anything and can be deleted, along with its process file.
+ * @see NeuronSeparatorPipelineService
  */
 public class NeuronSeparatorSubmitJobService extends SubmitDrmaaJobService {
 
     private static final String CONFIG_PREFIX = "neuSepConfiguration.";
+    private static final String REMOTE_SCRIPT = "runsep.fedora.sh";
+    private static final String STDOUT_FILE = "runsep.out";
+    private static final String STDERR_FILE = "runsep.err";
 
     /**
      * This method is intended to allow subclasses to define service-unique filenames which will be used
@@ -61,7 +68,6 @@ public class NeuronSeparatorSubmitJobService extends SubmitDrmaaJobService {
      * which ultimately get executed by the grid nodes
      */
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
-//        NeuronSeparatorTask neuSepTask = (NeuronSeparatorTask) task;
         File configFile = new File(getSGEConfigurationDirectory() + File.separator + CONFIG_PREFIX + "1");
         boolean fileSuccess = configFile.createNewFile();
         if (!fileSuccess){
@@ -79,18 +85,24 @@ public class NeuronSeparatorSubmitJobService extends SubmitDrmaaJobService {
 
     private void createShellScript(FileWriter writer)
             throws IOException, ParameterException, MissingDataException, InterruptedException, ServiceException {
-        String basePath = SystemConfigurationProperties.getString("Executables.ModuleBase");
 
-        String pipelineCmd = basePath + SystemConfigurationProperties.getString("NeuSep.PipelineCmd")+" \""+
-                task.getParameter(NeuronSeparatorTask.PARAM_inputTifFilePath)+"\" "+resultFileNode.getDirectoryPath()+
-                File.separator;
-//        SystemConfigurationProperties properties = SystemConfigurationProperties.getInstance();
-//        String tmpDirectoryName = properties.getProperty("Upload.ScratchDir");
+        NeuronSeparatorResultNode parentNode = (NeuronSeparatorResultNode) ProcessDataHelper.getResultFileNode(processData);
+        
+        String script = NeuronSeparatorHelper.getNeuronSeparationCommands((NeuronSeparatorPipelineTask)task, parentNode, "mylib.fedora", " ; ");
+    	File scriptFile = new File(parentNode.getDirectoryPath(), REMOTE_SCRIPT);
+    	FileUtils.writeStringToFile(scriptFile, NeuronSeparatorHelper.covertPathsToRemoteServer(script));
 
-        StringBuffer script = new StringBuffer();
-        script.append("set -o errexit\n");
-        script.append("cd ").append(resultFileNode.getDirectoryPath()).append("\n");
-        script.append(pipelineCmd).append("\n");
+    	File outFile = new File(parentNode.getDirectoryPath(), STDOUT_FILE);
+        File errFile = new File(parentNode.getDirectoryPath(), STDERR_FILE);
+        // Need to use bash to get process substitution for the tricksy tee stuff to work. It is explained here:
+        // http://stackoverflow.com/questions/692000/how-do-i-write-stderr-to-a-file-while-using-tee-with-a-pipe
+        String cmdLine = "bash "+ NeuronSeparatorHelper.covertPathsToRemoteServer(scriptFile.getAbsolutePath()) +
+//        	" 1>>"+outFile.getAbsolutePath()+" 2>>"+errFile.getAbsolutePath()
+        	" > >(tee "+outFile.getAbsolutePath()+") 2> >(tee "+errFile.getAbsolutePath()+" >&2)";
+
+        StringBuffer wrapper = new StringBuffer();
+        wrapper.append("set -o errexit\n");
+        wrapper.append(cmdLine).append("\n");
         writer.write(script.toString());
     }
 
