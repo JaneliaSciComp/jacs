@@ -38,6 +38,7 @@ import javax.ejb.MessageDriven;
  * has an error code data member.
  *
  * @author Tareq Nabeel
+ * @deprecated Looks like this class is not used and may be deleted.
  */
 @MessageDriven(name = "NeuronSeparatorLauncherMDB", activationConfig = {
         @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),

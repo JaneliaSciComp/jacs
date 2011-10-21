@@ -60,7 +60,7 @@ public class V3DPipelineService extends SubmitDrmaaJobService {
         writer.write(fullCmd);
         writer.write(V3DHelper.getV3DGridCommandSuffix());
         boolean success = new File(getSGEConfigurationDirectory()+File.separator+task.getTaskName()+"Configuration.1").createNewFile();
-        if (!success) { throw new ServiceException("Unable to create SGE Configuraiton directory"); }
+        if (!success) { throw new ServiceException("Unable to create SGE Configuration directory"); }
         success = new File(getSGEOutputDirectory()+File.separator+task.getTaskName()+"Output").createNewFile();
         if (!success) { throw new ServiceException("Unable to create SGE Output directory"); }
         setJobIncrementStop(1);

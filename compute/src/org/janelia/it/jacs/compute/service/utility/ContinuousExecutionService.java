@@ -38,14 +38,14 @@ public class ContinuousExecutionService implements IService {
             init(processData);
             while(true) {
                 // Get the tasks from the database - things may have changed
-            	originalSubtask = (ContinuousExecutionTask) EJBFactory.getLocalComputeBean().getTaskById(originalSubtask.getObjectId());
+            	originalSubtask = EJBFactory.getLocalComputeBean().getTaskById(originalSubtask.getObjectId());
                 task = (ContinuousExecutionTask) EJBFactory.getLocalComputeBean().getTaskById(task.getObjectId());
                 // Check the enabled state
                 if (!task.isStillEnabled()) {
                     break;
                 }
                 
-                logger.debug("Preparing to run subtask again. Last event was: "+originalSubtask.getLastEvent().getEventType());
+                logger.debug("Preparing to run subtask. Last event was: "+originalSubtask.getLastEvent().getEventType());
 
                 // Format the new Task and try again.  If the original is good, use it
                 Task subTask = originalSubtask;
@@ -58,7 +58,7 @@ public class ContinuousExecutionService implements IService {
                     subTask.setTaskDeleted(false);
                 }
                 else {
-                    logger.debug("Reusing subtask="+subTask.getObjectId());
+                    logger.debug("Using subtask="+subTask.getObjectId());
                 }
                 
                 subTask.setParentTaskId(task.getObjectId());

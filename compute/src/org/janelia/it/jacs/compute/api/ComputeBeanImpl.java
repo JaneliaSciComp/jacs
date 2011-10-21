@@ -158,7 +158,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     	cet.setEnabled(false);
     	try {
         	// This saves the enabled flash as well
-        	computeDAO.createEvent(cet, Event.CANCELED_EVENT, "Ended continuous execution", new Date());	
+        	computeDAO.createEvent(cet, "stopped", "User requested end of continuous execution", new Date());	
     	}
     	catch (DaoException e) {
     		throw new ServiceException(e);

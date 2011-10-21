@@ -46,7 +46,7 @@ public class MCFOUnifiedFileDiscoveryService implements IService {
     	GRID
     }
     
-    private NeuronSepMode mode = NeuronSepMode.REMOTE;
+    private NeuronSepMode mode = NeuronSepMode.GRID;
     
     private String linkingDir;
     private boolean refresh = true;

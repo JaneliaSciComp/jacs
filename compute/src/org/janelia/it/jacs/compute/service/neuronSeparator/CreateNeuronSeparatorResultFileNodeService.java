@@ -23,22 +23,21 @@ public class CreateNeuronSeparatorResultFileNodeService implements IService {
     private Task task;
     private NeuronSeparatorResultNode resultFileNode;
     private String sessionName;
-    Long resultNodeId;
 
     public void execute(IProcessData processData) throws CreateRecruitmentFileNodeException {
         try {
             this.task = ProcessDataHelper.getTask(processData);
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
-            resultNodeId = createResultFileNode();
-            processData.putItem(ProcessDataConstants.RESULT_FILE_NODE_ID, resultNodeId);
+            createResultFileNode();
             processData.putItem(ProcessDataConstants.RESULT_FILE_NODE, resultFileNode);
+            processData.putItem(ProcessDataConstants.RESULT_FILE_NODE_ID, resultFileNode.getObjectId());
         }
         catch (Exception e) {
             throw new CreateRecruitmentFileNodeException(e);
         }
     }
 
-    private Long createResultFileNode() throws DaoException, IOException {
+    private void createResultFileNode() throws DaoException, IOException {
         // if we get this far then we assume that no result persist exists and create one
         String visibility = Node.VISIBILITY_PRIVATE;
 
@@ -52,7 +51,6 @@ public class CreateNeuronSeparatorResultFileNodeService implements IService {
 
         FileUtil.ensureDirExists(resultFileNode.getDirectoryPath());
         FileUtil.cleanDirectory(resultFileNode.getDirectoryPath());
-        return resultFileNode.getObjectId();
     }
 
 }
