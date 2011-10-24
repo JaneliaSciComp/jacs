@@ -35,7 +35,7 @@ public class NeuronSeparationPipelineLocalService implements IService {
 
             String script = NeuronSeparatorHelper.getNeuronSeparationCommands(task, parentNode, "mylib.fedora", " ; ");
         	File scriptFile = new File(parentNode.getDirectoryPath(), REMOTE_SCRIPT);
-        	FileUtils.writeStringToFile(scriptFile, NeuronSeparatorHelper.covertPathsToRemoteServer(script));
+        	FileUtils.writeStringToFile(scriptFile, script);
             
         	String cmdLine = script;
         	

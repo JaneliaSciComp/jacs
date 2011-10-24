@@ -39,12 +39,11 @@ public class NeuronSeparationPipelineRemoteService implements IService {
             
             String script = NeuronSeparatorHelper.getNeuronSeparationCommands(task, parentNode, "mylib.mac", " ; ");
         	File scriptFile = new File(parentNode.getDirectoryPath(), REMOTE_SCRIPT);
-        	FileUtils.writeStringToFile(scriptFile, NeuronSeparatorHelper.covertPathsToRemoteServer(script));
+        	FileUtils.writeStringToFile(scriptFile, script);
 
         	File outFile = new File(parentNode.getDirectoryPath(), STDOUT_FILE);
             File errFile = new File(parentNode.getDirectoryPath(), STDERR_FILE);
-            String cmdLine = "ssh "+REMOTE_SERVER+" sh "+
-            	NeuronSeparatorHelper.covertPathsToRemoteServer(scriptFile.getAbsolutePath()) +
+            String cmdLine = "ssh "+REMOTE_SERVER+" sh "+ scriptFile.getAbsolutePath() +
             	" 1>>"+outFile.getAbsolutePath()+" 2>>"+errFile.getAbsolutePath();
             
             SystemCall call = new SystemCall();
