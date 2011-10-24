@@ -33,5 +33,4 @@ public interface AnnotationManagerMBean {
 
     public void testNeuronSep(String inputFilePath);
     public void testColorSep(String inputFilePath);
-    public void testNeuronSepPipeline(String inputFilePath);
 }

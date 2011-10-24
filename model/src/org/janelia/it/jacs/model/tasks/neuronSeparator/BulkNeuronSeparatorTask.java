@@ -40,39 +40,27 @@ import java.util.Set;
  * Date: Dec 15, 2008
  * Time: 3:03:13 PM
  */
-public class NeuronSeparatorPipelineTask extends Task {
-    transient public static final String TASK_NAME = "neuronSeparatorPipeline";
-    transient public static final String DISPLAY_NAME = "Neuron Separation Pipeline";
+public class BulkNeuronSeparatorTask extends Task {
+    transient public static final String TASK_NAME = "bulkNeuronSeparator";
+    transient public static final String DISPLAY_NAME = "Bulk Neuron Separation";
     // Sample input file
 
-    // Parameter Keys - Subset of the params needed by the child tasks of this pipeline
-
-    // Note: Only one of these parameters should be populated
-    transient public static final String PARAM_inputFilePath        = "input file path";
-    transient public static final String PARAM_inputStitchedStackId = "input stitched stack id";
-    transient public static final String PARAM_inputLsmFilePathList = "input lsm file path list";
-    transient public static final String PARAM_inputLsmEntityIdList = "input lsm entity id list";
-    transient public static final String PARAM_outputSampleEntityId = "output sample entity id";
-    transient public static final String PARAM_symbolLinkName = "name of the link to the result dir";
+    // Parameter Keys
+    transient public static final String PARAM_inputDirectoryList = "list of input directories";
 
     // Default values - default overrides
 
-    public NeuronSeparatorPipelineTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet) {
+    public BulkNeuronSeparatorTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet) {
         super(inputNodes, owner, events, taskParameterSet);
         setDefaultValues();
     }
 
-    public NeuronSeparatorPipelineTask() {
+    public BulkNeuronSeparatorTask() {
         setDefaultValues();
     }
 
     private void setDefaultValues() {
-        setParameter(PARAM_inputFilePath, "");
-        setParameter(PARAM_inputStitchedStackId, "");
-        setParameter(PARAM_inputLsmFilePathList, "");
-        setParameter(PARAM_inputLsmEntityIdList, "");
-        setParameter(PARAM_outputSampleEntityId, "");
-        setParameter(PARAM_symbolLinkName, "");
+        setParameter(PARAM_inputDirectoryList, "");
         this.taskName = TASK_NAME;
     }
 
@@ -82,20 +70,8 @@ public class NeuronSeparatorPipelineTask extends Task {
         String value = getParameter(key);
         if (value == null)
             return null;
-        if (key.equals(PARAM_inputStitchedStackId)||key.equals(PARAM_inputFilePath)) {
-            return new TextParameterVO(value,1000);
-        }
-        if (key.equals(PARAM_inputLsmFilePathList)) {
-            return new TextParameterVO(value,1000);
-        }
-        else if (key.equals(PARAM_inputLsmEntityIdList)) {
-            return new TextParameterVO(value, 1000);
-        }
-        else if (key.equals(PARAM_outputSampleEntityId)) {
-            return new TextParameterVO(value, 1000);
-        }
-        else if (key.equals(PARAM_symbolLinkName)) {
-            return new TextParameterVO(value, 1000);
+        if (key.equals(PARAM_inputDirectoryList)) {
+            return new TextParameterVO(value, 4000);
         }
         // No match
         return null;

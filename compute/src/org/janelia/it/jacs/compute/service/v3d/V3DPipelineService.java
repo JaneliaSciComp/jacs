@@ -8,16 +8,13 @@ import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJob
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.v3d.V3DPipelineTask;
-import org.janelia.it.jacs.model.user_data.FileNode;
-import org.janelia.it.jacs.model.user_data.GenericFileNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.util.HashMap;
+import java.io.FilenameFilter;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Scanner;
 
 /**
  * Created by IntelliJ IDEA.
@@ -36,10 +33,7 @@ public class V3DPipelineService extends SubmitDrmaaJobService {
         if (this.task == null) {
             this.task = ProcessDataHelper.getTask(processData);
         }
-        // Permit the resultNode to be defined elsewhere
-        resultFileNode = new GenericFileNode(task.getOwner(), task, "","", FileNode.VISIBILITY_PRIVATE,
-                FileNode.DIRECTORY_DATA_TYPE, null);
-        resultFileNode.setPathOverride(temporaryDirectory+File.separator+task.getObjectId());
+        resultFileNode = ProcessDataHelper.getResultFileNode(processData);
         this.jobSet = new HashSet<String>();
         // ensure the SGE dirs exist
         FileUtil.ensureDirExists(getSGEConfigurationDirectory());
@@ -73,49 +67,55 @@ public class V3DPipelineService extends SubmitDrmaaJobService {
         if (inputFiles.size()>1) {
             throw new ServiceException("Functionality not yet implemented.");
         }
-        String lastDirectoryPointer=inputFiles.get(0);
+        String lastDirectoryPointer=resultFileNode.getDirectoryPath();
         File inputImageDirectory = new File(inputPaths);
-        File slideGroupInfoFile = new File(inputPaths+File.separator+"slide_group_info.txt");
-        if (!slideGroupInfoFile.exists()) {
-            throw new ServiceException("Cannot find the slide_group_info.txt file in "+inputImageDirectory.getAbsolutePath());
-        }
-        HashMap<String, FilePair> filePairings = new HashMap<String, FilePair>();
-        Scanner scanner = new Scanner(slideGroupInfoFile);
-        String identifier=null;
-        while (scanner.hasNextLine()){
-            String[] pieces = scanner.nextLine().split("\t");
-            if (null==filePairings.get(pieces[1])) {
-                filePairings.put(pieces[1], new FilePair(pieces[1], pieces[0]));
-            }
-            else {
-                filePairings.get(pieces[1]).setFilename2(pieces[0]);
-            }
-            if (null==identifier) {
-                identifier = pieces[2];
-            }
-        }
+//        File slideGroupInfoFile = new File(inputPaths+File.separator+"slide_group_info.txt");
+//        if (!slideGroupInfoFile.exists()) {
+//            throw new ServiceException("Cannot find the slide_group_info.txt file in "+inputImageDirectory.getAbsolutePath());
+//        }
+//        HashMap<String, FilePair> filePairings = new HashMap<String, FilePair>();
+//        Scanner scanner = new Scanner(slideGroupInfoFile);
+//        String identifier=null;
+//        while (scanner.hasNextLine()){
+//            String[] pieces = scanner.nextLine().split("\t");
+//            if (null==filePairings.get(pieces[1])) {
+//                filePairings.put(pieces[1], new FilePair(pieces[1], pieces[0]));
+//            }
+//            else {
+//                filePairings.get(pieces[1]).setFilename2(pieces[0]);
+//            }
+//            if (null==identifier) {
+//                identifier = pieces[2];
+//            }
+//        }
         if (Boolean.valueOf(task.getParameter(V3DPipelineTask.PARAM_RUN_MERGE))){
             // Assume the path is a directory and get the image info
             lastDirectoryPointer = lastDirectoryPointer+File.separator+"merged";
-            for (FilePair filePair : filePairings.values()) {
-                if (filePair.isPairingComplete()) {
-                    String tmpUniqueName = identifier+"-"+inputImageDirectory.getName()+"-"+filePair.getPairTag()+".v3draw";
+//            for (FilePair filePair : filePairings.values()) {
+//                if (filePair.isPairingComplete()) {
+                    File[] childFiles = inputImageDirectory.listFiles(new FilenameFilter() {
+                        @Override
+                        public boolean accept(File file, String s) {
+                            return s.toLowerCase().endsWith(".lsm");
+                        }
+                    });
+                    String tmpUniqueName = "pipeline-"+inputImageDirectory.getName()+".v3draw";
                     tmpUniqueName = tmpUniqueName.replaceAll(" ","_");
                     String tmpOutputFilename = lastDirectoryPointer+File.separator+tmpUniqueName;
-                    sbuf.append(V3DHelper.getFormattedMergeCommand(inputPaths+File.separator+filePair.getFilename1(),
-                            inputPaths+File.separator+filePair.getFilename2(), tmpOutputFilename)).append("\n");
-                }
-            }
+                    sbuf.append(V3DHelper.getFormattedMergeCommand(childFiles[0].getAbsolutePath(),
+                            childFiles[1].getAbsolutePath(), tmpOutputFilename)).append("\n");
+//                }
+//            }
         }
-        if (Boolean.valueOf(task.getParameter(V3DPipelineTask.PARAM_RUN_STITCH))) {
-            sbuf.append(V3DHelper.getFormattedStitcherCommand(lastDirectoryPointer)).append("\n");
-        }
-        if (Boolean.valueOf(task.getParameter(V3DPipelineTask.PARAM_RUN_BLEND))) {
-            String tmpUniqueName = identifier+"-"+inputImageDirectory.getName()+"-stitched.v3draw";
-            tmpUniqueName = tmpUniqueName.replaceAll(" ","_");
-            String tmpOutputFilename = inputFiles.get(0)+File.separator+"stitched"+tmpUniqueName;
-            sbuf.append(V3DHelper.getFormattedBlendCommand(lastDirectoryPointer,tmpOutputFilename)).append("\n");
-        }
+//        if (Boolean.valueOf(task.getParameter(V3DPipelineTask.PARAM_RUN_STITCH))) {
+//            sbuf.append(V3DHelper.getFormattedStitcherCommand(lastDirectoryPointer)).append("\n");
+//        }
+//        if (Boolean.valueOf(task.getParameter(V3DPipelineTask.PARAM_RUN_BLEND))) {
+//            String tmpUniqueName = identifier+"-"+inputImageDirectory.getName()+"-stitched.v3draw";
+//            tmpUniqueName = tmpUniqueName.replaceAll(" ","_");
+//            String tmpOutputFilename = inputFiles.get(0)+File.separator+"stitched"+tmpUniqueName;
+//            sbuf.append(V3DHelper.getFormattedBlendCommand(lastDirectoryPointer,tmpOutputFilename)).append("\n");
+//        }
         return sbuf.toString();
     }
 

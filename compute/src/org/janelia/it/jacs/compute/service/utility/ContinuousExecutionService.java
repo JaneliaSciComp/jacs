@@ -1,10 +1,5 @@
 package org.janelia.it.jacs.compute.service.utility;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
@@ -15,8 +10,10 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.SubmitJobAndWaitHelper;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.tasks.TaskMessage;
 import org.janelia.it.jacs.model.tasks.utility.ContinuousExecutionTask;
+
+import java.io.IOException;
+import java.util.Date;
 
 /**
  * This service is intended to provide a means for users to fire off continuously running pipelines.
@@ -50,22 +47,23 @@ public class ContinuousExecutionService implements IService {
                 // Format the new Task and try again.  If the original is good, use it
                 Task subTask = originalSubtask;
                 if (subTask.isDone()) {
-                    logger.debug("Cloning subtask="+subTask.getObjectId());
-                    subTask = Task.clone(subTask);
-                    subTask.setObjectId(null);
-                    subTask.setEvents(new ArrayList<Event>());
-                    subTask.setMessages(new HashSet<TaskMessage>());
-                    subTask.setTaskDeleted(false);
+                    logger.debug("Copying subtask="+subTask.getObjectId());
+                    subTask = (Task)Class.forName(originalSubtask.getClass().getCanonicalName()).newInstance();
+                    // Copy all relevant parameters
+                    for (String parameter : originalSubtask.getParameterKeySet()) {
+                        subTask.setParameter(parameter, originalSubtask.getParameter(parameter));
+                    }
+                    subTask.setOwner(originalSubtask.getOwner());
+                    subTask.setJobName(originalSubtask.getJobName());
+                    subTask.setParentTaskId(originalSubtask.getParentTaskId());
                 }
                 else {
                     logger.debug("Using subtask="+subTask.getObjectId());
                 }
-                
-                subTask.setParentTaskId(task.getObjectId());
                 subTask = EJBFactory.getLocalComputeBean().saveOrUpdateTask(subTask);
                 
                 // save task to the db and submit
-                logger.debug("Submitting subtask="+subTask.getObjectId());
+                logger.debug("Submitting subtask=" + subTask.getObjectId());
                 SubmitJobAndWaitHelper jobHelper = new SubmitJobAndWaitHelper(currentSubtaskProcess, subTask.getObjectId());
                 jobHelper.setWaitIntervalInSeconds(statusCheckDelayInSeconds);
                 EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(), Event.SUBTASKRUNNING_EVENT, 

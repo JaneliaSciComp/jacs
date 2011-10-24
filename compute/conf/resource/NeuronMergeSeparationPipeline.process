@@ -1,0 +1,9 @@
+<process name="Neuron Merge Separation Pipeline" startEvent="pending" updateProcessStatus="on_success" processor="queue/mcfoUnifiedFileDiscoveryLauncher">
+    <sequence name="Neuron Merge Separation Processing">
+        <operation name="Create Neuron Separation Result Node" processor="org.janelia.it.jacs.compute.service.neuronSeparator.CreateNeuronSeparatorResultFileNodeService">
+            <output name="RESULT_FILE_NODE_ID"/>
+            <output name="RESULT_FILE_NODE"/>
+        </operation>
+        <operation name="Bulk Neuron Data Processing Service" processor="org.janelia.it.jacs.compute.service.neuronSeparator.BulkNeuronMergeSeparationProcessingService" />
+    </sequence>
+</process>

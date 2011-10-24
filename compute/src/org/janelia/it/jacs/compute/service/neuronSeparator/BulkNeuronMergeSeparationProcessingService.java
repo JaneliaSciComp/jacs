@@ -21,7 +21,7 @@
  * "http://www.perlfoundation.org/artistic_license_2_0."
  */
 
-package org.janelia.it.jacs.compute.service.v3d;
+package org.janelia.it.jacs.compute.service.neuronSeparator;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
@@ -30,15 +30,16 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.BulkNeuronSeparatorTask;
+import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.tasks.v3d.V3DPipelineTask;
+import org.janelia.it.jacs.model.user_data.Node;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -46,11 +47,14 @@ import java.util.List;
  * Date: Jan 20, 2009
  * Time: 11:44:08 PM
  */
-public class V3DBulkProcessingService implements IService {
+public class BulkNeuronMergeSeparationProcessingService implements IService {
     private Logger logger;
     private List<String> directoryPathList = new ArrayList<String>();
     private HashSet<String> v3dTaskIdSet = new HashSet<String>();
     private HashSet<String> v3dCompletionSet = new HashSet<String>();
+    private HashSet<String> neusepTaskIdSet = new HashSet<String>();
+    private HashSet<String> neusepTaskCompletionSet = new HashSet<String>();
+    private HashMap<String, String> v3dTaskResultNodeMap = new HashMap<String, String>();
     private BulkNeuronSeparatorTask task;
 
     public void execute(IProcessData processData) throws ServiceException {
@@ -74,7 +78,7 @@ public class V3DBulkProcessingService implements IService {
             }
 
             for (String directoryPath : directoryPathList) {
-                logger.info("BulkNeuronSeparatorTask including directory = "+directoryPath);
+                logger.info("MCFOUnifiedFileDiscoveryService including directory = "+directoryPath);
             }
 
             for (String directoryPath : directoryPathList) {
@@ -91,7 +95,22 @@ public class V3DBulkProcessingService implements IService {
                 }
             }
 
-            waitAndVerifyCompletion();
+            waitAndVerifyV3DCompletion();
+
+            // Now run all the V3dData into the Neuron Separation pipeline
+            for (String tmpV3dTaskId : v3dCompletionSet) {
+                Task tmpTask = EJBFactory.getLocalComputeBean().getTaskById(Long.valueOf(tmpV3dTaskId));
+                NeuronSeparatorPipelineTask neuTask = new NeuronSeparatorPipelineTask(new HashSet<Node>(),
+                        task.getOwner(), new ArrayList<Event>(), new HashSet<TaskParameter>());
+                neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_inputFilePath, tmpTask.getParameter(V3DPipelineTask.PARAM_INPUT_FILE_PATHS));
+                neuTask.setJobName("Remote Neuron Separator Task");
+                neuTask.setParentTaskId(tmpTask.getObjectId());
+                neuTask = (NeuronSeparatorPipelineTask)EJBFactory.getLocalComputeBean().saveOrUpdateTask(neuTask);
+                neusepTaskIdSet.add(neuTask.getObjectId().toString());
+                EJBFactory.getLocalComputeBean().submitJob("NeuronSeparationPipelineRemote", neuTask.getObjectId());
+            }
+
+            waitAndVerifyNeuSepCompletion();
         }
         catch (Exception e) {
             throw new ServiceException("There was an error bulk processing files for the V3D pipeline", e);
@@ -110,6 +129,9 @@ public class V3DBulkProcessingService implements IService {
             }
         }
 
+        // Check the db to see if this input has already been run
+
+
         if (childFiles.size()==2){
             V3DPipelineTask newV3dTask = new V3DPipelineTask(null, task.getOwner(), null, null, true, false, false,
                     dir.getAbsolutePath());
@@ -122,7 +144,7 @@ public class V3DBulkProcessingService implements IService {
         }
     }
 
-    private void waitAndVerifyCompletion() throws Exception {
+    private void waitAndVerifyV3DCompletion() throws Exception {
         boolean allComplete = false;
         if (v3dTaskIdSet.size()!=0) {
             logger.debug("\n\nWaiting for processing of "+v3dTaskIdSet.size()+" V3D pipelines.");
@@ -154,4 +176,36 @@ public class V3DBulkProcessingService implements IService {
                 "V3D Processing Complete", new Date());
     }
 
+    // todo This needs to be a generic pipeline method that all services can use
+    private void waitAndVerifyNeuSepCompletion() throws Exception {
+        boolean allComplete = false;
+        if (neusepTaskIdSet.size()!=0) {
+            logger.debug("\n\nWaiting for processing of "+neusepTaskIdSet.size()+" Neuron Separation pipelines.");
+            EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(), "Waiting for Neuron Separation Processing",
+                    "Waiting for Neuron Separation Processing", new Date());
+        }
+        else {
+//            logger.debug("No Neuron Separation pipelines processing."); // Would be too verbose every 5 seconds
+            return;
+        }
+        while (!allComplete && neusepTaskIdSet.size()>0) {
+            for (String tmpTaskId : neusepTaskIdSet) {
+                if (!neusepTaskCompletionSet.contains(tmpTaskId)) {
+                    String[] statusTypeAndValue = EJBFactory.getLocalComputeBean().getTaskStatus(Long.valueOf(tmpTaskId));
+                    if (Task.isDone(statusTypeAndValue[0])) {
+                        neusepTaskCompletionSet.add(tmpTaskId);
+                    }
+                }
+                if (neusepTaskIdSet.size()==neusepTaskCompletionSet.size()) {
+                    allComplete = true;
+                }
+                else {
+                    Thread.sleep(5000);
+                }
+            }
+        }
+        logger.debug("\n\nBulk Neuron Separation pipeline processing complete.");
+        EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(), "Bulk Neuron Separation Processing Complete",
+                "Bulk Neuron Separation Processing Complete", new Date());
+    }
 }

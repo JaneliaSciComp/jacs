@@ -1,7 +1,5 @@
 package org.janelia.it.jacs.compute.service.neuronSeparator;
 
-import java.io.File;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -12,6 +10,8 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.user_data.neuronSeparator.NeuronSeparatorResultNode;
+
+import java.io.File;
 
 /**
  * Created by IntelliJ IDEA.
@@ -52,13 +52,23 @@ public class NeuronSeparatorHelper {
 	public static String getNeuronSeparationCommands(NeuronSeparatorPipelineTask task, 
 			NeuronSeparatorResultNode parentNode, String mylibDir, String commandDelim) throws ServiceException {
 
-		StringBuffer cmdLine = new StringBuffer();
-        String fileList = NeuronSeparatorHelper.getFileListString(task);
-    	
-		cmdLine.append("cd "+parentNode.getDirectoryPath()+";export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64:" +
-                SystemConfigurationProperties.getString("Executables.ModuleBase")+"singleNeuronTools/genelib/"+mylibDir+";"+
-                SystemConfigurationProperties.getString("Executables.ModuleBase")+"singleNeuronTools/genelib/"+mylibDir+"/sampsepNALoadRaw -nr -pj "+
-                parentNode.getDirectoryPath()+" neuronSeparatorPipeline "+ NeuronSeparatorHelper.addQuotesToCsvString(fileList)).append(commandDelim);
+        StringBuilder cmdLine = new StringBuilder();
+        String fileList;
+        if (null!=task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputFilePath)&&
+            !"".equals(task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputFilePath))) {
+            fileList = task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputFilePath);
+        }
+        else {
+            fileList = NeuronSeparatorHelper.getFileListString(task);
+        }
+
+        cmdLine.append("cd ").append(parentNode.getDirectoryPath()).append(";export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64:").
+                append(SystemConfigurationProperties.getString("Executables.ModuleBase")).
+                append("singleNeuronTools/genelib/").append(mylibDir).append(";").
+                append(SystemConfigurationProperties.getString("Executables.ModuleBase")).
+                append("singleNeuronTools/genelib/").append(mylibDir).append("/sampsepNALoadRaw -nr -pj ").
+                append(parentNode.getDirectoryPath()).append(" neuronSeparatorPipeline ").
+                append(NeuronSeparatorHelper.addQuotesToCsvString(fileList)).append(commandDelim);
         
         return cmdLine.toString();
 	}

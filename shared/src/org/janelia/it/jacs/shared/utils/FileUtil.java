@@ -47,7 +47,7 @@ public class FileUtil {
     public static final String FILE_SEPARATOR = File.separator;
     private static final String os = System.getProperties().getProperty("os.name");
     private static final boolean isWindows = os != null && os.toLowerCase().contains("windows");
-
+    public static final String TOKEN_STRING = ".token";
     private static final Logger logger = Logger.getLogger(FileUtil.class.getName());
 
     public static void appendOneFileToAnother(File baseFile, File fileToAppend) throws IOException {
@@ -739,7 +739,7 @@ public class FileUtil {
     public static void removeAllTokens(String pathToDirectory) {
         String[] dirFiles = (new File(pathToDirectory)).list();
         for (String dirFile : dirFiles) {
-            if (dirFile.endsWith(".token")) {
+            if (dirFile.endsWith(TOKEN_STRING)) {
                 (new File(dirFile)).delete();
             }
         }
@@ -755,7 +755,7 @@ public class FileUtil {
     public static void removeToken(String pathToDirectory, String specificToken) {
         String[] dirFiles = (new File(pathToDirectory)).list();
         for (String dirFile : dirFiles) {
-            if (dirFile.endsWith(specificToken + ".token")) {
+            if (dirFile.endsWith(specificToken + TOKEN_STRING)) {
                 (new File(dirFile)).delete();
                 break;
             }
@@ -774,7 +774,7 @@ public class FileUtil {
     public static void dropTokenFile(String pathToDirectory, String specificToken) throws IOException {
         FileOutputStream os = null;
         try {
-            os = new FileOutputStream(pathToDirectory + File.separator + specificToken + ".token");
+            os = new FileOutputStream(pathToDirectory + File.separator + specificToken + TOKEN_STRING);
             os.write((specificToken + " - This file is indication that some processing error has occurred.  File may be removed.").getBytes());
         }
         finally {
@@ -795,7 +795,7 @@ public class FileUtil {
      * @return boolean if the dir has the token requested
      */
     public static boolean directoryHasTokenFile(String pathToDirectory, String specificToken) {
-        return new File(pathToDirectory + File.separator + specificToken + ".token").exists();
+        return new File(pathToDirectory + File.separator + specificToken + TOKEN_STRING).exists();
     }
 
     /**

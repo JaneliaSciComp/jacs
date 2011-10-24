@@ -36,6 +36,9 @@
         <subclass name="org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorTask" extends="org.janelia.it.jacs.model.tasks.Task"
                   discriminator-value="neuronSeparator" abstract="false">
         </subclass>
+        <subclass name="org.janelia.it.jacs.model.tasks.neuronSeparator.BulkNeuronSeparatorTask" extends="org.janelia.it.jacs.model.tasks.Task"
+                  discriminator-value="bulkNeuronSeparator" abstract="false">
+        </subclass>
         <subclass name="org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask" extends="org.janelia.it.jacs.model.tasks.Task"
                   discriminator-value="neuronSeparatorPipeline" abstract="false">
         </subclass>
