@@ -23,10 +23,6 @@
 
 package org.janelia.it.jacs.compute.service.neuronSeparator;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-
 import org.ggf.drmaa.DrmaaException;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
@@ -38,13 +34,16 @@ import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTa
 import org.janelia.it.jacs.model.user_data.neuronSeparator.NeuronSeparatorResultNode;
 import org.janelia.it.jacs.model.vo.ParameterException;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
 /**
  * Created by IntelliJ IDEA.
  * User: tsafford
  * Date: Dec 15, 2008
  * Time: 3:47:21 PM
  * @deprecated I'm pretty sure this is not used by anything and can be deleted, along with its process file.
- * @see NeuronSeparatorPipelineService
  */
 public class NeuronSeparatorSubmitJobService extends SubmitDrmaaJobService {
 

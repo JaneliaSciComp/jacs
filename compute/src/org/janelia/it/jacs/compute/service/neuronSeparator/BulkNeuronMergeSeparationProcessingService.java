@@ -36,9 +36,11 @@ import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.BulkNeuronSeparatorTask;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.tasks.v3d.V3DPipelineTask;
+import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.util.*;
 
 /**
@@ -78,7 +80,7 @@ public class BulkNeuronMergeSeparationProcessingService implements IService {
             }
 
             for (String directoryPath : directoryPathList) {
-                logger.info("MCFOUnifiedFileDiscoveryService including directory = "+directoryPath);
+                logger.info("BulkNeuronMergeSeparationProcessingService including directory = "+directoryPath);
             }
 
             for (String directoryPath : directoryPathList) {
@@ -100,14 +102,27 @@ public class BulkNeuronMergeSeparationProcessingService implements IService {
             // Now run all the V3dData into the Neuron Separation pipeline
             for (String tmpV3dTaskId : v3dCompletionSet) {
                 Task tmpTask = EJBFactory.getLocalComputeBean().getTaskById(Long.valueOf(tmpV3dTaskId));
+                FileNode tmpResultNode = (FileNode)EJBFactory.getLocalComputeBean().getResultNodeByTaskId(tmpTask.getObjectId());
+                // Find the merged file
+                File tmpMergedDir = new File(tmpResultNode.getDirectoryPath()+File.separator+"merged");
+                File[] tmpRawFile = tmpMergedDir.listFiles(new FilenameFilter() {
+                    @Override
+                    public boolean accept(File file, String s) {
+                        return s.toLowerCase().endsWith(".v3draw");
+                    }
+                });
+                if (tmpRawFile.length!=1) {
+                    logger.error("There should only be one merged v3draw file in dir "+tmpMergedDir.getAbsolutePath());
+                    continue;
+                }
                 NeuronSeparatorPipelineTask neuTask = new NeuronSeparatorPipelineTask(new HashSet<Node>(),
                         task.getOwner(), new ArrayList<Event>(), new HashSet<TaskParameter>());
-                neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_inputFilePath, tmpTask.getParameter(V3DPipelineTask.PARAM_INPUT_FILE_PATHS));
+                neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_inputFilePath, tmpRawFile[0].getAbsolutePath());
                 neuTask.setJobName("Remote Neuron Separator Task");
                 neuTask.setParentTaskId(tmpTask.getObjectId());
                 neuTask = (NeuronSeparatorPipelineTask)EJBFactory.getLocalComputeBean().saveOrUpdateTask(neuTask);
                 neusepTaskIdSet.add(neuTask.getObjectId().toString());
-                EJBFactory.getLocalComputeBean().submitJob("NeuronSeparationPipelineRemote", neuTask.getObjectId());
+                EJBFactory.getLocalComputeBean().submitJob("SimpleNeuronSeparationPipeline", neuTask.getObjectId());
             }
 
             waitAndVerifyNeuSepCompletion();
