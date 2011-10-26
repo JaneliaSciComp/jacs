@@ -47,6 +47,7 @@ public class BulkNeuronSeparatorTask extends Task {
 
     // Parameter Keys
     transient public static final String PARAM_inputDirectoryList = "list of input directories";
+    transient public static final String PARAM_topLevelFolderName = "top level folder name";
 
     // Default values - default overrides
 
@@ -61,6 +62,7 @@ public class BulkNeuronSeparatorTask extends Task {
 
     private void setDefaultValues() {
         setParameter(PARAM_inputDirectoryList, "");
+        setParameter(PARAM_topLevelFolderName, "");
         this.taskName = TASK_NAME;
     }
 
@@ -70,7 +72,7 @@ public class BulkNeuronSeparatorTask extends Task {
         String value = getParameter(key);
         if (value == null)
             return null;
-        if (key.equals(PARAM_inputDirectoryList)) {
+        if (key.equals(PARAM_inputDirectoryList)||key.equals(PARAM_topLevelFolderName)) {
             return new TextParameterVO(value, 4000);
         }
         // No match

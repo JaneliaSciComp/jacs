@@ -11,6 +11,7 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.neuronSeparator.NeuronSeparatorResultNode;
@@ -33,35 +34,21 @@ public class NeuronMergeSeparatorResultsService implements IService {
     
     private Logger logger;
     private NeuronSeparatorResultNode parentNode;
+    private NeuronSeparatorPipelineTask task;
     private AnnotationBeanLocal annotationBean;
-    private ComputeBeanLocal computeBean;
     private Date createDate;
     private User user;
 
     public void execute(IProcessData processData) throws ServiceException {
         try {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-            NeuronSeparatorPipelineTask task = (NeuronSeparatorPipelineTask) ProcessDataHelper.getTask(processData);
+            task = (NeuronSeparatorPipelineTask) ProcessDataHelper.getTask(processData);
             parentNode = (NeuronSeparatorResultNode) ProcessDataHelper.getResultFileNode(processData);
             annotationBean = EJBFactory.getLocalAnnotationBean();
-            computeBean = EJBFactory.getLocalComputeBean();
+            ComputeBeanLocal computeBean = EJBFactory.getLocalComputeBean();
             createDate = new Date();
             user = computeBean.getUserByName(task.getOwner());
 
-            // Create the other files that are necessary
-//            File outFile = new File(parentNode.getDirectoryPath(), STDOUT_FILE);
-//            File errFile = new File(parentNode.getDirectoryPath(), STDERR_FILE);
-//            String cmdLine = NeuronSeparatorHelper.getPostNeuronSeparationCommands(task, parentNode, sample, " ; ") +
-//            	" 1>"+outFile.getAbsolutePath()+" 2>"+errFile.getAbsolutePath();
-//
-//            if (cmdLine!=null && cmdLine.length()>0) {
-//                SystemCall call = new SystemCall();
-//                int exitCode = call.emulateCommandLine(cmdLine.toString(), true, 60);
-//                if (0 != exitCode) {
-//                    throw new ServiceException("NeuronSeparatorResultsService failed with exitCode " + exitCode + " for resultDir=" + parentNode.getDirectoryPath());
-//                }
-//            }
-            
             // Create the result entity and populate with the output files
             List<Entity> userCommonRoots = EJBFactory.getLocalAnnotationBean().getCommonRootEntitiesByTypeName(EntityConstants.TYPE_FOLDER);
             Entity userParentRoot=null;
@@ -75,37 +62,23 @@ public class NeuronMergeSeparatorResultsService implements IService {
                 throw new ServiceException("NeuronMergeSeparatorResultsService: Can't find a common root for user "+task.getOwner());
             }
             Entity resultEntity = createResultEntity();
-            NeuronSeparatorHelper.addToParent(userParentRoot, resultEntity, userParentRoot.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_RESULT);
+            NeuronSeparatorHelper.addToParent(userParentRoot, resultEntity, userParentRoot.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
             
-            Entity filesFolder = createSupportingFilesFolder();
-            NeuronSeparatorHelper.addToParent(resultEntity, filesFolder, 0, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
+            Entity inputFolder = createInputFilesFolder();
+            NeuronSeparatorHelper.addToParent(resultEntity, inputFolder, 0, EntityConstants.ATTRIBUTE_ENTITY);
             
             Entity fragmentsFolder = createFragmentCollection();
             NeuronSeparatorHelper.addToParent(resultEntity, fragmentsFolder, 1, EntityConstants.ATTRIBUTE_NEURON_FRAGMENTS);
             
             EntityType tif2D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_2D);
-            EntityType tif3D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_3D);
-            EntityType tif3DLabel = annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_3D_LABEL_MASK);
-            
+
             File resultDir = new File(parentNode.getDirectoryPath());
             for (File resultFile : resultDir.listFiles()) {
             	String filename = resultFile.getName();
 
             	if (resultFile.isDirectory()) continue;
             	
-                if (filename.equals("ConsolidatedSignal.tif")) {
-                    addResultItem(filesFolder, tif3D, resultFile);
-                }
-                else if (filename.startsWith("Signal_") && filename.endsWith(".tif")) {
-                    addResultItem(filesFolder, tif3D, resultFile);
-                }
-                else if (filename.equals("ConsolidatedLabel.tif")) {
-                    addResultItem(filesFolder, tif3DLabel, resultFile);
-                }
-                else if (filename.equals("Reference.tif")) {
-                    addResultItem(filesFolder, tif3D, resultFile);
-                }
-                else if (filename.startsWith("neuronSeparatorPipeline.PR.neuron") && filename.endsWith(".tif")) {
+                if (filename.startsWith("neuronSeparatorPipeline.PR.neuron") && filename.endsWith(".tif")) {
                 	String mipNum = filename.substring("neuronSeparatorPipeline.PR.neuron".length(), filename.lastIndexOf('.'));
 
                 	Integer index = null;
@@ -131,8 +104,26 @@ public class NeuronMergeSeparatorResultsService implements IService {
             throw new ServiceException(e);
         }
     }
-    
-	private Entity createFragmentEntity(EntityType tif2D, File file, Integer index) throws Exception {
+
+    private Entity createInputFilesFolder() throws Exception {
+        Entity inputFolder = new Entity();
+        inputFolder.setUser(user);
+        inputFolder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK_PAIR));
+        inputFolder.setCreationDate(createDate);
+        inputFolder.setUpdatedDate(createDate);
+        inputFolder.setName("Input Files");
+        inputFolder = annotationBean.saveOrUpdateEntity(inputFolder);
+        logger.info("Saved supporting files folder as "+inputFolder.getId());
+
+        List<String> inputLsmFiles = Task.listOfStringsFromCsvString(task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmFilePathList));
+        Entity lsmEntity1 = createLsmStackFromFile(new File(inputLsmFiles.get(0)));
+        Entity lsmEntity2 = createLsmStackFromFile(new File(inputLsmFiles.get(1)));
+        NeuronSeparatorHelper.addToParent(inputFolder, lsmEntity1, inputFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+        NeuronSeparatorHelper.addToParent(inputFolder, lsmEntity2, inputFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+        return inputFolder;
+    }
+
+    private Entity createFragmentEntity(EntityType tif2D, File file, Integer index) throws Exception {
 		
         Entity fragmentEntity = new Entity();
         fragmentEntity.setUser(user);
@@ -160,32 +151,6 @@ public class NeuronMergeSeparatorResultsService implements IService {
         return fragmentEntity;
     }
 	
-    protected Entity createSupportingFilesFolder() throws Exception {
-        Entity filesFolder = new Entity();
-        filesFolder.setUser(user);
-        filesFolder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
-        filesFolder.setCreationDate(createDate);
-        filesFolder.setUpdatedDate(createDate);
-        filesFolder.setName("Supporting Files");
-        filesFolder = annotationBean.saveOrUpdateEntity(filesFolder);
-        logger.info("Saved supporting files folder as "+filesFolder.getId());
-        return filesFolder;
-    }
-    
-	private Entity createFolderEntity(String name) throws Exception {
-        Entity fragmentsEntity = new Entity();
-        fragmentsEntity.setUser(user);
-        fragmentsEntity.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
-        fragmentsEntity.setCreationDate(createDate);
-        fragmentsEntity.setUpdatedDate(createDate);
-        fragmentsEntity.setName(name);
-
-        fragmentsEntity = annotationBean.saveOrUpdateEntity(fragmentsEntity);
-        logger.info("Saved folder '"+name+"' as "+fragmentsEntity.getId());
-        
-        return fragmentsEntity;
-    }
-
 	private Entity createFragmentCollection() throws Exception {
         Entity fragmentsEntity = new Entity();
         fragmentsEntity.setUser(user);
@@ -201,12 +166,14 @@ public class NeuronMergeSeparatorResultsService implements IService {
     }
 	
 	private Entity createResultEntity() throws Exception {
+        List<String> tmplsmFiles = Task.listOfStringsFromCsvString(task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmFilePathList));
+        File tmpInputPath = new File(tmplsmFiles.get(0));
         Entity resultEntity = new Entity();
         resultEntity.setUser(user);
         resultEntity.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT));
         resultEntity.setCreationDate(createDate);
         resultEntity.setUpdatedDate(createDate);
-        resultEntity.setName("Neuron Separation");
+        resultEntity.setName("Neuron Separation of "+tmpInputPath.getParentFile().getName());
 
         resultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, parentNode.getDirectoryPath());
         resultEntity = annotationBean.saveOrUpdateEntity(resultEntity);
@@ -215,18 +182,17 @@ public class NeuronMergeSeparatorResultsService implements IService {
         return resultEntity;
     }
 
-    private Entity addResultItem(Entity resultEntity, EntityType type, File file) throws Exception {
-        Entity entity = new Entity();
-        entity.setUser(user);
-        entity.setCreationDate(createDate);
-        entity.setUpdatedDate(createDate);
-        entity.setEntityType(type);
-        entity.setName(file.getName());
-        entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
-        entity = annotationBean.saveOrUpdateEntity(entity);
-        logger.info("Saved "+type.getName()+" as "+entity.getId());
-        NeuronSeparatorHelper.addToParent(resultEntity, entity, null, EntityConstants.ATTRIBUTE_ENTITY);
-        return entity;
+    private Entity createLsmStackFromFile(File file) throws Exception {
+        Entity lsmStack = new Entity();
+        lsmStack.setUser(user);
+        lsmStack.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK));
+        lsmStack.setCreationDate(createDate);
+        lsmStack.setUpdatedDate(createDate);
+        lsmStack.setName(file.getName());
+        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
+        lsmStack = annotationBean.saveOrUpdateEntity(lsmStack);
+        logger.info("Saved LSM stack as " + lsmStack.getId());
+        return lsmStack;
     }
 
 }

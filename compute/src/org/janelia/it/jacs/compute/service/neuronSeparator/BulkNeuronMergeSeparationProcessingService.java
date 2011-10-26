@@ -24,12 +24,16 @@
 package org.janelia.it.jacs.compute.service.neuronSeparator;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
@@ -38,6 +42,7 @@ import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTa
 import org.janelia.it.jacs.model.tasks.v3d.V3DPipelineTask;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.model.user_data.User;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -56,7 +61,6 @@ public class BulkNeuronMergeSeparationProcessingService implements IService {
     private HashSet<String> v3dCompletionSet = new HashSet<String>();
     private HashSet<String> neusepTaskIdSet = new HashSet<String>();
     private HashSet<String> neusepTaskCompletionSet = new HashSet<String>();
-    private HashMap<String, String> v3dTaskResultNodeMap = new HashMap<String, String>();
     private BulkNeuronSeparatorTask task;
 
     public void execute(IProcessData processData) throws ServiceException {
@@ -79,10 +83,14 @@ public class BulkNeuronMergeSeparationProcessingService implements IService {
             	throw new Exception("No input directories provided");
             }
 
+            createOrVerifyRootEntity(task.getParameter(BulkNeuronSeparatorTask.PARAM_topLevelFolderName));
             for (String directoryPath : directoryPathList) {
                 logger.info("BulkNeuronMergeSeparationProcessingService including directory = "+directoryPath);
             }
 
+            ComputeDAO computeDAO = new ComputeDAO(logger);
+            List<Task> previousNeuSepTasks = computeDAO.getUserTasksByType(NeuronSeparatorPipelineTask.TASK_NAME,
+                    task.getOwner());
             for (String directoryPath : directoryPathList) {
                 logger.info("Processing dir="+directoryPath);
                 File dir = new File(directoryPath);
@@ -93,6 +101,16 @@ public class BulkNeuronMergeSeparationProcessingService implements IService {
                     logger.error(("File " + dir.getAbsolutePath()+ " is not a directory - skipping"));
                 }
                 else {
+                    boolean alreadyRanData = false;
+                    for (Task previousNeuSepTask : previousNeuSepTasks) {
+                        if (null!=previousNeuSepTask.getParameter(V3DPipelineTask.PARAM_INPUT_FILE_PATHS) &&
+                            previousNeuSepTask.getParameter(V3DPipelineTask.PARAM_INPUT_FILE_PATHS).contains(directoryPath)&&
+                            previousNeuSepTask.getLastEvent().getEventType().equalsIgnoreCase(Event.COMPLETED_EVENT)) {
+                            alreadyRanData = true;
+                            break;
+                        }
+                    }
+                    if (alreadyRanData) { continue; }
                     checkForDataAndStartV3D(dir);
                 }
             }
@@ -101,7 +119,7 @@ public class BulkNeuronMergeSeparationProcessingService implements IService {
 
             // Now run all the V3dData into the Neuron Separation pipeline
             for (String tmpV3dTaskId : v3dCompletionSet) {
-                Task tmpTask = EJBFactory.getLocalComputeBean().getTaskById(Long.valueOf(tmpV3dTaskId));
+                V3DPipelineTask tmpTask = (V3DPipelineTask)EJBFactory.getLocalComputeBean().getTaskById(Long.valueOf(tmpV3dTaskId));
                 FileNode tmpResultNode = (FileNode)EJBFactory.getLocalComputeBean().getResultNodeByTaskId(tmpTask.getObjectId());
                 // Find the merged file
                 File tmpMergedDir = new File(tmpResultNode.getDirectoryPath()+File.separator+"merged");
@@ -115,11 +133,27 @@ public class BulkNeuronMergeSeparationProcessingService implements IService {
                     logger.error("There should only be one merged v3draw file in dir "+tmpMergedDir.getAbsolutePath());
                     continue;
                 }
+                List<String> tmpInputDirectory = Task.listOfStringsFromCsvString(tmpTask.getParameter(V3DPipelineTask.PARAM_INPUT_FILE_PATHS));
+                File[] lsmFiles = new File(tmpInputDirectory.get(0)).listFiles(new FilenameFilter() {
+                    @Override
+                    public boolean accept(File file, String s) {
+                        return s.toLowerCase().endsWith(".lsm");
+                    }
+                });
+                List<String> tmpLsmFiles = new ArrayList<String>();
+                for (File lsmFile : lsmFiles) {
+                    tmpLsmFiles.add(lsmFile.getAbsolutePath());
+                }
                 NeuronSeparatorPipelineTask neuTask = new NeuronSeparatorPipelineTask(new HashSet<Node>(),
                         task.getOwner(), new ArrayList<Event>(), new HashSet<TaskParameter>());
                 neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_inputFilePath, tmpRawFile[0].getAbsolutePath());
-                neuTask.setJobName("Remote Neuron Separator Task");
+                neuTask.setParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmFilePathList,Task.csvStringFromCollection(tmpLsmFiles));
+                neuTask.setJobName("Neuron Separator Task");
                 neuTask.setParentTaskId(tmpTask.getObjectId());
+                // Get the params used by V3D
+                for (String tmpTaskParam : tmpTask.getParameterKeySet()) {
+                    neuTask.setParameter(tmpTaskParam, tmpTask.getParameter(tmpTaskParam));
+                }
                 neuTask = (NeuronSeparatorPipelineTask)EJBFactory.getLocalComputeBean().saveOrUpdateTask(neuTask);
                 neusepTaskIdSet.add(neuTask.getObjectId().toString());
                 EJBFactory.getLocalComputeBean().submitJob("SimpleNeuronSeparationPipeline", neuTask.getObjectId());
@@ -223,4 +257,42 @@ public class BulkNeuronMergeSeparationProcessingService implements IService {
         EJBFactory.getLocalComputeBean().saveEvent(task.getObjectId(), "Bulk Neuron Separation Processing Complete",
                 "Bulk Neuron Separation Processing Complete", new Date());
     }
+
+    protected Entity createOrVerifyRootEntity(String topLevelFolderName) throws Exception {
+        AnnotationBeanLocal annotationBean = EJBFactory.getLocalAnnotationBean();
+        User user = EJBFactory.getLocalComputeBean().getUserByName(task.getOwner());
+        Set<Entity> topLevelFolders = annotationBean.getEntitiesByName(topLevelFolderName);
+     	Entity topLevelFolder = null;
+        if (topLevelFolders!=null) {
+        	// Only accept the current user's top level folder
+	        for(Entity entity : topLevelFolders) {
+	        	if (entity.getUser().getUserLogin().equals(user.getUserLogin())
+	        			&& entity.getEntityType().getName().equals(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER).getName())) {
+	                // This is the folder we want, now load the entire folder hierarchy
+	                topLevelFolder = annotationBean.getFolderTree(entity.getId());
+	                logger.info("Found existing topLevelFolder, name=" + topLevelFolder.getName());
+	        		break;
+	        	}
+	        }
+        }
+
+
+        if (topLevelFolder == null) {
+            logger.info("Creating new topLevelFolder with name="+topLevelFolderName);
+            Date createDate = new Date();
+            topLevelFolder = new Entity();
+            topLevelFolder.setCreationDate(createDate);
+            topLevelFolder.setUpdatedDate(createDate);
+            topLevelFolder.setUser(user);
+            topLevelFolder.setName(topLevelFolderName);
+            topLevelFolder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+            topLevelFolder.addAttributeAsTag(EntityConstants.ATTRIBUTE_COMMON_ROOT);
+            topLevelFolder = annotationBean.saveOrUpdateEntity(topLevelFolder);
+            logger.info("Saved top level folder as "+topLevelFolder.getId());
+        }
+
+        logger.info("Using topLevelFolder with id="+topLevelFolder.getId());
+        return topLevelFolder;
+    }
+
 }

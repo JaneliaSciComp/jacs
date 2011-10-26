@@ -21,7 +21,7 @@ public class V3DPipelineTask extends Task {
     transient public static final String PARAM_RUN_STITCH   = "Run V3D Stitch";
     transient public static final String PARAM_RUN_BLEND    = "Run V3D Blend";
     // The value of this can be a directory or a comma-separated list of paired files
-    transient public static final String PARAM_INPUT_FILE_PATHS    = "Input File Paths";
+    transient public static final String PARAM_INPUT_FILE_PATHS    = "V3D Input File Paths";
 
 
     public V3DPipelineTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet,

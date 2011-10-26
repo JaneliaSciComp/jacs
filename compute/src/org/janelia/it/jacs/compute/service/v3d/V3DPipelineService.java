@@ -64,7 +64,7 @@ public class V3DPipelineService extends SubmitDrmaaJobService {
         StringBuilder sbuf = new StringBuilder();
         String inputPaths = task.getParameter(V3DPipelineTask.PARAM_INPUT_FILE_PATHS);
         List<String> inputFiles = Task.listOfStringsFromCsvString(inputPaths);
-        if (inputFiles.size()>1) {
+        if (inputFiles.size()==0 || inputFiles.size()>1) {
             throw new ServiceException("Functionality not yet implemented.");
         }
         String lastDirectoryPointer=resultFileNode.getDirectoryPath();
