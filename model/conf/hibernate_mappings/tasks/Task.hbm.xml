@@ -241,14 +241,6 @@
                  discriminator-value="fasta2BsmlTask">
     </subclass>
 
-    <subclass name="org.janelia.it.jacs.model.tasks.fileDiscovery.MultiColorFlipOutFileDiscoveryTask" extends="org.janelia.it.jacs.model.tasks.Task"
-                  discriminator-value="multiColorFlipOutFileDiscoveryTask">
-    </subclass>
-
-    <subclass name="org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOStitchedFileDiscoveryTask" extends="org.janelia.it.jacs.model.tasks.Task"
-                  discriminator-value="mcfoStitchedFileDiscoveryTask">
-    </subclass>
-
     <subclass name="org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOUnifiedFileDiscoveryTask" extends="org.janelia.it.jacs.model.tasks.Task"
                   discriminator-value="mcfoUnifiedFileDiscoveryTask">
     </subclass>
