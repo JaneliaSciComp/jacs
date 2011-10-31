@@ -1,17 +1,19 @@
 package org.janelia.it.jacs.compute.service.neuronSeparator;
 
+import java.io.File;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
-import org.janelia.it.jacs.model.user_data.neuronSeparator.NeuronSeparatorResultNode;
-
-import java.io.File;
+import org.janelia.it.jacs.model.user_data.FileNode;
 
 /**
  * Created by IntelliJ IDEA.
@@ -22,7 +24,12 @@ import java.io.File;
 public class NeuronSeparatorHelper {
 
 	private static final Logger logger = Logger.getLogger(NeuronSeparatorHelper.class);
-	
+
+    protected static final String SEPARATOR_BASE_CMD = "export LD_LIBRARY_PATH="+
+    		SystemConfigurationProperties.getString("Separator.LDLibraryPath")+":$LD_LIBRARY_PATH\n"+
+            SystemConfigurationProperties.getString("Executables.ModuleBase") +
+            SystemConfigurationProperties.getString("Separator.CMD");
+    
 	// TODO: this path translation should be made into some sort of robust service
 	
     private static final String jacsDataPathLinux = SystemConfigurationProperties.getString("JacsData.Dir.Linux","").trim();
@@ -48,41 +55,65 @@ public class NeuronSeparatorHelper {
 		 		 replaceAll(flylightPathLinux, flylightPathMac).
 		 		 replaceAll(rubinlabPathLinux, rubinlabPathMac);
     }
-    
-	public static String getNeuronSeparationCommands(NeuronSeparatorPipelineTask task, 
-			NeuronSeparatorResultNode parentNode, String mylibDir, String commandDelim) throws ServiceException {
 
-        StringBuilder cmdLine = new StringBuilder();
+    /**
+     * @deprecated Use the method with ProcessData instead
+     */
+	public static String getNeuronSeparationCommands(NeuronSeparatorPipelineTask task, 
+			FileNode parentNode, String mylibDir, String commandDelim) throws ServiceException {
         String fileList;
         if (null!=task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputFilePath)&&
             !"".equals(task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputFilePath))) {
             fileList = task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputFilePath);
         }
         else {
-            fileList = NeuronSeparatorHelper.getFileListString(task);
+            fileList = NeuronSeparatorHelper.getFileListString((NeuronSeparatorPipelineTask)task);
         }
+		return getNeuronSeparationCommands(fileList, parentNode, mylibDir, commandDelim);
+	}
 
-        cmdLine.append("cd ").append(parentNode.getDirectoryPath()).append(";export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64:").
-                append(SystemConfigurationProperties.getString("Executables.ModuleBase")).
-                append("singleNeuronTools/genelib/").append(mylibDir).append(";").
-                append(SystemConfigurationProperties.getString("Executables.ModuleBase")).
-                append("singleNeuronTools/genelib/").append(mylibDir).append("/sampsepNALoadRaw -nr -pj ").
-                append(parentNode.getDirectoryPath()).append(" neuronSeparatorPipeline ").
-                append(NeuronSeparatorHelper.addQuotesToCsvString(fileList)).append(commandDelim);
+	public static String getNeuronSeparationCommands(Task task, IProcessData processData,
+			FileNode parentNode, String mylibDir, String commandDelim) throws ServiceException {
+
+		if (task!=null&&task instanceof NeuronSeparatorPipelineTask) {
+			return getNeuronSeparationCommands((NeuronSeparatorPipelineTask)task, parentNode, mylibDir, commandDelim);
+		}
+		else {
+			String fileList = (String)processData.getItem("INPUT_FILENAME");
+	        if (fileList==null) {
+	        	throw new ServiceException("Input parameter INPUT_FILENAME may not be null");
+	        }
+			return getNeuronSeparationCommands(fileList, parentNode, mylibDir, commandDelim);
+		}
+	}
+	
+	private static String getNeuronSeparationCommands(String fileList,
+			FileNode parentNode, String mylibDir, String commandDelim) throws ServiceException {
+        
+		// TODO: mylibDir no longer does anything... maybe we should inject it into the command string if we intend
+		// to run on multiple architectures. 
+        StringBuilder cmdLine = new StringBuilder();
+        cmdLine.append("cd ").append(parentNode.getDirectoryPath()).append(commandDelim).
+        		append(SEPARATOR_BASE_CMD).append(" -nr -pj ").
+                	append(parentNode.getDirectoryPath()).append(" neuronSeparatorPipeline ").
+                	append(NeuronSeparatorHelper.addQuotesToCsvString(fileList)).append(commandDelim);
         
         return cmdLine.toString();
 	}
 
+	/**
+	 * @deprecated Use the separate CreateLsmMetadataService for this
+	 */
     public static String getPostNeuronSeparationCommands(NeuronSeparatorPipelineTask task,
-                                                         NeuronSeparatorResultNode parentNode, Entity sample, String commandDelim) throws ServiceException {
-
+    		FileNode parentNode, Entity sample, String commandDelim) throws ServiceException {
+    
         StringBuffer cmdLine = new StringBuffer();
 
         String inputLsmEntityIdList = task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmEntityIdList);
         String lsmFilePathsFilename = parentNode.getDirectoryPath() + "/" + "lsmFilePaths.txt";
 
         // In this case, we assume a tiled input in which two lsm files are input
-        logger.info("starting getPostNeuronSeparationCommands()");
+        logger.info("starting getPostNeuronSeparationCommands");
         if (inputLsmEntityIdList != null && inputLsmEntityIdList.length() > 0) {
             logger.info("Found inputLsmEntityIdList to process - creating lsmFilePaths");
 
@@ -123,7 +154,7 @@ public class NeuronSeparatorHelper {
         return cmdLine.toString();
     }
 	
-    public static String getFileListString(NeuronSeparatorPipelineTask task) throws ServiceException {
+    private static String getFileListString(NeuronSeparatorPipelineTask task) throws ServiceException {
         String[] filePaths = getFilePaths(task);
         if (filePaths.length==0) {
             throw new ServiceException("Must have non-zero files as input to neuron separator");
@@ -139,7 +170,7 @@ public class NeuronSeparatorHelper {
         }
     }
 
-    public static String[] getFilePaths(NeuronSeparatorPipelineTask task) throws ServiceException {
+    private static String[] getFilePaths(NeuronSeparatorPipelineTask task) throws ServiceException {
         AnnotationBeanLocal annotationBean = EJBFactory.getLocalAnnotationBean();
         String lsmEntityIdList = task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputLsmEntityIdList);
         String stitchedEntityId = task.getParameter(NeuronSeparatorPipelineTask.PARAM_inputStitchedStackId);
@@ -173,7 +204,7 @@ public class NeuronSeparatorHelper {
         }
     }
 
-    public static String getScriptToCreateLsmMetadataFile(NeuronSeparatorResultNode parentNode, String lsmPath) throws ServiceException {
+    private static String getScriptToCreateLsmMetadataFile(FileNode parentNode, String lsmPath) throws ServiceException {
 
         File lsmFile = new File(lsmPath);
         if (!lsmFile.exists()) {
@@ -187,11 +218,11 @@ public class NeuronSeparatorHelper {
         return cmdLine;
     }
 
-    public static String addQuotes(String s) {
+    private static String addQuotes(String s) {
     	return "\""+s+"\"";
     }
 
-    public static String addQuotesToCsvString(String csvString) {
+    private static String addQuotesToCsvString(String csvString) {
         String[] clist=csvString.split(",");
         StringBuffer sb=new StringBuffer();
         for (int i=0;i<clist.length;i++) {
@@ -205,7 +236,7 @@ public class NeuronSeparatorHelper {
         return sb.toString();
     }
     
-    public static String createLsmMetadataFilename(File lsmFile) {
+    private static String createLsmMetadataFilename(File lsmFile) {
         return lsmFile.getName().replaceAll("\\s+","_");
     }
     

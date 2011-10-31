@@ -114,10 +114,13 @@ public class GridSubmitAndWaitMDB extends BaseServiceMDB {
             SubmitJobService originalservice = ((SubmitJobService) dataMap.get(GridSubmitHelperMap.ORIGINAL_SERVICE_KEY));
 
             // Call postprocess method of the service so that the necessary information is set to the processData
-            originalservice.handleErrors();
-            originalservice.postProcess();
-
-            GridSubmitHelperMap.getInstance().removeFromDataMap(uniqueKey);
+            try {
+	            originalservice.handleErrors();
+	            originalservice.postProcess();
+            }
+            finally {
+            	GridSubmitHelperMap.getInstance().removeFromDataMap(uniqueKey);
+            }
 
             //try to handle grid errors here
             if (!gpr.isCompleted()) {

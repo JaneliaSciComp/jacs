@@ -1,0 +1,24 @@
+<!-- 
+	Discover samples in the fileshare, load them into the database and run the MCFOSamplePipeline for each one 
+-->
+<process name="MCFO Results Discovery Pipeline" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
+	<sequence>
+	
+	    <!-- Import variables from the MCFODataPipelineTask -->
+	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="TASK_PARAMETER_1" value="list of input directories"/>
+            <input name="PROCESS_VARIABLE_1" value="INPUT_DIR_LIST"/>
+            <input name="TASK_PARAMETER_2" value="top level folder name"/>
+            <input name="PROCESS_VARIABLE_2" value="ROOT_ENTITY_ID"/>
+	        <output name="INPUT_DIR_LIST"/>
+	        <output name="ROOT_ENTITY_NAME"/>
+	    </operation>
+	    
+	    <!-- Load the separation results into the database -->
+		<operation name="Discover Neuron Separation Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.NeuronSeparatorResultsDiscoveryService" startEvent="postprocess">
+			<input name="INPUT_DIR_LIST"/>
+			<input name="ROOT_ENTITY_ID"/>
+	    </operation>
+	    
+    </sequence>
+</process>

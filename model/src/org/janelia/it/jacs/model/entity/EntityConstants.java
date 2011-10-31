@@ -38,6 +38,7 @@ public class EntityConstants {
     public static final String TYPE_NEURON_FRAGMENT_COLLECTION       = "Neuron Fragment Collection";
 
     // Entity Data Attributes
+    public static final String ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH          = "Default 2D Image File Path";
     public static final String ATTRIBUTE_FILE_PATH                           = "File Path";
     public static final String ATTRIBUTE_ONTOLOGY_ELEMENT                    = "Ontology Element";
     public static final String ATTRIBUTE_COMMON_ROOT                         = "Common Root"; // Will cause folder to appear at top of Common tree pane
@@ -56,6 +57,8 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ANNOTATION_SESSION_ID               = "Annotation Session Id";
     public static final String ATTRIBUTE_NUMBER                              = "Number";
     public static final String ATTRIBUTE_RESULT                              = "Result";
+    public static final String ATTRIBUTE_LSM_STACK_1                         = "LSM Stack 1";
+    public static final String ATTRIBUTE_LSM_STACK_2                         = "LSM Stack 2";
     public static final String ATTRIBUTE_SUPPORTING_FILES                    = "Supporting Files";
     public static final String ATTRIBUTE_NEURON_FRAGMENTS                    = "Neuron Fragments";
     public static final String ATTRIBUTE_INPUT                               = "ATTRIBUTE_INPUT";

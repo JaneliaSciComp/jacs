@@ -30,6 +30,7 @@
  */
 package org.janelia.it.jacs.compute.engine.service;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -43,7 +44,7 @@ public class GridSubmitHelperMap {
 
     private static GridSubmitHelperMap gridSubmitHelperMap = new GridSubmitHelperMap();
 
-    private Map<String, Map> dataMap = new HashMap<String, Map>();
+    private Map<String, Map> dataMap = Collections.synchronizedMap(new HashMap<String, Map>());
 
     public static GridSubmitHelperMap getInstance() {
         return gridSubmitHelperMap;

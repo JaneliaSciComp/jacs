@@ -1,0 +1,125 @@
+ <!-- 
+      Fully process a Sample in the database by merging its LSMs, stitching and blending them, 
+      running neuron separation, and loading the results back into the database. 
+ -->
+ <process name="MultiColor FlipOut Sample Pipeline" processor="queue/mcfoSamplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+	<sequence>
+	    
+	    <!-- Import variables from the MCFOSamplePipelineTask -->
+	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="TASK_PARAMETER_1" value="sample entity id"/>
+            <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
+	        <output name="SAMPLE_ENTITY_ID"/>
+	    </operation>
+	    
+	    <!-- Create a sample result node, with nested result nodes for all the pipeline steps -->
+	    <operation name="Create Sample Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateSampleResultFileNodeService">
+	        <output name="RESULT_FILE_NODE"/>
+	        <output name="RESULT_FILE_NODE_ID"/>
+	        <output name="SAMPLE_RESULT_FILE_NODE"/>
+	        <output name="METADATA_RESULT_FILE_NODE"/>
+	        <output name="MERGE_RESULT_FILE_NODE"/>
+	        <output name="STITCH_RESULT_FILE_NODE"/>
+	        <output name="SEPARATE_RESULT_FILE_NODE"/>
+	        <output name="COMPRESS_RESULT_FILE_NODE"/>
+	        <output name="MIPS_RESULT_FILE_NODE"/>
+	    </operation>
+	    
+	    <!-- Asynchronously create the metadata describing the input LSM files -->
+        <sequence name="Create Lsm Metadata Files" waitForAsync="true">
+	        <operation name="Create Lsm Metadata Files" processor="queue/gridSubmitAndWait">
+	            <input name="iservice" value="org.janelia.it.jacs.compute.service.entity.CreateLsmMetadataFilesService"/>
+		        <input name="SAMPLE_ENTITY_ID"/>
+				<input name="METADATA_RESULT_FILE_NODE"/>
+		        <input name="RESULT_FILE_NODE" value="$V{METADATA_RESULT_FILE_NODE}"/>
+				<input name="SAMPLE_RESULT_FILE_NODE"/>
+	    		<input name="OUTPUT_FILE_NODE" value="$V{SAMPLE_RESULT_FILE_NODE}"/>
+	        </operation>
+        </sequence>
+		
+	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
+	    <operation name="Create Merge Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitV3DSampleParametersService">
+			<input name="SAMPLE_RESULT_FILE_NODE"/>
+			<input name="SAMPLE_ENTITY_ID"/>
+			<output name="BULK_MERGE_PARAMETERS"/>
+			<output name="STITCHED_FILENAME"/>
+		</operation>
+	    
+	    <!-- Merge all the LSM pairs in parallel -->
+        <sequence name="Merge Lsm Pairs" waitForAsync="true">
+	        <operation name="Merge Lsm Pairs" processor="queue/gridSubmitAndWait">
+	            <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.V3DBulkMergeService"/>
+				<input name="MERGE_RESULT_FILE_NODE"/>
+	    		<input name="RESULT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
+				<input name="BULK_MERGE_PARAMETERS"/>
+	        </operation>
+        </sequence>
+	
+	    <!-- Stitch the merged files into a single result -->
+        <sequence name="Stitch and Blend" waitForAsync="true">
+	        <operation name="Stitch and Blend" processor="queue/gridSubmitAndWait">
+	            <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.V3DStitchAndBlendService"/>
+				<input name="STITCH_RESULT_FILE_NODE"/>
+	    		<input name="RESULT_FILE_NODE" value="$V{STITCH_RESULT_FILE_NODE}"/>
+				<input name="SAMPLE_RESULT_FILE_NODE"/>
+	    		<input name="OUTPUT_FILE_NODE" value="$V{SAMPLE_RESULT_FILE_NODE}"/>
+				<input name="BULK_MERGE_PARAMETERS"/>
+				<input name="STITCHED_FILENAME"/>
+	        </operation>
+        </sequence>
+			
+	    <!-- Run neuron separation on the stitched result -->
+        <sequence name="Neuron Separation" waitForAsync="true">
+		    <operation name="Neuron Separation" processor="queue/gridSubmitAndWait">
+		        <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.NeuronSeparationPipelineGridService"/>
+				<input name="SEPARATE_RESULT_FILE_NODE"/>
+	    		<input name="RESULT_FILE_NODE" value="$V{SEPARATE_RESULT_FILE_NODE}"/>
+				<input name="SAMPLE_RESULT_FILE_NODE"/>
+	    		<input name="OUTPUT_FILE_NODE" value="$V{SAMPLE_RESULT_FILE_NODE}"/>
+				<input name="STITCHED_FILENAME"/>
+				<input name="INPUT_FILENAME" value="$V{STITCHED_FILENAME}"/>
+		    </operation>
+        </sequence>
+		    
+	    <!-- Compress the results of neuron separation -->
+        <sequence name="Compress" waitForAsync="true">
+		    <operation name="Compress" processor="queue/gridSubmitAndWait">
+		        <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.PBDCompressionService"/>
+				<input name="COMPRESS_RESULT_FILE_NODE"/>
+	    		<input name="RESULT_FILE_NODE" value="$V{COMPRESS_RESULT_FILE_NODE}"/>
+				<input name="SAMPLE_RESULT_FILE_NODE"/>
+	    		<input name="OUTPUT_FILE_NODE" value="$V{SAMPLE_RESULT_FILE_NODE}"/>
+				<input name="INPUT_FILENAME_1" value="ConsolidatedSignal.tif"/>
+				<input name="OUTPUT_FILENAME_1" value="ConsolidatedSignal.v3dpbd"/>
+				<input name="INPUT_FILENAME_2" value="ConsolidatedLabel.tif"/>
+				<input name="OUTPUT_FILENAME_2" value="ConsolidatedLabel.v3dpbd"/>
+				<input name="INPUT_FILENAME_3" value="Reference.tif"/>
+				<input name="OUTPUT_FILENAME_3" value="Reference.v3dpbd"/>
+			</operation>
+        </sequence>
+			
+	    <!-- Generated whole-sample MIPs from the neuron separation results -->
+        <sequence name="MIP Generation" waitForAsync="true">
+		    <operation name="MIP Generation" processor="queue/gridSubmitAndWait">
+		        <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.MIPGenerationService"/>
+				<input name="MIPS_RESULT_FILE_NODE"/>
+	    		<input name="RESULT_FILE_NODE" value="$V{MIPS_RESULT_FILE_NODE}"/>
+				<input name="SAMPLE_RESULT_FILE_NODE"/>
+	    		<input name="OUTPUT_FILE_NODE" value="$V{SAMPLE_RESULT_FILE_NODE}"/>
+				<input name="INPUT_FILENAME_1" value="ConsolidatedSignal.v3dpbd"/>
+				<input name="OUTPUT_FILENAME_1" value="ConsolidatedSignalMIP.tif"/>
+				<input name="INPUT_FILENAME_2" value="Reference.v3dpbd"/>
+				<input name="OUTPUT_FILENAME_2" value="ReferenceMIP.tif"/>
+			</operation>
+        </sequence>
+			
+	    <!-- Load the separation results into the database -->
+		<operation name="Discover Neuron Separation Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.NeuronSeparatorResultsDiscoveryService" startEvent="postprocess">
+			<input name="SEPARATE_RESULT_FILE_NODE"/>
+			<input name="ROOT_FILE_NODE" value="$V{SEPARATE_RESULT_FILE_NODE}"/>
+			<input name="SAMPLE_ENTITY_ID"/>
+			<input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
+	    </operation>
+		
+    </sequence>
+</process>

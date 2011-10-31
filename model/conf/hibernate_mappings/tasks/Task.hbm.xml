@@ -253,6 +253,18 @@
               discriminator-value="v3dPipelineTask">
     </subclass>
 
+    <subclass name="org.janelia.it.jacs.model.tasks.fileDiscovery.FileDiscoveryTask" extends="org.janelia.it.jacs.model.tasks.Task"
+              discriminator-value="fileDiscoveryTask">
+    </subclass>
+    
+    <subclass name="org.janelia.it.jacs.model.tasks.fileDiscovery.MCFODataPipelineTask" extends="org.janelia.it.jacs.model.tasks.Task"
+              discriminator-value="mcfoDataPipelineTask">
+    </subclass>
+    
+    <subclass name="org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOSamplePipelineTask" extends="org.janelia.it.jacs.model.tasks.Task"
+              discriminator-value="mcfoSamplePipelineTask">
+    </subclass>
+    
     <class name="Event"
            table="task_event">
         <composite-id>

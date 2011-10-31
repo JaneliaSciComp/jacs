@@ -104,14 +104,6 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     public Set<EntityData> getEntityData() {
         return this.entityData;
     }
-
-    public Set<Entity> getChildren() {
-    	Set<Entity> children = new HashSet<Entity>();
-    	for(EntityData ed : entityData) {
-        	if (ed.getChildEntity() != null) children.add(ed.getChildEntity());
-    	}
-    	return children;
-    }
     
     public void setEntityData(Set<EntityData> entityData) {
         this.entityData = entityData;
@@ -199,7 +191,7 @@ public class Entity  implements java.io.Serializable, IsSerializable {
             // Ok, we will add this
             EntityAttribute attribute=getAttributeByName(attributeName);
             if (attribute==null) {
-                return false;
+                throw new IllegalArgumentException("Entity "+getId()+" with type "+getEntityType().getName()+" does not have attribute: "+attributeName);
             }
             EntityData ed=new EntityData();
             ed.setParentEntity(this);
@@ -294,7 +286,7 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     public List<Entity> getDescendantsOfType(String typeName) {
 
         List<Entity> items = new ArrayList<Entity>();
-        if (typeName.equals(getEntityType().getName())) {
+        if (typeName==null || typeName.equals(getEntityType().getName())) {
             items.add(this);
         }
 
@@ -308,6 +300,35 @@ public class Entity  implements java.io.Serializable, IsSerializable {
         return items;
     }
 
+    public List<Entity> getChildrenOfType(String typeName) {
+
+        List<Entity> items = new ArrayList<Entity>();
+        for (EntityData entityData : getOrderedEntityData()) {
+            Entity child = entityData.getChildEntity();
+            if (typeName==null || typeName.equals(getEntityType().getName())) {
+                items.add(child);
+            }
+        }
+
+        return items;
+    }
+
+    public List<Entity> getOrderedChildren() {
+    	List<Entity> children = new ArrayList<Entity>();
+    	for(EntityData ed : getOrderedEntityData()) {
+        	if (ed.getChildEntity() != null) children.add(ed.getChildEntity());
+    	}
+    	return children;
+    }
+    
+    public Set<Entity> getChildren() {
+    	Set<Entity> children = new HashSet<Entity>();
+    	for(EntityData ed : entityData) {
+        	if (ed.getChildEntity() != null) children.add(ed.getChildEntity());
+    	}
+    	return children;
+    }
+    
     @Override
     public String toString() {
         return getName();
