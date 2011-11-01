@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?>
- 
+    <?xml version="1.0" encoding="UTF-8"?>
+
 <!-- ===================================================================== -->
 <!--                                                                       -->
 <!--  JBoss Server Configuration                                           -->
@@ -16,7 +16,7 @@
  
  <local-tx-datasource>
      <jndi-name>ComputeServer_DataSource</jndi-name>
-     <connection-url>jdbc:mysql://clustrix:3306/flyportal</connection-url>
+     <connection-url>jdbc:mysql://flyportal-db:3306/flyportal?autoReconnect=true</connection-url>
      <driver-class>com.mysql.jdbc.Driver</driver-class>
      <user-name>flyportalAdmin</user-name>
      <!--<password></password>-->
