@@ -11,6 +11,8 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
  */
 public class V3DHelper {
 	
+	protected static final int STARTING_DISPLAY_PORT = 966;
+	
     protected static final String V3D_BASE_CMD = "export LD_LIBRARY_PATH="+
     		SystemConfigurationProperties.getString("V3D.LDLibraryPath")+":$LD_LIBRARY_PATH\n"+
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
@@ -39,31 +41,54 @@ public class V3DHelper {
     }
 
     public static String getV3DGridCommandPrefix() {
-        int randomPort = ((int)(998.0 * Math.random()) + 1);
-        return getV3DGridCommandPrefix(randomPort+"");
+        return getV3DGridCommandPrefix(getRandomPort()+"");
     }
     
     public static String getV3DGridCommandPrefix(String displayPort) {
     	StringBuffer prefix = new StringBuffer();
+    	
+    	// Exit the entire script if anything returns a non-zero exit code
     	prefix.append("set -o errexit\n");
-        // todo This is a little sketchy.  Get V3D to run headless for plug-ins!!!
-    	prefix.append("/usr/bin/Xvfb :"+displayPort+" -screen 0 1x1x24 -sp /usr/lib64/xserver/SecurityPolicy -fp /usr/share/X11/fonts/misc &\n");
+    	
+    	prefix.append("PORT="+displayPort+"\n");
+    	
+		prefix.append("while [ -f \"/tmp/.X${Port}-lock\" ]; do\n");
+		prefix.append("    Port=$(( ${Port} + 1 ))\n");
+		prefix.append("done\n");
+		
+		// Run Xvfb (virtual framebuffer) on the chosen port
+    	prefix.append("/usr/bin/Xvfb :${PORT} -screen 0 1x1x24 -sp /usr/lib64/xserver/SecurityPolicy -fp /usr/share/X11/fonts/misc &\n");
+    	
+    	// Save the PID so that we can kill it when we're done
     	prefix.append("MYPID=$!\n");
-    	prefix.append("export DISPLAY=\"localhost:"+displayPort+".0\"\n");
+    	prefix.append("export DISPLAY=\"localhost:${PORT}.0\"\n");
+    	
     	return prefix.toString();
     }
 
     public static String getV3DGridCommandSuffix() {
-        return "kill -9 $MYPID";
+    	// Kill the Xvfb
+        return "kill $MYPID";
     }
 
     public static String getFormattedMIPCommand(String inputFilepath, String outputFilepath, boolean flipy) throws ServiceException {
     	String cmd = V3D_BASE_CMD+" -cmd image-loader -mip "+inputFilepath+" "+outputFilepath;
+    	
+    	// Flip the Y axis (needed for historical reasons)
     	if (flipy) cmd += " -flipy";
+    	
     	return cmd+" ;";
     }
     
     public static String getFormattedPBDCommand(String inputFilepath, String outputFilepath) throws ServiceException {
     	return V3D_BASE_CMD+" -cmd image-loader -convert "+inputFilepath+" "+outputFilepath+" ;";
+    }
+    
+    public static int getRandomPort() {
+    	return getRandomPort(STARTING_DISPLAY_PORT);
+    }
+    
+    public static int getRandomPort(int startDisplayPort) {
+       return ((int)(100.0 * Math.random()) + startDisplayPort);
     }
 }
