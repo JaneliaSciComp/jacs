@@ -9,14 +9,14 @@ package org.janelia.it.jacs.compute.mbean;
 
 
 public interface WorkstationDataManagerMBean {
-
-    public void runResultsDiscovery(String user, String dir, String entityId);
     	
-    public void runMultiColorFlipOutFileDiscoveryService(String user, boolean refresh);
+//    public void runMultiColorFlipOutFileDiscoveryService(String user, boolean refresh);
+//
+//    public void runMCFOStitchedFileDiscoveryService(String user, boolean refresh);
 
-    public void runMCFOStitchedFileDiscoveryService(String user, boolean refresh);
+    public void runMCFODataPipelineService(String user, boolean refresh);
 
-    public void runMCFODataPipelineService(String user);
+    public void runMCFOSamplePipelineService(String sampleEntityId);
     
     public void setupEntityTypes();
 
