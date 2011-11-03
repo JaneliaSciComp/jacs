@@ -30,6 +30,7 @@ public class EntityConstants {
     public static final String TYPE_SAMPLE                           = "Sample";
     public static final String TYPE_LSM_STACK_PAIR                   = "LSM Stack Pair";
     public static final String TYPE_NEURON_SEPARATOR_PIPELINE_RESULT = "Neuron Separator Pipeline Result";
+    public static final String TYPE_IMAGE_2D                         = "Image 2D";
     public static final String TYPE_TIF_2D                           = "Tif 2D Image";
     public static final String TYPE_TIF_3D                           = "Tif 3D Image";
     public static final String TYPE_TIF_3D_LABEL_MASK                = "Tif 3D Label Mask";
@@ -40,6 +41,7 @@ public class EntityConstants {
     // Entity Data Attributes
     public static final String ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH          = "Default 2D Image File Path";
     public static final String ATTRIBUTE_FILE_PATH                           = "File Path";
+    public static final String ATTRIBUTE_IMAGE_FORMAT                        = "Image Format";
     public static final String ATTRIBUTE_ONTOLOGY_ELEMENT                    = "Ontology Element";
     public static final String ATTRIBUTE_COMMON_ROOT                         = "Common Root"; // Will cause folder to appear at top of Common tree pane
     public static final String ATTRIBUTE_ENTITY                              = "Entity"; // A generic attribute so that a folder can contain any entity
