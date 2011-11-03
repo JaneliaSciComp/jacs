@@ -167,7 +167,7 @@ public class DrmaaSubmitter {
             if (params.notificationMethod.equalsIgnoreCase(OPT_RETURN_VIA_QUEUE_VAL)) {
                 JmsTemplate jmsTemplate = (JmsTemplate) ctx.getBean("queueTemplate");
                 jmsTemplate.send(new StatusMessageCreator(gpr));
-                logger.info("Reply message posted to " + jmsTemplate.getDefaultDestinationName());
+                logger.info("Reply message posted to " + jmsTemplate.getDefaultDestination());
             }
             else {
                 logger.info("Reply sent to STDOUT");

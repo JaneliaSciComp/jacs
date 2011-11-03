@@ -223,9 +223,12 @@ public class DrmaaHelper {
         while (currentStatusMap.size() > 0) {
             // If timeout is set, check for expiration
             try {
-                if (0<timeoutInSeconds) {
-                    Date elapsedDate = new Date();
-                    if (null!=startTime && ((elapsedDate.getTime()-startTime.getTime())/1000)>timeoutInSeconds) {
+                if (0<timeoutInSeconds && null!=startTime) {
+                    Date now = new Date();
+                    long elapsedSeconds = (now.getTime()-startTime.getTime())/1000;
+                    logger.info("Timeout is set to "+timeoutInSeconds+" seconds. Elapsed: "+elapsedSeconds+" seconds.");
+                    if (elapsedSeconds>timeoutInSeconds) {
+                        logger.error("The grid job ("+mainJobID+") exceeded the timeout specified: "+timeoutInSeconds+" seconds.");
                         sunSession.control(mainJobID, Session.TERMINATE);
                         throw new Exception("The grid job ("+mainJobID+") exceeded the timeout specified: "+timeoutInSeconds+" seconds.");
                     }
