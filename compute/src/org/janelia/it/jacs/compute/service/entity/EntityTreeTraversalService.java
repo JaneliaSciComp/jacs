@@ -18,6 +18,7 @@ import org.janelia.it.jacs.model.tasks.Task;
  * Traverses the entity tree starting from a given root entity and builds a flattened list of ancestor
  * entities. Parameters must be provided in the ProcessData:
  *   ENTITY_TYPE_NAME (The entityType to traverse. If null, all entities will be returned)
+ *   ENTITY_FILTER_CLASSNAME (The EntityFilter to use to narrow the resultset)
  *   ROOT_ENTITY_ID (The entity to start at)
  *   OUTVAR_ENTITY_ID (The output variable to populate with a List of Entities)
  * 
@@ -39,7 +40,18 @@ public class EntityTreeTraversalService implements IService {
             computeBean = EJBFactory.getLocalComputeBean();
             
             String entityTypeName = (String)processData.getItem("ENTITY_TYPE_NAME");
+            String entityFilterClassName = (String)processData.getItem("ENTITY_FILTER_CLASS");
             
+            EntityFilter entityFilter = null;            
+            if (entityFilterClassName!=null) {
+                try {
+                	entityFilter = (EntityFilter)Class.forName(entityFilterClassName).newInstance();
+                }
+                catch (RuntimeException e) {
+            		throw new IllegalArgumentException("Error instantiating ENTITY_FILTER class",e);
+                }
+            }
+
         	Long rootEntityId = (Long)processData.getItem("ROOT_ENTITY_ID");
         	if (rootEntityId == null) {
         		throw new IllegalArgumentException("ROOT_ENTITY_ID may not be null");
@@ -60,13 +72,13 @@ public class EntityTreeTraversalService implements IService {
         	
         	List<Entity> entities = rootEntity.getDescendantsOfType(entityTypeName);
 
-    		logger.info("Found "+entities.size()+" entities.");
+    		logger.info("Found "+entities.size()+" entities. Filtering...");
     		
     		List<Long> ids = new ArrayList<Long>();
         	for(Entity entity : entities) {
-        		// TODO: remove this.. it was used for debugging
-//        		if (entity.getName().equals("GMR_57C10_AD_01-20110606_2_B6"))
-        			ids.add(entity.getId());
+        		if (entityFilter==null || entityFilter.includeEntity(processData, entity)) {
+        			ids.add(entity.getId());	
+        		}
         	}
 
     		logger.info("Putting "+ids.size()+" ids in "+outvar);

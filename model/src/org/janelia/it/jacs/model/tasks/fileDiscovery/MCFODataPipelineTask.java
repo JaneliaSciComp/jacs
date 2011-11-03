@@ -6,6 +6,9 @@ import java.util.Set;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.model.vo.BooleanParameterVO;
+import org.janelia.it.jacs.model.vo.ParameterException;
+import org.janelia.it.jacs.model.vo.ParameterVO;
 
 /**
  * Discover files in a set of input directories and create corresponding entities in the database.
@@ -16,15 +19,31 @@ public class MCFODataPipelineTask extends FileDiscoveryTask {
 
     transient public static final String TASK_NAME = "mcfoDataPipeline";
     transient public static final String DISPLAY_NAME = "MCFO Data Pipeline";
-
+    transient public static final String PARAM_refresh = "refresh";
+    
     public MCFODataPipelineTask(Set<Node> inputNodes, String owner, List<Event> events,
-    		Set<TaskParameter> taskParameterSet, String inputDirList, String topLevelFolderName) {
+    		Set<TaskParameter> taskParameterSet, String inputDirList, String topLevelFolderName, boolean refresh) {
         super(inputNodes, owner, events, taskParameterSet, inputDirList, topLevelFolderName);
+        setDefaultValues();
+        setParameter(PARAM_refresh, Boolean.toString(refresh));
     }
 
     public MCFODataPipelineTask() {
     	super();
+        setDefaultValues();
         this.taskName = TASK_NAME;
+    }
+
+    private void setDefaultValues() {
+        setParameter(PARAM_refresh, "true");
+    }
+
+    public ParameterVO getParameterVO(String key) throws ParameterException {
+        String value = getParameter(key);
+        if (key.equals(PARAM_refresh)) {
+            return new BooleanParameterVO(Boolean.parseBoolean(value));
+        }
+        return super.getParameterVO(key);
     }
 
     public String getDisplayName() {
