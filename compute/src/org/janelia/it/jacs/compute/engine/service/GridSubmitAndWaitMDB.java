@@ -57,7 +57,7 @@ import java.util.Map;
         @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
         @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/gridSubmitAndWait"),
-        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "60"),
+        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "200"),
         @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
 //    @ActivationConfigProperty(propertyName="MaxMessages", propertyValue="5"),
         @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
@@ -67,7 +67,7 @@ import java.util.Map;
         //@ActivationConfigProperty(propertyName="RedeliveryDelay", propertyValue="30"),
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 60, timeout = 10000)
+@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 200, timeout = 10000)
 public class GridSubmitAndWaitMDB extends BaseServiceMDB {
 
     //public static QueueMessage originalMessage = null;
