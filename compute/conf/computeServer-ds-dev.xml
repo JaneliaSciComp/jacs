@@ -17,13 +17,13 @@
  
  <local-tx-datasource>
      <jndi-name>ComputeServer_DataSource</jndi-name>
-     <connection-url>jdbc:mysql://dev-db:3306/flyportal?autoReconnect=true</connection-url>
+	 <connection-url>jdbc:mysql://dev-db:3306/flyportal?autoReconnect=true</connection-url>
      <driver-class>com.mysql.jdbc.Driver</driver-class>
      <user-name>flyportalAdmin</user-name>
      <!--<password></password>-->
      <!--pooling parameters-->
      <min-pool-size>5</min-pool-size>
-     <max-pool-size>120</max-pool-size>
+     <max-pool-size>200</max-pool-size>
      <idle-timeout-minutes>6</idle-timeout-minutes>  </local-tx-datasource>
      <exception-sorter-class-name>com.mysql.jdbc.integration.jboss.ExtendedMysqlExceptionSorter</exception-sorter-class-name>
      <valid-connection-checker-class-name>com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker</valid-connection-checker-class-name>

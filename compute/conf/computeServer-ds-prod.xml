@@ -1,5 +1,5 @@
-    <?xml version="1.0" encoding="UTF-8"?>
-
+<?xml version="1.0" encoding="UTF-8"?>
+ 
 <!-- ===================================================================== -->
 <!--                                                                       -->
 <!--  JBoss Server Configuration                                           -->
@@ -22,7 +22,7 @@
      <!--<password></password>-->
      <!--pooling parameters-->
      <min-pool-size>5</min-pool-size>
-     <max-pool-size>120</max-pool-size>
+     <max-pool-size>200</max-pool-size>
      <idle-timeout-minutes>6</idle-timeout-minutes>  </local-tx-datasource>
      <exception-sorter-class-name>com.mysql.jdbc.integration.jboss.ExtendedMysqlExceptionSorter</exception-sorter-class-name>
      <valid-connection-checker-class-name>com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker</valid-connection-checker-class-name>
