@@ -63,6 +63,15 @@ public class SampleDiscoveryService extends FileDiscoveryService {
         finally {
         	scanner.close();
         }
+
+        // Make sure we actually have a sample here        
+        int numPairs = 0;
+        for (FilePair filePair : filePairings.values()) {
+        	if (filePair.isPairingComplete()) {
+        		numPairs++;
+        	}
+        }
+        if (numPairs<1) return;
         
         sampleIdentifier +=  "-" + folder.getName();
         Entity sample = findExistingSample(folder, sampleIdentifier);
