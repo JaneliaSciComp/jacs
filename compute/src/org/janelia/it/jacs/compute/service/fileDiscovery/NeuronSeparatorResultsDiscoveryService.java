@@ -58,7 +58,7 @@ public class NeuronSeparatorResultsDiscoveryService extends FileDiscoveryService
         Entity fragmentsFolder = createFragmentCollection();
         addToParent(resultEntity, fragmentsFolder, 1, EntityConstants.ATTRIBUTE_NEURON_FRAGMENTS);
         
-        EntityType tif2D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_2D);
+        EntityType image2D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
         EntityType tif3D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_3D);
         EntityType tif3DLabel = annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_3D_LABEL_MASK);
         
@@ -76,7 +76,8 @@ public class NeuronSeparatorResultsDiscoveryService extends FileDiscoveryService
             else if (filename.startsWith("Reference.")) {
                 addResultItem(filesFolder, tif3D, resultFile);
             }
-            else if (filename.startsWith("neuronSeparatorPipeline.PR.neuron") && filename.endsWith(".tif")) {
+            else if (filename.startsWith("neuronSeparatorPipeline.PR.neuron") && filename.endsWith(".png")) {
+                addResultItem(filesFolder, image2D, resultFile);
             	String mipNum = filename.substring("neuronSeparatorPipeline.PR.neuron".length(), filename.lastIndexOf('.'));
 
             	Integer index = null;
@@ -87,12 +88,12 @@ public class NeuronSeparatorResultsDiscoveryService extends FileDiscoveryService
             		logger.warn("Error parsing number from MIP filename: "+mipNum);
             	}
 
-            	Entity fragmentEntity = createFragmentEntity(tif2D, resultFile, index);
+            	Entity fragmentEntity = createFragmentEntity(image2D, resultFile, index);
             	addToParent(fragmentsFolder, fragmentEntity, index, EntityConstants.ATTRIBUTE_ENTITY);
             }
-            else if (filename.endsWith("MIP.tif")) {
-                addResultItem(filesFolder, tif2D, resultFile);
-                if (filename.equals("ConsolidatedSignalMIP.tif")) {
+            else if (filename.endsWith("MIP.png")) {
+                addResultItem(filesFolder, image2D, resultFile);
+                if (filename.equals("ConsolidatedSignalMIP.png")) {
                 	resultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, resultFile.getAbsolutePath());
                 	resultEntity = annotationBean.saveOrUpdateEntity(resultEntity);
                 	if (sampleEntity!=null) {
@@ -113,7 +114,7 @@ public class NeuronSeparatorResultsDiscoveryService extends FileDiscoveryService
         // TODO: migrate the annotations from the previous result
     }
     
-	private Entity createFragmentEntity(EntityType tif2D, File file, Integer index) throws Exception {
+	private Entity createFragmentEntity(EntityType image2D, File file, Integer index) throws Exception {
 		
         Entity fragmentEntity = new Entity();
         fragmentEntity.setUser(user);
@@ -123,22 +124,8 @@ public class NeuronSeparatorResultsDiscoveryService extends FileDiscoveryService
         fragmentEntity.setName("Neuron Fragment "+index);
         fragmentEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER, index.toString());
         fragmentEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, file.getAbsolutePath());
-    	
         fragmentEntity = annotationBean.saveOrUpdateEntity(fragmentEntity);
         logger.info("Saved fragment entity as "+fragmentEntity.getId());
-
-        Entity fileEntity = new Entity();
-        fileEntity.setUser(user);
-        fileEntity.setCreationDate(createDate);
-        fileEntity.setUpdatedDate(createDate);
-        fileEntity.setEntityType(tif2D);
-        fileEntity.setName(file.getName());
-        fileEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
-        fileEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, file.getAbsolutePath());
-        fileEntity = annotationBean.saveOrUpdateEntity(fileEntity);
-        addToParent(fragmentEntity, fileEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
-
-        logger.info("Saved fragment MIP as "+fileEntity.getId());
         
         return fragmentEntity;
     }
@@ -193,7 +180,10 @@ public class NeuronSeparatorResultsDiscoveryService extends FileDiscoveryService
         entity.setName(file.getName());
         entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
         
-        if (type.getName().equals(EntityConstants.TYPE_TIF_2D)) {
+        if (type.getName().equals(EntityConstants.TYPE_IMAGE_2D)) {
+        	String filename = file.getName();
+        	String fileFormat = filename.substring(filename.lastIndexOf('.')+1);
+        	entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, fileFormat);
         	entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, file.getAbsolutePath());
         }
         

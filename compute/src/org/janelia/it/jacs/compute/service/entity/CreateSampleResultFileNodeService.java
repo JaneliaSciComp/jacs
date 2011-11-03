@@ -51,6 +51,7 @@ public class CreateSampleResultFileNodeService implements IService {
             processData.putItem("SEPARATE_RESULT_FILE_NODE", createChildFileNode("separate"));
             processData.putItem("COMPRESS_RESULT_FILE_NODE", createChildFileNode("compress"));
             processData.putItem("MIPS_RESULT_FILE_NODE", createChildFileNode("mips"));
+            processData.putItem("CONVERT_RESULT_FILE_NODE", createChildFileNode("convert"));
             
             logger.info("Created sample result node: "+resultFileNode.getDirectoryPath());
         }

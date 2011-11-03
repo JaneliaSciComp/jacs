@@ -25,6 +25,8 @@ import org.janelia.it.jacs.shared.utils.SystemCall;
  * Process the results of a Neuron Separation task and create the required entities, symbolic links, and other 
  * auxiliary files.
  * 
+ * @deprecated Use NeuronSeparatorResultsDiscoveryService (part of the new pipeline)
+ * 
  * @author Todd Safford
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */

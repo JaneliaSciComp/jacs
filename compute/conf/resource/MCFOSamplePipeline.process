@@ -23,6 +23,7 @@
 	        <output name="SEPARATE_RESULT_FILE_NODE"/>
 	        <output name="COMPRESS_RESULT_FILE_NODE"/>
 	        <output name="MIPS_RESULT_FILE_NODE"/>
+	        <output name="CONVERT_RESULT_FILE_NODE"/>
 	    </operation>
 	    
 	    <!-- Asynchronously create the metadata describing the input LSM files -->
@@ -112,11 +113,26 @@
 				<input name="OUTPUT_FILENAME_2" value="ReferenceMIP.tif"/>
 			</operation>
         </sequence>
+        
+	    <!-- Convert all MIPs to PNG format -->
+        <sequence name="MIP Conversion to PNG" waitForAsync="true">
+		    <operation name="MIP Conversion to PNG" processor="queue/gridSubmitAndWait">
+		        <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ImageConversionService"/>
+				<input name="CONVERT_RESULT_FILE_NODE"/>
+	    		<input name="RESULT_FILE_NODE" value="$V{CONVERT_RESULT_FILE_NODE}"/>
+				<input name="SAMPLE_RESULT_FILE_NODE"/>
+	    		<input name="OUTPUT_FILE_NODE" value="$V{SAMPLE_RESULT_FILE_NODE}"/>
+				<input name="INPUT_FILENAME_REGEX_1" value="((.*?)MIP)\.tif$"/>
+				<input name="OUTPUT_FILENAME_PATTERN_1" value="$1.png"/>
+				<input name="INPUT_FILENAME_REGEX_2" value="(neuronSeparatorPipeline\.PR\.(.*?))\.tif$"/>
+				<input name="OUTPUT_FILENAME_PATTERN_2" value="$1.png"/>
+			</operation>
+        </sequence>
 			
 	    <!-- Load the separation results into the database -->
-		<operation name="Discover Neuron Separation Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.NeuronSeparatorResultsDiscoveryService" startEvent="postprocess">
+		<operation name="Discover Neuron Separation Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.NeuronSeparatorResultsDiscoveryService">
 			<input name="SEPARATE_RESULT_FILE_NODE"/>
-			<input name="ROOT_FILE_NODE" value="$V{SEPARATE_RESULT_FILE_NODE}"/>
+			<input name="ROOT_FILE_NODE" value="$V{SAMPLE_RESULT_FILE_NODE}"/>
 			<input name="SAMPLE_ENTITY_ID"/>
 			<input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
 	    </operation>
