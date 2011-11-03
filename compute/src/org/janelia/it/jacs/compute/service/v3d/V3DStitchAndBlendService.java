@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.service.v3d;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
+import java.util.List;
 
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
@@ -23,6 +24,7 @@ import org.janelia.it.jacs.model.user_data.FileNode;
  */
 public class V3DStitchAndBlendService extends SubmitDrmaaJobService {
 
+    private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
     private static final String CONFIG_PREFIX = "stitchConfiguration.";
     
     protected void init(IProcessData processData) throws Exception {
@@ -37,25 +39,6 @@ public class V3DStitchAndBlendService extends SubmitDrmaaJobService {
     @Override
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
 
-        // This SHOULD use the mergedFilepaths from the mergedLsmPairs as below, but right now the stitcher does its
-        // own file discovery, so we just need to point it at the merged directory.
-        
-//        Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
-//        if (bulkMergeParamObj==null) {
-//        	throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS may not be null");
-//        }
-//
-//        if (bulkMergeParamObj instanceof List) {
-//        	List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
-//            List<File> mergedFiles = new ArrayList<File>();
-//            for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
-//            	mergedFiles.add(new File(mergedLsmPair.getMergedFilepath()));
-//            }
-//        }
-//        else {
-//        	throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS must be an ArrayList<MergedLsmPair>");
-//        }
-        
         FileNode outputFileNode = (FileNode)processData.getItem("OUTPUT_FILE_NODE");
         if (outputFileNode==null) {
         	throw new ServiceException("Input parameter OUTPUT_FILE_NODE may not be null");
@@ -67,8 +50,25 @@ public class V3DStitchAndBlendService extends SubmitDrmaaJobService {
         }
         
         writeInstanceFiles();
-    	createShellScript(writer, outputFileNode.getDirectoryPath(), stitchedFilename);
         setJobIncrementStop(1);
+        
+        Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
+        if (bulkMergeParamObj==null) {
+        	throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS may not be null");
+        }
+
+        if (bulkMergeParamObj instanceof List) {
+        	List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
+        	if (mergedLsmPairs.size()==1) {
+        		createBypassShellScript(writer, mergedLsmPairs.get(0).getMergedFilepath(), stitchedFilename);
+        	}            
+        	else {
+            	createShellScript(writer, outputFileNode.getDirectoryPath(), stitchedFilename);
+        	}
+        }
+        else {
+        	throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS must be an ArrayList<MergedLsmPair>");
+        }
     }
 
     private void writeInstanceFiles() throws Exception {
@@ -77,7 +77,29 @@ public class V3DStitchAndBlendService extends SubmitDrmaaJobService {
         	throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath()); 
     	}
     }
+    
+    /**
+     * if there is just one merged file we have to bypass the stitcher altogether because otherwise we get a bogus 
+     * output from it. 
+     * @param writer
+     * @param mergedFilepath
+     * @param stitchedFilepath
+     * @throws Exception
+     */
+    private void createBypassShellScript(FileWriter writer, String mergedFilepath, String stitchedFilepath) throws Exception {
+        StringBuffer script = new StringBuffer();
+        script.append("cp "+mergedFilepath+" "+stitchedFilepath);
+        script.append("\n");
+        writer.write(script.toString());
+    }
 
+    /**
+     * Write the shell script that runs the stitcher on the merged files.
+     * @param writer
+     * @param mergedFilepath
+     * @param stitchedFilepath
+     * @throws Exception
+     */
     private void createShellScript(FileWriter writer, String mergedFilepath, String stitchedFilepath) throws Exception {
         StringBuffer script = new StringBuffer();
         script.append(V3DHelper.getV3DGridCommandPrefix());
@@ -98,7 +120,12 @@ public class V3DStitchAndBlendService extends SubmitDrmaaJobService {
     	jt.setNativeSpecification("-l excl=true");
     	return jt;
     }
-    
+
+	@Override
+    public int getJobTimeoutSeconds() {
+        return TIMEOUT_SECONDS;
+    }
+	
     @Override
 	public void postProcess() throws MissingDataException {
 
