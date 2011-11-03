@@ -24,7 +24,8 @@ import org.janelia.it.jacs.model.user_data.FileNode;
  */
 public class V3DBulkMergeService extends SubmitDrmaaJobService {
 
-	private static final int DISPLAY_PORT = 9541;
+    private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
+	private static final int START_DISPLAY_PORT = 890;
     private static final String CONFIG_PREFIX = "mergeConfiguration.";
     
     protected void init(IProcessData processData) throws Exception {
@@ -67,7 +68,7 @@ public class V3DBulkMergeService extends SubmitDrmaaJobService {
             fw.write(mergedLsmPair.getLsmFilepath1() + "\n");
             fw.write(mergedLsmPair.getLsmFilepath2() + "\n");
             fw.write(mergedLsmPair.getMergedFilepath() + "\n");
-            fw.write((DISPLAY_PORT+configIndex) + "\n");
+            fw.write((V3DHelper.getRandomPort(START_DISPLAY_PORT)+configIndex) + "\n");
         }
         catch (IOException e) {
         	throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath(),e); 
@@ -100,6 +101,11 @@ public class V3DBulkMergeService extends SubmitDrmaaJobService {
     	return jt;
     }
 
+	@Override
+    public int getJobTimeoutSeconds() {
+        return TIMEOUT_SECONDS;
+    }
+	
     @Override
 	public void postProcess() throws MissingDataException {
 
