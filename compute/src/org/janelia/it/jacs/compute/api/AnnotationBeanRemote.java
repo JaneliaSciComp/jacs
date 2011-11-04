@@ -34,6 +34,7 @@ public interface AnnotationBeanRemote {
     public List<EntityType> getEntityTypes();
     public List<Entity> getEntitiesByTypeName(String entityTypeName);
     public List<Entity> getCommonRootEntitiesByTypeName(String entityTypeName);
+    public List<Entity> getCommonRootEntitiesByTypeName(String userLogin, String entityTypeName);
     
     public List<Entity> getAnnotationsForEntities(String username, List<Long> entityIds) throws ComputeException;
     public List<Entity> getAnnotationsForEntity(String username, long entityId) throws ComputeException;

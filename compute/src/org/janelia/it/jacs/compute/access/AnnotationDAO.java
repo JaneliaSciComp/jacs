@@ -618,6 +618,26 @@ public class AnnotationDAO extends ComputeBaseDAO {
             throw new DaoException(e);
         }
     }
+
+    public List<Entity> getUserCommonRoots(String userLogin, String entityTypeName) throws DaoException {
+        try {
+            Session session = getCurrentSession();
+            StringBuffer hql = new StringBuffer("select e from Entity e");
+            hql.append(" where e.entityType.name=?");
+            if (null != userLogin) {
+                hql.append(" and e.user.userLogin=?");
+            }
+            hql.append(" and exists (from EntityData as attr where attr.parentEntity = e " +
+            		"and attr.entityAttribute.name = '"+EntityConstants.ATTRIBUTE_COMMON_ROOT+"')");
+            Query query = session.createQuery(hql.toString()).setString(0, entityTypeName);
+            if (null != userLogin) {
+                query.setString(1, userLogin);
+            }
+            return query.list();
+        } catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
     
     public Set<EntityData> getParentEntityDatas(long childEntityId) throws DaoException {
         try {
