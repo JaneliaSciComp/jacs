@@ -80,8 +80,8 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
     @Override
     protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
     	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
-    	// Reserve entire node
-    	jt.setNativeSpecification("-l excl=true");
+    	// Reserve 7 out of the 8 slots on a node. This gives us 21 GB of memory. 
+    	jt.setNativeSpecification("-pe batch 7");
     	return jt;
     }
     
