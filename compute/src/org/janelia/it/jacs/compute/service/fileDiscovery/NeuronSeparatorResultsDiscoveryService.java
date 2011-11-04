@@ -1,6 +1,10 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -62,7 +66,16 @@ public class NeuronSeparatorResultsDiscoveryService extends FileDiscoveryService
         EntityType tif3D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_3D);
         EntityType tif3DLabel = annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_3D_LABEL_MASK);
         
-        for (File resultFile : resultDir.listFiles()) {
+        // Sort files so that the entities are added in the correct order
+        List<File> files = Arrays.asList(resultDir.listFiles());
+        Collections.sort(files, new Comparator<File>() {
+        	@Override
+        	public int compare(File file1, File file2) {
+        		return file1.getName().compareTo(file2.getName());
+        	}
+		});
+        
+        for (File resultFile : files) {
         	String filename = resultFile.getName();
 
         	if (resultFile.isDirectory()) continue;
@@ -189,7 +202,7 @@ public class NeuronSeparatorResultsDiscoveryService extends FileDiscoveryService
         
         entity = annotationBean.saveOrUpdateEntity(entity);
         logger.info("Saved "+type.getName()+" as "+entity.getId());
-        addToParent(resultEntity, entity, null, EntityConstants.ATTRIBUTE_ENTITY);
+        addToParent(resultEntity, entity, resultEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
         return entity;
     }
 
