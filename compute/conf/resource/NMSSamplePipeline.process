@@ -56,14 +56,11 @@
 	        </operation>
         </sequence>
 	
-	    <!-- Stitch the merged files into a single result -->
-        <sequence name="Create Separation Parameters" waitForAsync="true">
-	        <operation name="Create Separation Parameters" processor="queue/gridSubmitAndWait">
-	            <input name="iservice" value="org.janelia.it.jacs.compute.service.entity.InitSingleMergeParameterService"/>
-				<input name="BULK_MERGE_PARAMETERS"/>
-				<output name="MERGED_FILENAME"/>
-	        </operation>
-        </sequence>
+	    <!-- Take the first merged file (there should only be one) -->
+        <operation name="Create Separation Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitSingleMergeParameterService">
+			<input name="BULK_MERGE_PARAMETERS"/>
+			<output name="MERGED_FILENAME"/>
+        </operation>
 			
 	    <!-- Run neuron separation on the stitched result -->
         <sequence name="Neuron Separation" waitForAsync="true">
