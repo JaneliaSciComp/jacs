@@ -20,9 +20,11 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.user_data.FileNode;
 
 /**
- * Extracts and outputs the two filepaths from an LsmPair entity. The parameter must be included in the ProcessData:
- *   SAMPLE_ENTITY_ID
+ * Takes a Sample Entity and finds all the LSM stacks which are part of it, then creates lsmFileNames.txt with all the
+ * LSM filenames, and a metadata file for each LSM. The parameters should be included in the ProcessData:
+ *   SAMPLE_ENTITY_ID 
  *   RESULT_FILE_NODE
+ *   OUTPUT_FILE_NODE
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
