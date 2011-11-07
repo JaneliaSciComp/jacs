@@ -1,9 +1,6 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import org.janelia.it.jacs.model.entity.Entity;
@@ -67,13 +64,7 @@ public class NeuronSeparatorResultsDiscoveryService extends FileDiscoveryService
         EntityType tif3DLabel = annotationBean.getEntityTypeByName(EntityConstants.TYPE_TIF_3D_LABEL_MASK);
         
         // Sort files so that the entities are added in the correct order
-        List<File> files = Arrays.asList(resultDir.listFiles());
-        Collections.sort(files, new Comparator<File>() {
-        	@Override
-        	public int compare(File file1, File file2) {
-        		return file1.getName().compareTo(file2.getName());
-        	}
-		});
+        List<File> files = getOrderedFilesInDir(resultDir);
         
         for (File resultFile : files) {
         	String filename = resultFile.getName();

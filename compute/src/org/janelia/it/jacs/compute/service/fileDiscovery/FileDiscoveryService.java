@@ -1,10 +1,7 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
@@ -201,6 +198,7 @@ public class FileDiscoveryService implements IService {
         logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
         		" as child of "+parent.getEntityType().getName()+"#"+parent.getId());
     }
+    
     /**
      * Override this method to create additional entities within the given folder. If you want the child folders
      * to be processed recursively, make sure to call processChildFolders.
@@ -213,11 +211,27 @@ public class FileDiscoveryService implements IService {
     
 	protected void processChildFolders(Entity folder) throws Exception {
         File dir = new File(folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-	    for (File file : dir.listFiles()) {
+	    for (File file : getOrderedFilesInDir(dir)) {
 	        if (file.isDirectory()) {
                 Entity subfolder = verifyOrCreateChildFolderFromDir(folder, file);
                 processFolderForData(subfolder);
 	        } 
 	    }
 	}
+    
+    /**
+     * Returns the child files of the given directory, sorted by name.
+     * @param dir
+     * @return
+     */
+    protected List<File> getOrderedFilesInDir(File dir) {
+        List<File> files = Arrays.asList(dir.listFiles());
+        Collections.sort(files, new Comparator<File>() {
+        	@Override
+        	public int compare(File file1, File file2) {
+        		return file1.getName().compareTo(file2.getName());
+        	}
+		});
+        return files;
+    }
 }

@@ -36,7 +36,7 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
         File dir = new File(folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         logger.info("Processing folder as unstitched data="+dir.getAbsolutePath());
         List<File> lsmFileList = new ArrayList<File>();
-        for (File file : dir.listFiles()) {
+        for (File file : getOrderedFilesInDir(dir)) {
             if (file.isDirectory()) {
                 Entity subfolder = verifyOrCreateChildFolderFromDir(folder, file);
                 processFolderForData(subfolder);
