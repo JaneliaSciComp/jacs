@@ -10,7 +10,7 @@
                    default-lazy="false"
                    auto-import="true"
                    default-cascade="none" >
-        <subclass name="org.janelia.it.jacs.model.tasks.geci.GeciImageProcessingTask" extends="org.janelia.it.jacs.model.tasks.Task"
-                  discriminator-value="geciImageProcessingTask" abstract="false">
+        <subclass name="NeuronalAssayAnalysisTask" extends="org.janelia.it.jacs.model.tasks.Task"
+                  discriminator-value="neuronalAssayAnalysisTask" abstract="false">
         </subclass>
 </hibernate-mapping>

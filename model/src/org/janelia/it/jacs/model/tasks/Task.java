@@ -29,7 +29,6 @@ import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.model.vo.ParameterVO;
 
-import java.lang.reflect.Field;
 import java.util.*;
 
 /**
@@ -225,7 +224,7 @@ public abstract class Task implements java.io.Serializable, IsSerializable {
     public abstract String getDisplayName();
 
     public String toString() {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append("Task{objectId=").append(objectId != null ? objectId.toString() : "null").append(", taskName=").append(taskName);
         buf.append('\n');
         // TODO: The following breaks if the session is closed since these properties are lazy
@@ -330,7 +329,7 @@ public abstract class Task implements java.io.Serializable, IsSerializable {
     }
 
     public static String csvStringFromCollection(Collection<String> collection) {
-        StringBuffer sb = new StringBuffer("");
+        StringBuilder sb = new StringBuilder("");
         if (collection != null) {
             Iterator iterator = collection.iterator();
             while (iterator.hasNext()) {
@@ -458,27 +457,4 @@ public abstract class Task implements java.io.Serializable, IsSerializable {
         this.taskNote = taskNote;
     }
 
-    public static Task clone(Object o) throws IllegalAccessException, InstantiationException {
-      Object clone = null;
-
-     clone = o.getClass().newInstance();
-
-      // Walk up the superclass hierarchy
-      for (Class obj = o.getClass();!obj.equals(Object.class);obj = obj.getSuperclass()){
-          Field[] fields = obj.getDeclaredFields();
-          for (Field field : fields) {
-              field.setAccessible(true);
-              try {
-                  // for each class/suerclass, copy all fields
-                  // from this object to the clone
-                  field.set(clone, field.get(o));
-              }
-              catch (IllegalArgumentException e) {
-              }
-              catch (IllegalAccessException e) {
-              }
-          }
-      }
-      return (Task)clone;
-    }
 }

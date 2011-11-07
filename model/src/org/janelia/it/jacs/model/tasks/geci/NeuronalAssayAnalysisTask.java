@@ -7,6 +7,7 @@ import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.vo.MultiSelectVO;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.model.vo.ParameterVO;
+import org.janelia.it.jacs.model.vo.TextParameterVO;
 
 import java.util.List;
 import java.util.Set;
@@ -18,27 +19,29 @@ import java.util.Set;
  * Time: 3:03:13 PM
  * Modified by naxelrod
  */
-public class GeciImageProcessingTask extends Task {
-    transient public static final String TASK_NAME = "geciImageProcessing";
-    transient public static final String DISPLAY_NAME = "GECI Image Processing";
+public class NeuronalAssayAnalysisTask extends Task {
+    transient public static final String TASK_NAME = "neuronalAssayAnalysis";
+    transient public static final String DISPLAY_NAME = "GECI Neuronal Assay Analysis";
 
     // Parameter Keys
     transient public static final String PARAM_inputFile = "input files";
     transient public static final String PARAM_inputFileType = "inputFileType";
+    transient public static final String PARAM_fretType = "fretType";
 
 
-    public GeciImageProcessingTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet) {
+    public NeuronalAssayAnalysisTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet) {
         super(inputNodes, owner, events, taskParameterSet);
         setDefaultValues();
     }
 
-    public GeciImageProcessingTask() {
+    public NeuronalAssayAnalysisTask() {
         setDefaultValues();
     }
 
     private void setDefaultValues() {
         setParameter(PARAM_inputFile, "");
         setParameter(PARAM_inputFileType, "");
+        setParameter(PARAM_fretType, "");
         this.taskName = TASK_NAME;
     }
 
@@ -48,6 +51,9 @@ public class GeciImageProcessingTask extends Task {
         String value = getParameter(key);
         if (value == null)
             return null;
+        if (key.equals(PARAM_fretType)) {
+            return new TextParameterVO(value);
+        }
         if (key.equals(PARAM_inputFile)) {
             return new MultiSelectVO(listOfStringsFromCsvString(value), listOfStringsFromCsvString(value));
         }

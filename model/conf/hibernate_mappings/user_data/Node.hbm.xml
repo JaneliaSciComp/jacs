@@ -633,7 +633,7 @@
                       select-before-update="false">
             </subclass>
 
-            <subclass name="org.janelia.it.jacs.model.user_data.geci.GeciImageProcessingResultNode" discriminator-value="GeciImageProcessingResultNode"
+            <subclass name="org.janelia.it.jacs.model.user_data.geci.NeuronalAssayAnalysisResultNode" discriminator-value="NeuronalAssayAnalysisResultNode"
                       dynamic-update="true"
                       dynamic-insert="true"
                       select-before-update="false">

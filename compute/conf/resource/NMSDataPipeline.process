@@ -1,7 +1,7 @@
 <!-- 
 	Discover samples in the fileshare, load them into the database and run the NMSSamplePipeline for each one 
 -->
-<process name="Neuron Merge Separate Data Pipeline" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
+<process name="Neuron Merge Separate Data Pipeline" processor="queue/mcfoDataPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	
 	    <!-- Import variables from the MCFODataPipelineTask -->
@@ -37,7 +37,7 @@
 			
 				<!-- Spawn a new task to process the Sample -->
 		        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
-        			<input name="TASK_CLASS" value="org.janelia.it.jacs.model.tasks.fileDiscovery.NMSSamplePipelineTask"/>
+        			<input name="TASK_CLASS" value="org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOSamplePipelineTask"/>
 		            <input name="PROCESS_DEF_NAME" value="NMSSamplePipeline"/>
 		            <input name="PARAMETER_1_KEY" value="sample entity id"/>
 		            <input name="SAMPLE_ENTITY_ID"/>

@@ -10,7 +10,7 @@ import org.janelia.it.jacs.compute.service.recruitment.CreateRecruitmentFileNode
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
-import org.janelia.it.jacs.model.user_data.profileComparison.ProfileComparisonResultNode;
+import org.janelia.it.jacs.model.user_data.geci.NeuronalAssayAnalysisResultNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
 import java.io.IOException;
@@ -18,10 +18,10 @@ import java.io.IOException;
 /**
  * @author Todd Safford
  */
-public class GeciImageProcessingResultFileNodeService implements IService {
+public class NeuronalAssayAnalysisResultFileNodeService implements IService {
 
     private Task task;
-    private ProfileComparisonResultNode resultFileNode;
+    private NeuronalAssayAnalysisResultNode resultFileNode;
     private String sessionName;
     Long resultNodeId;
 
@@ -45,9 +45,9 @@ public class GeciImageProcessingResultFileNodeService implements IService {
         if (User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner())) {
             visibility = Node.VISIBILITY_PUBLIC;
         }
-        resultFileNode = new ProfileComparisonResultNode(task.getOwner(), task,
-                "ProfileComparisonResultNode",
-                "ProfileComparisonResultNode for createtask " + task.getObjectId(), visibility, sessionName);
+        resultFileNode = new NeuronalAssayAnalysisResultNode(task.getOwner(), task,
+                "NeuronalAssayAnalysisResultNode",
+                "NeuronalAssayAnalysisResultNode for createtask " + task.getObjectId(), visibility, sessionName);
         EJBFactory.getLocalComputeBean().saveOrUpdateNode(resultFileNode);
 
         FileUtil.ensureDirExists(resultFileNode.getDirectoryPath());

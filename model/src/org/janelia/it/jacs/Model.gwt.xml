@@ -45,6 +45,7 @@
         <include name="DataSource.java"/>
     </source>
     <source path="model/user_data/prefs"/>
+    <source path="model/user_data/geci"/>
 
     <source path="model/user_data/blast">
         <exclude name="BlastDatabaseFileNode.java"/>

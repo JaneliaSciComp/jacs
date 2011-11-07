@@ -120,8 +120,8 @@ public class EntryPointController extends MultiActionController {
         return checkedEntryPoint(request, response, "ProfileComparison");
     }
 
-    public ModelAndView geciImageProcessing(HttpServletRequest request, HttpServletResponse response) {
-        return checkedEntryPoint(request, response, "GeciImageProcessing");
+    public ModelAndView neuronalAssayAnalysis(HttpServletRequest request, HttpServletResponse response) {
+        return checkedEntryPoint(request, response, "NeuronalAssayAnalysis");
     }
 
     public ModelAndView zlaticLab(HttpServletRequest request, HttpServletResponse response) {

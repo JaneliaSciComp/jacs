@@ -43,10 +43,10 @@ import org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuItem;
  * Time: 11:38:01 AM
  * Modified by nelson for Profile Comparison job results
  */
-public class GeciImageProcessingJobResultsPanel extends GeneralJobResultsPanel {
-    public GeciImageProcessingJobResultsPanel(String taskType, JobSelectionListener jobSelectionListener, JobSelectionListener reRunJobListener, String[] rowsPerPageOptions, int defaultRowsPerPage) {
+public class NeuronalAssayAnalysisJobResultsPanel extends GeneralJobResultsPanel {
+    public NeuronalAssayAnalysisJobResultsPanel(String taskType, JobSelectionListener jobSelectionListener, JobSelectionListener reRunJobListener, String[] rowsPerPageOptions, int defaultRowsPerPage) {
         super(taskType, jobSelectionListener, reRunJobListener, rowsPerPageOptions, defaultRowsPerPage,
-                "GeciImageProcessingJobResults");
+                "NeuronalAssayAnalysisJobResults");
     }
 
     protected Widget getJobMenu(final JobInfo job) {

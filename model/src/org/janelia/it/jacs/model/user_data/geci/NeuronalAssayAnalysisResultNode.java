@@ -15,15 +15,15 @@ import java.io.Serializable;
  * Date: Dec 15, 2008
  * Time: 3:32:11 PM
  */
-public class GeciImageProcessingResultNode extends FileNode implements IsSerializable, Serializable {
+public class NeuronalAssayAnalysisResultNode extends FileNode implements IsSerializable, Serializable {
 
     /**
      * constructor
      */
-    public GeciImageProcessingResultNode() {
+    public NeuronalAssayAnalysisResultNode() {
     }
 
-    public GeciImageProcessingResultNode(String owner, Task task, String name, String description, String visibility, String relativeSessionPath) {
+    public NeuronalAssayAnalysisResultNode(String owner, Task task, String name, String description, String visibility, String relativeSessionPath) {
         super(owner, task, name, description, visibility, Node.DIRECTORY_DATA_TYPE, relativeSessionPath);
     }
 

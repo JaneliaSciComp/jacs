@@ -12,18 +12,18 @@ import org.janelia.it.jacs.web.gwt.common.client.Constants;
 import org.janelia.it.jacs.web.gwt.common.client.jobs.JobSelectionListener;
 import org.janelia.it.jacs.web.gwt.common.client.jobs.JobSubmissionListener;
 import org.janelia.it.jacs.web.gwt.common.client.panel.TitledBox;
-import org.janelia.it.jacs.web.gwt.common.client.panel.user.jobs.GeciImageProcessingJobResultsPanel;
+import org.janelia.it.jacs.web.gwt.common.client.panel.user.jobs.NeuronalAssayAnalysisJobResultsPanel;
 import org.janelia.it.jacs.web.gwt.common.client.popup.InfoPopupPanel;
 import org.janelia.it.jacs.web.gwt.common.client.popup.launcher.PopupCenteredLauncher;
 import org.janelia.it.jacs.web.gwt.common.client.util.HtmlUtils;
 import org.janelia.it.jacs.web.gwt.common.client.util.UrlBuilder;
 
-public class GeciImageProcessing extends BaseEntryPoint {
-    public static final String TASK_GECI_IMAGE_PROCESSING = "GeciImageProcessingTask";
+public class NeuronalAssayAnalysis extends BaseEntryPoint {
+    public static final String TASK_NEURONAL_ASSAY_ANALYSIS = "NeuronalAssayAnalysisTask";
     public static final String TASK_ID_PARAM = "taskId";
     public static final String DATASET_PARAM = "dataset";
 
-    private GeciImageProcessingJobResultsPanel _geciImageProcessingJobResultsPanel;
+    private NeuronalAssayAnalysisJobResultsPanel _neuronalAssayAnalysisJobResultsPanel;
 
     public void onModuleLoad() {
         // Create and fade in the page contents
@@ -49,15 +49,15 @@ public class GeciImageProcessing extends BaseEntryPoint {
     private Widget getJobResultsPanel() {
         TitledBox resultBox = new TitledBox("Recent Results");
         resultBox.setWidth("300px"); // min width when contents hidden
-        _geciImageProcessingJobResultsPanel = new GeciImageProcessingJobResultsPanel(TASK_GECI_IMAGE_PROCESSING, new JobResultsSelectedListener(),
+        _neuronalAssayAnalysisJobResultsPanel = new NeuronalAssayAnalysisJobResultsPanel(TASK_NEURONAL_ASSAY_ANALYSIS, new JobResultsSelectedListener(),
                 new ReRunJobListener(), new String[]{"5", "10", "20"}, 5);
-        _geciImageProcessingJobResultsPanel.setJobCompletedListener(new JobCompletedListener());
-        resultBox.add(_geciImageProcessingJobResultsPanel);
+        _neuronalAssayAnalysisJobResultsPanel.setJobCompletedListener(new JobCompletedListener());
+        resultBox.add(_neuronalAssayAnalysisJobResultsPanel);
 
         // load recent jobs table when browser's done with initial content load
         DeferredCommand.addCommand(new Command() {
             public void execute() {
-                _geciImageProcessingJobResultsPanel.first();
+                _neuronalAssayAnalysisJobResultsPanel.first();
             }
         });
 
@@ -65,7 +65,7 @@ public class GeciImageProcessing extends BaseEntryPoint {
     }
 
     public Widget getPanel() {
-        return new GeciImageProcessingPanel(Constants.GECI_IP_LABEL, new JobSubmittedListener());
+        return new NeuronalAssayAnalysisPanel(Constants.GECI_IP_LABEL, new JobSubmittedListener());
     }
 
     private class JobResultsSelectedListener implements JobSelectionListener {
@@ -91,7 +91,7 @@ public class GeciImageProcessing extends BaseEntryPoint {
         } // **submission** failed, so no need to update results panel
 
         public void onSuccess(String jobId) {
-            _geciImageProcessingJobResultsPanel.refresh();
+            _neuronalAssayAnalysisJobResultsPanel.refresh();
         }
     }
 

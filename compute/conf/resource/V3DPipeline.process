@@ -21,7 +21,7 @@
   ~ "http://www.perlfoundation.org/artistic_license_2_0."
   -->
 
-<process name="V3D Pipeline" startEvent="pending" updateProcessStatus="on_success">
+<process name="V3D Pipeline" startEvent="pending" updateProcessStatus="on_success" processor="queue/v3dPipelineLauncher">
     <sequence>
         <operation name="Create Neuron Separation Result Node" processor="org.janelia.it.jacs.compute.service.v3d.CreateV3DResultFileNodeService">
             <output name="RESULT_FILE_NODE_ID"/>

@@ -31,6 +31,7 @@ import org.janelia.it.jacs.model.common.UserDataVO;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.prokPipeline.ProkGenomeVO;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.user_data.geci.GeciImageDirectoryVO;
 import org.janelia.it.jacs.web.gwt.common.client.model.genomics.BlastHit;
 import org.janelia.it.jacs.web.gwt.common.client.model.metadata.Site;
 
@@ -89,4 +90,6 @@ public interface DataService extends RemoteService {
     public List<String> getEntityTypeNames() throws GWTServiceException;
     public Integer getNumEntityTypes(String searchString) throws GWTServiceException;
     public List<EntityType> getPagedEntityTypes(String searchString, int startIndex, int numRows, SortArgument[] sortArgs) throws GWTServiceException;
+    public List<GeciImageDirectoryVO> getPotentialResultNodes(String filePath) throws GWTServiceException;
+
 }

@@ -57,7 +57,7 @@
         </sequence>
 	
 	    <!-- Take the first merged file (there should only be one) -->
-        <operation name="Create Separation Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitSingleMergeParameterService">
+        <operation name="Create Separation Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitSingleMergeParametersService">
 			<input name="BULK_MERGE_PARAMETERS"/>
 			<output name="MERGED_FILENAME"/>
         </operation>

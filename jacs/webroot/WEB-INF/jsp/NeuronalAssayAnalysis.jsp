@@ -1,4 +1,4 @@
-<!--
+<%--
   ~ Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
   ~
   ~ This file is part of JCVI VICS.
@@ -19,15 +19,23 @@
   ~ You should have received a copy of the Artistic License 2.0 along with
   ~ JCVI VICS.  If not, the license can be obtained from
   ~ "http://www.perlfoundation.org/artistic_license_2_0."
-  -->
+  --%>
 
-<module rename-to="GeciImageProcessing">
-    <inherits name="com.google.gwt.user.User"/>
-    <inherits name="org.gwtwidgets.WidgetLibrary"/>
-    <inherits name="org.janelia.it.jacs.Model"/>
-    <inherits name="org.janelia.it.jacs.web.gwt.common.Common"/>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 
-    <entry-point class="org.janelia.it.jacs.web.gwt.geci.client.GeciImageProcessing"/>
-    @browser-compiler-setting@
-    @selenium-test-setting@
-</module>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>GECI Image Processing</title>
+    <meta name='gwt:module' content='org.janelia.it.jacs.web.gwt.geci.NeuronalAssayAnalysis'>
+
+    <jsp:include page="/WEB-INF/jsp/common/GWTIncludes.jsp"/>
+    <jsp:include page="/WEB-INF/jsp/common/Preferences.jsp">
+        <jsp:param name="prefCategoryNames" value="tasks,BasePaginatorRowsPerPage"/>
+    </jsp:include>
+</head>
+    <body>
+        <script language="javascript" src="/jacs/gwt/NeuronalAssayAnalysis/NeuronalAssayAnalysis.nocache.js"></script>
+        <jsp:include page="/WEB-INF/jsp/common/BasePageBody.jsp"/>
+    </body>
+</html>

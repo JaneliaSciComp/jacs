@@ -21,15 +21,15 @@
   ~ "http://www.perlfoundation.org/artistic_license_2_0."
   -->
 
-<process name="GECI Image Processing"  startEvent="pending" updateProcessStatus="on_success" processor="queue/geciImageLauncher">
+<process name="Neuronal Assay Analysis"  startEvent="pending" updateProcessStatus="on_success" processor="queue/neuronalAssayLauncher">
     <sequence name="geciImageLauncher">
-        <operation name="Create a Result Node" processor="org.janelia.it.jacs.compute.service.geci.GeciImageProcessingResultFileNodeService">
+        <operation name="Create a Result Node" processor="org.janelia.it.jacs.compute.service.geci.NeuronalAssayAnalysisResultFileNodeService">
             <output name="RESULT_FILE_NODE_ID"/>          
             <output name="RESULT_FILE_NODE"/>
         </operation>
         <sequence name="Submit GECI Image Processing Job" waitForAsync="true">
             <operation name="Submit Job" processor="queue/gridSubmitAndWait">
-                <input name="iservice" value="org.janelia.it.jacs.compute.service.geci.GeciImageProcessingSubmitJobService"/>
+                <input name="iservice" value="org.janelia.it.jacs.compute.service.geci.NeuronalAssayAnalysisSubmitJobService"/>
                 <input name="RESULT_FILE_NODE_ID"/>
                 <input name="RESULT_FILE_NODE"/>
             </operation>

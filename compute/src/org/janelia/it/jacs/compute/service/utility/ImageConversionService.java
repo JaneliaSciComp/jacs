@@ -1,8 +1,8 @@
 package org.janelia.it.jacs.compute.service.utility;
 
-import java.io.FileWriter;
-
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+
+import java.io.FileWriter;
 
 /**
  * Convert any number of images, in parallel. 
@@ -11,7 +11,7 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
  */
 public class ImageConversionService extends ParallelFileProcessingService {
 
-    protected static final String CONVERT_BASE_CMD = 
+    protected static final String CONVERT_BASE_CMD = SystemConfigurationProperties.getString("Executables.ModuleBase") +
     		SystemConfigurationProperties.getString("ImageMagick.Bin.Path")+"/convert";
     
     @Override

@@ -21,7 +21,7 @@
  * "http://www.perlfoundation.org/artistic_license_2_0."
  */
 
-package org.janelia.it.jacs.compute.launcher.geci;
+package org.janelia.it.jacs.compute.launcher.v3d;
 
 import org.janelia.it.jacs.compute.engine.launcher.ejb.SeriesLauncherMDB;
 import org.jboss.annotation.ejb.PoolClass;
@@ -39,18 +39,18 @@ import javax.ejb.MessageDriven;
  *
  * @author Tareq Nabeel
  */
-@MessageDriven(name = "GeciImageProcessingLauncherMDB", activationConfig = {
+@MessageDriven(name = "V3DPipelineLauncherMDB", activationConfig = {
         @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
         @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/geciImageLauncher"),
-        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "30"),
-//        @ActivationConfigProperty(propertyName = "MaxMessages", propertyValue = "30"),
+        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/v3dPipelineLauncher"),
+        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "20"),
+//    @ActivationConfigProperty(propertyName="MaxMessages", propertyValue="30"),
         @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
         // DLQMaxResent is a JBoss-specific management property. 0 = no resent messages
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 30, timeout = 10000)
-public class GeciImageProcessingLauncherMDB extends SeriesLauncherMDB {
+@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 20, timeout = 10000)
+public class V3DPipelineLauncherMDB extends SeriesLauncherMDB {
 
 }

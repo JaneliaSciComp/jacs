@@ -36,6 +36,7 @@ import org.janelia.it.jacs.model.user_data.FastaFileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.blast.Blastable;
+import org.janelia.it.jacs.model.user_data.geci.GeciImageDirectoryVO;
 import org.janelia.it.jacs.model.user_data.prokAnnotation.ProkAnnotationResultFileNode;
 import org.janelia.it.jacs.server.access.*;
 import org.janelia.it.jacs.server.access.hibernate.DaoException;
@@ -57,6 +58,7 @@ import org.janelia.it.jacs.web.gwt.common.server.file.FileNodeRetriever;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.util.*;
 
 public class DataServiceImpl extends JcviGWTSpringController implements DataService {
@@ -560,4 +562,34 @@ public class DataServiceImpl extends JcviGWTSpringController implements DataServ
         }
     }
 
+    // NOTE: This method assumes the fileshare is the same for web server and compute server.  A little risky.  Find a better way to abstract this.
+    public List<GeciImageDirectoryVO> getPotentialResultNodes(String filePath) throws GWTServiceException {
+        List<GeciImageDirectoryVO> returnList = new ArrayList<GeciImageDirectoryVO>();
+        File rootDir = new File(filePath);
+        if (!rootDir.exists()||!rootDir.canRead()) {
+            throw new GWTServiceException("Cannot access "+filePath+" or the directory does not exist.");
+        }
+        File[] imageResultFolders = rootDir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File file, String s) {
+                return new File(file,s).isDirectory();
+            }
+        });
+        for (File imageResultFolder : imageResultFolders) {
+            GeciImageDirectoryVO tmpVO = new GeciImageDirectoryVO();
+            tmpVO.setLocalDirName(imageResultFolder.getName());
+            tmpVO.setTargetDirectoryPath(imageResultFolder.getAbsolutePath());
+            File[] imagesDir = imageResultFolder.listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File file, String s) {
+                    return s.equalsIgnoreCase("imaging") && new File(file,s).isDirectory();
+                }
+            });
+            if (null!=imagesDir && imagesDir.length>=1) {
+                tmpVO.setProcessed(true);
+            }
+            returnList.add(tmpVO);
+        }
+        return returnList;
+    }
 }

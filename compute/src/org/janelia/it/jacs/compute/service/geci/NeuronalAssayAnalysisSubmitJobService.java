@@ -5,15 +5,15 @@ import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.tasks.profileComparison.ProfileComparisonTask;
-import org.janelia.it.jacs.model.user_data.profileComparison.ProfileComparisonResultNode;
+import org.janelia.it.jacs.model.tasks.geci.NeuronalAssayAnalysisTask;
+import org.janelia.it.jacs.model.user_data.geci.NeuronalAssayAnalysisResultNode;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.util.List;
 
-public class GeciImageProcessingSubmitJobService extends SubmitDrmaaJobService {
-    private static final String CONFIG_PREFIX = "geciImageProcessingConfiguration.";
+public class NeuronalAssayAnalysisSubmitJobService extends SubmitDrmaaJobService {
+    private static final String CONFIG_PREFIX = "neuronalAssayAnalysisConfiguration.";
 
     /**
      * This method is intended to allow subclasses to define service-unique filenames which will be used
@@ -22,7 +22,7 @@ public class GeciImageProcessingSubmitJobService extends SubmitDrmaaJobService {
      * @return - unique (subclass) service prefix name. ie "blast"
      */
     protected String getGridServicePrefixName() {
-        return "geciImageProcessing";
+        return "neuronalAssayAnalysis";
     }
 
     /**
@@ -31,30 +31,27 @@ public class GeciImageProcessingSubmitJobService extends SubmitDrmaaJobService {
      */
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
         //ProfileComparisonTask profileComparisonTask = (ProfileComparisonTask) task;
-        ProfileComparisonResultNode tmpResultNode = (ProfileComparisonResultNode) resultFileNode;
+        NeuronalAssayAnalysisResultNode tmpResultNode = (NeuronalAssayAnalysisResultNode) resultFileNode;
 
         // Creating the default config file for the Drmaa Template
         File configFile = new File(getSGEConfigurationDirectory() + File.separator + CONFIG_PREFIX + "1");
         boolean fileSuccess = configFile.createNewFile();
         if (!fileSuccess) {
-            logger.error("Unable to create configFile for ProfileComparison process.");
+            logger.error("Unable to create configFile for NeuronalAssayAnalysis process.");
         }
 
-        String perlPath = SystemConfigurationProperties.getString("Perl.Path");
         String basePath = SystemConfigurationProperties.getString("Executables.ModuleBase");
-        String pipelineCmd = perlPath + " " + basePath + SystemConfigurationProperties.getString("ProfileComparison.PerlBase") +
-                SystemConfigurationProperties.getString("ProfileComparison.Cmd");
+        String pipelineCmd = basePath + SystemConfigurationProperties.getString("NeuronalAssayAnalysis.Cmd");
         String tmpDirectoryName = SystemConfigurationProperties.getString("Upload.ScratchDir");
-        List<String> inputFiles = Task.listOfStringsFromCsvString(task.getParameter(ProfileComparisonTask.PARAM_inputFile));
+        List<String> inputFiles = Task.listOfStringsFromCsvString(task.getParameter(NeuronalAssayAnalysisTask.PARAM_inputFile));
 
         // Takes a list of files, smart enough to figure out the file type based on extension
         String fullCmd = pipelineCmd + " -o " + tmpResultNode.getDirectoryPath();
         for (String inputFile : inputFiles) {
             fullCmd += " -f " + tmpDirectoryName + File.separator + inputFile;
         }
-        fullCmd = "export PATH=$PATH:" + basePath + ";export PERL5LIB=$PERL5LIB:" + basePath +
-                SystemConfigurationProperties.getString("ProfileComparison.PerlBase") + ";" + fullCmd;
-        StringBuffer script = new StringBuffer();
+        fullCmd = "export PATH=$PATH:" + basePath + ";" + fullCmd;
+        StringBuilder script = new StringBuilder();
         script.append(fullCmd).append("\n");
         writer.write(script.toString());
         setJobIncrementStop(1);
