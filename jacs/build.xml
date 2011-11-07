@@ -160,8 +160,8 @@
                 <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/status/Status.gwt.xml" />-->
             <!--</antcall>-->
             <!--<antcall target="gwt-compile-module">-->
-                <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.geci.GeciImageProcessing" />-->
-                <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/geci/GeciImageProcessing.gwt.xml" />-->
+                <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.geci.NeuronalAssayAnalysis" />-->
+                <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/geci/NeuronalAssayAnalysis.gwt.xml" />-->
             <!--</antcall>-->
             <!--<antcall target="gwt-compile-module">-->
                 <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.zlatic.ZlaticLab" />-->
@@ -591,11 +591,11 @@
             <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/matrix/ProfileComparison.gwt.xml" />
         </antcall>
     </target>
-    <target name="deploy-geciImageProcessing" depends="setup">
+    <target name="deploy-neuronalAssayAnalysis" depends="setup">
         <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.geci.GeciImageProcessing"/>
-            <param name="url.target" value="GeciImageProcessing"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/geci/GeciImageProcessing.gwt.xml" />
+            <param name="module.path" value="org.janelia.it.jacs.web.gwt.geci.NeuronalAssayAnalysis"/>
+            <param name="url.target" value="NeuronalAssayAnalysis"/>
+            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/geci/NeuronalAssayAnalysis.gwt.xml" />
         </antcall>
     </target>
     <target name="deploy-zlaticLab" depends="setup">
