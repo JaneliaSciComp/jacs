@@ -52,7 +52,8 @@ public class EntityTreeTraversalService implements IService {
                 }
             }
 
-        	Long rootEntityId = (Long)processData.getItem("ROOT_ENTITY_ID");
+            Object rootEntityIdObj = processData.getItem("ROOT_ENTITY_ID");
+        	Long rootEntityId = (rootEntityIdObj instanceof Long) ? (Long)rootEntityIdObj : Long.parseLong(rootEntityIdObj.toString());
         	if (rootEntityId == null) {
         		throw new IllegalArgumentException("ROOT_ENTITY_ID may not be null");
         	}

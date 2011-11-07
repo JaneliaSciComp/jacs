@@ -20,12 +20,14 @@ public class MCFODataPipelineTask extends FileDiscoveryTask {
     transient public static final String TASK_NAME = "mcfoDataPipeline";
     transient public static final String DISPLAY_NAME = "MCFO Data Pipeline";
     transient public static final String PARAM_refresh = "refresh";
+    transient public static final String PARAM_sampleViewName = "sample view name";
     
     public MCFODataPipelineTask(Set<Node> inputNodes, String owner, List<Event> events,
-    		Set<TaskParameter> taskParameterSet, String inputDirList, String topLevelFolderName, boolean refresh) {
+    		Set<TaskParameter> taskParameterSet, String inputDirList, String topLevelFolderName, String sampleViewName, boolean refresh) {
         super(inputNodes, owner, events, taskParameterSet, inputDirList, topLevelFolderName);
         setDefaultValues();
         setParameter(PARAM_refresh, Boolean.toString(refresh));
+        setParameter(PARAM_sampleViewName, sampleViewName);
     }
 
     public MCFODataPipelineTask() {
@@ -36,11 +38,12 @@ public class MCFODataPipelineTask extends FileDiscoveryTask {
 
     private void setDefaultValues() {
         setParameter(PARAM_refresh, "true");
+        setParameter(PARAM_sampleViewName, "");
     }
 
     public ParameterVO getParameterVO(String key) throws ParameterException {
         String value = getParameter(key);
-        if (key.equals(PARAM_refresh)) {
+        if (key.equals(PARAM_refresh) || key.equals(PARAM_sampleViewName)) {
             return new BooleanParameterVO(Boolean.parseBoolean(value));
         }
         return super.getParameterVO(key);

@@ -6,13 +6,13 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 
 /**
- * An entity filter which accepts non-completed entities, unless the REFRESH parameter is set in the ProcessData.
+ * An entity filter which accepts non-completed Samples, unless the REFRESH parameter is set in the ProcessData.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class CompletedSampleEntityFilter implements EntityFilter {
+public class IncompleteSampleEntityFilter implements EntityFilter {
 
-	private static final Logger logger = Logger.getLogger(CompletedSampleEntityFilter.class);
+	private static final Logger logger = Logger.getLogger(IncompleteSampleEntityFilter.class);
 	
 	public boolean includeEntity(IProcessData processData, Entity entity) {
 		

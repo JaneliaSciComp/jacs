@@ -10,6 +10,8 @@
             <input name="PROCESS_VARIABLE_1" value="INPUT_DIR_LIST"/>
             <input name="TASK_PARAMETER_2" value="top level folder name"/>
             <input name="PROCESS_VARIABLE_2" value="ROOT_ENTITY_NAME"/>
+            <input name="TASK_PARAMETER_3" value="sample view name"/>
+            <input name="PROCESS_VARIABLE_3" value="SAMPLE_VIEW_NAME"/>
             <input name="REFRESH" value="false"/>
 	        <output name="INPUT_DIR_LIST"/>
 	        <output name="ROOT_ENTITY_NAME"/>
@@ -24,28 +26,46 @@
 		
 	    <!-- Find all the Sample Entities in the database -->
 		<operation name="Entity Tree Traversal" processor="org.janelia.it.jacs.compute.service.entity.EntityTreeTraversalService">
-			<input name="ENTITY_FILTER_CLASS" value="org.janelia.it.jacs.compute.service.entity.CompletedSampleEntityFilter"/>
 			<input name="ENTITY_TYPE_NAME" value="Sample"/>
+			<input name="ENTITY_FILTER_CLASS" value="org.janelia.it.jacs.compute.service.entity.IncompleteSampleEntityFilter"/>
 			<input name="TOP_LEVEL_ENTITY_ID"/>
 			<input name="ROOT_ENTITY_ID" value="$V{TOP_LEVEL_ENTITY_ID}"/>
 			<input name="OUTVAR_ENTITY_ID" value="SAMPLE_ENTITY_ID"/>
 		</operation>
 		
 	    <!-- Process each Sample Entity -->
-        <sequence forEach="SAMPLE_ENTITY_ID">
-            <sequence>
-			
-				<!-- Spawn a new task to process the Sample -->
-		        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
-        			<input name="TASK_CLASS" value="org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOSamplePipelineTask"/>
-		            <input name="PROCESS_DEF_NAME" value="MCFOSamplePipeline"/>
-		            <input name="PARAMETER_1_KEY" value="sample entity id"/>
-		            <input name="SAMPLE_ENTITY_ID"/>
-		            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
-		        </operation>
+        <sequence waitForAsync="true">
+	        <sequence forEach="SAMPLE_ENTITY_ID">
+	            <sequence>
 				
-			</sequence>
+					<!-- Spawn a new task to process the Sample -->
+			        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
+	        			<input name="TASK_CLASS" value="org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOSamplePipelineTask"/>
+			            <input name="PROCESS_DEF_NAME" value="MCFOSamplePipeline"/>
+			            <input name="PARAMETER_1_KEY" value="sample entity id"/>
+			            <input name="SAMPLE_ENTITY_ID"/>
+			            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
+			        </operation>
+					
+				</sequence>
+		    </sequence>
 	    </sequence>
 	    
+	    <!-- Find all the completed Sample Entities in the database -->
+		<operation name="Find Completed Samples" processor="org.janelia.it.jacs.compute.service.entity.EntityTreeTraversalService">
+			<input name="ENTITY_FILTER_CLASS" value="org.janelia.it.jacs.compute.service.entity.CompleteSampleEntityFilter"/>
+			<input name="ENTITY_TYPE_NAME" value="Sample"/>
+			<input name="TOP_LEVEL_ENTITY_ID"/>
+			<input name="ROOT_ENTITY_ID" value="$V{TOP_LEVEL_ENTITY_ID}"/>
+			<input name="OUTVAR_ENTITY_ID" value="COMPLETE_SAMPLE_ID_LIST"/>
+		</operation>
+		
+	    <!-- Create or update the Sample-centric view -->
+		<operation name="Update the Sample View" processor="org.janelia.it.jacs.compute.service.entity.EntityViewCreationService">
+			<input name="VIEW_ENTITY_NAME"/>
+			<input name="COMPLETE_SAMPLE_ID_LIST"/>
+			<input name="ENTITY_ID_LIST" value="$V{COMPLETE_SAMPLE_ID_LIST}"/>
+		</operation>
+		
     </sequence>
 </process>

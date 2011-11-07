@@ -1147,6 +1147,15 @@ public class AnnotationDAO extends ComputeBaseDAO {
             throw new DaoException(e);
         }
     }
+    
+	public List<Entity> getEntitiesInList(List<Long> entityIds) throws DaoException {
+		StringBuffer entityIdStr = new StringBuffer();
+		for(Long entityId : entityIds) {
+			if (entityIdStr.length()>0) entityIdStr.append(",");
+			entityIdStr.append(entityId);
+		}
+		return getEntitiesInList(entityIdStr.toString());
+	}
 
 	public List<Entity> getEntitiesInList(String entityIds) throws DaoException {
         try {

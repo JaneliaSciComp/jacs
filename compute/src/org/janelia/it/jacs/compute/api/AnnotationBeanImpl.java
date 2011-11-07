@@ -76,7 +76,17 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             throw new ComputeException("Coud not get entities in session",e);
         }
     }
-	
+
+    public List<Entity> getEntitiesById(List<Long> ids) throws ComputeException {
+        try {
+            return _annotationDAO.getEntitiesInList(ids);
+        }
+        catch (Exception e) {
+            _logger.error("Unexpected error occurred while trying to get multiple entities", e);
+            throw new ComputeException("Coud not get entities in session",e);
+        }
+    }
+    
     public List<Entity> getCategoriesForAnnotationSession(String username, long sessionId) throws ComputeException {
         try {
             return _annotationDAO.getCategoriesForAnnotationSession(username, sessionId);

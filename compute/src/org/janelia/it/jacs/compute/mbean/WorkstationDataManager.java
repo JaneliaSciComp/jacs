@@ -9,6 +9,7 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
+import org.janelia.it.jacs.model.tasks.fileDiscovery.EntityViewCreationTask;
 import org.janelia.it.jacs.model.tasks.fileDiscovery.MCFODataPipelineTask;
 import org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOSamplePipelineTask;
 import org.janelia.it.jacs.model.user_data.Node;
@@ -24,45 +25,15 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
 	
     public WorkstationDataManager() {
     }
-    
-//    public void runMultiColorFlipOutFileDiscoveryService(String user, boolean refresh) {
-//        try {
-//        	String topLevelFolderName = "FlyLight Single Neuron Pilot Data";
-//        	String inputDirList = "/groups/flylight/flylight/SingleNeuronPilotData";
-//    		String linkingDirName = "/groups/scicomp/jacsData/flylight/"+user+"/SingleNeuronPilotData";
-//    		Task task = new MCFOUnifiedFileDiscoveryTask(new HashSet<Node>(), 
-//            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), inputDirList, topLevelFolderName, 
-//            		linkingDirName, refresh);
-//            task.setJobName("MultiColor FlipOut File Discovery Task");
-//            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-//            EJBFactory.getLocalComputeBean().submitJob("MCFOUnifiedFileDiscovery", task.getObjectId());
-//        } catch (Exception ex) {
-//            ex.printStackTrace();
-//        }
-//    }
-//
-//    public void runMCFOStitchedFileDiscoveryService(String user, boolean refresh) {
-//        try {
-//        	String topLevelFolderName = "FlyLight Single Neuron Stitched Data";
-//        	String inputDirList = "/groups/flylight/flylight/flip/SecData/stitch";
-//    		String linkingDirName = "/groups/scicomp/jacsData/flylight/"+user+"/SingleNeuronStitchedData";
-//    		Task task = new MCFOUnifiedFileDiscoveryTask(new HashSet<Node>(), 
-//            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), inputDirList, topLevelFolderName, 
-//            		linkingDirName, refresh);
-//            task.setJobName("MultiColor FlipOut Unified File Discovery Task");
-//            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-//            EJBFactory.getLocalComputeBean().submitJob("MCFOUnifiedFileDiscovery", task.getObjectId());
-//        } catch (Exception ex) {
-//            ex.printStackTrace();
-//        }
-//    }
 
     public void runMCFODataPipelineService(String user, boolean refresh) {
         try {
         	String topLevelFolderName = "FlyLight Single Neuron Data";
+        	String sampleViewName = "FlyLight Single Neuron Samples";
         	String inputDirList = "/groups/flylight/flylight/flip/SecData/stitch";
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
-            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), inputDirList, topLevelFolderName, refresh);
+            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), 
+            		inputDirList, topLevelFolderName, sampleViewName, refresh);
             task.setJobName("MultiColor FlipOut Unified File Discovery Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("MCFODataPipeline", task.getObjectId());
@@ -79,6 +50,19 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             task.setJobName("MultiColor FlipOut Unified Sample Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("MCFOSamplePipeline", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
+    public void runMCFOSampleViewCreation(String sourceEntityId, String targetEntityName) {
+        try {
+        	Entity sourceEntity = EJBFactory.getLocalAnnotationBean().getEntityById(sourceEntityId);
+        	Task task = new EntityViewCreationTask(new HashSet<Node>(), 
+        			sourceEntity.getUser().getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>(), sourceEntityId, targetEntityName);
+            task.setJobName("Sample View Creation Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("MCFOSampleViewCreation", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }
