@@ -320,6 +320,15 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     	}
     	return children;
     }
+
+	public boolean hasChildren() {
+    	for(EntityData ed : entityData) {
+        	if (ed.getChildEntity() != null) {
+        		return true;
+        	}
+    	}
+    	return false;
+	}
     
     public Set<Entity> getChildren() {
     	Set<Entity> children = new HashSet<Entity>();
