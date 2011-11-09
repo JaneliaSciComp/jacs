@@ -49,6 +49,7 @@ if (! -e $inputStack) {
 &centralLocalAlignment2($inputStack);
 &addTemplateBoundary($inputStack);
 &generateOutputFiles($inputStack);
+#&addMips($inputStack);  COMMENTED OUT IN FAVOR OF SEPARATE SERVICE
 &cleanup($inputStack);
 
 exit;
@@ -257,6 +258,25 @@ sub generateOutputFiles {
     system( "$cmd 1>>$logFile 2>&1" );
 
     $cmd = "$v3d -cmd image-loader -mapchannels $templateDir\/GMR_36G04_AE_01_05-hanchuan_rot180_recentered_3chan_mask_edgesinglecolor_center_16bit.raw $workingDir\/AlignedCompartments\.v3dpbd \"0,0\"";
+    print "cmd=$cmd\n";
+    system( "$cmd 1>>$logFile 2>&1" );
+}
+
+sub addMips {
+    print "Start addMips\n";
+    my $inputFile=$_[0];
+    print "inputFile=$inputFile\n";
+    my $baseName=&getBaseNameFromFile($inputFile);
+    print "baseName=$baseName\n";
+    my $outputFileBase="$workingDir\/$baseName";
+    print "outputFileBase=$outputFileBase\n";
+    my $logFile="$workingDir\/addMips.log";
+
+    my $cmd = "$v3d -cmd image-loader -mip $workingDir\/AlignedSignal\.v3dpbd $workingDir\/AlignedSignalMIP\.tif";
+    print "cmd=$cmd\n";
+    system( "$cmd 1>$logFile 2>&1" );
+
+    $cmd = "$v3d -cmd image-loader -mip $workingDir\/AlignedReference\.v3dpbd $workingDir\/AlignedReferenceMIP\.tif";
     print "cmd=$cmd\n";
     system( "$cmd 1>>$logFile 2>&1" );
 }
