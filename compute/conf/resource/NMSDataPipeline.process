@@ -24,7 +24,7 @@
 		
 	    <!-- Find all the Sample Entities in the database -->
 		<operation name="Entity Tree Traversal" processor="org.janelia.it.jacs.compute.service.entity.EntityTreeTraversalService">
-			<input name="ENTITY_FILTER_CLASS" value="org.janelia.it.jacs.compute.service.entity.CompletedSampleEntityFilter"/>
+			<input name="ENTITY_FILTER_CLASS" value="org.janelia.it.jacs.compute.service.entity.IncompleteSampleEntityFilter"/>
 			<input name="ENTITY_TYPE_NAME" value="Sample"/>
 			<input name="TOP_LEVEL_ENTITY_ID"/>
 			<input name="ROOT_ENTITY_ID" value="$V{TOP_LEVEL_ENTITY_ID}"/>
