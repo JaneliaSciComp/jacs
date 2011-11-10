@@ -56,7 +56,9 @@ public class GridSubmitHelperMap {
     }
 
     public Map<String, Object> getFromDataMap(String key) {
-        return Collections.synchronizedMap(dataMap.get(key));
+    	Map<String, Object> map = dataMap.get(key);
+    	if (map == null) return null;
+        return Collections.synchronizedMap(map);
     }
 
     public synchronized Set<String> getDataMapKeys() {
