@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/local/bin/perl
 
 use Getopt::Std;
 use strict;
@@ -49,7 +49,7 @@ if (! -e $inputStack) {
 &centralLocalAlignment2($inputStack);
 &addTemplateBoundary($inputStack);
 &generateOutputFiles($inputStack);
-#&addMips($inputStack);  COMMENTED OUT IN FAVOR OF SEPARATE SERVICE
+#&addMips($inputStack);
 &cleanup($inputStack);
 
 exit;
@@ -298,3 +298,4 @@ sub cleanup {
 
 
 __END__
+
