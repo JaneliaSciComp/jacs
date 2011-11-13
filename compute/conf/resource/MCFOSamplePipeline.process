@@ -20,6 +20,7 @@
 	        <output name="METADATA_RESULT_FILE_NODE"/>
 	        <output name="MERGE_RESULT_FILE_NODE"/>
 	        <output name="STITCH_RESULT_FILE_NODE"/>
+	        <output name="ALIGN_RESULT_FILE_NODE"/>
 	        <output name="SEPARATE_RESULT_FILE_NODE"/>
 	        <output name="COMPRESS_RESULT_FILE_NODE"/>
 	        <output name="MIPS_RESULT_FILE_NODE"/>
@@ -66,6 +67,19 @@
 	    		<input name="OUTPUT_FILE_NODE" value="$V{SAMPLE_RESULT_FILE_NODE}"/>
 				<input name="BULK_MERGE_PARAMETERS"/>
 				<input name="STITCHED_FILENAME"/>
+	        </operation>
+        </sequence>
+
+   	    <!-- Align the stitched results -->
+        <sequence name="Align" waitForAsync="true">
+	        <operation name="Align" processor="queue/gridSubmitAndWait">
+	            <input name="iservice" value="org.janelia.it.jacs.compute.service.align.BrainAlignmentService"/>
+				<input name="ALIGN_RESULT_FILE_NODE"/>
+	    		<input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
+				<input name="SAMPLE_RESULT_FILE_NODE"/>
+	    		<input name="OUTPUT_FILE_NODE" value="$V{SAMPLE_RESULT_FILE_NODE}"/>
+	    		<input name="STITCHED_FILENAME"/>
+				<input name="INPUT_FILENAME" value="$V{STITCHED_FILENAME}"/>
 	        </operation>
         </sequence>
 			

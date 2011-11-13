@@ -62,7 +62,7 @@
 		
 	    <!-- Create or update the Sample-centric view -->
 		<operation name="Update the Sample View" processor="org.janelia.it.jacs.compute.service.entity.EntityViewCreationService">
-			<input name="VIEW_ENTITY_NAME"/>
+			<input name="VIEW_ENTITY_NAME" value="$V{SAMPLE_VIEW_NAME}"/>
 			<input name="COMPLETE_SAMPLE_ID_LIST"/>
 			<input name="ENTITY_ID_LIST" value="$V{COMPLETE_SAMPLE_ID_LIST}"/>
 		</operation>
