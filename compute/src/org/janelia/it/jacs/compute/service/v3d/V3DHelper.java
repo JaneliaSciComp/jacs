@@ -91,4 +91,13 @@ public class V3DHelper {
     public static int getRandomPort(int startDisplayPort) {
        return ((int)(100.0 * Math.random()) + startDisplayPort);
     }
+
+    public static String getV3dLibrarySetupCmd() {
+        return "export LD_LIBRARY_PATH=" + SystemConfigurationProperties.getString("V3D.LDLibraryPath") + ":$LD_LIBRARY_PATH";
+    }
+
+    public static String getV3dExecutableCmd() {
+        return SystemConfigurationProperties.getString("Executables.ModuleBase") + SystemConfigurationProperties.getString("V3D.CMD");
+    }
+
 }
