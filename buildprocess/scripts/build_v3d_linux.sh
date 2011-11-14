@@ -25,3 +25,6 @@ cp main_backgnd_lobeseg.makefile Makefile
 make
 cp $BASE/released_plugins/v3d_plugins/lobeseg/lobeseg_main/lobe_seger $BASE/v3d/
 
+# copy libs
+cp -R ./v3d_main/common_lib/lib $BASE/v3d
+
