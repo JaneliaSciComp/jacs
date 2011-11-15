@@ -249,7 +249,13 @@ sub generateOutputFiles {
 	die "Could not find result file $resultFile\n";
     }
 
-    my $cmd = "$v3d -cmd image-loader -mapchannels $resultFile $workingDir\/AlignedSignal\.v3dpbd \"0,0,1,1,2,2\"";
+    my $cmd = '';
+
+    $cmd = "$v3d -cmd image-loader -mapchannels $resultFile $workingDir\/Aligned\.v3dpbd \"3,0,0,1,1,2,2,3\"";
+    print "cmd=$cmd\n";
+    system( "$cmd 1>>$logFile 2>&1" );
+
+    $cmd = "$v3d -cmd image-loader -mapchannels $resultFile $workingDir\/AlignedSignal\.v3dpbd \"0,0,1,1,2,2\"";
     print "cmd=$cmd\n";
     system( "$cmd 1>$logFile 2>&1" );
 
