@@ -251,7 +251,7 @@ sub generateOutputFiles {
 
     my $cmd = '';
 
-    $cmd = "$v3d -cmd image-loader -mapchannels $resultFile $workingDir\/Aligned\.v3dpbd \"3,0,0,1,1,2,2,3\"";
+    $cmd = "$v3d -cmd image-loader -mapchannels $resultFile $workingDir\/Aligned\.v3draw \"3,0,0,1,1,2,2,3\"";
     print "cmd=$cmd\n";
     system( "$cmd 1>>$logFile 2>&1" );
 
