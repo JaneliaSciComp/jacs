@@ -13,6 +13,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -49,6 +50,7 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     	if (outputNode == null) {
     		throw new IllegalArgumentException("OUTPUT_FILE_NODE may not be null");
     	}
+    	outputDir = new File(outputNode.getDirectoryPath());
     	
     	String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
     	if (sampleEntityId == null) {
@@ -59,7 +61,7 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     	if (sampleEntity == null) {
     		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
     	}
-
+    	
     	for(Entity lsmPairEntity : sampleEntity.getDescendantsOfType(EntityConstants.TYPE_LSM_STACK_PAIR)) {
         	for(EntityData ed : lsmPairEntity.getOrderedEntityData()) {
         		Entity lsmStack = ed.getChildEntity();
@@ -70,7 +72,13 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
         	}
     	}
     	
-    	outputDir = new File(outputNode.getDirectoryPath());
+    	File sampleIdFile = new File(outputNode.getDirectoryPath(), "sampleEntityId.txt");
+    	try {
+    		FileUtils.writeStringToFile(sampleIdFile, sampleEntityId);
+    	}
+    	catch (Exception e) {
+    		logger.error("Error writing "+sampleIdFile.getAbsolutePath(),e);
+    	}
     }
 
     @Override
@@ -120,7 +128,7 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     
     private String getScriptToCreateLsmMetadataFile() throws ServiceException {
         String cmdLine = "cd " + outputDir.getAbsolutePath() + ";perl " +
-                SystemConfigurationProperties.getString("Executables.ModuleBase") + "singleNeuronTools/lsm_metadata_dump.pl " +
+                SystemConfigurationProperties.getString("Executables.ModuleBase") + SystemConfigurationProperties.getString("LSMMetadataDump.CMD")+ " " +
                 addQuotes("$INPUT_FILENAME") + " " + addQuotes("$METADATA_FILENAME");
 
         return cmdLine;
