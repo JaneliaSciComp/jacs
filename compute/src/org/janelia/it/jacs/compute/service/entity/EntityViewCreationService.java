@@ -15,7 +15,6 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.User;
-import org.mortbay.log.Log;
 
 /**
  * Creates or updates a view of the given entities.
@@ -50,19 +49,31 @@ public class EntityViewCreationService implements IService {
         	if (entityIdList == null) {
         		throw new IllegalArgumentException("ENTITY_ID_LIST may not be null");
         	}
+        	
+        	List<Entity> entities = annotationBean.getEntitiesById(entityIdList);
+        	if (entities.isEmpty()) {
+        		logger.warn("No entities to add to view '"+viewEntityName+"'");
+        		return;
+        	}
+        	else {
+        		logger.warn("Adding "+entities.size()+" entities to view '"+viewEntityName+"'");
+        	}
 
+        	// Create the root entity for the view if it doesn't already exist
+        	
         	Entity rootEntity = createOrVerifyRootEntity(viewEntityName);
         	if (rootEntity == null) {
         		throw new IllegalArgumentException("Root entity not found with id="+viewEntityName);
         	}
         	
-        	List<Entity> entities = annotationBean.getEntitiesById(entityIdList);
-        	if (entities.isEmpty()) {
-        		logger.warn("No entities to add to view '"+viewEntityName+"'");
+        	// Build a hash of existing entities
+        	
+        	Set<Long> existingChildrenIds = new HashSet<Long>();
+        	for(Entity child : rootEntity.getChildren()) {
+        		existingChildrenIds.add(child.getId());
         	}
-        	else {
-        		logger.warn("Adding "+entities.size()+" entities to view '"+viewEntityName+"'");
-        	}
+
+        	// Add the new entities
         	
         	Collections.sort(entities, new Comparator<Entity>() {
 				@Override
@@ -71,11 +82,6 @@ public class EntityViewCreationService implements IService {
 				}
 			});
         	
-        	Set<Long> existingChildrenIds = new HashSet<Long>();
-        	for(Entity child : rootEntity.getChildren()) {
-        		existingChildrenIds.add(child.getId());
-        	}
-        		
         	for(Entity entity : entities) {
         		if (!existingChildrenIds.contains(entity.getId())) {
         			addToParent(rootEntity, entity, rootEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);

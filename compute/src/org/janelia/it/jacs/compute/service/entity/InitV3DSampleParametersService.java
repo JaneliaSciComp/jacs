@@ -81,6 +81,7 @@ public class InitV3DSampleParametersService implements IService {
 
         	File mergedFile = new File(sampleResultNode.getDirectoryPath(), "stitched-"+sampleEntity.getId()+".v3draw");
         	processData.putItem("BULK_MERGE_PARAMETERS", mergedLsmPairs);
+        	processData.putItem("NUM_LSM_PAIRS", new Long(mergedLsmPairs.size()));
         	processData.putItem("STITCHED_FILENAME", mergedFile.getAbsolutePath());
         	
         } catch (Exception e) {

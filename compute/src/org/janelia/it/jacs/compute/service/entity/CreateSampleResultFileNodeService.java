@@ -53,6 +53,10 @@ public class CreateSampleResultFileNodeService implements IService {
             processData.putItem("MIPS_RESULT_FILE_NODE", createChildFileNode("mips"));
             processData.putItem("CONVERT_RESULT_FILE_NODE", createChildFileNode("convert"));
             processData.putItem("ALIGN_RESULT_FILE_NODE", createChildFileNode("align"));
+            processData.putItem("ALIGNSEP_RESULT_FILE_NODE", createChildFileNode("alignsep"));
+            processData.putItem("ALIGNCOMP_RESULT_FILE_NODE", createChildFileNode("aligncomp"));
+            processData.putItem("ALIGNMIPS_RESULT_FILE_NODE", createChildFileNode("alignmips"));
+            processData.putItem("ALIGNCONV_RESULT_FILE_NODE", createChildFileNode("alignconv"));
             
             logger.info("Created sample result node: "+resultFileNode.getDirectoryPath());
         }

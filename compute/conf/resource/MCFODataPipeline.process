@@ -34,38 +34,20 @@
 		</operation>
 		
 	    <!-- Process each Sample Entity -->
-        <sequence waitForAsync="true">
-	        <sequence forEach="SAMPLE_ENTITY_ID">
-	            <sequence>
+        <sequence forEach="SAMPLE_ENTITY_ID">
+            <sequence>
+			
+				<!-- Spawn a new task to process the Sample -->
+		        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
+        			<input name="TASK_CLASS" value="org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOSamplePipelineTask"/>
+		            <input name="PROCESS_DEF_NAME" value="MCFOSamplePipeline"/>
+		            <input name="PARAMETER_1_KEY" value="sample entity id"/>
+		            <input name="SAMPLE_ENTITY_ID"/>
+		            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
+		        </operation>
 				
-					<!-- Spawn a new task to process the Sample -->
-			        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
-	        			<input name="TASK_CLASS" value="org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOSamplePipelineTask"/>
-			            <input name="PROCESS_DEF_NAME" value="MCFOSamplePipeline"/>
-			            <input name="PARAMETER_1_KEY" value="sample entity id"/>
-			            <input name="SAMPLE_ENTITY_ID"/>
-			            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
-			        </operation>
-					
-				</sequence>
-		    </sequence>
+			</sequence>
 	    </sequence>
 	    
-	    <!-- Find all the completed Sample Entities in the database -->
-		<operation name="Find Completed Samples" processor="org.janelia.it.jacs.compute.service.entity.EntityTreeTraversalService">
-			<input name="ENTITY_FILTER_CLASS" value="org.janelia.it.jacs.compute.service.entity.CompleteSampleEntityFilter"/>
-			<input name="ENTITY_TYPE_NAME" value="Sample"/>
-			<input name="TOP_LEVEL_ENTITY_ID"/>
-			<input name="ROOT_ENTITY_ID" value="$V{TOP_LEVEL_ENTITY_ID}"/>
-			<input name="OUTVAR_ENTITY_ID" value="COMPLETE_SAMPLE_ID_LIST"/>
-		</operation>
-		
-	    <!-- Create or update the Sample-centric view -->
-		<operation name="Update the Sample View" processor="org.janelia.it.jacs.compute.service.entity.EntityViewCreationService">
-			<input name="VIEW_ENTITY_NAME" value="$V{SAMPLE_VIEW_NAME}"/>
-			<input name="COMPLETE_SAMPLE_ID_LIST"/>
-			<input name="ENTITY_ID_LIST" value="$V{COMPLETE_SAMPLE_ID_LIST}"/>
-		</operation>
-		
     </sequence>
 </process>

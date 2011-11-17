@@ -1,8 +1,11 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
+import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityType;
@@ -15,31 +18,44 @@ import org.janelia.it.jacs.model.entity.EntityType;
 public class NeuronSeparatorResultsDiscoveryService extends FileDiscoveryService {
 
 	private Entity sampleEntity;
-	
+	private String resultEntityName;
+
+	@Override
+    public void execute(IProcessData processData) throws ServiceException {
+    	this.resultEntityName = (String)processData.getItem("RESULT_ENTITY_NAME");
+        if (resultEntityName==null) {
+        	throw new ServiceException("Input parameter RESULT_ENTITY_NAME may not be null");
+        }
+    	super.execute(processData);
+    	logger.info("resultEntityName="+resultEntityName);
+    }
+    
     @Override
     protected Entity verifyOrCreateChildFolderFromDir(Entity parentFolder, File dir) throws Exception {
 
+        logger.info("Discovering neuron separation results in "+dir.getAbsolutePath()+" and placing under "+parentFolder.getName());
+        
     	if (!parentFolder.getEntityType().getName().equals(EntityConstants.TYPE_SAMPLE)) {
-    		throw new IllegalStateException("Expected sample as top-level folder");
+    		throw new IllegalStateException("Expected Sample as top-level folder");
     	}
     	
     	sampleEntity = parentFolder;
     	
-        Entity resultEntity = createResultEntity(dir.getAbsolutePath());
+        Entity resultEntity = createResultEntity(dir.getAbsolutePath(), resultEntityName);
         addToParent(parentFolder, resultEntity, parentFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_RESULT);
-        
+    	
     	return resultEntity;
     }
     
     @Override
     protected void processFolderForData(Entity folder) throws Exception {
-
+    	
     	if (!folder.getEntityType().getName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
     		throw new IllegalStateException("Expected neuron separator result");
     	}
     	
         File dir = new File(folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-        logger.info("Processing neuron separation results in "+dir.getAbsolutePath());
+        logger.info("Processing "+folder.getName()+" results in "+dir.getAbsolutePath());
         
         if (!dir.canRead()) {
         	logger.info("Cannot read from folder "+dir.getAbsolutePath());
@@ -50,7 +66,7 @@ public class NeuronSeparatorResultsDiscoveryService extends FileDiscoveryService
     }
     
     protected void processSeparationFolder(Entity resultEntity) throws Exception {
-
+    	
         File resultDir = new File(resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
     	
         Entity filesFolder = createSupportingFilesFolder();
@@ -65,6 +81,8 @@ public class NeuronSeparatorResultsDiscoveryService extends FileDiscoveryService
         
         // Sort files so that the entities are added in the correct order
         List<File> files = getOrderedFilesInDir(resultDir);
+        
+        ArrayList<File> fragmentFiles = new ArrayList<File>();
         
         for (File resultFile : files) {
         	String filename = resultFile.getName();
@@ -81,9 +99,8 @@ public class NeuronSeparatorResultsDiscoveryService extends FileDiscoveryService
                 addResultItem(filesFolder, tif3D, resultFile);
             }
             else if (filename.startsWith("neuronSeparatorPipeline.PR.neuron") && filename.endsWith(".png")) {
-                addResultItem(filesFolder, image2D, resultFile);
-            	String mipNum = filename.substring("neuronSeparatorPipeline.PR.neuron".length(), filename.lastIndexOf('.'));
 
+            	String mipNum = filename.substring("neuronSeparatorPipeline.PR.neuron".length(), filename.lastIndexOf('.'));
             	Integer index = null;
             	try {
             		index = Integer.parseInt(mipNum);
@@ -91,9 +108,9 @@ public class NeuronSeparatorResultsDiscoveryService extends FileDiscoveryService
             	catch (NumberFormatException e) {
             		logger.warn("Error parsing number from MIP filename: "+mipNum);
             	}
-
-            	Entity fragmentEntity = createFragmentEntity(image2D, resultFile, index);
-            	addToParent(fragmentsFolder, fragmentEntity, index, EntityConstants.ATTRIBUTE_ENTITY);
+            	
+            	fragmentFiles.ensureCapacity(index+1);
+            	fragmentFiles.set(index, resultFile);
             }
             else if (filename.endsWith("MIP.png")) {
                 addResultItem(filesFolder, image2D, resultFile);
@@ -115,7 +132,17 @@ public class NeuronSeparatorResultsDiscoveryService extends FileDiscoveryService
             }
         }
 
-        // TODO: migrate the annotations from the previous result
+        int index = 0;
+        for(File resultFile : fragmentFiles) {
+        	if (resultFile != null) {
+                addResultItem(filesFolder, image2D, resultFile);
+            	Entity fragmentEntity = createFragmentEntity(image2D, resultFile, index);
+            	addToParent(fragmentsFolder, fragmentEntity, index, EntityConstants.ATTRIBUTE_ENTITY);	
+        	}
+        	index++;
+        }
+        
+        // TODO: migrate the annotations from the previous result(s)
     }
     
 	private Entity createFragmentEntity(EntityType image2D, File file, Integer index) throws Exception {
@@ -160,13 +187,13 @@ public class NeuronSeparatorResultsDiscoveryService extends FileDiscoveryService
         return fragmentsEntity;
     }
 	
-	private Entity createResultEntity(String path) throws Exception {
+	private Entity createResultEntity(String path, String name) throws Exception {
         Entity resultEntity = new Entity();
         resultEntity.setUser(user);
         resultEntity.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT));
         resultEntity.setCreationDate(createDate);
         resultEntity.setUpdatedDate(createDate);
-        resultEntity.setName("Neuron Separation");
+        resultEntity.setName(name);
         resultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, path);
         
         resultEntity = annotationBean.saveOrUpdateEntity(resultEntity);

@@ -1,8 +1,7 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Scanner;
+import java.util.*;
 
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -49,77 +48,153 @@ public class SampleDiscoveryService extends FileDiscoveryService {
             scanner = new Scanner(slideGroupInfoFile);
             while (scanner.hasNextLine()){
                 String[] pieces = scanner.nextLine().split("\t");
-                if (null==filePairings.get(pieces[1])) {
-                    filePairings.put(pieces[1], new FilePair(pieces[1], pieces[0]));
+                String tag = pieces[1];
+                if (!filePairings.containsKey(tag)) {
+                	
+                	FilePair filePair = new FilePair(tag);
+                	filePair.setFilename1(pieces[0]);
+
+                	File lsmFile1 = new File(dir,filePair.getFilename1());
+            		if (!lsmFile1.exists()) {
+            			logger.warn("File referenced by slide_group_info.txt does not exist: "+filePair.getFilename1());
+            			return;
+            		}
+            		
+            		filePair.setFile1(lsmFile1);
+            		filePairings.put(filePair.getPairTag(), filePair);
                 }
                 else {
-                    filePairings.get(pieces[1]).setFilename2(pieces[0]);
+                	FilePair filePair = filePairings.get(tag);
+                	filePair.setFilename2(pieces[0]);
+                    
+                	File lsmFile2 = new File(dir,filePair.getFilename2());
+            		if (!lsmFile2.exists()) {
+            			logger.warn("File referenced by slide_group_info.txt does not exist: "+filePair.getFilename2());
+            			return;
+            		}
+
+            		filePair.setFile2(lsmFile2);
                 }
                 if (null==sampleIdentifier) {
-                    sampleIdentifier = pieces[2];
+                    sampleIdentifier = pieces[2]+ "-" + folder.getName();
                 }
             }
         }
         finally {
         	scanner.close();
         }
-
-        // Make sure we actually have a sample here        
-        int numPairs = 0;
+        
+        // Get a list of complete pairs
+    	List<FilePair> filePairs = new ArrayList<FilePair>();
         for (FilePair filePair : filePairings.values()) {
         	if (filePair.isPairingComplete()) {
-        		numPairs++;
+        		filePairs.add(filePair);
         	}
         }
-        if (numPairs<1) return;
+
+        // Make sure we actually have a sample here    
+        if (filePairs.size()<1) return;
+    	
+        // Sort the pairs by their tag name
+        Collections.sort(filePairs, new Comparator<FilePair>() {
+			@Override
+			public int compare(FilePair o1, FilePair o2) {
+				return o1.getPairTag().compareTo(o2.getPairTag());
+			}
+		});
         
-        sampleIdentifier +=  "-" + folder.getName();
-        Entity sample = findExistingSample(folder, sampleIdentifier);
-        
-        if (sample != null) {
-			logger.info("Sample already exists: "+sample.getName());
-        	return;
+        if (isFullBrain(filePairs)) {
+            Entity sample = createOrVerifySample(sampleIdentifier, folder);
+        	// Add the LSM pairs to the Sample's Supporting Files folder
+            for (FilePair filePair : filePairs) {
+            	addLsmPairToSample(sample, filePair);
+            }
         }
-
-        sample = createSample(sampleIdentifier);
-        addToParent(folder, sample, null, EntityConstants.ATTRIBUTE_ENTITY);
-        
-        for (FilePair filePair : filePairings.values()) {
-        	if (filePair.isPairingComplete()) {
-
-        		File lsmFile1 = new File(dir,filePair.getFilename1());
-        		File lsmFile2 = new File(dir,filePair.getFilename2());
-        		
-        		if (!lsmFile1.exists()) {
-        			logger.warn("File referenced by slide_group_info.txt does not exist: "+lsmFile1.getAbsolutePath());
-        			return;
-        		}
-        		
-        		if (!lsmFile2.exists()) {
-        			logger.warn("File referenced by slide_group_info.txt does not exist: "+lsmFile2.getAbsolutePath());
-        			return;
-        		}
-
-            	Entity lsmStackPair = new Entity();
-                lsmStackPair.setUser(user);
-                lsmStackPair.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK_PAIR));
-                lsmStackPair.setCreationDate(createDate);
-                lsmStackPair.setUpdatedDate(createDate);
-                lsmStackPair.setName(filePair.getPairTag());
-                lsmStackPair = annotationBean.saveOrUpdateEntity(lsmStackPair);
-                logger.info("Saved LSM stack pair for '"+filePair.getPairTag()+"' as "+lsmStackPair.getId());
-                addSampleSupportingEntity(sample, lsmStackPair);
-                
-                Entity lsmEntity1 = createLsmStackFromFile(lsmFile1);
-                Entity lsmEntity2 = createLsmStackFromFile(lsmFile2);
-                addToParent(lsmStackPair, lsmEntity1, 0, EntityConstants.ATTRIBUTE_LSM_STACK_1);
-                addToParent(lsmStackPair, lsmEntity2, 1, EntityConstants.ATTRIBUTE_LSM_STACK_2);
-        		
-                logger.info("Adding lsm file to sample parent entity="+lsmFile1.getAbsolutePath());
-                logger.info("Adding lsm file to sample parent entity="+lsmFile2.getAbsolutePath());
-        		
-        	}
+        else {
+        	logger.info("Full brain not found in: "+dir.getAbsolutePath());
+        	// This is a legacy case where both optic lobes are in a single directory, or other such cases where a 
+        	// full brain is not present. In these cases we just create a Sample for each LSM pair.
+            for (FilePair filePair : filePairs) {
+            	String sampleName = sampleIdentifier+"-"+filePair.getPairTag().replaceAll(" ", "_");
+                Entity sample = createOrVerifySample(sampleName, folder);
+            	addLsmPairToSample(sample, filePair);
+            }
         }
+    }
+    
+    private boolean isFullBrain(List<FilePair> filePairs) {
+
+        boolean hasLeftOptic = false;
+        boolean hasRightOptic = false;
+        boolean hasRightCentralBrain = false;
+        boolean hasLeftCentralBrain = false;
+        boolean hasVentralBrain = false;
+        
+        for(FilePair filePair : filePairs) {
+        	if ("Left Optic Lobe".equals(filePair.getPairTag())) hasLeftOptic = true;
+        	if ("Right Optic Lobe".equals(filePair.getPairTag())) hasRightOptic = true;
+        	if ("Right Central Brain".equals(filePair.getPairTag())) hasRightCentralBrain = true;
+        	if ("Left Central Brain".equals(filePair.getPairTag())) hasLeftCentralBrain = true;
+        	if ("Ventral Brain".equals(filePair.getPairTag())) hasVentralBrain = true;
+        }
+        
+        return (hasLeftOptic && hasRightOptic && hasVentralBrain) || 
+        		(hasLeftOptic && hasRightOptic && hasRightCentralBrain && hasLeftCentralBrain);
+    }
+    
+    private Entity createOrVerifySample(String name, Entity folder) throws Exception {
+        Entity sample = findExistingSample(folder, name);
+        if (sample == null) {
+	        sample = createSample(name);
+	        addToParent(folder, sample, null, EntityConstants.ATTRIBUTE_ENTITY);
+        }
+        return sample;
+    }
+
+    private void addLsmPairToSample(Entity sample, FilePair filePair) throws Exception {
+
+        // Get the existing Supporting Files, or create a new one
+        Entity supportingFiles = getSampleSupportingFiles(sample);
+    	if (supportingFiles == null) {
+    		supportingFiles = createSupportingFilesFolder();
+    		addToParent(sample, supportingFiles, 0, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
+    	}
+    	
+		Entity lsmStackPair = findChildWithName(supportingFiles, filePair.getPairTag());
+		if (lsmStackPair == null) {
+			lsmStackPair = new Entity();
+            lsmStackPair.setUser(user);
+            lsmStackPair.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK_PAIR));
+            lsmStackPair.setCreationDate(createDate);
+            lsmStackPair.setUpdatedDate(createDate);
+            lsmStackPair.setName(filePair.getPairTag());
+            lsmStackPair = annotationBean.saveOrUpdateEntity(lsmStackPair);
+            logger.info("Saved LSM stack pair for '"+filePair.getPairTag()+"' as "+lsmStackPair.getId());
+        	addToParent(supportingFiles, lsmStackPair, null, EntityConstants.ATTRIBUTE_ENTITY);
+		}
+
+		Entity lsmEntity1 = findChildWithName(lsmStackPair, filePair.getFilename1());
+		if (lsmEntity1 == null) {
+            lsmEntity1 = createLsmStackFromFile(filePair.getFile1());
+            addToParent(lsmStackPair, lsmEntity1, 0, EntityConstants.ATTRIBUTE_LSM_STACK_1);
+            logger.info("Adding lsm file to sample parent entity="+filePair.getFile1().getAbsolutePath());
+		}
+
+		Entity lsmEntity2 = findChildWithName(lsmStackPair, filePair.getFilename2());
+		if (lsmEntity2 == null) {
+            lsmEntity2 = createLsmStackFromFile(filePair.getFile2());
+            addToParent(lsmStackPair, lsmEntity2, 1, EntityConstants.ATTRIBUTE_LSM_STACK_2);
+            logger.info("Adding lsm file to sample parent entity="+filePair.getFile2().getAbsolutePath());
+		}
+    }
+    
+    private Entity findChildWithName(Entity entity, String childName) {
+		for (Entity child : entity.getChildren()) {
+			if (child.getName().equals(childName)) {
+				return child;
+			}
+		}
+		return null;
     }
     
     /**
@@ -151,18 +226,6 @@ public class SampleDiscoveryService extends FileDiscoveryService {
         return sample;
     }
     
-    private void addSampleSupportingEntity(Entity sample, Entity entity) throws Exception {
-
-    	Entity supportingFiles = getSampleSupportingFiles(sample);
-    	
-    	if (supportingFiles == null) {
-    		supportingFiles = createSupportingFilesFolder();
-    		addToParent(sample, supportingFiles, 0, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
-    	}
-    	
-    	addToParent(supportingFiles, entity, null, EntityConstants.ATTRIBUTE_ENTITY);
-    }
-    
     protected Entity createSupportingFilesFolder() throws Exception {
         Entity filesFolder = new Entity();
         filesFolder.setUser(user);
@@ -176,14 +239,13 @@ public class SampleDiscoveryService extends FileDiscoveryService {
     }
     
     private Entity getSampleSupportingFiles(Entity sample) {
-    	Entity supportingFiles = null;
     	for(EntityData ed : sample.getEntityData()) {
     		Entity child = ed.getChildEntity();
     		if (child != null && child.getEntityType().getName().equals(EntityConstants.TYPE_SUPPORTING_DATA)) {
-    			supportingFiles = child;
+    			return child;
     		}	
     	}
-    	return supportingFiles;
+    	return null;
     }
 
     private Entity createLsmStackFromFile(File file) throws Exception {
@@ -211,29 +273,50 @@ public class SampleDiscoveryService extends FileDiscoveryService {
         private String pairTag;
         private String filename1;
         private String filename2;
+        private File file1;
+        private File file2;
 
-        public FilePair(String pairTag, String filename1) {
+        public FilePair(String pairTag) {
             this.pairTag = pairTag;
-            this.filename1 = filename1;
-        }
-
-        public String getFilename1() {
-            return filename1;
-        }
-
-        public String getFilename2() {
-            return filename2;
-        }
-
-        public void setFilename2(String filename2) {
-            this.filename2 = filename2;
         }
 
         public String getPairTag() {
-            return pairTag;
-        }
+			return pairTag;
+		}
 
-        public boolean isPairingComplete() {
+		public String getFilename1() {
+			return filename1;
+		}
+
+		public void setFilename1(String filename1) {
+			this.filename1 = filename1;
+		}
+
+		public String getFilename2() {
+			return filename2;
+		}
+
+		public void setFilename2(String filename2) {
+			this.filename2 = filename2;
+		}
+
+		public File getFile1() {
+			return file1;
+		}
+
+		public void setFile1(File file1) {
+			this.file1 = file1;
+		}
+
+		public File getFile2() {
+			return file2;
+		}
+
+		public void setFile2(File file2) {
+			this.file2 = file2;
+		}
+
+		public boolean isPairingComplete() {
             return (null!=filename1&&!"".equals(filename1)) &&
                    (null!=filename2&&!"".equals(filename2));
         }

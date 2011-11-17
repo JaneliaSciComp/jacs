@@ -61,6 +61,9 @@ public class BrainAlignmentService extends SubmitDrmaaJobService {
         if (inputFilename==null) {
         	throw new ServiceException("Input parameter INPUT_FILENAME may not be null");
         }
+        
+        File outputFile = new File(outputFileNode.getDirectoryPath(),"Aligned.v3draw");
+        processData.putItem("ALIGNED_FILENAME", outputFile.getAbsolutePath());
     }
 
     @Override
@@ -135,8 +138,8 @@ sub usage {
 			}
 		});
 
-    	if (alignedFiles.length < 3) {
-    		throw new MissingDataException("Expected AlignedReference, AlignedSignal, and AlignedCompartments - not found for "+alignFileNode.getDirectoryPath());
+    	if (alignedFiles.length < 4) {
+    		throw new MissingDataException("Expected Aligned, AlignedReference, AlignedSignal, and AlignedCompartments - not found for "+alignFileNode.getDirectoryPath());
     	}
 	}
 }

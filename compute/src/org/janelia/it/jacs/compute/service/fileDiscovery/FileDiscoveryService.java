@@ -60,6 +60,12 @@ public class FileDiscoveryService implements IService {
             	topLevelFolder = annotationBean.getEntityById(rootEntityId);
             }
             
+        	if (topLevelFolder==null) {
+        		throw new IllegalArgumentException("Both ROOT_ENTITY_NAME and ROOT_ENTITY_ID may not be null");
+        	}
+        	
+            logger.info("Will put discovered entities into top level entity "+topLevelFolder.getName()+", id="+topLevelFolder.getId());
+            
             // What directory should we discover files within?
 
             String taskInputDirectoryList;
@@ -107,8 +113,8 @@ public class FileDiscoveryService implements IService {
         		processData.putItem(outvar, topLevelFolder.getId());
         	}
             
-            
-        } catch (Exception e) {
+        } 
+        catch (Exception e) {
             throw new ServiceException(e);
         }
     }
