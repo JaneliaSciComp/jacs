@@ -75,8 +75,6 @@ public class SubTaskExecutionService implements IService {
             
             logger.info("Launching "+subtask.getJobName()+", task id = "+task.getObjectId()+" subtask id="+subtask.getObjectId());
             computeBean.submitJob(processDefName, subtask.getObjectId());
-            
-            Thread.sleep(500);
         } 
         catch (Exception e) {
             throw new ServiceException(e);
