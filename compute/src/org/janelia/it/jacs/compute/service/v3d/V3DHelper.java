@@ -40,6 +40,16 @@ public class V3DHelper {
         return V3D_BASE_CMD+" -x ifusion.so -f iblender -i \""+inputDirectoryPath+"\" -o \""+outputFilePath+"\" -p \"#s 1\"";
     }
 
+    /**
+     * For V3D plugins that are truly headless.
+     * @return
+     */
+    public static String getHeadlessGridCommandPrefix() {
+    	StringBuffer prefix = new StringBuffer();
+    	prefix.append("set -o errexit\n");
+    	return prefix.toString();
+    }
+    
     public static String getV3DGridCommandPrefix() {
         return getV3DGridCommandPrefix(getRandomPort()+"");
     }
@@ -50,10 +60,10 @@ public class V3DHelper {
     	// Exit the entire script if anything returns a non-zero exit code
     	prefix.append("set -o errexit\n");
     	
+    	// Skip ports that are currently in use, or "locked"
     	prefix.append("PORT="+displayPort+"\n");
-    	
-		prefix.append("while [ -f \"/tmp/.X${Port}-lock\" ]; do\n");
-		prefix.append("    Port=$(( ${Port} + 1 ))\n");
+		prefix.append("while (test -f \"/tmp/.X${Port}-lock\") || (netstat -atwn | grep \"^.*:${Port}.*:\\*\\s*LISTEN\\s*$\")\n");
+		prefix.append("do Port=$(( ${Port} + 1 ))\n");
 		prefix.append("done\n");
 		
 		// Run Xvfb (virtual framebuffer) on the chosen port
