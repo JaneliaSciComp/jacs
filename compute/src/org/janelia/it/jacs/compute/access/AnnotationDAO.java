@@ -1225,6 +1225,49 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	return null;
     }
 
+    private static final int MAX_SEARCH_PATHS = 10;
+    public List<List<Long>> searchTree(Long rootId, String searchString) throws DaoException {
+
+        Session session = getCurrentSession();
+        StringBuffer hql = new StringBuffer("select e from Entity e where e.name like ?");
+        Query query = session.createQuery(hql.toString()).setString(0, searchString);
+        List<Entity> results = query.list();
+
+        _logger.info("searchTree got "+results.size());
+        
+        List<List<Long>> matches = new ArrayList<List<Long>>();
+        for(Entity entity : results) {
+        	List<Long> path = getPathToRoot(entity, rootId);
+        	if (path != null) matches.add(path);
+        	if (matches.size()>=MAX_SEARCH_PATHS) break;
+        }
+        
+        _logger.info("searchTree limited to "+matches.size());
+        
+        return matches;
+    }
+    
+    public List<Long> getPathToRoot(Entity node, Long rootId) throws DaoException {
+
+		List<Long> ids = new ArrayList<Long>();
+		
+    	if (node.getId().equals(rootId)) {
+    		ids.add(rootId);
+    		return ids;
+    	}
+    	
+    	for(Entity parent : getParentEntities(node.getId())) {
+    		List<Long> path = getPathToRoot(parent, rootId);
+    		if (path != null) {
+    			path.add(node.getId());
+    			return path;
+    		}
+    	}
+    	
+    	// No path to the given root
+    	return null;
+    }
+    
     public EntityType getEntityTypeByName(String entityTypeName) {
     	preloadData();
         return entityByName.get(entityTypeName);	

@@ -469,6 +469,17 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     		throw new ComputeException("Error finding ancestor of type "+type+" for "+entity.getId(),e);
     	}
     }
+    
+    public List<List<Long>> searchTreeForNameStartingWith(Long rootId, String searchString) throws ComputeException {
+
+    	try {
+    		return _annotationDAO.searchTree(rootId, searchString+"%");
+    	}
+    	catch (DaoException e) {
+            _logger.error("Error searching tree rooted at "+rootId+" for "+searchString,e);
+    		throw new ComputeException("Error searching tree rooted at "+rootId+" for "+searchString,e);
+    	}
+    }
 
     public EntityType getEntityTypeByName(String entityTypeName) {
 		return _annotationDAO.getEntityTypeByName(entityTypeName);
