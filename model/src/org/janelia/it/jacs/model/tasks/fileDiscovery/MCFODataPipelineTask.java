@@ -19,14 +19,12 @@ public class MCFODataPipelineTask extends FileDiscoveryTask {
 
     transient public static final String TASK_NAME = "mcfoDataPipeline";
     transient public static final String DISPLAY_NAME = "MCFO Data Pipeline";
-    transient public static final String PARAM_refresh = "refresh";
     transient public static final String PARAM_sampleViewName = "sample view name";
     
     public MCFODataPipelineTask(Set<Node> inputNodes, String owner, List<Event> events,
     		Set<TaskParameter> taskParameterSet, String inputDirList, String topLevelFolderName, String sampleViewName, boolean refresh) {
-        super(inputNodes, owner, events, taskParameterSet, inputDirList, topLevelFolderName);
+        super(inputNodes, owner, events, taskParameterSet, inputDirList, topLevelFolderName, refresh);
         setDefaultValues();
-        setParameter(PARAM_refresh, Boolean.toString(refresh));
         setParameter(PARAM_sampleViewName, sampleViewName);
     }
 

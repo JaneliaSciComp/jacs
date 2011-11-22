@@ -37,6 +37,7 @@ public class EntityConstants {
     public static final String TYPE_STITCHED_V3D_RAW                 = "Stitched V3D Raw Stack";
     public static final String TYPE_NEURON_FRAGMENT                  = "Neuron Fragment";
     public static final String TYPE_NEURON_FRAGMENT_COLLECTION       = "Neuron Fragment Collection";
+    public static final String TYPE_ALIGNED_BRAIN_STACK              = "Aligned Brain Stack";
 
     // Entity Data Attributes
     public static final String ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH          = "Default 2D Image File Path";
