@@ -62,8 +62,8 @@ public class V3DHelper {
     	
     	// Skip ports that are currently in use, or "locked"
     	prefix.append("PORT="+displayPort+"\n");
-		prefix.append("while (test -f \"/tmp/.X${Port}-lock\") || (netstat -atwn | grep \"^.*:${Port}.*:\\*\\s*LISTEN\\s*$\")\n");
-		prefix.append("do Port=$(( ${Port} + 1 ))\n");
+		prefix.append("while (test -f \"/tmp/.X${PORT}-lock\") || (netstat -atwn | grep \"^.*:${PORT}.*:\\*\\s*LISTEN\\s*$\")\n");
+		prefix.append("do PORT=$(( ${PORT} + 1 ))\n");
 		prefix.append("done\n");
 		
 		// Run Xvfb (virtual framebuffer) on the chosen port
