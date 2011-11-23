@@ -42,14 +42,17 @@
 	    		<input name="OUTPUT_FILE_NODE" value="$V{METADATA_RESULT_FILE_NODE}"/>
 	        </operation>
         </sequence>
-		
+		        
 	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
-	    <operation name="Create Merge Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitV3DSampleParametersService">
+	    <operation name="Create Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitV3DSampleParametersService">
 			<input name="SAMPLE_RESULT_FILE_NODE"/>
+	        <input name="MERGE_RESULT_FILE_NODE"/>
+	        <input name="STITCH_RESULT_FILE_NODE"/>
 			<input name="SAMPLE_ENTITY_ID"/>
 			<output name="BULK_MERGE_PARAMETERS"/>
 			<output name="NUM_LSM_PAIRS"/>
 			<output name="STITCHED_FILENAME"/>
+			<output name="RUN_ALIGNMENT"/>
 		</operation>
 	    
 	    <!-- Merge all the LSM pairs in parallel -->
@@ -68,8 +71,8 @@
 	            <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.V3DStitchAndBlendService"/>
 				<input name="STITCH_RESULT_FILE_NODE"/>
 	    		<input name="RESULT_FILE_NODE" value="$V{STITCH_RESULT_FILE_NODE}"/>
-				<input name="SAMPLE_RESULT_FILE_NODE"/>
-	    		<input name="OUTPUT_FILE_NODE" value="$V{SAMPLE_RESULT_FILE_NODE}"/>
+				<input name="MERGE_RESULT_FILE_NODE"/>
+	    		<input name="INPUT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
 				<input name="BULK_MERGE_PARAMETERS"/>
 				<input name="STITCHED_FILENAME"/>
 	        </operation>
@@ -136,7 +139,7 @@
 						<input name="OUTPUT_FILENAME_PATTERN_2" value="$1.png"/>
 					</operation>
 		        </sequence>
-					
+		        
 			    <!-- Load the separation results into the database -->
 				<operation name="Discover Neuron Separation Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.NeuronSeparatorResultsDiscoveryService">
 					<input name="SEPARATE_RESULT_FILE_NODE"/>
@@ -149,7 +152,7 @@
 	    	</sequence>
 	    	
 	    	<!-- Align and separate, only if there is more than one LSM pair -->
-        	<sequence if="NUM_LSM_PAIRS&gt;1">
+        	<sequence if="RUN_ALIGNMENT=true">
 		        	
 		   	    <!-- Align the stitched results -->
 		        <sequence name="Align" waitForAsync="true">

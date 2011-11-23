@@ -12,9 +12,11 @@
             <input name="PROCESS_VARIABLE_2" value="ROOT_ENTITY_NAME"/>
             <input name="TASK_PARAMETER_3" value="sample view name"/>
             <input name="PROCESS_VARIABLE_3" value="SAMPLE_VIEW_NAME"/>
-            <input name="REFRESH" value="false"/>
+            <input name="TASK_PARAMETER_4" value="refresh"/>
+            <input name="PROCESS_VARIABLE_4" value="REFRESH"/>
 	        <output name="INPUT_DIR_LIST"/>
 	        <output name="ROOT_ENTITY_NAME"/>
+	        <output name="REFRESH"/>
 	    </operation>
 	    
 	    <!-- Discover samples in the fileshare and load them into the database as Entities -->

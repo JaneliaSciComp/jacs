@@ -11,6 +11,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.fileDiscovery.TilingPattern;
 import org.janelia.it.jacs.compute.service.v3d.MergedLsmPair;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -44,6 +45,15 @@ public class InitV3DSampleParametersService implements IService {
         		throw new IllegalArgumentException("SAMPLE_RESULT_FILE_NODE may not be null");
         	}
         	
+        	FileNode mergeResultNode = (FileNode)processData.getItem("MERGE_RESULT_FILE_NODE");
+        	if (mergeResultNode == null) {
+        		throw new IllegalArgumentException("MERGE_RESULT_FILE_NODE may not be null");
+        	}
+
+        	FileNode stitchResultNode = (FileNode)processData.getItem("STITCH_RESULT_FILE_NODE");
+        	if (stitchResultNode == null) {
+        		throw new IllegalArgumentException("STITCH_RESULT_FILE_NODE may not be null");
+        	}
         	String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
         	if (sampleEntityId == null || "".equals(sampleEntityId)) {
         		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
@@ -54,6 +64,7 @@ public class InitV3DSampleParametersService implements IService {
         		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
         	}
         	
+        	List<String> tags = new ArrayList<String>();
         	List<MergedLsmPair> mergedLsmPairs = new ArrayList<MergedLsmPair>();
         	
         	for(Entity lsmPairEntity : sampleEntity.getDescendantsOfType(EntityConstants.TYPE_LSM_STACK_PAIR)) {
@@ -75,14 +86,21 @@ public class InitV3DSampleParametersService implements IService {
             		}
             	}
             	
-            	File mergedFile = new File(sampleResultNode.getDirectoryPath(), "merged-"+lsmPairEntity.getId()+".v3draw");
+            	File mergedFile = new File(mergeResultNode.getDirectoryPath(), "merged-"+lsmPairEntity.getId()+".v3draw");
             	mergedLsmPairs.add(new MergedLsmPair(lsmFilepath1, lsmFilepath2, mergedFile.getAbsolutePath()));
+            	
+            	tags.add(lsmPairEntity.getName());
         	}
+        	
+        	File stitchedFile = new File(stitchResultNode.getDirectoryPath(), "stitched-"+sampleEntity.getId()+".v3draw");
 
-        	File mergedFile = new File(sampleResultNode.getDirectoryPath(), "stitched-"+sampleEntity.getId()+".v3draw");
+        	// Should we run the alignment and aligned separation?
+        	boolean runAlignment = TilingPattern.getTilingPattern(tags).isAlignable(); //mergedLsmPairs.size() > 1;
+        	
         	processData.putItem("BULK_MERGE_PARAMETERS", mergedLsmPairs);
         	processData.putItem("NUM_LSM_PAIRS", new Long(mergedLsmPairs.size()));
-        	processData.putItem("STITCHED_FILENAME", mergedFile.getAbsolutePath());
+        	processData.putItem("STITCHED_FILENAME", stitchedFile.getAbsolutePath());
+        	processData.putItem("RUN_ALIGNMENT", new Boolean(runAlignment));
         	
         } catch (Exception e) {
             throw new ServiceException(e);

@@ -20,14 +20,14 @@
 			<input name="ENTITY_TYPE_NAME" value="Sample"/>
 			<input name="TOP_LEVEL_ENTITY_ID"/>
 			<input name="ROOT_ENTITY_ID" value="$V{TOP_LEVEL_ENTITY_ID}"/>
-			<input name="OUTVAR_ENTITY_ID" value="COMPLETE_SAMPLE_ID_LIST"/>
+			<input name="OUTVAR_ENTITY" value="COMPLETE_SAMPLE_LIST"/>
 		</operation>
 		
 	    <!-- Create or update the Sample-centric view -->
-		<operation name="Update the Sample View" processor="org.janelia.it.jacs.compute.service.entity.EntityViewCreationService">
+		<operation name="Update the Sample View" processor="org.janelia.it.jacs.compute.service.entity.MCFOViewCreationService">
 			<input name="VIEW_ENTITY_NAME"/>
-			<input name="COMPLETE_SAMPLE_ID_LIST"/>
-			<input name="ENTITY_ID_LIST" value="$V{COMPLETE_SAMPLE_ID_LIST}"/>
+			<input name="COMPLETE_SAMPLE_LIST"/>
+			<input name="ENTITY_LIST" value="$V{COMPLETE_SAMPLE_LIST}"/>
 		</operation>
 		
     </sequence>

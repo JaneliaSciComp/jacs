@@ -2,6 +2,8 @@ package org.janelia.it.jacs.compute.service.fileDiscovery;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
@@ -27,7 +29,6 @@ public class NeuronSeparatorResultsDiscoveryService extends FileDiscoveryService
         	throw new ServiceException("Input parameter RESULT_ENTITY_NAME may not be null");
         }
     	super.execute(processData);
-    	logger.info("resultEntityName="+resultEntityName);
     }
     
     @Override
@@ -98,19 +99,8 @@ public class NeuronSeparatorResultsDiscoveryService extends FileDiscoveryService
             else if (filename.startsWith("Reference.")) {
                 addResultItem(filesFolder, tif3D, resultFile);
             }
-            else if (filename.startsWith("neuronSeparatorPipeline.PR.neuron") && filename.endsWith(".png")) {
-
-            	String mipNum = filename.substring("neuronSeparatorPipeline.PR.neuron".length(), filename.lastIndexOf('.'));
-            	Integer index = null;
-            	try {
-            		index = Integer.parseInt(mipNum);
-            	}
-            	catch (NumberFormatException e) {
-            		logger.warn("Error parsing number from MIP filename: "+mipNum);
-            	}
-            	
-            	fragmentFiles.ensureCapacity(index+1);
-            	fragmentFiles.set(index, resultFile);
+            else if (filename.startsWith("neuronSeparatorPipeline.PR.neuron") && filename.endsWith(".png")) {            	
+            	fragmentFiles.add(resultFile);
             }
             else if (filename.endsWith("MIP.png")) {
                 addResultItem(filesFolder, image2D, resultFile);
@@ -131,18 +121,41 @@ public class NeuronSeparatorResultsDiscoveryService extends FileDiscoveryService
                 // ignore other files
             }
         }
-
-        int index = 0;
+        
+        Collections.sort(fragmentFiles, new Comparator<File>() {
+			@Override
+			public int compare(File o1, File o2) {
+				Integer i1 = getIndex(o1);
+				Integer i2 = getIndex(o2);
+				if (i1 == null && i2 == null) return 0;
+				if (i1 == null) return 1;
+				if (i2 == null) return -1;
+				return i1.compareTo(i2);
+			}
+        });
+        
         for(File resultFile : fragmentFiles) {
-        	if (resultFile != null) {
-                addResultItem(filesFolder, image2D, resultFile);
-            	Entity fragmentEntity = createFragmentEntity(image2D, resultFile, index);
-            	addToParent(fragmentsFolder, fragmentEntity, index, EntityConstants.ATTRIBUTE_ENTITY);	
-        	}
-        	index++;
+    		Integer index = getIndex(resultFile);
+            addResultItem(filesFolder, image2D, resultFile);
+        	Entity fragmentEntity = createFragmentEntity(image2D, resultFile, index);
+        	addToParent(fragmentsFolder, fragmentEntity, index, EntityConstants.ATTRIBUTE_ENTITY);	
         }
         
         // TODO: migrate the annotations from the previous result(s)
+    }
+    
+    private Integer getIndex(File neuronMIPFile) {
+    	String filename = neuronMIPFile.getName();
+    	String mipNum = filename.substring("neuronSeparatorPipeline.PR.neuron".length(), filename.lastIndexOf('.'));
+    	try {
+        	// New 2-stage neuron separator creates files with an extra dot in the filename, so we need to account for that
+        	if (mipNum.startsWith(".")) mipNum = mipNum.substring(1); 
+    		return Integer.parseInt(mipNum);
+    	}
+    	catch (NumberFormatException e) {
+    		logger.warn("Error parsing number from MIP filename: "+mipNum);
+    	}
+    	return null;
     }
     
 	private Entity createFragmentEntity(EntityType image2D, File file, Integer index) throws Exception {

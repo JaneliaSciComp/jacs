@@ -45,12 +45,16 @@ public class EntityViewCreationService implements IService {
         		throw new IllegalArgumentException("VIEW_ENTITY_NAME may not be null");
         	}
 
-        	List<Long> entityIdList = (List<Long>)processData.getItem("ENTITY_ID_LIST");
-        	if (entityIdList == null) {
-        		throw new IllegalArgumentException("ENTITY_ID_LIST may not be null");
+        	List<Entity> entities = (List<Entity>)processData.getItem("ENTITY_LIST");
+        	if (entities == null) {
+            	List<Long> entityIdList = (List<Long>)processData.getItem("ENTITY_ID_LIST");
+            	if (entityIdList == null) {
+            		throw new IllegalArgumentException("Both ENTITY_LIST and ENTITY_ID_LIST may not be null");
+            	}
+            	entities = annotationBean.getEntitiesById(entityIdList);
+            	// TODO: in this case, we need to worry about lazy loaded entities, but currently this case is not used
         	}
         	
-        	List<Entity> entities = annotationBean.getEntitiesById(entityIdList);
         	if (entities.isEmpty()) {
         		logger.warn("No entities to add to view '"+viewEntityName+"'");
         		return;
@@ -66,40 +70,46 @@ public class EntityViewCreationService implements IService {
         		throw new IllegalArgumentException("Root entity not found with id="+viewEntityName);
         	}
         	
-        	// Build a hash of existing entities
+        	addToEntity(rootEntity, entities);
         	
-        	Set<Long> existingChildrenIds = new HashSet<Long>();
-        	for(Entity child : rootEntity.getChildren()) {
-        		existingChildrenIds.add(child.getId());
-        	}
-
-        	// Add the new entities
-        	
-        	Collections.sort(entities, new Comparator<Entity>() {
-				@Override
-				public int compare(Entity o1, Entity o2) {
-					return o1.getId().compareTo(o2.getId());
-				}
-			});
-        	
-        	for(Entity entity : entities) {
-        		if (!existingChildrenIds.contains(entity.getId())) {
-        			addToParent(rootEntity, entity, rootEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
-        		}
-        	}
-            
         } catch (Exception e) {
             throw new ServiceException(e);
         }
+    }
+    
+    protected void addToEntity(Entity viewEntity, List<Entity> entities) throws Exception {
+    	
+    	// Build a hash of existing entities
+    	
+    	Set<Long> existingChildrenIds = new HashSet<Long>();
+    	for(Entity child : viewEntity.getChildren()) {
+    		existingChildrenIds.add(child.getId());
+    	}
+
+    	// Add the new entities
+    	
+    	Collections.sort(entities, new Comparator<Entity>() {
+			@Override
+			public int compare(Entity o1, Entity o2) {
+				return o1.getId().compareTo(o2.getId());
+			}
+		});
+    	
+    	for(Entity entity : entities) {
+    		if (!existingChildrenIds.contains(entity.getId())) {
+    			addToParent(viewEntity, entity, viewEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+    		}
+    	}
     }
     
     protected Entity createOrVerifyRootEntity(String topLevelFolderName) throws Exception {
     	
         List<Entity> topLevelFolders = annotationBean.getCommonRootEntitiesByTypeName(user.getUserLogin(), EntityConstants.TYPE_FOLDER);
     	Entity topLevelFolder = null;
+    	
         if (topLevelFolders!=null) {
 	        for(Entity entity : topLevelFolders) {
-	        	if (entity.getName().equals(topLevelFolder)) {
+	        	if (entity.getName().equals(topLevelFolderName)) {
 	        		if (topLevelFolder!=null) {
 	        			logger.warn("More than one top level folder with name "+topLevelFolderName+
 	        					" found for user "+user.getUserLogin()+". Proceeding by picking the first.");

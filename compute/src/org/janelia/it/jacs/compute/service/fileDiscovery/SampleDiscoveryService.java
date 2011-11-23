@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.*;
 
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -14,6 +16,19 @@ import org.janelia.it.jacs.model.entity.EntityData;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class SampleDiscoveryService extends FileDiscoveryService {
+    
+	private Map<TilingPattern,Integer> patterns = new EnumMap<TilingPattern,Integer>(TilingPattern.class);
+
+    public void execute(IProcessData processData) throws ServiceException {
+    	super.execute(processData);
+
+    	logger.info("Tiling pattern statistics:");
+        for(TilingPattern pattern : TilingPattern.values()) {
+        	Integer count = patterns.get(pattern);
+        	if (count==null) count = 0;
+        	logger.info(pattern.getName()+": "+count);
+        }
+    }
     
     protected void processFolderForData(Entity folder) throws Exception {
     	
@@ -103,7 +118,28 @@ public class SampleDiscoveryService extends FileDiscoveryService {
 			}
 		});
         
-        if (isFullBrain(filePairs)) {
+        List<String> tags = new ArrayList<String>();
+        for(FilePair filePair : filePairs) {
+        	tags.add(filePair.getPairTag());
+        }
+        
+        TilingPattern tiling = TilingPattern.getTilingPattern(tags);
+        logger.info("Sample "+sampleIdentifier+" has tiling pattern: "+(tiling==null?"Unknown":tiling.getName()));
+        
+        if (tiling != null) {
+        	Integer count = patterns.get(tiling);
+        	if (count == null) {
+        		count = 1;
+        	}
+        	else {
+        		count++;
+        	}
+        	patterns.put(tiling, count);
+        }
+        
+        if (tiling != null && tiling.isStitchable()) {
+        	// This is a stitchable case
+        	logger.info("Sample "+sampleIdentifier+" is stitchable");
             Entity sample = createOrVerifySample(sampleIdentifier, folder);
         	// Add the LSM pairs to the Sample's Supporting Files folder
             for (FilePair filePair : filePairs) {
@@ -111,35 +147,14 @@ public class SampleDiscoveryService extends FileDiscoveryService {
             }
         }
         else {
-        	logger.info("Full brain not found in: "+dir.getAbsolutePath());
-        	// This is a legacy case where both optic lobes are in a single directory, or other such cases where a 
-        	// full brain is not present. In these cases we just create a Sample for each LSM pair.
+        	// In non-stitchable cases we just create a Sample for each LSM pair
+        	logger.info("Sample "+sampleIdentifier+" is not stitchable");
             for (FilePair filePair : filePairs) {
             	String sampleName = sampleIdentifier+"-"+filePair.getPairTag().replaceAll(" ", "_");
                 Entity sample = createOrVerifySample(sampleName, folder);
             	addLsmPairToSample(sample, filePair);
             }
         }
-    }
-    
-    private boolean isFullBrain(List<FilePair> filePairs) {
-
-        boolean hasLeftOptic = false;
-        boolean hasRightOptic = false;
-        boolean hasRightCentralBrain = false;
-        boolean hasLeftCentralBrain = false;
-        boolean hasVentralBrain = false;
-        
-        for(FilePair filePair : filePairs) {
-        	if ("Left Optic Lobe".equals(filePair.getPairTag())) hasLeftOptic = true;
-        	if ("Right Optic Lobe".equals(filePair.getPairTag())) hasRightOptic = true;
-        	if ("Right Central Brain".equals(filePair.getPairTag())) hasRightCentralBrain = true;
-        	if ("Left Central Brain".equals(filePair.getPairTag())) hasLeftCentralBrain = true;
-        	if ("Ventral Brain".equals(filePair.getPairTag())) hasVentralBrain = true;
-        }
-        
-        return (hasLeftOptic && hasRightOptic && hasVentralBrain) || 
-        		(hasLeftOptic && hasRightOptic && hasRightCentralBrain && hasLeftCentralBrain);
     }
     
     private Entity createOrVerifySample(String name, Entity folder) throws Exception {

@@ -93,9 +93,17 @@ public class NeuronSeparatorHelper {
 		// TODO: mylibDir no longer does anything... maybe we should inject it into the command string if we intend
 		// to run on multiple architectures. 
         StringBuilder cmdLine = new StringBuilder();
-        cmdLine.append("cd ").append(parentNode.getDirectoryPath()).append(commandDelim).
-        		append(SEPARATOR_BASE_CMD).append(" -nr -pj ").
-                	append(parentNode.getDirectoryPath()).append(" neuronSeparatorPipeline ").
+        cmdLine.append("cd ").append(parentNode.getDirectoryPath()).append(commandDelim);
+        
+        // TODO: This should be fixed at some point so that its specified in the process file
+        cmdLine.append("cp ../metadata/*.metadata .").append(commandDelim);
+        
+        cmdLine.append(SEPARATOR_BASE_CMD).append(" ");
+        
+        // TODO: Remove this when using the new 2-stage separator
+        cmdLine.append("-nr -pj ");
+        
+        cmdLine.append(parentNode.getDirectoryPath()).append(" neuronSeparatorPipeline ").
                 	append(NeuronSeparatorHelper.addQuotesToCsvString(fileList)).append(commandDelim);
         
         return cmdLine.toString();

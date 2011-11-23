@@ -58,9 +58,15 @@ public class EntityTreeTraversalService implements IService {
         		throw new IllegalArgumentException("ROOT_ENTITY_ID may not be null");
         	}
 
+        	boolean outputObjects = false;
+        	
         	String outvar = (String)processData.getItem("OUTVAR_ENTITY_ID");
         	if (outvar == null) {
-        		throw new IllegalArgumentException("OUTVAR_ENTITY_ID may not be null");
+            	outvar = (String)processData.getItem("OUTVAR_ENTITY");
+            	outputObjects = true;
+            	if (outvar == null) {
+            		throw new IllegalArgumentException("Both OUTVAR_ENTITY_ID and OUTVAR_ENTITY may not be null");
+            	}
         	}
         	
         	Entity rootEntity = annotationBean.getEntityTree(rootEntityId);
@@ -75,15 +81,15 @@ public class EntityTreeTraversalService implements IService {
 
     		logger.info("Found "+entities.size()+" entities. Filtering...");
     		
-    		List<Long> ids = new ArrayList<Long>();
+    		List outObjects = new ArrayList();
         	for(Entity entity : entities) {
         		if (entityFilter==null || entityFilter.includeEntity(processData, entity)) {
-        			ids.add(entity.getId());	
+        			outObjects.add(outputObjects ? entity : entity.getId());	
         		}
         	}
 
-    		logger.info("Putting "+ids.size()+" ids in "+outvar);
-        	processData.putItem(outvar, ids);
+    		logger.info("Putting "+outObjects.size()+" ids in "+outvar);
+        	processData.putItem(outvar, outObjects);
             
         } catch (Exception e) {
             throw new ServiceException(e);

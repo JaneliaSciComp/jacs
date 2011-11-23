@@ -39,9 +39,9 @@ public class V3DStitchAndBlendService extends SubmitDrmaaJobService {
     @Override
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
 
-        FileNode outputFileNode = (FileNode)processData.getItem("OUTPUT_FILE_NODE");
-        if (outputFileNode==null) {
-        	throw new ServiceException("Input parameter OUTPUT_FILE_NODE may not be null");
+        FileNode inputFileNode = (FileNode)processData.getItem("INPUT_FILE_NODE");
+        if (inputFileNode==null) {
+        	throw new ServiceException("Input parameter INPUT_FILE_NODE may not be null");
         }
 
         String stitchedFilename = (String)processData.getItem("STITCHED_FILENAME");
@@ -63,7 +63,7 @@ public class V3DStitchAndBlendService extends SubmitDrmaaJobService {
         		createBypassShellScript(writer, mergedLsmPairs.get(0).getMergedFilepath(), stitchedFilename);
         	}            
         	else {
-            	createShellScript(writer, outputFileNode.getDirectoryPath(), stitchedFilename);
+            	createShellScript(writer, inputFileNode.getDirectoryPath(), stitchedFilename);
         	}
         }
         else {

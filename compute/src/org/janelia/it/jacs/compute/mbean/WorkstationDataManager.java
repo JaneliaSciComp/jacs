@@ -31,10 +31,9 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         try {
         	String topLevelFolderName = "FlyLight Single Neuron Data";
         	String sampleViewName = "FlyLight Single Neuron Samples";
-        	//String inputDirList = "/groups/flylight/flylight/flip/SecData/stitch";
-            String inputDirList = "/groups/scicomp/jacsData/murphyTest/stitch";
+        	String inputDirList = "/groups/flylight/flylight/flip/SecData/tiles";
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
-            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(),
+            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), 
             		inputDirList, topLevelFolderName, sampleViewName, refresh);
             task.setJobName("MultiColor FlipOut Unified File Discovery Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
@@ -60,7 +59,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     public void runMCFOSampleViewCreation(String sourceEntityId, String targetEntityName) {
         try {
         	Entity sourceEntity = EJBFactory.getLocalAnnotationBean().getEntityById(sourceEntityId);
-        	Task task = new EntityViewCreationTask(new HashSet<Node>(),
+        	Task task = new EntityViewCreationTask(new HashSet<Node>(), 
         			sourceEntity.getUser().getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>(), sourceEntityId, targetEntityName);
             task.setJobName("Sample View Creation Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
@@ -69,7 +68,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
-
+    
     public void runFlyLightScreenPipeline(String user, boolean refresh) {
         try {
             String topLevelFolderName = "FlyLight Screen Data";
@@ -85,7 +84,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
-
+    
     public void setupEntityTypes() {
         try {
             AnnotationBeanRemote annotationBean = EJBFactory.getRemoteAnnotationBean();
