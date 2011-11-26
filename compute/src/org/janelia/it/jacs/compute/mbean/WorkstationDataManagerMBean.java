@@ -10,9 +10,11 @@ package org.janelia.it.jacs.compute.mbean;
 
 public interface WorkstationDataManagerMBean {
     	
-    public void runMCFODataPipelineService(String user, boolean refresh);
+	public void runMCFODataPipeline(String user, boolean refresh, String inputDirList, String topLevelFolderName);
+	
+	public void runMCFODataPipelineForTiles(String user, boolean refresh);
 
-    public void runMCFOSamplePipelineService(String sampleEntityId);
+    public void runMCFOSamplePipeline(String sampleEntityId);
 
     public void runMCFOSampleViewCreation(String sourceEntityId, String targetEntityName);
 

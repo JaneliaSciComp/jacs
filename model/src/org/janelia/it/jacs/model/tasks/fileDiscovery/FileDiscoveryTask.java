@@ -36,7 +36,7 @@ public class FileDiscoveryTask extends Task {
         setDefaultValues();
         setParameter(PARAM_inputDirectoryList, inputDirList);
         setParameter(PARAM_topLevelFolderName, topLevelFolderName);
-        setParameter(PARAM_refresh, refresh.toString());
+        setParameter(PARAM_refresh, refresh==null?"false":refresh.toString());
     }
 
     public FileDiscoveryTask() {

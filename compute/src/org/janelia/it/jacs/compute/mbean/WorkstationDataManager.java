@@ -27,14 +27,29 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     public WorkstationDataManager() {
     }
 
-    public void runMCFODataPipelineService(String user, boolean refresh) {
+    public void runMCFODataPipeline(String user, boolean refresh, String inputDirList, String topLevelFolderName) {
+        try {
+        	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
+            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), 
+            		inputDirList, topLevelFolderName, refresh);
+            task.setJobName("MultiColor FlipOut Unified File Discovery Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("MCFODataPipeline", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
+    /**
+     * @deprecated use runMCFODataPipelineService and specify the parameters explicitly
+     */
+    public void runMCFODataPipelineForTiles(String user, boolean refresh) {
         try {
         	String topLevelFolderName = "FlyLight Single Neuron Data";
-        	String sampleViewName = "FlyLight Single Neuron Samples";
         	String inputDirList = "/groups/flylight/flylight/flip/SecData/tiles";
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
             		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), 
-            		inputDirList, topLevelFolderName, sampleViewName, refresh);
+            		inputDirList, topLevelFolderName, refresh);
             task.setJobName("MultiColor FlipOut Unified File Discovery Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("MCFODataPipeline", task.getObjectId());
@@ -43,7 +58,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
-    public void runMCFOSamplePipelineService(String sampleEntityId) {
+    public void runMCFOSamplePipeline(String sampleEntityId) {
         try {
         	Entity sampleEntity = EJBFactory.getLocalAnnotationBean().getEntityById(sampleEntityId);
         	Task task = new MCFOSamplePipelineTask(new HashSet<Node>(), 

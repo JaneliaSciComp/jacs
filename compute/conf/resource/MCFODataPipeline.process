@@ -10,10 +10,8 @@
             <input name="PROCESS_VARIABLE_1" value="INPUT_DIR_LIST"/>
             <input name="TASK_PARAMETER_2" value="top level folder name"/>
             <input name="PROCESS_VARIABLE_2" value="ROOT_ENTITY_NAME"/>
-            <input name="TASK_PARAMETER_3" value="sample view name"/>
-            <input name="PROCESS_VARIABLE_3" value="SAMPLE_VIEW_NAME"/>
-            <input name="TASK_PARAMETER_4" value="refresh"/>
-            <input name="PROCESS_VARIABLE_4" value="REFRESH"/>
+            <input name="TASK_PARAMETER_3" value="refresh"/>
+            <input name="PROCESS_VARIABLE_3" value="REFRESH"/>
 	        <output name="INPUT_DIR_LIST"/>
 	        <output name="ROOT_ENTITY_NAME"/>
 	        <output name="REFRESH"/>
