@@ -88,8 +88,11 @@ public class InitV3DSampleParametersService implements IService {
             	
             	File mergedFile = new File(mergeResultNode.getDirectoryPath(), "merged-"+lsmPairEntity.getId()+".v3draw");
             	mergedLsmPairs.add(new MergedLsmPair(lsmFilepath1, lsmFilepath2, mergedFile.getAbsolutePath()));
-            	
             	tags.add(lsmPairEntity.getName());
+        	}
+
+        	if (mergedLsmPairs.isEmpty()) {
+        		throw new Exception("Sample (id="+sampleEntityId+") has no LSM pairs");
         	}
         	
         	File stitchedFile = new File(stitchResultNode.getDirectoryPath(), "stitched-"+sampleEntity.getId()+".v3draw");

@@ -30,19 +30,7 @@
 	        <output name="ALIGNMIPS_RESULT_FILE_NODE"/>
 	        <output name="ALIGNCONV_RESULT_FILE_NODE"/>
 	    </operation>
-	    
-	    <!-- Asynchronously create the metadata describing the input LSM files -->
-        <sequence name="Create Lsm Metadata Files" waitForAsync="true">
-	        <operation name="Create Lsm Metadata Files" processor="queue/gridSubmitAndWait">
-	            <input name="iservice" value="org.janelia.it.jacs.compute.service.entity.CreateLsmMetadataFilesService"/>
-		        <input name="SAMPLE_ENTITY_ID"/>
-				<input name="METADATA_RESULT_FILE_NODE"/>
-		        <input name="RESULT_FILE_NODE" value="$V{METADATA_RESULT_FILE_NODE}"/>
-				<input name="SAMPLE_RESULT_FILE_NODE"/>
-	    		<input name="OUTPUT_FILE_NODE" value="$V{METADATA_RESULT_FILE_NODE}"/>
-	        </operation>
-        </sequence>
-		        
+	            
 	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
 	    <operation name="Create Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitV3DSampleParametersService">
 			<input name="SAMPLE_RESULT_FILE_NODE"/>
@@ -54,6 +42,18 @@
 			<output name="STITCHED_FILENAME"/>
 			<output name="RUN_ALIGNMENT"/>
 		</operation>
+		
+	    <!-- Asynchronously create the metadata describing the input LSM files -->
+        <sequence name="Create Lsm Metadata Files" waitForAsync="true">
+	        <operation name="Create Lsm Metadata Files" processor="queue/gridSubmitAndWait">
+	            <input name="iservice" value="org.janelia.it.jacs.compute.service.entity.CreateLsmMetadataFilesService"/>
+		        <input name="SAMPLE_ENTITY_ID"/>
+				<input name="METADATA_RESULT_FILE_NODE"/>
+		        <input name="RESULT_FILE_NODE" value="$V{METADATA_RESULT_FILE_NODE}"/>
+				<input name="SAMPLE_RESULT_FILE_NODE"/>
+	    		<input name="OUTPUT_FILE_NODE" value="$V{METADATA_RESULT_FILE_NODE}"/>
+	        </operation>
+        </sequence>
 	    
 	    <!-- Merge all the LSM pairs in parallel -->
         <sequence name="Merge Lsm Pairs" waitForAsync="true">
