@@ -31,6 +31,7 @@ VAA3D_DIR="$INSTALL_DIR/vaa3d.redhat"
 NEUSEP_DIR="$INSTALL_DIR/NeuronSeparator"
 STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
 TEMPLATE_DIR="$STAGING_DIR/templates"
+SVN_OPTIONS="--trust-server-cert --non-interactive"
 
 # Build the Server Tools for the Grid
 cd "$EXE_DIR/compile/"
@@ -38,7 +39,7 @@ cd "$EXE_DIR/compile/"
 ################################################################
 # Build Vaa3d for Redhat (Grid) and Fedora (Client) 
 ################################################################
-svn co https://svn.janelia.org/penglab/projects/vaa3d/branches/FlySuite_${FWVER} vaa3d_FlySuite_${FWVER}-redhat
+svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/branches/FlySuite_${FWVER} vaa3d_FlySuite_${FWVER}-redhat
 if [ ! -f "vaa3d_FlySuite_${FWVER}-redhat" ]; then
     echo "SVN tag not found for Vaa3d: FlySuite_${FWVER}"
     exit
@@ -63,7 +64,7 @@ cp -R v3d $VAA3D_DIR
 ################################################################
 # Build NeuronSeparator
 ################################################################
-svn co https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/branches/FlySuite_${FWVER} neusep_${FWVER}-redhat
+svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/branches/FlySuite_${FWVER} neusep_${FWVER}-redhat
 if [ ! -f "vaa3d_FlySuite_${FWVER}-redhat" ]; then
     echo "SVN tag not found for NeuronSeparator: FlySuite_${FWVER}"
     exit
@@ -85,7 +86,7 @@ cp tools/finish4 $NEUSEP_DIR
 ################################################################
 echo "Building Jacs"
 cd $WORKSPACE
-svn co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/branches/FlySuite_${FWVER} jacs_FlySuite_${FWVER}
+svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/branches/FlySuite_${FWVER} jacs_FlySuite_${FWVER}
 if [ ! -f "jacs_FlySuite_${FWVER}" ]; then
     echo "SVN tag not found for jacs: FlySuite_${FWVER}"
     exit

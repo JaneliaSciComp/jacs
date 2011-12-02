@@ -18,12 +18,13 @@ JACSDATA_DIR="/Volumes/jacsData"
 SCRIPT_DIR="$WORKSPACE"
 STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
 PACKAGE_DIR="$STAGING_DIR/workstation"
+SVN_OPTIONS="--trust-server-cert --non-interactive"
 
 ################################################################
 # Build Vaa3d for the Mac client
 ################################################################
 
-svn co https://svn.janelia.org/penglab/projects/vaa3d/branches/FlySuite_${FWVER} vaa3d_FlySuite_${FWVER}-mac
+svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/branches/FlySuite_${FWVER} vaa3d_FlySuite_${FWVER}-mac
 if [ ! -f "vaa3d_FlySuite_${FWVER}-redhat" ]; then
     echo "SVN tag not found for Vaa3d: FlySuite_${FWVER}"
     exit
