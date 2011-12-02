@@ -1,3 +1,4 @@
+#!/bin/sh
 #
 # Hudson build script for the Fly Workstation (part 2)
 # 
@@ -10,10 +11,13 @@
 # 2) jacsData mounted on /Volumes/jacsData
 #
 
-export FWVER=$1
-export JACSDATA_DIR="/Volumes/jacsData"
-export SCRIPT_DIR="$WORKSPACE"
-export STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
+set -o errexit
+
+FWVER=$1
+JACSDATA_DIR="/Volumes/jacsData"
+SCRIPT_DIR="$WORKSPACE"
+STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
+PACKAGE_DIR="$STAGING_DIR/workstation"
 
 ################################################################
 # Build Vaa3d for the Mac client
@@ -26,11 +30,20 @@ if [ ! -f "vaa3d_FlySuite_${FWVER}-redhat" ]; then
 fi
 cd vaa3d_FlySuite_${FWVER}-mac
 $SCRIPT_DIR/build_vaa3d_mac.sh
-cp -R v3d_main/v3d/vaa3d64.app $STAGING_DIR/workstation/
+cp -R v3d_main/v3d/vaa3d64.app $PACKAGE_DIR
 
 ################################################################
 # Create the Mac Bundle
 ################################################################
 
-/usr/local/bin/platypus -P $STAGING_DIR/workstation/FlySuite.platypus $STAGING_DIR/workstation/FlySuite.app
+WORKSTATION_JAR="$PACKAGE_DIR/workstation.jar"
+WORKSTATION_LIB="$PACKAGE_DIR/workstation_lib"
+VAA3D_BUNDLE="$PACKAGE_DIR/vaa3d64.app"
+COMPARTMENT_MAP="$PACKAGE_DIR/flybraincompartmentmap.v3ds"
+BUNDLE_SCRIPT="$PACKAGE_DIR/workstation.sh"
+
+# We could use a profile...
+#/usr/local/bin/platypus -P $STAGING_DIR/workstation/FlySuite.platypus $STAGING_DIR/workstation/FlySuite.app
+# But being explicit allows us to customize the filepaths:
+/usr/local/bin/platypus -a 'FlySuite' -o 'None' -p '/bin/sh' -u 'HHMI'  -V "${FWVER}"  -I 'org.janelia.FlySuite' -f "$WORKSTATION_JAR" -f "$WORKSTATION_LIB" -f "$VAA3D_BUNDLE" -f "$COMPARTMENT_MAP" -c "$BUNDLE_SCRIPT" "FlySuite_${FWVER}.app"
 

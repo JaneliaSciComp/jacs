@@ -1,3 +1,4 @@
+#!/bin/sh
 #
 # Hudson build script for the Fly Workstation (part 1)
 #
@@ -7,18 +8,29 @@
 # create the Linux client distribution and the first part of a Mac client 
 # distribution. The latter is completed in part 2 on a Mac executor.
 #
+# Before executing this build, branches should be created manually. 
+# For example, to create build 0.1.1 from the trunk of all 3 repositories: 
+# 
+# FWVER=0.1.1
+#
+# svn copy https://svn.janelia.org/penglab/projects/vaa3d/trunk https://svn.janelia.org/penglab/projects/vaa3d/branches/FlySuite_${FWVER} -m "Creating a branch for Workstation Suite, release ${FWVER}"
+#
+# svn copy https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/branches/FlySuite_${FWVER} -m "Creating a branch for Workstation Suite, release ${FWVER}" 
+#
+# svn copy https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/trunk https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/branches/FlySuite_${FWVER} -m "Creating a branch for Workstation Suite, release ${FWVER}"
+#
+#
+set -o errexit
 
-export FWVER=$1
-export JACSDATA_DIR="/groups/scicomp/jacsData"
-export EXE_DIR="$JACSDATA_DIR/servers/jacs/executables"
-export SCRIPT_DIR="$WORKSPACE"
-
-export INSTALL_DIR="$EXE_DIR/install"
-export VAA3D_DIR="$INSTALL_DIR/vaa3d.redhat"
-export NEUSEP_DIR="$INSTALL_DIR/NeuronSeparator"
-
-export STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
-export TEMPLATE_DIR="$STAGING_DIR/templates"
+FWVER=$1
+JACSDATA_DIR="/groups/scicomp/jacsData"
+EXE_DIR="$JACSDATA_DIR/servers/jacs/executables"
+SCRIPT_DIR="$WORKSPACE"
+INSTALL_DIR="$EXE_DIR/install"
+VAA3D_DIR="$INSTALL_DIR/vaa3d.redhat"
+NEUSEP_DIR="$INSTALL_DIR/NeuronSeparator"
+STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
+TEMPLATE_DIR="$STAGING_DIR/templates"
 
 # Build the Server Tools for the Grid
 cd "$EXE_DIR/compile/"
