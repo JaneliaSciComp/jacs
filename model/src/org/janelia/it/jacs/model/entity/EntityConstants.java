@@ -31,6 +31,7 @@ public class EntityConstants {
     public static final String TYPE_LSM_STACK_PAIR                   = "LSM Stack Pair";
     public static final String TYPE_NEURON_SEPARATOR_PIPELINE_RESULT = "Neuron Separator Pipeline Result";
     public static final String TYPE_IMAGE_2D                         = "Image 2D";
+    public static final String TYPE_IMAGE_3D                         = "Image 3D";
     public static final String TYPE_TIF_2D                           = "Tif 2D Image";
     public static final String TYPE_TIF_3D                           = "Tif 3D Image";
     public static final String TYPE_TIF_3D_LABEL_MASK                = "Tif 3D Label Mask";
@@ -60,8 +61,11 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ANNOTATION_SESSION_ID               = "Annotation Session Id";
     public static final String ATTRIBUTE_NUMBER                              = "Number";
     public static final String ATTRIBUTE_RESULT                              = "Result";
+    public static final String ATTRIBUTE_IS_ZIPPED                           = "Is Zipped";
     public static final String ATTRIBUTE_LSM_STACK_1                         = "LSM Stack 1";
     public static final String ATTRIBUTE_LSM_STACK_2                         = "LSM Stack 2";
+    public static final String ATTRIBUTE_MERGED_STACK                        = "Merged Stack";
+    public static final String ATTRIBUTE_TILING_PATTERN                      = "Tiling Pattern";
     public static final String ATTRIBUTE_SUPPORTING_FILES                    = "Supporting Files";
     public static final String ATTRIBUTE_NEURON_FRAGMENTS                    = "Neuron Fragments";
     public static final String ATTRIBUTE_INPUT                               = "ATTRIBUTE_INPUT";

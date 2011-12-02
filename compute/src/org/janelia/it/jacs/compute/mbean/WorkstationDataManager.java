@@ -32,9 +32,22 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
             		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), 
             		inputDirList, topLevelFolderName, refresh);
-            task.setJobName("MultiColor FlipOut Unified File Discovery Task");
+            task.setJobName("MultiColor FlipOut File Discovery Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("MCFODataPipeline", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void runMergedTileDataPipeline(String user, boolean refresh, String inputDirList, String topLevelFolderName) {
+        try {
+        	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
+            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), 
+            		inputDirList, topLevelFolderName, refresh);
+            task.setJobName("Merged Tile File Discovery Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("MergedTileDataPipeline", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }

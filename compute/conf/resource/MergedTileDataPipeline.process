@@ -1,0 +1,51 @@
+<!-- 
+	Discover merged tiles in the fileshare, load them into the database and run the MergedTileDataPipeline for each one 
+-->
+<process name="Merged Tile Data Pipeline" processor="queue/mcfoDataPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+	<sequence>
+	
+	    <!-- Import variables from the MCFODataPipelineTask -->
+	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="TASK_PARAMETER_1" value="list of input directories"/>
+            <input name="PROCESS_VARIABLE_1" value="INPUT_DIR_LIST"/>
+            <input name="TASK_PARAMETER_2" value="top level folder name"/>
+            <input name="PROCESS_VARIABLE_2" value="ROOT_ENTITY_NAME"/>
+            <input name="REFRESH" value="false"/>
+	        <output name="INPUT_DIR_LIST"/>
+	        <output name="ROOT_ENTITY_NAME"/>
+	    </operation>
+	    
+	    <!-- Discover samples in the fileshare and load them into the database as Entities -->
+		<operation name="Initial File Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.MergedFileDiscoveryService">
+			<input name="INPUT_DIR_LIST"/>
+			<input name="ROOT_ENTITY_NAME"/>
+			<input name="OUTVAR_ENTITY_ID" value="TOP_LEVEL_ENTITY_ID"/>
+		</operation>
+		
+	    <!-- Find all the eligible Sample Entities in the database -->
+		<operation name="Entity Tree Traversal" processor="org.janelia.it.jacs.compute.service.entity.EntityTreeTraversalService">
+			<input name="ENTITY_FILTER_CLASS" value="org.janelia.it.jacs.compute.service.entity.OpticIncompleteSampleEntityFilter"/>
+			<input name="ENTITY_TYPE_NAME" value="Sample"/>
+			<input name="TOP_LEVEL_ENTITY_ID"/>
+			<input name="ROOT_ENTITY_ID" value="$V{TOP_LEVEL_ENTITY_ID}"/>
+			<input name="OUTVAR_ENTITY_ID" value="SAMPLE_ENTITY_ID"/>
+		</operation>
+		
+	    <!-- Process each Sample Entity -->
+        <sequence forEach="SAMPLE_ENTITY_ID">
+            <sequence>
+			
+				<!-- Spawn a new task to process the Sample -->
+		        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
+        			<input name="TASK_CLASS" value="org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOSamplePipelineTask"/>
+		            <input name="PROCESS_DEF_NAME" value="MergedTileSamplePipeline"/>
+		            <input name="PARAMETER_1_KEY" value="sample entity id"/>
+		            <input name="SAMPLE_ENTITY_ID"/>
+		            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
+		        </operation>
+				
+			</sequence>
+	    </sequence>
+	    
+    </sequence>
+</process>

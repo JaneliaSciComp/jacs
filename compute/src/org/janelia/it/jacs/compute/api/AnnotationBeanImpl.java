@@ -481,6 +481,17 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     	}
     }
 
+    public List<Long> getPathToRoot(Long entityId, Long rootId) throws ComputeException {
+
+    	try {
+    		return _annotationDAO.getPathToRoot(entityId, rootId);
+    	}
+    	catch (DaoException e) {
+            _logger.error("Error searching tree rooted at "+rootId+" for "+entityId,e);
+    		throw new ComputeException("Error searching tree rooted at "+rootId+" for "+entityId,e);
+    	}
+    }
+    
     public EntityType getEntityTypeByName(String entityTypeName) {
 		return _annotationDAO.getEntityTypeByName(entityTypeName);
     }

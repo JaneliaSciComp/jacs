@@ -177,6 +177,15 @@ public class Entity  implements java.io.Serializable, IsSerializable {
 		return ed.getValue();
 	}
 
+	/**
+	 * Returns the child given by the attribute, if it exists and there is only one.
+	 */
+	public Entity getChildByAttributeName(String attributeName) {
+		EntityData ed = getEntityDataByAttributeName(attributeName);
+		if (ed == null) return null;
+		return ed.getChildEntity();
+	}
+
     // This is the sister method of the above 'getValueByAttributeName'
     // which does the inverse.
 

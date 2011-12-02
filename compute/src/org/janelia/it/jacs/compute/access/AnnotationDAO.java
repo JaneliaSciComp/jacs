@@ -1237,7 +1237,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
         
         List<List<Long>> matches = new ArrayList<List<Long>>();
         for(Entity entity : results) {
-        	List<Long> path = getPathToRoot(entity, rootId);
+        	List<Long> path = getPathToRoot(entity.getId(), rootId);
         	if (path != null) matches.add(path);
         	if (matches.size()>=MAX_SEARCH_PATHS) break;
         }
@@ -1247,19 +1247,19 @@ public class AnnotationDAO extends ComputeBaseDAO {
         return matches;
     }
     
-    public List<Long> getPathToRoot(Entity node, Long rootId) throws DaoException {
+    public List<Long> getPathToRoot(Long entityId, Long rootId) throws DaoException {
 
 		List<Long> ids = new ArrayList<Long>();
 		
-    	if (node.getId().equals(rootId)) {
+    	if (entityId.equals(rootId)) {
     		ids.add(rootId);
     		return ids;
     	}
     	
-    	for(Entity parent : getParentEntities(node.getId())) {
-    		List<Long> path = getPathToRoot(parent, rootId);
+    	for(Entity parent : getParentEntities(entityId)) {
+    		List<Long> path = getPathToRoot(parent.getId(), rootId);
     		if (path != null) {
-    			path.add(node.getId());
+    			path.add(entityId);
     			return path;
     		}
     	}

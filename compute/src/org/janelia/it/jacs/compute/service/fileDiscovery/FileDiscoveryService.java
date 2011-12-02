@@ -90,23 +90,8 @@ public class FileDiscoveryService implements IService {
                 }
             }
             
-            if (directoryPathList.isEmpty()) throw new Exception("No input directories provided");
+            processPathList(directoryPathList, topLevelFolder);
             
-            for (String directoryPath : directoryPathList) {
-                logger.info("Discover files in "+directoryPath);
-                File dir = new File(directoryPath);
-                if (!dir.exists()) {
-                    logger.error("Directory "+dir.getAbsolutePath()+" does not exist - skipping");
-                }
-                else if (!dir.isDirectory()) {
-                    logger.error(("File " + dir.getAbsolutePath()+ " is not a directory - skipping"));
-                } 
-                else {
-                    Entity folder = verifyOrCreateChildFolderFromDir(topLevelFolder, dir);
-                    processFolderForData(folder);
-                }
-            } 
-
         	String outvar = (String)processData.getItem("OUTVAR_ENTITY_ID");
         	if (outvar != null) {
         		logger.info("Putting "+topLevelFolder.getId()+" in "+outvar);
@@ -117,6 +102,26 @@ public class FileDiscoveryService implements IService {
         catch (Exception e) {
             throw new ServiceException(e);
         }
+    }
+    
+    protected void processPathList(List<String> directoryPathList, Entity topLevelFolder) throws Exception {
+
+        if (directoryPathList.isEmpty()) throw new Exception("No input directories provided");
+        
+        for (String directoryPath : directoryPathList) {
+            logger.info("Discover files in "+directoryPath);
+            File dir = new File(directoryPath);
+            if (!dir.exists()) {
+                logger.error("Directory "+dir.getAbsolutePath()+" does not exist - skipping");
+            }
+            else if (!dir.isDirectory()) {
+                logger.error(("File " + dir.getAbsolutePath()+ " is not a directory - skipping"));
+            } 
+            else {
+                Entity folder = verifyOrCreateChildFolderFromDir(topLevelFolder, dir);
+                processFolderForData(folder);
+            }
+        } 
     }
 
     protected Entity createOrVerifyRootEntity(String topLevelFolderName) throws Exception {

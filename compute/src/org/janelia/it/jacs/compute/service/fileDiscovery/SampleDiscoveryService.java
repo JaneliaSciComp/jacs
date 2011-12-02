@@ -140,7 +140,7 @@ public class SampleDiscoveryService extends FileDiscoveryService {
         if (tiling != null && tiling.isStitchable()) {
         	// This is a stitchable case
         	logger.info("Sample "+sampleIdentifier+" is stitchable");
-            Entity sample = createOrVerifySample(sampleIdentifier, folder);
+            Entity sample = createOrVerifySample(sampleIdentifier, folder, tiling);
         	// Add the LSM pairs to the Sample's Supporting Files folder
             for (FilePair filePair : filePairs) {
             	addLsmPairToSample(sample, filePair);
@@ -151,16 +151,16 @@ public class SampleDiscoveryService extends FileDiscoveryService {
         	logger.info("Sample "+sampleIdentifier+" is not stitchable");
             for (FilePair filePair : filePairs) {
             	String sampleName = sampleIdentifier+"-"+filePair.getPairTag().replaceAll(" ", "_");
-                Entity sample = createOrVerifySample(sampleName, folder);
+                Entity sample = createOrVerifySample(sampleName, folder, tiling);
             	addLsmPairToSample(sample, filePair);
             }
         }
     }
     
-    private Entity createOrVerifySample(String name, Entity folder) throws Exception {
+    private Entity createOrVerifySample(String name, Entity folder, TilingPattern tiling) throws Exception {
         Entity sample = findExistingSample(folder, name);
         if (sample == null) {
-	        sample = createSample(name);
+	        sample = createSample(name, tiling);
 	        addToParent(folder, sample, null, EntityConstants.ATTRIBUTE_ENTITY);
         }
         return sample;
@@ -229,13 +229,14 @@ public class SampleDiscoveryService extends FileDiscoveryService {
     	return null;
     }
 
-    protected Entity createSample(String name) throws Exception {
+    protected Entity createSample(String name, TilingPattern tiling) throws Exception {
         Entity sample = new Entity();
         sample.setUser(user);
         sample.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_SAMPLE));
         sample.setCreationDate(createDate);
         sample.setUpdatedDate(createDate);
         sample.setName(name);
+        sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN, tiling.toString());
         sample = annotationBean.saveOrUpdateEntity(sample);
         logger.info("Saved sample as "+sample.getId());
         return sample;

@@ -11,7 +11,9 @@ package org.janelia.it.jacs.compute.mbean;
 public interface WorkstationDataManagerMBean {
     	
 	public void runMCFODataPipeline(String user, boolean refresh, String inputDirList, String topLevelFolderName);
-	
+
+    public void runMergedTileDataPipeline(String user, boolean refresh, String inputDirList, String topLevelFolderName);
+    
 	public void runMCFODataPipelineForTiles(String user, boolean refresh);
 
     public void runMCFOSamplePipeline(String sampleEntityId);
