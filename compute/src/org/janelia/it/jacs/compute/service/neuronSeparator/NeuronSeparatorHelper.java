@@ -79,24 +79,27 @@ public class NeuronSeparatorHelper {
 			return getNeuronSeparationCommands((NeuronSeparatorPipelineTask)task, parentNode, mylibDir, commandDelim);
 		}
 		else {
-			String fileList = (String)processData.getItem("INPUT_FILENAME");
-	        if (fileList==null) {
+			String inputFilename = (String)processData.getItem("INPUT_FILENAME");
+	        if (inputFilename==null) {
 	        	throw new ServiceException("Input parameter INPUT_FILENAME may not be null");
 	        }
-			return getNeuronSeparationCommands(fileList, parentNode, mylibDir, commandDelim);
+			return getNeuronSeparationCommands(inputFilename, parentNode, mylibDir, commandDelim);
 		}
 	}
 	
-	private static String getNeuronSeparationCommands(String fileList,
+	private static String getNeuronSeparationCommands(String inputFilename,
 			FileNode parentNode, String mylibDir, String commandDelim) throws ServiceException {
         
 		// TODO: mylibDir no longer does anything... maybe we should inject it into the command string if we intend
 		// to run on multiple architectures. 
         StringBuilder cmdLine = new StringBuilder();
         cmdLine.append("cd ").append(parentNode.getDirectoryPath()).append(commandDelim);
-        
-        // TODO: This should be fixed at some point so that its specified in the process file
-        cmdLine.append("cp ../metadata/*.metadata .").append(commandDelim);
+
+    	File inputFile = new File(inputFilename);
+        if (inputFile.getName().endsWith(".zip")) {
+        	cmdLine.append("unzip "+inputFilename).append(commandDelim);
+        	inputFile = new File(parentNode.getDirectoryPath(), inputFile.getName().replaceFirst("\\.zip$", ""));
+        }
         
         cmdLine.append(SEPARATOR_BASE_CMD).append(" ");
         
@@ -104,7 +107,7 @@ public class NeuronSeparatorHelper {
         cmdLine.append("-nr -pj ");
         
         cmdLine.append(parentNode.getDirectoryPath()).append(" neuronSeparatorPipeline ").
-                	append(NeuronSeparatorHelper.addQuotesToCsvString(fileList)).append(commandDelim);
+                	append(inputFile.getAbsolutePath()).append(commandDelim);
         
         return cmdLine.toString();
 	}
@@ -228,20 +231,6 @@ public class NeuronSeparatorHelper {
 
     private static String addQuotes(String s) {
     	return "\""+s+"\"";
-    }
-
-    private static String addQuotesToCsvString(String csvString) {
-        String[] clist=csvString.split(",");
-        StringBuffer sb=new StringBuffer();
-        for (int i=0;i<clist.length;i++) {
-            sb.append("\"");
-            sb.append(clist[i].trim());
-            sb.append("\"");
-            if (i<clist.length-1) {
-                sb.append(" ");
-            }
-        }
-        return sb.toString();
     }
     
     private static String createLsmMetadataFilename(File lsmFile) {

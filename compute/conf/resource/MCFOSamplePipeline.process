@@ -2,7 +2,7 @@
       Fully process a Sample in the database by merging its LSMs, stitching and blending them, 
       running neuron separation, and loading the results back into the database. 
  -->
- <process name="MultiColor FlipOut Sample Pipeline" processor="queue/mcfoSamplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+ <process name="MultiColor FlipOut Sample Pipeline" processor="queue/mcfoSamplePipelineLauncher" startEvent="pending">
 	<sequence>
 	    
 	    <!-- Import variables from the MCFOSamplePipelineTask -->
@@ -149,6 +149,12 @@
 					<input name="RESULT_ENTITY_NAME" value="Prealigned Neuron Separation"/>
 			    </operation>
 	    
+			    <!-- Copy LSM metadata files -->
+			    <operation name="Copy Lsm Metadata Files" processor="org.janelia.it.jacs.compute.service.entity.MigrateLsmMetadataFilesService">
+			        <input name="SAMPLE_ENTITY_ID"/>
+			        <input name="SEPARATE_RESULT_FILE_NODE"/>
+			    </operation>
+			    
 	    	</sequence>
 	    	
 	    	<!-- Align and separate, only if there is more than one LSM pair -->
@@ -233,6 +239,12 @@
 					<input name="SAMPLE_ENTITY_ID"/>
 					<input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
 					<input name="RESULT_ENTITY_NAME" value="Aligned Neuron Separation"/>
+			    </operation>
+			    
+			    <!-- Copy LSM metadata files -->
+			    <operation name="Copy Lsm Metadata Files" processor="org.janelia.it.jacs.compute.service.entity.MigrateLsmMetadataFilesService">
+			        <input name="SAMPLE_ENTITY_ID"/>
+			        <input name="ALIGNSEP_RESULT_FILE_NODE"/>
 			    </operation>
 			    
 	    	</sequence>
