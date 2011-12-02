@@ -766,7 +766,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         List<Long> taskList = getTaskTreeIdList(taskId);
         for (Long tid : taskList) {
             Task t = computeDAO.getTaskById(tid);
-            if (!t.getLastEvent().getEventType().equals(Event.CANCELED_EVENT)) {
+            if (t.getLastEvent()==null || t.getLastEvent().getEventType()==null || !t.getLastEvent().getEventType().equals(Event.CANCELED_EVENT)) {
                 Event event = new Event();
                 event.setEventType(Event.CANCELED_EVENT);
                 event.setTimestamp(new Date());
