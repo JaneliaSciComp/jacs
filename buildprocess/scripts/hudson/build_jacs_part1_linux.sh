@@ -33,6 +33,8 @@ STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
 TEMPLATE_DIR="$STAGING_DIR/templates"
 SVN_OPTIONS="--trust-server-cert --non-interactive"
 
+echo "Building FlySuite version $FWVER (Part 1)"
+
 # Build the Server Tools for the Grid
 cd "$EXE_DIR/compile/"
 

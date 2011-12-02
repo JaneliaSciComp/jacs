@@ -20,6 +20,8 @@ STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
 PACKAGE_DIR="$STAGING_DIR/workstation"
 SVN_OPTIONS="--trust-server-cert --non-interactive"
 
+echo "Building FlySuite version $FWVER (Part 2)"
+
 ################################################################
 # Build Vaa3d for the Mac client
 ################################################################
