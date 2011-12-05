@@ -20,7 +20,12 @@
 # svn copy https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/trunk https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/branches/FlySuite_${FWVER} -m "Creating a branch for Workstation Suite, release ${FWVER}"
 #
 #
+
+# Exit after any error
 set -o errexit
+
+# Configure SGE for doing grid builds
+. /sge/6.2u5/default/common/settings.sh
 
 FWVER=$1
 JACSDATA_DIR="/groups/scicomp/jacsData"
