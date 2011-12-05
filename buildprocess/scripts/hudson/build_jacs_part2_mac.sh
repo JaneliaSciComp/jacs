@@ -25,13 +25,14 @@ echo "Building FlySuite version $FWVER (Part 2)"
 ################################################################
 # Build Vaa3d for the Mac client
 ################################################################
-
-svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/branches/FlySuite_${FWVER} vaa3d_FlySuite_${FWVER}-mac
-if [ ! -f "vaa3d_FlySuite_${FWVER}-redhat" ]; then
+VAA3D_COMPILE_MAC_DIR="vaa3d_FlySuite_${FWVER}-mac"
+rm -rf "$VAA3D_COMPILE_MAC_DIR" || true
+svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/branches/FlySuite_${FWVER} $VAA3D_COMPILE_MAC_DIR
+if [ ! -f $VAA3D_COMPILE_MAC_DIR ]; then
     echo "SVN tag not found for Vaa3d: FlySuite_${FWVER}"
-    exit
+    exit 1
 fi
-cd vaa3d_FlySuite_${FWVER}-mac
+cd $VAA3D_COMPILE_MAC_DIR
 $SCRIPT_DIR/build_vaa3d_mac.sh
 cp -R v3d_main/v3d/vaa3d64.app $PACKAGE_DIR
 

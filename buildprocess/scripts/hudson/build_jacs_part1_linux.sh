@@ -41,19 +41,22 @@ cd "$EXE_DIR/compile/"
 ################################################################
 # Build Vaa3d for Redhat (Grid) and Fedora (Client) 
 ################################################################
-svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/branches/FlySuite_${FWVER} vaa3d_FlySuite_${FWVER}-redhat
-if [ ! -f "vaa3d_FlySuite_${FWVER}-redhat" ]; then
+VAA3D_COMPILE_REDHAT_DIR="vaa3d_FlySuite_${FWVER}-redhat"
+VAA3D_COMPILE_FEDORA_DIR="vaa3d_FlySuite_${FWVER}-redhat"
+rm -rf $VAA3D_COMPILE_REDHAT_DIR || true
+svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/branches/FlySuite_${FWVER} $VAA3D_COMPILE_REDHAT_DIR
+if [ ! -e $VAA3D_COMPILE_REDHAT_DIR ]; then
     echo "SVN tag not found for Vaa3d: FlySuite_${FWVER}"
-    exit
+    exit 1
 fi
-cp "$SCRIPT_DIR/build_vaa3d_linux.sh" vaa3d_FlySuite_${FWVER}-redhat/
-cp -R vaa3d_FlySuite_${FWVER}-redhat vaa3d_FlySuite_${FWVER}-fedora
+cp "$SCRIPT_DIR/build_vaa3d_linux.sh" $VAA3D_COMPILE_REDHAT_DIR
+cp -R $VAA3D_COMPILE_REDHAT_DIR $VAA3D_COMPILE_FEDORA_DIR
 
 echo "Building Vaa3D for the grid"
 qsub -sync "$SCRIPT_DIR/qsub_vaa3d_build.sh" $FWVER
 
 echo "Building Vaa3D for the linux client"
-cd vaa3d_FlySuite_${FWVER}-fedora
+cd $VAA3D_COMPILE_FEDORA_DIR
 sh build_v3d_linux.sh
 
 ################################################################
@@ -66,10 +69,12 @@ cp -R v3d $VAA3D_DIR
 ################################################################
 # Build NeuronSeparator
 ################################################################
-svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/branches/FlySuite_${FWVER} neusep_${FWVER}-redhat
-if [ ! -f "vaa3d_FlySuite_${FWVER}-redhat" ]; then
+NEUSEP_COMPILE_REDHAT_DIR="neusep_FlySuite_${FWVER}-redhat"
+rm -rf $NEUSEP_COMPILE_REDHAT_DIR || true
+svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/branches/FlySuite_${FWVER} $NEUSEP_COMPILE_REDHAT_DIR
+if [ ! -e $NEUSEP_COMPILE_REDHAT_DIR ]; then
     echo "SVN tag not found for NeuronSeparator: FlySuite_${FWVER}"
-    exit
+    exit 1
 fi
 echo "Building NeuronSeparator for the grid"
 qsub -sync "$SCRIPT_DIR/qsub_neusep_build.sh" $FWVER
@@ -88,15 +93,17 @@ cp tools/finish4 $NEUSEP_DIR
 ################################################################
 echo "Building Jacs"
 cd $WORKSPACE
-svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/branches/FlySuite_${FWVER} jacs_FlySuite_${FWVER}
-if [ ! -f "jacs_FlySuite_${FWVER}" ]; then
+JACS_COMPILE_DIR="jacs_FlySuite_${FWVER}"
+rm -rf $JACS_COMPILE_DIR || true
+svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/branches/FlySuite_${FWVER} $JACS_COMPILE_DIR
+if [ ! -e $JACS_COMPILE_DIR ]; then
     echo "SVN tag not found for jacs: FlySuite_${FWVER}"
-    exit
+    exit 1
 fi
 
 # TODO: deploy to jacs and jacs-data?
 
-
+cd $JACS_COMPILE_DIR
 cd buildprocess
 ant -buildfile build-all.xml
 cd ../compute
@@ -110,7 +117,6 @@ rm -rf workstation
 rm -rf workstation_linux
 cp -R $TEMPLATE_DIR/mac_template workstation
 cp -R $TEMPLATE_DIR/linux_template workstation_linux
-cp -R $WORKSPACE/jacs_FlySuite_${FWVER}/console/jars/* workstation/ 
-cp -R $WORKSPACE/jacs_FlySuite_${FWVER}/console/jars/* workstation_linux/ 
-
+cp -R $WORKSPACE/$JACS_COMPILE_DIR/console/jars/* workstation/ 
+cp -R $WORKSPACE/$JACS_COMPILE_DIR/console/jars/* workstation_linux/ 
 
