@@ -26,6 +26,7 @@ FWVER=$1
 JACSDATA_DIR="/groups/scicomp/jacsData"
 EXE_DIR="$JACSDATA_DIR/servers/jacs/executables"
 SCRIPT_DIR="$WORKSPACE"
+COMPILE_DIR="$EXE_DIR/compile"
 INSTALL_DIR="$EXE_DIR/install"
 VAA3D_DIR="$INSTALL_DIR/vaa3d.redhat"
 NEUSEP_DIR="$INSTALL_DIR/NeuronSeparator"
@@ -35,14 +36,13 @@ SVN_OPTIONS="--trust-server-cert --non-interactive"
 
 echo "Building FlySuite version $FWVER (Part 1)"
 
-# Build the Server Tools for the Grid
-cd "$EXE_DIR/compile/"
-
 ################################################################
 # Build Vaa3d for Redhat (Grid) and Fedora (Client) 
 ################################################################
-VAA3D_COMPILE_REDHAT_DIR="vaa3d_FlySuite_${FWVER}-redhat"
-VAA3D_COMPILE_FEDORA_DIR="vaa3d_FlySuite_${FWVER}-redhat"
+echo "Building Vaa3D"
+cd $COMPILE_DIR
+VAA3D_COMPILE_REDHAT_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-redhat"
+VAA3D_COMPILE_FEDORA_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-fedora"
 rm -rf $VAA3D_COMPILE_REDHAT_DIR || true
 svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/branches/FlySuite_${FWVER} $VAA3D_COMPILE_REDHAT_DIR
 if [ ! -e $VAA3D_COMPILE_REDHAT_DIR ]; then
@@ -69,14 +69,15 @@ cp -R v3d $VAA3D_DIR
 ################################################################
 # Build NeuronSeparator
 ################################################################
-NEUSEP_COMPILE_REDHAT_DIR="neusep_FlySuite_${FWVER}-redhat"
+echo "Building NeuronSeparator for the grid"
+cd $COMPILE_DIR
+NEUSEP_COMPILE_REDHAT_DIR="$COMPILE_DIR/neusep_FlySuite_${FWVER}-redhat"
 rm -rf $NEUSEP_COMPILE_REDHAT_DIR || true
 svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/branches/FlySuite_${FWVER} $NEUSEP_COMPILE_REDHAT_DIR
 if [ ! -e $NEUSEP_COMPILE_REDHAT_DIR ]; then
     echo "SVN tag not found for NeuronSeparator: FlySuite_${FWVER}"
     exit 1
 fi
-echo "Building NeuronSeparator for the grid"
 qsub -sync "$SCRIPT_DIR/qsub_neusep_build.sh" $FWVER
 
 ################################################################
@@ -92,8 +93,8 @@ cp tools/finish4 $NEUSEP_DIR
 # Build Jacs
 ################################################################
 echo "Building Jacs"
-cd $WORKSPACE
-JACS_COMPILE_DIR="jacs_FlySuite_${FWVER}"
+cd $COMPILE_DIR
+JACS_COMPILE_DIR="$COMPILE_DIR/jacs_FlySuite_${FWVER}"
 rm -rf $JACS_COMPILE_DIR || true
 svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/branches/FlySuite_${FWVER} $JACS_COMPILE_DIR
 if [ ! -e $JACS_COMPILE_DIR ]; then
@@ -101,13 +102,12 @@ if [ ! -e $JACS_COMPILE_DIR ]; then
     exit 1
 fi
 
-# TODO: deploy to jacs and jacs-data?
-
 cd $JACS_COMPILE_DIR
 cd buildprocess
 ant -buildfile build-all.xml
 cd ../compute
-ant "deploy-[your-server]-dev"
+# TODO: deploy to jacs and jacs-data?
+#ant "deploy-[your-server]-dev"
 cd ../console
 ant "build-run-jar"
 
