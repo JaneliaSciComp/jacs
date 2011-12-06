@@ -118,6 +118,7 @@ public class DrmaaSubmitter {
     }
 
     public static void main(String[] args) {
+    	int exitCode = 0;
         // parse parameters
         SubmitterParams params = null;
         try {
@@ -174,17 +175,17 @@ public class DrmaaSubmitter {
                 System.out.println(output);
             }
             logger.info(output);
-
-            System.exit(gridActionSuccessful ? 0 : 200);
+            exitCode = gridActionSuccessful ? 0 : 200;
         }
         catch (Throwable t) {
             logger.error("DrmaaSubmit Error: " + t.getMessage(), t);
             System.err.println(t.getClass().getName() + ": " + t.getMessage());
-            System.exit(1);
+            exitCode = 1;
         }
         finally {
             LogManager.shutdown();
         }
+        System.exit(exitCode);
     }
 
     private static void configureLog4j(String logFileName) {
