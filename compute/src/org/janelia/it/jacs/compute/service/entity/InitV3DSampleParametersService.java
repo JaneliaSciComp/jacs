@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.service.entity;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -84,6 +85,17 @@ public class InitV3DSampleParametersService implements IService {
                         	gotFirst = true;
             			}	
             		}
+            	}
+            	
+            	File lsmFile1 = new File(lsmFilepath1);
+            	File lsmFile2 = new File(lsmFilepath2);
+            	
+            	if (!lsmFile1.exists()||!lsmFile1.canRead()) {
+            		throw new FileNotFoundException("LSM file does not exist or is not readable: "+lsmFile1.getAbsolutePath());
+            	}
+
+            	if (!lsmFile2.exists()||!lsmFile2.canRead()) {
+            		throw new FileNotFoundException("LSM file does not exist or is not readable: "+lsmFile2.getAbsolutePath());
             	}
             	
             	File mergedFile = new File(mergeResultNode.getDirectoryPath(), "merged-"+lsmPairEntity.getId()+".v3draw");
