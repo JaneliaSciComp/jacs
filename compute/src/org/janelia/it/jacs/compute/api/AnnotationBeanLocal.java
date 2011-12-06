@@ -68,5 +68,6 @@ public interface AnnotationBeanLocal {
     public Entity getAncestorWithType(Entity entity, String type) throws ComputeException;
     public List<List<Long>> searchTreeForNameStartingWith(Long rootId, String searchString) throws ComputeException;
     public List<Long> getPathToRoot(Long entityId, Long rootId) throws ComputeException;
+    public List<Entity> getEntitiesWithAttributeValue(String attrName, String attrValue) throws ComputeException;
     
 }

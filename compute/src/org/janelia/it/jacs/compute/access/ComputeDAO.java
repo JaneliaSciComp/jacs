@@ -587,6 +587,18 @@ public class ComputeDAO extends ComputeBaseDAO {
         }
     }
 
+    public List<Node> getNodeByPathOverride(String pathOverride) throws DaoException {
+        try {
+            String hql = "select n from Node n where n.pathOverride=?";
+            Query query = getCurrentSession().createQuery(hql).setString(0, pathOverride);
+            return query.list();
+        }
+        catch (Exception e) {
+            // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
+            throw handleException(e, "getNodeByPathOverride");
+        }
+    }
+    
     /**
      * Method to expire system-owned recruitment and filter data tasks.  Expired system tasks will no longer show up
      * in the system lists, BUT user-saved data based on the old GBK file/Gi-number should still work.  This occurrance

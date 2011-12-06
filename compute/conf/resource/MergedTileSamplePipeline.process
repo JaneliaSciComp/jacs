@@ -103,6 +103,18 @@
 					</operation>
 		        </sequence>
 		        
+			    <!-- Cleanup all TIFs that are not needed since they were converted to PNG -->
+				<operation name="Clean up unneeded TIFs" processor="org.janelia.it.jacs.compute.service.common.FileCleanupService">
+					<input name="SEPARATE_RESULT_FILE_NODE"/>
+					<input name="TARGET_FILE_NODE" value="$V{SEPARATE_RESULT_FILE_NODE}"/>
+					<input name="TARGET_FILENAME_1" value="ConsolidatedSignal.tif"/>
+					<input name="TARGET_FILENAME_2" value="ConsolidatedLabel.tif"/>
+					<input name="TARGET_FILENAME_3" value="Reference.tif"/>
+					<input name="TARGET_FILENAME_REGEX_4" value="(.*?)MIP\.tif$"/>
+					<input name="TARGET_FILENAME_REGEX_5" value="neuronSeparatorPipeline\.PR\.(.*?)\.tif$"/>
+					<input name="TARGET_FILENAME_REGEX_6" value="(.*?)\.(oos|neu)$"/>
+			    </operation>
+			    
 			    <!-- Load the separation results into the database -->
 				<operation name="Discover Neuron Separation Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.NeuronSeparatorResultsDiscoveryService">
 					<input name="SEPARATE_RESULT_FILE_NODE"/>

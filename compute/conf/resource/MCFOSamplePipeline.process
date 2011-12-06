@@ -109,7 +109,7 @@
 						<input name="OUTPUT_FILENAME_3" value="Reference.v3dpbd"/>
 					</operation>
 		        </sequence>
-		        
+			    
 			    <!-- Generated whole-sample MIPs from the neuron separation results -->
 		        <sequence name="MIP Generation" waitForAsync="true">
 				    <operation name="MIP Generation" processor="queue/gridSubmitAndWait">
@@ -140,6 +140,18 @@
 					</operation>
 		        </sequence>
 		        
+			    <!-- Cleanup all TIFs that are not needed since they were converted to PNG -->
+				<operation name="Clean up unneeded TIFs" processor="org.janelia.it.jacs.compute.service.common.FileCleanupService">
+					<input name="SEPARATE_RESULT_FILE_NODE"/>
+					<input name="TARGET_FILE_NODE" value="$V{SEPARATE_RESULT_FILE_NODE}"/>
+					<input name="TARGET_FILENAME_1" value="ConsolidatedSignal.tif"/>
+					<input name="TARGET_FILENAME_2" value="ConsolidatedLabel.tif"/>
+					<input name="TARGET_FILENAME_3" value="Reference.tif"/>
+					<input name="TARGET_FILENAME_REGEX_4" value="(.*?)MIP\.tif$"/>
+					<input name="TARGET_FILENAME_REGEX_5" value="neuronSeparatorPipeline\.PR\.(.*?)\.tif$"/>
+					<input name="TARGET_FILENAME_REGEX_6" value="(.*?)\.(oos|neu)$"/>
+			    </operation>
+	    
 			    <!-- Load the separation results into the database -->
 				<operation name="Discover Neuron Separation Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.NeuronSeparatorResultsDiscoveryService">
 					<input name="SEPARATE_RESULT_FILE_NODE"/>
@@ -232,6 +244,18 @@
 					</operation>
 		        </sequence>
 				
+			    <!-- Cleanup all TIFs that are not needed since they were converted to PNG -->
+				<operation name="Clean up unneeded TIFs" processor="org.janelia.it.jacs.compute.service.common.FileCleanupService">
+					<input name="ALIGNSEP_RESULT_FILE_NODE"/>
+					<input name="TARGET_FILE_NODE" value="$V{ALIGNSEP_RESULT_FILE_NODE}"/>
+					<input name="TARGET_FILENAME_1" value="ConsolidatedSignal.tif"/>
+					<input name="TARGET_FILENAME_2" value="ConsolidatedLabel.tif"/>
+					<input name="TARGET_FILENAME_3" value="Reference.tif"/>
+					<input name="TARGET_FILENAME_REGEX_4" value="(.*?)MIP\.tif$"/>
+					<input name="TARGET_FILENAME_REGEX_5" value="neuronSeparatorPipeline\.PR\.(.*?)\.tif$"/>
+					<input name="TARGET_FILENAME_REGEX_6" value="(.*?)\.(oos|neu)$"/>
+			    </operation>
+			    
 			    <!-- Load the aligned separation results into the database -->
 				<operation name="Discover Aligned Neuron Separation Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.NeuronSeparatorResultsDiscoveryService">
 					<input name="ALIGNSEP_RESULT_FILE_NODE"/>

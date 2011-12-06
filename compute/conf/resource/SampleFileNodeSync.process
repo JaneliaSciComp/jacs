@@ -1,0 +1,13 @@
+<!-- 
+	Synchronize file nodes with the entities in the database. 
+-->
+<process name="Sample File Node Synchronization" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
+	<sequence>
+	
+	    <!-- Find all the Sample Entities in the database -->
+		<operation name="Entity Tree Traversal" processor="org.janelia.it.jacs.compute.service.entity.SampleFileNodeSyncService">
+		
+		</operation>
+	    
+    </sequence>
+</process>

@@ -111,6 +111,7 @@ public interface ComputeBeanRemote {
     public List<Task> getChildTasksByParentTaskId(long taskId) throws RemoteException;
     public long getCumulativeCpuTime(long taskId) throws RemoteException;
     public List<Node> getNodeByName(String nodeName) throws DaoException;
+    public List<Node> getNodeByPathOverride(String pathOverride) throws DaoException;
 
     public void setSystemDataRelatedToGiNumberObsolete(String giNumber) throws DaoException;
 

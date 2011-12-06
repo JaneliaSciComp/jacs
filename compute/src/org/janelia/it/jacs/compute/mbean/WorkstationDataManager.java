@@ -13,6 +13,7 @@ import org.janelia.it.jacs.model.tasks.fileDiscovery.EntityViewCreationTask;
 import org.janelia.it.jacs.model.tasks.fileDiscovery.FileDiscoveryTask;
 import org.janelia.it.jacs.model.tasks.fileDiscovery.MCFODataPipelineTask;
 import org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOSamplePipelineTask;
+import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
 
 /**
@@ -27,6 +28,18 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     public WorkstationDataManager() {
     }
 
+    public void runSampleSyncService(String user) {
+        try {
+        	Task task = new GenericTask(new HashSet<Node>(), 
+            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), "sampleSync", "Sample Sync");
+            task.setJobName("MultiColor FlipOut File Discovery Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("SampleFileNodeSync", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
     public void runMCFODataPipeline(String user, boolean refresh, String inputDirList, String topLevelFolderName) {
         try {
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 

@@ -492,6 +492,16 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     	}
     }
     
+    public List<Entity> getEntitiesWithAttributeValue(String attrName, String attrValue) throws ComputeException {
+    	try {
+    		return _annotationDAO.getEntitiesWithAttributeValue(attrName, attrValue);
+    	}
+    	catch (DaoException e) {
+            _logger.error("Error searching for entities with "+attrName+" like "+attrValue,e);
+    		throw new ComputeException("Error searching for entities with "+attrName+" like "+attrValue,e);
+    	}
+    }
+    
     public EntityType getEntityTypeByName(String entityTypeName) {
 		return _annotationDAO.getEntityTypeByName(entityTypeName);
     }

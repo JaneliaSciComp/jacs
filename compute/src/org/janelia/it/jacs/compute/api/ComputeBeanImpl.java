@@ -525,6 +525,10 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return computeDAO.getNodeByName(nodeName);
     }
 
+    public List<Node> getNodeByPathOverride(String pathOverride) throws DaoException {
+        return computeDAO.getNodeByPathOverride(pathOverride);
+    }
+    
     public void setSystemDataRelatedToGiNumberObsolete(String giNumber) throws DaoException {
         computeDAO.setSystemDataRelatedToGiNumberObsolete(giNumber);
     }

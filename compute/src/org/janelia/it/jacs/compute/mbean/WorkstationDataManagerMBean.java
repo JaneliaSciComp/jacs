@@ -10,6 +10,8 @@ package org.janelia.it.jacs.compute.mbean;
 
 public interface WorkstationDataManagerMBean {
     	
+	public void runSampleSyncService(String user);
+		
 	public void runMCFODataPipeline(String user, boolean refresh, String inputDirList, String topLevelFolderName);
 
     public void runMergedTileDataPipeline(String user, boolean refresh, String inputDirList, String topLevelFolderName);

@@ -85,6 +85,7 @@ public interface ComputeBeanLocal {
     public int getNumCategoryResults(Long nodeId, String category); 
     public Node createNode(Node node) throws DaoException;
     public List<Node> getNodeByName(String nodeName) throws DaoException;
+    public List<Node> getNodeByPathOverride(String pathOverride) throws DaoException;
 
     public void setSystemDataRelatedToGiNumberObsolete(String giNumber) throws DaoException;
     public List<HmmerPfamDatabaseNode> getHmmerPfamDatabases();

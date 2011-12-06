@@ -31,23 +31,19 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
         try {
             if (entityByName.isEmpty()) {
-                _logger.debug("  Preloading entity types...");
                 for(EntityType entityType : getAllEntityTypes()) {
-                    _logger.debug("    Loaded entity type: "+entityType.getName());
                     entityByName.put(entityType.getName(), entityType);
                 }
             }
 
             if (attrByName.isEmpty()) {
-                _logger.debug("  Preloading attribute types...");
                 for(EntityAttribute entityAttr : getAllEntityAttributes()) {
-                    _logger.debug("    Loaded entity attr: "+entityAttr.getName());
                     attrByName.put(entityAttr.getName(), entityAttr);
                 }
             }
         }
         catch (Exception e) {
-            _logger.error("Unexpected error occurred while trying preload models.", e);
+            _logger.error("Unexpected error occurred while trying preload metamodel", e);
         }
     }
     
@@ -1266,6 +1262,17 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	
     	// No path to the given root
     	return null;
+    }
+
+    public List<Entity> getEntitiesWithAttributeValue(String attrName, String attrValue) throws DaoException {
+        try {
+            Session session = getCurrentSession();
+            StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed where ed.entityAttribute.name=? and ed.value like ?");
+            Query query = session.createQuery(hql.toString()).setString(0, attrName).setString(1, attrValue);
+            return query.list();
+        } catch (Exception e) {
+            throw new DaoException(e);
+        }
     }
     
     public EntityType getEntityTypeByName(String entityTypeName) {
