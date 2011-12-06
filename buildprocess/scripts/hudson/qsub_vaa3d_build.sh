@@ -1,5 +1,7 @@
 #!/bin/sh
 FWVER=$1
-cd /groups/scicomp/jacsData/servers/jacs/executables/compile/vaa3d_FlySuite_${FWVER}-redhat
-sh build_v3d_linux.sh
-
+SERVER=$2
+DIR="/groups/scicomp/jacsData/servers/${SERVER}/executables/compile/vaa3d_FlySuite_${FWVER}-redhat"
+echo "Building $DIR"
+cd $DIR
+sh build_vaa3d_linux.sh > build.out

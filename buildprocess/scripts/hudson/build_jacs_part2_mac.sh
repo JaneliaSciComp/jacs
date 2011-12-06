@@ -11,43 +11,72 @@
 # 2) jacsData mounted on /Volumes/jacsData
 #
 
+BUILD_VAA3D=1
+BUILD_FLYSUITE=1
+
+# Exit after any error
 set -o errexit
 
 FWVER=$1
-JACSDATA_DIR="/Volumes/jacsData"
-SCRIPT_DIR="$WORKSPACE"
-STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
-PACKAGE_DIR="$STAGING_DIR/workstation"
+SERVER=$2
+
+JACSDATA_DIR="/groups/scicomp/jacsData"
 SVN_OPTIONS="--trust-server-cert --non-interactive"
+
+EXE_DIR="$JACSDATA_DIR/servers/$SERVER/executables"
+COMPILE_DIR="$EXE_DIR/compile"
+VAA3D_COMPILE_MAC_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-mac"
+
+STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
+PACKAGE_MAC_DIR="$STAGING_DIR/workstation"
 
 echo "Building FlySuite version $FWVER (Part 2)"
 
 ################################################################
 # Build Vaa3d for the Mac client
 ################################################################
-VAA3D_COMPILE_MAC_DIR="vaa3d_FlySuite_${FWVER}-mac"
-rm -rf "$VAA3D_COMPILE_MAC_DIR" || true
-svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/branches/FlySuite_${FWVER} $VAA3D_COMPILE_MAC_DIR
-if [ ! -f $VAA3D_COMPILE_MAC_DIR ]; then
-    echo "SVN tag not found for Vaa3d: FlySuite_${FWVER}"
-    exit 1
+if [ $BUILD_VAA3D == 1 ]; then
+
+    echo "Building Vaa3D"
+    cd $COMPILE_DIR
+
+    echo "  Removing VAA3D_COMPILE_MAC_DIR"
+    rm -rf "$VAA3D_COMPILE_MAC_DIR" || true
+
+    echo "  Checking out from SVN"
+    svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/branches/FlySuite_${FWVER} $VAA3D_COMPILE_MAC_DIR
+    if [ ! -f $VAA3D_COMPILE_MAC_DIR ]; then
+        echo "SVN tag not found for Vaa3d: FlySuite_${FWVER}"
+        exit 1
+    fi
+    cd $VAA3D_COMPILE_MAC_DIR
+
+    svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk/buildprocess/scripts/hudson
+
+    echo "  Building Vaa3D for the Mac client"
+    hudson/build_vaa3d_mac.sh
+    cp -R v3d_main/v3d/vaa3d64.app $PACKAGE_MAC_DIR
 fi
-cd $VAA3D_COMPILE_MAC_DIR
-$SCRIPT_DIR/build_vaa3d_mac.sh
-cp -R v3d_main/v3d/vaa3d64.app $PACKAGE_DIR
 
 ################################################################
 # Create the Mac Bundle
 ################################################################
 
-WORKSTATION_JAR="$PACKAGE_DIR/workstation.jar"
-WORKSTATION_LIB="$PACKAGE_DIR/workstation_lib"
-VAA3D_BUNDLE="$PACKAGE_DIR/vaa3d64.app"
-COMPARTMENT_MAP="$PACKAGE_DIR/flybraincompartmentmap.v3ds"
-BUNDLE_SCRIPT="$PACKAGE_DIR/workstation.sh"
+if [ $BUILD_FLYSUITE == 1 ]; then
 
-# We could use a profile...
-#/usr/local/bin/platypus -P $STAGING_DIR/workstation/FlySuite.platypus $STAGING_DIR/workstation/FlySuite.app
-# But being explicit allows us to customize the filepaths:
-/usr/local/bin/platypus -a 'FlySuite' -o 'None' -p '/bin/sh' -u 'HHMI'  -V "${FWVER}"  -I 'org.janelia.FlySuite' -f "$WORKSTATION_JAR" -f "$WORKSTATION_LIB" -f "$VAA3D_BUNDLE" -f "$COMPARTMENT_MAP" -c "$BUNDLE_SCRIPT" "FlySuite_${FWVER}.app"
+    WORKSTATION_JAR="$PACKAGE_MAC_DIR/workstation.jar"
+    WORKSTATION_LIB="$PACKAGE_MAC_DIR/workstation_lib"
+    VAA3D_BUNDLE="$PACKAGE_MAC_DIR/vaa3d64.app"
+    COMPARTMENT_MAP="$PACKAGE_MAC_DIR/flybraincompartmentmap.v3ds"
+    BUNDLE_SCRIPT="$PACKAGE_MAC_DIR/workstation.sh"
+    BUNDLE_FILE="$PACKAGE_MAC_DIR/FlySuite_${FWVER}.app"
+
+    /usr/local/bin/platypus -a 'FlySuite' -o 'None' -p '/bin/sh' -u 'HHMI'  -V "${FWVER}"  -I 'org.janelia.FlySuite' -f "$WORKSTATION_JAR" -f "$WORKSTATION_LIB" -f "$VAA3D_BUNDLE" -f "$COMPARTMENT_MAP" -c "$BUNDLE_SCRIPT" "$BUNDLE_FILE"
+
+fi
+
+echo "We're all done with part 2. The new Mac client bundle is available here:"
+echo "  $BUNDLE_FILE"
+echo "Run part 3 manually in order to deploy everything."
+echo ""
 
