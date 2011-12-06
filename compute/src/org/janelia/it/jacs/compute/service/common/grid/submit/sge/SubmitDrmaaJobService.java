@@ -23,6 +23,13 @@
 
 package org.janelia.it.jacs.compute.service.common.grid.submit.sge;
 
+import java.io.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.log4j.Logger;
 import org.ggf.drmaa.DrmaaException;
 import org.ggf.drmaa.JobTemplate;
@@ -47,13 +54,6 @@ import org.janelia.it.jacs.model.tasks.TaskMessage;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.shared.utils.FileUtil;
-
-import java.io.*;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * This service submit a job to the Grid.  It's entirely extracted from work done by Sean Murphy
@@ -167,6 +167,8 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         logger.info("DRMAA using SGE_CELL=" + sgeCell);
         try {
             createJobScriptAndConfigurationFiles(writer);
+            verifyConfigurationFiles();
+            
             boolean permissionsSuccessful = jobScript.setExecutable(true, false);
             if (!permissionsSuccessful) {
                 logger.error("Unsuccessful on setting permissions of job script "+jobScript.getAbsolutePath()+". Continuing...");
@@ -389,6 +391,15 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
      */
     protected abstract void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception;
 
+    protected void verifyConfigurationFiles() throws Exception {
+    	for(int i=0; i<getJobIncrementStop(); i++) {
+    		File configFile = new File(getSGEConfigurationDirectory(), getGridServicePrefixName()+"Configuration."+(i+1));
+    		if (!configFile.exists()) {
+    			throw new IllegalStateException("Configuration file for job "+i+" does not exist: "+configFile.getAbsolutePath());
+    		}
+    	}
+    }
+    
     protected String getSGEConfigurationDirectory() {
         return resultFileNode.getDirectoryPath() + File.separator + "sge_config";
     }
