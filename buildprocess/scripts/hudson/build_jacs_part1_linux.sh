@@ -54,8 +54,8 @@ JACS_COMPILE_DIR="$COMPILE_DIR/jacs_FlySuite_${FWVER}"
 STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
 TEMPLATE_DIR="$STAGING_DIR/templates"
 
-PACKAGE_MAC_DIR="$STAGING_DIR/workstation"
-PACKAGE_LINUX_DIR="$STAGING_DIR/workstation_linux"
+PACKAGE_MAC_DIR="$STAGING_DIR/Staging_${FWVER}"
+PACKAGE_LINUX_DIR="$STAGING_DIR/Staging_linux_${FWVER}"
 
 echo "Building FlySuite version $FWVER (Part 1)"
 

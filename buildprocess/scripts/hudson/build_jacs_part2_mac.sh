@@ -28,7 +28,7 @@ COMPILE_DIR="$EXE_DIR/compile"
 VAA3D_COMPILE_MAC_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-mac"
 
 STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
-PACKAGE_MAC_DIR="$STAGING_DIR/workstation"
+PACKAGE_MAC_DIR="$STAGING_DIR/Staging_${FWVER}"
 
 echo "Building FlySuite version $FWVER (Part 2)"
 
