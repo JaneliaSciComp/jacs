@@ -27,8 +27,10 @@ NEUSEP_COMPILE_REDHAT_DIR="$COMPILE_DIR/neusep_FlySuite_${FWVER}-redhat"
 JACS_COMPILE_DIR="$COMPILE_DIR/jacs_FlySuite_${FWVER}"
 
 INSTALL_DIR="$EXE_DIR/install"
-VAA3D_INSTALL_REDHAT_DIR="$INSTALL_DIR/vaa3d_FlySuite-redhat"
-NEUSEP_INSTALL_REDHAT_DIR="$INSTALL_DIR/neusep_FlySuite-redhat"
+VAA3D_INSTALL_REDHAT_DIR="$INSTALL_DIR/vaa3d_FlySuite_${FWVER}-redhat"
+NEUSEP_INSTALL_REDHAT_DIR="$INSTALL_DIR/neusep_FlySuite_${FWVER}-redhat"
+VAA3D_INSTALL_SYMLINK="$INSTALL_DIR/vaa3d-redhat"
+NEUSEP_INSTALL_SYMLINK="$INSTALL_DIR/neusep-redhat"
 
 STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
 PACKAGE_MAC_DIR="$STAGING_DIR/Staging_${FWVER}"
@@ -49,6 +51,8 @@ if [ $INSTALL_VAA3D == 1 ]; then
     echo "Installing Vaa3D in $VAA3D_COMPILE_FEDORA_DIR"
     mkdir -p $VAA3D_COMPILE_FEDORA_DIR
     cp -R VAA3D_COMPILE_REDHAT_DIR/v3a/* $VAA3D_COMPILE_FEDORA_DIR
+    rm $VAA3D_INSTALL_SYMLINK || true
+    ln -s $VAA3D_INSTALL_REDHAT_DIR $VAA3D_INSTALL_SYMLINK
 fi
 
 ################################################################
@@ -61,6 +65,8 @@ if [ $INSTALL_NEUSEP == 1 ]; then
     cp mylib/sampsepNALoadRaw $NEUSEP_INSTALL_REDHAT_DIR
     cp tools/setup4 $NEUSEP_INSTALL_REDHAT_DIR
     cp tools/finish4 $NEUSEP_INSTALL_REDHAT_DIR
+    rm $NEUSEP_INSTALL_SYMLINK || true
+    ln -s $NEUSEP_INSTALL_REDHAT_DIR $NEUSEP_INSTALL_SYMLINK
 fi
 
 ################################################################
@@ -70,11 +76,9 @@ if [ $BUILD_JACS == 1 ]; then
     echo "Installing Jacs"
     cd $JACS_COMPILE_DIR
     
-    #TODO: stop server
-
-    
-
-    #TODO: start server
+    #TODO: stop, deploy, start for jacs and jacs-data
+    echo "Server deployment is not yet implemented."
+    echo "Go to $JACS_COMPILE_DIR and deploy the server to jacs and jacs-data."
 
 fi
 

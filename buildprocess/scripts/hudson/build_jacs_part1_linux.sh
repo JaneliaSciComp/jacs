@@ -79,10 +79,11 @@ if [ $BUILD_VAA3D == 1 ]; then
         exit 1
     fi
     cp "$SCRIPT_DIR/build_vaa3d_linux.sh" $VAA3D_COMPILE_REDHAT_DIR
+    cp "$SCRIPT_DIR/qsub_vaa3d_build.sh" $VAA3D_COMPILE_REDHAT_DIR
     cp -R $VAA3D_COMPILE_REDHAT_DIR $VAA3D_COMPILE_FEDORA_DIR
 
     echo "  Building Vaa3D for the grid"
-    echo "sh $SCRIPT_DIR/qsub_vaa3d_build.sh $FWVER $SERVER" > "$VAA3D_COMPILE_REDHAT_DIR/build.sh"
+    echo "sh \"$VAA3D_COMPILE_REDHAT_DIR/qsub_vaa3d_build.sh\" $FWVER $SERVER" > "$VAA3D_COMPILE_REDHAT_DIR/build.sh"
     qsub -sync y "$VAA3D_COMPILE_REDHAT_DIR/build.sh"
 
     echo "  Building Vaa3D for the linux client"
@@ -106,9 +107,10 @@ if [ $BUILD_NEUSEP == 1 ]; then
         echo "SVN tag not found for NeuronSeparator: FlySuite_${FWVER}"
         exit 1
     fi
-    
+    cp "$SCRIPT_DIR/qsub_neusep_build.sh" $NEUSEP_COMPILE_REDHAT_DIR
+
     echo "  Building NeuronSeparator for the grid"
-    echo "sh $SCRIPT_DIR/qsub_neusep_build.sh $FWVER $SERVER" > "$NEUSEP_COMPILE_REDHAT_DIR/build.sh"
+    echo "sh \"$NEUSEP_COMPILE_REDHAT_DIR/qsub_neusep_build.sh\" $FWVER $SERVER" > "$NEUSEP_COMPILE_REDHAT_DIR/build.sh"
     qsub -sync y "$NEUSEP_COMPILE_REDHAT_DIR/build.sh"
 fi
 
