@@ -13,6 +13,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.user_data.FileNode;
@@ -83,11 +84,15 @@ public class MigrateLsmMetadataFilesService implements IService {
     		script.append(file.getAbsolutePath());
     		script.append(" ");
     		script.append(targetDir.getAbsolutePath());
-    		script.append("; ");
+    		script.append("\n");
     	}
     	
+    	File scriptFile = new File(targetDir.getAbsolutePath(), "migrateMetadata.sh");
+    	FileUtils.writeStringToFile(scriptFile, script.toString());
+    	
         SystemCall call = new SystemCall(logger);
-        int exitCode = call.emulateCommandLine(script.toString(), true, 60);
+        int exitCode = call.emulateCommandLine("sh "+scriptFile.getAbsolutePath(), true, 60);
+
         if (exitCode != 0) {
         	throw new Exception("LSM Migration failed with exit code "+exitCode);
         }
