@@ -24,6 +24,8 @@ JACSDATA_DIR="/groups/scicomp/jacsData"
 SVN_OPTIONS="--trust-server-cert --non-interactive"
 
 EXE_DIR="$JACSDATA_DIR/servers/$SERVER/executables"
+SCRIPT_DIR="$JACSDATA_DIR/servers/$SERVER/scripts"
+
 COMPILE_DIR="$EXE_DIR/compile"
 VAA3D_COMPILE_MAC_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-mac"
 
@@ -51,10 +53,8 @@ if [ $BUILD_VAA3D == 1 ]; then
     fi
     cd $VAA3D_COMPILE_MAC_DIR
 
-    svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk/buildprocess/scripts/hudson
-
     echo "  Building Vaa3D for the Mac client"
-    hudson/build_vaa3d_mac.sh
+    $SCRIPT_DIR/build_vaa3d_mac.sh
     cp -R v3d_main/v3d/vaa3d64.app $PACKAGE_MAC_DIR
 fi
 

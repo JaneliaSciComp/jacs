@@ -1,9 +1,9 @@
 #!/bin/sh
 
 if [ -f /etc/fedora-release ] ; then
-    export QTDIR="/groups/scicomp/jacsData/install/Qt-4.7.4-fedora-static"
+    export QTDIR="/groups/scicomp/jacsData/install/Qt-4.7.4-fedora"
 else
-    export QTDIR="/groups/scicomp/jacsData/install/Qt-4.7.4-redhat-static"
+    export QTDIR="/groups/scicomp/jacsData/install/Qt-4.7.4-redhat"
 fi
 
 export QTLIB=$QTDIR/lib

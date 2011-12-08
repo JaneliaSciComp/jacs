@@ -36,9 +36,9 @@ set -o errexit
 FWVER=$1
 SERVER=$2
 
-SCRIPT_DIR=`pwd`
 JACSDATA_DIR="/groups/scicomp/jacsData"
 EXE_DIR="$JACSDATA_DIR/servers/$SERVER/executables"
+SCRIPT_DIR="$JACSDATA_DIR/servers/$SERVER/scripts"
 
 SVN_OPTIONS="--trust-server-cert --non-interactive"
 
@@ -58,6 +58,14 @@ PACKAGE_MAC_DIR="$STAGING_DIR/Staging_${FWVER}"
 PACKAGE_LINUX_DIR="$STAGING_DIR/Staging_linux_${FWVER}"
 
 echo "Building FlySuite version $FWVER (Part 1)"
+
+################################################################
+# Make sure the latest scripts are in an accessible place.
+# (We already have these in $WORKSPACE, but only Hudson can 
+# access that.)
+################################################################
+rm -rf $SCRIPT_DIR || true
+svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk/buildprocess/scripts/hudson $SCRIPT_DIR
 
 ################################################################
 # Build Vaa3d for Redhat (Grid) and Fedora (Client) 
@@ -82,9 +90,10 @@ if [ $BUILD_VAA3D == 1 ]; then
     cp "$SCRIPT_DIR/qsub_vaa3d_build.sh" $VAA3D_COMPILE_REDHAT_DIR
     cp -R $VAA3D_COMPILE_REDHAT_DIR $VAA3D_COMPILE_FEDORA_DIR
 
-    echo "  Building Vaa3D for the grid"
+    echo "  Building Vaa3D for the grid (in the background)"
     echo "sh \"$VAA3D_COMPILE_REDHAT_DIR/qsub_vaa3d_build.sh\" $FWVER $SERVER" > "$VAA3D_COMPILE_REDHAT_DIR/build.sh"
-    qsub -sync y "$VAA3D_COMPILE_REDHAT_DIR/build.sh"
+    qsub -sync y "$VAA3D_COMPILE_REDHAT_DIR/build.sh" &
+    VAA3D_QSUB_PID=$!
 
     echo "  Building Vaa3D for the linux client"
     cd $VAA3D_COMPILE_FEDORA_DIR
@@ -109,9 +118,10 @@ if [ $BUILD_NEUSEP == 1 ]; then
     fi
     cp "$SCRIPT_DIR/qsub_neusep_build.sh" $NEUSEP_COMPILE_REDHAT_DIR
 
-    echo "  Building NeuronSeparator for the grid"
+    echo "  Building NeuronSeparator for the grid (in the background)"
     echo "sh \"$NEUSEP_COMPILE_REDHAT_DIR/qsub_neusep_build.sh\" $FWVER $SERVER" > "$NEUSEP_COMPILE_REDHAT_DIR/build.sh"
-    qsub -sync y "$NEUSEP_COMPILE_REDHAT_DIR/build.sh"
+    qsub -sync y "$NEUSEP_COMPILE_REDHAT_DIR/build.sh" &
+    NEUSEP_QSUB_PID=$!
 fi
 
 ################################################################
@@ -163,10 +173,19 @@ if [ $BUILD_FLYSUITE == 1 ]; then
     cp -R $JACS_COMPILE_DIR/console/build/jars/* $PACKAGE_LINUX_DIR 
 fi
 
-echo "We're all done with part 1. The new Linux client package is available here:"
-echo "  $PACKAGE_LINUX_DIR"
-echo "Most of the Mac client package (to be completed in part 2) is available here:"
-echo "  $PACKAGE_MAC_DIR"
+echo "Waiting for Vaa3d qsub ($VAA3D_QSUB_PID)..." 
+wait $VAA3D_QSUB_PID
+
+echo "Waiting for Neusep qsub ($NEUSEP_QSUB_PID)..." 
+wait $NEUSEP_QSUB_PID
+
+echo "We're all done with part 1 compilations:" 
+echo "  Vaa3d (Fedora): $VAA3D_COMPILE_FEDORA_DIR"
+echo "  Vaa3d (Redhat): $VAA3D_COMPILE_REDHAT_DIR"
+echo "  Neusep (Redhat): $NEUSEP_COMPILE_REDHAT_DIR"
+echo "  Jacs: $JACS_COMPILE_DIR"
+echo "  Linux Package: $PACKAGE_LINUX_DIR"
+echo "  Mac Package (to be completed in part 2): $PACKAGE_MAC_DIR"
 echo ""
 echo "Now running part 2 on a Mac..."
 ssh $SSH_OPTIONS $MAC_EXECUTOR_HOST "sh $SCRIPT_DIR/build_jacs_part2_mac.sh $FWVER $SERVER"
