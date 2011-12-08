@@ -76,7 +76,10 @@ if [ $BUILD_JACS == 1 ]; then
     echo "Installing Jacs"
     cd $JACS_COMPILE_DIR
     cd compute
-    ant "deploy-[your-server]-dev"
+    echo "  Deploying to jacs"
+    ant -Duser.server.machine=jacs "deploy-[your-server]-dev"
+    echo "  Deploying to jacs-data"
+    ant -Duser.server.machine=jacs-data "deploy-[your-server]-dev"
 fi
 
 ################################################################
