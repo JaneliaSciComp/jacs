@@ -47,14 +47,14 @@ if [ $BUILD_VAA3D == 1 ]; then
 
     echo "  Checking out from SVN"
     svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/branches/FlySuite_${FWVER} $VAA3D_COMPILE_MAC_DIR
-    if [ ! -f $VAA3D_COMPILE_MAC_DIR ]; then
+    if [ ! -e $VAA3D_COMPILE_MAC_DIR ]; then
         echo "SVN tag not found for Vaa3d: FlySuite_${FWVER}"
         exit 1
     fi
     cd $VAA3D_COMPILE_MAC_DIR
 
     echo "  Building Vaa3D for the Mac client"
-    $SCRIPT_DIR/build_vaa3d_mac.sh
+    sh $SCRIPT_DIR/build_vaa3d_mac.sh
     cp -R v3d_main/v3d/vaa3d64.app $PACKAGE_MAC_DIR
 fi
 

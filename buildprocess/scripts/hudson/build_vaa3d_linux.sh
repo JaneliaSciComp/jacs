@@ -16,9 +16,9 @@ export PATH=$HOME/bin:$PATH
 export BASE=`pwd`
 
 # build brainaligner
-cd $BASE/v3d_main/jba/c++
+cd $BASE/jba/c++
 make
-cp $BASE/v3d_main/jba/c++/brainaligner $BASE/v3d/
+cp $BASE/jba/c++/brainaligner $BASE/v3d/
 
 # build lobeseg
 cd $BASE/released_plugins/v3d_plugins/lobeseg/lobeseg_main

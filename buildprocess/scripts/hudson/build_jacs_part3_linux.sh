@@ -75,11 +75,8 @@ fi
 if [ $BUILD_JACS == 1 ]; then
     echo "Installing Jacs"
     cd $JACS_COMPILE_DIR
-    
-    #TODO: stop, deploy, start for jacs and jacs-data
-    echo "Server deployment is not yet implemented."
-    echo "Go to $JACS_COMPILE_DIR and deploy the server to jacs and jacs-data."
-
+    cd compute
+    ant "deploy-[your-server]-dev"
 fi
 
 ################################################################
