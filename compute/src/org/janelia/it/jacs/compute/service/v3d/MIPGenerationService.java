@@ -25,7 +25,7 @@ public class MIPGenerationService extends ParallelFileProcessingService {
         script.append("\n");
         script.append(V3DHelper.getFormattedMIPCommand("$INPUT_FILENAME", "$OUTPUT_FILENAME", true));
         script.append("\n");
-        script.append(V3DHelper.getV3DGridCommandSuffix());
+        script.append(V3DHelper.getHeadlessGridCommandSuffix());
         script.append("\n");
         writer.write(script.toString());
     }

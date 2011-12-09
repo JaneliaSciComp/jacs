@@ -59,7 +59,7 @@
 			    <!-- Compress the results of neuron separation -->
 		        <sequence name="Compress" waitForAsync="true">
 				    <operation name="Compress" processor="queue/gridSubmitAndWait">
-				        <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.PBDCompressionService"/>
+				        <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.V3DConversionService"/>
 						<input name="COMPRESS_RESULT_FILE_NODE"/>
 			    		<input name="RESULT_FILE_NODE" value="$V{COMPRESS_RESULT_FILE_NODE}"/>
 						<input name="SEPARATE_RESULT_FILE_NODE"/>

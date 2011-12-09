@@ -76,6 +76,10 @@ public class V3DHelper {
     	return prefix.toString();
     }
 
+    public static String getHeadlessGridCommandSuffix() {
+        return "";
+    }
+    
     public static String getV3DGridCommandSuffix() {
     	// Kill the Xvfb
         return "kill $MYPID";
@@ -90,8 +94,12 @@ public class V3DHelper {
     	return cmd+" ;";
     }
     
-    public static String getFormattedPBDCommand(String inputFilepath, String outputFilepath) throws ServiceException {
-    	return V3D_BASE_CMD+" -cmd image-loader -convert "+inputFilepath+" "+outputFilepath+" ;";
+    public static String getFormattedConvertCommand(String inputFilepath, String outputFilepath) throws ServiceException {
+    	return getFormattedConvertCommand(inputFilepath, outputFilepath, "");
+    }
+
+    public static String getFormattedConvertCommand(String inputFilepath, String outputFilepath, String saveTo8bit) throws ServiceException {
+    	return V3D_BASE_CMD+" -cmd image-loader -convert"+saveTo8bit+" "+inputFilepath+" "+outputFilepath+" ;";
     }
     
     public static int getRandomPort() {

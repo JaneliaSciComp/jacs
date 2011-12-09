@@ -96,7 +96,7 @@
 			    <!-- Compress the results of neuron separation -->
 		        <sequence name="Compress" waitForAsync="true">
 				    <operation name="Compress" processor="queue/gridSubmitAndWait">
-				        <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.PBDCompressionService"/>
+				        <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.V3DConversionService"/>
 						<input name="COMPRESS_RESULT_FILE_NODE"/>
 			    		<input name="RESULT_FILE_NODE" value="$V{COMPRESS_RESULT_FILE_NODE}"/>
 						<input name="SEPARATE_RESULT_FILE_NODE"/>
@@ -107,6 +107,7 @@
 						<input name="OUTPUT_FILENAME_2" value="ConsolidatedLabel.v3dpbd"/>
 						<input name="INPUT_FILENAME_3" value="Reference.tif"/>
 						<input name="OUTPUT_FILENAME_3" value="Reference.v3dpbd"/>
+						<input name="OUTPUT_8BIT_3" value="true"/>
 					</operation>
 		        </sequence>
 			    
@@ -200,7 +201,7 @@
 			    <!-- Compress the results of aligned neuron separation -->
 		        <sequence name="Compress" waitForAsync="true">
 				    <operation name="Compress" processor="queue/gridSubmitAndWait">
-				        <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.PBDCompressionService"/>
+				        <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.V3DConversionService"/>
 						<input name="ALIGNCOMP_RESULT_FILE_NODE"/>
 			    		<input name="RESULT_FILE_NODE" value="$V{ALIGNCOMP_RESULT_FILE_NODE}"/>
 						<input name="ALIGNSEP_RESULT_FILE_NODE"/>

@@ -134,12 +134,12 @@ sub usage {
     	File[] alignedFiles = alignDir.listFiles(new FilenameFilter() {
 			@Override
 			public boolean accept(File dir, String name) {
-	            return name.startsWith("Aligned");
+	            return name.equals("Aligned.v3draw");
 			}
 		});
 
-    	if (alignedFiles.length < 4) {
-    		throw new MissingDataException("Expected Aligned, AlignedReference, AlignedSignal, and AlignedCompartments - not found for "+alignFileNode.getDirectoryPath());
+    	if (alignedFiles.length < 1) {
+    		throw new MissingDataException("Expected Aligned.v3draw - not found for "+alignFileNode.getDirectoryPath());
     	}
 	}
 }
