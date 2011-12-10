@@ -22,7 +22,7 @@ public interface WorkstationDataManagerMBean {
 
     public void runMCFOSampleViewCreation(String sourceEntityId, String targetEntityName);
 
-    public void runFlyLightScreenPipeline(String user, boolean refresh);
+    public void runFlyScreenPipeline(String user, boolean refresh);
     	
     public void setupEntityTypes();
 

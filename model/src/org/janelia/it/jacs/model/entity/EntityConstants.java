@@ -28,6 +28,7 @@ public class EntityConstants {
     public static final String TYPE_FOLDER                           = "Folder";
     public static final String TYPE_SUPPORTING_DATA                  = "Supporting Data";
     public static final String TYPE_SAMPLE                           = "Sample";
+    public static final String TYPE_SCREEN_SAMPLE                    = "Screen Sample";
     public static final String TYPE_LSM_STACK_PAIR                   = "LSM Stack Pair";
     public static final String TYPE_NEURON_SEPARATOR_PIPELINE_RESULT = "Neuron Separator Pipeline Result";
     public static final String TYPE_IMAGE_2D                         = "Image 2D";
@@ -69,5 +70,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_SUPPORTING_FILES                    = "Supporting Files";
     public static final String ATTRIBUTE_NEURON_FRAGMENTS                    = "Neuron Fragments";
     public static final String ATTRIBUTE_INPUT                               = "ATTRIBUTE_INPUT";
+    public static final String ATTRIBUTE_ALIGNMENT_QI_SCORE                  = "Alignment Inconsistency Score";
+    public static final String ATTRIBUTE_ALIGNMENT_QM_SCORE                  = "Alignment Model Violation Score";
     
 }

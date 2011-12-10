@@ -4,7 +4,12 @@
 <process name="Fly Light Screen Pipeline" processor="queue/flyLightScreenPipelineLauncher" startEvent="pending">
 	<sequence>
 
-	    <!-- Import variables from the MCFODataPipelineTask -->
+	    <!-- Import basic variables from the FileDiscoveryTask
+
+	         This service receives instructions below on which key:value pairs to transfer from task parameters
+	         to process parameters. It then sets as outputs some of these parameters so they are available
+	         to downstream steps. -->
+
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="TASK_PARAMETER_1" value="list of input directories"/>
             <input name="PROCESS_VARIABLE_1" value="INPUT_DIR_LIST"/>
@@ -15,39 +20,89 @@
 	        <output name="ROOT_ENTITY_NAME"/>
 	    </operation>
 
-	    <!-- Discover samples in the fileshare and load them into the database as Entities -->
-		<operation name="Initial File Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FlyLightScreenDiscoveryService">
+	    <!-- Discover samples in the fileshare and load them into the database as Entities
+
+	        This service sets up the entity tree based on the data in the filesystem. It does this in a series of steps:
+
+	        1. Creates or verifies the top-level entity, which is named according to the ROOT_ENTITY_NAME
+	        2. Traverses the filesystem tree in the INPUT_DIR_LIST and creates appropriate entities, which include:
+	            a. FLY_SCREEN_SAMPLE
+	            b. '- ALIGNED_3D_STACK
+	        3. Reads the quality score file for the aligned stack and adds quality attributes to the aligned stack
+
+	        The end-result is a populated entity tree. Note that before new entities are created, a check is made to
+	        see if an equivalent entity already exists. -->
+
+		<operation name="Initial File Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FlyScreenDiscoveryService">
 			<input name="INPUT_DIR_LIST"/>
 			<input name="ROOT_ENTITY_NAME"/>
 			<input name="OUTVAR_ENTITY_ID" value="TOP_LEVEL_ENTITY_ID"/>
+			<output name="TOP_LEVEL_ENTITY_ID"/>
 		</operation>
 
-	    <!-- Find all the Sample Entities in the database
+		<!-- Find all the Sample Entities in the database
+
+            This service takes as input the top-level entity, and traverses the entity tree. As it does this, a flat
+            list of FLY_SCREEN_SAMPLE entities is generated, which qualify as needing to be processed. A sample will
+            qualify for processing if it is missing one of these child entities:
+
+            1. 2D_MIP
+            2. <to be added>
+
+            The incomplete samples are added to a list which is output as a collection SAMPLE_ENTITY_ID  -->
+
 		<operation name="Entity Tree Traversal" processor="org.janelia.it.jacs.compute.service.entity.EntityTreeTraversalService">
-			<input name="ENTITY_TYPE_NAME" value="Sample"/>
-			<input name="ENTITY_FILTER_CLASS" value="org.janelia.it.jacs.compute.service.entity.IncompleteSampleEntityFilter"/>
+			<input name="ENTITY_TYPE_NAME" value="FlyScreenSample"/>
+			<input name="ENTITY_FILTER_CLASS" value="org.janelia.it.jacs.compute.service.screen.FlyScreenSampleService"/>
 			<input name="TOP_LEVEL_ENTITY_ID"/>
 			<input name="ROOT_ENTITY_ID" value="$V{TOP_LEVEL_ENTITY_ID}"/>
 			<input name="OUTVAR_ENTITY_ID" value="SAMPLE_ENTITY_ID"/>
 		</operation>
-		-->
 
 	    <!-- Process each Sample Entity
-        <sequence forEach="SAMPLE_ENTITY_ID">
-            <sequence>
+        <sequence forEach="SAMPLE_ENTITY_ID" waitForAsync="true">
+            <sequence async="true">
 
-				-- Spawn a new task to process the Sample --
-		        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
-        			<input name="TASK_CLASS" value="org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOSamplePipelineTask"/>
-		            <input name="PROCESS_DEF_NAME" value="MCFOSamplePipeline"/>
-		            <input name="PARAMETER_1_KEY" value="sample entity id"/>
+				<!-- Service instance for processing each Screen Sample
+
+				This service creates a result node for processing the screen sample, and attaches it to the sample.  -->
+
+		        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.screen.FlyScreenSampleService">
+		            <input name="MODE" value="SETUP"/>
 		            <input name="SAMPLE_ENTITY_ID"/>
-		            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
+		            <output name="RESULT_FILE_NODE"/>
+	                <output name="RESULT_FILE_NODE_ID"/>
+	                <output name="STACK_PATH"/>
+		        </operation>
+
+		        <sequence name="MIP Generation" waitForAsync="true">
+				    <operation name="MIP Generation" processor="queue/gridSubmitAndWait">
+				        <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.MIPGenerationService"/>
+			    		<input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
+			    		<input name="INPUT_PATH_1" value="$V{STACK_PATH}"/>
+						<input name="OUTPUT_FILENAME_1" value="AlignedStackMIP.tif"/>
+					</operation>
+		        </sequence>
+
+		        <sequence name="MIP Conversion to PNG" waitForAsync="true">
+				    <operation name="MIP Conversion to PNG" processor="queue/gridSubmitAndWait">
+				        <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ImageConversionService"/>
+			    		<input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
+						<input name="INPUT_FILENAME_REGEX_1" value="((.*?)MIP)\.tif$"/>
+						<input name="OUTPUT_FILENAME_PATTERN_1" value="$1.png"/>
+					</operation>
+		        </sequence>
+
+		        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.screen.FlyScreenSampleService">
+		            <input name="MODE" value="COMPLETE"/>
+		            <input name="SAMPLE_ENTITY_ID"/>
+		            <output name="RESULT_FILE_NODE"/>
+	                <output name="RESULT_FILE_NODE_ID"/>
+	                <output name="STACK_PATH"/>
 		        </operation>
 
 			</sequence>
 	    </sequence>
-	    -->
 
     </sequence>
 </process>

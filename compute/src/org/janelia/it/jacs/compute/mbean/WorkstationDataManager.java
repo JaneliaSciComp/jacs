@@ -110,11 +110,10 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
     
-    public void runFlyLightScreenPipeline(String user, boolean refresh) {
+    public void runFlyScreenPipeline(String user, boolean refresh) {
         try {
             String topLevelFolderName = "FlyLight Screen Data";
-            //String inputDirList = "/archive/flylight_archive/screen/SecData/registrations";
-            String inputDirList = "/groups/scicomp/jacsData/murphyTest/screen";
+            String inputDirList = "/groups/scicomp/jacsData/ScreenStaging";
             Task task = new FileDiscoveryTask(new HashSet<Node>(),
                     user, new ArrayList<Event>(), new HashSet<TaskParameter>(),
                     inputDirList, topLevelFolderName, refresh);

@@ -288,6 +288,10 @@ public class AnnotationDAO extends ComputeBaseDAO {
 //            createEntityAttribute(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM);
 //            createEntityAttribute(EntityConstants.ATTRIBUTE_ANNOTATION_SESSION_ID);
 //            createEntityAttribute(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
+
+              createEntityAttribute(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
+              createEntityAttribute(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE);
+
 //
 //            //========== Type ============
 //            Set<String> lsmAttributeNameSet = new HashSet<String>();
@@ -334,14 +338,25 @@ public class AnnotationDAO extends ComputeBaseDAO {
 //            Set<String> sampleAttributeSet = new HashSet<String>();
 //            sampleAttributeSet.add(EntityConstants.ATTRIBUTE_ENTITY);
 //            createEntityType(EntityConstants.TYPE_SAMPLE, sampleAttributeSet);
+
+            Set<String> screenSampleAttributeSet = new HashSet<String>();
+            screenSampleAttributeSet.add(EntityConstants.ATTRIBUTE_ENTITY);
+            createEntityType(EntityConstants.TYPE_SCREEN_SAMPLE, screenSampleAttributeSet);
+
+            Set<String> alignedStackAttributeSet = new HashSet<String>();
+            alignedStackAttributeSet.add(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
+            alignedStackAttributeSet.add(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE);
+            alignedStackAttributeSet.add(EntityConstants.ATTRIBUTE_FILE_PATH);
+            createEntityType(EntityConstants.TYPE_ALIGNED_BRAIN_STACK, alignedStackAttributeSet);
+
 //
 //            Set<String> lsmStackPairAttributeSet = new HashSet<String>();
 //            lsmStackPairAttributeSet.add(EntityConstants.ATTRIBUTE_ENTITY);
 //            createEntityType(EntityConstants.TYPE_LSM_STACK_PAIR, lsmStackPairAttributeSet);
 
-            Set<String> stitchedStackAttributeSet = new HashSet<String>();
-            stitchedStackAttributeSet.add(EntityConstants.ATTRIBUTE_FILE_PATH);
-            createEntityType(EntityConstants.TYPE_STITCHED_V3D_RAW, stitchedStackAttributeSet);
+//            Set<String> stitchedStackAttributeSet = new HashSet<String>();
+//            stitchedStackAttributeSet.add(EntityConstants.ATTRIBUTE_FILE_PATH);
+//            createEntityType(EntityConstants.TYPE_STITCHED_V3D_RAW, stitchedStackAttributeSet);
             
         }
         catch (Exception e) {

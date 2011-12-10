@@ -35,19 +35,23 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
         
     	int configIndex = 1;
     	while (true) {
-    	    String inputFilename = (String)processData.getItem("INPUT_FILENAME_"+configIndex);	
-    		if (inputFilename != null) {
-        		String outputFilename = (String)processData.getItem("OUTPUT_FILENAME_"+configIndex);
-            	File inputFile = new File(outputFileNode.getDirectoryPath(), inputFilename);
-            	File outputFile = new File(outputFileNode.getDirectoryPath(), outputFilename);
-            	inputFiles.add(inputFile);
-            	outputFiles.add(outputFile);
-    		}
-    		else {
-        		final String inputRegex = (String)processData.getItem("INPUT_FILENAME_REGEX_"+configIndex);
-        		if (inputRegex == null || configIndex>100) break;
-        		String outputPattern = (String)processData.getItem("OUTPUT_FILENAME_PATTERN_"+configIndex);	
 
+            // First determine input file for this index
+       	    String inputFilename = (String)processData.getItem("INPUT_FILENAME_"+configIndex);
+            String inputPath = (String)processData.getItem("INPUT_PATH_" + configIndex);
+            final String inputRegex = (String)processData.getItem("INPUT_FILENAME_REGEX_"+configIndex);
+            if ( (inputFilename==null && inputPath==null && inputRegex==null) || configIndex>100 )
+                break;
+
+            if (inputFilename!=null) {
+                File inputFile=new File(outputFileNode.getDirectoryPath(), inputFilename);
+                inputFiles.add(inputFile);
+            } else if (inputPath!=null) {
+                File inputFile=new File(inputPath);
+                inputFiles.add(inputFile);
+            } else if (inputRegex!=null) {
+                // We do the output here also in this case, since for regex they must be coordinated
+                String outputPattern = (String)processData.getItem("OUTPUT_FILENAME_PATTERN_"+configIndex);
     			File inputDir = new File(outputFileNode.getDirectoryPath());
     			String[] filenames = inputDir.list(new FilenameFilter() {
 					@Override
@@ -56,14 +60,26 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
 					}
 				});
     			for(String foundInputFilename : filenames) {
-    				String outputFilename = foundInputFilename.replaceAll(inputRegex, outputPattern);
+                    String outputFilename = foundInputFilename.replaceAll(inputRegex, outputPattern);
                 	File inputFile = new File(inputDir, foundInputFilename);
-                	File outputFile = new File(inputDir, outputFilename);
+                    File outputFile = new File(inputDir, outputFilename);
 	            	inputFiles.add(inputFile);
-                	outputFiles.add(outputFile);
+                    outputFiles.add(outputFile);
     			}
-    		}
-    		configIndex++;
+            }
+
+            // Next, we do outputs
+            String outputFilename = (String)processData.getItem("OUTPUT_FILENAME_"+configIndex);
+            String outputPath = (String)processData.getItem("OUTPUT_PATH_"+configIndex);
+
+            if (outputFilename!=null) {
+                File outputFile=new File(outputFileNode.getDirectoryPath(), outputFilename);
+                outputFiles.add(outputFile);
+            } else if (outputPath!=null) {
+                File outputFile=new File(outputPath);
+                outputFiles.add(outputFile);
+            }
+            configIndex++;
     	}
     }
 
