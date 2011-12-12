@@ -36,6 +36,7 @@ public class V3DConversionService extends ParallelFileProcessingService {
     		if (is8bit != null && is8bit.equals("true")) {
     			output8bit.add(configIndex);
     		}
+    		configIndex++;
     	}
     }
 
@@ -46,6 +47,7 @@ public class V3DConversionService extends ParallelFileProcessingService {
     
     protected void writeShellScript(FileWriter writer) throws Exception {
     	super.writeShellScript(writer);
+        writer.write("read SAVE_TO_8BIT\n");
         StringBuffer script = new StringBuffer();
         script.append(V3DHelper.getHeadlessGridCommandPrefix());
         script.append("\n");
