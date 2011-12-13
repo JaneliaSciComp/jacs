@@ -28,9 +28,10 @@ SCRIPT_DIR="$JACSDATA_DIR/servers/$SERVER/scripts"
 
 COMPILE_DIR="$EXE_DIR/compile"
 VAA3D_COMPILE_MAC_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-mac"
+JACS_COMPILE_DIR="$COMPILE_DIR/jacs_FlySuite_${FWVER}"
 
 STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
-PACKAGE_MAC_DIR="$STAGING_DIR/Staging_${FWVER}"
+PACKAGE_MAC_DIR="$STAGING_DIR/FlySuite_${FWVER}"
 
 echo "Building FlySuite version $FWVER (Part 2)"
 
@@ -55,7 +56,8 @@ if [ $BUILD_VAA3D == 1 ]; then
 
     echo "  Building Vaa3D for the Mac client"
     sh $SCRIPT_DIR/build_vaa3d_mac.sh
-    cp -R v3d_main/v3d/vaa3d64.app $PACKAGE_MAC_DIR
+    mkdir -p $PACKAGE_MAC_DIR
+    cp -R $VAA3D_COMPILE_MAC_DIR/v3d_main/v3d/vaa3d64.app $PACKAGE_MAC_DIR/
 fi
 
 ################################################################
@@ -64,14 +66,16 @@ fi
 
 if [ $BUILD_FLYSUITE == 1 ]; then
 
+    ICON_FILE="$JACS_COMPILE_DIR/console/src/main/java/images/flyscope.jpg"
     WORKSTATION_JAR="$PACKAGE_MAC_DIR/workstation.jar"
     WORKSTATION_LIB="$PACKAGE_MAC_DIR/workstation_lib"
     VAA3D_BUNDLE="$PACKAGE_MAC_DIR/vaa3d64.app"
     COMPARTMENT_MAP="$PACKAGE_MAC_DIR/flybraincompartmentmap.v3ds"
     BUNDLE_SCRIPT="$PACKAGE_MAC_DIR/workstation.sh"
-    BUNDLE_FILE="$PACKAGE_MAC_DIR/FlySuite_${FWVER}.app"
+    BUNDLE_FILE="$PACKAGE_MAC_DIR/FlySuite.app"
 
-    /usr/local/bin/platypus -a 'FlySuite' -o 'None' -p '/bin/sh' -u 'HHMI'  -V "${FWVER}"  -I 'org.janelia.FlySuite' -f "$WORKSTATION_JAR" -f "$WORKSTATION_LIB" -f "$VAA3D_BUNDLE" -f "$COMPARTMENT_MAP" -c "$BUNDLE_SCRIPT" "$BUNDLE_FILE"
+    rm -rf $BUNDLE_FILE || true
+    /usr/local/bin/platypus -a 'FlySuite' -o 'None' -p '/bin/sh' -u 'HHMI'  -V "${FWVER}"  -I 'org.janelia.FlySuite' -i "$ICON_FILE" -f "$WORKSTATION_JAR" -f "$WORKSTATION_LIB" -f "$VAA3D_BUNDLE" -f "$COMPARTMENT_MAP" -c "$BUNDLE_SCRIPT" "$BUNDLE_FILE"
 
 fi
 

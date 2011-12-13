@@ -96,10 +96,14 @@ fi
 ################################################################
 if [ $INSTALL_CLIENT == 1 ]; then
     echo "Installing deployment packages"
+    
     rm -rf $FLYSUITE_INSTALL_DIR || true
+    mkdir -p $FLYSUITE_INSTALL_DIR
+    cp -R $PACKAGE_MAC_DIR/FlySuite.app $FLYSUITE_INSTALL_DIR
+    
     rm -rf $FLYSUITE_LINUX_INSTALL_DIR || true
-    cp -R $PACKAGE_MAC_DIR $FLYSUITE_INSTALL_DIR
     cp -R $PACKAGE_LINUX_DIR $FLYSUITE_LINUX_INSTALL_DIR
+    
     echo "FlySuite Version ${FWVER} (client) was successfully installed into the following locations:"
     echo "  Mac: $FLYSUITE_INSTALL_DIR"
     echo "  Linux: $FLYSUITE_LINUX_INSTALL_DIR"
