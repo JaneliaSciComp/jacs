@@ -92,7 +92,7 @@ sub usage {
 
         StringBuffer script = new StringBuffer();
         script.append(V3DHelper.getV3dLibrarySetupCmd()+"\n");
-        script.append("cd " + alignFileNode.getDirectoryPath() + "\n" +
+        script.append("cd " + alignFileNode.getDirectoryPath() + "\nsh " +
                       EXECUTABLE_DIR + ALIGNER_SCRIPT_CMD +
             " -v " +  V3DHelper.getV3dExecutableCmd() +
             " -b " +  EXECUTABLE_DIR + ALIGNER_EXE_PATH +
