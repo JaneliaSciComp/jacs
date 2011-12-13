@@ -103,7 +103,8 @@ public abstract class FileNode extends Node implements Serializable, IsSerializa
         String tmpSubDir = getSubDirectory();
 
         // Get the specific instance id directory of the node
-        String specificDir = getObjectId().toString();
+        String simplePath = getObjectId().toString();
+        String treePath = getTreePathForId(getObjectId());
 
         StringBuffer tmpFinalPath = new StringBuffer();
         tmpFinalPath.append(tmpRoot).append(File.separator);
@@ -114,8 +115,16 @@ public abstract class FileNode extends Node implements Serializable, IsSerializa
         if (null != tmpSubDir && !"".equals(tmpSubDir)) {
             tmpFinalPath.append(tmpSubDir).append(File.separator);
         }
-        tmpFinalPath.append(specificDir);
-        return tmpFinalPath.toString();
+        String simpleFinalPath = tmpFinalPath + simplePath;
+        String treeFinalPath = tmpFinalPath + treePath;
+
+        File simpleFinalFile = new File(simpleFinalPath);
+
+        if (simpleFinalFile.exists()) {
+            return simpleFinalPath;
+        } else {
+            return treeFinalPath;
+        }
     }
 
     public String getFilePath(String filename) {
@@ -149,6 +158,21 @@ public abstract class FileNode extends Node implements Serializable, IsSerializa
 
     public void setIsReplicated(Boolean replicated) {
         isReplicated = replicated;
+    }
+
+    // For directory abcdefghijklmnop, this returns:
+    //
+    //  klm/nop/abcdefghijklmnop
+    //
+    public static String getTreePathForId(Long id) {
+        String idAsString=id.toString();
+        int length=idAsString.length();
+        if (length<7) {
+            return null;
+        }
+        String firstThree=idAsString.substring(length-6, length-3);
+        String secondThree=idAsString.substring(length-3);
+        return firstThree + File.separator + secondThree + File.separator + idAsString;
     }
 
 
