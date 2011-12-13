@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
+import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -84,7 +85,12 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         processFlyLightScreenDirectory(dir, currentSceenSamples, sampleMap);
 
         // Next, create the new samples
-        EntityType screenSampleType=annotationBean.getEntityTypeByName(EntityConstants.TYPE_SCREEN_SAMPLE);
+        EntityType screenSampleType= EJBFactory.getLocalAnnotationBean().getEntityTypeByName(EntityConstants.TYPE_SCREEN_SAMPLE);
+        if (screenSampleType==null) {
+            String errorMsg="EntityType screenSampleType  returned  NULL";
+            logger.error(errorMsg);
+            throw new Exception(errorMsg);
+        }
         for (String key : sampleMap.keySet()) {
             FlyScreenSample screenSample = sampleMap.get(key);
             Entity screenSampleEntity=incompleteScreenSamples.get(key);
@@ -95,7 +101,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
                 screenSampleEntity.setUser(user);
                 screenSampleEntity.setName(key);
                 screenSampleEntity.setEntityType(screenSampleType);
-                screenSampleEntity = annotationBean.saveOrUpdateEntity(screenSampleEntity);
+                screenSampleEntity = EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(screenSampleEntity);
                 logger.info("Created new Screen Sample " + key + " id=" + screenSampleEntity.getId());
                 addToParent(topFolder, screenSampleEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
             }
@@ -207,16 +213,17 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         if (alignedStack==null) {
             alignedStack = new Entity();
             alignedStack.setUser(user);
-            alignedStack.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK));
+            alignedStack.setEntityType(EJBFactory.getLocalAnnotationBean().getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK));
             alignedStack.setCreationDate(createDate);
             alignedStack.setUpdatedDate(createDate);
             alignedStack.setName(screenSampleEntity.getName()+" aligned stack");
             alignedStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, screenSample.StackPath);
         }
+        // The following will capture the new case implicitly
         if (!alreadyHasQualityScores) {
             alignedStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE, alignmentScores[0]);
             alignedStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE, alignmentScores[1]);
-            alignedStack = annotationBean.saveOrUpdateEntity(alignedStack);
+            alignedStack = EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(alignedStack);
         }
         if (!alreadyHasStack) {
             addToParent(screenSampleEntity, alignedStack, null, EntityConstants.ATTRIBUTE_ENTITY);
