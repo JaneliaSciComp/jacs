@@ -65,6 +65,7 @@ if [ $INSTALL_NEUSEP == 1 ]; then
     echo "Installing NeuronSeparator in $NEUSEP_INSTALL_REDHAT_DIR"
     rm -rf $NEUSEP_INSTALL_REDHAT_DIR || true
     cd "$NEUSEP_COMPILE_REDHAT_DIR/build_cmake.redhat"
+    mkdir -p $NEUSEP_INSTALL_REDHAT_DIR
     cp mylib/sampsepNALoadRaw $NEUSEP_INSTALL_REDHAT_DIR
     cp tools/setup4 $NEUSEP_INSTALL_REDHAT_DIR
     cp tools/finish4 $NEUSEP_INSTALL_REDHAT_DIR
@@ -80,11 +81,14 @@ fi
 if [ $INSTALL_SERVER == 1 ]; then
     echo "Installing Jacs"
     cd $JACS_COMPILE_DIR/compute
-    echo "  Deploying to jacs"
-    ant -Duser.server.machine=jacs "deploy-[your-server]-dev"
-    echo "  Deploying to jacs-data"
-    ant -Duser.server.machine=jacs-data "deploy-[your-server]-dev"
-    echo "FlySuite Version ${FWVER} (server) was successfully deployed to jacs and jacs-data."
+    
+    echo "  Deploying to server 'jacs-data'..."
+    ant -Duser.server.machine=jacs-data -Duser.server.login=jacs "deploy-[your-server]-dev"
+    echo "FlySuite Version ${FWVER} (server) was successfully deployed to the JACS production data-loading server."
+    
+    echo "  Deploying to server 'jacs'..."
+    ant -Duser.server.machine=jacs -Duser.server.login=jacs "deploy-[your-server]-dev"
+    echo "FlySuite Version ${FWVER} (server) was successfully deployed to the JACS production server."
 fi
 
 ################################################################
