@@ -114,7 +114,7 @@ public class FlyScreenSampleService implements EntityFilter, IService {
                 pngFile=f;
             }
         }
-        if (tifFile!=null) {
+        if (tifFile!=null && pngFile!=null) {
             logger.info("Deleting tif file="+tifFile.getAbsolutePath());
             tifFile.delete();
         }
