@@ -52,6 +52,9 @@ public class FlyScreenSampleService implements EntityFilter, IService {
 
        public void execute(IProcessData processData) throws ServiceException {
         try {
+
+            logger.info("FlyScreenSampleService execute() start");
+
             this.processData=processData;
             task = ProcessDataHelper.getTask(processData);
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
@@ -62,6 +65,8 @@ public class FlyScreenSampleService implements EntityFilter, IService {
             createDate = new Date();
             mode = processData.getString("MODE");
             sampleEntityId=processData.getString("SAMPLE_ENTITY_ID");
+
+            logger.info("FlyScreenSampleService execute()  sampleEntityId="+sampleEntityId+" mode="+mode);
 
             if (mode==MODE_SETUP) {
                 doSetup();
@@ -85,9 +90,11 @@ public class FlyScreenSampleService implements EntityFilter, IService {
     }
 
     public void doSetup() throws Exception {
+        logger.info("FlyScreenSampleService  doSetup() start");
     	resultNode = new ScreenSampleResultNode(task.getOwner(), task, "ScreenSampleResultNode",
                 "ScreenSampleResultNode for task " + task.getObjectId(), visibility, sessionName);
         EJBFactory.getLocalComputeBean().saveOrUpdateNode(resultNode);
+        logger.info("FlyScreenSampleService  doSetup()  resultNodeId="+resultNode.getObjectId());
         FileUtil.ensureDirExists(resultNode.getDirectoryPath());
         FileUtil.cleanDirectory(resultNode.getDirectoryPath());
         String creationMessage="Created ScreenSanmpleResultNode path="+resultNode.getDirectoryPath()+" id="+resultNode.getObjectId()+" screenSampleId="+sampleEntityId;
@@ -99,15 +106,19 @@ public class FlyScreenSampleService implements EntityFilter, IService {
         Entity screenSampleEntity=EJBFactory.getLocalAnnotationBean().getEntityById(sampleEntityId);
         String stackPath=getStackPath(screenSampleEntity);
         processData.putItem("STACK_PATH", stackPath);
+        logger.info("FlyScreenSampleService  doSetup()   stackPath="+stackPath);
     }
 
     public void doComplete() throws Exception {
+        logger.info("FlyScreenSampleService  doComplete() start");
         Entity screenSampleEntity=EJBFactory.getLocalAnnotationBean().getEntityById(sampleEntityId);
         File resultDir=new File(resultNode.getDirectoryPath());
+        logger.info("FlyScreenSampleService  doComplete()  using resultDir="+resultDir.getAbsolutePath());
         File[] resultFiles=resultDir.listFiles();
         File pngFile=null;
         File tifFile=null;
         for (File f : resultFiles) {
+            logger.info("Checking file="+f.getAbsolutePath());
             if (f.getName().toLowerCase().endsWith(".tif")) {
                 tifFile=f;
             } else if (f.getName().toLowerCase().endsWith(".png")) {
@@ -119,6 +130,7 @@ public class FlyScreenSampleService implements EntityFilter, IService {
             tifFile.delete();
         }
         if (pngFile!=null) {
+            logger.info("Found png file="+pngFile.getAbsolutePath());
             Entity mipEntity=createMipEntity(pngFile, screenSampleEntity.getName() + " mip");
             addToParent(screenSampleEntity, mipEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
             screenSampleEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
@@ -126,7 +138,9 @@ public class FlyScreenSampleService implements EntityFilter, IService {
             stackEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
             EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(screenSampleEntity);
             EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(stackEntity);
+            logger.info("Finished saving entity metadata for png file");
         }
+        logger.info("FlyScreenSampleService  doComplete()  done");
     }
 
     protected String getStackPath(Entity screenSampleEntity) {

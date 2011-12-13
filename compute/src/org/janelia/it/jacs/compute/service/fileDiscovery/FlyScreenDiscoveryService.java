@@ -48,6 +48,8 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
     @Override
     protected void processFolderForData(Entity folder) throws Exception {
 
+        logger.info("FlyScreenDiscoveryService  processFolderForData()  start   folder="+folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+
         if (topFolder==null) {
             topFolder=folder;
         } else {
@@ -58,27 +60,79 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         logger.info("Processing folder="+dir.getAbsolutePath()+" id="+folder.getId());
 
         if (!dir.canRead()) {
-        	logger.info("Cannot read from folder "+dir.getAbsolutePath());
+        	logger.error("Cannot read from folder " + dir.getAbsolutePath());
         	return;
         }
 
         // We need to know the pre-existing set of Screen Samples, so we can detect new ones
         Set<String> currentSceenSamples=new HashSet<String>();
+        Map<String,Entity> incompleteScreenSamples=new HashMap<String,Entity>();
         for (EntityData ed : topFolder.getEntityData()) {
             Entity child = ed.getChildEntity();
             if (child != null && child.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
-                currentSceenSamples.add(child.getName());
+                String previousSampleName=child.getName();
+                if (screenSampleIsComplete(child)) {
+                    logger.info("Skipping previous complete ScreenSample  name="+previousSampleName);
+                    currentSceenSamples.add(previousSampleName);
+                } else {
+                    logger.info("Adding incomplete ScreenSample  name="+previousSampleName);
+                    incompleteScreenSamples.put(previousSampleName, child);
+                }
             }
         }
+        Map<String, FlyScreenSample> sampleMap=new HashMap<String, FlyScreenSample>();
+        processFlyLightScreenDirectory(dir, currentSceenSamples, sampleMap);
 
-        processFlyLightScreenDirectory(dir, currentSceenSamples);
+        // Next, create the new samples
+        EntityType screenSampleType=annotationBean.getEntityTypeByName(EntityConstants.TYPE_SCREEN_SAMPLE);
+        for (String key : sampleMap.keySet()) {
+            FlyScreenSample screenSample = sampleMap.get(key);
+            Entity screenSampleEntity=incompleteScreenSamples.get(key);
+            if (screenSampleEntity==null) {
+                screenSampleEntity = new Entity();
+                screenSampleEntity.setCreationDate(createDate);
+                screenSampleEntity.setUpdatedDate(createDate);
+                screenSampleEntity.setUser(user);
+                screenSampleEntity.setName(key);
+                screenSampleEntity.setEntityType(screenSampleType);
+                screenSampleEntity = annotationBean.saveOrUpdateEntity(screenSampleEntity);
+                logger.info("Created new Screen Sample " + key + " id=" + screenSampleEntity.getId());
+                addToParent(topFolder, screenSampleEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
+            }
+            String[] alignmentScores = getAlignmentScoresFromQualityFile(screenSample.QualityCsvPath);
+            addStackToScreenSample(screenSampleEntity, screenSample, alignmentScores);
+        }
     }
 
-    protected void processFlyLightScreenDirectory(File dir, Set<String> currentScreenSamples) throws Exception {
+    protected boolean screenSampleIsComplete(Entity screenSample) {
+        boolean hasStack=false;
+        boolean hasMip=false;
+        for (EntityData ed2 : screenSample.getEntityData()) {
+            Entity child2 = ed2.getChildEntity();
+            if (child2.getEntityType().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
+                String stackPath=child2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                File stackFile=new File(stackPath);
+                if (stackFile.exists())
+                    hasStack=true;
+            } else if (child2.getEntityType().equals(EntityConstants.TYPE_IMAGE_2D) &&
+                    child2.getName().toLowerCase().endsWith("mip")) {
+                String mipPath=child2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                File mipFile=new File(mipPath);
+                if (mipFile.exists())
+                    hasMip=true;
+            }
+        }
+        if (hasStack && hasMip) {
+            return true;
+        }
+        return false;
+    }
+
+    protected void processFlyLightScreenDirectory(File dir, Set<String> currentScreenSamples,
+                                                  Map<String, FlyScreenSample> sampleMap) throws Exception {
 
         // First, find the new sample stack and quality files in the directory
         List<File> fileList=getOrderedFilesInDir(dir);
-        Map<String, FlyScreenSample> sampleMap=new HashMap<String, FlyScreenSample>();
 
         for (File file : fileList) {
             if (!file.isDirectory()) {
@@ -104,27 +158,9 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
                     }
                 }
             } else {
-                processFlyLightScreenDirectory(file, currentScreenSamples);
+                processFlyLightScreenDirectory(file, currentScreenSamples, sampleMap);
             }
         }
-
-        // Next, create the new samples
-        EntityType screenSampleType=annotationBean.getEntityTypeByName(EntityConstants.TYPE_SCREEN_SAMPLE);
-        for (String key : sampleMap.keySet()) {
-            FlyScreenSample screenSample = sampleMap.get(key);
-            Entity screenSampleEntity = new Entity();
-            screenSampleEntity.setCreationDate(createDate);
-            screenSampleEntity.setUpdatedDate(createDate);
-            screenSampleEntity.setUser(user);
-            screenSampleEntity.setName(key);
-            screenSampleEntity.setEntityType(screenSampleType);
-            screenSampleEntity = annotationBean.saveOrUpdateEntity(screenSampleEntity);
-            logger.info("Created new Screen Sample " + key + " id=" + screenSampleEntity.getId());
-            addToParent(topFolder, screenSampleEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
-            String[] alignmentScores = getAlignmentScoresFromQualityFile(screenSample.QualityCsvPath);
-            addImageEntitiesToScreenSample(screenSampleEntity, screenSample, alignmentScores);
-        }
-
     }
 
     String[] getAlignmentScoresFromQualityFile(String filepath) {
@@ -146,19 +182,45 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         return scoreArray;
     }
 
-    protected void addImageEntitiesToScreenSample(Entity screenSampleEntity, FlyScreenSample screenSample,
+    protected void addStackToScreenSample(Entity screenSampleEntity, FlyScreenSample screenSample,
                                                   String[] alignmentScores) throws Exception {
-        Entity alignedStack = new Entity();
-        alignedStack.setUser(user);
-        alignedStack.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK));
-        alignedStack.setCreationDate(createDate);
-        alignedStack.setUpdatedDate(createDate);
-        alignedStack.setName(screenSampleEntity.getName()+" aligned stack");
-        alignedStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, screenSample.StackPath);
-        alignedStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE, alignmentScores[0]);
-        alignedStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE, alignmentScores[1]);
-        alignedStack = annotationBean.saveOrUpdateEntity(alignedStack);
-        addToParent(screenSampleEntity, alignedStack, null, EntityConstants.ATTRIBUTE_ENTITY);
+        boolean alreadyHasQualityScores=false;
+        boolean alreadyHasStack=false;
+        Entity alignedStack=null;
+        Set<Entity> children = screenSampleEntity.getChildren();
+        if (children!=null && children.size()>0) {
+            for (Entity child : children)  {
+                if (child.getEntityType().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
+                    String stackPath=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                    File stackFile=new File(stackPath);
+                    if (stackFile.exists()) {
+                        alignedStack=child;
+                        alreadyHasStack=true;
+                        String qiScore=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
+                        if (qiScore!=null && qiScore.trim().length()>0) {
+                            alreadyHasQualityScores=true;
+                        }
+                    }
+                }
+            }
+        }
+        if (alignedStack==null) {
+            alignedStack = new Entity();
+            alignedStack.setUser(user);
+            alignedStack.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK));
+            alignedStack.setCreationDate(createDate);
+            alignedStack.setUpdatedDate(createDate);
+            alignedStack.setName(screenSampleEntity.getName()+" aligned stack");
+            alignedStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, screenSample.StackPath);
+        }
+        if (!alreadyHasQualityScores) {
+            alignedStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE, alignmentScores[0]);
+            alignedStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE, alignmentScores[1]);
+            alignedStack = annotationBean.saveOrUpdateEntity(alignedStack);
+        }
+        if (!alreadyHasStack) {
+            addToParent(screenSampleEntity, alignedStack, null, EntityConstants.ATTRIBUTE_ENTITY);
+        }
         logger.info("Saved stack " + alignedStack.getName() + " as "+alignedStack.getId());
     }
 
