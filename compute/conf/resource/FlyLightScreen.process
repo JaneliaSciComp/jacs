@@ -96,9 +96,8 @@
 		        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.screen.FlyScreenSampleService">
 		            <input name="MODE" value="COMPLETE"/>
 		            <input name="SAMPLE_ENTITY_ID"/>
-		            <output name="RESULT_FILE_NODE"/>
-	                <output name="RESULT_FILE_NODE_ID"/>
-	                <output name="STACK_PATH"/>
+		            <input name="RESULT_FILE_NODE"/>
+	                <input name="RESULT_FILE_NODE_ID"/>
 		        </operation>
 
 			</sequence>
