@@ -100,6 +100,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     public void runMCFOSampleViewCreation(String sourceEntityId, String targetEntityName) {
         try {
         	Entity sourceEntity = EJBFactory.getLocalAnnotationBean().getEntityById(sourceEntityId);
+        	if (sourceEntity==null) throw new IllegalArgumentException("Entity with id "+sourceEntityId+" does not exist");
         	Task task = new EntityViewCreationTask(new HashSet<Node>(), 
         			sourceEntity.getUser().getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>(), sourceEntityId, targetEntityName);
             task.setJobName("Sample View Creation Task");
