@@ -119,9 +119,13 @@ public class FlyScreenSampleService implements EntityFilter, IService {
             tifFile.delete();
         }
         if (pngFile!=null) {
-            addMipToScreenSample(screenSampleEntity, pngFile);
+            Entity mipEntity=createMipEntity(pngFile, screenSampleEntity.getName() + " mip");
+            addToParent(screenSampleEntity, mipEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
             screenSampleEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
+            Entity stackEntity=getStackEntityFromScreenSample(screenSampleEntity);
+            stackEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
             EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(screenSampleEntity);
+            EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(stackEntity);
         }
     }
 
@@ -143,17 +147,26 @@ public class FlyScreenSampleService implements EntityFilter, IService {
         return null;
     }
 
-    protected void addMipToScreenSample(Entity screenSampleEntity, File pngFile) throws Exception {
+     protected Entity getStackEntityFromScreenSample(Entity screenSampleEntity) {
+        if (screenSampleEntity.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
+            List<Entity> stackEntities = screenSampleEntity.getChildrenOfType(EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
+            if (stackEntities.size()>0) {
+                return stackEntities.get(0);
+            }
+        }
+        return null;
+    }
+
+    protected Entity createMipEntity(File pngFile, String name) throws Exception {
         Entity mipEntity = new Entity();
         mipEntity.setUser(user);
         mipEntity.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D));
         mipEntity.setCreationDate(createDate);
         mipEntity.setUpdatedDate(createDate);
-        mipEntity.setName(screenSampleEntity.getName() + " mip");
+        mipEntity.setName(name);
         mipEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, pngFile.getAbsolutePath());
         mipEntity = annotationBean.saveOrUpdateEntity(mipEntity);
-        addToParent(screenSampleEntity, mipEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
-        logger.info("Saved stack " + mipEntity.getName() + " as "+mipEntity.getId());
+        return mipEntity;
     }
 
     protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
