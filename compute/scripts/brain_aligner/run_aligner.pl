@@ -253,19 +253,23 @@ sub generateOutputFiles {
 
     $cmd = "$v3d -cmd image-loader -mapchannels $resultFile $workingDir\/Aligned\.v3draw \"3,0,0,1,1,2,2,3\"";
     print "cmd=$cmd\n";
-    system( "$cmd 1>>$logFile 2>&1" );
-
-    $cmd = "$v3d -cmd image-loader -mapchannels $resultFile $workingDir\/AlignedSignal\.v3dpbd \"0,0,1,1,2,2\"";
-    print "cmd=$cmd\n";
     system( "$cmd 1>$logFile 2>&1" );
 
-    $cmd = "$v3d -cmd image-loader -mapchannels $resultFile $workingDir\/AlignedReference\.v3dpbd \"3,0\"";
-    print "cmd=$cmd\n";
-    system( "$cmd 1>>$logFile 2>&1" );
+    #$cmd = "$v3d -cmd image-loader -convert8 $workingDir\/Aligned16\.v3draw $workingDir\/Aligned8\.v3draw";
+    #print "cmd=$cmd\n";
+    #system( "$cmd 1>>$logFile 2>&1" );
 
-    $cmd = "$v3d -cmd image-loader -mapchannels $templateDir\/GMR_36G04_AE_01_05-hanchuan_rot180_recentered_3chan_mask_edgesinglecolor_center_16bit.raw $workingDir\/AlignedCompartments\.v3dpbd \"0,0\"";
-    print "cmd=$cmd\n";
-    system( "$cmd 1>>$logFile 2>&1" );
+    #$cmd = "$v3d -cmd image-loader -mapchannels $resultFile $workingDir\/AlignedSignal\.v3dpbd \"0,0,1,1,2,2\"";
+    #print "cmd=$cmd\n";
+    #system( "$cmd 1>>$logFile 2>&1" );
+
+    #$cmd = "$v3d -cmd image-loader -mapchannels $resultFile $workingDir\/AlignedReference\.v3dpbd \"3,0\"";
+    #print "cmd=$cmd\n";
+    #system( "$cmd 1>>$logFile 2>&1" );
+
+    #$cmd = "$v3d -cmd image-loader -mapchannels $templateDir\/GMR_36G04_AE_01_05-hanchuan_rot180_recentered_3chan_mask_edgesinglecolor_center_16bit.raw $workingDir\/AlignedCompartments\.v3dpbd \"0,0\"";
+    #print "cmd=$cmd\n";
+    #system( "$cmd 1>>$logFile 2>&1" );
 }
 
 sub addMips {
