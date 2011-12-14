@@ -25,15 +25,21 @@ import org.janelia.it.jacs.model.user_data.entity.SampleResultNode;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class SampleFileNodeSyncService implements IService {
-	
+
+    public transient static final String PARAM_testRun = "is test run";
+    
 	public transient static final String CENTRAL_DIR_PROP = "FileStore.CentralDir";
 	
     protected Logger logger;
     protected Task task;
+    protected String username;
     protected AnnotationBeanLocal annotationBean;
     protected ComputeBeanLocal computeBean;
     
     private boolean isDebug = false;
+    private int numDirs = 0;
+    private int numResultNodes = 0;
+    private int numDeletedResultNodes = 0;
     
     public void execute(IProcessData processData) throws ServiceException {
 
@@ -42,60 +48,24 @@ public class SampleFileNodeSyncService implements IService {
             task = ProcessDataHelper.getTask(processData);
             annotationBean = EJBFactory.getLocalAnnotationBean();
             computeBean = EJBFactory.getLocalComputeBean();
-            String username = task.getOwner();
+            username = task.getOwner();
+            isDebug = Boolean.parseBoolean(task.getParameter(PARAM_testRun));
             
             File sampleDir = new File(SystemConfigurationProperties.getString(CENTRAL_DIR_PROP) + File.separator + username + File.separator + "Sample");
             
             logger.info("Synchronizing file share directory to DB: "+sampleDir.getAbsolutePath());
             
-            File[] dirs = sampleDir.listFiles(new FileFilter() {
-				@Override
-				public boolean accept(File file) {
-					return file.isDirectory();
-				}
-            });
-        	
-            int numSampleResultNodes = 0;
-            int numDeletedFileNodes = 0;
+            if (isDebug) {
+            	logger.info("This is a test run. No files will be moved or deleted.");
+            }
+            else {
+            	logger.info("This is the real thing. Files will be moved and/or deleted!");
+            }
             
-        	for(File dir : dirs) {
-        		Node node = null;
-        		try {
-        			long fileNodeId = Long.parseLong(dir.getName());
-        			node = computeBean.getNodeById(fileNodeId);
-        		}
-        		catch (NumberFormatException e) {
-        			// Not an identifier, that's ok, just ignore it
-        			logger.info("Ignoring subdir because name is not an id: "+dir.getName());
-        			continue;
-        		}
-        		
-                if (null == node) {
-                    // If we get here, we have a numeric dirname which the DB knows nothing about. But maybe the production DB does?? Yikes, we can't delete it. 
-//                    if (!isDebug) FileUtil.deleteDirectory(dir);
-//                    logger.debug("Deleted orphaned node " + dir.getName());
-                	logger.info("Ignoring subdir because it is not a node: "+dir.getName());
-                }
-                else if (node instanceof SampleResultNode) {
-                	numSampleResultNodes++;
-                	
-                	List<Entity> entities = annotationBean.getEntitiesWithAttributeValue(EntityConstants.ATTRIBUTE_FILE_PATH, dir.getAbsolutePath()+"%");
-                	
-                	if (entities.isEmpty()) {
-                        if (!isDebug) computeBean.deleteNode(username, node.getObjectId(), true);
-                        logger.debug("Deleted unreferenced node: " + node.getObjectId());	
-                        numDeletedFileNodes++;
-                	}
-                	else {
-                		logger.debug("Node " + node.getObjectId() +" has "+entities.size()+" references to it, leaving it alone.");
-                	}
-                }
-                else {
-        			logger.info("Ignoring subdir which is not a SampleResultNode but a "+node.getClass().getName());
-                }
-        	}
+            processChildren(sampleDir);
         	
-			logger.info("Processed "+dirs.length+" directories. Found "+numSampleResultNodes+" sample result nodes. Deleted "+numDeletedFileNodes+" nodes.");
+			logger.info("Processed "+numDirs+" directories. Found "+numResultNodes+" sample result nodes. Trashed "+
+					numDeletedResultNodes+" nodes. Left "+(numResultNodes-numDeletedResultNodes)+" nodes alone.");
     	}
         catch (Exception e) {
         	if (e instanceof ServiceException) {
@@ -103,6 +73,62 @@ public class SampleFileNodeSyncService implements IService {
             }
             throw new ServiceException("Error running FileCopyingService:" + e.getMessage(), e);
         }
+    }
+    
+    private void processChildren(File dir) throws Exception {
+    	for(File childDir : getChildDirs(dir)) {
+    		if (childDir.getName().matches("^\\d{3}$")) {
+    			processChildren(childDir);
+    		}
+    		else {
+    			processDir(childDir);
+    		}
+    	}
+    }
+    
+    private void processDir(File dir) throws Exception {
+
+    	numDirs++;
     	
+		Node node = null;
+		try {
+			long fileNodeId = Long.parseLong(dir.getName());
+			node = computeBean.getNodeById(fileNodeId);
+		}
+		catch (NumberFormatException e) {
+			// Not an identifier, that's ok, just ignore it
+			logger.info("Ignoring subdir because name is not an id: "+dir.getName());
+			return;
+		}
+		
+        if (null == node) {
+            // This may be a node owned by another database... just leave it alone 
+        	logger.info("Ignoring subdir because it is not a node: "+dir.getName());
+        }
+        else if (node instanceof SampleResultNode) {
+        	numResultNodes++;
+        	
+        	List<Entity> entities = annotationBean.getEntitiesWithAttributeValue(EntityConstants.ATTRIBUTE_FILE_PATH, dir.getAbsolutePath()+"%");
+        	if (entities.isEmpty()) {
+                if (!isDebug) computeBean.trashNode(username, node.getObjectId(), true);
+                logger.debug("Trashed unreferenced node: " + node.getObjectId());	
+                numDeletedResultNodes++;
+        	}
+        	else {
+        		logger.debug("Node " + node.getObjectId() +" has "+entities.size()+" references to it, leaving it alone.");
+        	}
+        }
+        else {
+			logger.info("Ignoring subdir which is not a SampleResultNode but a "+node.getClass().getName());
+        }
+    }
+    
+    private File[] getChildDirs(File dir) {
+        return dir.listFiles(new FileFilter() {
+			@Override
+			public boolean accept(File file) {
+				return file.isDirectory();
+			}
+        });
     }
 }

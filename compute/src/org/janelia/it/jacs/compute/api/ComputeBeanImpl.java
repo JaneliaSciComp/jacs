@@ -435,6 +435,19 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     public void setTaskParameter(Long taskId, String parameterKey, String parameterValue) throws DaoException {
         computeDAO.setTaskParameter(taskId, parameterKey, parameterValue);
     }
+    
+    private Node retireNode(String username, Long nodeId) throws Exception {
+        // Test the ownership of the node to the username provided.  Basic security.
+        // To add group security nodes and tasks should be owned by groups
+        Node targetNode = computeDAO.getNodeById(nodeId);
+        if (null==targetNode || !username.equals(targetNode.getOwner())){
+            throw new SecurityException("The provided user does not own the node!");
+        }
+        // Get the node and deprecate the status
+        targetNode.setVisibility(Node.VISIBILITY_PRIVATE_DEPRECATED);
+        computeDAO.saveOrUpdate(targetNode);
+        return targetNode;
+    }
 
     /**
      * Method to clean up the db and filestore upon deletion of a node.
@@ -446,16 +459,8 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
      */
     public boolean deleteNode(String username, Long nodeId, boolean clearFromFilestoreIfAppropriate) {
         try {
-            // Test the ownership of the node to the username provided.  Basic security.
-            // To add group security nodes and tasks should be owned by groups
-            Node targetNode = computeDAO.getNodeById(nodeId);
-            if (null==targetNode || !username.equals(targetNode.getOwner())){
-                throw new SecurityException("The provided user does not own the node!");
-            }
-            // Get the node and deprecate the status
-            targetNode.setVisibility(Node.VISIBILITY_PRIVATE_DEPRECATED);
-            computeDAO.saveOrUpdate(targetNode);
-
+        	Node targetNode = retireNode(username, nodeId);
+        	
             // Clean up the filestore if asked
             if (clearFromFilestoreIfAppropriate && targetNode instanceof FileNode) {
                 FileNode tmpFileNode = (FileNode) targetNode;
@@ -476,6 +481,35 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return true;
     }
 
+    /**
+     * Method to clean up the db and filestore upon deletion of a node.
+     *
+     * @param nodeId - node id of what is to be deleted
+     * @param clearFromFilestoreIfAppropriate
+     *               - whether to nuke the filestore dir, if node is a FileNode
+     * @return boolean of success
+     */
+    public boolean trashNode(String username, Long nodeId, boolean clearFromFilestoreIfAppropriate) {
+        try {
+        	Node targetNode = retireNode(username, nodeId);
+
+            // Clean up the filestore if asked
+            if (clearFromFilestoreIfAppropriate && targetNode instanceof FileNode) {
+                FileNode tmpFileNode = (FileNode) targetNode;
+                String centralDir = SystemConfigurationProperties.getString(FileNode.CENTRAL_DIR_PROP);
+                File trashDir = new File(centralDir, "trash");
+            	FileUtil.ensureDirExists(trashDir.getAbsolutePath());
+            	FileUtil.moveFileUsingSystemCall(new File(tmpFileNode.getDirectoryPath()), trashDir);
+                logger.debug("Successfully moved " + tmpFileNode.getDirectoryPath()+" to trash directory ("+trashDir+")");
+            }
+        }
+        catch (Exception e) {
+            logger.error("Unsuccessful in moving node to trash: " + e.getMessage());
+            return false;
+        }
+        return true;
+    }
+    
     public int getNumCategoryResults(Long nodeId, String category) {
         try {
             String sql =

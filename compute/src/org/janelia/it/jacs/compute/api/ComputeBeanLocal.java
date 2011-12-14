@@ -110,7 +110,8 @@ public interface ComputeBeanLocal {
     public void deleteTaskById(Long taskId) throws Exception;
     public void cancelTaskById(Long taskId) throws Exception;
     public boolean deleteNode(String username, Long nodeId, boolean clearFromFilestoreIfAppropriate);
-
+    public boolean trashNode(String username, Long nodeId, boolean clearFromFilestoreIfAppropriate);
+    
     public void stopContinuousExecution(long taskId) throws ServiceException;
     public Task getTaskById(long taskId);
     public List<Long> getTaskTreeIdList(Long taskId) throws Exception;

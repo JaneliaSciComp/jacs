@@ -95,6 +95,8 @@ public interface ComputeBeanRemote {
     public void addEventToTask(Long taskId, Event event) throws DaoException, RemoteException ;
     public void setTaskParameter(Long taskId, String parameterKey, String parameterValue) throws DaoException, RemoteException;
     public boolean deleteNode(String username, Long nodeId, boolean clearFromFilestoreIfAppropriate) throws RemoteException;
+    public boolean trashNode(String username, Long nodeId, boolean clearFromFilestoreIfAppropriate) throws RemoteException;
+    
     public int getNumCategoryResults(Long nodeId, String category) throws RemoteException;
     public Node createNode(Node node) throws DaoException, RemoteException;
     public List getAllSampleNamesAsList() throws RemoteException, DaoException;
