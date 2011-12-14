@@ -34,10 +34,11 @@ public class FileDiscoveryService implements IService {
     protected User user;
     protected Date createDate;
     protected List<String> directoryPathList = new ArrayList<String>();
+    protected IProcessData processData;
 
     public void execute(IProcessData processData) throws ServiceException {
         try {
-        	
+        	this.processData=processData;
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             annotationBean = EJBFactory.getLocalAnnotationBean();
             computeBean = EJBFactory.getLocalComputeBean();

@@ -288,7 +288,6 @@ public class Entity  implements java.io.Serializable, IsSerializable {
      * Get all the descendants (including self) which are of a certain type. Depends on the subtree of entities 
      * "below" this one being loaded.
      *
-     * @param entity
      * @param typeName
      * @return
      */
@@ -314,7 +313,7 @@ public class Entity  implements java.io.Serializable, IsSerializable {
         List<Entity> items = new ArrayList<Entity>();
         for (EntityData entityData : getOrderedEntityData()) {
             Entity child = entityData.getChildEntity();
-            if (typeName==null || typeName.equals(getEntityType().getName())) {
+            if (typeName==null || typeName.equals(child.getEntityType().getName())) {
                 items.add(child);
             }
         }

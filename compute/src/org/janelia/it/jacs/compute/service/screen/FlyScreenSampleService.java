@@ -22,6 +22,7 @@ import org.janelia.it.jacs.shared.utils.FileUtil;
 import java.io.File;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,9 +35,9 @@ public class FlyScreenSampleService implements EntityFilter, IService {
 
     private static final Logger logger = Logger.getLogger(FlyScreenSampleService.class);
 
-    final public String MODE_UNDEFINED="MODE_UNDEFINED";
-    final public String MODE_SETUP="MODE_SETUP";
-    final public String MODE_COMPLETE="MODE_COMPLETE";
+    final public String MODE_UNDEFINED="UNDEFINED";
+    final public String MODE_SETUP="SETUP";
+    final public String MODE_COMPLETE="COMPLETE";
 
     protected AnnotationBeanLocal annotationBean;
     protected ComputeBeanLocal computeBean;
@@ -68,9 +69,9 @@ public class FlyScreenSampleService implements EntityFilter, IService {
 
             logger.info("FlyScreenSampleService execute()  sampleEntityId="+sampleEntityId+" mode="+mode);
 
-            if (mode==MODE_SETUP) {
+            if (mode.equals(MODE_SETUP)) {
                 doSetup();
-            } else if (mode==MODE_COMPLETE) {
+            } else if (mode.equals(MODE_COMPLETE)) {
                 doComplete();
             } else {
                 logger.error("Do not recognize mode type="+mode);
@@ -91,19 +92,21 @@ public class FlyScreenSampleService implements EntityFilter, IService {
 
     public void doSetup() throws Exception {
         logger.info("FlyScreenSampleService  doSetup() start");
+        resultNode = (ScreenSampleResultNode)processData.getItem(ProcessDataConstants.RESULT_FILE_NODE);
+        if (resultNode!=null) {
+            throw new Exception("resultNode is non-null at start - this shows shared processData");
+        }
     	resultNode = new ScreenSampleResultNode(task.getOwner(), task, "ScreenSampleResultNode",
                 "ScreenSampleResultNode for task " + task.getObjectId(), visibility, sessionName);
         EJBFactory.getLocalComputeBean().saveOrUpdateNode(resultNode);
-        logger.info("FlyScreenSampleService  doSetup()  resultNodeId="+resultNode.getObjectId());
+        logger.info("FlyScreenSampleService  doSetup()  resultNodeId="+resultNode.getObjectId()+ " intended path="+resultNode.getDirectoryPath());
         FileUtil.ensureDirExists(resultNode.getDirectoryPath());
         FileUtil.cleanDirectory(resultNode.getDirectoryPath());
         String creationMessage="Created ScreenSanmpleResultNode path="+resultNode.getDirectoryPath()+" id="+resultNode.getObjectId()+" screenSampleId="+sampleEntityId;
         logger.info(creationMessage);
-        task.addMessage(creationMessage);
-        EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
         processData.putItem(ProcessDataConstants.RESULT_FILE_NODE, resultNode);
         processData.putItem(ProcessDataConstants.RESULT_FILE_NODE_ID, resultNode.getObjectId());
-        Entity screenSampleEntity=EJBFactory.getLocalAnnotationBean().getEntityById(sampleEntityId);
+        Entity screenSampleEntity=EJBFactory.getLocalAnnotationBean().getEntityTree(new Long(sampleEntityId.trim()));
         String stackPath=getStackPath(screenSampleEntity);
         processData.putItem("STACK_PATH", stackPath);
         logger.info("FlyScreenSampleService  doSetup()   stackPath="+stackPath);
@@ -111,6 +114,7 @@ public class FlyScreenSampleService implements EntityFilter, IService {
 
     public void doComplete() throws Exception {
         logger.info("FlyScreenSampleService  doComplete() start");
+        resultNode=(ScreenSampleResultNode)processData.getItem("RESULT_FILE_NODE");
         Entity screenSampleEntity=EJBFactory.getLocalAnnotationBean().getEntityById(sampleEntityId);
         File resultDir=new File(resultNode.getDirectoryPath());
         logger.info("FlyScreenSampleService  doComplete()  using resultDir="+resultDir.getAbsolutePath());
@@ -144,16 +148,21 @@ public class FlyScreenSampleService implements EntityFilter, IService {
     }
 
     protected String getStackPath(Entity screenSampleEntity) {
-        if (screenSampleEntity.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
-            List<Entity> stackEntities = screenSampleEntity.getChildrenOfType(EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
-            for (Entity e : stackEntities) {
-                String filepath = e.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                if (filepath!=null) {
-                    File f = new File(filepath);
-                    if (f.exists()) {
-                        return f.getAbsolutePath();
-                    } else {
-                        logger.error("Could not find expected stack in location="+f.getAbsolutePath());
+        logger.info("getStackPath() checking screenSampleEntity id="+screenSampleEntity.getId());
+        Set<Entity> children = screenSampleEntity.getChildren();
+        logger.info("Found " + children.size() + " children for screenSampleEntity id="+screenSampleEntity.getId());
+        if (children!=null && children.size()>0) {
+            for (Entity child : children)  {
+                Long childId=child.getId();
+                logger.info("childId="+childId);
+                //child=EJBFactory.getLocalAnnotationBean().getEntityById(childId.toString());
+                String message = "For screenSampleEntity id="+screenSampleEntity.getId() + " considering child name="+child.getName()+" id="+child.getId();
+                logger.info(message);
+                if (child.getEntityType().getName().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
+                    String stackPath=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                    File stackFile=new File(stackPath);
+                    if (stackFile.exists()) {
+                        return stackFile.getAbsolutePath();
                     }
                 }
             }

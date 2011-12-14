@@ -85,6 +85,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         processFlyLightScreenDirectory(dir, currentSceenSamples, sampleMap);
 
         // Next, create the new samples
+        List<String> sampleIdList=new ArrayList<String>();
         EntityType screenSampleType= EJBFactory.getLocalAnnotationBean().getEntityTypeByName(EntityConstants.TYPE_SCREEN_SAMPLE);
         if (screenSampleType==null) {
             String errorMsg="EntityType screenSampleType  returned  NULL";
@@ -107,7 +108,10 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
             }
             String[] alignmentScores = getAlignmentScoresFromQualityFile(screenSample.QualityCsvPath);
             addStackToScreenSample(screenSampleEntity, screenSample, alignmentScores);
+            sampleIdList.add(screenSampleEntity.getId().toString());
         }
+        logger.info("Adding "+sampleIdList.size()+" sample IDs to SAMPLE_ENTITY_ID");
+        processData.putItem("SAMPLE_ENTITY_ID", sampleIdList);
     }
 
     protected boolean screenSampleIsComplete(Entity screenSample) {
@@ -196,17 +200,22 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         Set<Entity> children = screenSampleEntity.getChildren();
         if (children!=null && children.size()>0) {
             for (Entity child : children)  {
-                if (child.getEntityType().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
+                if (child.getEntityType().getName().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
                     String stackPath=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                     File stackFile=new File(stackPath);
+                    logger.info("Found already existing stack="+stackFile.getAbsolutePath());
                     if (stackFile.exists()) {
+                        logger.info("Stack already exists on filesystem");
                         alignedStack=child;
                         alreadyHasStack=true;
                         String qiScore=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
                         if (qiScore!=null && qiScore.trim().length()>0) {
                             alreadyHasQualityScores=true;
+                            logger.info("Stack already has quality scores");
                         }
                     }
+                } else {
+                    logger.info("Skipping child of type="+child.getEntityType().getName());
                 }
             }
         }
@@ -221,14 +230,19 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         }
         // The following will capture the new case implicitly
         if (!alreadyHasQualityScores) {
+            logger.info("Adding fresh quality scores to stack");
             alignedStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE, alignmentScores[0]);
             alignedStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE, alignmentScores[1]);
             alignedStack = EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(alignedStack);
+            logger.info("Saved stack " + alignedStack.getName() + " as "+alignedStack.getId());
         }
         if (!alreadyHasStack) {
+            logger.info("Adding stack to parent entity");
             addToParent(screenSampleEntity, alignedStack, null, EntityConstants.ATTRIBUTE_ENTITY);
         }
-        logger.info("Saved stack " + alignedStack.getName() + " as "+alignedStack.getId());
+        if (alreadyHasQualityScores && alreadyHasStack) {
+            logger.info("Screen sample id="+screenSampleEntity.getId() + " already has stack and quality values");
+        }
     }
 
 

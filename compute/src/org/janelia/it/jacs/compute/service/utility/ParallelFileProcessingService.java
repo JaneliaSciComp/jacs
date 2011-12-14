@@ -37,9 +37,19 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
     	while (true) {
 
             // First determine input file for this index
-       	    String inputFilename = (String)processData.getItem("INPUT_FILENAME_"+configIndex);
-            String inputPath = (String)processData.getItem("INPUT_PATH_" + configIndex);
-            final String inputRegex = (String)processData.getItem("INPUT_FILENAME_REGEX_"+configIndex);
+
+            String inputFilenameKey="INPUT_FILENAME_"+configIndex;
+            String inputPathKey="INPUT_PATH_"+configIndex;
+            String inputRegexKey="INPUT_FILENAME_REGEX_"+configIndex;
+
+       	    String inputFilename = (String)processData.getItem(inputFilenameKey);
+            String inputPath = (String)processData.getItem(inputPathKey);
+            final String inputRegex = (String)processData.getItem(inputRegexKey);
+
+            logger.info(inputFilenameKey+" = "+inputFilename);
+            logger.info(inputPathKey+" = "+inputPath);
+            logger.info(inputRegexKey+" = "+inputRegex);
+
             if ( (inputFilename==null && inputPath==null && inputRegex==null) || configIndex>100 )
                 break;
 
@@ -81,6 +91,7 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
             }
             configIndex++;
     	}
+        logger.info("ParallelFileProcessingService  init()  inputFile count="+inputFiles.size()+ "  outputFile count="+outputFiles.size());
     }
 
     @Override
