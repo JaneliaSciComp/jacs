@@ -313,8 +313,10 @@ public class Entity  implements java.io.Serializable, IsSerializable {
         List<Entity> items = new ArrayList<Entity>();
         for (EntityData entityData : getOrderedEntityData()) {
             Entity child = entityData.getChildEntity();
-            if (typeName==null || typeName.equals(child.getEntityType().getName())) {
-                items.add(child);
+            if (child != null) {
+                if (typeName==null || typeName.equals(child.getEntityType().getName())) {
+                    items.add(child);
+                }
             }
         }
 
