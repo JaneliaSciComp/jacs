@@ -115,7 +115,7 @@ public class FlyScreenSampleService implements EntityFilter, IService {
     public void doComplete() throws Exception {
         logger.info("FlyScreenSampleService  doComplete() start");
         resultNode=(ScreenSampleResultNode)processData.getItem("RESULT_FILE_NODE");
-        Entity screenSampleEntity=EJBFactory.getLocalAnnotationBean().getEntityById(sampleEntityId);
+        Entity screenSampleEntity=EJBFactory.getLocalAnnotationBean().getEntityTree(new Long(sampleEntityId.trim()));
         File resultDir=new File(resultNode.getDirectoryPath());
         logger.info("FlyScreenSampleService  doComplete()  using resultDir="+resultDir.getAbsolutePath());
         File[] resultFiles=resultDir.listFiles();
@@ -138,6 +138,7 @@ public class FlyScreenSampleService implements EntityFilter, IService {
             Entity mipEntity=createMipEntity(pngFile, screenSampleEntity.getName() + " mip");
             addToParent(screenSampleEntity, mipEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
             screenSampleEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
+            EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(screenSampleEntity); // to save the previous attribute
             Entity stackEntity=getStackEntityFromScreenSample(screenSampleEntity);
             stackEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
             EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(screenSampleEntity);
@@ -183,12 +184,12 @@ public class FlyScreenSampleService implements EntityFilter, IService {
     protected Entity createMipEntity(File pngFile, String name) throws Exception {
         Entity mipEntity = new Entity();
         mipEntity.setUser(user);
-        mipEntity.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D));
+        mipEntity.setEntityType(EJBFactory.getLocalAnnotationBean().getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D));
         mipEntity.setCreationDate(createDate);
         mipEntity.setUpdatedDate(createDate);
         mipEntity.setName(name);
         mipEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, pngFile.getAbsolutePath());
-        mipEntity = annotationBean.saveOrUpdateEntity(mipEntity);
+        mipEntity = EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(mipEntity);
         return mipEntity;
     }
 
