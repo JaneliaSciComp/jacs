@@ -289,8 +289,8 @@ public class AnnotationDAO extends ComputeBaseDAO {
 //            createEntityAttribute(EntityConstants.ATTRIBUTE_ANNOTATION_SESSION_ID);
 //            createEntityAttribute(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
 
-              createEntityAttribute(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
-              createEntityAttribute(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE);
+//              createEntityAttribute(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
+//              createEntityAttribute(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE);
 
 //
 //            //========== Type ============
@@ -341,12 +341,14 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
             Set<String> screenSampleAttributeSet = new HashSet<String>();
             screenSampleAttributeSet.add(EntityConstants.ATTRIBUTE_ENTITY);
+            screenSampleAttributeSet.add(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
             createEntityType(EntityConstants.TYPE_SCREEN_SAMPLE, screenSampleAttributeSet);
 
             Set<String> alignedStackAttributeSet = new HashSet<String>();
             alignedStackAttributeSet.add(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
             alignedStackAttributeSet.add(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE);
             alignedStackAttributeSet.add(EntityConstants.ATTRIBUTE_FILE_PATH);
+            alignedStackAttributeSet.add(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
             createEntityType(EntityConstants.TYPE_ALIGNED_BRAIN_STACK, alignedStackAttributeSet);
 
 //
