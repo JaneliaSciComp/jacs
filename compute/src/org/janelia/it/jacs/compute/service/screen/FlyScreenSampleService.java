@@ -140,14 +140,24 @@ public class FlyScreenSampleService implements EntityFilter, IService {
         }
         if (pngFile!=null) {
             logger.info("Found png file="+pngFile.getAbsolutePath());
+
+            // Create MIP
             Entity mipEntity=createMipEntity(pngFile, screenSampleEntity.getName() + " mip");
             addToParent(screenSampleEntity, mipEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
+
+            // Add default image to screen sample
             screenSampleEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
-            EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(screenSampleEntity); // to save the previous attribute
+            EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(screenSampleEntity);
+
+            // Add default image to stack
             Entity stackEntity=getStackEntityFromScreenSample(screenSampleEntity);
             stackEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
-            EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(screenSampleEntity);
             EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(stackEntity);
+
+           // Add default image to mip
+            mipEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
+            EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(mipEntity);
+
             logger.info("Finished saving entity metadata for png file");
         }
         logger.info("FlyScreenSampleService  doComplete()  done");
@@ -185,6 +195,19 @@ public class FlyScreenSampleService implements EntityFilter, IService {
         }
         return null;
     }
+
+    protected Entity getMipEntityFromScreenSample(Entity screenSampleEntity) {
+        if (screenSampleEntity.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
+            List<Entity> mipEntities = screenSampleEntity.getChildrenOfType(EntityConstants.TYPE_IMAGE_2D);
+            for (Entity mip : mipEntities) {
+                if (mip.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH).endsWith(".png")) {
+                    return mip;
+                }
+            }
+        }
+        return null;
+    }
+
 
     protected Entity createMipEntity(File pngFile, String name) throws Exception {
         Entity mipEntity = new Entity();
