@@ -133,10 +133,11 @@ public class FileDiscoveryService implements IService {
         	// Only accept the current user's top level folder
 	        for(Entity entity : topLevelFolders) {
 	        	if (entity.getUser().getUserLogin().equals(user.getUserLogin()) 
-	        			&& entity.getEntityType().getName().equals(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER).getName())) {
+	        			&& entity.getEntityType().getName().equals(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER).getName())
+	        			&& entity.getAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT)!=null) {
 	                // This is the folder we want, now load the entire folder hierarchy
 	                topLevelFolder = annotationBean.getFolderTree(entity.getId());
-	                logger.info("Found existing topLevelFolder, name=" + topLevelFolder.getName());
+	                logger.info("Found existing topLevelFolder common root, name=" + topLevelFolder.getName());
 	        		break;
 	        	}
 	        }

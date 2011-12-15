@@ -23,8 +23,6 @@
 
 package org.janelia.it.jacs.shared.utils;
 
-import org.apache.log4j.Logger;
-
 import java.io.*;
 import java.net.URL;
 import java.nio.channels.FileChannel;
@@ -36,6 +34,8 @@ import java.util.Scanner;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import org.apache.log4j.Logger;
 
 /**
  * This class has some common Java I/O utility methods
@@ -887,6 +887,16 @@ public class FileUtil {
         return fileList;
     }
 
+    public static File[] getSubDirectories(File dir) {
+    	if (!dir.isDirectory()) throw new IllegalArgumentException("Given file is not a directory");
+        return dir.listFiles(new FileFilter() {
+			@Override
+			public boolean accept(File file) {
+				return file.isDirectory();
+			}
+        });
+    }
+    
     /**
      * Locks the file for read and write as other threads might be accessing it at the same time.  Lock can be released
      * either by close the file or releasing FileLock

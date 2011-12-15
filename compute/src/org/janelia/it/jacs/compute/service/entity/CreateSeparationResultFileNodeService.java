@@ -16,7 +16,7 @@ import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.NamedFileNode;
-import org.janelia.it.jacs.model.user_data.entity.SampleResultNode;
+import org.janelia.it.jacs.model.user_data.entity.SeparationResultNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
 /**
@@ -28,7 +28,7 @@ public class CreateSeparationResultFileNodeService implements IService {
 
     protected Logger logger;
     private Task task;
-    private SampleResultNode resultFileNode;
+    private SeparationResultNode resultFileNode;
     private String sessionName;
     private String visibility;
 
@@ -58,8 +58,8 @@ public class CreateSeparationResultFileNodeService implements IService {
     }
 
     private void createResultFileNode() throws DaoException, IOException {
-    	resultFileNode = new SampleResultNode(task.getOwner(), task, "SampleResultNode", 
-                "SampleResultNode for task " + task.getObjectId(), visibility, sessionName);
+    	resultFileNode = new SeparationResultNode(task.getOwner(), task, "SeparationResultNode", 
+                "SeparationResultNode for task " + task.getObjectId(), visibility, null);
     	
         EJBFactory.getLocalComputeBean().saveOrUpdateNode(resultFileNode);
         FileUtil.ensureDirExists(resultFileNode.getDirectoryPath());

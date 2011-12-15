@@ -265,6 +265,10 @@
               discriminator-value="mcfoSamplePipelineTask">
     </subclass>
     
+    <subclass name="org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOSeparationPipelineTask" extends="org.janelia.it.jacs.model.tasks.Task"
+              discriminator-value="mcfoSeparationPipelineTask">
+    </subclass>
+    
     <subclass name="org.janelia.it.jacs.model.tasks.fileDiscovery.EntityViewCreationTask" extends="org.janelia.it.jacs.model.tasks.Task"
               discriminator-value="viewCreationTask">
     </subclass>

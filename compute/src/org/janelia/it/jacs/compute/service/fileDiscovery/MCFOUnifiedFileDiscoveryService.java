@@ -36,6 +36,7 @@ import java.util.regex.Pattern;
 /**
  * File discovery service for stitched and non-stitched data.
  * 
+ * @deprecated Use SampleDiscoveryService instead.
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class MCFOUnifiedFileDiscoveryService implements IService {

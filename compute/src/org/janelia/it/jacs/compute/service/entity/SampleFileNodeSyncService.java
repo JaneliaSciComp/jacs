@@ -1,7 +1,6 @@
 package org.janelia.it.jacs.compute.service.entity;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -18,6 +17,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.entity.SampleResultNode;
+import org.janelia.it.jacs.shared.utils.FileUtil;
 
 /**
  * Synchronizes the Samples in the database to the FileNodes on the fileshare.
@@ -76,7 +76,7 @@ public class SampleFileNodeSyncService implements IService {
     }
     
     private void processChildren(File dir) throws Exception {
-    	for(File childDir : getChildDirs(dir)) {
+    	for(File childDir : FileUtil.getSubDirectories(dir)) {
     		if (childDir.getName().matches("^\\d{3}$")) {
     			processChildren(childDir);
     		}
@@ -121,14 +121,5 @@ public class SampleFileNodeSyncService implements IService {
         else {
 			logger.info("Ignoring subdir which is not a SampleResultNode but a "+node.getClass().getName());
         }
-    }
-    
-    private File[] getChildDirs(File dir) {
-        return dir.listFiles(new FileFilter() {
-			@Override
-			public boolean accept(File file) {
-				return file.isDirectory();
-			}
-        });
     }
 }

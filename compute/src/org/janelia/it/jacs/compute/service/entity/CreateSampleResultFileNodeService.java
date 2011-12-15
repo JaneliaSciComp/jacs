@@ -48,17 +48,9 @@ public class CreateSampleResultFileNodeService implements IService {
             processData.putItem("METADATA_RESULT_FILE_NODE", createChildFileNode("metadata"));
             processData.putItem("MERGE_RESULT_FILE_NODE", createChildFileNode("merge"));
             processData.putItem("STITCH_RESULT_FILE_NODE", createChildFileNode("stitch"));
-            processData.putItem("SEPARATE_RESULT_FILE_NODE", createChildFileNode("separate"));
-            processData.putItem("COMPRESS_RESULT_FILE_NODE", createChildFileNode("compress"));
-            processData.putItem("MIPS_RESULT_FILE_NODE", createChildFileNode("mips"));
-            processData.putItem("CONVERT_RESULT_FILE_NODE", createChildFileNode("convert"));
             processData.putItem("ALIGN_RESULT_FILE_NODE", createChildFileNode("align"));
-            processData.putItem("ALIGNSEP_RESULT_FILE_NODE", createChildFileNode("alignsep"));
-            processData.putItem("ALIGNCOMP_RESULT_FILE_NODE", createChildFileNode("aligncomp"));
-            processData.putItem("ALIGNMIPS_RESULT_FILE_NODE", createChildFileNode("alignmips"));
-            processData.putItem("ALIGNCONV_RESULT_FILE_NODE", createChildFileNode("alignconv"));
             
-            logger.info("Created sample result node: "+resultFileNode.getDirectoryPath());
+            logger.info("Created separation result node: "+resultFileNode.getDirectoryPath());
         }
         catch (Exception e) {
             throw new CreateRecruitmentFileNodeException(e);

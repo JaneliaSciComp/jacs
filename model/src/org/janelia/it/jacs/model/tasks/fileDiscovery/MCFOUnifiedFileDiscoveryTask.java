@@ -17,6 +17,7 @@ import java.util.Set;
  * User: murphys
  * Date: 8/29/11
  * Time: 4:24 PM
+ * @deprecated Use FileDiscoveryTask or its subclass MCFODataPipelineTask instead of this class.
  */
 public class MCFOUnifiedFileDiscoveryTask extends Task {
 

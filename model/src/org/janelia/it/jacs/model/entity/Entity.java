@@ -1,7 +1,6 @@
 package org.janelia.it.jacs.model.entity;
 // Generated May 26, 2011 10:42:23 AM by Hibernate Tools 3.2.1.GA
 
-
 import java.util.*;
 
 import javax.xml.bind.annotation.*;
@@ -270,6 +269,15 @@ public class Entity  implements java.io.Serializable, IsSerializable {
 			public int compare(EntityData o1, EntityData o2) {
 				if (o1.getOrderIndex() == null) {
 					if (o2.getOrderIndex() == null) {
+						if (o1.getId()==null) {
+							if (o2.getId()==null) {
+								return 0;
+							}
+							return -1;
+						}
+						else if (o2.getId()==null) {
+							return 1;
+						}
 						return o1.getId().compareTo(o2.getId());
 					}
 					return -1;
@@ -322,13 +330,32 @@ public class Entity  implements java.io.Serializable, IsSerializable {
 
         return items;
     }
-
+    
+    /**
+     * Get a list of children ordered by index order, or id if the index is not available.X
+     * @return
+     */
     public List<Entity> getOrderedChildren() {
     	List<Entity> children = new ArrayList<Entity>();
     	for(EntityData ed : getOrderedEntityData()) {
         	if (ed.getChildEntity() != null) children.add(ed.getChildEntity());
     	}
     	return children;
+    }
+
+    /**
+     * Order the children and return the last child with the given type.
+     * @param entityTypeName
+     * @return
+     */
+    public Entity getLatestChildOfType(String entityTypeName) {
+    	List<Entity> children = getOrderedChildren();
+    	Collections.reverse(children);
+    	for(Entity child : children) {
+    		if (!child.getEntityType().getName().equals(entityTypeName)) continue;
+	    	return child;
+    	}
+    	return null;
     }
 
 	public boolean hasChildren() {

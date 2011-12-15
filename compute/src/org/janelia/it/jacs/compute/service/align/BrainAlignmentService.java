@@ -49,12 +49,12 @@ public class BrainAlignmentService extends SubmitDrmaaJobService {
 
         outputFileNode = (FileNode)processData.getItem("OUTPUT_FILE_NODE");
         if (outputFileNode==null) {
-        	throw new ServiceException("Input parameter OUTPUT_FILE_NODE may not be null");
+        	outputFileNode = resultFileNode;
         }
 
         alignFileNode = (FileNode)processData.getItem("ALIGN_RESULT_FILE_NODE");
         if (alignFileNode==null) {
-        	throw new ServiceException("Input parameter ALIGN_RESULT_FILE_NODE may not be null");
+        	alignFileNode = resultFileNode;
         }
 
         inputFilename = (String)processData.getItem("INPUT_FILENAME");
@@ -92,7 +92,7 @@ sub usage {
 
         StringBuffer script = new StringBuffer();
         script.append(V3DHelper.getV3dLibrarySetupCmd()+"\n");
-        script.append("cd " + alignFileNode.getDirectoryPath() + "\nsh " +
+        script.append("cd " + alignFileNode.getDirectoryPath() + "\nperl " +
                       EXECUTABLE_DIR + ALIGNER_SCRIPT_CMD +
             " -v " +  V3DHelper.getV3dExecutableCmd() +
             " -b " +  EXECUTABLE_DIR + ALIGNER_EXE_PATH +

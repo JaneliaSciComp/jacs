@@ -3,7 +3,6 @@ package org.janelia.it.jacs.compute.service.entity;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -20,7 +19,8 @@ import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.SystemCall;
 
 /**
- * Copy LSMs from the latest run of a Sample to the given file node. 
+ * Copy LSM metadata files into a separation result node. The files must be present for NeuronAnnotator to get 
+ * an accurate z height for the stack.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -53,30 +53,45 @@ public class MigrateLsmMetadataFilesService implements IService {
         		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
         	}
         	
-        	List<Entity> children = sampleEntity.getOrderedChildren();
-        	Collections.reverse(children);
-        	for(Entity child : children) {
-        		if (!child.getEntityType().getName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) continue;
-        		// Child is the latest separation result
-            	String filepath = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-            	File dir = new File(filepath);
-            	migrateLsmMetadata(new File(dir.getParent(),"metadata"), targetDir);
-        		break;
+        	File metadataDir = new File(getLatestDir(sampleEntity, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT), "metadata");
+        	
+        	if (metadataDir==null || !metadataDir.exists()) {
+        		logger.warn("Could not find metadata directory at "+metadataDir+" and will fallback on last neuron separation result");
+        		metadataDir = new File(getLatestDir(sampleEntity, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT).getParentFile(), "metadata");
         	}
+        	
+        	if (metadataDir==null || !metadataDir.exists()) {
+        		throw new Exception("Could not find metadata directory at "+metadataDir);
+        	}
+        	
+        	migrateLsmMetadata(metadataDir, targetDir);
         	
         } catch (Exception e) {
             throw new ServiceException(e);
         }
     }
     
+    private File getLatestDir(Entity sampleEntity, String entityTypeName) {
+    	Entity sampleProcessingResult = sampleEntity.getLatestChildOfType(entityTypeName);
+    	if (sampleProcessingResult == null) return null;
+    	String filepath = sampleProcessingResult.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+    	return new File(filepath);
+    }
+    
     private void migrateLsmMetadata(File sourceDir, File targetDir) throws Exception {
-
-    	List<File> metadataFiles = Arrays.asList(sourceDir.listFiles(new FilenameFilter() {
+    	
+    	File[] files = sourceDir.listFiles(new FilenameFilter() {
 			@Override
 			public boolean accept(File dir, String name) {
 	            return name.endsWith("metadata");
 			}
-		}));
+		});
+    	
+    	if (files==null || files.length==0) {
+    		throw new Exception("Could not find metadata files in "+sourceDir.getAbsolutePath());
+    	}
+		
+    	List<File> metadataFiles = Arrays.asList(files);
 
         StringBuffer script = new StringBuffer();
     	for(File file : metadataFiles) {

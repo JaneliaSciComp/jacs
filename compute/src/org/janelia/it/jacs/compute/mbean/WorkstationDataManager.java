@@ -5,14 +5,12 @@ import java.util.HashSet;
 
 import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.service.entity.SampleFileNodeSyncService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
-import org.janelia.it.jacs.model.tasks.fileDiscovery.EntityViewCreationTask;
-import org.janelia.it.jacs.model.tasks.fileDiscovery.FileDiscoveryTask;
-import org.janelia.it.jacs.model.tasks.fileDiscovery.MCFODataPipelineTask;
-import org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOSamplePipelineTask;
+import org.janelia.it.jacs.model.tasks.fileDiscovery.*;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
 
@@ -28,10 +26,12 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     public WorkstationDataManager() {
     }
 
-    public void runSampleSyncService(String user) {
+    public void runSampleSyncService(String user, Boolean testRun) {
         try {
-        	Task task = new GenericTask(new HashSet<Node>(), 
-            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), "sampleSync", "Sample Sync");
+        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        	taskParameters.add(new TaskParameter(SampleFileNodeSyncService.PARAM_testRun, Boolean.toString(testRun), null)); 
+        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
+        			taskParameters, "sampleSync", "Sample Sync");
             task.setJobName("MultiColor FlipOut File Discovery Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("SampleFileNodeSync", task.getObjectId());
@@ -40,58 +40,42 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
     
-    public void runMCFODataPipeline(String user, boolean refresh, String inputDirList, String topLevelFolderName) {
+    public void runMCFODataPipeline(String user, Boolean refresh, String inputDirList, String topLevelFolderName) {
         try {
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
             		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), 
             		inputDirList, topLevelFolderName, refresh);
-            task.setJobName("MultiColor FlipOut File Discovery Task");
+            task.setJobName("MultiColor FlipOut Data Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("MCFODataPipeline", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    public void runMergedTileDataPipeline(String user, boolean refresh, String inputDirList, String topLevelFolderName) {
-        try {
-        	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
-            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), 
-            		inputDirList, topLevelFolderName, refresh);
-            task.setJobName("Merged Tile File Discovery Task");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("MergedTileDataPipeline", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
     
-    /**
-     * @deprecated use runMCFODataPipelineService and specify the parameters explicitly
-     */
-    public void runMCFODataPipelineForTiles(String user, boolean refresh) {
+    public void runMCFOSamplePipeline(String sampleEntityId) {
         try {
-        	String topLevelFolderName = "FlyLight Single Neuron Data";
-        	String inputDirList = "/groups/flylight/flylight/flip/SecData/tiles";
-        	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
-            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), 
-            		inputDirList, topLevelFolderName, refresh);
-            task.setJobName("MultiColor FlipOut Unified File Discovery Task");
+        	Entity sampleEntity = EJBFactory.getLocalAnnotationBean().getEntityById(sampleEntityId);
+        	if (sampleEntity==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
+        	Task task = new MCFOSamplePipelineTask(new HashSet<Node>(), 
+        			sampleEntity.getUser().getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>(), sampleEntityId);
+            task.setJobName("MultiColor FlipOut Sample Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("MCFODataPipeline", task.getObjectId());
+            EJBFactory.getLocalComputeBean().submitJob("MCFOSamplePipeline", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
 
-    public void runMCFOSamplePipeline(String sampleEntityId) {
+    public void runMCFOSeparationPipeline(String sampleEntityId, String inputFilename, String resultEntityName) {
         try {
         	Entity sampleEntity = EJBFactory.getLocalAnnotationBean().getEntityById(sampleEntityId);
-        	Task task = new MCFOSamplePipelineTask(new HashSet<Node>(), 
-        			sampleEntity.getUser().getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>(), sampleEntityId);
-            task.setJobName("MultiColor FlipOut Unified Sample Pipeline Task");
+        	if (sampleEntity==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
+        	Task task = new MCFOSeparationPipelineTask(new HashSet<Node>(), 
+        			sampleEntity.getUser().getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>(), sampleEntityId, inputFilename, resultEntityName);
+            task.setJobName("MultiColor FlipOut Separation Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("MCFOSamplePipeline", task.getObjectId());
+            EJBFactory.getLocalComputeBean().submitJob("MCFOSeparationPipeline", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -110,8 +94,21 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
+
+    public void runMergedTileDataPipeline(String user, Boolean refresh, String inputDirList, String topLevelFolderName) {
+        try {
+        	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
+            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), 
+            		inputDirList, topLevelFolderName, refresh);
+            task.setJobName("Merged Tile Data Pipeline Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("MergedTileDataPipeline", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
     
-    public void runFlyScreenPipeline(String user, boolean refresh) {
+    public void runFlyScreenPipeline(String user, Boolean refresh) {
         try {
             String topLevelFolderName = "FlyLight Screen Data";
             String inputDirList = "/groups/scicomp/jacsData/ScreenStagingTest";
@@ -126,6 +123,9 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
     
+    /**
+     * @deprecated this has not been kept in sync. use the data viewer instead.
+     */
     public void setupEntityTypes() {
         try {
             AnnotationBeanRemote annotationBean = EJBFactory.getRemoteAnnotationBean();

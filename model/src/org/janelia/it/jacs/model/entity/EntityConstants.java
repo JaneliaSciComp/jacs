@@ -31,6 +31,7 @@ public class EntityConstants {
     public static final String TYPE_SCREEN_SAMPLE                    = "Screen Sample";
     public static final String TYPE_LSM_STACK_PAIR                   = "LSM Stack Pair";
     public static final String TYPE_NEURON_SEPARATOR_PIPELINE_RESULT = "Neuron Separator Pipeline Result";
+    public static final String TYPE_SAMPLE_PROCESSING_RESULT         = "Sample Processing Result";
     public static final String TYPE_IMAGE_2D                         = "Image 2D";
     public static final String TYPE_IMAGE_3D                         = "Image 3D";
     public static final String TYPE_TIF_2D                           = "Tif 2D Image";
@@ -40,6 +41,7 @@ public class EntityConstants {
     public static final String TYPE_NEURON_FRAGMENT                  = "Neuron Fragment";
     public static final String TYPE_NEURON_FRAGMENT_COLLECTION       = "Neuron Fragment Collection";
     public static final String TYPE_ALIGNED_BRAIN_STACK              = "Aligned Brain Stack";
+    public static final String TYPE_TEXT_FILE                        = "Text File";
 
     // Entity Data Attributes
     public static final String ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH          = "Default 2D Image File Path";

@@ -10,19 +10,19 @@ package org.janelia.it.jacs.compute.mbean;
 
 public interface WorkstationDataManagerMBean {
     	
-	public void runSampleSyncService(String user);
+    public void runSampleSyncService(String user, Boolean testRun);
 		
-	public void runMCFODataPipeline(String user, boolean refresh, String inputDirList, String topLevelFolderName);
-
-    public void runMergedTileDataPipeline(String user, boolean refresh, String inputDirList, String topLevelFolderName);
-    
-	public void runMCFODataPipelineForTiles(String user, boolean refresh);
+	public void runMCFODataPipeline(String user, Boolean refresh, String inputDirList, String topLevelFolderName);
 
     public void runMCFOSamplePipeline(String sampleEntityId);
-
+    
+	public void runMCFOSeparationPipeline(String sampleEntityId, String inputFilename, String resultEntityName);
+	
     public void runMCFOSampleViewCreation(String sourceEntityId, String targetEntityName);
 
-    public void runFlyScreenPipeline(String user, boolean refresh);
+    public void runMergedTileDataPipeline(String user, Boolean refresh, String inputDirList, String topLevelFolderName);
+
+    public void runFlyScreenPipeline(String user, Boolean refresh);
     	
     public void setupEntityTypes();
 
