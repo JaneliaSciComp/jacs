@@ -31,7 +31,11 @@
 	        3. Reads the quality score file for the aligned stack and adds quality attributes to the aligned stack
 
 	        The end-result is a populated entity tree. Note that before new entities are created, a check is made to
-	        see if an equivalent entity already exists. -->
+	        see if an equivalent entity already exists.
+
+	        This service also creates the pipeline-level RESULT_NODE which is a ScreenPipelineResultNode.
+
+	        -->
 
 		<operation name="Initial File Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FlyScreenDiscoveryService">
 			<input name="INPUT_DIR_LIST"/>
@@ -39,10 +43,13 @@
 			<input name="OUTVAR_ENTITY_ID" value="TOP_LEVEL_ENTITY_ID"/>
 			<output name="TOP_LEVEL_ENTITY_ID"/>
 			<output name="SAMPLE_ENTITY_ID"/>
+			<output name="RESULT_NODE"/>
+			<output name="RESULT_NODE_ID"/>
 		</operation>
 
 	    <!-- Process each Sample Entity -->
-        <sequence forEach="SAMPLE_ENTITY_ID">
+        <sequence forEach="SAMPLE_ENTITY_ID" waitForAsync="true">
+            <sequence async="true">
                 <sequence>
 
 				    <!-- Service instance for processing each Screen Sample
@@ -51,16 +58,18 @@
 		            <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.screen.FlyScreenSampleService">
 		                <input name="MODE" value="SETUP"/>
 		                <input name="SAMPLE_ENTITY_ID"/>
-		                <output name="RESULT_FILE_NODE"/>
-	                    <output name="RESULT_FILE_NODE_ID"/>
+		                <output name="SAMPLE_FILE_NODE"/>
+	                    <output name="SAMPLE_FILE_NODE_ID"/>
 	                    <output name="STACK_PATH"/>
 		            </operation>
 
 		            <sequence name="MIP Generation" waitForAsync="true">
 				        <operation name="MIP Generation" processor="queue/gridSubmitAndWait">
 				            <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.MIPGenerationService"/>
-				            <input name="RESULT_FILE_NODE_ID"/>
-			    		    <input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
+				            <input name="SAMPLE_FILE_NODE_ID"/>
+				            <input name="SAMPLE_FILE_NODE"/>
+				            <input name="RESULT_FILE_NODE_ID" value="$V{SAMPLE_FILE_NODE_ID}"/>
+			    		    <input name="OUTPUT_FILE_NODE" value="$V{SAMPLE_FILE_NODE}"/>
 			    		    <input name="STACK_PATH"/>
 			    		    <input name="INPUT_PATH_1" value="$V{STACK_PATH}"/>
 						    <input name="OUTPUT_FILENAME_1" value="AlignedStackMIP.tif"/>
@@ -70,9 +79,11 @@
                     <sequence name="MIP Conversion to PNG" waitForAsync="true">
 				        <operation name="MIP Conversion to PNG" processor="queue/gridSubmitAndWait">
 				            <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ImageConversionService"/>
-				            <input name="RESULT_FILE_NODE_ID"/>
-				            <input name="RESULT_FILE_NODE"/>
-			    		    <input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
+				            <input name="SAMPLE_FILE_NODE_ID"/>
+				            <input name="SAMPLE_FILE_NODE"/>
+				            <input name="RESULT_FILE_NODE_ID" value="$V{SAMPLE_FILE_NODE_ID}"/>
+				            <input name="RESULT_FILE_NODE" value="$V{SAMPLE_FILE_NODE}"/>
+			    		    <input name="OUTPUT_FILE_NODE" value="$V{SAMPLE_FILE_NODE}"/>
 						    <input name="INPUT_FILENAME_REGEX_1" value="((.*?)MIP)\.tif$"/>
 						    <input name="OUTPUT_FILENAME_PATTERN_1" value="$1.png"/>
 					    </operation>
@@ -81,11 +92,14 @@
 		            <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.screen.FlyScreenSampleService">
 		                <input name="MODE" value="COMPLETE"/>
 		                <input name="SAMPLE_ENTITY_ID"/>
+		                <input name="SAMPLE_FILE_NODE"/>
+		                <input name="SAMPLE_FILE_NODE_ID"/>
 		                <input name="RESULT_FILE_NODE"/>
 	                    <input name="RESULT_FILE_NODE_ID"/>
 		            </operation>
 
                 </sequence>
+            </sequence>
 	    </sequence>
 
     </sequence>

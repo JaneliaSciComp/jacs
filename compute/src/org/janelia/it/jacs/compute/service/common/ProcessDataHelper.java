@@ -35,6 +35,8 @@ import org.janelia.it.jacs.shared.utils.FileUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -209,6 +211,33 @@ public class ProcessDataHelper {
             File destFile = new File(resultNode.getDirectoryPath() + File.separator + sourceFile.getName());
             FileUtil.copyFile(sourceFile, destFile);
         }
+    }
+
+    public static String getProcessDataMapAsString(IProcessData processData) {
+        StringBuilder sb=new StringBuilder();
+        Set<Map.Entry<String,Object>> pdm = processData.entrySet();
+        if (pdm==null) {
+            sb.append("ProcessData map is null\n");
+        } else {
+            sb.append("ProcessData map contains "+pdm.size()+" entries\n");
+            for (Map.Entry<String,Object> m : pdm) {
+                if (m==null) {
+                    sb.append("map entry is null\n");
+                } else {
+                    String key=m.getKey();
+                    if (key==null) {
+                        key="null";
+                    }
+                    Object o=m.getValue();
+                    String value=o.toString();
+                    if (value==null) {
+                        value="null";
+                    }
+                    sb.append("ProcessData key=" + key + " value=" + value + "\n");
+                }
+            }
+        }
+        return sb.toString();
     }
 
 

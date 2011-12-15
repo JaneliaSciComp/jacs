@@ -14,6 +14,7 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.ScreenSampleResultNode;
@@ -92,10 +93,14 @@ public class FlyScreenSampleService implements EntityFilter, IService {
 
     public void doSetup() throws Exception {
         logger.info("FlyScreenSampleService  doSetup() start");
-        resultNode = (ScreenSampleResultNode)processData.getItem(ProcessDataConstants.RESULT_FILE_NODE);
+
+        // Error Check that ProcessData state is being handled correctly
+        resultNode = (ScreenSampleResultNode)processData.getItem("SAMPLE_FILE_NODE");
         if (resultNode!=null) {
-            throw new Exception("resultNode is non-null at start - this shows shared processData");
+            throw new Exception("ScreenSampleResultNode is non-null at start - this shows incorrectly shared processData");
         }
+
+        // Proceed if no error
     	resultNode = new ScreenSampleResultNode(task.getOwner(), task, "ScreenSampleResultNode",
                 "ScreenSampleResultNode for task " + task.getObjectId(), visibility, sessionName);
         EJBFactory.getLocalComputeBean().saveOrUpdateNode(resultNode);
@@ -104,8 +109,8 @@ public class FlyScreenSampleService implements EntityFilter, IService {
         FileUtil.cleanDirectory(resultNode.getDirectoryPath());
         String creationMessage="Created ScreenSanmpleResultNode path="+resultNode.getDirectoryPath()+" id="+resultNode.getObjectId()+" screenSampleId="+sampleEntityId;
         logger.info(creationMessage);
-        processData.putItem(ProcessDataConstants.RESULT_FILE_NODE, resultNode);
-        processData.putItem(ProcessDataConstants.RESULT_FILE_NODE_ID, resultNode.getObjectId());
+        processData.putItem("SAMPLE_FILE_NODE", resultNode);
+        processData.putItem("SAMPLE_FILE_NODE_ID", resultNode.getObjectId());
         Entity screenSampleEntity=EJBFactory.getLocalAnnotationBean().getEntityTree(new Long(sampleEntityId.trim()));
         String stackPath=getStackPath(screenSampleEntity);
         processData.putItem("STACK_PATH", stackPath);
@@ -114,7 +119,7 @@ public class FlyScreenSampleService implements EntityFilter, IService {
 
     public void doComplete() throws Exception {
         logger.info("FlyScreenSampleService  doComplete() start");
-        resultNode=(ScreenSampleResultNode)processData.getItem("RESULT_FILE_NODE");
+        resultNode=(ScreenSampleResultNode)processData.getItem("SAMPLE_FILE_NODE");
         Entity screenSampleEntity=EJBFactory.getLocalAnnotationBean().getEntityTree(new Long(sampleEntityId.trim()));
         File resultDir=new File(resultNode.getDirectoryPath());
         logger.info("FlyScreenSampleService  doComplete()  using resultDir="+resultDir.getAbsolutePath());

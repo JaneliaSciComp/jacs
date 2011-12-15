@@ -1,10 +1,20 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.compute.engine.data.ProcessData;
+import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
+import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.model.user_data.User;
+import org.janelia.it.jacs.model.user_data.entity.ScreenPipelineResultNode;
+import org.janelia.it.jacs.shared.utils.FileUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -28,6 +38,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
     // has been created and persisted.
 
     Entity topFolder;
+    ScreenPipelineResultNode resultNode;
 
     protected static class FlyScreenSample {
         public String StackPath;
@@ -45,6 +56,27 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
             return cArr[0];
         }
     }
+
+    @Override
+    public void execute(IProcessData processData) throws ServiceException {
+        super.execute(processData);
+        try {
+            Task task= ProcessDataHelper.getTask(processData);
+            String sessionName = ProcessDataHelper.getSessionRelativePath(processData);
+            String visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
+            resultNode = new ScreenPipelineResultNode(task.getOwner(), task, "ScreenSampleResultNode",
+                    "ScreenPipelineResultNode for task " + task.getObjectId(), visibility, sessionName);
+            EJBFactory.getLocalComputeBean().saveOrUpdateNode(resultNode);
+            logger.info("FlyScreenSampleService  doSetup()  resultNodeId="+resultNode.getObjectId()+ " intended path="+resultNode.getDirectoryPath());
+            FileUtil.ensureDirExists(resultNode.getDirectoryPath());
+            FileUtil.cleanDirectory(resultNode.getDirectoryPath());
+            processData.putItem(ProcessDataConstants.RESULT_FILE_NODE, resultNode);
+            processData.putItem(ProcessDataConstants.RESULT_FILE_NODE_ID, resultNode.getObjectId());
+        } catch (Exception e) {
+            throw new ServiceException(e.getMessage());
+        }
+    }
+
 
     @Override
     protected void processFolderForData(Entity folder) throws Exception {
@@ -119,6 +151,9 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         boolean hasMip=false;
         for (EntityData ed2 : screenSample.getEntityData()) {
             Entity child2 = ed2.getChildEntity();
+            if (child2==null) {
+                continue;
+            }
             if (child2.getEntityType().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
                 String stackPath=child2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                 File stackFile=new File(stackPath);
