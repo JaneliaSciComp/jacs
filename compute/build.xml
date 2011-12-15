@@ -221,7 +221,10 @@
                 <attribute name="Built-By" value="${user.name}"/>
                 <attribute name="Build-Date" value="${DSTAMP} ${TSTAMP}"/>
             </manifest>
-            <metainf dir="${condesc.dir}" includes="jboss-service.xml"/>
+            <metainf dir="${condesc.dir}">
+            	<include name="jboss-service.xml"/>
+            	<include name="*-xmbean.xml"/>
+            </metainf>
         </jar>
         <!-- build ejb client jar -->
         <jar jarfile="${basedir}/build/jars/${localname}-client.jar">

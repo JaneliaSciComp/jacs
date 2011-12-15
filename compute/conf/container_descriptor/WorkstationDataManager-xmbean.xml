@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mbean PUBLIC
+          "-//JBoss//DTD JBOSS XMBEAN 1.0//EN"
+          "http://www.jboss.org/j2ee/dtd/jboss_xmbean_1_0.dtd">
+<mbean>
+
+    <description>Workstation Management Bean</description>
+    <class>org.janelia.it.jacs.compute.mbean.WorkstationDataManager</class>
+    <constructor>
+        <description>The default constructor</description>
+        <name>WorkstationDataManager</name>
+    </constructor>
+
+    <operation>
+        <description>Synchronize the given user's Sample fileshare with the database</description>
+        <name>runSampleSyncService</name>
+        <parameter>
+           <description>User to run as (e.g. "system")</description>
+           <name>user</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Should this run as a test without making any real changes?</description>
+           <name>testRun</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+    </operation>
+
+    <operation>
+        <description>Run the entire MCFO Data Pipeline</description>
+        <name>runMCFODataPipeline</name>
+        <parameter>
+           <description>User to run as (e.g. "system")</description>
+           <name>user</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Re-run the Samples that already have separation results?</description>
+           <name>refresh</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+           <description>Root of the input directory tree containing slide_group_info.txt files (e.g. "/groups/flylight/flylight/flip/SecData/tiles")</description>
+           <name>inputDirList</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Name of the folder entity where results will be placed (e.g. "FlyLight Single Neuron Data")</description>
+           <name>topLevelFolderName</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+
+    <operation>
+        <description>Run the MCFO Sample Pipeline for a single Sample</description>
+        <name>runMCFOSamplePipeline</name>
+        <parameter>
+           <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
+           <name>sampleEntityId</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+
+    <operation>
+        <description>Run the MCFO Separation Pipeline for a single input file</description>
+        <name>runMCFOSeparationPipeline</name>
+        <parameter>
+           <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
+           <name>sampleEntityId</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Input filename to run the separator on (e.g. "/groups/scicomp/jacsData/filestore/system/Sample/1681147037363486818/stitch/stitched-1681061667699425378.v3draw")</description>
+           <name>inputFilename</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>The name of the result entity to create under the Sample (e.g. "Prealigned Neuron Separation")</description>
+           <name>resultEntityName</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+
+    <operation>
+        <description>Create or update an MCFO sample view</description>
+        <name>runMCFOSampleViewCreation</name>
+        <parameter>
+           <description>Id of the entity to search for completed Samples (e.g. "1679282451010027618")</description>
+           <name>sourceEntityId</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Name of the result view entity to create or update (e.g. "FlyLight Single Neuron Samples")</description>
+           <name>targetEntityName</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
+        <description>Run the Merged Tile Data Pipeline and augment some existing MCFO-generated Samples with additional results</description>
+        <name>runMergedTileDataPipeline</name>
+        <parameter>
+           <description>User to run as (e.g. "system")</description>
+           <name>user</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Re-run the Samples that already have results?</description>
+           <name>refresh</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+           <description>Input directory (e.g. "/groups/peng/home/brainaligner/target1_aligned_rigid")</description>
+           <name>inputDirList</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Top-level MCFO folder name, where Samples will be found and augmented (e.g. "FlyLight Single Neuron Data")</description>
+           <name>topLevelFolderName</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
+        <description>Run the FlyScreen Pipeline</description>
+        <name>runFlyScreenPipeline</name>
+        <parameter>
+           <description>User to run as (e.g. "system")</description>
+           <name>user</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Re-run the Samples that already have results?</description>
+           <name>refresh</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+    </operation>
+    
+</mbean>
