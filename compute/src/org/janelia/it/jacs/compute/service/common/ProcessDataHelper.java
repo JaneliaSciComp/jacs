@@ -114,7 +114,7 @@ public class ProcessDataHelper {
         FileNode tmpNode = getRootFileNode(processData);
         if (null != tmpNode && !"".equals(new File(tmpNode.getDirectoryPath()).getName())) {
             String tmpRootSubdir = tmpNode.getSubDirectory();
-            String tmpRootDir = tmpNode.getObjectId().toString();
+            String tmpRootDir = FileNode.getTreePathForId(tmpNode.getObjectId());
             return tmpRootSubdir + File.separator + tmpRootDir;
         }
         return null;
