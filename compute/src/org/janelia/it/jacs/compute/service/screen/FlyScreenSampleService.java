@@ -138,10 +138,21 @@ public class FlyScreenSampleService implements EntityFilter, IService {
                 pngFile=f;
             }
         }
+
+        // Clean up tif file
         if (tifFile!=null && pngFile!=null) {
             logger.info("Deleting tif file="+tifFile.getAbsolutePath());
             tifFile.delete();
         }
+
+        // Clean up map channel intermediary
+        File alignedStackNoCompartments=new File(resultDir, "AlignedStackNoCompartments.v3dpbd");
+        if (!alignedStackNoCompartments.exists()) {
+            throw new Exception("Could not locate intermediate file="+alignedStackNoCompartments.getAbsolutePath());
+        }
+        alignedStackNoCompartments.delete();
+
+
         if (pngFile!=null) {
             logger.info("Found png file="+pngFile.getAbsolutePath());
 

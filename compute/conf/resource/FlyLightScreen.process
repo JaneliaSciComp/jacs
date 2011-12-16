@@ -63,6 +63,20 @@
 	                    <output name="STACK_PATH"/>
 		            </operation>
 
+		            <sequence name="Map Channels" waitForAsync="true">
+				        <operation name="Map Channels" processor="queue/gridSubmitAndWait">
+				            <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.MapChannelService"/>
+				            <input name="SAMPLE_FILE_NODE_ID"/>
+				            <input name="SAMPLE_FILE_NODE"/>
+				            <input name="RESULT_FILE_NODE_ID" value="$V{SAMPLE_FILE_NODE_ID}"/>
+			    		    <input name="OUTPUT_FILE_NODE" value="$V{SAMPLE_FILE_NODE}"/>
+			    		    <input name="STACK_PATH"/>
+			    		    <input name="INPUT_PATH_1" value="$V{STACK_PATH}"/>
+			    		    <input name="MAP_CHANNEL_STRING" value="0,0,1,1"/>
+						    <input name="OUTPUT_FILENAME_1" value="AlignedStackNoCompartments.v3dpbd"/>
+					    </operation>
+					</sequence>
+
 		            <sequence name="MIP Generation" waitForAsync="true">
 				        <operation name="MIP Generation" processor="queue/gridSubmitAndWait">
 				            <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.MIPGenerationService"/>
@@ -70,8 +84,7 @@
 				            <input name="SAMPLE_FILE_NODE"/>
 				            <input name="RESULT_FILE_NODE_ID" value="$V{SAMPLE_FILE_NODE_ID}"/>
 			    		    <input name="OUTPUT_FILE_NODE" value="$V{SAMPLE_FILE_NODE}"/>
-			    		    <input name="STACK_PATH"/>
-			    		    <input name="INPUT_PATH_1" value="$V{STACK_PATH}"/>
+			    		    <input name="INPUT_FILENAME_1" value="AlignedStackNoCompartments.v3dpbd"/>
 						    <input name="OUTPUT_FILENAME_1" value="AlignedStackMIP.tif"/>
 					    </operation>
 					</sequence>
