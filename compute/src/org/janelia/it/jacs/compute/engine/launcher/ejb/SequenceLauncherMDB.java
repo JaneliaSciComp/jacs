@@ -42,13 +42,13 @@ import javax.ejb.MessageDriven;
         @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
         @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/AnonymousSequenceLauncher"),
-        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "50"),
+        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "20"),
 //    @ActivationConfigProperty(propertyName="MaxMessages", propertyValue="50"),
         @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
         // DLQMaxResent is a JBoss-specific management property. 0 = no resent messages
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 50, timeout = 100000)
+@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 100, timeout = 80000)
 public class SequenceLauncherMDB extends SeriesLauncherMDB {
 
     protected ILauncher getLauncher() {

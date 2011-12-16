@@ -49,7 +49,7 @@ import javax.ejb.TransactionAttributeType;
 @Stateless
 @TransactionAttribute(value = TransactionAttributeType.MANDATORY)
 @TransactionTimeout(432000)
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 60, timeout = 10000)
+@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 200, timeout = 90000)
 public class SequenceLauncherSLSB extends SeriesLauncherSLSB {
 
     protected ILauncher getLauncher() {
