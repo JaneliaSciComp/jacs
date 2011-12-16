@@ -2,7 +2,6 @@ package org.janelia.it.jacs.compute.service.fileDiscovery;
 
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.engine.data.ProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
@@ -101,15 +100,20 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         Set<String> currentSceenSamples=new HashSet<String>();
         Map<String,Entity> incompleteScreenSamples=new HashMap<String,Entity>();
         for (EntityData ed : topFolder.getEntityData()) {
-            Entity child = ed.getChildEntity();
-            if (child != null && child.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
-                String previousSampleName=child.getName();
-                if (screenSampleIsComplete(child)) {
-                    logger.info("Skipping previous complete ScreenSample  name="+previousSampleName);
-                    currentSceenSamples.add(previousSampleName);
-                } else {
-                    logger.info("Adding incomplete ScreenSample  name="+previousSampleName);
-                    incompleteScreenSamples.put(previousSampleName, child);
+            Entity dateFolder = ed.getChildEntity();
+            if (dateFolder != null && dateFolder.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+                for (EntityData d : dateFolder.getEntityData()) {
+                    Entity child=d.getChildEntity();
+                    if (child != null && child.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
+                        String previousSampleName=child.getName();
+                        if (screenSampleIsComplete(child)) {
+                            logger.info("Skipping previous complete ScreenSample  name="+previousSampleName);
+                            currentSceenSamples.add(previousSampleName);
+                        } else {
+                            logger.info("Adding incomplete ScreenSample  name="+previousSampleName);
+                            incompleteScreenSamples.put(previousSampleName, child);
+                        }
+                    }
                 }
             }
         }
@@ -128,6 +132,9 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
             FlyScreenSample screenSample = sampleMap.get(key);
             Entity screenSampleEntity=incompleteScreenSamples.get(key);
             if (screenSampleEntity==null) {
+                File stackPath=new File(screenSample.StackPath);
+                File dateFolderFile=stackPath.getParentFile();
+                Entity dateFolder=getDateFolderFromSampleKey(key, dateFolderFile.getAbsolutePath());
                 screenSampleEntity = new Entity();
                 screenSampleEntity.setCreationDate(createDate);
                 screenSampleEntity.setUpdatedDate(createDate);
@@ -136,7 +143,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
                 screenSampleEntity.setEntityType(screenSampleType);
                 screenSampleEntity = EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(screenSampleEntity);
                 logger.info("Created new Screen Sample " + key + " id=" + screenSampleEntity.getId());
-                addToParent(topFolder, screenSampleEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
+                addToParent(dateFolder, screenSampleEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
             }
             String[] alignmentScores = getAlignmentScoresFromQualityFile(screenSample.QualityCsvPath);
             addStackToScreenSample(screenSampleEntity, screenSample, alignmentScores);
@@ -144,6 +151,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         }
         logger.info("Adding "+sampleIdList.size()+" sample IDs to SAMPLE_ENTITY_ID");
         processData.putItem("SAMPLE_ENTITY_ID", sampleIdList);
+        sortDateFolders();
     }
 
     protected boolean screenSampleIsComplete(Entity screenSample) {
@@ -280,5 +288,57 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         }
     }
 
+    // Example of key: GMR_45B01_AE_01_02-fA01b_C090625_20090625160238328
+    protected Entity getDateFolderFromSampleKey(String sampleKey, String folderPath) throws Exception {
+        String[] ucList=sampleKey.split("_");
+        if (ucList.length<4) {
+            return null;
+        }
+        String dateGuid=ucList[ucList.length-1];
+        String monthSection=dateGuid.substring(0,6);
+        Set<Entity> children=topFolder.getChildren();
+        for (Entity child : children) {
+            if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) &&
+                    child.getName().equals(monthSection)) {
+                return child;
+            }
+        }
+        // Assume we don't have a folder for this date yet
+        Entity dateFolder = new Entity();
+        EntityType dateFolderType=EJBFactory.getLocalAnnotationBean().getEntityTypeByName(EntityConstants.TYPE_FOLDER);
+        dateFolder.setUser(user);
+        dateFolder.setEntityType(dateFolderType);
+        dateFolder.setCreationDate(createDate);
+        dateFolder.setUpdatedDate(createDate);
+        dateFolder.setName(monthSection);
+        dateFolder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, folderPath);
+        EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(dateFolder);
+        addToParent(topFolder, dateFolder, null, EntityConstants.ATTRIBUTE_ENTITY);
+        return dateFolder;
+    }
+
+    protected void sortDateFolders() throws Exception {
+        Set<EntityData> folderEdSet=topFolder.getEntityData();
+        Map<Long, EntityData> folderMapByDateNumber=new HashMap<Long, EntityData>();
+        for (EntityData ed : folderEdSet) {
+            Entity folder = ed.getChildEntity();
+            if (folder!=null) {
+                if (folder.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+                    Long dateNumber=new Long(folder.getName().trim());
+                    folderMapByDateNumber.put(dateNumber, ed);
+                }
+            }
+        }
+        List<Long> dateNumberList=new ArrayList<Long>();
+        for (Long dateNumber : folderMapByDateNumber.keySet()) {
+            dateNumberList.add(dateNumber);
+        }
+        Collections.sort(dateNumberList);
+        for (int i=0;i<dateNumberList.size();i++) {
+            EntityData ed=folderMapByDateNumber.get(dateNumberList.get(i));
+            ed.setOrderIndex(i);
+            EJBFactory.getLocalAnnotationBean().saveOrUpdateEntityData(ed);
+        }
+    }
 
 }
