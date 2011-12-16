@@ -97,7 +97,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         }
 
         // We need to know the pre-existing set of Screen Samples, so we can detect new ones
-        Set<String> currentSceenSamples=new HashSet<String>();
+        Set<String> currentScreenSamples=new HashSet<String>();
         Map<String,Entity> incompleteScreenSamples=new HashMap<String,Entity>();
         for (EntityData ed : topFolder.getEntityData()) {
             Entity dateFolder = ed.getChildEntity();
@@ -108,7 +108,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
                         String previousSampleName=child.getName();
                         if (screenSampleIsComplete(child)) {
                             logger.info("Skipping previous complete ScreenSample  name="+previousSampleName);
-                            currentSceenSamples.add(previousSampleName);
+                            currentScreenSamples.add(previousSampleName);
                         } else {
                             logger.info("Adding incomplete ScreenSample  name="+previousSampleName);
                             incompleteScreenSamples.put(previousSampleName, child);
@@ -118,7 +118,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
             }
         }
         Map<String, FlyScreenSample> sampleMap=new HashMap<String, FlyScreenSample>();
-        processFlyLightScreenDirectory(dir, currentSceenSamples, sampleMap);
+        processFlyLightScreenDirectory(dir, currentScreenSamples, sampleMap);
 
         // Next, create the new samples
         List<String> sampleIdList=new ArrayList<String>();
@@ -157,22 +157,35 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
     protected boolean screenSampleIsComplete(Entity screenSample) {
         boolean hasStack=false;
         boolean hasMip=false;
-        for (EntityData ed2 : screenSample.getEntityData()) {
+        Set<EntityData> edSet=screenSample.getEntityData();
+        logger.info("screenSampleIsComplete: edSet has "+edSet.size()+" members to evaluate");
+        for (EntityData ed2 : edSet) {
             Entity child2 = ed2.getChildEntity();
             if (child2==null) {
-                continue;
-            }
-            if (child2.getEntityType().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
-                String stackPath=child2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                File stackFile=new File(stackPath);
-                if (stackFile.exists())
-                    hasStack=true;
-            } else if (child2.getEntityType().equals(EntityConstants.TYPE_IMAGE_2D) &&
-                    child2.getName().toLowerCase().endsWith("mip")) {
-                String mipPath=child2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                File mipFile=new File(mipPath);
-                if (mipFile.exists())
-                    hasMip=true;
+                logger.info("Skipping null ed entry");
+            } else {
+                if (child2.getEntityType().getName().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
+                    String stackPath=child2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                    File stackFile=new File(stackPath);
+                    if (stackFile.exists()) {
+                        logger.info("Found existing stack="+stackFile.getAbsolutePath()+" hasStack=true");
+                        hasStack=true;
+                    } else {
+                        logger.info("Could not find existing stack="+stackFile.getAbsolutePath()+" hasStack=false");
+                    }
+                } else if (child2.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_2D) &&
+                        child2.getName().toLowerCase().endsWith("mip")) {
+                    String mipPath=child2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                    File mipFile=new File(mipPath);
+                    if (mipFile.exists()) {
+                        logger.info("Found existing mip="+mipFile.getAbsolutePath()+" hasMip=true");
+                        hasMip=true;
+                    } else {
+                        logger.info("Could not find existing mip="+mipFile.getAbsolutePath()+" hasMip=false");
+                    }
+                } else {
+                    logger.info("Ignoring child entity of type="+child2.getEntityType().getName());
+                }
             }
         }
         if (hasStack && hasMip) {
