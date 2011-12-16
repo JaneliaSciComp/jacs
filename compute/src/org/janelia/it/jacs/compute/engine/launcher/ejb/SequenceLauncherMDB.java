@@ -48,7 +48,7 @@ import javax.ejb.MessageDriven;
         // DLQMaxResent is a JBoss-specific management property. 0 = no resent messages
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 50, timeout = 10000)
+@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 50, timeout = 100000)
 public class SequenceLauncherMDB extends SeriesLauncherMDB {
 
     protected ILauncher getLauncher() {

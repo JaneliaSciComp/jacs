@@ -10,6 +10,7 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.entity.EntityFilter;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -19,6 +20,7 @@ import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.ScreenSampleResultNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
+import org.janelia.it.jacs.shared.utils.SystemCall;
 
 import java.io.File;
 import java.util.Date;
@@ -51,6 +53,8 @@ public class FlyScreenSampleService implements EntityFilter, IService {
     protected String visibility;
     protected IProcessData processData;
     protected String sampleEntityId;
+
+    protected static final String RELATIVE_SAMPLE_TO_JACS_PATH = SystemConfigurationProperties.getString("FlyScreen.RelativePathFromScreenSampleToJacsRoot");
 
        public void execute(IProcessData processData) throws ServiceException {
         try {
@@ -154,9 +158,17 @@ public class FlyScreenSampleService implements EntityFilter, IService {
             stackEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
             EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(stackEntity);
 
-           // Add default image to mip
+            // Add default image to mip
             mipEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
             EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(mipEntity);
+
+            // Add link to stack file
+            SystemCall sc=new SystemCall(logger);
+            File stackFile=new File(stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+            String stackPath=stackFile.getAbsolutePath();
+            String[] splist=stackPath.split("jacsData");
+            String relativePath=RELATIVE_SAMPLE_TO_JACS_PATH+splist[1];
+            sc.emulateCommandLine("ln -s "+relativePath+" "+resultDir.getAbsolutePath()+"/"+stackFile.getName(), true);
 
             logger.info("Finished saving entity metadata for png file");
         }
