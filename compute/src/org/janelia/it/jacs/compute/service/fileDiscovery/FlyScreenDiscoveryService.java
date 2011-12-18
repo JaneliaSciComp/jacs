@@ -38,6 +38,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
 
     Entity topFolder;
     ScreenPipelineResultNode resultNode;
+    Integer sampleGroupSize;
 
     protected static class FlyScreenSample {
         public String StackPath;
@@ -58,6 +59,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
 
     @Override
     public void execute(IProcessData processData) throws ServiceException {
+        sampleGroupSize=new Integer((String)processData.getString("SAMPLE_GROUP_SIZE").trim());
         super.execute(processData);
         try {
             Task task= ProcessDataHelper.getTask(processData);
@@ -121,6 +123,9 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         processFlyLightScreenDirectory(dir, currentScreenSamples, sampleMap);
 
         // Next, create the new samples
+        List<List<String>> groupList=new ArrayList<List<String>>();
+        Long sampleTotal=0L;
+        Integer sampleCount=0;
         List<String> sampleIdList=new ArrayList<String>();
         EntityType screenSampleType= EJBFactory.getLocalAnnotationBean().getEntityTypeByName(EntityConstants.TYPE_SCREEN_SAMPLE);
         if (screenSampleType==null) {
@@ -148,9 +153,20 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
             String[] alignmentScores = getAlignmentScoresFromQualityFile(screenSample.QualityCsvPath);
             addStackToScreenSample(screenSampleEntity, screenSample, alignmentScores);
             sampleIdList.add(screenSampleEntity.getId().toString());
+            sampleCount++;
+            if (sampleCount>=sampleGroupSize) {
+                groupList.add(sampleIdList);
+                sampleTotal+=sampleIdList.size();
+                sampleIdList=new ArrayList<String>();
+                sampleCount=0;
+            }
         }
-        logger.info("Adding "+sampleIdList.size()+" sample IDs to SAMPLE_ENTITY_ID");
-        processData.putItem("SAMPLE_ENTITY_ID", sampleIdList);
+        if (sampleIdList.size()>0) {
+            groupList.add(sampleIdList);
+            sampleTotal+=sampleIdList.size();
+        }
+        logger.info("Adding "+groupList.size()+" groups containing "+sampleTotal+" total samples");
+        processData.putItem("GROUP_LIST", groupList);
         sortDateFolders();
     }
 

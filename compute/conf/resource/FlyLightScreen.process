@@ -4,6 +4,8 @@
 <process name="Fly Light Screen Pipeline" processor="queue/flyLightScreenPipelineLauncher" startEvent="pending">
 	<sequence>
 
+	    <sequence>
+
 	    <!-- Import basic variables from the FileDiscoveryTask
 
 	         This service receives instructions below on which key:value pairs to transfer from task parameters
@@ -41,79 +43,90 @@
 			<input name="INPUT_DIR_LIST"/>
 			<input name="ROOT_ENTITY_NAME"/>
 			<input name="OUTVAR_ENTITY_ID" value="TOP_LEVEL_ENTITY_ID"/>
+			<input name="SAMPLE_GROUP_SIZE" value="100"/>
 			<output name="TOP_LEVEL_ENTITY_ID"/>
-			<output name="SAMPLE_ENTITY_ID"/>
+			<output name="GROUP_LIST"/>
 			<output name="RESULT_NODE"/>
 			<output name="RESULT_NODE_ID"/>
 		</operation>
 
+		</sequence>
+
 	    <!-- Process each Sample Entity -->
-        <sequence forEach="SAMPLE_ENTITY_ID" waitForAsync="true">
-            <sequence async="true">
-                <sequence>
+	    <sequence forEach="GROUP_LIST">
 
-				    <!-- Service instance for processing each Screen Sample
-				        This service creates a result node for processing the screen sample, and attaches it to the sample.  -->
+	        <operation name="Populate Sample Group" processor="org.janelia.it.jacs.compute.service.screen.FlyScreenGroupService">
+	            <input name="GROUP_LIST"/>
+	            <output name="SAMPLE_ENTITY_ID"/>
+	        </operation>
 
-		            <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.screen.FlyScreenSampleService">
-		                <input name="MODE" value="SETUP"/>
-		                <input name="SAMPLE_ENTITY_ID"/>
-		                <output name="SAMPLE_FILE_NODE"/>
-	                    <output name="SAMPLE_FILE_NODE_ID"/>
-	                    <output name="STACK_PATH"/>
-		            </operation>
+            <sequence forEach="SAMPLE_ENTITY_ID" waitForAsync="true">
+                <sequence async="true">
+                    <sequence>
 
-		            <sequence name="Map Channels" waitForAsync="true">
-				        <operation name="Map Channels" processor="queue/gridSubmitAndWait">
-				            <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.MapChannelService"/>
-				            <input name="SAMPLE_FILE_NODE_ID"/>
-				            <input name="SAMPLE_FILE_NODE"/>
-				            <input name="RESULT_FILE_NODE_ID" value="$V{SAMPLE_FILE_NODE_ID}"/>
-			    		    <input name="OUTPUT_FILE_NODE" value="$V{SAMPLE_FILE_NODE}"/>
-			    		    <input name="STACK_PATH"/>
-			    		    <input name="INPUT_PATH_1" value="$V{STACK_PATH}"/>
-			    		    <input name="MAP_CHANNEL_STRING" value="0,0,1,1"/>
-						    <input name="OUTPUT_FILENAME_1" value="AlignedStackNoCompartments.v3dpbd"/>
-					    </operation>
-					</sequence>
+				        <!-- Service instance for processing each Screen Sample
+				            This service creates a result node for processing the screen sample, and attaches it to the sample.  -->
 
-		            <sequence name="MIP Generation" waitForAsync="true">
-				        <operation name="MIP Generation" processor="queue/gridSubmitAndWait">
-				            <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.MIPGenerationService"/>
-				            <input name="SAMPLE_FILE_NODE_ID"/>
-				            <input name="SAMPLE_FILE_NODE"/>
-				            <input name="RESULT_FILE_NODE_ID" value="$V{SAMPLE_FILE_NODE_ID}"/>
-			    		    <input name="OUTPUT_FILE_NODE" value="$V{SAMPLE_FILE_NODE}"/>
-			    		    <input name="INPUT_FILENAME_1" value="AlignedStackNoCompartments.v3dpbd"/>
-						    <input name="OUTPUT_FILENAME_1" value="AlignedStackMIP.tif"/>
-					    </operation>
-					</sequence>
+		                <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.screen.FlyScreenSampleService">
+		                    <input name="MODE" value="SETUP"/>
+		                    <input name="SAMPLE_ENTITY_ID"/>
+		                    <output name="SAMPLE_FILE_NODE"/>
+	                        <output name="SAMPLE_FILE_NODE_ID"/>
+	                        <output name="STACK_PATH"/>
+		                </operation>
 
-                    <sequence name="MIP Conversion to PNG" waitForAsync="true">
-				        <operation name="MIP Conversion to PNG" processor="queue/gridSubmitAndWait">
-				            <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ImageConversionService"/>
-				            <input name="SAMPLE_FILE_NODE_ID"/>
-				            <input name="SAMPLE_FILE_NODE"/>
-				            <input name="RESULT_FILE_NODE_ID" value="$V{SAMPLE_FILE_NODE_ID}"/>
-				            <input name="RESULT_FILE_NODE" value="$V{SAMPLE_FILE_NODE}"/>
-			    		    <input name="OUTPUT_FILE_NODE" value="$V{SAMPLE_FILE_NODE}"/>
-						    <input name="INPUT_FILENAME_REGEX_1" value="((.*?)MIP)\.tif$"/>
-						    <input name="OUTPUT_FILENAME_PATTERN_1" value="$1.png"/>
-					    </operation>
-					</sequence>
+		                <sequence name="Map Channels" waitForAsync="true">
+    				        <operation name="Map Channels" processor="queue/gridSubmitAndWait">
+    				            <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.MapChannelService"/>
+    				            <input name="SAMPLE_FILE_NODE_ID"/>
+    				            <input name="SAMPLE_FILE_NODE"/>
+    				            <input name="RESULT_FILE_NODE_ID" value="$V{SAMPLE_FILE_NODE_ID}"/>
+    			    		    <input name="OUTPUT_FILE_NODE" value="$V{SAMPLE_FILE_NODE}"/>
+    			    		    <input name="STACK_PATH"/>
+    			    		    <input name="INPUT_PATH_1" value="$V{STACK_PATH}"/>
+    			    		    <input name="MAP_CHANNEL_STRING" value="0,0,1,1"/>
+    						    <input name="OUTPUT_FILENAME_1" value="AlignedStackNoCompartments.v3dpbd"/>
+    					    </operation>
+    					</sequence>
 
-		            <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.screen.FlyScreenSampleService">
-		                <input name="MODE" value="COMPLETE"/>
-		                <input name="SAMPLE_ENTITY_ID"/>
-		                <input name="SAMPLE_FILE_NODE"/>
-		                <input name="SAMPLE_FILE_NODE_ID"/>
-		                <input name="RESULT_FILE_NODE"/>
-	                    <input name="RESULT_FILE_NODE_ID"/>
-		            </operation>
+    		            <sequence name="MIP Generation" waitForAsync="true">
+    				        <operation name="MIP Generation" processor="queue/gridSubmitAndWait">
+    				            <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.MIPGenerationService"/>
+    				            <input name="SAMPLE_FILE_NODE_ID"/>
+    				            <input name="SAMPLE_FILE_NODE"/>
+    				            <input name="RESULT_FILE_NODE_ID" value="$V{SAMPLE_FILE_NODE_ID}"/>
+    			    		    <input name="OUTPUT_FILE_NODE" value="$V{SAMPLE_FILE_NODE}"/>
+    			    		    <input name="INPUT_FILENAME_1" value="AlignedStackNoCompartments.v3dpbd"/>
+    						    <input name="OUTPUT_FILENAME_1" value="AlignedStackMIP.tif"/>
+    					    </operation>
+    					</sequence>
 
+                        <sequence name="MIP Conversion to PNG" waitForAsync="true">
+    				        <operation name="MIP Conversion to PNG" processor="queue/gridSubmitAndWait">
+    				            <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ImageConversionService"/>
+    				            <input name="SAMPLE_FILE_NODE_ID"/>
+    				            <input name="SAMPLE_FILE_NODE"/>
+    				            <input name="RESULT_FILE_NODE_ID" value="$V{SAMPLE_FILE_NODE_ID}"/>
+    				            <input name="RESULT_FILE_NODE" value="$V{SAMPLE_FILE_NODE}"/>
+    			    		    <input name="OUTPUT_FILE_NODE" value="$V{SAMPLE_FILE_NODE}"/>
+    						    <input name="INPUT_FILENAME_REGEX_1" value="((.*?)MIP)\.tif$"/>
+    						    <input name="OUTPUT_FILENAME_PATTERN_1" value="$1.png"/>
+    					    </operation>
+    					</sequence>
+
+    		            <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.screen.FlyScreenSampleService">
+    		                <input name="MODE" value="COMPLETE"/>
+    		                <input name="SAMPLE_ENTITY_ID"/>
+    		                <input name="SAMPLE_FILE_NODE"/>
+    		                <input name="SAMPLE_FILE_NODE_ID"/>
+    		                <input name="RESULT_FILE_NODE"/>
+    	                    <input name="RESULT_FILE_NODE_ID"/>
+    		            </operation>
+
+                    </sequence>
                 </sequence>
-            </sequence>
-	    </sequence>
+    	    </sequence>
+  	    </sequence>
 
     </sequence>
 </process>
