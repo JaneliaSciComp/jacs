@@ -1,13 +1,14 @@
 package org.janelia.it.jacs.compute.service.v3d;
 
+import java.io.File;
 import java.io.FileWriter;
-import java.util.Map;
+import java.io.IOException;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.utility.ParallelFileProcessingService;
 
 /**
@@ -17,17 +18,43 @@ import org.janelia.it.jacs.compute.service.utility.ParallelFileProcessingService
  */
 public class MIPGenerationService extends ParallelFileProcessingService {
 
+	private Set<Integer> outputFlipy = new HashSet<Integer>();
+	
     @Override
     protected String getGridServicePrefixName() {
         return "mip";
     }
+    
+    @Override
+    protected void init(IProcessData processData) throws Exception {
+    	super.init(processData);
+    	
+    	int configIndex = 1;
+    	while (true) {
+    		String outputFilename = (String)processData.getItem("OUTPUT_FILENAME_"+configIndex);
+    		if (outputFilename == null) break;
+    	    String isFlipy = (String)processData.getItem("OUTPUT_FLIPY_"+configIndex);	
+    		if (isFlipy != null && isFlipy.equals("true")) {
+    			outputFlipy.add(configIndex);
+    		}
+    		configIndex++;
+    	}
+    }
 
+    @Override
+    protected void writeInstanceFile(FileWriter fw, File inputFile, File outputFile, int configIndex) throws IOException {
+        super.writeInstanceFile(fw, inputFile, outputFile, configIndex);
+        fw.write((outputFlipy.contains(configIndex)?"-flipy":"") + "\n");
+    }
+
+    @Override
     protected void writeShellScript(FileWriter writer) throws Exception {
     	super.writeShellScript(writer);
         StringBuffer script = new StringBuffer();
+        script.append("read EXTRA_OPTIONS\n");
         script.append(V3DHelper.getHeadlessGridCommandPrefix());
         script.append("\n");
-        script.append(V3DHelper.getFormattedMIPCommand("$INPUT_FILENAME", "$OUTPUT_FILENAME", true));
+        script.append(V3DHelper.getFormattedMIPCommand("$INPUT_FILENAME", "$OUTPUT_FILENAME", "$EXTRA_OPTIONS"));
         script.append("\n");
         script.append(V3DHelper.getHeadlessGridCommandSuffix());
         script.append("\n");

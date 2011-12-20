@@ -67,8 +67,10 @@
 	    		<input name="OUTPUT_FILE_NODE" value="$V{SEPARATE_RESULT_FILE_NODE}"/>
 				<input name="INPUT_FILENAME_1" value="ConsolidatedSignal.v3dpbd"/>
 				<input name="OUTPUT_FILENAME_1" value="ConsolidatedSignalMIP.tif"/>
+				<input name="OUTPUT_FLIPY_1" value="true"/>
 				<input name="INPUT_FILENAME_2" value="Reference.v3dpbd"/>
 				<input name="OUTPUT_FILENAME_2" value="ReferenceMIP.tif"/>
+				<input name="OUTPUT_FLIPY_2" value="false"/>
 			</operation>
         </sequence>
         

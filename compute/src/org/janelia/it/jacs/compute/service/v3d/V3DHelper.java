@@ -85,12 +85,8 @@ public class V3DHelper {
         return "kill $MYPID";
     }
 
-    public static String getFormattedMIPCommand(String inputFilepath, String outputFilepath, boolean flipy) throws ServiceException {
-    	String cmd = V3D_BASE_CMD+" -cmd image-loader -mip "+inputFilepath+" "+outputFilepath;
-    	
-    	// Flip the Y axis (needed for historical reasons)
-    	if (flipy) cmd += " -flipy";
-    	
+    public static String getFormattedMIPCommand(String inputFilepath, String outputFilepath, String extraOptions) throws ServiceException {
+    	String cmd = V3D_BASE_CMD+" -cmd image-loader -mip "+inputFilepath+" "+outputFilepath+" "+extraOptions;
     	return cmd+" ;";
     }
 

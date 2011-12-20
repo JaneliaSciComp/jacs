@@ -27,6 +27,7 @@
 			<output name="RUN_PROCESSING"/>
 			<output name="RUN_ALIGNMENT"/>
 			<output name="RUN_SEPARATION"/>
+			<output name="IS_ALIGNABLE"/>
 			<output name="STITCHED_FILENAME"/>
 			<output name="ALIGNED_FILENAME"/>
 		</operation>
