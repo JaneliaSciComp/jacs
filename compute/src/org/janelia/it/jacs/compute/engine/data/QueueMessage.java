@@ -23,6 +23,7 @@
 
 package org.janelia.it.jacs.compute.engine.data;
 
+import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.engine.def.ActionDef;
 import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 import org.janelia.it.jacs.compute.jtc.BaseMessage;
@@ -41,6 +42,8 @@ import java.util.Set;
  */
 public class QueueMessage extends BaseMessage implements IProcessData {
 
+    private static final Logger logger = Logger.getLogger(QueueMessage.class);
+    
     public QueueMessage(ObjectMessage msg, boolean construct) throws JMSException {
         super(msg, construct);
         try {
@@ -166,27 +169,63 @@ public class QueueMessage extends BaseMessage implements IProcessData {
     }
 
     public Long getLong(String key) {
-        return getLongProperty(key);
+    	try {
+    		return (Long)getItem(key);	
+    	}
+    	catch (Throwable t) {
+            logger.error("Exception thrown while trying to get " + key + " property from message");
+            return null;
+    	}
     }
 
     public Double getDouble(String key) {
-        return getDoubleProperty(key);
+    	try {
+    		return (Double)getItem(key);	
+    	}
+    	catch (Throwable t) {
+            logger.error("Exception thrown while trying to get " + key + " property from message");
+            return null;
+    	}
     }
 
     public Float getFloat(String key) {
-        return getFloatProperty(key);
+    	try {
+    		return (Float)getItem(key);	
+    	}
+    	catch (Throwable t) {
+            logger.error("Exception thrown while trying to get " + key + " property from message");
+            return null;
+    	}
     }
 
     public Integer getInt(String key) {
-        return getIntProperty(key);
+    	try {
+    		return (Integer)getItem(key);	
+    	}
+    	catch (Throwable t) {
+            logger.error("Exception thrown while trying to get " + key + " property from message");
+            return null;
+    	}
     }
 
     public Boolean getBoolean(String key) {
-        return getBooleanProperty(key);
+    	try {
+    		return (Boolean)getItem(key);	
+    	}
+    	catch (Throwable t) {
+            logger.error("Exception thrown while trying to get " + key + " property from message");
+            return null;
+    	}
     }
 
     public String getString(String key) {
-        return getStringProperty(key);
+    	try {
+    		return (String)getItem(key);	
+    	}
+    	catch (Throwable t) {
+            logger.error("Exception thrown while trying to get " + key + " property from message");
+            return null;
+    	}
     }
 
     public Set<Map.Entry<String, Object>> entrySet() {
