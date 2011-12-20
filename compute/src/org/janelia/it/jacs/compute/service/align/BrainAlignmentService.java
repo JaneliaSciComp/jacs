@@ -17,16 +17,14 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 
 /**
- * Created by IntelliJ IDEA.
- * User: murphys
- * Date: 11/9/11
- * Time: 3:15 PM
- * To change this template use File | Settings | File Templates.
+ * Align an central brain globally and locally.
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class BrainAlignmentService extends SubmitDrmaaJobService {
 
-    private static final String CONFIG_PREFIX = "alignConfiguration.";
-    private static final int TIMEOUT_SECONDS = 3600;  // 60 minutes
+	protected static final String CONFIG_PREFIX = "alignConfiguration.";
+	protected static final int TIMEOUT_SECONDS = 3600;  // 60 minutes
 
     protected static final String EXECUTABLE_DIR = SystemConfigurationProperties.getString("Executables.ModuleBase");
     protected static final String ALIGNER_SCRIPT_CMD = SystemConfigurationProperties.getString("BrainAligner.ScriptPath");
@@ -35,9 +33,9 @@ public class BrainAlignmentService extends SubmitDrmaaJobService {
     protected static final String TEMPLATE_DIR = SystemConfigurationProperties.getString("BrainAligner.TemplateDir");
     protected static final String PERL_EXE = SystemConfigurationProperties.getString("Perl.Path");
 
-    private FileNode outputFileNode;
-    private FileNode alignFileNode;
-    private String inputFilename;
+    protected FileNode outputFileNode;
+    protected FileNode alignFileNode;
+    protected String inputFilename;
 
     @Override
     protected String getGridServicePrefixName() {
@@ -71,29 +69,22 @@ public class BrainAlignmentService extends SubmitDrmaaJobService {
         File configFile = new File(getSGEConfigurationDirectory() + File.separator + CONFIG_PREFIX + "1");
         boolean fileSuccess = configFile.createNewFile();
         if (!fileSuccess){
-            throw new ServiceException("Unable to create a config file for the Neuron Separation pipeline.");
+            throw new ServiceException("Unable to create a config file for the alignment pipeline.");
         }
         createShellScript(writer);
         setJobIncrementStop(1);
     }
 
-    private void createShellScript(FileWriter writer)
+    protected void createShellScript(FileWriter writer)
             throws IOException, ParameterException, MissingDataException, InterruptedException, ServiceException {
 
         logger.info("Starting BrainAlignmentService with taskId=" + task.getObjectId() + " resultNodeId=" + resultFileNode.getObjectId() + " resultDir=" + resultFileNode.getDirectoryPath() +
             " workingDir="+alignFileNode.getDirectoryPath() + " inputFilename="+inputFilename);
 
-/*
-sub usage {
-    print STDERR $_[0] . "\n";
-    die "Usage: -v <v3d exe path> -b <brain_aligner path> -l <lobeseg path> -t <template dir> -w <working dir> -i <input stack> \n";
-}
-  */
-
         StringBuffer script = new StringBuffer();
         script.append(V3DHelper.getV3dLibrarySetupCmd()+"\n");
-        script.append("cd " + alignFileNode.getDirectoryPath() + "\nperl " +
-                      EXECUTABLE_DIR + ALIGNER_SCRIPT_CMD +
+        script.append("cd " + alignFileNode.getDirectoryPath() + "\n " + 
+        	PERL_EXE + " " + EXECUTABLE_DIR + ALIGNER_SCRIPT_CMD +
             " -v " +  V3DHelper.getV3dExecutableCmd() +
             " -b " +  EXECUTABLE_DIR + ALIGNER_EXE_PATH +
             " -l " +  EXECUTABLE_DIR + LOBESEG_EXE_PATH +
