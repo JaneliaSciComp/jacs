@@ -46,9 +46,9 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
             String inputPath = (String)processData.getItem(inputPathKey);
             final String inputRegex = (String)processData.getItem(inputRegexKey);
 
-            logger.info(inputFilenameKey+" = "+inputFilename);
-            logger.info(inputPathKey+" = "+inputPath);
-            logger.info(inputRegexKey+" = "+inputRegex);
+//            logger.info(inputFilenameKey+" = "+inputFilename);
+//            logger.info(inputPathKey+" = "+inputPath);
+//            logger.info(inputRegexKey+" = "+inputRegex);
 
             if ( (inputFilename==null && inputPath==null && inputRegex==null) || configIndex>100 )
                 break;
@@ -91,7 +91,7 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
             }
             configIndex++;
     	}
-        logger.info("ParallelFileProcessingService  init()  inputFile count="+inputFiles.size()+ "  outputFile count="+outputFiles.size());
+//        logger.info("ParallelFileProcessingService  init()  inputFile count="+inputFiles.size()+ "  outputFile count="+outputFiles.size());
     }
 
     @Override

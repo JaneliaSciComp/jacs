@@ -11,10 +11,10 @@ package org.janelia.it.jacs.compute.mbean;
 public interface WorkstationDataManagerMBean {
     	
     public void runSampleSyncService(String user, Boolean testRun);
-		
-	public void runMCFODataPipeline(String user, Boolean refresh, String inputDirList, String topLevelFolderName);
 
-    public void runMCFOSamplePipeline(String sampleEntityId);
+    public void runMCFODataPipeline(String user, String inputDirList, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
+
+    public void runMCFOSamplePipeline(String sampleEntityId, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
     
 	public void runMCFOSeparationPipeline(String sampleEntityId, String inputFilename, String resultEntityName);
 	

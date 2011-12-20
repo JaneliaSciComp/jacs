@@ -13,7 +13,7 @@ public enum TilingPattern {
 	OPTIC_SPAN("Optic Span", true, true),
 	CENTRAL_BRAIN("Central Brain", true, true),
 	OPTIC_CENTRAL_BORDER("Optic/Central Border", true, false),
-	OPTIC_TILE("Optic Lobe Tile", false, false),
+	OPTIC_TILE("Optic Lobe Tile", false, true),
 	CENTRAL_TILE("Central Tile", false, false),
 	OTHER("Other", false, false);
 	

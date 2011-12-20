@@ -20,7 +20,7 @@ import org.janelia.it.jacs.model.user_data.entity.SampleResultNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
 /**
- * Node that contains all output from pipeline operations run on a particular sample.
+ * Node that contains processing operations (e.g. merging and stitching) run on a particular sample.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -48,7 +48,6 @@ public class CreateSampleResultFileNodeService implements IService {
             processData.putItem("METADATA_RESULT_FILE_NODE", createChildFileNode("metadata"));
             processData.putItem("MERGE_RESULT_FILE_NODE", createChildFileNode("merge"));
             processData.putItem("STITCH_RESULT_FILE_NODE", createChildFileNode("stitch"));
-            processData.putItem("ALIGN_RESULT_FILE_NODE", createChildFileNode("align"));
             
             logger.info("Created separation result node: "+resultFileNode.getDirectoryPath());
         }

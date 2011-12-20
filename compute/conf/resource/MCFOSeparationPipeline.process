@@ -99,12 +99,6 @@
 			<input name="TARGET_FILENAME_REGEX_6" value="(.*?)\.(oos|neu)$"/>
 	    </operation>
 
-	    <!-- Copy LSM metadata files -->
-	    <operation name="Copy Lsm Metadata Files" processor="org.janelia.it.jacs.compute.service.entity.MigrateLsmMetadataFilesService">
-	        <input name="SAMPLE_ENTITY_ID"/>
-	        <input name="SEPARATE_RESULT_FILE_NODE"/>
-	    </operation>
-
 	    <!-- Load the separation results into the database -->
 		<operation name="Discover Neuron Separation Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.NeuronSeparatorResultsDiscoveryService">
 			<input name="SEPARATE_RESULT_FILE_NODE"/>
@@ -112,6 +106,12 @@
 			<input name="SAMPLE_ENTITY_ID"/>
 			<input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
 			<input name="RESULT_ENTITY_NAME"/>
+	    </operation>
+
+	    <!-- Copy LSM metadata files -->
+	    <operation name="Copy Lsm Metadata Files" processor="org.janelia.it.jacs.compute.service.entity.MigrateLsmMetadataFilesService">
+	        <input name="SAMPLE_ENTITY_ID"/>
+	        <input name="SEPARATE_RESULT_FILE_NODE"/>
 	    </operation>
 			
     </sequence>

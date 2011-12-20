@@ -12,7 +12,6 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
-import org.janelia.it.jacs.compute.service.fileDiscovery.TilingPattern;
 import org.janelia.it.jacs.compute.service.v3d.MergedLsmPair;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -20,17 +19,11 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.user_data.FileNode;
 
 /**
- * Extracts and outputs the two filepaths from an LsmPair entity. The parameter must be included in the ProcessData:
- *   SAMPLE_ENTITY_ID
- *   RESULT_FILE_NODE
- * 
- * Output is produced in ProcessData as:
- *   BULK_MERGE_PARAMETERS
- *   STITCHED_FILENAME
- * 
+ * Extracts stuff about the Sample from the entity model and loads it into simplified objects for use by other services.
+ *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class InitV3DSampleParametersService implements IService {
+public class InitSampleProcessingParametersService implements IService {
 
     protected Logger logger;
     protected AnnotationBeanLocal annotationBean;
@@ -40,7 +33,7 @@ public class InitV3DSampleParametersService implements IService {
         	
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             annotationBean = EJBFactory.getLocalAnnotationBean();
-
+        	
         	FileNode sampleResultNode = (FileNode)processData.getItem("SAMPLE_RESULT_FILE_NODE");
         	if (sampleResultNode == null) {
         		throw new IllegalArgumentException("SAMPLE_RESULT_FILE_NODE may not be null");
@@ -55,6 +48,7 @@ public class InitV3DSampleParametersService implements IService {
         	if (stitchResultNode == null) {
         		throw new IllegalArgumentException("STITCH_RESULT_FILE_NODE may not be null");
         	}
+        	
         	String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
         	if (sampleEntityId == null || "".equals(sampleEntityId)) {
         		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
@@ -97,6 +91,7 @@ public class InitV3DSampleParametersService implements IService {
             	if (!lsmFile2.exists()||!lsmFile2.canRead()) {
             		throw new FileNotFoundException("LSM file does not exist or is not readable: "+lsmFile2.getAbsolutePath());
             	}
+
             	
             	File mergedFile = new File(mergeResultNode.getDirectoryPath(), "merged-"+lsmPairEntity.getId()+".v3draw");
             	mergedLsmPairs.add(new MergedLsmPair(lsmFilepath1, lsmFilepath2, mergedFile.getAbsolutePath()));
@@ -106,16 +101,10 @@ public class InitV3DSampleParametersService implements IService {
         	if (mergedLsmPairs.isEmpty()) {
         		throw new Exception("Sample (id="+sampleEntityId+") has no LSM pairs");
         	}
-        	
-        	File stitchedFile = new File(stitchResultNode.getDirectoryPath(), "stitched-"+sampleEntity.getId()+".v3draw");
 
-        	// Should we run the alignment and aligned separation?
-        	boolean runAlignment = TilingPattern.getTilingPattern(tags).isAlignable(); //mergedLsmPairs.size() > 1;
-        	
-        	processData.putItem("BULK_MERGE_PARAMETERS", mergedLsmPairs);
-        	processData.putItem("NUM_LSM_PAIRS", new Long(mergedLsmPairs.size()));
+        	File stitchedFile = new File(stitchResultNode.getDirectoryPath(), "stitched-"+sampleEntity.getId()+".v3draw");
         	processData.putItem("STITCHED_FILENAME", stitchedFile.getAbsolutePath());
-        	processData.putItem("RUN_ALIGNMENT", new Boolean(runAlignment));
+        	processData.putItem("BULK_MERGE_PARAMETERS", mergedLsmPairs);
         	
         } catch (Exception e) {
             throw new ServiceException(e);

@@ -40,11 +40,11 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
     
-    public void runMCFODataPipeline(String user, Boolean refresh, String inputDirList, String topLevelFolderName) {
+    public void runMCFODataPipeline(String user, String inputDirList, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation) {
         try {
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
             		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), 
-            		inputDirList, topLevelFolderName, refresh);
+            		inputDirList, topLevelFolderName, refreshProcessing, refreshAlignment, refreshSeparation);
             task.setJobName("MultiColor FlipOut Data Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("MCFODataPipeline", task.getObjectId());
@@ -53,12 +53,13 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
     
-    public void runMCFOSamplePipeline(String sampleEntityId) {
+    public void runMCFOSamplePipeline(String sampleEntityId, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation) {
         try {
         	Entity sampleEntity = EJBFactory.getLocalAnnotationBean().getEntityById(sampleEntityId);
         	if (sampleEntity==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
         	Task task = new MCFOSamplePipelineTask(new HashSet<Node>(), 
-        			sampleEntity.getUser().getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>(), sampleEntityId);
+        			sampleEntity.getUser().getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>(), 
+        			sampleEntityId, refreshProcessing, refreshAlignment, refreshSeparation);
             task.setJobName("MultiColor FlipOut Sample Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("MCFOSamplePipeline", task.getObjectId());
@@ -96,16 +97,17 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     }
 
     public void runMergedTileDataPipeline(String user, Boolean refresh, String inputDirList, String topLevelFolderName) {
-        try {
-        	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
-            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), 
-            		inputDirList, topLevelFolderName, refresh);
-            task.setJobName("Merged Tile Data Pipeline Task");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("MergedTileDataPipeline", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+    	// TODO: redo this
+//        try {
+//        	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
+//            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), 
+//            		inputDirList, topLevelFolderName, refresh, false);
+//            task.setJobName("Merged Tile Data Pipeline Task");
+//            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+//            EJBFactory.getLocalComputeBean().submitJob("MergedTileDataPipeline", task.getObjectId());
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//        }
     }
     
     public void runFlyScreenPipeline(String user, Boolean refresh) {

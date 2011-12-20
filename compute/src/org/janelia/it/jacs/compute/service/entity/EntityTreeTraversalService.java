@@ -48,7 +48,7 @@ public class EntityTreeTraversalService implements IService {
                 	entityFilter = (EntityFilter)Class.forName(entityFilterClassName).newInstance();
                 }
                 catch (RuntimeException e) {
-            		throw new IllegalArgumentException("Error instantiating ENTITY_FILTER class",e);
+            		throw new IllegalArgumentException("Error instantiating ENTITY_FILTER_CLASS, "+entityFilterClassName,e);
                 }
             }
 

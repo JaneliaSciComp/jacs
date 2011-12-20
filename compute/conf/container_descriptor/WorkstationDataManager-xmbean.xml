@@ -35,11 +35,6 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>Re-run the Samples that already have separation results?</description>
-           <name>refresh</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-        <parameter>
            <description>Root of the input directory tree containing slide_group_info.txt files (e.g. "/groups/flylight/flylight/flip/SecData/tiles")</description>
            <name>inputDirList</name>
            <type>java.lang.String</type>
@@ -48,6 +43,21 @@
            <description>Name of the folder entity where results will be placed (e.g. "FlyLight Single Neuron Data")</description>
            <name>topLevelFolderName</name>
            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Re-run merging and stitching?</description>
+           <name>refreshProcessing</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+           <description>Re-run brain alignments?</description>
+           <name>refreshAlignment</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+           <description>Re-run neuron separations?</description>
+           <name>refreshSeparation</name>
+           <type>java.lang.Boolean</type>
         </parameter>
     </operation>
 
@@ -58,6 +68,21 @@
            <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
            <name>sampleEntityId</name>
            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Re-run merging and stitching?</description>
+           <name>refreshProcessing</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+           <description>Re-run brain alignments?</description>
+           <name>refreshAlignment</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+           <description>Re-run neuron separations?</description>
+           <name>refreshSeparation</name>
+           <type>java.lang.Boolean</type>
         </parameter>
     </operation>
 

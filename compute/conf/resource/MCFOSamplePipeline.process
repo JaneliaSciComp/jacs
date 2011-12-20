@@ -1,6 +1,6 @@
  <!-- 
-      Fully process a Sample in the database by merging its LSMs, stitching and blending them, 
-      running neuron separation, and loading the results back into the database. 
+      Fully process a Sample in the database by merging its LSMs, stitching and blending them, aligning,
+      and running neuron separation. Any of the steps can be skipped if the Sample already has a result of that type.
  -->
  <process name="MultiColor FlipOut Sample Pipeline" processor="queue/mcfoSamplePipelineLauncher" startEvent="pending">
 	<sequence>
@@ -9,101 +9,138 @@
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="TASK_PARAMETER_1" value="sample entity id"/>
             <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
+            <input name="TASK_PARAMETER_2" value="refresh processing"/>
+            <input name="PROCESS_VARIABLE_2" value="REFRESH_PROCESSING"/>
+            <input name="TASK_PARAMETER_3" value="refresh alignment"/>
+            <input name="PROCESS_VARIABLE_3" value="REFRESH_ALIGNMENT"/>
+            <input name="TASK_PARAMETER_4" value="refresh separation"/>
+            <input name="PROCESS_VARIABLE_4" value="REFRESH_SEPARATION"/>
 	        <output name="SAMPLE_ENTITY_ID"/>
 	    </operation>
 	    
-	    <!-- Create a sample result node, with nested result nodes for all the pipeline steps -->
-	    <operation name="Create Sample Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateSampleResultFileNodeService">
-	        <output name="RESULT_FILE_NODE"/>
-	        <output name="RESULT_FILE_NODE_ID"/>
-	        <output name="SAMPLE_RESULT_FILE_NODE"/>
-	        <output name="METADATA_RESULT_FILE_NODE"/>
-	        <output name="MERGE_RESULT_FILE_NODE"/>
-	        <output name="STITCH_RESULT_FILE_NODE"/>
-	    </operation>
-	            
-	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
-	    <operation name="Create Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitV3DSampleParametersService">
-			<input name="SAMPLE_RESULT_FILE_NODE"/>
-	        <input name="MERGE_RESULT_FILE_NODE"/>
-	        <input name="STITCH_RESULT_FILE_NODE"/>
+	    <!-- Decide which types of processing will be run -->
+	    <operation name="Choose Sample Processing Steps" processor="org.janelia.it.jacs.compute.service.entity.ChooseMCFOSampleStepsService">
 			<input name="SAMPLE_ENTITY_ID"/>
-			<output name="BULK_MERGE_PARAMETERS"/>
-			<output name="NUM_LSM_PAIRS"/>
-			<output name="STITCHED_FILENAME"/>
+			<input name="REFRESH_PROCESSING"/>
+			<input name="REFRESH_ALIGNMENT"/>
+			<input name="REFRESH_SEPARATION"/>
+			<output name="RUN_PROCESSING"/>
 			<output name="RUN_ALIGNMENT"/>
+			<output name="RUN_SEPARATION"/>
+			<output name="STITCHED_FILENAME"/>
+			<output name="ALIGNED_FILENAME"/>
 		</operation>
 		
-	    <!-- Asynchronously create the metadata describing the input LSM files -->
-        <sequence name="Create Lsm Metadata Files" waitForAsync="true">
-	        <operation name="Create Lsm Metadata Files" processor="queue/gridSubmitAndWait">
-	            <input name="iservice" value="org.janelia.it.jacs.compute.service.entity.CreateLsmMetadataFilesService"/>
-		        <input name="SAMPLE_ENTITY_ID"/>
-				<input name="METADATA_RESULT_FILE_NODE"/>
-		        <input name="RESULT_FILE_NODE" value="$V{METADATA_RESULT_FILE_NODE}"/>
+        <sequence if="RUN_PROCESSING=true">
+	        	
+		    <!-- Create a sample result node, with nested result nodes for all the pipeline steps -->
+		    <operation name="Create Sample Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateSampleResultFileNodeService">
+		        <output name="RESULT_FILE_NODE"/>
+		        <output name="RESULT_FILE_NODE_ID"/>
+		        <output name="SAMPLE_RESULT_FILE_NODE"/>
+		        <output name="METADATA_RESULT_FILE_NODE"/>
+		        <output name="MERGE_RESULT_FILE_NODE"/>
+		        <output name="STITCH_RESULT_FILE_NODE"/>
+		    </operation>
+		            
+		    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
+		    <operation name="Create Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitSampleProcessingParametersService">
 				<input name="SAMPLE_RESULT_FILE_NODE"/>
-	    		<input name="OUTPUT_FILE_NODE" value="$V{METADATA_RESULT_FILE_NODE}"/>
-	        </operation>
-        </sequence>
-	    
-	    <!-- Merge all the LSM pairs in parallel -->
-        <sequence name="Merge Lsm Pairs" waitForAsync="true">
-	        <operation name="Merge Lsm Pairs" processor="queue/gridSubmitAndWait">
-	            <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.V3DBulkMergeService"/>
-				<input name="MERGE_RESULT_FILE_NODE"/>
-	    		<input name="RESULT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
-				<input name="BULK_MERGE_PARAMETERS"/>
-	        </operation>
-        </sequence>
-	
-	    <!-- Stitch the merged files into a single result -->
-        <sequence name="Stitch and Blend" waitForAsync="true">
-	        <operation name="Stitch and Blend" processor="queue/gridSubmitAndWait">
-	            <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.V3DStitchAndBlendService"/>
-				<input name="STITCH_RESULT_FILE_NODE"/>
-	    		<input name="RESULT_FILE_NODE" value="$V{STITCH_RESULT_FILE_NODE}"/>
-				<input name="MERGE_RESULT_FILE_NODE"/>
-	    		<input name="INPUT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
-				<input name="BULK_MERGE_PARAMETERS"/>
-				<input name="STITCHED_FILENAME"/>
-	        </operation>
-        </sequence>
-			
-	    <!-- Load the sample analysis results into the database -->
-		<operation name="Discover Neuron Separation Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SampleProcessingResultsDiscoveryService">
-			<input name="SAMPLE_RESULT_FILE_NODE"/>
-			<input name="ROOT_FILE_NODE" value="$V{SAMPLE_RESULT_FILE_NODE}"/>
-			<input name="SAMPLE_ENTITY_ID"/>
-			<input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
-			<input name="RESULT_ENTITY_NAME" value="Sample Processing"/>
-	    </operation>
-	    
-        <sequence waitForAsync="true">
-                    
-            <sequence async="true">
-			
-				<!-- Spawn a new task to process the Separation -->
-		        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
-        			<input name="TASK_CLASS" value="org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOSeparationPipelineTask"/>
-		            <input name="PROCESS_DEF_NAME" value="MCFOSeparationPipeline"/>
-		            <input name="PARAMETER_1_KEY" value="sample entity id"/>
-		            <input name="SAMPLE_ENTITY_ID"/>
-		            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
-		            <input name="PARAMETER_2_KEY" value="input filename"/>
-		            <input name="STITCHED_FILENAME"/>
-		            <input name="PARAMETER_2_VALUE" value="$V{STITCHED_FILENAME}"/>
-		            <input name="PARAMETER_3_KEY" value="result entity name"/>
-		            <input name="PARAMETER_3_VALUE" value="Prealigned Neuron Separation"/>
+		        <input name="MERGE_RESULT_FILE_NODE"/>
+		        <input name="STITCH_RESULT_FILE_NODE"/>
+				<input name="SAMPLE_ENTITY_ID"/>
+				<output name="BULK_MERGE_PARAMETERS"/>
+				<output name="STITCHED_FILENAME"/>
+			</operation>
+		
+		    <!-- Asynchronously create the metadata describing the input LSM files -->
+	        <sequence name="Create Lsm Metadata Files" waitForAsync="true">
+		        <operation name="Create Lsm Metadata Files" processor="queue/gridSubmitAndWait">
+		            <input name="iservice" value="org.janelia.it.jacs.compute.service.entity.CreateLsmMetadataFilesService"/>
+			        <input name="SAMPLE_ENTITY_ID"/>
+					<input name="METADATA_RESULT_FILE_NODE"/>
+			        <input name="RESULT_FILE_NODE" value="$V{METADATA_RESULT_FILE_NODE}"/>
+					<input name="SAMPLE_RESULT_FILE_NODE"/>
+		    		<input name="OUTPUT_FILE_NODE" value="$V{METADATA_RESULT_FILE_NODE}"/>
 		        </operation>
-				
-			</sequence>
+	        </sequence>
+		    
+		    <!-- Merge all the LSM pairs in parallel -->
+	        <sequence name="Merge Lsm Pairs" waitForAsync="true">
+		        <operation name="Merge Lsm Pairs" processor="queue/gridSubmitAndWait">
+		            <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.V3DBulkMergeService"/>
+					<input name="MERGE_RESULT_FILE_NODE"/>
+		    		<input name="RESULT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
+					<input name="BULK_MERGE_PARAMETERS"/>
+		        </operation>
+	        </sequence>
+		
+		    <!-- Stitch the merged files into a single result (does nothing in the case of a single tile) -->
+	        <sequence name="Stitch and Blend" waitForAsync="true">
+		        <operation name="Stitch and Blend" processor="queue/gridSubmitAndWait">
+		            <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.V3DStitchAndBlendService"/>
+					<input name="STITCH_RESULT_FILE_NODE"/>
+		    		<input name="RESULT_FILE_NODE" value="$V{STITCH_RESULT_FILE_NODE}"/>
+					<input name="MERGE_RESULT_FILE_NODE"/>
+		    		<input name="INPUT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
+					<input name="BULK_MERGE_PARAMETERS"/>
+					<input name="STITCHED_FILENAME"/>
+		        </operation>
+	        </sequence>
+	        
+		    <!-- Load the sample analysis results into the database -->
+			<operation name="Discover Sample Processing Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SupportingFilesDiscoveryService">
+				<input name="SAMPLE_RESULT_FILE_NODE"/>
+				<input name="ROOT_FILE_NODE" value="$V{SAMPLE_RESULT_FILE_NODE}"/>
+				<input name="SAMPLE_ENTITY_ID"/>
+				<input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
+				<input name="RESULT_ENTITY_TYPE" value="Sample Processing Result"/>
+				<input name="RESULT_ENTITY_NAME" value="Sample Processing"/>
+		    </operation>
+	    	
+	    </sequence>
+	    
+        <sequence if="RUN_SEPARATION=true">
+	
+			<!-- Spawn a new task to process the Prealigned Separation -->
+	        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
+    			<input name="TASK_CLASS" value="org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOSeparationPipelineTask"/>
+	            <input name="PROCESS_DEF_NAME" value="MCFOSeparationPipeline"/>
+	            <input name="PARAMETER_1_KEY" value="sample entity id"/>
+	            <input name="SAMPLE_ENTITY_ID"/>
+	            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
+	            <input name="PARAMETER_2_KEY" value="input filename"/>
+	            <input name="STITCHED_FILENAME"/>
+	            <input name="PARAMETER_2_VALUE" value="$V{STITCHED_FILENAME}"/>
+	            <input name="PARAMETER_3_KEY" value="result entity name"/>
+	            <input name="PARAMETER_3_VALUE" value="Prealigned Neuron Separation"/>
+	        </operation>
 			
-        	<sequence async="true" if="RUN_ALIGNMENT=true" >
-		        	
-		   	    <!-- Align the stitched results -->
+		</sequence>
+	    	        
+    	<sequence if="IS_ALIGNABLE=true">
+    	
+	        <sequence if="RUN_ALIGNMENT=true">
+			
+			    <!-- Create a alignment result node, with nested result nodes for all the pipeline steps -->
+			    <operation name="Create Alignment Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateAlignmentResultFileNodeService">
+			        <output name="RESULT_FILE_NODE"/>
+			        <output name="RESULT_FILE_NODE_ID"/>
+			        <output name="ALIGN_RESULT_FILE_NODE"/>
+			    </operation>
+		                
+			    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
+			    <operation name="Create Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitAlignmentParametersService">
+					<input name="SAMPLE_ENTITY_ID"/>
+					<output name="ALIGNMENT_SERVICE_CLASS"/>
+					<output name="ALIGNMENT_RESULT_NAME"/>
+				</operation>
+			    
+		   	    <!-- Align the sample -->
 		        <sequence name="Align" waitForAsync="true">
 			        <operation name="Align" processor="queue/gridSubmitAndWait">
-			            <input name="iservice" value="org.janelia.it.jacs.compute.service.align.BrainAlignmentService"/>
+						<input name="ALIGNMENT_SERVICE_CLASS"/>
+			            <input name="iservice" value="$V{ALIGNMENT_SERVICE_CLASS}"/>
 						<input name="ALIGN_RESULT_FILE_NODE"/>
 			    		<input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
 			    		<input name="STITCHED_FILENAME"/>
@@ -112,9 +149,24 @@
 			        </operation>
 		        </sequence>
 		        
-				<!-- Spawn a new task to process the Separation -->
+			    <!-- Load the alignment results into the database -->
+				<operation name="Discover Alignment Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SupportingFilesDiscoveryService">
+					<input name="ALIGN_RESULT_FILE_NODE"/>
+					<input name="ROOT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
+					<input name="SAMPLE_ENTITY_ID"/>
+					<input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
+					<input name="RESULT_ENTITY_TYPE" value="Alignment Result"/>
+					<input name="ALIGNMENT_RESULT_NAME"/>
+					<input name="RESULT_ENTITY_NAME" value="$V{ALIGNMENT_RESULT_NAME}"/>
+			    </operation>
+			    
+		    </sequence>
+		    
+	    	<sequence if="RUN_SEPARATION=true">
+		        	
+				<!-- Spawn a new task to process the Aligned Separation -->
 		        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
-        			<input name="TASK_CLASS" value="org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOSeparationPipelineTask"/>
+	    			<input name="TASK_CLASS" value="org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOSeparationPipelineTask"/>
 		            <input name="PROCESS_DEF_NAME" value="MCFOSeparationPipeline"/>
 		            <input name="PARAMETER_1_KEY" value="sample entity id"/>
 		            <input name="SAMPLE_ENTITY_ID"/>
@@ -125,10 +177,10 @@
 		            <input name="PARAMETER_3_KEY" value="result entity name"/>
 		            <input name="PARAMETER_3_VALUE" value="Aligned Neuron Separation"/>
 		        </operation>
-
+	
 	    	</sequence>
 	    	
-    	</sequence>
+	    </sequence>
     	
     </sequence>
 </process>

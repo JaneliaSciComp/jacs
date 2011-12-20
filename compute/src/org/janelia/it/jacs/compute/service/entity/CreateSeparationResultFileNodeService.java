@@ -29,14 +29,12 @@ public class CreateSeparationResultFileNodeService implements IService {
     protected Logger logger;
     private Task task;
     private SeparationResultNode resultFileNode;
-    private String sessionName;
     private String visibility;
 
     public void execute(IProcessData processData) throws CreateRecruitmentFileNodeException {
         try {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             this.task = ProcessDataHelper.getTask(processData);
-            sessionName = ProcessDataHelper.getSessionRelativePath(processData);
 
             visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
             
@@ -50,7 +48,7 @@ public class CreateSeparationResultFileNodeService implements IService {
             processData.putItem("MIPS_RESULT_FILE_NODE", createChildFileNode("mips"));
             processData.putItem("CONVERT_RESULT_FILE_NODE", createChildFileNode("convert"));
             
-            logger.info("Created sample result node: "+resultFileNode.getDirectoryPath());
+            logger.info("Created separation result node: "+resultFileNode.getDirectoryPath());
         }
         catch (Exception e) {
             throw new CreateRecruitmentFileNodeException(e);
