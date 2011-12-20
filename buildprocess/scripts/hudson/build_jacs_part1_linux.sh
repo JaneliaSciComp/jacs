@@ -22,9 +22,10 @@
 #
 
 BUILD_VAA3D=1
-BUILD_NEUSEP=1
-BUILD_JACS=1
-BUILD_FLYSUITE=1
+BUILD_NEUSEP=0
+BUILD_JACS=0
+BUILD_FLYSUITE=0
+RUN_PART2=0
 
 # Exit after any error
 set -o errexit
@@ -87,6 +88,7 @@ if [ $BUILD_VAA3D == 1 ]; then
         exit 1
     fi
     svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/BrainAligner/trunk/jba $VAA3D_COMPILE_REDHAT_DIR/jba
+    svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/BrainAligner/trunk/opticLobeAlign/ssd_registration $VAA3D_COMPILE_REDHAT_DIR/released_plugins/v3d_plugins/ssd_registration
     cp "$SCRIPT_DIR/build_vaa3d_linux.sh" $VAA3D_COMPILE_REDHAT_DIR
     cp "$SCRIPT_DIR/qsub_vaa3d_build.sh" $VAA3D_COMPILE_REDHAT_DIR
     cp -R $VAA3D_COMPILE_REDHAT_DIR $VAA3D_COMPILE_FEDORA_DIR
@@ -189,6 +191,9 @@ echo "  Jacs: $JACS_COMPILE_DIR"
 echo "  Linux Package: $PACKAGE_LINUX_DIR"
 echo "  Mac Package (to be completed in part 2): $PACKAGE_MAC_DIR"
 echo ""
-echo "Now running part 2 on a Mac..."
-ssh $SSH_OPTIONS $MAC_EXECUTOR_HOST "sh $SCRIPT_DIR/build_jacs_part2_mac.sh $FWVER $SERVER"
+
+if [ $RUN_PART2 == 1 ]; then
+    echo "Now running part 2 on a Mac..."
+    ssh $SSH_OPTIONS $MAC_EXECUTOR_HOST "sh $SCRIPT_DIR/build_jacs_part2_mac.sh $FWVER $SERVER"
+fi
 
