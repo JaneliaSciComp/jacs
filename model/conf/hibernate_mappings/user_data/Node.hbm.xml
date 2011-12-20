@@ -609,6 +609,12 @@
                       select-before-update="false">
             </subclass>
 
+            <subclass name="org.janelia.it.jacs.model.user_data.entity.AlignmentResultNode" discriminator-value="AlignmentResultNode"
+                      dynamic-update="true"
+                      dynamic-insert="true"
+                      select-before-update="false">
+            </subclass>
+            
             <subclass name="org.janelia.it.jacs.model.user_data.entity.SeparationResultNode" discriminator-value="SeparationResultNode"
                       dynamic-update="true"
                       dynamic-insert="true"
