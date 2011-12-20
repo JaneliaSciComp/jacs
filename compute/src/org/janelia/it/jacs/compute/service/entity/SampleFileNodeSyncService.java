@@ -16,7 +16,9 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.model.user_data.entity.AlignmentResultNode;
 import org.janelia.it.jacs.model.user_data.entity.SampleResultNode;
+import org.janelia.it.jacs.model.user_data.entity.SeparationResultNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
 /**
@@ -51,9 +53,9 @@ public class SampleFileNodeSyncService implements IService {
             username = task.getOwner();
             isDebug = Boolean.parseBoolean(task.getParameter(PARAM_testRun));
             
-            File sampleDir = new File(SystemConfigurationProperties.getString(CENTRAL_DIR_PROP) + File.separator + username + File.separator + "Sample");
+            File userFilestore = new File(SystemConfigurationProperties.getString(CENTRAL_DIR_PROP) + File.separator + username + File.separator);
             
-            logger.info("Synchronizing file share directory to DB: "+sampleDir.getAbsolutePath());
+            logger.info("Synchronizing file share directory to DB: "+userFilestore.getAbsolutePath());
             
             if (isDebug) {
             	logger.info("This is a test run. No files will be moved or deleted.");
@@ -62,9 +64,12 @@ public class SampleFileNodeSyncService implements IService {
             	logger.info("This is the real thing. Files will be moved and/or deleted!");
             }
             
-            processChildren(sampleDir);
-        	
-			logger.info("Processed "+numDirs+" directories. Found "+numResultNodes+" sample result nodes. Trashed "+
+            processChildren(new File(userFilestore, "Sample"));
+            processChildren(new File(userFilestore, "Alignment"));
+            processChildren(new File(userFilestore, "Separation"));
+
+            
+			logger.info("Processed "+numDirs+" directories. Found "+numResultNodes+" result nodes. Trashed "+
 					numDeletedResultNodes+" nodes. Left "+(numResultNodes-numDeletedResultNodes)+" nodes alone.");
     	}
         catch (Exception e) {
@@ -105,7 +110,7 @@ public class SampleFileNodeSyncService implements IService {
             // This may be a node owned by another database... just leave it alone 
         	logger.info("Ignoring subdir because it is not a node: "+dir.getName());
         }
-        else if (node instanceof SampleResultNode) {
+        else if (node instanceof SampleResultNode || node instanceof AlignmentResultNode || node instanceof SeparationResultNode) {
         	numResultNodes++;
         	
         	List<Entity> entities = annotationBean.getEntitiesWithAttributeValue(EntityConstants.ATTRIBUTE_FILE_PATH, dir.getAbsolutePath()+"%");
@@ -122,4 +127,5 @@ public class SampleFileNodeSyncService implements IService {
 			logger.info("Ignoring subdir which is not a SampleResultNode but a "+node.getClass().getName());
         }
     }
+    
 }
