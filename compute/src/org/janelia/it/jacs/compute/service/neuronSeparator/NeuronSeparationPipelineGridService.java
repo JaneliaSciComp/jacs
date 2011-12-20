@@ -43,8 +43,8 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
         }
         
         String inputFilename = (String)processData.getItem("INPUT_FILENAME");
-        if (inputFilename==null) {
-        	throw new ServiceException("Input parameter INPUT_FILENAME may not be null");
+        if (inputFilename==null || "".equals(inputFilename)) {
+        	throw new ServiceException("Input parameter INPUT_FILENAME may not be empty");
         }
     }
     
