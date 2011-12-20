@@ -240,6 +240,26 @@ public class SystemCall {
         return this.emulateCommandLine(desiredCommandLine, isUnixStyleSystem, envVariables, directory, 0);
     }
 
+    public int emulateCommandLine(String desiredCommandLine, boolean isUnixStyleSystem, String[] envVariables, File directory, int timeoutSeconds) throws IOException, InterruptedException {
+
+        if (logger != null && logger.isDebugEnabled()) {
+            logger.debug("Executing: " + desiredCommandLine);
+        }
+        
+        String[] args = null;
+    	args = new String[]{"", "", ""};
+        if (isUnixStyleSystem) {
+            args[0] = UNIX_SHELL;
+            args[1] = UNIX_SHELL_FLAG;
+        }
+        else {
+            args[0] = WIN_SHELL;
+            args[1] = WIN_SHELL_FLAG;
+        }
+        args[2] = desiredCommandLine;
+        
+    	return this.emulateCommandLine(args, envVariables, directory, timeoutSeconds);
+    }
 
     /**
      * This method is used when the developer wants to run a command line, verbatim.
@@ -255,21 +275,8 @@ public class SystemCall {
      * @throws IOException          - error executing the thread
      * @throws InterruptedException - error used to stop the wait state
      */
-    public int emulateCommandLine(String desiredCommandLine, boolean isUnixStyleSystem, String[] envVariables, File directory, int timeoutSeconds) throws IOException, InterruptedException {
-        String[] args = new String[]{"", "", ""};
-        if (logger != null && logger.isDebugEnabled()) {
-            logger.debug("Executing: " + desiredCommandLine);
-        }
-        if (isUnixStyleSystem) {
-            args[0] = UNIX_SHELL;
-            args[1] = UNIX_SHELL_FLAG;
-        }
-        else {
-            args[0] = WIN_SHELL;
-            args[1] = WIN_SHELL_FLAG;
-        }
-        args[2] = desiredCommandLine;
-
+    public int emulateCommandLine(String[] args, String[] envVariables, File directory, int timeoutSeconds) throws IOException, InterruptedException {
+        
         Process proc = null;
         StreamGobbler errorGobbler, outputGobbler;
         int exitVal = -1;
