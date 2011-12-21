@@ -22,6 +22,8 @@ import org.janelia.it.jacs.model.user_data.FileNode;
  */
 public abstract class ParallelFileProcessingService extends SubmitDrmaaJobService {
 
+    static final int GLOBAL_CASE = -1;
+
     // These 2 vars are the core which must be populated for the service to run.
     // Additionally, a result node or id must be supplied for SubmitDrmaaJobService, which may
     // be the first ID in a result node list.
@@ -148,15 +150,15 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
         }
         for (FileNode outputNode: outputFileNodes) {
             // -1 is a mechanism for us to handle the global case
-            for (int argIndex=-1;argIndex<argumentIndex;argIndex++) {
+            for (int argIndex=GLOBAL_CASE;argIndex<argumentIndex;argIndex++) {
                 File inputFile=null;
                 File outputFile=null;
 
                 // First do input, then output
                 if (!inputPathListAlreadySpecified) {
-                    if (argIndex==-1 && inputNameGlobal!=null) {
+                    if (argIndex==GLOBAL_CASE && inputNameGlobal!=null) {
                         inputFile=new File(outputNode.getDirectoryPath(), inputNameGlobal);
-                    } else if (argIndex==-1 && (inputRegexGlobal!=null && outputPatternGlobal!=null)) {
+                    } else if (argIndex==GLOBAL_CASE && (inputRegexGlobal!=null && outputPatternGlobal!=null)) {
                         File inputDir=new File(outputNode.getDirectoryPath());
                         String[] inputFilenames=inputDir.list(new FilenameFilter() {
                             @Override
@@ -169,20 +171,20 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
                             inputFiles.add(new File(inputDir, inputFilename));
                             outputFiles.add(new File(inputDir, outputFilename));
                         }
-                    } else if (argIndex>-1 && inputNameList.size()>0) {
+                    } else if (argIndex!=GLOBAL_CASE && inputNameList.size()>0) {
                         inputFile=new File(outputNode.getDirectoryPath(), inputNameList.get(argIndex));
-                    } else if (argIndex>-1 && inputPathList.size()>0) {
+                    } else if (argIndex!=GLOBAL_CASE && inputPathList.size()>0) {
                         inputFile=new File(inputPathList.get(argIndex));
                     }
                     if (inputFile!=null) inputFiles.add(inputFile);
                 }
                 if (!outputPathListAlreadySpecified) {
                     // Now output
-                    if (argIndex==-1 && outputNameGlobal!=null) {
+                    if (argIndex==GLOBAL_CASE && outputNameGlobal!=null) {
                         outputFile=new File(outputNode.getDirectoryPath(), outputNameGlobal);
-                    } else if (argIndex>-1 && outputNameList.size()>0) {
+                    } else if (argIndex!=GLOBAL_CASE && outputNameList.size()>0) {
                         outputFile=new File(outputNode.getDirectoryPath(), outputNameList.get(argIndex));
-                    } else if (argIndex>-1 && outputPathList.size()>0) {
+                    } else if (argIndex!=GLOBAL_CASE && outputPathList.size()>0) {
                         outputFile=new File(outputPathList.get(argIndex));
                     }
                     if (outputFile!=null) outputFiles.add(outputFile);
