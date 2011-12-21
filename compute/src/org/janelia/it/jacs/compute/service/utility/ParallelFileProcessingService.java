@@ -22,7 +22,8 @@ import org.janelia.it.jacs.model.user_data.FileNode;
  */
 public abstract class ParallelFileProcessingService extends SubmitDrmaaJobService {
 
-    static final int GLOBAL_CASE = -1;
+	private static final boolean DEBUG = false;
+    private static final int GLOBAL_CASE = -1;
 
     // These 2 vars are the core which must be populated for the service to run.
     // Additionally, a result node or id must be supplied for SubmitDrmaaJobService, which may
@@ -95,12 +96,12 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
             outputFileNodes.add(outputFileNode);
         }
 
-        String inputNameGlobal=(String)processData.getItem("INPUT_FILENAME");
+        final String inputNameGlobal=(String)processData.getItem("INPUT_FILENAME");
         final String inputRegexGlobal=(String)processData.getItem("INPUT_FILENAME_REGEX");
-        String outputNameGlobal=(String)processData.getItem("OUTPUT_FILENAME");
+        final String outputNameGlobal=(String)processData.getItem("OUTPUT_FILENAME");
         final String outputPatternGlobal=(String)processData.getItem("OUTPUT_FILENAME_PATTERN");
-        List<String> inputPathListGlobal=(List<String>)processData.getItem("INPUT_PATH_LIST");
-        List<String> outputPathListGlobal=(List<String>)processData.getItem("OUTPUT_PATH_LIST");
+        final List<String> inputPathListGlobal=(List<String>)processData.getItem("INPUT_PATH_LIST");
+        final List<String> outputPathListGlobal=(List<String>)processData.getItem("OUTPUT_PATH_LIST");
 
         // Next, configure input/output arguments
         int argumentIndex=1;
@@ -149,53 +150,96 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
             outputPathListAlreadySpecified=true;
         }
         for (FileNode outputNode: outputFileNodes) {
+        	if (DEBUG) logger.info("Process output file node: "+outputNode.getDirectoryPath());
             // -1 is a mechanism for us to handle the global case
-            for (int argIndex=GLOBAL_CASE;argIndex<argumentIndex;argIndex++) {
+            for (int argIndex=GLOBAL_CASE; argIndex<argumentIndex-1; argIndex++) {
                 File inputFile=null;
-                File outputFile=null;
 
+            	if (DEBUG) logger.info("  argIndex: "+argIndex);
+            	if (DEBUG) logger.info("    Inputs...");
                 // First do input, then output
                 if (!inputPathListAlreadySpecified) {
-                    if (argIndex==GLOBAL_CASE && inputNameGlobal!=null) {
-                        inputFile=new File(outputNode.getDirectoryPath(), inputNameGlobal);
-                    } else if (argIndex==GLOBAL_CASE && (inputRegexGlobal!=null && outputPatternGlobal!=null)) {
-                        File inputDir=new File(outputNode.getDirectoryPath());
-                        String[] inputFilenames=inputDir.list(new FilenameFilter() {
-                            @Override
-                            public boolean accept(File file, String s) {
-                                return s.matches(inputRegexGlobal);
+                	
+                	if (argIndex==GLOBAL_CASE) {
+                        if (inputNameGlobal!=null) {
+                        	if (DEBUG) logger.info("      Global Case 1: inputNameGlobal:"+inputNameGlobal);
+                            inputFile=new File(outputNode.getDirectoryPath(), inputNameGlobal);
+                        } 
+                        else if (inputRegexGlobal!=null && outputPatternGlobal!=null) {
+                        	if (DEBUG) logger.info("      Global Case 2: inputRegexGlobal:"+inputRegexGlobal+", outputPatternGlobal:"+outputPatternGlobal);
+                            File inputDir=new File(outputNode.getDirectoryPath());
+                            String[] inputFilenames=getFilesMatching(inputDir, inputRegexGlobal);
+                            for (String inputFilename : inputFilenames) {
+                                String outputFilename = inputFilename.replaceAll(inputRegexGlobal, outputPatternGlobal);
+                                inputFiles.add(new File(inputDir, inputFilename));
+                                outputFiles.add(new File(inputDir, outputFilename));
                             }
-                        });
-                        for (String inputFilename : inputFilenames) {
-                            String outputFilename = inputFilename.replaceAll(inputRegexGlobal, outputPatternGlobal);
-                            inputFiles.add(new File(inputDir, inputFilename));
-                            outputFiles.add(new File(inputDir, outputFilename));
+                        } 
+                	}
+                	else {
+                        if (!inputNameList.isEmpty()) {
+                        	if (DEBUG) logger.info("      Case 1: inputNameList:"+inputNameList.size());
+                            inputFile=new File(outputNode.getDirectoryPath(), inputNameList.get(argIndex));
+                        } 
+                        else if (!inputPathList.isEmpty()) {
+                        	if (DEBUG) logger.info("      Case 2: inputPathList:"+inputPathList.size());
+                            inputFile=new File(inputPathList.get(argIndex));
                         }
-                    } else if (argIndex!=GLOBAL_CASE && inputNameList.size()>0) {
-                        inputFile=new File(outputNode.getDirectoryPath(), inputNameList.get(argIndex));
-                    } else if (argIndex!=GLOBAL_CASE && inputPathList.size()>0) {
-                        inputFile=new File(inputPathList.get(argIndex));
+                        else if (!inputRegexList.isEmpty() && !outputPatternList.isEmpty()) {
+                        	if (DEBUG) logger.info("      Case 3: inputRegexList:"+inputRegexList.size());
+                            File inputDir=new File(outputNode.getDirectoryPath());
+                            String regex = inputRegexList.get(argIndex);
+                            String pattern = outputPatternList.get(argIndex);
+                            String[] inputFilenames = getFilesMatching(inputDir, regex);
+                            for (String inputFilename : inputFilenames) {
+                                String outputFilename = inputFilename.replaceAll(regex, pattern);
+                                inputFiles.add(new File(inputDir, inputFilename));
+                                outputFiles.add(new File(inputDir, outputFilename));
+                            }
+                        }
+                	}
+                	
+                    if (inputFile!=null) {
+                    	inputFiles.add(inputFile);
                     }
-                    if (inputFile!=null) inputFiles.add(inputFile);
                 }
+
+                // Now output
+            	if (DEBUG) logger.info("    Outputs...");
                 if (!outputPathListAlreadySpecified) {
-                    // Now output
-                    if (argIndex==GLOBAL_CASE && outputNameGlobal!=null) {
-                        outputFile=new File(outputNode.getDirectoryPath(), outputNameGlobal);
-                    } else if (argIndex!=GLOBAL_CASE && outputNameList.size()>0) {
-                        outputFile=new File(outputNode.getDirectoryPath(), outputNameList.get(argIndex));
-                    } else if (argIndex!=GLOBAL_CASE && outputPathList.size()>0) {
-                        outputFile=new File(outputPathList.get(argIndex));
+                    File outputFile=null;
+                	
+                	if (argIndex==GLOBAL_CASE) {
+                        if (outputNameGlobal!=null) {
+                        	if (DEBUG) logger.info("      Global Case 1: outputNameGlobal:"+outputNameGlobal);
+                            outputFile=new File(outputNode.getDirectoryPath(), outputNameGlobal);
+                        } 
+                	}
+                	else {
+                        if (!outputNameList.isEmpty()) {
+                        	if (DEBUG) logger.info("      Case 1: outputNameList:"+outputNameList.size());
+                            outputFile=new File(outputNode.getDirectoryPath(), outputNameList.get(argIndex));
+                        } 
+                        else if (!outputPathList.isEmpty()) {
+                        	if (DEBUG) logger.info("      Case 2: outputPathList:"+outputPathList.size());
+                            outputFile=new File(outputPathList.get(argIndex));
+                        }
+                	}
+                    
+                    if (outputFile!=null) {
+                    	outputFiles.add(outputFile);
                     }
-                    if (outputFile!=null) outputFiles.add(outputFile);
+            		
                 }
+                
             }
         }
+        
         if (inputFiles.size()!=outputFiles.size()) {
             throw new Exception("Input and Output file counts must match");
         }
     }
-
+    
     @Override
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
 
@@ -274,4 +318,13 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
         	}
     	}
 	}
+
+    private String[] getFilesMatching(File dir, final String regexPattern) {
+    	return dir.list(new FilenameFilter() {
+            @Override
+            public boolean accept(File file, String s) {
+                return s.matches(regexPattern);
+            }
+        });
+    }
 }
