@@ -28,4 +28,6 @@ public interface WorkstationDataManagerMBean {
 
     public void deleteEntityById(String entityId);
 
+    public void doEntityTreePerformanceTest();
+
 }

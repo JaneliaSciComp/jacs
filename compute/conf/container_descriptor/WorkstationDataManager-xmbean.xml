@@ -160,5 +160,10 @@
            <type>java.lang.Boolean</type>
         </parameter>
     </operation>
+
+    <operation>
+        <description>Do Entity load performance test and report results to log</description>
+        <name>doEntityTreePerformanceTest</name>
+    </operation>
     
 </mbean>
