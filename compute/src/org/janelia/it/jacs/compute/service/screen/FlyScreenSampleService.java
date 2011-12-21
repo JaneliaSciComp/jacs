@@ -7,7 +7,6 @@ import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.entity.EntityFilter;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
@@ -15,7 +14,6 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.ScreenSampleResultNode;
@@ -23,6 +21,7 @@ import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.SystemCall;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -47,12 +46,11 @@ public class FlyScreenSampleService implements EntityFilter, IService {
     protected User user;
     protected Date createDate;
     protected String mode=MODE_UNDEFINED;
-    protected ScreenSampleResultNode resultNode;
     protected Task task;
     protected String sessionName;
     protected String visibility;
     protected IProcessData processData;
-    protected String sampleEntityId;
+    protected List<String> sampleEntityIdList;
 
     protected static final String RELATIVE_SAMPLE_TO_JACS_PATH = SystemConfigurationProperties.getString("FlyScreen.RelativePathFromScreenSampleToJacsRoot");
 
@@ -70,9 +68,9 @@ public class FlyScreenSampleService implements EntityFilter, IService {
             user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
             createDate = new Date();
             mode = processData.getString("MODE");
-            sampleEntityId=processData.getString("SAMPLE_ENTITY_ID");
+            sampleEntityIdList=(List<String>)processData.getItem("GROUP_LIST");
 
-            logger.info("FlyScreenSampleService execute()  sampleEntityId="+sampleEntityId+" mode="+mode);
+            logger.info("FlyScreenSampleService execute() contains "+sampleEntityIdList.size()+" samples, mode="+mode);
 
             if (mode.equals(MODE_SETUP)) {
                 doSetup();
@@ -98,90 +96,102 @@ public class FlyScreenSampleService implements EntityFilter, IService {
     public void doSetup() throws Exception {
         logger.info("FlyScreenSampleService  doSetup() start");
 
-        // Error Check that ProcessData state is being handled correctly
-        resultNode = (ScreenSampleResultNode)processData.getItem("SAMPLE_FILE_NODE");
-        if (resultNode!=null) {
-            throw new Exception("ScreenSampleResultNode is non-null at start - this shows incorrectly shared processData");
-        }
+        List<ScreenSampleResultNode> resultNodeList=new ArrayList<ScreenSampleResultNode>();
+        List<String> resultNodeIdList=new ArrayList<String>();
+        List<String> stackPathList=new ArrayList<String>();
 
-        // Proceed if no error
-    	resultNode = new ScreenSampleResultNode(task.getOwner(), task, "ScreenSampleResultNode",
-                "ScreenSampleResultNode for task " + task.getObjectId(), visibility, sessionName);
-        EJBFactory.getLocalComputeBean().saveOrUpdateNode(resultNode);
-        logger.info("FlyScreenSampleService  doSetup()  resultNodeId="+resultNode.getObjectId()+ " intended path="+resultNode.getDirectoryPath());
-        FileUtil.ensureDirExists(resultNode.getDirectoryPath());
-        FileUtil.cleanDirectory(resultNode.getDirectoryPath());
-        String creationMessage="Created ScreenSanmpleResultNode path="+resultNode.getDirectoryPath()+" id="+resultNode.getObjectId()+" screenSampleId="+sampleEntityId;
-        logger.info(creationMessage);
-        processData.putItem("SAMPLE_FILE_NODE", resultNode);
-        processData.putItem("SAMPLE_FILE_NODE_ID", resultNode.getObjectId());
-        Entity screenSampleEntity=EJBFactory.getLocalAnnotationBean().getEntityTree(new Long(sampleEntityId.trim()));
-        String stackPath=getStackPath(screenSampleEntity);
-        processData.putItem("STACK_PATH", stackPath);
-        logger.info("FlyScreenSampleService  doSetup()   stackPath="+stackPath);
+        // Error Check that ProcessData state is being handled correctly
+        for (String sampleEntityId : sampleEntityIdList) {
+
+            // Proceed if no error
+            ScreenSampleResultNode resultNode = new ScreenSampleResultNode(task.getOwner(), task, "ScreenSampleResultNode",
+                    "ScreenSampleResultNode for task " + task.getObjectId(), visibility, sessionName);
+            EJBFactory.getLocalComputeBean().saveOrUpdateNode(resultNode);
+            logger.info("FlyScreenSampleService  doSetup()  resultNodeId="+resultNode.getObjectId()+ " intended path="+resultNode.getDirectoryPath());
+            FileUtil.ensureDirExists(resultNode.getDirectoryPath());
+            FileUtil.cleanDirectory(resultNode.getDirectoryPath());
+            String creationMessage="Created ScreenSanmpleResultNode path="+resultNode.getDirectoryPath()+" id="+resultNode.getObjectId()+" screenSampleId="+sampleEntityId;
+            logger.info(creationMessage);
+            resultNodeList.add(resultNode);
+            resultNodeIdList.add(resultNode.getObjectId().toString());
+            Entity screenSampleEntity=EJBFactory.getLocalAnnotationBean().getEntityTree(new Long(sampleEntityId.trim()));
+            String stackPath=getStackPath(screenSampleEntity);
+            stackPathList.add(stackPath);
+            logger.info("FlyScreenSampleService  doSetup()   stackPath="+stackPath);
+
+        }
+        processData.putItem("SAMPLE_FILE_NODE_LIST", resultNodeList);
+        processData.putItem("SAMPLE_FILE_NODE_ID_LIST", resultNodeIdList);
+        processData.putItem("STACK_PATH_LIST", stackPathList);
     }
 
     public void doComplete() throws Exception {
         logger.info("FlyScreenSampleService  doComplete() start");
-        resultNode=(ScreenSampleResultNode)processData.getItem("SAMPLE_FILE_NODE");
-        Entity screenSampleEntity=EJBFactory.getLocalAnnotationBean().getEntityTree(new Long(sampleEntityId.trim()));
-        File resultDir=new File(resultNode.getDirectoryPath());
-        logger.info("FlyScreenSampleService  doComplete()  using resultDir="+resultDir.getAbsolutePath());
-        File[] resultFiles=resultDir.listFiles();
-        File pngFile=null;
-        File tifFile=null;
-        for (File f : resultFiles) {
-            logger.info("Checking file="+f.getAbsolutePath());
-            if (f.getName().toLowerCase().endsWith(".tif")) {
-                tifFile=f;
-            } else if (f.getName().toLowerCase().endsWith(".png")) {
-                pngFile=f;
+
+        List<ScreenSampleResultNode> resultNodeList=(List<ScreenSampleResultNode>)processData.getItem("SAMPLE_FILE_NODE_LIST");
+
+        int index=0;
+        for (ScreenSampleResultNode resultNode : resultNodeList) {
+            Entity screenSampleEntity=EJBFactory.getLocalAnnotationBean().getEntityTree(new Long(sampleEntityIdList.get(index).trim()));
+            File resultDir=new File(resultNode.getDirectoryPath());
+            logger.info("FlyScreenSampleService  doComplete()  using resultDir="+resultDir.getAbsolutePath());
+            File[] resultFiles=resultDir.listFiles();
+            File pngFile=null;
+            File tifFile=null;
+            for (File f : resultFiles) {
+                logger.info("Checking file="+f.getAbsolutePath());
+                if (f.getName().toLowerCase().endsWith(".tif")) {
+                    tifFile=f;
+                } else if (f.getName().toLowerCase().endsWith(".png")) {
+                    pngFile=f;
+                }
             }
-        }
 
-        // Clean up tif file
-        if (tifFile!=null && pngFile!=null) {
-            logger.info("Deleting tif file="+tifFile.getAbsolutePath());
-            tifFile.delete();
-        }
+            // Clean up tif file
+            if (tifFile!=null && pngFile!=null) {
+                logger.info("Deleting tif file="+tifFile.getAbsolutePath());
+                tifFile.delete();
+            }
 
-        // Clean up map channel intermediary
-        File alignedStackNoCompartments=new File(resultDir, "AlignedStackNoCompartments.v3dpbd");
-        if (!alignedStackNoCompartments.exists()) {
-            throw new Exception("Could not locate intermediate file="+alignedStackNoCompartments.getAbsolutePath());
-        }
-        alignedStackNoCompartments.delete();
+            // Clean up map channel intermediary
+            File alignedStackNoCompartments=new File(resultDir, "AlignedStackNoCompartments.v3dpbd");
+            if (!alignedStackNoCompartments.exists()) {
+                throw new Exception("Could not locate intermediate file="+alignedStackNoCompartments.getAbsolutePath());
+            }
+            alignedStackNoCompartments.delete();
 
 
-        if (pngFile!=null) {
-            logger.info("Found png file="+pngFile.getAbsolutePath());
+            if (pngFile!=null) {
+                logger.info("Found png file="+pngFile.getAbsolutePath());
 
-            // Create MIP
-            Entity mipEntity=createMipEntity(pngFile, screenSampleEntity.getName() + " mip");
-            addToParent(screenSampleEntity, mipEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
+                // Create MIP
+                Entity mipEntity=createMipEntity(pngFile, screenSampleEntity.getName() + " mip");
+                addToParent(screenSampleEntity, mipEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
 
-            // Add default image to screen sample
-            screenSampleEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
-            EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(screenSampleEntity);
+                // Add default image to screen sample
+                screenSampleEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
+                EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(screenSampleEntity);
 
-            // Add default image to stack
-            Entity stackEntity=getStackEntityFromScreenSample(screenSampleEntity);
-            stackEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
-            EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(stackEntity);
+                // Add default image to stack
+                Entity stackEntity=getStackEntityFromScreenSample(screenSampleEntity);
+                stackEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
+                EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(stackEntity);
 
-            // Add default image to mip
-            mipEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
-            EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(mipEntity);
+                // Add default image to mip
+                mipEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
+                EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(mipEntity);
 
-            // Add link to stack file
-            SystemCall sc=new SystemCall(logger);
-            File stackFile=new File(stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-            String stackPath=stackFile.getAbsolutePath();
-            String[] splist=stackPath.split("jacsData");
-            String relativePath=RELATIVE_SAMPLE_TO_JACS_PATH+splist[1];
-            sc.emulateCommandLine("ln -s "+relativePath+" "+resultDir.getAbsolutePath()+"/"+stackFile.getName(), true);
+                // Add link to stack file
+                SystemCall sc=new SystemCall(logger);
+                File stackFile=new File(stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+                String stackPath=stackFile.getAbsolutePath();
+                String[] splist=stackPath.split("jacsData");
+                String relativePath=RELATIVE_SAMPLE_TO_JACS_PATH+splist[1];
+                sc.emulateCommandLine("ln -s "+relativePath+" "+resultDir.getAbsolutePath()+"/"+stackFile.getName(), true);
 
-            logger.info("Finished saving entity metadata for png file");
+                logger.info("Finished saving entity metadata for png file");
+            }
+            index++;
         }
         logger.info("FlyScreenSampleService  doComplete()  done");
     }

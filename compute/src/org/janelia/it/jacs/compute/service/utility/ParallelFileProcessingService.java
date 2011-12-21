@@ -22,76 +22,176 @@ import org.janelia.it.jacs.model.user_data.FileNode;
  */
 public abstract class ParallelFileProcessingService extends SubmitDrmaaJobService {
 
+    // These 2 vars are the core which must be populated for the service to run.
+    // Additionally, a result node or id must be supplied for SubmitDrmaaJobService, which may
+    // be the first ID in a result node list.
     private List<File> inputFiles = new ArrayList<File>();
     private List<File> outputFiles = new ArrayList<File>();
+
+    private List<FileNode> outputFileNodes;
+
+    private List<String> inputNameList = new ArrayList<String>();
+    private List<String> outputNameList = new ArrayList<String>();
+    private List<String> inputRegexList = new ArrayList<String>();
+    private List<String> outputPatternList = new ArrayList<String>();
+    private List<String> inputPathList = new ArrayList<String>();
+    private List<String> outputPathList = new ArrayList<String>();
     
     protected void init(IProcessData processData) throws Exception {
-    	super.init(processData);
-    	
-        FileNode outputFileNode = (FileNode)processData.getItem("OUTPUT_FILE_NODE");
-        if (outputFileNode==null) {
-        	throw new ServiceException("Input parameter OUTPUT_FILE_NODE may not be null");
+
+        // First we make sure a single result file node is established for the drmaa run.
+        // Note that the result node is handled independently of the output nodes.
+        Long resultFileNodeId=0L;
+        resultFileNode = (FileNode)processData.getItem("RESULT_FILE_NODE");
+        if (resultFileNode==null) {
+            resultFileNodeId = (Long)processData.getLong("RESULT_FILE_NODE_ID");
         }
-        
-    	int configIndex = 1;
-    	while (true) {
-
-            // First determine input file for this index
-
-            String inputFilenameKey="INPUT_FILENAME_"+configIndex;
-            String inputPathKey="INPUT_PATH_"+configIndex;
-            String inputRegexKey="INPUT_FILENAME_REGEX_"+configIndex;
-
-       	    String inputFilename = (String)processData.getItem(inputFilenameKey);
-            String inputPath = (String)processData.getItem(inputPathKey);
-            final String inputRegex = (String)processData.getItem(inputRegexKey);
-
-//            logger.info(inputFilenameKey+" = "+inputFilename);
-//            logger.info(inputPathKey+" = "+inputPath);
-//            logger.info(inputRegexKey+" = "+inputRegex);
-
-            if ( (inputFilename==null && inputPath==null && inputRegex==null) || configIndex>100 )
-                break;
-
-            if (inputFilename!=null) {
-                File inputFile=new File(outputFileNode.getDirectoryPath(), inputFilename);
-                inputFiles.add(inputFile);
-            } else if (inputPath!=null) {
-                File inputFile=new File(inputPath);
-                inputFiles.add(inputFile);
-            } else if (inputRegex!=null) {
-                // We do the output here also in this case, since for regex they must be coordinated
-                String outputPattern = (String)processData.getItem("OUTPUT_FILENAME_PATTERN_"+configIndex);
-    			File inputDir = new File(outputFileNode.getDirectoryPath());
-    			String[] filenames = inputDir.list(new FilenameFilter() {
-					@Override
-					public boolean accept(File dir, String name) {
-						return name.matches(inputRegex);
-					}
-				});
-    			for(String foundInputFilename : filenames) {
-                    String outputFilename = foundInputFilename.replaceAll(inputRegex, outputPattern);
-                	File inputFile = new File(inputDir, foundInputFilename);
-                    File outputFile = new File(inputDir, outputFilename);
-	            	inputFiles.add(inputFile);
-                    outputFiles.add(outputFile);
-    			}
+        if (resultFileNode==null && resultFileNodeId==null) {
+            // We assume a list and simply use the first node from the list for drmaa
+            List<String> resultNodeIdList = (List<String>)processData.getItem("RESULT_FILE_NODE_ID_LIST");
+            if (resultNodeIdList!=null && resultNodeIdList.size()>0) {
+                processData.putItem("RESULT_FILE_NODE_ID", new Long(resultNodeIdList.get(0).trim()));
+            } else {
+                List<FileNode> resultFileNodes = (List<FileNode>)processData.getItem("RESULT_FILE_NODE_LIST");
+                if (resultFileNodes!=null && resultFileNodes.size()>0) {
+                    processData.putItem("RESULT_FILE_NODE", resultFileNodes.get(0));
+                }
             }
+        }
+        // Now it should be safe to call init() on SubmitDrmaaJobService
+    	super.init(processData);
 
-            // Next, we do outputs
-            String outputFilename = (String)processData.getItem("OUTPUT_FILENAME_"+configIndex);
-            String outputPath = (String)processData.getItem("OUTPUT_PATH_"+configIndex);
+        // Next we establish the output list. There are multiple modes in which this service can be run:
+        //
+        //  1. The output file node is specified, and an indexed list of input and output filenames are specified,
+        //      all of which are assumed to be in the 'output file node'. In this case, the service is applied
+        //      to each pair in the indexed list, but all inputs and outputs are within the output filenode directory.
+        //
+        //  2. Similar to #1, except that regular expression is used to construct the list of inputs and outputs,
+        //      by using REGEX and PATTERN tags.
+        //
+        //  3. Similar to #1, except that PATH is used rather than filename to specify input files. In this
+        //      case, it is not assumed that the input is in the 'output file node', but in a totally independent
+        //      location.
+        //
+        //  4. Similar to #2, except that a list both input paths and output file nodes is supplied. A single
+        //      filename is expected to be given for output, then this output name is used for all outputs (presumably
+        //      in each of the different output file node directories).
 
-            if (outputFilename!=null) {
-                File outputFile=new File(outputFileNode.getDirectoryPath(), outputFilename);
-                outputFiles.add(outputFile);
-            } else if (outputPath!=null) {
-                File outputFile=new File(outputPath);
-                outputFiles.add(outputFile);
+
+        // Next, setup output file node(s)
+        FileNode outputFileNode = (FileNode)processData.getItem("OUTPUT_FILE_NODE");
+        outputFileNodes = (List<FileNode>)processData.getItem("OUTPUT_FILE_NODE_LIST");
+        if (outputFileNode==null && outputFileNodes==null) {
+        	throw new ServiceException("Input parameter OUTPUT_FILE_NODE and OUTPUT_FILE_NODE_LIST may not both be null");
+        }
+        if (outputFileNode!=null && outputFileNodes!=null) {
+            throw new ServiceException("Both OUTPUT_FILE_NODE and OUTPUT_FILE_NODE_LIST cannot be specified - one or the other");
+        }
+        if (outputFileNodes==null) {
+            outputFileNodes=new ArrayList<FileNode>();
+            outputFileNodes.add(outputFileNode);
+        }
+
+        String inputNameGlobal=(String)processData.getItem("INPUT_FILENAME");
+        final String inputRegexGlobal=(String)processData.getItem("INPUT_FILENAME_REGEX");
+        String outputNameGlobal=(String)processData.getItem("OUTPUT_FILENAME");
+        final String outputPatternGlobal=(String)processData.getItem("OUTPUT_FILENAME_PATTERN");
+        List<String> inputPathListGlobal=(List<String>)processData.getItem("INPUT_PATH_LIST");
+        List<String> outputPathListGlobal=(List<String>)processData.getItem("OUTPUT_PATH_LIST");
+
+        // Next, configure input/output arguments
+        int argumentIndex=1;
+        while (true) {
+
+            String inputFilenameKey="INPUT_FILENAME_"+argumentIndex;
+            String inputPathKey="INPUT_PATH_"+argumentIndex;
+            String inputRegexKey="INPUT_FILENAME_REGEX_"+argumentIndex;
+            String outputFilenameKey="OUTPUT_FILENAME_"+argumentIndex;
+            String outputPathKey="OUTPUT_PATH_"+argumentIndex;
+            String outputPatternKey="OUTPUT_FILENAME_PATTERN_"+argumentIndex;
+
+            String inputFilename=(String)processData.getItem(inputFilenameKey);
+            String inputPath=(String)processData.getItem(inputPathKey);
+            String inputRegex=(String)processData.getItem(inputRegexKey);
+            String outputFilename=(String)processData.getItem(outputFilenameKey);
+            String outputPath=(String)processData.getItem(outputPathKey);
+            String outputPattern=(String)processData.getItem(outputPatternKey);
+
+            int hits=0;
+
+            if (inputFilename!=null) { inputNameList.add(inputFilename); hits++; }
+            if (inputPath!=null) { inputPathList.add(inputPath); hits++; }
+            if (inputRegex!=null) { inputRegexList.add(inputRegex); hits++; }
+            if (outputFilename!=null) { outputNameList.add(outputFilename); hits++; }
+            if (outputPath!=null) { outputPathList.add(outputPath); hits++; }
+            if (outputPattern!=null) { outputPatternList.add(outputPattern); hits++; }
+
+            if (hits==0 || argumentIndex>=100) break;
+
+            argumentIndex++;
+        }
+
+        boolean inputPathListAlreadySpecified=false;
+        boolean outputPathListAlreadySpecified=false;
+        if (inputPathListGlobal!=null && inputPathListGlobal.size()==outputFileNodes.size()) {
+            for (String filepath : inputPathListGlobal) {
+                inputFiles.add(new File(filepath));
             }
-            configIndex++;
-    	}
-//        logger.info("ParallelFileProcessingService  init()  inputFile count="+inputFiles.size()+ "  outputFile count="+outputFiles.size());
+            inputPathListAlreadySpecified=true;
+        }
+        if (outputPathListGlobal!=null && outputPathListGlobal.size()==outputFileNodes.size()) {
+            for (String filepath : outputPathListGlobal) {
+                outputFiles.add(new File(filepath));
+            }
+            outputPathListAlreadySpecified=true;
+        }
+        for (FileNode outputNode: outputFileNodes) {
+            // -1 is a mechanism for us to handle the global case
+            for (int argIndex=-1;argIndex<argumentIndex;argIndex++) {
+                File inputFile=null;
+                File outputFile=null;
+
+                // First do input, then output
+                if (!inputPathListAlreadySpecified) {
+                    if (argIndex==-1 && inputNameGlobal!=null) {
+                        inputFile=new File(outputNode.getDirectoryPath(), inputNameGlobal);
+                    } else if (argIndex==-1 && (inputRegexGlobal!=null && outputPatternGlobal!=null)) {
+                        File inputDir=new File(outputNode.getDirectoryPath());
+                        String[] inputFilenames=inputDir.list(new FilenameFilter() {
+                            @Override
+                            public boolean accept(File file, String s) {
+                                return s.matches(inputRegexGlobal);
+                            }
+                        });
+                        for (String inputFilename : inputFilenames) {
+                            String outputFilename = inputFilename.replaceAll(inputRegexGlobal, outputPatternGlobal);
+                            inputFiles.add(new File(inputDir, inputFilename));
+                            outputFiles.add(new File(inputDir, outputFilename));
+                        }
+                    } else if (inputNameList.size()>0) {
+                        inputFile=new File(outputNode.getDirectoryPath(), inputNameList.get(argIndex));
+                    } else if (inputPathList.size()>0) {
+                        inputFile=new File(inputPathList.get(argIndex));
+                    }
+                    if (inputFile!=null) inputFiles.add(inputFile);
+                }
+                if (!outputPathListAlreadySpecified) {
+                    // Now output
+                    if (argIndex==-1 && outputNameGlobal!=null) {
+                        outputFile=new File(outputNode.getDirectoryPath(), outputNameGlobal);
+                    } else if (outputNameList.size()>0) {
+                        outputFile=new File(outputNode.getDirectoryPath(), outputNameList.get(argIndex));
+                    } else if (outputPathList.size()>0) {
+                        outputFile=new File(outputPathList.get(argIndex));
+                    }
+                    if (outputFile!=null) outputFiles.add(outputFile);
+                }
+            }
+        }
+        if (inputFiles.size()!=outputFiles.size()) {
+            throw new Exception("Input and Output file counts must match");
+        }
     }
 
     @Override
