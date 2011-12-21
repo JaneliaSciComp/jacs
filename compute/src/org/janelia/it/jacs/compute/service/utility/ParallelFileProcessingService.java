@@ -169,9 +169,9 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
                             inputFiles.add(new File(inputDir, inputFilename));
                             outputFiles.add(new File(inputDir, outputFilename));
                         }
-                    } else if (inputNameList.size()>0) {
+                    } else if (argIndex>-1 && inputNameList.size()>0) {
                         inputFile=new File(outputNode.getDirectoryPath(), inputNameList.get(argIndex));
-                    } else if (inputPathList.size()>0) {
+                    } else if (argIndex>-1 && inputPathList.size()>0) {
                         inputFile=new File(inputPathList.get(argIndex));
                     }
                     if (inputFile!=null) inputFiles.add(inputFile);
@@ -180,9 +180,9 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
                     // Now output
                     if (argIndex==-1 && outputNameGlobal!=null) {
                         outputFile=new File(outputNode.getDirectoryPath(), outputNameGlobal);
-                    } else if (outputNameList.size()>0) {
+                    } else if (argIndex>-1 && outputNameList.size()>0) {
                         outputFile=new File(outputNode.getDirectoryPath(), outputNameList.get(argIndex));
-                    } else if (outputPathList.size()>0) {
+                    } else if (argIndex>-1 && outputPathList.size()>0) {
                         outputFile=new File(outputPathList.get(argIndex));
                     }
                     if (outputFile!=null) outputFiles.add(outputFile);
