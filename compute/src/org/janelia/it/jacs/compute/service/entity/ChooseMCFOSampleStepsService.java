@@ -56,20 +56,23 @@ public class ChooseMCFOSampleStepsService implements IService {
     		}
     		
     		boolean runProcessing = refreshProcessing || !canSkipProcessing(processData, sampleEntity);
-    		boolean runAlignment = isAlignable && (refreshAlignment || !canSkipAlignment(processData, sampleEntity));
-    		boolean runSeparation = refreshSeparation || !canSkipSeparation(processData, sampleEntity, isAlignable);
+    		boolean runAlignment = isAlignable && (runProcessing || refreshAlignment || !canSkipAlignment(processData, sampleEntity));
+    		boolean runSeparation = runProcessing || refreshSeparation || !canSkipSeparation(processData, sampleEntity, isAlignable);
+    		boolean runAlignedSeparation = runAlignment || refreshSeparation || !canSkipSeparation(processData, sampleEntity, isAlignable);
     		
     		logger.info("Sample "+sampleEntity.getName()+" (id="+sampleEntityId+") has tiling pattern "+pattern.getName()+" (alignable="+isAlignable+")");
     		
     		processData.putItem("RUN_PROCESSING", new Boolean(runProcessing));
     		processData.putItem("RUN_ALIGNMENT", new Boolean(runAlignment));
     		processData.putItem("RUN_SEPARATION", new Boolean(runSeparation));
+    		processData.putItem("RUN_ALIGNED_SEPARATION", new Boolean(runAlignedSeparation));
         	processData.putItem("IS_ALIGNABLE", new Boolean(isAlignable));
 
         	logger.info("Pipeline steps to execute for Sample "+sampleEntity.getName()+":");
-        	logger.info("Processing = "+processData.getItem("RUN_PROCESSING"));
-        	logger.info("Alignment = "+processData.getItem("RUN_ALIGNMENT"));
-        	logger.info("Separation = "+processData.getItem("RUN_SEPARATION"));
+        	logger.info("    Processing = "+processData.getItem("RUN_PROCESSING"));
+        	logger.info("    Alignment = "+processData.getItem("RUN_ALIGNMENT"));
+        	logger.info("    Prealigned Separation = "+processData.getItem("RUN_SEPARATION"));
+        	logger.info("    Aligned Separation = "+processData.getItem("RUN_ALIGNED_SEPARATION"));
         	
         } catch (Exception e) {
             throw new ServiceException(e);
