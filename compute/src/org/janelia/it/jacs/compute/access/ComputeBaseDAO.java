@@ -238,8 +238,14 @@ public class ComputeBaseDAO {
             String[] taskStatusArr = new String[2];
             if (null != task) {
                 Event lastEvent = task.getLastEvent();
-                taskStatusArr[STATUS_TYPE] = lastEvent.getEventType();
-                taskStatusArr[STATUS_DESCRIPTION] = lastEvent.getDescription();
+                if (lastEvent != null) {
+                	taskStatusArr[STATUS_TYPE] = lastEvent.getEventType();
+                	taskStatusArr[STATUS_DESCRIPTION] = lastEvent.getDescription();
+                }
+                else {
+                    taskStatusArr[STATUS_TYPE] = "Null";
+                    taskStatusArr[STATUS_DESCRIPTION] = "No events found for task "+taskId;
+                }
             }
             else {
                 taskStatusArr[STATUS_TYPE] = "Not Applicable";

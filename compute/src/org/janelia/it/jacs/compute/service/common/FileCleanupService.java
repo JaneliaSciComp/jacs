@@ -39,14 +39,14 @@ public class FileCleanupService implements IService {
         	    String inputFilename = (String)processData.getItem("TARGET_FILENAME_"+configIndex);	
         		if (inputFilename != null) {
                 	File targetFile = new File(targetFileNode.getDirectoryPath(), inputFilename);
-                	logger.info("Target file to delete: "+inputFilename);
+                	logger.info("Delete file: "+inputFilename);
                 	targetFiles.add(targetFile);
         		}
         		else {
             		final String targetRegex = (String)processData.getItem("TARGET_FILENAME_REGEX_"+configIndex);
             		if (targetRegex == null) break;	
 
-                	logger.info("Target regex: "+targetRegex);
+                	logger.info("Delete files matching: "+targetRegex);
                 	
         			File inputDir = new File(targetFileNode.getDirectoryPath());
         			String[] filenames = inputDir.list(new FilenameFilter() {

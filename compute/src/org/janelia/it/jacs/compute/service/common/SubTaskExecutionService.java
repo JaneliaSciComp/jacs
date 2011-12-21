@@ -21,11 +21,12 @@ import org.janelia.it.jacs.model.user_data.User;
  *   TASK_CLASS - fully qualified class name of the task to create
  *   PARAMETER_{X}_KEY - name of a task parameter
  *   PARAMETER_{X}_VALUE - value of the same task parameter 
+ *   WAIT_FOR_COMPLETION - if true then execute synchronously (wait until the subtask completes). Default to false.
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class SubTaskExecutionService implements IService {
-
+	
     public void execute(IProcessData processData) throws ServiceException {
         try {
         	
@@ -34,6 +35,12 @@ public class SubTaskExecutionService implements IService {
             ComputeBeanLocal computeBean = EJBFactory.getLocalComputeBean();
             User user = computeBean.getUserByName(task.getOwner());
 
+            boolean waitForCompletion = false;
+            String waitForCompletionStr = (String)processData.getItem("WAIT_FOR_COMPLETION");
+        	if (waitForCompletionStr != null) {
+        		waitForCompletion = Boolean.valueOf(waitForCompletionStr);
+        	}
+        	
         	String processDefName = (String)processData.getItem("PROCESS_DEF_NAME");
         	if (processDefName == null) {
         		throw new IllegalArgumentException("PROCESS_DEF_NAME may not be null");
@@ -73,8 +80,22 @@ public class SubTaskExecutionService implements IService {
         	
             subtask.setJobName("Subtask "+processDefName+" for "+task.getJobName());
             
-            logger.info("Launching "+subtask.getJobName()+", task id = "+task.getObjectId()+" subtask id="+subtask.getObjectId());
+            logger.info("Launching "+subtask.getJobName()+", task id="+task.getObjectId()+", subtask id="+subtask.getObjectId());
             computeBean.submitJob(processDefName, subtask.getObjectId());
+            
+            if (waitForCompletion) {
+                logger.info("Waiting for completion of subtask "+processDefName+" (id="+subtask.getObjectId()+")");
+            	boolean complete = false;
+	            while (!complete) {
+                    String[] statusTypeAndValue = EJBFactory.getLocalComputeBean().getTaskStatus(subtask.getObjectId());
+                    if (statusTypeAndValue[0]!=null && Task.isDone(statusTypeAndValue[0])) {
+                    	complete = true;
+                    }
+                    else {
+                    	Thread.sleep(5000);
+                    }
+	            }
+            }
         } 
         catch (Exception e) {
             throw new ServiceException(e);
