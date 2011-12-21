@@ -1,19 +1,14 @@
 package org.janelia.it.jacs.compute.service.v3d;
 
 import java.io.FileWriter;
-import java.util.Map;
-import java.util.Set;
 
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.utility.ParallelFileProcessingService;
 
 /**
- * Generate MIPs for any number of 3d volumes in parallel. 
- * 
- * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ * Execute a channel mapping on an arbitrary number of files in parallel. 
  */
 public class MapChannelService extends ParallelFileProcessingService {
 
