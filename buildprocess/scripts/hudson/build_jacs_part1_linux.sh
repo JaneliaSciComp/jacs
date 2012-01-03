@@ -8,16 +8,18 @@
 # create the Linux client distribution and the first part of a Mac client 
 # distribution. The latter is completed in part 2 on a Mac executor.
 #
-# Before executing this build, branches should be created manually. 
-# For example, to create build 0.1.1 from the trunk of all 3 repositories: 
+# Before executing this build, tags should be created manually, 
+# or by using the codeFreeze.sh script. 
+# 
+# For example, to create manually build 0.1.1 from the trunk of all 3 repositories: 
 # 
 # FWVER=0.1.1
 #
-# svn copy https://svn.janelia.org/penglab/projects/vaa3d/trunk https://svn.janelia.org/penglab/projects/vaa3d/branches/FlySuite_${FWVER} -m "Creating a branch for Workstation Suite, release ${FWVER}"
+# svn copy https://svn.janelia.org/penglab/projects/vaa3d/trunk https://svn.janelia.org/penglab/projects/vaa3d/tags/FlySuite_${FWVER} -m "Creating a branch for Workstation Suite, release ${FWVER}"
 #
-# svn copy https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/branches/FlySuite_${FWVER} -m "Creating a branch for Workstation Suite, release ${FWVER}" 
+# svn copy https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tags/FlySuite_${FWVER} -m "Creating a branch for Workstation Suite, release ${FWVER}" 
 #
-# svn copy https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/trunk https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/branches/FlySuite_${FWVER} -m "Creating a branch for Workstation Suite, release ${FWVER}"
+# svn copy https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/trunk https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/tags/FlySuite_${FWVER} -m "Creating a branch for Workstation Suite, release ${FWVER}"
 #
 #
 
@@ -82,7 +84,7 @@ if [ $BUILD_VAA3D == 1 ]; then
     rm -rf $VAA3D_COMPILE_FEDORA_DIR || true
 
     echo "  Checking out from SVN"
-    svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/branches/FlySuite_${FWVER} $VAA3D_COMPILE_REDHAT_DIR
+    svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/tags/FlySuite_${FWVER} $VAA3D_COMPILE_REDHAT_DIR
     if [ ! -e $VAA3D_COMPILE_REDHAT_DIR ]; then
         echo "SVN tag not found for Vaa3d: FlySuite_${FWVER}"
         exit 1
@@ -114,7 +116,7 @@ if [ $BUILD_NEUSEP == 1 ]; then
     rm -rf $NEUSEP_COMPILE_REDHAT_DIR || true
     
     echo "  Checking out from SVN"
-    svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/branches/FlySuite_${FWVER} $NEUSEP_COMPILE_REDHAT_DIR
+    svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/tags/FlySuite_${FWVER} $NEUSEP_COMPILE_REDHAT_DIR
     if [ ! -e $NEUSEP_COMPILE_REDHAT_DIR ]; then
         echo "SVN tag not found for NeuronSeparator: FlySuite_${FWVER}"
         exit 1
@@ -138,7 +140,7 @@ if [ $BUILD_JACS == 1 ]; then
     rm -rf $JACS_COMPILE_DIR || true
     
     echo "  Checking out from SVN"
-    svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/branches/FlySuite_${FWVER} $JACS_COMPILE_DIR
+    svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tags/FlySuite_${FWVER} $JACS_COMPILE_DIR
     if [ ! -e $JACS_COMPILE_DIR ]; then
         echo "SVN tag not found for jacs: FlySuite_${FWVER}"
         exit 1
