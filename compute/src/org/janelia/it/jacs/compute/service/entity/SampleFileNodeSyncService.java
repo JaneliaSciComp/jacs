@@ -81,6 +81,7 @@ public class SampleFileNodeSyncService implements IService {
     }
     
     private void processChildren(File dir) throws Exception {
+    	if (dir==null || !dir.canRead() || !dir.isDirectory()) return;
     	for(File childDir : FileUtil.getSubDirectories(dir)) {
     		if (childDir.getName().matches("^\\d{3}$")) {
     			processChildren(childDir);
