@@ -1,9 +1,11 @@
 package org.janelia.it.jacs.compute.service.entity;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
+import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
@@ -12,6 +14,7 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.fileDiscovery.TilingPattern;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
 
 /**
  * Decides which types of MCFO processing will be run for a Sample based on user preferences and 
@@ -47,7 +50,16 @@ public class ChooseMCFOSampleStepsService implements IService {
         	}
         	
     		String strTilingPattern = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN);
-    		TilingPattern pattern = TilingPattern.valueOf(strTilingPattern);
+    		TilingPattern pattern = null;
+    		
+    		// If the Sample has no tiling pattern then it was not created correctly. But we can fix it on-the-fly.
+    		if (strTilingPattern==null) {
+    			pattern = fixMissingTilingPattern(sampleEntity);
+    		}
+    		else {
+    			pattern = TilingPattern.valueOf(strTilingPattern);
+    		}
+    		
     		boolean isAlignable = pattern.isAlignable();
 
     		// TODO: currently Left optic lobe alignments are not supported. This work-around should be removed in the future.
@@ -78,8 +90,8 @@ public class ChooseMCFOSampleStepsService implements IService {
             throw new ServiceException(e);
         }
     }
-    
-    public boolean canSkipProcessing(IProcessData processData, Entity sampleEntity) {
+
+	public boolean canSkipProcessing(IProcessData processData, Entity sampleEntity) {
 
 		Entity sampleProcessing = sampleEntity.getLatestChildOfType(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT);
 		if (sampleProcessing == null) {
@@ -168,4 +180,30 @@ public class ChooseMCFOSampleStepsService implements IService {
     	}
     	return Boolean.parseBoolean(boolStr);
     }
+    
+    private TilingPattern fixMissingTilingPattern(Entity sample) {
+
+    	List<String> tags = new ArrayList<String>();
+    	for(Entity lsmPairEntity : sample.getDescendantsOfType(EntityConstants.TYPE_LSM_STACK_PAIR)) {
+        	for(EntityData ed : lsmPairEntity.getOrderedEntityData()) {
+        		Entity lsmStack = ed.getChildEntity();
+        		if (lsmStack != null && lsmStack.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK)) {
+        			tags.add(lsmStack.getName());
+        		}
+        	}
+        }
+        
+        TilingPattern tiling = TilingPattern.getTilingPattern(tags);
+        sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN, tiling.toString());
+        
+        try {
+            annotationBean.saveOrUpdateEntity(sample);
+            logger.info("Fixed sample "+sample.getName()+" by adding its tiling pattern: "+tiling.getName());
+        }
+        catch (ComputeException e) {
+        	logger.warn("Unable to fix sample "+sample.getName()+" by adding its tiling pattern ("+tiling.getName()+") but proceeding anyway.",e);
+        }
+        
+        return tiling;
+	}
 }

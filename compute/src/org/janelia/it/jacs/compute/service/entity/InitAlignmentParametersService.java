@@ -10,6 +10,7 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.fileDiscovery.TilingPattern;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.mortbay.log.Log;
 
 /**
  * Extracts alignment metadata about the Sample from the entity model and loads it into simplified objects for use by other services.
@@ -38,6 +39,12 @@ public class InitAlignmentParametersService implements IService {
         	}
         	
     		String strTilingPattern = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN);
+    		
+    		if (strTilingPattern==null) {
+    			Log.warn("Sample "+sampleEntityId+" has no tiling pattern. Cannot proceed with alignment.");
+    			return;
+    		}
+    		
     		TilingPattern pattern = TilingPattern.valueOf(strTilingPattern);
 
     		if (pattern == TilingPattern.OPTIC_TILE) {
