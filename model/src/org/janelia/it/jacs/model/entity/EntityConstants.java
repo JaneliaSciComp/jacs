@@ -45,7 +45,10 @@ public class EntityConstants {
     public static final String TYPE_TEXT_FILE                        = "Text File";
 
     // Entity Data Attributes
-    public static final String ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH          = "Default 2D Image File Path";
+    
+    public static final String ATTRIBUTE_DEFAULT_2D_IMAGE                    = "Default 2D Image";
+    public static final String ATTRIBUTE_REFERENCE_MIP_IMAGE                 = "Reference MIP Image";
+    public static final String ATTRIBUTE_SIGNAL_MIP_IMAGE                    = "Signal MIP Image";
     public static final String ATTRIBUTE_FILE_PATH                           = "File Path";
     public static final String ATTRIBUTE_IMAGE_FORMAT                        = "Image Format";
     public static final String ATTRIBUTE_ONTOLOGY_ELEMENT                    = "Ontology Element";
@@ -75,5 +78,10 @@ public class EntityConstants {
     public static final String ATTRIBUTE_INPUT                               = "ATTRIBUTE_INPUT";
     public static final String ATTRIBUTE_ALIGNMENT_QI_SCORE                  = "Alignment Inconsistency Score";
     public static final String ATTRIBUTE_ALIGNMENT_QM_SCORE                  = "Alignment Model Violation Score";
+    
+    /**
+     * @deprecated Use ATTRIBUTE_DEFAULT_2D_IMAGE instead. This will be removed someday.
+     */
+    public static final String ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH          = "Default 2D Image File Path";
     
 }
