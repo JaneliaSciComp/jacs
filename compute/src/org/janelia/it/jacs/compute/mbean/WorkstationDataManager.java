@@ -1,14 +1,16 @@
 package org.janelia.it.jacs.compute.mbean;
 
-import java.sql.Timestamp;
 import java.util.*;
 
 import org.apache.log4j.Logger;
+import org.hibernate.Session;
+import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.service.entity.SampleFileNodeSyncService;
 import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
@@ -155,14 +157,22 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         try {
             AnnotationBeanLocal annotationBean = EJBFactory.getLocalAnnotationBean();
             Set<Entity> entities=annotationBean.getEntitiesByName("FlyLight Screen Data");
+
             if (entities.size()==1) {
                 Entity topEntity=entities.iterator().next();
                 logger.info("Found top-level entity name="+topEntity.getName());
+//                Date start=new Date();
+//                Entity populatedEntity=annotationBean.getEntityTree(topEntity.getId());
+//                Date end=new Date();
+//                Long ms=end.getTime()-start.getTime();
+//                logger.info("Entity tree took "+ms+" milliseconds");
+//
                 Date start=new Date();
-                Entity populatedEntity=annotationBean.getEntityTree(topEntity.getId());
+                Entity testEntity=annotationBean.getEntityTreeQuery(topEntity.getId());
                 Date end=new Date();
                 Long ms=end.getTime()-start.getTime();
-                logger.info("Entity tree took "+ms+" milliseconds");
+                logger.info("Test Entity tree took "+ms+" milliseconds");
+
             } else {
                 logger.error("Found more than one top-level entity");
             }

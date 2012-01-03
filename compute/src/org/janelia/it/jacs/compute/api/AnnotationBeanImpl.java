@@ -306,6 +306,10 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     public Entity getEntityTree(Long id) {
     	return _annotationDAO.populateDescendants(getEntityById(id.toString()));
     }
+
+    public Entity getEntityTreeQuery(Long id) {
+        return _annotationDAO.getEntityTreeQuery(id);
+    }
     
     public Entity getCachedEntityTree(Long id) {
     	Entity entity = entityTrees.get(id);

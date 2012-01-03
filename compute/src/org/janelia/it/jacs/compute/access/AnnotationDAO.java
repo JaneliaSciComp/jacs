@@ -7,6 +7,7 @@ import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Expression;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.model.entity.*;
@@ -1217,6 +1218,18 @@ public class AnnotationDAO extends ComputeBaseDAO {
     		}
     	}
     	return entity;
+    }
+
+    /**
+     * Perform combination of queries to populate entity graph.
+     * @param id
+     * @return
+     */
+    public Entity getEntityTreeQuery(Long id) {
+        Session session=this.getCurrentSession();
+        Criteria c = session.createCriteria(Entity.class);
+        List allEntities=c.list();
+        return null;
     }
     
     /**

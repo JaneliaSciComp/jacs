@@ -22,6 +22,7 @@ public interface AnnotationBeanRemote {
     public Set<Entity> getEntitiesByName(String name);
     public Entity getEntityById(String targetId);
     public Entity getEntityTree(Long id);
+    public Entity getEntityTreeQuery(Long id);
     public List<Entity> getEntitiesById(List<Long> ids) throws ComputeException;
     public Entity getCachedEntityTree(Long id);
     public Entity getUserEntityById(String userLogin, long entityId);
