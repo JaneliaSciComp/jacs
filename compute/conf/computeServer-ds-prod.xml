@@ -18,7 +18,7 @@
      <jndi-name>ComputeServer_DataSource</jndi-name>
      <connection-url>jdbc:mysql://flyportal-db.int.janelia.org:3306/flyportal?autoReconnect=true</connection-url>
      <driver-class>com.mysql.jdbc.Driver</driver-class>
-     <user-name>flyportalAdmin</user-name>
+     <user-name>flyportalApp</user-name>
      <!--<password></password>-->
      <!--pooling parameters-->
      <min-pool-size>5</min-pool-size>

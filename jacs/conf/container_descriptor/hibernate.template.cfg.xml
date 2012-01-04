@@ -31,8 +31,8 @@
         <property name="connection.driver_class">com.mysql.jdbc.Driver</property>
 
         <property name="connection.url">jdbc:mysql://dev-db:3306/flyportal</property>
-        <property name="connection.username">flyportalAdmin</property>
-        <property name="connection.password">flyp0rt@lAdm1n</property>
+        <property name="connection.username">flyportalApp</property>
+        <property name="connection.password">flyp0rt@lApp</property>
 
         <!-- JDBC connection pool (use the built-in) -->
         <property name="connection.pool_size">1</property>
