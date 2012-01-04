@@ -162,6 +162,21 @@
     </operation>
 
     <operation>
+         <description>Run the FlyScreen Pattern Annotation Pipeline</description>
+         <name>runFlyScreenPatternAnnotationPipeline</name>
+         <parameter>
+            <description>User to run as (e.g. "system")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+         </parameter>
+         <parameter>
+            <description>Re-run the Samples that already have results?</description>
+            <name>refresh</name>
+            <type>java.lang.Boolean</type>
+         </parameter>
+     </operation>
+
+    <operation>
         <description>Do Entity load performance test and report results to log</description>
         <name>doEntityTreePerformanceTest</name>
     </operation>

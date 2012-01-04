@@ -23,6 +23,8 @@ public interface WorkstationDataManagerMBean {
     public void runMergedTileDataPipeline(String user, Boolean refresh, String inputDirList, String topLevelFolderName);
 
     public void runFlyScreenPipeline(String user, Boolean refresh);
+
+    public void runFlyScreenPatternAnnotationPipeline(String user, Boolean refresh);
     	
     public void setupEntityTypes();
 

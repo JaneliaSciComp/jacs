@@ -30,7 +30,7 @@ public class FlyScreenPatternAnnotationTask extends Task {
     // Default values - default overrides
 
     public FlyScreenPatternAnnotationTask(Set<Node> inputNodes, String owner, List<Event> events,
-    		Set<TaskParameter> taskParameterSet, String inputDirList, String topLevelFolderName, Boolean refresh) {
+    		Set<TaskParameter> taskParameterSet, String topLevelFolderName, Boolean refresh) {
         super(inputNodes, owner, events, taskParameterSet);
         setDefaultValues();
         setParameter(PARAM_topLevelFolderName, topLevelFolderName);

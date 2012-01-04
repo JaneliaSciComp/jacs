@@ -15,6 +15,7 @@ import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.fileDiscovery.*;
+import org.janelia.it.jacs.model.tasks.fly.FlyScreenPatternAnnotationTask;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
 
@@ -126,6 +127,20 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             task.setJobName("FlyLight Screen File Discovery Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("FlyLightScreen", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void runFlyScreenPatternAnnotationPipeline(String user, Boolean refresh) {
+        try {
+            String topLevelFolderName = "FlyLight Screen Pattern Annotation";
+            Task task = new FlyScreenPatternAnnotationTask(new HashSet<Node>(),
+                    user, new ArrayList<Event>(), new HashSet<TaskParameter>(),
+                    topLevelFolderName, refresh);
+            task.setJobName("FlyLight Screen Pattern Annotation Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("FlyScreenPatternAnnotation", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }
