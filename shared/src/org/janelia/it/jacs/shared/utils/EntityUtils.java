@@ -1,12 +1,8 @@
-package org.janelia.it.FlyWorkstation.shared.util;
+package org.janelia.it.jacs.shared.utils;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 import org.hibernate.Hibernate;
-import org.janelia.it.FlyWorkstation.api.entity_model.management.ModelMgr;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -18,13 +14,6 @@ import org.janelia.it.jacs.model.entity.EntityData;
  */
 public class EntityUtils {
 
-	public static final void loadChild(Entity entity, String attrName) throws Exception {
-    	EntityData ed = entity.getEntityDataByAttributeName(attrName);
-    	if (ed != null) {
-    		ed.setChildEntity(ModelMgr.getModelMgr().getEntityById(ed.getChildEntity().getId()+""));
-    	}
-	}
-
     public static boolean areLoaded(Collection<EntityData> eds) {
         for (EntityData entityData : eds) {
             if (!Hibernate.isInitialized(entityData.getChildEntity())) {
@@ -32,32 +21,6 @@ public class EntityUtils {
             }
         }
         return true;
-    }
-
-    public static void loadLazyEntity(Entity entity, boolean recurse) {
-
-        if (!EntityUtils.areLoaded(entity.getEntityData())) {
-            Set<Entity> childEntitySet = ModelMgr.getModelMgr().getChildEntities(entity.getId());
-            Map<Long, Entity> childEntityMap = new HashMap<Long, Entity>();
-            for (Entity childEntity : childEntitySet) {
-                childEntityMap.put(childEntity.getId(), childEntity);
-            }
-
-            // Replace the entity data with real objects
-            for (EntityData ed : entity.getEntityData()) {
-                if (ed.getChildEntity() != null) {
-                    ed.setChildEntity(childEntityMap.get(ed.getChildEntity().getId()));
-                }
-            }
-        }
-
-        if (recurse) {
-            for (EntityData ed : entity.getEntityData()) {
-                if (ed.getChildEntity() != null) {
-                    loadLazyEntity(ed.getChildEntity(), true);
-                }
-            }
-        }
     }
     
     public static String getFilePath(Entity entity) {
@@ -95,6 +58,23 @@ public class EntityUtils {
     	}
     	return getDefaultImageFilePath(entity);
     }
+
+    public static Entity findChildWithName(Entity entity, String childName) {
+		for (Entity child : entity.getChildren()) {
+			if (child.getName().equals(childName)) {
+				return child;
+			}
+		}
+		return null;
+    }
     
-	
+    public static Entity getSupportingData(Entity entity) {
+    	for(EntityData ed : entity.getEntityData()) {
+    		Entity child = ed.getChildEntity();
+    		if (child != null && child.getEntityType().getName().equals(EntityConstants.TYPE_SUPPORTING_DATA)) {
+    			return child;
+    		}	
+    	}
+    	return null;
+    }
 }

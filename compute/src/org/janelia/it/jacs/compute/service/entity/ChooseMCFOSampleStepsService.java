@@ -14,7 +14,7 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.fileDiscovery.TilingPattern;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Decides which types of MCFO processing will be run for a Sample based on user preferences and 
@@ -69,8 +69,8 @@ public class ChooseMCFOSampleStepsService implements IService {
     		
     		boolean runProcessing = refreshProcessing || !canSkipProcessing(processData, sampleEntity);
     		boolean runAlignment = isAlignable && (runProcessing || refreshAlignment || !canSkipAlignment(processData, sampleEntity));
-    		boolean runSeparation = runProcessing || refreshSeparation || !canSkipSeparation(processData, sampleEntity, isAlignable);
-    		boolean runAlignedSeparation = runAlignment || refreshSeparation || !canSkipSeparation(processData, sampleEntity, isAlignable);
+    		boolean runSeparation = runProcessing || refreshSeparation || !canSkipPrealignedSeparation(processData, sampleEntity);
+    		boolean runAlignedSeparation = runAlignment || refreshSeparation || (isAlignable && !canSkipAlignedSeparation(processData, sampleEntity));
     		
     		logger.info("Sample "+sampleEntity.getName()+" (id="+sampleEntityId+") has tiling pattern "+pattern.getName()+" (alignable="+isAlignable+")");
     		
@@ -149,28 +149,26 @@ public class ChooseMCFOSampleStepsService implements IService {
 		return true;
     }
     
-    public boolean canSkipSeparation(IProcessData processData, Entity sampleEntity, boolean isAlignable) {
+    public boolean canSkipPrealignedSeparation(IProcessData processData, Entity sampleEntity) {
 
 		List<Entity> separations = sampleEntity.getChildrenOfType(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
-    	
-    	Entity prealignedSeparation = null;
-    	Entity alignedSeparation = null;
     	for(Entity separation : separations) {
-    		if (separation.getName().startsWith("Prealigned")) prealignedSeparation = separation;
-    		if (separation.getName().startsWith("Aligned")) alignedSeparation = separation;
+    		if (separation.getName().startsWith("Prealigned")) return true;
     	}
 
-		if (prealignedSeparation == null) {
-			logger.warn("Cannot find existing prealigned separation result for Sample with id="+sampleEntity.getId());
-			return false;
-		}
-		
-		if (isAlignable && alignedSeparation == null) {
-			logger.warn("Cannot find existing aligned separation result for Sample with id="+sampleEntity.getId());
-			return false;
-		}
-		
-		return true;
+		logger.warn("Cannot find existing prealigned separation result for Sample with id="+sampleEntity.getId());
+		return false;
+    }
+    
+    public boolean canSkipAlignedSeparation(IProcessData processData, Entity sampleEntity) {
+
+		List<Entity> separations = sampleEntity.getChildrenOfType(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
+    	for(Entity separation : separations) {
+    		if (separation.getName().startsWith("Aligned")) return true;
+    	}
+
+		logger.warn("Cannot find existing aligned separation result for Sample with id="+sampleEntity.getId());
+		return false;
     }
     
     private boolean getBoolean(String key) {
@@ -183,14 +181,10 @@ public class ChooseMCFOSampleStepsService implements IService {
     
     private TilingPattern fixMissingTilingPattern(Entity sample) {
 
+    	Entity supportingFiles = EntityUtils.getSupportingData(sample);
     	List<String> tags = new ArrayList<String>();
-    	for(Entity lsmPairEntity : sample.getDescendantsOfType(EntityConstants.TYPE_LSM_STACK_PAIR)) {
-        	for(EntityData ed : lsmPairEntity.getOrderedEntityData()) {
-        		Entity lsmStack = ed.getChildEntity();
-        		if (lsmStack != null && lsmStack.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK)) {
-        			tags.add(lsmStack.getName());
-        		}
-        	}
+    	for(Entity lsmPairEntity : supportingFiles.getDescendantsOfType(EntityConstants.TYPE_LSM_STACK_PAIR)) {
+			tags.add(lsmPairEntity.getName());
         }
         
         TilingPattern tiling = TilingPattern.getTilingPattern(tags);

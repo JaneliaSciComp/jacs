@@ -9,6 +9,7 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * File discovery service for samples defined by a slide_group_info.txt metadata file.
@@ -169,13 +170,13 @@ public class SampleDiscoveryService extends FileDiscoveryService {
     private void addLsmPairToSample(Entity sample, FilePair filePair) throws Exception {
 
         // Get the existing Supporting Files, or create a new one
-        Entity supportingFiles = getSampleSupportingFiles(sample);
+        Entity supportingFiles = EntityUtils.getSupportingData(sample);
     	if (supportingFiles == null) {
     		supportingFiles = createSupportingFilesFolder();
     		addToParent(sample, supportingFiles, 0, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
     	}
     	
-		Entity lsmStackPair = findChildWithName(supportingFiles, filePair.getPairTag());
+		Entity lsmStackPair = EntityUtils.findChildWithName(supportingFiles, filePair.getPairTag());
 		if (lsmStackPair == null) {
 			lsmStackPair = new Entity();
             lsmStackPair.setUser(user);
@@ -188,28 +189,19 @@ public class SampleDiscoveryService extends FileDiscoveryService {
         	addToParent(supportingFiles, lsmStackPair, null, EntityConstants.ATTRIBUTE_ENTITY);
 		}
 
-		Entity lsmEntity1 = findChildWithName(lsmStackPair, filePair.getFilename1());
+		Entity lsmEntity1 = EntityUtils.findChildWithName(lsmStackPair, filePair.getFilename1());
 		if (lsmEntity1 == null) {
             lsmEntity1 = createLsmStackFromFile(filePair.getFile1());
             addToParent(lsmStackPair, lsmEntity1, 0, EntityConstants.ATTRIBUTE_LSM_STACK_1);
             logger.info("Adding lsm file to sample parent entity="+filePair.getFile1().getAbsolutePath());
 		}
 
-		Entity lsmEntity2 = findChildWithName(lsmStackPair, filePair.getFilename2());
+		Entity lsmEntity2 = EntityUtils.findChildWithName(lsmStackPair, filePair.getFilename2());
 		if (lsmEntity2 == null) {
             lsmEntity2 = createLsmStackFromFile(filePair.getFile2());
             addToParent(lsmStackPair, lsmEntity2, 1, EntityConstants.ATTRIBUTE_LSM_STACK_2);
             logger.info("Adding lsm file to sample parent entity="+filePair.getFile2().getAbsolutePath());
 		}
-    }
-    
-    private Entity findChildWithName(Entity entity, String childName) {
-		for (Entity child : entity.getChildren()) {
-			if (child.getName().equals(childName)) {
-				return child;
-			}
-		}
-		return null;
     }
     
     /**
@@ -252,16 +244,6 @@ public class SampleDiscoveryService extends FileDiscoveryService {
         filesFolder = annotationBean.saveOrUpdateEntity(filesFolder);
         logger.info("Saved supporting files folder as "+filesFolder.getId());
         return filesFolder;
-    }
-    
-    private Entity getSampleSupportingFiles(Entity sample) {
-    	for(EntityData ed : sample.getEntityData()) {
-    		Entity child = ed.getChildEntity();
-    		if (child != null && child.getEntityType().getName().equals(EntityConstants.TYPE_SUPPORTING_DATA)) {
-    			return child;
-    		}	
-    	}
-    	return null;
     }
 
     private Entity createLsmStackFromFile(File file) throws Exception {

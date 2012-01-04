@@ -9,6 +9,7 @@ import org.janelia.it.jacs.compute.service.fileDiscovery.TilingPattern;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Creates or updates a view of samples categorized by tiling pattern.
@@ -53,7 +54,7 @@ public class MCFOViewCreationService extends EntityViewCreationService {
     
     private List<String> getTags(Entity sample) {
     	List<String> tags = new ArrayList<String>();
-    	Entity supportingFiles = getSampleSupportingFiles(sample);
+    	Entity supportingFiles = EntityUtils.getSupportingData(sample);
     	if (supportingFiles == null) return tags;
     	for(Entity lsmPair : supportingFiles.getOrderedChildren()) {
     		if (lsmPair.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK_PAIR)) {
@@ -63,15 +64,6 @@ public class MCFOViewCreationService extends EntityViewCreationService {
     	return tags;
     }
 
-    private Entity getSampleSupportingFiles(Entity sample) {
-    	for(EntityData ed : sample.getEntityData()) {
-    		Entity child = ed.getChildEntity();
-    		if (child != null && child.getEntityType().getName().equals(EntityConstants.TYPE_SUPPORTING_DATA)) {
-    			return child;
-    		}	
-    	}
-    	return null;
-    }
     private Entity createTilingPatternFolder(TilingPattern pattern) throws Exception {
         Entity patternFolder = new Entity();
         patternFolder.setUser(user);

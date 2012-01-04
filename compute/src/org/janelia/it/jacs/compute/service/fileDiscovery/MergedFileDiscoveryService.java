@@ -10,6 +10,7 @@ import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * File discovery service for samples defined by a single merged file.
@@ -113,7 +114,7 @@ public class MergedFileDiscoveryService extends FileDiscoveryService {
     private void addMergedFileToSample(Entity sample, String anatomicLocation, File mergedFile) throws Exception {
 
         // Get the existing Supporting Files, or create a new one
-        Entity supportingFiles = getSampleSupportingFiles(sample);
+        Entity supportingFiles = EntityUtils.getSupportingData(sample);
     	if (supportingFiles == null) {
     		supportingFiles = createSupportingFilesFolder();
     		addToParent(sample, supportingFiles, 0, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
@@ -187,16 +188,6 @@ public class MergedFileDiscoveryService extends FileDiscoveryService {
         filesFolder = annotationBean.saveOrUpdateEntity(filesFolder);
         logger.info("Saved supporting files folder as "+filesFolder.getId());
         return filesFolder;
-    }
-    
-    private Entity getSampleSupportingFiles(Entity sample) {
-    	for(EntityData ed : sample.getEntityData()) {
-    		Entity child = ed.getChildEntity();
-    		if (child != null && child.getEntityType().getName().equals(EntityConstants.TYPE_SUPPORTING_DATA)) {
-    			return child;
-    		}	
-    	}
-    	return null;
     }
 
     private Entity createImageFromFile(File file) throws Exception {
