@@ -183,7 +183,7 @@ public class ChooseMCFOSampleStepsService implements IService {
 
     	Entity supportingFiles = EntityUtils.getSupportingData(sample);
     	
-    	TilingPattern tiling = TilingPattern.UNKNOWN;
+    	TilingPattern tiling = TilingPattern.OTHER;
     	if (supportingFiles!=null) {
         	List<String> tags = new ArrayList<String>();
         	for(Entity lsmPairEntity : supportingFiles.getDescendantsOfType(EntityConstants.TYPE_LSM_STACK_PAIR)) {
