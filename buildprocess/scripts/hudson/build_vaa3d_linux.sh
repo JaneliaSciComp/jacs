@@ -1,7 +1,7 @@
 #!/bin/sh
 
-export JACS_INSTALL_DIR="/groups/scicomp/jacsData/install
-"
+export JACS_INSTALL_DIR="/groups/scicomp/jacsData/install"
+
 if [ -f /etc/fedora-release ] ; then
     export QTDIR="${JACS_INSTALL_DIR}/Qt-4.7.4-fedora"
     export INCLUDEPATH="${JACS_INSTALL_DIR}/tiff-3.9.5-fedora/include"
