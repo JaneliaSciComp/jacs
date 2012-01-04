@@ -1,0 +1,40 @@
+<!--
+	Computes the annotation for the GAL4 effector anatomical expression patterns for Fly Line Screen Samples.
+-->
+<process name="Fly Screen Pattern Annotation Pipeline" processor="queue/flyScreenPatternAnnotationPipelineLauncher" startEvent="pending">
+
+	<sequence>
+
+	    <sequence>
+
+    	    <!-- Import basic variables from the FlyScreenPatternAnnotationTask
+
+    	         This service receives instructions below on which key:value pairs to transfer from task parameters
+    	         to process parameters. It then sets as outputs some of these parameters so they are available
+    	         to downstream steps. -->
+
+    	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+                <input name="TASK_PARAMETER_1" value="top level folder name"/>
+                <input name="PROCESS_VARIABLE_1" value="ROOT_ENTITY_NAME"/>
+                <input name="REFRESH" value="false"/>
+    	        <output name="ROOT_ENTITY_NAME"/>
+    	    </operation>
+
+    	    <!-- Loads all of the Fly Screen Samples and makes sure that Fly Line Entities exist which cover all
+    	         samples. If there are fly lines which are not represented by a Fly Line Entity, it creates a
+    	         new Fly Line Entity to cover the sample. It also makes sure that each Fly Line has the matching
+    	         Fly Screen Samples as children.
+
+    	         It produces as output a list of Fly Line groups, where the size of each group is an input parameter.
+    	         The intention is that each group is then processable as a unit downstream. -->
+
+    	    <operation name="Fly Line Screen Sample Coordination" processor="org.janelia.it.jacs.compute.service.fly.ScreenSampleLineCoordinationService">
+                <input name="FLY_LINE_GROUP_SIZE" value="200"/>
+                <output name="FLY_LINE_GROUP_LIST"/>
+    		</operation>
+
+    	<sequence/>
+
+    </sequence>
+
+</process>

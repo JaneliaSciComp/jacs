@@ -268,6 +268,10 @@
     <subclass name="org.janelia.it.jacs.model.tasks.fileDiscovery.EntityViewCreationTask" extends="org.janelia.it.jacs.model.tasks.Task"
               discriminator-value="viewCreationTask">
     </subclass>
+
+    <subclass name="org.janelia.it.jacs.model.tasks.fly.FlyScreenPatternAnnotationTask" extends="org.janelia.it.jacs.model.tasks.Task"
+              discriminator-value="flyScreenPatternAnnotationTask">
+    </subclass>
     
     <subclass name="org.janelia.it.jacs.model.tasks.utility.GenericTask" extends="org.janelia.it.jacs.model.tasks.Task"
               discriminator-value="genericTask">
