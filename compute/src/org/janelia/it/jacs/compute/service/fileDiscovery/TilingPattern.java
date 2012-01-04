@@ -15,7 +15,8 @@ public enum TilingPattern {
 	OPTIC_CENTRAL_BORDER("Optic/Central Border", true, false),
 	OPTIC_TILE("Optic Lobe Tile", false, true),
 	CENTRAL_TILE("Central Tile", false, false),
-	OTHER("Other", false, false);
+	OTHER("Other", false, false),
+	UNKNOWN("Unknown", false, false);
 	
 	private String name;
 	private boolean isStitchable;

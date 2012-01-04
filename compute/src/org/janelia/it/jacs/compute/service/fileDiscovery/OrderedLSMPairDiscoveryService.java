@@ -10,6 +10,7 @@ import org.janelia.it.jacs.compute.service.neuronSeparator.NeuronSeparatorHelper
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * File discovery service for LSM pairs ordered by suffix.
@@ -63,7 +64,6 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
         	logger.info("Processing LSM Pair: "+lsmPair.name);
         	
         	Entity sample = findExistingSample(folder, lsmPair);
-            String linkName = getSymbolicLinkName(lsmPair.lsmFile1);
             
         	try {
         		if (sample == null) {
@@ -77,14 +77,6 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
         	}
         	
         }
-    }
-
-    private String getSymbolicLinkName(File lsmFile1) throws Exception {
-    	String location = lsmFile1.getAbsolutePath();
-        for (String directoryPath : directoryPathList) {
-        	location = location.replaceFirst(directoryPath, "");
-        }
-        return location.replaceFirst("^\\/", "").replaceAll("\\/", "_D_").replaceAll(" ", "_");
     }
     
     /**
@@ -236,7 +228,13 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
         sample.setName(lsmPair.name);
         sample = annotationBean.saveOrUpdateEntity(sample);
         logger.info("Saved sample as "+sample.getId());
-        
+
+        Entity supportingFiles = EntityUtils.getSupportingData(sample);
+    	if (supportingFiles == null) {
+    		supportingFiles = createSupportingFilesFolder();
+    		addToParent(sample, supportingFiles, 0, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
+    	}
+    	
     	Entity lsmStackPair = new Entity();
         lsmStackPair.setUser(user);
         lsmStackPair.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK_PAIR));
@@ -245,13 +243,25 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
         lsmStackPair.setName("Scans");
         lsmStackPair = annotationBean.saveOrUpdateEntity(lsmStackPair);
         logger.info("Saved LSM stack pair as "+lsmStackPair.getId());
-        NeuronSeparatorHelper.addToParent(sample, lsmStackPair, 0, EntityConstants.ATTRIBUTE_ENTITY);
+        NeuronSeparatorHelper.addToParent(supportingFiles, lsmStackPair, 0, EntityConstants.ATTRIBUTE_ENTITY);
         NeuronSeparatorHelper.addToParent(lsmStackPair, lsmPair.lsmEntity1, 0, EntityConstants.ATTRIBUTE_ENTITY);
         NeuronSeparatorHelper.addToParent(lsmStackPair, lsmPair.lsmEntity2, 1, EntityConstants.ATTRIBUTE_ENTITY);
         
         return sample;
     }
 
+    protected Entity createSupportingFilesFolder() throws Exception {
+        Entity filesFolder = new Entity();
+        filesFolder.setUser(user);
+        filesFolder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
+        filesFolder.setCreationDate(createDate);
+        filesFolder.setUpdatedDate(createDate);
+        filesFolder.setName("Supporting Files");
+        filesFolder = annotationBean.saveOrUpdateEntity(filesFolder);
+        logger.info("Saved supporting files folder as "+filesFolder.getId());
+        return filesFolder;
+    }
+    
     private Entity createLsmStackFromFile(File file) throws Exception {
         Entity lsmStack = new Entity();
         lsmStack.setUser(user);

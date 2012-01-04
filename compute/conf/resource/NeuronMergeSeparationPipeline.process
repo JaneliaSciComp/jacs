@@ -1,3 +1,4 @@
+<!-- @deprecated Pretty sure this isn't used anymore. Can it be deleted? -->
 <process name="Neuron Merge Separation Pipeline" startEvent="pending" updateProcessStatus="on_success" processor="queue/mcfoUnifiedFileDiscoveryLauncher">
     <sequence name="Neuron Merge Separation Processing">
         <operation name="Create Neuron Separation Result Node" processor="org.janelia.it.jacs.compute.service.neuronSeparator.CreateNeuronSeparatorResultFileNodeService">

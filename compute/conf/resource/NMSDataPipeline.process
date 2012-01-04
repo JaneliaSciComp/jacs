@@ -1,5 +1,5 @@
 <!-- 
-	Discover samples in the fileshare, load them into the database and run the NMSSamplePipeline for each one 
+	Discover LSM pairs in the fileshare, load them into the database and run the MCFOSamplePipeline for each one 
 -->
 <process name="Neuron Merge Separate Data Pipeline" processor="queue/mcfoDataPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
@@ -10,7 +10,12 @@
             <input name="PROCESS_VARIABLE_1" value="INPUT_DIR_LIST"/>
             <input name="TASK_PARAMETER_2" value="top level folder name"/>
             <input name="PROCESS_VARIABLE_2" value="ROOT_ENTITY_NAME"/>
-            <input name="REFRESH" value="false"/>
+            <input name="TASK_PARAMETER_3" value="refresh processing"/>
+            <input name="PROCESS_VARIABLE_3" value="REFRESH_PROCESSING"/>
+            <input name="TASK_PARAMETER_4" value="refresh alignment"/>
+            <input name="PROCESS_VARIABLE_4" value="REFRESH_ALIGNMENT"/>
+            <input name="TASK_PARAMETER_5" value="refresh separation"/>
+            <input name="PROCESS_VARIABLE_5" value="REFRESH_SEPARATION"/>
 	        <output name="INPUT_DIR_LIST"/>
 	        <output name="ROOT_ENTITY_NAME"/>
 	    </operation>
@@ -24,7 +29,6 @@
 		
 	    <!-- Find all the Sample Entities in the database -->
 		<operation name="Entity Tree Traversal" processor="org.janelia.it.jacs.compute.service.entity.EntityTreeTraversalService">
-			<input name="ENTITY_FILTER_CLASS" value="org.janelia.it.jacs.compute.service.entity.IncompleteSampleEntityFilter"/>
 			<input name="ENTITY_TYPE_NAME" value="Sample"/>
 			<input name="TOP_LEVEL_ENTITY_ID"/>
 			<input name="ROOT_ENTITY_ID" value="$V{TOP_LEVEL_ENTITY_ID}"/>
@@ -42,6 +46,15 @@
 		            <input name="PARAMETER_1_KEY" value="sample entity id"/>
 		            <input name="SAMPLE_ENTITY_ID"/>
 		            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
+		            <input name="PARAMETER_2_KEY" value="refresh processing"/>
+		            <input name="REFRESH_PROCESSING"/>
+		            <input name="PARAMETER_2_VALUE" value="$V{REFRESH_PROCESSING}"/>
+		            <input name="PARAMETER_3_KEY" value="refresh alignment"/>
+		            <input name="REFRESH_PROCESSING"/>
+		            <input name="PARAMETER_3_VALUE" value="$V{REFRESH_ALIGNMENT}"/>
+		            <input name="PARAMETER_4_KEY" value="refresh separation"/>
+		            <input name="REFRESH_PROCESSING"/>
+		            <input name="PARAMETER_4_VALUE" value="$V{REFRESH_SEPARATION}"/>
 		        </operation>
 				
 			</sequence>

@@ -182,12 +182,16 @@ public class ChooseMCFOSampleStepsService implements IService {
     private TilingPattern fixMissingTilingPattern(Entity sample) {
 
     	Entity supportingFiles = EntityUtils.getSupportingData(sample);
-    	List<String> tags = new ArrayList<String>();
-    	for(Entity lsmPairEntity : supportingFiles.getDescendantsOfType(EntityConstants.TYPE_LSM_STACK_PAIR)) {
-			tags.add(lsmPairEntity.getName());
-        }
+    	
+    	TilingPattern tiling = TilingPattern.UNKNOWN;
+    	if (supportingFiles!=null) {
+        	List<String> tags = new ArrayList<String>();
+        	for(Entity lsmPairEntity : supportingFiles.getDescendantsOfType(EntityConstants.TYPE_LSM_STACK_PAIR)) {
+    			tags.add(lsmPairEntity.getName());
+            }
+            tiling = TilingPattern.getTilingPattern(tags);
+    	}
         
-        TilingPattern tiling = TilingPattern.getTilingPattern(tags);
         sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN, tiling.toString());
         
         try {

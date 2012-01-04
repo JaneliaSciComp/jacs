@@ -53,6 +53,8 @@ import java.util.*;
  * User: tsafford
  * Date: Jan 20, 2009
  * Time: 11:44:08 PM
+ * 
+ * @deprecated Pretty sure this isn't used anymore. Can it be deleted?
  */
 public class BulkNeuronMergeSeparationProcessingService implements IService {
     private Logger logger;

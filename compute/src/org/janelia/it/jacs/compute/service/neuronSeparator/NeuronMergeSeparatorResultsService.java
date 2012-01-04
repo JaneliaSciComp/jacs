@@ -24,6 +24,8 @@ import java.util.List;
  * Process the results of a Neuron Separation task and create the required entities, symbolic links, and other 
  * auxiliary files.
  * 
+ * @deprecated Pretty sure this isn't used anymore. Can it be deleted?
+ * 
  * @author Todd Safford
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
