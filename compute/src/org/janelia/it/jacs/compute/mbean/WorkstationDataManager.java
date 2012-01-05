@@ -9,6 +9,8 @@ import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.service.entity.SampleFileNodeSyncService;
+import org.janelia.it.jacs.compute.service.fileDiscovery.FlyScreenDiscoveryService;
+import org.janelia.it.jacs.compute.service.fly.ScreenSampleLineCoordinationService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Event;
@@ -119,7 +121,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     
     public void runFlyScreenPipeline(String user, Boolean refresh) {
         try {
-            String topLevelFolderName = "FlyLight Screen Data";
+            String topLevelFolderName = FlyScreenDiscoveryService.SCREEN_SAMPLE_TOP_LEVEL_FOLDER_NAME;
             String inputDirList = "/groups/scicomp/jacsData/ScreenStaging";
             Task task = new FileDiscoveryTask(new HashSet<Node>(),
                     user, new ArrayList<Event>(), new HashSet<TaskParameter>(),
@@ -134,7 +136,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
 
     public void runFlyScreenPatternAnnotationPipeline(String user, Boolean refresh) {
         try {
-            String topLevelFolderName = "FlyLight Screen Pattern Annotation";
+            String topLevelFolderName = ScreenSampleLineCoordinationService.SCREEN_PATTERN_TOP_LEVEL_FOLDER_NAME;
             Task task = new FlyScreenPatternAnnotationTask(new HashSet<Node>(),
                     user, new ArrayList<Event>(), new HashSet<TaskParameter>(),
                     topLevelFolderName, refresh);

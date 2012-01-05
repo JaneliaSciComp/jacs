@@ -126,37 +126,45 @@ public class FileDiscoveryService implements IService {
     }
 
     protected Entity createOrVerifyRootEntity(String topLevelFolderName) throws Exception {
-    	
+        return createOrVerifyRootEntity(topLevelFolderName, user, createDate, logger, true /* create if necessary */);
+    }
+
+    public static Entity createOrVerifyRootEntity(String topLevelFolderName, User user, Date createDate, org.apache.log4j.Logger logger, boolean createIfNecessary) throws Exception {
+        AnnotationBeanLocal annotationBean = EJBFactory.getLocalAnnotationBean();
         Set<Entity> topLevelFolders = annotationBean.getEntitiesByName(topLevelFolderName);
-    	Entity topLevelFolder = null;
-        if (topLevelFolders!=null) {
-        	// Only accept the current user's top level folder
-	        for(Entity entity : topLevelFolders) {
-	        	if (entity.getUser().getUserLogin().equals(user.getUserLogin()) 
-	        			&& entity.getEntityType().getName().equals(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER).getName())
-	        			&& entity.getAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT)!=null) {
-	                // This is the folder we want, now load the entire folder hierarchy
-	                topLevelFolder = annotationBean.getFolderTree(entity.getId());
-	                logger.info("Found existing topLevelFolder common root, name=" + topLevelFolder.getName());
-	        		break;
-	        	}
-	        }
+        Entity topLevelFolder = null;
+        if (topLevelFolders != null) {
+            // Only accept the current user's top level folder
+            for (Entity entity : topLevelFolders) {
+                if (entity.getUser().getUserLogin().equals(user.getUserLogin())
+                        && entity.getEntityType().getName().equals(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER).getName())
+                        && entity.getAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
+                    // This is the folder we want, now load the entire folder hierarchy
+                    topLevelFolder = annotationBean.getFolderTree(entity.getId());
+                    logger.info("Found existing topLevelFolder common root, name=" + topLevelFolder.getName());
+                    break;
+                }
+            }
         }
-         
+
         if (topLevelFolder == null) {
-            logger.info("Creating new topLevelFolder with name="+topLevelFolderName);
-            topLevelFolder = new Entity();
-            topLevelFolder.setCreationDate(createDate);
-            topLevelFolder.setUpdatedDate(createDate);
-            topLevelFolder.setUser(user);
-            topLevelFolder.setName(topLevelFolderName);
-            topLevelFolder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
-            topLevelFolder.addAttributeAsTag(EntityConstants.ATTRIBUTE_COMMON_ROOT);
-            topLevelFolder = annotationBean.saveOrUpdateEntity(topLevelFolder);
-            logger.info("Saved top level folder as "+topLevelFolder.getId());
+            if (createIfNecessary) {
+                logger.info("Creating new topLevelFolder with name=" + topLevelFolderName);
+                topLevelFolder = new Entity();
+                topLevelFolder.setCreationDate(createDate);
+                topLevelFolder.setUpdatedDate(createDate);
+                topLevelFolder.setUser(user);
+                topLevelFolder.setName(topLevelFolderName);
+                topLevelFolder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+                topLevelFolder.addAttributeAsTag(EntityConstants.ATTRIBUTE_COMMON_ROOT);
+                topLevelFolder = annotationBean.saveOrUpdateEntity(topLevelFolder);
+                logger.info("Saved top level folder as " + topLevelFolder.getId());
+            } else {
+                throw new Exception("Could not find top-level folder by name=" + topLevelFolderName);
+            }
         }
-        
-        logger.info("Using topLevelFolder with id="+topLevelFolder.getId());
+
+        logger.info("Using topLevelFolder with id=" + topLevelFolder.getId());
         return topLevelFolder;
     }
 

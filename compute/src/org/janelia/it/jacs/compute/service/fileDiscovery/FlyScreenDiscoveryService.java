@@ -29,6 +29,8 @@ import java.util.*;
  */
 public class FlyScreenDiscoveryService extends FileDiscoveryService {
 
+    public static final String SCREEN_SAMPLE_TOP_LEVEL_FOLDER_NAME = "FlyLight Screen Data";
+
     // In this discovery service, we do not want to create an entity tree which looks like the
     // filesystem. Instead, we want to traverse a filesystem tree and create a flat set of
     // entities which we discover at any position in the tree.
