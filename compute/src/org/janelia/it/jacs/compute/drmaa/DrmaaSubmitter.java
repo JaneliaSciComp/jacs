@@ -118,7 +118,7 @@ public class DrmaaSubmitter {
     }
 
     public static void main(String[] args) {
-    	int exitCode = 0;
+
         // parse parameters
         SubmitterParams params = null;
         try {
@@ -175,17 +175,21 @@ public class DrmaaSubmitter {
                 System.out.println(output);
             }
             logger.info(output);
-            exitCode = gridActionSuccessful ? 0 : 200;
+            int exitCode = gridActionSuccessful ? 0 : 200;
+            logger.info("Exiting with code "+exitCode);
+            System.exit(exitCode);
         }
         catch (Throwable t) {
             logger.error("DrmaaSubmit Error: " + t.getMessage(), t);
             System.err.println(t.getClass().getName() + ": " + t.getMessage());
-            exitCode = 1;
+            int exitCode = 1;
+            logger.info("Exiting with code "+exitCode);
+            System.exit(exitCode);
         }
         finally {
-            LogManager.shutdown();
+        	// Just an observation: this is never run because System.exit does not care about finally.
+            LogManager.shutdown();            
         }
-        System.exit(exitCode);
     }
 
     private static void configureLog4j(String logFileName) {

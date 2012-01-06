@@ -45,6 +45,7 @@
 				<!-- Spawn a new task to process the Sample -->
 		        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
         			<input name="TASK_CLASS" value="org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOSamplePipelineTask"/>
+        			<input name="WAIT_FOR_COMPLETION" value="false"/>
 		            <input name="PROCESS_DEF_NAME" value="MCFOSamplePipeline"/>
 		            <input name="PARAMETER_1_KEY" value="sample entity id"/>
 		            <input name="SAMPLE_ENTITY_ID"/>
