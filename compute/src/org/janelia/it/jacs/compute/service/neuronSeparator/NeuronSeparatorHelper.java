@@ -111,10 +111,10 @@ public class NeuronSeparatorHelper {
         
         // A little hack to clear core dumps that can be ignored. If the last line in the output has "Kill" in it, 
         // that means we're in the cleanup stage, and core dumps are not important.
-        cmdLine.append("lastOut=`tail -n 1 neuSepOutput.1`");
-        cmdLine.append("if echo \"$lastOut\" |grep -q Kill; then ");
-        cmdLine.append("    rm ").append(parentNode.getDirectoryPath()).append("/core.*");
-        cmdLine.append("fi");
+        cmdLine.append("lastOut=`tail -n 1 ").append(parentNode.getDirectoryPath()).append("/sge_output/neuSepOutput.1`\n");
+        cmdLine.append("if echo \"$lastOut\" |grep -q Kill; then\n");
+        cmdLine.append("    rm ").append(parentNode.getDirectoryPath()).append("/core.*\n");
+        cmdLine.append("fi\n");
         
         return cmdLine.toString();
 	}
