@@ -39,6 +39,7 @@ set -o errexit
 FWVER=$1
 SERVER=$2
 
+JACSHOME_DIR="/home/jacs"
 JACSDATA_DIR="/groups/scicomp/jacsData"
 EXE_DIR="$JACSDATA_DIR/servers/$SERVER/executables"
 SCRIPT_DIR="$JACSDATA_DIR/servers/$SERVER/scripts"
@@ -46,7 +47,7 @@ SCRIPT_DIR="$JACSDATA_DIR/servers/$SERVER/scripts"
 SVN_OPTIONS="--trust-server-cert --non-interactive"
 
 MAC_EXECUTOR_HOST="saffordt-wm1"
-SSH_OPTIONS="-i ${JACSDATA_DIR}/.ssh/id_dsa_hudson"
+SSH_OPTIONS=""
 
 COMPILE_DIR="$EXE_DIR/compile"
 VAA3D_COMPILE_REDHAT_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-redhat"
