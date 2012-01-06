@@ -23,21 +23,21 @@
 #
 #
 
-BUILD_VAA3D=1
-BUILD_NEUSEP=1
-BUILD_JACS=1
-BUILD_FLYSUITE=1
-RUN_PART2=1
-
 # Exit after any error
 set -o errexit
 
 # Configure SGE for doing grid builds
 . /sge/6.2u5/default/common/settings.sh
 
-#TODO: change this to jacs for production use
 FWVER=$1
 SERVER=$2
+BUILD_VAA3D=$3
+BUILD_NEUSEP=$4
+BUILD_JACS=$5
+BUILD_FLYSUITE=$6
+RUN_PART2=$7
+PART2_BUILD_VAA3D=$8
+PART2_BUILD_FLYSUITE=$9
 
 JACSHOME_DIR="/home/jacs"
 JACSDATA_DIR="/groups/scicomp/jacsData"
@@ -197,6 +197,6 @@ echo ""
 
 if [ $RUN_PART2 == 1 ]; then
     echo "Now running part 2 on a Mac..."
-    ssh $SSH_OPTIONS $MAC_EXECUTOR_HOST "sh $SCRIPT_DIR/build_jacs_part2_mac.sh $FWVER $SERVER"
+    ssh $SSH_OPTIONS $MAC_EXECUTOR_HOST "sh $SCRIPT_DIR/build_jacs_part2_mac.sh $FWVER $SERVER $PART2_BUILD_VAA3D $PART2_BUILD_FLYSUITE"
 fi
 

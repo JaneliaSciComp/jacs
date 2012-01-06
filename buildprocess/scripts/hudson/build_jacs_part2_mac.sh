@@ -11,14 +11,13 @@
 # 2) jacsData mounted on /Volumes/jacsData
 #
 
-BUILD_VAA3D=1
-BUILD_FLYSUITE=1
-
 # Exit after any error
 set -o errexit
 
 FWVER=$1
 SERVER=$2
+BUILD_VAA3D=$3
+BUILD_FLYSUITE=$4
 
 JACSDATA_DIR="/groups/scicomp/jacsData"
 SVN_OPTIONS="--trust-server-cert --non-interactive"

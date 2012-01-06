@@ -6,16 +6,17 @@
 # executables and the Jacs servers.
 #
 
-INSTALL_VAA3D=1
-INSTALL_NEUSEP=1
-INSTALL_SERVER=1
-INSTALL_CLIENT=1
-
 # Exit after any error
 set -o errexit
 
 FWVER=$1
 SERVER=$2
+
+INSTALL_VAA3D=$3
+INSTALL_NEUSEP=$4
+INSTALL_DATA_SERVER=$5
+INSTALL_PROD_SERVER=$6
+INSTALL_CLIENT=$7
 
 JACSDATA_DIR="/groups/scicomp/jacsData"
 EXE_DIR="$JACSDATA_DIR/servers/$SERVER/executables"
@@ -76,17 +77,21 @@ if [ $INSTALL_NEUSEP == 1 ]; then
 fi
 
 ################################################################
-# Install Jacs to jacs and jacs-data servers
+# Install Jacs to the jacs-data (data refresh) server
 ################################################################
-if [ $INSTALL_SERVER == 1 ]; then
-    echo "Installing Jacs"
-    cd $JACS_COMPILE_DIR/compute
-    
+if [ $INSTALL_DATA_SERVER == 1 ]; then
     echo "  Deploying to server 'jacs-data'..."
+    cd $JACS_COMPILE_DIR/compute
     ant -Duser.server.machine=jacs-data -Duser.server.login=jacs "deploy-[your-server]-dev"
     echo "FlySuite Version ${FWVER} (server) was successfully deployed to the JACS production data-loading server."
+fi 
     
+################################################################
+# Install Jacs to the jacs (production) server
+################################################################
+if [ $INSTALL_PROD_SERVER == 1 ]; then
     echo "  Deploying to server 'jacs'..."
+    cd $JACS_COMPILE_DIR/compute
     ant -Duser.server.machine=jacs -Duser.server.login=jacs "deploy-[your-server]-dev"
     echo "FlySuite Version ${FWVER} (server) was successfully deployed to the JACS production server."
 fi
