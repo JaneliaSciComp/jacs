@@ -113,6 +113,7 @@ public class NeuronSeparatorHelper {
         // that means we're in the cleanup stage, and core dumps are not important.
         cmdLine.append("lastOut=`tail -n 1 ").append(parentNode.getDirectoryPath()).append("/sge_output/neuSepOutput.1`\n");
         cmdLine.append("if echo \"$lastOut\" |grep -q Kill; then\n");
+        cmdLine.append("    echo \"Removing useless core dump\"\n");
         cmdLine.append("    rm ").append(parentNode.getDirectoryPath()).append("/core.*\n");
         cmdLine.append("fi\n");
         

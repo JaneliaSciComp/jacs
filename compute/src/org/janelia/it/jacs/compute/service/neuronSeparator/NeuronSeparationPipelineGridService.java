@@ -67,7 +67,6 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
 
         String script = NeuronSeparatorHelper.getNeuronSeparationCommands(task, processData, outputFileNode, "mylib.fedora", "\n");
         StringBuffer wrapper = new StringBuffer();
-        wrapper.append("set -o errexit\n");
         wrapper.append(script).append("\n");
         writer.write(wrapper.toString());
     }
