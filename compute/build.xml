@@ -471,8 +471,9 @@
         <echo message="Done : ${exec.output}"  />
         <echo message="Done : ${exec.error}"  />
 
-         <!--remove temp files -->
+         <!--remove temp files
          <delete dir="${temp.dir}"/>
+          -->
     </target>
 
     <target name="build-and-deploy" depends="build,deploy-[your-server]-dev" description="Build and deploy">
