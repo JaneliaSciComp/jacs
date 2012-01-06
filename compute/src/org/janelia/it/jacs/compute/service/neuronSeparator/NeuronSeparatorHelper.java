@@ -109,6 +109,13 @@ public class NeuronSeparatorHelper {
         cmdLine.append(parentNode.getDirectoryPath()).append(" neuronSeparatorPipeline ").
                 	append(inputFile.getAbsolutePath()).append(commandDelim);
         
+        // A little hack to clear core dumps that can be ignored. If the last line in the output has "Kill" in it, 
+        // that means we're in the cleanup stage, and core dumps are not important.
+        cmdLine.append("lastOut=`tail -n 1 neuSepOutput.1`");
+        cmdLine.append("if echo \"$lastOut\" |grep -q Kill; then ");
+        cmdLine.append("    rm ").append(parentNode.getDirectoryPath()).append("/core.*");
+        cmdLine.append("fi");
+        
         return cmdLine.toString();
 	}
 
