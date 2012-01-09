@@ -11,6 +11,7 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * File discovery service for supporting files.
@@ -63,7 +64,7 @@ public class SupportingFilesDiscoveryService extends FileDiscoveryService {
 
         File resultDir = new File(folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         
-        Entity filesFolder = getSupportingFiles(folder);
+        Entity filesFolder = EntityUtils.getSupportingData(folder);
         if (filesFolder==null) {
         	filesFolder = createSupportingFilesFolder();
         	addToParent(folder, filesFolder, 0, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
@@ -111,6 +112,9 @@ public class SupportingFilesDiscoveryService extends FileDiscoveryService {
             else if (filename.endsWith(".v3draw")) {
                 addResultItem(filesFolder, image3D, resultFile);
             }
+            else if (filename.endsWith(".v3dpbd")) {
+                addResultItem(filesFolder, image3D, resultFile);
+            }
             else if (filename.endsWith(".png")) {
                 addResultItem(filesFolder, image2D, resultFile);
             }
@@ -118,15 +122,6 @@ public class SupportingFilesDiscoveryService extends FileDiscoveryService {
                 // ignore other files
             }
         }
-    }
-    
-    protected Entity getSupportingFiles(Entity entity) {
-    	for(Entity child : entity.getChildren()) {    		
-    		if (child.getEntityType().getName().equals(EntityConstants.TYPE_SUPPORTING_DATA)) {
-    			return child;
-    		}	
-    	}
-    	return null;
     }
     
     protected Entity createSupportingFilesFolder() throws Exception {
