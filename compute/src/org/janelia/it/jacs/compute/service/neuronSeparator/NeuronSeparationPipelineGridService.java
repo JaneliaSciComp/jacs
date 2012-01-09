@@ -46,6 +46,9 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
         if (inputFilename==null || "".equals(inputFilename)) {
         	throw new ServiceException("Input parameter INPUT_FILENAME may not be empty");
         }
+    	
+        logger.info("Starting NeuronSeparationPipelineService with taskId=" + task.getObjectId() + " resultNodeId=" + resultFileNode.getObjectId() + " resultDir=" + resultFileNode.getDirectoryPath()+
+                " workingDir="+outputFileNode.getDirectoryPath() + " inputFilename="+inputFilename);
     }
     
     @Override
@@ -62,8 +65,6 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
 
     private void createShellScript(FileWriter writer, FileNode outputFileNode)
             throws IOException, ParameterException, MissingDataException, InterruptedException, ServiceException {
-    	
-        logger.info("Starting NeuronSeparationPipelineService with taskId=" + task.getObjectId() + " resultNodeId=" + resultFileNode.getObjectId() + " resultDir=" + resultFileNode.getDirectoryPath());
 
         String script = NeuronSeparatorHelper.getNeuronSeparationCommands(task, processData, outputFileNode, "mylib.fedora", "\n");
         StringBuffer wrapper = new StringBuffer();

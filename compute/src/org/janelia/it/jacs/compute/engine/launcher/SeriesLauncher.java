@@ -142,6 +142,7 @@ public abstract class SeriesLauncher implements ILauncher {
      */
     protected void launchSeries(SeriesDef seriesDef, IProcessData processData) throws ComputeException {
         try {
+            DataExtractor.copyData(processData, processData, seriesDef.getLocalInputParameters());
             setupAsyncActionsLaunch(seriesDef);
             if (seriesDef.getForEachParam() != null) {
                 List<IProcessData> pds = DataExtractor.createForEachPDs(processData, seriesDef.getForEachParam());

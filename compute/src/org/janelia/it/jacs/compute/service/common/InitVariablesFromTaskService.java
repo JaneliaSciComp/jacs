@@ -19,15 +19,17 @@ public class InitVariablesFromTaskService implements IService {
         try {
             Logger logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             Task task = ProcessDataHelper.getTask(processData);
-
+            
         	int num = 1;
         	while (true) {
         		String taskParamName = (String)processData.getItem("TASK_PARAMETER_"+num);	
         		if (taskParamName == null || num>100) break;
         		String processVarName = (String)processData.getItem("PROCESS_VARIABLE_"+num);	
         		String value = task.getParameter(taskParamName);
-            	logger.info("Putting value '"+value+"' in "+processVarName);
-            	processData.putItem(processVarName, value);
+        		if (value != null) {
+	            	logger.info("Putting value '"+value+"' in "+processVarName);
+	            	processData.putItem(processVarName, value);
+        		}
                 num++;
         	}
         } 

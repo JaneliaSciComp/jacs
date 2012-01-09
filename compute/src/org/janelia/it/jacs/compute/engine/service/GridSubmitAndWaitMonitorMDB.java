@@ -66,6 +66,11 @@ public class GridSubmitAndWaitMonitorMDB implements Job {
             // iterate over all monitored processes
             for (String submissionKey : keySet) {
                 Map<String, Object> submissionData = GridSubmitHelperMap.getInstance().getFromDataMap(submissionKey);
+                if (submissionData==null) {
+                	logger.warn("Missing submission data for "+submissionKey+". Removing zombie process from map.");
+                    GridSubmitHelperMap.getInstance().removeFromDataMap(submissionKey);
+                	continue;
+                }
                 Process proc = (Process) submissionData.get(GridSubmitHelperMap.PROCESS_OBJECT);
                 if (proc != null) {
                     // check if it's exited or not

@@ -81,7 +81,7 @@ public class SequenceLauncher extends SeriesLauncher {
     }
 
     /**
-     * Launches the immediate children of the suppied sequence definition
+     * Launches the immediate children of the supplied sequence definition
      *
      * @param seriesDef   the sequence definition
      * @param processData the running state of the process

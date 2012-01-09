@@ -104,7 +104,6 @@ public class GridSubmitAndWaitMDB extends BaseServiceMDB {
         
         // Get the unique key from the queue message
         String uniqueKey = gpr.getGridSubmissionKey();
-        logger.info("completeProcessing for "+uniqueKey);
         
         // Retriev the original Message and the service objects from the GridSubmitHelperMap
         Map dataMap = GridSubmitHelperMap.getInstance().getFromDataMap(uniqueKey);

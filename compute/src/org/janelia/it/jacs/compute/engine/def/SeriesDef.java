@@ -45,6 +45,16 @@ public abstract class SeriesDef extends ActionDef implements Serializable {
     private List<ActionDef> childDefs = new ArrayList<ActionDef>();
 
     /**
+     * The input parameters specified in the operation definition
+     */
+    private Set<Parameter> localInputParameters = new HashSet<Parameter>();
+
+    /**
+     * The output parameters specified in the oepration definition
+     */
+    private Set<Parameter> localOutputParameters = new HashSet<Parameter>();
+
+    /**
      * Whether or not the SeriesLauncher would wait on possible asynchrounous actions within this Series
      */
     private boolean waitOnAsyncActions;
@@ -62,6 +72,25 @@ public abstract class SeriesDef extends ActionDef implements Serializable {
     protected abstract String getDefaultPojoProcessor();
 
     protected abstract String getDefaultLocalSlsbProcessor();
+
+
+    /**
+     * Returns input parameters specified for this sequence.
+     *
+     * @return the input parameters
+     */
+    public Set<Parameter> getLocalInputParameters() {
+        return localInputParameters;
+    }
+
+    /**
+     * Returns output parameters specified for this sequence.
+     *
+     * @return the output parameters
+     */
+    public Set<Parameter> getLocalOutputParameters() {
+        return localOutputParameters;
+    }
 
     /**
      * Whether or not we're going to wait on asynchronous actions to complete
@@ -204,13 +233,13 @@ public abstract class SeriesDef extends ActionDef implements Serializable {
 
 
     public Set<Parameter> getInputParameters() {
-        Set<Parameter> parameters = new HashSet<Parameter>();
+        Set<Parameter> parameters = new HashSet<Parameter>(localInputParameters);
         getAllParameters(getChildActionDefs(), parameters, true);
         return parameters;
     }
 
     public Set<Parameter> getOutputParameters() {
-        Set<Parameter> parameters = new HashSet<Parameter>();
+        Set<Parameter> parameters = new HashSet<Parameter>(localOutputParameters);
         getAllParameters(getChildActionDefs(), parameters, false);
         return parameters;
     }

@@ -49,6 +49,7 @@ import java.util.Set;
 public class DefLoader implements Serializable {
 
     private static final String PROCESS_ELE = "process";
+    private static final String INCLUDE_ELE = "include";
     private static final String SEQUENCE_ELE = "sequence";
     private static final String OPERATION_ELE = "operation";
     private static final String NAME_ATTR = "name";
@@ -70,6 +71,7 @@ public class DefLoader implements Serializable {
     private static final String MAX_JMS_WAIT_TIME = "maxJMSWaitTime";
     private static final String HALT_ON_ERROR = "haltOnError";
     private static final String START_EVENT = "startEvent";
+    private static final String PROCESS_NAME_ATTR = "process";
 
     /**
      * This method loads the process defintion specified by <code>processName</code>
@@ -147,6 +149,9 @@ public class DefLoader implements Serializable {
                 else if (SEQUENCE_ELE.equals(child.getName())) {
                     sequenceDef.addChildDef(createSequenceDef(child, sequenceDef));
                 }
+                else if (INCLUDE_ELE.equals(child.getName())) {
+                	sequenceDef.addChildDef(createSequenceDefViaInclude(child, sequenceDef));
+                }
                 else {
                     throw new UnexpectedElementException(child.getName());
                 }
@@ -155,6 +160,31 @@ public class DefLoader implements Serializable {
         return sequenceDef;
     }
 
+    /**
+     * Initializes the sequence definition using the "include" element
+     *
+     * @param operationElement  operation defined in the process file
+     * @param parentSequenceDef parent sequence definition from the process file
+     * @return returns the operation definition
+     */
+    private SequenceDef createSequenceDefViaInclude(Element includeElement, SeriesDef parentSeriesDef) {
+    	
+    	String processName = includeElement.attributeValue(PROCESS_NAME_ATTR);
+    	ProcessDef processDef = loadProcessDef(processName);
+    	
+        SequenceDef sequenceDef = new SequenceDef(parentSeriesDef);
+        initSeriesDef(sequenceDef, includeElement);
+        
+    	for(ActionDef actionDef : processDef.getChildActionDefs()) {
+            sequenceDef.addChildDef(actionDef);
+    	}
+
+        addParameters(sequenceDef.getLocalInputParameters(), includeElement.elements(INPUT_ELE), ParameterType.INPUT);
+        addParameters(sequenceDef.getLocalOutputParameters(), includeElement.elements(OUTPUT_ELE), ParameterType.OUTPUT);
+        
+        return sequenceDef;
+    }
+    
     /**
      * Initializs the operation definition using the "operation" element
      *
@@ -179,8 +209,8 @@ public class DefLoader implements Serializable {
         else {
             setProcessorTypeBasedOnProcessorName(operationDef);
         }
-        addParamaters(operationDef.getInputParameters(), operationElement.elements(INPUT_ELE), ParameterType.INPUT);
-        addParamaters(operationDef.getOutputParameters(), operationElement.elements(OUTPUT_ELE), ParameterType.OUTPUT);
+        addParameters(operationDef.getInputParameters(), operationElement.elements(INPUT_ELE), ParameterType.INPUT);
+        addParameters(operationDef.getOutputParameters(), operationElement.elements(OUTPUT_ELE), ParameterType.OUTPUT);
         return operationDef;
     }
 
@@ -192,7 +222,7 @@ public class DefLoader implements Serializable {
      * @param elements      list of elements to get parameters from
      * @param parameterType type of parameter (string, int, etc)
      */
-    private void addParamaters(Set<Parameter> targetSet, List elements, ParameterType parameterType) {
+    private void addParameters(Set<Parameter> targetSet, List elements, ParameterType parameterType) {
         if (elements != null) {
             for (Object o : elements) {
                 Element element = (Element) o;
@@ -431,6 +461,7 @@ public class DefLoader implements Serializable {
         VALID_SERIES_ATTRIBUTES.addAll(VALID_ACTION_ATTRIBUTES);
         VALID_SERIES_ATTRIBUTES.add(WAIT_FOR_ASYNC_ATTR);
         VALID_SERIES_ATTRIBUTES.add(ASYNC_ATTR);
+        VALID_SERIES_ATTRIBUTES.add(PROCESS_NAME_ATTR);
     }
 
     static {
