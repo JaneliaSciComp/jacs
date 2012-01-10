@@ -177,7 +177,7 @@ public class NAAManagementPanel extends VerticalPanel {
 
     private void populateOracle() {
         // Populate the oraclePanel with the node names
-        _dataservice.getNodeNamesForUserByName("NeuronalAssayAnalysisResultNode", new AsyncCallback() {
+        _dataservice.getNodeNamesForUserByName("org.janelia.it.jacs.model.user_data.geci.NeuronalAssayAnalysisResultNode", new AsyncCallback() {
             public void onFailure(Throwable caught) {
                 _logger.error("error retrieving naaResult logins for suggest oracle: " + caught.getMessage());
             }
@@ -232,7 +232,7 @@ public class NAAManagementPanel extends VerticalPanel {
      */
     public class UserDataRetriever implements PagedDataRetriever {
         public void retrieveTotalNumberOfDataRows(final DataRetrievedListener listener) {
-            _dataservice.getNumNodesForUserByName("NeuronalAssayAnalysisResultNode", new AsyncCallback() {
+            _dataservice.getNumNodesForUserByName("org.janelia.it.jacs.model.user_data.geci.NeuronalAssayAnalysisResultNode", new AsyncCallback() {
                 public void onFailure(Throwable caught) {
                     _logger.error("UserDataRetriever.getNumNodesForUserByName().onFailure(): " + caught.getMessage());
                     listener.onFailure(caught);
@@ -250,7 +250,7 @@ public class NAAManagementPanel extends VerticalPanel {
                                      int numRows,
                                      SortArgument[] sortArgs,
                                      final DataRetrievedListener listener) {
-            _dataservice.getPagedNodesForUserByName("NeuronalAssayAnalysisResultNode", startIndex, numRows, sortArgs, new AsyncCallback() {
+            _dataservice.getPagedNodesForUserByName("org.janelia.it.jacs.model.user_data.geci.NeuronalAssayAnalysisResultNode", startIndex, numRows, sortArgs, new AsyncCallback() {
                 public void onFailure(Throwable caught) {
                     _logger.error("UserDataRetriever.retrieveDataRows().onFailure(): " + caught.getMessage());
                     listener.onFailure(caught);
