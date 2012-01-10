@@ -1,25 +1,3 @@
-/*
- * Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
- *
- * This file is part of JCVI VICS.
- *
- * JCVI VICS is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the Artistic License 2.0.  For
- * details, see the full text of the license in the file LICENSE.txt.  No
- * other rights are granted.  Any and all third party software rights to
- * remain with the original developer.
- *
- * JCVI VICS is distributed in the hope that it will be useful in
- * bioinformatics applications, but it is provided "AS IS" and WITHOUT
- * ANY EXPRESS OR IMPLIED WARRANTIES including but not limited to
- * implied warranties of merchantability or fitness for any particular
- * purpose.  For details, see the full text of the license in the file
- * LICENSE.txt.
- *
- * You should have received a copy of the Artistic License 2.0 along with
- * JCVI VICS.  If not, the license can be obtained from
- * "http://www.perlfoundation.org/artistic_license_2_0."
- */
 
 package org.janelia.it.jacs.compute.engine.launcher;
 
@@ -110,7 +88,7 @@ public abstract class SeriesLauncher implements ILauncher {
      *
      * @param actionDef   a process or sequence definition
      * @param processData the running state of the process
-     * @throws org.janelia.it.jacs.compute.api.ComputeException
+     * @throws org.janelia.it.jacs.compute.api.ComputeException server error
      *
      */
     protected void launchActions(ActionDef actionDef, IProcessData processData) throws ComputeException {
@@ -137,7 +115,7 @@ public abstract class SeriesLauncher implements ILauncher {
      *
      * @param seriesDef   a process or sequence definition
      * @param processData the running state of the process
-     * @throws org.janelia.it.jacs.compute.api.ComputeException
+     * @throws org.janelia.it.jacs.compute.api.ComputeException server error
      *
      */
     protected void launchSeries(SeriesDef seriesDef, IProcessData processData) throws ComputeException {
@@ -174,7 +152,7 @@ public abstract class SeriesLauncher implements ILauncher {
      *
      * @param sequenceDef a sequence definition
      * @param processData the running state of the process
-     * @throws org.janelia.it.jacs.compute.api.ComputeException
+     * @throws org.janelia.it.jacs.compute.api.ComputeException server error
      *
      */
     protected void launchSequence(SequenceDef sequenceDef, IProcessData processData) throws ComputeException {
@@ -197,7 +175,7 @@ public abstract class SeriesLauncher implements ILauncher {
      * Also creates a temporary queue if waitForAsync is set to true for the supplied series definition
      *
      * @param seriesDef the series definition
-     * @throws LauncherException
+     * @throws LauncherException launcher error
      */
     protected void setupAsyncActionsLaunch(SeriesDef seriesDef) throws LauncherException {
         if (seriesDef.containsAysncActions()) {
@@ -240,7 +218,7 @@ public abstract class SeriesLauncher implements ILauncher {
      *                    action.  Currently, only input parameters for the first such action is copied.  There are workarounds
      *                    for the case where a subsequent async operation needs input parameters.  We need to refine this method
      *                    to service this need seemlessly.
-     * @throws LauncherException
+     * @throws LauncherException launcher error
      */
     protected void sendMessageToQueue(IProcessData processData) throws LauncherException {
         QueueMessage queueMessage = JmsUtil.sendMessageToQueue(messageInterface, processData, tempWaitQueue);
@@ -258,7 +236,7 @@ public abstract class SeriesLauncher implements ILauncher {
      *
      * @param processData the running state of the process
      * @param seriesDef   the process or sequence definition this launcher has launched
-     * @throws org.janelia.it.jacs.compute.api.ComputeException
+     * @throws org.janelia.it.jacs.compute.api.ComputeException server error
      *
      */
     protected void waitForAsyncActions(IProcessData processData, SeriesDef seriesDef) throws ComputeException {
@@ -299,9 +277,8 @@ public abstract class SeriesLauncher implements ILauncher {
      *
      * @param actionDef   the sequence definition
      * @param processData the running state of the process
-     * @throws org.janelia.it.jacs.compute.engine.data.MissingDataException
-     *
-     * @throws org.janelia.it.jacs.compute.access.DaoException
+     * @throws org.janelia.it.jacs.compute.engine.data.MissingDataException data missing error
+     * @throws org.janelia.it.jacs.compute.access.DaoException data access error
      *
      */
     private void createStartEvent(ActionDef actionDef, IProcessData processData) throws DaoException, MissingDataException {

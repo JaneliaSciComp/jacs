@@ -7,7 +7,10 @@ import com.google.gwt.user.client.ui.*;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.geci.NeuronalAssayAnalysisTask;
 import org.janelia.it.jacs.model.user_data.geci.GeciImageDirectoryVO;
-import org.janelia.it.jacs.web.gwt.common.client.panel.*;
+import org.janelia.it.jacs.web.gwt.common.client.panel.CenteredWidgetHorizontalPanel;
+import org.janelia.it.jacs.web.gwt.common.client.panel.FinalOutputDestinationPanel;
+import org.janelia.it.jacs.web.gwt.common.client.panel.ProjectCodePanel;
+import org.janelia.it.jacs.web.gwt.common.client.panel.TitledBox;
 import org.janelia.it.jacs.web.gwt.common.client.popup.ErrorPopupPanel;
 import org.janelia.it.jacs.web.gwt.common.client.popup.launcher.PopupCenteredLauncher;
 import org.janelia.it.jacs.web.gwt.common.client.service.DataService;
@@ -63,7 +66,6 @@ public class NeuronalAssayAnalysisPanel extends Composite {
         _geciFRETList = new ListBox(false);
         _geciFRETList.addItem("GCaMP");
         _geciResultsTable = new FlexTable();
-        _geciResultsTable.setCellSpacing(3);
         _geciResultsTable.setHTML(0, 0, HtmlUtils.getHtml("Directory", "prompt").toString());
         _geciResultsTable.setHTML(0, 1, HtmlUtils.getHtml("Path", "prompt").toString());
         _geciResultsTable.setHTML(0, 2, HtmlUtils.getHtml("Is Processed", "prompt").toString());
@@ -73,8 +75,9 @@ public class NeuronalAssayAnalysisPanel extends Composite {
 
     private void popuplateContentPanel() {
         _geciImagePath = new TextBox();
-        _geciImagePath.setText("/groups/scicomp/jacsData/GECI/201110181");
-        _scanDirForResultsButton = new RoundedButton("Scan", new ClickListener() {
+        _geciImagePath.setVisibleLength(30);
+        _geciImagePath.setText("/groups/scicomp/jacsData/GECI/20111018");
+        _scanDirForResultsButton = new RoundedButton("Scan Directory", new ClickListener() {
             @Override
             public void onClick(Widget sender) {
                 _dataservice.getPotentialResultNodes(_geciImagePath.getText(), new AsyncCallback() {
@@ -84,16 +87,8 @@ public class NeuronalAssayAnalysisPanel extends Composite {
 
                     public void onSuccess(Object o) {
                         _geciImageDirs = (List<GeciImageDirectoryVO>)o;
-                        // Clear out all the old data
-                        for (int i = 1; i < _geciResultsTable.getRowCount(); i++) {
-                            _geciResultsTable.removeRow(i);
-                        }
-                        for (GeciImageDirectoryVO geciImageDir : _geciImageDirs) {
-                            int numRows = _geciResultsTable.getRowCount();
-                            _geciResultsTable.setWidget(numRows, 0, HtmlUtils.getHtml(geciImageDir.getLocalDirName(), "nowrapText"));
-                            _geciResultsTable.setWidget(numRows, 1, HtmlUtils.getHtml(geciImageDir.getTargetDirectoryPath(), "nowrapText"));
-                            _geciResultsTable.setWidget(numRows, 2, HtmlUtils.getHtml(Boolean.toString(geciImageDir.isProcessed()), "nowrapText"));
-                        }
+                        clear();
+                        reloadTableData();
                         _submitButton.setEnabled(_geciImageDirs.size()>0);
                     }
                 });
@@ -118,7 +113,16 @@ public class NeuronalAssayAnalysisPanel extends Composite {
         contentPanel.add(getPrimerStatusMessage());
 
         _mainPanel.add(contentPanel);
-        _submitButton.setEnabled(false);
+        _submitButton.setEnabled(false);                                                                                  
+    }
+
+    private void reloadTableData() {
+        for (GeciImageDirectoryVO geciImageDir : _geciImageDirs) {
+            int numRows = _geciResultsTable.getRowCount();
+            _geciResultsTable.setWidget(numRows, 0, HtmlUtils.getHtml(geciImageDir.getLocalDirName(), "nowrapText"));
+            _geciResultsTable.setWidget(numRows, 1, HtmlUtils.getHtml(geciImageDir.getTargetDirectoryPath(), "nowrapText"));
+            _geciResultsTable.setWidget(numRows, 2, HtmlUtils.getHtml(Boolean.toString(geciImageDir.isProcessed()), "nowrapText"));
+        }
     }
 
     private Widget getPrimerStatusMessage() {
@@ -169,7 +173,10 @@ public class NeuronalAssayAnalysisPanel extends Composite {
     private void clear() {
         // Clear the Query Sequence PulldownPopup and any selections in the popup
         //_uploadFileForm.clear();
-
+        // Clear out all the old data
+        for (int i = 0; i < _geciResultsTable.getRowCount(); i++) {
+            _geciResultsTable.removeRow(i);
+        }
         _neuronalAssayAnalysisTask = new NeuronalAssayAnalysisTask();
 //        _optionsPanel.displayParams(_neuronalAssayAnalysisTask);
         _submitButton.setEnabled(false);

@@ -1,25 +1,3 @@
-/*
- * Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
- *
- * This file is part of JCVI VICS.
- *
- * JCVI VICS is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the Artistic License 2.0.  For
- * details, see the full text of the license in the file LICENSE.txt.  No
- * other rights are granted.  Any and all third party software rights to
- * remain with the original developer.
- *
- * JCVI VICS is distributed in the hope that it will be useful in
- * bioinformatics applications, but it is provided "AS IS" and WITHOUT
- * ANY EXPRESS OR IMPLIED WARRANTIES including but not limited to
- * implied warranties of merchantability or fitness for any particular
- * purpose.  For details, see the full text of the license in the file
- * LICENSE.txt.
- *
- * You should have received a copy of the Artistic License 2.0 along with
- * JCVI VICS.  If not, the license can be obtained from
- * "http://www.perlfoundation.org/artistic_license_2_0."
- */
 
 package org.janelia.it.jacs.server.access.hibernate;
 
@@ -49,7 +27,10 @@ import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.orm.hibernate3.HibernateTemplate;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * User: Lfoster
@@ -553,19 +534,6 @@ public class NodeDAOImpl extends DaoBaseImpl implements NodeDAO {
                 subjectNode.getOrd());
     }
 
-    public List<Node> getNodesByIds(List<Long> nodeIds) throws DataAccessException, DaoException {
-        List<Node> nodes = null;
-        try {
-            DetachedCriteria criteria = DetachedCriteria.forClass(Node.class);
-            criteria.add(Restrictions.in("objectId", nodeIds));
-            nodes = getHibernateTemplate().findByCriteria(criteria);
-        }
-        catch (DataAccessException e) {
-            _logger.error("Error obtaining nodes. " + e.getMessage(), e);
-        }
-        return nodes;
-    }
-
     public int getNumBlastableSubjectNodes(String[] userLogins) throws DaoException {
         DetachedCriteria criteria = DetachedCriteria.forClass(BlastDatabaseFileNode.class, "blastableSubject");
         // add user Restrictions
@@ -694,6 +662,19 @@ public class NodeDAOImpl extends DaoBaseImpl implements NodeDAO {
         catch (IllegalStateException e) {
             throw handleException(e, "NodeDAOImpl - getNodeById");
         }
+    }
+
+    public List<Node> getNodesByIds(List<Long> nodeIds) throws DataAccessException, DaoException {
+        List<Node> nodes = null;
+        try {
+            DetachedCriteria criteria = DetachedCriteria.forClass(Node.class);
+            criteria.add(Restrictions.in("objectId", nodeIds));
+            nodes = getHibernateTemplate().findByCriteria(criteria);
+        }
+        catch (DataAccessException e) {
+            _logger.error("Error obtaining nodes. " + e.getMessage(), e);
+        }
+        return nodes;
     }
 
     public Node getNodeByName(String name) throws DataAccessException, DaoException {
@@ -935,7 +916,7 @@ public class NodeDAOImpl extends DaoBaseImpl implements NodeDAO {
 
             // Results
             int totalCount = 0;
-            DetachedCriteria criteria = createNumNodesForUserByNameQuery(nodeClassName, user);
+            DetachedCriteria criteria = createNodesForUserByNameQuery(nodeClassName, user);
             criteria.setProjection(Projections.rowCount());
             List<Integer> list = (List<Integer>) getHibernateTemplate().findByCriteria(criteria);
             if (list != null && list.size() > 0) {
@@ -961,7 +942,7 @@ public class NodeDAOImpl extends DaoBaseImpl implements NodeDAO {
         }
     }
 
-    private DetachedCriteria createNumNodesForUserByNameQuery(String nodeClassName, String user) throws Exception {
+    private DetachedCriteria createNodesForUserByNameQuery(String nodeClassName, String user) throws Exception {
         Class nodeClass = Class.forName(nodeClassName);
         DetachedCriteria criteria = DetachedCriteria.forClass(nodeClass);
         Criterion userNode = Expression.eq("owner", user);
@@ -1072,4 +1053,30 @@ public class NodeDAOImpl extends DaoBaseImpl implements NodeDAO {
     }
 
 
+    public List<String> getNodeNamesForUserByName(String nodeClassName, String userLogin) throws DaoException {
+        try {
+            _logger.debug("executing getNodeNamesForUserByName where user=" + userLogin+ " and class is "+nodeClassName);
+
+            // Results
+            DetachedCriteria criteria = createNodesForUserByNameQuery(nodeClassName, userLogin);
+            List<Node> list = (List<Node>) getHibernateTemplate().findByCriteria(criteria);
+            ArrayList<String> returnList = new ArrayList<String>();
+            for (Node node : list) {
+                returnList.add(node.getName());
+            }
+            return returnList;
+        }
+        catch (HibernateException e) {
+            throw convertHibernateAccessException(e);
+        }
+        catch (DataAccessResourceFailureException e) {
+            throw handleException(e, "NodeDAOImpl - getNumNodesForUserByName");
+        }
+        catch (IllegalStateException e) {
+            throw handleException(e, "NodeDAOImpl - getNumNodesForUserByName");
+        }
+        catch (Exception e) {
+            throw handleException(e, "NodeDAOImpl - getNumNodesForUserByName");
+        }
+    }
 }

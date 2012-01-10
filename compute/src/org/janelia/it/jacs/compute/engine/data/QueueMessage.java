@@ -1,35 +1,18 @@
-/*
- * Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
- *
- * This file is part of JCVI VICS.
- *
- * JCVI VICS is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the Artistic License 2.0.  For
- * details, see the full text of the license in the file LICENSE.txt.  No
- * other rights are granted.  Any and all third party software rights to
- * remain with the original developer.
- *
- * JCVI VICS is distributed in the hope that it will be useful in
- * bioinformatics applications, but it is provided "AS IS" and WITHOUT
- * ANY EXPRESS OR IMPLIED WARRANTIES including but not limited to
- * implied warranties of merchantability or fitness for any particular
- * purpose.  For details, see the full text of the license in the file
- * LICENSE.txt.
- *
- * You should have received a copy of the Artistic License 2.0 along with
- * JCVI VICS.  If not, the license can be obtained from
- * "http://www.perlfoundation.org/artistic_license_2_0."
- */
 
 package org.janelia.it.jacs.compute.engine.data;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.engine.def.ActionDef;
 import org.janelia.it.jacs.compute.engine.def.ProcessDef;
-import org.janelia.it.jacs.compute.jtc.BaseMessage;
 
 import javax.jms.JMSException;
+import javax.jms.MapMessage;
+import javax.jms.Message;
 import javax.jms.ObjectMessage;
+import java.io.Serializable;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,12 +23,35 @@ import java.util.Set;
  *
  * @author Tareq Nabeel
  */
-public class QueueMessage extends BaseMessage implements IProcessData {
+public class QueueMessage implements IProcessData {
+    static final String SRC_HOST_NAME = "SrcHostname";
+    static final String SRC_USER_NAME = "SrcUsername";
+    static final String MESSAGE_CREATION_TIME = "CreationTime";
+    static final String VERSION = "Version";
+    static final String EXPECTED_VERSION = "1";
+    private static final String MINOR_VERSION = "0";
+    private MapMessage mapMsg;
+    private ObjectMessage objectMsg;
+    private HashMap objectMap;
+
 
     private static final Logger logger = Logger.getLogger(QueueMessage.class);
     
     public QueueMessage(ObjectMessage msg, boolean construct) throws JMSException {
-        super(msg, construct);
+        if (msg != null) {
+            this.objectMsg = msg;
+        }
+        else {
+            throw new IllegalArgumentException("msg passed to QueueMessage is null!");
+        }
+        if (construct) {
+            objectMap = new HashMap();
+            setConstructionParameters();
+            // objectMsg.setObject(objectMap);
+        }
+        else {
+            objectMap = (HashMap) objectMsg.getObject();
+        }
         try {
             // ObjectMessage will not have an id if it's a newly created JMS Message
             // However, if it's a JMS Message received in an onMessage method of an MDB
@@ -55,6 +61,111 @@ public class QueueMessage extends BaseMessage implements IProcessData {
         catch (JMSException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * @return original or constructed message
+     */
+    public Message getMessage() {
+        if (mapMsg != null) return mapMsg;
+        return objectMsg;
+    }
+
+    protected Object getObjectProperty(String property) {
+        Object obj = null;
+        try {
+            if (mapMsg != null) {
+                obj = mapMsg.getObject(property);
+            }
+            else {
+                if (objectMap != null) {
+                    obj = objectMap.get(property);
+                }
+            }
+        }
+        catch (Throwable ex) {
+            logger.error("Exception thrown while trying to get " + property + " property from message");
+            return null;
+        }
+        return obj;
+    }
+
+    protected void setStringProperty(String property, String value) {
+        try {
+            if (mapMsg != null) mapMsg.setString(property, value);
+            else {
+                if (objectMap != null) {
+                    objectMap.put(property, value);
+                }
+            }
+        }
+        catch (Throwable ex) {
+            logger.error("Exception thrown while trying to get " + property + " property from message");
+        }
+    }
+
+    protected void setLongProperty(String property, Long value) {
+        try {
+            if (mapMsg != null) mapMsg.setLong(property, value);
+            else {
+                if (objectMap != null) {
+                    objectMap.put(property, value);
+                }
+            }
+        }
+        catch (Throwable ex) {
+            logger.error("Exception thrown while trying to get " + property + " property from message");
+        }
+    }
+
+    protected void setObjectProperty(String property, Object value) {
+        if (value != null && !(value instanceof Serializable))
+            throw new IllegalStateException("Cannot set Object properties that are not serializable");
+        if (mapMsg != null)
+            throw new IllegalStateException("Cannot set Object properties on a MapMessage");
+        else {
+            if (objectMap != null) {
+                objectMap.put(property, value);
+            }
+        }
+    }
+
+    /**
+     * This MUST be called when all properties are populated on the message.  Otherwise
+     * the properties will never be copied into the message.
+     *
+     * @throws JMSException error with the message
+     */
+    protected void finishedObjectMsgConstruction() throws JMSException {
+        objectMsg.setObject(objectMap);
+    }
+
+    private void setConstructionParameters() {
+        setLongProperty(MESSAGE_CREATION_TIME, System.currentTimeMillis());
+        try {
+            String hostName = InetAddress.getLocalHost().getHostName();
+            setStringProperty(SRC_HOST_NAME, hostName);
+        }
+        catch (UnknownHostException ex) {
+            setStringProperty(SRC_HOST_NAME, "Unknown");
+        }
+        String userName = System.getProperty("user.name");
+        setStringProperty(SRC_USER_NAME, userName);
+        setStringProperty(VERSION, EXPECTED_VERSION + "." + MINOR_VERSION);
+    }
+
+    public void clearBody() throws JMSException {
+        getMessage().clearBody();
+        if (objectMap != null) {
+            objectMap.clear();
+        }
+    }
+
+    public Map getObjectMap() {
+        if (this.objectMsg != null) {
+            return this.objectMap;
+        }
+        return null;
     }
 
     public void putItem(String key, Object obj) {
@@ -89,11 +200,6 @@ public class QueueMessage extends BaseMessage implements IProcessData {
 
     public void removeItem(String key) {
         //
-    }
-
-    public List<IProcessData> createForEachPDs(String forEachPDParam) {
-        // not implemented
-        return null;
     }
 
     public List<Long> getProcessIds() {

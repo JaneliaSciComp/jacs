@@ -1,8 +1,5 @@
 package org.janelia.it.jacs.compute.service.entity;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
@@ -13,6 +10,9 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.tasks.Task;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Traverses the entity tree starting from a given root entity and builds a flattened list of ancestor

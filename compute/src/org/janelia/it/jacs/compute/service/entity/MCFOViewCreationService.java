@@ -1,15 +1,14 @@
 package org.janelia.it.jacs.compute.service.entity;
 
+import org.janelia.it.jacs.compute.service.fileDiscovery.TilingPattern;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
+
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-
-import org.janelia.it.jacs.compute.service.fileDiscovery.TilingPattern;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Creates or updates a view of samples categorized by tiling pattern.

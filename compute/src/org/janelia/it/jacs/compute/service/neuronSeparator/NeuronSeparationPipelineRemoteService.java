@@ -1,8 +1,5 @@
 package org.janelia.it.jacs.compute.service.neuronSeparator;
 
-import java.io.File;
-import java.util.Date;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
@@ -15,6 +12,9 @@ import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.user_data.neuronSeparator.NeuronSeparatorResultNode;
 import org.janelia.it.jacs.shared.utils.SystemCall;
+
+import java.io.File;
+import java.util.Date;
 
 public class NeuronSeparationPipelineRemoteService implements IService {
 

@@ -1,8 +1,5 @@
 package org.janelia.it.jacs.compute.service.common;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -14,6 +11,9 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
+
+import java.util.ArrayList;
+import java.util.HashSet;
 
 /**
  * Creates and executes a sub-task with some parameters. Inputs:

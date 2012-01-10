@@ -1,13 +1,13 @@
 package org.janelia.it.jacs.compute.service.align;
 
-import java.io.FileWriter;
-import java.io.IOException;
-
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.v3d.V3DHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.vo.ParameterException;
+
+import java.io.FileWriter;
+import java.io.IOException;
 
 /**
  * Align an optic lobe globally and locally.

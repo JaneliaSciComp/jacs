@@ -1,8 +1,5 @@
 package org.janelia.it.jacs.model.tasks.fileDiscovery;
 
-import java.util.List;
-import java.util.Set;
-
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
@@ -10,6 +7,9 @@ import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.model.vo.ParameterVO;
 import org.janelia.it.jacs.model.vo.TextParameterVO;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * Create a view from a source entity.

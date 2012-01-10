@@ -1,25 +1,3 @@
-/*
- * Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
- *
- * This file is part of JCVI VICS.
- *
- * JCVI VICS is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the Artistic License 2.0.  For
- * details, see the full text of the license in the file LICENSE.txt.  No
- * other rights are granted.  Any and all third party software rights to
- * remain with the original developer.
- *
- * JCVI VICS is distributed in the hope that it will be useful in
- * bioinformatics applications, but it is provided "AS IS" and WITHOUT
- * ANY EXPRESS OR IMPLIED WARRANTIES including but not limited to
- * implied warranties of merchantability or fitness for any particular
- * purpose.  For details, see the full text of the license in the file
- * LICENSE.txt.
- *
- * You should have received a copy of the Artistic License 2.0 along with
- * JCVI VICS.  If not, the license can be obtained from
- * "http://www.perlfoundation.org/artistic_license_2_0."
- */
 
 package org.janelia.it.jacs.compute.engine.def;
 
@@ -102,15 +80,6 @@ public abstract class SeriesDef extends ActionDef implements Serializable {
     }
 
     /**
-     * Whether or not we're going to wait on asynchronous actions to complete
-     *
-     * @return returns boolean if the definition will wait on async actions
-     */
-    public boolean isWaitOnAsyncOperations() {
-        return waitOnAsyncActions;
-    }
-
-    /**
      * Sets whether or not we're going to wait on asynchronous actions to complete
      *
      * @param waitOnAsyncActions boolean whether the action should wait on async processing
@@ -145,21 +114,6 @@ public abstract class SeriesDef extends ActionDef implements Serializable {
             }
         }
         return false;
-    }
-
-    /**
-     * Returns true if this process or sequence contains only asynchronous actions
-     *
-     * @return returns boolean if the child actions contain only async actions
-     */
-    public boolean containsOnlyAysncActions() {
-        // We're only interested in immediate children actions
-        for (ActionDef actionDef : childDefs) {
-            if (!actionDef.isProcessorAsync()) {
-                return false;
-            }
-        }
-        return true;
     }
 
     /**
@@ -202,35 +156,6 @@ public abstract class SeriesDef extends ActionDef implements Serializable {
     protected void setMaxJMSWaitTime(long maxJMSWaitTime) {
         this.maxJMSWaitTime = maxJMSWaitTime;
     }
-
-    /**
-     * Returns the first operation within this series
-     *
-     * @return the first operation definition
-     */
-    public OperationDef getFirstOperation() {
-        return getFirstOperation(getChildActionDefs());
-    }
-
-    /**
-     * Returns the first operation within this series
-     *
-     * @param actionDefs a list of actions defined
-     * @return the first operation definition
-     */
-    private OperationDef getFirstOperation(List<ActionDef> actionDefs) {
-        for (ActionDef actionDef : actionDefs) {
-            if (actionDef.isSeriesDef()) {
-                SeriesDef seriesDef = (SeriesDef) actionDef;
-                return getFirstOperation(seriesDef.getChildActionDefs());
-            }
-            else if (actionDef.isOperation()) {
-                return (OperationDef) actionDef;
-            }
-        }
-        return null;
-    }
-
 
     public Set<Parameter> getInputParameters() {
         Set<Parameter> parameters = new HashSet<Parameter>(localInputParameters);

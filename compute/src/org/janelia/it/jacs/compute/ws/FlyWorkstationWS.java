@@ -1,11 +1,10 @@
 package org.janelia.it.jacs.compute.ws;
 
+import org.janelia.it.jacs.model.entity.Entity;
+
 import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
-
-import org.janelia.it.jacs.model.entity.Entity;
-
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 

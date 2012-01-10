@@ -1,7 +1,5 @@
 package org.janelia.it.jacs.compute.service.entity;
 
-import java.util.List;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -10,6 +8,8 @@ import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.v3d.MergedLsmPair;
+
+import java.util.List;
 
 /**
  * Merge paired LSMs into v3draw files. Parameters:

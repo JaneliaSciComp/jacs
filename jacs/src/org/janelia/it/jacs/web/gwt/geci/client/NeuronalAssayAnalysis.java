@@ -65,7 +65,8 @@ public class NeuronalAssayAnalysis extends BaseEntryPoint {
     }
 
     public Widget getPanel() {
-        return new NeuronalAssayAnalysisPanel(Constants.GECI_IP_LABEL, new JobSubmittedListener());
+//        return new NeuronalAssayAnalysisPanel(Constants.GECI_IP_LABEL, new JobSubmittedListener());
+        return new NAAManagementPanel();
     }
 
     private class JobResultsSelectedListener implements JobSelectionListener {

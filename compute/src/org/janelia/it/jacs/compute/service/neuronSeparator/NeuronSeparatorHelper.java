@@ -1,7 +1,5 @@
 package org.janelia.it.jacs.compute.service.neuronSeparator;
 
-import java.io.File;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -14,6 +12,8 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.user_data.FileNode;
+
+import java.io.File;
 
 /**
  * Created by IntelliJ IDEA.

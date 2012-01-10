@@ -1,4 +1,3 @@
-<%@ page import="org.janelia.it.jacs.web.control.report.BlastTaskReportController" %>
 <%@ page import="org.janelia.it.jacs.model.tasks.blast.BlastTask" %>
 
 <%--

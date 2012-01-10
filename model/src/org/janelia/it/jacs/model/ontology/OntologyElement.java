@@ -1,12 +1,12 @@
 package org.janelia.it.jacs.model.ontology;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * An named element in an ontology tree. Has a single parent and zero or more children. Each element also has

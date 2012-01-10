@@ -1,5 +1,3 @@
-<%@ page import="org.janelia.it.jacs.model.tasks.blast.BlastTask" %>
-
 <%--
   ~ Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
   ~

@@ -1,11 +1,11 @@
 package org.janelia.it.jacs.shared.utils;
 
-import java.util.Collection;
-
 import org.hibernate.Hibernate;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
+
+import java.util.Collection;
 
 /**
  * Utilities for dealing with Entities.

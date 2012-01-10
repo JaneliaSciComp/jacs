@@ -1,26 +1,3 @@
-/*
- * Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
- *
- * This file is part of JCVI VICS.
- *
- * JCVI VICS is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the Artistic License 2.0.  For
- * details, see the full text of the license in the file LICENSE.txt.  No
- * other rights are granted.  Any and all third party software rights to
- * remain with the original developer.
- *
- * JCVI VICS is distributed in the hope that it will be useful in
- * bioinformatics applications, but it is provided "AS IS" and WITHOUT
- * ANY EXPRESS OR IMPLIED WARRANTIES including but not limited to
- * implied warranties of merchantability or fitness for any particular
- * purpose.  For details, see the full text of the license in the file
- * LICENSE.txt.
- *
- * You should have received a copy of the Artistic License 2.0 along with
- * JCVI VICS.  If not, the license can be obtained from
- * "http://www.perlfoundation.org/artistic_license_2_0."
- */
-
 package org.janelia.it.jacs.compute.engine.def;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
@@ -110,7 +87,7 @@ public class Condition implements Serializable {
      * @param actualValue   the value of <code>name</code> in process data at runtime
      * @param expectedValue the value of <code>name</code> in process definition
      * @param operator      the operator to use to make the evaluation
-     * @return
+     * @return boolean to tell comparison truth
      */
     private boolean compareTo(Object actualValue, Object expectedValue, Operator operator) {
         validateComparables(actualValue, expectedValue);
@@ -158,22 +135,22 @@ public class Condition implements Serializable {
      * @return the operation in the condition
      */
     private static Operator getOperator(String condition) {
-        if (condition.indexOf("!=") != -1) {
+        if (condition.contains("!=")) {
             return Operator.NOT_EQUALS;
         }
-        else if (condition.indexOf(">=") != -1) {
+        else if (condition.contains(">=")) {
             return Operator.GREATER_THAN_OR_EQUALS;
         }
-        else if (condition.indexOf("<=") != -1) {
+        else if (condition.contains("<=")) {
             return Operator.LESS_THAN_OR_EQUALS;
         }
-        else if (condition.indexOf("=") != -1) {
+        else if (condition.contains("=")) {
             return Operator.EQUALS;
         }
-        else if (condition.indexOf(">") != -1) {
+        else if (condition.contains(">")) {
             return Operator.GREATER_THAN;
         }
-        else if (condition.indexOf("<") != -1) {
+        else if (condition.contains("<")) {
             return Operator.LESS_THAN;
         }
         else {
@@ -240,6 +217,8 @@ public class Condition implements Serializable {
 
     /**
      * Returns true if the condition value is a boolean
+     * @param value string to check boolean on
+     * @return boolean if string is a boolean
      */
     private static boolean isBoolean(String value) {
         return "true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value);
@@ -247,6 +226,8 @@ public class Condition implements Serializable {
 
     /**
      * Parses the condition value as a number
+     * @param value string to check if a number
+     * @return returns Number object if string passed is a number
      */
     private static Number parseNumber(String value) {
         try {

@@ -1,5 +1,3 @@
-<%@ page import="org.janelia.it.jacs.compute.api.EJBFactory" %>
-<%@ page import="org.janelia.it.jacs.compute.api.ComputeBeanRemote" %>
 <%@ page import="org.janelia.it.jacs.compute.web.MetaGenoPipeController" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"  %>

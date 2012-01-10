@@ -13,7 +13,6 @@ import org.janelia.it.jacs.compute.service.fileDiscovery.FlyScreenDiscoveryServi
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.user_data.User;
 
 import java.util.*;
@@ -25,7 +24,6 @@ import java.util.regex.Pattern;
  * User: murphys
  * Date: 1/4/12
  * Time: 2:37 PM
- * To change this template use File | Settings | File Templates.
  */
 public class ScreenSampleLineCoordinationService implements IService {
 

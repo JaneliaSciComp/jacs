@@ -1,8 +1,5 @@
 package org.janelia.it.jacs.model.tasks.fileDiscovery;
 
-import java.util.List;
-import java.util.Set;
-
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
@@ -11,6 +8,9 @@ import org.janelia.it.jacs.model.vo.BooleanParameterVO;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.model.vo.ParameterVO;
 import org.janelia.it.jacs.model.vo.TextParameterVO;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * Process a single sample through the entire MCFO pipeline. 

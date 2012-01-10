@@ -1,15 +1,15 @@
 package org.janelia.it.jacs.compute.service.v3d;
 
+import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
+import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
+import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.compute.service.utility.ParallelFileProcessingService;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
-
-import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
-import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.service.utility.ParallelFileProcessingService;
 
 /**
  * Compress any number of 3d volumes in parallel. 

@@ -1,9 +1,5 @@
 package org.janelia.it.jacs.compute.service.neuronSeparator;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
@@ -15,6 +11,10 @@ import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
 import org.janelia.it.jacs.model.user_data.neuronSeparator.NeuronSeparatorResultNode;
 import org.janelia.it.jacs.model.vo.ParameterException;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.

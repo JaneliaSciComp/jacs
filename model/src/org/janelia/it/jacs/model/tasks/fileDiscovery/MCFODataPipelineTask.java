@@ -1,14 +1,14 @@
 package org.janelia.it.jacs.model.tasks.fileDiscovery;
 
-import java.util.List;
-import java.util.Set;
-
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.vo.BooleanParameterVO;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.model.vo.ParameterVO;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * Discover files in a set of input directories and create corresponding entities in the database.

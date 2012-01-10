@@ -1,26 +1,3 @@
-/*
- * Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
- *
- * This file is part of JCVI VICS.
- *
- * JCVI VICS is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the Artistic License 2.0.  For
- * details, see the full text of the license in the file LICENSE.txt.  No
- * other rights are granted.  Any and all third party software rights to
- * remain with the original developer.
- *
- * JCVI VICS is distributed in the hope that it will be useful in
- * bioinformatics applications, but it is provided "AS IS" and WITHOUT
- * ANY EXPRESS OR IMPLIED WARRANTIES including but not limited to
- * implied warranties of merchantability or fitness for any particular
- * purpose.  For details, see the full text of the license in the file
- * LICENSE.txt.
- *
- * You should have received a copy of the Artistic License 2.0 along with
- * JCVI VICS.  If not, the license can be obtained from
- * "http://www.perlfoundation.org/artistic_license_2_0."
- */
-
 package org.janelia.it.jacs.compute.engine.util;
 
 import org.apache.log4j.Logger;
@@ -55,7 +32,6 @@ public class JmsUtil {
 
     public static boolean replyToReceivedFromQueue(QueueMessage originalQueueMessage, ActionDef actionToProcess, Throwable e) {
         try {
-            //logActionStatus(originalQueueMessage, e);
             Queue replyToQueue = (Queue) originalQueueMessage.getMessage().getJMSReplyTo();
             if (replyToQueue == null) {
                 return false;
@@ -123,12 +99,12 @@ public class JmsUtil {
      * caller can determine what happened.  If the action has a queueToLinkTo parameter, it also sets the data
      * that the service it's linking to needs.
      *
-     * @param originalQueueMessage
-     * @param processedAction
-     * @param replyMessage
-     * @param e
-     * @throws LauncherException
-     * @throws JMSException
+     * @param originalQueueMessage original message
+     * @param processedAction processed Action
+     * @param replyMessage the reply message
+     * @param e error
+     * @throws LauncherException server error
+     * @throws JMSException JMS error
      */
     private static void prepareReplyMessage(QueueMessage originalQueueMessage, ActionDef processedAction, QueueMessage replyMessage, Throwable e) throws LauncherException, JMSException {
         try {

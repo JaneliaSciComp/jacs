@@ -1,8 +1,5 @@
 package org.janelia.it.jacs.compute.service.entity;
 
-import java.io.File;
-import java.util.List;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
@@ -20,6 +17,9 @@ import org.janelia.it.jacs.model.user_data.entity.AlignmentResultNode;
 import org.janelia.it.jacs.model.user_data.entity.SampleResultNode;
 import org.janelia.it.jacs.model.user_data.entity.SeparationResultNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
+
+import java.io.File;
+import java.util.List;
 
 /**
  * Synchronizes the Samples in the database to the FileNodes on the fileshare.

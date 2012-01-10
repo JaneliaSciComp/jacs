@@ -6,10 +6,10 @@
  */
 package org.janelia.it.jacs.model.ontology.types;
 
-import java.math.BigDecimal;
-
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+
+import java.math.BigDecimal;
 
 /**
  * An precise interval on the real number line. 

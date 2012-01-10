@@ -1,7 +1,5 @@
 package org.janelia.it.jacs.compute.service.common.file;
 
-import java.io.IOException;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -14,6 +12,8 @@ import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.NamedFileNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
+
+import java.io.IOException;
 
 /**
  * A named child of result node.

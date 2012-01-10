@@ -1,14 +1,14 @@
 package org.janelia.it.jacs.model.tasks.utility;
 
-import java.util.List;
-import java.util.Set;
-
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.model.vo.ParameterVO;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * A generic task that can be used for anything. 

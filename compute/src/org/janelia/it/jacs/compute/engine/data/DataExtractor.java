@@ -1,25 +1,3 @@
-/*
- * Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
- *
- * This file is part of JCVI VICS.
- *
- * JCVI VICS is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the Artistic License 2.0.  For
- * details, see the full text of the license in the file LICENSE.txt.  No
- * other rights are granted.  Any and all third party software rights to
- * remain with the original developer.
- *
- * JCVI VICS is distributed in the hope that it will be useful in
- * bioinformatics applications, but it is provided "AS IS" and WITHOUT
- * ANY EXPRESS OR IMPLIED WARRANTIES including but not limited to
- * implied warranties of merchantability or fitness for any particular
- * purpose.  For details, see the full text of the license in the file
- * LICENSE.txt.
- *
- * You should have received a copy of the Artistic License 2.0 along with
- * JCVI VICS.  If not, the license can be obtained from
- * "http://www.perlfoundation.org/artistic_license_2_0."
- */
 
 package org.janelia.it.jacs.compute.engine.data;
 
@@ -48,6 +26,7 @@ public class DataExtractor {
      * @param from       source
      * @param to         destination
      * @param parameters input or output parameters to look for in the source
+     * @throws MissingDataException missing data error
      */
     public static void copyData(IProcessData from, IProcessData to, Set<Parameter> parameters) throws MissingDataException {
         copyPrimaryData(from, to);
@@ -96,6 +75,7 @@ public class DataExtractor {
      *
      * @param from source
      * @param to   destination
+     * @throws MissingDataException missing data error
      */
     private static void copyPrimaryData(IProcessData from, IProcessData to) throws MissingDataException {
         to.setProcessDef(from.getProcessDef());

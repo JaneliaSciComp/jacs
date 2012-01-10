@@ -1,16 +1,16 @@
 package org.janelia.it.jacs.compute.ws;
 
-import javax.ejb.Remote;
-import javax.ejb.Stateless;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
-
 import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
+
+import javax.ejb.Remote;
+import javax.ejb.Stateless;
+import javax.jws.WebParam;
+import javax.jws.WebService;
+import javax.jws.soap.SOAPBinding;
 
 @SOAPBinding(style = SOAPBinding.Style.RPC)
 @Stateless(name = "FlyWorkstationWS")

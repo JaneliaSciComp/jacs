@@ -1,26 +1,3 @@
-/*
- * Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
- *
- * This file is part of JCVI VICS.
- *
- * JCVI VICS is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the Artistic License 2.0.  For
- * details, see the full text of the license in the file LICENSE.txt.  No
- * other rights are granted.  Any and all third party software rights to
- * remain with the original developer.
- *
- * JCVI VICS is distributed in the hope that it will be useful in
- * bioinformatics applications, but it is provided "AS IS" and WITHOUT
- * ANY EXPRESS OR IMPLIED WARRANTIES including but not limited to
- * implied warranties of merchantability or fitness for any particular
- * purpose.  For details, see the full text of the license in the file
- * LICENSE.txt.
- *
- * You should have received a copy of the Artistic License 2.0 along with
- * JCVI VICS.  If not, the license can be obtained from
- * "http://www.perlfoundation.org/artistic_license_2_0."
- */
-
 package org.janelia.it.jacs.compute.engine.def;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
@@ -343,16 +320,6 @@ public abstract class ActionDef implements Serializable {
     }
 
     /**
-     * Returns true if another action wraps this action e.g. process wrapping a sequence
-     * or a sequence wrapping another sequence or a sequence wrapping an operation
-     *
-     * @return true if there's a parent, false otherwise
-     */
-    public boolean hasParent() {
-        return getParentDef() != null;
-    }
-
-    /**
      * Returns the parent definition
      *
      * @return the parent definition
@@ -410,7 +377,7 @@ public abstract class ActionDef implements Serializable {
     /**
      * Returns true if this operation updates the process/task status, false otherwise
      *
-     * @return
+     * @return boolean if status success
      */
     public boolean updateProcessStatusOnSuccess() {
         return statusUpdateType == StatusUpdate.ON_SUCCESS;
@@ -419,19 +386,10 @@ public abstract class ActionDef implements Serializable {
     /**
      * Returns true if this operation updates the process/task status on failure, false otherwise
      *
-     * @return
+     * @return boolean if status failure
      */
     public boolean updateProcessStatusOnFailure() {
         return statusUpdateType == StatusUpdate.ON_FAILURE;
-    }
-
-    /**
-     * Returns true if this operation never updates process status on completion
-     *
-     * @return
-     */
-    public boolean updateProcessStatusNever() {
-        return statusUpdateType == StatusUpdate.NEVER;
     }
 
     /**
@@ -455,6 +413,7 @@ public abstract class ActionDef implements Serializable {
      * was INTERNALLY creating an event, we would get duplicate-event-constraint-violation exceptions
      * even if we checked for pre-existence of event in DAO (because they're running in separate tx)
      * The solution is to move status update functionality to the framework
+     * @param startEvent start event string
      */
     public void setStartEvent(String startEvent) {
         this.startEvent = startEvent;

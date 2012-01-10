@@ -1,34 +1,5 @@
-/*
- * Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
- *
- * This file is part of JCVI VICS.
- *
- * JCVI VICS is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the Artistic License 2.0.  For
- * details, see the full text of the license in the file LICENSE.txt.  No
- * other rights are granted.  Any and all third party software rights to
- * remain with the original developer.
- *
- * JCVI VICS is distributed in the hope that it will be useful in
- * bioinformatics applications, but it is provided "AS IS" and WITHOUT
- * ANY EXPRESS OR IMPLIED WARRANTIES including but not limited to
- * implied warranties of merchantability or fitness for any particular
- * purpose.  For details, see the full text of the license in the file
- * LICENSE.txt.
- *
- * You should have received a copy of the Artistic License 2.0 along with
- * JCVI VICS.  If not, the license can be obtained from
- * "http://www.perlfoundation.org/artistic_license_2_0."
- */
 
 package org.janelia.it.jacs.compute.service.common.grid.submit.sge;
-
-import java.io.*;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.ggf.drmaa.DrmaaException;
@@ -54,6 +25,13 @@ import org.janelia.it.jacs.model.tasks.TaskMessage;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.shared.utils.FileUtil;
+
+import java.io.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * This service submit a job to the Grid.  It's entirely extracted from work done by Sean Murphy
@@ -296,7 +274,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
      * This method will allow us to name the SGE queue directly in the process' definition
      * instead of the properties file
      *
-     * @return
+     * @return SGE queue name
      */
     protected String getSGEQueue() {
         String sgeQueue = (String) processData.getItem("SGEQueue");
@@ -364,8 +342,9 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
     /**
      * If the method returns false no job is submitted to the grid;
      * It isused as a mechanism to prevent useless job submission to the grid
-     *
-     * @return
+     * @param drmaaHelper reference to the helper class for DRMAA
+     * @return boolean whether the job submission preconditions are satisified
+     * @throws Exception error checking preconditions
      */
     protected boolean checkSubmitJobPrecondition(DrmaaHelper drmaaHelper) throws Exception {
         // If required, check the project code

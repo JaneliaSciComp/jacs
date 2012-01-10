@@ -1,9 +1,9 @@
 package org.janelia.it.jacs.model.ontology;
 
-import javax.xml.bind.annotation.*;
-
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+
+import javax.xml.bind.annotation.*;
 
 /**
  * Annotation of an Entity with an Ontology term and possible value.

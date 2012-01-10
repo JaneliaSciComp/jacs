@@ -1,8 +1,5 @@
 package org.janelia.it.jacs.compute.service.entity;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeException;
@@ -15,6 +12,9 @@ import org.janelia.it.jacs.compute.service.fileDiscovery.TilingPattern;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Decides which types of MCFO processing will be run for a Sample based on user preferences and 

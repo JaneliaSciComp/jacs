@@ -1,16 +1,15 @@
 package org.janelia.it.jacs.compute.api;
 
-import java.util.List;
-import java.util.Set;
-
-import javax.ejb.Remote;
-
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
+
+import javax.ejb.Remote;
+import java.util.List;
+import java.util.Set;
 
 @Remote
 public interface AnnotationBeanRemote {

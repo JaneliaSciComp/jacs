@@ -1,8 +1,5 @@
 package org.janelia.it.jacs.compute.service.neuronSeparator;
 
-import java.io.File;
-import java.util.Date;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
@@ -20,6 +17,9 @@ import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTa
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.neuronSeparator.NeuronSeparatorResultNode;
 import org.janelia.it.jacs.shared.utils.SystemCall;
+
+import java.io.File;
+import java.util.Date;
 
 /**
  * Process the results of a Neuron Separation task and create the required entities, symbolic links, and other 
