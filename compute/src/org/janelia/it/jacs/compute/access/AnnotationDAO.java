@@ -185,8 +185,115 @@ public class AnnotationDAO extends ComputeBaseDAO {
      * @throws DaoException
      */
     public void deleteEntityTree(String owner, Entity entity) throws DaoException {
-    	deleteEntityTree(owner, entity, true, false, 0);
+    	//deleteEntityTree(owner, entity, true, false, 0);
+        try {
+            deleteEntityTree2(owner, entity, true, false, 0, true, null);
+        } catch (Exception ex) {
+            throw new DaoException(ex.getMessage(), ex);
+        }
     }
+
+    void getEntitySetFromTree(Entity entity, Set<Long> entityIdSet) throws Exception {
+        if (!entityIdSet.contains(entity.getId())) {
+            entityIdSet.add(entity.getId());
+        }
+        for (EntityData ed : entity.getEntityData()) {
+            Entity child=ed.getChildEntity();
+            if (child!=null && !entityIdSet.contains(child.getId())) {
+                entityIdSet.add(child.getId());
+                getEntitySetFromTree(child, entityIdSet);
+            }
+        }
+    }
+
+    private void deleteEntityTree2(String owner, Entity entity, boolean ignoreRefs, boolean ignoreAncestorRefs, int level,
+                                   boolean allowDeletionOfInternalRefs, Set<Long> internalEntitySet) throws Exception {
+
+        StringBuffer indent = new StringBuffer();
+        for (int i = 0; i < level; i++) {
+            indent.append("  ");
+        }
+
+        // Null check
+        if (entity == null) {
+            _logger.warn(indent + "Cannot delete null entity");
+            return;
+        }
+
+        if (allowDeletionOfInternalRefs && internalEntitySet == null) {
+            // Start of process
+            internalEntitySet = new HashSet<Long>();
+            _logger.info("Calling getEntitySetFromTree for entity=" + entity.getId());
+            getEntitySetFromTree(entity, internalEntitySet);
+            _logger.info("Found " + internalEntitySet.size() + " entities in tree:");
+            for (Long el : internalEntitySet) {
+                Entity e = this.getEntityById(el);
+                _logger.info("id=" + el + " name=" + e.getName());
+            }
+        }
+
+        // Ownership check
+        if (!entity.getUser().getUserLogin().equals(owner)) {
+            _logger.info(indent + "Cannot delete entity because owner (" + entity.getUser().getUserLogin() + ") does not match invoker (" + owner + ")");
+            return;
+        }
+
+        _logger.info(indent + "Deleting " + entity.getName());
+
+        // Reference check - does this entity have more than one parent pointing to it?
+        _logger.info("Evaluating entityId="+entity.getId()+" name="+entity.getName());
+        Set<EntityData> eds = getParentEntityDatas(entity.getId());
+        int parentTotal=eds.size();
+        int internalTotal=0;
+        int topLevelParentTotal=0;
+        for (EntityData refCheckEd : eds) {
+            Entity refCheckParent=refCheckEd.getParentEntity();
+            if (refCheckParent!=null) {
+                _logger.info("Parent entityId="+refCheckParent.getId()+" name="+refCheckParent.getName());
+            }
+            if (level==0 && refCheckParent!=null) {
+                _logger.info("Treating parentEntityId="+refCheckParent.getId()+" name="+refCheckParent.getName()+" as top-level parent");
+                topLevelParentTotal++;
+            } else {
+                if (internalEntitySet!=null && refCheckParent!=null && internalEntitySet.contains(refCheckParent.getId())) {
+                    _logger.info("Parent entityId="+refCheckParent.getId()+" counted as internal");
+                    internalTotal++;
+                }
+            }
+        }
+        int externalTotal=parentTotal-(internalTotal+topLevelParentTotal);
+        _logger.info("Total external (non-internal and non-top-level) parents="+externalTotal);
+
+        if ( (!allowDeletionOfInternalRefs && parentTotal>0 && !ignoreRefs) || (allowDeletionOfInternalRefs && externalTotal>0) ) {
+            _logger.info(indent + "  Cannot delete " + entity.getName() + " because more than one parent is pointing to it. parentTotal="
+                    +parentTotal+" externalTotal="+externalTotal+" internalTotal="+internalTotal);
+            return;
+        }
+
+        // Delete all ancestors first
+        for (EntityData ed : new ArrayList<EntityData>(entity.getEntityData())) {
+            Entity child = ed.getChildEntity();
+            if (child != null) {
+                deleteEntityTree2(owner, child, ignoreAncestorRefs, ignoreAncestorRefs, level + 1, allowDeletionOfInternalRefs, internalEntitySet);
+            }
+            // We have to manually remove the EntityData from its parent, otherwise we get this error:
+            // "deleted object would be re-saved by cascade (remove deleted object from associations)"
+            ed.getParentEntity().getEntityData().remove(ed);
+            getCurrentSession().delete(ed);
+        }
+
+        // Delete all parent EDs
+        for (EntityData ed : eds) {
+            // This ED points to the term to be deleted. We must delete the ED first to avoid violating constraints.
+            ed.getParentEntity().getEntityData().remove(ed);
+            getCurrentSession().delete(ed);
+        }
+
+        // Finally we can delete the entity itself
+        getCurrentSession().delete(entity);
+    }
+
+
     
     private void deleteEntityTree(String owner, Entity entity, boolean ignoreRefs, boolean ignoreAncestorRefs, int level) throws DaoException {
 
