@@ -8,12 +8,12 @@ import org.janelia.it.jacs.web.gwt.common.client.panel.TitledBox;
 import org.janelia.it.jacs.web.gwt.common.client.ui.link.Link;
 import org.janelia.it.jacs.web.gwt.common.client.util.UrlBuilder;
 
-public class ResearchEntryPointsPanel extends TitledBox {
+public class ToolsPanel extends TitledBox {
     protected static final String CANVAS_STYLENAME = "IconPanel";
     protected static final String CANVAS_CORNER_STYLENAME = "IconPanelRounding";
     protected static final String BORDER_COLOR = "#CCCCCC"; // temp until can be set via CSS
 
-    public ResearchEntryPointsPanel() {
+    public ToolsPanel() {
         super("Tools", true);
 
         setWidth("300px"); // min width when contents are hidden

@@ -19,7 +19,8 @@ import org.janelia.it.jacs.web.gwt.common.client.ui.link.Link;
 import org.janelia.it.jacs.web.gwt.common.client.util.HtmlUtils;
 import org.janelia.it.jacs.web.gwt.common.client.util.UrlBuilder;
 import org.janelia.it.jacs.web.gwt.home.client.panel.PipelineListPanel;
-import org.janelia.it.jacs.web.gwt.home.client.panel.ResearchEntryPointsPanel;
+import org.janelia.it.jacs.web.gwt.home.client.panel.ProjectsPanel;
+import org.janelia.it.jacs.web.gwt.home.client.panel.ToolsPanel;
 import org.janelia.it.jacs.web.gwt.home.client.panel.UserSettingsPanel;
 
 public class Home extends BaseEntryPoint {
@@ -33,12 +34,15 @@ public class Home extends BaseEntryPoint {
 
         VerticalPanel mainHomePanel = new VerticalPanel();
         HorizontalPanel subPanel = new HorizontalPanel();
+        subPanel.add(getProjectsPanel());
+        subPanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
         subPanel.add(getEntryPointsPanel()); // Research Entry Points Panel
         subPanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
         subPanel.add(getPipelineListPanel());
         subPanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
-        subPanel.add(getUserSettingsPanel());
         mainHomePanel.add(subPanel);
+        mainHomePanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
+        mainHomePanel.add(getUserSettingsPanel());
         mainHomePanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
         mainHomePanel.add(getRecentActivityPanel()); // Row 2 - My Data, Tutorial and Help panels
 
@@ -52,9 +56,9 @@ public class Home extends BaseEntryPoint {
 //        panel.add(new FeaturedProjectPanel());
 //        panel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
 
-        ResearchEntryPointsPanel entryPointsPanel = new ResearchEntryPointsPanel();
-        TitledBoxActionLinkUtils.addHelpActionLink(entryPointsPanel, new HelpActionLink("help"), RESEARCH_HOME_HELP_LINK_PROP);
-        panel.add(entryPointsPanel);
+        ToolsPanel toolsPanel = new ToolsPanel();
+        TitledBoxActionLinkUtils.addHelpActionLink(toolsPanel, new HelpActionLink("help"), RESEARCH_HOME_HELP_LINK_PROP);
+        panel.add(toolsPanel);
 
         return panel;
     }
@@ -106,6 +110,14 @@ public class Home extends BaseEntryPoint {
         });
 
         return recentActivityPanel;
+    }
+
+    public Widget getProjectsPanel() {
+        HorizontalPanel panel = new HorizontalPanel();
+        ProjectsPanel projectsPanel = new ProjectsPanel();
+        TitledBoxActionLinkUtils.addHelpActionLink(projectsPanel, new HelpActionLink("help"), RESEARCH_HOME_HELP_LINK_PROP);
+        panel.add(projectsPanel);
+        return panel;
     }
 
     private class JobResultsSelectedListener implements JobSelectionListener {
