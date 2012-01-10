@@ -348,7 +348,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     }
     
     public List<Entity> getCommonRootEntitiesByTypeName(String entityTypeName) {
-    	return getCommonRootEntitiesByTypeName(entityTypeName, null);
+    	return getCommonRootEntitiesByTypeName(null, entityTypeName);
     }
     
     public List<Entity> getCommonRootEntitiesByTypeName(String userLogin, String entityTypeName) {
