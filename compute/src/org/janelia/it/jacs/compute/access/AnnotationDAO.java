@@ -263,7 +263,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
         int externalTotal=parentTotal-(internalTotal+topLevelParentTotal);
         _logger.info("Total external (non-internal and non-top-level) parents="+externalTotal);
 
-        if ( (!allowDeletionOfInternalRefs && parentTotal>0 && !ignoreRefs) || (allowDeletionOfInternalRefs && externalTotal>0) ) {
+        if ( (!allowDeletionOfInternalRefs && parentTotal>1 && !ignoreRefs) || (allowDeletionOfInternalRefs && externalTotal>0) ) {
             _logger.info(indent + "  Cannot delete " + entity.getName() + " because more than one parent is pointing to it. parentTotal="
                     +parentTotal+" externalTotal="+externalTotal+" internalTotal="+internalTotal);
             return;
