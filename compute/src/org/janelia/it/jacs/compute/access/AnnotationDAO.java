@@ -1,11 +1,9 @@
 package org.janelia.it.jacs.compute.access;
 
 import org.apache.log4j.Logger;
-import org.hibernate.Criteria;
-import org.hibernate.HibernateException;
-import org.hibernate.Query;
-import org.hibernate.Session;
+import org.hibernate.*;
 import org.hibernate.criterion.Expression;
+import org.hibernate.hql.ast.tree.Statement;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
@@ -16,6 +14,11 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
 import org.janelia.it.jacs.model.user_data.User;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 
 public class AnnotationDAO extends ComputeBaseDAO {
@@ -186,115 +189,221 @@ public class AnnotationDAO extends ComputeBaseDAO {
     public void deleteEntityTree(String owner, Entity entity) throws DaoException {
     	//deleteEntityTree(owner, entity, true, false, 0);
         try {
-            deleteEntityTree2(owner, entity, true, false, 0, true, null);
+            deleteEntityTree3(owner, entity);
         } catch (Exception ex) {
             throw new DaoException(ex.getMessage(), ex);
         }
     }
 
-    private void getEntitySetFromTree(Entity entity, Set<Long> entityIdSet) throws Exception {
+    private void deleteEntityTree3(String owner, Entity entity) throws Exception {
+        Session session = getCurrentSession();
+
+        // First, get the user id
+        StringBuffer hqlUser = new StringBuffer("select clazz from User clazz where clazz.userLogin=?");
+        Query userQuery = session.createQuery(hqlUser.toString()).setString(0, owner);
+        List<User> userList=userQuery.list();
+        if (userList==null || userList.size()!=1) {
+            throw new Exception("Could not find user for userLogin="+owner);
+        }
+        User user=userList.get(0);
+
+        Map<Long,Set<Long[]>> entityMap=new HashMap<Long, Set<Long[]>>();
+        Map<Long,Set<Long>> parentMap=new HashMap<Long, Set<Long>>();
+        getEntityTreeForUserByJdbc(user.getUserId(), entityMap, parentMap);
+
+        // Next, get the sub-entity-graph we care about
+        Set<Long> entitySetCandidatesToDelete=walkEntityMap(entity.getId(), entityMap, null /* exclusion list */);
+
+        // Get the subset which do not have external parents
+        Set<Long> exclusionList=new HashSet<Long>();
+        for (Long candidateId : entitySetCandidatesToDelete) {
+            if (candidateId != entity.getId()) { /* we expect the top-level entity to have external parents but still want to delete it */
+                //_logger.info("Checking external parents of candidateId=" + candidateId);
+                Set<Long> parentSet = parentMap.get(candidateId);
+                boolean shouldExclude = false;
+                for (Long parentId : parentSet) {
+                    //_logger.info("Found parentId=" + parentId);
+                    if (!entitySetCandidatesToDelete.contains(parentId)) {
+                        shouldExclude = true;
+                        break;
+                    }
+                }
+                if (shouldExclude) {
+                    //_logger.info("Marking canidateId=" + candidateId + " for exclusion");
+                    exclusionList.add(candidateId);
+                } else {
+                    //_logger.info("Marking candidateId=" + candidateId + " OK to include");
+                }
+            }
+        }
+        Set<Long> entitySetToDelete=walkEntityMap(entity.getId(), entityMap, exclusionList);
+
+        // We now have our list of entities to delete. First, we need to collect a list
+        // of entityData to delete. We can construct such a list by simply adding the
+        // entity-data children of all the entities-to-delete, and then adding to this
+        // the entity-data pointing-to the top entity.
+        Set<Long> entityDataSetToDelete=new HashSet<Long>();
+        for (Long entityId : entitySetToDelete) {
+            Set<Long[]> edSet = entityMap.get(entityId);
+            if (edSet!=null) {
+                for (Long[] edArr : edSet) {
+                    entityDataSetToDelete.add(edArr[0]);
+                }
+            } else {
+                //_logger.info("Warning: found null edSet for entityId="+entityId);
+            }
+        }
+        Set<Long> topParentSet=parentMap.get(entity.getId());
+        if (topParentSet != null) {
+            for (Long parentEntityId : topParentSet) {
+                //_logger.info("Checking top-level parentId=" + parentEntityId + " for entity data to be deleted");
+                Set<Long[]> edSet = entityMap.get(parentEntityId);
+                for (Long[] edArr : edSet) {
+                    //_logger.info("Found entityData entry id=" + edArr[0] + " childId=" + edArr[1]);
+                    Long childEntityId = edArr[1];
+                    if (childEntityId != null) {
+                        if (childEntityId.longValue() == entity.getId().longValue()) {
+                            //_logger.info("This matches the top-level entity, so including for deletion");
+                            entityDataSetToDelete.add(edArr[0]);
+                        } else {
+                            //_logger.info("This does not match the top-level entity, so excluding");
+                        }
+                    }
+                }
+            }
+        }
+
+        // Now time to actually delete. First the entity-data, then the entities
+        deleteIdSetByJdbc(entityDataSetToDelete, "entityData", "id");
+
+        // debug
+        for (Long entityId : entitySetToDelete) {
+            //_logger.info("Entity for deletion="+entityId);
+            for (Long ei : entityMap.keySet()) {
+                Set<Long[]> childSet = entityMap.get(ei);
+                for (Long[] cl : childSet) {
+                    if (cl[1]!=null && cl[1].longValue()==entityId.longValue()) {
+                        //_logger.info("Found child entityDataId="+cl[0]+" parentEntityId="+ei);
+                    }
+                }
+            }
+        }
+
+
+        deleteIdSetByJdbc(entitySetToDelete, "entity", "id");
+    }
+
+    protected void getEntityTreeForUserByJdbc(Long userId, Map<Long, Set<Long[]>> entityMap, Map<Long, Set<Long>> parentMap) throws Exception   {
+        Connection connection=getJdbcConnection();
+        StringBuffer sql = new StringBuffer("select e.id, ed.id, ed.child_entity_id from entity e, entityData ed where e.user_id="+userId+" and ed.parent_entity_id=e.id");
+        java.sql.Statement statement=connection.createStatement();
+        ResultSet rs=statement.executeQuery(sql.toString());
+        while(rs.next()) {
+            Long entityId=rs.getBigDecimal(1).longValue();
+            Long entityDataId=rs.getBigDecimal(2).longValue();
+            BigDecimal childIdBD=rs.getBigDecimal(3);
+            Long childId=null;
+            if (childIdBD!=null) {
+                childId=childIdBD.longValue();
+            }
+            //_logger.info("TreeResult entityId="+entityId+" entityDataId="+entityDataId+" childId="+(childId==null?"null":childId));
+            Long[] childData=new Long[2];
+            childData[0]=entityDataId;
+            childData[1]=childId;
+            // Handle child direction
+            Set<Long[]> childSet=entityMap.get(entityId);
+            if (childSet==null) {
+                childSet=new HashSet<Long[]>();
+                entityMap.put(entityId, childSet);
+            }
+            childSet.add(childData);
+            // Handle parent direction
+            if (childId != null) {
+                Set<Long> parentSet = parentMap.get(childId);
+                if (parentSet == null) {
+                    parentSet = new HashSet<Long>();
+                    parentMap.put(childId, parentSet);
+                }
+                parentSet.add(entityId);
+            }
+        }
+        statement.close();
+        connection.close();
+    }
+
+    protected void deleteIdSetByJdbc(Set<Long> idSet, String tableName, String identifierColumnName) throws Exception {
+        Connection connection=getJdbcConnection();
+        int batchSize=200;
+        int batchStart=0;
+        Iterator<Long> edIter=idSet.iterator();
+        int deleteCount=0;
+        for (int position=0;position<idSet.size();position++) {
+            if ( (position!=0 && position%batchSize==0) || (position==idSet.size()-1)) {
+                java.sql.Statement statement=connection.createStatement();
+                StringBuffer deleteSqlBuffer=new StringBuffer("DELETE FROM "+tableName+" WHERE "+identifierColumnName+" IN (");
+                if (position==(idSet.size()-1)) {
+                    position++; // to trigger inclusion of all members on last batch
+                }
+                for (int i=batchStart;i<position;i++) {
+                    if (i!=batchStart) {
+                        deleteSqlBuffer.append(", ");
+                    }
+                    deleteSqlBuffer.append(edIter.next());
+                    deleteCount++;
+                }
+                deleteSqlBuffer.append(")");
+                _logger.info("Calling executeUpdate on=" + deleteSqlBuffer.toString());
+                statement.executeUpdate(deleteSqlBuffer.toString());
+                statement.close();
+                batchStart=position;
+            }
+        }
+        if (deleteCount!=idSet.size()) {
+            throw new Exception("Delete count="+deleteCount+" does not match set size="+idSet.size());
+        }
+        connection.commit();
+        connection.close();
+    }
+
+    protected Set<Long> walkEntityMap(Long startEntityId, Map<Long, Set<Long[]>> treeMap, Set<Long> exclusionList) {
+        Set<Long> inclusionList = new HashSet<Long>();
+        if (exclusionList==null) {
+            exclusionList=new HashSet<Long>(); /* empty */
+        }
+        if (!exclusionList.contains(startEntityId)) {
+            inclusionList.add(startEntityId);
+            Set<Long[]> childSet = treeMap.get(startEntityId);
+            if (childSet != null) {
+                for (Long[] childInfo : childSet) {
+                    Long childEntityId = childInfo[1];
+                    if (childEntityId != null && !exclusionList.contains(childEntityId)) {
+                        /* note: this excludes the subtree of the excluded node */
+                        if (!inclusionList.contains(childEntityId))
+                            inclusionList.add(childEntityId);
+                        Set<Long> childList = walkEntityMap(childEntityId, treeMap, exclusionList);
+                        for (Long cl : childList) {
+                            if (!inclusionList.contains(cl) && !exclusionList.contains(cl))
+                                inclusionList.add(cl);
+                        }
+                    }
+                }
+            }
+        }
+        return inclusionList;
+    }
+
+    void getEntitySetFromTree(Entity entity, Set<Long> entityIdSet) throws Exception {
         if (!entityIdSet.contains(entity.getId())) {
             entityIdSet.add(entity.getId());
         }
         for (EntityData ed : entity.getEntityData()) {
             Entity child=ed.getChildEntity();
-            if (child!=null) {
+            if (child!=null && !entityIdSet.contains(child.getId())) {
+                entityIdSet.add(child.getId());
                 getEntitySetFromTree(child, entityIdSet);
             }
         }
     }
-
-    private void deleteEntityTree2(String owner, Entity entity, boolean ignoreRefs, boolean ignoreAncestorRefs, int level,
-                                   boolean allowDeletionOfInternalRefs, Set<Long> internalEntitySet) throws Exception {
-
-    	boolean debugDeletion = false;
-    	
-        StringBuffer indent = new StringBuffer();
-        for (int i = 0; i < level; i++) {
-            indent.append("  ");
-        }
-
-        // Null check
-        if (entity == null) {
-            _logger.warn(indent + "Cannot delete null entity");
-            return;
-        }
-        
-        _logger.info(indent + "Deleting " + entity.getName()+" (id="+entity.getId()+")");
-
-        if (allowDeletionOfInternalRefs && internalEntitySet == null) {
-            // Start of process
-            internalEntitySet = new HashSet<Long>();
-            if (debugDeletion) _logger.info(indent + "Calling getEntitySetFromTree for entity=" + entity.getId());
-            getEntitySetFromTree(entity, internalEntitySet);
-            _logger.info(indent + "Found " + internalEntitySet.size() + " entities in subtree");
-            if (debugDeletion) {
-	            for (Long el : internalEntitySet) {
-	                Entity e = this.getEntityById(el);
-	                _logger.info(indent + "id=" + el + " name=" + e.getName());
-	            }
-            }
-        }
-
-        // Ownership check
-        if (!entity.getUser().getUserLogin().equals(owner)) {
-            _logger.info(indent + "Cannot delete entity because owner (" + entity.getUser().getUserLogin() + ") does not match invoker (" + owner + ")");
-            return;
-        }
-
-        // Reference check - does this entity have more than one parent pointing to it?
-        Set<EntityData> parentEds = getParentEntityDatas(entity.getId());
-        int parentTotal=parentEds.size();
-        int internalTotal=0;
-        int topLevelParentTotal=0;
-        for (EntityData refCheckEd : parentEds) {
-            Entity refCheckParent=refCheckEd.getParentEntity();
-            if (refCheckParent!=null) {
-            	if (debugDeletion) _logger.info(indent + "Parent entityId="+refCheckParent.getId()+" name="+refCheckParent.getName());
-            	
-                if (level==0) {
-                	if (debugDeletion) _logger.info(indent + "Treating parentEntityId="+refCheckParent.getId()+" name="+refCheckParent.getName()+" as top-level parent");
-                    topLevelParentTotal++;
-                } 
-                else if (internalEntitySet!=null && internalEntitySet.contains(refCheckParent.getId())) {
-                	if (debugDeletion) _logger.info(indent + "Parent entityId="+refCheckParent.getId()+" counted as internal");
-                    internalTotal++;
-                }
-            }
-        }
-        
-        int externalTotal = parentTotal-(internalTotal+topLevelParentTotal);
-        if (debugDeletion) _logger.info(indent + "Total external (non-internal and non-top-level) parents="+externalTotal);
-
-        if ( (!allowDeletionOfInternalRefs && parentTotal>1 && !ignoreRefs) || (allowDeletionOfInternalRefs && externalTotal>0) ) {
-        	_logger.info(indent + "Cannot delete " + entity.getName() + " because more than one parent is pointing to it. parentTotal="
-                    +parentTotal+" externalTotal="+externalTotal+" internalTotal="+internalTotal);
-            return;
-        }
-
-        // Delete all ancestors first
-        for (EntityData ed : new ArrayList<EntityData>(entity.getEntityData())) {
-            Entity child = ed.getChildEntity();
-            if (child != null) {
-                deleteEntityTree2(owner, child, ignoreAncestorRefs, ignoreAncestorRefs, level + 1, allowDeletionOfInternalRefs, internalEntitySet);
-            }
-            // We have to manually remove the EntityData from its parent, otherwise we get this error:
-            // "deleted object would be re-saved by cascade (remove deleted object from associations)"
-            ed.getParentEntity().getEntityData().remove(ed);
-            getCurrentSession().delete(ed);
-        }
-
-        // Delete all parent EDs
-        for (EntityData ed : parentEds) {
-            // This ED points to the entity to be deleted. We must delete the ED first to avoid violating constraints.
-            ed.getParentEntity().getEntityData().remove(ed);
-            getCurrentSession().delete(ed);
-        }
-
-        // Finally we can delete the entity itself
-        getCurrentSession().delete(entity);
-    }
-
 
     
     private void deleteEntityTree(String owner, Entity entity, boolean ignoreRefs, boolean ignoreAncestorRefs, int level) throws DaoException {

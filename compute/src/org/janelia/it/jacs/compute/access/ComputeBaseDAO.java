@@ -5,6 +5,7 @@ import org.apache.log4j.Logger;
 import org.hibernate.*;
 import org.hibernate.criterion.Expression;
 import org.janelia.it.jacs.compute.engine.def.ProcessDef;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskMessage;
@@ -16,6 +17,9 @@ import org.janelia.it.jacs.model.user_data.search.SearchResultNode;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import java.math.BigInteger;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.*;
 
 /**
@@ -31,6 +35,21 @@ public class ComputeBaseDAO {
     protected Logger _logger;
     protected SessionFactory sessionFactory;
     Session externalSession;
+
+    public Connection getJdbcConnection() throws Exception {
+        String jdbcDriver=SystemConfigurationProperties.getString("jdbc.driverClassName");
+        String jdbcUrl=SystemConfigurationProperties.getString("jdbc.url");
+        String jdbcUser=SystemConfigurationProperties.getString("jdbc.username");
+        String jdbcPw=SystemConfigurationProperties.getString("jdbc.password");
+        Class.forName(jdbcDriver);
+        Connection connection = DriverManager.getConnection(
+                jdbcUrl,
+                jdbcUser,
+                jdbcPw);
+        connection.setAutoCommit(false);
+        _logger.info("getJdbcConnection() using these parameters: driverClassName="+jdbcDriver+" url="+jdbcUrl+" user="+jdbcUser);
+        return connection;
+    }
 
     public ComputeBaseDAO(Logger logger) {
         getSessionFactory();
