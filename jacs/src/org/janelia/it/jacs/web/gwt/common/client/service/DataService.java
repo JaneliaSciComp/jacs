@@ -68,7 +68,7 @@ public interface DataService extends RemoteService {
     public List<String> getEntityTypeNames() throws GWTServiceException;
     public Integer getNumEntityTypes(String searchString) throws GWTServiceException;
     public List<EntityType> getPagedEntityTypes(String searchString, int startIndex, int numRows, SortArgument[] sortArgs) throws GWTServiceException;
-    public List<GeciImageDirectoryVO> getPotentialResultNodes(String filePath) throws GWTServiceException;
+    public List<GeciImageDirectoryVO> findPotentialResultNodes(String filePath) throws GWTServiceException;
 
     public List<String> getNodeNamesForUserByName(String nodeClassName) throws GWTServiceException;
 }

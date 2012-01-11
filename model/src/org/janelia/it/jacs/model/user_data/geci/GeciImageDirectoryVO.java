@@ -5,6 +5,7 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 import java.io.Serializable;
 
 public class GeciImageDirectoryVO implements IsSerializable, Serializable {
+    private Long nodeId;
     private String _localDirName;
     private String _targetDirectoryPath;
     private boolean processed;
@@ -34,5 +35,13 @@ public class GeciImageDirectoryVO implements IsSerializable, Serializable {
 
     public void setProcessed(boolean processed) {
         this.processed = processed;
+    }
+
+    public Long getNodeId() {
+        return nodeId;
+    }
+
+    public void setNodeId(Long nodeId) {
+        this.nodeId = nodeId;
     }
 }

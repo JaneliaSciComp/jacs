@@ -1,4 +1,3 @@
-
 package org.janelia.it.jacs.web.gwt.common.google.user.client.ui;
 
 import com.google.gwt.user.client.ui.PopupPanel;

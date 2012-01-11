@@ -35,6 +35,7 @@ public class UserDataNodeVO implements IsSerializable, Serializable {
     private Date dateCreated;
     private int numOfSeqences;
     private long seqLength; // sane as strLength, but in the numeric form
+    private boolean isProcessed;
     private String parentTaskStatus;
 
     public UserDataNodeVO() {
@@ -188,6 +189,14 @@ public class UserDataNodeVO implements IsSerializable, Serializable {
         this.sequencePreview = sequencePreview;
     }
 
+    public boolean isProcessed() {
+        return isProcessed;
+    }
+
+    public void setProcessed(boolean processed) {
+        isProcessed = processed;
+    }
+
     public String toString() {
         return "UserDataNodeVO{" +
                 "databaseObjectId='" + databaseObjectId + '\'' +
@@ -201,6 +210,7 @@ public class UserDataNodeVO implements IsSerializable, Serializable {
                 ", dateCreated='" + dateCreated + '\'' +
                 ", sequencePreview='" + sequencePreview + '\'' +
                 ", parentTaskStatus='" + parentTaskStatus + '\'' +
+                ", isProcessed='" + isProcessed + '\'' +
                 '}';
     }
 

@@ -15,6 +15,7 @@ import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.blast.Blastable;
 import org.janelia.it.jacs.model.user_data.geci.GeciImageDirectoryVO;
+import org.janelia.it.jacs.model.user_data.geci.NeuronalAssayAnalysisResultNode;
 import org.janelia.it.jacs.model.user_data.prokAnnotation.ProkAnnotationResultFileNode;
 import org.janelia.it.jacs.server.access.*;
 import org.janelia.it.jacs.server.access.hibernate.DaoException;
@@ -225,10 +226,11 @@ public class DataServiceImpl extends JcviGWTSpringController implements DataServ
         Node returnNode;
         try {
             // Save assume FastaFileNode since already checked possibilities above
-            logger.debug("Calling dataSetAPI.saveOrUpdateFastaFileNode");
-            returnNode = dataSetAPI.saveOrUpdateFastaFileNode(getSessionUser().getUserLogin(), (FastaFileNode) newNode);
-            if (returnNode == null)
-                throw new Exception("returnNode from dataSetAPI.saveOrUpdateFastaFileNode() is null");
+            logger.debug("Calling dataSetAPI.saveOrUpdateNode");
+            returnNode = dataSetAPI.saveOrUpdateNode(getSessionUser().getUserLogin(), newNode);
+            if (returnNode == null) {
+                throw new Exception("returnNode from dataSetAPI.saveOrUpdateNode() is null");
+            }
             logger.debug("Casting returnNode to FastaFileNode");
             FastaFileNode fastaFileNode = (FastaFileNode) returnNode;
             logger.debug("Calling createFastaFileNodeFromTmp()");
@@ -541,32 +543,47 @@ public class DataServiceImpl extends JcviGWTSpringController implements DataServ
     }
 
     // NOTE: This method assumes the fileshare is the same for web server and compute server.  A little risky.  Find a better way to abstract this.
-    public List<GeciImageDirectoryVO> getPotentialResultNodes(String filePath) throws GWTServiceException {
+    public List<GeciImageDirectoryVO> findPotentialResultNodes(String filePath) throws GWTServiceException {
         List<GeciImageDirectoryVO> returnList = new ArrayList<GeciImageDirectoryVO>();
         File rootDir = new File(filePath);
         if (!rootDir.exists()||!rootDir.canRead()) {
             throw new GWTServiceException("Cannot access "+filePath+" or the directory does not exist.");
         }
-        File[] imageResultFolders = rootDir.listFiles(new FilenameFilter() {
+        File[] plateFolders = rootDir.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File file, String s) {
-                return new File(file,s).isDirectory();
+                return new File(file,s).isDirectory() && s.startsWith("P");
             }
         });
-        for (File imageResultFolder : imageResultFolders) {
-            GeciImageDirectoryVO tmpVO = new GeciImageDirectoryVO();
-            tmpVO.setLocalDirName(imageResultFolder.getName());
-            tmpVO.setTargetDirectoryPath(imageResultFolder.getAbsolutePath());
-            File[] imagesDir = imageResultFolder.listFiles(new FilenameFilter() {
-                @Override
-                public boolean accept(File file, String s) {
-                    return s.equalsIgnoreCase("imaging") && new File(file,s).isDirectory();
+        for (File plateFolder : plateFolders) {
+            // Check in the database for a path to this node
+            try {
+                Node plateNode = nodeDAO.getNodeByName(plateFolder.getName());
+                // If we don't know this plate then create the node
+                if (null==plateNode || !(plateNode instanceof NeuronalAssayAnalysisResultNode)) {
+                    NeuronalAssayAnalysisResultNode tmpNode = new NeuronalAssayAnalysisResultNode(getSessionUser().getUserLogin(), null,
+                            plateFolder.getName(), plateFolder.getName(), Node.VISIBILITY_PRIVATE, null);
+                    tmpNode.setPathOverride(plateFolder.getAbsolutePath());
+                    plateNode = dataSetAPI.saveOrUpdateNode(getSessionUser().getUserLogin(), tmpNode);
                 }
-            });
-            if (null!=imagesDir && imagesDir.length>=1) {
-                tmpVO.setProcessed(true);
+                GeciImageDirectoryVO tmpVO = new GeciImageDirectoryVO();
+                tmpVO.setLocalDirName(plateNode.getName());
+                tmpVO.setTargetDirectoryPath(((NeuronalAssayAnalysisResultNode)plateNode).getDirectoryPath());
+                tmpVO.setNodeId(plateNode.getObjectId());
+                File[] imagesDir = plateFolder.listFiles(new FilenameFilter() {
+                    @Override
+                    public boolean accept(File file, String s) {
+                        return s.equalsIgnoreCase("imaging") && new File(file,s).isDirectory();
+                    }
+                });
+                if (null!=imagesDir && imagesDir.length>=1) {
+                    tmpVO.setProcessed(true);
+                }
+                returnList.add(tmpVO);
+            } catch (Exception e) {
+                logger.error("Error checking for node with name "+plateFolder.getName());
+                throw new GWTServiceException("Error looking for NAA Nodes", e);
             }
-            returnList.add(tmpVO);
         }
         return returnList;
     }

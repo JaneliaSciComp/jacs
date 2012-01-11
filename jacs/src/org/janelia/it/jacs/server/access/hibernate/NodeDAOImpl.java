@@ -356,8 +356,8 @@ public class NodeDAOImpl extends DaoBaseImpl implements NodeDAO {
         }
     }
 
-    public void saveOrUpdateFastaFileNode(FastaFileNode targetNode) throws DataAccessException, DaoException {
-        saveOrUpdateObject(targetNode, "NodeDAOImpl - saveOrUpdateFastaFileNode");
+    public void saveOrUpdateNode(Node targetNode) throws DataAccessException, DaoException {
+        saveOrUpdateObject(targetNode, "NodeDAOImpl - saveOrUpdateNode");
     }
 
     public FastaFileNode getFastaFileNode(Long nodeId) throws DataAccessException, DaoException {

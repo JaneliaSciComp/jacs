@@ -14,6 +14,7 @@ import org.janelia.it.jacs.model.tasks.ap16s.AnalysisPipeline16sTask;
 import org.janelia.it.jacs.model.tasks.barcodeDesigner.BarcodeDesignerTask;
 import org.janelia.it.jacs.model.tasks.blast.CreateBlastDatabaseTask;
 import org.janelia.it.jacs.model.tasks.blast.CreateRecruitmentBlastDatabaseTask;
+import org.janelia.it.jacs.model.tasks.geci.NeuronalAssayAnalysisTask;
 import org.janelia.it.jacs.model.tasks.inspect.InspectTask;
 import org.janelia.it.jacs.model.tasks.metageno.MetaGenoAnnotationTask;
 import org.janelia.it.jacs.model.tasks.metageno.MetaGenoOrfCallerTask;
@@ -25,7 +26,6 @@ import org.janelia.it.jacs.model.tasks.rnaSeq.RnaSeqPipelineTask;
 import org.janelia.it.jacs.model.tasks.rnaSeq.UploadRnaSeqReferenceGenomeTask;
 import org.janelia.it.jacs.model.tasks.utility.FtpFileTask;
 import org.janelia.it.jacs.model.tasks.utility.UploadFastqDirectoryTask;
-import org.janelia.it.jacs.model.user_data.FastaFileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.blast.Blastable;
@@ -73,22 +73,19 @@ public class DataSetAPI {
         }
     }
 
-    public FastaFileNode saveOrUpdateFastaFileNode(String targetUser, FastaFileNode targetNode) throws SystemException {
+    public Node saveOrUpdateNode(String targetUser, Node targetNode) throws SystemException {
         try {
             logger.info("Pre: Target Node id is " + targetNode.getObjectId());
             // Associate the user to the node
             targetNode.setOwner(targetUser);
-            dataDao.saveOrUpdateFastaFileNode(targetNode);
+            dataDao.saveOrUpdateNode(targetNode);
             logger.info("Post: Target Node id is " + targetNode.getObjectId());
-            return dataDao.getFastaFileNode(targetNode.getObjectId());
+            return dataDao.getNodeById(targetNode.getObjectId());
         }
         catch (DaoException e) {
             throw new SystemException(e);
         }
         catch (Exception e) {
-            throw new SystemException(e);
-        }
-        catch (OutOfMemoryError e) {
             throw new SystemException(e);
         }
     }
@@ -347,6 +344,9 @@ public class DataSetAPI {
             }
             else if (newTask instanceof RnaSeqPipelineTask) {
                 processName = "RnaSeqPipeline";
+            }
+            else if (newTask instanceof NeuronalAssayAnalysisTask) {
+                processName = "NeuronalAssayAnalysis";
             }
             else if (newTask instanceof InspectTask){
                 processName = "Inspect";

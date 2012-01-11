@@ -60,7 +60,7 @@ public interface DataServiceAsync {
     public void getEntityTypeNames(AsyncCallback asyncCallback);
     public void getNumEntityTypes(String searchString, AsyncCallback asyncCallback);
     public void getPagedEntityTypes(String searchString, int startIndex, int numRows, SortArgument[] sortArgs, AsyncCallback asyncCallback);
-    public void getPotentialResultNodes(String filePath, AsyncCallback asyncCallback);
+    public void findPotentialResultNodes(String filePath, AsyncCallback asyncCallback);
 
     public void getNodeNamesForUserByName(String nodeClassName, AsyncCallback asyncCallback);
 }
