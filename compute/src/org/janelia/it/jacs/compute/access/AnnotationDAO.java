@@ -276,18 +276,18 @@ public class AnnotationDAO extends ComputeBaseDAO {
         // Now time to actually delete. First the entity-data, then the entities
         deleteIdSetByJdbc(entityDataSetToDelete, "entityData", "id");
 
-        // debug
-        for (Long entityId : entitySetToDelete) {
-            //_logger.info("Entity for deletion="+entityId);
-            for (Long ei : entityMap.keySet()) {
-                Set<Long[]> childSet = entityMap.get(ei);
-                for (Long[] cl : childSet) {
-                    if (cl[1]!=null && cl[1].longValue()==entityId.longValue()) {
-                        //_logger.info("Found child entityDataId="+cl[0]+" parentEntityId="+ei);
-                    }
-                }
-            }
-        }
+//        // debug
+//        for (Long entityId : entitySetToDelete) {
+//            //_logger.info("Entity for deletion="+entityId);
+//            for (Long ei : entityMap.keySet()) {
+//                Set<Long[]> childSet = entityMap.get(ei);
+//                for (Long[] cl : childSet) {
+//                    if (cl[1]!=null && cl[1].longValue()==entityId.longValue()) {
+//                        //_logger.info("Found child entityDataId="+cl[0]+" parentEntityId="+ei);
+//                    }
+//                }
+//            }
+//        }
 
 
         deleteIdSetByJdbc(entitySetToDelete, "entity", "id");
