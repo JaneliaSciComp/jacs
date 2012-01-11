@@ -192,14 +192,13 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
-    void getEntitySetFromTree(Entity entity, Set<Long> entityIdSet) throws Exception {
+    private void getEntitySetFromTree(Entity entity, Set<Long> entityIdSet) throws Exception {
         if (!entityIdSet.contains(entity.getId())) {
             entityIdSet.add(entity.getId());
         }
         for (EntityData ed : entity.getEntityData()) {
             Entity child=ed.getChildEntity();
-            if (child!=null && !entityIdSet.contains(child.getId())) {
-                entityIdSet.add(child.getId());
+            if (child!=null) {
                 getEntitySetFromTree(child, entityIdSet);
             }
         }
@@ -208,6 +207,8 @@ public class AnnotationDAO extends ComputeBaseDAO {
     private void deleteEntityTree2(String owner, Entity entity, boolean ignoreRefs, boolean ignoreAncestorRefs, int level,
                                    boolean allowDeletionOfInternalRefs, Set<Long> internalEntitySet) throws Exception {
 
+    	boolean debugDeletion = false;
+    	
         StringBuffer indent = new StringBuffer();
         for (int i = 0; i < level; i++) {
             indent.append("  ");
@@ -218,16 +219,20 @@ public class AnnotationDAO extends ComputeBaseDAO {
             _logger.warn(indent + "Cannot delete null entity");
             return;
         }
+        
+        _logger.info(indent + "Deleting " + entity.getName()+" (id="+entity.getId()+")");
 
         if (allowDeletionOfInternalRefs && internalEntitySet == null) {
             // Start of process
             internalEntitySet = new HashSet<Long>();
-            _logger.info("Calling getEntitySetFromTree for entity=" + entity.getId());
+            if (debugDeletion) _logger.info(indent + "Calling getEntitySetFromTree for entity=" + entity.getId());
             getEntitySetFromTree(entity, internalEntitySet);
-            _logger.info("Found " + internalEntitySet.size() + " entities in tree:");
-            for (Long el : internalEntitySet) {
-                Entity e = this.getEntityById(el);
-                _logger.info("id=" + el + " name=" + e.getName());
+            _logger.info(indent + "Found " + internalEntitySet.size() + " entities in subtree");
+            if (debugDeletion) {
+	            for (Long el : internalEntitySet) {
+	                Entity e = this.getEntityById(el);
+	                _logger.info(indent + "id=" + el + " name=" + e.getName());
+	            }
             }
         }
 
@@ -237,34 +242,32 @@ public class AnnotationDAO extends ComputeBaseDAO {
             return;
         }
 
-        _logger.info(indent + "Deleting " + entity.getName());
-
         // Reference check - does this entity have more than one parent pointing to it?
-        _logger.info("Evaluating entityId="+entity.getId()+" name="+entity.getName());
-        Set<EntityData> eds = getParentEntityDatas(entity.getId());
-        int parentTotal=eds.size();
+        Set<EntityData> parentEds = getParentEntityDatas(entity.getId());
+        int parentTotal=parentEds.size();
         int internalTotal=0;
         int topLevelParentTotal=0;
-        for (EntityData refCheckEd : eds) {
+        for (EntityData refCheckEd : parentEds) {
             Entity refCheckParent=refCheckEd.getParentEntity();
             if (refCheckParent!=null) {
-                _logger.info("Parent entityId="+refCheckParent.getId()+" name="+refCheckParent.getName());
-            }
-            if (level==0 && refCheckParent!=null) {
-                _logger.info("Treating parentEntityId="+refCheckParent.getId()+" name="+refCheckParent.getName()+" as top-level parent");
-                topLevelParentTotal++;
-            } else {
-                if (internalEntitySet!=null && refCheckParent!=null && internalEntitySet.contains(refCheckParent.getId())) {
-                    _logger.info("Parent entityId="+refCheckParent.getId()+" counted as internal");
+            	if (debugDeletion) _logger.info(indent + "Parent entityId="+refCheckParent.getId()+" name="+refCheckParent.getName());
+            	
+                if (level==0) {
+                	if (debugDeletion) _logger.info(indent + "Treating parentEntityId="+refCheckParent.getId()+" name="+refCheckParent.getName()+" as top-level parent");
+                    topLevelParentTotal++;
+                } 
+                else if (internalEntitySet!=null && internalEntitySet.contains(refCheckParent.getId())) {
+                	if (debugDeletion) _logger.info(indent + "Parent entityId="+refCheckParent.getId()+" counted as internal");
                     internalTotal++;
                 }
             }
         }
-        int externalTotal=parentTotal-(internalTotal+topLevelParentTotal);
-        _logger.info("Total external (non-internal and non-top-level) parents="+externalTotal);
+        
+        int externalTotal = parentTotal-(internalTotal+topLevelParentTotal);
+        if (debugDeletion) _logger.info(indent + "Total external (non-internal and non-top-level) parents="+externalTotal);
 
         if ( (!allowDeletionOfInternalRefs && parentTotal>1 && !ignoreRefs) || (allowDeletionOfInternalRefs && externalTotal>0) ) {
-            _logger.info(indent + "  Cannot delete " + entity.getName() + " because more than one parent is pointing to it. parentTotal="
+        	_logger.info(indent + "Cannot delete " + entity.getName() + " because more than one parent is pointing to it. parentTotal="
                     +parentTotal+" externalTotal="+externalTotal+" internalTotal="+internalTotal);
             return;
         }
@@ -282,8 +285,8 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
 
         // Delete all parent EDs
-        for (EntityData ed : eds) {
-            // This ED points to the term to be deleted. We must delete the ED first to avoid violating constraints.
+        for (EntityData ed : parentEds) {
+            // This ED points to the entity to be deleted. We must delete the ED first to avoid violating constraints.
             ed.getParentEntity().getEntityData().remove(ed);
             getCurrentSession().delete(ed);
         }

@@ -1,0 +1,9 @@
+<!-- 
+	Synchronize samples with the latest result entities in the database. 
+-->
+<process name="Sample Image Synchronization" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
+	<sequence>
+		<operation name="Sample Image Sync" processor="org.janelia.it.jacs.compute.service.entity.SampleImageSyncService">
+		</operation>
+    </sequence>
+</process>

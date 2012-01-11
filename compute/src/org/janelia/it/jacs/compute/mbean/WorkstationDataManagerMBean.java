@@ -11,6 +11,8 @@ package org.janelia.it.jacs.compute.mbean;
 public interface WorkstationDataManagerMBean {
     	
     public void runSampleSyncService(String user, Boolean testRun);
+    
+    public void runSampleImageSync(String user);
 
     public void runMCFODataPipeline(String user, String inputDirList, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
 
@@ -31,5 +33,4 @@ public interface WorkstationDataManagerMBean {
     public void deleteEntityById(String entityId);
 
     public void doEntityTreePerformanceTest();
-
 }

@@ -41,9 +41,22 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         	taskParameters.add(new TaskParameter(SampleFileNodeSyncService.PARAM_testRun, Boolean.toString(testRun), null)); 
         	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
         			taskParameters, "sampleSync", "Sample Sync");
-            task.setJobName("MultiColor FlipOut File Discovery Task");
+            task.setJobName("MultiColor FlipOut Sample Fileshare Sync Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("SampleFileNodeSync", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void runSampleImageSync(String user) {
+        try {
+        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
+        			taskParameters, "sampleImageSync", "Sample Image Sync");
+            task.setJobName("MultiColor FlipOut Sample Image Sync Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("SampleImageSync", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }

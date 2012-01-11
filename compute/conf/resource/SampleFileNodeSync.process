@@ -3,11 +3,7 @@
 -->
 <process name="Sample File Node Synchronization" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
 	<sequence>
-	
-	    <!-- Find all the Sample Entities in the database -->
-		<operation name="Entity Tree Traversal" processor="org.janelia.it.jacs.compute.service.entity.SampleFileNodeSyncService">
-		
+		<operation name="Sample File Node Sync" processor="org.janelia.it.jacs.compute.service.entity.SampleFileNodeSyncService">
 		</operation>
-	    
     </sequence>
 </process>

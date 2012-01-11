@@ -76,7 +76,7 @@ public class SampleFileNodeSyncService implements IService {
         	if (e instanceof ServiceException) {
             	throw (ServiceException)e;
             }
-            throw new ServiceException("Error running FileCopyingService:" + e.getMessage(), e);
+            throw new ServiceException("Error running SampleFileNodeSyncService:" + e.getMessage(), e);
         }
     }
     
