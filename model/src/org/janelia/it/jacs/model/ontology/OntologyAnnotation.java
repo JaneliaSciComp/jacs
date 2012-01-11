@@ -67,16 +67,28 @@ public class OntologyAnnotation implements java.io.Serializable {
 		if (!isEmpty(targetEntityId)) {
         	this.targetEntityId = Long.parseLong(targetEntityId);	
         }
-        
+		else {
+			Entity targetEntity = annotation.getChildByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
+			if (targetEntity!=null) this.targetEntityId = targetEntity.getId();
+		}
+		
 		String keyEntityId = annotation.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
 		if (!isEmpty(keyEntityId)) {
         	this.keyEntityId = Long.parseLong(keyEntityId);	
         }
-        
+		else {
+			Entity keyEntity = annotation.getChildByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
+			if (keyEntity!=null) this.keyEntityId = keyEntity.getId();
+		}
+		
 		String valueEntityId = annotation.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_ENTITY_ID);
 		if (!isEmpty(valueEntityId)) {
         	this.valueEntityId = Long.parseLong(valueEntityId);	
         }
+		else {
+			Entity valueEntity = annotation.getChildByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_ENTITY_ID);
+			if (valueEntity!=null) this.valueEntityId = valueEntity.getId();
+		}
     }
 
 	private boolean isEmpty(String s) {
