@@ -43,7 +43,7 @@
     			<input name="INPUT_DIR_LIST"/>
     			<input name="ROOT_ENTITY_NAME"/>
     			<input name="OUTVAR_ENTITY_ID" value="TOP_LEVEL_ENTITY_ID"/>
-    			<input name="SAMPLE_GROUP_SIZE" value="200"/>
+    			<input name="SAMPLE_GROUP_SIZE" value="100"/>
     			<output name="TOP_LEVEL_ENTITY_ID"/>
     			<output name="GROUP_LIST"/>
     			<output name="RESULT_NODE"/>
