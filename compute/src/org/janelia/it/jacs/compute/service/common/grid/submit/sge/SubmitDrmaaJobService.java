@@ -392,29 +392,22 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
     }
 
     protected void collectStdErr() throws WaitForJobException, DaoException {
-//        // Use this hash to avoid identical messages
-//        Set<TaskMessage> stdGridErrorMsgSet = new HashSet<TaskMessage>();
-//        File configDir = new File(getSGEErrorDirectory());
-//        File[] errorFiles = configDir.listFiles(new StdErrorFilenameFilter());
-//        if (logger.isInfoEnabled())
-//            logger.info("Found " + errorFiles.length + " stderr files in dir=" + configDir.getAbsolutePath());
-//        for (File f : errorFiles) {
-//            //if (logger.isInfoEnabled()) logger.info("Reading stderr file " + f.getAbsolutePath());
+        // Use this hash to avoid identical messages
+        File configDir = new File(getSGEErrorDirectory());
+        File[] errorFiles = configDir.listFiles(new StdErrorFilenameFilter());
+        if (logger.isInfoEnabled())
+            logger.info("Found " + errorFiles.length + " stderr files in dir=" + configDir.getAbsolutePath());
+        int numBytes = 0;
+        for (File f : errorFiles) {
+        	numBytes += f.length();
+            //if (logger.isInfoEnabled()) logger.info("Reading stderr file " + f.getAbsolutePath());
 //            if (f.length() > 0) {
 //                try {
 //                    BufferedReader br = new BufferedReader(new FileReader(f));
 //                    try {
 //                        String line;
-//                        int maxCount = 0;
 //                        while ((line = br.readLine()) != null) {
-//                            stdGridErrorMsgSet.add(new TaskMessage(this.task, line));
-//                            maxCount++;
-//                            // Don't try to grab every single line.  OOM != your friend.
-//                            if (20 <= maxCount) {
-//                                stdGridErrorMsgSet.add(new TaskMessage(this.task, "More errors, have someone check the file directly..."));
-//                                EJBFactory.getLocalComputeBean().saveTaskMessages(task.getObjectId(), stdGridErrorMsgSet);
-//                                return;
-//                            }
+//                            numLines++;
 //                        }
 //                    }
 //                    finally {
@@ -425,10 +418,11 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
 //                    throw new WaitForJobException("Error reading file " + f.getAbsolutePath());
 //                }
 //            }
-//        }
-//        if (stdGridErrorMsgSet.size() > 0) {
-//            EJBFactory.getLocalComputeBean().saveTaskMessages(task.getObjectId(), stdGridErrorMsgSet);
-//        }
+        }
+        if (numBytes > 0) {
+        	String note = numBytes+" bytes of output were written to stderr files in dir="+configDir.getAbsolutePath();
+            EJBFactory.getLocalComputeBean().addTaskNote(task.getObjectId(), note);
+        }
     }
 
     public int getJobTimeoutSeconds() {
