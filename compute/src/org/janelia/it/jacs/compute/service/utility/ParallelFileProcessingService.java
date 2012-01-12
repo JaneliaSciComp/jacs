@@ -312,11 +312,32 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
     		throw new MissingDataException(getGridServicePrefixName()+" core dumped for "+resultFileNode.getDirectoryPath());
     	}
 
-    	for(File outputFile : outputFiles) {
-        	if (!outputFile.exists()) {
-        		throw new MissingDataException(getGridServicePrefixName()+" missing output file: "+outputFile.getAbsolutePath());
-        	}
+        int outputFileCheckTries=0;
+        int maxOutputFileCheckTries=3;
+        List<File> missingFiles=new ArrayList<File>();
+        while(outputFileCheckTries<maxOutputFileCheckTries) {
+            missingFiles.clear();
+    	    for(File outputFile : outputFiles) {
+                if (!outputFile.exists()) {
+                    missingFiles.add(outputFile);
+                }
+            }
+            if (missingFiles.size()>0) {
+                logger.info("Warning: could not find these files during try="+outputFileCheckTries+" out of "+maxOutputFileCheckTries);
+                for (File mf : missingFiles) {
+                    logger.info("missing file: "+mf.getAbsolutePath());
+                }
+                outputFileCheckTries++;
+                try { Thread.sleep(2000); } catch (Exception e) {} // 2-seconds
+            } else {
+                break;
+            }
     	}
+        if (missingFiles.size()>0) {
+            StringBuffer sb=new StringBuffer();
+            for (File f : missingFiles) sb.append(", "+ f.getAbsolutePath());
+            throw new MissingDataException(getGridServicePrefixName()+" missing output files: "+sb.toString());
+        }
 	}
 
     private String[] getFilesMatching(File dir, final String regexPattern) {
