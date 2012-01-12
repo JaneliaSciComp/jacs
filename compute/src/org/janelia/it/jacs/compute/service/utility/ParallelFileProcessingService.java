@@ -328,7 +328,7 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
                     logger.info("missing file: "+mf.getAbsolutePath());
                 }
                 outputFileCheckTries++;
-                try { Thread.sleep(2000); } catch (Exception e) {} // 2-seconds
+                try { Thread.sleep(5000); } catch (Exception e) {} // 5-seconds
             } else {
                 break;
             }
