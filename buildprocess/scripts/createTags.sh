@@ -8,12 +8,12 @@ if [ ! $1 ]; then
     echo "Specify a branch version"
     exit;
 fi
-if [ ! $1 ]; then
+if [ ! $2 ]; then
     echo "Specify a tag version"
     exit;
 fi
 FWVER=$1
-TAGVER=$1
+TAGVER=$2
 
 svn copy https://svn.janelia.org/penglab/projects/vaa3d/branches/FlySuite_${FWVER} https://svn.janelia.org/penglab/projects/vaa3d/tags/FlySuite_${TAGVER} -m "Creating a tag for release ${TAGVER} from branch ${FWVER}"
 
