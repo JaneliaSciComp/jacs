@@ -1,9 +1,16 @@
 package org.janelia.it.jacs.compute.access;
 
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.util.*;
+
 import org.apache.log4j.Logger;
-import org.hibernate.*;
+import org.hibernate.Criteria;
+import org.hibernate.HibernateException;
+import org.hibernate.Query;
+import org.hibernate.Session;
 import org.hibernate.criterion.Expression;
-import org.hibernate.hql.ast.tree.Statement;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
@@ -13,13 +20,6 @@ import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
 import org.janelia.it.jacs.model.user_data.User;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
 
 public class AnnotationDAO extends ComputeBaseDAO {
 
@@ -189,13 +189,14 @@ public class AnnotationDAO extends ComputeBaseDAO {
     public void deleteEntityTree(String owner, Entity entity) throws DaoException {
     	//deleteEntityTree(owner, entity, true, false, 0);
         try {
-            deleteEntityTree3(owner, entity);
+        	// TODO: this should try the old method first, and if the tree is large, abort and use this:
+            deleteLargeEntityTree(owner, entity);
         } catch (Exception ex) {
             throw new DaoException(ex.getMessage(), ex);
         }
     }
 
-    private void deleteEntityTree3(String owner, Entity entity) throws Exception {
+    private void deleteLargeEntityTree(String owner, Entity entity) throws Exception {
         Session session = getCurrentSession();
 
         // First, get the user id
@@ -210,10 +211,15 @@ public class AnnotationDAO extends ComputeBaseDAO {
         Map<Long,Set<Long[]>> entityMap=new HashMap<Long, Set<Long[]>>();
         Map<Long,Set<Long>> parentMap=new HashMap<Long, Set<Long>>();
         getEntityTreeForUserByJdbc(user.getUserId(), entityMap, parentMap);
-
+//        _logger.info("Built entity graph for user "+owner+". entityMap.size="+entityMap.size()+" parentMap.size="+parentMap.size());
+        
         // Next, get the sub-entity-graph we care about
-        Set<Long> entitySetCandidatesToDelete=walkEntityMap(entity.getId(), entityMap, null /* exclusion list */);
+        Set<Long> entitySetCandidatesToDelete=walkEntityMap(entity.getId(), entityMap, new HashSet<Long>());
 
+//        for(Long id : entitySetCandidatesToDelete) {
+//        	_logger.info("entitySetCandidatesToDelete contains "+id);
+//        }
+        
         // Get the subset which do not have external parents
         Set<Long> exclusionList=new HashSet<Long>();
         for (Long candidateId : entitySetCandidatesToDelete) {
@@ -229,7 +235,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
                     }
                 }
                 if (shouldExclude) {
-                    //_logger.info("Marking canidateId=" + candidateId + " for exclusion");
+                    //_logger.info("Marking candidateId=" + candidateId + " for exclusion");
                     exclusionList.add(candidateId);
                 } else {
                     //_logger.info("Marking candidateId=" + candidateId + " OK to include");
@@ -259,80 +265,103 @@ public class AnnotationDAO extends ComputeBaseDAO {
                 //_logger.info("Checking top-level parentId=" + parentEntityId + " for entity data to be deleted");
                 Set<Long[]> edSet = entityMap.get(parentEntityId);
                 for (Long[] edArr : edSet) {
-                    //_logger.info("Found entityData entry id=" + edArr[0] + " childId=" + edArr[1]);
+                    //_logger.info("  Found entityData entry id=" + edArr[0] + " childId=" + edArr[1]);
                     Long childEntityId = edArr[1];
                     if (childEntityId != null) {
                         if (childEntityId.longValue() == entity.getId().longValue()) {
-                            //_logger.info("This matches the top-level entity, so including for deletion");
+                            //_logger.info("    This matches the top-level entity, so including for deletion");
                             entityDataSetToDelete.add(edArr[0]);
-                        } else {
-                            //_logger.info("This does not match the top-level entity, so excluding");
+                        } 
+                        else if (entitySetToDelete.contains(childEntityId.longValue())) {
+                            //_logger.info("    This matches an internal node, so including for deletion");
+                            entityDataSetToDelete.add(edArr[0]);
+                        } 
+                        else {
+                            //_logger.info("    This does not match the top-level entity or any internal entity, so excluding");
                         }
                     }
                 }
             }
         }
 
-        // Now time to actually delete. First the entity-data, then the entities
-        deleteIdSetByJdbc(entityDataSetToDelete, "entityData", "id");
-
-//        // debug
+        // debug
 //        for (Long entityId : entitySetToDelete) {
-//            //_logger.info("Entity for deletion="+entityId);
+//            _logger.info("Entity for deletion="+entityId);
 //            for (Long ei : entityMap.keySet()) {
 //                Set<Long[]> childSet = entityMap.get(ei);
 //                for (Long[] cl : childSet) {
 //                    if (cl[1]!=null && cl[1].longValue()==entityId.longValue()) {
-//                        //_logger.info("Found child entityDataId="+cl[0]+" parentEntityId="+ei);
+//                        _logger.info("Found child entityDataId="+cl[0]+" parentEntityId="+ei);
 //                    }
 //                }
 //            }
 //        }
 
-
-        deleteIdSetByJdbc(entitySetToDelete, "entity", "id");
-    }
-
-    protected void getEntityTreeForUserByJdbc(Long userId, Map<Long, Set<Long[]>> entityMap, Map<Long, Set<Long>> parentMap) throws Exception   {
-        Connection connection=getJdbcConnection();
-        StringBuffer sql = new StringBuffer("select e.id, ed.id, ed.child_entity_id from entity e, entityData ed where e.user_id="+userId+" and ed.parent_entity_id=e.id");
-        java.sql.Statement statement=connection.createStatement();
-        ResultSet rs=statement.executeQuery(sql.toString());
-        while(rs.next()) {
-            Long entityId=rs.getBigDecimal(1).longValue();
-            Long entityDataId=rs.getBigDecimal(2).longValue();
-            BigDecimal childIdBD=rs.getBigDecimal(3);
-            Long childId=null;
-            if (childIdBD!=null) {
-                childId=childIdBD.longValue();
-            }
-            //_logger.info("TreeResult entityId="+entityId+" entityDataId="+entityDataId+" childId="+(childId==null?"null":childId));
-            Long[] childData=new Long[2];
-            childData[0]=entityDataId;
-            childData[1]=childId;
-            // Handle child direction
-            Set<Long[]> childSet=entityMap.get(entityId);
-            if (childSet==null) {
-                childSet=new HashSet<Long[]>();
-                entityMap.put(entityId, childSet);
-            }
-            childSet.add(childData);
-            // Handle parent direction
-            if (childId != null) {
-                Set<Long> parentSet = parentMap.get(childId);
-                if (parentSet == null) {
-                    parentSet = new HashSet<Long>();
-                    parentMap.put(childId, parentSet);
-                }
-                parentSet.add(entityId);
-            }
+        // Do this in a transaction so that we're not left with orphans if things go wrong
+        Connection connection = null;
+        try {
+        	connection = getJdbcConnection();
+        	connection.setAutoCommit(false);
+            // Now time to actually delete. First the entity-data, then the entities
+            deleteIdSetByJdbc(connection, entityDataSetToDelete, "entityData", "id");
+            deleteIdSetByJdbc(connection, entitySetToDelete, "entity", "id");	
         }
-        statement.close();
-        connection.close();
+        catch (Exception e) {
+        	connection.rollback();
+        	throw e;
+        }
+        finally {
+            connection.commit();
+            connection.close();
+        }
     }
 
-    protected void deleteIdSetByJdbc(Set<Long> idSet, String tableName, String identifierColumnName) throws Exception {
-        Connection connection=getJdbcConnection();
+    protected void getEntityTreeForUserByJdbc(Long userId, Map<Long, Set<Long[]>> entityMap, Map<Long, Set<Long>> parentMap) throws Exception {
+    	Connection connection=null;
+    	java.sql.Statement statement=null;
+    	try {
+	        connection=getJdbcConnection();
+	        StringBuffer sql = new StringBuffer("select e.id, ed.id, ed.child_entity_id from entity e, entityData ed where e.user_id="+userId+" and ed.parent_entity_id=e.id");
+	        statement=connection.createStatement();
+	        ResultSet rs=statement.executeQuery(sql.toString());
+	        while(rs.next()) {
+	            Long entityId=rs.getBigDecimal(1).longValue();
+	            Long entityDataId=rs.getBigDecimal(2).longValue();
+	            BigDecimal childIdBD=rs.getBigDecimal(3);
+	            Long childId=null;
+	            if (childIdBD!=null) {
+	                childId=childIdBD.longValue();
+	            }
+//	            _logger.info("TreeResult entityId="+entityId+" entityDataId="+entityDataId+" childId="+(childId==null?"null":childId));
+	            Long[] childData=new Long[2];
+	            childData[0]=entityDataId;
+	            childData[1]=childId;
+	            // Handle child direction
+	            Set<Long[]> childSet=entityMap.get(entityId);
+	            if (childSet==null) {
+	                childSet=new HashSet<Long[]>();
+	                entityMap.put(entityId, childSet);
+	            }
+	            childSet.add(childData);
+	            // Handle parent direction
+	            if (childId != null) {
+	                Set<Long> parentSet = parentMap.get(childId);
+	                if (parentSet == null) {
+	                    parentSet = new HashSet<Long>();
+	                    parentMap.put(childId, parentSet);
+	                }
+	                parentSet.add(entityId);
+	            }
+	        }
+    	}
+        finally {
+            statement.close();
+            connection.close();
+        }
+        
+    }
+
+    protected void deleteIdSetByJdbc(Connection connection, Set<Long> idSet, String tableName, String identifierColumnName) throws Exception {
         int batchSize=200;
         int batchStart=0;
         Iterator<Long> edIter=idSet.iterator();
@@ -361,17 +390,18 @@ public class AnnotationDAO extends ComputeBaseDAO {
         if (deleteCount!=idSet.size()) {
             throw new Exception("Delete count="+deleteCount+" does not match set size="+idSet.size());
         }
-        connection.commit();
-        connection.close();
     }
 
     protected Set<Long> walkEntityMap(Long startEntityId, Map<Long, Set<Long[]>> treeMap, Set<Long> exclusionList) {
-        Set<Long> inclusionList = new HashSet<Long>();
-        if (exclusionList==null) {
-            exclusionList=new HashSet<Long>(); /* empty */
-        }
-        if (!exclusionList.contains(startEntityId)) {
-            inclusionList.add(startEntityId);
+    	return walkEntityMap(startEntityId, treeMap, exclusionList, new HashSet<Long>());
+    }
+    
+    protected Set<Long> walkEntityMap(Long startEntityId, Map<Long, Set<Long[]>> treeMap, Set<Long> exclusionList, Set<Long> visited) {
+    	_logger.info("walkEntityMap startEntityId="+startEntityId+" exclusionList.size="+exclusionList.size()+" visited.size="+visited.size());
+    	Set<Long> inclusionList = new HashSet<Long>();
+        if (!exclusionList.contains(startEntityId) && !visited.contains(startEntityId)) {
+        	visited.add(startEntityId); // Let's not visit it again since we've seen it already
+        	inclusionList.add(startEntityId);
             Set<Long[]> childSet = treeMap.get(startEntityId);
             if (childSet != null) {
                 for (Long[] childInfo : childSet) {
@@ -380,7 +410,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
                         /* note: this excludes the subtree of the excluded node */
                         if (!inclusionList.contains(childEntityId))
                             inclusionList.add(childEntityId);
-                        Set<Long> childList = walkEntityMap(childEntityId, treeMap, exclusionList);
+                        Set<Long> childList = walkEntityMap(childEntityId, treeMap, exclusionList, visited);
                         for (Long cl : childList) {
                             if (!inclusionList.contains(cl) && !exclusionList.contains(cl))
                                 inclusionList.add(cl);
@@ -1133,6 +1163,23 @@ public class AnnotationDAO extends ComputeBaseDAO {
         return query.list();
     }
     
+    public Entity createEntity(String userLogin, String entityTypeName, String entityName) throws ComputeException {
+    	if (entityTypeName==null) throw new ComputeException("Error creating entity with null type");
+        User owner = getUserByName(userLogin);
+        Entity entity = newEntity(entityTypeName, entityName, owner);
+        if (entity.getEntityType()==null) throw new ComputeException("Error creating entity with unknown entity type: "+entityTypeName);
+        saveOrUpdate(entity);
+        return entity;
+    }
+
+    public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName) throws ComputeException {
+    	if (attrName==null) throw new ComputeException("Error adding entity child with null attribute name");
+        EntityData ed = parent.addChildEntity(entity, attrName);
+        ed.setOrderIndex(index);
+        saveOrUpdate(ed);
+        return ed;
+    }
+    
     public Entity createOntologyRoot(String userLogin, String rootName) throws ComputeException {
         
         User tmpUser = getUserByName(userLogin);
@@ -1536,14 +1583,16 @@ public class AnnotationDAO extends ComputeBaseDAO {
         return attrByName.get(attrName);	
     }
     
-    private Entity newEntity(String entityTypeName, String value, User owner) {
+    private Entity newEntity(String entityTypeName, String name, User owner) {
+    	Date date = new Date();
         EntityType tmpType = getEntityTypeByName(entityTypeName);
-        return new Entity(null, value, owner, null, tmpType, new Date(), new Date(), null);	
+        return new Entity(null, name, owner, null, tmpType, date, date, new HashSet<EntityData>());	
     }
     
     private EntityData newData(Entity parent, String attrName, User owner) {
-        EntityAttribute ontologyTypeAttribute = getEntityAttributeByName(attrName);
-        return new EntityData(null, ontologyTypeAttribute, parent, null, owner, null, new Date(), new Date(), null);
+    	Date date = new Date();
+        EntityAttribute attribute = getEntityAttributeByName(attrName);
+        return new EntityData(null, attribute, parent, null, owner, null, date, date, null);
     }
     
 }

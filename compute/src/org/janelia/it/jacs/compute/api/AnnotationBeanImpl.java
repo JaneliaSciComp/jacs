@@ -265,6 +265,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
 	
     public Entity saveOrUpdateEntity(Entity entity) throws ComputeException {
         try {
+        	entity.setUpdatedDate(new Date());
             _annotationDAO.saveOrUpdate(entity);
             return entity;
         } catch (DaoException e) {
@@ -275,6 +276,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
 
     public EntityData saveOrUpdateEntityData(EntityData newData) throws ComputeException {
         try {
+        	newData.setUpdatedDate(new Date());
             _annotationDAO.saveOrUpdate(newData);
             return newData;
         } catch (DaoException e) {
@@ -283,6 +285,24 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
     }
 
+    public Entity createEntity(String userLogin, String entityTypeName, String entityName) throws ComputeException {
+        try {
+            return _annotationDAO.createEntity(userLogin, entityTypeName, entityName);
+        } catch (DaoException e) {
+            _logger.error("Error trying to create entity");
+            throw new ComputeException("Error trying to create entity",e);
+        }
+    }
+
+    public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName) throws ComputeException {
+        try {
+            return _annotationDAO.addEntityToParent(parent, entity, index, attrName);
+        } catch (DaoException e) {
+            _logger.error("Error trying to add entity to parent");
+            throw new ComputeException("Error trying to add entity to parent",e);
+        }
+    }
+    
     public Entity getEntityById(Long id) {
         try {
             return _annotationDAO.getEntityById(""+id);
@@ -330,7 +350,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             return _annotationDAO.getUserEntityById(userLogin, entityId);
         }
         catch (DaoException e) {
-            _logger.error("Error trying to get the entities of id "+entityId+" for user "+userLogin);
+            _logger.error("Error trying to get the entities of id "+entityId+" for user "+userLogin, e);
         }
         return null;
     }
@@ -342,7 +362,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             return returnList;
         }
         catch (DaoException e) {
-            _logger.error("Error trying to get the entity types");
+            _logger.error("Error trying to get the entity types", e);
         }
         return null;
     }
@@ -356,7 +376,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             return _annotationDAO.getUserCommonRoots(userLogin, entityTypeName);
         }
         catch (DaoException e) {
-            _logger.error("Error trying to get the entities of type "+entityTypeName);
+            _logger.error("Error trying to get the entities of type "+entityTypeName, e);
         }
         return null;
     }
@@ -368,7 +388,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             return returnList;
         }
         catch (DaoException e) {
-            _logger.error("Error trying to get the entities of type "+entityTypeName);
+            _logger.error("Error trying to get the entities of type "+entityTypeName, e);
         }
         return null;
     }
@@ -377,7 +397,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         try {
             _annotationDAO.setupEntityTypes();
         } catch (DaoException e) {
-            _logger.error("Error calling annotationDAO.setupEntityTypes()");
+            _logger.error("Error calling annotationDAO.setupEntityTypes()",e);
         }
     }
 
@@ -385,7 +405,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         try {
             return _annotationDAO.getEntitiesByName(name);
         } catch (DaoException e) {
-            _logger.error("Error trying to get EntityType by name = " + name);
+            _logger.error("Error trying to get EntityType by name = " + name, e);
         }
         return null;
     }
@@ -394,7 +414,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
          try {
             return _annotationDAO.deleteEntityById(entityId);
         } catch (DaoException e) {
-            _logger.error("Error trying to get delete Entity id="+entityId);
+            _logger.error("Error trying to get delete Entity id="+entityId, e);
         }
         return false;
     }
@@ -416,7 +436,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             return _annotationDAO.getParentEntities(entityId);
         } 
         catch (DaoException e) {
-            _logger.error("Error trying to get parent entities for id="+entityId+" message: "+e.getMessage());
+            _logger.error("Error trying to get parent entities for id="+entityId, e);
         }
         return null;
     }
@@ -426,7 +446,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             return _annotationDAO.getChildEntities(entityId);
         } 
         catch (DaoException e) {
-            _logger.error("Error trying to get child entities for id="+entityId+" message: "+e.getMessage());
+            _logger.error("Error trying to get child entities for id="+entityId, e);
         }
         return null;
     }
@@ -437,7 +457,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             return _annotationDAO.getParentEntityDatas(entityId);
         } 
         catch (DaoException e) {
-            _logger.error("Error trying to get parent entity data for id="+entityId+" message: "+e.getMessage());
+            _logger.error("Error trying to get parent entity data for id="+entityId, e);
         }
         return null;
     }

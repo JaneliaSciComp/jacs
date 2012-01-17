@@ -16,6 +16,9 @@ public interface AnnotationBeanRemote {
 
     public Entity saveOrUpdateEntity(Entity entity) throws ComputeException;
     public EntityData saveOrUpdateEntityData(EntityData newData) throws ComputeException;
+    public Entity createEntity(String userLogin, String entityTypeName, String entityName) throws ComputeException;
+    public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName) throws ComputeException;
+    
     public EntityType getEntityTypeByName(String name);
 	public EntityAttribute getEntityAttributeByName(String name);
     public Set<Entity> getEntitiesByName(String name);

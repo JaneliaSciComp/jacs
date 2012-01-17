@@ -1,11 +1,13 @@
 package org.janelia.it.jacs.shared.utils;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import org.hibernate.Hibernate;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
-
-import java.util.Collection;
 
 /**
  * Utilities for dealing with Entities.
@@ -76,5 +78,32 @@ public class EntityUtils {
     		}	
     	}
     	return null;
+    }
+    
+    public static EntityData removeChild(Entity entity, Entity child) {
+		EntityData toDelete = null;
+		for(EntityData ed : entity.getEntityData()) {
+			if (ed.getChildEntity() != null && ed.getChildEntity().getId().equals(child.getId())) {
+				toDelete = ed;
+			}
+		}
+		if (toDelete == null) {
+			System.out.println("Could not find EntityData to delete for "+child.getName());
+			return null;
+		}
+		else {
+			entity.getEntityData().remove(toDelete);
+			return toDelete;
+		}
+    }
+
+    public static List<EntityData> getOrderedEntityDataOfType(Entity entity, String attrName) {
+        List<EntityData> items = new ArrayList<EntityData>();
+        for (EntityData entityData : entity.getOrderedEntityData()) {
+            if (attrName==null || attrName.equals(entityData.getEntityAttribute().getName())) {
+                items.add(entityData);
+            }
+        }
+        return items;
     }
 }
