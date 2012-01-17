@@ -151,6 +151,8 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
                 screenSampleEntity = EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(screenSampleEntity);
                 logger.info("Created new Screen Sample " + key + " id=" + screenSampleEntity.getId());
                 addToParent(dateFolder, screenSampleEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
+            } else {
+                logger.info("Re-using incomplete Screen Sample " + key +" id="+screenSampleEntity.getId());
             }
             String[] alignmentScores = getAlignmentScoresFromQualityFile(screenSample.QualityCsvPath);
             addStackToScreenSample(screenSampleEntity, screenSample, alignmentScores);
