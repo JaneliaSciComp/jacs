@@ -30,9 +30,9 @@
         <!-- Database connection settings -->
         <property name="connection.driver_class">com.mysql.jdbc.Driver</property>
 
-        <property name="connection.url">jdbc:mysql://dev-db:3306/flyportal</property>
-        <property name="connection.username">flyportalApp</property>
-        <property name="connection.password">flyp0rt@lApp</property>
+        <property name="connection.url">jdbc:mysql://clustrix:3306/flyportal</property>
+        <property name="connection.username">val_flyportalApp</property>
+        <property name="connection.password">v@l_flyp0rt@lApp</property>
 
         <!-- JDBC connection pool (use the built-in) -->
         <property name="connection.pool_size">1</property>
