@@ -47,6 +47,7 @@ public class SubversionParser {
             extensionList.add(".htm");
             extensionList.add(".xhtml");
             extensionList.add(".shtml");
+            extensionList.add(".m");
             extensionList.add(".py");
             extensionList.add(".pl");
             extensionList.add(".php");
