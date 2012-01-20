@@ -422,6 +422,9 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     public boolean deleteEntityTree(String userLogin, long entityId) throws ComputeException {
     	try {
             Entity entity = _annotationDAO.getEntityById(""+entityId);
+            if (entity==null) {
+            	throw new Exception("Entity not found: "+entityId);
+            }
     		_annotationDAO.deleteEntityTree(userLogin, entity);
     		return true;
     	}

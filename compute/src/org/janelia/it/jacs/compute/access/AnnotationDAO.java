@@ -26,6 +26,8 @@ public class AnnotationDAO extends ComputeBaseDAO {
     private static final Map<String, EntityType> entityByName = Collections.synchronizedMap(new HashMap<String, EntityType>());
     private static final Map<String, EntityAttribute> attrByName = Collections.synchronizedMap(new HashMap<String, EntityAttribute>());
 
+    private boolean debugDeletions = true;
+    
     public AnnotationDAO(Logger logger) {
         super(logger);
     }
@@ -211,34 +213,36 @@ public class AnnotationDAO extends ComputeBaseDAO {
         Map<Long,Set<Long[]>> entityMap=new HashMap<Long, Set<Long[]>>();
         Map<Long,Set<Long>> parentMap=new HashMap<Long, Set<Long>>();
         getEntityTreeForUserByJdbc(user.getUserId(), entityMap, parentMap);
-//        _logger.info("Built entity graph for user "+owner+". entityMap.size="+entityMap.size()+" parentMap.size="+parentMap.size());
+        if (debugDeletions) _logger.info("Built entity graph for user "+owner+". entityMap.size="+entityMap.size()+" parentMap.size="+parentMap.size());
         
         // Next, get the sub-entity-graph we care about
         Set<Long> entitySetCandidatesToDelete=walkEntityMap(entity.getId(), entityMap, new HashSet<Long>());
-
-//        for(Long id : entitySetCandidatesToDelete) {
-//        	_logger.info("entitySetCandidatesToDelete contains "+id);
-//        }
+        
+        if (debugDeletions) {
+	        for(Long id : entitySetCandidatesToDelete) {
+	        	_logger.info("entitySetCandidatesToDelete contains "+id);
+	        }
+        }
         
         // Get the subset which do not have external parents
         Set<Long> exclusionList=new HashSet<Long>();
         for (Long candidateId : entitySetCandidatesToDelete) {
             if (candidateId != entity.getId()) { /* we expect the top-level entity to have external parents but still want to delete it */
-                //_logger.info("Checking external parents of candidateId=" + candidateId);
+            	if (debugDeletions) _logger.info("Checking external parents of candidateId=" + candidateId);
                 Set<Long> parentSet = parentMap.get(candidateId);
                 boolean shouldExclude = false;
                 for (Long parentId : parentSet) {
-                    //_logger.info("Found parentId=" + parentId);
+                	if (debugDeletions) _logger.info("Found parentId=" + parentId);
                     if (!entitySetCandidatesToDelete.contains(parentId)) {
                         shouldExclude = true;
                         break;
                     }
                 }
                 if (shouldExclude) {
-                    //_logger.info("Marking candidateId=" + candidateId + " for exclusion");
+                	if (debugDeletions) _logger.info("Marking candidateId=" + candidateId + " for exclusion");
                     exclusionList.add(candidateId);
                 } else {
-                    //_logger.info("Marking candidateId=" + candidateId + " OK to include");
+                	if (debugDeletions) _logger.info("Marking candidateId=" + candidateId + " OK to include");
                 }
             }
         }
@@ -255,47 +259,46 @@ public class AnnotationDAO extends ComputeBaseDAO {
                 for (Long[] edArr : edSet) {
                     entityDataSetToDelete.add(edArr[0]);
                 }
-            } else {
-                //_logger.info("Warning: found null edSet for entityId="+entityId);
             }
         }
         Set<Long> topParentSet=parentMap.get(entity.getId());
         if (topParentSet != null) {
             for (Long parentEntityId : topParentSet) {
-                //_logger.info("Checking top-level parentId=" + parentEntityId + " for entity data to be deleted");
+            	if (debugDeletions) _logger.info("Checking top-level parentId=" + parentEntityId + " for entity data to be deleted");
                 Set<Long[]> edSet = entityMap.get(parentEntityId);
                 for (Long[] edArr : edSet) {
-                    //_logger.info("  Found entityData entry id=" + edArr[0] + " childId=" + edArr[1]);
+                	if (debugDeletions) _logger.info("  Found entityData entry id=" + edArr[0] + " childId=" + edArr[1]);
                     Long childEntityId = edArr[1];
                     if (childEntityId != null) {
                         if (childEntityId.longValue() == entity.getId().longValue()) {
-                            //_logger.info("    This matches the top-level entity, so including for deletion");
+                        	if (debugDeletions) _logger.info("    This matches the top-level entity, so including for deletion");
                             entityDataSetToDelete.add(edArr[0]);
                         } 
                         else if (entitySetToDelete.contains(childEntityId.longValue())) {
-                            //_logger.info("    This matches an internal node, so including for deletion");
+                        	if (debugDeletions) _logger.info("    This matches an internal node, so including for deletion");
                             entityDataSetToDelete.add(edArr[0]);
                         } 
                         else {
-                            //_logger.info("    This does not match the top-level entity or any internal entity, so excluding");
+                        	if (debugDeletions) _logger.info("    This does not match the top-level entity or any internal entity, so excluding");
                         }
                     }
                 }
             }
         }
 
-        // debug
-//        for (Long entityId : entitySetToDelete) {
-//            _logger.info("Entity for deletion="+entityId);
-//            for (Long ei : entityMap.keySet()) {
-//                Set<Long[]> childSet = entityMap.get(ei);
-//                for (Long[] cl : childSet) {
-//                    if (cl[1]!=null && cl[1].longValue()==entityId.longValue()) {
-//                        _logger.info("Found child entityDataId="+cl[0]+" parentEntityId="+ei);
-//                    }
-//                }
-//            }
-//        }
+        if (debugDeletions) {
+	        for (Long entityId : entitySetToDelete) {
+	            _logger.info("Entity for deletion="+entityId);
+	            for (Long ei : entityMap.keySet()) {
+	                Set<Long[]> childSet = entityMap.get(ei);
+	                for (Long[] cl : childSet) {
+	                    if (cl[1]!=null && cl[1].longValue()==entityId.longValue()) {
+	                        _logger.info("Found child entityDataId="+cl[0]+" parentEntityId="+ei);
+	                    }
+	                }
+	            }
+	        }
+        }
 
         // Do this in a transaction so that we're not left with orphans if things go wrong
         Connection connection = null;
@@ -397,7 +400,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
     }
     
     protected Set<Long> walkEntityMap(Long startEntityId, Map<Long, Set<Long[]>> treeMap, Set<Long> exclusionList, Set<Long> visited) {
-    	_logger.info("walkEntityMap startEntityId="+startEntityId+" exclusionList.size="+exclusionList.size()+" visited.size="+visited.size());
+    	if (debugDeletions) _logger.info("walkEntityMap startEntityId="+startEntityId+" exclusionList.size="+exclusionList.size()+" visited.size="+visited.size());
     	Set<Long> inclusionList = new HashSet<Long>();
         if (!exclusionList.contains(startEntityId) && !visited.contains(startEntityId)) {
         	visited.add(startEntityId); // Let's not visit it again since we've seen it already
@@ -894,6 +897,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
             }
             hql.append(" and exists (from EntityData as attr where attr.parentEntity = e " +
             		"and attr.entityAttribute.name = '"+EntityConstants.ATTRIBUTE_COMMON_ROOT+"')");
+            hql.append(" order by e.id ");
             Query query = session.createQuery(hql.toString()).setString(0, entityTypeName);
             if (null != userLogin) {
                 query.setString(1, userLogin);
