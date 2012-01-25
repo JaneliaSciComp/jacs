@@ -1475,18 +1475,25 @@ public class AnnotationDAO extends ComputeBaseDAO {
             throw new DaoException(e);
         }
 	}
-
-    /**
+	/**
      * Iterate recursively through all children in the Entity graph in order to preload them.
      * @param entity
      * @return
      */
     public Entity populateDescendants(Entity entity) {
+    	return populateDescendants(entity, new HashSet<Long>());
+    }
+    
+    private Entity populateDescendants(Entity entity, Set<Long> visited) {
     	if (entity == null) return null;
+    	if (visited.contains(entity.getId())) {
+    		return entity;
+    	}
+    	visited.add(entity.getId());
     	for(EntityData ed : entity.getEntityData()) {
     		Entity child = ed.getChildEntity();
     		if (child != null) {
-    			populateDescendants(child);
+    			populateDescendants(child, visited);
     		}
     	}
     	return entity;
