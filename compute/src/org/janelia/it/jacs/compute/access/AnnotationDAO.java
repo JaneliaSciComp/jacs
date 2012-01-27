@@ -15,6 +15,7 @@ import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.ontology.types.Category;
+import org.janelia.it.jacs.model.ontology.types.EnumText;
 import org.janelia.it.jacs.model.ontology.types.Interval;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
 import org.janelia.it.jacs.model.tasks.Task;
@@ -971,7 +972,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed where " +
                     "ed.entityAttribute.name = ? " +
-                    "and ed.value in ("+entityCommaList+") ");
+                    "and ed.value in ("+entityCommaList+") order by ed.parentEntity.id ");
             Query query = session.createQuery(hql.toString());
             query.setString(0, EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
             // TODO: check userLogin if the session is private
@@ -994,7 +995,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed where " +
                     "ed.entityAttribute.name = ? " +
-                    "and ed.value = ? ");
+                    "and ed.value = ? order by ed.parentEntity.id ");
             Query query = session.createQuery(hql.toString());
             query.setString(0, EntityConstants.ATTRIBUTE_ANNOTATION_SESSION_ID);
             query.setString(1, ""+sessionId);
@@ -1262,6 +1263,16 @@ public class AnnotationDAO extends ComputeBaseDAO {
             eds.add(upperData);
         }
 
+        // Add the type-specific parameters
+        if (type instanceof EnumText) {
+
+            EnumText enumText = (EnumText)type;
+
+            EntityData lowerData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_ENUMTEXT_ENUMID, tmpUser);
+            lowerData.setValue(enumText.getValueEnumId().toString());
+            eds.add(lowerData);
+        }
+        
         // Save the new element
         saveOrUpdate(newOntologyElement);
         

@@ -58,6 +58,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ONTOLOGY_TERM_TYPE                  = "Ontology Term Type";
     public static final String ATTRIBUTE_IS_PUBLIC                           = "Is Public";
     public static final String ATTRIBUTE_ONTOLOGY_TERM                       = "Ontology Term";
+    public static final String ATTRIBUTE_ONTOLOGY_TERM_TYPE_ENUMTEXT_ENUMID  = "Ontology Term Type EnumText Enum Id";
     public static final String ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER   = "Ontology Term Type Interval Lower Bound";
     public static final String ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER   = "Ontology Term Type Interval Upper Bound";
     public static final String ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID   = "Annotation Ontology Key Entity Id";
