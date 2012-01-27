@@ -324,12 +324,26 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	java.sql.Statement statement=null;
     	try {
 	        connection=getJdbcConnection();
-	        StringBuffer sql = new StringBuffer("select e.id, ed.id, ed.child_entity_id from entity e, entityData ed where e.user_id="+userId+" and ed.parent_entity_id=e.id");
+	        
+	        StringBuffer sql = new StringBuffer();
+	        sql.append("select e.id, ed.id, ce.id, ce.user_id ");
+	        sql.append("from entity e ");
+	        sql.append("left outer join entityData ed on e.id=ed.parent_entity_id ");
+	        sql.append("left outer join (select * from entity where user_id="+userId+") ce on ed.child_entity_id=ce.id ");
+	        sql.append("where e.user_id="+userId);
+	        
+//	        StringBuffer sql = new StringBuffer("select e.id, ed.id, ed.child_entity_id from entity e, entityData ed where e.user_id="+userId+" and ed.user_id="+userId+" and ed.parent_entity_id=e.id");
+	        if (debugDeletions) _logger.info("getEntityTreeForUserByJdbc userId="+userId);
+	        if (debugDeletions) _logger.info("getEntityTreeForUserByJdbc sql="+sql);
 	        statement=connection.createStatement();
 	        ResultSet rs=statement.executeQuery(sql.toString());
 	        while(rs.next()) {
 	            Long entityId=rs.getBigDecimal(1).longValue();
-	            Long entityDataId=rs.getBigDecimal(2).longValue();
+	            BigDecimal entityDataBD=rs.getBigDecimal(2);
+	            Long entityDataId=null;
+	            if (entityDataBD!=null) {
+	            	entityDataId = entityDataBD.longValue();
+	            }
 	            BigDecimal childIdBD=rs.getBigDecimal(3);
 	            Long childId=null;
 	            if (childIdBD!=null) {
@@ -345,7 +359,9 @@ public class AnnotationDAO extends ComputeBaseDAO {
 	                childSet=new HashSet<Long[]>();
 	                entityMap.put(entityId, childSet);
 	            }
-	            childSet.add(childData);
+	            if (childData[0]!=null) {
+	            	childSet.add(childData);
+	            }
 	            // Handle parent direction
 	            if (childId != null) {
 	                Set<Long> parentSet = parentMap.get(childId);
