@@ -18,7 +18,7 @@ public class Text extends OntologyElementType {
     }
     
     public boolean allowsChildren() {
-        return false;
+        return true;
     }
 
     public String getName() {

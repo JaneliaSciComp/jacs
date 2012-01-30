@@ -18,7 +18,7 @@ public class Tag extends OntologyElementType {
     }
     
     public boolean allowsChildren() {
-        return false;
+        return true;
     }
 
     public String getName() {

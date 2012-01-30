@@ -11,6 +11,8 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.ontology.OntologyElement;
 
 /**
+ * An annotation where the value is an Item from an Enumeration.
+ * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class EnumText extends OntologyElementType {
@@ -30,7 +32,7 @@ public class EnumText extends OntologyElementType {
     }
     
     public boolean allowsChildren() {
-        return false;
+        return true;
     }
 
     public String getName() {

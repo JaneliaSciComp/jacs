@@ -1219,15 +1219,6 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
         User tmpUser = getUserByName(userLogin);
         Entity parentOntologyElement = getEntityById(ontologyTermParentId.toString());
-
-        // Check first to see if it's necessary to coerce the parent's type
-        EntityData parentTypeED = parentOntologyElement.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE);
-        _logger.info("Parent's type is "+parentTypeED.getValue());
-        if (parentTypeED!=null && "Tag".equals(parentTypeED.getValue())) {
-            // Adding a child to a Tag, so it must be coerced into a Category
-        	parentTypeED.setValue(Category.class.getSimpleName());
-            saveOrUpdate(parentTypeED);
-        }
         
         // Create and save the new entity
         Entity newOntologyElement = newEntity(EntityConstants.TYPE_ONTOLOGY_ELEMENT, termName, tmpUser);

@@ -38,7 +38,7 @@ public class OntologyRoot extends OntologyElement {
     	
     	// Populate secondary properties
     	
-    	populateInternalReferences(this);
+    	populateInternalReferences(this, true);
 	}
 
 	public void populateElementMap(OntologyElement element) {
@@ -52,7 +52,7 @@ public class OntologyRoot extends OntologyElement {
 		}	
 	}
 
-	public void populateInternalReferences(OntologyElement element) {
+	public void populateInternalReferences(OntologyElement element, boolean recurse) {
 
 		if (element.getType() instanceof EnumText) {
 			EnumText enumText = (EnumText)element.getType();
@@ -62,9 +62,9 @@ public class OntologyRoot extends OntologyElement {
 			}
 		}
 		
-		if (hasChildren()) {
+		if (recurse && hasChildren()) {
 			for(OntologyElement child : element.getChildren()) {
-				populateInternalReferences(child);
+				populateInternalReferences(child, true);
 			}
 		}	
 	}

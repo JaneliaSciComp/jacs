@@ -45,6 +45,8 @@ public class OntologyElement {
             if (type != null) type.init(entity);
         }
         
+        getRoot().populateInternalReferences(this, false);
+        
         // Only reinitialize children if they've already been initialized already
         if (children != null) {
         	initChildren();
@@ -81,6 +83,16 @@ public class OntologyElement {
 
 	public OntologyElementType getType() {
 		return type;
+	}
+	
+	public OntologyRoot getRoot() {
+		OntologyElement ancestor = this;
+		int i = 0;
+		while (!(ancestor instanceof OntologyRoot)) {
+			ancestor = ancestor.getParent();
+			if (i++>10000) return null; // Avoid infinite loop in the case of an orphan tree branch
+		}
+		return (OntologyRoot)ancestor;
 	}
 	
 	/**
