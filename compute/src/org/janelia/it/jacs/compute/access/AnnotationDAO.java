@@ -330,49 +330,62 @@ public class AnnotationDAO extends ComputeBaseDAO {
 	        sql.append("select e.id, ed.id, ce.id, ce.user_id ");
 	        sql.append("from entity e ");
 	        sql.append("left outer join entityData ed on e.id=ed.parent_entity_id ");
-	        sql.append("left outer join (select * from entity where user_id="+userId+") ce on ed.child_entity_id=ce.id ");
-	        sql.append("where e.user_id="+userId);
+	        sql.append("left outer join entity ce on ed.child_entity_id=ce.id ");
+	        sql.append("where e.user_id="+userId+" ");
 	        
 //	        StringBuffer sql = new StringBuffer("select e.id, ed.id, ed.child_entity_id from entity e, entityData ed where e.user_id="+userId+" and ed.user_id="+userId+" and ed.parent_entity_id=e.id");
 	        if (debugDeletions) _logger.info("getEntityTreeForUserByJdbc userId="+userId);
 	        if (debugDeletions) _logger.info("getEntityTreeForUserByJdbc sql="+sql);
 	        statement=connection.createStatement();
-	        ResultSet rs=statement.executeQuery(sql.toString());
-	        while(rs.next()) {
-	            Long entityId=rs.getBigDecimal(1).longValue();
-	            BigDecimal entityDataBD=rs.getBigDecimal(2);
-	            Long entityDataId=null;
-	            if (entityDataBD!=null) {
-	            	entityDataId = entityDataBD.longValue();
-	            }
-	            BigDecimal childIdBD=rs.getBigDecimal(3);
-	            Long childId=null;
-	            if (childIdBD!=null) {
-	                childId=childIdBD.longValue();
-	            }
-//	            _logger.info("TreeResult entityId="+entityId+" entityDataId="+entityDataId+" childId="+(childId==null?"null":childId));
-	            Long[] childData=new Long[2];
-	            childData[0]=entityDataId;
-	            childData[1]=childId;
-	            // Handle child direction
-	            Set<Long[]> childSet=entityMap.get(entityId);
-	            if (childSet==null) {
-	                childSet=new HashSet<Long[]>();
-	                entityMap.put(entityId, childSet);
-	            }
-	            if (childData[0]!=null) {
-	            	childSet.add(childData);
-	            }
-	            // Handle parent direction
-	            if (childId != null) {
-	                Set<Long> parentSet = parentMap.get(childId);
-	                if (parentSet == null) {
-	                    parentSet = new HashSet<Long>();
-	                    parentMap.put(childId, parentSet);
-	                }
-	                parentSet.add(entityId);
-	            }
-	        }
+	        
+			ResultSet rs = statement.executeQuery(sql.toString());
+			while (rs.next()) {
+				Long entityId = rs.getBigDecimal(1).longValue();
+				BigDecimal entityDataBD = rs.getBigDecimal(2);
+				Long entityDataId = null;
+				if (entityDataBD != null) {
+					entityDataId = entityDataBD.longValue();
+				}
+				BigDecimal childIdBD = rs.getBigDecimal(3);
+				Long childId = null;
+				if (childIdBD != null) {
+					childId = childIdBD.longValue();
+				}
+				BigDecimal childUserIdBD = rs.getBigDecimal(4);
+				Long childUserId = null;
+				if (childUserIdBD != null) {
+					childUserId = childUserIdBD.longValue();
+					if (!childUserId.equals(userId)) {
+						// We don't own the child, so let's forget about it
+//						if (debugDeletions) _logger.info("Forget child entity "+childId+" owned by "+childUserId);
+						childId = null;
+						childUserId = null;
+					}
+				}
+				
+				// _logger.info("TreeResult entityId="+entityId+" entityDataId="+entityDataId+" childId="+(childId==null?"null":childId));
+				Long[] childData = new Long[2];
+				childData[0] = entityDataId;
+				childData[1] = childId;
+				// Handle child direction
+				Set<Long[]> childSet = entityMap.get(entityId);
+				if (childSet == null) {
+					childSet = new HashSet<Long[]>();
+					entityMap.put(entityId, childSet);
+				}
+				if (childData[0] != null) {
+					childSet.add(childData);
+				}
+				// Handle parent direction
+				if (childId != null) {
+					Set<Long> parentSet = parentMap.get(childId);
+					if (parentSet == null) {
+						parentSet = new HashSet<Long>();
+						parentMap.put(childId, parentSet);
+					}
+					parentSet.add(entityId);
+				}
+			}
     	}
         finally {
             statement.close();
