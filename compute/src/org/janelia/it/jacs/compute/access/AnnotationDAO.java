@@ -330,7 +330,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 	        sql.append("select e.id, ed.id, ce.id, ce.user_id ");
 	        sql.append("from entity e ");
 	        sql.append("left outer join entityData ed on e.id=ed.parent_entity_id ");
-	        sql.append("left outer join entity ce on ed.child_entity_id=ce.id ");
+	        sql.append("left outer join entity ce on ed.child_entity_id=ce.id and ce.user_id="+userId+" ");
 	        sql.append("where e.user_id="+userId+" ");
 	        
 //	        StringBuffer sql = new StringBuffer("select e.id, ed.id, ed.child_entity_id from entity e, entityData ed where e.user_id="+userId+" and ed.user_id="+userId+" and ed.parent_entity_id=e.id");
@@ -356,8 +356,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 				if (childUserIdBD != null) {
 					childUserId = childUserIdBD.longValue();
 					if (!childUserId.equals(userId)) {
-						// We don't own the child, so let's forget about it
-//						if (debugDeletions) _logger.info("Forget child entity "+childId+" owned by "+childUserId);
+						// We don't own the child, so let's forget about it. This case should be prevented by the join condition on the last outer join above.
 						childId = null;
 						childUserId = null;
 					}
