@@ -22,12 +22,6 @@ public class OntologyRoot extends OntologyElement {
         String publicStr = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PUBLIC);
     	this.isPublic = (publicStr != null && !"".equals(publicStr) && !"false".equals(publicStr));
     	this.elementMap = new HashMap<Long,OntologyElement>();
-    	
-//        for (EntityData entityData : entity.getEntityData()) {
-//            if (!Hibernate.isInitialized(entityData.getChildEntity())) {
-//                return;
-//            }
-//        }
         
         init();
 	}
