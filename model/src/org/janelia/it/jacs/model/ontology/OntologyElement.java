@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.model.ontology;
 
+import org.hibernate.Hibernate;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -18,14 +19,20 @@ import java.util.List;
  */
 public class OntologyElement {
 
-    private Entity entity;
-    private OntologyElement parentElement;
+    protected Entity entity;
+    protected OntologyElement parentElement;
     
     // Derived properties
-    private String name;
-    private OntologyElementType type;
-    private List<OntologyElement> children;
-    
+    protected String name;
+    protected OntologyElementType type;
+    protected List<OntologyElement> children;
+
+	public OntologyElement(Entity entity) {
+		this.entity = entity;
+		this.parentElement = null;
+		// This is a root node... it will init() itself later.
+	}
+	
 	public OntologyElement(Entity entity, OntologyElement parentElement) {
 		this.entity = entity;
 		this.parentElement = parentElement;
@@ -44,7 +51,8 @@ public class OntologyElement {
             type = OntologyElementType.createTypeByName(typeName);
             if (type != null) type.init(entity);
         }
-        
+
+        getRoot().populateElementMap(this, false);
         getRoot().populateInternalReferences(this, false);
         
         // Only reinitialize children if they've already been initialized already
@@ -57,7 +65,9 @@ public class OntologyElement {
     	children = new ArrayList<OntologyElement>();
         for(EntityData ed : entity.getList(EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT)) {
         	Entity child = ed.getChildEntity();
-        	if (child != null) children.add(new OntologyElement(child, this));
+            if (child!=null && Hibernate.isInitialized(child)) {
+        		children.add(new OntologyElement(child, this));
+            }
         }
 	}
 	

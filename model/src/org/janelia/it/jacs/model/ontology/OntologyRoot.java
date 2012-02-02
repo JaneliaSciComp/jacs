@@ -3,10 +3,8 @@ package org.janelia.it.jacs.model.ontology;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.hibernate.Hibernate;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.ontology.types.EnumText;
 
 /**
@@ -16,49 +14,53 @@ import org.janelia.it.jacs.model.ontology.types.EnumText;
  */
 public class OntologyRoot extends OntologyElement {
 
-	private boolean isPublic;
-
-	private Map<Long,OntologyElement> elementMap = new HashMap<Long,OntologyElement>();
+	private final boolean isPublic;
+	private final Map<Long,OntologyElement> elementMap;
 	
 	public OntologyRoot(Entity entity) {
-		super(entity, null);
-		
-		// Derive additional properties
-	  
+		super(entity);
         String publicStr = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PUBLIC);
     	this.isPublic = (publicStr != null && !"".equals(publicStr) && !"false".equals(publicStr));
-
-        for (EntityData entityData : entity.getEntityData()) {
-            if (!Hibernate.isInitialized(entityData.getChildEntity())) {
-                return;
-            }
-        }
+    	this.elementMap = new HashMap<Long,OntologyElement>();
+    	
+//        for (EntityData entityData : entity.getEntityData()) {
+//            if (!Hibernate.isInitialized(entityData.getChildEntity())) {
+//                return;
+//            }
+//        }
         
-    	populateElementMap(this);
-    	
-    	// Populate secondary properties
-    	
-    	populateInternalReferences(this, true);
+        init();
 	}
 
-	public void populateElementMap(OntologyElement element) {
+	public void populateElementMap(OntologyElement element, boolean recurse) {
 
 		elementMap.put(element.getId(), element);
+		System.out.println("OntologyRoot.populateElementMap "+element.getId()+"="+element.getName());
 		
-		if (hasChildren()) {
+		if (recurse && hasChildren()) {
 			for(OntologyElement child : element.getChildren()) {
-				populateElementMap(child);
+				populateElementMap(child, recurse);
 			}
 		}	
 	}
 
 	public void populateInternalReferences(OntologyElement element, boolean recurse) {
 
+		System.out.println("populateInternalReferences "+element.getName());
+		
 		if (element.getType() instanceof EnumText) {
 			EnumText enumText = (EnumText)element.getType();
 			OntologyElement valueEnum = elementMap.get(enumText.getValueEnumId());
-			if (valueEnum.getType() instanceof org.janelia.it.jacs.model.ontology.types.Enum) {
-				enumText.init(valueEnum);	
+			if (valueEnum==null) {
+				System.out.println("Warning: could not find reference enum, id="+enumText.getValueEnumId());
+			}
+			else { 
+				if (valueEnum.getType() instanceof org.janelia.it.jacs.model.ontology.types.Enum) {
+					enumText.init(valueEnum);
+				}
+				else {
+					System.out.println("Warning: referenced enum is not an enum but "+valueEnum.getType().getName());	
+				}
 			}
 		}
 		
@@ -71,9 +73,5 @@ public class OntologyRoot extends OntologyElement {
 	
 	public boolean isPublic() {
 		return isPublic;
-	}
-
-	public void setPublic(boolean isPublic) {
-		this.isPublic = isPublic;
 	}
 }
