@@ -231,8 +231,7 @@ public class Entity  implements java.io.Serializable, IsSerializable {
         ed.setCreationDate(createDate);
         ed.setUpdatedDate(createDate);
         EntityAttribute attribute=getAttributeByName(attributeName);
-        if (attribute==null) throw new IllegalStateException("Entity type "+entityType.getName()+" does not support attributes of type "+attributeName);
-        ed.setEntityAttribute(attribute);
+        if (attribute!=null) ed.setEntityAttribute(attribute);
         this.entityData.add(ed);
         return ed;
     }

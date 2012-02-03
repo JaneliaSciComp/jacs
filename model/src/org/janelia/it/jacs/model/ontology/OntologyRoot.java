@@ -29,7 +29,6 @@ public class OntologyRoot extends OntologyElement {
 	public void populateElementMap(OntologyElement element, boolean recurse) {
 
 		elementMap.put(element.getId(), element);
-		System.out.println("OntologyRoot.populateElementMap "+element.getId()+"="+element.getName());
 		
 		if (recurse && hasChildren()) {
 			for(OntologyElement child : element.getChildren()) {
@@ -40,8 +39,6 @@ public class OntologyRoot extends OntologyElement {
 
 	public void populateInternalReferences(OntologyElement element, boolean recurse) {
 
-		System.out.println("populateInternalReferences "+element.getName());
-		
 		if (element.getType() instanceof EnumText) {
 			EnumText enumText = (EnumText)element.getType();
 			OntologyElement valueEnum = elementMap.get(enumText.getValueEnumId());
