@@ -13,6 +13,7 @@ import org.janelia.it.jacs.compute.service.fileDiscovery.FlyScreenDiscoveryServi
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.user_data.User;
 
 import java.util.*;
@@ -73,16 +74,34 @@ public class ScreenSampleLineCoordinationService implements IService {
             Long groupSize = new Long(processData.getString("FLY_LINE_GROUP_SIZE").trim());
             logger.info("Using FLY_LINE_GROUP_SIZE="+groupSize);
 
-            //List<List<Entity>> groupList = createFlyLineGroupList(flyLineList);
-            //logger.info("Created FLY_LINE_GROUP_LIST with "+groupList.size()+" entries");
+            List<List<String>> groupList = createFlyLineGroupList(flyLineList, groupSize);
+            logger.info("Created FLY_LINE_GROUP_LIST with "+groupList.size()+" entries");
 
-            //processData.putItem("FLY_LINE_GROUP_LIST", groupList);
+            processData.putItem("FLY_LINE_GROUP_LIST", groupList);
 
         } catch (Exception ex) {
             String msg = "Exception in execute() : " + ex.getMessage();
             logger.error(msg);
             throw new ServiceException(ex);
         }
+    }
+
+    List<List<String>> createFlyLineGroupList(List<Entity> flyLineList, Long groupSize) {
+        List<List<String>> groupList=new ArrayList<List<String>>();
+        List<String> currentGroup=null;
+        for (int i=0;i<flyLineList.size();i++) {
+            if (currentGroup==null) {
+                currentGroup=new ArrayList<String>();
+            } else if (currentGroup.size()==groupSize) {
+                groupList.add(currentGroup);
+                currentGroup=new ArrayList<String>();
+            }
+            currentGroup.add(flyLineList.get(i).getId().toString());
+        }
+        if (currentGroup.size()>0) {
+            groupList.add(currentGroup);
+        }
+        return groupList;
     }
 
     protected Entity getTopLevelFolder(String topLevelFolderName, boolean createIfNecessary) throws Exception {
@@ -276,7 +295,11 @@ public class ScreenSampleLineCoordinationService implements IService {
         flyLine.setUpdatedDate(createDate);
         flyLine.setUser(user);
         flyLine.setName(lineName);
-        flyLine.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FLY_LINE));
+        EntityType flyLineType=annotationBean.getEntityTypeByName(EntityConstants.TYPE_FLY_LINE);
+        if (flyLineType==null) {
+            throw new Exception("Could not find EntityType for name="+EntityConstants.TYPE_FLY_LINE);
+        }
+        flyLine.setEntityType(flyLineType);
         flyLine = annotationBean.saveOrUpdateEntity(flyLine);
         EntityData ed = folder.addChildEntity(flyLine, EntityConstants.ATTRIBUTE_ENTITY);
         EJBFactory.getLocalAnnotationBean().saveOrUpdateEntityData(ed);

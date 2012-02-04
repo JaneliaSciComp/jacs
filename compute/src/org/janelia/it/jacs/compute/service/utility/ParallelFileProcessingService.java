@@ -39,7 +39,7 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
     private List<String> outputPatternList = new ArrayList<String>();
     private List<String> inputPathList = new ArrayList<String>();
     private List<String> outputPathList = new ArrayList<String>();
-    
+
     protected void init(IProcessData processData) throws Exception {
 
         // First we make sure a single result file node is established for the drmaa run.
@@ -102,6 +102,7 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
         final String outputPatternGlobal=(String)processData.getItem("OUTPUT_FILENAME_PATTERN");
         final List<String> inputPathListGlobal=(List<String>)processData.getItem("INPUT_PATH_LIST");
         final List<String> outputPathListGlobal=(List<String>)processData.getItem("OUTPUT_PATH_LIST");
+        final String alternateWorkingDirectory=processData.getString("ALTERNATE_WORKING_DIR_PATH");
 
         // Next, configure input/output arguments
         int argumentIndex=1;
@@ -153,6 +154,14 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
         	if (DEBUG) logger.info("Process output file node: "+outputNode.getDirectoryPath());
             // -1 is a mechanism for us to handle the global case
             for (int argIndex=GLOBAL_CASE; argIndex<argumentIndex-1; argIndex++) {
+
+                File inputDir=null;
+                if (alternateWorkingDirectory!=null || alternateWorkingDirectory.trim().length()>0) {
+                    inputDir=new File(alternateWorkingDirectory);
+                } else {
+                    inputDir=new File(outputNode.getDirectoryPath());
+                }
+
                 File inputFile=null;
 
             	if (DEBUG) logger.info("  argIndex: "+argIndex);
@@ -163,11 +172,10 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
                 	if (argIndex==GLOBAL_CASE) {
                         if (inputNameGlobal!=null) {
                         	if (DEBUG) logger.info("      Global Case 1: inputNameGlobal:"+inputNameGlobal);
-                            inputFile=new File(outputNode.getDirectoryPath(), inputNameGlobal);
+                            inputFile=new File(inputDir.getAbsolutePath(), inputNameGlobal);
                         } 
                         else if (inputRegexGlobal!=null && outputPatternGlobal!=null) {
                         	if (DEBUG) logger.info("      Global Case 2: inputRegexGlobal:"+inputRegexGlobal+", outputPatternGlobal:"+outputPatternGlobal);
-                            File inputDir=new File(outputNode.getDirectoryPath());
                             String[] inputFilenames=getFilesMatching(inputDir, inputRegexGlobal);
                             for (String inputFilename : inputFilenames) {
                                 String outputFilename = inputFilename.replaceAll(inputRegexGlobal, outputPatternGlobal);
@@ -179,7 +187,7 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
                 	else {
                         if (!inputNameList.isEmpty()) {
                         	if (DEBUG) logger.info("      Case 1: inputNameList:"+inputNameList.size());
-                            inputFile=new File(outputNode.getDirectoryPath(), inputNameList.get(argIndex));
+                            inputFile=new File(inputDir.getAbsolutePath(), inputNameList.get(argIndex));
                         } 
                         else if (!inputPathList.isEmpty()) {
                         	if (DEBUG) logger.info("      Case 2: inputPathList:"+inputPathList.size());
@@ -187,7 +195,6 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
                         }
                         else if (!inputRegexList.isEmpty() && !outputPatternList.isEmpty()) {
                         	if (DEBUG) logger.info("      Case 3: inputRegexList:"+inputRegexList.size());
-                            File inputDir=new File(outputNode.getDirectoryPath());
                             String regex = inputRegexList.get(argIndex);
                             String pattern = outputPatternList.get(argIndex);
                             String[] inputFilenames = getFilesMatching(inputDir, regex);
@@ -212,13 +219,13 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
                 	if (argIndex==GLOBAL_CASE) {
                         if (outputNameGlobal!=null) {
                         	if (DEBUG) logger.info("      Global Case 1: outputNameGlobal:"+outputNameGlobal);
-                            outputFile=new File(outputNode.getDirectoryPath(), outputNameGlobal);
+                            outputFile=new File(inputDir.getAbsolutePath(), outputNameGlobal);
                         } 
                 	}
                 	else {
                         if (!outputNameList.isEmpty()) {
                         	if (DEBUG) logger.info("      Case 1: outputNameList:"+outputNameList.size());
-                            outputFile=new File(outputNode.getDirectoryPath(), outputNameList.get(argIndex));
+                            outputFile=new File(inputDir.getAbsolutePath(), outputNameList.get(argIndex));
                         } 
                         else if (!outputPathList.isEmpty()) {
                         	if (DEBUG) logger.info("      Case 2: outputPathList:"+outputPathList.size());
