@@ -633,6 +633,10 @@ public class PatternAnnotationSampleService  implements IService {
                 }
             }
         }
+
+        // Finally, we need to add targeted 2D image assignments
+        patternAnnotationFolder.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE,
+                mipMap.get("Heatmap MIP").getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
     }
 
     protected Entity createMipEntity(File pngFile, String name) throws Exception {
