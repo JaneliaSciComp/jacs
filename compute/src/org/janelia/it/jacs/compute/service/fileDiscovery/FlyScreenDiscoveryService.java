@@ -5,6 +5,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.screen.FlyScreenSampleService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -179,13 +180,13 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         boolean hasMip=false;
         Set<EntityData> edSet=screenSample.getEntityData();
         logger.info("screenSampleIsComplete: edSet has "+edSet.size()+" members to evaluate");
-        for (EntityData ed2 : edSet) {
-            Entity child2 = ed2.getChildEntity();
-            if (child2==null) {
+        for (EntityData ed : edSet) {
+            Entity child = ed.getChildEntity();
+            if (child==null) {
                 logger.info("Skipping null ed entry");
             } else {
-                if (child2.getEntityType().getName().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
-                    String stackPath=child2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                if (child.getEntityType().getName().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
+                    String stackPath=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                     File stackFile=new File(stackPath);
                     if (stackFile.exists()) {
                         logger.info("Found existing stack="+stackFile.getAbsolutePath()+" hasStack=true");
@@ -193,18 +194,26 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
                     } else {
                         logger.info("Could not find existing stack="+stackFile.getAbsolutePath()+" hasStack=false");
                     }
-                } else if (child2.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_2D) &&
-                        child2.getName().toLowerCase().endsWith("mip")) {
-                    String mipPath=child2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                    File mipFile=new File(mipPath);
-                    if (mipFile.exists()) {
-                        logger.info("Found existing mip="+mipFile.getAbsolutePath()+" hasMip=true");
-                        hasMip=true;
-                    } else {
-                        logger.info("Could not find existing mip="+mipFile.getAbsolutePath()+" hasMip=false");
+                } else if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) &&
+                        child.getName().equals(FlyScreenSampleService.SUPPORTING_FILES_FOLDER_NAME)) {
+                    for (EntityData ed2 : child.getEntityData()) {
+                        Entity child2=ed2.getChildEntity();
+                        if (child2!=null) {
+                            if (child2.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_2D) &&
+                                child2.getName().toLowerCase().endsWith("mip")) {
+                                String mipPath=child2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                                File mipFile=new File(mipPath);
+                                if (mipFile.exists()) {
+                                    logger.info("Found existing mip="+mipFile.getAbsolutePath()+" hasMip=true");
+                                    hasMip=true;
+                                } else {
+                                    logger.info("Could not find existing mip="+mipFile.getAbsolutePath()+" hasMip=false");
+                                }
+                            } else {
+                                logger.info("Ignoring child entity of type="+child.getEntityType().getName());
+                            }
+                        }
                     }
-                } else {
-                    logger.info("Ignoring child entity of type="+child2.getEntityType().getName());
                 }
             }
         }
