@@ -169,16 +169,16 @@ public class FlyScreenSampleService implements EntityFilter, IService {
                 addToParent(screenSampleEntity, mipEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
 
                 // Add default image to screen sample
-                screenSampleEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
+                screenSampleEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, pngFile.getAbsolutePath());
                 EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(screenSampleEntity);
 
                 // Add default image to stack
                 Entity stackEntity=getStackEntityFromScreenSample(screenSampleEntity);
-                stackEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
+                stackEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, pngFile.getAbsolutePath());
                 EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(stackEntity);
 
                 // Add default image to mip
-                mipEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
+                mipEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, pngFile.getAbsolutePath());
                 EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(mipEntity);
 
                 // Add link to stack file
