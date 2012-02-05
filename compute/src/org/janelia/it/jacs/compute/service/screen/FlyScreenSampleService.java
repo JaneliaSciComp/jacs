@@ -169,10 +169,10 @@ public class FlyScreenSampleService implements EntityFilter, IService {
 
                 // Create supporting files folder
                 File supportingFileDir=new File(resultDir, SUPPORTING_FILES_FOLDER_NAME);
-                if (!supportingFileDir.mkdir()) {
+                if (!supportingFileDir.exists() && !supportingFileDir.mkdir()) {
                     throw new Exception("Could not create new directory="+supportingFileDir.getAbsolutePath());
                 }
-                Entity supportingFilesFolder=addChildFolderToEntity(screenSampleEntity, SUPPORTING_FILES_FOLDER_NAME,
+                Entity supportingFilesFolder=verifyOrAddChildFolderToEntity(screenSampleEntity, SUPPORTING_FILES_FOLDER_NAME,
                         supportingFileDir.getAbsolutePath());
                 File supportingPngFile=new File(supportingFileDir, pngFile.getName());
                 FileUtil.moveFileUsingSystemCall(pngFile, supportingPngFile);
@@ -276,7 +276,16 @@ public class FlyScreenSampleService implements EntityFilter, IService {
         		" as child of "+parent.getEntityType().getName()+"#"+parent.getId());
     }
 
-    protected Entity addChildFolderToEntity(Entity parent, String name, String directoryPath) throws Exception {
+    protected Entity verifyOrAddChildFolderToEntity(Entity parent, String name, String directoryPath) throws Exception {
+        for (EntityData ed : parent.getEntityData()) {
+            Entity child=ed.getChildEntity();
+            if (child!=null) {
+                if (child.getName().equals(name) && child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+                    return child;
+                }
+            }
+        }
+        // Assume does not already exist
         Entity folder = new Entity();
         folder.setCreationDate(createDate);
         folder.setUpdatedDate(createDate);
