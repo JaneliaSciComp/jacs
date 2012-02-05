@@ -20,6 +20,7 @@ import org.janelia.it.jacs.model.user_data.entity.ScreenSampleResultNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.SystemCall;
 
+import javax.mail.Folder;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
@@ -53,6 +54,8 @@ public class FlyScreenSampleService implements EntityFilter, IService {
     protected List<String> sampleEntityIdList;
 
     protected static final String RELATIVE_SAMPLE_TO_JACS_PATH = SystemConfigurationProperties.getString("FlyScreen.RelativePathFromScreenSampleToJacsRoot");
+    public static final String SUPPORTING_FILES_FOLDER_NAME="supporting files";
+
 
        public void execute(IProcessData processData) throws ServiceException {
         try {
@@ -164,6 +167,17 @@ public class FlyScreenSampleService implements EntityFilter, IService {
             if (pngFile!=null) {
                 logger.info("Found png file="+pngFile.getAbsolutePath());
 
+                // Create supporting files folder
+                File supportingFileDir=new File(resultDir, SUPPORTING_FILES_FOLDER_NAME);
+                if (!supportingFileDir.mkdir()) {
+                    throw new Exception("Could not create new directory="+supportingFileDir.getAbsolutePath());
+                }
+                Entity supportingFilesFolder=addChildFolderToEntity(screenSampleEntity, SUPPORTING_FILES_FOLDER_NAME,
+                        supportingFileDir.getAbsolutePath());
+                File supportingPngFile=new File(supportingFileDir, pngFile.getName());
+                FileUtil.moveFileUsingSystemCall(pngFile, supportingPngFile);
+                pngFile=supportingPngFile;
+
                 // Create MIP
                 Entity mipEntity=createMipEntity(pngFile, screenSampleEntity.getName() + " mip");
                 addToParent(screenSampleEntity, mipEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
@@ -261,6 +275,23 @@ public class FlyScreenSampleService implements EntityFilter, IService {
         logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
         		" as child of "+parent.getEntityType().getName()+"#"+parent.getId());
     }
+
+    protected Entity addChildFolderToEntity(Entity parent, String name, String directoryPath) throws Exception {
+        Entity folder = new Entity();
+        folder.setCreationDate(createDate);
+        folder.setUpdatedDate(createDate);
+        folder.setUser(user);
+        folder.setName(name);
+        folder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+        if (directoryPath!=null) {
+            folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, directoryPath);
+        }
+        folder = annotationBean.saveOrUpdateEntity(folder);
+        logger.info("Saved folder " + name+" as " + folder.getId());
+        addToParent(parent, folder, null, EntityConstants.ATTRIBUTE_ENTITY);
+        return folder;
+    }
+
 
 
 }
