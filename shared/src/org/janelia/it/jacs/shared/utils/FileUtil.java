@@ -450,11 +450,11 @@ public class FileUtil {
         try {
             int returnVal;
             if (isWindows) {
-                command = "copy " + sourceFile.getAbsolutePath() + " " + destFile.getAbsolutePath();
+                command = "copy " + createSafePath(sourceFile.getAbsolutePath()) + " " + createSafePath(destFile.getAbsolutePath());
                 returnVal = call.emulateCommandLine(command, false);
             }
             else {
-                command = "cp " + sourceFile.getAbsolutePath() + " " + destFile.getAbsolutePath();
+                command = "cp " + createSafePath(sourceFile.getAbsolutePath()) + " " + createSafePath(destFile.getAbsolutePath());
                 returnVal = call.emulateCommandLine(command, true);
             }
             if (returnVal != 0) {
@@ -492,11 +492,11 @@ public class FileUtil {
         try {
             int returnVal;
             if (isWindows) {
-                command = "move " + sourceFile.getAbsolutePath() + " " + destFile.getAbsolutePath();
+                command = "move " + createSafePath(sourceFile.getAbsolutePath()) + " " + createSafePath(destFile.getAbsolutePath());
                 returnVal = call.emulateCommandLine(command, false);
             }
             else {
-                command = "mv " + sourceFile.getAbsolutePath() + " " + destFile.getAbsolutePath();
+                command = "mv " + createSafePath(sourceFile.getAbsolutePath()) + " " + createSafePath(destFile.getAbsolutePath());
                 returnVal = call.emulateCommandLine(command, true);
             }
             if (returnVal != 0) {
@@ -518,15 +518,15 @@ public class FileUtil {
                 int returnVal;
                 if (isWindows) {
                     if (i == 0) {
-                        command = "copy " + source.getAbsolutePath() + " " + destFile.getAbsolutePath();
+                        command = "copy " + createSafePath(source.getAbsolutePath()) + " " + createSafePath(destFile.getAbsolutePath());
                     }
                     else {
-                        command = "copy " + destFile.getAbsolutePath() + "+" + source.getAbsolutePath();
+                        command = "copy " + createSafePath(destFile.getAbsolutePath()) + "+" + createSafePath(source.getAbsolutePath());
                     }
                     returnVal = call.emulateCommandLine(command, false);
                 }
                 else {
-                    command = "cat " + source.getAbsolutePath() + " >> " + destFile.getAbsolutePath();
+                    command = "cat " + createSafePath(source.getAbsolutePath()) + " >> " + createSafePath(destFile.getAbsolutePath());
                     returnVal = call.emulateCommandLine(command, true);
                 }
                 if (returnVal != 0) {
@@ -962,8 +962,8 @@ public class FileUtil {
                 throw new RuntimeException("tar compression not yet supported for Windows");
             }
             else {
-                command = "tar -cvf " + destinationArchiveFile.getAbsolutePath() + " -C " + sourceDirectory.getParentFile().getAbsolutePath()
-                        + " " + sourceDirectory.getName();
+                command = "tar -cvf " + createSafePath(destinationArchiveFile.getAbsolutePath()) + " -C " + createSafePath(sourceDirectory.getParentFile().getAbsolutePath())
+                        + " " + createSafePath(sourceDirectory.getName());
                 returnVal = call.emulateCommandLine(command, true);
             }
             if (returnVal != 0) {
@@ -996,4 +996,9 @@ public class FileUtil {
             }
         }
     }
+
+    public static String createSafePath(String path) {
+        return "\""+path+"\"";
+    }
+
 }
