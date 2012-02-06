@@ -9,6 +9,7 @@ import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.screen.FlyScreenSampleService;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -261,6 +262,8 @@ public class PatternAnnotationSampleService  implements IService {
             String QmScore=null;
             String QiScore=null;
 
+            updateSampleSupportingDirIfNecessary(sample);
+
             for (EntityData ed : sample.getEntityData()) {
                 Entity child=ed.getChildEntity();
                 if (child!=null) {
@@ -364,6 +367,53 @@ public class PatternAnnotationSampleService  implements IService {
         processData.putItem("RESOURCE_DIR_PATH", patternAnnotationResourceDir);
         processData.putItem(ProcessDataConstants.RESULT_FILE_NODE, resultNode);
         processData.putItem("PATTERN_CHANNEL", patternChannel);
+    }
+
+    protected void updateSampleSupportingDirIfNecessary(Entity sample) throws Exception {
+        // Originally, the screen sample has both the screen raw data stack and mip sharing
+        // the same top-level screen sample folder. This is distracting for the user, where
+        // the stack and mip get confused. Here we create a supporting folder and place
+        // the mip there if it is not already configured this way.
+        Entity rawMip=null;
+        Entity supportingFolder=null;
+        String screenFolderPath=sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        EntityData rawMipEd=null;
+        File rawMipFile=null;
+        File supportingDir=new File(screenFolderPath, FlyScreenSampleService.SUPPORTING_FILES_FOLDER_NAME);
+        String sampleDefault2DImagePath=sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+        boolean replaceSampleDefault2DImage=false;
+        for (EntityData ed : sample.getEntityData()) {
+            Entity child=ed.getChildEntity();
+            if (child.getEntityType().equals(EntityConstants.TYPE_IMAGE_2D)) {
+                String childPath=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                File childFile=new File(childPath);
+                if (childPath.equals(sampleDefault2DImagePath)) replaceSampleDefault2DImage=true;
+                if (childFile.getName().toLowerCase().contains("mip")) {
+                    rawMip=child;
+                    rawMipEd=ed;
+                    rawMipFile=childFile;
+                }
+            } else if (child.getEntityType().equals(EntityConstants.TYPE_FOLDER) && child.getName().equals(FlyScreenSampleService.SUPPORTING_FILES_FOLDER_NAME)) {
+                supportingFolder=child;
+            }
+        }
+        if (rawMip!=null) {
+            // Then assume we need to move it - first check if a supporting dir already exists
+            if (supportingFolder==null) {
+                // We need to create it
+                if (!supportingDir.exists() && !supportingDir.mkdir()) {
+                    throw new Exception("Could not create supporting file directory="+supportingDir.getAbsolutePath());
+                }
+                supportingFolder=addChildFolderToEntity(sample, FlyScreenSampleService.SUPPORTING_FILES_FOLDER_NAME, supportingDir.getAbsolutePath());
+            }
+            annotationBean.deleteEntityData(rawMipEd);
+            File newMipFile=new File(supportingDir, rawMipFile.getName());
+            FileUtil.moveFileUsingSystemCall(rawMipFile, newMipFile);
+            addToParent(supportingFolder, rawMip, null, EntityConstants.ATTRIBUTE_ENTITY);
+            if (replaceSampleDefault2DImage) {
+                sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, newMipFile.getAbsolutePath());
+            }
+        }
     }
 
     protected void cleanFullOrIncompletePatternAnnotationFolderAndFiles(Entity patternAnnotationFolder, File patternDir) throws Exception {
@@ -635,8 +685,11 @@ public class PatternAnnotationSampleService  implements IService {
         }
 
         // Finally, we need to add targeted 2D image assignments
-        patternAnnotationFolder.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE,
-                mipMap.get("Heatmap MIP").getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+        String mipPath=mipMap.get("Heatmap MIP").getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        patternAnnotationFolder.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, mipPath);
+
+        // We also want to replace the sample 2D image with the heatmap, for those samples where it is available
+        screenSample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, mipPath);
     }
 
     protected Entity createMipEntity(File pngFile, String name) throws Exception {

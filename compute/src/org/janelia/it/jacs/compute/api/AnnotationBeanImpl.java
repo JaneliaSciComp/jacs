@@ -41,6 +41,16 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
     }
 
+    public void deleteEntityData(EntityData ed) throws ComputeException {
+        try {
+            _annotationDAO.genericDelete(ed);
+        }
+        catch (Exception e) {
+            _logger.error("Unexpected error while trying to delete entity data "+ed.getId());
+            throw new ComputeException("Unexpected error while trying to delete entity data "+ed.getId(),e);
+        }
+    }
+
     public List<Entity> getAnnotationsForEntities(String username, List<Long> entityIds) throws ComputeException {
         try {
             return _annotationDAO.getAnnotationsByEntityId(username, entityIds);
