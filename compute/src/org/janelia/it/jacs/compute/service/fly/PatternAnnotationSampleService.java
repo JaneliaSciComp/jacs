@@ -382,6 +382,7 @@ public class PatternAnnotationSampleService  implements IService {
         File supportingDir=new File(screenFolderPath, FlyScreenSampleService.SUPPORTING_FILES_FOLDER_NAME);
         String sampleDefault2DImagePath=sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
         boolean replaceSampleDefault2DImage=false;
+        logger.info("Checking sample supporting dir status for sample id="+sample.getId());
         for (EntityData ed : sample.getEntityData()) {
             Entity child=ed.getChildEntity();
             if (child.getEntityType().equals(EntityConstants.TYPE_IMAGE_2D)) {
@@ -398,21 +399,28 @@ public class PatternAnnotationSampleService  implements IService {
             }
         }
         if (rawMip!=null) {
+            logger.info("Updating position of mip and supporting directory for screen sample id="+sample.getId());
             // Then assume we need to move it - first check if a supporting dir already exists
             if (supportingFolder==null) {
                 // We need to create it
                 if (!supportingDir.exists() && !supportingDir.mkdir()) {
                     throw new Exception("Could not create supporting file directory="+supportingDir.getAbsolutePath());
                 }
+                logger.info("Creating new supporting folder in location="+supportingDir.getAbsolutePath());
                 supportingFolder=addChildFolderToEntity(sample, FlyScreenSampleService.SUPPORTING_FILES_FOLDER_NAME, supportingDir.getAbsolutePath());
             }
             annotationBean.deleteEntityData(rawMipEd);
             File newMipFile=new File(supportingDir, rawMipFile.getName());
+            logger.info("Moving mip to new location="+newMipFile.getAbsolutePath());
             FileUtil.moveFileUsingSystemCall(rawMipFile, newMipFile);
             addToParent(supportingFolder, rawMip, null, EntityConstants.ATTRIBUTE_ENTITY);
             if (replaceSampleDefault2DImage) {
+                logger.info("Resetting default 2D image for screen sample to new image location");
                 sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, newMipFile.getAbsolutePath());
+                annotationBean.saveOrUpdateEntity(sample);
             }
+        } else {
+            logger.info("Could not locate mip in prior location, so assuming does not need update for sample id="+sample.getId());
         }
     }
 
