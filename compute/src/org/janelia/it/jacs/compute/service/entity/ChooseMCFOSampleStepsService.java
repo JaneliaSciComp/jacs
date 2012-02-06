@@ -98,24 +98,52 @@ public class ChooseMCFOSampleStepsService implements IService {
 			logger.warn("Cannot find existing sample processing result for Sample with id="+sampleEntity.getId());
 			return false;
 		}
-		
+
+
+		int numTiles = 0;
+		Entity sampleSupportingFiles = sampleEntity.getLatestChildOfType(EntityConstants.TYPE_SUPPORTING_DATA);
+    	if (sampleSupportingFiles!=null) {
+    		numTiles = sampleSupportingFiles.getDescendantsOfType(EntityConstants.TYPE_LSM_STACK_PAIR).size();
+    	}
+    	
 		Entity stitchedFile = null;
+		Entity mergedFile = null;
+		int numMergedFiles = 0;
 		Entity supportingFiles = sampleProcessing.getLatestChildOfType(EntityConstants.TYPE_SUPPORTING_DATA);
 		if (supportingFiles != null) {
     		for(Entity child : supportingFiles.getChildren()) {
-    			if (child.getName().startsWith("stitched-") && child.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_3D)) {
-    				stitchedFile = child;
+    			if (child.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_3D)) {
+    				if (child.getName().startsWith("stitched-")) {
+        				stitchedFile = child;
+        			}	
+    				else if (child.getName().startsWith("merged-")) {
+        				mergedFile = child;
+        				numMergedFiles++;
+        			}	
     			}
     		}
 		}
 		
 		if (stitchedFile == null) {
-			logger.warn("Cannot find existing stitched result for Sample with id="+sampleEntity.getId());
-			return false;
+			if (numTiles == 1) {
+				// We should have a single merged tile
+				if (mergedFile==null) {
+					logger.warn("Cannot find existing merged result for Sample with id="+sampleEntity.getId());
+					return false;	
+				}
+				processData.putItem("STITCHED_FILENAME", mergedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+		    	logger.info("Putting '"+processData.getItem("STITCHED_FILENAME")+"' in STITCHED_FILENAME");
+			}
+			else {
+				// We should have a stitched file but we don't
+				logger.warn("Cannot find existing stitched result for Sample with id="+sampleEntity.getId());
+				return false;
+			}
 		}
-		
-		processData.putItem("STITCHED_FILENAME", stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-    	logger.info("Putting '"+processData.getItem("STITCHED_FILENAME")+"' in STITCHED_FILENAME");	
+		else {
+			processData.putItem("STITCHED_FILENAME", stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+	    	logger.info("Putting '"+processData.getItem("STITCHED_FILENAME")+"' in STITCHED_FILENAME");	
+		}	
 
 		return true;
     }

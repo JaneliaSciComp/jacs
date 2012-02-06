@@ -90,7 +90,9 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
     		if (sampleFolder == null) continue;
     		if (!EntityConstants.TYPE_SAMPLE.equals(sampleFolder.getEntityType().getName())) continue;
 
-	    	for(EntityData sed : sampleFolder.getEntityData()) {
+            Entity supportingFiles = EntityUtils.getSupportingData(sampleFolder);
+        	
+	    	for(EntityData sed : supportingFiles.getEntityData()) {
     			Entity lsmStackPair = sed.getChildEntity();
 	    		if (lsmStackPair == null) continue;
 	    		if (!EntityConstants.TYPE_LSM_STACK_PAIR.equals(lsmStackPair.getEntityType().getName())) continue;
