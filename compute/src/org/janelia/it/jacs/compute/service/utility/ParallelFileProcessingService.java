@@ -156,7 +156,7 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
             for (int argIndex=GLOBAL_CASE; argIndex<argumentIndex-1; argIndex++) {
 
                 File inputDir=null;
-                if (alternateWorkingDirectory!=null || alternateWorkingDirectory.trim().length()>0) {
+                if (alternateWorkingDirectory!=null && alternateWorkingDirectory.trim().length()>0) {
                     inputDir=new File(alternateWorkingDirectory);
                 } else {
                     inputDir=new File(outputNode.getDirectoryPath());
