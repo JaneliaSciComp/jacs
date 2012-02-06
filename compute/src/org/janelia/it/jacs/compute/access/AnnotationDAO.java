@@ -27,7 +27,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
     private static final Map<String, EntityType> entityByName = Collections.synchronizedMap(new HashMap<String, EntityType>());
     private static final Map<String, EntityAttribute> attrByName = Collections.synchronizedMap(new HashMap<String, EntityAttribute>());
 
-    private boolean debugDeletions = true;
+    private boolean debugDeletions = false;
     
     public AnnotationDAO(Logger logger) {
         super(logger);
