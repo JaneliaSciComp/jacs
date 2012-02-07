@@ -3,9 +3,12 @@ package org.janelia.it.jacs.shared.utils;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.hibernate.Hibernate;
 import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 
@@ -14,7 +17,16 @@ import org.janelia.it.jacs.model.entity.EntityData;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
+
+
 public class EntityUtils {
+
+    private static final Logger logger = Logger.getLogger(EntityUtils.class);
+
+
+    public interface SaveUnit {
+        public void saveUnit(Object o) throws Exception;
+    }
 
     public static boolean areLoaded(Collection<EntityData> eds) {
         for (EntityData entityData : eds) {
@@ -106,4 +118,24 @@ public class EntityUtils {
         }
         return items;
     }
+
+    public static void replaceAllAttributeTypesInEntityTree(Entity topEntity, EntityAttribute previousEa, EntityAttribute newEa, SaveUnit su) throws Exception {
+        logger.info("replaceAllAttributeTypesInEntityTree id="+topEntity.getId());
+        Set<EntityData> edSet=topEntity.getEntityData();
+        logger.info("Found "+edSet.size()+" entity-data");
+        for (EntityData ed : edSet) {
+            if (ed.getEntityAttribute().getName().equals(previousEa.getName())) {
+                logger.info("Changing value to "+newEa.getName());
+                ed.setEntityAttribute(newEa);
+                su.saveUnit(ed);
+            } else {
+                logger.info("Skipping attribute="+ed.getEntityAttribute().getName());
+            }
+            Entity child=ed.getChildEntity();
+            if (child!=null) {
+                replaceAllAttributeTypesInEntityTree(child, previousEa, newEa, su);
+            }
+        }
+    }
+
 }

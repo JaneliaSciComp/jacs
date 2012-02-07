@@ -195,5 +195,15 @@
         <description>Load entity types from Java class AnnotationDAO</description>
         <name>setupEntityTypes</name>
     </operation>
-    
+
+    <operation>
+        <description>Perform custom surgery on Screen Pipeline results, by user</description>
+        <name>performScreenPipelineSurgery</name>
+        <parameter>
+            <description>User to run as (e.g. "system")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+
 </mbean>

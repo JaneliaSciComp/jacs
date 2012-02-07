@@ -3,11 +3,15 @@ package org.janelia.it.jacs.compute.mbean;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
+import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.service.entity.SampleFileNodeSyncService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FlyScreenDiscoveryService;
 import org.janelia.it.jacs.compute.service.fly.ScreenSampleLineCoordinationService;
 import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityAttribute;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
@@ -15,6 +19,7 @@ import org.janelia.it.jacs.model.tasks.fileDiscovery.*;
 import org.janelia.it.jacs.model.tasks.fly.FlyScreenPatternAnnotationTask;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -210,5 +215,43 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
+
+    public void performScreenPipelineSurgery(String username) {
+        try {
+            final AnnotationBeanLocal annotationBean = EJBFactory.getLocalAnnotationBean();
+            Set<Entity> entities=annotationBean.getEntitiesByName("FlyLight Screen Data");
+            Set<Entity> userEntities=new HashSet<Entity>();
+            for (Entity e : entities) {
+                if (e.getUser().getUserLogin().equals(username)) {
+                    userEntities.add(e);
+                }
+            }
+
+            if (userEntities.size()==1) {
+                Entity topEntity=entities.iterator().next();
+                logger.info("Found top-level entity name="+topEntity.getName()+" , now changing attributes");
+                Entity screenTree=annotationBean.getEntityTree(topEntity.getId());
+                EntityAttribute pEa=annotationBean.getEntityAttributeByName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+                EntityAttribute nEa=annotationBean.getEntityAttributeByName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
+
+                EntityUtils.replaceAllAttributeTypesInEntityTree(screenTree, pEa, nEa, new EntityUtils.SaveUnit() {
+                    public void saveUnit(Object o) throws Exception {
+                        EntityData ed=(EntityData)o;
+                        logger.info("Saving attribute change for ed="+ed.getId());
+                        annotationBean.saveOrUpdateEntityData(ed);
+                    }
+                }
+                );
+                logger.info("Done replacement, now saving");
+                annotationBean.saveOrUpdateEntity(topEntity);
+                logger.info("Done with save");
+            } else {
+                logger.error("Found more than one top-level entity - this is unexpected - exiting");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
 
 }

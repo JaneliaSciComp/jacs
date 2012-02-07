@@ -33,4 +33,6 @@ public interface WorkstationDataManagerMBean {
     public void deleteEntityById(String entityId);
 
     public void doEntityTreePerformanceTest();
+
+    public void performScreenPipelineSurgery(String user);
 }
