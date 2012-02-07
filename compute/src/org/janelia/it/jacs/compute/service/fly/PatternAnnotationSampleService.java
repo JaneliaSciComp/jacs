@@ -380,7 +380,7 @@ public class PatternAnnotationSampleService  implements IService {
         EntityData rawMipEd=null;
         File rawMipFile=null;
         File supportingDir=new File(screenFolderPath, FlyScreenSampleService.SUPPORTING_FILES_FOLDER_NAME);
-        String sampleDefault2DImagePath=sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+        String sampleDefault2DImagePath=sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
         boolean replaceSampleDefault2DImage=false;
         logger.info("Checking sample supporting dir status for sample id="+sample.getId());
         for (EntityData ed : sample.getEntityData()) {
@@ -416,7 +416,7 @@ public class PatternAnnotationSampleService  implements IService {
             addToParent(supportingFolder, rawMip, null, EntityConstants.ATTRIBUTE_ENTITY);
             if (replaceSampleDefault2DImage) {
                 logger.info("Resetting default 2D image for screen sample to new image location");
-                sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, newMipFile.getAbsolutePath());
+                sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, newMipFile.getAbsolutePath());
                 annotationBean.saveOrUpdateEntity(sample);
             }
         } else {
@@ -694,10 +694,10 @@ public class PatternAnnotationSampleService  implements IService {
 
         // Finally, we need to add targeted 2D image assignments
         String mipPath=mipMap.get("Heatmap MIP").getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        patternAnnotationFolder.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, mipPath);
+        patternAnnotationFolder.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, mipPath);
 
         // We also want to replace the sample 2D image with the heatmap, for those samples where it is available
-        screenSample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, mipPath);
+        screenSample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, mipPath);
     }
 
     protected Entity createMipEntity(File pngFile, String name) throws Exception {
@@ -708,7 +708,7 @@ public class PatternAnnotationSampleService  implements IService {
         mipEntity.setUpdatedDate(createDate);
         mipEntity.setName(name);
         mipEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, pngFile.getAbsolutePath());
-        mipEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, pngFile.getAbsolutePath());
+        mipEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
         mipEntity = EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(mipEntity);
         return mipEntity;
     }
@@ -722,7 +722,7 @@ public class PatternAnnotationSampleService  implements IService {
         stack.setUpdatedDate(createDate);
         stack.setName(entityName);
         stack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
-        stack.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, mipFilePath);
+        stack.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, mipFilePath);
         stack = EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(stack);
         logger.info("Saved stack " + stack.getName() + " as "+stack.getId());
         return stack;
