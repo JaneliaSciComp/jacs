@@ -39,7 +39,7 @@ public class PatternAnnotationSampleService  implements IService {
     final public String FILESYSTEM_SUBDIR_NAME="patternAnnotation";
     final public String PATTERN_ANNOTATION_FOLDER_NAME="Pattern Annotation";
     final public String MIPS_SUBFOLDER_NAME="mips";
-    final public String SUPPORTING_FILE_SUBFOLDER_NAME="supporting files";
+    final public String SUPPORTING_FILE_SUBFOLDER_NAME="supportingFiles";
     final public String NORMALIZED_SUBFOLDER_NAME="normalized";
     final public String ABBREVIATION_INDEX_FILENAME="compartmentAbbreviationIndex.txt";
 

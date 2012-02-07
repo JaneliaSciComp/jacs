@@ -54,7 +54,7 @@ public class FlyScreenSampleService implements EntityFilter, IService {
     protected List<String> sampleEntityIdList;
 
     protected static final String RELATIVE_SAMPLE_TO_JACS_PATH = SystemConfigurationProperties.getString("FlyScreen.RelativePathFromScreenSampleToJacsRoot");
-    public static final String SUPPORTING_FILES_FOLDER_NAME="supporting files";
+    public static final String SUPPORTING_FILES_FOLDER_NAME="supportingFiles";
 
 
        public void execute(IProcessData processData) throws ServiceException {
@@ -180,7 +180,7 @@ public class FlyScreenSampleService implements EntityFilter, IService {
 
                 // Create MIP
                 Entity mipEntity=createMipEntity(pngFile, screenSampleEntity.getName() + " mip");
-                addToParent(screenSampleEntity, mipEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
+                addToParent(supportingFilesFolder, mipEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
 
                 // Add default image to screen sample
                 screenSampleEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, pngFile.getAbsolutePath());
