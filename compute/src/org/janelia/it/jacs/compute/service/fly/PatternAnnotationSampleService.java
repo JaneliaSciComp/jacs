@@ -733,30 +733,5 @@ public class PatternAnnotationSampleService  implements IService {
         return stack;
     }
 
-    protected Entity getStackEntityFromScreenSample(Entity screenSampleEntity) {
-        if (screenSampleEntity.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
-            List<Entity> stackEntities = screenSampleEntity.getChildrenOfType(EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
-            if (stackEntities.size()>0) {
-                return stackEntities.get(0);
-            }
-        }
-        return null;
-    }
-
-    protected Entity getMipEntityFromScreenSample(Entity screenSampleEntity) {
-        if (screenSampleEntity.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
-            List<Entity> mipEntities = screenSampleEntity.getChildrenOfType(EntityConstants.TYPE_IMAGE_2D);
-            for (Entity mip : mipEntities) {
-                if (mip.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH).endsWith(".png")) {
-                    return mip;
-                }
-            }
-        }
-        return null;
-    }
-
-
-
-
 }
 
