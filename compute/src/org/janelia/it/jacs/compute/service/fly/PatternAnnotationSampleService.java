@@ -267,7 +267,7 @@ public class PatternAnnotationSampleService  implements IService {
             for (EntityData ed : sample.getEntityData()) {
                 Entity child=ed.getChildEntity();
                 if (child!=null) {
-                    if (child.getEntityType().equals(EntityConstants.TYPE_IMAGE_2D) && child.getName().trim().endsWith("mip")) {
+                    if (child.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_2D) && child.getName().trim().endsWith("mip")) {
                         File mipFile=new File(child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
                         nodeDir=mipFile.getParentFile();
                     } else if (child.getEntityType().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
@@ -385,7 +385,7 @@ public class PatternAnnotationSampleService  implements IService {
         logger.info("Checking sample supporting dir status for sample id="+sample.getId());
         for (EntityData ed : sample.getEntityData()) {
             Entity child=ed.getChildEntity();
-            if (child.getEntityType().equals(EntityConstants.TYPE_IMAGE_2D)) {
+            if (child.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_2D)) {
                 String childPath=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                 File childFile=new File(childPath);
                 if (childPath.equals(sampleDefault2DImagePath)) replaceSampleDefault2DImage=true;
@@ -435,7 +435,7 @@ public class PatternAnnotationSampleService  implements IService {
             Entity child=ed.getChildEntity();
             if (child!=null) {
                 if (child.getUser().getUserLogin().equals(task.getOwner())) {
-                    if (child.getEntityType().equals(EntityConstants.TYPE_FOLDER)) {
+                    if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
                         String folderPath=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                         File childFolderFile=new File(folderPath);
                         File childFolderParent=childFolderFile.getParentFile();
@@ -515,7 +515,7 @@ public class PatternAnnotationSampleService  implements IService {
         for (EntityData ed : screenSample.getEntityData()) {
             Entity child=ed.getChildEntity();
             if (child!=null) {
-                if (child.getEntityType().equals(EntityConstants.TYPE_FOLDER) && child.getName().equals(PATTERN_ANNOTATION_FOLDER_NAME)) {
+                if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) && child.getName().equals(PATTERN_ANNOTATION_FOLDER_NAME)) {
                     return child;
                 }
             }
