@@ -388,7 +388,9 @@ public class PatternAnnotationSampleService  implements IService {
             if (child.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_2D)) {
                 String childPath=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                 File childFile=new File(childPath);
-                if (childPath.equals(sampleDefault2DImagePath)) replaceSampleDefault2DImage=true;
+                if (childPath.equals(sampleDefault2DImagePath)) {
+                    replaceSampleDefault2DImage=true;
+                }
                 if (childFile.getName().toLowerCase().contains("mip")) {
                     rawMip=child;
                     rawMipEd=ed;
@@ -414,6 +416,9 @@ public class PatternAnnotationSampleService  implements IService {
             logger.info("Moving mip to new location="+newMipFile.getAbsolutePath());
             FileUtil.moveFileUsingSystemCall(rawMipFile, newMipFile);
             addToParent(supportingFolder, rawMip, null, EntityConstants.ATTRIBUTE_ENTITY);
+            rawMip.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, newMipFile.getAbsolutePath());
+            rawMip.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, newMipFile.getAbsolutePath());
+            annotationBean.saveOrUpdateEntity(rawMip);
             if (replaceSampleDefault2DImage) {
                 logger.info("Resetting default 2D image for screen sample to new image location");
                 sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, newMipFile.getAbsolutePath());
