@@ -270,7 +270,7 @@ public class PatternAnnotationSampleService  implements IService {
                     if (child.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_2D) && child.getName().trim().endsWith("mip")) {
                         File mipFile=new File(child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
                         nodeDir=mipFile.getParentFile();
-                    } else if (child.getEntityType().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
+                    } else if (child.getEntityType().getName().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
                         stackFile=new File(child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
                         QmScore=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE);
                         QiScore=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
@@ -397,7 +397,7 @@ public class PatternAnnotationSampleService  implements IService {
                         rawMipEd=ed;
                         rawMipFile=childFile;
                     }
-                } else if (child.getEntityType().equals(EntityConstants.TYPE_FOLDER) && child.getName().equals(FlyScreenSampleService.SUPPORTING_FILES_FOLDER_NAME)) {
+                } else if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) && child.getName().equals(FlyScreenSampleService.SUPPORTING_FILES_FOLDER_NAME)) {
                     supportingFolder=child;
                 }
             }
