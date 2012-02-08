@@ -59,7 +59,7 @@
 
                     <sequence name="Compute Pattern Annotation" waitForAsync="true">
        			        <operation name="Pattern Annotation" processor="queue/gridSubmitAndWait">
-        			        <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.PatternAnnotationService"/>
+        			        <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.V3DPatternAnnotationService"/>
         			        <input name="RESULT_FILE_NODE"/>
     		                <input name="SAMPLE_ID_LIST"/>
     		                <input name="SAMPLE_NAME_LIST"/>
