@@ -385,19 +385,21 @@ public class PatternAnnotationSampleService  implements IService {
         logger.info("Checking sample supporting dir status for sample id="+sample.getId());
         for (EntityData ed : sample.getEntityData()) {
             Entity child=ed.getChildEntity();
-            if (child.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_2D)) {
-                String childPath=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                File childFile=new File(childPath);
-                if (childPath.equals(sampleDefault2DImagePath)) {
-                    replaceSampleDefault2DImage=true;
+            if (child!=null) {
+                if (child.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_2D)) {
+                    String childPath=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                    File childFile=new File(childPath);
+                    if (childPath.equals(sampleDefault2DImagePath)) {
+                        replaceSampleDefault2DImage=true;
+                    }
+                    if (childFile.getName().toLowerCase().contains("mip")) {
+                        rawMip=child;
+                        rawMipEd=ed;
+                        rawMipFile=childFile;
+                    }
+                } else if (child.getEntityType().equals(EntityConstants.TYPE_FOLDER) && child.getName().equals(FlyScreenSampleService.SUPPORTING_FILES_FOLDER_NAME)) {
+                    supportingFolder=child;
                 }
-                if (childFile.getName().toLowerCase().contains("mip")) {
-                    rawMip=child;
-                    rawMipEd=ed;
-                    rawMipFile=childFile;
-                }
-            } else if (child.getEntityType().equals(EntityConstants.TYPE_FOLDER) && child.getName().equals(FlyScreenSampleService.SUPPORTING_FILES_FOLDER_NAME)) {
-                supportingFolder=child;
             }
         }
         if (rawMip!=null) {

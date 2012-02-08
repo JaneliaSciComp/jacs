@@ -86,7 +86,7 @@
         			</sequence>
 
                     <!-- This creates appropriate entities for all results in the proper hierarchy and also cleans up
-                         any temporary files ->
+                         any temporary files -->
 
         		    <operation name="Completion phase of Pattern Annotation Service" processor="org.janelia.it.jacs.compute.service.fly.PatternAnnotationSampleService">
                         <input name="MODE" value="COMPLETE"/>
