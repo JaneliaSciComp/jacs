@@ -18,28 +18,23 @@ public class V3DHelper {
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("V3D.CMD");
 
-    public static String getFormattedMergeCommand(String inputFilePath1, String inputFilePath2, String outputFilePath) throws Exception {
-        try {
-            return V3D_BASE_CMD+" -x libblend_multiscanstacks.so -f multiscanblend -p \"#k 1\" -i \"" + inputFilePath1
-                    + "\" \"" +inputFilePath2+ "\" -o \"" + outputFilePath+"\"";
-        }
-        catch (Exception e) {
-            throw new ServiceException("Cannot format the command for V3D Merge",e);
-        }
+    public static String getFormattedMergeCommand(String inputFilePath1, String inputFilePath2, String outputFilePath) {
+        return V3D_BASE_CMD+" -x libblend_multiscanstacks.so -f multiscanblend -p \"#k 1\" -i \"" + inputFilePath1
+                + "\" \"" +inputFilePath2+ "\" -o \"" + outputFilePath+"\"";
     }
 
-    public static String getFormattedStitcherCommand(String inputDirectoryPath) throws ServiceException {
+    public static String getFormattedGrouperCommand(String inputDirectoryPath, String outputFilePath) {
+    	return V3D_BASE_CMD+" -x imageStitch.so -f istitch-grouping -p \"#c 4\" -i \""+inputDirectoryPath+"\" -o \""+outputFilePath+"\";";
+    }
+    
+    public static String getFormattedStitcherCommand(String inputDirectoryPath) {
         return V3D_BASE_CMD+" -x imageStitch.so -f v3dstitch -i \""+inputDirectoryPath+"\" -p \"#c 4 #si 0\";";
     }
 
-    /**
-     * Why does this look like it is actually stitching the files?  Why does the blender need a directory of images?
-     * SHouldn't there only be one image by now?
-     */
-    public static String getFormattedBlendCommand(String inputDirectoryPath, String outputFilePath) throws ServiceException {
+    public static String getFormattedBlendCommand(String inputDirectoryPath, String outputFilePath) {
         return V3D_BASE_CMD+" -x ifusion.so -f iblender -i \""+inputDirectoryPath+"\" -o \""+outputFilePath+"\" -p \"#s 1\"";
     }
-
+    
     /**
      * For V3D plugins that are truly headless.
      * @return

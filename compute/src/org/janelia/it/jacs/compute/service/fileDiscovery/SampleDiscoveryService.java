@@ -258,14 +258,6 @@ public class SampleDiscoveryService extends FileDiscoveryService {
         logger.info("Saved LSM stack as "+lsmStack.getId());
         return lsmStack;
     }
-
-    public void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
-        EntityData ed = parent.addChildEntity(entity, attrName);
-        ed.setOrderIndex(index);
-        EJBFactory.getLocalAnnotationBean().saveOrUpdateEntityData(ed);
-        logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
-        		" as child of "+parent.getEntityType().getName()+"#"+parent.getId());
-    }
     
     private class FilePair {
         private String pairTag;

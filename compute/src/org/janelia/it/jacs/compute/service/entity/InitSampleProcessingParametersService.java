@@ -105,6 +105,7 @@ public class InitSampleProcessingParametersService implements IService {
         	File stitchedFile = new File(stitchResultNode.getDirectoryPath(), "stitched-"+sampleEntity.getId()+".v3draw");
         	processData.putItem("STITCHED_FILENAME", stitchedFile.getAbsolutePath());
         	processData.putItem("BULK_MERGE_PARAMETERS", mergedLsmPairs);
+        	processData.putItem("NUM_PAIRS", new Long(mergedLsmPairs.size()));
         	
         } catch (Exception e) {
             throw new ServiceException(e);

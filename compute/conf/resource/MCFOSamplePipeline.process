@@ -42,6 +42,7 @@
 		        <output name="SAMPLE_RESULT_FILE_NODE"/>
 		        <output name="METADATA_RESULT_FILE_NODE"/>
 		        <output name="MERGE_RESULT_FILE_NODE"/>
+		        <output name="GROUP_RESULT_FILE_NODE"/>
 		        <output name="STITCH_RESULT_FILE_NODE"/>
 		    </operation>
 		            
@@ -77,17 +78,44 @@
 		        </operation>
 	        </sequence>
 		
-		    <!-- Stitch the merged files into a single result (does nothing in the case of a single tile) -->
-	        <sequence name="Stitch and Blend" waitForAsync="true">
-		        <operation name="Stitch and Blend" processor="queue/gridSubmitAndWait">
-		            <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.V3DStitchAndBlendService"/>
-					<input name="STITCH_RESULT_FILE_NODE"/>
-		    		<input name="RESULT_FILE_NODE" value="$V{STITCH_RESULT_FILE_NODE}"/>
-					<input name="MERGE_RESULT_FILE_NODE"/>
-		    		<input name="INPUT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
+        	<sequence if="NUM_PAIRS=1">
+        	
+			    <!-- In the case of a single tile, it is considered the "stitched" file used in downstream processing -->
+			    <operation name="Create Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitSingleMergeParametersService">
 					<input name="BULK_MERGE_PARAMETERS"/>
-					<input name="STITCHED_FILENAME"/>
-		        </operation>
+					<output name="STITCHED_FILENAME"/>
+				</operation>
+				
+	        </sequence>
+        	
+        	<sequence if="NUM_PAIRS>1"> <!-- else -->
+        	
+			    <!-- Determine tile groupings and pick the largest group for processing -->
+		        <sequence name="Determine Stitch Grouping" waitForAsync="true">
+			        <operation name="Stitch Grouping" processor="queue/gridSubmitAndWait">
+			            <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.V3DStitchGroupingService"/>
+						<input name="GROUP_RESULT_FILE_NODE"/>
+			    		<input name="RESULT_FILE_NODE" value="$V{GROUP_RESULT_FILE_NODE}"/>
+						<input name="MERGE_RESULT_FILE_NODE"/>
+			    		<input name="INPUT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
+						<input name="BULK_MERGE_PARAMETERS"/>
+						<output name="BULK_MERGE_PARAMETERS"/>
+			        </operation>
+		        </sequence>
+		        
+			    <!-- Stitch the merged files into a single result -->
+		        <sequence name="Stitch and Blend" waitForAsync="true">
+			        <operation name="Stitch and Blend" processor="queue/gridSubmitAndWait">
+			            <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.V3DStitchAndBlendService"/>
+						<input name="STITCH_RESULT_FILE_NODE"/>
+			    		<input name="RESULT_FILE_NODE" value="$V{STITCH_RESULT_FILE_NODE}"/>
+						<input name="GROUP_RESULT_FILE_NODE"/>
+			    		<input name="INPUT_FILE_NODE" value="$V{GROUP_RESULT_FILE_NODE}"/>
+						<input name="BULK_MERGE_PARAMETERS"/>
+						<input name="STITCHED_FILENAME"/>
+			        </operation>
+		        </sequence>
+		        
 	        </sequence>
 	        
 		    <!-- Load the sample analysis results into the database -->

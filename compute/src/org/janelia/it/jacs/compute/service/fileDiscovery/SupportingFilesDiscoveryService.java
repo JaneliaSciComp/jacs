@@ -2,6 +2,7 @@ package org.janelia.it.jacs.compute.service.fileDiscovery;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityType;
@@ -102,11 +103,18 @@ public class SupportingFilesDiscoveryService extends FileDiscoveryService {
 		});
         
         for (File resultFile : files) {
+        	
+        	// Skip symbolic links
+        	if (FileUtils.isSymlink(resultFile)) continue;
+        	
         	String filename = resultFile.getName();
             if (filename.endsWith(".metadata")) {
                 addResultItem(filesFolder, textFile, resultFile);
             }
             else if (filename.endsWith(".csv")) {
+                addResultItem(filesFolder, textFile, resultFile);
+            }
+            else if (filename.endsWith("groups.txt")) {
                 addResultItem(filesFolder, textFile, resultFile);
             }
             else if (filename.endsWith(".v3draw")) {
