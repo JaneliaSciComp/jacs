@@ -970,7 +970,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
-    public List<Entity> getAnnotationsByEntityId(String username, List<Long> entityIds) throws DaoException {
+    public List<Entity> getAnnotationsByEntityId(String userLogin, List<Long> entityIds) throws DaoException {
         try {
         	if (entityIds.isEmpty()) {
         		return new ArrayList<Entity>();
@@ -984,10 +984,19 @@ public class AnnotationDAO extends ComputeBaseDAO {
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed where " +
                     "ed.entityAttribute.name = ? " +
-                    "and ed.value in ("+entityCommaList+") order by ed.parentEntity.id ");
+                    "and ed.value in ("+entityCommaList+") ");
+
+            if (null != userLogin) {
+                hql.append(" and (ed.parentEntity.user.userLogin=? or ed.parentEntity.user.userLogin='system') ");
+            }
+            
+            hql.append(" order by ed.parentEntity.id ");
+            
             Query query = session.createQuery(hql.toString());
             query.setString(0, EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
-            // TODO: check userLogin if the session is private
+            if (null != userLogin) {
+                query.setString(1, userLogin);
+            }
             return query.list();
         } catch (Exception e) {
             throw new DaoException(e);
