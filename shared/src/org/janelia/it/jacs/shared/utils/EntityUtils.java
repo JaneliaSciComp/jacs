@@ -17,8 +17,6 @@ import org.janelia.it.jacs.model.entity.EntityData;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-
-
 public class EntityUtils {
 
     private static final Logger logger = Logger.getLogger(EntityUtils.class);
@@ -109,10 +107,20 @@ public class EntityUtils {
 		}
     }
 
-    public static List<EntityData> getOrderedEntityDataOfType(Entity entity, String attrName) {
+    public static List<EntityData> getOrderedEntityDataForAttribute(Entity entity, String attrName) {
         List<EntityData> items = new ArrayList<EntityData>();
         for (EntityData entityData : entity.getOrderedEntityData()) {
             if (attrName==null || attrName.equals(entityData.getEntityAttribute().getName())) {
+                items.add(entityData);
+            }
+        }
+        return items;
+    }
+
+    public static List<EntityData> getOrderedEntityDataWithChildren(Entity entity) {
+        List<EntityData> items = new ArrayList<EntityData>();
+        for (EntityData entityData : entity.getOrderedEntityData()) {
+            if (entityData.getChildEntity()!=null) {
                 items.add(entityData);
             }
         }
