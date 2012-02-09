@@ -22,8 +22,6 @@ public interface WorkstationDataManagerMBean {
 	
     public void runMCFOSampleViewCreation(String sourceEntityId, String targetEntityName);
 
-    public void runMergedTileDataPipeline(String user, Boolean refresh, String inputDirList, String topLevelFolderName);
-
     public void runFlyScreenPipeline(String user, Boolean refresh);
 
     public void runFlyScreenPatternAnnotationPipeline(String user, Boolean refresh);
@@ -35,4 +33,6 @@ public interface WorkstationDataManagerMBean {
     public void doEntityTreePerformanceTest();
 
     public void performScreenPipelineSurgery(String user);
+    
+    public void performMCFOPipelineSurgery(String user);
 }

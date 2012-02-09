@@ -132,31 +132,6 @@
     </operation>
     
     <operation>
-        <description>Run the Merged Tile Data Pipeline and augment some existing MCFO-generated Samples with additional results</description>
-        <name>runMergedTileDataPipeline</name>
-        <parameter>
-           <description>User to run as (e.g. "system")</description>
-           <name>user</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Re-run the Samples that already have results?</description>
-           <name>refresh</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-        <parameter>
-           <description>Input directory (e.g. "/groups/peng/home/brainaligner/target1_aligned_rigid")</description>
-           <name>inputDirList</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Top-level MCFO folder name, where Samples will be found and augmented (e.g. "FlyLight Single Neuron Data")</description>
-           <name>topLevelFolderName</name>
-           <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
         <description>Run the FlyScreen Pipeline</description>
         <name>runFlyScreenPipeline</name>
         <parameter>
@@ -206,4 +181,14 @@
         </parameter>
     </operation>
 
+    <operation>
+        <description>Perform custom surgery on MCFO Pipeline results, by user</description>
+        <name>performMCFOPipelineSurgery</name>
+        <parameter>
+            <description>User to run as (e.g. "system")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
 </mbean>

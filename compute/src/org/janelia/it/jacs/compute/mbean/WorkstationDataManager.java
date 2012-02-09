@@ -1,9 +1,11 @@
 package org.janelia.it.jacs.compute.mbean;
 
+import java.util.*;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
-import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.service.entity.SampleFileNodeSyncService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FlyScreenDiscoveryService;
@@ -20,11 +22,6 @@ import org.janelia.it.jacs.model.tasks.fly.FlyScreenPatternAnnotationTask;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -121,20 +118,6 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-    }
-
-    public void runMergedTileDataPipeline(String user, Boolean refresh, String inputDirList, String topLevelFolderName) {
-    	// TODO: redo this
-//        try {
-//        	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
-//            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), 
-//            		inputDirList, topLevelFolderName, refresh, false);
-//            task.setJobName("Merged Tile Data Pipeline Task");
-//            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-//            EJBFactory.getLocalComputeBean().submitJob("MergedTileDataPipeline", task.getObjectId());
-//        } catch (Exception ex) {
-//            ex.printStackTrace();
-//        }
     }
     
     public void runFlyScreenPipeline(String user, Boolean refresh) {
@@ -253,5 +236,85 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
+    public void performMCFOPipelineSurgery(String username) {
+        try {
+            final AnnotationBeanLocal annotationBean = EJBFactory.getLocalAnnotationBean();
+            List<Entity> entities=annotationBean.getCommonRootEntitiesByTypeName(username, EntityConstants.TYPE_FOLDER);
+
+            for(Entity topEntity : entities) {
+                logger.info("Found top-level entity name="+topEntity.getName());
+                performMCFOPipelineSurgery(username, annotationBean.getEntityTree(topEntity.getId()));
+            }
+    		logger.info("The surgery was a success.");
+        } 
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
+    public void performMCFOPipelineSurgery(String username, Entity entity) throws Exception {
+    	
+    	if (!entity.getUser().getUserLogin().equals(username)) return;
+
+		logger.info("Processing, name="+entity.getName());
+		
+    	if (entity.getEntityType().getName().equals(EntityConstants.TYPE_SAMPLE)) {
+
+    		List<EntityData> toMove = new ArrayList<EntityData>();
+    		
+    		Set<EntityData> pairs = entity.getEntityData();
+    		for(EntityData ed : pairs) {
+    			Entity child = ed.getChildEntity();
+    			if (child!=null && child.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK_PAIR)) {
+    				toMove.add(ed);
+    			}
+    		}
+    		
+    		if (!toMove.isEmpty()) {
+    			logger.info("Found old-style sample, name="+entity.getName());		
+    			AnnotationBeanLocal annotationBean = EJBFactory.getLocalAnnotationBean();
+    	        
+                Entity supportingFiles = EntityUtils.getSupportingData(entity);
+            	if (supportingFiles == null) {
+            		supportingFiles = createSupportingFilesFolder(username);
+        			addToParent(entity, supportingFiles, 0, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);	
+            	}
+
+        		for(EntityData ed : toMove) {
+                    logger.info("Moving ed="+ed.getId()+" to new parent "+supportingFiles.getId());
+        			ed.setParentEntity(supportingFiles);
+                    annotationBean.saveOrUpdateEntityData(ed);
+        		}
+    		}
+    	}
+    	else {
+    		for(Entity child : entity.getChildren()) {
+    			performMCFOPipelineSurgery(username, child);
+    		}
+    	}
+    }
+
+    protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
+        EntityData ed = parent.addChildEntity(entity, attrName);
+        ed.setOrderIndex(index);
+        EJBFactory.getLocalAnnotationBean().saveOrUpdateEntityData(ed);
+        logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
+        		" as child of "+parent.getEntityType().getName()+"#"+parent.getId());
+    }
+    
+    protected Entity createSupportingFilesFolder(String username) throws Exception {
+        AnnotationBeanLocal annotationBean = EJBFactory.getLocalAnnotationBean();
+        ComputeBeanLocal computeBean = EJBFactory.getLocalComputeBean();
+        Entity filesFolder = new Entity();
+        filesFolder.setUser(computeBean.getUserByName(username));
+        filesFolder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
+        Date createDate = new Date();
+        filesFolder.setCreationDate(createDate);
+        filesFolder.setUpdatedDate(createDate);
+        filesFolder.setName("Supporting Files");
+        filesFolder = annotationBean.saveOrUpdateEntity(filesFolder);
+        logger.info("Saved supporting files folder as "+filesFolder.getId());
+        return filesFolder;
+    }
 
 }
