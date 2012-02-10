@@ -467,8 +467,10 @@ public class PatternAnnotationSampleService  implements IService {
                         if (childFolderParent.getAbsolutePath().equals(patternAnnotationDirPath)) {
                             filesToDelete.add(childFolderFile);
                             File[] childFolderFiles=childFolderFile.listFiles();
-                            for (File f : childFolderFiles) {
-                                filesToDelete.add(f);
+                            if (childFolderFiles!=null && childFolderFiles.length>0) {
+                                for (File f : childFolderFiles) {
+                                    filesToDelete.add(f);
+                                }
                             }
                         }
                     }
@@ -493,13 +495,13 @@ public class PatternAnnotationSampleService  implements IService {
         annotationBean.deleteEntityTree(task.getOwner(), patternAnnotationFolder.getId());
         // Now we can delete the files and then directories
         for (File fileToDelete : filesToDelete) {
-            if (!fileToDelete.isDirectory()) {
+            if (fileToDelete.exists() && !fileToDelete.isDirectory()) {
                 logger.info("Deleting prior pattern annotation file="+fileToDelete.getAbsolutePath());
                 fileToDelete.delete();
             }
         }
         for (File fileToDelete : filesToDelete) {
-            if (fileToDelete.isDirectory()) {
+            if (fileToDelete.exists() && fileToDelete.isDirectory()) {
                 logger.info("Deleting prior pattern dir="+fileToDelete.getAbsolutePath());
                 fileToDelete.delete();
             }
