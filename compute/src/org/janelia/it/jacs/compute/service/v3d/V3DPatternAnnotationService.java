@@ -36,6 +36,10 @@ public class V3DPatternAnnotationService extends SubmitDrmaaJobService {
         alignedStackPathList=(List<String>)processData.getItem("ALIGNED_STACK_PATH_LIST");
         resourceDirPath=processData.getString("RESOURCE_DIR_PATH");
         patternChannel=new Integer(processData.getString("PATTERN_CHANNEL").trim());
+
+        for (String sampleName : sampleNameList) {
+            logger.info("Received sampleName="+sampleName);
+        }
     }
 
     @Override

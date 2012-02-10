@@ -118,6 +118,8 @@ public class FlyScreenSampleService implements EntityFilter, IService {
             resultNodeList.add(resultNode);
             resultNodeIdList.add(resultNode.getObjectId().toString());
             Entity screenSampleEntity=EJBFactory.getLocalAnnotationBean().getEntityTree(new Long(sampleEntityId.trim()));
+            screenSampleEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_RESULT_NODE_ID, resultNode.getObjectId()+"");
+            annotationBean.saveOrUpdateEntity(screenSampleEntity);
             String stackPath=getStackPath(screenSampleEntity);
             stackPathList.add(stackPath);
             logger.info("FlyScreenSampleService  doSetup()   stackPath="+stackPath);

@@ -18,6 +18,7 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.PatternAnnotationResultNode;
+import org.janelia.it.jacs.model.user_data.entity.ScreenSampleResultNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
 import java.io.BufferedReader;
@@ -36,7 +37,7 @@ public class PatternAnnotationSampleService  implements IService {
 
     private static final Logger logger = Logger.getLogger(PatternAnnotationSampleService.class);
 
-    final public String FILESYSTEM_SUBDIR_NAME="patternAnnotation";
+    final public String PATTERN_ANNOTATION_SUBDIR_NAME="patternAnnotation";
     final public String PATTERN_ANNOTATION_FOLDER_NAME="Pattern Annotation";
     final public String MIPS_SUBFOLDER_NAME="mips";
     final public String SUPPORTING_FILE_SUBFOLDER_NAME="supportingFiles";
@@ -81,6 +82,13 @@ public class PatternAnnotationSampleService  implements IService {
             mode = processData.getString("MODE");
             refresh=processData.getString("REFRESH").trim().toLowerCase().equals("true");
 
+            if (processData.getString("QI_MAXIMUM")!=null) {
+                QI_MAXIMUM=new Double(processData.getString("QI_MAXIMUM").trim());
+            }
+            if (processData.getString("QM_MAXIMUM")!=null) {
+                QM_MAXIMUM=new Double(processData.getString("QM_MAXIMUM").trim());
+            }
+
             if (mode.equals(MODE_SETUP)) {
                 doSetup();
             } else if (mode.equals(MODE_COMPLETE)) {
@@ -89,103 +97,12 @@ public class PatternAnnotationSampleService  implements IService {
                 logger.error("Do not recognize mode type="+mode);
             }
 
-            if (processData.getString("QI_MAXIMUM")!=null) {
-                QI_MAXIMUM=new Double(processData.getString("QI_MAXIMUM").trim());
-            }
-            if (processData.getString("QM_MAXIMUM")!=null) {
-                QM_MAXIMUM=new Double(processData.getString("QM_MAXIMUM").trim());
-            }
         }
         catch (Exception e) {
             throw new ServiceException(e);
         }
     }
 
-    public List<String> getExpectedPatternAnnotationResultFilenameList(String sampleName) throws Exception {
-        if (expectedPatternAnnotationResultFilenameList.size()>0) {
-            return expectedPatternAnnotationResultFilenameList;
-        } else {
-            String[] compartmentSuffixArray=new String[4];
-            compartmentSuffixArray[0]="_heatmap16Color.v3dpbd";
-            compartmentSuffixArray[1]="_heatmap16ColorMIP.png";
-            compartmentSuffixArray[2]="_normalized_heatmap16Color.v3dpbd";
-            compartmentSuffixArray[3]="_normalized_heatmap16ColorMIP.png";
-            String[] otherSuffixArray=new String[3];
-            otherSuffixArray[0]="_indexCubified.v3dpbd";
-            otherSuffixArray[1]="_inputImageCubified.v3dpbd";
-            otherSuffixArray[2]="_quantifiers.txt";
-            File abbreviationIndexFile=new File(patternAnnotationResourceDir+File.separator+ABBREVIATION_INDEX_FILENAME);
-            FileReader fr=new FileReader(abbreviationIndexFile);
-            BufferedReader br=new BufferedReader(fr);
-            String nextLine=null;
-            List<String> abbrevationList=new ArrayList<String>();
-            while ((nextLine=br.readLine())!=null) {
-                String[] tokens=nextLine.trim().split(" ");
-                if (tokens.length!=2) {
-                    throw new Exception("Could not parse line from file="+abbreviationIndexFile.getAbsolutePath()+" line="+nextLine);
-                }
-                abbrevationList.add(tokens[1]);
-            }
-            expectedPatternAnnotationResultFilenameList.add(sampleName+compartmentSuffixArray[0]);
-            expectedPatternAnnotationResultFilenameList.add(sampleName+compartmentSuffixArray[1]);
-            // Note: there are not normalized files at the global level
-            expectedPatternAnnotationResultFilenameList.add(sampleName+otherSuffixArray[0]);
-            expectedPatternAnnotationResultFilenameList.add(sampleName+otherSuffixArray[1]);
-            expectedPatternAnnotationResultFilenameList.add(sampleName+otherSuffixArray[2]);
-            for (String abbreviation : abbrevationList) {
-                expectedPatternAnnotationResultFilenameList.add(sampleName+"_"+abbreviation+compartmentSuffixArray[0]);
-                expectedPatternAnnotationResultFilenameList.add(sampleName+"_"+abbreviation+compartmentSuffixArray[1]);
-                expectedPatternAnnotationResultFilenameList.add(sampleName+"_"+abbreviation+compartmentSuffixArray[2]);
-                expectedPatternAnnotationResultFilenameList.add(sampleName+"_"+abbreviation+compartmentSuffixArray[3]);
-            }
-            return expectedPatternAnnotationResultFilenameList;
-        }
-    }
-
-    public List<File> getExpectedPatternAnnotationResultFiles(File patternAnnotationDir, String sampleName) throws Exception {
-        List<String> filenameList=getExpectedPatternAnnotationResultFilenameList(sampleName);
-        File mipSubFolder=new File(patternAnnotationDir, MIPS_SUBFOLDER_NAME);
-        File supportingFilesFolder=new File(patternAnnotationDir, SUPPORTING_FILE_SUBFOLDER_NAME);
-        File normalizedSubFolder=new File(patternAnnotationDir, NORMALIZED_SUBFOLDER_NAME);
-        List<File> expectedFiles=new ArrayList<File>();
-        for (String filename : filenameList) {
-            String[] tokens=filename.split("_");
-            if (tokens.length==2) {
-                if (tokens[1].equals("indexCubified.v3dpbd")) {
-                    File file=new File(supportingFilesFolder, filename);
-                    expectedFiles.add(file);
-                } else if (tokens[1].equals("inputImageCubified.v3dpbd")) {
-                    File file=new File(supportingFilesFolder, filename);
-                    expectedFiles.add(file);
-                } else if (tokens[1].equals("quantifiers.txt")) {
-                    File file=new File(supportingFilesFolder, filename);
-                    expectedFiles.add(file);
-                } else if (tokens[1].equals("heatmap16ColorMIP.png")) {
-                    File file=new File(mipSubFolder, filename);
-                    expectedFiles.add(file);
-                } else if (tokens[1].equals("heatmap16Color.v3dpbd")) {
-                    File file=new File(patternAnnotationDir, filename);
-                    expectedFiles.add(file);
-                }
-            } else if (tokens.length==3) {
-                File file=new File(patternAnnotationDir, filename);
-                expectedFiles.add(file);
-            } else if (tokens.length==4 || tokens.length==5) {
-                File file=null;
-                if (filename.toLowerCase().contains("mip")) {
-                    file=new File(mipSubFolder, filename);
-                } else if (filename.toLowerCase().contains("normalized")) {
-                    file=new File(normalizedSubFolder, filename);
-                } else {
-                    file=new File(patternAnnotationDir, filename);
-                }
-                expectedFiles.add(file);
-            } else {
-                throw new Exception("Could not parse filename for expected pattern annotation result file="+filename);
-            }
-        }
-        return expectedFiles;
-    }
 
     /*
             What we want to do here is get everything ready to run the pattern annotation on the grid.
@@ -226,8 +143,11 @@ public class PatternAnnotationSampleService  implements IService {
 
         List<Entity> sampleList=new ArrayList<Entity>();
         List<String> flyLineIdList=(List<String>)processData.getItem("FLY_LINE_GROUP_LIST");
-
         logger.info("PatternAnnotationSampleService execute() contains "+flyLineIdList.size()+" fly lines, mode="+mode);
+
+        // Create Pattern Annotation Result Node - note that other than the grid-metadata, the result of this service will
+        // actually be placed with the ScreenSampleResultNode, so that there is a unified location for the user to browse
+        // sample-related data on the filesystem.
 
         PatternAnnotationResultNode resultNode = new PatternAnnotationResultNode(task.getOwner(), task, "PatternAnnotationResultNode",
                 "PatternAnnotationResultNode for task " + task.getObjectId(), visibility, sessionName);
@@ -237,6 +157,9 @@ public class PatternAnnotationSampleService  implements IService {
         FileUtil.cleanDirectory(resultNode.getDirectoryPath());
         String creationMessage="Created PatternAnnotationSampleService path="+resultNode.getDirectoryPath()+" id="+resultNode.getObjectId();
         logger.info(creationMessage);
+
+        // We need an index-synchronized set of lists to track those samples with sufficiently good alignments to process here.
+        // We hope this is the overwhelming majority of all samples, but will not be all samples.
 
         List<String> properlyAlignedSampleIdList=new ArrayList<String>();
         List<Entity> properlyAlignedSampleList=new ArrayList<Entity>();
@@ -257,23 +180,39 @@ public class PatternAnnotationSampleService  implements IService {
         logger.info("Processing " + sampleList.size() + " Screen Samples");
         for (Entity sample : sampleList) {
 
-            File nodeDir=null;
+            logger.info("Processing sample name="+sample.getName());
+
+            // This is the directory containing the link to the stack, and will have a pattern annotation
+            // subdirectory, as well as a separte supportingFiles directory.
+            File sampleResultDir=getOrUpdateSampleResultDir(sample);
+
+            // This method ensures that there is a supporting directory for the sample in the sample
+            // result node directory, and that the mip has been relocated to this directory.
+            updateSampleSupportingDirIfNecessary(sample);
+
+            if (refresh) {
+                Entity patternAnnotationFolder=getPatternAnnotationFolder(sample);
+                if (patternAnnotationFolder!=null) {
+                    cleanFullOrIncompletePatternAnnotationFolderAndFiles(patternAnnotationFolder);
+                }
+            }
+
+            // This ensures that the patternAnnotation directory and its subdirs are correctly setup.
+            File patternAnnotationDir=getOrUpdatePatternAnnotationDir(sample);
+
             File stackFile=null;
             String QmScore=null;
             String QiScore=null;
 
-            updateSampleSupportingDirIfNecessary(sample);
-
             for (EntityData ed : sample.getEntityData()) {
                 Entity child=ed.getChildEntity();
                 if (child!=null) {
-                    if (child.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_2D) && child.getName().trim().endsWith("mip")) {
-                        File mipFile=new File(child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-                        nodeDir=mipFile.getParentFile();
-                    } else if (child.getEntityType().getName().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
+                    if (child.getEntityType().getName().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
+                        logger.info("Found Aligned Brain Stack child");
                         stackFile=new File(child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
                         QmScore=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE);
                         QiScore=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
+                        logger.info("QmScore="+QmScore+" QiScore="+QiScore);
                     }
                 }
             }
@@ -284,8 +223,9 @@ public class PatternAnnotationSampleService  implements IService {
                 if (!(qm==0.0 && qi==0.0) && qm<=QM_MAXIMUM && qi<=QI_MAXIMUM) {
                     properlyAlignedSampleList.add(sample);
                     properlyAlignedSampleIdList.add(sample.getId().toString());
-                    patternAnnotationDirList.add(nodeDir.getAbsolutePath()+File.separator+FILESYSTEM_SUBDIR_NAME);
+                    patternAnnotationDirList.add(patternAnnotationDir.getAbsolutePath());
                     alignedStackPathList.add(stackFile.getAbsolutePath());
+                    logger.info("This stack has valid Qm and Qi scores="+stackFile.getAbsolutePath());
                 } else {
                     logger.info("Skipping stack="+stackFile.getAbsolutePath()+" due to poor or undefined Qm and Qi scores");
                 }
@@ -293,17 +233,6 @@ public class PatternAnnotationSampleService  implements IService {
                 logger.error("Could not find expected QmScore and QiScore attributes from aligned brain stack of sample="+sample.getId());
             }
 
-        }
-
-        if (refresh) {
-            // Then, for each prior pattern annotation sample, we will delete the prior folder and its contents
-            for (Entity alignedSample : properlyAlignedSampleList) {
-                Entity priorPatternAnnotationFolder=getPatternAnnotationFolder(alignedSample);
-                if (priorPatternAnnotationFolder!=null) {
-                    File patternDir=new File(priorPatternAnnotationFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-                    cleanFullOrIncompletePatternAnnotationFolderAndFiles(priorPatternAnnotationFolder, patternDir);
-                }
-            }
         }
 
         // Finally, make sure the pattern annotation folder entity and directory exist for each sample. Note that
@@ -317,47 +246,16 @@ public class PatternAnnotationSampleService  implements IService {
         List<String> finalAlignedStackList=new ArrayList<String>();
 
         for (Entity alignedSample : properlyAlignedSampleList) {
-            String patternAnnotationDirPath=patternAnnotationDirList.get(sampleIndex);
-            String mipsSubDirPath=new File(patternAnnotationDirPath, MIPS_SUBFOLDER_NAME).getAbsolutePath();
-            String supportingSubDirPath=new File(patternAnnotationDirPath, SUPPORTING_FILE_SUBFOLDER_NAME).getAbsolutePath();
-            String normalizedSubDirPath=new File(patternAnnotationDirPath, NORMALIZED_SUBFOLDER_NAME).getAbsolutePath();
-            Entity patternAnnotationFolder=getPatternAnnotationFolder(alignedSample);
-            if (patternAnnotationFolder==null) {
-                patternAnnotationFolder=addChildFolderToEntity(alignedSample, PATTERN_ANNOTATION_FOLDER_NAME, patternAnnotationDirPath);
-                addChildFolderToEntity(patternAnnotationFolder, MIPS_SUBFOLDER_NAME, mipsSubDirPath);
-                addChildFolderToEntity(patternAnnotationFolder, SUPPORTING_FILE_SUBFOLDER_NAME, supportingSubDirPath);
-                addChildFolderToEntity(patternAnnotationFolder, NORMALIZED_SUBFOLDER_NAME, normalizedSubDirPath);
+
+            if (!patternAnnotationDirIsComplete(alignedSample.getName(), new File(patternAnnotationDirList.get(sampleIndex)), false)) {
+
+                finalSampleIdList.add(alignedSample.getId().toString());
+                finalSampleNameList.add(alignedSample.getName());
+                finalAnnotationDirList.add(patternAnnotationDirList.get(sampleIndex));
+                finalAlignedStackList.add(alignedStackPathList.get(sampleIndex));
+                sampleIndex++;
+
             }
-            File patternDir=new File(patternAnnotationDirPath);
-            File mipsSubDir=new File(mipsSubDirPath);
-            File supportingSubDir=new File(supportingSubDirPath);
-            File normalizedSubDir=new File(normalizedSubDirPath);
-            if (patternDir.exists() && patternDir.isDirectory()) {
-                logger.info("Directory " + patternDir.getAbsolutePath()+" already exists");
-                if (patternAnnotationDirIsComplete(alignedSample.getName(), patternDir, false /* verbose */)) {
-                    logger.info("Directory " + patternDir.getAbsolutePath()+" is complete");
-                } else {
-                    logger.info("Directory "+ patternDir.getAbsolutePath()+" is not complete - will reprocess");
-                    cleanFullOrIncompletePatternAnnotationFolderAndFiles(patternAnnotationFolder, patternDir);
-                }
-            }
-            if (!patternDir.exists() && !patternDir.mkdir()) {
-                throw new Exception("Could not create directory="+patternDir.getAbsolutePath());
-            }
-            if (!mipsSubDir.exists() && !mipsSubDir.mkdir()) {
-                throw new Exception("Could not create directory="+mipsSubDir.getAbsolutePath());
-            }
-            if (!supportingSubDir.exists() && !supportingSubDir.mkdir()) {
-                throw new Exception("Could not create directory="+supportingSubDir.getAbsolutePath());
-            }
-            if (!normalizedSubDir.exists() && !normalizedSubDir.mkdir()) {
-                throw new Exception("Could not create directory="+normalizedSubDir.getAbsolutePath());
-            }
-            finalSampleIdList.add(alignedSample.getId().toString());
-            finalSampleNameList.add(alignedSample.getName());
-            finalAnnotationDirList.add(patternAnnotationDirPath);
-            finalAlignedStackList.add(alignedStackPathList.get(sampleIndex));
-            sampleIndex++;
         }
 
         processData.putItem("SAMPLE_ID_LIST", finalSampleIdList);
@@ -367,6 +265,68 @@ public class PatternAnnotationSampleService  implements IService {
         processData.putItem("RESOURCE_DIR_PATH", patternAnnotationResourceDir);
         processData.putItem(ProcessDataConstants.RESULT_FILE_NODE, resultNode);
         processData.putItem("PATTERN_CHANNEL", patternChannel);
+
+        for (String sampleName : finalSampleNameList) {
+            logger.info("doSetup() : Adding sampleName to list="+sampleName);
+        }
+    }
+
+    File getOrUpdateSampleResultDir(Entity sample) throws Exception {
+        // First, does the sample already have a RESULT_NODE_ID?
+        String resultNodeIdString=sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_RESULT_NODE_ID);
+        if (resultNodeIdString!=null) {
+            return getResultNodeDirFromSample(sample);
+        }
+        // We have to do some homework to get the resultNodeId. We can't use the path of the sample stack,
+        // because this actually lives in the ScreenStaging area, not the ScreenSampleResult. The
+        // 'anchor' artifact for the ScreenSampleResult is the mip.
+        //
+        // Using the mip as the anchor is itself tricky because there is (a) the original location, which
+        // is peer-level to the stack link in the result directory, and (b) the post-moved location,
+        // in the 'supporting files' folder. We will check (a) first and then (b).
+
+        // First step is to check for the MIP and supporting files folder
+
+        File nodeDir=null;
+
+        for (EntityData ed : sample.getEntityData()) {
+            Entity child=ed.getChildEntity();
+            if (child!=null) {
+                if (child.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_2D) && child.getName().trim().endsWith("mip")) {
+                    File mipFile=new File(child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+                    logger.info("getOrUpdateSampleResultDir() - found mip="+mipFile.getAbsolutePath());
+                    nodeDir=mipFile.getParentFile();
+                    if (nodeDir.getName().equals(SUPPORTING_FILE_SUBFOLDER_NAME)) {
+                        // Then we need to click-up to the next level
+                        nodeDir=nodeDir.getParentFile();
+                    }
+                    logger.info("getOrUpdateSampleResultDir() - based on mip, assuming nodeDir="+nodeDir.getAbsolutePath()+" nodeId="+nodeDir.getName());
+                }
+            }
+        }
+        if (nodeDir==null) {
+            throw new Exception("Could not locate node directory for sampleId="+sample.getId()+" sampleName="+sample.getName());
+        } else {
+            // Verify node
+            Long nodeId=new Long(nodeDir.getName().trim());
+            ScreenSampleResultNode ssrn=(ScreenSampleResultNode)computeBean.getNodeById(nodeId);
+            File checkDir=new File(ssrn.getDirectoryPath());
+            if (checkDir.getAbsolutePath().equals(nodeDir.getAbsolutePath())) {
+                logger.info("Verified nodeId="+nodeId+" now saving as sample attribute");
+                sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_RESULT_NODE_ID, nodeId.toString());
+            } else {
+                throw new Exception("Could not verify result node id="+nodeId);
+            }
+        }
+        return nodeDir;
+    }
+
+    File getResultNodeDirFromSample(Entity sample) {
+        String resultNodeIdString=sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_RESULT_NODE_ID);
+        Long resultNodeId=new Long(resultNodeIdString.trim());
+        ScreenSampleResultNode resultNode=(ScreenSampleResultNode)computeBean.getNodeById(resultNodeId);
+        File dir=new File(resultNode.getDirectoryPath());
+        return dir;
     }
 
     protected void updateSampleSupportingDirIfNecessary(Entity sample) throws Exception {
@@ -374,12 +334,16 @@ public class PatternAnnotationSampleService  implements IService {
         // the same top-level screen sample folder. This is distracting for the user, where
         // the stack and mip get confused. Here we create a supporting folder and place
         // the mip there if it is not already configured this way.
+
+        File screenFolderDir=getResultNodeDirFromSample(sample);
+        String screenFolderPath=screenFolderDir.getAbsolutePath();
+        File supportingDir=new File(screenFolderPath, FlyScreenSampleService.SUPPORTING_FILES_FOLDER_NAME);
+
         Entity rawMip=null;
-        Entity supportingFolder=null;
-        String screenFolderPath=sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         EntityData rawMipEd=null;
         File rawMipFile=null;
-        File supportingDir=new File(screenFolderPath, FlyScreenSampleService.SUPPORTING_FILES_FOLDER_NAME);
+        Entity supportingFolder=null;
+
         String sampleDefault2DImagePath=sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
         boolean replaceSampleDefault2DImage=false;
         logger.info("Checking sample supporting dir status for sample id="+sample.getId());
@@ -431,7 +395,61 @@ public class PatternAnnotationSampleService  implements IService {
         }
     }
 
-    protected void cleanFullOrIncompletePatternAnnotationFolderAndFiles(Entity patternAnnotationFolder, File patternDir) throws Exception {
+    void verifyOrCreateSubFolder(Entity patternAnnotationFolder, String subFolderName) throws Exception {
+        Entity subFolder=getSubFolderByName(patternAnnotationFolder, subFolderName);
+        String patternDirPath=patternAnnotationFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        File subFolderDir=new File(patternDirPath, subFolderName);
+        if (subFolderDir==null) {
+            subFolder=addChildFolderToEntity(patternAnnotationFolder, subFolderName, subFolderDir.getAbsolutePath());
+        } else {
+            String actualPath=subFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+            if (!actualPath.equals(subFolderDir.getAbsolutePath())) {
+                // Need to correct
+                subFolder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, subFolderDir.getAbsolutePath());
+                annotationBean.saveOrUpdateEntity(subFolder);
+            }
+        }
+        if (!subFolderDir.exists() && !subFolderDir.mkdir()) {
+            throw new Exception("Could not create subfolder="+subFolderDir.getAbsolutePath());
+        }
+    }
+
+    File getOrUpdatePatternAnnotationDir(Entity sample) throws Exception {
+        File sampleDir=getOrUpdateSampleResultDir(sample);
+
+        // Check to see if the sample already has a patternAnnotation folder
+        Entity patternAnnotationFolder=getPatternAnnotationFolder(sample);
+        File patternAnnotationCorrectDir=new File(sampleDir, PATTERN_ANNOTATION_SUBDIR_NAME);
+        if (patternAnnotationFolder==null) {
+            patternAnnotationFolder=addChildFolderToEntity(sample, PATTERN_ANNOTATION_FOLDER_NAME, patternAnnotationCorrectDir.getAbsolutePath());
+        } else {
+            String patternAnnotationActualDirPath=patternAnnotationFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+            if (!patternAnnotationActualDirPath.equals(patternAnnotationCorrectDir.getAbsolutePath())) {
+                patternAnnotationFolder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, patternAnnotationCorrectDir.getAbsolutePath());
+                annotationBean.saveOrUpdateEntity(patternAnnotationFolder);
+            }
+        }
+        // Now check to make sure the physical dir exists
+        if (!patternAnnotationCorrectDir.exists() && !patternAnnotationCorrectDir.mkdir()) {
+            throw new Exception("Could not verify or create pattern annotation dir="+patternAnnotationCorrectDir.getAbsolutePath());
+        }
+
+        // Now move on to the three subdirs: mip, supportingFiles, and normalized
+        verifyOrCreateSubFolder(patternAnnotationFolder, MIPS_SUBFOLDER_NAME);
+        verifyOrCreateSubFolder(patternAnnotationFolder, SUPPORTING_FILE_SUBFOLDER_NAME);
+        verifyOrCreateSubFolder(patternAnnotationFolder, NORMALIZED_SUBFOLDER_NAME);
+
+        return patternAnnotationCorrectDir;
+    }
+
+
+    protected void cleanFullOrIncompletePatternAnnotationFolderAndFiles(Entity patternAnnotationFolder) throws Exception {
+        String patternDirPath=patternAnnotationFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        if (patternDirPath==null) {
+            logger.info("Could not find directory path for previous pattern folder id="+patternAnnotationFolder.getId());
+            return;
+        }
+        File patternDir=new File(patternDirPath);
         logger.info("Removing prior pattern annotation folder at location="+patternDir.getAbsolutePath());
         String patternAnnotationDirPath=patternDir.getAbsolutePath();
         List<File> filesToDelete=new ArrayList<File>();
@@ -537,6 +555,10 @@ public class PatternAnnotationSampleService  implements IService {
         logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
                 " as child of "+parent.getEntityType().getName()+"#"+parent.getId());
     }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Completion
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
     public void doComplete() throws Exception {
@@ -734,6 +756,92 @@ public class PatternAnnotationSampleService  implements IService {
         logger.info("Saved stack " + stack.getName() + " as "+stack.getId());
         return stack;
     }
+
+    public List<String> getExpectedPatternAnnotationResultFilenameList(String sampleName) throws Exception {
+         if (expectedPatternAnnotationResultFilenameList.size()>0) {
+             return expectedPatternAnnotationResultFilenameList;
+         } else {
+             String[] compartmentSuffixArray=new String[4];
+             compartmentSuffixArray[0]="_heatmap16Color.v3dpbd";
+             compartmentSuffixArray[1]="_heatmap16ColorMIP.png";
+             compartmentSuffixArray[2]="_normalized_heatmap16Color.v3dpbd";
+             compartmentSuffixArray[3]="_normalized_heatmap16ColorMIP.png";
+             String[] otherSuffixArray=new String[3];
+             otherSuffixArray[0]="_indexCubified.v3dpbd";
+             otherSuffixArray[1]="_inputImageCubified.v3dpbd";
+             otherSuffixArray[2]="_quantifiers.txt";
+             File abbreviationIndexFile=new File(patternAnnotationResourceDir+File.separator+ABBREVIATION_INDEX_FILENAME);
+             FileReader fr=new FileReader(abbreviationIndexFile);
+             BufferedReader br=new BufferedReader(fr);
+             String nextLine=null;
+             List<String> abbrevationList=new ArrayList<String>();
+             while ((nextLine=br.readLine())!=null) {
+                 String[] tokens=nextLine.trim().split(" ");
+                 if (tokens.length!=2) {
+                     throw new Exception("Could not parse line from file="+abbreviationIndexFile.getAbsolutePath()+" line="+nextLine);
+                 }
+                 abbrevationList.add(tokens[1]);
+             }
+             expectedPatternAnnotationResultFilenameList.add(sampleName+compartmentSuffixArray[0]);
+             expectedPatternAnnotationResultFilenameList.add(sampleName+compartmentSuffixArray[1]);
+             // Note: there are not normalized files at the global level
+             expectedPatternAnnotationResultFilenameList.add(sampleName+otherSuffixArray[0]);
+             expectedPatternAnnotationResultFilenameList.add(sampleName+otherSuffixArray[1]);
+             expectedPatternAnnotationResultFilenameList.add(sampleName+otherSuffixArray[2]);
+             for (String abbreviation : abbrevationList) {
+                 expectedPatternAnnotationResultFilenameList.add(sampleName+"_"+abbreviation+compartmentSuffixArray[0]);
+                 expectedPatternAnnotationResultFilenameList.add(sampleName+"_"+abbreviation+compartmentSuffixArray[1]);
+                 expectedPatternAnnotationResultFilenameList.add(sampleName+"_"+abbreviation+compartmentSuffixArray[2]);
+                 expectedPatternAnnotationResultFilenameList.add(sampleName+"_"+abbreviation+compartmentSuffixArray[3]);
+             }
+             return expectedPatternAnnotationResultFilenameList;
+         }
+     }
+
+     public List<File> getExpectedPatternAnnotationResultFiles(File patternAnnotationDir, String sampleName) throws Exception {
+         List<String> filenameList=getExpectedPatternAnnotationResultFilenameList(sampleName);
+         File mipSubFolder=new File(patternAnnotationDir, MIPS_SUBFOLDER_NAME);
+         File supportingFilesFolder=new File(patternAnnotationDir, SUPPORTING_FILE_SUBFOLDER_NAME);
+         File normalizedSubFolder=new File(patternAnnotationDir, NORMALIZED_SUBFOLDER_NAME);
+         List<File> expectedFiles=new ArrayList<File>();
+         for (String filename : filenameList) {
+             String[] tokens=filename.split("_");
+             if (tokens.length==2) {
+                 if (tokens[1].equals("indexCubified.v3dpbd")) {
+                     File file=new File(supportingFilesFolder, filename);
+                     expectedFiles.add(file);
+                 } else if (tokens[1].equals("inputImageCubified.v3dpbd")) {
+                     File file=new File(supportingFilesFolder, filename);
+                     expectedFiles.add(file);
+                 } else if (tokens[1].equals("quantifiers.txt")) {
+                     File file=new File(supportingFilesFolder, filename);
+                     expectedFiles.add(file);
+                 } else if (tokens[1].equals("heatmap16ColorMIP.png")) {
+                     File file=new File(mipSubFolder, filename);
+                     expectedFiles.add(file);
+                 } else if (tokens[1].equals("heatmap16Color.v3dpbd")) {
+                     File file=new File(patternAnnotationDir, filename);
+                     expectedFiles.add(file);
+                 }
+             } else if (tokens.length==3) {
+                 File file=new File(patternAnnotationDir, filename);
+                 expectedFiles.add(file);
+             } else if (tokens.length==4 || tokens.length==5) {
+                 File file=null;
+                 if (filename.toLowerCase().contains("mip")) {
+                     file=new File(mipSubFolder, filename);
+                 } else if (filename.toLowerCase().contains("normalized")) {
+                     file=new File(normalizedSubFolder, filename);
+                 } else {
+                     file=new File(patternAnnotationDir, filename);
+                 }
+                 expectedFiles.add(file);
+             } else {
+                 throw new Exception("Could not parse filename for expected pattern annotation result file="+filename);
+             }
+         }
+         return expectedFiles;
+     }
 
 }
 
