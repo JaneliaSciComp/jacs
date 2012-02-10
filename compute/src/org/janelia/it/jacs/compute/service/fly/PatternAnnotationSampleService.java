@@ -25,6 +25,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -178,6 +180,7 @@ public class PatternAnnotationSampleService  implements IService {
         }
 
         logger.info("Processing " + sampleList.size() + " Screen Samples");
+        long sampleDirFailureCount=0;
         for (Entity sample : sampleList) {
 
             logger.info("Processing sample name="+sample.getName());
@@ -185,6 +188,11 @@ public class PatternAnnotationSampleService  implements IService {
             // This is the directory containing the link to the stack, and will have a pattern annotation
             // subdirectory, as well as a separte supportingFiles directory.
             File sampleResultDir=getOrUpdateSampleResultDir(sample);
+            if (sampleResultDir==null) {
+                logger.info("Could not find sample result directory for sampleId="+sample.getId()+" name="+sample.getName());
+                sampleDirFailureCount++;
+                continue; // move on to next sample
+            }
 
             // This method ensures that there is a supporting directory for the sample in the sample
             // result node directory, and that the mip has been relocated to this directory.
@@ -195,6 +203,9 @@ public class PatternAnnotationSampleService  implements IService {
                 if (patternAnnotationFolder!=null) {
                     cleanFullOrIncompletePatternAnnotationFolderAndFiles(patternAnnotationFolder);
                 }
+                // Refresh sample after delete
+                logger.info("Refreshing sample after clean operation");
+                sample=annotationBean.getEntityTree(sample.getId());
             }
 
             // This ensures that the patternAnnotation directory and its subdirs are correctly setup.
@@ -269,6 +280,8 @@ public class PatternAnnotationSampleService  implements IService {
         for (String sampleName : finalSampleNameList) {
             logger.info("doSetup() : Adding sampleName to list="+sampleName);
         }
+
+        logger.info("End of doSetup() - including "+finalSampleNameList.size()+" samples - skipped "+sampleDirFailureCount+" samples due to missing sample result directories");
     }
 
     File getOrUpdateSampleResultDir(Entity sample) throws Exception {
@@ -304,9 +317,7 @@ public class PatternAnnotationSampleService  implements IService {
                 }
             }
         }
-        if (nodeDir==null) {
-            throw new Exception("Could not locate node directory for sampleId="+sample.getId()+" sampleName="+sample.getName());
-        } else {
+        if (nodeDir!=null) {
             // Verify node
             Long nodeId=new Long(nodeDir.getName().trim());
             ScreenSampleResultNode ssrn=(ScreenSampleResultNode)computeBean.getNodeById(nodeId);
@@ -493,6 +504,7 @@ public class PatternAnnotationSampleService  implements IService {
         // Now we know the files to delete, so we can delete the folder entity tree
         logger.info("Deleting entity tree for prior pattern annotation folderId="+patternAnnotationFolder.getId());
         annotationBean.deleteEntityTree(task.getOwner(), patternAnnotationFolder.getId());
+        logger.info("Finished deleting entity tree");
         // Now we can delete the files and then directories
         for (File fileToDelete : filesToDelete) {
             if (fileToDelete.exists() && !fileToDelete.isDirectory()) {
@@ -533,19 +545,23 @@ public class PatternAnnotationSampleService  implements IService {
             folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, directoryPath);
         }
         folder = annotationBean.saveOrUpdateEntity(folder);
-        logger.info("Saved folder " + name+" as " + folder.getId());
+        logger.info("Saved folder " + name+" as " + folder.getId()+" , will now add as child to parent entity name="+parent.getName()+" parentId="+parent.getId());
         addToParent(parent, folder, null, EntityConstants.ATTRIBUTE_ENTITY);
         return folder;
     }
 
-    public Entity getPatternAnnotationFolder(Entity screenSample) {
+    public Entity getPatternAnnotationFolder(Entity screenSample) throws Exception {
+        Set<Entity> patternAnnotationFolderSet=new HashSet<Entity>();
         for (EntityData ed : screenSample.getEntityData()) {
             Entity child=ed.getChildEntity();
             if (child!=null) {
                 if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) && child.getName().equals(PATTERN_ANNOTATION_FOLDER_NAME)) {
-                    return child;
+                    patternAnnotationFolderSet.add(child);
                 }
             }
+        }
+        if (patternAnnotationFolderSet.size()>1) {
+            throw new Exception("getPatternAnnotationFolder() for sampleId="+screenSample.getId()+" found "+patternAnnotationFolderSet.size()+" pattern annotation folders - should be singleton");
         }
         return null;
     }
@@ -807,7 +823,22 @@ public class PatternAnnotationSampleService  implements IService {
          File normalizedSubFolder=new File(patternAnnotationDir, NORMALIZED_SUBFOLDER_NAME);
          List<File> expectedFiles=new ArrayList<File>();
          for (String filename : filenameList) {
-             String[] tokens=filename.split("_");
+             String[] tokens=null;
+             String [] gmrComponents=getGmrSampleNameFilename(filename);
+             if (gmrComponents!=null) {
+                 String[] remainingComponents=gmrComponents[1].split("_");
+                 int totalComponents=remainingComponents.length+1;
+                 tokens=new String[totalComponents];
+                 for (int i=0;i<totalComponents;i++) {
+                     if (i==0) {
+                         tokens[i]=gmrComponents[0];
+                     } else {
+                         tokens[i]=remainingComponents[i-1];
+                     }
+                 }
+             } else {
+                tokens=filename.split("_");
+             }
              if (tokens.length==2) {
                  if (tokens[1].equals("indexCubified.v3dpbd")) {
                      File file=new File(supportingFilesFolder, filename);
@@ -844,6 +875,23 @@ public class PatternAnnotationSampleService  implements IService {
          }
          return expectedFiles;
      }
+
+    // The first array member is the name, the 2nd the remaining component of the filename
+    //
+    // example: GMR_64G06_AE_01_00-fA01b_C101002_20101003110018750_heatmap16Color.v3dpbd
+
+    public String[] getGmrSampleNameFilename(String filename) {
+        String[] result=new String[2];
+        Pattern gmrPattern=Pattern.compile("(\\D\\D\\D\\_\\w+\\_\\w+\\_\\w+\\_\\w+-\\w+\\_\\w+\\_\\w+)(\\_.+)");
+        Matcher gmrMatcher=gmrPattern.matcher(filename);
+        if (gmrMatcher.matches()) {
+            result[0]=gmrMatcher.group(1);
+            result[1]=gmrMatcher.group(2);
+            return result;
+        } else {
+            return null;
+        }
+    }
 
 }
 
