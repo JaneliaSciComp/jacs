@@ -399,7 +399,7 @@ public class PatternAnnotationSampleService  implements IService {
         Entity subFolder=getSubFolderByName(patternAnnotationFolder, subFolderName);
         String patternDirPath=patternAnnotationFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         File subFolderDir=new File(patternDirPath, subFolderName);
-        if (subFolderDir==null) {
+        if (subFolder==null) {
             subFolder=addChildFolderToEntity(patternAnnotationFolder, subFolderName, subFolderDir.getAbsolutePath());
         } else {
             String actualPath=subFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
