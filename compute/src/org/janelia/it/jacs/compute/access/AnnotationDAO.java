@@ -212,7 +212,8 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
         Map<Long,Set<Long[]>> entityMap=new HashMap<Long, Set<Long[]>>();
         Map<Long,Set<Long>> parentMap=new HashMap<Long, Set<Long>>();
-        getEntityTreeForUserByJdbc(user.getUserId(), entityMap, parentMap);
+        Set<Long> commonRootSet =  new HashSet<Long>();
+        getEntityTreeForUserByJdbc(user.getUserId(), entityMap, parentMap, commonRootSet);
         if (debugDeletions) _logger.info("Built entity graph for user "+owner+". entityMap.size="+entityMap.size()+" parentMap.size="+parentMap.size());
         
         // Next, get the sub-entity-graph we care about
@@ -238,6 +239,11 @@ public class AnnotationDAO extends ComputeBaseDAO {
                         break;
                     }
                 }
+                if (debugDeletions) _logger.info("Checking for common rootness of candidateId=" + candidateId);
+                if (commonRootSet.contains(candidateId)) {
+                	if (debugDeletions) _logger.info("Excluding common root candidateId=" + candidateId);
+                	shouldExclude = true;
+                }
                 if (shouldExclude) {
                 	if (debugDeletions) _logger.info("Marking candidateId=" + candidateId + " for exclusion");
                     exclusionList.add(candidateId);
@@ -246,6 +252,17 @@ public class AnnotationDAO extends ComputeBaseDAO {
                 }
             }
         }
+
+    	if (debugDeletions) _logger.info("Checking for additional exclusions...");
+        int i = 0;
+        Set<Long> additionalExclusions;
+        do {
+        	additionalExclusions = getAdditionalExclusions(parentMap, entitySetCandidatesToDelete, exclusionList);
+        	if (debugDeletions) _logger.info("Got "+additionalExclusions.size()+" additional exclusions on iteration "+i);
+        	exclusionList.addAll(additionalExclusions);
+        }
+        while (!additionalExclusions.isEmpty() && ++i<100);
+        
         Set<Long> entitySetToDelete=walkEntityMap(entity.getId(), entityMap, exclusionList);
 
         // We now have our list of entities to delete. First, we need to collect a list
@@ -318,21 +335,57 @@ public class AnnotationDAO extends ComputeBaseDAO {
             connection.close();
         }
     }
+    
+    /**
+     * Iteratively exclude entities based on if any of their ancestors were excluded.
+     */
+    protected Set<Long> getAdditionalExclusions(Map<Long, Set<Long>> parentMap, Set<Long> entitySetCandidatesToDelete, Set<Long> exclusionList) {
+    	Set<Long> additionalExclusions=new HashSet<Long>();
+    	for(Long candidateId : entitySetCandidatesToDelete) {
+    		if (exclusionList.contains(candidateId)) continue; // Skip things we've already excluded
+    		if (areAncestorsExcluded(candidateId, parentMap, exclusionList)) {
+            	if (debugDeletions) _logger.info("    Marking candidateId=" + candidateId + " for exclusion");
+    			additionalExclusions.add(candidateId);
+    		}
+    	}
 
-    protected void getEntityTreeForUserByJdbc(Long userId, Map<Long, Set<Long[]>> entityMap, Map<Long, Set<Long>> parentMap) throws Exception {
+    	if (debugDeletions) _logger.info("    Found "+additionalExclusions.size()+" additional exclusions");
+    	return additionalExclusions;
+    }
+    
+    protected boolean areAncestorsExcluded(Long entityId, Map<Long, Set<Long>> parentMap, Set<Long> exclusionList) {
+
+    	if (debugDeletions) _logger.info("    Checking if any ancestors of "+entityId+" were excluded");
+    	Set<Long> parents = parentMap.get(entityId);
+    	if (parents != null) {
+			for(Long parentId : parents) {
+				if (exclusionList.contains(parentId)) {
+			    	if (debugDeletions) _logger.info("    Parent of "+entityId+" (parentId="+parentId+") was excluded");
+					return true;
+				}
+				if (areAncestorsExcluded(parentId, parentMap, exclusionList)) {
+					if (debugDeletions) _logger.info("    Some ancestor of "+entityId+" (via parentId="+parentId+") was excluded");
+					return true;
+				}
+			}
+    	}
+		return false;
+    }
+
+    protected void getEntityTreeForUserByJdbc(Long userId, Map<Long, Set<Long[]>> entityMap, Map<Long, Set<Long>> parentMap, Set<Long> commonRootSet) throws Exception {
     	Connection connection=null;
     	java.sql.Statement statement=null;
     	try {
 	        connection=getJdbcConnection();
 	        
 	        StringBuffer sql = new StringBuffer();
-	        sql.append("select e.id, ed.id, ce.id, ce.user_id ");
+	        sql.append("select e.id, ed.id, ce.id, ce.user_id, ea.name ");
 	        sql.append("from entity e ");
 	        sql.append("left outer join entityData ed on e.id=ed.parent_entity_id ");
+	        sql.append("left outer join entityAttribute ea on ed.entity_att_id = ea.id ");
 	        sql.append("left outer join entity ce on ed.child_entity_id=ce.id and ce.user_id="+userId+" ");
 	        sql.append("where e.user_id="+userId+" ");
-	        
-//	        StringBuffer sql = new StringBuffer("select e.id, ed.id, ed.child_entity_id from entity e, entityData ed where e.user_id="+userId+" and ed.user_id="+userId+" and ed.parent_entity_id=e.id");
+
 	        if (debugDeletions) _logger.info("getEntityTreeForUserByJdbc userId="+userId);
 	        if (debugDeletions) _logger.info("getEntityTreeForUserByJdbc sql="+sql);
 	        statement=connection.createStatement();
@@ -359,6 +412,12 @@ public class AnnotationDAO extends ComputeBaseDAO {
 						childId = null;
 						childUserId = null;
 					}
+				}
+				
+				// Handle common roots
+				String attrName = rs.getString(5);
+				if (EntityConstants.ATTRIBUTE_COMMON_ROOT.equals(attrName)) {
+					commonRootSet.add(entityId);
 				}
 				
 				// _logger.info("TreeResult entityId="+entityId+" entityDataId="+entityDataId+" childId="+(childId==null?"null":childId));
@@ -389,7 +448,6 @@ public class AnnotationDAO extends ComputeBaseDAO {
             statement.close();
             connection.close();
         }
-        
     }
 
     protected void deleteIdSetByJdbc(Connection connection, Set<Long> idSet, String tableName, String identifierColumnName) throws Exception {
