@@ -86,7 +86,7 @@ public class V3DBulkMergeService extends SubmitDrmaaJobService {
         script.append("read DISPLAY_PORT\n");
         script.append(V3DHelper.getV3DGridCommandPrefix("$DISPLAY_PORT"));
         script.append("\n");
-        script.append(V3DHelper.getFormattedMergeCommand("$LSM_FILENAME_1", "$LSM_FILENAME_2", "$MERGED_FILENAME"));
+        script.append(V3DHelper.getFormattedMergePipelineCommand("$LSM_FILENAME_1", "$LSM_FILENAME_2", "$MERGED_FILENAME"));
         script.append("\n");
         script.append(V3DHelper.getV3DGridCommandSuffix());
         script.append("\n");

@@ -25,10 +25,14 @@ public class NeuronSeparatorHelper {
 
 	private static final Logger logger = Logger.getLogger(NeuronSeparatorHelper.class);
 
-    protected static final String SEPARATOR_BASE_CMD = "export LD_LIBRARY_PATH="+
-    		SystemConfigurationProperties.getString("Separator.LDLibraryPath")+":$LD_LIBRARY_PATH\n"+
+//    protected static final String SEPARATOR_BASE_CMD = "export LD_LIBRARY_PATH="+
+//    		SystemConfigurationProperties.getString("Separator.LDLibraryPath")+":$LD_LIBRARY_PATH\n"+
+//            SystemConfigurationProperties.getString("Executables.ModuleBase") +
+//            SystemConfigurationProperties.getString("Separator.CMD");
+
+    protected static final String SEPARATOR_SCRIPT = 
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
-            SystemConfigurationProperties.getString("Separator.CMD");
+            SystemConfigurationProperties.getString("Separator.ScriptPath");
     
 	// TODO: this path translation should be made into some sort of robust service
 	
@@ -100,11 +104,11 @@ public class NeuronSeparatorHelper {
         	cmdLine.append("unzip "+inputFilename).append(commandDelim);
         	inputFile = new File(parentNode.getDirectoryPath(), inputFile.getName().replaceFirst("\\.zip$", ""));
         }
+
+//      cmdLine.append(SEPARATOR_BASE_CMD).append(" ");
+//      cmdLine.append("-nr -pj ");
         
-        cmdLine.append(SEPARATOR_BASE_CMD).append(" ");
-        
-        // TODO: Remove this when using the new 2-stage separator
-        cmdLine.append("-nr -pj ");
+        cmdLine.append("sh ").append(SEPARATOR_SCRIPT).append(" ");
         
         cmdLine.append(parentNode.getDirectoryPath()).append(" neuronSeparatorPipeline ").
                 	append(inputFile.getAbsolutePath()).append(commandDelim);

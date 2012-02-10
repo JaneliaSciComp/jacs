@@ -72,6 +72,15 @@ public class SupportingFilesDiscoveryService extends FileDiscoveryService {
         }
 
 		collectFiles(resultDir);
+
+		// Sort files so that the entities are added in the correct order
+        Collections.sort(allFiles, new Comparator<File>() {
+        	@Override
+        	public int compare(File file1, File file2) {
+        		return file1.getName().compareTo(file2.getName());
+        	}
+		});
+        
 		addFilesToSupportingFiles(filesFolder, allFiles);
     }
     
@@ -81,9 +90,14 @@ public class SupportingFilesDiscoveryService extends FileDiscoveryService {
         logger.info("Found "+files.size()+" files in "+dir.getAbsolutePath());
         
         for (File resultFile : files) {
+
+        	// Skip symbolic links
+        	if (FileUtils.isSymlink(resultFile)) continue;
+        	
         	if (resultFile.isDirectory() && !resultFile.getName().startsWith("sge_")) {
         		collectFiles(resultFile);
         	}
+        	
         	allFiles.add(resultFile);
         }
     }
@@ -94,18 +108,7 @@ public class SupportingFilesDiscoveryService extends FileDiscoveryService {
 		EntityType image3D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
 		EntityType image2D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
 
-		// Sort files so that the entities are added in the correct order
-        Collections.sort(files, new Comparator<File>() {
-        	@Override
-        	public int compare(File file1, File file2) {
-        		return file1.getName().compareTo(file2.getName());
-        	}
-		});
-        
         for (File resultFile : files) {
-        	
-        	// Skip symbolic links
-        	if (FileUtils.isSymlink(resultFile)) continue;
         	
         	String filename = resultFile.getName();
             if (filename.endsWith(".metadata")) {

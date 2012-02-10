@@ -18,6 +18,14 @@ public class V3DHelper {
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("V3D.CMD");
 
+    protected static final String MERGE_PIPELINE_CMD = 
+            SystemConfigurationProperties.getString("Executables.ModuleBase") +
+            SystemConfigurationProperties.getString("MergePipeline.ScriptPath");
+    
+    public static String getFormattedMergePipelineCommand(String inputFilePath1, String inputFilePath2, String outputFilePath) {
+        return "sh "+MERGE_PIPELINE_CMD+" "+inputFilePath1+" "+inputFilePath2+" "+outputFilePath;
+    }
+    
     public static String getFormattedMergeCommand(String inputFilePath1, String inputFilePath2, String outputFilePath) {
         return V3D_BASE_CMD+" -x libblend_multiscanstacks.so -f multiscanblend -p \"#k 1\" -i \"" + inputFilePath1
                 + "\" \"" +inputFilePath2+ "\" -o \"" + outputFilePath+"\"";
@@ -44,7 +52,15 @@ public class V3DHelper {
     	prefix.append("set -o errexit\n");
     	return prefix.toString();
     }
-    
+
+    public static String getHeadlessGridCommandSuffix() {
+        return "";
+    }
+
+    /**
+     * For V3D plugins that need a virtual framebuffer because they are not headless.
+     * @return
+     */
     public static String getV3DGridCommandPrefix() {
         return getV3DGridCommandPrefix(getRandomPort()+"");
     }
@@ -69,10 +85,6 @@ public class V3DHelper {
     	prefix.append("export DISPLAY=\"localhost:${PORT}.0\"\n");
     	
     	return prefix.toString();
-    }
-
-    public static String getHeadlessGridCommandSuffix() {
-        return "";
     }
     
     public static String getV3DGridCommandSuffix() {

@@ -10,6 +10,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * File discovery service for neuron separation results.
@@ -44,6 +45,24 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     	super.processFolderForData(folder);
     	
         processSeparationFolder(folder);
+    }
+    
+    protected void addFilesToSupportingFiles(Entity filesFolder, List<File> files) throws Exception {
+
+    	super.addFilesToSupportingFiles(filesFolder, files);
+
+		EntityType image3D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+
+        for (File resultFile : files) {
+        	
+        	String filename = resultFile.getName();
+            if (filename.contains(".chk")) {
+                addResultItem(filesFolder, image3D, resultFile);
+            }
+            else {
+                // ignore other files
+            }
+        }
     }
     
     protected void processSeparationFolder(Entity resultEntity) throws Exception {
