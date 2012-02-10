@@ -37,6 +37,12 @@ public class V3DPatternAnnotationService extends SubmitDrmaaJobService {
         resourceDirPath=processData.getString("RESOURCE_DIR_PATH");
         patternChannel=new Integer(processData.getString("PATTERN_CHANNEL").trim());
 
+        if (sampleNameList==null) {
+            logger.info("V3DPatternAnnotationService init() sampleName list is null");
+        } else {
+            logger.info("V3DPatternAnnotationService init() sampleName list contains "+sampleNameList.size()+" entries");
+        }
+
         for (String sampleName : sampleNameList) {
             logger.info("Received sampleName="+sampleName);
         }
@@ -51,7 +57,9 @@ public class V3DPatternAnnotationService extends SubmitDrmaaJobService {
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
         int i = 0;
         int configIndex = 1;
+        logger.info("V3DPatternAnnotationService createJobScriptAndConfigurationFiles() start");
         for(String sampleName : sampleNameList) {
+            logger.info("V3DPatternAnnotationService createJobScriptAndConfigurationFiles() sampleName="+sampleName);
             String patternAnnotationPath = patternAnnotationPathList.get(i);
             String alignedStackPath = alignedStackPathList.get(i);
             writeInstanceFiles(sampleName, patternAnnotationPath, alignedStackPath, configIndex++);

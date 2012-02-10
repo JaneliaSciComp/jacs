@@ -199,7 +199,7 @@ public class PatternAnnotationSampleService  implements IService {
             updateSampleSupportingDirIfNecessary(sample);
 
             if (refresh) {
-                Entity patternAnnotationFolder=getPatternAnnotationFolder(sample);
+                Entity patternAnnotationFolder=getPatternAnnotationFolderAndCleanExtra(sample);
                 if (patternAnnotationFolder!=null) {
                     cleanFullOrIncompletePatternAnnotationFolderAndFiles(patternAnnotationFolder);
                 }
@@ -429,7 +429,7 @@ public class PatternAnnotationSampleService  implements IService {
         File sampleDir=getOrUpdateSampleResultDir(sample);
 
         // Check to see if the sample already has a patternAnnotation folder
-        Entity patternAnnotationFolder=getPatternAnnotationFolder(sample);
+        Entity patternAnnotationFolder=getPatternAnnotationFolderAndCleanExtra(sample);
         File patternAnnotationCorrectDir=new File(sampleDir, PATTERN_ANNOTATION_SUBDIR_NAME);
         if (patternAnnotationFolder==null) {
             patternAnnotationFolder=addChildFolderToEntity(sample, PATTERN_ANNOTATION_FOLDER_NAME, patternAnnotationCorrectDir.getAbsolutePath());
@@ -503,7 +503,7 @@ public class PatternAnnotationSampleService  implements IService {
 
         // Now we know the files to delete, so we can delete the folder entity tree
         logger.info("Deleting entity tree for prior pattern annotation folderId="+patternAnnotationFolder.getId());
-        annotationBean.deleteEntityTree(task.getOwner(), patternAnnotationFolder.getId());
+        annotationBean.deleteSmallEntityTree(task.getOwner(), patternAnnotationFolder.getId());
         logger.info("Finished deleting entity tree");
         // Now we can delete the files and then directories
         for (File fileToDelete : filesToDelete) {
@@ -550,18 +550,31 @@ public class PatternAnnotationSampleService  implements IService {
         return folder;
     }
 
-    public Entity getPatternAnnotationFolder(Entity screenSample) throws Exception {
-        Set<Entity> patternAnnotationFolderSet=new HashSet<Entity>();
+    public Entity getPatternAnnotationFolderAndCleanExtra(Entity screenSample) throws Exception {
+        List<Entity> patternAnnotationFolderList=new ArrayList<Entity>();
         for (EntityData ed : screenSample.getEntityData()) {
             Entity child=ed.getChildEntity();
             if (child!=null) {
                 if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) && child.getName().equals(PATTERN_ANNOTATION_FOLDER_NAME)) {
-                    patternAnnotationFolderSet.add(child);
+                    patternAnnotationFolderList.add(child);
                 }
             }
         }
-        if (patternAnnotationFolderSet.size()>1) {
-            throw new Exception("getPatternAnnotationFolder() for sampleId="+screenSample.getId()+" found "+patternAnnotationFolderSet.size()+" pattern annotation folders - should be singleton");
+        Collections.sort(patternAnnotationFolderList, new Comparator<Entity>() {
+            @Override
+            public int compare(Entity entity, Entity entity1) {
+                if (entity.getId()>entity1.getId()) {
+                    return 1;
+                } else {
+                    return -1;
+                }
+            }
+        });
+        for (int i=0;i<patternAnnotationFolderList.size();i++) {
+            if (i<patternAnnotationFolderList.size()-1) {
+                logger.info("Removing extra pattern folder id="+patternAnnotationFolderList.get(i).getId());
+                annotationBean.deleteSmallEntityTree(user.getUserLogin(), patternAnnotationFolderList.get(i).getId());
+            }
         }
         return null;
     }
@@ -599,7 +612,7 @@ public class PatternAnnotationSampleService  implements IService {
             if (!patternAnnotationDirIsComplete(sampleName, patternAnnotationDir, true /* verbose */)) {
                 throw new Exception("Pattern annotation in this dir is incomplete="+patternAnnotationPath);
             } else {
-                addPatternAnnotationEntitiesToSample(sampleIdList.get(index), sampleName, patternAnnotationDir);
+                addPatternAnnotationResultEntitiesToSample(sampleIdList.get(index), sampleName, patternAnnotationDir);
             }
             index++;
         }
@@ -669,33 +682,17 @@ public class PatternAnnotationSampleService  implements IService {
         }
     }
 
-    public void addPatternAnnotationEntitiesToSample(String sampleId, String sampleName, File patternAnnotationDir) throws Exception {
+    public void addPatternAnnotationResultEntitiesToSample(String sampleId, String sampleName, File patternAnnotationDir) throws Exception {
 
-        Entity screenSample=annotationBean.getEntityById(sampleId);
+        Entity screenSample=annotationBean.getEntityTree(new Long(sampleId));
         if (screenSample==null) {
             throw new Exception("Could not find screenSample by id="+sampleId);
         }
-        Entity patternAnnotationFolder=getPatternAnnotationFolder(screenSample);
-        if (patternAnnotationFolder==null) {
-            patternAnnotationFolder=addChildFolderToEntity(screenSample, PATTERN_ANNOTATION_FOLDER_NAME, patternAnnotationDir.getAbsolutePath());
-        }
-        Entity mipsSubFolder=getSubFolderByName(patternAnnotationFolder, MIPS_SUBFOLDER_NAME);
-        if (mipsSubFolder==null) {
-            File mipsDir=new File(patternAnnotationDir, MIPS_SUBFOLDER_NAME);
-            mipsSubFolder=addChildFolderToEntity(patternAnnotationFolder, MIPS_SUBFOLDER_NAME, mipsDir.getAbsolutePath());
-        }
-        Entity supportingSubFolder=getSubFolderByName(patternAnnotationFolder, SUPPORTING_FILE_SUBFOLDER_NAME);
-        if (supportingSubFolder==null) {
-            File supportingDir=new File(patternAnnotationDir, SUPPORTING_FILE_SUBFOLDER_NAME);
-            supportingSubFolder=addChildFolderToEntity(patternAnnotationFolder, SUPPORTING_FILE_SUBFOLDER_NAME, supportingDir.getAbsolutePath());
-        }
-        Entity normalizedSubFolder=getSubFolderByName(patternAnnotationFolder, NORMALIZED_SUBFOLDER_NAME);
-        if (normalizedSubFolder==null) {
-            File normalizedDir=new File(patternAnnotationDir, NORMALIZED_SUBFOLDER_NAME);
-            normalizedSubFolder=addChildFolderToEntity(patternAnnotationFolder, NORMALIZED_SUBFOLDER_NAME, normalizedDir.getAbsolutePath());
-        }
-
         List<File> fileList=getExpectedPatternAnnotationResultFiles(patternAnnotationDir, sampleName);
+
+        Entity patternAnnotationFolder=getSubFolderByName(screenSample, PATTERN_ANNOTATION_FOLDER_NAME);
+        Entity mipsSubFolder=getSubFolderByName(patternAnnotationFolder, MIPS_SUBFOLDER_NAME);
+        Entity normalizedSubFolder=getSubFolderByName(patternAnnotationFolder, NORMALIZED_SUBFOLDER_NAME);
 
         // In this next section, we will iterate through each file, determine its proper entity name, and then
         // decide based on its name what folder it belongs in. Then, we will check to see if this folder already

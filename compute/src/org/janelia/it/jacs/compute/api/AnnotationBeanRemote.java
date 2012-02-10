@@ -30,6 +30,7 @@ public interface AnnotationBeanRemote {
     public Entity getUserEntityById(String userLogin, long entityId);
     public boolean deleteEntityById(Long entityId);
     public boolean deleteEntityTree(String userLogin, long entityId) throws ComputeException;
+    public boolean deleteSmallEntityTree(String userLogin, long entityId) throws ComputeException;
     public void removeEntityFromFolder(EntityData folderEntityData) throws ComputeException;
     public void deleteEntityData(EntityData ed) throws ComputeException;
     public Set<Entity> getParentEntities(long entityId);

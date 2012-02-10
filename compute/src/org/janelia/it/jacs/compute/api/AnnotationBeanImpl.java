@@ -17,7 +17,7 @@ import java.util.*;
 @Stateless(name = "AnnotationEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 15, timeout = 10000)
+@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 60, timeout = 10000)
 public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRemote {
 	
     private Logger _logger = Logger.getLogger(this.getClass());
@@ -438,6 +438,21 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     		_annotationDAO.deleteEntityTree(userLogin, entity);
     		return true;
     	}
+        catch (Exception e) {
+            _logger.error("Error deleting entity tree for user "+userLogin,e);
+            throw new ComputeException("Error deleting entity tree for user "+userLogin,e);
+        }
+    }
+
+    public boolean deleteSmallEntityTree(String userLogin, long entityId) throws ComputeException {
+        try {
+            Entity entity = _annotationDAO.getEntityById(""+entityId);
+            if (entity==null) {
+                throw new Exception("Entity not found: "+entityId);
+            }
+            _annotationDAO.deleteSmallEntityTree(userLogin, entity, true, false, 0);
+            return true;
+        }
         catch (Exception e) {
             _logger.error("Error deleting entity tree for user "+userLogin,e);
             throw new ComputeException("Error deleting entity tree for user "+userLogin,e);

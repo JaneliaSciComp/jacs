@@ -192,7 +192,6 @@ public class AnnotationDAO extends ComputeBaseDAO {
     public void deleteEntityTree(String owner, Entity entity) throws DaoException {
     	//deleteEntityTree(owner, entity, true, false, 0);
         try {
-        	// TODO: this should try the old method first, and if the tree is large, abort and use this:
             deleteLargeEntityTree(owner, entity);
         } catch (Exception ex) {
             throw new DaoException(ex.getMessage(), ex);
@@ -468,7 +467,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
     }
 
     
-    private void deleteEntityTree(String owner, Entity entity, boolean ignoreRefs, boolean ignoreAncestorRefs, int level) throws DaoException {
+    public void deleteSmallEntityTree(String owner, Entity entity, boolean ignoreRefs, boolean ignoreAncestorRefs, int level) throws DaoException {
 
     	StringBuffer indent = new StringBuffer();
 		for (int i = 0; i < level; i++) {
@@ -501,7 +500,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
         for(EntityData ed : new ArrayList<EntityData>(entity.getEntityData())) {
         	Entity child = ed.getChildEntity();
         	if (child != null) {
-        		deleteEntityTree(owner, child, ignoreAncestorRefs, ignoreAncestorRefs, level+1);
+        		deleteSmallEntityTree(owner, child, ignoreAncestorRefs, ignoreAncestorRefs, level + 1);
         	}
         	// We have to manually remove the EntityData from its parent, otherwise we get this error: 
         	// "deleted object would be re-saved by cascade (remove deleted object from associations)"

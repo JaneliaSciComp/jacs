@@ -34,8 +34,7 @@
         </operation>
 
     	<!-- Process each Sample Entity -->
-	    <sequence forEach="FLY_LINE_GROUP_LIST" waitForAsync="true">
-	        <sequence async="true">
+	    <sequence forEach="FLY_LINE_GROUP_LIST">
 	            <sequence>
 
 				    <!-- Service instance for processing each Fly Line Group.
@@ -99,7 +98,6 @@
      	            </operation>
 
                 </sequence>
-    	    </sequence>
   	    </sequence>
     </sequence>
 </process>
