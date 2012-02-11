@@ -305,7 +305,7 @@ public class PatternAnnotationSampleService  implements IService {
         for (EntityData ed : sample.getEntityData()) {
             Entity child=ed.getChildEntity();
             if (child!=null) {
-                if (child.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_2D) && child.getName().trim().endsWith("mip")) {
+                if (child.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_2D) && child.getName().toLowerCase().contains("mip")) {
                     File mipFile=new File(child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
                     logger.info("getOrUpdateSampleResultDir() - found mip="+mipFile.getAbsolutePath());
                     nodeDir=mipFile.getParentFile();
@@ -314,6 +314,13 @@ public class PatternAnnotationSampleService  implements IService {
                         nodeDir=nodeDir.getParentFile();
                     }
                     logger.info("getOrUpdateSampleResultDir() - based on mip, assuming nodeDir="+nodeDir.getAbsolutePath()+" nodeId="+nodeDir.getName());
+                } else if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) && child.getName().equals(SUPPORTING_FILE_SUBFOLDER_NAME)) {
+                    // We can use this folder for the nodeId anchor
+                    String supportingFolderPath=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                    if (supportingFolderPath!=null) {
+                        File supportingDir=new File(supportingFolderPath);
+                        nodeDir=supportingDir.getParentFile();
+                    }
                 }
             }
         }
