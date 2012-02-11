@@ -55,14 +55,14 @@ public class V3DPatternAnnotationService extends SubmitDrmaaJobService {
 
     @Override
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
-        int i = 0;
         int configIndex = 1;
         logger.info("V3DPatternAnnotationService createJobScriptAndConfigurationFiles() start");
         for(String sampleName : sampleNameList) {
             logger.info("V3DPatternAnnotationService createJobScriptAndConfigurationFiles() sampleName="+sampleName);
-            String patternAnnotationPath = patternAnnotationPathList.get(i);
-            String alignedStackPath = alignedStackPathList.get(i);
-            writeInstanceFiles(sampleName, patternAnnotationPath, alignedStackPath, configIndex++);
+            String patternAnnotationPath = patternAnnotationPathList.get(configIndex-1);
+            String alignedStackPath = alignedStackPathList.get(configIndex-1);
+            writeInstanceFiles(sampleName, patternAnnotationPath, alignedStackPath, configIndex);
+            configIndex++;
         }
         writeShellScript(writer);
         setJobIncrementStop(configIndex-1);
