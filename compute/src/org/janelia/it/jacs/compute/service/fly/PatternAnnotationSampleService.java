@@ -231,7 +231,10 @@ public class PatternAnnotationSampleService  implements IService {
             if (QmScore!=null && QiScore!=null) {
                 Double qm=new Double(QmScore.trim());
                 Double qi=new Double(QiScore.trim());
-                if (!(qm==0.0 && qi==0.0) && qm<=QM_MAXIMUM && qi<=QI_MAXIMUM) {
+                logger.info("Using Double-valued Qm="+qm+" Qi="+qi+" QM_MAXIMUM="+QM_MAXIMUM+" QI_MAXIMUM="+QI_MAXIMUM);
+                boolean qScoresUndefined=(qm==0.0 && qi==0.0);
+                if (!qScoresUndefined && qm<=QM_MAXIMUM && qi<=QI_MAXIMUM) {
+                    logger.info("Adding properly-aligned sampleName="+sample.getName());
                     properlyAlignedSampleList.add(sample);
                     properlyAlignedSampleIdList.add(sample.getId().toString());
                     patternAnnotationDirList.add(patternAnnotationDir.getAbsolutePath());
@@ -256,16 +259,18 @@ public class PatternAnnotationSampleService  implements IService {
         List<String> finalAnnotationDirList=new ArrayList<String>();
         List<String> finalAlignedStackList=new ArrayList<String>();
 
+        long alreadyCompleteSampleCount=0;
         for (Entity alignedSample : properlyAlignedSampleList) {
-
+            logger.info("Checking to see if aligned Sample name="+alignedSample.getName()+" is complete");
             if (!patternAnnotationDirIsComplete(alignedSample.getName(), new File(patternAnnotationDirList.get(sampleIndex)), false)) {
-
                 finalSampleIdList.add(alignedSample.getId().toString());
                 finalSampleNameList.add(alignedSample.getName());
                 finalAnnotationDirList.add(patternAnnotationDirList.get(sampleIndex));
                 finalAlignedStackList.add(alignedStackPathList.get(sampleIndex));
                 sampleIndex++;
-
+            } else {
+                logger.info("Sample is complete - skipping");
+                alreadyCompleteSampleCount++;
             }
         }
 
@@ -281,7 +286,8 @@ public class PatternAnnotationSampleService  implements IService {
             logger.info("doSetup() : Adding sampleName to list="+sampleName);
         }
 
-        logger.info("End of doSetup() - including "+finalSampleNameList.size()+" samples - skipped "+sampleDirFailureCount+" samples due to missing sample result directories");
+        logger.info("End of doSetup() - including "+finalSampleNameList.size()+" samples - skipped "+alreadyCompleteSampleCount+
+                " already-complete samples, and skipped "+sampleDirFailureCount+" samples due to missing sample result directories");
     }
 
     File getOrUpdateSampleResultDir(Entity sample) throws Exception {
@@ -538,7 +544,7 @@ public class PatternAnnotationSampleService  implements IService {
                 missingAFile=true;
             }
         }
-        return missingAFile;
+        return !missingAFile;
     }
 
     protected Entity addChildFolderToEntity(Entity parent, String name, String directoryPath) throws Exception {
