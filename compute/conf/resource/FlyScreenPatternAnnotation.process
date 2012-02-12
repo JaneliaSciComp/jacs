@@ -76,6 +76,7 @@
        			                 <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ImageConversionService"/>
    				                 <input name="RESULT_FILE_NODE"/>
        		    		         <input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
+       		    		         <input name="PATTERN_ANNOTATION_PATH"/>
        		    		         <input name="ALTERNATE_WORKING_DIR_PATH" value="$V{PATTERN_ANNOTATION_PATH}"/>
    						         <input name="INPUT_FILENAME_REGEX" value="((.*?)MIP)\.tif$"/>
         				         <input name="OUTPUT_FILENAME_PATTERN" value="$1.png"/>
