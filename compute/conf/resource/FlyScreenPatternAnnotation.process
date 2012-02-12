@@ -69,20 +69,20 @@
         			    </operation>
         			</sequence>
 
- 	                <sequence forEach="PATTERN_ANNOTATION_PATH">
-
-                        <sequence name="MIP Conversion to PNG" waitForAsync="true">
-        		             <operation name="MIP Conversion to PNG" processor="queue/gridSubmitAndWait">
-       			                 <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ImageConversionService"/>
-   				                 <input name="RESULT_FILE_NODE"/>
-       		    		         <input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
-       		    		         <input name="PATTERN_ANNOTATION_PATH"/>
-       		    		         <input name="ALTERNATE_WORKING_DIR_PATH" value="$V{PATTERN_ANNOTATION_PATH}"/>
-   						         <input name="INPUT_FILENAME_REGEX" value="((.*?)MIP)\.tif$"/>
-        				         <input name="OUTPUT_FILENAME_PATTERN" value="$1.png"/>
-        			         </operation>
-        			    </sequence>
-
+ 	                <sequence forEach="PATTERN_ANNOTATION_PATH" waitForAsync="true">
+	                    <sequence async="true">
+                            <sequence name="MIP Conversion to PNG" waitForAsync="true">
+            		             <operation name="MIP Conversion to PNG" processor="queue/gridSubmitAndWait">
+           			                 <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ImageConversionService"/>
+       				                 <input name="RESULT_FILE_NODE"/>
+           		    		         <input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
+           		    		         <input name="PATTERN_ANNOTATION_PATH"/>
+           		    		         <input name="ALTERNATE_WORKING_DIR_PATH" value="$V{PATTERN_ANNOTATION_PATH}"/>
+       						         <input name="INPUT_FILENAME_REGEX" value="((.*?)MIP)\.tif$"/>
+            				         <input name="OUTPUT_FILENAME_PATTERN" value="$1.png"/>
+            			         </operation>
+        			        </sequence>
+                        </sequence>
         			</sequence>
 
                     <!-- This creates appropriate entities for all results in the proper hierarchy and also cleans up

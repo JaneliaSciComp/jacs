@@ -320,7 +320,7 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
     	}
 
         int outputFileCheckTries=0;
-        int maxOutputFileCheckTries=3;
+        int maxOutputFileCheckTries=10;
         List<File> missingFiles=new ArrayList<File>();
         while(outputFileCheckTries<maxOutputFileCheckTries) {
             missingFiles.clear();
@@ -334,8 +334,9 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
                 for (File mf : missingFiles) {
                     logger.info("missing file: "+mf.getAbsolutePath());
                 }
+                logger.info("Missing total of "+missingFiles.size()+" files\n\n");
                 outputFileCheckTries++;
-                try { Thread.sleep(5000); } catch (Exception e) {} // 5-seconds
+                try { Thread.sleep(10000); } catch (Exception e) {} // 10-seconds
             } else {
                 break;
             }
