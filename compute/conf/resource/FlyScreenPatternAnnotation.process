@@ -29,7 +29,7 @@
     	     The intention is that each group is then processable as a unit downstream. -->
 
     	<operation name="Fly Line Screen Sample Coordination" processor="org.janelia.it.jacs.compute.service.fly.ScreenSampleLineCoordinationService">
-            <input name="FLY_LINE_GROUP_SIZE" value="100"/>
+            <input name="FLY_LINE_GROUP_SIZE" value="5"/>
             <output name="FLY_LINE_GROUP_LIST"/>
         </operation>
 
@@ -54,7 +54,11 @@
     		            <output name="RESOURCE_DIR_PATH"/>
     		            <output name="RESULT_FILE_NODE"/>
     		            <output name="PATTERN_CHANNEL"/>
+    		            <output name="IMAGE_CONVERSION_RESULT_NODE_MAP"/>
+    		            <output name="SAMPLE_COUNT"/>
                     </operation>
+
+                    <sequence if="SAMPLE_COUNT&gt;=1">
 
                     <sequence name="Compute Pattern Annotation" waitForAsync="true">
        			        <operation name="Pattern Annotation" processor="queue/gridSubmitAndWait">
@@ -74,8 +78,7 @@
                             <sequence name="MIP Conversion to PNG" waitForAsync="true">
             		             <operation name="MIP Conversion to PNG" processor="queue/gridSubmitAndWait">
            			                 <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ImageConversionService"/>
-       				                 <input name="RESULT_FILE_NODE"/>
-           		    		         <input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
+           			                 <input name="IMAGE_CONVERSION_RESULT_NODE_MAP"/>
            		    		         <input name="PATTERN_ANNOTATION_PATH"/>
            		    		         <input name="ALTERNATE_WORKING_DIR_PATH" value="$V{PATTERN_ANNOTATION_PATH}"/>
        						         <input name="INPUT_FILENAME_REGEX" value="((.*?)MIP)\.tif$"/>
@@ -97,6 +100,8 @@
     	                <input name="ALIGNED_STACK_PATH_LIST"/>
     	                <input name="RESULT_FILE_NODE"/>
      	            </operation>
+
+     	            </sequence>
 
                 </sequence>
   	    </sequence>

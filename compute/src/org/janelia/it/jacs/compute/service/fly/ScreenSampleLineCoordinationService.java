@@ -30,6 +30,8 @@ public class ScreenSampleLineCoordinationService implements IService {
 
     public static final String SCREEN_PATTERN_TOP_LEVEL_FOLDER_NAME="FlyLight Screen Pattern Annotation";
 
+    final boolean DEBUG=true;
+
     protected Logger logger;
     protected User user;
     protected Date createDate;

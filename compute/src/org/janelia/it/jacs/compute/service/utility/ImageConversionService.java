@@ -1,8 +1,12 @@
 package org.janelia.it.jacs.compute.service.utility;
 
+import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.user_data.FileNode;
 
 import java.io.FileWriter;
+import java.util.Map;
 
 /**
  * Convert any number of images, in parallel. 
@@ -13,6 +17,21 @@ public class ImageConversionService extends ParallelFileProcessingService {
 
     protected static final String CONVERT_BASE_CMD = SystemConfigurationProperties.getString("Executables.ModuleBase") +
     		SystemConfigurationProperties.getString("ImageMagick.Bin.Path")+"/convert";
+
+    @Override
+    protected void init(IProcessData processData) throws Exception {
+        String altWorkingPath=processData.getString("ALTERNATE_WORKING_DIR_PATH");
+        Map<String, FileNode> nodeMap=(Map<String, FileNode>)processData.getItem("IMAGE_CONVERSION_RESULT_NODE_MAP");
+        if (altWorkingPath!=null && nodeMap!=null) {
+            FileNode resultFileNode=nodeMap.get(altWorkingPath);
+            if (resultFileNode!=null) {
+                processData.putItem(ProcessDataConstants.RESULT_FILE_NODE, resultFileNode);
+                processData.putItem("OUTPUT_FILE_NODE", resultFileNode);
+            }
+        }
+        super.init(processData);
+    }
+
     
     @Override
     protected String getGridServicePrefixName() {

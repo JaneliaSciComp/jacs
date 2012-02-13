@@ -15,8 +15,10 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
+import org.janelia.it.jacs.model.user_data.entity.NamedFileNode;
 import org.janelia.it.jacs.model.user_data.entity.PatternAnnotationResultNode;
 import org.janelia.it.jacs.model.user_data.entity.ScreenSampleResultNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
@@ -75,6 +77,7 @@ public class PatternAnnotationSampleService  implements IService {
 
             this.processData=processData;
             task = ProcessDataHelper.getTask(processData);
+            logger.info("PatternAnnotationSampleService running under TaskId="+task.getObjectId());
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
             visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
             annotationBean = EJBFactory.getLocalAnnotationBean();
@@ -154,7 +157,11 @@ public class PatternAnnotationSampleService  implements IService {
         PatternAnnotationResultNode resultNode = new PatternAnnotationResultNode(task.getOwner(), task, "PatternAnnotationResultNode",
                 "PatternAnnotationResultNode for task " + task.getObjectId(), visibility, sessionName);
         EJBFactory.getLocalComputeBean().saveOrUpdateNode(resultNode);
-        logger.info("PatternAnnotationSampleService  doSetup()  resultNodeId="+resultNode.getObjectId()+ " intended path="+resultNode.getDirectoryPath());
+
+        // Update sessionName
+        sessionName = ProcessDataHelper.getSessionRelativePath(processData);
+        logger.info("PatternAnnotationSampleService  doSetup()  resultNodeId="+resultNode.getObjectId()+ " updated sessionName="+sessionName+
+                " intended path="+resultNode.getDirectoryPath());
         FileUtil.ensureDirExists(resultNode.getDirectoryPath());
         FileUtil.cleanDirectory(resultNode.getDirectoryPath());
         String creationMessage="Created PatternAnnotationSampleService path="+resultNode.getDirectoryPath()+" id="+resultNode.getObjectId();
@@ -199,13 +206,21 @@ public class PatternAnnotationSampleService  implements IService {
             updateSampleSupportingDirIfNecessary(sample);
 
             if (refresh) {
-                Entity patternAnnotationFolder=getPatternAnnotationFolderAndCleanExtra(sample);
-                if (patternAnnotationFolder!=null) {
-                    cleanFullOrIncompletePatternAnnotationFolderAndFiles(patternAnnotationFolder);
+                logger.info("Refresh is true - checking status of patternAnnotationFolder for sampleName="+sample.getName());
+                List<Entity> patternAnnotationFolderList=getPatternAnnotationFoldersFromSample(sample);
+                if (patternAnnotationFolderList!=null) {
+                    for (Entity patternFolderToDelete : patternAnnotationFolderList) {
+                        logger.info("Deleting patternFolder id="+patternFolderToDelete.getId()+" dir="+patternFolderToDelete.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+                        cleanFullOrIncompletePatternAnnotationFolderAndFiles(patternFolderToDelete);
+                    }
+                } else {
+                    logger.info("patternAnnotationFolder is null - nothing to clean");
                 }
                 // Refresh sample after delete
                 logger.info("Refreshing sample after clean operation");
                 sample=annotationBean.getEntityTree(sample.getId());
+            } else {
+                logger.info("Refresh is false - using prior data");
             }
 
             // This ensures that the patternAnnotation directory and its subdirs are correctly setup.
@@ -274,6 +289,10 @@ public class PatternAnnotationSampleService  implements IService {
             }
         }
 
+        Map<String, FileNode> mipResultNodeMap=createResultNodeMapForMipConversion(finalAnnotationDirList);
+
+        long sampleCount=finalSampleNameList.size();
+
         processData.putItem("SAMPLE_ID_LIST", finalSampleIdList);
         processData.putItem("SAMPLE_NAME_LIST", finalSampleNameList);
         processData.putItem("PATTERN_ANNOTATION_PATH", finalAnnotationDirList);
@@ -281,6 +300,8 @@ public class PatternAnnotationSampleService  implements IService {
         processData.putItem("RESOURCE_DIR_PATH", patternAnnotationResourceDir);
         processData.putItem(ProcessDataConstants.RESULT_FILE_NODE, resultNode);
         processData.putItem("PATTERN_CHANNEL", patternChannel);
+        processData.putItem("IMAGE_CONVERSION_RESULT_NODE_MAP", mipResultNodeMap);
+        processData.putItem("SAMPLE_COUNT", sampleCount);
 
         for (String sampleName : finalSampleNameList) {
             logger.info("doSetup() : Adding sampleName to list="+sampleName);
@@ -288,6 +309,17 @@ public class PatternAnnotationSampleService  implements IService {
 
         logger.info("End of doSetup() - including "+finalSampleNameList.size()+" samples - skipped "+alreadyCompleteSampleCount+
                 " already-complete samples, and skipped "+sampleDirFailureCount+" samples due to missing sample result directories");
+    }
+
+    Map<String, FileNode> createResultNodeMapForMipConversion(List<String> dirPathList) throws Exception {
+        Map<String, FileNode> nodeMap=new HashMap<String, FileNode>();
+        for (String dirPath : dirPathList) {
+            NamedFileNode mipResultNode=new NamedFileNode(task.getOwner(), task, "mipConversion", "mipConversion", visibility, sessionName);
+            mipResultNode=(NamedFileNode)computeBean.saveOrUpdateNode(mipResultNode);
+            nodeMap.put(dirPath, mipResultNode);
+            logger.info("For mip input dir="+dirPath+" sessionName="+sessionName+" created output result dir="+mipResultNode.getDirectoryPath());
+        }
+        return nodeMap;
     }
 
     File getOrUpdateSampleResultDir(Entity sample) throws Exception {
@@ -442,7 +474,13 @@ public class PatternAnnotationSampleService  implements IService {
         File sampleDir=getOrUpdateSampleResultDir(sample);
 
         // Check to see if the sample already has a patternAnnotation folder
-        Entity patternAnnotationFolder=getPatternAnnotationFolderAndCleanExtra(sample);
+        Entity patternAnnotationFolder=null;
+        List<Entity> patternAnnotationFolderList=getPatternAnnotationFoldersFromSample(sample);
+        if (patternAnnotationFolderList!=null && patternAnnotationFolderList.size()>1) {
+            throw new Exception("Expected a single patternAnnotationFolder for sampleId="+sample.getId());
+        } else if (patternAnnotationFolderList!=null && patternAnnotationFolderList.size()==1) {
+            patternAnnotationFolder=patternAnnotationFolderList.get(0);
+        }
         File patternAnnotationCorrectDir=new File(sampleDir, PATTERN_ANNOTATION_SUBDIR_NAME);
         if (patternAnnotationFolder==null) {
             patternAnnotationFolder=addChildFolderToEntity(sample, PATTERN_ANNOTATION_FOLDER_NAME, patternAnnotationCorrectDir.getAbsolutePath());
@@ -468,6 +506,9 @@ public class PatternAnnotationSampleService  implements IService {
 
 
     protected void cleanFullOrIncompletePatternAnnotationFolderAndFiles(Entity patternAnnotationFolder) throws Exception {
+        if (!patternAnnotationFolder.getUser().getUserLogin().equals(task.getOwner())) {
+            throw new Exception("Users do not match for cleanFullOrIncompletePatternAnnotationFolderAndFiles()");
+        }
         String patternDirPath=patternAnnotationFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         if (patternDirPath==null) {
             logger.info("Could not find directory path for previous pattern folder id="+patternAnnotationFolder.getId());
@@ -475,42 +516,21 @@ public class PatternAnnotationSampleService  implements IService {
         }
         File patternDir=new File(patternDirPath);
         logger.info("Removing prior pattern annotation folder at location="+patternDir.getAbsolutePath());
-        String patternAnnotationDirPath=patternDir.getAbsolutePath();
         List<File> filesToDelete=new ArrayList<File>();
 
         // We need to iterate through the entities and delete - note we only want to delete 'official'
         // contents and not other links.
-        for (EntityData ed : patternAnnotationFolder.getEntityData()) {
-            Entity child=ed.getChildEntity();
-            if (child!=null) {
-                if (child.getUser().getUserLogin().equals(task.getOwner())) {
-                    if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
-                        String folderPath=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                        File childFolderFile=new File(folderPath);
-                        File childFolderParent=childFolderFile.getParentFile();
-                        if (childFolderParent.getAbsolutePath().equals(patternAnnotationDirPath)) {
-                            filesToDelete.add(childFolderFile);
-                            File[] childFolderFiles=childFolderFile.listFiles();
-                            if (childFolderFiles!=null && childFolderFiles.length>0) {
-                                for (File f : childFolderFiles) {
-                                    filesToDelete.add(f);
-                                }
-                            }
-                        }
-                    }
-                    String filePath=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                    if (filePath!=null) {
-                        File childFile=new File(filePath);
-                        File parentDir=childFile.getParentFile();
-                        if (parentDir.getAbsoluteFile().equals(patternAnnotationDirPath)) {
-                            // We can be confident that the file needs to be deleted
-                            logger.info("Deleting prior annotation file="+childFile.getAbsolutePath());
-                            filesToDelete.add(childFile);
-                        }
-                    }
-                } else {
-                    logger.error("Cannot delete entity belonging to user="+child.getUser().getUserLogin()+" as user="+task.getOwner());
-                }
+        File mipsSubDir=new File(patternDir, MIPS_SUBFOLDER_NAME);
+        File suppSubDir=new File(patternDir, SUPPORTING_FILE_SUBFOLDER_NAME);
+        File normSubDir=new File(patternDir, NORMALIZED_SUBFOLDER_NAME);
+        List<File> dirsToDelete=new ArrayList<File>();
+        dirsToDelete.add(mipsSubDir);
+        dirsToDelete.add(suppSubDir);
+        dirsToDelete.add(normSubDir);
+        dirsToDelete.add(patternDir);
+        for (File f : dirsToDelete) {
+            for (File sf : f.listFiles()) {
+                filesToDelete.add(sf);
             }
         }
 
@@ -563,7 +583,7 @@ public class PatternAnnotationSampleService  implements IService {
         return folder;
     }
 
-    public Entity getPatternAnnotationFolderAndCleanExtra(Entity screenSample) throws Exception {
+    public List<Entity> getPatternAnnotationFoldersFromSample(Entity screenSample) throws Exception {
         List<Entity> patternAnnotationFolderList=new ArrayList<Entity>();
         for (EntityData ed : screenSample.getEntityData()) {
             Entity child=ed.getChildEntity();
@@ -583,13 +603,7 @@ public class PatternAnnotationSampleService  implements IService {
                 }
             }
         });
-        for (int i=0;i<patternAnnotationFolderList.size();i++) {
-            if (i<patternAnnotationFolderList.size()-1) {
-                logger.info("Removing extra pattern folder id="+patternAnnotationFolderList.get(i).getId());
-                annotationBean.deleteSmallEntityTree(user.getUserLogin(), patternAnnotationFolderList.get(i).getId());
-            }
-        }
-        return null;
+        return patternAnnotationFolderList;
     }
 
     protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
@@ -622,12 +636,47 @@ public class PatternAnnotationSampleService  implements IService {
             if (!patternAnnotationDir.exists()) {
                 throw new Exception("Could not find expected pattern annotation dir="+patternAnnotationDir.getAbsolutePath());
             }
+            moveFilesToSubDirectory("mip", patternAnnotationDir, new File(patternAnnotationDir, MIPS_SUBFOLDER_NAME));
+            moveFilesToSubDirectory("normalized", patternAnnotationDir, new File(patternAnnotationDir, NORMALIZED_SUBFOLDER_NAME));
+            moveFilesToSubDirectory("quant", patternAnnotationDir, new File(patternAnnotationDir, SUPPORTING_FILE_SUBFOLDER_NAME));
+            cleanFilesFromDirectory(".tif", patternAnnotationDir);
             if (!patternAnnotationDirIsComplete(sampleName, patternAnnotationDir, true /* verbose */)) {
                 throw new Exception("Pattern annotation in this dir is incomplete="+patternAnnotationPath);
             } else {
                 addPatternAnnotationResultEntitiesToSample(sampleIdList.get(index), sampleName, patternAnnotationDir);
             }
             index++;
+        }
+    }
+
+    protected void moveFilesToSubDirectory(String nameFragment, File fromDir, File toDir) throws Exception {
+        if (!fromDir.exists()) {
+            throw new Exception("Could not find directory="+fromDir.getAbsolutePath());
+        }
+        if (!toDir.exists()) {
+            throw new Exception("Could not find directory="+toDir.getAbsolutePath());
+        }
+        List<File> fromList=new ArrayList<File>();
+        File[] fromFileArr=fromDir.listFiles();
+        for (File f : fromFileArr) {
+            if (f.getName().contains(nameFragment)) {
+                fromList.add(f);
+            }
+        }
+        for (File fromFile : fromList) {
+            File toFile=new File(toDir, fromFile.getName());
+            logger.info("Moving "+fromFile.getAbsolutePath()+" to "+toFile.getAbsolutePath());
+            FileUtil.moveFileUsingSystemCall(fromFile, toFile);
+        }
+    }
+
+    protected void cleanFilesFromDirectory(String nameFragment, File dir) throws Exception {
+        File[] fileArr=dir.listFiles();
+        for (File f : fileArr) {
+            if (f.getName().contains(nameFragment)) {
+                logger.info("Deleting file "+f.getAbsolutePath());
+                f.delete();
+            }
         }
     }
 
@@ -683,16 +732,19 @@ public class PatternAnnotationSampleService  implements IService {
     }
 
     String getAbbreviationFromPatternAnnotationFilename(String filename) throws Exception {
-        String[] tokens=filename.split("_");
+        String[] tokens=getFilenameTokenSet(filename);
+        String abbreviation=null;
         if (tokens.length==2) {
-            return null;
+            abbreviation=null;
         } else if (tokens.length==3) {
-            return tokens[1];
+            abbreviation=tokens[1];
         } else if (tokens.length==4 || tokens.length==5) {
-            return tokens[1]+"_"+tokens[2];
+            abbreviation=tokens[1]+"_"+tokens[2];
         } else {
             throw new Exception("Could not properly evaluate filename="+filename+" for abbreviation");
         }
+        logger.info("getAbbreviationFromPatternAnnotationFilename() filename="+filename+" abbreviation="+abbreviation);
+        return abbreviation;
     }
 
     public void addPatternAnnotationResultEntitiesToSample(String sampleId, String sampleName, File patternAnnotationDir) throws Exception {
@@ -722,6 +774,7 @@ public class PatternAnnotationSampleService  implements IService {
                     mipEntity=createMipEntity(file, entityName);
                     addToParent(mipsSubFolder, mipEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
                 }
+                logger.info("Adding to mipMap entityName="+entityName+" entityId="+mipEntity.getId());
                 mipMap.put(entityName, mipEntity);
             }
         }
@@ -750,7 +803,11 @@ public class PatternAnnotationSampleService  implements IService {
         }
 
         // Finally, we need to add targeted 2D image assignments
-        String mipPath=mipMap.get("Heatmap MIP").getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        Entity heatmapMip=mipMap.get("Heatmap MIP");
+        if (heatmapMip==null) {
+            throw new Exception("heatmapMip is unexpectedly null");
+        }
+        String mipPath=heatmapMip.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         patternAnnotationFolder.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, mipPath);
 
         // We also want to replace the sample 2D image with the heatmap, for those samples where it is available
@@ -794,10 +851,10 @@ public class PatternAnnotationSampleService  implements IService {
              compartmentSuffixArray[1]="_heatmap16ColorMIP.png";
              compartmentSuffixArray[2]="_normalized_heatmap16Color.v3dpbd";
              compartmentSuffixArray[3]="_normalized_heatmap16ColorMIP.png";
-             String[] otherSuffixArray=new String[3];
-             otherSuffixArray[0]="_indexCubified.v3dpbd";
-             otherSuffixArray[1]="_inputImageCubified.v3dpbd";
-             otherSuffixArray[2]="_quantifiers.txt";
+             String[] otherSuffixArray=new String[1];
+             //otherSuffixArray[0]="_indexCubified.v3dpbd";
+             //otherSuffixArray[1]="_inputImageCubified.v3dpbd";
+             otherSuffixArray[0]="_quantifiers.txt";
              File abbreviationIndexFile=new File(patternAnnotationResourceDir+File.separator+ABBREVIATION_INDEX_FILENAME);
              FileReader fr=new FileReader(abbreviationIndexFile);
              BufferedReader br=new BufferedReader(fr);
@@ -814,8 +871,8 @@ public class PatternAnnotationSampleService  implements IService {
              expectedPatternAnnotationResultFilenameList.add(sampleName+compartmentSuffixArray[1]);
              // Note: there are not normalized files at the global level
              expectedPatternAnnotationResultFilenameList.add(sampleName+otherSuffixArray[0]);
-             expectedPatternAnnotationResultFilenameList.add(sampleName+otherSuffixArray[1]);
-             expectedPatternAnnotationResultFilenameList.add(sampleName+otherSuffixArray[2]);
+             //expectedPatternAnnotationResultFilenameList.add(sampleName+otherSuffixArray[1]);
+             //expectedPatternAnnotationResultFilenameList.add(sampleName+otherSuffixArray[2]);
              for (String abbreviation : abbrevationList) {
                  expectedPatternAnnotationResultFilenameList.add(sampleName+"_"+abbreviation+compartmentSuffixArray[0]);
                  expectedPatternAnnotationResultFilenameList.add(sampleName+"_"+abbreviation+compartmentSuffixArray[1]);
@@ -833,22 +890,7 @@ public class PatternAnnotationSampleService  implements IService {
          File normalizedSubFolder=new File(patternAnnotationDir, NORMALIZED_SUBFOLDER_NAME);
          List<File> expectedFiles=new ArrayList<File>();
          for (String filename : filenameList) {
-             String[] tokens=null;
-             String [] gmrComponents=getGmrSampleNameFilename(filename);
-             if (gmrComponents!=null) {
-                 String[] remainingComponents=gmrComponents[1].split("_");
-                 int totalComponents=remainingComponents.length+1;
-                 tokens=new String[totalComponents];
-                 for (int i=0;i<totalComponents;i++) {
-                     if (i==0) {
-                         tokens[i]=gmrComponents[0];
-                     } else {
-                         tokens[i]=remainingComponents[i-1];
-                     }
-                 }
-             } else {
-                tokens=filename.split("_");
-             }
+             String[] tokens=getFilenameTokenSet(filename);
              if (tokens.length==2) {
                  if (tokens[1].equals("indexCubified.v3dpbd")) {
                      File file=new File(supportingFilesFolder, filename);
@@ -892,7 +934,7 @@ public class PatternAnnotationSampleService  implements IService {
 
     public String[] getGmrSampleNameFilename(String filename) {
         String[] result=new String[2];
-        Pattern gmrPattern=Pattern.compile("(\\D\\D\\D\\_\\w+\\_\\w+\\_\\w+\\_\\w+-\\w+\\_\\w+\\_\\w+)(\\_.+)");
+        Pattern gmrPattern=Pattern.compile("(\\D\\D\\D\\_[\\w&&[^\\_]]+\\_[\\w&&[^\\_]]+\\_[\\w&&[^\\_]]+\\_[\\w&&[^\\_]]+-[\\w&&[^\\_]]+\\_[\\w&&[^\\_]]+\\_\\d+)\\_(\\S.+)");
         Matcher gmrMatcher=gmrPattern.matcher(filename);
         if (gmrMatcher.matches()) {
             result[0]=gmrMatcher.group(1);
@@ -901,6 +943,30 @@ public class PatternAnnotationSampleService  implements IService {
         } else {
             return null;
         }
+    }
+
+    public String[] getFilenameTokenSet(String filename) {
+        String[] tokens=null;
+        String [] gmrComponents=getGmrSampleNameFilename(filename);
+        if (gmrComponents!=null) {
+            String[] remainingComponents=gmrComponents[1].split("_");
+            int totalComponents=remainingComponents.length+1;
+            tokens=new String[totalComponents];
+            for (int i=0;i<totalComponents;i++) {
+                if (i==0) {
+                    tokens[i]=gmrComponents[0];
+                } else {
+                    tokens[i]=remainingComponents[i-1];
+                }
+            }
+        } else {
+            tokens=filename.split("_");
+        }
+        logger.info("getFilenameTokenSet filename="+filename);
+        for (int i=0;i<tokens.length;i++) {
+            logger.info("token "+i+" ="+tokens[i]);
+        }
+        return tokens;
     }
 
 }

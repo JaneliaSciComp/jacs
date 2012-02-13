@@ -2,6 +2,7 @@
 package org.janelia.it.jacs.compute.service.common;
 
 import org.apache.log4j.Logger;
+import org.apache.tools.ant.taskdefs.Parallel;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
@@ -76,14 +77,28 @@ public class ProcessDataHelper {
 
     public static FileNode getRootFileNode(IProcessData processData) throws MissingDataException, IOException {
         Logger logger = getLoggerForTask(processData, ProcessDataHelper.class);
-        Task task = getRootTask(getTask(processData), logger);
+        if (logger!=null) {
+            logger.info("getRootFileNode() found non-null logger");
+        }
+        Task tmpTask=getTask(processData);
+        if (logger!=null) {
+            if (tmpTask!=null) {
+                logger.info("getRootFileNode() found non-null task id="+tmpTask.getObjectId());
+            } else {
+                logger.info("getRootFileNode() found null task");
+            }
+        }
+        Task task = getRootTask(tmpTask, logger);
         // If no session exists, return null
         if (null == task /*|| !(task instanceof SessionTask)*/) {
+            logger.info("getRootFileNode() returning null because getRootTask() returned null");
             return null;
         }
         // else return the session node
+        logger.info("task from getRootTask has id="+task.getObjectId());
         Node tmpSessionNode = new ComputeDAO(logger).getResultNodeByTaskId(task.getObjectId());
         if (null == tmpSessionNode/* || !(tmpSessionNode instanceof SessionFileNode)*/) {
+            logger.info("getRootFileNode() returning null because tmpSessionNode is null");
             return null;
         }
         return (FileNode) tmpSessionNode;
