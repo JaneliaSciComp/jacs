@@ -909,7 +909,12 @@ public class PatternAnnotationSampleService  implements IService {
                      expectedFiles.add(file);
                  }
              } else if (tokens.length==3) {
-                 File file=new File(patternAnnotationDir, filename);
+                 File file=null;
+                 if (filename.toLowerCase().contains("mip")) {
+                     file=new File(mipSubFolder, filename);
+                 } else {
+                     file=new File(patternAnnotationDir, filename);
+                 }
                  expectedFiles.add(file);
              } else if (tokens.length==4 || tokens.length==5) {
                  File file=null;
