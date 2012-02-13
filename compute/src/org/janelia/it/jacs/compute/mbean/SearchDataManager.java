@@ -46,6 +46,10 @@ public class SearchDataManager implements SearchDataManagerMBean {
         updateIndexForData(LuceneIndexer.INDEX_SAMPLES);
     }
 
+    public void updateIndexForEntityData() {
+        updateIndexForData(LuceneIndexer.INDEX_ENITTIES);
+    }
+
     private void updateIndexForData(String dataType) {
         LOGGER.debug("Updating Lucene index file for data type=" + dataType);
         try {
@@ -108,6 +112,15 @@ public class SearchDataManager implements SearchDataManagerMBean {
     public void searchSamples(String searchString) {
         try {
             EJBFactory.getRemoteSearchBean().search(LuceneIndexer.INDEX_SAMPLES, searchString);
+        }
+        catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void searchEntities(String searchString) {
+        try {
+            EJBFactory.getRemoteSearchBean().search(LuceneIndexer.INDEX_ENITTIES, searchString);
         }
         catch (RemoteException e) {
             e.printStackTrace();

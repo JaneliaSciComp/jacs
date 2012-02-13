@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.service.v3d;
+package org.janelia.it.jacs.compute.service.vaa3d;
 
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
@@ -22,7 +22,7 @@ import java.util.List;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class V3DStitchAndBlendService extends SubmitDrmaaJobService {
+public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
 
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
     private static final String CONFIG_PREFIX = "stitchConfiguration.";
@@ -102,13 +102,13 @@ public class V3DStitchAndBlendService extends SubmitDrmaaJobService {
      */
     private void createShellScript(FileWriter writer, String mergedFilepath, String stitchedFilepath) throws Exception {
         StringBuffer script = new StringBuffer();
-        script.append(V3DHelper.getV3DGridCommandPrefix());
+        script.append(Vaa3DHelper.getVaa3DGridCommandPrefix());
         script.append("\n");
-        script.append(V3DHelper.getFormattedStitcherCommand(mergedFilepath));
+        script.append(Vaa3DHelper.getFormattedStitcherCommand(mergedFilepath));
         script.append("\n");
-        script.append(V3DHelper.getFormattedBlendCommand(mergedFilepath, stitchedFilepath));
+        script.append(Vaa3DHelper.getFormattedBlendCommand(mergedFilepath, stitchedFilepath));
         script.append("\n");
-        script.append(V3DHelper.getV3DGridCommandSuffix());
+        script.append(Vaa3DHelper.getVaa3DGridCommandSuffix());
         script.append("\n");
         writer.write(script.toString());
     }

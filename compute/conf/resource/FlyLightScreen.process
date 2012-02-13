@@ -70,7 +70,7 @@
 
  		            <sequence name="Map Channels" waitForAsync="true">
        			        <operation name="Map Channels" processor="queue/gridSubmitAndWait">
-        			            <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.MapChannelService"/>
+        			            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.MapChannelService"/>
         			            <input name="SAMPLE_FILE_NODE_ID_LIST"/>
        				            <input name="SAMPLE_FILE_NODE_LIST"/>
        				            <input name="RESULT_FILE_NODE_ID_LIST" value="$V{SAMPLE_FILE_NODE_ID_LIST}"/>
@@ -84,7 +84,7 @@
 
                     <sequence name="MIP Generation" waitForAsync="true">
         		        <operation name="MIP Generation" processor="queue/gridSubmitAndWait">
-        				    <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.MIPGenerationService"/>
+        				    <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.MIPGenerationService"/>
         				    <input name="SAMPLE_FILE_NODE_LIST"/>
         				    <input name="SAMPLE_FILE_NODE_ID_LIST"/>
         		            <input name="RESULT_FILE_NODE_ID_LIST" value="$V{SAMPLE_FILE_NODE_ID_LIST}"/>

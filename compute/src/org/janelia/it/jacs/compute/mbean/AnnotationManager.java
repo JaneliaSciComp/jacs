@@ -69,4 +69,17 @@ public class AnnotationManager implements AnnotationManagerMBean {
         }
     }
 
+    @Override
+    public void generateUserAnnotationReport(String username) {
+        /**
+         * Use this as the basis of the query
+         *
+         select ed.id, e2.name, e.name
+         from entity e, entityData ed, entity e2
+         where e.id = ed.parent_entity_id
+         and ed.entity_att_id=1629239031722148011
+         and e.id in (select entityData.parent_entity_id from entityData where user_id=1676846821353193561 and entityData.entity_att_id=1629239031722148011)
+         and e2.id = ed.value order by e2.name desc, ed.id asc
+         */
+    }
 }

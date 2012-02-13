@@ -25,8 +25,6 @@ public interface WorkstationDataManagerMBean {
     public void runFlyScreenPipeline(String user, Boolean refresh);
 
     public void runFlyScreenPatternAnnotationPipeline(String user, Boolean refresh);
-    	
-    public void setupEntityTypes();
 
     public void deleteEntityById(String entityId);
 

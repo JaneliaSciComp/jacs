@@ -33,16 +33,17 @@ public class SearchTask extends Task {
     transient public static final int SEARCH_TIMEDOUT = 2;
     transient public static final int SEARCH_STILL_RUNNING = 1;
 
-    transient public static final String TOPIC_ALL = "all";
-    transient public static final String TOPIC_ACCESSION = "accession";
-    transient public static final String TOPIC_PROTEIN = "protein";
-    transient public static final String TOPIC_CLUSTER = "final_cluster";
+    transient public static final String TOPIC_ALL      = "all";
+    transient public static final String TOPIC_ACCESSION= "accession";
+    transient public static final String TOPIC_PROTEIN  = "protein";
+    transient public static final String TOPIC_CLUSTER  = "final_cluster";
     transient public static final String TOPIC_PUBLICATION = "publication";
-    transient public static final String TOPIC_PROJECT = "project";
-    transient public static final String TOPIC_SAMPLE = "sample";
-    transient public static final String TOPIC_WEBSITE = "website";
-    transient public static final String TOPIC_GENOME = "genome";
-    transient public static final String TOPIC_NCGENE = "ncgene";
+    transient public static final String TOPIC_PROJECT  = "project";
+    transient public static final String TOPIC_SAMPLE   = "sample";
+    transient public static final String TOPIC_WEBSITE  = "website";
+    transient public static final String TOPIC_GENOME   = "genome";
+    transient public static final String TOPIC_NCGENE   = "ncgene";
+    transient public static final String TOPIC_ENTITIES = "entities";
 
     // Parameter Keys
     transient public static final String PARAM_searchString = "searchString";
@@ -52,13 +53,14 @@ public class SearchTask extends Task {
     // Status for asynchronous thread management
     // currently supported topics
     transient private static final String[] SUPPORTED_TOPICS = {
-            TOPIC_ACCESSION,
-            TOPIC_PROTEIN,
-            TOPIC_CLUSTER,
-            TOPIC_PUBLICATION,
-            TOPIC_PROJECT,
-            TOPIC_SAMPLE,
-            TOPIC_WEBSITE
+//            TOPIC_ACCESSION,
+//            TOPIC_PROTEIN,
+//            TOPIC_CLUSTER,
+//            TOPIC_PUBLICATION,
+//            TOPIC_PROJECT,
+//            TOPIC_SAMPLE,
+//            TOPIC_WEBSITE
+        TOPIC_ENTITIES
     };
 
     public static String matchFlagsToString(int matchFlags) {

@@ -591,12 +591,6 @@
                       select-before-update="false">
             </subclass>
 
-            <subclass name="org.janelia.it.jacs.model.user_data.v3d.V3DResultNode" discriminator-value="V3DResultNode"
-                      dynamic-update="true"
-                      dynamic-insert="true"
-                      select-before-update="false">
-            </subclass>
-
             <subclass name="org.janelia.it.jacs.model.user_data.entity.NamedFileNode" discriminator-value="NamedFileNode"
                       dynamic-update="true"
                       dynamic-insert="true"

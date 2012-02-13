@@ -32,6 +32,9 @@ public class LuceneDataFactory {
             else if (docType.equals(LuceneIndexer.INDEX_SAMPLES)) {
                 return new SamplesDataRetriever();
             }
+            else if (docType.equals(LuceneIndexer.INDEX_ENITTIES)) {
+                return new EntityDataRetriever();
+            }
         }
 
         return null;
@@ -53,6 +56,9 @@ public class LuceneDataFactory {
             }
             else if (LuceneIndexer.INDEX_SAMPLES.equals(docType)) {
                 return new SampleSearcher();
+            }
+            else if (LuceneIndexer.INDEX_ENITTIES.equals(docType)) {
+                return new EntitySearcher();
             }
         }
 

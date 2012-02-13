@@ -149,18 +149,6 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
     
-    /**
-     * @deprecated this has not been kept in sync. use the data viewer instead.
-     */
-    public void setupEntityTypes() {
-        try {
-            AnnotationBeanRemote annotationBean = EJBFactory.getRemoteAnnotationBean();
-            annotationBean.setupEntityTypes();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
     public void deleteEntityById(String entityId) {
      try {
          Long id=new Long(entityId);

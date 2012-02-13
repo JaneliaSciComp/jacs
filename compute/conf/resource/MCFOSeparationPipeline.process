@@ -40,7 +40,7 @@
 	    <!-- Compress the results of neuron separation -->
         <sequence name="Compress" waitForAsync="true">
 		    <operation name="Compress" processor="queue/gridSubmitAndWait">
-		        <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.V3DConversionService"/>
+		        <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DConversionService"/>
 				<input name="COMPRESS_RESULT_FILE_NODE"/>
 	    		<input name="RESULT_FILE_NODE" value="$V{COMPRESS_RESULT_FILE_NODE}"/>
 				<input name="SEPARATE_RESULT_FILE_NODE"/>
@@ -60,7 +60,7 @@
 	    <!-- Generated whole-sample MIPs from the neuron separation results -->
         <sequence name="MIP Generation" waitForAsync="true">
 		    <operation name="MIP Generation" processor="queue/gridSubmitAndWait">
-		        <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.MIPGenerationService"/>
+		        <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.MIPGenerationService"/>
 				<input name="MIPS_RESULT_FILE_NODE"/>
 	    		<input name="RESULT_FILE_NODE" value="$V{MIPS_RESULT_FILE_NODE}"/>
 				<input name="SEPARATE_RESULT_FILE_NODE"/>

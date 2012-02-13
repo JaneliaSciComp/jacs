@@ -5,7 +5,7 @@ import java.util.List;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.v3d.MergedLsmPair;
+import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 
 /**
  * Given BULK_MERGE_PARAMETER which contain only a single LSM pair, put that LSM pair's merged filename into

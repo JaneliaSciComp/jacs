@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.service.v3d;
+package org.janelia.it.jacs.compute.service.vaa3d;
 
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
@@ -16,13 +16,13 @@ import java.util.Set;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class V3DConversionService extends ParallelFileProcessingService {
+public class Vaa3DConversionService extends ParallelFileProcessingService {
     
 	private Set<Integer> output8bit = new HashSet<Integer>();
 	
     @Override
     protected String getGridServicePrefixName() {
-        return "v3dconvert";
+        return "vaa3dconvert";
     }
 
     protected void init(IProcessData processData) throws Exception {
@@ -49,11 +49,11 @@ public class V3DConversionService extends ParallelFileProcessingService {
     	super.writeShellScript(writer);
         writer.write("read SAVE_TO_8BIT\n");
         StringBuffer script = new StringBuffer();
-        script.append(V3DHelper.getHeadlessGridCommandPrefix());
+        script.append(Vaa3DHelper.getHeadlessGridCommandPrefix());
         script.append("\n");
-        script.append(V3DHelper.getFormattedConvertCommand("$INPUT_FILENAME", "$OUTPUT_FILENAME", "$SAVE_TO_8BIT"));
+        script.append(Vaa3DHelper.getFormattedConvertCommand("$INPUT_FILENAME", "$OUTPUT_FILENAME", "$SAVE_TO_8BIT"));
         script.append("\n");
-        script.append(V3DHelper.getHeadlessGridCommandSuffix());
+        script.append(Vaa3DHelper.getHeadlessGridCommandSuffix());
         script.append("\n");
         writer.write(script.toString());
     }

@@ -245,10 +245,6 @@
               discriminator-value="ceTask">
     </subclass>
 
-    <subclass name="org.janelia.it.jacs.model.tasks.v3d.V3DPipelineTask" extends="org.janelia.it.jacs.model.tasks.Task"
-              discriminator-value="v3dPipelineTask">
-    </subclass>
-
     <subclass name="org.janelia.it.jacs.model.tasks.fileDiscovery.FileDiscoveryTask" extends="org.janelia.it.jacs.model.tasks.Task"
               discriminator-value="fileDiscoveryTask">
     </subclass>

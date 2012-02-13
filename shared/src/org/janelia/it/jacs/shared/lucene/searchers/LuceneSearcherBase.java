@@ -59,8 +59,8 @@ public abstract class LuceneSearcherBase implements LuceneSearcher {
         QueryParser qp = new QueryParser("content", analyzer);
         qp.setDefaultOperator(QueryParser.Operator.AND);
         Query query = qp.parse(searchString);
-//        SimpleOut.sysOut("\n\nExecuting search for: "+searchString);
-        //        SimpleOut.sysOut("Found " + hits.length() + " hits");
+//        _logger.debug("\n\nExecuting search for: "+searchString);
+        //        _logger.debug("Found " + hits.length() + " hits");
         return luceneSearcher.search(query);
     }
 
@@ -69,8 +69,8 @@ public abstract class LuceneSearcherBase implements LuceneSearcher {
         QueryParser qp = new QueryParser("content", analyzer);
         qp.setDefaultOperator(QueryParser.Operator.AND);
         Query query = qp.parse(searchString);
-//        SimpleOut.sysOut("\n\nExecuting search for: "+searchString);
-        //        SimpleOut.sysOut("Found " + hits.length() + " hits");
+//        _logger.debug("\n\nExecuting search for: "+searchString);
+        //        _logger.debug("Found " + hits.length() + " hits");
         return luceneSearcher.search(query, null, maxDocs);
     }
 

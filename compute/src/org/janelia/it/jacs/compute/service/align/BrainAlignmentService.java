@@ -6,7 +6,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
-import org.janelia.it.jacs.compute.service.v3d.V3DHelper;
+import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.vo.ParameterException;
@@ -82,10 +82,10 @@ public class BrainAlignmentService extends SubmitDrmaaJobService {
             " workingDir="+alignFileNode.getDirectoryPath() + " inputFilename="+inputFilename);
 
         StringBuffer script = new StringBuffer();
-        script.append(V3DHelper.getV3dLibrarySetupCmd()+"\n");
+        script.append(Vaa3DHelper.getVaa3dLibrarySetupCmd()+"\n");
         script.append("cd " + alignFileNode.getDirectoryPath() + "\n " + 
         	PERL_EXE + " " + EXECUTABLE_DIR + ALIGNER_SCRIPT_CMD +
-            " -v " +  V3DHelper.getV3dExecutableCmd() +
+            " -v " +  Vaa3DHelper.getVaa3dExecutableCmd() +
             " -b " +  EXECUTABLE_DIR + ALIGNER_EXE_PATH +
             " -l " +  EXECUTABLE_DIR + LOBESEG_EXE_PATH +
             " -t " +  EXECUTABLE_DIR + TEMPLATE_DIR +

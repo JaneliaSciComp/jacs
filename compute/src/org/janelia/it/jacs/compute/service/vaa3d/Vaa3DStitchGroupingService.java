@@ -1,8 +1,4 @@
-package org.janelia.it.jacs.compute.service.v3d;
-
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+package org.janelia.it.jacs.compute.service.vaa3d;
 
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
@@ -14,6 +10,10 @@ import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJob
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.SystemCall;
 
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Group a bunch of merged files into stitchable groups. Put the largest group back into play. 
  * Parameters:
@@ -22,7 +22,7 @@ import org.janelia.it.jacs.shared.utils.SystemCall;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class V3DStitchGroupingService extends SubmitDrmaaJobService {
+public class Vaa3DStitchGroupingService extends SubmitDrmaaJobService {
 
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
     private static final String CONFIG_PREFIX = "groupConfiguration.";
@@ -69,11 +69,11 @@ public class V3DStitchGroupingService extends SubmitDrmaaJobService {
      */
     private void createShellScript(FileWriter writer, String mergedFilepath, String groupedFilepath) throws Exception {
         StringBuffer script = new StringBuffer();
-        script.append(V3DHelper.getV3DGridCommandPrefix());
+        script.append(Vaa3DHelper.getVaa3DGridCommandPrefix());
         script.append("\n");
-        script.append(V3DHelper.getFormattedGrouperCommand(mergedFilepath, groupedFilepath));
+        script.append(Vaa3DHelper.getFormattedGrouperCommand(mergedFilepath, groupedFilepath));
         script.append("\n");
-        script.append(V3DHelper.getV3DGridCommandSuffix());
+        script.append(Vaa3DHelper.getVaa3DGridCommandSuffix());
         script.append("\n");
         writer.write(script.toString());
     }

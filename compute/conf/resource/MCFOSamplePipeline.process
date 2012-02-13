@@ -71,7 +71,7 @@
 		    <!-- Merge all the LSM pairs in parallel -->
 	        <sequence name="Merge Lsm Pairs" waitForAsync="true">
 		        <operation name="Merge Lsm Pairs" processor="queue/gridSubmitAndWait">
-		            <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.V3DBulkMergeService"/>
+		            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DBulkMergeService"/>
 					<input name="MERGE_RESULT_FILE_NODE"/>
 		    		<input name="RESULT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
 					<input name="BULK_MERGE_PARAMETERS"/>
@@ -93,7 +93,7 @@
 			    <!-- Determine tile groupings and pick the largest group for processing -->
 		        <sequence name="Determine Stitch Grouping" waitForAsync="true">
 			        <operation name="Stitch Grouping" processor="queue/gridSubmitAndWait">
-			            <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.V3DStitchGroupingService"/>
+			            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DStitchGroupingService"/>
 						<input name="GROUP_RESULT_FILE_NODE"/>
 			    		<input name="RESULT_FILE_NODE" value="$V{GROUP_RESULT_FILE_NODE}"/>
 						<input name="MERGE_RESULT_FILE_NODE"/>
@@ -106,7 +106,7 @@
 			    <!-- Stitch the merged files into a single result -->
 		        <sequence name="Stitch and Blend" waitForAsync="true">
 			        <operation name="Stitch and Blend" processor="queue/gridSubmitAndWait">
-			            <input name="iservice" value="org.janelia.it.jacs.compute.service.v3d.V3DStitchAndBlendService"/>
+			            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DStitchAndBlendService"/>
 						<input name="STITCH_RESULT_FILE_NODE"/>
 			    		<input name="RESULT_FILE_NODE" value="$V{STITCH_RESULT_FILE_NODE}"/>
 						<input name="GROUP_RESULT_FILE_NODE"/>

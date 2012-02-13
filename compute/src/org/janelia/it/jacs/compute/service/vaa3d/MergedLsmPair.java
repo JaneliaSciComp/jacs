@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.service.v3d;
+package org.janelia.it.jacs.compute.service.vaa3d;
 
 import java.io.Serializable;
 

@@ -2,7 +2,7 @@ package org.janelia.it.jacs.compute.service.align;
 
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.v3d.V3DHelper;
+import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.vo.ParameterException;
 
@@ -28,16 +28,16 @@ public class OpticLobeAlignmentService extends BrainAlignmentService {
 				+ alignFileNode.getDirectoryPath() + " inputFilename=" + inputFilename);
 
         StringBuffer script = new StringBuffer();
-        script.append(V3DHelper.getV3DGridCommandPrefix() + "\n");
-        script.append(V3DHelper.getV3dLibrarySetupCmd()+"\n");
+        script.append(Vaa3DHelper.getVaa3DGridCommandPrefix() + "\n");
+        script.append(Vaa3DHelper.getVaa3dLibrarySetupCmd()+"\n");
         script.append("cd " + alignFileNode.getDirectoryPath() + "\n " +
         	PERL_EXE + " " + EXECUTABLE_DIR + OPTIC_ALIGNER_SCRIPT_CMD +
-            " -v " +  V3DHelper.getV3dExecutableCmd() +
+            " -v " +  Vaa3DHelper.getVaa3dExecutableCmd() +
             " -b " +  EXECUTABLE_DIR + ALIGNER_EXE_PATH +
             " -t " +  EXECUTABLE_DIR + OPTIC_TEMPLATE_DIR +
             " -w " +  alignFileNode.getDirectoryPath() +
             " -i " +  inputFilename + "\n");
-        script.append(V3DHelper.getV3DGridCommandSuffix() + "\n");
+        script.append(Vaa3DHelper.getVaa3DGridCommandSuffix() + "\n");
         writer.write(script.toString());
 	}
 }

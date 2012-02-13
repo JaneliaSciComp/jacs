@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.service.v3d;
+package org.janelia.it.jacs.compute.service.vaa3d;
 
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
@@ -13,7 +13,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -21,9 +20,8 @@ import java.util.List;
  * User: murphys
  * Date: 2/2/12
  * Time: 7:33 PM
- * To change this template use File | Settings | File Templates.
  */
-public class V3DPatternAnnotationService extends SubmitDrmaaJobService {
+public class Vaa3DPatternAnnotationService extends SubmitDrmaaJobService {
 
         List<String> sampleIdList;
         List<String> sampleNameList;
@@ -43,9 +41,9 @@ public class V3DPatternAnnotationService extends SubmitDrmaaJobService {
         patternChannel=new Integer(processData.getString("PATTERN_CHANNEL").trim());
 
         if (sampleNameList==null) {
-            logger.info("V3DPatternAnnotationService init() sampleName list is null");
+            logger.info("Vaa3DPatternAnnotationService init() sampleName list is null");
         } else {
-            logger.info("V3DPatternAnnotationService init() sampleName list contains "+sampleNameList.size()+" entries");
+            logger.info("Vaa3DPatternAnnotationService init() sampleName list contains "+sampleNameList.size()+" entries");
         }
 
         for (String sampleName : sampleNameList) {
@@ -61,9 +59,9 @@ public class V3DPatternAnnotationService extends SubmitDrmaaJobService {
     @Override
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
         int configIndex = 1;
-        logger.info("V3DPatternAnnotationService createJobScriptAndConfigurationFiles() start");
+        logger.info("Vaa3DPatternAnnotationService createJobScriptAndConfigurationFiles() start");
         for(String sampleName : sampleNameList) {
-            logger.info("V3DPatternAnnotationService createJobScriptAndConfigurationFiles() sampleName="+sampleName);
+            logger.info("Vaa3DPatternAnnotationService createJobScriptAndConfigurationFiles() sampleName="+sampleName);
             String patternAnnotationPath = patternAnnotationPathList.get(configIndex-1);
             String alignedStackPath = alignedStackPathList.get(configIndex-1);
             writeInstanceFiles(sampleName, patternAnnotationPath, alignedStackPath, configIndex);
@@ -98,11 +96,11 @@ public class V3DPatternAnnotationService extends SubmitDrmaaJobService {
         script.append("read SAMPLE_NAME\n");
         script.append("read PATTERN_ANNOTATION_PATH\n");
         script.append("read ALIGNED_STACK_PATH\n");
-        script.append(V3DHelper.getHeadlessGridCommandPrefix());
+        script.append(Vaa3DHelper.getHeadlessGridCommandPrefix());
         script.append("\n");
-        script.append(V3DHelper.getPatternAnnotationCommand("$ALIGNED_STACK_PATH", patternChannel, "$SAMPLE_NAME", "\""+resourceDirPath+"\"", "$PATTERN_ANNOTATION_PATH"));
+        script.append(Vaa3DHelper.getPatternAnnotationCommand("$ALIGNED_STACK_PATH", patternChannel, "$SAMPLE_NAME", "\"" + resourceDirPath + "\"", "$PATTERN_ANNOTATION_PATH"));
         script.append("\n");
-        script.append(V3DHelper.getHeadlessGridCommandSuffix());
+        script.append(Vaa3DHelper.getHeadlessGridCommandSuffix());
         script.append("\n");
         writer.write(script.toString());
     }

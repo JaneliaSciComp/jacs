@@ -23,12 +23,13 @@ import java.util.Set;
  */
 public class LuceneIndexer {
 
-    public static final String INDEX_ALL = "all";
-    public static final String INDEX_CLUSTERS = "final_cluster";
-    public static final String INDEX_PROJECTS = "project";
-    public static final String INDEX_PROTEINS = "protein";
+    public static final String INDEX_ALL        = "all";
+    public static final String INDEX_CLUSTERS   = "final_cluster";
+    public static final String INDEX_PROJECTS   = "project";
+    public static final String INDEX_PROTEINS   = "protein";
     public static final String INDEX_PUBLICATIONS = "publication";
-    public static final String INDEX_SAMPLES = "sample";
+    public static final String INDEX_SAMPLES    = "sample";
+    public static final String INDEX_ENITTIES   = "entities";
 
     public final static int MERGE_FACTOR = 1000;
     public final static int MAX_MERGE_DOCUMENTS = Integer.MAX_VALUE;
@@ -36,11 +37,12 @@ public class LuceneIndexer {
 
     static {
         SET_OF_ALL_DOC_TYPES = new HashSet<String>();
-        SET_OF_ALL_DOC_TYPES.add(INDEX_CLUSTERS);
-        SET_OF_ALL_DOC_TYPES.add(INDEX_PROJECTS);
-        SET_OF_ALL_DOC_TYPES.add(INDEX_PROTEINS);
-        SET_OF_ALL_DOC_TYPES.add(INDEX_PUBLICATIONS);
-        SET_OF_ALL_DOC_TYPES.add(INDEX_SAMPLES);
+//        SET_OF_ALL_DOC_TYPES.add(INDEX_CLUSTERS);
+//        SET_OF_ALL_DOC_TYPES.add(INDEX_PROJECTS);
+//        SET_OF_ALL_DOC_TYPES.add(INDEX_PROTEINS);
+//        SET_OF_ALL_DOC_TYPES.add(INDEX_PUBLICATIONS);
+//        SET_OF_ALL_DOC_TYPES.add(INDEX_SAMPLES);
+        SET_OF_ALL_DOC_TYPES.add(INDEX_ENITTIES);
     }
 
     /**
@@ -53,21 +55,21 @@ public class LuceneIndexer {
     public void execute(Set<String> docTypeSet, int numberOfRecordsToIndex) throws Exception {
         for (String docType : docTypeSet) {
             IndexWriter writer = openIndex(getIndexRootPath() + docType);
-            Connection conn = openDbConnection(true);
+//            Connection conn = openDbConnection(true);
             LuceneDataRetrieverBase dr = LuceneDataFactory.createDocumentRetriever(docType);
-            dr.setConnection(conn);
-            SimpleOut.sysOut("Begin retriving and indexing");
+//            dr.setConnection(conn);
+            System.out.println("Begin retriving and indexing");
             if (numberOfRecordsToIndex > 0) {
                 dr.setSetSize(numberOfRecordsToIndex);
             }
-            String dumpFileName = getIndexRootPath() + docType + ".txt";
-            dr.executeDbDump(dumpFileName);
-            dr.processDocumentsFromDbFile(new File(dumpFileName), writer);
-            //dr.deleteDbDumpFile(dumpFileName);
-            SimpleOut.sysOut("Done. Total " + dr.getTotalRecordsProcessed() + " records");
-            conn.close();
+            String dumpFilePath = getIndexRootPath() + docType + ".txt";
+            dr.executeDbDump(dumpFilePath);
+            dr.processDocumentsFromDbFile(new File(dumpFilePath), writer);
+            //dr.deleteDbDumpFile(dumpFilePath);
+            System.out.println("Done. Total " + dr.getTotalRecordsProcessed() + " records");
+//            conn.close();
             writer.optimize();
-            SimpleOut.sysOut("Finished index optimization");
+            System.out.println("Finished index optimization");
             writer.close();
         }
     }
@@ -83,7 +85,7 @@ public class LuceneIndexer {
     private IndexWriter openIndex(String idxPath) throws IOException {
         Analyzer analyzer = new StandardAnalyzer();
         boolean createFlag = true;
-        SimpleOut.sysOut("Opening index at <" + idxPath + ">");
+        System.out.println("Opening index at <" + idxPath + ">");
         IndexWriter writer = new IndexWriter(idxPath, analyzer, createFlag);
         writer.setMergeFactor(MERGE_FACTOR);
         writer.setMaxMergeDocs(MAX_MERGE_DOCUMENTS);
@@ -108,7 +110,7 @@ public class LuceneIndexer {
         );
         connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
         connection.setAutoCommit(autoCommit);
-        SimpleOut.sysOut("Connected to DB");
+        System.out.println("Connected to DB");
         return connection;
     }
 
@@ -133,7 +135,7 @@ public class LuceneIndexer {
         try {
             IndexerArgs iArgs = new IndexerArgs(args);
             indexer.execute(iArgs.getDocTypesToIndex(), iArgs.getRecsCount());
-            SimpleOut.sysOut("Done");
+            System.out.println("Done");
         }
         catch (Exception e) {
             e.printStackTrace();

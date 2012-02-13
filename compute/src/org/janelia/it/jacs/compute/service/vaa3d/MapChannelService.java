@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.service.v3d;
+package org.janelia.it.jacs.compute.service.vaa3d;
 
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
@@ -31,11 +31,11 @@ public class MapChannelService extends ParallelFileProcessingService {
     protected void writeShellScript(FileWriter writer) throws Exception {
     	super.writeShellScript(writer);
         StringBuffer script = new StringBuffer();
-        script.append(V3DHelper.getHeadlessGridCommandPrefix());
+        script.append(Vaa3DHelper.getHeadlessGridCommandPrefix());
         script.append("\n");
-        script.append(V3DHelper.getMapChannelCommand("$INPUT_FILENAME", "$OUTPUT_FILENAME", "\""+mapChannelString+"\""));
+        script.append(Vaa3DHelper.getMapChannelCommand("$INPUT_FILENAME", "$OUTPUT_FILENAME", "\"" + mapChannelString + "\""));
         script.append("\n");
-        script.append(V3DHelper.getHeadlessGridCommandSuffix());
+        script.append(Vaa3DHelper.getHeadlessGridCommandSuffix());
         script.append("\n");
         writer.write(script.toString());
     }

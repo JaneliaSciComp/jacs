@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.service.v3d;
+package org.janelia.it.jacs.compute.service.vaa3d;
 
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
@@ -22,7 +22,7 @@ import java.util.List;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class V3DBulkMergeService extends SubmitDrmaaJobService {
+public class Vaa3DBulkMergeService extends SubmitDrmaaJobService {
 
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
 	private static final int START_DISPLAY_PORT = 890;
@@ -68,7 +68,7 @@ public class V3DBulkMergeService extends SubmitDrmaaJobService {
             fw.write(mergedLsmPair.getLsmFilepath1() + "\n");
             fw.write(mergedLsmPair.getLsmFilepath2() + "\n");
             fw.write(mergedLsmPair.getMergedFilepath() + "\n");
-            fw.write((V3DHelper.getRandomPort(START_DISPLAY_PORT)+configIndex) + "\n");
+            fw.write((Vaa3DHelper.getRandomPort(START_DISPLAY_PORT)+configIndex) + "\n");
         }
         catch (IOException e) {
         	throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath(),e); 
@@ -84,11 +84,11 @@ public class V3DBulkMergeService extends SubmitDrmaaJobService {
         script.append("read LSM_FILENAME_2\n");
         script.append("read MERGED_FILENAME\n");
         script.append("read DISPLAY_PORT\n");
-        script.append(V3DHelper.getV3DGridCommandPrefix("$DISPLAY_PORT"));
+        script.append(Vaa3DHelper.getVaa3DGridCommandPrefix("$DISPLAY_PORT"));
         script.append("\n");
-        script.append(V3DHelper.getFormattedMergePipelineCommand("$LSM_FILENAME_1", "$LSM_FILENAME_2", "$MERGED_FILENAME"));
+        script.append(Vaa3DHelper.getFormattedMergePipelineCommand("$LSM_FILENAME_1", "$LSM_FILENAME_2", "$MERGED_FILENAME"));
         script.append("\n");
-        script.append(V3DHelper.getV3DGridCommandSuffix());
+        script.append(Vaa3DHelper.getVaa3DGridCommandSuffix());
         script.append("\n");
         writer.write(script.toString());
     }

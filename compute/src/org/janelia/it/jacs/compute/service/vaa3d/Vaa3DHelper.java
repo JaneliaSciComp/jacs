@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.service.v3d;
+package org.janelia.it.jacs.compute.service.vaa3d;
 
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
@@ -9,14 +9,14 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
  * Date: 10/18/11
  * Time: 11:01 AM
  */
-public class V3DHelper {
+public class Vaa3DHelper {
 	
 	protected static final int STARTING_DISPLAY_PORT = 966;
 	
-    protected static final String V3D_BASE_CMD = "export LD_LIBRARY_PATH="+
-    		SystemConfigurationProperties.getString("V3D.LDLibraryPath")+":$LD_LIBRARY_PATH\n"+
+    protected static final String VAA3D_BASE_CMD = "export LD_LIBRARY_PATH="+
+    		SystemConfigurationProperties.getString("VAA3D.LDLibraryPath")+":$LD_LIBRARY_PATH\n"+
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
-            SystemConfigurationProperties.getString("V3D.CMD");
+            SystemConfigurationProperties.getString("VAA3D.CMD");
 
     protected static final String MERGE_PIPELINE_CMD = 
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
@@ -27,20 +27,20 @@ public class V3DHelper {
     }
     
     public static String getFormattedMergeCommand(String inputFilePath1, String inputFilePath2, String outputFilePath) {
-        return V3D_BASE_CMD+" -x libblend_multiscanstacks.so -f multiscanblend -p \"#k 1\" -i \"" + inputFilePath1
+        return VAA3D_BASE_CMD +" -x libblend_multiscanstacks.so -f multiscanblend -p \"#k 1\" -i \"" + inputFilePath1
                 + "\" \"" +inputFilePath2+ "\" -o \"" + outputFilePath+"\"";
     }
 
     public static String getFormattedGrouperCommand(String inputDirectoryPath, String outputFilePath) {
-    	return V3D_BASE_CMD+" -x imageStitch.so -f istitch-grouping -p \"#c 4\" -i \""+inputDirectoryPath+"\" -o \""+outputFilePath+"\";";
+    	return VAA3D_BASE_CMD +" -x imageStitch.so -f istitch-grouping -p \"#c 4\" -i \""+inputDirectoryPath+"\" -o \""+outputFilePath+"\";";
     }
     
     public static String getFormattedStitcherCommand(String inputDirectoryPath) {
-        return V3D_BASE_CMD+" -x imageStitch.so -f v3dstitch -i \""+inputDirectoryPath+"\" -p \"#c 4 #si 0\";";
+        return VAA3D_BASE_CMD +" -x imageStitch.so -f v3dstitch -i \""+inputDirectoryPath+"\" -p \"#c 4 #si 0\";";
     }
 
     public static String getFormattedBlendCommand(String inputDirectoryPath, String outputFilePath) {
-        return V3D_BASE_CMD+" -x ifusion.so -f iblender -i \""+inputDirectoryPath+"\" -o \""+outputFilePath+"\" -p \"#s 1\"";
+        return VAA3D_BASE_CMD +" -x ifusion.so -f iblender -i \""+inputDirectoryPath+"\" -o \""+outputFilePath+"\" -p \"#s 1\"";
     }
     
     /**
@@ -61,11 +61,11 @@ public class V3DHelper {
      * For V3D plugins that need a virtual framebuffer because they are not headless.
      * @return
      */
-    public static String getV3DGridCommandPrefix() {
-        return getV3DGridCommandPrefix(getRandomPort()+"");
+    public static String getVaa3DGridCommandPrefix() {
+        return getVaa3DGridCommandPrefix(getRandomPort() + "");
     }
     
-    public static String getV3DGridCommandPrefix(String displayPort) {
+    public static String getVaa3DGridCommandPrefix(String displayPort) {
     	StringBuffer prefix = new StringBuffer();
     	
     	// Exit the entire script if anything returns a non-zero exit code
@@ -87,23 +87,23 @@ public class V3DHelper {
     	return prefix.toString();
     }
     
-    public static String getV3DGridCommandSuffix() {
+    public static String getVaa3DGridCommandSuffix() {
     	// Kill the Xvfb
         return "kill $MYPID";
     }
 
     public static String getFormattedMIPCommand(String inputFilepath, String outputFilepath, String extraOptions) throws ServiceException {
-    	String cmd = V3D_BASE_CMD+" -cmd image-loader -mip "+inputFilepath+" "+outputFilepath+" "+extraOptions;
+    	String cmd = VAA3D_BASE_CMD +" -cmd image-loader -mip "+inputFilepath+" "+outputFilepath+" "+extraOptions;
     	return cmd+" ;";
     }
 
     public static String getMapChannelCommand(String inputFilepath, String outputFilepath, String mapchannelString) throws ServiceException {
-        String cmd = V3D_BASE_CMD+" -cmd image-loader -mapchannels "+inputFilepath+" "+outputFilepath+" "+mapchannelString;
+        String cmd = VAA3D_BASE_CMD +" -cmd image-loader -mapchannels "+inputFilepath+" "+outputFilepath+" "+mapchannelString;
         return cmd+" ;";
     }
 
     public static String getPatternAnnotationCommand(String inputStackFilepath, int patternChannel, String outputPrefix, String resourceDirPath, String outputDirPath) throws ServiceException {
-        String cmd = V3D_BASE_CMD+" -cmd screen-pattern-annotator -input "+inputStackFilepath+" -pattern_channel "+patternChannel+" -prefix "+outputPrefix+" -resourceDir "+resourceDirPath+" -outputDir "+outputDirPath;
+        String cmd = VAA3D_BASE_CMD +" -cmd screen-pattern-annotator -input "+inputStackFilepath+" -pattern_channel "+patternChannel+" -prefix "+outputPrefix+" -resourceDir "+resourceDirPath+" -outputDir "+outputDirPath;
         return cmd+" ;";
     }
     
@@ -112,7 +112,7 @@ public class V3DHelper {
     }
 
     public static String getFormattedConvertCommand(String inputFilepath, String outputFilepath, String saveTo8bit) throws ServiceException {
-    	return V3D_BASE_CMD+" -cmd image-loader -convert"+saveTo8bit+" "+inputFilepath+" "+outputFilepath+" ;";
+    	return VAA3D_BASE_CMD +" -cmd image-loader -convert"+saveTo8bit+" "+inputFilepath+" "+outputFilepath+" ;";
     }
     
     public static int getRandomPort() {
@@ -123,12 +123,12 @@ public class V3DHelper {
        return ((int)(100.0 * Math.random()) + startDisplayPort);
     }
 
-    public static String getV3dLibrarySetupCmd() {
-        return "export LD_LIBRARY_PATH=" + SystemConfigurationProperties.getString("V3D.LDLibraryPath") + ":$LD_LIBRARY_PATH";
+    public static String getVaa3dLibrarySetupCmd() {
+        return "export LD_LIBRARY_PATH=" + SystemConfigurationProperties.getString("VAA3D.LDLibraryPath") + ":$LD_LIBRARY_PATH";
     }
 
-    public static String getV3dExecutableCmd() {
-        return SystemConfigurationProperties.getString("Executables.ModuleBase") + SystemConfigurationProperties.getString("V3D.CMD");
+    public static String getVaa3dExecutableCmd() {
+        return SystemConfigurationProperties.getString("Executables.ModuleBase") + SystemConfigurationProperties.getString("VAA3D.CMD");
     }
 
 }

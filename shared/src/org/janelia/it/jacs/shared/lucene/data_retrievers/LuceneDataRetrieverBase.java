@@ -1,9 +1,10 @@
 
 package org.janelia.it.jacs.shared.lucene.data_retrievers;
 
+import org.apache.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
-import org.janelia.it.jacs.shared.lucene.SimpleOut;
+import org.janelia.it.jacs.shared.utils.SystemCall;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,6 +19,8 @@ import java.util.List;
  * Time: 6:02:14 PM
  */
 public abstract class LuceneDataRetrieverBase {
+
+    protected Logger _logger = Logger.getLogger(this.getClass());
 
     public static final int TEST_SET_SIZE = 51981;
     protected int setSize = TEST_SET_SIZE; // default
@@ -69,15 +72,15 @@ public abstract class LuceneDataRetrieverBase {
             if (this.dbChunk < this.numOfDbChunks) {
                 String sql = getSQLQueryForDocumentData();
                 this.statement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-                SimpleOut.sysOut("Executing SQL chunk " + this.dbChunk);
+                System.out.println("Executing SQL chunk " + this.dbChunk);
                 this.rs = statement.executeQuery();
-                SimpleOut.sysOut("\texecuteQuery completed");
+                System.out.println("\texecuteQuery completed");
                 List<Document> list = extractDocumentsFromResultSet();
                 totalRecordsProcessed += list.size();
                 for (Document doc : list) {
                     writer.addDocument(doc);
                 }
-                SimpleOut.sysOut("\tProcessed " + totalRecordsProcessed + " records so far. Just constructed " + list.size() + " documents");
+                System.out.println("\tProcessed " + totalRecordsProcessed + " records so far. Just constructed " + list.size() + " documents");
                 done();
                 offset += chunkSize;
                 dbChunk++;
@@ -107,7 +110,7 @@ public abstract class LuceneDataRetrieverBase {
             cnt = r.getInt(1);
         }
         else {
-            SimpleOut.sysOut("====ERROR: Unable to retrieve max chunks from DB====");
+            System.out.println("====ERROR: Unable to retrieve max chunks from DB====");
         }
         r.close();
         st.close();
@@ -156,12 +159,22 @@ public abstract class LuceneDataRetrieverBase {
         return totalRecordsProcessed;
     }
 
-    public void executeDbDump(String dumpFileName) throws SQLException {
-        String sql = "select writequeryresultstodisk(?,?,'\t')";
-        PreparedStatement pstmt = connection.prepareStatement(sql);
-        pstmt.setString(1, getSQLQueryForDocumentData());
-        pstmt.setString(2, dumpFileName);
-        pstmt.execute();
+    public void executeDbDump(String dumpFilePath) throws SQLException {
+//        String sql = "select writequeryresultstodisk(?,?,'\t')";
+//        String sql = "? >> ?";
+        SystemCall call = new SystemCall();
+        try {
+            String tmpQuery = "mysql -u val_flyportalApp -pv@l_flyp0rt@lApp -h clustrix flyportal -e "+
+                    "\"select id, entity_type_id, user_id, name from entity;\" >> "+dumpFilePath;
+            System.out.println(tmpQuery);
+            call.emulateCommandLine(tmpQuery, true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+//        PreparedStatement pstmt = connection.prepareStatement(sql);
+//        pstmt.setString(1, getSQLQueryForDocumentData());
+//        pstmt.setString(2, dumpFilePath);
+//        pstmt.execute();
     }
 
     abstract public void processDocumentsFromDbFile(File dbDumpFile, IndexWriter writer) throws IOException;

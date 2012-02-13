@@ -30,4 +30,6 @@ public interface SearchDataManagerMBean {
     public void searchFinalCluster(String searchString);
 
     public void searchSamples(String searchString);
+
+    public void searchEntities(String searchString);
 }
