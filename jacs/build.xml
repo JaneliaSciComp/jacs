@@ -897,8 +897,9 @@
             <arg line="${ssh.common.params} /groups/scicomp/jacsData/bin/starttomcat.sh ${tomcat.home}"/>
         </exec>
 
-         <!--remove temp files -->
+         <!-- remove temp files 
          <delete dir="${temp.dir}"/>
+         -->
     </target>
 
 </project>
