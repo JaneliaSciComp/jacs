@@ -659,7 +659,7 @@ public class PatternAnnotationSampleService  implements IService {
         List<File> fromList=new ArrayList<File>();
         File[] fromFileArr=fromDir.listFiles();
         for (File f : fromFileArr) {
-            if (f.getName().contains(nameFragment)) {
+            if (!f.isDirectory() && f.getName().contains(nameFragment)) {
                 fromList.add(f);
             }
         }
@@ -673,7 +673,7 @@ public class PatternAnnotationSampleService  implements IService {
     protected void cleanFilesFromDirectory(String nameFragment, File dir) throws Exception {
         File[] fileArr=dir.listFiles();
         for (File f : fileArr) {
-            if (f.getName().contains(nameFragment)) {
+            if (!f.isDirectory() && f.getName().contains(nameFragment)) {
                 logger.info("Deleting file "+f.getAbsolutePath());
                 f.delete();
             }
