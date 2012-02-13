@@ -636,10 +636,10 @@ public class PatternAnnotationSampleService  implements IService {
             if (!patternAnnotationDir.exists()) {
                 throw new Exception("Could not find expected pattern annotation dir="+patternAnnotationDir.getAbsolutePath());
             }
+            cleanFilesFromDirectory(".tif", patternAnnotationDir);
             moveFilesToSubDirectory("mip", patternAnnotationDir, new File(patternAnnotationDir, MIPS_SUBFOLDER_NAME));
             moveFilesToSubDirectory("normalized", patternAnnotationDir, new File(patternAnnotationDir, NORMALIZED_SUBFOLDER_NAME));
             moveFilesToSubDirectory("quant", patternAnnotationDir, new File(patternAnnotationDir, SUPPORTING_FILE_SUBFOLDER_NAME));
-            cleanFilesFromDirectory(".tif", patternAnnotationDir);
             if (!patternAnnotationDirIsComplete(sampleName, patternAnnotationDir, true /* verbose */)) {
                 throw new Exception("Pattern annotation in this dir is incomplete="+patternAnnotationPath);
             } else {
@@ -659,7 +659,7 @@ public class PatternAnnotationSampleService  implements IService {
         List<File> fromList=new ArrayList<File>();
         File[] fromFileArr=fromDir.listFiles();
         for (File f : fromFileArr) {
-            if (!f.isDirectory() && f.getName().contains(nameFragment)) {
+            if (!f.isDirectory() && f.getName().toLowerCase().contains(nameFragment)) {
                 fromList.add(f);
             }
         }
@@ -673,7 +673,7 @@ public class PatternAnnotationSampleService  implements IService {
     protected void cleanFilesFromDirectory(String nameFragment, File dir) throws Exception {
         File[] fileArr=dir.listFiles();
         for (File f : fileArr) {
-            if (!f.isDirectory() && f.getName().contains(nameFragment)) {
+            if (!f.isDirectory() && f.getName().toLowerCase().contains(nameFragment)) {
                 logger.info("Deleting file "+f.getAbsolutePath());
                 f.delete();
             }
