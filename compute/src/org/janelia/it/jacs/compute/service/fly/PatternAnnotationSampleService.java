@@ -67,7 +67,7 @@ public class PatternAnnotationSampleService  implements IService {
     protected Double QI_MAXIMUM=0.0;
     protected Double QM_MAXIMUM=0.0;
     protected Boolean refresh;
-    protected List<String> expectedPatternAnnotationResultFilenameList=new ArrayList<String>();
+    protected List<String> abbrevationList=new ArrayList<String>();
 
 
     public void execute(IProcessData processData) throws ServiceException {
@@ -555,6 +555,7 @@ public class PatternAnnotationSampleService  implements IService {
 
     protected boolean patternAnnotationDirIsComplete(String sampleName, File patternDir, boolean verbose) throws Exception {
         boolean missingAFile=false;
+        logger.info("Calling getExpectedPatternAnnotationResultFiles() with sampleName="+sampleName);
         List<File> filenameList=getExpectedPatternAnnotationResultFiles(patternDir, sampleName);
         for (File file : filenameList) {
             if (!file.exists()) {
@@ -633,6 +634,7 @@ public class PatternAnnotationSampleService  implements IService {
         for (String patternAnnotationPath : patternAnnotationPathList) {
             String sampleName=sampleNameList.get(index);
             File patternAnnotationDir=new File(patternAnnotationPath);
+            logger.info("Top of doComplete() loop, index="+index+" sampleName="+sampleName+" patternAnnotationDir="+patternAnnotationPath);
             if (!patternAnnotationDir.exists()) {
                 throw new Exception("Could not find expected pattern annotation dir="+patternAnnotationDir.getAbsolutePath());
             }
@@ -640,6 +642,7 @@ public class PatternAnnotationSampleService  implements IService {
             moveFilesToSubDirectory("mip", patternAnnotationDir, new File(patternAnnotationDir, MIPS_SUBFOLDER_NAME));
             moveFilesToSubDirectory("normalized", patternAnnotationDir, new File(patternAnnotationDir, NORMALIZED_SUBFOLDER_NAME));
             moveFilesToSubDirectory("quant", patternAnnotationDir, new File(patternAnnotationDir, SUPPORTING_FILE_SUBFOLDER_NAME));
+            logger.info("Calling patternAnnotationDirIsComplete with sampleName="+sampleName);
             if (!patternAnnotationDirIsComplete(sampleName, patternAnnotationDir, true /* verbose */)) {
                 throw new Exception("Pattern annotation in this dir is incomplete="+patternAnnotationPath);
             } else {
@@ -847,53 +850,54 @@ public class PatternAnnotationSampleService  implements IService {
     }
 
     public List<String> getExpectedPatternAnnotationResultFilenameList(String sampleName) throws Exception {
-         if (expectedPatternAnnotationResultFilenameList.size()>0) {
-             return expectedPatternAnnotationResultFilenameList;
-         } else {
-             String[] compartmentSuffixArray=new String[4];
-             compartmentSuffixArray[0]="_heatmap16Color.v3dpbd";
-             compartmentSuffixArray[1]="_heatmap16ColorMIP.png";
-             compartmentSuffixArray[2]="_normalized_heatmap16Color.v3dpbd";
-             compartmentSuffixArray[3]="_normalized_heatmap16ColorMIP.png";
-             String[] otherSuffixArray=new String[1];
-             //otherSuffixArray[0]="_indexCubified.v3dpbd";
-             //otherSuffixArray[1]="_inputImageCubified.v3dpbd";
-             otherSuffixArray[0]="_quantifiers.txt";
-             File abbreviationIndexFile=new File(patternAnnotationResourceDir+File.separator+ABBREVIATION_INDEX_FILENAME);
-             FileReader fr=new FileReader(abbreviationIndexFile);
-             BufferedReader br=new BufferedReader(fr);
-             String nextLine=null;
-             List<String> abbrevationList=new ArrayList<String>();
-             while ((nextLine=br.readLine())!=null) {
-                 String[] tokens=nextLine.trim().split(" ");
-                 if (tokens.length!=2) {
-                     throw new Exception("Could not parse line from file="+abbreviationIndexFile.getAbsolutePath()+" line="+nextLine);
-                 }
-                 abbrevationList.add(tokens[1]);
-             }
-             expectedPatternAnnotationResultFilenameList.add(sampleName+compartmentSuffixArray[0]);
-             expectedPatternAnnotationResultFilenameList.add(sampleName+compartmentSuffixArray[1]);
-             // Note: there are not normalized files at the global level
-             expectedPatternAnnotationResultFilenameList.add(sampleName+otherSuffixArray[0]);
-             //expectedPatternAnnotationResultFilenameList.add(sampleName+otherSuffixArray[1]);
-             //expectedPatternAnnotationResultFilenameList.add(sampleName+otherSuffixArray[2]);
-             for (String abbreviation : abbrevationList) {
-                 expectedPatternAnnotationResultFilenameList.add(sampleName+"_"+abbreviation+compartmentSuffixArray[0]);
-                 expectedPatternAnnotationResultFilenameList.add(sampleName+"_"+abbreviation+compartmentSuffixArray[1]);
-                 expectedPatternAnnotationResultFilenameList.add(sampleName+"_"+abbreviation+compartmentSuffixArray[2]);
-                 expectedPatternAnnotationResultFilenameList.add(sampleName+"_"+abbreviation+compartmentSuffixArray[3]);
-             }
-             return expectedPatternAnnotationResultFilenameList;
-         }
-     }
+        List<String> expectedPatternAnnotationResultFilenameList=new ArrayList<String>();
+        String[] compartmentSuffixArray=new String[4];
+        compartmentSuffixArray[0]="_heatmap16Color.v3dpbd";
+        compartmentSuffixArray[1]="_heatmap16ColorMIP.png";
+        compartmentSuffixArray[2]="_normalized_heatmap16Color.v3dpbd";
+        compartmentSuffixArray[3]="_normalized_heatmap16ColorMIP.png";
+        String[] otherSuffixArray=new String[1];
+        //otherSuffixArray[0]="_indexCubified.v3dpbd";
+        //otherSuffixArray[1]="_inputImageCubified.v3dpbd";
+        otherSuffixArray[0]="_quantifiers.txt";
+        if (abbrevationList.size()==0) {
+            File abbreviationIndexFile=new File(patternAnnotationResourceDir+File.separator+ABBREVIATION_INDEX_FILENAME);
+            FileReader fr=new FileReader(abbreviationIndexFile);
+            BufferedReader br=new BufferedReader(fr);
+            String nextLine=null;
+            while ((nextLine=br.readLine())!=null) {
+                String[] tokens=nextLine.trim().split(" ");
+                if (tokens.length!=2) {
+                    throw new Exception("Could not parse line from file="+abbreviationIndexFile.getAbsolutePath()+" line="+nextLine);
+                }
+                abbrevationList.add(tokens[1]);
+            }
+            br.close();
+        }
+        expectedPatternAnnotationResultFilenameList.add(sampleName+compartmentSuffixArray[0]);
+        expectedPatternAnnotationResultFilenameList.add(sampleName+compartmentSuffixArray[1]);
+        // Note: there are not normalized files at the global level
+        expectedPatternAnnotationResultFilenameList.add(sampleName+otherSuffixArray[0]);
+        //expectedPatternAnnotationResultFilenameList.add(sampleName+otherSuffixArray[1]);
+        //expectedPatternAnnotationResultFilenameList.add(sampleName+otherSuffixArray[2]);
+        for (String abbreviation : abbrevationList) {
+            expectedPatternAnnotationResultFilenameList.add(sampleName+"_"+abbreviation+compartmentSuffixArray[0]);
+            expectedPatternAnnotationResultFilenameList.add(sampleName+"_"+abbreviation+compartmentSuffixArray[1]);
+            expectedPatternAnnotationResultFilenameList.add(sampleName+"_"+abbreviation+compartmentSuffixArray[2]);
+            expectedPatternAnnotationResultFilenameList.add(sampleName+"_"+abbreviation+compartmentSuffixArray[3]);
+        }
+        return expectedPatternAnnotationResultFilenameList;
+    }
 
      public List<File> getExpectedPatternAnnotationResultFiles(File patternAnnotationDir, String sampleName) throws Exception {
+         logger.info("Calling getExpectedPatternAnnotationResultFilenameList( with sampleName="+sampleName);
          List<String> filenameList=getExpectedPatternAnnotationResultFilenameList(sampleName);
          File mipSubFolder=new File(patternAnnotationDir, MIPS_SUBFOLDER_NAME);
          File supportingFilesFolder=new File(patternAnnotationDir, SUPPORTING_FILE_SUBFOLDER_NAME);
          File normalizedSubFolder=new File(patternAnnotationDir, NORMALIZED_SUBFOLDER_NAME);
          List<File> expectedFiles=new ArrayList<File>();
          for (String filename : filenameList) {
+             logger.info("getExpectedPatternAnnotationResultFilenameList() filename="+filename);
              String[] tokens=getFilenameTokenSet(filename);
              if (tokens.length==2) {
                  if (tokens[1].equals("indexCubified.v3dpbd")) {
