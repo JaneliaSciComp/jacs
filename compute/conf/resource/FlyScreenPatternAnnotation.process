@@ -50,6 +50,7 @@
     		            <output name="SAMPLE_ID_LIST"/>
     		            <output name="SAMPLE_NAME_LIST"/>
     		            <output name="PATTERN_ANNOTATION_PATH"/>
+    		            <output name="MIPS_CONVERSION_PATH"/>
     	                <output name="ALIGNED_STACK_PATH_LIST"/>
     		            <output name="RESOURCE_DIR_PATH"/>
     		            <output name="RESULT_FILE_NODE"/>
@@ -73,14 +74,14 @@
         			    </operation>
         			</sequence>
 
- 	                <sequence forEach="PATTERN_ANNOTATION_PATH" waitForAsync="true">
+ 	                <sequence forEach="MIPS_CONVERSION_PATH" waitForAsync="true">
 	                    <sequence async="true">
                             <sequence name="MIP Conversion to PNG" waitForAsync="true">
             		             <operation name="MIP Conversion to PNG" processor="queue/gridSubmitAndWait">
            			                 <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ImageConversionService"/>
            			                 <input name="IMAGE_CONVERSION_RESULT_NODE_MAP"/>
-           		    		         <input name="PATTERN_ANNOTATION_PATH"/>
-           		    		         <input name="ALTERNATE_WORKING_DIR_PATH" value="$V{PATTERN_ANNOTATION_PATH}/mips"/>
+           		    		         <input name="MIPS_CONVERSION_PATH"/>
+           		    		         <input name="ALTERNATE_WORKING_DIR_PATH" value="$V{MIPS_CONVERSION_PATH}"/>
        						         <input name="INPUT_FILENAME_REGEX" value="((.*?)MIP)\.tif$"/>
             				         <input name="OUTPUT_FILENAME_PATTERN" value="$1.png"/>
             			         </operation>

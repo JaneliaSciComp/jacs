@@ -272,6 +272,7 @@ public class PatternAnnotationSampleService  implements IService {
         List<String> finalSampleIdList=new ArrayList<String>();
         List<String> finalSampleNameList=new ArrayList<String>();
         List<String> finalAnnotationDirList=new ArrayList<String>();
+        List<String> finalMipConversionDirList=new ArrayList<String>();
         List<String> finalAlignedStackList=new ArrayList<String>();
 
         long alreadyCompleteSampleCount=0;
@@ -281,6 +282,7 @@ public class PatternAnnotationSampleService  implements IService {
                 finalSampleIdList.add(alignedSample.getId().toString());
                 finalSampleNameList.add(alignedSample.getName());
                 finalAnnotationDirList.add(patternAnnotationDirList.get(sampleIndex));
+                finalMipConversionDirList.add(patternAnnotationDirList.get(sampleIndex)+File.separator+MIPS_SUBFOLDER_NAME);
                 finalAlignedStackList.add(alignedStackPathList.get(sampleIndex));
             } else {
                 logger.info("Sample is complete - skipping");
@@ -296,6 +298,7 @@ public class PatternAnnotationSampleService  implements IService {
         processData.putItem("SAMPLE_ID_LIST", finalSampleIdList);
         processData.putItem("SAMPLE_NAME_LIST", finalSampleNameList);
         processData.putItem("PATTERN_ANNOTATION_PATH", finalAnnotationDirList);
+        processData.putItem("MIPS_CONVERSION_PATH", finalMipConversionDirList);
         processData.putItem("ALIGNED_STACK_PATH_LIST", finalAlignedStackList);
         processData.putItem("RESOURCE_DIR_PATH", patternAnnotationResourceDir);
         processData.putItem(ProcessDataConstants.RESULT_FILE_NODE, resultNode);
