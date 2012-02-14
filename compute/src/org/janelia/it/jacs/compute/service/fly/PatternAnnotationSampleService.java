@@ -282,11 +282,11 @@ public class PatternAnnotationSampleService  implements IService {
                 finalSampleNameList.add(alignedSample.getName());
                 finalAnnotationDirList.add(patternAnnotationDirList.get(sampleIndex));
                 finalAlignedStackList.add(alignedStackPathList.get(sampleIndex));
-                sampleIndex++;
             } else {
                 logger.info("Sample is complete - skipping");
                 alreadyCompleteSampleCount++;
             }
+            sampleIndex++;
         }
 
         Map<String, FileNode> mipResultNodeMap=createResultNodeMapForMipConversion(finalAnnotationDirList);
@@ -717,7 +717,7 @@ public class PatternAnnotationSampleService  implements IService {
             }
         } else {
             if (filename.contains("heatmap16ColorMIP")) {
-                entityName="Heatmap MIP";
+                entityName="Heatmap";
             } else if (filename.contains("heatmap16Color")) {
                 entityName="Heatmap";
             } else if (filename.contains("indexCubified")) {
@@ -739,7 +739,11 @@ public class PatternAnnotationSampleService  implements IService {
         } else if (tokens.length==3) {
             abbreviation=tokens[1];
         } else if (tokens.length==4 || tokens.length==5) {
-            abbreviation=tokens[1]+"_"+tokens[2];
+            if (tokens[2].contains("normal")) {
+                abbreviation=tokens[1];
+            } else {
+                abbreviation=tokens[1]+"_"+tokens[2];
+            }
         } else {
             throw new Exception("Could not properly evaluate filename="+filename+" for abbreviation");
         }
@@ -774,7 +778,7 @@ public class PatternAnnotationSampleService  implements IService {
                     mipEntity=createMipEntity(file, entityName);
                     addToParent(mipsSubFolder, mipEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
                 }
-                logger.info("Adding to mipMap entityName="+entityName+" entityId="+mipEntity.getId());
+                logger.info("Adding to mipMap entityName="+entityName+" based on filename="+file.getName()+" entityId="+mipEntity.getId());
                 mipMap.put(entityName, mipEntity);
             }
         }
@@ -803,12 +807,12 @@ public class PatternAnnotationSampleService  implements IService {
         }
 
         // Finally, we need to add targeted 2D image assignments
-        Entity heatmapMip=mipMap.get("Heatmap MIP");
+        Entity heatmapMip=mipMap.get("Heatmap");
         if (heatmapMip==null) {
             throw new Exception("heatmapMip is unexpectedly null");
         }
         String mipPath=heatmapMip.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        patternAnnotationFolder.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, mipPath);
+        //patternAnnotationFolder.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, mipPath);
 
         // We also want to replace the sample 2D image with the heatmap, for those samples where it is available
         screenSample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, mipPath);
