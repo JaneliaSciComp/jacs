@@ -477,7 +477,12 @@ public class PatternAnnotationSampleService  implements IService {
         Entity patternAnnotationFolder=null;
         List<Entity> patternAnnotationFolderList=getPatternAnnotationFoldersFromSample(sample);
         if (patternAnnotationFolderList!=null && patternAnnotationFolderList.size()>1) {
-            throw new Exception("Expected a single patternAnnotationFolder for sampleId="+sample.getId());
+            logger.info("Cleaning extra patternAnnotationFolder");
+            patternAnnotationFolder=patternAnnotationFolderList.get(patternAnnotationFolderList.size()-1);
+            for (int pa=0;pa<patternAnnotationFolderList.size()-1;pa++) {
+                Entity olderPa=patternAnnotationFolderList.get(pa);
+                cleanFullOrIncompletePatternAnnotationFolderAndFiles(olderPa);
+            }
         } else if (patternAnnotationFolderList!=null && patternAnnotationFolderList.size()==1) {
             patternAnnotationFolder=patternAnnotationFolderList.get(0);
         }
@@ -587,6 +592,7 @@ public class PatternAnnotationSampleService  implements IService {
         return folder;
     }
 
+    // This returns a list with the oldest first (ascending by id)
     public List<Entity> getPatternAnnotationFoldersFromSample(Entity screenSample) throws Exception {
         List<Entity> patternAnnotationFolderList=new ArrayList<Entity>();
         for (EntityData ed : screenSample.getEntityData()) {
