@@ -646,7 +646,7 @@ public class PatternAnnotationSampleService  implements IService {
         for (String patternAnnotationPath : patternAnnotationPathList) {
             String sampleName=sampleNameList.get(index);
             File patternAnnotationDir=new File(patternAnnotationPath);
-            logger.info("Top of doComplete() loop, index="+index+" sampleName="+sampleName+" patternAnnotationDir="+patternAnnotationPath);
+            //logger.info("Top of doComplete() loop, index="+index+" sampleName="+sampleName+" patternAnnotationDir="+patternAnnotationPath);
             if (!patternAnnotationDir.exists()) {
                 throw new Exception("Could not find expected pattern annotation dir="+patternAnnotationDir.getAbsolutePath());
             }
@@ -659,7 +659,7 @@ public class PatternAnnotationSampleService  implements IService {
             //moveFilesToSubDirectory("normalized", patternAnnotationDir, new File(patternAnnotationDir, NORMALIZED_SUBFOLDER_NAME));
             //moveFilesToSubDirectory("quant", patternAnnotationDir, new File(patternAnnotationDir, SUPPORTING_FILE_SUBFOLDER_NAME));
 
-            logger.info("Calling patternAnnotationDirIsComplete with sampleName="+sampleName);
+            //logger.info("Calling patternAnnotationDirIsComplete with sampleName="+sampleName);
             if (!patternAnnotationDirIsComplete(sampleName, patternAnnotationDir, true /* verbose */)) {
                 throw new Exception("Pattern annotation in this dir is incomplete="+patternAnnotationPath);
             } else {
@@ -767,7 +767,7 @@ public class PatternAnnotationSampleService  implements IService {
         } else {
             throw new Exception("Could not properly evaluate filename="+filename+" for abbreviation");
         }
-        logger.info("getAbbreviationFromPatternAnnotationFilename() filename="+filename+" abbreviation="+abbreviation);
+        //logger.info("getAbbreviationFromPatternAnnotationFilename() filename="+filename+" abbreviation="+abbreviation);
         return abbreviation;
     }
 
@@ -798,7 +798,7 @@ public class PatternAnnotationSampleService  implements IService {
                     mipEntity=createMipEntity(file, entityName);
                     addToParent(mipsSubFolder, mipEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
                 }
-                logger.info("Adding to mipMap entityName="+entityName+" based on filename="+file.getName()+" entityId="+mipEntity.getId());
+                //logger.info("Adding to mipMap entityName="+entityName+" based on filename="+file.getName()+" entityId="+mipEntity.getId());
                 mipMap.put(entityName, mipEntity);
             }
         }
@@ -907,14 +907,14 @@ public class PatternAnnotationSampleService  implements IService {
     }
 
      public List<File> getExpectedPatternAnnotationResultFiles(File patternAnnotationDir, String sampleName) throws Exception {
-         logger.info("Calling getExpectedPatternAnnotationResultFilenameList( with sampleName="+sampleName);
+         //logger.info("Calling getExpectedPatternAnnotationResultFilenameList( with sampleName="+sampleName);
          List<String> filenameList=getExpectedPatternAnnotationResultFilenameList(sampleName);
          File mipSubFolder=new File(patternAnnotationDir, MIPS_SUBFOLDER_NAME);
          File supportingFilesFolder=new File(patternAnnotationDir, SUPPORTING_FILE_SUBFOLDER_NAME);
          File normalizedSubFolder=new File(patternAnnotationDir, NORMALIZED_SUBFOLDER_NAME);
          List<File> expectedFiles=new ArrayList<File>();
          for (String filename : filenameList) {
-             logger.info("getExpectedPatternAnnotationResultFilenameList() filename="+filename);
+             //logger.info("getExpectedPatternAnnotationResultFilenameList() filename="+filename);
              String[] tokens=getFilenameTokenSet(filename);
              if (tokens.length==2) {
                  if (tokens[1].equals("indexCubified.v3dpbd")) {
@@ -992,10 +992,10 @@ public class PatternAnnotationSampleService  implements IService {
         } else {
             tokens=filename.split("_");
         }
-        logger.info("getFilenameTokenSet filename="+filename);
-        for (int i=0;i<tokens.length;i++) {
-            logger.info("token "+i+" ="+tokens[i]);
-        }
+        //logger.info("getFilenameTokenSet filename="+filename);
+        //for (int i=0;i<tokens.length;i++) {
+        //    logger.info("token "+i+" ="+tokens[i]);
+        //}
         return tokens;
     }
 
