@@ -291,7 +291,7 @@ public class PatternAnnotationSampleService  implements IService {
             sampleIndex++;
         }
 
-        Map<String, FileNode> mipResultNodeMap=createResultNodeMapForMipConversion(finalAnnotationDirList);
+        Map<String, FileNode> mipResultNodeMap=createResultNodeMapForMipConversion(finalMipConversionDirList);
 
         long sampleCount=finalSampleNameList.size();
 
