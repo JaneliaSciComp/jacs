@@ -529,8 +529,11 @@ public class PatternAnnotationSampleService  implements IService {
         dirsToDelete.add(normSubDir);
         dirsToDelete.add(patternDir);
         for (File f : dirsToDelete) {
-            for (File sf : f.listFiles()) {
-                filesToDelete.add(sf);
+            File [] fileArr=f.listFiles();
+            if (fileArr!=null) {
+                for (File sf : fileArr) {
+                    filesToDelete.add(sf);
+                }
             }
         }
 
