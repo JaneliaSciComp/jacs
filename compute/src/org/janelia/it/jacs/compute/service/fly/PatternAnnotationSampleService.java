@@ -642,9 +642,14 @@ public class PatternAnnotationSampleService  implements IService {
                 throw new Exception("Could not find expected pattern annotation dir="+patternAnnotationDir.getAbsolutePath());
             }
             cleanFilesFromDirectory(".tif", patternAnnotationDir);
-            moveFilesToSubDirectory("mip", patternAnnotationDir, new File(patternAnnotationDir, MIPS_SUBFOLDER_NAME));
-            moveFilesToSubDirectory("normalized", patternAnnotationDir, new File(patternAnnotationDir, NORMALIZED_SUBFOLDER_NAME));
-            moveFilesToSubDirectory("quant", patternAnnotationDir, new File(patternAnnotationDir, SUPPORTING_FILE_SUBFOLDER_NAME));
+
+            // We are going to move responsibility for placing the output files in this subdirectory structure on the
+            // V3D layer, for performance reasons.
+
+            //moveFilesToSubDirectory("mip", patternAnnotationDir, new File(patternAnnotationDir, MIPS_SUBFOLDER_NAME));
+            //moveFilesToSubDirectory("normalized", patternAnnotationDir, new File(patternAnnotationDir, NORMALIZED_SUBFOLDER_NAME));
+            //moveFilesToSubDirectory("quant", patternAnnotationDir, new File(patternAnnotationDir, SUPPORTING_FILE_SUBFOLDER_NAME));
+
             logger.info("Calling patternAnnotationDirIsComplete with sampleName="+sampleName);
             if (!patternAnnotationDirIsComplete(sampleName, patternAnnotationDir, true /* verbose */)) {
                 throw new Exception("Pattern annotation in this dir is incomplete="+patternAnnotationPath);

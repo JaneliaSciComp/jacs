@@ -80,7 +80,7 @@
            			                 <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ImageConversionService"/>
            			                 <input name="IMAGE_CONVERSION_RESULT_NODE_MAP"/>
            		    		         <input name="PATTERN_ANNOTATION_PATH"/>
-           		    		         <input name="ALTERNATE_WORKING_DIR_PATH" value="$V{PATTERN_ANNOTATION_PATH}"/>
+           		    		         <input name="ALTERNATE_WORKING_DIR_PATH" value="$V{PATTERN_ANNOTATION_PATH}/mips"/>
        						         <input name="INPUT_FILENAME_REGEX" value="((.*?)MIP)\.tif$"/>
             				         <input name="OUTPUT_FILENAME_PATTERN" value="$1.png"/>
             			         </operation>
