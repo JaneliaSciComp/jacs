@@ -650,7 +650,8 @@ public class PatternAnnotationSampleService  implements IService {
             if (!patternAnnotationDir.exists()) {
                 throw new Exception("Could not find expected pattern annotation dir="+patternAnnotationDir.getAbsolutePath());
             }
-            cleanFilesFromDirectory(".tif", patternAnnotationDir);
+            File mipDir=new File(patternAnnotationDir, MIPS_SUBFOLDER_NAME);
+            cleanFilesFromDirectory(".tif", mipDir);
 
             // We are going to move responsibility for placing the output files in this subdirectory structure on the
             // V3D layer, for performance reasons.
