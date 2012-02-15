@@ -22,13 +22,13 @@ export BASE=`pwd`
 # build brainaligner
 cd $BASE/jba/c++
 make
-cp $BASE/jba/c++/brainaligner $BASE/v3d/
+cp $BASE/jba/c++/brainaligner $BASE/bin/
 
 # build lobeseg
 cd $BASE/released_plugins/v3d_plugins/lobeseg/lobeseg_main
 cp main_backgnd_lobeseg.makefile Makefile
 make
-cp $BASE/released_plugins/v3d_plugins/lobeseg/lobeseg_main/lobe_seger $BASE/v3d/
+cp $BASE/released_plugins/v3d_plugins/lobeseg/lobeseg_main/lobe_seger $BASE/bin/
 
 # build optic lobe aligner
 cd $BASE/released_plugins/v3d_plugins/ssd_registration
@@ -38,5 +38,5 @@ make
 cp -R $BASE/released_plugins/v3d/plugins/optic_lobe_aligner $BASE/v3d/plugins
 
 # copy libs
-cp -R $BASE/v3d_main/common_lib/lib $BASE/v3d
+cp -R $BASE/v3d_main/common_lib/lib $BASE/bin/
 
