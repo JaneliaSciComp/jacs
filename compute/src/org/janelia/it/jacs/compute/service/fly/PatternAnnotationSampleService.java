@@ -836,6 +836,7 @@ public class PatternAnnotationSampleService  implements IService {
 
         // We also want to replace the sample 2D image with the heatmap, for those samples where it is available
         screenSample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, mipPath);
+        annotationBean.saveOrUpdateEntity(screenSample);
     }
 
     protected Entity createMipEntity(File pngFile, String name) throws Exception {
