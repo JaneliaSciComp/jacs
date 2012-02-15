@@ -783,6 +783,7 @@ public class PatternAnnotationSampleService  implements IService {
         Entity patternAnnotationFolder=getSubFolderByName(screenSample, PATTERN_ANNOTATION_FOLDER_NAME);
         Entity mipsSubFolder=getSubFolderByName(patternAnnotationFolder, MIPS_SUBFOLDER_NAME);
         Entity normalizedSubFolder=getSubFolderByName(patternAnnotationFolder, NORMALIZED_SUBFOLDER_NAME);
+        Entity supportingSubFolder=getSubFolderByName(patternAnnotationFolder, SUPPORTING_FILE_SUBFOLDER_NAME);
 
         // In this next section, we will iterate through each file, determine its proper entity name, and then
         // decide based on its name what folder it belongs in. Then, we will check to see if this folder already
@@ -827,6 +828,18 @@ public class PatternAnnotationSampleService  implements IService {
             }
         }
 
+        // Add supporting data
+        File supportingDir=new File(patternAnnotationDir, SUPPORTING_FILE_SUBFOLDER_NAME);
+        if (supportingDir.exists()) {
+            File[] supportingFiles=supportingDir.listFiles();
+            if (supportingFiles!=null) {
+                for (File f : supportingFiles) {
+                    Entity supportingEntity=createSupportingEntity(f, f.getName());
+                    addToParent(supportingSubFolder, supportingEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
+                }
+            }
+        }
+
         // Finally, we need to add targeted 2D image assignments
         Entity heatmapMip=mipMap.get("Heatmap");
         if (heatmapMip==null) {
@@ -838,6 +851,18 @@ public class PatternAnnotationSampleService  implements IService {
         // We also want to replace the sample 2D image with the heatmap, for those samples where it is available
         screenSample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, mipPath);
         annotationBean.saveOrUpdateEntity(screenSample);
+    }
+
+    protected Entity createSupportingEntity(File supportingFile, String name) throws Exception {
+        Entity supportingEntity = new Entity();
+        supportingEntity.setUser(user);
+        supportingEntity.setEntityType(EJBFactory.getLocalAnnotationBean().getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
+        supportingEntity.setCreationDate(createDate);
+        supportingEntity.setUpdatedDate(createDate);
+        supportingEntity.setName(name);
+        supportingEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, supportingFile.getAbsolutePath());
+        supportingEntity = EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(supportingEntity);
+        return supportingEntity;
     }
 
     protected Entity createMipEntity(File pngFile, String name) throws Exception {
