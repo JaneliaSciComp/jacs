@@ -1,16 +1,18 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityType;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
+import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * File discovery service for neuron separation results.
@@ -40,16 +42,66 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     }
     
     @Override
-    protected void processFolderForData(Entity folder) throws Exception {
+    protected void processFolderForData(Entity resultEntity) throws Exception {
+
+    	if (!resultEntity.getEntityType().getName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
+    		throw new IllegalStateException("Expected Separator Result as input");
+    	}
     	
-    	super.processFolderForData(folder);
-    	
-        processSeparationFolder(folder);
+    	super.processFolderForData(resultEntity);
+        processSeparationFolder(resultEntity);
+        
+        // Remove current default images
+        
+        EntityData ed1 = sampleEntity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+        EntityData ed2 = sampleEntity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE);
+        EntityData ed3 = sampleEntity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE);
+        if (ed1!=null) annotationBean.deleteEntityData(ed1);
+        if (ed2!=null) annotationBean.deleteEntityData(ed2);
+        if (ed3!=null) annotationBean.deleteEntityData(ed3);
+        
+        // Add new default images
+
+        Entity filesFolder = EntityUtils.getSupportingData(resultEntity);
+        Entity signalMIP = findChildWithName(filesFolder, "ConsolidatedSignalMIP.png");
+        Entity referenceMIP = findChildWithName(filesFolder, "ReferenceMIP.png");
+        
+        if (signalMIP != null) {
+        	String signalMIPfilepath = signalMIP.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        	
+        	EntityData ed = sampleEntity.addChildEntity(signalMIP, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+        	ed.setValue(signalMIPfilepath);
+        	ed = sampleEntity.addChildEntity(signalMIP, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE);
+        	ed.setValue(signalMIPfilepath);
+        	
+        	ed = resultEntity.addChildEntity(signalMIP, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+        	ed.setValue(signalMIPfilepath);
+        	ed = resultEntity.addChildEntity(signalMIP, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE);
+        	ed.setValue(signalMIPfilepath);
+        }
+        else {
+        	logger.warn("Could not find ConsolidatedSignalMIP.png in supporting files for result entity id="+resultEntity.getId());
+        }
+        
+        if (referenceMIP != null) {
+        	String referenceMIPfilepath = referenceMIP.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        	
+        	EntityData ed = sampleEntity.addChildEntity(referenceMIP, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE);
+        	ed.setValue(referenceMIPfilepath);
+        	ed = resultEntity.addChildEntity(referenceMIP, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE);
+        	ed.setValue(referenceMIPfilepath);
+        }
+        else {
+        	logger.warn("Could not find ReferenceMIP.png in supporting files for result entity id="+resultEntity.getId());
+        }
+
+        if (signalMIP != null || referenceMIP != null) {
+	        annotationBean.saveOrUpdateEntity(sampleEntity);
+	        annotationBean.saveOrUpdateEntity(resultEntity);
+        }
     }
     
     protected void addFilesToSupportingFiles(Entity filesFolder, List<File> files) throws Exception {
-
-    	super.addFilesToSupportingFiles(filesFolder, files);
 
 		EntityType image3D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
 
@@ -63,6 +115,17 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
                 // ignore other files
             }
         }
+
+    	super.addFilesToSupportingFiles(filesFolder, files);
+    }
+
+    private Entity findChildWithName(Entity entity, String childName) {
+		for (Entity child : entity.getChildren()) {
+			if (child.getName().equals(childName)) {
+				return child;
+			}
+		}
+		return null;
     }
     
     protected void processSeparationFolder(Entity resultEntity) throws Exception {
@@ -82,20 +145,6 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
             if (filename.startsWith("neuronSeparatorPipeline.PR.neuron") && filename.endsWith(".png")) {            	
             	fragmentFiles.add(resultFile);
             }
-            else if (filename.endsWith(".png")) {
-                if (filename.equals("ConsolidatedSignalMIP.png")) {
-                	resultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, resultFile.getAbsolutePath());
-                	resultEntity = annotationBean.saveOrUpdateEntity(resultEntity);
-                	if (sampleEntity!=null) {
-                		// Update sample with newest result MIP
-                		sampleEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, resultFile.getAbsolutePath());
-                		sampleEntity = annotationBean.saveOrUpdateEntity(sampleEntity);
-                	}
-                	else {
-                		logger.warn("Sample entity is unknown");
-                	}
-                }
-            }
             else {
                 // ignore other files
             }
@@ -104,24 +153,29 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
         Collections.sort(fragmentFiles, new Comparator<File>() {
 			@Override
 			public int compare(File o1, File o2) {
-				Integer i1 = getIndex(o1);
-				Integer i2 = getIndex(o2);
+				Integer i1 = getIndex(o1.getName());
+				Integer i2 = getIndex(o2.getName());
 				if (i1 == null && i2 == null) return 0;
 				if (i1 == null) return 1;
 				if (i2 == null) return -1;
 				return i1.compareTo(i2);
 			}
         });
+
+        Entity filesFolder = EntityUtils.getSupportingData(resultEntity);
         
         for(File resultFile : fragmentFiles) {
-    		Integer index = getIndex(resultFile);
-        	Entity fragmentEntity = createFragmentEntity(fragmentType, resultFile, index);
+            Entity fragmentMIP = findChildWithName(filesFolder, resultFile.getName());
+            if (fragmentMIP == null) {
+            	logger.warn("Could not find "+resultFile.getName()+" in supporting files for result entity id="+resultEntity.getId());
+            }
+    		Integer index = getIndex(resultFile.getName());
+        	Entity fragmentEntity = createFragmentEntity(fragmentType, fragmentMIP, index);
         	addToParent(fragmentsFolder, fragmentEntity, index, EntityConstants.ATTRIBUTE_ENTITY);	
         }
     }
     
-    protected Integer getIndex(File neuronMIPFile) {
-    	String filename = neuronMIPFile.getName();
+    protected Integer getIndex(String filename) {
     	String mipNum = filename.substring("neuronSeparatorPipeline.PR.neuron".length(), filename.lastIndexOf('.'));
     	try {
         	// New 2-stage neuron separator creates files with an extra dot in the filename, so we need to account for that
@@ -134,7 +188,7 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     	return null;
     }
     
-    protected Entity createFragmentEntity(EntityType fragmentType, File file, Integer index) throws Exception {
+    protected Entity createFragmentEntity(EntityType fragmentType, Entity fragmentMIP, Integer index) throws Exception {
         Entity fragmentEntity = new Entity();
         fragmentEntity.setUser(user);
         fragmentEntity.setEntityType(fragmentType);
@@ -142,7 +196,9 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
         fragmentEntity.setUpdatedDate(createDate);
         fragmentEntity.setName("Neuron Fragment "+index);
         fragmentEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER, index.toString());
-        fragmentEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, file.getAbsolutePath());
+        if (fragmentMIP != null) {
+        	fragmentEntity.addChildEntity(fragmentMIP, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+        }
         fragmentEntity = annotationBean.saveOrUpdateEntity(fragmentEntity);
         logger.info("Saved fragment entity as "+fragmentEntity.getId());
         return fragmentEntity;

@@ -1,6 +1,10 @@
 
 package org.janelia.it.jacs.compute.api;
 
+import java.util.*;
+
+import javax.ejb.Local;
+
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -13,15 +17,13 @@ import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultNode;
 import org.janelia.it.jacs.model.user_data.hmmer.HmmerPfamDatabaseNode;
 
-import javax.ejb.Local;
-import java.util.*;
-
 /**
  * Local interface to ComputeBeanImpl
  */
 @Local
 public interface ComputeBeanLocal {
-    
+
+     public String getAppVersion();
      public void updateTaskStatus(long taskId, String status, String comment) throws DaoException;
      public Node getResultNodeByTaskId(long taskId) throws DaoException;
      public List<Node> getResultNodesByTaskId(long taskId) throws DaoException;

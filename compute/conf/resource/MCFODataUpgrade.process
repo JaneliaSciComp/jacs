@@ -1,0 +1,9 @@
+<!-- 
+	Upgrade the model to use the most current entity structure.
+-->
+<process name="Sample File Node Synchronization" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
+	<sequence>
+		<operation name="MCFO Data Upgrade" processor="org.janelia.it.jacs.compute.service.entity.MCFODataUpgradeService">
+		</operation>
+    </sequence>
+</process>

@@ -176,7 +176,6 @@ public class SupportingFilesDiscoveryService extends FileDiscoveryService {
         	String filename = file.getName();
         	String fileFormat = filename.substring(filename.lastIndexOf('.')+1);
         	entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, fileFormat);
-        	entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, file.getAbsolutePath());
         }
         
         entity = annotationBean.saveOrUpdateEntity(entity);

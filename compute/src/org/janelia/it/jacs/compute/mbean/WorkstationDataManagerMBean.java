@@ -14,6 +14,8 @@ public interface WorkstationDataManagerMBean {
     
     public void runSampleImageSync(String user);
 
+    public void runMCFODataUpgrade(String user, Boolean testRun);
+    
     public void runMCFODataPipeline(String user, String inputDirList, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
 
     public void runMCFOSamplePipeline(String sampleEntityId, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
@@ -31,6 +33,4 @@ public interface WorkstationDataManagerMBean {
     public void doEntityTreePerformanceTest();
 
     public void performScreenPipelineSurgery(String user);
-    
-    public void performMCFOPipelineSurgery(String user);
 }

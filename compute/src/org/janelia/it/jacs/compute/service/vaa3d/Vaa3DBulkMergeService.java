@@ -1,5 +1,11 @@
 package org.janelia.it.jacs.compute.service.vaa3d;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.List;
+
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
@@ -8,12 +14,6 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.model.user_data.FileNode;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.List;
 
 /**
  * Merge paired LSMs into v3draw files. Parameters:
@@ -27,6 +27,7 @@ public class Vaa3DBulkMergeService extends SubmitDrmaaJobService {
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
 	private static final int START_DISPLAY_PORT = 890;
     private static final String CONFIG_PREFIX = "mergeConfiguration.";
+    private static int randomPort;
     
     protected void init(IProcessData processData) throws Exception {
     	super.init(processData);
@@ -49,6 +50,7 @@ public class Vaa3DBulkMergeService extends SubmitDrmaaJobService {
         	List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
 
             int configIndex = 1;
+            randomPort = Vaa3DHelper.getRandomPort(START_DISPLAY_PORT);
             for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
             	writeInstanceFiles(mergedLsmPair, configIndex++);
             }
@@ -68,7 +70,7 @@ public class Vaa3DBulkMergeService extends SubmitDrmaaJobService {
             fw.write(mergedLsmPair.getLsmFilepath1() + "\n");
             fw.write(mergedLsmPair.getLsmFilepath2() + "\n");
             fw.write(mergedLsmPair.getMergedFilepath() + "\n");
-            fw.write((Vaa3DHelper.getRandomPort(START_DISPLAY_PORT)+configIndex) + "\n");
+            fw.write((randomPort+configIndex) + "\n");
         }
         catch (IOException e) {
         	throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath(),e); 
