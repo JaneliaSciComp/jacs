@@ -39,8 +39,12 @@ public class EntityUtils {
     	if (entity == null) return null;
     	return entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
     }
-    
+
     public static String getDefaultImageFilePath(Entity entity) {
+    	return getDefaultImageFilePath(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+    }
+    
+    public static String getDefaultImageFilePath(Entity entity, String imageRole) {
 
     	String type = entity.getEntityType().getName();
     	String path = null;
@@ -51,15 +55,24 @@ public class EntityUtils {
 		}
     	
 		if (path == null) {
-	    	// If the entity has a default 2D image, just return that path
-	    	path = getFilePath(entity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE));
+			// If the entity has a default 2D image, then just return the cached path
+	    	path = entity.getValueByAttributeName(imageRole);
+		}
+		
+		if (path == null) {
+	    	// This should never be non-null if the previous attempt was null, but just in case...
+	    	path = getFilePath(entity.getChildByAttributeName(imageRole));
 		}
 
-		if (path == null) {
+		if (path == null && EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE.equals(imageRole)) {
 	    	// TODO: This is for backwards compatibility with old data. Remove this in the future.
 	    	path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
+	    	if (path!=null) {
+	    		System.out.println("Warning: old data detected. Using deprecated attribute '"+EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH+"'");
+	    	}
+	    	
 		}
-    	
+		
 		return path;
     }
 
@@ -145,5 +158,27 @@ public class EntityUtils {
             }
         }
     }
+
+	public static void replaceEntityData(Entity entity, EntityData ed, EntityData savedEd) {
+		if (!entity.getEntityData().remove(ed)) {
+			throw new IllegalStateException("Entity does not contain EntityData: "+ed.getId());
+		}
+		entity.getEntityData().add(savedEd);
+	}
+
+	/**
+	 * Returns true if the given data should not be directly displayed in the GUI.
+	 * @param entityData
+	 * @return
+	 */
+	public static boolean isHidden(EntityData entityData) {
+		String attrName = entityData.getEntityAttribute().getName();
+		if (EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE.equals(attrName) 
+				|| EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE.equals(attrName) 
+				|| EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE.equals(attrName)) {
+			return true;
+		}
+		return false;
+	}
 
 }
