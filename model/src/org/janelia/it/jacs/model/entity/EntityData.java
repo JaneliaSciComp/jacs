@@ -14,7 +14,7 @@ import java.util.Date;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class EntityData implements java.io.Serializable, IsSerializable {
 	
-	@XmlAttribute
+	@XmlAttribute(name="guid")
     private Long id;
 
 	@XmlElement

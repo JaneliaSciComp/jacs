@@ -35,6 +35,7 @@ public class MCFODataUpgradeService implements IService {
     protected int numEntities;
     protected int numChanges;
     
+    private Set<Long> visited = new HashSet<Long>();
     private boolean isDebug = false;
     
     public void execute(IProcessData processData) throws ServiceException {
@@ -83,6 +84,9 @@ public class MCFODataUpgradeService implements IService {
     
     public void processEntityTree(Entity entity) throws ComputeException {
     	
+    	if (visited.contains(entity.getId())) return;
+    	visited.add(entity.getId());
+    	
     	if (!entity.getUser().getUserLogin().equals(username)) return;
 
 		logger.info("Processing "+entity.getName()+" (id="+entity.getId()+")");
@@ -105,6 +109,8 @@ public class MCFODataUpgradeService implements IService {
     private void migrateSampleLevelLsmPairs(Entity sample) throws ComputeException {
 
     	if (!sample.getUser().getUserLogin().equals(username)) return;
+    	
+    	logger.info("migrateSampleLevelLsmPairs for sample "+sample.getName());
     	
     	List<EntityData> toMove = new ArrayList<EntityData>();
 		for(EntityData ed : sample.getEntityData()) {
@@ -150,7 +156,7 @@ public class MCFODataUpgradeService implements IService {
 
     	if (!sample.getUser().getUserLogin().equals(username)) return;
     	
-    	logger.info("Processing sample "+sample.getName());
+    	logger.info("migrateDefault2dImages for sample "+sample.getName());
     	
         Entity latestSignalMIP = null;
         Entity latestReferenceMIP = null;

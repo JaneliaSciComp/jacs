@@ -13,7 +13,7 @@ import java.util.*;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Entity  implements java.io.Serializable, IsSerializable {
 	
-	@XmlAttribute
+	@XmlAttribute(name="guid")
     private Long id;
 	
 	@XmlElement
