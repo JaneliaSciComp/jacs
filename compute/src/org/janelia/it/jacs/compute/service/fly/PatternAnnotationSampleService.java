@@ -856,7 +856,7 @@ public class PatternAnnotationSampleService  implements IService {
     protected Entity createSupportingEntity(File supportingFile, String name) throws Exception {
         Entity supportingEntity = new Entity();
         supportingEntity.setUser(user);
-        supportingEntity.setEntityType(EJBFactory.getLocalAnnotationBean().getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
+        supportingEntity.setEntityType(EJBFactory.getLocalAnnotationBean().getEntityTypeByName(EntityConstants.TYPE_TEXT_FILE));
         supportingEntity.setCreationDate(createDate);
         supportingEntity.setUpdatedDate(createDate);
         supportingEntity.setName(name);

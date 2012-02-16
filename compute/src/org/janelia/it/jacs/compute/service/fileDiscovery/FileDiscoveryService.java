@@ -125,11 +125,15 @@ public class FileDiscoveryService implements IService {
         } 
     }
 
-    protected Entity createOrVerifyRootEntity(String topLevelFolderName) throws Exception {
-        return createOrVerifyRootEntity(topLevelFolderName, user, createDate, logger, true /* create if necessary */);
+    protected Entity createOrVerifyRootEntityButDontLoadTree(String topLevelFolderName) throws Exception {
+        return createOrVerifyRootEntity(topLevelFolderName, user, createDate, logger, true /* create if necessary */, false /* load tree */);
     }
 
-    public static Entity createOrVerifyRootEntity(String topLevelFolderName, User user, Date createDate, org.apache.log4j.Logger logger, boolean createIfNecessary) throws Exception {
+    protected Entity createOrVerifyRootEntity(String topLevelFolderName) throws Exception {
+        return createOrVerifyRootEntity(topLevelFolderName, user, createDate, logger, true /* create if necessary */, true);
+    }
+
+    public static Entity createOrVerifyRootEntity(String topLevelFolderName, User user, Date createDate, org.apache.log4j.Logger logger, boolean createIfNecessary, boolean loadTree) throws Exception {
         AnnotationBeanLocal annotationBean = EJBFactory.getLocalAnnotationBean();
         Set<Entity> topLevelFolders = annotationBean.getEntitiesByName(topLevelFolderName);
         Entity topLevelFolder = null;
@@ -140,7 +144,11 @@ public class FileDiscoveryService implements IService {
                         && entity.getEntityType().getName().equals(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER).getName())
                         && entity.getAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
                     // This is the folder we want, now load the entire folder hierarchy
-                    topLevelFolder = annotationBean.getFolderTree(entity.getId());
+                    if (loadTree) {
+                        topLevelFolder = annotationBean.getFolderTree(entity.getId());
+                    } else {
+                        topLevelFolder = entity;
+                    }
                     logger.info("Found existing topLevelFolder common root, name=" + topLevelFolder.getName());
                     break;
                 }
