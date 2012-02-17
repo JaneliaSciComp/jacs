@@ -237,4 +237,18 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
+
+    public void runFileTreeLoaderPipeline(String user, String rootDirectoryPath, String topLevelFolderName) {
+        try {
+            Task task = new FileTreeLoaderPipelineTask(new HashSet<Node>(), user, new ArrayList<Event>(),
+                    new HashSet<TaskParameter>(), rootDirectoryPath, topLevelFolderName);
+            task.setJobName("File Tree Loader Pipeline Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("FileTreeLoader", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+
 }

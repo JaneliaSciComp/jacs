@@ -33,4 +33,6 @@ public interface WorkstationDataManagerMBean {
     public void doEntityTreePerformanceTest();
 
     public void performScreenPipelineSurgery(String user);
+
+    public void runFileTreeLoaderPipeline(String user, String rootDirectoryPath, String topLevelFolderName);
 }
