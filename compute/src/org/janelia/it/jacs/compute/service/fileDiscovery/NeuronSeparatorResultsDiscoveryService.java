@@ -8,9 +8,9 @@ import java.util.List;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.service.entity.EntityHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
@@ -22,9 +22,11 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
 public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDiscoveryService {
 
 	protected Entity sampleEntity;
+	protected EntityHelper entityHelper;
 
 	@Override
     public void execute(IProcessData processData) throws ServiceException {
+        entityHelper = new EntityHelper(false);
     	processData.putItem("RESULT_ENTITY_TYPE", EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
     	super.execute(processData);
     }
@@ -53,51 +55,30 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
         
         // Remove current default images
         
-        EntityData ed1 = sampleEntity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-        EntityData ed2 = sampleEntity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE);
-        EntityData ed3 = sampleEntity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE);
-        if (ed1!=null) annotationBean.deleteEntityData(ed1);
-        if (ed2!=null) annotationBean.deleteEntityData(ed2);
-        if (ed3!=null) annotationBean.deleteEntityData(ed3);
-        
-        // Add new default images
+		entityHelper.removeMIPs(resultEntity);
+		entityHelper.removeMIPs(sampleEntity);
+		entityHelper.removeDefaultImage(resultEntity);
+		entityHelper.removeDefaultImage(sampleEntity);
 
+		// Add new default images
         Entity filesFolder = EntityUtils.getSupportingData(resultEntity);
-        Entity signalMIP = findChildWithName(filesFolder, "ConsolidatedSignalMIP.png");
-        Entity referenceMIP = findChildWithName(filesFolder, "ReferenceMIP.png");
+        Entity signalMIP = EntityUtils.findChildWithName(filesFolder, "ConsolidatedSignalMIP.png");
+        Entity referenceMIP = EntityUtils.findChildWithName(filesFolder, "ReferenceMIP.png");
         
         if (signalMIP != null) {
-        	String signalMIPfilepath = signalMIP.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        	
-        	EntityData ed = sampleEntity.addChildEntity(signalMIP, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-        	ed.setValue(signalMIPfilepath);
-        	ed = sampleEntity.addChildEntity(signalMIP, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE);
-        	ed.setValue(signalMIPfilepath);
-        	
-        	ed = resultEntity.addChildEntity(signalMIP, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-        	ed.setValue(signalMIPfilepath);
-        	ed = resultEntity.addChildEntity(signalMIP, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE);
-        	ed.setValue(signalMIPfilepath);
+			entityHelper.addMIPs(resultEntity, signalMIP, referenceMIP);
+			entityHelper.addDefaultImage(resultEntity, signalMIP);
         }
         else {
         	logger.warn("Could not find ConsolidatedSignalMIP.png in supporting files for result entity id="+resultEntity.getId());
         }
         
         if (referenceMIP != null) {
-        	String referenceMIPfilepath = referenceMIP.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        	
-        	EntityData ed = sampleEntity.addChildEntity(referenceMIP, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE);
-        	ed.setValue(referenceMIPfilepath);
-        	ed = resultEntity.addChildEntity(referenceMIP, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE);
-        	ed.setValue(referenceMIPfilepath);
+			entityHelper.addMIPs(sampleEntity, signalMIP, referenceMIP);
+			entityHelper.addDefaultImage(sampleEntity, signalMIP);
         }
         else {
         	logger.warn("Could not find ReferenceMIP.png in supporting files for result entity id="+resultEntity.getId());
-        }
-
-        if (signalMIP != null || referenceMIP != null) {
-	        annotationBean.saveOrUpdateEntity(sampleEntity);
-	        annotationBean.saveOrUpdateEntity(resultEntity);
         }
     }
     
@@ -117,15 +98,6 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
         }
 
     	super.addFilesToSupportingFiles(filesFolder, files);
-    }
-
-    private Entity findChildWithName(Entity entity, String childName) {
-		for (Entity child : entity.getChildren()) {
-			if (child.getName().equals(childName)) {
-				return child;
-			}
-		}
-		return null;
     }
     
     protected void processSeparationFolder(Entity resultEntity) throws Exception {
@@ -165,7 +137,7 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
         Entity filesFolder = EntityUtils.getSupportingData(resultEntity);
         
         for(File resultFile : fragmentFiles) {
-            Entity fragmentMIP = findChildWithName(filesFolder, resultFile.getName());
+            Entity fragmentMIP = EntityUtils.findChildWithName(filesFolder, resultFile.getName());
             if (fragmentMIP == null) {
             	logger.warn("Could not find "+resultFile.getName()+" in supporting files for result entity id="+resultEntity.getId());
             }

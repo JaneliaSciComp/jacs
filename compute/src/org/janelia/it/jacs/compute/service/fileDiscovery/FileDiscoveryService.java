@@ -33,7 +33,6 @@ public class FileDiscoveryService implements IService {
     protected ComputeBeanLocal computeBean;
     protected User user;
     protected Date createDate;
-    protected List<String> directoryPathList = new ArrayList<String>();
     protected IProcessData processData;
 
     public void execute(IProcessData processData) throws ServiceException {
@@ -69,19 +68,23 @@ public class FileDiscoveryService implements IService {
             
             // What directory should we discover files within?
 
-            String taskInputDirectoryList;
-            if (processData.getItem("INPUT_DIR_LIST") != null) {
-            	taskInputDirectoryList = (String)processData.getItem("INPUT_DIR_LIST");
+            String taskInputDirectoryList = null;
+            Object inputDirList = processData.getItem("INPUT_DIR_LIST");
+            if (inputDirList != null && !"".equals(inputDirList)) {
+            	taskInputDirectoryList = (String)inputDirList;
             }
             else {
             	FileNode resultFileNode = (FileNode)processData.getItem("ROOT_FILE_NODE");
             	if (resultFileNode==null) {
-            		throw new IllegalArgumentException("Both ROOT_FILE_NODE and INPUT_DIR_LIST may not be null");
+            		logger.info("Both ROOT_FILE_NODE and INPUT_DIR_LIST are null, no file discovery will be done.");
             	}
-            	taskInputDirectoryList = resultFileNode.getDirectoryPath();
+            	else {
+            		taskInputDirectoryList = resultFileNode.getDirectoryPath();	
+            	}
             }
             
             if (taskInputDirectoryList != null) {
+            	List<String> directoryPathList = new ArrayList<String>();
                 String[] directoryArray = taskInputDirectoryList.split(",");
                 for (String d : directoryArray) {
                     String trimmedPath=d.trim();
@@ -89,9 +92,9 @@ public class FileDiscoveryService implements IService {
                         directoryPathList.add(trimmedPath);
                     }
                 }
+                processPathList(directoryPathList, topLevelFolder);
             }
             
-            processPathList(directoryPathList, topLevelFolder);
             
         	String outvar = (String)processData.getItem("OUTVAR_ENTITY_ID");
         	if (outvar != null) {
