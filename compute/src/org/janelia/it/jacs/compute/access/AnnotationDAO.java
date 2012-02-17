@@ -975,18 +975,21 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
     public List<Entity> getUserCommonRoots(String userLogin, String entityTypeName) throws DaoException {
         try {
+        	EntityAttribute attr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT);
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select e from Entity e");
+            hql.append(" join e.entityData as ed ");
             hql.append(" where e.entityType.name=?");
+            hql.append(" and ed.entityAttribute.id=?");
             if (null != userLogin) {
                 hql.append(" and e.user.userLogin=?");
             }
-            hql.append(" and exists (from EntityData as attr where attr.parentEntity = e " +
-            		"and attr.entityAttribute.name = '"+EntityConstants.ATTRIBUTE_COMMON_ROOT+"')");
             hql.append(" order by e.id ");
-            Query query = session.createQuery(hql.toString()).setString(0, entityTypeName);
+            Query query = session.createQuery(hql.toString());
+            query.setString(0, entityTypeName);
+            query.setLong(1, attr.getId());
             if (null != userLogin) {
-                query.setString(1, userLogin);
+                query.setString(2, userLogin);
             }
             return query.list();
         } catch (Exception e) {
