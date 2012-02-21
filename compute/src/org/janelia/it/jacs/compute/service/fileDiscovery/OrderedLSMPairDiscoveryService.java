@@ -39,7 +39,7 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
         List<File> lsmFileList = new ArrayList<File>();
         for (File file : getOrderedFilesInDir(dir)) {
             if (file.isDirectory()) {
-                Entity subfolder = verifyOrCreateChildFolderFromDir(folder, file);
+                Entity subfolder = verifyOrCreateChildFolderFromDir(folder, file, null /*index*/);
                 processFolderForData(subfolder);
             } 
             else if (file.getName().toUpperCase().endsWith(".LSM")) {
