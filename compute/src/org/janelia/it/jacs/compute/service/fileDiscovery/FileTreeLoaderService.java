@@ -158,8 +158,8 @@ public class FileTreeLoaderService extends FileDiscoveryService {
             groupSize = new Integer(processData.getString("GROUP_SIZE").trim());
             mode = processData.getString("MODE");
 
-            pbdGroupMap=getPbdGroupMap(task);
-            mipGroupMap=getMipGroupMap(task);
+            pbdGroupMap=getPbdGroupMap(task, false /*remove*/);
+            mipGroupMap=getMipGroupMap(task, false /*remove*/);
 
             if (mode.equals(MODE_SETUP)) {
                 doSetup();
@@ -176,9 +176,13 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         }
     }
 
-    protected static synchronized Map<Long, List<ArtifactInfo>> getPbdGroupMap(Task task) {
+    protected static synchronized Map<Long, List<ArtifactInfo>> getPbdGroupMap(Task task, boolean remove) {
         Long taskId=task.getObjectId();
         if (taskId==null) {
+            return null;
+        }
+        if (remove) {
+            pbdGroupByTaskMap.remove(taskId);
             return null;
         }
         Map<Long, List<ArtifactInfo>> pbdGroupMap=pbdGroupByTaskMap.get(taskId);
@@ -189,9 +193,13 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         return pbdGroupMap;
     }
 
-    protected static synchronized Map<Long, List<ArtifactInfo>> getMipGroupMap(Task task) {
+    protected static synchronized Map<Long, List<ArtifactInfo>> getMipGroupMap(Task task, boolean remove) {
         Long taskId=task.getObjectId();
         if (taskId==null) {
+            return null;
+        }
+        if (remove) {
+            mipGroupByTaskMap.remove(taskId);
             return null;
         }
         Map<Long, List<ArtifactInfo>> mipGroupMap=mipGroupByTaskMap.get(taskId);
@@ -345,6 +353,8 @@ public class FileTreeLoaderService extends FileDiscoveryService {
     }
 
     protected void doPbdList() throws Exception {
+        Long groupIndex=new Long(processData.getString("PBD_INDEX").trim());
+        List<ArtifactInfo> artifactList=pbdGroupMap.get(groupIndex);
 
     }
 
@@ -362,8 +372,8 @@ public class FileTreeLoaderService extends FileDiscoveryService {
     protected void clearResultMaps() {
         Long taskId=task.getObjectId();
         if (taskId!=null) {
-            pbdGroupByTaskMap.remove(taskId);
-            mipGroupByTaskMap.remove(taskId);
+            getPbdGroupMap(task, true /*remove*/);
+            getMipGroupMap(task, true /*remove*/);
         }
     }
 
