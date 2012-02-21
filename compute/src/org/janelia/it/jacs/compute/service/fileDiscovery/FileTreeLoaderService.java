@@ -92,6 +92,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
     final public String MODE_COMPLETE="COMPLETE";
     final public String MODE_PBDLIST="PBDLIST";
     final public String MODE_MIPLIST="MIPLIST";
+    final public String MODE_MIPSYNC="MIPSYNC";
 
     final public String PBD_SIZE_THRESHOLD="PBD_SIZE_THRESHOLD";
     final public String PBD_EXTENSIONS="PBD_EXTENSIONS";
@@ -172,6 +173,8 @@ public class FileTreeLoaderService extends FileDiscoveryService {
                 doSetup();
             } else if (mode.equals(MODE_PBDLIST)) {
                 doPbdList();
+            } else if (mode.equals(MODE_MIPSYNC)) {
+                doMipSync();
             } else if (mode.equals(MODE_MIPLIST)) {
                 doMipList();
             } else if (mode.equals(MODE_COMPLETE)) {
@@ -404,6 +407,14 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         logger.info("Finished doPbdList()");
     }
 
+    protected void doMipSync() throws Exception {
+        logger.info("doMipSync() start");
+        List<Long> mipKeyList=new ArrayList<Long>(mipGroupMap.keySet());
+        Collections.sort(mipKeyList);
+        logger.info("mipKeyList has "+mipKeyList.size()+" entries");
+        processData.putItem("MIP_INDEX", mipKeyList);
+        logger.info("doMipSync() end");
+    }
 
     protected void doMipList() throws Exception {
         logger.info("Starting doMipList()");
