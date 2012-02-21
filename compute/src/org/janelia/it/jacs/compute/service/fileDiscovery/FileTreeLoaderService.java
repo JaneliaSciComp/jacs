@@ -302,7 +302,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
             Entity pbdArtifact=fileEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_PERFORMANCE_PROXY_IMAGE);
             if (pbdArtifact==null) {
                 // We need to create one
-                addToArtifactList(fileEntity, pbdGroupMap);
+                addToArtifactList(fileEntity, null /*altSourcePath*/, pbdGroupMap);
             }
         }
 
@@ -310,13 +310,13 @@ public class FileTreeLoaderService extends FileDiscoveryService {
             Entity mipArtifact=fileEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
             if (mipArtifact==null) {
                 // We need to create one
-                addToArtifactList(fileEntity, mipGroupMap);
+                addToArtifactList(fileEntity, null /*altSourcePath*/, mipGroupMap);
             }
         }
 
     }
 
-    protected void addToArtifactList(Entity pbdSourceEntity, Map<Long, List<ArtifactInfo>> groupMap) {
+    protected void addToArtifactList(Entity pbdSourceEntity, String altSourcePath, Map<Long, List<ArtifactInfo>> groupMap) {
         long currentIndex=groupMap.size()-1;
         List<ArtifactInfo> artifactList=null;
         if (currentIndex<0) {
@@ -334,7 +334,11 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         }
         ArtifactInfo newInfo=new ArtifactInfo();
         newInfo.sourceEntityId=pbdSourceEntity.getId();
-        newInfo.sourcePath=pbdSourceEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        if (altSourcePath!=null) {
+            newInfo.sourcePath=altSourcePath;
+        } else {
+            newInfo.sourcePath=pbdSourceEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        }
         // leave artifactPath null for now
         artifactList.add(newInfo);
     }
@@ -355,12 +359,48 @@ public class FileTreeLoaderService extends FileDiscoveryService {
     protected void doPbdList() throws Exception {
         Long groupIndex=new Long(processData.getString("PBD_INDEX").trim());
         List<ArtifactInfo> artifactList=pbdGroupMap.get(groupIndex);
-
+        FileTreeLoaderResultNode resultNode=new FileTreeLoaderResultNode(user.getUserLogin(), task, "FileTreeLoaderResultNode",
+                "FileTreeLoaderResultNode for "+rootDirectoryPath+" pbd group index="+groupIndex, visibility, sessionName);
+        resultNode=(FileTreeLoaderResultNode)computeBean.saveOrUpdateNode(resultNode);
+        logger.info("Created resultNode id="+resultNode.getObjectId()+" PBD groupIndex="+groupIndex);
+        FileUtil.ensureDirExists(resultNode.getDirectoryPath());
+        List<String> inputPathList=new ArrayList<String>();
+        List<String> outputPathList=new ArrayList<String>();
+        for (ArtifactInfo ai : artifactList) {
+            inputPathList.add(ai.sourcePath);
+            String outputPath=resultNode.getDirectoryPath()+File.separator+"pbdArtifact_"+ai.sourceEntityId+".v3dpbd";
+            outputPathList.add(outputPath);
+            // Add mip entry
+            Entity sourceEntity=annotationBean.getEntityById(ai.sourceEntityId.toString());
+            addToArtifactList(sourceEntity, outputPath, mipGroupMap);
+        }
+        processData.putItem("PBD_RESULT_NODE", resultNode);
+        processData.putItem("PBD_INPUT_LIST", inputPathList);
+        processData.putItem("PBD_OUTPUT_LIST", outputPathList);
     }
 
 
     protected void doMipList() throws Exception {
-
+        Long groupIndex=new Long(processData.getString("MIP_INDEX").trim());
+        List<ArtifactInfo> artifactList=mipGroupMap.get(groupIndex);
+        FileTreeLoaderResultNode resultNode=new FileTreeLoaderResultNode(user.getUserLogin(), task, "FileTreeLoaderResultNode",
+                "FileTreeLoaderResultNode for "+rootDirectoryPath+" mip group index="+groupIndex, visibility, sessionName);
+        resultNode=(FileTreeLoaderResultNode)computeBean.saveOrUpdateNode(resultNode);
+        logger.info("Created resultNode id="+resultNode.getObjectId()+" MIP groupIndex="+groupIndex);
+        FileUtil.ensureDirExists(resultNode.getDirectoryPath());
+        List<String> inputPathList=new ArrayList<String>();
+        List<String> outputPathList=new ArrayList<String>();
+        for (ArtifactInfo ai : artifactList) {
+            inputPathList.add(ai.sourcePath);
+            String outputPath=resultNode.getDirectoryPath()+File.separator+"mipArtifact_"+ai.sourceEntityId+".tif";
+            outputPathList.add(outputPath);
+            // Add mip entry
+            Entity sourceEntity=annotationBean.getEntityById(ai.sourceEntityId.toString());
+            addToArtifactList(sourceEntity, outputPath, mipGroupMap);
+        }
+        processData.putItem("MIP_RESULT_NODE", resultNode);
+        processData.putItem("MIP_INPUT_LIST", inputPathList);
+        processData.putItem("MIP_OUTPUT_LIST", outputPathList);
     }
 
 
