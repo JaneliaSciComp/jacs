@@ -44,6 +44,8 @@ public class EntityConstants {
     public static final String TYPE_NEURON_FRAGMENT_COLLECTION       = "Neuron Fragment Collection";
     public static final String TYPE_ALIGNED_BRAIN_STACK              = "Aligned Brain Stack";
     public static final String TYPE_TEXT_FILE                        = "Text File";
+    public static final String TYPE_SWC_FILE                         = "SWC File";
+    public static final String TYPE_V3D_ANO_FILE                     = "Vaa3d ANO File";
 
     // Entity Data Attributes
     
@@ -81,6 +83,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ALIGNMENT_QI_SCORE                  = "Alignment Inconsistency Score";
     public static final String ATTRIBUTE_ALIGNMENT_QM_SCORE                  = "Alignment Model Violation Score";
     public static final String ATTRIBUTE_RESULT_NODE_ID                      = "Result Node Id";
+    public static final String ATTRIBUTE_PERFORMANCE_PROXY_IMAGE             = "Performance Proxy Image";
     
     /**
      * @deprecated Use ATTRIBUTE_DEFAULT_2D_IMAGE instead. This will be removed someday.

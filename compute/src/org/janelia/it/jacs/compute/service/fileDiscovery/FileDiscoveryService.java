@@ -11,6 +11,7 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.User;
 
@@ -34,6 +35,8 @@ public class FileDiscoveryService implements IService {
     protected User user;
     protected Date createDate;
     protected IProcessData processData;
+
+    public final Long FILE_3D_SIZE_THRESHOLD = new Long(5000000L);
 
     public void execute(IProcessData processData) throws ServiceException {
         try {
@@ -122,7 +125,7 @@ public class FileDiscoveryService implements IService {
                 logger.error(("File " + dir.getAbsolutePath()+ " is not a directory - skipping"));
             } 
             else {
-                Entity folder = verifyOrCreateChildFolderFromDir(topLevelFolder, dir);
+                Entity folder = verifyOrCreateChildFolderFromDir(topLevelFolder, dir, null /*index*/);
                 processFolderForData(folder);
             }
         } 
@@ -179,7 +182,7 @@ public class FileDiscoveryService implements IService {
         return topLevelFolder;
     }
 
-    protected Entity verifyOrCreateChildFolderFromDir(Entity parentFolder, File dir) throws Exception {
+    protected Entity verifyOrCreateChildFolderFromDir(Entity parentFolder, File dir, Integer index) throws Exception {
 
         logger.info("Looking for folder entity with path "+dir.getAbsolutePath()+" in parent folder "+parentFolder.getId());
         Entity folder = null;
@@ -214,7 +217,7 @@ public class FileDiscoveryService implements IService {
             folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, dir.getAbsolutePath());
             folder = annotationBean.saveOrUpdateEntity(folder);
             logger.info("Saved folder as "+folder.getId());
-            addToParent(parentFolder, folder, null, EntityConstants.ATTRIBUTE_ENTITY);
+            addToParent(parentFolder, folder, index, EntityConstants.ATTRIBUTE_ENTITY);
         }
         else {
             logger.info("Found folder with id="+folder.getId());
@@ -245,7 +248,7 @@ public class FileDiscoveryService implements IService {
         File dir = new File(folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
 	    for (File file : getOrderedFilesInDir(dir)) {
 	        if (file.isDirectory()) {
-                Entity subfolder = verifyOrCreateChildFolderFromDir(folder, file);
+                Entity subfolder = verifyOrCreateChildFolderFromDir(folder, file, null /*index*/);
                 processFolderForData(subfolder);
 	        } 
 	    }
@@ -266,4 +269,42 @@ public class FileDiscoveryService implements IService {
 		});
         return files;
     }
+
+    EntityType getEntityTypeForFile(File file) throws Exception {
+        String filenameLowerCase=file.getName().toLowerCase();
+        if (filenameLowerCase.endsWith(".lsm")) {
+            return annotationBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK);
+        } else if (filenameLowerCase.endsWith(".tif")) {
+            if (file.length()>=FILE_3D_SIZE_THRESHOLD) {
+                return annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+            } else {
+                return annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
+            }
+        } else if (filenameLowerCase.endsWith(".txt")) {
+            return annotationBean.getEntityTypeByName(EntityConstants.TYPE_TEXT_FILE);
+        } else if (filenameLowerCase.endsWith(".swc")) {
+            return annotationBean.getEntityTypeByName(EntityConstants.TYPE_SWC_FILE);
+        } else if (filenameLowerCase.endsWith(".ano")) {
+            return annotationBean.getEntityTypeByName(EntityConstants.TYPE_V3D_ANO_FILE);
+        } else if (filenameLowerCase.endsWith(".png")) {
+            return annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
+        } else if (filenameLowerCase.endsWith(".raw")) {
+            if (filenameLowerCase.contains(".local.")) {
+                return annotationBean.getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
+            } else {
+                return annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+            }
+        } else if (filenameLowerCase.endsWith(".v3draw")) {
+            return annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+        } else if (filenameLowerCase.endsWith(".vaa3draw")) {
+            return annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+        } else if (filenameLowerCase.endsWith(".pbd")) {
+            return annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+        } else if (filenameLowerCase.endsWith(".v3dpbd")) {
+            return annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+        } else {
+            return annotationBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA);
+        }
+    }
+
 }

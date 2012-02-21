@@ -40,29 +40,29 @@
 	    	    <input name="MODE" value="SETUP"/>
     			<input name="TOP_LEVEL_FOLDER_NAME"/>
     			<input name="FILE_TREE_ROOT_DIRECTORY"/>
+    			<input name="PBD_SIZE_THRESHOLD" value="5000000"/>
+    			<input name="PBD_EXTENSIONS" value="LSM TIF RAW V3DRAW VAA3DRAW"/>
+    			<input name="MIP_EXTENSIONS" value="LSM TIF RAW V3DRAW VAA3DRAW V3DPBD PBD"/>
     			<input name="GROUP_SIZE" value="200"/>
+    			<output name="GROUP_SIZE"/>
     			<output name="RESULT_NODE"/>
     			<output name="RESULT_NODE_ID"/>
-    			<output name="MIP_RESULT_NODE_GROUPS"/>
-    			<output name="MIP_SOURCE_PATH_GROUPS"/>
-    			<output name="MIP_SOURCE_TARGET_MAP"/>
-    			<output name="MIP_SOURCE_NODE_MAP"/>
-    			<output name="PBD_RESULT_NODE_GROUPS"/>
-    			<output name="PBD_SOURCE_PATH_GROUPS"/>
-    			<output name="PBD_SOURCE_TARGET_MAP"/>
-    			<output name="PBD_SOURCE_NODE_MAP"/>
+    			<output name="PBD_INDEX"/>
+    			<output name="MIP_INDEX"/>
     		</operation>
 
 	        <!-- Do pbds first -->
-	        <sequence forEach="PBD_SOURCE_PATH_GROUPS" waitForAsync="true">
+	        <sequence forEach="PBD_INDEX" waitForAsync="true">
 	            <sequence async="true">
 	                <sequence>
 
-				        <!-- Service instance for processing each PBD Group -->
+				        <!-- Service instance for processing each PBD Group. This also adds to the MIP Groups -->
 				        <operation name="Create PBD Lists" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FileTreeLoaderService">
 				            <input name="MODE" value="PBDLIST"/>
-				            <input name="PBD_SOURCE_PATH_GROUPS"/>
-				            <output name="PBD_NODE_LIST"/>
+				            <input name="PBD_INDEX"/>
+ 			                <input name="TOP_LEVEL_FOLDER_NAME"/>
+    			            <input name="FILE_TREE_ROOT_DIRECTORY"/>
+    				        <output name="PBD_RESULT_NODE"/>
 				            <output name="PBD_INPUT_LIST"/>
 				            <output name="PBD_OUTPUT_LIST"/>
 				        </operation>
@@ -70,11 +70,11 @@
                         <sequence name="PBD Generation" waitForAsync="true">
         		            <operation name="PBD Generation" processor="queue/gridSubmitAndWait">
         				        <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DConversionService"/>
-        				        <input name="PBD_NODE_LIST"/>
+        				        <input name="PBD_RESULT_NODE"/>
         				        <input name="PBD_INPUT_LIST"/>
         				        <input name="PBD_OUTPUT_LIST"/>
-        		                <input name="RESULT_FILE_NODE_LIST" value="$V{PBD_NODE_LIST}"/>
-        	    		        <input name="OUTPUT_FILE_NODE_LIST" value="$V{PBD_NODE_LIST}"/>
+        		                <input name="RESULT_FILE_NODE" value="$V{PBD_RESULT_NODE}"/>
+        	    		        <input name="OUTPUT_FILE_NODE" value="$V{PBD_RESULT_NODE}"/>
        		    		        <input name="INPUT_PATH_LIST" value="$V{PBD_INPUT_LIST}"/>
    						        <input name="OUTPUT_PATH_LIST" value="$V{PBD_OUTPUT_LIST}"/>
         				    </operation>
@@ -85,15 +85,17 @@
             </sequence>
 
 	        <!-- Do MIPs next to take advantage of pbd loading -->
-	        <sequence forEach="MIP_SOURCE_PATH_GROUPS" waitForAsync="true">
+	        <sequence forEach="MIP_INDEX" waitForAsync="true">
 	            <sequence async="true">
 	                <sequence>
 
 				        <!-- Service instance for processing each MIP Group -->
 				        <operation name="Create MIP Lists" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FileTreeLoaderService">
 				            <input name="MODE" value="MIPLIST"/>
-				            <input name="MIP_SOURCE_PATH_GROUPS"/>
-				            <output name="MIP_NODE_LIST"/>
+				            <input name="MIP_INDEX"/>
+ 			                <input name="TOP_LEVEL_FOLDER_NAME"/>
+    			            <input name="FILE_TREE_ROOT_DIRECTORY"/>
+				            <output name="MIP_RESULT_NODE"/>
 				            <output name="MIP_INPUT_LIST"/>
 				            <output name="MIP_OUTPUT_LIST"/>
 				        </operation>
@@ -101,11 +103,11 @@
                         <sequence name="MIP Generation" waitForAsync="true">
         		            <operation name="MIP Generation" processor="queue/gridSubmitAndWait">
         				        <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.MIPGenerationService"/>
-        				        <input name="MIP_NODE_LIST"/>
+        				        <input name="MIP_RESULT_NODE"/>
         				        <input name="MIP_INPUT_LIST"/>
         				        <input name="MIP_OUTPUT_LIST"/>
-        				        <input name="RESULT_FILE_NODE_LIST" value="$V{MIP_NODE_LIST}"/>
-        				        <input name="OUTPUT_FILE_NODE_LIST" value="$V{MIP_NODE_LIST}"/>
+        				        <input name="RESULT_FILE_NODE" value="$V{MIP_RESULT_NODE}"/>
+        				        <input name="OUTPUT_FILE_NODE" value="$V{MIP_RESULT_NODE}"/>
         				        <input name="INPUT_PATH_LIST" value="$V{MIP_INPUT_LIST}"/>
         				        <input name="OUTPUT_PATH_LIST" value="$V{MIP_OUTPUT_LIST}"/>
         				    </operation>
@@ -114,9 +116,9 @@
                         <sequence name="MIP Conversion to PNG" waitForAsync="true">
         		            <operation name="MIP Conversion to PNG" processor="queue/gridSubmitAndWait">
        			                <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ImageConversionService"/>
-        				        <input name="MIP_NODE_LIST"/>
-        		                <input name="RESULT_FILE_NODE_LIST" value="$V{MIP_NODE_LIST}"/>
-       		    		        <input name="OUTPUT_FILE_NODE_LIST" value="$V{MIP_NODE_LIST}"/>
+        				        <input name="MIP_NODE"/>
+        		                <input name="RESULT_FILE_NODE" value="$V{MIP_RESULT_NODE}"/>
+       		    		        <input name="OUTPUT_FILE_NODE" value="$V{MIP_RESULT_NODE}"/>
    						        <input name="INPUT_FILENAME_REGEX" value="((.*?)MIP)\.tif$"/>
         				        <input name="OUTPUT_FILENAME_PATTERN" value="$1.png"/>
         			        </operation>
@@ -130,14 +132,8 @@
                 <input name="MODE" value="COMPLETE"/>
    			    <input name="RESULT_NODE"/>
     			<input name="RESULT_NODE_ID"/>
-    			<input name="MIP_RESULT_NODE_GROUPS"/>
-    			<input name="MIP_SOURCE_PATH_GROUPS"/>
-    			<input name="MIP_SOURCE_TARGET_MAP"/>
-    			<input name="MIP_SOURCE_NODE_MAP"/>
-    			<input name="PBD_RESULT_NODE_GROUPS"/>
-    			<input name="PBD_SOURCE_PATH_GROUPS"/>
-    			<input name="PBD_SOURCE_TARGET_MAP"/>
-    			<input name="PBD_SOURCE_NODE_MAP"/>
+ 			    <input name="TOP_LEVEL_FOLDER_NAME"/>
+    			<input name="FILE_TREE_ROOT_DIRECTORY"/>
      	    </operation>
 
      	</sequence>
