@@ -307,4 +307,32 @@ public class FileDiscoveryService implements IService {
         }
     }
 
+    protected Entity verifyOrCreateVirtualSubFolder(Entity parentFolder, String subFolderName) throws Exception {
+        for (Entity child : parentFolder.getChildren()) {
+            if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) &&
+                    child.getName().equals(subFolderName)) {
+                return child;
+            }
+        }
+        // Need to create
+        Entity subFolder=addChildFolderToEntity(parentFolder, subFolderName, null);
+        return subFolder;
+    }
+
+    protected Entity addChildFolderToEntity(Entity parent, String name, String directoryPath) throws Exception {
+        Entity folder = new Entity();
+        folder.setCreationDate(createDate);
+        folder.setUpdatedDate(createDate);
+        folder.setUser(user);
+        folder.setName(name);
+        folder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+        if (directoryPath!=null) {
+            folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, directoryPath);
+        }
+        folder = annotationBean.saveOrUpdateEntity(folder);
+        logger.info("Saved folder " + name+" as " + folder.getId()+" , will now add as child to parent entity name="+parent.getName()+" parentId="+parent.getId());
+        addToParent(parent, folder, null, EntityConstants.ATTRIBUTE_ENTITY);
+        return folder;
+    }
+
 }

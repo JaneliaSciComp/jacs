@@ -1,12 +1,10 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
-import com.google.gwt.core.ext.linker.Artifact;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
-import org.janelia.it.jacs.compute.service.screen.FlyScreenSampleService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -15,12 +13,9 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.FileTreeLoaderResultNode;
-import org.janelia.it.jacs.model.user_data.entity.ScreenPipelineResultNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.util.*;
 
 /**
@@ -102,12 +97,15 @@ public class FileTreeLoaderService extends FileDiscoveryService {
     final public String PBD_EXTENSIONS="PBD_EXTENSIONS";
     final public String MIP_EXTENSIONS="MIP_EXTENSIONS";
 
+    final public String SUPPORTING_FILES_FOLDER_NAME="supportingFiles";
+
     protected Task task;
     protected String sessionName;
     protected String visibility;
     protected String topLevelFolderName;
     protected String rootDirectoryPath;
     protected Entity topLevelFolder;
+    protected Entity supportingFilesFolder;
     protected File rootDirectory;
     protected FileTreeLoaderResultNode resultNode;
     protected String mode;
@@ -149,6 +147,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
 
             topLevelFolderName=processData.getString("TOP_LEVEL_FOLDER_NAME");
             topLevelFolder=createOrVerifyRootEntity(topLevelFolderName);
+            supportingFilesFolder=verifyOrCreateVirtualSubFolder(topLevelFolder, SUPPORTING_FILES_FOLDER_NAME);
 
             rootDirectoryPath=processData.getString("FILE_TREE_ROOT_DIRECTORY");
             rootDirectory=new File(rootDirectoryPath);
@@ -283,15 +282,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         if (!alreadyExists) {
             // Assume the entity needs to be created
             EntityType entityType=getEntityTypeForFile(f);
-            fileEntity=new Entity();
-            fileEntity.setCreationDate(createDate);
-            fileEntity.setUpdatedDate(createDate);
-            fileEntity.setUser(user);
-            fileEntity.setName(f.getName());
-            fileEntity.setEntityType(entityType);
-            fileEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, f.getAbsolutePath());
-            fileEntity = annotationBean.saveOrUpdateEntity(fileEntity);
-            logger.info("Saved file "+f.getAbsolutePath()+" as entity="+fileEntity.getId());
+            fileEntity=createEntityForFile(f, entityType);
             addToParent(folder, fileEntity, index, EntityConstants.ATTRIBUTE_ENTITY);
         }
 
@@ -314,6 +305,19 @@ public class FileTreeLoaderService extends FileDiscoveryService {
             }
         }
 
+    }
+
+    protected Entity createEntityForFile(File f, EntityType entityType) throws Exception {
+        Entity fileEntity=new Entity();
+        fileEntity.setCreationDate(createDate);
+        fileEntity.setUpdatedDate(createDate);
+        fileEntity.setUser(user);
+        fileEntity.setName(f.getName());
+        fileEntity.setEntityType(entityType);
+        fileEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, f.getAbsolutePath());
+        fileEntity = annotationBean.saveOrUpdateEntity(fileEntity);
+        logger.info("Saved file "+f.getAbsolutePath()+" as entity="+fileEntity.getId());
+        return fileEntity;
     }
 
     protected void addToArtifactList(Entity pbdSourceEntity, String altSourcePath, Map<Long, List<ArtifactInfo>> groupMap) {
@@ -369,6 +373,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         for (ArtifactInfo ai : artifactList) {
             inputPathList.add(ai.sourcePath);
             String outputPath=resultNode.getDirectoryPath()+File.separator+"pbdArtifact_"+ai.sourceEntityId+".v3dpbd";
+            ai.artifactPath=outputPath;
             outputPathList.add(outputPath);
             // Add mip entry
             Entity sourceEntity=annotationBean.getEntityById(ai.sourceEntityId.toString());
@@ -393,6 +398,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         for (ArtifactInfo ai : artifactList) {
             inputPathList.add(ai.sourcePath);
             String outputPath=resultNode.getDirectoryPath()+File.separator+"mipArtifact_"+ai.sourceEntityId+".tif";
+            ai.artifactPath=resultNode.getDirectoryPath()+File.separator+"mipArtifact_"+ai.sourceEntityId+".png";
             outputPathList.add(outputPath);
         }
         processData.putItem("MIP_RESULT_NODE", resultNode);
@@ -400,8 +406,98 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         processData.putItem("MIP_OUTPUT_LIST", outputPathList);
     }
 
+    /*
+        doComplete()
 
+        Executes the following steps:
+
+        1. Iterates through each group of PBD results
+        2. Creates a new Entity for the PBD result
+        3. Adds this entity as a ATTRIBUTE_PERFORMANCE_PROXY_IMAGE attribute for the original source Entity
+        4. Builds a map of <sourceEntityId> => <PBD result entityId>
+        5. Then, iterates through each group of the MIP results
+        6. Creates a new Entity for the MIP result
+        7. Adds the MIP entity as the DEFAULT_2D_IMAGE for the matching PBD, if there is one
+        8. Adds the MIP entity as the DEFAULT_2D_IMAGE for the original source Entity
+
+     */
     protected void doComplete() throws Exception {
+        // Map for interconnecting PBD results with MIP results
+        Map<Long, Entity> sourceEntityIdToPbdEntityMap=new HashMap<Long, Entity>();
+
+        // Handle PBDs
+        EntityType pbdResultEntityType=annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+        List<Long> pbdGroupKeyList=new ArrayList(pbdGroupByTaskMap.keySet());
+        Collections.sort(pbdGroupKeyList);
+        for (Long pbdGroupKey : pbdGroupKeyList) {
+            List<ArtifactInfo> artifactList=pbdGroupMap.get(pbdGroupKey);
+            for (ArtifactInfo ai : artifactList) {
+                String pbdResultPath=ai.artifactPath;
+                if (pbdResultPath==null) {
+                    logger.error("pbdResultPath for sourceEntityId="+ai.sourceEntityId+" is null");
+                } else {
+                    File pbdResultFile=new File(pbdResultPath);
+                    if (!pbdResultFile.exists()) {
+                        logger.error("Could not find expected pbd result file="+pbdResultFile.getAbsolutePath()+" for sourceEntityId="+ai.sourceEntityId);
+                    } else {
+                        // First, create the pbdResultEntity and place it in the supporting files folder
+                        Entity pbdResultEntity=createEntityForFile(pbdResultFile, pbdResultEntityType);
+                        pbdResultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_ARTIFACT_SOURCE_ID, ai.sourceEntityId.toString());
+                        annotationBean.saveOrUpdateEntity(pbdResultEntity);
+                        addToParent(supportingFilesFolder, pbdResultEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
+                        // Second, add this entity as the proxy attribute of the source Entity
+                        Entity sourceEntity=annotationBean.getEntityById(ai.sourceEntityId.toString());
+                        EntityData ed=sourceEntity.addChildEntity(pbdResultEntity, EntityConstants.ATTRIBUTE_PERFORMANCE_PROXY_IMAGE);
+                        annotationBean.saveOrUpdateEntityData(ed);
+                        // Populate map
+                        sourceEntityIdToPbdEntityMap.put(ai.sourceEntityId, pbdResultEntity);
+                    }
+                }
+            }
+        }
+
+        // Handle MIPs
+        EntityType mipResultEntityType=annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
+        List<Long> mipGroupKeyList=new ArrayList<Long>(mipGroupByTaskMap.keySet());
+        Collections.sort(mipGroupKeyList);
+        for (Long mipGroupKey : mipGroupKeyList) {
+            List<ArtifactInfo> artifactList=mipGroupMap.get(mipGroupKey);
+            for (ArtifactInfo ai : artifactList) {
+                String mipResultPath=ai.artifactPath;
+                if (mipResultPath==null) {
+                    logger.error("mipResultPath for sourceEntityId="+ai.sourceEntityId+" is null");
+                } else {
+                    File mipResultFile=new File(mipResultPath);
+                    if (!mipResultFile.exists()) {
+                        logger.error("Could not find expected mip result file="+mipResultFile.getAbsolutePath()+" for sourceEntityId="+ai.sourceEntityId);
+                    } else {
+                        // Create the mip entity
+                        Entity mipResultEntity=createEntityForFile(mipResultFile, mipResultEntityType);
+                        mipResultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_ARTIFACT_SOURCE_ID, ai.sourceEntityId.toString());
+                        annotationBean.saveOrUpdateEntity(mipResultEntity);
+                        addToParent(supportingFilesFolder, mipResultEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
+                        // Add as default 2D image
+                        Entity sourceEntity=annotationBean.getEntityById(ai.sourceEntityId.toString());
+                        EntityData ed=sourceEntity.addChildEntity(mipResultEntity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+                        annotationBean.saveOrUpdateEntityData(ed);
+                        // Get PBD and add 2D default image for this
+                        Entity pbdForMip=sourceEntityIdToPbdEntityMap.get(ai.sourceEntityId);
+                        if (pbdForMip!=null) {
+                            EntityData pbdEd=pbdForMip.addChildEntity(mipResultEntity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+                            annotationBean.saveOrUpdateEntityData(pbdEd);
+                        }
+                        // Delete extra tif file
+                        String pngName=mipResultFile.getName();
+                        if (pngName.endsWith(".png")) {
+                            String tifName=pngName.substring(0, pngName.length()-4)+".tif";
+                            File tifFile=new File(mipResultFile.getParentFile(), tifName);
+                            tifFile.delete();
+                        }
+                    }
+                }
+            }
+        }
+
 
         clearResultMaps();
     }
