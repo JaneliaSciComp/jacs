@@ -42,7 +42,7 @@ public class SupportingFilesDiscoveryService extends FileDiscoveryService {
     }
     
     @Override
-    protected Entity verifyOrCreateChildFolderFromDir(Entity parentFolder, File dir) throws Exception {
+    protected Entity verifyOrCreateChildFolderFromDir(Entity parentFolder, File dir, Integer index) throws Exception {
 
         logger.info("Discovering supporting files in "+dir.getAbsolutePath());
     	

@@ -32,7 +32,7 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     }
     
     @Override
-    protected Entity verifyOrCreateChildFolderFromDir(Entity parentFolder, File dir) throws Exception {
+    protected Entity verifyOrCreateChildFolderFromDir(Entity parentFolder, File dir, Integer index) throws Exception {
 
     	if (!parentFolder.getEntityType().getName().equals(EntityConstants.TYPE_SAMPLE)) {
     		throw new IllegalStateException("Expected Sample as top-level folder");
@@ -40,7 +40,7 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     	
     	sampleEntity = parentFolder;
     	
-    	return super.verifyOrCreateChildFolderFromDir(parentFolder, dir);
+    	return super.verifyOrCreateChildFolderFromDir(parentFolder, dir, index);
     }
     
     @Override
