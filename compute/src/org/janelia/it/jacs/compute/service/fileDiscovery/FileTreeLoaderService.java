@@ -394,9 +394,6 @@ public class FileTreeLoaderService extends FileDiscoveryService {
             inputPathList.add(ai.sourcePath);
             String outputPath=resultNode.getDirectoryPath()+File.separator+"mipArtifact_"+ai.sourceEntityId+".tif";
             outputPathList.add(outputPath);
-            // Add mip entry
-            Entity sourceEntity=annotationBean.getEntityById(ai.sourceEntityId.toString());
-            addToArtifactList(sourceEntity, outputPath, mipGroupMap);
         }
         processData.putItem("MIP_RESULT_NODE", resultNode);
         processData.putItem("MIP_INPUT_LIST", inputPathList);
