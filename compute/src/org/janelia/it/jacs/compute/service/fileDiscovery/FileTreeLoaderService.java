@@ -383,7 +383,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         FileTreeLoaderResultNode resultNode=new FileTreeLoaderResultNode(user.getUserLogin(), task, "FileTreeLoaderResultNode",
                 "FileTreeLoaderResultNode for "+rootDirectoryPath+" pbd group index="+groupIndex, visibility, sessionName);
         resultNode=(FileTreeLoaderResultNode)computeBean.saveOrUpdateNode(resultNode);
-        logger.info("Created resultNode id="+resultNode.getObjectId()+" PBD groupIndex="+groupIndex);
+        logger.info("Created resultNode id="+resultNode.getObjectId()+" PBD groupIndex="+groupIndex+" listSize="+artifactList.size());
         FileUtil.ensureDirExists(resultNode.getDirectoryPath());
         List<String> inputPathList=new ArrayList<String>();
         List<String> outputPathList=new ArrayList<String>();
@@ -396,6 +396,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
             Entity sourceEntity=annotationBean.getEntityById(ai.sourceEntityId.toString());
             addToArtifactList(sourceEntity, outputPath, mipGroupMap);
         }
+        logger.info("doPbdList() putting vars in processData, inputListSize="+inputPathList.size()+" outputListSize="+outputPathList.size());
         processData.putItem("PBD_RESULT_NODE", resultNode);
         processData.putItem("PBD_INPUT_LIST", inputPathList);
         processData.putItem("PBD_OUTPUT_LIST", outputPathList);
@@ -413,7 +414,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         FileTreeLoaderResultNode resultNode=new FileTreeLoaderResultNode(user.getUserLogin(), task, "FileTreeLoaderResultNode",
                 "FileTreeLoaderResultNode for "+rootDirectoryPath+" mip group index="+groupIndex, visibility, sessionName);
         resultNode=(FileTreeLoaderResultNode)computeBean.saveOrUpdateNode(resultNode);
-        logger.info("Created resultNode id="+resultNode.getObjectId()+" MIP groupIndex="+groupIndex);
+        logger.info("Created resultNode id="+resultNode.getObjectId()+" MIP groupIndex="+groupIndex+" listSize="+artifactList.size());
         FileUtil.ensureDirExists(resultNode.getDirectoryPath());
         List<String> inputPathList=new ArrayList<String>();
         List<String> outputPathList=new ArrayList<String>();
@@ -423,6 +424,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
             ai.artifactPath=resultNode.getDirectoryPath()+File.separator+"mipArtifact_"+ai.sourceEntityId+".png";
             outputPathList.add(outputPath);
         }
+        logger.info("doMipList() putting vars in processData, inputListSize="+inputPathList.size()+" outputListSize="+outputPathList.size());
         processData.putItem("MIP_RESULT_NODE", resultNode);
         processData.putItem("MIP_INPUT_LIST", inputPathList);
         processData.putItem("MIP_OUTPUT_LIST", outputPathList);

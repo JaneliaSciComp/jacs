@@ -138,107 +138,119 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
 
         boolean inputPathListAlreadySpecified=false;
         boolean outputPathListAlreadySpecified=false;
-        if (inputPathListGlobal!=null && inputPathListGlobal.size()==outputFileNodes.size()) {
+
+        if (inputPathListGlobal!=null && outputPathListGlobal!=null &&
+                (inputPathListGlobal.size()==outputPathListGlobal.size())) {
             for (String filepath : inputPathListGlobal) {
                 inputFiles.add(new File(filepath));
             }
-            inputPathListAlreadySpecified=true;
-        }
-        if (outputPathListGlobal!=null && outputPathListGlobal.size()==outputFileNodes.size()) {
             for (String filepath : outputPathListGlobal) {
                 outputFiles.add(new File(filepath));
             }
-            outputPathListAlreadySpecified=true;
-        }
-        for (FileNode outputNode: outputFileNodes) {
-        	if (DEBUG) logger.info("Process output file node: "+outputNode.getDirectoryPath());
-            // -1 is a mechanism for us to handle the global case
-            for (int argIndex=GLOBAL_CASE; argIndex<argumentIndex-1; argIndex++) {
+        } else {
 
-                File inputDir=null;
-                if (alternateWorkingDirectory!=null && alternateWorkingDirectory.trim().length()>0) {
-                    inputDir=new File(alternateWorkingDirectory);
-                } else {
-                    inputDir=new File(outputNode.getDirectoryPath());
+            if (inputPathListGlobal!=null && inputPathListGlobal.size()==outputFileNodes.size()) {
+                for (String filepath : inputPathListGlobal) {
+                    inputFiles.add(new File(filepath));
                 }
+                inputPathListAlreadySpecified=true;
+            }
+            if (outputPathListGlobal!=null && outputPathListGlobal.size()==outputFileNodes.size()) {
+                for (String filepath : outputPathListGlobal) {
+                    outputFiles.add(new File(filepath));
+                }
+                outputPathListAlreadySpecified=true;
+            }
+            for (FileNode outputNode: outputFileNodes) {
+                if (DEBUG) logger.info("Process output file node: "+outputNode.getDirectoryPath());
+                // -1 is a mechanism for us to handle the global case
+                for (int argIndex=GLOBAL_CASE; argIndex<argumentIndex-1; argIndex++) {
 
-                File inputFile=null;
+                    File inputDir=null;
+                    if (alternateWorkingDirectory!=null && alternateWorkingDirectory.trim().length()>0) {
+                        inputDir=new File(alternateWorkingDirectory);
+                    } else {
+                        inputDir=new File(outputNode.getDirectoryPath());
+                    }
 
-            	if (DEBUG) logger.info("  argIndex: "+argIndex);
-            	if (DEBUG) logger.info("    Inputs...");
-                // First do input, then output
-                if (!inputPathListAlreadySpecified) {
-                	
-                	if (argIndex==GLOBAL_CASE) {
-                        if (inputNameGlobal!=null) {
-                        	if (DEBUG) logger.info("      Global Case 1: inputNameGlobal:"+inputNameGlobal);
-                            inputFile=new File(inputDir.getAbsolutePath(), inputNameGlobal);
-                        } 
-                        else if (inputRegexGlobal!=null && outputPatternGlobal!=null) {
-                        	if (DEBUG) logger.info("      Global Case 2: inputRegexGlobal:"+inputRegexGlobal+", outputPatternGlobal:"+outputPatternGlobal);
-                            String[] inputFilenames=getFilesMatching(inputDir, inputRegexGlobal);
-                            for (String inputFilename : inputFilenames) {
-                                String outputFilename = inputFilename.replaceAll(inputRegexGlobal, outputPatternGlobal);
-                                inputFiles.add(new File(inputDir, inputFilename));
-                                outputFiles.add(new File(inputDir, outputFilename));
+                    File inputFile=null;
+
+                    if (DEBUG) logger.info("  argIndex: "+argIndex);
+                    if (DEBUG) logger.info("    Inputs...");
+                    // First do input, then output
+                    if (!inputPathListAlreadySpecified) {
+
+                        if (argIndex==GLOBAL_CASE) {
+                            if (inputNameGlobal!=null) {
+                                if (DEBUG) logger.info("      Global Case 1: inputNameGlobal:"+inputNameGlobal);
+                                inputFile=new File(inputDir.getAbsolutePath(), inputNameGlobal);
                             }
-                        } 
-                	}
-                	else {
-                        if (!inputNameList.isEmpty()) {
-                        	if (DEBUG) logger.info("      Case 1: inputNameList:"+inputNameList.size());
-                            inputFile=new File(inputDir.getAbsolutePath(), inputNameList.get(argIndex));
-                        } 
-                        else if (!inputPathList.isEmpty()) {
-                        	if (DEBUG) logger.info("      Case 2: inputPathList:"+inputPathList.size());
-                            inputFile=new File(inputPathList.get(argIndex));
-                        }
-                        else if (!inputRegexList.isEmpty() && !outputPatternList.isEmpty()) {
-                        	if (DEBUG) logger.info("      Case 3: inputRegexList:"+inputRegexList.size());
-                            String regex = inputRegexList.get(argIndex);
-                            String pattern = outputPatternList.get(argIndex);
-                            String[] inputFilenames = getFilesMatching(inputDir, regex);
-                            for (String inputFilename : inputFilenames) {
-                                String outputFilename = inputFilename.replaceAll(regex, pattern);
-                                inputFiles.add(new File(inputDir, inputFilename));
-                                outputFiles.add(new File(inputDir, outputFilename));
+                            else if (inputRegexGlobal!=null && outputPatternGlobal!=null) {
+                                if (DEBUG) logger.info("      Global Case 2: inputRegexGlobal:"+inputRegexGlobal+", outputPatternGlobal:"+outputPatternGlobal);
+                                String[] inputFilenames=getFilesMatching(inputDir, inputRegexGlobal);
+                                for (String inputFilename : inputFilenames) {
+                                    String outputFilename = inputFilename.replaceAll(inputRegexGlobal, outputPatternGlobal);
+                                    inputFiles.add(new File(inputDir, inputFilename));
+                                    outputFiles.add(new File(inputDir, outputFilename));
+                                }
                             }
                         }
-                	}
-                	
-                    if (inputFile!=null) {
-                    	inputFiles.add(inputFile);
-                    }
-                }
-
-                // Now output
-            	if (DEBUG) logger.info("    Outputs...");
-                if (!outputPathListAlreadySpecified) {
-                    File outputFile=null;
-                	
-                	if (argIndex==GLOBAL_CASE) {
-                        if (outputNameGlobal!=null) {
-                        	if (DEBUG) logger.info("      Global Case 1: outputNameGlobal:"+outputNameGlobal);
-                            outputFile=new File(inputDir.getAbsolutePath(), outputNameGlobal);
-                        } 
-                	}
-                	else {
-                        if (!outputNameList.isEmpty()) {
-                        	if (DEBUG) logger.info("      Case 1: outputNameList:"+outputNameList.size());
-                            outputFile=new File(inputDir.getAbsolutePath(), outputNameList.get(argIndex));
-                        } 
-                        else if (!outputPathList.isEmpty()) {
-                        	if (DEBUG) logger.info("      Case 2: outputPathList:"+outputPathList.size());
-                            outputFile=new File(outputPathList.get(argIndex));
+                        else {
+                            if (!inputNameList.isEmpty()) {
+                                if (DEBUG) logger.info("      Case 1: inputNameList:"+inputNameList.size());
+                                inputFile=new File(inputDir.getAbsolutePath(), inputNameList.get(argIndex));
+                            }
+                            else if (!inputPathList.isEmpty()) {
+                                if (DEBUG) logger.info("      Case 2: inputPathList:"+inputPathList.size());
+                                inputFile=new File(inputPathList.get(argIndex));
+                            }
+                            else if (!inputRegexList.isEmpty() && !outputPatternList.isEmpty()) {
+                                if (DEBUG) logger.info("      Case 3: inputRegexList:"+inputRegexList.size());
+                                String regex = inputRegexList.get(argIndex);
+                                String pattern = outputPatternList.get(argIndex);
+                                String[] inputFilenames = getFilesMatching(inputDir, regex);
+                                for (String inputFilename : inputFilenames) {
+                                    String outputFilename = inputFilename.replaceAll(regex, pattern);
+                                    inputFiles.add(new File(inputDir, inputFilename));
+                                    outputFiles.add(new File(inputDir, outputFilename));
+                                }
+                            }
                         }
-                	}
-                    
-                    if (outputFile!=null) {
-                    	outputFiles.add(outputFile);
+
+                        if (inputFile!=null) {
+                            inputFiles.add(inputFile);
+                        }
                     }
-            		
+
+                    // Now output
+                    if (DEBUG) logger.info("    Outputs...");
+                    if (!outputPathListAlreadySpecified) {
+                        File outputFile=null;
+
+                        if (argIndex==GLOBAL_CASE) {
+                            if (outputNameGlobal!=null) {
+                                if (DEBUG) logger.info("      Global Case 1: outputNameGlobal:"+outputNameGlobal);
+                                outputFile=new File(inputDir.getAbsolutePath(), outputNameGlobal);
+                            }
+                        }
+                        else {
+                            if (!outputNameList.isEmpty()) {
+                                if (DEBUG) logger.info("      Case 1: outputNameList:"+outputNameList.size());
+                                outputFile=new File(inputDir.getAbsolutePath(), outputNameList.get(argIndex));
+                            }
+                            else if (!outputPathList.isEmpty()) {
+                                if (DEBUG) logger.info("      Case 2: outputPathList:"+outputPathList.size());
+                                outputFile=new File(outputPathList.get(argIndex));
+                            }
+                        }
+
+                        if (outputFile!=null) {
+                            outputFiles.add(outputFile);
+                        }
+
+                    }
+
                 }
-                
             }
         }
         
