@@ -144,19 +144,27 @@ public class FileTreeLoaderService extends FileDiscoveryService {
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
             visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
 
-
+            logger.info("Creating top-level folder");
             topLevelFolderName=processData.getString("TOP_LEVEL_FOLDER_NAME");
             topLevelFolder=createOrVerifyRootEntity(topLevelFolderName);
+
+            logger.info("Creating supporting files folder");
             supportingFilesFolder=verifyOrCreateVirtualSubFolder(topLevelFolder, SUPPORTING_FILES_FOLDER_NAME);
 
+            logger.info("Validating root directorypath");
             rootDirectoryPath=processData.getString("FILE_TREE_ROOT_DIRECTORY");
             rootDirectory=new File(rootDirectoryPath);
             if (!rootDirectory.exists()) {
                 throw new Exception("Could not find rootDirectory="+rootDirectory.getAbsolutePath());
             }
+
+            logger.info("Getting GROUP_SIZE");
             groupSize = new Integer(processData.getString("GROUP_SIZE").trim());
+
+            logger.info("Getting MODE");
             mode = processData.getString("MODE");
 
+            logger.info("Establishing GroupMaps");
             pbdGroupMap=getPbdGroupMap(task, false /*remove*/);
             mipGroupMap=getMipGroupMap(task, false /*remove*/);
 
@@ -168,6 +176,8 @@ public class FileTreeLoaderService extends FileDiscoveryService {
                 doMipList();
             } else if (mode.equals(MODE_COMPLETE)) {
                 doComplete();
+            } else {
+                throw new Exception("Do not recognize mode="+mode);
             }
 
        } catch (Exception e) {
@@ -247,9 +257,11 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         processData.putItem("GROUP_SIZE", new Long(groupSize).toString());
         List<Long> pbdKeyList=new ArrayList<Long>(pbdGroupMap.keySet());
         Collections.sort(pbdKeyList);
+        logger.info("pbdKeyList has "+pbdKeyList.size()+" entries");
         processData.putItem("PBD_INDEX", pbdKeyList);
         List<Long> mipKeyList=new ArrayList<Long>(mipGroupMap.keySet());
         Collections.sort(mipKeyList);
+        logger.info("mipKeyList has "+mipKeyList.size()+" entries");
         processData.putItem("MIP_INDEX", mipKeyList);
 
         logger.info("Finishing doSetup()");
@@ -365,7 +377,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
     protected void doPbdList() throws Exception {
         logger.info("Starting doPbdList()");
 
-        Long groupIndex=new Long(processData.getString("PBD_INDEX").trim());
+        Long groupIndex=processData.getLong("PBD_INDEX");
         logger.info("PBD_INDEX="+groupIndex);
         List<ArtifactInfo> artifactList=pbdGroupMap.get(groupIndex);
         FileTreeLoaderResultNode resultNode=new FileTreeLoaderResultNode(user.getUserLogin(), task, "FileTreeLoaderResultNode",
@@ -395,7 +407,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
     protected void doMipList() throws Exception {
         logger.info("Starting doMipList()");
 
-        Long groupIndex=new Long(processData.getString("MIP_INDEX").trim());
+        Long groupIndex=processData.getLong("MIP_INDEX");
         logger.info("MIP_INDEX="+groupIndex);
         List<ArtifactInfo> artifactList=mipGroupMap.get(groupIndex);
         FileTreeLoaderResultNode resultNode=new FileTreeLoaderResultNode(user.getUserLogin(), task, "FileTreeLoaderResultNode",

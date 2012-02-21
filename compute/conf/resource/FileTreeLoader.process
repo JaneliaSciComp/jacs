@@ -59,6 +59,7 @@
 				        <!-- Service instance for processing each PBD Group. This also adds to the MIP Groups -->
 				        <operation name="Create PBD Lists" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FileTreeLoaderService">
 				            <input name="MODE" value="PBDLIST"/>
+				            <input name="GROUP_SIZE"/>
 				            <input name="PBD_INDEX"/>
  			                <input name="TOP_LEVEL_FOLDER_NAME"/>
     			            <input name="FILE_TREE_ROOT_DIRECTORY"/>
@@ -92,6 +93,7 @@
 				        <!-- Service instance for processing each MIP Group -->
 				        <operation name="Create MIP Lists" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FileTreeLoaderService">
 				            <input name="MODE" value="MIPLIST"/>
+				            <input name="GROUP_SIZE"/>
 				            <input name="MIP_INDEX"/>
  			                <input name="TOP_LEVEL_FOLDER_NAME"/>
     			            <input name="FILE_TREE_ROOT_DIRECTORY"/>
@@ -130,6 +132,7 @@
 
             <operation name="Completion Step for Entity Creation" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FileTreeLoaderService">
                 <input name="MODE" value="COMPLETE"/>
+                <input name="GROUP_SIZE"/>
    			    <input name="RESULT_NODE"/>
     			<input name="RESULT_NODE_ID"/>
  			    <input name="TOP_LEVEL_FOLDER_NAME"/>
