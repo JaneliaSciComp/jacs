@@ -158,8 +158,8 @@ public class FileTreeLoaderService extends FileDiscoveryService {
             groupSize = new Integer(processData.getString("GROUP_SIZE").trim());
             mode = processData.getString("MODE");
 
-            pbdGroupMap=getPbdGroupMap();
-            mipGroupMap=getMipGroupMap();
+            pbdGroupMap=getPbdGroupMap(task);
+            mipGroupMap=getMipGroupMap(task);
 
             if (mode.equals(MODE_SETUP)) {
                 doSetup();
@@ -176,7 +176,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         }
     }
 
-    protected Map<Long, List<ArtifactInfo>> getPbdGroupMap() {
+    protected static synchronized Map<Long, List<ArtifactInfo>> getPbdGroupMap(Task task) {
         Long taskId=task.getObjectId();
         if (taskId==null) {
             return null;
@@ -189,7 +189,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         return pbdGroupMap;
     }
 
-    protected Map<Long, List<ArtifactInfo>> getMipGroupMap() {
+    protected static synchronized Map<Long, List<ArtifactInfo>> getMipGroupMap(Task task) {
         Long taskId=task.getObjectId();
         if (taskId==null) {
             return null;
