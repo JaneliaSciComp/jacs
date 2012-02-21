@@ -93,17 +93,17 @@ public class Vaa3DHelper {
     }
 
     public static String getFormattedMIPCommand(String inputFilepath, String outputFilepath, String extraOptions) throws ServiceException {
-    	String cmd = VAA3D_BASE_CMD +" -cmd image-loader -mip "+inputFilepath+" "+outputFilepath+" "+extraOptions;
+    	String cmd = VAA3D_BASE_CMD +" -cmd image-loader -mip \""+inputFilepath+"\" \""+outputFilepath+"\" "+extraOptions;
     	return cmd+" ;";
     }
 
     public static String getMapChannelCommand(String inputFilepath, String outputFilepath, String mapchannelString) throws ServiceException {
-        String cmd = VAA3D_BASE_CMD +" -cmd image-loader -mapchannels "+inputFilepath+" "+outputFilepath+" "+mapchannelString;
+        String cmd = VAA3D_BASE_CMD +" -cmd image-loader -mapchannels \""+inputFilepath+"\" \""+outputFilepath+"\" "+mapchannelString;
         return cmd+" ;";
     }
 
     public static String getPatternAnnotationCommand(String inputStackFilepath, int patternChannel, String outputPrefix, String resourceDirPath, String outputDirPath) throws ServiceException {
-        String cmd = VAA3D_BASE_CMD +" -cmd screen-pattern-annotator -input "+inputStackFilepath+" -pattern_channel "+patternChannel+" -prefix "+outputPrefix+" -resourceDir "+resourceDirPath+" -outputDir "+outputDirPath;
+        String cmd = VAA3D_BASE_CMD +" -cmd screen-pattern-annotator -input \""+inputStackFilepath+"\" -pattern_channel "+patternChannel+" -prefix "+outputPrefix+" -resourceDir "+resourceDirPath+" -outputDir \""+outputDirPath+"\"";
         return cmd+" ;";
     }
     
@@ -112,7 +112,7 @@ public class Vaa3DHelper {
     }
 
     public static String getFormattedConvertCommand(String inputFilepath, String outputFilepath, String saveTo8bit) throws ServiceException {
-    	return VAA3D_BASE_CMD +" -cmd image-loader -convert"+saveTo8bit+" "+inputFilepath+" "+outputFilepath+" ;";
+    	return VAA3D_BASE_CMD +" -cmd image-loader -convert"+saveTo8bit+" \""+inputFilepath+"\" \""+outputFilepath+"\" ;";
     }
     
     public static int getRandomPort() {
