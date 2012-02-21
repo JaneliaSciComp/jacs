@@ -195,5 +195,25 @@
             <type>java.lang.String</type>
         </parameter>
     </operation>
+
+    <operation>
+        <description>Run the File Tree Loader Pipeline</description>
+        <name>runFileTreeLoaderPipeline</name>
+        <parameter>
+            <description>User to run as (e.g. "system")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Root directory path of tree to import</description>
+            <name>rootDirectoryPath</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Name for top-level folder in Workstation</description>
+            <name>topLevelFolderName</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
     
 </mbean>
