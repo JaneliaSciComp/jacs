@@ -210,6 +210,8 @@ public class FileTreeLoaderService extends FileDiscoveryService {
     }
 
     protected void doSetup() throws Exception {
+        logger.info("Starting doSetup()");
+
         // Initialize vars for this section
         String pbdExtensionString=processData.getString(PBD_EXTENSIONS);
         if (pbdExtensionString!=null) {
@@ -250,7 +252,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         Collections.sort(mipKeyList);
         processData.putItem("MIP_INDEX", mipKeyList);
 
-
+        logger.info("Finishing doSetup()");
     }
 
     protected void addDirectoryAndContentsToFolder(Entity folder, File dir, Integer index) throws Exception {
@@ -361,7 +363,10 @@ public class FileTreeLoaderService extends FileDiscoveryService {
     }
 
     protected void doPbdList() throws Exception {
+        logger.info("Starting doPbdList()");
+
         Long groupIndex=new Long(processData.getString("PBD_INDEX").trim());
+        logger.info("PBD_INDEX="+groupIndex);
         List<ArtifactInfo> artifactList=pbdGroupMap.get(groupIndex);
         FileTreeLoaderResultNode resultNode=new FileTreeLoaderResultNode(user.getUserLogin(), task, "FileTreeLoaderResultNode",
                 "FileTreeLoaderResultNode for "+rootDirectoryPath+" pbd group index="+groupIndex, visibility, sessionName);
@@ -382,11 +387,16 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         processData.putItem("PBD_RESULT_NODE", resultNode);
         processData.putItem("PBD_INPUT_LIST", inputPathList);
         processData.putItem("PBD_OUTPUT_LIST", outputPathList);
+
+        logger.info("Finished doPbdList()");
     }
 
 
     protected void doMipList() throws Exception {
+        logger.info("Starting doMipList()");
+
         Long groupIndex=new Long(processData.getString("MIP_INDEX").trim());
+        logger.info("MIP_INDEX="+groupIndex);
         List<ArtifactInfo> artifactList=mipGroupMap.get(groupIndex);
         FileTreeLoaderResultNode resultNode=new FileTreeLoaderResultNode(user.getUserLogin(), task, "FileTreeLoaderResultNode",
                 "FileTreeLoaderResultNode for "+rootDirectoryPath+" mip group index="+groupIndex, visibility, sessionName);
@@ -404,6 +414,8 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         processData.putItem("MIP_RESULT_NODE", resultNode);
         processData.putItem("MIP_INPUT_LIST", inputPathList);
         processData.putItem("MIP_OUTPUT_LIST", outputPathList);
+
+        logger.info("Finished doMipList()");
     }
 
     /*
@@ -422,6 +434,8 @@ public class FileTreeLoaderService extends FileDiscoveryService {
 
      */
     protected void doComplete() throws Exception {
+        logger.info("Starting doComplete()");
+
         // Map for interconnecting PBD results with MIP results
         Map<Long, Entity> sourceEntityIdToPbdEntityMap=new HashMap<Long, Entity>();
 
@@ -500,6 +514,8 @@ public class FileTreeLoaderService extends FileDiscoveryService {
 
 
         clearResultMaps();
+
+        logger.info("Finished doComplete()");
     }
 
     protected void clearResultMaps() {
