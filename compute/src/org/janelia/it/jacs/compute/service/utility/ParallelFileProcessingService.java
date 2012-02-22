@@ -22,7 +22,7 @@ import java.util.List;
  */
 public abstract class ParallelFileProcessingService extends SubmitDrmaaJobService {
 
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
     private static final int GLOBAL_CASE = -1;
 
     // These 2 vars are the core which must be populated for the service to run.
