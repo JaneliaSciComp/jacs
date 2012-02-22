@@ -12,11 +12,14 @@ set -o errexit
 FWVER=$1
 SERVER=$2
 
+SVN_OPTIONS="--trust-server-cert --non-interactive"
+
 INSTALL_VAA3D=$3
 INSTALL_NEUSEP=$4
-INSTALL_DATA_SERVER=$5
-INSTALL_PROD_SERVER=$6
-INSTALL_CLIENT=$7
+INSTALL_SCRIPTS=$5
+INSTALL_DATA_SERVER=$6
+INSTALL_PROD_SERVER=$7
+INSTALL_CLIENT=$8
 
 JACSDATA_DIR="/groups/scicomp/jacsData"
 EXE_DIR="$JACSDATA_DIR/servers/$SERVER/executables"
@@ -33,6 +36,10 @@ VAA3D_INSTALL_FEDORA_DIR="$INSTALL_DIR/vaa3d_FlySuite_${FWVER}-fedora"
 NEUSEP_INSTALL_REDHAT_DIR="$INSTALL_DIR/neusep_FlySuite_${FWVER}-redhat"
 VAA3D_INSTALL_SYMLINK="$INSTALL_DIR/vaa3d-redhat"
 NEUSEP_INSTALL_SYMLINK="$INSTALL_DIR/neusep-redhat"
+SCRIPTS_INSTALL_DIR="$INSTALL_DIR/scripts_${FWVER}"
+SCRIPTS_INSTALL_SYMLINK="$INSTALL_DIR/scripts"
+ALIGN_TEMPLATES_DIR="$JACSDATA_DIR/AlignTemplates"
+ALIGN_TEMPLATES_SYMLINK="$INSTALL_DIR/scripts/BrainAligner/AlignTemplates"
 
 STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
 PACKAGE_MAC_DIR="$STAGING_DIR/FlySuite_${FWVER}"
@@ -81,6 +88,23 @@ if [ $INSTALL_NEUSEP == 1 ]; then
     echo "Creating symbolic link at $NEUSEP_INSTALL_SYMLINK"
     rm $NEUSEP_INSTALL_SYMLINK || true
     ln -s $NEUSEP_INSTALL_REDHAT_DIR $NEUSEP_INSTALL_SYMLINK
+fi
+
+################################################################
+# Install Scripts
+################################################################
+if [ $INSTALL_SCRIPTS == 1 ]; then
+    echo "Installing single neuron scripts in $SCRIPTS_INSTALL_DIR"
+    rm -rf $SCRIPTS_INSTALL_DIR || true
+    mkdir -p $SCRIPTS_INSTALL_DIR
+    svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk/compute/scripts/single_neuron $SCRIPTS_INSTALL_DIR/single_neuron
+
+    echo "Creating symbolic links at $ALIGN_TEMPLATES_SYMLINK"
+    ln -s $ALIGN_TEMPLATES_DIR $ALIGN_TEMPLATES_SYMLINK
+
+    echo "Creating symbolic link at $SCRIPTS_INSTALL_SYMLINK"
+    rm $SCRIPTS_INSTALL_SYMLINK || true
+    ln -s $SCRIPTS_INSTALL_DIR $SCRIPTS_INSTALL_SYMLINK 
 fi
 
 ################################################################
