@@ -1,18 +1,20 @@
 package org.janelia.it.jacs.compute.api;
 
+import java.util.*;
+
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
-
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import java.util.*;
 
 @Stateless(name = "AnnotationEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
@@ -51,6 +53,16 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
     }
 
+    public List<Task> getAnnotationSessionTasks(String username) throws ComputeException {
+        try {
+             return _annotationDAO.getAnnotationSessions(username);
+        }
+        catch (Exception e) {
+            _logger.error("Unexpected error occurred while trying to get annotations for entities "+username, e);
+            throw new ComputeException("Coud not get annotations for entities ",e);
+        }
+    }
+
     public List<Entity> getAnnotationsForEntities(String username, List<Long> entityIds) throws ComputeException {
         try {
             return _annotationDAO.getAnnotationsByEntityId(username, entityIds);
@@ -66,7 +78,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     	entityIds.add(entityId);
     	return getAnnotationsForEntities(username, entityIds);
     }
-
+    
     public List<Entity> getAnnotationsForSession(String username, long sessionId) throws ComputeException {
         try {
         	return _annotationDAO.getAnnotationsForSession(username, sessionId);

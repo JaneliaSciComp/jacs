@@ -1030,6 +1030,16 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
+    public List<Task> getAnnotationSessions(String userLogin) throws DaoException {
+		try {
+	        String hql = "select clazz from Task clazz where subclass='" + AnnotationSessionTask.TASK_NAME + "' and clazz.owner='" + userLogin + "' order by clazz.objectId";
+	        Query query = sessionFactory.getCurrentSession().createQuery(hql);
+	        return query.list();
+	    } catch (Exception e) {
+	        throw new DaoException(e);
+	    }
+    }
+    
     public List<Entity> getAnnotationsByEntityId(String userLogin, List<Long> entityIds) throws DaoException {
         try {
         	if (entityIds.isEmpty()) {
