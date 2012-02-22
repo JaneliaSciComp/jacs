@@ -130,7 +130,7 @@
         				        <input name="MIP_RESULT_NODE"/>
         		                <input name="RESULT_FILE_NODE" value="$V{MIP_RESULT_NODE}"/>
        		    		        <input name="OUTPUT_FILE_NODE" value="$V{MIP_RESULT_NODE}"/>
-   						        <input name="INPUT_FILENAME_REGEX" value="((.*?)MIP)\.tif$"/>
+   						        <input name="INPUT_FILENAME_REGEX" value="(mip(.*?))\.tif$"/>
         				        <input name="OUTPUT_FILENAME_PATTERN" value="$1.png"/>
         			        </operation>
         			    </sequence>

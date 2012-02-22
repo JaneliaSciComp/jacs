@@ -22,7 +22,7 @@ import java.util.List;
  */
 public abstract class ParallelFileProcessingService extends SubmitDrmaaJobService {
 
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
     private static final int GLOBAL_CASE = -1;
 
     // These 2 vars are the core which must be populated for the service to run.
@@ -84,6 +84,13 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
 
         // Next, setup output file node(s)
         FileNode outputFileNode = (FileNode)processData.getItem("OUTPUT_FILE_NODE");
+        if (DEBUG) {
+            if (outputFileNode==null) {
+                logger.info("outputFileNode is null from OUTPUT_FILE_NODE getItem()");
+            } else {
+                logger.info("outputFileNode is NOT null from OUTPUT_FILE_NODE getItem()");
+            }
+        }
         outputFileNodes = (List<FileNode>)processData.getItem("OUTPUT_FILE_NODE_LIST");
         if (outputFileNode==null && outputFileNodes==null) {
         	throw new ServiceException("Input parameter OUTPUT_FILE_NODE and OUTPUT_FILE_NODE_LIST may not both be null");
@@ -93,7 +100,18 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
         }
         if (outputFileNodes==null) {
             outputFileNodes=new ArrayList<FileNode>();
+            if (DEBUG) {
+                logger.info("Adding outputFileNode to outputFileNodes");
+            }
             outputFileNodes.add(outputFileNode);
+        }
+
+        if (DEBUG) {
+            if (outputFileNodes==null) {
+                logger.info("outputFileNodes is null");
+            } else {
+                logger.info("outputFileNodes has "+outputFileNodes.size()+" entries");
+            }
         }
 
         final String inputNameGlobal=(String)processData.getItem("INPUT_FILENAME");
@@ -173,6 +191,8 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
                         inputDir=new File(outputNode.getDirectoryPath());
                     }
 
+                    if (DEBUG) logger.info("Using inputDir="+inputDir.getAbsolutePath());
+
                     File inputFile=null;
 
                     if (DEBUG) logger.info("  argIndex: "+argIndex);
@@ -188,6 +208,11 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
                             else if (inputRegexGlobal!=null && outputPatternGlobal!=null) {
                                 if (DEBUG) logger.info("      Global Case 2: inputRegexGlobal:"+inputRegexGlobal+", outputPatternGlobal:"+outputPatternGlobal);
                                 String[] inputFilenames=getFilesMatching(inputDir, inputRegexGlobal);
+                                if (inputFilenames==null) {
+                                    if (DEBUG) logger.info("inputFilesnames[] is null");
+                                } else {
+                                    if (DEBUG) logger.info("inputFilenames[] contains "+inputFilenames.length+" entries");
+                                }
                                 for (String inputFilename : inputFilenames) {
                                     String outputFilename = inputFilename.replaceAll(inputRegexGlobal, outputPatternGlobal);
                                     inputFiles.add(new File(inputDir, inputFilename));

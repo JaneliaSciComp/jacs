@@ -184,6 +184,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
             }
 
        } catch (Exception e) {
+            logger.error("Error in FileTreeLoader execute() : " + e.getMessage());
             throw new ServiceException(e.getMessage());
         }
     }
@@ -305,7 +306,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
 
         // Handle artifacts
         boolean willHaveMipArtifactBecauseHasPbdArtifact=false;
-        if (shouldHaveArtifact(f, pbdExtensions)) {
+        if (shouldHaveArtifact(f, pbdExtensions) && shouldTifHavePbdArtifact(f)) {
             willHaveMipArtifactBecauseHasPbdArtifact=true;
             Entity pbdArtifact=fileEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_PERFORMANCE_PROXY_IMAGE);
             if (pbdArtifact==null) {
@@ -322,6 +323,18 @@ public class FileTreeLoaderService extends FileDiscoveryService {
             }
         }
 
+    }
+
+    protected boolean shouldTifHavePbdArtifact(File f) {
+        if (f.getName().toLowerCase().endsWith(".tif")) {
+            if (f.length()>=pbdThreshold) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return true; // we dn't want to block other types
+        }
     }
 
     protected Entity createEntityForFile(File f, EntityType entityType) throws Exception {
@@ -466,38 +479,47 @@ public class FileTreeLoaderService extends FileDiscoveryService {
 
         // Handle PBDs
         EntityType pbdResultEntityType=annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
-        List<Long> pbdGroupKeyList=new ArrayList(pbdGroupByTaskMap.keySet());
+        List<Long> pbdGroupKeyList=new ArrayList(pbdGroupMap.keySet());
         Collections.sort(pbdGroupKeyList);
+        logger.info("doComplete() pbdGroupKeyList has "+pbdGroupKeyList.size()+" entries");
         for (Long pbdGroupKey : pbdGroupKeyList) {
             List<ArtifactInfo> artifactList=pbdGroupMap.get(pbdGroupKey);
+            logger.info("doComplete() artifactList has "+artifactList.size()+" entries");
             for (ArtifactInfo ai : artifactList) {
                 String pbdResultPath=ai.artifactPath;
                 if (pbdResultPath==null) {
                     logger.error("pbdResultPath for sourceEntityId="+ai.sourceEntityId+" is null");
                 } else {
                     File pbdResultFile=new File(pbdResultPath);
+                    logger.info("doComplete() using pbdResultFile="+pbdResultFile.getAbsolutePath());
                     if (!pbdResultFile.exists()) {
                         logger.error("Could not find expected pbd result file="+pbdResultFile.getAbsolutePath()+" for sourceEntityId="+ai.sourceEntityId);
                     } else {
                         // First, create the pbdResultEntity and place it in the supporting files folder
+                        logger.info("doComplete() creating pbdResultEntity");
                         Entity pbdResultEntity=createEntityForFile(pbdResultFile, pbdResultEntityType);
                         pbdResultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_ARTIFACT_SOURCE_ID, ai.sourceEntityId.toString());
+                        logger.info("doComplete() saving pbdResultEntity");
                         annotationBean.saveOrUpdateEntity(pbdResultEntity);
                         addToParent(supportingFilesFolder, pbdResultEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
                         // Second, add this entity as the proxy attribute of the source Entity
+                        logger.info("doComplete() adding entity as performance proxy");
                         Entity sourceEntity=annotationBean.getEntityById(ai.sourceEntityId.toString());
+                        logger.info("doComplete() adding entityData to entity of type="+sourceEntity.getEntityType().getName());
                         EntityData ed=sourceEntity.addChildEntity(pbdResultEntity, EntityConstants.ATTRIBUTE_PERFORMANCE_PROXY_IMAGE);
                         annotationBean.saveOrUpdateEntityData(ed);
                         // Populate map
+                        logger.info("doComplete() populating entityIdToPbdEntity map");
                         sourceEntityIdToPbdEntityMap.put(ai.sourceEntityId, pbdResultEntity);
                     }
                 }
             }
         }
+        logger.info("doComplete() finished PBD section, beginning MIP section");
 
         // Handle MIPs
         EntityType mipResultEntityType=annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
-        List<Long> mipGroupKeyList=new ArrayList<Long>(mipGroupByTaskMap.keySet());
+        List<Long> mipGroupKeyList=new ArrayList<Long>(mipGroupMap.keySet());
         Collections.sort(mipGroupKeyList);
         for (Long mipGroupKey : mipGroupKeyList) {
             List<ArtifactInfo> artifactList=mipGroupMap.get(mipGroupKey);
@@ -517,8 +539,11 @@ public class FileTreeLoaderService extends FileDiscoveryService {
                         addToParent(supportingFilesFolder, mipResultEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
                         // Add as default 2D image
                         Entity sourceEntity=annotationBean.getEntityById(ai.sourceEntityId.toString());
+                        File sourceFile=new File(sourceEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+                        logger.info("Creating entityData DEFAULT_2D_IMAGE for sourceEntity id="+sourceEntity.getId()+" type="+sourceEntity.getEntityType().getName()+" sourceFile="+sourceFile.getAbsolutePath());
                         EntityData ed=sourceEntity.addChildEntity(mipResultEntity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
                         annotationBean.saveOrUpdateEntityData(ed);
+                        logger.info("Done with entityData save");
                         // Get PBD and add 2D default image for this
                         Entity pbdForMip=sourceEntityIdToPbdEntityMap.get(ai.sourceEntityId);
                         if (pbdForMip!=null) {
