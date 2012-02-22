@@ -8,7 +8,7 @@
 
 DIR=$(cd "$(dirname "$0")"; pwd)
 
-NSDIR="$DIR/../install/neusep-redhat"
+NSDIR="$DIR/../../../neusep-redhat"
 OUTDIR=$1
 NAME=$2
 INPUTFILE=$3
