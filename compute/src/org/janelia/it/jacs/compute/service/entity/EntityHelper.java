@@ -39,7 +39,7 @@ public class EntityHelper {
     }
 
 	public void removeDefaultImage(Entity entity) throws ComputeException {
-    	logger.info("Removing MIP images for id="+entity.getId()+" name="+entity.getName());
+    	logger.info("Removing default image for id="+entity.getId()+" name="+entity.getName());
         EntityData ed1 = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
         if (ed1!=null) {
 	        if (!isDebug) {

@@ -92,7 +92,6 @@ public class InitSampleProcessingParametersService implements IService {
             		throw new FileNotFoundException("LSM file does not exist or is not readable: "+lsmFile2.getAbsolutePath());
             	}
 
-            	
             	File mergedFile = new File(mergeResultNode.getDirectoryPath(), "merged-"+lsmPairEntity.getId()+".v3draw");
             	mergedLsmPairs.add(new MergedLsmPair(lsmFilepath1, lsmFilepath2, mergedFile.getAbsolutePath()));
             	tags.add(lsmPairEntity.getName());

@@ -52,34 +52,22 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     	
     	super.processFolderForData(resultEntity);
         processSeparationFolder(resultEntity);
+
+        Entity filesFolder = EntityUtils.getSupportingData(resultEntity);
+        Entity signalMIP = EntityUtils.findChildWithName(filesFolder, "ConsolidatedSignalMIP.png");
+        Entity referenceMIP = EntityUtils.findChildWithName(filesFolder, "ReferenceMIP.png");
         
-        // Remove current default images
-        
+        // Remove current images
 		entityHelper.removeMIPs(resultEntity);
 		entityHelper.removeMIPs(sampleEntity);
 		entityHelper.removeDefaultImage(resultEntity);
 		entityHelper.removeDefaultImage(sampleEntity);
 
-		// Add new default images
-        Entity filesFolder = EntityUtils.getSupportingData(resultEntity);
-        Entity signalMIP = EntityUtils.findChildWithName(filesFolder, "ConsolidatedSignalMIP.png");
-        Entity referenceMIP = EntityUtils.findChildWithName(filesFolder, "ReferenceMIP.png");
-        
-        if (signalMIP != null) {
-			entityHelper.addMIPs(resultEntity, signalMIP, referenceMIP);
-			entityHelper.addDefaultImage(resultEntity, signalMIP);
-        }
-        else {
-        	logger.warn("Could not find ConsolidatedSignalMIP.png in supporting files for result entity id="+resultEntity.getId());
-        }
-        
-        if (referenceMIP != null) {
-			entityHelper.addMIPs(sampleEntity, signalMIP, referenceMIP);
-			entityHelper.addDefaultImage(sampleEntity, signalMIP);
-        }
-        else {
-        	logger.warn("Could not find ReferenceMIP.png in supporting files for result entity id="+resultEntity.getId());
-        }
+		// Add new images
+		entityHelper.addMIPs(resultEntity, signalMIP, referenceMIP);
+		entityHelper.addMIPs(sampleEntity, signalMIP, referenceMIP);
+		entityHelper.addDefaultImage(resultEntity, signalMIP);
+		entityHelper.addDefaultImage(sampleEntity, signalMIP);
     }
     
     protected void addFilesToSupportingFiles(Entity filesFolder, List<File> files) throws Exception {

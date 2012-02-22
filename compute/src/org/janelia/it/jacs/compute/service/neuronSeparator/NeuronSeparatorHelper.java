@@ -5,6 +5,7 @@ import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -99,19 +100,33 @@ public class NeuronSeparatorHelper {
         StringBuilder cmdLine = new StringBuilder();
         cmdLine.append("cd ").append(parentNode.getDirectoryPath()).append(commandDelim);
 
+        boolean deleteInputWhenDone = false;
     	File inputFile = new File(inputFilename);
-        if (inputFile.getName().endsWith(".zip")) {
-        	cmdLine.append("unzip "+inputFilename).append(commandDelim);
+        if (inputFilename.endsWith(".zip")) {
         	inputFile = new File(parentNode.getDirectoryPath(), inputFile.getName().replaceFirst("\\.zip$", ""));
+        	cmdLine.append("unzip "+inputFilename).append(commandDelim);
+        	deleteInputWhenDone = true;
+        }
+        else if (inputFilename.endsWith(".v3dpbd")) {
+        	inputFile = new File(parentNode.getDirectoryPath(), inputFile.getName().replaceAll("v3dpbd", "v3draw"));
+        	cmdLine.append(Vaa3DHelper.getHeadlessGridCommandPrefix());
+        	cmdLine.append("\n");
+        	cmdLine.append(Vaa3DHelper.getFormattedConvertCommand(inputFilename, inputFile.getAbsolutePath(), ""));
+        	cmdLine.append("\n");
+        	cmdLine.append(Vaa3DHelper.getHeadlessGridCommandSuffix());
+        	deleteInputWhenDone = true;
         }
 
 //      cmdLine.append(SEPARATOR_BASE_CMD).append(" ");
 //      cmdLine.append("-nr -pj ");
         
-        cmdLine.append("sh ").append(SEPARATOR_SCRIPT).append(" ");
+        cmdLine.append("sh ").append(SEPARATOR_SCRIPT).append(" ").append(parentNode.getDirectoryPath()).
+    			append(" neuronSeparatorPipeline ").append(inputFile.getAbsolutePath()).append(commandDelim);
         
-        cmdLine.append(parentNode.getDirectoryPath()).append(" neuronSeparatorPipeline ").
-                	append(inputFile.getAbsolutePath()).append(commandDelim);
+        // Remove the uncompressed file, if necessary.
+        if (deleteInputWhenDone) {
+        	cmdLine.append("rm ").append(inputFile.getAbsolutePath()).append(commandDelim);
+        }
         
         // A little hack to clear core dumps that can be ignored. If the last line in the output has "Kill" in it, 
         // that means we're in the cleanup stage, and core dumps are not important.
