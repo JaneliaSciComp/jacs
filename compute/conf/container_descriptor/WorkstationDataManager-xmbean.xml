@@ -37,6 +37,21 @@
     </operation>
 
     <operation>
+        <description>Compress all of the user's v3draw files to v3dpbd</description>
+        <name>runMCFODataCompress</name>
+        <parameter>
+            <description>User to run as (e.g. "system")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Should this run as a test without making any real changes?</description>
+           <name>testRun</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+    </operation>
+    
+    <operation>
         <description>Upgrade the given user's MCFO results to use the most current entity structure</description>
         <name>runMCFODataUpgrade</name>
         <parameter>

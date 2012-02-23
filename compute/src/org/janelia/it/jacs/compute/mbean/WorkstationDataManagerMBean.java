@@ -14,6 +14,8 @@ public interface WorkstationDataManagerMBean {
     
     public void runSampleImageSync(String user);
 
+    public void runMCFODataCompress(String user, Boolean testRun);
+    
     public void runMCFODataUpgrade(String user, Boolean testRun);
     
     public void runMCFODataPipeline(String user, String inputDirList, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);

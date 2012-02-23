@@ -63,7 +63,21 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
-
+    
+    public void runMCFODataCompress(String user, Boolean testRun) {
+        try {
+        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        	taskParameters.add(new TaskParameter(SampleFileNodeSyncService.PARAM_testRun, Boolean.toString(testRun), null)); 
+        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
+        			taskParameters, "mcfoDataCompress", "MCFO Data Compress");
+            task.setJobName("MultiColor FlipOut Data Compress Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("MCFODataCompress", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
     public void runMCFODataUpgrade(String user, Boolean testRun) {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();

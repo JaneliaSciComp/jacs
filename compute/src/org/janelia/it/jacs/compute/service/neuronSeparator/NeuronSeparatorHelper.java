@@ -98,6 +98,7 @@ public class NeuronSeparatorHelper {
 		// TODO: mylibDir no longer does anything... maybe we should inject it into the command string if we intend
 		// to run on multiple architectures. 
         StringBuilder cmdLine = new StringBuilder();
+
         cmdLine.append("cd ").append(parentNode.getDirectoryPath()).append(commandDelim);
 
         boolean deleteInputWhenDone = false;
@@ -119,7 +120,7 @@ public class NeuronSeparatorHelper {
 
 //      cmdLine.append(SEPARATOR_BASE_CMD).append(" ");
 //      cmdLine.append("-nr -pj ");
-        
+    	
         cmdLine.append("sh ").append(SEPARATOR_SCRIPT).append(" ").append(parentNode.getDirectoryPath()).
     			append(" neuronSeparatorPipeline ").append(inputFile.getAbsolutePath()).append(commandDelim);
         
@@ -130,8 +131,7 @@ public class NeuronSeparatorHelper {
         
         // A little hack to clear core dumps that can be ignored. If the last line in the output has "Kill" in it, 
         // that means we're in the cleanup stage, and core dumps are not important.
-        cmdLine.append("lastOut=`tail -n 1 ").append(parentNode.getDirectoryPath()).append("/sge_output/neuSepOutput.1`\n");
-        cmdLine.append("if echo \"$lastOut\" |grep -q Kill; then\n");
+        cmdLine.append("if grep \"Finished Output_Consolidated_Mask\" ").append(parentNode.getDirectoryPath()).append("/sge_output/neuSepOutput.1").append("; then\n");
         cmdLine.append("    echo \"Removing useless core dump\"\n");
         cmdLine.append("    rm ").append(parentNode.getDirectoryPath()).append("/core.*\n");
         cmdLine.append("fi\n");

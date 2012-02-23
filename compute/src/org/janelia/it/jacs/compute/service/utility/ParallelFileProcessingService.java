@@ -40,8 +40,13 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
     private List<String> inputPathList = new ArrayList<String>();
     private List<String> outputPathList = new ArrayList<String>();
 
+    private boolean ignoreErrors = false;
+    
     protected void init(IProcessData processData) throws Exception {
 
+        String ignoreErrorsStr = (String)processData.getItem("IGNORE_ERRORS");
+        ignoreErrors = ignoreErrorsStr!=null && ignoreErrorsStr.equalsIgnoreCase("true");
+        
         // First we make sure a single result file node is established for the drmaa run.
         // Note that the result node is handled independently of the output nodes.
         Long resultFileNodeId=0L;
@@ -92,9 +97,6 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
             }
         }
         outputFileNodes = (List<FileNode>)processData.getItem("OUTPUT_FILE_NODE_LIST");
-        if (outputFileNode==null && outputFileNodes==null) {
-        	throw new ServiceException("Input parameter OUTPUT_FILE_NODE and OUTPUT_FILE_NODE_LIST may not both be null");
-        }
         if (outputFileNode!=null && outputFileNodes!=null) {
             throw new ServiceException("Both OUTPUT_FILE_NODE and OUTPUT_FILE_NODE_LIST cannot be specified - one or the other");
         }
@@ -352,8 +354,8 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
 			}
 		});
     	
-    	if (coreFiles.length > 0) {
-    		throw new MissingDataException(getGridServicePrefixName()+" core dumped for "+resultFileNode.getDirectoryPath());
+    	if (!ignoreErrors && coreFiles.length > 0) {
+			throw new MissingDataException(getGridServicePrefixName()+" core dumped for "+resultFileNode.getDirectoryPath());
     	}
 
         int outputFileCheckTries=0;
@@ -378,7 +380,7 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
                 break;
             }
     	}
-        if (missingFiles.size()>0) {
+        if (!ignoreErrors && missingFiles.size()>0) {
             StringBuffer sb=new StringBuffer();
             for (File f : missingFiles) sb.append(", "+ f.getAbsolutePath());
             throw new MissingDataException(getGridServicePrefixName()+" missing output files: "+sb.toString());

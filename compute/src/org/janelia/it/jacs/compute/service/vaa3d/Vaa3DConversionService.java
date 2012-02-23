@@ -25,6 +25,7 @@ public class Vaa3DConversionService extends ParallelFileProcessingService {
         return "vaa3dconvert";
     }
 
+    @Override
     protected void init(IProcessData processData) throws Exception {
     	super.init(processData);
     	
