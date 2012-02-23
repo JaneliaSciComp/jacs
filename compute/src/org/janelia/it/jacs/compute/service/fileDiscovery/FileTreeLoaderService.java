@@ -276,11 +276,21 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         List<File> orderedFiles=getOrderedFilesInDir(dir);
         for (int i=0;i<orderedFiles.size();i++) {
             File f=orderedFiles.get(i);
-            if (f.isDirectory()) {
-                addDirectoryAndContentsToFolder(dirEntity, f, i);
-            } else {
-                verifyOrCreateFileEntityForFolder(dirEntity, f, i);
+            if (passesExclusionFilter(f)) {
+                if (f.isDirectory()) {
+                    addDirectoryAndContentsToFolder(dirEntity, f, i);
+                } else {
+                    verifyOrCreateFileEntityForFolder(dirEntity, f, i);
+                }
             }
+        }
+    }
+
+    protected boolean passesExclusionFilter(File f) {
+        if (f.getName().startsWith(".")) {
+            return false;
+        } else {
+            return true;
         }
     }
 
