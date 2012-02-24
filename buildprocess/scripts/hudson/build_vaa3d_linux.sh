@@ -31,11 +31,11 @@ make
 cp $BASE/released_plugins/v3d_plugins/lobeseg/lobeseg_main/lobe_seger $BASE/bin/
 
 # build optic lobe aligner
-cd $BASE/released_plugins/v3d_plugins/ssd_registration
-echo "INCLUDEPATH += $INCLUDEPATH" >> plugin_PQ_imagereg.pro
-qmake
-make
-cp -R $BASE/released_plugins/v3d/plugins/optic_lobe_aligner $BASE/v3d/plugins
+#cd $BASE/released_plugins/v3d_plugins/ssd_registration
+#echo "INCLUDEPATH += $INCLUDEPATH" >> plugin_PQ_imagereg.pro
+#qmake
+#make
+#cp -R $BASE/released_plugins/v3d/plugins/optic_lobe_aligner $BASE/v3d/plugins
 
 # copy libs
 cp -R $BASE/v3d_main/common_lib/lib $BASE/bin/
