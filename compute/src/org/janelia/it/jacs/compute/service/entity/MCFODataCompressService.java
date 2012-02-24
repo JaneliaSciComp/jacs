@@ -1,7 +1,6 @@
 package org.janelia.it.jacs.compute.service.entity;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 import org.apache.log4j.Logger;
@@ -105,6 +104,7 @@ public class MCFODataCompressService implements IService {
     private List<List<String>> createGroups(Collection<String> fullList, int groupSize) {
         List<List<String>> groupList = new ArrayList<List<String>>();
         List<String> currentGroup = null;
+        int i = 0;
         for (String s : fullList) {
             if (currentGroup==null) {
                 currentGroup = new ArrayList<String>();
@@ -115,7 +115,7 @@ public class MCFODataCompressService implements IService {
             }
             currentGroup.add(s);
         }
-        if (currentGroup.size() > 0) {
+        if (currentGroup!=null && currentGroup.size() > 0) {
             groupList.add(currentGroup);
         }
         return groupList;
@@ -136,9 +136,8 @@ public class MCFODataCompressService implements IService {
 		
         List<Entity> entities=annotationBean.getCommonRootEntitiesByTypeName(username, EntityConstants.TYPE_FOLDER);
         for(Entity topEntity : entities) {
-            logger.info("Found top-level entity name="+topEntity.getName());
-            Entity tree = annotationBean.getEntityTree(topEntity.getId());
-            processEntityTree(tree);
+        	logger.info("Found top-level entity name="+topEntity.getName());
+        	processEntityTree(annotationBean.getEntityTree(topEntity.getId()));
         }
 		logger.info("The processing was a success.");
     }
@@ -226,46 +225,58 @@ public class MCFODataCompressService implements IService {
     	}
 
     	try {
-    		if (!isDebug) {
-	        	for(Entity entity : inputEntites) {
-	        		entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, outputPath);
-	        		String format = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT);
-	        		if (format != null && !"".equals(format)) {
-	        			entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, "v3dpbd");
-	        		}
-	        		if (entity.getName().endsWith(".v3draw")) {
-	        			entity.getName().replaceAll("v3draw", "v3dpbd");
-	        		}
-	            	annotationBean.saveOrUpdateEntity(entity);
-	            	numChanges++;
-	            	logger.info("Updated entity: "+entity.getName()+" (id="+entity.getId()+")");
-	        	}
-    		}
+        	for(Entity entity : inputEntites) {
+        		entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, outputPath);
+        		String format = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT);
+        		if (format != null && !"".equals(format)) {
+        			entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, "v3dpbd");
+        		}
+        		if (entity.getName().endsWith(".v3draw")) {
+        			entity.setName(entity.getName().replaceAll("v3draw", "v3dpbd"));
+        		}
+        		if (!isDebug) {
+	            	Entity savedEntity = annotationBean.saveOrUpdateEntity(entity);
+	            	logger.info("Updated entity: "+savedEntity.getName()+" (id="+savedEntity.getId()+")");
+        		}
+        		else {
+        			logger.info("Updated entity: "+entity.getName()+" (id="+entity.getId()+")");
+        		}
+            	numChanges++;
+        	}
+		
         	
         	logger.info("Updated all entities to use new compressed file: "+outputPath);
-        	
-        	if (!isDebug) {
-        		File file = new File(inputPath);
-        		FileUtils.forceDelete(file);
-        		logger.info("Deleted old file: "+inputPath);
-        		
-        		if (file.getName().startsWith("merged-")) {
-        			// Delete the symlink as well, if there is one
-        			String filenodeDir = file.getParentFile().getParent();
-        			File symlink = new File(filenodeDir, "group/"+file.getName());
-        			if (symlink.exists()) {
-        				symlink.delete();
-        				logger.info("Deleted symlink: "+inputPath);
-        			}
-        		}
-        		
-        	}
+    	
+    		File file = new File(inputPath);
+    		if (!isDebug) {
+				try {
+					FileUtils.forceDelete(file);
+					logger.info("Deleted old file: "+inputPath);
+				}
+				catch (Exception e) {
+					logger.info("Error deleting symlink "+inputPath+": "+e.getMessage());
+				}
+    		}
+    		
+    		if (file.getName().startsWith("merged-")) {
+    			// Delete the symlink as well, if there is one
+    			String filenodeDir = file.getParentFile().getParent();
+    			logger.info("Looking for symlink under "+filenodeDir+"/group");
+    			File symlink = new File(filenodeDir+"/group", file.getName());
+				if (!isDebug) {
+					try {
+						FileUtils.forceDelete(symlink);
+						logger.info("Deleted symlink: "+symlink);
+					}
+					catch (Exception e) {
+						logger.info("Error deleting symlink "+symlink+": "+e.getMessage());
+					}
+				}
+    		}
+    		
     	}
     	catch (ComputeException e) {
     		logger.error("Unable to update all entities to use new compressed file: "+outputPath);
-    	}
-    	catch (IOException e) {
-    		logger.error("Unable to delete file: "+inputPath);
     	}
 	}
 }
