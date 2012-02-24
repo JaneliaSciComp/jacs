@@ -62,7 +62,7 @@ echo "Installing FlySuite version $FWVER (Part 3)"
 if [ $INSTALL_VAA3D == 1 ]; then
     echo "Installing Vaa3D in $VAA3D_INSTALL_REDHAT_DIR"
     rm -rf $VAA3D_INSTALL_REDHAT_DIR || true
-    cp -R $VAA3D_COMPILE_REDHAT_DIR/v3d $VAA3D_INSTALL_REDHAT_DIR
+    cp -R $VAA3D_COMPILE_REDHAT_DIR/bin $VAA3D_INSTALL_REDHAT_DIR
 
     echo "Creating symbolic link at $VAA3D_INSTALL_SYMLINK"
     rm $VAA3D_INSTALL_SYMLINK || true
@@ -70,7 +70,7 @@ if [ $INSTALL_VAA3D == 1 ]; then
 
     echo "Installing Vaa3D in $VAA3D_INSTALL_FEDORA_DIR"
     rm -rf $VAA3D_INSTALL_FEDORA_DIR || true
-    cp -R $VAA3D_COMPILE_FEDORA_DIR/v3d $VAA3D_INSTALL_FEDORA_DIR
+    cp -R $VAA3D_COMPILE_FEDORA_DIR/bin $VAA3D_INSTALL_FEDORA_DIR
 fi
 
 ################################################################
