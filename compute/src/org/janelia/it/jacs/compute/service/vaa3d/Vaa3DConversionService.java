@@ -19,6 +19,8 @@ import java.util.Set;
 public class Vaa3DConversionService extends ParallelFileProcessingService {
     
 	private Set<Integer> output8bit = new HashSet<Integer>();
+
+    boolean global8bitFlag=false;
 	
     @Override
     protected String getGridServicePrefixName() {
@@ -28,6 +30,11 @@ public class Vaa3DConversionService extends ParallelFileProcessingService {
     @Override
     protected void init(IProcessData processData) throws Exception {
     	super.init(processData);
+
+        String global8bitString=processData.getString("OUTPUT_8BIT");
+        if (global8bitString!=null && global8bitString.toLowerCase().equals("true")) {
+            global8bitFlag=true;
+        }
     	
     	int configIndex = 1;
     	while (true) {
@@ -43,7 +50,11 @@ public class Vaa3DConversionService extends ParallelFileProcessingService {
 
     protected void writeInstanceFile(FileWriter fw, File inputFile, File outputFile, int configIndex) throws IOException {
         super.writeInstanceFile(fw, inputFile, outputFile, configIndex);
-        fw.write((output8bit.contains(configIndex)?"8":"") + "\n");
+        if (global8bitFlag) {
+            fw.write("8" + "\n");
+        } else {
+            fw.write((output8bit.contains(configIndex)?"8":"") + "\n");
+        }
     }
     
     protected void writeShellScript(FileWriter writer) throws Exception {

@@ -74,6 +74,7 @@
         				        <input name="PBD_RESULT_NODE"/>
         				        <input name="PBD_INPUT_LIST"/>
         				        <input name="PBD_OUTPUT_LIST"/>
+        				        <input name="OUTPUT_8BIT" value="true"/>
         		                <input name="RESULT_FILE_NODE" value="$V{PBD_RESULT_NODE}"/>
         	    		        <input name="OUTPUT_FILE_NODE" value="$V{PBD_RESULT_NODE}"/>
        		    		        <input name="INPUT_PATH_LIST" value="$V{PBD_INPUT_LIST}"/>
