@@ -156,12 +156,14 @@ public class MCFODataCompressService implements IService {
     			addV3dRawFile(entity);
     		}
     		else if (entity.getName().endsWith(".v3draw")) {
-    			// How did the name get out of sync? Let's fix it. 
-    			if (filepath.endsWith(".v3dpbd")) {
-    				entity.setName(entity.getName().replaceAll("v3draw", "v3dpbd"));
-    	        	annotationBean.saveOrUpdateEntity(entity);
-    	        	logger.info("Fixed entity name: "+entity.getName()+" (id="+entity.getId()+")");	
-    			}
+        		if (!isDebug) {
+	    			// How did the name get out of sync? Let's fix it. 
+	    			if (filepath.endsWith(".v3dpbd")) {
+	    				entity.setName(entity.getName().replaceAll("v3draw", "v3dpbd"));
+	    	        	annotationBean.saveOrUpdateEntity(entity);
+	    	        	logger.info("Fixed entity name: "+entity.getName()+" (id="+entity.getId()+")");	
+	    			}
+        		}
     		}
     	}
     	
