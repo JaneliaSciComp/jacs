@@ -137,14 +137,13 @@ if [ $INSTALL_CLIENT == 1 ]; then
     rm -rf $FLYSUITE_INSTALL_DIR || true
     mkdir -p $FLYSUITE_INSTALL_DIR
     cp -R $PACKAGE_MAC_DIR/FlySuite.app $FLYSUITE_INSTALL_DIR
-    sleep 2 # give time for fileshare to catch up
-    cd $FLYSUITE_CLIENTS_DIR   
-    tar cvfz $FLYSUITE_TARBALL $FLYSUITE_NAME
 
     rm -rf $FLYSUITE_LINUX_INSTALL_DIR || true
     cp -R $PACKAGE_LINUX_DIR $FLYSUITE_LINUX_INSTALL_DIR
-    sleep 2 # give time for fileshare to catch up
+
     cd $FLYSUITE_CLIENTS_DIR
+    sleep 5 # give time for fileshare to catch up
+    tar cvfz $FLYSUITE_TARBALL $FLYSUITE_NAME
     tar cvfz $FLYSUITE_LINUX_TARBALL $FLYSUITE_LINUX_NAME
     
     echo "FlySuite Version ${FWVER} (client) was successfully installed into the following locations:"
