@@ -99,12 +99,12 @@ if [ $INSTALL_SCRIPTS == 1 ]; then
     mkdir -p $SCRIPTS_INSTALL_DIR
     svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk/compute/scripts/single_neuron $SCRIPTS_INSTALL_DIR/single_neuron
 
-    echo "Creating symbolic links at $ALIGN_TEMPLATES_SYMLINK"
-    ln -s $ALIGN_TEMPLATES_DIR $ALIGN_TEMPLATES_SYMLINK
-
     echo "Creating symbolic link at $SCRIPTS_INSTALL_SYMLINK"
     rm $SCRIPTS_INSTALL_SYMLINK || true
     ln -s $SCRIPTS_INSTALL_DIR $SCRIPTS_INSTALL_SYMLINK 
+
+    echo "Creating symbolic links at $ALIGN_TEMPLATES_SYMLINK"
+    ln -s $ALIGN_TEMPLATES_DIR $ALIGN_TEMPLATES_SYMLINK
 fi
 
 ################################################################
