@@ -179,7 +179,7 @@ if [ $BUILD_FLYSUITE == 1 ]; then
     echo "  Creating new Linux package in $PACKAGE_LINUX_DIR"
     cp -R $TEMPLATE_DIR/linux_template $PACKAGE_LINUX_DIR
     cp -R $JACS_COMPILE_DIR/console/build/jars/* $PACKAGE_LINUX_DIR 
-    cp $VAA3D_COMPILE_FEDORA_DIR/v3d/vaa3d $PACKAGE_LINUX_DIR
+    cp $VAA3D_COMPILE_FEDORA_DIR/bin/vaa3d $PACKAGE_LINUX_DIR
 fi
 
 echo "Waiting for Vaa3d qsub ($VAA3D_QSUB_PID)..." 
