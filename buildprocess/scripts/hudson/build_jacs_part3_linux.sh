@@ -142,7 +142,11 @@ if [ $INSTALL_CLIENT == 1 ]; then
     cp -R $PACKAGE_LINUX_DIR $FLYSUITE_LINUX_INSTALL_DIR
 
     cd $FLYSUITE_CLIENTS_DIR
-    sleep 5 # give time for fileshare to catch up
+    echo "Sync filesystem"
+    sync
+    sleep 2
+
+    echo "Create tarballls"
     tar cvfz $FLYSUITE_TARBALL $FLYSUITE_NAME
     tar cvfz $FLYSUITE_LINUX_TARBALL $FLYSUITE_LINUX_NAME
     
