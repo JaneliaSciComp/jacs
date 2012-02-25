@@ -39,7 +39,7 @@ NEUSEP_INSTALL_SYMLINK="$INSTALL_DIR/neusep-redhat"
 SCRIPTS_INSTALL_DIR="$INSTALL_DIR/scripts_${FWVER}"
 SCRIPTS_INSTALL_SYMLINK="$INSTALL_DIR/scripts"
 ALIGN_TEMPLATES_DIR="$JACSDATA_DIR/AlignTemplates"
-ALIGN_TEMPLATES_SYMLINK="$INSTALL_DIR/scripts/BrainAligner/AlignTemplates"
+ALIGN_TEMPLATES_SYMLINK="$INSTALL_DIR/scripts/single_neuron/BrainAligner/AlignTemplates"
 
 STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
 PACKAGE_MAC_DIR="$STAGING_DIR/FlySuite_${FWVER}"
@@ -85,8 +85,8 @@ if [ $INSTALL_NEUSEP == 1 ]; then
     cp tools/setup4 $NEUSEP_INSTALL_REDHAT_DIR
     cp tools/finish4 $NEUSEP_INSTALL_REDHAT_DIR
 
-    echo "Creating symbolic link at $NEUSEP_INSTALL_SYMLINK"
     rm $NEUSEP_INSTALL_SYMLINK || true
+    echo "Creating symbolic link at $NEUSEP_INSTALL_SYMLINK"
     ln -s $NEUSEP_INSTALL_REDHAT_DIR $NEUSEP_INSTALL_SYMLINK
 fi
 
@@ -99,10 +99,11 @@ if [ $INSTALL_SCRIPTS == 1 ]; then
     mkdir -p $SCRIPTS_INSTALL_DIR
     svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk/compute/scripts/single_neuron $SCRIPTS_INSTALL_DIR/single_neuron
 
-    echo "Creating symbolic link at $SCRIPTS_INSTALL_SYMLINK"
     rm $SCRIPTS_INSTALL_SYMLINK || true
+    echo "Creating symbolic link at $SCRIPTS_INSTALL_SYMLINK"
     ln -s $SCRIPTS_INSTALL_DIR $SCRIPTS_INSTALL_SYMLINK 
 
+    rm $ALIGN_TEMPLATES_SYMLINK || true
     echo "Creating symbolic links at $ALIGN_TEMPLATES_SYMLINK"
     ln -s $ALIGN_TEMPLATES_DIR $ALIGN_TEMPLATES_SYMLINK
 fi
