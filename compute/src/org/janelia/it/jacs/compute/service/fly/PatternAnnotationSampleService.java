@@ -192,6 +192,8 @@ public class PatternAnnotationSampleService  implements IService {
 
             logger.info("Processing sample name="+sample.getName());
 
+            sample=annotationBean.getEntityTree(sample.getId());
+
             // This is the directory containing the link to the stack, and will have a pattern annotation
             // subdirectory, as well as a separte supportingFiles directory.
             File sampleResultDir=getOrUpdateSampleResultDir(sample);
@@ -200,6 +202,9 @@ public class PatternAnnotationSampleService  implements IService {
                 sampleDirFailureCount++;
                 continue; // move on to next sample
             }
+
+            // refresh again after sample dir update
+            sample=annotationBean.getEntityTree(sample.getId());
 
             // This method ensures that there is a supporting directory for the sample in the sample
             // result node directory, and that the mip has been relocated to this directory.
@@ -373,6 +378,7 @@ public class PatternAnnotationSampleService  implements IService {
             if (checkDir.getAbsolutePath().equals(nodeDir.getAbsolutePath())) {
                 logger.info("Verified nodeId="+nodeId+" now saving as sample attribute");
                 sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_RESULT_NODE_ID, nodeId.toString());
+                annotationBean.saveOrUpdateEntity(sample);
             } else {
                 throw new Exception("Could not verify result node id="+nodeId);
             }
@@ -480,6 +486,8 @@ public class PatternAnnotationSampleService  implements IService {
 
     File getOrUpdatePatternAnnotationDir(Entity sample) throws Exception {
         File sampleDir=getOrUpdateSampleResultDir(sample);
+
+        sample=annotationBean.getEntityTree(sample.getId());
 
         // Check to see if the sample already has a patternAnnotation folder
         Entity patternAnnotationFolder=null;
