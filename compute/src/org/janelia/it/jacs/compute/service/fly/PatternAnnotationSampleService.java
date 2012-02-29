@@ -203,7 +203,7 @@ public class PatternAnnotationSampleService  implements IService {
 
             // This method ensures that there is a supporting directory for the sample in the sample
             // result node directory, and that the mip has been relocated to this directory.
-            updateSampleSupportingDirIfNecessary(sample);
+            sample=updateSampleSupportingDirIfNecessary(sample);
 
             if (refresh) {
                 logger.info("Refresh is true - checking status of patternAnnotationFolder for sampleName="+sample.getName());
@@ -388,7 +388,7 @@ public class PatternAnnotationSampleService  implements IService {
         return dir;
     }
 
-    protected void updateSampleSupportingDirIfNecessary(Entity sample) throws Exception {
+    protected Entity updateSampleSupportingDirIfNecessary(Entity sample) throws Exception {
         // Originally, the screen sample has both the screen raw data stack and mip sharing
         // the same top-level screen sample folder. This is distracting for the user, where
         // the stack and mip get confused. Here we create a supporting folder and place
@@ -435,6 +435,8 @@ public class PatternAnnotationSampleService  implements IService {
                 }
                 logger.info("Creating new supporting folder in location="+supportingDir.getAbsolutePath());
                 supportingFolder=addChildFolderToEntity(sample, FlyScreenSampleService.SUPPORTING_FILES_FOLDER_NAME, supportingDir.getAbsolutePath());
+                // refresh sample
+                sample = annotationBean.getEntityById(sample.getId().toString());
             }
             annotationBean.deleteEntityData(rawMipEd);
             File newMipFile=new File(supportingDir, rawMipFile.getName());
@@ -445,13 +447,16 @@ public class PatternAnnotationSampleService  implements IService {
             rawMip.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, newMipFile.getAbsolutePath());
             annotationBean.saveOrUpdateEntity(rawMip);
             if (replaceSampleDefault2DImage) {
-                logger.info("Resetting default 2D image for screen sample to new image location");
+                logger.info("Resetting default 2D image for screen sample to new image location - refreshing sample");
+                sample = annotationBean.getEntityById(sample.getId().toString());
                 sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, newMipFile.getAbsolutePath());
-                annotationBean.saveOrUpdateEntity(sample);
+                sample = annotationBean.saveOrUpdateEntity(sample);
+                logger.info("Done updating default 2D image for sample="+sample.getName());
             }
         } else {
             logger.info("Could not locate mip in prior location, so assuming does not need update for sample id="+sample.getId());
         }
+        return sample;
     }
 
     void verifyOrCreateSubFolder(Entity patternAnnotationFolder, String subFolderName) throws Exception {
