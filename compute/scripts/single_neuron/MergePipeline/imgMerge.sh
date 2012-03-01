@@ -43,12 +43,14 @@ FILETRNSTYPE="$FILEPATH/TransformationType.txt"
 echo "Run Dir: $DIR"
 echo "Working Dir: $WORKING_DIR"
 echo "Filepath: $FILEPATH"
+echo "Input 1: $INPUT1"
+echo "Input 2: $INPUT2"
 
 ####
 # detect transformation type
 ####
 
-$Vaa3D -x multiscanstacks.so -f transformdet -i $INPUT1 $INPUT2 -o $FILETRNSTYPE
+$Vaa3D -x multiscanstacks.so -f transformdet -i "$INPUT1" "$INPUT2" -o "$FILETRNSTYPE"
 
 ####
 # merge
@@ -74,7 +76,7 @@ do
             echo "$TYPE"
 
             # merge images using rigid translations
-            $Vaa3D -x multiscanstacks.so -f multiscanblend -i $INPUT1 $INPUT2 -o $OUTPUT
+            $Vaa3D -x multiscanstacks.so -f multiscanblend -i "$INPUT1" "$INPUT2" -o "$OUTPUT"
 
         elif [ "$TYPE" = "1 non-rigid transformations." ];
         then
@@ -84,7 +86,7 @@ do
             FILETEMP=$FILEPATH"/tmp.v3draw"
 
             echo "~ Running extractchannels"
-            $Vaa3D -x multiscanstacks.so -f extractchannels -i $INPUT1 $INPUT2 -o $FILETEMP
+            $Vaa3D -x multiscanstacks.so -f extractchannels -i "$INPUT1" "$INPUT2" -o "$FILETEMP"
             FIXED0=$FILEPATH"/target_ref.v3draw"
             MOVING0=$FILEPATH"/subject_ref.v3draw"
             SUBJECT0=$FILEPATH"/subject_signal.v3draw"
@@ -124,7 +126,7 @@ do
             $Vaa3D -x ireg.so -f NiftiImageConverter -i $DEFORMED -p "#b 1"
 
             echo "~ Running multiscanblend"
-            $Vaa3D -x multiscanstacks.so -f multiscanblend -i $INPUT1 $INPUT2 $DEFORMEDV3DRAW -o $OUTPUT -p "#d 1"
+            $Vaa3D -x multiscanstacks.so -f multiscanblend -i "$INPUT1" "$INPUT2" $DEFORMEDV3DRAW -o "$OUTPUT" -p "#d 1"
 
         else
             echo "Invalid Transformations: '$TYPE'"
