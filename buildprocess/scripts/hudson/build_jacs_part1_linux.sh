@@ -69,7 +69,7 @@ echo "Building FlySuite version $FWVER (Part 1)"
 # access that.)
 ################################################################
 rm -rf $SCRIPT_DIR || true
-svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk/buildprocess/scripts/hudson $SCRIPT_DIR
+svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tags/FlySuite_${FWVER}/buildprocess/scripts/hudson $SCRIPT_DIR
 
 ################################################################
 # Build Vaa3d for Redhat (Grid) and Fedora (Client) 
