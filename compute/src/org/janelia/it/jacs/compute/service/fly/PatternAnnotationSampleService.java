@@ -411,6 +411,7 @@ public class PatternAnnotationSampleService  implements IService {
         EntityData rawMipEd=null;
         File rawMipFile=null;
         Entity supportingFolder=null;
+        Entity screenStack=null;
 
         String sampleDefault2DImagePath=sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
         boolean replaceSampleDefault2DImage=false;
@@ -431,8 +432,13 @@ public class PatternAnnotationSampleService  implements IService {
                     }
                 } else if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) && child.getName().equals(FlyScreenSampleService.SUPPORTING_FILES_FOLDER_NAME)) {
                     supportingFolder=child;
+                } else if (child.getEntityType().getName().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
+                    screenStack=child;
                 }
             }
+        }
+        if (screenStack==null) {
+            throw new Exception("Could not locate aligned screen stack for sample name="+sample.getName() + " id="+sample.getId());
         }
         if (rawMip!=null) {
             logger.info("Updating position of mip and supporting directory for screen sample id="+sample.getId());
@@ -461,9 +467,43 @@ public class PatternAnnotationSampleService  implements IService {
                 sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, newMipFile.getAbsolutePath());
                 sample = annotationBean.saveOrUpdateEntity(sample);
                 logger.info("Done updating default 2D image for sample="+sample.getName());
+                logger.info("Now updating location of mip for aligned screen stack");
+                screenStack = annotationBean.getEntityById(screenStack.getId().toString());
+                screenStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, newMipFile.getAbsolutePath());
+                annotationBean.saveOrUpdateEntity(screenStack);
+                logger.info("Done updating aligned screen stack with mip path="+newMipFile.getAbsolutePath());
             }
         } else {
             logger.info("Could not locate mip in prior location, so assuming does not need update for sample id="+sample.getId());
+            logger.info("However, we will check to see if the aligned screen stack needs an updated mip location");
+            if (supportingFolder!=null) {
+                Entity postMovedAlignedMip=null;
+                String newMipPath=null;
+                for (EntityData ed : supportingFolder.getEntityData()) {
+                    Entity child=ed.getChildEntity();
+                    if (child!=null) {
+                        if (child.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_2D)) {
+                            String childPath=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                            File childFile=new File(childPath);
+                            if (childFile.getName().equals("AlignedStackMIP.png")) {
+                                postMovedAlignedMip=child;
+                                newMipPath=childFile.getAbsolutePath();
+                            }
+                        }
+                    }
+                }
+                if (postMovedAlignedMip!=null) {
+                    logger.info("Updating mip location for aligned stack");
+                    screenStack = annotationBean.getEntityById(screenStack.getId().toString());
+                    screenStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, newMipPath);
+                    annotationBean.saveOrUpdateEntity(screenStack);
+                    logger.info("Done updating aligned screen stack with mip path="+newMipPath);
+                } else {
+                    throw new Exception("Could not locate aligned mip in sample name="+sample.getName()+" id="+sample.getId());
+                }
+            } else {
+                throw new Exception("Unexpectedly could not find supporting folder for sampleId="+sample.getId());
+            }
         }
         return sample;
     }
