@@ -235,6 +235,9 @@ public class PatternAnnotationSampleService  implements IService {
             String QmScore=null;
             String QiScore=null;
 
+            // Do another refresh
+            sample=annotationBean.getEntityTree(sample.getId());
+
             for (EntityData ed : sample.getEntityData()) {
                 Entity child=ed.getChildEntity();
                 if (child!=null) {
