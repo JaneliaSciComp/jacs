@@ -190,6 +190,12 @@ public class PatternAnnotationSampleService  implements IService {
         long sampleDirFailureCount=0;
         for (Entity sample : sampleList) {
 
+            // Refresh beans
+            logger.info("Refreshing EJB instances");
+            annotationBean = EJBFactory.getLocalAnnotationBean();
+            computeBean = EJBFactory.getLocalComputeBean();
+            user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
+
             logger.info("Processing sample name="+sample.getName());
 
             sample=annotationBean.getEntityTree(sample.getId());
