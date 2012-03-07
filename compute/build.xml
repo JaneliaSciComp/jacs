@@ -123,7 +123,7 @@
             <zipfileset src="${common.dir}/GWT/gwt-servlet.jar" excludes="META-INF/** meta-inf/**"/>
             <zipfileset src="${common.dir}/JBoss-Server-4.2.3.GA/jbossall-client.jar" excludes="META-INF/** meta-inf/**"/>
             <zipfileset src="${common.dir}/JBoss-Server-4.2.3.GA/concurrent.jar" excludes="META-INF/** meta-inf/**"/>
-
+        	
             <fileset dir="${build.unzipped.dir}">
                 <include name="**/*.properties"/>
                 <include name="com/**"/>
@@ -180,6 +180,9 @@
             <fileset file="${common.module}/GWT/gwt-servlet.jar"/>
             <fileset file="${common.module}/commons-vfs/commons-vfs-1.0.jar"/>
             <fileset file="${common.module}/commons-net/commons-net-2.0.jar"/>
+        	<fileset dir="${common.module}/Solrj">
+        		<include name="**/*.jar"/>
+        	</fileset>
             <fileset dir="${basedir}/../shared/lib">
                 <include name="**/*.jar"/>
             </fileset>

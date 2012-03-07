@@ -12,6 +12,16 @@
     </constructor>
 
     <operation>
+        <description>Synchronize the SOLR indexes to the database</description>
+        <name>runSolrIndexSync</name>
+        <parameter>
+           <description>Clear the index first?</description>
+           <name>clearIndex</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+    </operation>
+    
+    <operation>
         <description>Synchronize the given user's Sample fileshare with the database</description>
         <name>runSampleSyncService</name>
         <parameter>

@@ -2,15 +2,19 @@ package org.janelia.it.jacs.compute.access;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 
 import org.apache.log4j.Logger;
-import org.hibernate.Criteria;
-import org.hibernate.HibernateException;
-import org.hibernate.Query;
-import org.hibernate.Session;
+import org.apache.solr.common.SolrInputDocument;
+import org.hibernate.*;
 import org.hibernate.criterion.Expression;
+import org.janelia.it.jacs.compute.access.solr.KeyValuePair;
+import org.janelia.it.jacs.compute.access.solr.SimpleAnnotation;
+import org.janelia.it.jacs.compute.access.solr.SimpleEntity;
+import org.janelia.it.jacs.compute.access.solr.SolrDAO;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
@@ -24,6 +28,10 @@ import org.janelia.it.jacs.model.user_data.User;
 
 public class AnnotationDAO extends ComputeBaseDAO {
 
+    private final static int SOLR_FETCH_SIZE = 500;
+    private final static int SOLR_BATCH_SIZE = 25000;
+    private final static int SOLR_COMMIT_SIZE = 500000;
+    
     private static final Map<String, EntityType> entityByName = Collections.synchronizedMap(new HashMap<String, EntityType>());
     private static final Map<String, EntityAttribute> attrByName = Collections.synchronizedMap(new HashMap<String, EntityAttribute>());
 
@@ -50,6 +58,17 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
         catch (Exception e) {
             _logger.error("Unexpected error occurred while trying preload metamodel", e);
+        }
+    }
+
+    public List<User> getAllUsers() throws DaoException {
+        try {
+            Session session = getCurrentSession();
+            StringBuffer hql = new StringBuffer("select u from User u order by u.id");
+            Query query = session.createQuery(hql.toString());
+            return query.list();
+        } catch (Exception e) {
+            throw new DaoException(e);
         }
     }
     
@@ -881,7 +900,6 @@ public class AnnotationDAO extends ComputeBaseDAO {
     public List<EntityType> getAllEntityTypes() throws DaoException {
         try {
             StringBuffer hql = new StringBuffer("select clazz from EntityType clazz");
-            if (_logger.isDebugEnabled()) _logger.debug("hql=" + hql);
             Query query = getCurrentSession().createQuery(hql.toString());
             return query.list();
         }
@@ -894,7 +912,6 @@ public class AnnotationDAO extends ComputeBaseDAO {
     public List<EntityAttribute> getAllEntityAttributes() throws DaoException {
         try {
             StringBuffer hql = new StringBuffer("select clazz from EntityAttribute clazz");
-            if (_logger.isDebugEnabled()) _logger.debug("hql=" + hql);
             Query query = getCurrentSession().createQuery(hql.toString());
             return query.list();
         }
@@ -911,7 +928,6 @@ public class AnnotationDAO extends ComputeBaseDAO {
             if (null != userLogin) {
                 hql.append(" and clazz.user.userLogin='").append(userLogin).append("'");
             }
-            if (_logger.isDebugEnabled()) _logger.debug("hql=" + hql);
             Query query = getCurrentSession().createQuery(hql.toString());
             return query.list();
         }
@@ -1039,36 +1055,51 @@ public class AnnotationDAO extends ComputeBaseDAO {
 	        throw new DaoException(e);
 	    }
     }
+
+    public List<Entity> getAnnotationsByEntityId(String userLogin, Long entityId) throws DaoException {
+    	List<Long> entityIds = new ArrayList<Long>();
+    	entityIds.add(entityId);
+    	return getAnnotationsByEntityId(userLogin, entityIds);
+    }
     
     public List<Entity> getAnnotationsByEntityId(String userLogin, List<Long> entityIds) throws DaoException {
         try {
         	if (entityIds.isEmpty()) {
         		return new ArrayList<Entity>();
         	}
-        	StringBuffer entityCommaList = new StringBuffer();
-        	for(Long id : entityIds) {
-        		if (entityCommaList.length()>0) entityCommaList.append(",");
-        		entityCommaList.append(id);
+        	if (userLogin==null) {
+        		throw new DaoException("No username provided");
         	}
-        	
             Session session = getCurrentSession();
-            StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed where " +
-                    "ed.entityAttribute.name = ? " +
-                    "and ed.value in ("+entityCommaList+") ");
-
-            if (null != userLogin) {
-                hql.append(" and (ed.parentEntity.user.userLogin=? or ed.parentEntity.user.userLogin='system') ");
+            StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed where ");
+            hql.append("ed.entityAttribute.name = ? ");
+            hql.append("and (ed.parentEntity.user.userLogin=? or ed.parentEntity.user.userLogin='system') ");
+            
+            if (entityIds.size()==1) {
+                hql.append("and ed.value = ?");
+            }
+            else {
+            	StringBuffer entityCommaList = new StringBuffer();
+            	for(Long id : entityIds) {
+            		if (entityCommaList.length()>0) entityCommaList.append(",");
+            		entityCommaList.append(id);
+            	}
+                hql.append("and ed.value in ("+entityCommaList+") ");
             }
             
             hql.append(" order by ed.parentEntity.id ");
             
             Query query = session.createQuery(hql.toString());
             query.setString(0, EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
-            if (null != userLogin) {
-                query.setString(1, userLogin);
+            query.setString(1, userLogin);
+
+            if (entityIds.size()==1) {
+                query.setLong(2, entityIds.get(0));
             }
+            
             return query.list();
-        } catch (Exception e) {
+        } 
+        catch (Exception e) {
             throw new DaoException(e);
         }
     }
@@ -1542,36 +1573,46 @@ public class AnnotationDAO extends ComputeBaseDAO {
             throw new DaoException(e);
         }
     }
-    
-	public List<Entity> getEntitiesInList(List<Long> entityIds) throws DaoException {
-		StringBuffer entityIdStr = new StringBuffer();
-		for(Long entityId : entityIds) {
-			if (entityIdStr.length()>0) entityIdStr.append(",");
-			entityIdStr.append(entityId);
-		}
-		return getEntitiesInList(entityIdStr.toString());
-	}
 
 	public List<Entity> getEntitiesInList(String entityIds) throws DaoException {
+		String[] idStrs = entityIds.split("\\s*,\\s*");
+		List<Long> ids = new ArrayList<Long>();
+		for(String idStr : idStrs) {
+			ids.add(new Long(idStr));
+		}
+		return getEntitiesInList(ids);
+	}
+    
+//	public List<Entity> getEntitiesInList(List<Long> entityIds) throws DaoException {
+//		StringBuffer entityIdStr = new StringBuffer();
+//		for(Long entityId : entityIds) {
+//			if (entityIdStr.length()>0) entityIdStr.append(",");
+//			entityIdStr.append(entityId);
+//		}
+//		return getEntitiesInList(entityIdStr.toString());
+//	}
+
+	public List<Entity> getEntitiesInList(List<Long> entityIds) throws DaoException {
         try {
         	if (entityIds == null || "".equals(entityIds)) {
         		return new ArrayList<Entity>();
         	}
             Session session = getCurrentSession();
-            StringBuffer hql = new StringBuffer("select e from Entity e where " +
-                    "e.id in ("+entityIds+") ");
+            StringBuffer hql = new StringBuffer("select e from Entity e where e.id in (:ids)");
             Query query = session.createQuery(hql.toString());
+            query.setParameterList("ids", entityIds);
+
             List<Entity> results = query.list();
             
             // Resort the results in the order that the ids were given
             
-            Map<String,Entity> map = new HashMap<String,Entity>();
+            Map<Long,Entity> map = new HashMap<Long,Entity>();
             for(Entity entity : results) {
-            	map.put(entity.getId().toString(), entity);
+            	map.put(entity.getId(), entity);
             }
             
             List<Entity> sortedList = new ArrayList<Entity>();
-            for(String entityId : entityIds.split("\\s*,\\s*")) {
+            for(Long entityId : entityIds) {
             	Entity entity = map.get(entityId);
             	if (entity != null) {
             		sortedList.add(entity);
@@ -1715,4 +1756,237 @@ public class AnnotationDAO extends ComputeBaseDAO {
         return new EntityData(null, attribute, parent, null, owner, null, date, date, null);
     }
     
+    public void clearIndex() throws DaoException {
+        SolrDAO solr = new SolrDAO(_logger, false);
+    	solr.clearIndex();
+    	solr.commit();
+		_logger.info("Index cleared");
+    }
+
+    private Map<Long,List<SimpleAnnotation>> buildAnnotationMap() throws DaoException {
+
+    	_logger.info("Building annotation map of all entities and annotations");
+    	
+    	Map<Long,List<SimpleAnnotation>> annotationMap = new HashMap<Long,List<SimpleAnnotation>>();
+
+    	Connection conn = null;
+    	PreparedStatement stmt = null;
+    	try {
+	        conn = getJdbcConnection();
+	        
+	        StringBuffer sql = new StringBuffer();
+	        sql.append("select a.id, aedt.value, aedk.value, aedv.value ");
+	        sql.append("from entity a ");
+	        sql.append("left outer join entityData aedt on a.id=aedt.parent_entity_id ");
+	        sql.append("left outer join entityData aedk on a.id=aedk.parent_entity_id ");
+	        sql.append("left outer join entityData aedv on a.id=aedv.parent_entity_id ");
+	        sql.append("where a.entity_type_id = ? ");
+	        sql.append("and aedt.entity_att_id = ? ");
+	        sql.append("and aedk.entity_att_id = ? ");
+	        sql.append("and aedv.entity_att_id = ? ");
+
+	        EntityType annotationType = getEntityTypeByName(EntityConstants.TYPE_ANNOTATION);
+	        EntityAttribute targetAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
+	        EntityAttribute keyAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_TERM);
+	        EntityAttribute valueAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM);
+
+	        stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+	        stmt.setLong(1, annotationType.getId());
+	        stmt.setLong(2, targetAttr.getId());
+	        stmt.setLong(3, keyAttr.getId());
+	        stmt.setLong(4, valueAttr.getId());
+	        
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				Long annotationId = rs.getBigDecimal(1).longValue();
+				String entityIdStr = rs.getString(2);
+				String key = rs.getString(2);
+				String value = rs.getString(3);
+				
+				Long entityId = null;
+				try {
+					entityId = new Long(entityIdStr);
+				}
+				catch (NumberFormatException e) {
+					_logger.warn("Cannot parse annotation target id for annotation="+annotationId);
+				}
+				
+				List<SimpleAnnotation> annots = annotationMap.get(entityId);
+				if (annots == null) {
+					annots = new ArrayList<SimpleAnnotation>();
+					annotationMap.put(entityId, annots);
+				}
+				annots.add(new SimpleAnnotation(key, value));
+			}
+    	}
+    	catch (SQLException e) {
+    		throw new DaoException(e);
+    	}
+        finally {
+        	try {
+        		stmt.close();
+                conn.close();	
+        	}
+            catch (Exception e) {
+        		throw new DaoException(e);
+            }
+        }
+    	
+        _logger.info("    annotationMap.size="+annotationMap.size());
+    	return annotationMap;
+    }
+    
+    private Map<Long,List<Long>> buildAncestorMap() throws DaoException {
+
+    	_logger.info("Building ancestor map for all entities");
+    	
+    	Map<Long,List<Long>> ancestorMap = new HashMap<Long,List<Long>>();
+
+    	Connection conn = null;
+    	PreparedStatement stmt = null;
+    	try {
+	        conn = getJdbcConnection();
+	        
+	        StringBuffer sql = new StringBuffer();
+	        sql.append("select e.id, ed.child_entity_id ");
+    		sql.append("from entity e ");
+	        sql.append("join entityData ed on e.id=ed.parent_entity_id ");
+	        sql.append("where ed.child_entity_id is not null ");
+	       	         
+	        stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				Long entityId = rs.getBigDecimal(1).longValue();
+				Long childId = rs.getBigDecimal(2).longValue();
+				
+				List<Long> ancestors = ancestorMap.get(childId);
+				if (ancestors == null) {
+					ancestors = new ArrayList<Long>();
+					ancestorMap.put(childId, ancestors);
+				}
+				ancestors.add(entityId);
+			}
+    	}
+    	catch (SQLException e) {
+    		throw new DaoException(e);
+    	}
+        finally {
+        	try {
+        		stmt.close();
+                conn.close();	
+        	}
+            catch (Exception e) {
+        		throw new DaoException(e);
+            }
+        }
+
+    	_logger.info("    ancestorMap.size="+ancestorMap.size());
+		return ancestorMap;
+    }
+
+    public void indexAllEntities() throws DaoException {
+
+        SolrDAO solr = new SolrDAO(_logger, true);
+        
+    	Map<Long,List<SimpleAnnotation>> annotationMap = buildAnnotationMap();
+    	Map<Long,List<Long>> ancestorMap = buildAncestorMap();
+    	Map<Long,SimpleEntity> entityMap = new HashMap<Long,SimpleEntity>();
+        
+        int i = 0;
+    	Connection conn = null;
+    	PreparedStatement stmt = null;
+    	try {
+	        conn = getJdbcConnection();
+	        
+	        StringBuffer sql = new StringBuffer();
+	        sql.append("select e.id, e.name, e.creation_date, e.updated_date, et.name, u.user_login, ea.name, ed.value, ed.child_entity_id ");
+	        sql.append("from entity e ");
+	        sql.append("join entityData ed on e.id=ed.parent_entity_id ");
+	        sql.append("join user_accounts u on e.user_id = u.user_id ");
+	        sql.append("join entityType et on e.entity_type_id = et.id ");
+	        sql.append("join entityAttribute ea on ed.entity_att_id = ea.id ");
+	        stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+	        stmt.setFetchSize(SOLR_FETCH_SIZE);
+			ResultSet rs = stmt.executeQuery();
+
+	    	_logger.info("Processing entities...");
+	    	
+			while (rs.next()) {
+				Long entityId = rs.getBigDecimal(1).longValue();
+				SimpleEntity entity = entityMap.get(entityId);
+				if (entity==null) {
+					if (i>0) {
+		            	if (i%SOLR_BATCH_SIZE==0) {
+		                    List<SolrInputDocument> docs = new ArrayList<SolrInputDocument>();
+		                    for(SimpleEntity se : entityMap.values()) {
+		        	    		List<SimpleAnnotation> annotations = annotationMap.get(se.getId());
+		        	    		List<Long> ancestors = ancestorMap.get(se.getId());
+		                    	SolrInputDocument doc = solr.createDoc(se, annotations, ancestors);
+		                    	docs.add(doc);
+		                    }
+		                    entityMap.clear();
+		            		_logger.info("  Adding "+docs.size()+" docs (i="+i+")");
+		            		solr.index(docs);
+		            	}
+	            		if (i%SOLR_COMMIT_SIZE==0) {
+	            	    	_logger.info("  Committing SOLR index");
+	            			solr.commit();
+	            		}
+					}
+					
+					i++;
+					entity = new SimpleEntity();
+					entityMap.put(entityId, entity);
+					entity.setId(entityId);
+					entity.setName(rs.getString(2));
+					entity.setCreationDate(rs.getDate(3));
+					entity.setUpdatedDate(rs.getDate(4));
+					entity.setEntityTypeName(rs.getString(5));
+					entity.setUserLogin(rs.getString(6));
+				}
+
+				String key = rs.getString(7);
+				String value = rs.getString(8);
+				BigDecimal childIdBD = rs.getBigDecimal(9);
+				
+				if (key!=null && value!=null) {
+					entity.getAttrValues().add(new KeyValuePair(key, value));
+				}
+				
+				if (childIdBD != null) {
+					entity.getChildIds().add(childIdBD.longValue());
+				}
+			}
+
+        	if (!entityMap.isEmpty()) {
+                List<SolrInputDocument> docs = new ArrayList<SolrInputDocument>();
+                for(SimpleEntity se : entityMap.values()) {
+    	    		List<SimpleAnnotation> annotations = annotationMap.get(se.getId());
+    	    		List<Long> ancestors = ancestorMap.get(se.getId());
+                	SolrInputDocument doc = solr.createDoc(se, annotations, ancestors);
+                	docs.add(doc);
+                }
+        		
+        		_logger.info("  Adding "+docs.size()+" docs (i="+i+")");
+        		solr.index(docs);
+        	}
+    	}
+    	catch (SQLException e) {
+    		throw new DaoException(e);
+    	}
+        finally {
+        	try {
+        		stmt.close();
+                conn.close();	
+        	}
+            catch (Exception e) {
+        		throw new DaoException(e);
+            }
+        }
+
+    	_logger.info("  Committing SOLR index");
+		solr.commit();
+		
+    	_logger.info("Completed indexing "+i+" entities");
+    }
 }

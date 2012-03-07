@@ -10,6 +10,8 @@ package org.janelia.it.jacs.compute.mbean;
 
 public interface WorkstationDataManagerMBean {
     	
+	public void runSolrIndexSync(Boolean clearIndex); 
+	
     public void runSampleSyncService(String user, Boolean testRun);
     
     public void runSampleImageSync(String user);

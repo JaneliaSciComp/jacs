@@ -31,6 +31,9 @@
         <ejb>compute.jar</ejb>
     </module>
     <module>
+        <ejb>commons-net-2.0.jar</ejb>
+    </module>
+    <module>
         <java>gwt-servlet.jar</java>
     </module>
     <module>
@@ -39,9 +42,30 @@
     <module>
         <java>jxl.jar</java>
     </module>
+    
+    <!-- for SOLR -->
     <module>
-        <ejb>commons-net-2.0.jar</ejb>
+        <java>apache-solr-solrj-3.5.0.jar</java>
     </module>
+    <module>
+        <java>wstx-asl-3.2.7.jar</java>
+    </module>
+    <module>
+        <java>slf4j-api-1.6.4.jar</java>
+    </module>
+    <module>
+        <ejb>slf4j-log4j12-1.6.4.jar</ejb>
+    </module>
+    <module>
+        <java>commons-io-1.4.jar</java>
+    </module>
+    <module>
+        <java>commons-httpclient-3.1.jar</java>
+    </module>
+    <module>
+        <java>commons-codec-1.5.jar</java>
+    </module>
+    
     <module>
         <web>
             <web-uri>compute.war</web-uri>

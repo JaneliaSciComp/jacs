@@ -77,4 +77,5 @@ public interface AnnotationBeanLocal {
     public List<Long> getPathToRoot(Long entityId, Long rootId) throws ComputeException;
     public List<Entity> getEntitiesWithAttributeValue(String attrName, String attrValue) throws ComputeException;
     
+    public void indexAllEntities(boolean clearIndex) throws ComputeException;
 }

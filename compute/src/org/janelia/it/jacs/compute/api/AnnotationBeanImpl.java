@@ -565,6 +565,19 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     		throw new ComputeException("Error searching for entities with "+attrName+" like "+attrValue,e);
     	}
     }
+
+    public void indexAllEntities(boolean clearIndex) throws ComputeException {
+    	try {
+    		if (clearIndex) {
+    			_annotationDAO.clearIndex();
+    		}
+    		_annotationDAO.indexAllEntities();
+    	}
+    	catch (DaoException e) {
+            _logger.error("Error indexing all entities");
+    		throw new ComputeException("Error indexing all entities",e);
+    	}
+    }
     
     public EntityType getEntityTypeByName(String entityTypeName) {
 		return _annotationDAO.getEntityTypeByName(entityTypeName);

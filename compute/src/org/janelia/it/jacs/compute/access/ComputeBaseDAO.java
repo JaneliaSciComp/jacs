@@ -1,6 +1,14 @@
 
 package org.janelia.it.jacs.compute.access;
 
+import java.math.BigInteger;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.util.*;
+
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
 import org.apache.log4j.Logger;
 import org.hibernate.*;
 import org.hibernate.criterion.Expression;
@@ -14,14 +22,6 @@ import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.search.SearchResultNode;
 
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-import java.math.BigInteger;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.*;
-
 /**
  * Created by IntelliJ IDEA.
  * User: smurphy
@@ -34,21 +34,26 @@ public class ComputeBaseDAO {
 
     protected Logger _logger;
     protected SessionFactory sessionFactory;
-    Session externalSession;
+    protected Session externalSession;
 
-    public Connection getJdbcConnection() throws Exception {
-        String jdbcDriver=SystemConfigurationProperties.getString("jdbc.driverClassName");
-        String jdbcUrl=SystemConfigurationProperties.getString("jdbc.url");
-        String jdbcUser=SystemConfigurationProperties.getString("jdbc.username");
-        String jdbcPw=SystemConfigurationProperties.getString("jdbc.password");
-        Class.forName(jdbcDriver);
-        Connection connection = DriverManager.getConnection(
-                jdbcUrl,
-                jdbcUser,
-                jdbcPw);
-        connection.setAutoCommit(false);
-        _logger.info("getJdbcConnection() using these parameters: driverClassName="+jdbcDriver+" url="+jdbcUrl+" user="+jdbcUser);
-        return connection;
+    public Connection getJdbcConnection() throws DaoException {
+    	try {
+            String jdbcDriver=SystemConfigurationProperties.getString("jdbc.driverClassName");
+            String jdbcUrl=SystemConfigurationProperties.getString("jdbc.url");
+            String jdbcUser=SystemConfigurationProperties.getString("jdbc.username");
+            String jdbcPw=SystemConfigurationProperties.getString("jdbc.password");
+            Class.forName(jdbcDriver);
+            Connection connection = DriverManager.getConnection(
+                    jdbcUrl,
+                    jdbcUser,
+                    jdbcPw);
+            connection.setAutoCommit(false);
+//            _logger.debug("getJdbcConnection() using these parameters: driverClassName="+jdbcDriver+" url="+jdbcUrl+" user="+jdbcUser);
+            return connection;
+    	}
+    	catch (Exception e) {
+    		throw new DaoException(e);
+    	}
     }
 
     public ComputeBaseDAO(Logger logger) {
@@ -62,7 +67,9 @@ public class ComputeBaseDAO {
 
     private SessionFactory getSessionFactory() {
         try {
-            sessionFactory = (SessionFactory) createInitialContext().lookup("java:/hibernate/ComputeSessionFactory");
+        	if (sessionFactory==null) {
+        		sessionFactory = (SessionFactory) createInitialContext().lookup("java:/hibernate/ComputeSessionFactory");
+        	}
             return sessionFactory;
         }
         catch (Exception e) {
