@@ -65,7 +65,7 @@ fi
 
 if [ $BUILD_FLYSUITE == 1 ]; then
 
-    ICON_FILE="$JACS_COMPILE_DIR/console/src/main/java/images/flyscope.jpg"
+    ICON_FILE="$JACS_COMPILE_DIR/console/src/main/java/images/fly.png"
     WORKSTATION_JAR="$PACKAGE_MAC_DIR/workstation.jar"
     WORKSTATION_LIB="$PACKAGE_MAC_DIR/workstation_lib"
     VAA3D_BUNDLE="$PACKAGE_MAC_DIR/vaa3d64.app"
