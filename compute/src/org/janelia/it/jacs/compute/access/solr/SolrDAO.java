@@ -154,7 +154,7 @@ public class SolrDAO {
     	return doc;
     }
 
-    public SolrInputDocument createDoc(SimpleEntity entity, List<SimpleAnnotation> annotations, List<Long> ancestorIds) {
+    public SolrInputDocument createDoc(SimpleEntity entity, Set<SimpleAnnotation> annotations, Set<Long> ancestorIds) {
 
     	SolrInputDocument doc = new SolrInputDocument();
     	doc.addField("id", entity.getId(), 1.0f);

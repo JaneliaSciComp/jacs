@@ -7,14 +7,18 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
+import net.sf.ehcache.Cache;
+import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.Element;
+
 import org.apache.log4j.Logger;
 import org.apache.solr.common.SolrInputDocument;
-import org.hibernate.*;
+import org.hibernate.Criteria;
+import org.hibernate.HibernateException;
+import org.hibernate.Query;
+import org.hibernate.Session;
 import org.hibernate.criterion.Expression;
-import org.janelia.it.jacs.compute.access.solr.KeyValuePair;
-import org.janelia.it.jacs.compute.access.solr.SimpleAnnotation;
-import org.janelia.it.jacs.compute.access.solr.SimpleEntity;
-import org.janelia.it.jacs.compute.access.solr.SolrDAO;
+import org.janelia.it.jacs.compute.access.solr.*;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
@@ -35,6 +39,8 @@ public class AnnotationDAO extends ComputeBaseDAO {
     private static final Map<String, EntityType> entityByName = Collections.synchronizedMap(new HashMap<String, EntityType>());
     private static final Map<String, EntityAttribute> attrByName = Collections.synchronizedMap(new HashMap<String, EntityAttribute>());
 
+	private CacheManager manager = new CacheManager();
+	
     private boolean debugDeletions = false;
     
     public AnnotationDAO(Logger logger) {
@@ -1763,12 +1769,26 @@ public class AnnotationDAO extends ComputeBaseDAO {
 		_logger.info("Index cleared");
     }
 
-    private Map<Long,List<SimpleAnnotation>> buildAnnotationMap() throws DaoException {
+    private Object getValue(Cache cache, Object key) {
+		Element e = cache.get(key);
+		return e!=null ? e.getObjectValue() : null;
+    }
+
+    private void putValue(Cache cache, Object key, Object value) {
+		Element e = new Element(key, value);
+		cache.put(e);
+    }
+    
+    /**
+     * Builds a map of entity ids to sets of SimpleAnnotations on disk using EhCache.
+     * @param annotationMapCache
+     * @throws DaoException
+     */
+    private void buildAnnotationMap() throws DaoException {
 
     	_logger.info("Building annotation map of all entities and annotations");
+    	Cache annotationMapCache = manager.getCache("annotationMapCache");
     	
-    	Map<Long,List<SimpleAnnotation>> annotationMap = new HashMap<Long,List<SimpleAnnotation>>();
-
     	Connection conn = null;
     	PreparedStatement stmt = null;
     	try {
@@ -1811,10 +1831,10 @@ public class AnnotationDAO extends ComputeBaseDAO {
 					_logger.warn("Cannot parse annotation target id for annotation="+annotationId);
 				}
 				
-				List<SimpleAnnotation> annots = annotationMap.get(entityId);
+				Set<SimpleAnnotation> annots = (Set<SimpleAnnotation>)getValue(annotationMapCache, entityId);
 				if (annots == null) {
-					annots = new ArrayList<SimpleAnnotation>();
-					annotationMap.put(entityId, annots);
+					annots = new HashSet<SimpleAnnotation>();
+					putValue(annotationMapCache, entityId, annots);
 				}
 				annots.add(new SimpleAnnotation(key, value));
 			}
@@ -1832,16 +1852,19 @@ public class AnnotationDAO extends ComputeBaseDAO {
             }
         }
     	
-        _logger.info("    annotationMap.size="+annotationMap.size());
-    	return annotationMap;
+        _logger.info("    Done, annotationMap.size="+annotationMapCache.getSize());
     }
     
-    private Map<Long,List<Long>> buildAncestorMap() throws DaoException {
+    /**
+     * Builds a map of entity ids to sets of ancestor ids on disk using EhCache.
+     * @param ancestorMapCache
+     * @throws DaoException
+     */
+    private void buildAncestorMap() throws DaoException {
 
     	_logger.info("Building ancestor map for all entities");
+    	Cache ancestorMapCache = manager.getCache("ancestorMapCache");
     	
-    	Map<Long,List<Long>> ancestorMap = new HashMap<Long,List<Long>>();
-
     	Connection conn = null;
     	PreparedStatement stmt = null;
     	try {
@@ -1858,13 +1881,12 @@ public class AnnotationDAO extends ComputeBaseDAO {
 			while (rs.next()) {
 				Long entityId = rs.getBigDecimal(1).longValue();
 				Long childId = rs.getBigDecimal(2).longValue();
-				
-				List<Long> ancestors = ancestorMap.get(childId);
-				if (ancestors == null) {
-					ancestors = new ArrayList<Long>();
-					ancestorMap.put(childId, ancestors);
+				AncestorSet ancestorSet = (AncestorSet)getValue(ancestorMapCache, childId);
+				if (ancestorSet == null) {
+					ancestorSet = new AncestorSet();
+					putValue(ancestorMapCache, childId, ancestorSet);
 				}
-				ancestors.add(entityId);
+				ancestorSet.getAncestors().add(entityId);
 			}
     	}
     	catch (SQLException e) {
@@ -1880,18 +1902,74 @@ public class AnnotationDAO extends ComputeBaseDAO {
             }
         }
 
-    	_logger.info("    ancestorMap.size="+ancestorMap.size());
-		return ancestorMap;
+    	_logger.info("    Loaded entity graph, now to find the ancestors...");
+
+    	int i = 0;
+    	for(Object entityIdObj : ancestorMapCache.getKeys()) {
+    		calculateAncestors((Long)entityIdObj, new HashSet<Long>(), 0);
+    		i++;
+    	}
+    	
+    	for(Object entityIdObj : ancestorMapCache.getKeys()) {
+    		Long entityId = (Long)entityIdObj;
+    		AncestorSet ancestorSet = (AncestorSet)getValue(ancestorMapCache, entityId);
+    		if (!ancestorSet.isComplete()) {
+    			_logger.warn("Incomplete ancestor set for "+entityId);
+    		}
+    	}
+    
+    	_logger.info("    Done, ancestorMap.size="+ancestorMapCache.getSize());
     }
+    
+    private Set<Long> calculateAncestors(Long entityId, Set<Long> visited, int level) {
 
+    	StringBuffer b = new StringBuffer();
+    	for(int i=0; i<level; i++) {
+    		b.append("  ");
+    	}
+    	
+    	Cache ancestorMapCache = manager.getCache("ancestorMapCache");
+    	AncestorSet ancestorSet = (AncestorSet)getValue(ancestorMapCache, entityId);
+    	
+    	if (ancestorSet==null) {
+    		// Hit a root, it has no ancestors
+    		return new HashSet<Long>();
+    	}
+    		
+    	if (ancestorSet.isComplete()) {
+    		// The work's already been done
+    		return ancestorSet.getAncestors();
+    	}
+
+    	if (visited.contains(entityId)) {
+    		// Loop detected because the set isn't complete but we're hitting the same entity again. Break out of it..
+    		ancestorSet.setComplete(true);
+    		putValue(ancestorMapCache, entityId, ancestorSet);
+    		return ancestorSet.getAncestors();
+    	}
+
+    	visited.add(entityId);
+    	
+    	Set<Long> ancestors = ancestorSet.getAncestors();
+    	for(Long parentId : new HashSet<Long>(ancestors)) {
+    		ancestors.addAll(calculateAncestors(parentId, visited, level+1));
+    	}
+    	
+    	ancestorSet.setComplete(true);
+    	putValue(ancestorMapCache, entityId, ancestorSet);
+    	
+    	return ancestorSet.getAncestors();
+    }
+    
     public void indexAllEntities() throws DaoException {
-
-        SolrDAO solr = new SolrDAO(_logger, true);
-        
-    	Map<Long,List<SimpleAnnotation>> annotationMap = buildAnnotationMap();
-    	Map<Long,List<Long>> ancestorMap = buildAncestorMap();
+    	
+    	buildAnnotationMap();
+    	buildAncestorMap();
+ 
+    	_logger.info("Getting entities");
+    	
+    	SolrDAO solr = new SolrDAO(_logger, true);
     	Map<Long,SimpleEntity> entityMap = new HashMap<Long,SimpleEntity>();
-        
         int i = 0;
     	Connection conn = null;
     	PreparedStatement stmt = null;
@@ -1905,11 +1983,16 @@ public class AnnotationDAO extends ComputeBaseDAO {
 	        sql.append("join user_accounts u on e.user_id = u.user_id ");
 	        sql.append("join entityType et on e.entity_type_id = et.id ");
 	        sql.append("join entityAttribute ea on ed.entity_att_id = ea.id ");
+	        sql.append("where e.entity_type_id != ? ");
+	        
+	        EntityType annotationType = getEntityTypeByName(EntityConstants.TYPE_ANNOTATION);
+	        
 	        stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+	        stmt.setLong(1, annotationType.getId());
 	        stmt.setFetchSize(SOLR_FETCH_SIZE);
 			ResultSet rs = stmt.executeQuery();
 
-	    	_logger.info("Processing entities...");
+	    	_logger.info("Processing entities");
 	    	
 			while (rs.next()) {
 				Long entityId = rs.getBigDecimal(1).longValue();
@@ -1917,13 +2000,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 				if (entity==null) {
 					if (i>0) {
 		            	if (i%SOLR_BATCH_SIZE==0) {
-		                    List<SolrInputDocument> docs = new ArrayList<SolrInputDocument>();
-		                    for(SimpleEntity se : entityMap.values()) {
-		        	    		List<SimpleAnnotation> annotations = annotationMap.get(se.getId());
-		        	    		List<Long> ancestors = ancestorMap.get(se.getId());
-		                    	SolrInputDocument doc = solr.createDoc(se, annotations, ancestors);
-		                    	docs.add(doc);
-		                    }
+		                    List<SolrInputDocument> docs = createEntityDocs(solr, entityMap.values());
 		                    entityMap.clear();
 		            		_logger.info("  Adding "+docs.size()+" docs (i="+i+")");
 		            		solr.index(docs);
@@ -1959,14 +2036,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 			}
 
         	if (!entityMap.isEmpty()) {
-                List<SolrInputDocument> docs = new ArrayList<SolrInputDocument>();
-                for(SimpleEntity se : entityMap.values()) {
-    	    		List<SimpleAnnotation> annotations = annotationMap.get(se.getId());
-    	    		List<Long> ancestors = ancestorMap.get(se.getId());
-                	SolrInputDocument doc = solr.createDoc(se, annotations, ancestors);
-                	docs.add(doc);
-                }
-        		
+                List<SolrInputDocument> docs = createEntityDocs(solr, entityMap.values());
         		_logger.info("  Adding "+docs.size()+" docs (i="+i+")");
         		solr.index(docs);
         	}
@@ -1986,7 +2056,22 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
     	_logger.info("  Committing SOLR index");
 		solr.commit();
-		
     	_logger.info("Completed indexing "+i+" entities");
+    }
+    
+    private List<SolrInputDocument> createEntityDocs(SolrDAO solr, Collection<SimpleEntity> entities) {
+
+    	Cache ancestorMapCache = manager.getCache("ancestorMapCache");
+    	Cache annotationMapCache = manager.getCache("annotationMapCache");
+    	
+        List<SolrInputDocument> docs = new ArrayList<SolrInputDocument>();
+        for(SimpleEntity se : entities) {
+        	Set<SimpleAnnotation> annotations = (Set<SimpleAnnotation>)getValue(annotationMapCache, se.getId());
+        	AncestorSet ancestorSet = (AncestorSet)getValue(ancestorMapCache, se.getId());
+        	Set<Long> ancestors = ancestorSet==null ? null : ancestorSet.getAncestors(); 
+        	SolrInputDocument doc = solr.createDoc(se, annotations, ancestors);
+        	docs.add(doc);
+        }
+        return docs;
     }
 }

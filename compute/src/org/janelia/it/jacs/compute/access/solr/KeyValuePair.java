@@ -1,11 +1,13 @@
 package org.janelia.it.jacs.compute.access.solr;
 
+import java.io.Serializable;
+
 /**
  * Self-explanatory.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class KeyValuePair {
+public class KeyValuePair implements Serializable {
 
 	private String key;
 	private String value;
