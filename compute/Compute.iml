@@ -53,6 +53,15 @@
     <orderEntry type="library" name="Spring" level="project" />
     <orderEntry type="library" name="Apache Commons" level="project" />
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../common/Solrj/apache-solr-solrj-3.5.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">
