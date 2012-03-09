@@ -115,7 +115,7 @@ if [ $INSTALL_DATA_SERVER == 1 ]; then
     echo "  Deploying to server 'jacs-data'..."
     cd $JACS_COMPILE_DIR/compute
     ant -Duser.server.machine=jacs-data -Duser.server.login=jacs "deploy-[your-server]-dev"
-    echo "FlySuite Version ${FWVER} (server) was successfully deployed to the JACS production data-loading server."
+    echo "FlySuite Version ${FWVER} (JBoss server) was successfully deployed to the JACS production data-loading server."
 fi 
     
 ################################################################
@@ -125,7 +125,10 @@ if [ $INSTALL_PROD_SERVER == 1 ]; then
     echo "  Deploying to server 'jacs'..."
     cd $JACS_COMPILE_DIR/compute
     ant -Duser.server.machine=jacs -Duser.server.login=jacs "deploy-[your-server]-dev"
-    echo "FlySuite Version ${FWVER} (server) was successfully deployed to the JACS production server."
+    echo "FlySuite Version ${FWVER} (JBoss server) was successfully deployed to the JACS production server."
+    cd $JACS_COMPILE_DIR/jacs
+    ant -Duser.server.machine=jacs -Duser.server.login=jacs "deploy-[your-server]-dev"
+    echo "FlySuite Version ${FWVER} (Tomcat web front-end) was successfully deployed to the JACS production server."
 fi
 
 ################################################################
