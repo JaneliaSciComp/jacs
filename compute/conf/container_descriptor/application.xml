@@ -66,11 +66,10 @@
         <java>commons-codec-1.5.jar</java>
     </module>
     
-    <!-- for ehcache -->
+    <!-- for ehcache  -->
     <module>
         <java>ehcache-core-2.5.1.jar</java>
     </module>
-    
     
     <module>
         <web>

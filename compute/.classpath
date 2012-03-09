@@ -10,9 +10,10 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/GWT"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Lucene"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Hibernate"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Spring"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Apache Commons"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Solrj"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Ehcache"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Spring"/>
 	<classpathentry kind="output" path="build/eclipse"/>
 </classpath>

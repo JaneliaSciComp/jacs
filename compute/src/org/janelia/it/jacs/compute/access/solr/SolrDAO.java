@@ -31,13 +31,19 @@ public class SolrDAO {
 	
     protected Logger logger;
     protected SolrServer solr;
+    protected boolean streamingUpdates;
 
-    public SolrDAO(Logger logger) throws DaoException {
+    public SolrDAO(Logger logger) {
     	this(logger, false);
     }
     
-    public SolrDAO(Logger logger, boolean streamingUpdates) throws DaoException {
+    public SolrDAO(Logger logger, boolean streamingUpdates) {
         this.logger = logger;
+        this.streamingUpdates = streamingUpdates;
+    }
+
+    private void init() throws DaoException {
+    	if (solr!=null) return;
         try {
         	if (streamingUpdates) {
         		solr = new StreamingUpdateSolrServer(SOLR_SERVER_URL, SOLR_LOADER_QUEUE_SIZE, SOLR_LOADER_THREAD_COUNT);	
@@ -57,8 +63,9 @@ public class SolrDAO {
         	throw new DaoException("Problem pinging SOLR at: "+SOLR_SERVER_URL);
         }
     }
-
+    
     public void clearIndex() throws DaoException {
+    	init();
 		try {
 	    	solr.deleteByQuery("*:*");
 		}
@@ -68,6 +75,7 @@ public class SolrDAO {
     }
 
     public void commit() throws DaoException {
+    	init();
 		try {
 	    	solr.commit();
 		}
@@ -77,6 +85,7 @@ public class SolrDAO {
     }
     
     public void index(Entity entity, List<SimpleAnnotation> annotations, List<Long> ancestorIds) throws DaoException {
+    	init();
     	if (entity==null) return;
     	try {
 	    	solr.add(createDoc(entity, annotations, ancestorIds));
@@ -87,6 +96,7 @@ public class SolrDAO {
     }
     
     public void index(List<Entity> entities, Map<Long,List<SimpleAnnotation>> annotationMap, Map<Long,List<Long>> ancestorMap) throws DaoException {
+    	init();
     	if (entities.isEmpty()) return;
 		try {
 	    	Collection<SolrInputDocument> docs = new ArrayList<SolrInputDocument>();
@@ -104,6 +114,7 @@ public class SolrDAO {
     }
     
     public void index(List<SolrInputDocument> docs) throws DaoException {
+    	init();
     	if (docs==null) return;
     	try {
 	    	solr.add(docs);
@@ -197,6 +208,7 @@ public class SolrDAO {
     }
     
     public SolrDocumentList search(SolrQuery query) throws DaoException {
+    	init();
     	try {
             QueryResponse rsp = solr.query(query);
             SolrDocumentList docs = rsp.getResults();

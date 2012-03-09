@@ -1,6 +1,8 @@
 package org.janelia.it.jacs.compute.access;
 
 import java.math.BigDecimal;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -39,12 +41,17 @@ public class AnnotationDAO extends ComputeBaseDAO {
     private static final Map<String, EntityType> entityByName = Collections.synchronizedMap(new HashMap<String, EntityType>());
     private static final Map<String, EntityAttribute> attrByName = Collections.synchronizedMap(new HashMap<String, EntityAttribute>());
 
-	private CacheManager manager = new CacheManager();
+	private static CacheManager manager;
 	
     private boolean debugDeletions = false;
     
     public AnnotationDAO(Logger logger) {
         super(logger);
+        synchronized (AnnotationDAO.class) {
+	        if (manager==null) {
+	        	manager = new CacheManager(getClass().getResource("/ehcache2-jacs.xml"));
+	        }
+        }
     }
 
     private void preloadData() {
@@ -1820,8 +1827,8 @@ public class AnnotationDAO extends ComputeBaseDAO {
 			while (rs.next()) {
 				Long annotationId = rs.getBigDecimal(1).longValue();
 				String entityIdStr = rs.getString(2);
-				String key = rs.getString(2);
-				String value = rs.getString(3);
+				String key = rs.getString(3);
+				String value = rs.getString(4);
 				
 				Long entityId = null;
 				try {
@@ -1909,6 +1916,8 @@ public class AnnotationDAO extends ComputeBaseDAO {
     		calculateAncestors((Long)entityIdObj, new HashSet<Long>(), 0);
     		i++;
     	}
+
+    	_logger.info("    Verifying ancestors...");
     	
     	for(Object entityIdObj : ancestorMapCache.getKeys()) {
     		Long entityId = (Long)entityIdObj;
@@ -1921,23 +1930,31 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	_logger.info("    Done, ancestorMap.size="+ancestorMapCache.getSize());
     }
     
+    boolean debugAncestors = false;
     private Set<Long> calculateAncestors(Long entityId, Set<Long> visited, int level) {
 
+    	if (level>10000) {
+    		throw new IllegalStateException("Something went wrong calculating ancestors");
+    	}
+    	
     	StringBuffer b = new StringBuffer();
     	for(int i=0; i<level; i++) {
-    		b.append("  ");
+    		b.append("    ");
     	}
+    	if (debugAncestors) _logger.info(b+""+entityId);
     	
     	Cache ancestorMapCache = manager.getCache("ancestorMapCache");
     	AncestorSet ancestorSet = (AncestorSet)getValue(ancestorMapCache, entityId);
     	
     	if (ancestorSet==null) {
     		// Hit a root, it has no ancestors
+    		if (debugAncestors) _logger.info(b+""+entityId+" is root");
     		return new HashSet<Long>();
     	}
     		
     	if (ancestorSet.isComplete()) {
     		// The work's already been done
+    		if (debugAncestors) _logger.info(b+""+entityId+" is complete");
     		return ancestorSet.getAncestors();
     	}
 
@@ -1945,6 +1962,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
     		// Loop detected because the set isn't complete but we're hitting the same entity again. Break out of it..
     		ancestorSet.setComplete(true);
     		putValue(ancestorMapCache, entityId, ancestorSet);
+    		if (debugAncestors) _logger.info(b+""+entityId+" is loop");
     		return ancestorSet.getAncestors();
     	}
 
@@ -1958,6 +1976,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	ancestorSet.setComplete(true);
     	putValue(ancestorMapCache, entityId, ancestorSet);
     	
+    	if (debugAncestors) _logger.info(b+""+entityId+" has "+ancestorSet.getAncestors().size()+" ancestors");
     	return ancestorSet.getAncestors();
     }
     

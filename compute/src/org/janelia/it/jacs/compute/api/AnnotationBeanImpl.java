@@ -7,8 +7,11 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 
 import org.apache.log4j.Logger;
+import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.compute.access.solr.SolrDAO;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
@@ -29,6 +32,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     public static final String MDB_PROVIDER_URL_PROP = "AsyncMessageInterface.ProviderURL";
 
     private final AnnotationDAO _annotationDAO = new AnnotationDAO(_logger);
+    private final SolrDAO _solrDAO = new SolrDAO(_logger);
     
     private static final Map<Long, Entity> entityTrees = Collections.synchronizedMap(new HashMap<Long, Entity>());
 
@@ -574,8 +578,27 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     		_annotationDAO.indexAllEntities();
     	}
     	catch (DaoException e) {
-            _logger.error("Error indexing all entities");
+            _logger.error("Error indexing all entities",e);
     		throw new ComputeException("Error indexing all entities",e);
+    	}
+    }
+    
+    public List<Map> search(String queryString) throws ComputeException {
+    	try {
+    		SolrDocumentList docs = _solrDAO.search(queryString);
+    		List<Map> list = new ArrayList<Map>();
+    		
+    		Iterator<SolrDocument> i = docs.iterator();
+    		while (i.hasNext()) {
+    			SolrDocument doc = i.next();
+    			Map docMap = new HashMap<String,Object>(doc);
+    			list.add(docMap);
+    		}
+    		return list;
+    	}
+    	catch (DaoException e) {
+            _logger.error("Error searching index",e);
+    		throw new ComputeException("Error searching index",e);
     	}
     }
     
