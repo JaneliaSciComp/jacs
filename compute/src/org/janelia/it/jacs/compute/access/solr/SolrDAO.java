@@ -145,9 +145,8 @@ public class SolrDAO {
     		}
     	}
     	
-    	if (!childrenIds.isEmpty()) {
-    		doc.addField("child_ids", childrenIds, 0.2f);
-    	}
+    	doc.addField("child_ids", childrenIds, 0.2f);
+    	doc.addField("child_count", childrenIds.size(), 0.2f);
     	
     	if (annotations != null) {
     		for(SimpleAnnotation annotation : annotations) {
@@ -160,6 +159,7 @@ public class SolrDAO {
     	
     	if (ancestorIds != null) {
     		doc.addField("ancestor_ids", ancestorIds, 0.2f);
+    		doc.addField("ancestor_count", ancestorIds.size(), 0.2f);
     	}
     	
     	return doc;
@@ -201,9 +201,11 @@ public class SolrDAO {
     	return doc;
     }
     
-    public SolrDocumentList search(String queryString) throws DaoException {
+    public SolrDocumentList search(String queryString, Integer start, Integer rows) throws DaoException {
     	SolrQuery query = new SolrQuery();
         query.setQuery(queryString);
+        if (start!=null) query.setStart(start);
+        if (rows!=null) query.setRows(rows);
         return search(query);
     }
     

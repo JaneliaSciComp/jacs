@@ -10,6 +10,7 @@ import org.janelia.it.jacs.model.tasks.Task;
 
 import javax.ejb.Remote;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Remote
@@ -76,5 +77,7 @@ public interface AnnotationBeanRemote {
     public List<List<Long>> searchTreeForNameStartingWith(Long rootId, String searchString) throws ComputeException;
     public List<Long> getPathToRoot(Long entityId, Long rootId) throws ComputeException;
     public List<Entity> getEntitiesWithAttributeValue(String attrName, String attrValue) throws ComputeException;
-    
+
+    public List<Map> search(String username, Long rootId, String queryString, Integer start, Integer rows) throws ComputeException;
+    public List<Entity> searchEntities(String username, Long rootId, String queryString, Integer start, Integer rows) throws ComputeException;
 }

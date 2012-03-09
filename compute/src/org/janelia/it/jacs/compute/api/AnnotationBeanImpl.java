@@ -582,10 +582,47 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     		throw new ComputeException("Error indexing all entities",e);
     	}
     }
+
+    public List<Entity> searchEntities(String username, Long rootId, String queryString, Integer start, Integer rows) throws ComputeException {
+    	List<Long> ids = new ArrayList<Long>();
+    	for(Map doc : search(username, rootId, queryString, start, rows)) {
+    		String idStr = (String)doc.get("id");
+    		try {
+    			if (idStr!=null) {
+    				Long id = new Long(idStr);
+    				if (id!=null) ids.add(id);
+    			}
+    		} 
+    		catch (NumberFormatException e) {
+    			_logger.warn("Error parsing id from index: "+idStr);
+    			continue;
+    		}
+    	}
+    	return getEntitiesById(ids);
+    }
     
-    public List<Map> search(String queryString) throws ComputeException {
+    public List<Map> search(String username, Long rootId, String queryString, Integer start, Integer rows) throws ComputeException {
+    	
+    	if (queryString==null || "".equals(queryString)) return new ArrayList<Map>();
+    	
+    	StringBuffer query = new StringBuffer();
+    	
+    	query.append("(username:system");
+    	if (username!=null) {
+    		query.append(" OR username:"+username);
+    	}
+    	query.append(") ");
+    	
+    	if (rootId != null) {
+    		query.append("AND (ancestor_ids:"+rootId+") ");
+    	}
+    	query.append("AND "+queryString);
+    	return search(query.toString(), start, rows);
+    }
+    
+    private List<Map> search(String queryString, Integer start, Integer rows) throws ComputeException {
     	try {
-    		SolrDocumentList docs = _solrDAO.search(queryString);
+    		SolrDocumentList docs = _solrDAO.search(queryString, start, rows);
     		List<Map> list = new ArrayList<Map>();
     		
     		Iterator<SolrDocument> i = docs.iterator();

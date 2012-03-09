@@ -1607,7 +1607,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
 	public List<Entity> getEntitiesInList(List<Long> entityIds) throws DaoException {
         try {
-        	if (entityIds == null || "".equals(entityIds)) {
+        	if (entityIds == null || entityIds.isEmpty()) {
         		return new ArrayList<Entity>();
         	}
             Session session = getCurrentSession();
