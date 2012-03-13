@@ -1,8 +1,8 @@
 package org.janelia.it.jacs.compute.service.solr;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.SolrBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -21,7 +21,7 @@ public class SolrIndexingService implements IService {
     protected Logger logger;
     protected Task task;
     protected String username;
-    protected AnnotationBeanLocal annotationBean;
+    protected SolrBeanLocal solrBean;
     private boolean clearIndex = false;
     
     public void execute(IProcessData processData) throws ServiceException {
@@ -29,10 +29,10 @@ public class SolrIndexingService implements IService {
     	try {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             task = ProcessDataHelper.getTask(processData);
-            annotationBean = EJBFactory.getLocalAnnotationBean();
+            solrBean = EJBFactory.getLocalSolrBean();
             username = task.getOwner();
             clearIndex = Boolean.parseBoolean(task.getParameter(PARAM_clearIndex));
-            annotationBean.indexAllEntities(clearIndex);
+            solrBean.indexAllEntities(clearIndex);
     	}
         catch (Exception e) {
         	if (e instanceof ServiceException) {

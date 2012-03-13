@@ -10,5 +10,9 @@ public class SimpleAnnotation extends KeyValuePair {
 	public SimpleAnnotation(String key, String value) {
 		super(key, value);
 	}
+	
+	public String getTag() {
+    	return (getValue() == null) ? getKey() : getKey() + " = " + getValue();
+	}
 
 }

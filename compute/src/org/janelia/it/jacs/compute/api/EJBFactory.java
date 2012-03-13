@@ -27,6 +27,8 @@ public class EJBFactory {
     private static final String REMOTE_COMPUTE_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("ComputeEJB.Name") + "/remote";
     private static final String LOCAL_SEARCH_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("SearchEJB.Name") + "/local";
     private static final String REMOTE_SEARCH_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("SearchEJB.Name") + "/remote";
+    private static final String LOCAL_SOLR_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("SolrEJB.Name") + "/local";
+    private static final String REMOTE_SOLR_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("SolrEJB.Name") + "/remote";
     private static final String LOCAL_GENOME_CONTEXT_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("GenomeContextEJB.Name") + "/local";
     private static final String REMOTE_GENOME_CONTEXT_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("GenomeContextEJB.Name") + "/remote";
     private static final String LOCAL_JOB_CONTROL_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("JobControlEJB.Name") + "/local";
@@ -85,7 +87,11 @@ public class EJBFactory {
     public static SearchBeanLocal getLocalSearchBean() {
         return (SearchBeanLocal) getLocalInterface(LOCAL_SEARCH_JNDI_NAME);
     }
-
+    
+    public static SolrBeanLocal getLocalSolrBean() {
+        return (SolrBeanLocal) getLocalInterface(LOCAL_SOLR_JNDI_NAME);
+    }
+    
     public static GenomeContextBeanLocal getLocalGenomeContextBean() {
         return (GenomeContextBeanLocal) getLocalInterface(LOCAL_GENOME_CONTEXT_JNDI_NAME);
     }
@@ -154,6 +160,10 @@ public class EJBFactory {
 
     public static SearchBeanRemote getRemoteSearchBean() {
         return (SearchBeanRemote) getRemoteInterface(REMOTE_SEARCH_JNDI_NAME);
+    }
+
+    public static SolrBeanRemote getRemoteSolrBean() {
+        return (SolrBeanRemote) getRemoteInterface(REMOTE_SOLR_JNDI_NAME);
     }
 
     public static GenomeContextBeanRemote getRemoteGenomeContextBean() {
