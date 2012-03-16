@@ -786,4 +786,31 @@ public class ComputeDAO extends ComputeBaseDAO {
             throw handleException(e, "getGenericServiceDefinitionByName");
         }
     }
+
+
+    /**
+     * Method used to add new users to the system
+     * @param userLogin - login of the user in the system
+     * @return a formatted user object, or null if there was a problem
+     * @throws DaoException thrown if there was a problem adding the user to the database
+     */
+    public User createUser(String userLogin) throws DaoException {
+        User tmpUser;
+        try {
+            tmpUser = getUserByName(userLogin);
+            if (null!=tmpUser) {
+                _logger.warn("Cannot create user "+userLogin+" as they already exist!");
+                return tmpUser;
+            }
+            else {
+                tmpUser = new User();
+                tmpUser.setUserLogin(userLogin);
+                saveOrUpdate(tmpUser);
+                return tmpUser;
+            }
+        }
+        catch (DaoException e) {
+            throw handleException(e, "createUser");
+        }
+    }
 }

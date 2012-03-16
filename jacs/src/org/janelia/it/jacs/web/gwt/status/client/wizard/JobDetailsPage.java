@@ -30,7 +30,6 @@ import org.janelia.it.jacs.web.gwt.common.client.util.HtmlUtils;
 import org.janelia.it.jacs.web.gwt.common.client.wizard.WizardController;
 import org.janelia.it.jacs.web.gwt.common.shared.data.EntityListener;
 import org.janelia.it.jacs.web.gwt.map.client.GoogleMap;
-import org.janelia.it.jacs.web.gwt.map.client.panel.MapBox;
 import org.janelia.it.jacs.web.gwt.status.client.JobResultsData;
 import org.janelia.it.jacs.web.gwt.status.client.Status;
 import org.janelia.it.jacs.web.gwt.status.client.panel.AlignmentListener;
@@ -51,7 +50,7 @@ public class JobDetailsPage extends JobResultsWizardPage {
     private Panel _mainPanel;
     private JobSummaryPanel _summaryPanel;
     private Panel _numSitesPanel;
-    private MapBox _mapPanel;
+//    private MapBox _mapPanel;
     private BlastHitsPanel _hitPanel;
     private SequenceAlignmentPanel _alignmentPanel;
 
@@ -151,11 +150,11 @@ public class JobDetailsPage extends JobResultsWizardPage {
         _numSitesPanel.setStyleName("jobDetailsNumSitesPanel");
         _numSitesPanel.setVisible(false);
 
-        _mapPanel = new MapBox("Sequence Geography", null);
-        _mapPanel.add(_numSitesPanel);
-        //TODO: find a better way to make a gray line
-        _mapPanel.add(HtmlUtils.getHtml("----------------------------------------------------------------------------------------------------", "hint"));
-        _mapPanel.add(mapHints);
+//        _mapPanel = new MapBox("Sequence Geography", null);
+//        _mapPanel.add(_numSitesPanel);
+//        //TODO: find a better way to make a gray line
+//        _mapPanel.add(HtmlUtils.getHtml("----------------------------------------------------------------------------------------------------", "hint"));
+//        _mapPanel.add(mapHints);
 
 /*
     +-vertpanel-row-------------------------
@@ -177,17 +176,17 @@ public class JobDetailsPage extends JobResultsWizardPage {
         HorizontalPanel everythingElsePanel = new HorizontalPanel();
         everythingElsePanel.setWidth("100%");
         VerticalPanel col1 = new VerticalPanel();
-        VerticalPanel col2 = new VerticalPanel();
+//        VerticalPanel col2 = new VerticalPanel();
 
         everythingElsePanel.add(col1);
         everythingElsePanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
-        everythingElsePanel.add(col2);
+//        everythingElsePanel.add(col2);
 
         col1.add(_hitPanel);
         col1.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
         col1.add(_alignmentPanel);
 
-        col2.add(_mapPanel);
+//        col2.add(_mapPanel);
 
         _mainPanel.add(_summaryPanel);
         _mainPanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
@@ -231,7 +230,7 @@ public class JobDetailsPage extends JobResultsWizardPage {
 
     private void reset() {
         _logger.trace("JobDetailsPage.reset()");
-        _mapPanel.reset();
+//        _mapPanel.reset();
         _alignmentPanel.reset();
         _hitPanel.reset();
         _numSitesPanel.clear();
@@ -247,7 +246,7 @@ public class JobDetailsPage extends JobResultsWizardPage {
     private class ResetTimer extends Timer {
         public void run() {
             _logger.debug("JobDetailsPage - going to earlier page so clearing all data.");
-            _mapPanel.reset();
+//            _mapPanel.reset();
             _alignmentPanel.reset();
             _hitPanel.reset();
             _numSitesPanel.clear();
@@ -283,8 +282,8 @@ public class JobDetailsPage extends JobResultsWizardPage {
 
     private void setErrorMessageInAllPanels(String message) {
         _logger.error(message);
-        _mapPanel.clear();
-        _mapPanel.add(HtmlUtils.getHtml(message, "error"));
+//        _mapPanel.clear();
+//        _mapPanel.add(HtmlUtils.getHtml(message, "error"));
         _numSitesPanel.setVisible(false);
         _summaryPanel.clear();
         _summaryPanel.add(HtmlUtils.getHtml(message, "error"));
@@ -326,7 +325,7 @@ public class JobDetailsPage extends JobResultsWizardPage {
                 Set<Marker> markers = getSiteMarkers(sites);
                 GoogleMap map = new GoogleMap((markers.iterator().next()).getLatLng(), /*zoom*/3, markers, MAP_SIZE, MAP_SIZE);
                 map.setMapType(MapType.getHybridMap());
-                _mapPanel.setMap(map);
+//                _mapPanel.setMap(map);
 
                 // Configure the number of sites text and popup
                 updateSiteNumLabel(sites);
@@ -402,13 +401,13 @@ public class JobDetailsPage extends JobResultsWizardPage {
 
         private void setMapError() {
             _logger.error("Failure retrieving blast result node for job " + getData().getJob().getJobId());
-            _mapPanel.setMessage("Error retrieving geographical information.", "error");
+//            _mapPanel.setMessage("Error retrieving geographical information.", "error");
             _numSitesPanel.setVisible(false);
         }
 
         private void setMapNoDataMessage() {
             _logger.debug("No sites to map");
-            _mapPanel.setMessage("No geographical information is available for these sequences.", "text");
+//            _mapPanel.setMessage("No geographical information is available for these sequences.", "text");
             _numSitesPanel.setVisible(false);
         }
 

@@ -24,6 +24,7 @@ import org.janelia.it.jacs.model.user_data.hmmer.HmmerPfamDatabaseNode;
 public interface ComputeBeanLocal {
 
      public String getAppVersion();
+     public boolean login(String userLogin, String password) throws ComputeException;
      public void updateTaskStatus(long taskId, String status, String comment) throws DaoException;
      public Node getResultNodeByTaskId(long taskId) throws DaoException;
      public List<Node> getResultNodesByTaskId(long taskId) throws DaoException;
@@ -34,7 +35,6 @@ public interface ComputeBeanLocal {
      public String[] getTaskStatus(long taskId) throws DaoException;
      public User getUserByName(String name);
      public void removePreferenceCategory(String categoryName) throws DaoException;
-     public boolean buildUserFilestoreDirectory(String userLoginName);
      public Event saveEvent(Long taskId, String eventType, String description, Date timestamp) throws DaoException;
      public void setTaskNote(long taskId, String note) throws DaoException;
      public void addTaskNote(long taskId, String note) throws DaoException;

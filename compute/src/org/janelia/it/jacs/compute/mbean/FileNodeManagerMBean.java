@@ -21,8 +21,6 @@ public interface FileNodeManagerMBean {
 
     public void createPeptideBlastableDatabase(String name, String description, String path);
 
-    public void createUserFilestoreDirectory(String userLoginName);
-
     public void createEmptyBlastableDatabase_name_desc_type_length_pnum(String csvString);
 
     public void createFastaFileNode_name_desc_path_type(String csvString);

@@ -16,7 +16,7 @@ public class JacsSecurityUtils {
 
     public static boolean isAuthenticated(HttpServletRequest request) {
         User u = getSessionUser(request);
-        return (u != null && u.getUserLogin() != null && !u.getUserLogin().equals("__CAMERA__ANONYMOUS__"));
+        return (u != null && u.getUserLogin() != null && !u.getUserLogin().equals("__ANONYMOUS__"));
     }
 
     public static boolean isAdmin(HttpServletRequest request) {

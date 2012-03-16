@@ -33,6 +33,7 @@ import java.util.Map;
 public interface ComputeBeanRemote {
 
     public String getAppVersion() throws RemoteException;
+    public boolean login(String userLogin, String password) throws ComputeException;
     public Node saveOrUpdateNode(Node node) throws DaoException, RemoteException;
     public Task saveOrUpdateTask(Task task) throws DaoException, RemoteException;
     public User saveOrUpdateUser(User user) throws DaoException;
@@ -49,7 +50,6 @@ public interface ComputeBeanRemote {
     public User getUserByName(String name) throws RemoteException;
     public void removePreferenceCategory(String categoryName) throws DaoException;
     public Event saveEvent(Long taskId, String eventType, String description, Date timestamp) throws DaoException, RemoteException;
-    public boolean buildUserFilestoreDirectory(String userLoginName) throws RemoteException;
     public void submitJob(String processDefName,long taskId) throws RemoteException; //Note: Used by Blast API
     public Long submitJob(String processDefName,Map<String, Object> processConfiguration)throws RemoteException; // Note: Used by test
     public void submitJobs(String processDefName, List<Long> taskIds)throws RemoteException; //Note: Used by test

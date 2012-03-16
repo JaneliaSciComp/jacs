@@ -38,6 +38,9 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.naming.Context;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
@@ -77,20 +80,60 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return appVersion;
     }
 
-    public boolean buildUserFilestoreDirectory(String userLoginName) {
+    public boolean login(String userLogin, String password) {
         try {
-            User user = computeDAO.getUserByName(userLoginName);
-            if (user == null) {
-                logger.error("User object for userLoginName " + userLoginName + " returns null");
-                throw new Exception("Received null user");
+            // Connect to LDAP server.
+            String ldapBase = SystemConfigurationProperties.getString("LDAP.Base");
+            String ldapURL  = SystemConfigurationProperties.getString("LDAP.URL");
+            Hashtable<String, String> env = new Hashtable<String, String>(2);
+            env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
+            env.put(Context.PROVIDER_URL, "ldap://"+ldapURL);
+            env.put(Context.SECURITY_AUTHENTICATION, "simple");
+            env.put(Context.SECURITY_PRINCIPAL, "cn="+userLogin+","+ldapBase);
+            env.put(Context.SECURITY_CREDENTIALS, password);
+
+            DirContext ctx = new InitialDirContext(env);
+            if (null!=ctx) {
+                logger.debug("Authenticated user "+userLogin+" successfully.");
             }
-            String fileNodeStorePath = SystemConfigurationProperties.getString(FILE_STORE_CENTRAL_DIR_PROP);
-            FileUtil.ensureDirExists(fileNodeStorePath + "/" + userLoginName);
+
+//            Attributes attrs = ctx.getAttributes("cn="+userLogin+","+ldapBase);
+//            NamingEnumeration enumeration = attrs.getAll();
+//            while (enumeration.hasMore()) {
+//                Attribute tmpAtt = (Attribute)enumeration.next();
+//                System.out.println(tmpAtt.getID()+" "+tmpAtt.get().toString());
+//            }
+//
+            User user = computeDAO.getUserByName(userLogin);
+            // If we don't know them, and they authenticated, add to the database and create a location in the filestore
+            if (null == user) {
+                boolean successful = createUser(userLogin);
+                if (!successful) {
+                    // will not be able to execute any computes, so throw an exception
+                    logger.error("Unable to create directory and/or account for user " + userLogin);
+                    return false;
+                }
+            }
             return true;
         }
+        catch (Exception e) {
+            logger.error("There was a problem logging in the user "+userLogin+"\n"+e.getMessage());
+            return false;
+        }
+    }
+
+    private boolean createUser(String userLogin) {
+        try {
+            logger.info("Creating user " + userLogin);
+            User user = computeDAO.createUser(userLogin);
+            String fileNodeStorePath = SystemConfigurationProperties.getString(FILE_STORE_CENTRAL_DIR_PROP);
+            File tmpUserDir = FileUtil.ensureDirExists(fileNodeStorePath + File.separator + userLogin);
+            if (null!=user && null!=tmpUserDir && tmpUserDir.exists()) {
+                return true;
+            }
+        }
         catch (Throwable t) {
-            t.printStackTrace();
-            logger.error("Error in createUserFilestoreDirectory: " + t, t);
+            logger.error("Error in createUser: " + t, t);
         }
         return false;
     }

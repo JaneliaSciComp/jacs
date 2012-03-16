@@ -5,7 +5,6 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.server.access.UserDAO;
-import org.janelia.it.jacs.server.access.hibernate.DaoException;
 import org.janelia.it.jacs.web.security.JacsSecurityUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
@@ -13,7 +12,6 @@ import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.rmi.RemoteException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -38,11 +36,11 @@ public class UserVerificationInterceptor extends HandlerInterceptorAdapter {
     public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object object) throws Exception {
         JacsPrincipal principal = new JacsPrincipal(httpServletRequest);
 
-        if (principal == null) {
-            logger.error("Attempted to execute controller without valid principal");
-            return false;
-        }
-
+//        if (principal == null) {
+//            logger.error("Attempted to execute controller without valid principal");
+//            return false;
+//        }
+//
         String userLogin = principal.getName();
 
         if (!StringUtils.hasText(userLogin)) {
@@ -60,12 +58,11 @@ public class UserVerificationInterceptor extends HandlerInterceptorAdapter {
                  *  only in the first case we will keep user session intact.
                  */
 
-                if (!sessionUser.getUserLogin().equals("__CAMERA__ANONYMOUS__")) {
+                if (!sessionUser.getUserLogin().equals("__ANONYMOUS__")) {
                     // authentication takes precedence - must reload user
                     logger.error("Caught mismatch between principal (" + userLogin + ") and session user (" + sessionUser.getUserLogin() + ")");
                     // invalidate session, and send user to home page
                     httpServletRequest.getSession().invalidate();
-                    sessionUser = null;
                 }
             }
             else // all is well and loadded, may return
@@ -74,10 +71,10 @@ public class UserVerificationInterceptor extends HandlerInterceptorAdapter {
         }
 
         try {
-            sessionUser = obtainUser(userLogin, userLogin, principal);
-            // todo WHen LDAP is fixed, put this back in
-//            if (httpServletRequest.isUserInRole("jacs-admin"))
+            sessionUser = obtainUser(userLogin);
+            if (httpServletRequest.isUserInRole("jacs-admin")) {
                 sessionUser.setAdministrator(true);
+            }
         }
         catch (Exception e) {
             return false;
@@ -87,35 +84,18 @@ public class UserVerificationInterceptor extends HandlerInterceptorAdapter {
         return true;
     }
 
-    protected User obtainUser(String userLoginId, String userName) throws Exception {
-        return obtainUser(userLoginId, userName, (Long) null);
-    }
-
-    protected User obtainUser(String userLoginId, String userName, Long id) throws Exception {
+    protected User obtainUser(String userLogin) throws Exception {
         try {
-            User user = userDAO.getUserByName(userLoginId);
+            User user = userDAO.getUserByName(userLogin);
             if (null == user) {
-                logger.info("Creating user " + userLoginId);
-                if (id == null)
-                    user = userDAO.createUser(userLoginId, userName);
-                else
-                    user = userDAO.createUserWithID(id, userLoginId, userName);
-
-                boolean successful = computeServerBean.buildUserFilestoreDirectory(userLoginId);
+                boolean successful = computeServerBean.login(userLogin, null);
                 if (!successful) {
                     // will not be able to execute any computes, so throw an exception
-                    throw new IOException("Unable to create directory for user " + userLoginId);
+                    throw new IOException("Unable to login user " + userLogin);
                 }
+                user = userDAO.getUserByName(userLogin);
             }
             return user;
-        }
-        catch (DaoException e) {
-            logger.error("DAOException: " + e.getMessage(), e);
-            throw e;
-        }
-        catch (RemoteException e) {
-            logger.error("RemoteException: " + e.getMessage(), e);
-            throw e;
         }
         catch (Exception e) {
             logger.error("Exception: " + e.getMessage(), e);
@@ -123,40 +103,4 @@ public class UserVerificationInterceptor extends HandlerInterceptorAdapter {
         }
     }
 
-    protected User obtainUser(String userLoginId, String userName, JacsPrincipal vp) throws Exception {
-        try {
-            User user = userDAO.getUserByName(userLoginId);
-            if (null == user) {
-                String email = vp.getEmailAddress();
-                logger.info("Creating user " + userLoginId);
-                user = userDAO.createUser(userLoginId, userName, email);
-                boolean successful = computeServerBean.buildUserFilestoreDirectory(userLoginId);
-                if (!successful) {
-                    // will not be able to execute any computes, so throw an exception
-                    throw new IOException("Unable to create directory for user " + userLoginId);
-                }
-            }
-            else {
-                if (user.getEmail() == null) {
-                    String email = vp.getEmailAddress();
-                    user.setEmail(email);
-                    userDAO.saveOrUpdateUser(user);
-                }
-            }
-
-            return user;
-        }
-        catch (DaoException e) {
-            logger.error("DAOException: " + e.getMessage(), e);
-            throw e;
-        }
-        catch (RemoteException e) {
-            logger.error("RemoteException: " + e.getMessage(), e);
-            throw e;
-        }
-        catch (Exception e) {
-            logger.error("Exception: " + e.getMessage(), e);
-            throw e;
-        }
-    }
 }

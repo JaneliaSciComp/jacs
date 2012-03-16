@@ -189,16 +189,6 @@ public class FileNodeManager implements FileNodeManagerMBean {
         return fileNodeManagerUser;
     }
 
-    public void createUserFilestoreDirectory(String userLoginName) {
-        try {
-            EJBFactory.getLocalComputeBean().buildUserFilestoreDirectory(userLoginName);
-        }
-        catch (Throwable t) {
-            logger.error(t, t);
-            t.printStackTrace();
-        }
-    }
-
     public void createEmptyBlastableDatabase_name_desc_type_length_pnum(String s) {
         String sa[] = s.split(",");
         String name = sa[0].trim();

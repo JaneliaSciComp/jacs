@@ -338,7 +338,7 @@ public class BlastJobResultsPanel extends GeneralJobResultsPanel {
             });
         }
         else {
-            return HtmlUtils.getHtml("Results", "disabledTextLink");
+            return HtmlUtils.getHtml("Results", "textLink");
         }
     }
 

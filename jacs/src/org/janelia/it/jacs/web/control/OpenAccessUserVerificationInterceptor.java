@@ -16,15 +16,15 @@ import java.security.Principal;
 public class OpenAccessUserVerificationInterceptor extends UserVerificationInterceptor {
     private static final Long ANONYMOUS_USER_DB_ID = new Long(100L);
 
-    protected User obtainUser(String userLoginId, String userName) throws Exception {
-        if ("__CAMERA__ANONYMOUS__".equals(userLoginId)) {
-            return super.obtainUser(userLoginId, "Public Access User", ANONYMOUS_USER_DB_ID);
+    protected User obtainUser(String userLogin) throws Exception {
+        if ("__ANONYMOUS__".equals(userLogin)) {
+            return super.obtainUser(userLogin);
 //            User u = new User();
 //            u.setUserId(ANONYMOUS_USER_DB_ID);
 //            return u;
         }
         else
-            return super.obtainUser(userLoginId, userName);    //use real one
+            return super.obtainUser(userLogin);    //use real one
     }
 
     protected Principal getPrincipal(HttpServletRequest request) {
@@ -37,7 +37,7 @@ public class OpenAccessUserVerificationInterceptor extends UserVerificationInter
         }
         if (p == null) {
             // generate one out of thin air to allow anonymous access
-            p = new UserPrincipal("__CAMERA__ANONYMOUS__");
+            p = new UserPrincipal("__ANONYMOUS__");
         }
 
         return p;

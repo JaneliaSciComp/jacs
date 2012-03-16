@@ -21,5 +21,7 @@ public interface AdministrativeManagerMBean {
     public void resubmitJobs(String processDefinition, String taskId);
 
     public void showCurrentGridProcessMap();
+    
+//    public void login(String userLogin, String password);
 
 }

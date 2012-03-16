@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.mbean;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.QueueMessage;
 import org.janelia.it.jacs.compute.engine.service.GridSubmitHelperMap;
@@ -220,4 +221,13 @@ public class AdministrativeManager implements AdministrativeManagerMBean {
         }
     }
 
+
+//    @Override
+//    public void login(String userLogin, String password) {
+//        try {
+//            EJBFactory.getRemoteComputeBean().login(userLogin, password);
+//        } catch (ComputeException e) {
+//            e.printStackTrace();
+//        }
+//    }
 }

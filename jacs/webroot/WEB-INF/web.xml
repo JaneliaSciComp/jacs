@@ -221,14 +221,16 @@
 
     <!-- have to list a whole bunch of groups out of LDAP here because
     LDAP group search only returns a list of groups where uids are listed directly -->
-    <security-role><role-name>tigr</role-name></security-role>
-    <security-role><role-name>jtc-cvs</role-name></security-role>
-    <security-role><role-name>jtc</role-name></security-role>
-    <security-role><role-name>cvsusers</role-name></security-role>
-    <security-role><role-name>science</role-name></security-role>
-    <security-role><role-name>prog</role-name></security-role>
-    <security-role><role-name>bioinfo</role-name></security-role>
-    <security-role><role-name>user</role-name></security-role>
+    <!--<security-role><role-name>tigr</role-name></security-role>-->
+    <!--<security-role><role-name>jtc-cvs</role-name></security-role>-->
+    <!--<security-role><role-name>jtc</role-name></security-role>-->
+    <!--<security-role><role-name>cvsusers</role-name></security-role>-->
+    <!--<security-role><role-name>science</role-name></security-role>-->
+    <!--<security-role><role-name>prog</role-name></security-role>-->
+    <!--<security-role><role-name>bioinfo</role-name></security-role>-->
+    <!--<security-role><role-name>user</role-name></security-role>-->
+    <security-role><role-name>jacsdata</role-name></security-role>
+    <security-role><role-name>jacs-admin</role-name></security-role>
 
     <error-page>
         <error-code>401</error-code>
