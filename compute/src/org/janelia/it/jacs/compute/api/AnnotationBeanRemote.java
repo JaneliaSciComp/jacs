@@ -40,6 +40,7 @@ public interface AnnotationBeanRemote {
     public Set<EntityData> getParentEntityDatas(long childEntityId);
     
     public List<EntityType> getEntityTypes();
+    public List<EntityAttribute> getEntityAttributes();
     public List<Entity> getEntitiesByTypeName(String entityTypeName);
     public List<Entity> getCommonRootEntitiesByTypeName(String entityTypeName);
     public List<Entity> getCommonRootEntitiesByTypeName(String userLogin, String entityTypeName);

@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.compute.access.solr;
 
+import org.janelia.it.jacs.compute.api.support.SolrUtils;
+
 /**
  * Simplified annotation representation for the purposes of SOLR indexing.
  * 
@@ -12,7 +14,7 @@ public class SimpleAnnotation extends KeyValuePair {
 	}
 	
 	public String getTag() {
-    	return (getValue() == null) ? getKey() : getKey() + " = " + getValue();
+    	return SolrUtils.getAnnotationTag(getKey(), getValue());
 	}
 
 }

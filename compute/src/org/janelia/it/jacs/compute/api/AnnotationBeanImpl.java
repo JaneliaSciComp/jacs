@@ -389,6 +389,18 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
         return null;
     }
+
+    public List<EntityAttribute> getEntityAttributes() {
+        try {
+            List<EntityAttribute> returnList = _annotationDAO.getAllEntityAttributes();
+            _logger.debug("Entity attributes returned:"+returnList.size());
+            return returnList;
+        }
+        catch (DaoException e) {
+            _logger.error("Error trying to get the entity attributes", e);
+        }
+        return null;
+    }
     
     public List<Entity> getCommonRootEntitiesByTypeName(String entityTypeName) {
     	return getCommonRootEntitiesByTypeName(null, entityTypeName);

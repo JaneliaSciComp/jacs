@@ -23,6 +23,7 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrInputDocument;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.compute.api.support.SolrUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.*;
 
@@ -490,7 +491,7 @@ public class SolrDAO extends AnnotationDAO {
     	
     	for(KeyValuePair kv : entity.getAttrValues()) {
     		if (kv.getValue()!=null) {
-    			doc.addField(getFieldName(kv.getKey())+"_txt", kv.getValue(), 1.0f);	
+    			doc.addField(SolrUtils.getFieldName(kv.getKey()), kv.getValue(), 1.0f);	
     		}
     	}
     	
@@ -503,7 +504,7 @@ public class SolrDAO extends AnnotationDAO {
     			doc.addField("annotations", annotation.getTag(), 1.0f);
     			doc.addField("key_annot", annotation.getKey(), 1.0f);
     			if (annotation.getValue()!=null) {
-    				doc.addField(getFieldName(annotation.getKey())+"_txt", annotation.getValue(), 1.0f);
+    				doc.addField(SolrUtils.getFieldName(annotation.getKey()), annotation.getValue(), 1.0f);
     			}
     		}
     	}
@@ -515,11 +516,6 @@ public class SolrDAO extends AnnotationDAO {
     	return doc;
     }
 
-    
-    private String getFieldName(String name) {
-    	return name.toLowerCase().replaceAll("\\s+", "_");
-    }
-    
     public QueryResponse search(SolrQuery query) throws DaoException {
     	init();
     	try {

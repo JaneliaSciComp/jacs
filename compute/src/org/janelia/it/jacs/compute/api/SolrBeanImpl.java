@@ -17,6 +17,7 @@ import org.apache.solr.common.SolrDocumentList;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.solr.SolrDAO;
 import org.janelia.it.jacs.compute.api.support.SolrResults;
+import org.janelia.it.jacs.model.entity.Entity;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 
@@ -55,11 +56,11 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
 	public SolrResults search(SolrQuery query, boolean mapToEntities) throws ComputeException {
 		
 		SolrDAO solrDAO = new SolrDAO(_logger, false);
-		SolrResults results = new SolrResults();
-		results.setResponse(solrDAO.search(query));
+		
+		QueryResponse response = solrDAO.search(query);
+		List<Entity> resultList = null;
 		if (mapToEntities) {
 			List<Long> ids = new ArrayList<Long>();
-			QueryResponse response = results.getResponse();
 			SolrDocumentList docs = response.getResults();
 			Iterator<SolrDocument> i = docs.iterator();
     		while (i.hasNext()) {
@@ -76,9 +77,9 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
 	    			continue;
 	    		}
 	    	}
-			results.setResultList(solrDAO.getEntitiesInList(ids));
+			resultList = solrDAO.getEntitiesInList(ids);
 		}
 		
-		return results;
+		return new SolrResults(response, resultList);
 	}
 }
