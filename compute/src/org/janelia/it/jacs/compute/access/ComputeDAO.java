@@ -3,9 +3,7 @@ package org.janelia.it.jacs.compute.access;
 
 import org.apache.log4j.Logger;
 import org.hibernate.*;
-import org.hibernate.criterion.Restrictions;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
-import org.janelia.it.jacs.model.genomics.BaseSequenceEntity;
 import org.janelia.it.jacs.model.genomics.BioSequence;
 import org.janelia.it.jacs.model.genomics.Read;
 import org.janelia.it.jacs.model.metadata.BioMaterial;
@@ -107,7 +105,7 @@ public class ComputeDAO extends ComputeBaseDAO {
             r = (Read) list.get(0);
         if (r != null) {
             r.getBioSequence().getSequence();
-            _logger.info("Sequence text for read " + r.getCameraAcc() + " is non-null");
+            _logger.info("Sequence text for read " + r.getAccession() + " is non-null");
             Library l = r.getLibrary();
             if (l != null) {
                 _logger.info("Retrieved read with accession " + accession + " and library id " + l.getLibraryId());
@@ -182,49 +180,49 @@ public class ComputeDAO extends ComputeBaseDAO {
                 .uniqueResult();
     }
 
-    public Map<String, String> getDeflinesByCameraAccSet(Set<String> cameraAccSet) {
-        assert false : "This method binds collection to a scalar variable (see setParameter)";
-        Map<String, String> deflineMap = new HashMap<String, String>();
-        Query query = sessionFactory.getCurrentSession().getNamedQuery("findDeflinesByCameraAccSet");
-        query.setParameter("cameraAcc", cameraAccSet);
+//    public Map<String, String> getDeflinesByAccessionSet(Set<String> accessionSet) {
+//        assert false : "This method binds collection to a scalar variable (see setParameter)";
+//        Map<String, String> deflineMap = new HashMap<String, String>();
+//        Query query = sessionFactory.getCurrentSession().getNamedQuery("findDeflinesByAccessionSet");
+//        query.setParameter("accession", accessionSet);
+//
+//        for (Iterator it = query.iterate(); it.hasNext();) {
+//            Object[] obj = (Object[]) it.next();
+//            deflineMap.put((String) obj[0], (String) obj[1]);
+//        }
+//        return deflineMap;
+//    }
 
-        for (Iterator it = query.iterate(); it.hasNext();) {
-            Object[] obj = (Object[]) it.next();
-            deflineMap.put((String) obj[0], (String) obj[1]);
-        }
-        return deflineMap;
-    }
 
-
-    public Map<String, BaseSequenceEntity> getEntityIdsByCameraAccSet(Set<String> cameraAccSet) {
-        Map<String, BaseSequenceEntity> entityIdMap = new HashMap<String, BaseSequenceEntity>();
-        // prepopulate map
-        for (String cameraAcc : cameraAccSet) {
-            entityIdMap.put(cameraAcc, null);
-
-        }
-        List<String> arrList = new ArrayList<String>(cameraAccSet);
-        Collection patialList;
-        // Postgres driver chokes on more then 10000 elements at a time
-        int chunk = 10000;
-        for (int from = 0, to = 0; from < arrList.size(); from = to) {
-            to = (to + chunk > arrList.size()) ? arrList.size() : to + chunk;
-            patialList = arrList.subList(from, to);
-            Criteria criteria = getCurrentSession().createCriteria(BaseSequenceEntity.class);
-            criteria.add(Restrictions.in("cameraAcc", patialList));
-            List<BaseSequenceEntity> bseList = criteria.list();
-
-            for (BaseSequenceEntity bse : bseList) {
-                entityIdMap.put(bse.getCameraAcc(), bse);
-            }
-        }
-
-        return entityIdMap;
-
-    }
+//    public Map<String, BaseSequenceEntity> getEntityIdsByAccessionSet(Set<String> accessionSet) {
+//        Map<String, BaseSequenceEntity> entityIdMap = new HashMap<String, BaseSequenceEntity>();
+//        // prepopulate map
+//        for (String accession : accessionSet) {
+//            entityIdMap.put(accession, null);
+//
+//        }
+//        List<String> arrList = new ArrayList<String>(accessionSet);
+//        Collection patialList;
+//        // Postgres driver chokes on more then 10000 elements at a time
+//        int chunk = 10000;
+//        for (int from = 0, to = 0; from < arrList.size(); from = to) {
+//            to = (to + chunk > arrList.size()) ? arrList.size() : to + chunk;
+//            patialList = arrList.subList(from, to);
+//            Criteria criteria = getCurrentSession().createCriteria(BaseSequenceEntity.class);
+//            criteria.add(Restrictions.in("accession", patialList));
+//            List<BaseSequenceEntity> bseList = criteria.list();
+//
+//            for (BaseSequenceEntity bse : bseList) {
+//                entityIdMap.put(bse.getAccession(), bse);
+//            }
+//        }
+//
+//        return entityIdMap;
+//
+//    }
 
     public List<String> getFirstAccesions(int limit) {
-        Query q = sessionFactory.getCurrentSession().createQuery("select bse.cameraAcc from BaseSequenceEntity bse");
+        Query q = sessionFactory.getCurrentSession().createQuery("select bse.accession from BaseSequenceEntity bse");
         q.setMaxResults(limit);
         return q.list();
     }
@@ -274,10 +272,10 @@ public class ComputeDAO extends ComputeBaseDAO {
         }
     }
 
-    public List<Object[]> getReadsByCameraAccs(HashSet<String> accSet) throws DaoException {
+    public List<Object[]> getReadsByAccessions(HashSet<String> accSet) throws DaoException {
         try {
             StringBuffer sql = new StringBuffer("select se.defline, bs.sequence from sequence_entity se, " +
-                    "bio_sequence bs where se.sequence_id=bs.sequence_id and se.camera_acc in (");
+                    "bio_sequence bs where se.sequence_id=bs.sequence_id and se.accession in (");
             for (String s : accSet) {
                 sql.append("'").append(s).append("',");
             }
@@ -290,7 +288,7 @@ public class ComputeDAO extends ComputeBaseDAO {
         }
         catch (Exception e) {
             // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
-            throw handleException(e, this.getClass().getName() + " - getReadsByCameraAccs");
+            throw handleException(e, this.getClass().getName() + " - getReadsByAccessions");
         }
     }
 
@@ -346,9 +344,9 @@ public class ComputeDAO extends ComputeBaseDAO {
 
     public List getHeaderDataForFRV(ArrayList readAccList) throws DaoException {
         try {
-            StringBuffer sql = new StringBuffer("select rmp.camera_acc, rmp.mate_acc, bs.sample_name " +
+            StringBuffer sql = new StringBuffer("select rmp.accession, rmp.mate_acc, bs.sample_name " +
                     "from read_mate_pair rmp, bio_sample bs " +
-                    "where rmp.camera_acc in (:readAccList) and rmp.sample_acc=bs.sample_acc");
+                    "where rmp.accession in (:readAccList) and rmp.sample_acc=bs.sample_acc");
             if (_logger.isDebugEnabled()) _logger.debug("readAccList length=" + readAccList.size() + "\nsql=" + sql);
             Query query = getCurrentSession().createSQLQuery(sql.toString());
             query.setParameterList("readAccList", readAccList);
@@ -744,7 +742,7 @@ public class ComputeDAO extends ComputeBaseDAO {
     }
 
     public String getFastaEntry(String targetAcc) {
-        String sql = "select e.defline, s.sequence from sequence_entity e, bio_sequence s where e.camera_acc='" + targetAcc + "' and s.sequence_id=e.sequence_id;";
+        String sql = "select e.defline, s.sequence from sequence_entity e, bio_sequence s where e.accession='" + targetAcc + "' and s.sequence_id=e.sequence_id;";
         StringBuffer returnEntry = new StringBuffer();
         Query query = getCurrentSession().createSQLQuery(sql);
         List result = query.list();

@@ -14,9 +14,12 @@ import org.janelia.it.jacs.model.user_data.blast.BlastDatabaseFileNode;
 import org.janelia.it.jacs.model.vo.LongParameterVO;
 import org.janelia.it.jacs.model.vo.MultiSelectVO;
 import org.janelia.it.jacs.model.vo.ParameterException;
+import org.janelia.it.jacs.shared.blast.ParsedBlastResultCollection;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 
 /**
  * This class contains methods used by more than one Blast service
@@ -93,6 +96,26 @@ public class BlastServiceUtil {
         catch (Exception ex) {
             throw new ParameterException("Could not determine PARAM_databaseAlignments from blastTask=" + blastTask.getObjectId());
         }
+    }
+
+    /**
+     * ParsedBlastResultCollection is serialized to file system by MergeSortService because we're planning on moving MergeSort to grid
+     * and because run PersistBlastResults Node or PersistBlastResultsXML services after MergeSort is done
+     * @param blastDestOutputDir
+     * @return
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    public static ParsedBlastResultCollection deserializeParsedBlastResultCollection(File blastDestOutputDir) throws IOException, ClassNotFoundException {
+        ObjectInputStream ois = new ObjectInputStream(new FileInputStream(blastDestOutputDir.getAbsolutePath()+File.separator+"parsedBlastResultsCollection.oos"));
+        ParsedBlastResultCollection parsedBlastResultCollection;
+        try {
+            parsedBlastResultCollection = (ParsedBlastResultCollection) ois.readObject();
+        }
+        finally {
+            ois.close();
+        }
+        return parsedBlastResultCollection;
     }
 
 }

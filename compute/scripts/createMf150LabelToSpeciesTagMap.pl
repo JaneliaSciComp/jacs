@@ -25,13 +25,13 @@
 #
 #  Note: for proteins, this command line can be used rather than this script, which is for nucleotides:
 #
-# cat /usr/local/projects/CAMERA/data/release-source-moore/mf150_FromGbff_20070305.protein.fasta | perl -e 'while(<>) { if (/^>(\S+) \/organism.+\/locus\_tag=\"(\S+)\_\d+\"/) { print "$1,$2\n"; } }' > proteinLabelToSpeciesTagMap.txt
+# cat Xdata/release-source-moore/mf150_FromGbff_20070305.protein.fasta | perl -e 'while(<>) { if (/^>(\S+) \/organism.+\/locus\_tag=\"(\S+)\_\d+\"/) { print "$1,$2\n"; } }' > proteinLabelToSpeciesTagMap.txt
 #
 #
 #
 
 my $speciesTagMapFile="orderedMf150SpeciesDefToTagMap.txt";
-my $mf150NucleotideFastaFile="/usr/local/projects/CAMERA/data/release-source-moore/mf150_FromGbff_20070305.nucleotide.fasta";
+my $mf150NucleotideFastaFile="Xdata/release-source-moore/mf150_FromGbff_20070305.nucleotide.fasta";
 
 # Read in the species tag map
 

@@ -26,7 +26,7 @@
   <BlastOutput_program>blastn</BlastOutput_program>
   <BlastOutput_version>blastn 2.2.15 [Oct-15-2006]</BlastOutput_version>
   <BlastOutput_reference>~Reference: Altschul, Stephen F., Thomas L. Madden, Alejandro A. Schaffer, ~Jinghui Zhang, Zheng Zhang, Webb Miller, and David J. Lipman (1997), ~&quot;Gapped BLAST and PSI-BLAST: a new generation of protein database search~programs&quot;,  Nucleic Acids Res. 25:3389-3402.</BlastOutput_reference>
-  <BlastOutput_db>/usr/local/projects/CAMERA/runtime-shared/filestore/system/1054882077725426015/p_4.fasta</BlastOutput_db>
+  <BlastOutput_db>Xruntime-shared/filestore/system/1054882077725426015/p_4.fasta</BlastOutput_db>
   <BlastOutput_query-ID>lcl|1_0</BlastOutput_query-ID>
   <BlastOutput_query-def>MTZA003 MTZA003TF-MTZA003TR_RC_9Ns_join (1327 bp)</BlastOutput_query-def>
   <BlastOutput_query-len>1327</BlastOutput_query-len>

@@ -63,7 +63,7 @@ When succesfully submitted, this web service returns the following:
 
 Status Type: completed
 Status Description: Process 1438294324725942443 completed successfully
-MetaGenoOrfCaller Result Location: /usr/local/projects/CAMERA/runtime-shared/filestore/jinman/MetaGenoOrfCallerResult/1438294325191510187
+MetaGenoOrfCaller Result Location: Xruntime-shared/filestore/jinman/MetaGenoOrfCallerResult/1438294325191510187
 
 Note that if the job is too old, the following may be displayed:
 

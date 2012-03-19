@@ -83,8 +83,8 @@ public class PeporfSourceDNAPanel extends PeporfEntityPanel {
             if (naEntity != null) {
                 // if we already have the DNA entity display it, otherwise we'll retrieve it later
                 tableBuilder.setBaseEntity(naEntity);
-                RowIndex rowIndex = tableBuilder.populateCAMERAAccNoAsTargetLink("Source DNA details",
-                        tableBuilder.getBaseEntity().getCameraAcc(),
+                RowIndex rowIndex = tableBuilder.populateAccessionNoAsTargetLink("Source DNA details",
+                        tableBuilder.getBaseEntity().getAccession(),
                         "Source DNA",
                         null);
                 tableBuilder.populateEntityDetails(rowIndex);

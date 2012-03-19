@@ -57,7 +57,7 @@ public class BSEntityPanel extends DetailSubPanel {
             return false;
         }
         if (baseEntity.getSequenceLength() == null) {
-            logger.debug("baseEntity getSeqLength is null acc=" + baseEntity.getCameraAcc());
+            logger.debug("baseEntity getSeqLength is null acc=" + baseEntity.getAccession());
         }
         else {
             logger.debug("baseEntity getSeqLength is NOT null and =" + baseEntity.getSequenceLength());
@@ -90,7 +90,7 @@ public class BSEntityPanel extends DetailSubPanel {
     public void displayData() {
         try {
             logger.debug("BSEntityPanel displayData...");
-            RowIndex rowIndex = getBaseEntityTableBuilder().populateCAMERAAccNo(getAcc(), getDetailTypeLabel(), null);
+            RowIndex rowIndex = getBaseEntityTableBuilder().populateAccessionNo(getAcc(), getDetailTypeLabel(), null);
             logger.debug("BSEntityPanel populateEntityDetails...");
             getBaseEntityTableBuilder().populateEntityDetails(rowIndex);
         }

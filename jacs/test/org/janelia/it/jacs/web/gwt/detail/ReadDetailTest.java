@@ -215,7 +215,7 @@ public class ReadDetailTest extends TestCase {
 
     private void validateRead(Read read) {
         // GenericService bse data
-        assertEquals("SCUMS_READ_Arctic2448841", read.getCameraAcc());
+        assertEquals("SCUMS_READ_Arctic2448841", read.getAccession());
         assertNull(read.getExternalAcc());
         //assertNull(read.getDescription());
 

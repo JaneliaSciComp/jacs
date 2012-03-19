@@ -13,7 +13,7 @@ import java.util.List;
  * Date: Sep 25, 2006
  * Time: 10:56:22 AM
  * <p/>
- * Project, which has publications.  One such project is "CAMERA".
+ * Project, which has publications.  One such project is "PROJECT".
  */
 public interface Project extends Serializable, IsSerializable, Comparable {
     public static final String NAME_SORT = "name";

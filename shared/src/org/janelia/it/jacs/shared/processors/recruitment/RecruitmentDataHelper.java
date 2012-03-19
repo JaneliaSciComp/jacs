@@ -943,7 +943,7 @@ public class RecruitmentDataHelper {
     }
 
     /**
-     * Since the reads Doug used had different accessions, we need to CAMERA'ify them with these
+     * Since the reads Doug used had different accessions, we need to change them with these
      * prefixes
      *
      * @param oldSampleName - name of the sample

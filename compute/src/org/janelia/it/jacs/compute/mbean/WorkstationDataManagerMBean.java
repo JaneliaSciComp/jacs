@@ -39,4 +39,6 @@ public interface WorkstationDataManagerMBean {
     public void performScreenPipelineSurgery(String user);
 
     public void runFileTreeLoaderPipeline(String user, String rootDirectoryPath, String topLevelFolderName);
+    
+    public void runTicPipeline(String user, String rootDirectoryPath);
 }

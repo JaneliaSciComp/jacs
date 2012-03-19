@@ -9,7 +9,7 @@ import org.janelia.it.jacs.shared.tasks.JobInfo;
 public class JobResultsData {
     private JobInfo _job;    // selected job
     private String _jobId;      // we might only have the id from URL param if entry point is loaded on later page
-    private String _cameraAcc;
+    private String _accession;
 
     public void setJob(JobInfo job) {
         _job = job;
@@ -31,11 +31,11 @@ public class JobResultsData {
     }
 
     public String getDetailAcc() {
-        return _cameraAcc;
+        return _accession;
     }
 
-    public void setDetailAcc(String cameraAcc) {
-        _cameraAcc = cameraAcc;
+    public void setDetailAcc(String accession) {
+        _accession = accession;
     }
 
 }

@@ -262,7 +262,7 @@ public class UpdateGenomeProjectService implements IService {
         try {
             if (logger.isInfoEnabled())
                 logger.info("Starting importGenomeProjectDataFromViewableList() with source path: " + pathToGenomeProjectData);
-            // VI path should be something like /usr/local/projects/CAMERA/gpData
+            // VI path should be something like XgpData
             File tmpGPDirectory = new File(pathToGenomeProjectData);
             File[] tmpGenomeProjects = tmpGPDirectory.listFiles();
             int newGPs = 0;

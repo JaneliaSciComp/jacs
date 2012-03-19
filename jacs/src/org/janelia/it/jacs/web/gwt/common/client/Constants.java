@@ -50,6 +50,7 @@ public class Constants {
     public static final String FR_LABEL = "Fragment Recruitment";
     public static final String PROFILE_COMPARISON_LABEL = "Profile Comparison Tools";
     public static final String GECI_IP_LABEL = "GECI Image Processing";
+    public static final String TIC_IP_LABEL = "Transcription Imaging Consortium";
     public static final String JOBS_MG_ANNOT_LABEL = "Metagenomics Annotation";
     public static final String JOBS_PROK_ANNOT_LABEL = "Prokaryotic Annotation";
     public static final String JOBS_EUK_ANNOT_LABEL = "Eukaryotic Annotation";

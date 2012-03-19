@@ -29,7 +29,7 @@ abstract public class SequenceEntityDeflineInitializer {
      */
     public void copySequence(BaseSequenceEntity src, BaseSequenceEntity dst) {
         dst.setEntityId(src.getEntityId());
-        dst.setCameraAcc(src.getCameraAcc());
+        dst.setAccession(src.getAccession());
         dst.setExternalAcc(src.getExternalAcc());
         dst.setDefline(src.getDefline());
         dst.setSequence(src.getSequence());
@@ -37,17 +37,17 @@ abstract public class SequenceEntityDeflineInitializer {
 
     public void initialize(BaseSequenceEntity entity, String defline) {
         if (defline != null && defline.length() > 0) {
-            if (defline.startsWith(entity.getCameraAcc())) {
+            if (defline.startsWith(entity.getAccession())) {
                 entity.setDefline(defline);
             }
             else {
-                entity.setDefline(entity.getCameraAcc() + " " + defline);
+                entity.setDefline(entity.getAccession() + " " + defline);
             }
             Map deflineMap = deflineFormat.parseDefline(defline);
             initialize(entity, deflineMap);
         }
         else {
-            entity.setDefline(entity.getCameraAcc());
+            entity.setDefline(entity.getAccession());
         }
     }
 

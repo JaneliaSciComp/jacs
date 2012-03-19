@@ -103,7 +103,7 @@ public class CorrelatedFeaturesPanelBuilder extends BaseCorrelatedEntitiesPanelB
 
     protected String[][] getSortOptions() {
         return new String[][]{
-                {"cameraAcc", ID_COLUMN_HEADING},
+                {"accession", ID_COLUMN_HEADING},
                 {"entityType", TYPE_COLUMN_HEADING},
                 {"sequenceLength", LENGTH_COLUMN_HEADING},
                 {"dnaBegin", BEGIN_COLUMN_HEADING},

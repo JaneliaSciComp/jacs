@@ -35,7 +35,7 @@ public class PeporfOrfPanel extends PeporfEntityPanel {
         if (baseTypeCode == EntityTypeGenomic.ENTITY_CODE_ORF) {
             tableBuilder = baseBuilder;
             String orfAcc = parentPanel.getAcc();
-            rowIndex = tableBuilder.populateCAMERAAccNo(orfAcc, PeporfPanel.ORF_DETAIL_TYPE, null);
+            rowIndex = tableBuilder.populateAccessionNo(orfAcc, PeporfPanel.ORF_DETAIL_TYPE, null);
         }
         else if (baseTypeCode == EntityTypeGenomic.ENTITY_CODE_PROTEIN) {
             Protein protein = (Protein) bse;
@@ -49,8 +49,8 @@ public class PeporfOrfPanel extends PeporfEntityPanel {
                 if (proteinORF != null) {
                     // if we already have the ORF display it, otherwise we'll retrieve it later
                     tableBuilder.setBaseEntity(proteinORF);
-                    rowIndex = tableBuilder.populateCAMERAAccNoAsTargetLink("Peptide details",
-                            tableBuilder.getBaseEntity().getCameraAcc(), "ORF", null);
+                    rowIndex = tableBuilder.populateAccessionNoAsTargetLink("Peptide details",
+                            tableBuilder.getBaseEntity().getAccession(), "ORF", null);
                 }
             }
         }

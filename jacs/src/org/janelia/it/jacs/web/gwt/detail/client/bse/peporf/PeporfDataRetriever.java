@@ -201,7 +201,7 @@ public class PeporfDataRetriever {
             entityPanel.getLoadingLabel().setVisible(false);
             BaseSequenceEntity bse = entityPanel.getEntity();
             String entityType = bse.getEntityType().getName();
-            String entityAcc = bse.getCameraAcc();
+            String entityAcc = bse.getAccession();
             MessageUtil.addServiceErrorMessage(entityPanel.getDetailBox(),
                     entityType + " Sequence",
                     entityType + " Accession: " + entityAcc);
@@ -219,7 +219,7 @@ public class PeporfDataRetriever {
                 else {
                     entityPanel.getLoadingLabel().setVisible(false);
                     BaseSequenceEntity bse = entityPanel.getEntity();
-                    String entityAcc = bse.getCameraAcc();
+                    String entityAcc = bse.getAccession();
                     String entityType = bse.getEntityType().getName();
                     MessageUtil.addNotFoundErrorMessage(entityPanel.getDetailBox(),
                             entityType + " Sequence",
@@ -237,7 +237,7 @@ public class PeporfDataRetriever {
     private void retrieveSequence(PeporfEntityPanel panel, BaseSequenceEntity bse) {
         int begin = panel.getSequenceBegin();
         int end = panel.getSequenceEnd();
-        entityService.getSequenceUIData(bse.getCameraAcc(),
+        entityService.getSequenceUIData(bse.getAccession(),
                 begin,
                 end,
                 peporfPanel.SEQUENCE_CHARS_PER_LINE,
@@ -289,8 +289,8 @@ public class PeporfDataRetriever {
         logger.debug("PeporfDataRetriever populateAnnotationPanel start");
         if (pep != null) {
             logger.debug("pep is not null - calling detail services to populate annotation panel");
-            proteinDetailService.getProteinClusterInfo(pep.getCameraAcc(), new GetProteinClusterMembershipCallback());
-            proteinDetailService.getProteinAnnotations(pep.getCameraAcc(), null, new GetProteinAnnotationCallback());
+            proteinDetailService.getProteinClusterInfo(pep.getAccession(), new GetProteinClusterMembershipCallback());
+            proteinDetailService.getProteinAnnotations(pep.getAccession(), null, new GetProteinAnnotationCallback());
         }
         else {
             logger.debug("pep is null - skipping services to populate annotation panel");
@@ -353,7 +353,7 @@ public class PeporfDataRetriever {
             }
             else {
                 // orf==null, therefore no orf to retrieve or populate
-                logger.debug("No orf found for protein=" + pro.getCameraAcc());
+                logger.debug("No orf found for protein=" + pro.getAccession());
             }
         }
     }

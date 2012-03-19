@@ -476,7 +476,7 @@ public class BlastTest implements BlastTestMBean {
      */
     public void removeFastaAndResultFileNodesForSystem() {
         try {
-            String rootDir = "/usr/local/projects/CAMERA/runtime-shared/filestore/system/";
+            String rootDir = "/filestore/system/";
             Scanner scanner = new Scanner(new File(rootDir + "rmDirs.txt"));
             while (scanner.hasNextLine()) {
                 String tmpDirToNuke = scanner.nextLine();

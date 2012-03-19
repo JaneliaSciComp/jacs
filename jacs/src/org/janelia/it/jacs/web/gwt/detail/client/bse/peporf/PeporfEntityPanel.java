@@ -77,8 +77,8 @@ public abstract class PeporfEntityPanel extends HorizontalPanel {
     public void displayDetail(BaseSequenceEntity bse) {
         tableBuilder.setBaseEntity(bse);
         String type = bse.getEntityType().getName();
-        RowIndex rowIndex = tableBuilder.populateCAMERAAccNoAsTargetLink(type + " details",
-                tableBuilder.getBaseEntity().getCameraAcc(), type, null);
+        RowIndex rowIndex = tableBuilder.populateAccessionNoAsTargetLink(type + " details",
+                tableBuilder.getBaseEntity().getAccession(), type, null);
         if (rowIndex != null)
             tableBuilder.populateEntityDetails(rowIndex);
     }

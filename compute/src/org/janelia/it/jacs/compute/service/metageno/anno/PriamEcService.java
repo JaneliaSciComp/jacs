@@ -43,7 +43,7 @@ public class PriamEcService extends SubmitDrmaaJobService {
 
     /* SCRIPT DEPENDENCIES
 
-        priExpandCmd=/usr/local/projects/CAMERA/db/priam_jun09_gene/bin/expandPriToEcHitLines.pl
+        priExpandCmd=Xdb/priam_jun09_gene/bin/expandPriToEcHitLines.pl
             <none>
         ecListCmd=/usr/local/devel/ANNOTATION/mg-annotation/testing/smurphy-20090825-DO_NOT_USE_FOR_PRODUCTION/jboss-test/bin/create_ec_list
             use Blast::NcbiBlastHitDataType;

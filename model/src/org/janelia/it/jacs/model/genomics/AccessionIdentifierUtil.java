@@ -34,15 +34,15 @@ public class AccessionIdentifierUtil {
     public static final int INVALID_ACC = 0;
 
     // project accession types
-    public static final int CAMERA_PROJECT_ACC = 100;
-    public static final int CAMERA_PUBLICATION_ACC = 101;
+    public static final int PROJECT_ACC = 100;
+    public static final int PUBLICATION_ACC = 101;
 
     // genomic accession types
-    public static final int CAMERA_READ_ACC = 200;
-    public static final int CAMERA_ORF_ACC = 201;
-    public static final int CAMERA_PROTEIN_ACC = 202;
-    public static final int CAMERA_NCRNA_ACC = 203;
-    public static final int CAMERA_SCAFFOLD_ACC = 210;
+    public static final int READ_ACC = 200;
+    public static final int ORF_ACC = 201;
+    public static final int PROTEIN_ACC = 202;
+    public static final int NCRNA_ACC = 203;
+    public static final int SCAFFOLD_ACC = 210;
 
     public static final int NCBI_NT_ACC = 280;
     public static final int NCBI_AA_ACC = 281;
@@ -51,11 +51,11 @@ public class AccessionIdentifierUtil {
     public static final int MISC_SEQ_ACC = 299;
 
     // metagenomic accession types
-    public static final int CAMERA_BIOSAMPLE_ACC = 300;
-    public static final int CAMERA_BIOMATERIAL_ACC = 301;
+    public static final int BIOSAMPLE_ACC = 300;
+    public static final int BIOMATERIAL_ACC = 301;
 
     // cluster accession types
-    public static final int CAMERA_PROTEIN_CLUSTER_ACC = 400;
+    public static final int PROTEIN_CLUSTER_ACC = 400;
 
 
     private static final String SUPPORTED_ACCESSIONS = createSupportedAccessions();
@@ -70,38 +70,38 @@ public class AccessionIdentifierUtil {
             return new AccessionType(INVALID_ACC, "INVALID");
         }
         else if (acc.startsWith("CAM_PROJ_")) {
-            return new AccessionType(CAMERA_PROJECT_ACC, "PROJECT");
+            return new AccessionType(PROJECT_ACC, "PROJECT");
         }
         else if (acc.startsWith("CAM_PUB_")) {
-            return new AccessionType(CAMERA_PUBLICATION_ACC, "PUBLICATION");
+            return new AccessionType(PUBLICATION_ACC, "PUBLICATION");
         }
         else if (acc.indexOf("_SMPL_") > 0) {
-            return new AccessionType(CAMERA_BIOSAMPLE_ACC, "BIO SAMPLE");
+            return new AccessionType(BIOSAMPLE_ACC, "BIO SAMPLE");
         }
         else if (acc.startsWith("CAM_CL_") ||
                 acc.startsWith("CAM_CRCL_")) {
-            return new AccessionType(CAMERA_PROTEIN_CLUSTER_ACC, "PROTEIN CLUSTER");
+            return new AccessionType(PROTEIN_CLUSTER_ACC, "PROTEIN CLUSTER");
         }
         else if (acc.indexOf("_READ_") > 0) {
-            return new AccessionType(CAMERA_READ_ACC, "READ");
+            return new AccessionType(READ_ACC, "READ");
         }
         else if (acc.indexOf("_ORF_") > 0) {
-            return new AccessionType(CAMERA_ORF_ACC, "ORF");
+            return new AccessionType(ORF_ACC, "ORF");
         }
         else if (acc.startsWith("UNIPROT_NT_")) {
-            return new AccessionType(CAMERA_ORF_ACC, "ORF");
+            return new AccessionType(ORF_ACC, "ORF");
         }
         else if (acc.indexOf("_PEP_") > 0) {
-            return new AccessionType(CAMERA_PROTEIN_ACC, "PROTEIN");
+            return new AccessionType(PROTEIN_ACC, "PROTEIN");
         }
         else if (acc.startsWith("UNIPROT_SP_")) {
-            return new AccessionType(CAMERA_PROTEIN_ACC, "PROTEIN");
+            return new AccessionType(PROTEIN_ACC, "PROTEIN");
         }
         else if (acc.indexOf("_NCRNA_") > 0) {
-            return new AccessionType(CAMERA_NCRNA_ACC, "NCRNA");
+            return new AccessionType(NCRNA_ACC, "NCRNA");
         }
         else if (acc.indexOf("_SCAF_") > 0) {
-            return new AccessionType(CAMERA_SCAFFOLD_ACC, "SCAFFOLD");
+            return new AccessionType(SCAFFOLD_ACC, "SCAFFOLD");
         }
         else if (acc.indexOf("_CNTG_") > 0) {
             return new AccessionType(NCBI_CNTG_ACC, "NCBI CONTIG");
@@ -110,10 +110,10 @@ public class AccessionIdentifierUtil {
             return new AccessionType(NCBI_GENF_ACC, "NCBI GENE");
         }
         else if (acc.indexOf("_16S_") > 0) {
-            return new AccessionType(CAMERA_NCRNA_ACC, "NCRNA");
+            return new AccessionType(NCRNA_ACC, "NCRNA");
         }
         else if (acc.startsWith("JCVI_NT_")) {
-            return new AccessionType(CAMERA_NCRNA_ACC, "NCRNA");
+            return new AccessionType(NCRNA_ACC, "NCRNA");
         }
         else if (acc.indexOf("_NT_") > 0 ||
                 acc.indexOf("_TGI_") > 0 ||
@@ -127,32 +127,32 @@ public class AccessionIdentifierUtil {
 
     public static boolean isProjectOrPublication(String acc) {
         int accType = AccessionIdentifierUtil.getAccType(acc);
-        return accType == CAMERA_PROJECT_ACC || accType == CAMERA_PUBLICATION_ACC;
+        return accType == PROJECT_ACC || accType == PUBLICATION_ACC;
     }
 
     public static boolean isORF(String acc) {
         int accType = AccessionIdentifierUtil.getAccType(acc);
-        return accType == CAMERA_ORF_ACC;
+        return accType == ORF_ACC;
     }
 
     public static boolean isPeptide(String acc) {
         int accType = AccessionIdentifierUtil.getAccType(acc);
-        return accType == CAMERA_PROTEIN_ACC;
+        return accType == PROTEIN_ACC;
     }
 
     public static boolean isNcRNA(String acc) {
         int accType = AccessionIdentifierUtil.getAccType(acc);
-        return accType == CAMERA_NCRNA_ACC;
+        return accType == NCRNA_ACC;
     }
 
     public static boolean isScaffold(String acc) {
         int accType = AccessionIdentifierUtil.getAccType(acc);
-        return accType == CAMERA_SCAFFOLD_ACC;
+        return accType == SCAFFOLD_ACC;
     }
 
     public static boolean isRead(String acc) {
         int accType = AccessionIdentifierUtil.getAccType(acc);
-        return accType == CAMERA_READ_ACC;
+        return accType == READ_ACC;
     }
 
     public static String getSupportedAccessions() {

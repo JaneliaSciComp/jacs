@@ -257,7 +257,7 @@ abstract public class SearchDAOImpl extends DaoBaseImpl implements SearchDAO {
         // Note in query below importance of order by rank, which ensures the
         // corresponding DocumentResult lists are populated by rank desc
         String docSql = "select distinct "+
-                        //"se.camera_acc, "+
+                        //"se.accession, "+
                         "nt.accession "+
                         //"from sequence_entity se, "+
                         "from node_ts_result nt, "+
@@ -265,9 +265,9 @@ abstract public class SearchDAOImpl extends DaoBaseImpl implements SearchDAO {
                         "(select parameter_value from task_parameter tp"+
                         " where tp.task_id=(select task_id from node where node_id="+nodeId+")"+
                         " and tp.parameter_name='searchString') tp "+
-                        //"where se.camera_acc in ("+accSB.toString()+") "+
+                        //"where se.accession in ("+accSB.toString()+") "+
                         "where nt.accession in ("+accSB.toString()+") "+
-                        //"and se.camera_acc=nt.accession "+
+                        //"and se.accession=nt.accession "+
                         "and nt.category=\'"+categoryType+"\' " +
                         "and nt.node_id="+nodeId+" "+
                         "and doc.docid=nt.docid "+

@@ -1006,7 +1006,7 @@
 
         <mkdir dir="${dst_root}/cluster/predicted_proteins/kingdom_classification" />
         <antcall target="copy_and_compress">
-			<param name="source" value="${src_root}/peptides/clusters/kingdom_classification/CAMERA_GOS_predictedproteins_kingdom_classification" />
+			<param name="source" value="${src_root}/peptides/clusters/kingdom_classification/X_GOS_predictedproteins_kingdom_classification" />
 			<param name="final_name" value="kingdom_classifications.txt" />
 			<param name="dst_dir" value="${dst_root}/cluster/predicted_proteins/kingdom_classification" />
 		</antcall>

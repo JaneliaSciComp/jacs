@@ -61,8 +61,8 @@ There is no required input for this script.
 =head1  OUTPUT
 
 All dbs owned by the user should be reported on stdout.  For example:
- 1438256871256361131     ji_test_db_prot /usr/local/projects/CAMERA/runtime-shared/filestore/jinman/BlastDatabases/1438256871256361131
- 1436484266337765547     ji_ws_test_db   /usr/local/projects/CAMERA/runtime-shared/filestore/jinman/BlastDatabases/1436484266337765547
+ 1438256871256361131     ji_test_db_prot Xruntime-shared/filestore/jinman/BlastDatabases/1438256871256361131
+ 1436484266337765547     ji_ws_test_db   Xruntime-shared/filestore/jinman/BlastDatabases/1436484266337765547
 
 =head1  CONTACT
 

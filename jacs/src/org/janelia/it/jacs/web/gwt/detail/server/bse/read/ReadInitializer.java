@@ -18,7 +18,7 @@ public class ReadInitializer extends BSEntityInitializer {
     }
 
     public boolean checkEntityTypeAccession(BaseSequenceEntity bse) {
-        return AccessionIdentifierUtil.isRead(bse.getCameraAcc()) && bse instanceof Read;
+        return AccessionIdentifierUtil.isRead(bse.getAccession()) && bse instanceof Read;
     }
 
     public boolean recognizeAccessionNo(String accessionNo) {

@@ -21,7 +21,7 @@ public class ORFInitializer extends BSEntityInitializer {
     }
 
     public boolean checkEntityTypeAccession(BaseSequenceEntity bse) {
-        return AccessionIdentifierUtil.isORF(bse.getCameraAcc()) && bse instanceof ORF;
+        return AccessionIdentifierUtil.isORF(bse.getAccession()) && bse instanceof ORF;
     }
 
     public boolean recognizeAccessionNo(String accessionNo) {

@@ -46,7 +46,7 @@ public class RNAPanel extends BSEntityPanel {
     public void displayData() {
         try {
             logger.debug("RNAPanel displayData...");
-            RowIndex rowIndex = getBaseEntityTableBuilder().populateCAMERAAccNo(getAcc(), null, null);
+            RowIndex rowIndex = getBaseEntityTableBuilder().populateAccessionNo(getAcc(), null, null);
             getBaseEntityTableBuilder().populateEntityDetails(rowIndex);
             NonCodingRNA ncRNA = (NonCodingRNA) getBaseEntityTableBuilder().getBaseEntity();
 
@@ -126,8 +126,8 @@ public class RNAPanel extends BSEntityPanel {
     }
 
     void displayNAEntity() {
-        RowIndex rowIndex = naSeqDetailsTableBuilder.populateCAMERAAccNoAsTargetLink("Source DNA details",
-                naSeqDetailsTableBuilder.getBaseEntity().getCameraAcc(),
+        RowIndex rowIndex = naSeqDetailsTableBuilder.populateAccessionNoAsTargetLink("Source DNA details",
+                naSeqDetailsTableBuilder.getBaseEntity().getAccession(),
                 "Source DNA",
                 null);
         naSeqDetailsTableBuilder.populateEntityDetails(rowIndex);

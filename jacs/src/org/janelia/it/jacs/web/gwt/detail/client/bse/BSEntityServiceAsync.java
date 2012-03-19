@@ -24,7 +24,7 @@ public interface BSEntityServiceAsync extends DetailServiceAsync {
 
     public void getSequenceUIData(String bseEntityId, int clearRangeBegin, int clearRangeEnd, int charsPerLine, AsyncCallback callback);
 
-    public void getBseEntity(String cameraAcc, AsyncCallback callback);
+    public void getBseEntity(String accession, AsyncCallback callback);
 
     public void getTaxonSynonyms(Integer taxonId, AsyncCallback callback);
 

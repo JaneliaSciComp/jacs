@@ -1,7 +1,6 @@
 
 package org.janelia.it.jacs.compute.access;
 
-import org.janelia.it.jacs.model.genomics.BaseSequenceEntity;
 import org.janelia.it.jacs.model.genomics.Read;
 import org.janelia.it.jacs.model.genomics.SequenceType;
 import org.janelia.it.jacs.model.tasks.Event;
@@ -13,7 +12,10 @@ import org.janelia.it.jacs.model.user_data.blast.BlastDatabaseFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastDatasetNode;
 import org.springframework.test.AbstractTransactionalDataSourceSpringContextTests;
 
-import java.util.*;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -211,7 +213,7 @@ public class ComputeDAOTest extends AbstractTransactionalDataSourceSpringContext
         try {
             read=computeDAO.getReadByBseEntityId(15860450L);
             assertNotNull(read);
-            assertEquals(read.getCameraAcc(),"JCVI_READ_1092963132211");
+            assertEquals(read.getAccession(),"JCVI_READ_1092963132211");
             assertEquals(read.getClearRangeBegin(),new Integer(294));
             assertEquals(read.getClearRangeEnd(),new Integer(513));
             assertEquals(read.getBioSequence().getSequence(),"GACGTTGCGTATGATGTCTTGATTGGATGTATGAAACCCACAATTACGATTTCAGGAATTCAAAACATCCAAATATTTAGTTGACTATATTCAAAAAAATTCAAAATCTGTAAATTATCCCTCTCATGGTCTTGAATAGCTTTTGATATTACATTTGGTGAAGAGGGCCCTCTTACAGTTATATGTGTTGAATATGATGCCTTGCCTGAAATTGGCCATGCATGTGGACATAACATTATTGCAACAGCGTCTATCCGTGCACGATTAGGTTTAAAGGACATAGCTTCCAAATTACGGATTATAGTAAAGCTCCTACGAACTCCTGCTGAAGAAGGTGGGGGTGGAAAAATTATTCTTATTAATGAACGAGCATTTGACGACCCTTCATGTTCAATGATGATTCATCCTGGGTATGAAGATGTGGTGAATCCTACATTTACCACTATTGAACAATATACAGTGGAGTATTTTGGTAAAGACGCACATGCTGCAGGTGCGCCTGATCAAGGCATCAATGCCCTAGATGCACAAATACAACTGTTCGTTAATGCATCTACCTATCGACAGCAAATGGTACAAAGCAACAGAATGCACGGTGTGATAAGAGATGGGGGTTTTAAACCAAATATAATTCCATCATATACAAAATCACAATGGTATTTAAGATCACTAAATGAATAACGATTAAACCAGTTGGAGCAAGACTTTTATAATTTTGTCAATGCTGCTGCATTATCAACAAAGTGTGAAGTAAAAATTACATCACCTGATTACAGATATGAAGAAATCAATAACAATGAAACAATGTATAAGCTCTTCATGGAAAATGCACAAGACGTCGTAGAGAAATGATATTACAAACAGATGCCACGAGACCAGGTTTGGGCTCTACTGATATGGGAAATGTATCCCAAATCTTTCCATCAGTACACCCAATGCTTGGCCATTGCAGAAAAAGAAGCTGTTAATCATCAACCTGAATATGCTGCAGCTACATTAACTGACGTGGTCATAAAGCCATATGATGATGGTGCATATGCAATGGGGTGCTTCCATCATTGTTTTAGCTGAAAAAAATCCTCTGGG");
@@ -223,37 +225,37 @@ public class ComputeDAOTest extends AbstractTransactionalDataSourceSpringContext
         }
     }
 
-    public void testGetEntityIdsByCameraAccSet() {
-        Map<String, BaseSequenceEntity> map=null;
-        try {
-            Set accSet=getCameraAccSet();
-            logger.info("starting testGetEntityIdsByCameraAccSet");
-            map = computeDAO.getEntityIdsByCameraAccSet(accSet);
-            assertNotNull(map);
-            Set keySet=map.keySet();
-            Iterator iter=keySet.iterator();
-            while(iter.hasNext()) {
-                String key=(String)iter.next();
-                assertNotNull(key);
-                BaseSequenceEntity bse=(BaseSequenceEntity)map.get(key);
-                assertNotNull(bse);
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            String message="Exception: "+ex.getMessage();
-            logger.warn(message);
-            fail(message);
-        }
-        logger.info("done with  testGetEntityIdsByCameraAccSet");
-        Set values = new HashSet(map.values());
-        values.remove(null);
-        logger.info("got " + values.size() + "values ");
-    }
-
-    protected Set<String> getCameraAccSet() {
+//    public void testGetEntityIdsByAccessionSet() {
+//        Map<String, BaseSequenceEntity> map=null;
+//        try {
+//            Set accSet=getAccessionSet();
+//            logger.info("starting testGetEntityIdsByAccessionSet");
+//            map = computeDAO.getEntityIdsByAccessionSet(accSet);
+//            assertNotNull(map);
+//            Set keySet=map.keySet();
+//            Iterator iter=keySet.iterator();
+//            while(iter.hasNext()) {
+//                String key=(String)iter.next();
+//                assertNotNull(key);
+//                BaseSequenceEntity bse=(BaseSequenceEntity)map.get(key);
+//                assertNotNull(bse);
+//            }
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//            String message="Exception: "+ex.getMessage();
+//            logger.warn(message);
+//            fail(message);
+//        }
+//        logger.info("done with  testGetEntityIdsByAccessionSet");
+//        Set values = new HashSet(map.values());
+//        values.remove(null);
+//        logger.info("got " + values.size() + "values ");
+//    }
+//
+    protected Set<String> getAccessionSet() {
 
         Set<String> hashSet=new HashSet<String>(computeDAO.getFirstAccesions(50000));
-        logger.info("getCameraAccSet: got " +hashSet.size() + " accesions");
+        logger.info("getAccessionSet: got " +hashSet.size() + " accesions");
         return hashSet;
     }
 

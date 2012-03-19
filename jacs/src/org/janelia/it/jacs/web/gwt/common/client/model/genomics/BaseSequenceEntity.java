@@ -9,7 +9,7 @@ abstract public class BaseSequenceEntity implements IsSerializable {
     public static Integer REVERSE_ORIENTATION = new Integer(-1);
 
     private Long entityId;
-    private String cameraAcc;
+    private String accession;
     private String externalAcc;
     //protected User owner;
     private String description;
@@ -33,12 +33,12 @@ abstract public class BaseSequenceEntity implements IsSerializable {
         return entityId;
     }
 
-    public String getCameraAcc() {
-        return cameraAcc;
+    public String getAccession() {
+        return accession;
     }
 
-    public void setCameraAcc(String cameraAcc) {
-        this.cameraAcc = cameraAcc;
+    public void setAccession(String accession) {
+        this.accession = accession;
     }
 
     /**

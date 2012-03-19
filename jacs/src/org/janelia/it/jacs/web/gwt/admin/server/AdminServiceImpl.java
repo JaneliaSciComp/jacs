@@ -94,7 +94,7 @@ public class AdminServiceImpl extends JcviGWTSpringController implements AdminSe
             scanner = new Scanner(new File(SystemConfigurationProperties.getString("Reports.Dir") + File.separator + SystemConfigurationProperties.getString("DiskUsageFilename")));
             while (scanner.hasNextLine()) {
                 String[] pieces = scanner.nextLine().split("\t");
-                String path = pieces[1].substring("/usr/local/projects/CAMERA/runtime-shared/filestore/".length());
+                String path = pieces[1].substring("Xruntime-shared/filestore/".length());
                 if (path.indexOf("/") < 0) {
                     diskUsage.add(new DiskInfo(new Long(pieces[0]), path));
                 }

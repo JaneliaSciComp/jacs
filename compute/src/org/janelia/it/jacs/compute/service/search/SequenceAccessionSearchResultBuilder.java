@@ -18,15 +18,15 @@ class SequenceAccessionSearchResultBuilder extends AccessionSearchResultBuilder 
     protected SQLQuery createSearchQuery(Object[] accessionQueryParams, Session session) {
         String searchedAcc = (String) accessionQueryParams[0];
         String sql = "select " +
-                "camera_acc as accession," +
+                "accession as accession," +
                 "et.name," +
-                "camera_acc as docAccessionName " +
+                "accession as docAccessionName " +
                 "from " +
                 "sequence_entity se, entity_type et " +
-                "where upper(camera_acc) = :accession  " +
+                "where upper(accession) = :accession  " +
                 "and se.entity_type_code = et.code ";
         SQLQuery sqlQuery = session.createSQLQuery(sql);
-        _logger.debug("CAMERA sequence accession search sql: " + sql + " for " + searchedAcc);
+        _logger.debug("sequence accession search sql: " + sql + " for " + searchedAcc);
         sqlQuery.setString("accession", searchedAcc.toUpperCase());
         return sqlQuery;
     }

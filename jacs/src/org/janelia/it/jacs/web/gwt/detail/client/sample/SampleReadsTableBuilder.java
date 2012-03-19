@@ -172,7 +172,7 @@ public class SampleReadsTableBuilder {
 
     private String[][] getReadSortOptions() {
         return new String[][]{
-                {"cameraAcc", ACCESSION_HEADING},
+                {"accession", ACCESSION_HEADING},
                 {"sequenceLength", LENGTH_HEADING},
                 {"clearRangeBegin", CLEARBEGIN_HEADING},
                 {"clearRangeEnd", CLEAREND_HEADING},
@@ -256,12 +256,12 @@ public class SampleReadsTableBuilder {
         TableRow row = new TableRow();
         if (ClientSecurityUtils.isAuthenticated()) {
             row.setValue(ACCESSION_COLUMN,
-                    new TableCell(r.getCameraAcc(),
-                            readAccessionBuilder.createAccessionLink(r.getCameraAcc(), r.getCameraAcc())));
+                    new TableCell(r.getAccession(),
+                            readAccessionBuilder.createAccessionLink(r.getAccession(), r.getAccession())));
         }
         else {
             row.setValue(ACCESSION_COLUMN,
-                    new TableCell(r.getCameraAcc(), new NotLoggedInLink(r.getCameraAcc())));
+                    new TableCell(r.getAccession(), new NotLoggedInLink(r.getAccession())));
         }
         row.setValue(LENGTH_COLUMN, new TableCell(r.getSequenceLength()));
         row.setValue(CLEARBEGIN_COLUMN, new TableCell(r.getClearRangeBegin()));

@@ -52,7 +52,7 @@
 <!--
         basic data from fasta file
 -->
-        <property name="cameraAcc" type="java.lang.String" column="camera_acc" not-null="true" unique="true"/>
+        <property name="accession" type="java.lang.String" column="accession" not-null="true" unique="true"/>
         <property name="defline" type="java.lang.String" column="defline"/>
         <many-to-one name="bioSequence" class="BioSequence" lazy="proxy" fetch="select" cascade="all" column="sequence_id"/>
         <property name="sequenceLength" type="java.lang.Integer" column="sequence_length"/>

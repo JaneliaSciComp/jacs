@@ -286,9 +286,9 @@ public class TeragridSimpleBlastService implements IService {
 
     private void remapXmlResult(int index) throws Exception {
 // Example:
-//         --add_deflines -i /usr/local/projects/CAMERA/remapped_panda_20091112/smurphy_test_4.output
-//                        -m /usr/local/projects/CAMERA/remapped_panda_20091112/panda_20091112_remap.db
-//                        -o /usr/local/projects/CAMERA/remapped_panda_20091112/smurphy_test_4_wdefs.output
+//         --add_deflines -i Xremapped_panda_20091112/smurphy_test_4.output
+//                        -m Xremapped_panda_20091112/panda_20091112_remap.db
+//                        -o Xremapped_panda_20091112/smurphy_test_4_wdefs.output
         String resultFilepath = new File(resultDir, getTgResultFilename(index)).getAbsolutePath();
         String overlapCmd =
                 MetaGenoPerlConfig.getPerlEnvPrefix() +

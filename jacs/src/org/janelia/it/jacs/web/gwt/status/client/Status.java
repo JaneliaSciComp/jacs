@@ -47,7 +47,7 @@ public class Status extends WizardController {
             _jobResultsData.setDetailAcc(value);
         }
         else
-            _logger.error("Got unknown param " + name + "=" + value + " from URL");
+            _logger.error("Status: Got unknown param " + name + "=" + value + " from URL");
     }
 
     public Breadcrumb getBreadcrumbSection() {

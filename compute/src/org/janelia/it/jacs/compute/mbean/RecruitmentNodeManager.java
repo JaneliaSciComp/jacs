@@ -52,7 +52,7 @@ public class RecruitmentNodeManager implements RecruitmentNodeManagerMBean {
     }
 
     public long blastFrvASingleGenbankFileReturnId(String pathToGenbankFile, String ownerLogin) {
-        // Example: /usr/local/projects/CAMERA/runtime-shared/filestore/system/genomeProject/1167236348080292196/NC_010087.gbk
+        // Example: /usr/local/projects/X/filestore/system/genomeProject/1167236348080292196/NC_010087.gbk
         org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
         try {
             System.out.println("Running BlastFRV for: " + pathToGenbankFile);
@@ -1024,7 +1024,7 @@ public class RecruitmentNodeManager implements RecruitmentNodeManagerMBean {
         }
     }
 
-    // /usr/local/projects/CAMERA/toddTmp/jirausers.txt
+    // XtoddTmp/jirausers.txt
     public void testUsers(String pathUserFile) {
         try {
             Scanner scanner = new Scanner(new File(pathUserFile));
@@ -1214,7 +1214,7 @@ public class RecruitmentNodeManager implements RecruitmentNodeManagerMBean {
 
     public void restartSamplingRecruitmentRuns(String pathToRecruitmentTasksTabFile, boolean restartJobs){
         try {
-            Scanner scanner = new Scanner(new File("/usr/local/projects/CAMERA/runtime-shared/filestore/tsafford/Recruitment/1526476431503130917/recruitmentTasks.tab"));
+            Scanner scanner = new Scanner(new File("X/filestore/tsafford/Recruitment/1526476431503130917/recruitmentTasks.tab"));
             while(scanner.hasNextLine()){
                 String[] pieces = scanner.nextLine().split("\t");
                 String[] status = EJBFactory.getLocalComputeBean().getTaskStatus(Long.valueOf(pieces[1]));

@@ -19,9 +19,9 @@ import java.util.List;
  */
 public class HQLBioMaterialDAOTest extends TestCase {
 
-    //private static String HIBERNATE_CONFIGURATION_FILE = "C:\\development\\CAMERA\\camera\\build\\container_descriptor\\hibernate.cfg.xml";
+    //private static String HIBERNATE_CONFIGURATION_FILE = "C:\\development\\X\\build\\container_descriptor\\hibernate.cfg.xml";
     // Tom's location
-    private static String HIBERNATE_CONFIGURATION_FILE = "C:\\home\\tomCVS\\CAMERA\\camera\\build\\container_descriptor\\hibernate.cfg.xml";
+    private static String HIBERNATE_CONFIGURATION_FILE = "C:\\home\\X\\build\\container_descriptor\\hibernate.cfg.xml";
     private SessionFactory factory;
     private static Logger logger = Logger.getLogger(HQLBioMaterialDAOTest.class);
 

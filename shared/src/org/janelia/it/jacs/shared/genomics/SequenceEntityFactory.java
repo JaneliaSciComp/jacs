@@ -12,7 +12,7 @@ public class SequenceEntityFactory {
 
     static public void copySequenceEntity(BaseSequenceEntity src, BaseSequenceEntity dst) {
         dst.setEntityId(src.getEntityId());
-        dst.setCameraAcc(src.getCameraAcc());
+        dst.setAccession(src.getAccession());
         dst.setExternalAcc(src.getExternalAcc());
         dst.setDefline(src.getDefline());
         dst.setDescription(src.getDescription());
@@ -46,19 +46,19 @@ public class SequenceEntityFactory {
         }
         SequenceEntityDeflineInitializer entityDeflineInitializer;
         switch (accessionType) {
-            case AccessionIdentifierUtil.CAMERA_READ_ACC:
+            case AccessionIdentifierUtil.READ_ACC:
                 sequenceEntity = new Read();
                 entityDeflineInitializer = new ReadDeflineInitializer();
                 break;
-            case AccessionIdentifierUtil.CAMERA_ORF_ACC:
+            case AccessionIdentifierUtil.ORF_ACC:
                 sequenceEntity = new ORF();
                 entityDeflineInitializer = new ORFDeflineInitializer();
                 break;
-            case AccessionIdentifierUtil.CAMERA_PROTEIN_ACC:
+            case AccessionIdentifierUtil.PROTEIN_ACC:
                 sequenceEntity = new Protein();
                 entityDeflineInitializer = new ProteinDeflineInitializer();
                 break;
-            case AccessionIdentifierUtil.CAMERA_SCAFFOLD_ACC:
+            case AccessionIdentifierUtil.SCAFFOLD_ACC:
                 sequenceEntity = new Scaffold();
                 entityDeflineInitializer = new GenericDeflineInitializer();
                 break;
@@ -81,7 +81,7 @@ public class SequenceEntityFactory {
                 }
                 break;
         }
-        sequenceEntity.setCameraAcc(accessionNo);
+        sequenceEntity.setAccession(accessionNo);
         entityDeflineInitializer.initialize(sequenceEntity, defline);
         if (sequenceData != null && sequenceData.length() > 0) {
             sequenceEntity.setSequence(sequenceData);
@@ -95,7 +95,7 @@ public class SequenceEntityFactory {
      */
     static public BaseSequenceEntity duplicateSequenceEntity(BaseSequenceEntity src) {
         BaseSequenceEntity dupEntity =
-                createSequenceEntity(src.getCameraAcc(), src.getDefline(), src.getSequenceType(), null);
+                createSequenceEntity(src.getAccession(), src.getDefline(), src.getSequenceType(), null);
         copySequenceEntity(src, dupEntity);
         return dupEntity;
     }
@@ -113,9 +113,9 @@ public class SequenceEntityFactory {
         if (sequenceEntity == null) {
             return result;
         }
-        int accessionType = AccessionIdentifierUtil.getAccType(sequenceEntity.getCameraAcc());
+        int accessionType = AccessionIdentifierUtil.getAccType(sequenceEntity.getAccession());
         switch (accessionType) {
-            case AccessionIdentifierUtil.CAMERA_READ_ACC:
+            case AccessionIdentifierUtil.READ_ACC:
                 if (sequenceEntity instanceof Read) {
                     result = 1;
                 }
@@ -123,7 +123,7 @@ public class SequenceEntityFactory {
                     result = -1;
                 }
                 break;
-            case AccessionIdentifierUtil.CAMERA_ORF_ACC:
+            case AccessionIdentifierUtil.ORF_ACC:
                 if (sequenceEntity instanceof ORF) {
                     result = 1;
                 }
@@ -131,7 +131,7 @@ public class SequenceEntityFactory {
                     result = -1;
                 }
                 break;
-            case AccessionIdentifierUtil.CAMERA_PROTEIN_ACC:
+            case AccessionIdentifierUtil.PROTEIN_ACC:
                 if (sequenceEntity instanceof Protein) {
                     result = 1;
                 }
@@ -139,7 +139,7 @@ public class SequenceEntityFactory {
                     result = -1;
                 }
                 break;
-            case AccessionIdentifierUtil.CAMERA_SCAFFOLD_ACC:
+            case AccessionIdentifierUtil.SCAFFOLD_ACC:
                 if (sequenceEntity instanceof Scaffold) {
                     result = 1;
                 }

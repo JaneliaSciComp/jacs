@@ -32,7 +32,8 @@
 <%--<jsp:include page="/WEB-INF/jsp/common/BasePageTop.jsp"/>--%>
 <div id="errorBox">
   <h1>Error 403</h1>
-    <h2>This request was understood, but access is not available to your account.  If you feel this is in error, please send email to the <a href="mailto:saffordt@janelia.hhmi.org">Helpdesk</a>.</h2>
+    <h2>This request was understood, but access is not available to your account.</h2>
+    <h2>If you feel this is in error, please send email to the <a href="mailto:saffordt@janelia.hhmi.org">Helpdesk</a>.</h2>
 </div>
 <jsp:include page="/WEB-INF/jsp/common/BasePageBottom.jsp"/>
 </body>

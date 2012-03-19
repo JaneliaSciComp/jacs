@@ -68,7 +68,7 @@ or (if the blast job is finished):
 
 Status Type: completed
 Status Description: Process 1437591420000012459 completed successfully
-Blast Result Location: /usr/local/projects/CAMERA/runtime-shared/filestore/jinman/BlastResults/1437591420822096043/blastResults.zip
+Blast Result Location: Xruntime-shared/filestore/jinman/BlastResults/1437591420822096043/blastResults.zip
 
 
 =head1  CONTACT

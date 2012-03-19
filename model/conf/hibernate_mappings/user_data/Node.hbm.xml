@@ -81,7 +81,7 @@
             </set>
             <map name="deflineMap" table="blast_result_node_defline_map" lazy="true">
                 <key column="node_id"/>
-                <index column="camera_acc" type="java.lang.String"/>
+                <index column="accession" type="java.lang.String"/>
                 <element column="defline" type="java.lang.String"/>
             </map>
         </subclass>
@@ -664,6 +664,12 @@
             </subclass>
 
             <subclass name="org.janelia.it.jacs.model.user_data.geci.NeuronalAssayAnalysisResultNode" discriminator-value="NeuronalAssayAnalysisResultNode"
+                      dynamic-update="true"
+                      dynamic-insert="true"
+                      select-before-update="false">
+            </subclass>
+
+            <subclass name="org.janelia.it.jacs.model.user_data.tic.TICResultNode" discriminator-value="TICResultNode"
                       dynamic-update="true"
                       dynamic-insert="true"
                       select-before-update="false">

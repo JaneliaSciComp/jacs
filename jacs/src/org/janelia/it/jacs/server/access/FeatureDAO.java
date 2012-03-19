@@ -96,11 +96,11 @@ public interface FeatureDAO extends DAO {
     /**
      * This method returns a Read given a BaseSequenceEntity Id
      *
-     * @param cameraAcc
+     * @param accession
      * @return
      * @throws DaoException
      */
-    Read getReadWithLibraryByAccesion(String cameraAcc) throws DaoException;
+    Read getReadWithLibraryByAccesion(String accession) throws DaoException;
 
     /**
      * This method returns a BioSequence given a BaseSequenceEntity Id
@@ -162,9 +162,9 @@ public interface FeatureDAO extends DAO {
 
     Map<String, Read> getReadsByIdSet(Collection<String> readIdSet) throws DaoException;
 
-    List<Object[]> getReadsByCameraAccs(String[] accSet) throws DaoException;
+    List<Object[]> getReadsByAccessions(String[] accSet) throws DaoException;
 
-    List<BaseSequenceEntity> getSequenceEntitiesByCameraAccs(Collection<String> accCollection) throws DaoException;
+    List<BaseSequenceEntity> getSequenceEntitiesByAccessions(Collection<String> accCollection) throws DaoException;
 
     Long getNumBlastResultsByTaskOrIDs(Long taskId,
                                        Set<Long> blastHitIdSet,

@@ -43,7 +43,7 @@
                <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
            </id>
            <many-to-one name="subjectEntity" class="BaseSequenceEntity" cascade="save-update"
-                        column="subject_acc" property-ref="cameraAcc" not-found="ignore"
+                        column="subject_acc" property-ref="accession" not-found="ignore"
                         insert="false" update="false" lazy="proxy"/>
            <property name="subjectAcc" type="java.lang.String" column="subject_acc" not-null="true"
                      insert="true" update="true"/>
@@ -51,7 +51,7 @@
            <property name="subjectEnd" type="java.lang.Integer" column="subject_end" not-null="true"/>
            <property name="subjectOrientation" type="java.lang.Integer" column="subject_orientation" not-null="true" />
            <many-to-one name="queryEntity" class="BaseSequenceEntity" cascade="save-update"
-                        column="query_acc" property-ref="cameraAcc" not-found="ignore"
+                        column="query_acc" property-ref="accession" not-found="ignore"
                         insert="false" update="false" lazy="proxy"/>
            <property name="queryNodeId" type="java.lang.Long" column="query_node_id" />
            <property name="queryAcc" type="java.lang.String" column="query_acc" not-null="true"

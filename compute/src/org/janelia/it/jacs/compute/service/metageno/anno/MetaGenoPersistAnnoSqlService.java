@@ -40,7 +40,7 @@ public class MetaGenoPersistAnnoSqlService implements IService {
 
     /* SCRIPT DEPENDENCIES
 
-        persistAnnotationCmd=/usr/local/projects/CAMERA/mg_prok_sqlite_perl_bin/mg_sqlite_persist_anno_cmd.pl
+        persistAnnotationCmd=Xmg_prok_sqlite_perl_bin/mg_sqlite_persist_anno_cmd.pl
             use strict;
             require "getopts.pl";
             use Cwd 'realpath';
@@ -56,7 +56,7 @@ public class MetaGenoPersistAnnoSqlService implements IService {
             require 'dataset.pm';
 
         MODULE SUMMARY
-            <contents of directory /usr/local/projects/CAMERA/mg_prok_sqlite_perl_bin, which contains assorted files>
+            <contents of directory Xmg_prok_sqlite_perl_bin, which contains assorted files>
 
      */
 

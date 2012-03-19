@@ -29,7 +29,7 @@ public class DataSourceSettings extends JPanel implements PrefEditor {
     private String userPassword = new String("");
     private boolean settingsChanged = false;
     private JFrame parentFrame;
-    JPanel ejbPanel = new JPanel();
+    JPanel loginPanel = new JPanel();
     JPasswordField passwordTextField;
     JLabel passwordLabel = new JLabel("Password:");
     JLabel loginLabel = new JLabel("User Name:");
@@ -42,7 +42,7 @@ public class DataSourceSettings extends JPanel implements PrefEditor {
     private JButton addDirectoryButton;
     private JComboBox validationComboBox;
     private static String fileSep = File.separator;
-    protected File directoryPrefFile = new File(System.getProperty("user.home") + fileSep + "x" + fileSep + "FlyWorkstation" + fileSep + "userPrefs." + LOCATION_PROP_NAME);
+    protected File directoryPrefFile = new File(SessionMgr.getSessionMgr().getApplicationOutputDirectory() + fileSep + "userPrefs." + LOCATION_PROP_NAME);
 
     private JList currentDirectoryJList;
     private CollectionJListModel directoryLocationModel;
@@ -187,8 +187,9 @@ public class DataSourceSettings extends JPanel implements PrefEditor {
         });
         titledBorder2 = new TitledBorder("Workstation Login Information");
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        ejbPanel.setBorder(titledBorder2);
-        ejbPanel.setLayout(new BoxLayout(ejbPanel, BoxLayout.Y_AXIS));
+        loginPanel.setBorder(titledBorder2);
+        loginPanel.setLayout(new BoxLayout(loginPanel, BoxLayout.Y_AXIS));
+        loginPanel.setMaximumSize(new Dimension(2000, 100));
         JPanel userPassPanel = new JPanel();
         userPassPanel.setLayout(new BoxLayout(userPassPanel, BoxLayout.X_AXIS));
         userPassPanel.add(loginLabel);
@@ -198,13 +199,14 @@ public class DataSourceSettings extends JPanel implements PrefEditor {
         userPassPanel.add(passwordLabel);
         userPassPanel.add(Box.createHorizontalStrut(5));
         userPassPanel.add(passwordTextField);
-        ejbPanel.add(Box.createVerticalStrut(10));
-        ejbPanel.add(userPassPanel);
-        ejbPanel.add(Box.createVerticalStrut(10));
+        loginPanel.add(Box.createVerticalStrut(10));
+        loginPanel.add(userPassPanel);
+        loginPanel.add(Box.createVerticalStrut(10));
 
         add(Box.createVerticalStrut(10));
-        add(ejbPanel);
+        add(loginPanel);
         add(Box.createVerticalStrut(10));
+        add(Box.createVerticalGlue());
 
         addDirectoryButton = new JButton("Add to Current Directories");
         addDirectoryButton.addActionListener(new ActionListener() {
@@ -268,9 +270,9 @@ public class DataSourceSettings extends JPanel implements PrefEditor {
         int preferredWidthOfDirPanel = xmlDirectoryPanel.getWidth();
         xmlDirectoryPanel.setPreferredSize(new Dimension(preferredWidthOfDirPanel, PREFERRED_JLIST_HEIGHT));
 
-        add(xmlDirectoryPanel);
+//        add(xmlDirectoryPanel);
 
-        add(Box.createVerticalStrut(10));
+//        add(Box.createVerticalStrut(10));
 
         // "Add" panel.  Button and field to let user create a new URL and add it.
         addUrlButton.addActionListener(new ActionListener() {
@@ -332,8 +334,8 @@ public class DataSourceSettings extends JPanel implements PrefEditor {
         contentBox.add(Box.createVerticalStrut(5));
         contentBox.add(xmlServicePanel);
         contentBox.add(Box.createVerticalStrut(5));
-        add(contentBox);
-        add(Box.createVerticalStrut(10));
+//        add(contentBox);
+//        add(Box.createVerticalStrut(10));
     }
 
     private void addUrlButtonActionPerformed(ActionEvent ae) {

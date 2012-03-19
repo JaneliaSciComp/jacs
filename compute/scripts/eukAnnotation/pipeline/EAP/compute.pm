@@ -23,7 +23,7 @@
 use strict;
 our $myLib;
 our $errorMessage;
-our $filestore = "/usr/local/projects/CAMERA/runtime-shared/filestore";
+our $filestore = "Xruntime-shared/filestore";
 our $scratchspace = "/usr/local/scratch";
 our $sortsize = 100000;
 our $insertsize = 10000;

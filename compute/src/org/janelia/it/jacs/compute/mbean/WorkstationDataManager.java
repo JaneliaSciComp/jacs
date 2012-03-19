@@ -1,10 +1,5 @@
 package org.janelia.it.jacs.compute.mbean;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
@@ -22,9 +17,15 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.fileDiscovery.*;
 import org.janelia.it.jacs.model.tasks.fly.FlyScreenPatternAnnotationTask;
+import org.janelia.it.jacs.model.tasks.tic.TicTask;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -282,4 +283,15 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     }
 
 
+    public void runTicPipeline(String user, String rootDirectoryPath){
+        try {
+            TicTask task = new TicTask(new HashSet<Node>(), user, new ArrayList<Event>(), new HashSet<TaskParameter>());
+            task.setParameter(TicTask.PARAM_inputFile, rootDirectoryPath);
+            task.setJobName("Transcription Imaging Consortium Pipeline Task");
+            task = (TicTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("TranscriptionImagingConsortium", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
 }

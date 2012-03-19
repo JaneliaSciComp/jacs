@@ -38,7 +38,7 @@ public class DetailPageForwardingController extends BaseCommandController {
         RedirectView rv = null;
         String ncbiDBName = null;
         switch (accType) {
-            case AccessionIdentifierUtil.CAMERA_PROJECT_ACC:
+            case AccessionIdentifierUtil.PROJECT_ACC:
                 // forward to project page
                 Project project = downloadDAO.findReleasedProjectBySymbol(acc);
                 if (project != null) {
@@ -51,7 +51,7 @@ public class DetailPageForwardingController extends BaseCommandController {
                     throw new Exception("Invalid project symbol: " + acc);
                 }
                 break;
-            case AccessionIdentifierUtil.CAMERA_PUBLICATION_ACC:
+            case AccessionIdentifierUtil.PUBLICATION_ACC:
                 // forward to publication page
                 Publication publication = downloadDAO.findPublicationByAccessionNo(acc);
                 if (publication != null) {
@@ -64,16 +64,16 @@ public class DetailPageForwardingController extends BaseCommandController {
                     throw new Exception("Invalid publication accesion number: " + acc);
                 }
                 break;
-            case AccessionIdentifierUtil.CAMERA_READ_ACC:
-            case AccessionIdentifierUtil.CAMERA_ORF_ACC:
-            case AccessionIdentifierUtil.CAMERA_PROTEIN_ACC:
-            case AccessionIdentifierUtil.CAMERA_SCAFFOLD_ACC:
+            case AccessionIdentifierUtil.READ_ACC:
+            case AccessionIdentifierUtil.ORF_ACC:
+            case AccessionIdentifierUtil.PROTEIN_ACC:
+            case AccessionIdentifierUtil.SCAFFOLD_ACC:
             case AccessionIdentifierUtil.NCBI_GENF_ACC:
             case AccessionIdentifierUtil.NCBI_CNTG_ACC:
             case AccessionIdentifierUtil.NCBI_NT_ACC:
             case AccessionIdentifierUtil.NCBI_AA_ACC:
             case AccessionIdentifierUtil.MISC_SEQ_ACC:
-            case AccessionIdentifierUtil.CAMERA_PROTEIN_CLUSTER_ACC:
+            case AccessionIdentifierUtil.PROTEIN_CLUSTER_ACC:
                 logger.debug("Redirect to details for acc=" + acc);
                 rv = new RedirectView("/gwt/DetailPage/DetailPage.htm?acc=" + acc, true);
                 break;

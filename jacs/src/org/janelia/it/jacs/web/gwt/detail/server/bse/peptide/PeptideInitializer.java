@@ -19,7 +19,7 @@ public class PeptideInitializer extends BSEntityInitializer {
     }
 
     public boolean checkEntityTypeAccession(BaseSequenceEntity bse) {
-        return AccessionIdentifierUtil.isPeptide(bse.getCameraAcc()) && bse instanceof Protein;
+        return AccessionIdentifierUtil.isPeptide(bse.getAccession()) && bse instanceof Protein;
     }
 
     public boolean recognizeAccessionNo(String accessionNo) {

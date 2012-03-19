@@ -23,7 +23,7 @@
 use warnings;
 use strict;
 our $errorMessage;
-our $filestore = "/usr/local/projects/CAMERA/runtime-shared/filestore";
+our $filestore = "Xruntime-shared/filestore";
 use lib ('/usr/local/devel/ANNOTATION/EAP/pipeline');
 use EAP::generic;
 use EAP::db;

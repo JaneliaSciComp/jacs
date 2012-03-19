@@ -42,7 +42,7 @@ public class AccessionSearcher {
         // but for now I'll stick with one big ugly series of ifs
         AccessionSearchResultBuilder accSearchResultBuilder;
         accSearchResultBuilder = new JacsAccessionSearchResultBuilder();
-        // try a CAMERA accession search
+        // try an accession search
         nResults = accSearchResultBuilder.populateAccessionSearchResult(searchedAccession,
                 searchResultNodeId, _session);
         if (nResults > 0) {

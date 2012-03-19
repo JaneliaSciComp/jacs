@@ -14,7 +14,6 @@ import org.janelia.it.jacs.web.gwt.common.client.model.genomics.BlastHitWithSamp
 import org.janelia.it.jacs.web.gwt.common.client.panel.TitledBox;
 import org.janelia.it.jacs.web.gwt.common.client.service.log.Logger;
 import org.janelia.it.jacs.web.gwt.common.client.ui.RowIndex;
-import org.janelia.it.jacs.web.gwt.common.client.ui.link.Link;
 import org.janelia.it.jacs.web.gwt.common.client.util.HtmlUtils;
 import org.janelia.it.jacs.web.gwt.common.client.util.TableUtils;
 import org.janelia.it.jacs.web.gwt.common.shared.data.EntityListener;
@@ -141,15 +140,16 @@ public class SequenceAlignmentPanel extends TitledBox {
     }
 
     private Widget getSequenceIdWidget(final BlastHit hit) {
-        if (hit.getSubjectEntity() == null || hit.getSubjectEntity().getCameraAcc() == null)
+        if (hit.getSubjectEntity() == null || hit.getSubjectEntity().getAccession() == null)
             return HtmlUtils.getHtml("unknown", "error");
         else {
-            final String cameraAcc = hit.getSubjectEntity().getCameraAcc();
-            return new Link(hit.getSubjectEntity().getCameraAcc(), new ClickListener() {
-                public void onClick(Widget widget) {
-                    _entityListener.onEntitySelected(cameraAcc, null);
-                }
-            });
+            final String accession = hit.getSubjectEntity().getAccession();
+            return HtmlUtils.getHtml(accession, "text");
+//            return new Link(hit.getSubjectEntity().getAccession(), new ClickListener() {
+//                public void onClick(Widget widget) {
+//                    _entityListener.onEntitySelected(accession, null);
+//                }
+//            });
         }
     }
 

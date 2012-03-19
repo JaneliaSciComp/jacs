@@ -37,7 +37,7 @@ public class SequenceExportProcessor extends ExportProcessor {
                 String cur_defline = seqEntity.getDescription();
 
                 if (cur_defline == null || cur_defline.length() == 0) {
-                    cur_defline = seqEntity.getCameraAcc();
+                    cur_defline = seqEntity.getAccession();
                 }
 
                 if (!cur_defline.startsWith(">")) {

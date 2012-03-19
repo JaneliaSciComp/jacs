@@ -51,8 +51,8 @@ public abstract class BlastTestBase extends TestCase {
     protected static final String GOS_GS00a_SARGASSO_11_13 = "GOS: GS000a Reads from 0.1-0.8 Sargasso Sea Stations 11 and 13 (N)";
     protected static final String MARINE_VIROMES = "MarineViromes: All Metagenomic Sequence (454) Reads (N)";
 
-    protected static final String INPUT_DIR = "/usr/local/projects/CAMERA/camtest/blast/input/";
-    protected static final String COMPARE_DIR = "/usr/local/projects/CAMERA/camtest/blast/compare/";
+    protected static final String INPUT_DIR = "Xcamtest/blast/input/";
+    protected static final String COMPARE_DIR = "Xcamtest/blast/compare/";
 
     private long startTestTime;
     private static long startTime;

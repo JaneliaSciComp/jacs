@@ -126,7 +126,7 @@ public class DataSetAPIRemarshaller {
     private static org.janelia.it.jacs.web.gwt.common.client.model.genomics.GenericDNA createGenericSequenceEntity(
             BaseSequenceEntity modelEntity, String defline) {
         org.janelia.it.jacs.web.gwt.common.client.model.genomics.GenericDNA seq = new GenericDNA();
-        seq.setCameraAcc(modelEntity.getCameraAcc());
+        seq.setAccession(modelEntity.getAccession());
         seq.setDescription(modelEntity.getDescription());
         seq.setDescriptionFormatted(FastaUtil.wrapDeflineAsHTML(modelEntity.getDescription(), /*chars/line*/80, /*indent*/3));
         seq.setEntityId(modelEntity.getEntityId());
@@ -145,7 +145,7 @@ public class DataSetAPIRemarshaller {
         }
         // if no query entity is present set as much as possible from the hit object
         org.janelia.it.jacs.web.gwt.common.client.model.genomics.GenericDNA seq = new GenericDNA();
-        seq.setCameraAcc(modelHit.getQueryAcc());
+        seq.setAccession(modelHit.getQueryAcc());
         seq.setSeqLength(modelHit.getQueryLength());
         seq.setDefline(defline);
         seq.setDescription(defline);
@@ -161,7 +161,7 @@ public class DataSetAPIRemarshaller {
         }
         // if no query entity is present set as much as possible from the hit object
         org.janelia.it.jacs.web.gwt.common.client.model.genomics.GenericDNA seq = new GenericDNA();
-        seq.setCameraAcc(modelHit.getSubjectAcc());
+        seq.setAccession(modelHit.getSubjectAcc());
         seq.setSeqLength(modelHit.getSubjectLength());
         seq.setDefline(defline);
         seq.setDescription(defline);

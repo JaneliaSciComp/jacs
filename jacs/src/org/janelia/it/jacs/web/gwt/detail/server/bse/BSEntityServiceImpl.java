@@ -355,7 +355,7 @@ public class BSEntityServiceImpl extends JcviGWTSpringController implements BSEn
 //        ArrayList<String> testList=new ArrayList<String>();
 //        testList.add("13423160|");
 //        testList.add("24054684|");
-//        testList.add("CAMERA");
+//        testList.add("PROJECT");
 //        testList.add("GB|BAC57907.1|28569866|AB090816");
 //        testList.add("LipoproteinMotif");
 //        testList.add("OMNI|PIN_A1174");

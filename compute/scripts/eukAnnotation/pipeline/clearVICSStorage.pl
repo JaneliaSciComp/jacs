@@ -138,12 +138,12 @@ $vicsdbh->commit;
 #-----------------------------------------------------------------------
 # remove node directories from disk
 foreach my $node ( @$nodes ) {
-	my $dir = "/usr/local/projects/CAMERA/runtime-shared/filestore/$$node{node_owner}/$$node{node_id}";
+	my $dir = "Xruntime-shared/filestore/$$node{node_owner}/$$node{node_id}";
 	if ( -e $dir ) {
 		print "rm -r -f $dir\n";
 		system("rm -r -f $dir")
 	} else {
-		$dir = "/usr/local/projects/CAMERA/runtime-shared/filestore/$$node{node_owner}/*/$$node{node_id}";
+		$dir = "Xruntime-shared/filestore/$$node{node_owner}/*/$$node{node_id}";
 		print "rm -r -f $dir\n";
 		system("rm -r -f $dir")
 	}

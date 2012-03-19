@@ -73,7 +73,7 @@ When succesfully submitted, this web service returns the following if the task h
 Status Type: completed
 Status Description: Process 1437964257315522731 completed successfully
 
-Result(s) location: /usr/local/projects/CAMERA/runtime-shared/filestore/jinman/WorkSession/1437964257542015147
+Result(s) location: Xruntime-shared/filestore/jinman/WorkSession/1437964257542015147
 
 If the task isn't completed, some other status is returned.  For example:
 

@@ -32,7 +32,7 @@ public class BlastTestMultiFasta extends BlastTestBase {
 
     public void testJira526Fix() throws Exception {
         setExpectedHits(695874L);
-        setBlastInputFileName("JiraCAMERA526FixInput.fasta");
+        setBlastInputFileName("Jira526FixInput.fasta");
         submitJobAndWaitForCompletion("BlastWithGridMerge");
         validateHits();
         validateMessageCount();

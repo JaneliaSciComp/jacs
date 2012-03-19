@@ -63,19 +63,19 @@ public class DetailSubPanelFactory {
      */
     private DetailSubPanel createDetailSubPanel() {
         switch (getAccType()) {
-            case AccessionIdentifierUtil.CAMERA_READ_ACC:
+            case AccessionIdentifierUtil.READ_ACC:
                 subPanel = new ReadPanel();
                 break;
-            case AccessionIdentifierUtil.CAMERA_ORF_ACC:
+            case AccessionIdentifierUtil.ORF_ACC:
                 subPanel = new PeporfPanel();
                 break;
-            case AccessionIdentifierUtil.CAMERA_PROTEIN_ACC:
+            case AccessionIdentifierUtil.PROTEIN_ACC:
                 subPanel = new PeporfPanel();
                 break;
-            case AccessionIdentifierUtil.CAMERA_NCRNA_ACC:
+            case AccessionIdentifierUtil.NCRNA_ACC:
                 subPanel = new RNAPanel();
                 break;
-            case AccessionIdentifierUtil.CAMERA_SCAFFOLD_ACC:
+            case AccessionIdentifierUtil.SCAFFOLD_ACC:
                 subPanel = new ScaffoldPanel();
                 break;
             case AccessionIdentifierUtil.NCBI_GENF_ACC:

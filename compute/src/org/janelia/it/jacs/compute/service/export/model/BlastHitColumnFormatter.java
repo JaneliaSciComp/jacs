@@ -124,14 +124,14 @@ public class BlastHitColumnFormatter extends ColumnFormatter {
                             subjectSeq.getBioSequence().getSequence(), 80 /* fasta width */);
                 }
                 catch (Exception ex) {
-                    _logger.error("Error retrieving sequence for sequenceAcc=" + subjectSeq.getCameraAcc());
+                    _logger.error("Error retrieving sequence for sequenceAcc=" + subjectSeq.getAccession());
                     return "";
                 }
                 fastaSequence = fastaSequence.trim();  // Otherwise Excell will be confused.
                 //fastaSequence = CSVDataConversionHelper.escapeSpecialExcelChars(fastaSequence);
             }
             else {
-                fastaSequence = "sequence too large - see accession=" + subjectSeq.getCameraAcc();
+                fastaSequence = "sequence too large - see accession=" + subjectSeq.getAccession();
             }
             return fastaSequence;
         }

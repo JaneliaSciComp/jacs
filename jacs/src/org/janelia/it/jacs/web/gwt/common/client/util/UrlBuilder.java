@@ -112,6 +112,10 @@ public class UrlBuilder {
         return GWT_BASE_URL + "NeuronalAssayAnalysis/NeuronalAssayAnalysis.htm";
     }
 
+    public static String getTICUrl() {
+        return GWT_BASE_URL + "TIC/TIC.htm";
+    }
+
     public static String getZlaticLabUrl() {
         return GWT_BASE_URL + "ZlaticLab/ZlaticLab.htm";
     }

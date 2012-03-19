@@ -24,7 +24,7 @@ abstract public class BaseSequenceEntity implements Serializable, IsSerializable
     /*
     * fasta attributes
     */
-    private String cameraAcc;
+    private String accession;
     private String defline;
     private BioSequence bioSequence;
     private Integer sequenceLength;
@@ -61,7 +61,7 @@ abstract public class BaseSequenceEntity implements Serializable, IsSerializable
     * methods
     */
     public int compareTo(Object o) {
-        return this.cameraAcc.compareTo(((BaseSequenceEntity) o).getCameraAcc());
+        return this.accession.compareTo(((BaseSequenceEntity) o).getAccession());
     }
 
     public Long getEntityId() {
@@ -72,12 +72,12 @@ abstract public class BaseSequenceEntity implements Serializable, IsSerializable
         this.entityId = entityId;
     }
 
-    public String getCameraAcc() {
-        return cameraAcc;
+    public String getAccession() {
+        return accession;
     }
 
-    public void setCameraAcc(String cameraAcc) {
-        this.cameraAcc = cameraAcc;
+    public void setAccession(String accession) {
+        this.accession = accession;
     }
 
     public EntityTypeGenomic getEntityType() {

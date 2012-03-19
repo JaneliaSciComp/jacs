@@ -55,6 +55,7 @@
                 <output name="TOTAL_BLAST_HITS"/>
             </operation>
         </sequence>
+        <operation name="Persist Blast Node Results" if="TOTAL_BLAST_HITS&lt;=5000" processor="org.janelia.it.jacs.compute.service.blast.persist.results.finall.PersistFinalNodeResultsService" />
         <sequence name="Persist Blast Results" waitForAsync="true" startEvent="format">
             <operation name="Persist Blast XML Results" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.blast.persist.results.finall.PersistFinalXMLResultsGridService"/>

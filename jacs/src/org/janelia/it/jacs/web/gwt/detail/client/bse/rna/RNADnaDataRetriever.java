@@ -84,7 +84,7 @@ public class RNADnaDataRetriever {
             logger.error("GetNASequenceCallback failed", throwable);
             rnaPanel.getNASequenceLoadingLabel().setVisible(false);
             Nucleotide naEntity = rnaPanel.getNAEntity();
-            String naAcc = naEntity.getCameraAcc();
+            String naAcc = naEntity.getAccession();
             MessageUtil.addServiceErrorMessage(rnaPanel.getNADetailBox(),
                     "DNA Sequence",
                     "DNA Accession: " + naAcc);
@@ -102,7 +102,7 @@ public class RNADnaDataRetriever {
                 else {
                     rnaPanel.getNASequenceLoadingLabel().setVisible(false);
                     Nucleotide naEntity = rnaPanel.getNAEntity();
-                    String naAcc = naEntity.getCameraAcc();
+                    String naAcc = naEntity.getAccession();
                     MessageUtil.addServiceErrorMessage(rnaPanel.getNADetailBox(),
                             "DNA Sequence",
                             "DNA Accession: " + naAcc);

@@ -49,7 +49,6 @@
         <property name="build.war.unzipped.dir" value="${build.war.dir}/unzipped"/>
         <property name="jaas.plugin.name" value="${webapp.name}-jaasplugin.jar" />
         <property name="jaas.plugin.config.name" value="jaas.config" />
-        <property name="skip.GWT.compilation" value="true"/>
 
         <!-- GWT Stuff -->
         <property name="gwt.home" value="${basedir}/../common/GWT/" />
@@ -60,6 +59,17 @@
         <property name="gwt.dev.jar.name" value="gwt-dev-${gwt.flavour}.jar"/>
         <property name="gwt.compiler.default" value="@browser-compiler-setting@"/>
         <property name="gwt.test.ui.default" value="@selenium-test-setting@"/>
+
+        <condition property="compilation.threadcount" value="${compilation.threads}" else="4">
+            <isset property="compilation.threads"/>
+        </condition>
+
+        <condition property="skip.GWT.compilation" value="${skip.GWT.compile}" else="true">
+            <isset property="skip.GWT.compile"/>
+        </condition>
+
+        <echo message="Compilation threads = ${compilation.threadcount}"/>
+        <echo message="Skipping compile = ${skip.GWT.compilation}"/>
 
         <!-- External dependencies for compilation -->
         <path id="compile.classpath.additional">
@@ -125,58 +135,62 @@
 
     <target name="build-no-GWT" description="compiles and packages this module">
         <antcall target="build">
-            <param name="skip.GWT.compilation" value="true"/>            
+            <param name="skip.GWT.compilation" value="true"/>
         </antcall>
     </target>
 
     <!-- Runs the GWT compiler to convert client (browser) Java into JS for all modules -->
     <target name="gwt-compile" depends="setup, make-gwt-build-dir" description="Generate client side content with GWT"
-            unless="skip.GWT.compilation">
-        <parallel threadcount="6">
+            unless="${skip.GWT.compilation}">
+        <parallel threadcount="${compilation.threadcount}">
             <!-- Package up the common code module-->
             <antcall target="gwt-package-common"/>
 
             <!-- Header module is required for all entry points -->
             <!--todo Test: FRV, Project Sample Page, Detail Page, Status, Search, DownloadNewFilesPage-->
-            <antcall target="gwt-compile-module">
-                <param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.header.Header" />
-                <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/header/Header.gwt.xml" />
-            </antcall>
+            <!--<antcall target="gwt-compile-module">-->
+                <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.header.Header" />-->
+                <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/header/Header.gwt.xml" />-->
+            <!--</antcall>-->
 
              <!--&lt;!&ndash;Compile the entry point modules &ndash;&gt;-->
-            <antcall target="gwt-compile-module">
-                <param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.home.Home" />
-                <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/home/Home.gwt.xml" />
-            </antcall>
-            <antcall target="gwt-compile-module">
-                <param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.advancedblast.AdvancedBlast" />
-                <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/advancedblast/AdvancedBlast.gwt.xml" />
-            </antcall>
-            <antcall target="gwt-compile-module">
-                <param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.neuronSeparator.NeuronSeparator" />
-                <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/neuronSeparator/NeuronSeparator.gwt.xml" />
-            </antcall>
+            <!--<antcall target="gwt-compile-module">-->
+                <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.home.Home" />-->
+                <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/home/Home.gwt.xml" />-->
+            <!--</antcall>-->
+            <!--<antcall target="gwt-compile-module">-->
+                <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.advancedblast.AdvancedBlast" />-->
+                <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/advancedblast/AdvancedBlast.gwt.xml" />-->
+            <!--</antcall>-->
+            <!--<antcall target="gwt-compile-module">-->
+                <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.neuronSeparator.NeuronSeparator" />-->
+                <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/neuronSeparator/NeuronSeparator.gwt.xml" />-->
+            <!--</antcall>-->
             <antcall target="gwt-compile-module">
                 <param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.status.Status" />
                 <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/status/Status.gwt.xml" />
             </antcall>
             <antcall target="gwt-compile-module">
-                <param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.geci.NeuronalAssayAnalysis" />
-                <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/geci/NeuronalAssayAnalysis.gwt.xml" />
+                <param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.tic.TIC" />
+                <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/tic/TIC.gwt.xml" />
             </antcall>
-            <antcall target="gwt-compile-module">
-                <param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.zlatic.ZlaticLab" />
-                <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/zlatic/ZlaticLab.gwt.xml" />
-            </antcall>
-            <antcall target="gwt-compile-module">
-              <param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.admin.Admin" />
-              <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/admin/Admin.gwt.xml" />
-            </antcall>
-            <antcall target="gwt-compile-module">
-                <param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.test.CleanGWTEntities" />
-                <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/test/CleanGWTEntities.gwt.xml" />
-            </antcall>
+            <!--<antcall target="gwt-compile-module">-->
+                <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.geci.NeuronalAssayAnalysis" />-->
+                <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/geci/NeuronalAssayAnalysis.gwt.xml" />-->
+            <!--</antcall>-->
+            <!--<antcall target="gwt-compile-module">-->
+              <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.admin.Admin" />-->
+              <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/admin/Admin.gwt.xml" />-->
+            <!--</antcall>-->
+            <!--<antcall target="gwt-compile-module">-->
+                <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.test.CleanGWTEntities" />-->
+                <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/test/CleanGWTEntities.gwt.xml" />-->
+            <!--</antcall>-->
 
+            <!--<antcall target="gwt-compile-module">-->
+                <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.zlatic.ZlaticLab" />-->
+                <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/zlatic/ZlaticLab.gwt.xml" />-->
+            <!--</antcall>-->
             <!--<antcall target="gwt-compile-module">-->
                 <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.psiBlast.PsiBlast" />-->
                 <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/psiBlast/PsiBlast.gwt.xml" />-->
@@ -597,6 +611,13 @@
             <param name="module.path" value="org.janelia.it.jacs.web.gwt.geci.NeuronalAssayAnalysis"/>
             <param name="url.target" value="NeuronalAssayAnalysis"/>
             <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/geci/NeuronalAssayAnalysis.gwt.xml" />
+        </antcall>
+    </target>
+    <target name="deploy-tic" depends="setup">
+        <antcall target="deploy-gwt-module">
+            <param name="module.path" value="org.janelia.it.jacs.web.gwt.tic.TIC"/>
+            <param name="url.target" value="TranscriptionImagingConsortium"/>
+            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/tic/TIC.gwt.xml" />
         </antcall>
     </target>
     <target name="deploy-zlaticLab" depends="setup">

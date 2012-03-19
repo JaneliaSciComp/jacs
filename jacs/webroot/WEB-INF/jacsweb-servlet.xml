@@ -143,6 +143,7 @@
                          <prop key="/gwt/FRData/FRData.htm">frdata</prop>
                          <prop key="/gwt/FRV/Frv.htm">frv</prop>
                          <prop key="/gwt/NeuronalAssayAnalysis/NeuronalAssayAnalysis.htm">neuronalAssayAnalysis</prop>
+                         <prop key="/gwt/TIC/TIC.htm">tic</prop>
                          <prop key="/gwt/Header/Header.htm">header</prop>
                          <prop key="/gwt/Home/Home.htm">home</prop>
                          <prop key="/gwt/Inspect/Inspect.htm">inspect</prop>

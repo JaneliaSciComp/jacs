@@ -84,7 +84,7 @@ public class ProjectWizard extends ProjectsWizardController {
             getDataManager().setInitialProjectSymbol(value);
         }
         else
-            _logger.error("Got unknown param " + name + "=" + value + " from URL");
+            _logger.error("Project: Got unknown param " + name + "=" + value + " from URL");
     }
 
     public Breadcrumb getBreadcrumbSection() {

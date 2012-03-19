@@ -54,7 +54,7 @@ public class GenomeProjectBlastFrvService implements IService {
             String gpName = gpImportTask.getParameter(GenomeProjectImportTask.PARAM_GENOME_PROJECT_NAME);
             logger.debug("Getting the sequence for Genome Project: " + gpName);
             GenbankFile gbFile = new GenbankFile(genbankFile.getAbsolutePath());
-//                        GenbankFile gbFile = new GenbankFile("/usr/local/projects/CAMERA/runtime-shared/filestore/system/genomeProject/1167236322503426404/NC_002253.gbk");
+//                        GenbankFile gbFile = new GenbankFile("Xruntime-shared/filestore/system/genomeProject/1167236322503426404/NC_002253.gbk");
             String tmpSequence = gbFile.getFastaFormattedSequence().toUpperCase();
             if (null != tmpSequence && tmpSequence.length() >= 1000) {
                 logger.debug("Output: (" + tmpSequence.length() + ")\n" + tmpSequence.substring(0, 1000));

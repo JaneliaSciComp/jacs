@@ -77,29 +77,29 @@ public class DetailSubPanelBuilderFactory {
     private DetailPanelBuilder createDetailPanelBuilder(DetailSubPanel subPanel) {
         DetailPanelBuilder newPanelBuilder = null;
         switch (getAccType()) {
-            case AccessionIdentifierUtil.CAMERA_READ_ACC:
+            case AccessionIdentifierUtil.READ_ACC:
                 newPanelBuilder = new ReadPanelBuilder(subPanel);
                 break;
-            case AccessionIdentifierUtil.CAMERA_ORF_ACC:
+            case AccessionIdentifierUtil.ORF_ACC:
                 newPanelBuilder = new PeporfPanelBuilder(subPanel);
                 break;
-            case AccessionIdentifierUtil.CAMERA_PROTEIN_ACC:
+            case AccessionIdentifierUtil.PROTEIN_ACC:
                 newPanelBuilder = new PeporfPanelBuilder(subPanel);
                 break;
-            case AccessionIdentifierUtil.CAMERA_NCRNA_ACC:
+            case AccessionIdentifierUtil.NCRNA_ACC:
                 newPanelBuilder = new RNAPanelBuilder(subPanel);
                 break;
             case AccessionIdentifierUtil.NCBI_AA_ACC:
                 newPanelBuilder = new PeporfPanelBuilder(subPanel);
                 break;
-            case AccessionIdentifierUtil.CAMERA_PROTEIN_CLUSTER_ACC:
+            case AccessionIdentifierUtil.PROTEIN_CLUSTER_ACC:
                 newPanelBuilder = new ClusterPanelBuilder(subPanel);
                 break;
             default:
                 newPanelBuilder = new BSEntityPanelBuilder(subPanel);
                 break;
 /*
-            case AccessionIdentifierUtil.CAMERA_SCAFFOLD_ACC:
+            case AccessionIdentifierUtil.SCAFFOLD_ACC:
             case AccessionIdentifierUtil.NCBI_GENF_ACC:
             case AccessionIdentifierUtil.NCBI_CNTG_ACC:
             case AccessionIdentifierUtil.NCBI_NT_ACC:
@@ -120,19 +120,19 @@ public class DetailSubPanelBuilderFactory {
     private DetailSubPanel createDetailSubPanel(DetailPanel parentPanel) {
         DetailSubPanel newSubPanel = null;
         switch (getAccType()) {
-            case AccessionIdentifierUtil.CAMERA_READ_ACC:
+            case AccessionIdentifierUtil.READ_ACC:
                 newSubPanel = new ReadPanel();
                 break;
-            case AccessionIdentifierUtil.CAMERA_ORF_ACC:
+            case AccessionIdentifierUtil.ORF_ACC:
                 newSubPanel = new PeporfPanel(PeporfPanel.ORF_DETAIL_TYPE);
                 break;
-            case AccessionIdentifierUtil.CAMERA_PROTEIN_ACC:
+            case AccessionIdentifierUtil.PROTEIN_ACC:
                 newSubPanel = new PeporfPanel(PeporfPanel.PEPTIDE_DETAIL_TYPE);
                 break;
-            case AccessionIdentifierUtil.CAMERA_NCRNA_ACC:
+            case AccessionIdentifierUtil.NCRNA_ACC:
                 newSubPanel = new RNAPanel();
                 break;
-            case AccessionIdentifierUtil.CAMERA_SCAFFOLD_ACC:
+            case AccessionIdentifierUtil.SCAFFOLD_ACC:
                 newSubPanel = new ScaffoldPanel();
                 break;
             case AccessionIdentifierUtil.NCBI_GENF_ACC:
@@ -147,7 +147,7 @@ public class DetailSubPanelBuilderFactory {
             case AccessionIdentifierUtil.NCBI_AA_ACC:
                 newSubPanel = new PeporfPanel(PeporfPanel.PEPTIDE_DETAIL_TYPE);
                 break;
-            case AccessionIdentifierUtil.CAMERA_PROTEIN_CLUSTER_ACC:
+            case AccessionIdentifierUtil.PROTEIN_CLUSTER_ACC:
                 newSubPanel = new ClusterPanel();
                 break;
             default:

@@ -18,7 +18,7 @@ public class BseColumnFormatter extends ColumnFormatter {
     public static final Map<BseHeader, String> headerMap = new HashMap<BseHeader, String>();
 
     public static enum BseHeader {
-        CAMERA_ACC,
+        ACCESSION,
         NCBI_GI,
         LENGTH,
         ORGANISM,
@@ -27,7 +27,7 @@ public class BseColumnFormatter extends ColumnFormatter {
     }
 
     static {
-        headerMap.put(BseHeader.CAMERA_ACC, "Camera Acc");
+        headerMap.put(BseHeader.ACCESSION, "Accession");
         headerMap.put(BseHeader.NCBI_GI, "NCBI gi");
         headerMap.put(BseHeader.LENGTH, "Length");
         headerMap.put(BseHeader.ORGANISM, "Organism");
@@ -45,7 +45,7 @@ public class BseColumnFormatter extends ColumnFormatter {
 
     public static List<String> formatColumns(BaseSequenceEntity bse) {
         List<String> pl = new ArrayList<String>();
-        add(pl, bse.getCameraAcc());                    //CAMERA_ACC,
+        add(pl, bse.getAccession());                    //ACCESSION,
         add(pl, bse.getNcbiGINumber() + "");            //NCBI_GI,
         add(pl, bse.getBioSequence().getLength() + ""); //LENGTH,
         add(pl, bse.getOrganism());                     //ORGANISM,

@@ -48,7 +48,7 @@
         select bse.bioSequence
         from BaseSequenceEntity bse
         inner join bse.bioSequence seq
-        where bse.cameraAcc = :accesion
+        where bse.accession = :accesion
     ]]></query>
 
     <query name="findBioSequenceByBseEntityId"><![CDATA[
@@ -82,10 +82,10 @@
         where bh.blastHitId = :blastHitId
     ]]></query>
 
-    <query name="findDeflinesByCameraAccSet"><![CDATA[
-        select bse.cameraAcc, bse.defline as description
+    <query name="findDeflinesByAccessionSet"><![CDATA[
+        select bse.accession, bse.defline as description
         from BaseSequenceEntity bse
-        where bse.cameraAcc = :cameraAcc
+        where bse.accession = :accession
     ]]></query>
 
     <query name="findDistinctQueryEntitiesByResultNode"><![CDATA[
@@ -100,10 +100,10 @@
         where al.resultNode.objectId = :resultNodeId
     ]]></query>
 
-    <query name="findEntityIdsByCameraAccSet"><![CDATA[
-        select bse.cameraAcc, bse
+    <query name="findEntityIdsByAccessionSet"><![CDATA[
+        select bse.accession, bse
         from BaseSequenceEntity bse
-        where bse.cameraAcc in (:cameraAcc)
+        where bse.accession in (:accession)
     ]]></query>
 
     <query name="findLibraryByBseEntityId"><![CDATA[
@@ -132,13 +132,13 @@
 
     <query name="findReadByAccesion"><![CDATA[
         from Read read
-        where read.cameraAcc = :accesion
+        where read.accession = :accesion
     ]]></query>
 
     <query name="findPairedReadsByAccession"><![CDATA[
         select matedRead
         from Read read, Read matedRead
-        where read.cameraAcc = :accesion
+        where read.accession = :accesion
          and read.templateAcc = matedRead.templateAcc
          and read.libraryAcc = matedRead.libraryAcc
          and matedRead.entityId != read.entityId
@@ -157,7 +157,7 @@
         select rd.entityId, rd
         from BlastHit al, Read rd
         where al.blastHitId = :blastHitId
-            and rd.cameraAcc = al.subjectAcc
+            and rd.accession = al.subjectAcc
     ]]></query>
 
     <query name="findReadByBseEntityId"><![CDATA[
@@ -169,14 +169,14 @@
         select rd.entityId, rd
         from BlastHit al, Read rd
         where al.resultNode.objectId = :resultNodeId
-            and rd.cameraAcc = al.subjectAcc
+            and rd.accession = al.subjectAcc
     ]]></query>
 
     <query name="findReadWithLibraryByAccesion"><![CDATA[
         select read
         from Read read
         inner join fetch read.library
-        where read.cameraAcc = :accesion
+        where read.accession = :accesion
     ]]></query>
 
     <query name="findReadWithLibraryByBseEntityId"><![CDATA[
@@ -231,7 +231,7 @@
         from BaseSequenceEntity bse
         inner join bse.sample sample
         left outer join fetch sample.bioMaterials
-        where bse.cameraAcc=:entityAcc
+        where bse.accession=:entityAcc
     ]]></query>
 
     <query name="findSequenceTextByBseEntityId"><![CDATA[
@@ -248,7 +248,7 @@
     <query name="findSubjectBseByBlastHitId"><![CDATA[
         select bse.entityId, bse
         from BaseSequenceEntity bse
-        where bse.cameraAcc in
+        where bse.accession in
             (select al.subjectAcc
                 from BlastHit al
                 where al.blastHitId = :blastHitId)
@@ -257,7 +257,7 @@
     <query name="findSubjectBseByResultNode"><![CDATA[
         select bse.entityId, bse
         from BaseSequenceEntity bse
-        where bse.cameraAcc in
+        where bse.accession in
             (select al.subjectAcc
                 from BlastHit al
                 where al.resultNode.objectId = :resultNodeId)

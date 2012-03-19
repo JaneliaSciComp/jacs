@@ -48,6 +48,6 @@ public class SamplesPage extends WizardController {
             _data.setInitialProjectSymbol(value);
         }
         else
-            _logger.error("Got unknown param " + name + "=" + value + " from URL");
+            _logger.error("Samples: Got unknown param " + name + "=" + value + " from URL");
     }
 }

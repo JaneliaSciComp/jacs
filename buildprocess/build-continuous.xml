@@ -34,11 +34,11 @@
     <!-- Common properties -->
 	<property name="project.root" value="${basedir}/.."/>
 
-    <!-- CVS Build-all: runs 'build' on all sub-modules, in order of dependency -->
+    <!-- SVN Build-all: runs 'build' on all sub-modules, in order of dependency -->
     <target name="build-all" depends="delete-all" description="Runs 'clean' and 'build' on all sub-modules">
     <!-- Get the latest from SVN -->
         <svn>
-          <checkout url="http://isvn/CAMERA/camera/trunk/" revision="HEAD" destPath="${project.root}"/>
+          <checkout url="http://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk" revision="HEAD" destPath="${project.root}"/>
         </svn>
         <subant target="build-all" verbose="true">
             <filelist dir="${project.root}">

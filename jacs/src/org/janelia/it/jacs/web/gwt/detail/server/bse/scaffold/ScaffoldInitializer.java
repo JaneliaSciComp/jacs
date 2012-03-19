@@ -19,7 +19,7 @@ public class ScaffoldInitializer extends BSEntityInitializer {
     }
 
     public boolean checkEntityTypeAccession(BaseSequenceEntity bse) {
-        return AccessionIdentifierUtil.isScaffold(bse.getCameraAcc()) && bse instanceof Scaffold;
+        return AccessionIdentifierUtil.isScaffold(bse.getAccession()) && bse instanceof Scaffold;
     }
 
     public boolean recognizeAccessionNo(String accessionNo) {

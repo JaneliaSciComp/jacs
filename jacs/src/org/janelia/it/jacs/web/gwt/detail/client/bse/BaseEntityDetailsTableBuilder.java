@@ -55,18 +55,18 @@ public class BaseEntityDetailsTableBuilder {
         this.baseEntitySequenceData = baseEntitySequenceData;
     }
 
-    public RowIndex populateCAMERAAccNo(String cameraAcc, String entityType, RowIndex rowIndex) {
+    public RowIndex populateAccessionNo(String accession, String entityType, RowIndex rowIndex) {
         if (rowIndex == null) {
             rowIndex = new RowIndex(0);
         }
         TableUtil.addTextRow(entityDetailsTable,
                 rowIndex,
-                "CAMERA Accession",
-                cameraAcc);
+                "Accession",
+                accession);
         return rowIndex;
     }
 
-    public RowIndex populateCAMERAAccNoAsTargetLink(String currentPanelLabel,
+    public RowIndex populateAccessionNoAsTargetLink(String currentPanelLabel,
                                                     String sourceAccNo,
                                                     String label,
                                                     RowIndex rowIndex) {
@@ -75,7 +75,7 @@ public class BaseEntityDetailsTableBuilder {
         }
         Widget targetAccessWidget = parentPanel.getTargetAccessionWidget(sourceAccNo,
                 currentPanelLabel,
-                getBaseEntity().getCameraAcc());
+                getBaseEntity().getAccession());
         TableUtil.addWidgetRow(entityDetailsTable, rowIndex, label, targetAccessWidget);
         return rowIndex;
     }
@@ -134,7 +134,7 @@ public class BaseEntityDetailsTableBuilder {
         if (asDownloadLinkOnly) {
             // if the sequence is too big too display create an external link to download it as FASTA
             ArrayList<String> accessionList = new ArrayList<String>();
-            accessionList.add(getBaseEntity().getCameraAcc());
+            accessionList.add(getBaseEntity().getAccession());
             final SequenceExportTask exportTask = new SequenceExportTask(ExportWriterConstants.EXPORT_TYPE_FASTA, accessionList, null);
             TableUtil.addWidgetRow(entityDetailsTable, rowIndex, "Sequence",
                     new ExternalLink("Export as FASTA", new ClickListener() {

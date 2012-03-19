@@ -36,7 +36,7 @@ public class FASTAFileNodeHelperTest extends TestCase {
             BaseSequenceEntity seqEntity =
                     fastaHelper.readSequence(fastaFileChannelHandler, testAcc, fastaSequenceCache);
             assertTrue(seqEntity != null && seqEntity instanceof ORF);
-            assertTrue(seqEntity.getCameraAcc().equals(testAcc));
+            assertTrue(seqEntity.getAccession().equals(testAcc));
         } catch (Exception e) {
             e.printStackTrace();
             fail();

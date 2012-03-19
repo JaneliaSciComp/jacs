@@ -39,7 +39,7 @@ public class DownloadSequencePopup extends DownloadPopup {
             add(HtmlUtils.getHtml("No entity has been provided", "error"));
         }
         else {
-            addDescription(description, sequenceEntity.getCameraAcc());
+            addDescription(description, sequenceEntity.getAccession());
             add(HtmlUtils.getHtml("&nbsp;", "smallSpacer"));
             add(createDownloadLink("Download as",
                     new Link(ExportWriterConstants.EXPORT_TYPE_TEXT, new DownloadSequenceClickListener(ExportWriterConstants.EXPORT_TYPE_TEXT))));
@@ -66,7 +66,7 @@ public class DownloadSequencePopup extends DownloadPopup {
                             outputType
                     });
             ArrayList<String> accessionList = new ArrayList<String>();
-            accessionList.add(sequenceEntity.getCameraAcc());
+            accessionList.add(sequenceEntity.getAccession());
             SequenceExportTask exportTask = new SequenceExportTask(ExportWriterConstants.EXPORT_TYPE_FASTA, accessionList, null);
             if (ExportWriterConstants.COMPRESSION_ZIP.equals(outputType) ||
                     ExportWriterConstants.COMPRESSION_GZ.equals(outputType)) {

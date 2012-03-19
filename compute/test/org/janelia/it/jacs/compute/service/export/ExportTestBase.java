@@ -36,8 +36,8 @@ public abstract class ExportTestBase extends TestCase {
     private static final boolean CLEAN_DATA_AFTER_RUN = SystemConfigurationProperties.getBoolean("junit.test.cleanDataAfterRun");
     protected static final String TEST_USER_NAME = SystemConfigurationProperties.getString("junit.test.username");
 
-    protected static final String OUTPUT_DIR = "/usr/local/projects/CAMERA/camtest/export/output/";
-    protected static final String COMPARE_DIR = "/usr/local/projects/CAMERA/camtest/export/compare/";
+    protected static final String OUTPUT_DIR = "Xcamtest/export/output/";
+    protected static final String COMPARE_DIR = "Xcamtest/export/compare/";
 
     private long startTestTime;
     private static long startTime;

@@ -3,7 +3,7 @@
   <BlastOutput_program>blastn</BlastOutput_program>
   <BlastOutput_version>blastn 2.2.15 [Oct-15-2006]</BlastOutput_version>
   <BlastOutput_reference>~Reference: Altschul, Stephen F., Thomas L. Madden, Alejandro A. Schaffer, ~Jinghui Zhang, Zheng Zhang, Webb Miller, and David J. Lipman (1997), ~&quot;Gapped BLAST and PSI-BLAST: a new generation of protein database search~programs&quot;,  Nucleic Acids Res. 25:3389-3402.</BlastOutput_reference>
-  <BlastOutput_db>/usr/local/projects/CAMERA/runtime-shared/filestore/system/1015438972416950624/p_0.fasta</BlastOutput_db>
+  <BlastOutput_db>Xruntime-shared/filestore/system/1015438972416950624/p_0.fasta</BlastOutput_db>
   <BlastOutput_query-ID>lcl|1_0</BlastOutput_query-ID>
   <BlastOutput_query-def>JCVI_ORF_1096130161884 /source_dna_id=JCVI_TGI_1096124245420 /peptide_id=JCVI_PEP_1096130161885 /translation_start=213 /translation_stop=504 /translation_table=11 /length=291 /full_length=506 /orientation=reverse /tgi_defline=&quot;TC200 GB|AAA86640.1|1174149|HSU44104 small GTP binding protein Rab7 {Homo sapiens;} , partial (31%)&quot;</BlastOutput_query-def>
   <BlastOutput_query-len>291</BlastOutput_query-len>

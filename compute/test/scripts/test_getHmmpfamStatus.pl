@@ -62,7 +62,7 @@ There is no required input for this script.
 When succesfully submitted, this web service returns the following:
 Status Type: completed
 Status Description: Process 1438285268271499435 completed successfully
-Hmmpfam Result Location: /usr/local/projects/CAMERA/runtime-shared/filestore/jinman/HmmerPfamResult/1438285268661569707/hmmerpfam.out
+Hmmpfam Result Location: Xruntime-shared/filestore/jinman/HmmerPfamResult/1438285268661569707/hmmerpfam.out
 
 Note that if the job is too old, the following may be displayed:
 

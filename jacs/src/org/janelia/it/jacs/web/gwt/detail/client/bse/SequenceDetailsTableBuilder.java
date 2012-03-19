@@ -111,18 +111,18 @@ public class SequenceDetailsTableBuilder {
         return rowIndex;
     }
 
-    public RowIndex populateCAMERAAccNo(String cameraAcc, String entityType, RowIndex rowIndex) {
+    public RowIndex populateAccessionNo(String accession, String entityType, RowIndex rowIndex) {
         if (rowIndex == null) {
             rowIndex = new RowIndex(0);
         }
         TableUtil.addTextRow(entityDetailsTable,
                 rowIndex,
-                "CAMERA Accession",
-                cameraAcc);
+                "Accession",
+                accession);
         return rowIndex;
     }
 
-    public RowIndex populateCAMERAAccNoAsTargetLink(String currentPanelLabel,
+    public RowIndex populateAccessionNoAsTargetLink(String currentPanelLabel,
                                                     String sourceAccNo,
                                                     String label,
                                                     RowIndex rowIndex) {
@@ -131,7 +131,7 @@ public class SequenceDetailsTableBuilder {
         }
         Widget targetAccessWidget = parentPanel.getTargetAccessionWidget(sourceAccNo,
                 currentPanelLabel,
-                getBaseEntity().getCameraAcc());
+                getBaseEntity().getAccession());
         TableUtil.addWidgetRow(entityDetailsTable, rowIndex, label, targetAccessWidget);
         return rowIndex;
     }
@@ -150,7 +150,7 @@ public class SequenceDetailsTableBuilder {
          */
         if (bse.getReplacedBy() != null)
             TableUtil.addWidgetRow(entityDetailsTable, rowIndex, "Replaced by",
-                    parentPanel.getTargetAccessionWidget(bse.getCameraAcc(),
+                    parentPanel.getTargetAccessionWidget(bse.getAccession(),
                             "Replaced sequence", bse.getReplacedBy()));
 
         TableUtil.addTextRow(entityDetailsTable, rowIndex, "Entity Type", getBaseEntity().getEntityType().getName());
@@ -263,10 +263,10 @@ public class SequenceDetailsTableBuilder {
                 logger.debug("SequenceDetailsTableBuilder populate read mates");
                 Iterator mateIter = read.getMates().iterator();
                 while (mateIter.hasNext()) {
-                    String mateAcc = ((Read) mateIter.next()).getCameraAcc();
+                    String mateAcc = ((Read) mateIter.next()).getAccession();
                     logger.debug("SequenceDetailsTableBuilder read mate acc=" + mateAcc);
                     TableUtil.addWidgetRow(entityDetailsTable, rowIndex, "Mate",
-                            parentPanel.getTargetAccessionWidget(read.getCameraAcc(),
+                            parentPanel.getTargetAccessionWidget(read.getAccession(),
                                     "Mate details", mateAcc));
                 }
             }
@@ -287,7 +287,7 @@ public class SequenceDetailsTableBuilder {
                 TableUtil.addWidgetRow(entityDetailsTable,
                         rowIndex,
                         "Peptide",
-                        parentPanel.getTargetAccessionWidget(orf.getCameraAcc(),
+                        parentPanel.getTargetAccessionWidget(orf.getAccession(),
                                 "ORF details",
                                 orfProteinAcc));
             }
@@ -297,7 +297,7 @@ public class SequenceDetailsTableBuilder {
                 TableUtil.addWidgetRow(entityDetailsTable,
                         rowIndex,
                         "Source DNA",
-                        parentPanel.getTargetAccessionWidget(orf.getCameraAcc(),
+                        parentPanel.getTargetAccessionWidget(orf.getAccession(),
                                 "Source DNA details",
                                 orfSourceDNAAcc));
             }
@@ -323,7 +323,7 @@ public class SequenceDetailsTableBuilder {
                     orientation = "reverse";
                 else {
                     logger.debug("SequenceDetailsTableBuilder unknonw orientation value: " +
-                            orientation + " for " + bse.getCameraAcc());
+                            orientation + " for " + bse.getAccession());
                     orientation = "unknown";
                 }
                 TableUtil.addTextRow(entityDetailsTable, rowIndex, "Orientation", orientation);
@@ -361,7 +361,7 @@ public class SequenceDetailsTableBuilder {
                 TableUtil.addWidgetRow(entityDetailsTable,
                         rowIndex,
                         "ORF",
-                        parentPanel.getTargetAccessionWidget(protein.getCameraAcc(),
+                        parentPanel.getTargetAccessionWidget(protein.getAccession(),
                                 "Peptide details",
                                 proteinOrfAcc));
             }
@@ -371,7 +371,7 @@ public class SequenceDetailsTableBuilder {
                 TableUtil.addWidgetRow(entityDetailsTable,
                         rowIndex,
                         "Source DNA",
-                        parentPanel.getTargetAccessionWidget(protein.getCameraAcc(),
+                        parentPanel.getTargetAccessionWidget(protein.getAccession(),
                                 "Source DNA details",
                                 peptideSourceDNAAcc));
             }
@@ -397,7 +397,7 @@ public class SequenceDetailsTableBuilder {
 //                    orientation = "reverse";
 //                else {
 //                    logger.error("SequenceDetailsTableBuilder unknonw orientation value: " +
-//                            orientation + " for " + bse.getCameraAcc());
+//                            orientation + " for " + bse.getAccession());
 //                    orientation = "unknown";
 //                }
 //                TableUtil.addTextRow(entityDetailsTable, rowIndex, "Orientation", orientation);
@@ -434,7 +434,7 @@ public class SequenceDetailsTableBuilder {
                 TableUtil.addWidgetRow(entityDetailsTable,
                         rowIndex,
                         "Source DNA",
-                        parentPanel.getTargetAccessionWidget(ncRNA.getCameraAcc(),
+                        parentPanel.getTargetAccessionWidget(ncRNA.getAccession(),
                                 "RNA details",
                                 ncRNASourceDNAAcc));
             }
@@ -460,7 +460,7 @@ public class SequenceDetailsTableBuilder {
                     orientation = "reverse";
                 else {
                     logger.error("SequenceDetailsTableBuilder unknonw orientation value: " +
-                            orientation + " for " + bse.getCameraAcc());
+                            orientation + " for " + bse.getAccession());
                     orientation = "unknown";
                 }
                 TableUtil.addTextRow(entityDetailsTable, rowIndex, "DNA orientation", orientation);
@@ -515,7 +515,7 @@ public class SequenceDetailsTableBuilder {
         if (asDownloadLinkOnly) {
             // if the sequence is too big too display create an external link to download it as FASTA
             ArrayList<String> accessionList = new ArrayList<String>();
-            accessionList.add(getBaseEntity().getCameraAcc());
+            accessionList.add(getBaseEntity().getAccession());
             final SequenceExportTask exportTask = new SequenceExportTask(ExportWriterConstants.EXPORT_TYPE_FASTA, accessionList, null);
             TableUtil.addWidgetRow(entityDetailsTable, rowIndex, "Sequence",
                     new ExternalLink("Export as FASTA", new ClickListener() {

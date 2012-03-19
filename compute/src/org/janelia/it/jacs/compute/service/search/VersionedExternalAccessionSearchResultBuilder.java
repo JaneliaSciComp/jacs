@@ -20,7 +20,7 @@ class VersionedExternalAccessionSearchResultBuilder extends AccessionSearchResul
     protected SQLQuery createSearchQuery(Object[] accessionQueryParams, Session session) {
         String searchedAcc = (String) accessionQueryParams[0];
         String sql = "select " +
-                "camera_acc as accession," +
+                "accession as accession," +
                 "et.name," +
                 "external_acc as docAccessionName " +
                 "from " +

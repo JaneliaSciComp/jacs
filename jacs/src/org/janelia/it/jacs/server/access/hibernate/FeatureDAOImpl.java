@@ -85,7 +85,7 @@ public class FeatureDAOImpl extends DaoBaseImpl implements FeatureDAO {
         _logger.debug("findBseByAcc() called with accession=" + accesion);
         try {
             DetachedCriteria criteria = DetachedCriteria.forClass(BaseSequenceEntity.class);
-            Criterion cr = Restrictions.eq("cameraAcc", accesion);
+            Criterion cr = Restrictions.eq("accession", accesion);
             criteria.add(cr);
             criteria.setFetchMode("assembly", FetchMode.JOIN);
 
@@ -100,7 +100,7 @@ public class FeatureDAOImpl extends DaoBaseImpl implements FeatureDAO {
                     _logger.debug("null result - returning null");
                 }
                 else {
-                    _logger.debug("returning bse with accession=" + bse.getCameraAcc());
+                    _logger.debug("returning bse with accession=" + bse.getAccession());
                 }
                 return bses.get(0);
             }
@@ -197,7 +197,7 @@ public class FeatureDAOImpl extends DaoBaseImpl implements FeatureDAO {
                 "from Read r " +
                 "where r.library.sampleAcc = :sampleAcc ");
         if (readAccessions != null && readAccessions.size() > 0) {
-            hqlBuffer.append("and r.cameraAcc in (:readAccessions) ");
+            hqlBuffer.append("and r.accession in (:readAccessions) ");
         }
         hqlBuffer.append(orderByClause);
         Query query = getSession().createQuery(hqlBuffer.toString());
@@ -252,13 +252,13 @@ public class FeatureDAOImpl extends DaoBaseImpl implements FeatureDAO {
     /**
      * This method returns a Read given a BaseSequenceEntity Id
      *
-     * @param cameraAcc
+     * @param accession
      * @return
      * @throws DaoException
      */
-    public Read getReadWithLibraryByAccesion(String cameraAcc) throws DaoException {
+    public Read getReadWithLibraryByAccesion(String accession) throws DaoException {
         try {
-            Read read = (Read) findByNamedQueryAndNamedParam("findReadWithLibraryByAccesion", "accesion", cameraAcc, true);
+            Read read = (Read) findByNamedQueryAndNamedParam("findReadWithLibraryByAccesion", "accesion", accession, true);
             if (read == null) {
                 _logger.error("read returned null");
             }
@@ -721,11 +721,11 @@ public class FeatureDAOImpl extends DaoBaseImpl implements FeatureDAO {
         }
     }
 
-    public List<Object[]> getReadsByCameraAccs(String[] accSet) throws DaoException {
+    public List<Object[]> getReadsByAccessions(String[] accSet) throws DaoException {
         try {
             StringBuffer hql = new StringBuffer("select bse.defline, bse.bioSequence.sequence " +
                     "from BaseSequenceEntity bse " +
-                    "where bse.cameraAcc in (");
+                    "where bse.accession in (");
             for (int i = 0; i < accSet.length; i++) {
                 hql.append("?,");
             }
@@ -737,11 +737,11 @@ public class FeatureDAOImpl extends DaoBaseImpl implements FeatureDAO {
         catch (Exception e) {
             // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
             _logger.error(e);
-            throw handleException(e, this.getClass().getName() + " - getReadsByCameraAccs");
+            throw handleException(e, this.getClass().getName() + " - getReadsByAccessions");
         }
     }
 
-    public List<BaseSequenceEntity> getSequenceEntitiesByCameraAccs(Collection<String> accCollection)
+    public List<BaseSequenceEntity> getSequenceEntitiesByAccessions(Collection<String> accCollection)
             throws DaoException {
         try {
             if (accCollection == null || accCollection.size() == 0) {
@@ -749,7 +749,7 @@ public class FeatureDAOImpl extends DaoBaseImpl implements FeatureDAO {
                 // instead of returning everything
                 return new ArrayList<BaseSequenceEntity>();
             }
-            String hql = "select bse from BaseSequenceEntity bse where bse.cameraAcc in (:accessions)";
+            String hql = "select bse from BaseSequenceEntity bse where bse.accession in (:accessions)";
             _logger.debug("hql=" + hql);
             // Get the appropriate range of Node's hits, sorted by the specified field
             Query query = getSession().createQuery(hql);
@@ -759,7 +759,7 @@ public class FeatureDAOImpl extends DaoBaseImpl implements FeatureDAO {
         catch (Exception e) {
             // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
             _logger.error(e);
-            throw handleException(e, this.getClass().getName() + " - getSequenceEntitiesByCameraAccs");
+            throw handleException(e, this.getClass().getName() + " - getSequenceEntitiesByAccessions");
         }
     }
 
@@ -1195,7 +1195,7 @@ public class FeatureDAOImpl extends DaoBaseImpl implements FeatureDAO {
     public int getNumReadFeaturesBySubclassName(String[] name, String entityAccNo) throws DaoException {
         String hql = "select count(se) " +
                 "from BaseSequenceEntity dna, BaseSequenceEntity se " +
-                "where dna.cameraAcc=:entityAccNo and se.dnaEntity=dna " +
+                "where dna.accession=:entityAccNo and se.dnaEntity=dna " +
                 "and se.class in " +
                 "(";
         for (int i = 0; i < name.length; i++) {
@@ -1218,7 +1218,7 @@ public class FeatureDAOImpl extends DaoBaseImpl implements FeatureDAO {
                                                                   SortArgument[] sortArgs) throws DaoException {
         String hql = "select se " +
                 "from BaseSequenceEntity dna, BaseSequenceEntity feature " +
-                "where dna.cameraAcc = :entityAccNo " +
+                "where dna.accession = :entityAccNo " +
                 "and se.dnaEntity=dna and se.class in " +
                 "(";
 
@@ -1266,7 +1266,7 @@ public class FeatureDAOImpl extends DaoBaseImpl implements FeatureDAO {
             throws DaoException {
         String orderByClause = buildOrderByClause(sortArgs);
         String sql = "select " +
-                "se.camera_acc as cameraAcc, " +
+                "se.accession as accession, " +
                 "se.dna_begin as dnaBegin, " +
                 "se.dna_end as dnaEnd, " +
                 "se.dna_orientation as dnaOrientation, " +
@@ -1281,10 +1281,10 @@ public class FeatureDAOImpl extends DaoBaseImpl implements FeatureDAO {
                 "se.type as type, " +
                 "se.entity_type_code as entityTypeCode " +
                 "from sequence_entity se " +
-                "where se.entity_type_code+0=8 and se.dna_id=(select entity_id from sequence_entity where camera_acc=:readAcc) " +
+                "where se.entity_type_code+0=8 and se.dna_id=(select entity_id from sequence_entity where accession=:readAcc) " +
                 "union all " +
                 " select " +
-                "se.camera_acc as cameraAcc, " +
+                "se.accession as accession, " +
                 "se.dna_begin as dnaBegin, " +
                 "se.dna_end as dnaEnd, " +
                 "se.dna_orientation as dnaOrientation, " +
@@ -1299,7 +1299,7 @@ public class FeatureDAOImpl extends DaoBaseImpl implements FeatureDAO {
                 "se.type as type, " +
                 "se.entity_type_code as entityTypeCode " +
                 "from sequence_entity se inner join protein_detail pd on pd.protein_id=se.protein_id " +
-                "where se.entity_type_code+0=5 and se.dna_id=(select entity_id from sequence_entity where camera_acc=:readAcc) " + orderByClause;
+                "where se.entity_type_code+0=5 and se.dna_id=(select entity_id from sequence_entity where accession=:readAcc) " + orderByClause;
 
         _logger.info("getRelatedOrfsAndRnas sql: " + sql);
         SQLQuery sqlQuery = getSession().createSQLQuery(sql);
@@ -1336,7 +1336,7 @@ public class FeatureDAOImpl extends DaoBaseImpl implements FeatureDAO {
     // Support for Protein Detail
     public ProteinClusterMember getProteinClusterMemberInfo(String proteinAcc) throws DaoException {
         String sql = "select  " +
-                "se.camera_acc as proteinAcc, " +
+                "se.accession as proteinAcc, " +
                 "cc.core_cluster_acc as coreClusterAcc, " +
                 "cc.final_cluster_acc as finalClusterAcc, " +
                 "cp.nr_parent_acc, " +
@@ -1345,7 +1345,7 @@ public class FeatureDAOImpl extends DaoBaseImpl implements FeatureDAO {
                 "from sequence_entity se " +
                 "inner join core_cluster_protein cp on cp.protein_id=se.entity_id " +
                 "inner join core_cluster cc on cp.core_cluster_id = cc.core_cluster_id " +
-                "where se.camera_acc = :proteinAcc";
+                "where se.accession = :proteinAcc";
         _logger.info("Retrieve protein cluster data sql: " + sql);
         SQLQuery sqlQuery = getSession().createSQLQuery(sql);
         sqlQuery.setString("proteinAcc", proteinAcc);
@@ -1367,13 +1367,13 @@ public class FeatureDAOImpl extends DaoBaseImpl implements FeatureDAO {
     public List<ProteinAnnotation> getProteinAnnotations(String proteinAcc, SortArgument[] sortArgs)
             throws DaoException {
         String sql = "select  " +
-                "se.camera_acc as protein_acc, " +
+                "se.accession as protein_acc, " +
                 "pa.id, " +
                 "pa.category, " +
                 "pa.name, " +
                 "pa.evidence " +
                 "from sequence_entity se inner join protein_annotation pa on pa.protein_id=se.entity_id " +
-                "where se.camera_acc=:proteinAcc";
+                "where se.accession=:proteinAcc";
         _logger.info("Retrieve protein GO annotation sql: " + sql);
         SQLQuery sqlQuery = getSession().createSQLQuery(sql);
         sqlQuery.setString("proteinAcc", proteinAcc);
@@ -1398,7 +1398,7 @@ public class FeatureDAOImpl extends DaoBaseImpl implements FeatureDAO {
     public List<PeptideDetail> getPeptidesForScaffoldByAccNo(String scaffoldAccNo, int startIndex, int numRecords, SortArgument[] sortArgs) throws DaoException {
         String orderByClause = buildOrderByClause(sortArgs);
         String sql = "select " +
-                "se.camera_acc as cameraAcc, " +
+                "se.accession as accession, " +
                 "se.dna_begin as dnaBegin, " +
                 "se.dna_end as dnaEnd, " +
                 "se.dna_orientation as dnaOrientation, " +
@@ -1411,7 +1411,7 @@ public class FeatureDAOImpl extends DaoBaseImpl implements FeatureDAO {
                 "pd.length as length, " +
                 "pd.protein_function as proteinFunction " +
                 "from sequence_entity se inner join protein_detail pd on pd.protein_id=se.entity_id " +
-                "where se.dna_id = (select entity_id from sequence_entity where camera_acc=:scaffoldAccNo) " +
+                "where se.dna_id = (select entity_id from sequence_entity where accession=:scaffoldAccNo) " +
                 "and se.entity_type_code in (6,7) " + orderByClause;
 
         _logger.info("getPeptidesForScaffoldByAccNo sql: " + sql);

@@ -35,10 +35,10 @@
 <body>
 
 <!--
-<a href="/wiki/display/VISWCAMERA/Formatting+Content+for+Project+or+Paper+Pages?decorator=printable" rel="nofollow"><img src="/wiki/images/icons/print_16.gif" width="16" height="16" hspace="1" vspace="1" align="absmiddle" border="0" alt="View a printable version of the current page." title="View a printable version of the current page."/></a>
+<a href="/wiki/display/VISW/Formatting+Content+for+Project+or+Paper+Pages?decorator=printable" rel="nofollow"><img src="/wiki/images/icons/print_16.gif" width="16" height="16" hspace="1" vspace="1" align="absmiddle" border="0" alt="View a printable version of the current page." title="View a printable version of the current page."/></a>
 <img src="/wiki/images/icons/attachments/pdf.gif" height="16" width="16" border="0" align="absmiddle" title="Export Page as PDF"></a>
 
-<div class="logoSpaceLink" style="margin-top: 5px; margin-bottom:5px">            <a href="/wiki/display/VISWCAMERA">JaCS</a>    </div>
+<div class="logoSpaceLink" style="margin-top: 5px; margin-bottom:5px">            <a href="/wiki/display/VISW">JaCS</a>    </div>
 <div class="pagetitle" style="padding: 0px; margin-bottom:5px; margin-top: 2px;">
 Formatting Content for Project or Paper Pages
 </div>

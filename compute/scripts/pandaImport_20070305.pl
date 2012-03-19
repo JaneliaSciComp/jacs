@@ -74,7 +74,7 @@ my %sourceFiles = (
                    => [ "$cameraSourceDir\/gos\/reads\/gos-all.fasta",
                         "$cameraSourceDir\/stratified\/shotgun\/stratified_shotgun-all.fasta",
                         "$cameraSourceDir\/four_ocean_viromes\/four_ocean_viromes-all.fasta",
-                        "/usr/local/projects/CAMERA/data/release-0-formatted/spanish_brine/FLAS_SMPL_CR30-2002.fasta" ],   # added 7/13/07
+                        "Xdata/release-0-formatted/spanish_brine/FLAS_SMPL_CR30-2002.fasta" ],   # added 7/13/07
    "allMetagenomic16sReads.nucleotide.fasta"
                    => [ "$cameraSourceDir\/stratified\/16s\/stratified_16s-all.fasta" ],
    "allMetagenomicOrfNucleotides.nucleotide.fasta"

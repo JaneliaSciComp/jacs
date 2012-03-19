@@ -45,30 +45,30 @@ public class SearchEntityDetailPanelBuilder {
         }
         int accType = accTypeWithDesc.getType();
         Panel entityDetailPanel = null;
-        if (accType == AccessionIdentifierUtil.CAMERA_READ_ACC ||
-                accType == AccessionIdentifierUtil.CAMERA_ORF_ACC ||
-                accType == AccessionIdentifierUtil.CAMERA_PROTEIN_ACC ||
-                accType == AccessionIdentifierUtil.CAMERA_NCRNA_ACC ||
-                accType == AccessionIdentifierUtil.CAMERA_SCAFFOLD_ACC ||
+        if (accType == AccessionIdentifierUtil.READ_ACC ||
+                accType == AccessionIdentifierUtil.ORF_ACC ||
+                accType == AccessionIdentifierUtil.PROTEIN_ACC ||
+                accType == AccessionIdentifierUtil.NCRNA_ACC ||
+                accType == AccessionIdentifierUtil.SCAFFOLD_ACC ||
                 accType == AccessionIdentifierUtil.NCBI_NT_ACC ||
                 accType == AccessionIdentifierUtil.NCBI_AA_ACC ||
                 accType == AccessionIdentifierUtil.NCBI_CNTG_ACC ||
                 accType == AccessionIdentifierUtil.NCBI_GENF_ACC ||
                 accType == AccessionIdentifierUtil.MISC_SEQ_ACC ||
-                accType == AccessionIdentifierUtil.CAMERA_PROTEIN_CLUSTER_ACC) {
+                accType == AccessionIdentifierUtil.PROTEIN_CLUSTER_ACC) {
             DetailPanel detailPanel = new DetailPanel(searchController);
             detailPanel.rebuildPanel(accession, null/*page token*/, backLink);
             entityDetailPanel = detailPanel;
         }
-        else if (accType == AccessionIdentifierUtil.CAMERA_PROJECT_ACC) {
+        else if (accType == AccessionIdentifierUtil.PROJECT_ACC) {
             _logger.info("SearchEntityDetailPanelBuilder: looking up project by acc=" + accession);
             entityDetailPanel = new ProjectDetailPanel("Project Details", true /*show actionLink*/, accession, backLink);
         }
-        else if (accType == AccessionIdentifierUtil.CAMERA_PUBLICATION_ACC) {
+        else if (accType == AccessionIdentifierUtil.PUBLICATION_ACC) {
             entityDetailPanel = new PublicationDetailPanel("Publication Details",
                     accession, backLink, true /*show actionLink*/);
         }
-        else if (accType == AccessionIdentifierUtil.CAMERA_BIOSAMPLE_ACC) {
+        else if (accType == AccessionIdentifierUtil.BIOSAMPLE_ACC) {
             SampleDetailPanel sampleDetailPanel = new SampleDetailPanel("Sample Details",
                     accession, backLink, true /*show actionLink*/);
             sampleDetailPanel.setEntityListener(new EntityListener() {

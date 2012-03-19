@@ -258,7 +258,7 @@ public class SequenceReader extends Reader {
     private StringBuffer createEntityHeader() {
         StringBuffer returnBuffer = new StringBuffer();
         returnBuffer.append(">");
-        returnBuffer.append(_entity.getCameraAcc());
+        returnBuffer.append(_entity.getAccession());
         appendSettingToFastaHeader("description", _entity.getDescription(), returnBuffer);
         // Q: sample is causing slow-down of loading?
         // Q: should subclass for specific entity header?

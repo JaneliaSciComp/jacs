@@ -276,7 +276,7 @@ public class FeatureDAO extends ComputeBaseDAO {
         _logger.debug("findBseByAcc() called with accession=" + accesion);
         try {
             Criteria criteria = getSession().createCriteria(BaseSequenceEntity.class);
-            Criterion cr = Restrictions.eq("cameraAcc", accesion);
+            Criterion cr = Restrictions.eq("accession", accesion);
             criteria.add(cr);
             criteria.setFetchMode("assembly", FetchMode.JOIN);
 
@@ -291,7 +291,7 @@ public class FeatureDAO extends ComputeBaseDAO {
                     _logger.debug("null result - returning null");
                 }
                 else {
-                    _logger.debug("returning bse with accession=" + bse.getCameraAcc());
+                    _logger.debug("returning bse with accession=" + bse.getAccession());
                 }
                 return bses.get(0);
             }
@@ -304,7 +304,7 @@ public class FeatureDAO extends ComputeBaseDAO {
         }
     }
 
-    public List<BaseSequenceEntity> getSequenceEntitiesByCameraAccs(Collection<String> accCollection)
+    public List<BaseSequenceEntity> getSequenceEntitiesByAccessions(Collection<String> accCollection)
             throws DaoException {
         try {
             if (accCollection == null || accCollection.size() == 0) {
@@ -312,7 +312,7 @@ public class FeatureDAO extends ComputeBaseDAO {
                 // instead of returning everything
                 return new ArrayList<BaseSequenceEntity>();
             }
-            String hql = "select bse from BaseSequenceEntity bse where bse.cameraAcc in (:accessions)";
+            String hql = "select bse from BaseSequenceEntity bse where bse.accession in (:accessions)";
             _logger.debug("hql=" + hql);
             // Get the appropriate range of Node's hits, sorted by the specified field
             Query query = getSession().createQuery(hql);
@@ -322,7 +322,7 @@ public class FeatureDAO extends ComputeBaseDAO {
         catch (Exception e) {
             // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
             _logger.error(e);
-            throw handleException(e, this.getClass().getName() + " - getSequenceEntitiesByCameraAccs");
+            throw handleException(e, this.getClass().getName() + " - getSequenceEntitiesByAccessions");
         }
     }
 
@@ -481,7 +481,7 @@ public class FeatureDAO extends ComputeBaseDAO {
 //        ArrayList<String> testList=new ArrayList<String>();
 //        testList.add("13423160|");
 //        testList.add("24054684|");
-//        testList.add("CAMERA");
+//        testList.add("PROJECT");
 //        testList.add("GB|BAC57907.1|28569866|AB090816");
 //        testList.add("LipoproteinMotif");
 //        testList.add("OMNI|PIN_A1174");
@@ -831,7 +831,7 @@ public class FeatureDAO extends ComputeBaseDAO {
                 "from Read r " +
                 "where r.library.sampleAcc = :sampleAcc ");
         if (readAccessions != null && readAccessions.size() > 0) {
-            hqlBuffer.append("and r.cameraAcc in (:readAccessions) ");
+            hqlBuffer.append("and r.accession in (:readAccessions) ");
         }
         hqlBuffer.append(orderByClause);
         Query query = getSession().createQuery(hqlBuffer.toString());

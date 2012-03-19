@@ -151,7 +151,7 @@ public class ExportDAO extends ComputeBaseDAO {
                 BlastHit hit = (BlastHit) arr[0];
                 BaseSequenceEntity bse = hit.getSubjectEntity();
                 if (bse instanceof Protein) {
-                    proteinAccList.add(bse.getCameraAcc());
+                    proteinAccList.add(bse.getAccession());
                 }
             }
         }
@@ -198,17 +198,17 @@ public class ExportDAO extends ComputeBaseDAO {
             _logger.debug("getProteins: accList size=" + accList.size() + " of which " + uniqueCheck.size() + " are unqiue");
 //            StringBuffer hqlBuffer = new StringBuffer("select p " +
 //                    "from Protein p " +
-//                    "where p.cameraAcc in (:accList) ");
+//                    "where p.accession in (:accList) ");
             StringBuffer hqlBuffer = new StringBuffer("select p " +
                     "from Peptide p " + // covers both Peptides and Proteins
-                    "where p.cameraAcc in (:accList) ");
+                    "where p.accession in (:accList) ");
             Query query = getSession().createQuery(hqlBuffer.toString());
             query.setParameterList("accList", accList);
             List<Peptide> pList = query.list();
             _logger.debug("getProteins: list returned size=" + pList.size());
             Map<String, Peptide> pMap = new HashMap<String, Peptide>();
             for (Peptide p : pList) {
-                pMap.put(p.getCameraAcc().trim(), p);
+                pMap.put(p.getAccession().trim(), p);
             }
             List<Peptide> deliveryList = new ArrayList<Peptide>();
             List<String> nullList = new ArrayList<String>();
@@ -271,14 +271,14 @@ public class ExportDAO extends ComputeBaseDAO {
             _logger.debug("getBses: accList size=" + accList.size() + " of which " + uniqueCheck.size() + " are unqiue");
             StringBuffer hqlBuffer = new StringBuffer("select b " +
                     "from BaseSequenceEntity b " +
-                    "where b.cameraAcc in (:accList) ");
+                    "where b.accession in (:accList) ");
             Query query = getSession().createQuery(hqlBuffer.toString());
             query.setParameterList("accList", accList);
             List<BaseSequenceEntity> bList = query.list();
             _logger.debug("getBses: list returned size=" + bList.size());
             Map<String, BaseSequenceEntity> bMap = new HashMap<String, BaseSequenceEntity>();
             for (BaseSequenceEntity b : bList) {
-                bMap.put(b.getCameraAcc().trim(), b);
+                bMap.put(b.getAccession().trim(), b);
             }
             List<BaseSequenceEntity> deliveryList = new ArrayList<BaseSequenceEntity>();
             List<String> nullList = new ArrayList<String>();

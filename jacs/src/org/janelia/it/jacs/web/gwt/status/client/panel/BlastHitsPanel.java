@@ -10,7 +10,6 @@ import org.janelia.it.jacs.model.common.SortArgument;
 import org.janelia.it.jacs.model.tasks.export.BlastResultExportTask;
 import org.janelia.it.jacs.shared.export.ExportWriterConstants;
 import org.janelia.it.jacs.shared.tasks.BlastJobInfo;
-import org.janelia.it.jacs.web.gwt.common.client.SystemWebTracker;
 import org.janelia.it.jacs.web.gwt.common.client.jobs.AsyncExportTaskController;
 import org.janelia.it.jacs.web.gwt.common.client.model.genomics.BaseSequenceEntity;
 import org.janelia.it.jacs.web.gwt.common.client.model.genomics.BlastHit;
@@ -199,7 +198,7 @@ public class BlastHitsPanel extends TitledBox {
         _seqWithoutSampleTable.addColumn(new TextColumn(SEQTABLE_SEQUENCEID_HEADING, false, false));  //hidden
         _seqWithoutSampleTable.addColumn(new NumericColumn("Score", SEQTABLE_BITSCORE_HEADING));
         _seqWithoutSampleTable.addColumn(new NumericColumn("Len.", SEQTABLE_ALIGNMENTLENGTH_HEADING));
-        _seqWithoutSampleTable.addColumn(new TextColumn(SEQTABLE_QUERY_HEADING)); // cameraAcc
+        _seqWithoutSampleTable.addColumn(new TextColumn(SEQTABLE_QUERY_HEADING)); // accession
         _seqWithoutSampleTable.addColumn(new TextColumn(SEQTABLE_SUBJECTID_HEADING));
         _seqWithoutSampleTable.addColumn(new TextColumn(SEQTABLE_SUBJECTDESC_HEADING));
         _seqWithoutSampleTable.setHighlightSelect(true);
@@ -324,10 +323,11 @@ public class BlastHitsPanel extends TitledBox {
                 row.setValue(col++, getQueryDeflineTableCell(hit.getQueryEntity()));
 
                 if (hit.getSubjectEntity() != null) {
-                    row.setValue(col++, new TableCell(getEntityAcc(hit), getBseEntityLink(_seqWithoutSampleTable, hit)));
+                    row.setValue(col++, new TableCell(getEntityAcc(hit)));
+//                    row.setValue(col++, new TableCell(getEntityAcc(hit), getBseEntityLink(_seqWithoutSampleTable, hit)));
                 }
                 else {
-                    row.setValue(col++, new TableCell("unknown")); // CameraAcc
+                    row.setValue(col++, new TableCell("unknown")); // accession
                 }
 
                 row.setValue(col, getSubjectDeflineTableCell(hit.getSubjectEntity(), SUBJECT_DEFLINE_VISIBLE_SIZE));
@@ -448,6 +448,7 @@ public class BlastHitsPanel extends TitledBox {
         }
         _logger.debug("Total list size: " + data.size());
         Iterator iter = data.iterator();
+
         while (iter.hasNext()) {
             TableRow tableRow = (TableRow) iter.next();
             if (((CheckBox) tableRow.getTableCell(CHECKBOX_COL).getWidget()).getValue()) {
@@ -501,7 +502,7 @@ public class BlastHitsPanel extends TitledBox {
             public void exportResults(List selectedIDsList) {
                 _logger.debug("Export query sequences for " +
                         (selectedIDsList == null ? "all results" : selectedIDsList.toString()));
-                SystemWebTracker.trackActivity("Status.ExportJob.Query.FASTA", new String[]{_job.getJobId()});
+//                SystemWebTracker.trackActivity("Status.ExportJob.Query.FASTA", new String[]{_job.getJobId()});
                 SortableColumn[] sortArgs = pagingPanel.getSortableTable().getSortColumns();
                 ArrayList<SortArgument> sortList = new ArrayList<SortArgument>();
                 if (null != sortArgs && sortArgs.length > 0) {
@@ -532,7 +533,7 @@ public class BlastHitsPanel extends TitledBox {
             public void exportResults(List selectedIDsList) {
                 _logger.debug("Export subject sequences for " +
                         (selectedIDsList == null ? "all results" : selectedIDsList.toString()));
-                SystemWebTracker.trackActivity("Status.ExportJob.Subject.FASTA", new String[]{_job.getJobId()});
+//                SystemWebTracker.trackActivity("Status.ExportJob.Subject.FASTA", new String[]{_job.getJobId()});
                 SortableColumn[] sortArgs = pagingPanel.getSortableTable().getSortColumns();
                 ArrayList<SortArgument> sortList = new ArrayList<SortArgument>();
                 if (null != sortArgs && sortArgs.length > 0) {
@@ -563,7 +564,7 @@ public class BlastHitsPanel extends TitledBox {
             public void exportResults(List selectedIDsList) {
                 _logger.debug("Export results as CSV for " +
                         (selectedIDsList == null ? "all results" : selectedIDsList.toString()));
-                SystemWebTracker.trackActivity("Status.ExportJob.CSV", new String[]{_job.getJobId()});
+//                SystemWebTracker.trackActivity("Status.ExportJob.CSV", new String[]{_job.getJobId()});
                 ArrayList<SortArgument> sortList = new ArrayList<SortArgument>();
                 BlastResultExportTask blastResultExportTask = new BlastResultExportTask(
                         _job.getJobId(), BlastResultExportTask.SEQUENCES_SELECTED,
@@ -589,7 +590,7 @@ public class BlastHitsPanel extends TitledBox {
             public void exportResults(List selectedIDsList) {
                 _logger.debug("Export results as XML for " +
                         (selectedIDsList == null ? "all results" : selectedIDsList.toString()));
-                SystemWebTracker.trackActivity("Status.ExportJob.XML", new String[]{_job.getJobId()});
+//                SystemWebTracker.trackActivity("Status.ExportJob.XML", new String[]{_job.getJobId()});
                 ArrayList<SortArgument> sortList = new ArrayList<SortArgument>();
                 BlastResultExportTask blastResultExportTask = new BlastResultExportTask(
                         _job.getJobId(), BlastResultExportTask.SEQUENCES_SELECTED,
@@ -654,10 +655,10 @@ public class BlastHitsPanel extends TitledBox {
     }
 
     private String getEntityAcc(BlastHit hit) {
-        String cameraAcc = "";
-        if (hit.getSubjectEntity() != null && hit.getSubjectEntity().getCameraAcc() != null)
-            cameraAcc = String.valueOf(hit.getSubjectEntity().getCameraAcc());
-        return cameraAcc;
+        String accession = "";
+        if (hit.getSubjectEntity() != null && hit.getSubjectEntity().getAccession() != null)
+            accession = String.valueOf(hit.getSubjectEntity().getAccession());
+        return accession;
     }
 
     public class FirstPageRetrievedListener implements DataRetrievedListener {
@@ -709,7 +710,8 @@ public class BlastHitsPanel extends TitledBox {
         row.setValue(col++, new TableCell(hit.getBitScoreFormatted()));
         row.setValue(col++, new TableCell(hit.getLengthAlignment()));
         row.setValue(col++, getQueryDeflineTableCell(hit.getQueryEntity()));
-        row.setValue(col++, new TableCell(hit.getSubjectEntity().getCameraAcc(), getBseEntityLink(seqWithSampleTable, hit)));
+        row.setValue(col++, new TableCell(getEntityAcc(hit)));
+        //row.setValue(col++, new TableCell(hit.getSubjectEntity().getAccession(), getBseEntityLink(seqWithSampleTable, hit)));
 
         // Sample and site info
         if (hit instanceof BlastHitWithSample) {
@@ -789,7 +791,7 @@ public class BlastHitsPanel extends TitledBox {
     /**
      * We need to put an intelligent summary of the defline in the narrow Query column.  We'll use the entity
      * description, rather than the full defline, because the full defline has been prepended with the internal
-     * camera accession, while description is the original string the user entered.  If the entire defline is < 25 chars,
+     * accession, while description is the original string the user entered.  If the entire defline is < 25 chars,
      * we'll display the whole thing.   Often the defline begins with an identifier; if it does, we'll put the full
      * identifier (up to 25 chars) in the column, with a popperUpper with the full defline. Otherwise, we'll just show
      * the first 22 chars (somewhat arbitrarily) with a PopperUpper showing the whole defline.
@@ -837,7 +839,7 @@ public class BlastHitsPanel extends TitledBox {
         if (entityAcc == null || entityAcc.length() == 0)
             return HtmlUtils.getHtml("unknown", "error");
 
-        Widget widget = new Link(hit.getSubjectEntity().getCameraAcc(), new ClickListener() {
+        Widget widget = new Link(hit.getSubjectEntity().getAccession(), new ClickListener() {
             public void onClick(Widget widget) {
                 if (table != null)
                     table.clearHover(); // Have to remove the highlight style since the table will never get a mouse out event

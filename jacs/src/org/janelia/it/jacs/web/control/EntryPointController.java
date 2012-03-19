@@ -102,6 +102,10 @@ public class EntryPointController extends MultiActionController {
         return checkedEntryPoint(request, response, "NeuronalAssayAnalysis");
     }
 
+    public ModelAndView tic(HttpServletRequest request, HttpServletResponse response) {
+        return checkedEntryPoint(request, response, "TIC");
+    }
+
     public ModelAndView zlaticLab(HttpServletRequest request, HttpServletResponse response) {
         return checkedEntryPoint(request, response, "ZlaticLab");
     }

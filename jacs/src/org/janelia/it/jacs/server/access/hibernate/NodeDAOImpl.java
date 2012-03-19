@@ -324,7 +324,7 @@ public class NodeDAOImpl extends DaoBaseImpl implements NodeDAO {
                             "from \n" +
                             "   camera.node n\n" +
                             "   inner join camera.blast_hit bh on bh.result_node_id=n.node_id\n" +
-                            "   inner join camera.sequence_entity subj on subj.camera_acc=bh.subject_acc\n" +
+                            "   inner join camera.sequence_entity subj on subj.accession=bh.subject_acc\n" +
                             "   inner join camera.sample_site ss on ss.sample_acc=subj.sample_acc\n" +
                             "where n.task_id=" + taskId.toString() + "\n" +
                             "group by ss.material_acc, ss.longitude, ss.latitude, ss.location";

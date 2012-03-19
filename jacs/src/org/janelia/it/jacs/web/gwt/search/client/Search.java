@@ -69,7 +69,7 @@ public class Search extends WizardController {
             _searchResultsData.setEntityDetailAcc(value);
         }
         else {
-            _logger.error("Got unknown param " + name + "=" + value + " from URL");
+            _logger.error("Search: Got unknown param " + name + "=" + value + " from URL");
         }
     }
 

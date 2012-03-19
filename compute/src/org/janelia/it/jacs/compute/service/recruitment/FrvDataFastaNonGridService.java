@@ -97,7 +97,7 @@ public class FrvDataFastaNonGridService implements IService {
                 tmpAccChunk.add((String) it.next());
                 if (!it.hasNext() || tmpAccChunk.size() % DATABASE_QUERY_CHUNK_SIZE == 0) {
                     // Processing...
-                    List<Object[]> data = computeDAO.getReadsByCameraAccs(tmpAccChunk);
+                    List<Object[]> data = computeDAO.getReadsByAccessions(tmpAccChunk);
                     // Check that the db returned fasta material for all accessions
                     if (tmpAccChunk.size() != data.size()) {
                         //                    logger.error("Verifying disconnect between selected reads and db read information.");

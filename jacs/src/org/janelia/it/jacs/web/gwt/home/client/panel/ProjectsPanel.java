@@ -24,16 +24,24 @@ public class ProjectsPanel extends TitledBox {
             }
         });
 
-        // Add Zlatic Lab link
-        Link zlaticLabLink = new Link("Zlatic Lab", new ClickListener() {
+        // Add TIC Link
+        Link ticLink = new Link("Transcription Imaging Consortium", new ClickListener() {
             public void onClick(Widget sender) {
-                Window.open(UrlBuilder.getZlaticLabUrl(), "_self", "");
+                Window.open(UrlBuilder.getTICUrl(), "_self", "");
             }
         });
 
+//        // Add Zlatic Lab link
+//        Link zlaticLabLink = new Link("Zlatic Lab", new ClickListener() {
+//            public void onClick(Widget sender) {
+//                Window.open(UrlBuilder.getZlaticLabUrl(), "_self", "");
+//            }
+//        });
+
         // Add all the links to the titlebox.
         add(geciLink);
-        add(zlaticLabLink);
+        add(ticLink);
+//        add(zlaticLabLink);
     }
 
 }

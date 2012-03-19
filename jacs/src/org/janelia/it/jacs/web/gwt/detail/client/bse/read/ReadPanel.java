@@ -49,7 +49,7 @@ public class ReadPanel extends BSEntityPanel {
     public void displayData() {
         try {
             logger.debug("ReadPanel displayData...");
-            RowIndex rowIndex = getBaseEntityTableBuilder().populateCAMERAAccNo(getAcc(), getDetailTypeLabel(), null);
+            RowIndex rowIndex = getBaseEntityTableBuilder().populateAccessionNo(getAcc(), getDetailTypeLabel(), null);
             getBaseEntityTableBuilder().populateEntityDetails(rowIndex);
         }
         catch (RuntimeException e) {

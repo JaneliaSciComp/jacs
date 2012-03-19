@@ -25,7 +25,7 @@ drop table tmp_pointer_for_internal_sequence_entity_with_sample;
 
 create table tmp_internal_sequence_entity_with_sample (
 entity_id            bigint not null,
-camera_acc           character varying(255),
+accession           character varying(255),
 defline              text,
 owner_id             bigint,
 sequence_id          bigint,
@@ -124,16 +124,16 @@ if nrows % pagesize = 0 then
 raise notice '% EntityId, Acc: %,% ',
 nrows,
 seq_ent.entity_id,
-seq_ent.camera_acc;
+seq_ent.accession;
 end if;
 nrows := nrows + 1;
 exit l1 when $1 > 0 and nrows > $1;
 if not seq_ent.sample_acc is null then
 select fullDefLine into seq_ent.defline
-from fullDefLine(seq_ent.camera_acc);
+from fullDefLine(seq_ent.accession);
 insert into camera.tmp_internal_sequence_entity_with_sample (
 entity_id,
-camera_acc,
+accession,
 defline,
 owner_id,
 sequence_id,
@@ -169,7 +169,7 @@ source_id,
 obs_flag
 ) values (
 seq_ent.entity_id,
-seq_ent.camera_acc,
+seq_ent.accession,
 seq_ent.defline,
 seq_ent.owner_id,
 seq_ent.sequence_id,
@@ -206,7 +206,7 @@ seq_ent.obs_flag
 );
 end if;
 status_row.last_entity_id := seq_ent.entity_id;
-status_row.last_sequence_acc := seq_ent.camera_acc;
+status_row.last_sequence_acc := seq_ent.accession;
 status_row.curr_offset := status_row.curr_offset + 1;
 end;
 end loop;
@@ -282,7 +282,7 @@ se.entity_type_code as entityType,
 assembly_acc,
 se.defline as defline
 from sequence_entity se
-where se.camera_acc = $1
+where se.accession = $1
 LOOP
 IF fdefline is NULL THEN
 fdefline := originalDefline.defline;
@@ -307,7 +307,7 @@ select * into sampleEntry
 from bio_sample sample
 where sample.sample_acc = (select entity.sample_acc
 from sequence_entity entity
-where entity.camera_acc = $1);
+where entity.accession = $1);
 if sampleEntry.sample_acc is not null then
 fdefline := fdefline || ' ' ||
 '/sample_id=' ||

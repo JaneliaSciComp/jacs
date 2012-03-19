@@ -39,10 +39,10 @@
             <key-property name="readAcc" type="java.lang.String" column="read_acc"/>
         </composite-id>
         <many-to-one name="scaffold" class="Scaffold" cascade="save-update"
-                     column="scaffold_acc" property-ref="cameraAcc" not-found="ignore"
+                     column="scaffold_acc" property-ref="accession" not-found="ignore"
                      insert="false" update="false"/>
         <many-to-one name="read" class="Read" cascade="save-update"
-                     column="read_acc" property-ref="cameraAcc" not-found="ignore"
+                     column="read_acc" property-ref="accession" not-found="ignore"
                      insert="false" update="false"/>
         <property name="scaffoldBegin" type="java.lang.Integer" column="scaf_begin"/>
         <property name="scaffoldEnd" type="java.lang.Integer" column="scaf_end"/>

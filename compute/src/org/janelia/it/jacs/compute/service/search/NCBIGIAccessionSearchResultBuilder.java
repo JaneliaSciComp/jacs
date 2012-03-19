@@ -32,7 +32,7 @@ class NCBIGIAccessionSearchResultBuilder extends AccessionSearchResultBuilder {
     protected SQLQuery createSearchQuery(Object[] accessionQueryParams, Session session) {
         Integer searchedAcc = (Integer) accessionQueryParams[0];
         String sql = "select " +
-                "camera_acc as accession," +
+                "accession as accession," +
                 "et.name," +
                 "cast(ncbi_gi_number as varchar) as docAccessionName " +
                 "from " +

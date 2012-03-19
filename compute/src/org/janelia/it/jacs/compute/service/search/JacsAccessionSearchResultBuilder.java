@@ -24,7 +24,7 @@ class JacsAccessionSearchResultBuilder extends AccessionSearchResultBuilder {
             throws Exception {
         List<AccessionSearchResult> results = null;
         AccessionSearchResultBuilder accSearchBuilder =
-                createCAMERAAccessionSearchResultBuilder(acc);
+                createAccessionSearchResultBuilder(acc);
         if (accSearchBuilder != null) {
             results = accSearchBuilder.retrieveAccessionSearchResult(acc,
                     searchResultNodeId,
@@ -37,16 +37,16 @@ class JacsAccessionSearchResultBuilder extends AccessionSearchResultBuilder {
         throw new UnsupportedOperationException();
     }
 
-    private AccessionSearchResultBuilder createCAMERAAccessionSearchResultBuilder(String acc) {
+    private AccessionSearchResultBuilder createAccessionSearchResultBuilder(String acc) {
         // we use the upper case in order to determine the type of accession
         int accType = AccessionIdentifierUtil.getAccType(acc.toUpperCase());
         AccessionSearchResultBuilder accSearchResultBuilder = null;
         switch (accType) {
-            case AccessionIdentifierUtil.CAMERA_READ_ACC:
-            case AccessionIdentifierUtil.CAMERA_ORF_ACC:
-            case AccessionIdentifierUtil.CAMERA_PROTEIN_ACC:
-            case AccessionIdentifierUtil.CAMERA_NCRNA_ACC:
-            case AccessionIdentifierUtil.CAMERA_SCAFFOLD_ACC:
+            case AccessionIdentifierUtil.READ_ACC:
+            case AccessionIdentifierUtil.ORF_ACC:
+            case AccessionIdentifierUtil.PROTEIN_ACC:
+            case AccessionIdentifierUtil.NCRNA_ACC:
+            case AccessionIdentifierUtil.SCAFFOLD_ACC:
             case AccessionIdentifierUtil.NCBI_GENF_ACC:
             case AccessionIdentifierUtil.NCBI_CNTG_ACC:
             case AccessionIdentifierUtil.NCBI_NT_ACC:
@@ -55,19 +55,19 @@ class JacsAccessionSearchResultBuilder extends AccessionSearchResultBuilder {
                 // potential sequence entity accession
                 accSearchResultBuilder = new SequenceAccessionSearchResultBuilder();
                 break;
-            case AccessionIdentifierUtil.CAMERA_PROTEIN_CLUSTER_ACC:
+            case AccessionIdentifierUtil.PROTEIN_CLUSTER_ACC:
                 // potential protein cluster accession
                 accSearchResultBuilder = new ClusterAccessionSearchResultBuilder();
                 break;
-            case AccessionIdentifierUtil.CAMERA_BIOSAMPLE_ACC:
+            case AccessionIdentifierUtil.BIOSAMPLE_ACC:
                 // potential sample accession
                 accSearchResultBuilder = new SampleAccessionSearchResultBuilder();
                 break;
-            case AccessionIdentifierUtil.CAMERA_PROJECT_ACC:
+            case AccessionIdentifierUtil.PROJECT_ACC:
                 // potential project accession
                 accSearchResultBuilder = new ProjectAccessionSearchResultBuilder();
                 break;
-            case AccessionIdentifierUtil.CAMERA_PUBLICATION_ACC:
+            case AccessionIdentifierUtil.PUBLICATION_ACC:
                 // potential publication accession
                 accSearchResultBuilder = new PublicationAccessionSearchResultBuilder();
                 break;

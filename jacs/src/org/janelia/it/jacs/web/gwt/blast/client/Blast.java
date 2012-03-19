@@ -43,7 +43,7 @@ public class Blast extends WizardController {
             _blastData.setTaskIdFromParam(value);
         }
         else
-            _logger.error("Got unknown param " + name + "=" + value + " from URL");
+            _logger.error("Blast: Got unknown param " + name + "=" + value + " from URL");
     }
 
     public Breadcrumb getBreadcrumbSection() {

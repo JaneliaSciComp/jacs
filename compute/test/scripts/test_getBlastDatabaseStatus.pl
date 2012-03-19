@@ -64,7 +64,7 @@ This web service presents the following output upon successful formating of the 
 
 Status Type: completed
 Status Description: Process 1436484265041725611 completed successfully
-Blast Database Name: ji_ws_test_dbBlast Database Id: 1436484266337765547Blast Database Location: /usr/local/projects/CAMERA/runtime-shared/filestore/jinman/BlastDatabases/1436484266337765547
+Blast Database Name: ji_ws_test_dbBlast Database Id: 1436484266337765547Blast Database Location: Xruntime-shared/filestore/jinman/BlastDatabases/1436484266337765547
 
 Some other similar message should appear if the db is still being formatted.
 

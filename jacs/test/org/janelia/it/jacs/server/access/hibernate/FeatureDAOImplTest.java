@@ -47,7 +47,7 @@ public class FeatureDAOImplTest extends JacswebTestCase {
         try {
             bse = featureDAO.findBseByUid(1495672648L);
             assertNotNull(bse);
-            assertEquals(bse.getCameraAcc(), "JCVI_PEP_1096142014829");
+            assertEquals(bse.getAccession(), "JCVI_PEP_1096142014829");
             //assertEquals(bse.getExternalAcc(), "CF647727"); no longer valid
         } catch (Exception ex) {
 
@@ -57,7 +57,7 @@ public class FeatureDAOImplTest extends JacswebTestCase {
         }
     }
 
-    public void testGetSequenceEntitiesByCameraAccs() {
+    public void testGetSequenceEntitiesByAccessions() {
         try {
             List<String> accs= Arrays.asList(
                     "JCVI_PEP_1096462996691",
@@ -66,7 +66,7 @@ public class FeatureDAOImplTest extends JacswebTestCase {
                     "JCVI_PEP_1096470595377",
                     "JCVI_PEP_1096491437105"
             );
-            List<BaseSequenceEntity> bses = featureDAO.getSequenceEntitiesByCameraAccs(accs);
+            List<BaseSequenceEntity> bses = featureDAO.getSequenceEntitiesByAccessions(accs);
             Session session = featureDAO.getSessionFactory().getCurrentSession();
             // close session to test for lazy objects
             session.close();
@@ -74,7 +74,7 @@ public class FeatureDAOImplTest extends JacswebTestCase {
             assertNotNull(bses);
             assertEquals(bses.size(),accs.size());
             for(BaseSequenceEntity bse : bses) {
-                assertTrue(accs.contains(bse.getCameraAcc()));
+                assertTrue(accs.contains(bse.getAccession()));
                 assertTrue(bse.getSequence() == null);
             }
         } catch (Exception ex) {
@@ -90,7 +90,7 @@ public class FeatureDAOImplTest extends JacswebTestCase {
         try {
             read = featureDAO.getReadByBseEntityId(15860450L);
             assertNotNull(read);
-            assertEquals(read.getCameraAcc(), "JCVI_READ_1092963132211");
+            assertEquals(read.getAccession(), "JCVI_READ_1092963132211");
             assertEquals(read.getClearRangeBegin(), new Integer(294));
             assertEquals(read.getClearRangeEnd(), new Integer(513));
             assertEquals(read.getBioSequence().getSequence(), "GACGTTGCGTATGATGTCTTGATTGGATGTATGAAACCCACAATTACGATTTCAGGAATTCAAAACATCCAAATATTTAGTTGACTATATTCAAAAAAATTCAAAATCTGTAAATTATCCCTCTCATGGTCTTGAATAGCTTTTGATATTACATTTGGTGAAGAGGGCCCTCTTACAGTTATATGTGTTGAATATGATGCCTTGCCTGAAATTGGCCATGCATGTGGACATAACATTATTGCAACAGCGTCTATCCGTGCACGATTAGGTTTAAAGGACATAGCTTCCAAATTACGGATTATAGTAAAGCTCCTACGAACTCCTGCTGAAGAAGGTGGGGGTGGAAAAATTATTCTTATTAATGAACGAGCATTTGACGACCCTTCATGTTCAATGATGATTCATCCTGGGTATGAAGATGTGGTGAATCCTACATTTACCACTATTGAACAATATACAGTGGAGTATTTTGGTAAAGACGCACATGCTGCAGGTGCGCCTGATCAAGGCATCAATGCCCTAGATGCACAAATACAACTGTTCGTTAATGCATCTACCTATCGACAGCAAATGGTACAAAGCAACAGAATGCACGGTGTGATAAGAGATGGGGGTTTTAAACCAAATATAATTCCATCATATACAAAATCACAATGGTATTTAAGATCACTAAATGAATAACGATTAAACCAGTTGGAGCAAGACTTTTATAATTTTGTCAATGCTGCTGCATTATCAACAAAGTGTGAAGTAAAAATTACATCACCTGATTACAGATATGAAGAAATCAATAACAATGAAACAATGTATAAGCTCTTCATGGAAAATGCACAAGACGTCGTAGAGAAATGATATTACAAACAGATGCCACGAGACCAGGTTTGGGCTCTACTGATATGGGAAATGTATCCCAAATCTTTCCATCAGTACACCCAATGCTTGGCCATTGCAGAAAAAGAAGCTGTTAATCATCAACCTGAATATGCTGCAGCTACATTAACTGACGTGGTCATAAAGCCATATGATGATGGTGCATATGCAATGGGGTGCTTCCATCATTGTTTTAGCTGAAAAAAATCCTCTGGG");
@@ -107,7 +107,7 @@ public class FeatureDAOImplTest extends JacswebTestCase {
         try {
             read = featureDAO.getReadWithLibraryByAccesion("JCVI_READ_1092963132211");
             assertNotNull(read);
-            assertEquals(read.getCameraAcc(), "JCVI_READ_1092963132211");
+            assertEquals(read.getAccession(), "JCVI_READ_1092963132211");
             assertEquals(read.getClearRangeBegin(), new Integer(294));
             assertEquals(read.getClearRangeEnd(), new Integer(513));
             assertEquals(read.getBioSequence().getSequence(), "GACGTTGCGTATGATGTCTTGATTGGATGTATGAAACCCACAATTACGATTTCAGGAATTCAAAACATCCAAATATTTAGTTGACTATATTCAAAAAAATTCAAAATCTGTAAATTATCCCTCTCATGGTCTTGAATAGCTTTTGATATTACATTTGGTGAAGAGGGCCCTCTTACAGTTATATGTGTTGAATATGATGCCTTGCCTGAAATTGGCCATGCATGTGGACATAACATTATTGCAACAGCGTCTATCCGTGCACGATTAGGTTTAAAGGACATAGCTTCCAAATTACGGATTATAGTAAAGCTCCTACGAACTCCTGCTGAAGAAGGTGGGGGTGGAAAAATTATTCTTATTAATGAACGAGCATTTGACGACCCTTCATGTTCAATGATGATTCATCCTGGGTATGAAGATGTGGTGAATCCTACATTTACCACTATTGAACAATATACAGTGGAGTATTTTGGTAAAGACGCACATGCTGCAGGTGCGCCTGATCAAGGCATCAATGCCCTAGATGCACAAATACAACTGTTCGTTAATGCATCTACCTATCGACAGCAAATGGTACAAAGCAACAGAATGCACGGTGTGATAAGAGATGGGGGTTTTAAACCAAATATAATTCCATCATATACAAAATCACAATGGTATTTAAGATCACTAAATGAATAACGATTAAACCAGTTGGAGCAAGACTTTTATAATTTTGTCAATGCTGCTGCATTATCAACAAAGTGTGAAGTAAAAATTACATCACCTGATTACAGATATGAAGAAATCAATAACAATGAAACAATGTATAAGCTCTTCATGGAAAATGCACAAGACGTCGTAGAGAAATGATATTACAAACAGATGCCACGAGACCAGGTTTGGGCTCTACTGATATGGGAAATGTATCCCAAATCTTTCCATCAGTACACCCAATGCTTGGCCATTGCAGAAAAAGAAGCTGTTAATCATCAACCTGAATATGCTGCAGCTACATTAACTGACGTGGTCATAAAGCCATATGATGATGGTGCATATGCAATGGGGTGCTTCCATCATTGTTTTAGCTGAAAAAAATCCTCTGGG");
@@ -126,7 +126,7 @@ public class FeatureDAOImplTest extends JacswebTestCase {
             final String readAcc = "JCVI_READ_299";
             Read currentRead = featureDAO.getReadByAccesion(readAcc);
             assertNotNull(currentRead);
-            assertEquals(currentRead.getCameraAcc(), readAcc);
+            assertEquals(currentRead.getAccession(), readAcc);
             matedReadsByAcc = featureDAO.getPairedReadsByAccession(readAcc);
             matedReadsById = featureDAO.getPairedReadsByEntityId(currentRead.getEntityId());
             if(matedReadsByAcc != null && matedReadsByAcc.size() > 0) {
@@ -134,7 +134,7 @@ public class FeatureDAOImplTest extends JacswebTestCase {
                 for(Read matedRead : matedReadsByAcc) {
                     assertEquals(matedRead.getTemplateAcc(),currentRead.getTemplateAcc());
                     assertEquals(matedRead.getLibraryAcc(),currentRead.getLibraryAcc());
-                    assertFalse(matedRead.getCameraAcc().equals(currentRead.getCameraAcc()));
+                    assertFalse(matedRead.getAccession().equals(currentRead.getAccession()));
                     assertTrue(matedReadsById.contains(matedRead));
                 }
                 for(Read matedRead : matedReadsById) {
@@ -371,7 +371,7 @@ public class FeatureDAOImplTest extends JacswebTestCase {
                     "JCVI_READ_834809"
             ));
             SortArgument[] testSortArgs = new SortArgument[] {
-                    new SortArgument("cameraAcc", SortArgument.SORT_ASC),
+                    new SortArgument("accession", SortArgument.SORT_ASC),
                     new SortArgument("sequenceLength", SortArgument.SORT_DESC),
                     new SortArgument("clearRangeBegin", SortArgument.SORT_ASC),
                     new SortArgument("clearRangeEnd", SortArgument.SORT_ASC),
@@ -384,8 +384,8 @@ public class FeatureDAOImplTest extends JacswebTestCase {
                     testSortArgs);
             assertTrue(readList.size() == testReadAccs.size());
             for(Read r : readList) {
-                assertTrue(testReadAccs.contains(r.getCameraAcc()));
-                testReadAccs.remove(r.getCameraAcc());
+                assertTrue(testReadAccs.contains(r.getAccession()));
+                testReadAccs.remove(r.getAccession());
             }
             assertTrue("Following accessions were not found: " + testReadAccs,testReadAccs.size() == 0);
         } catch (Exception ex) {
@@ -712,7 +712,7 @@ public class FeatureDAOImplTest extends JacswebTestCase {
 
     private void validateRead(Read read, boolean validateLibrary) {
         // GenericService bse data
-        assertEquals("SCUMS_READ_Arctic2448841", read.getCameraAcc());
+        assertEquals("SCUMS_READ_Arctic2448841", read.getAccession());
         assertNull(read.getExternalAcc());
         //assertNull(read.getDescription());
 
