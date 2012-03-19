@@ -240,5 +240,20 @@
             <type>java.lang.String</type>
         </parameter>
     </operation>
-    
+
+    <operation>
+        <description>Run the Transcription Imaging Consortium Pipeline</description>
+        <name>runTICPipeline</name>
+        <parameter>
+            <description>User to run as (e.g. "system")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Root directory path for the image files</description>
+            <name>rootDirectoryPath</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+
 </mbean>
