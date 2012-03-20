@@ -85,11 +85,6 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>Root of the input directory tree containing slide_group_info.txt files (e.g. "/groups/flylight/flylight/flip/SecData/tiles")</description>
-           <name>inputDirList</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
            <description>Name of the folder entity where results will be placed (e.g. "FlyLight Single Neuron Data")</description>
            <name>topLevelFolderName</name>
            <type>java.lang.String</type>

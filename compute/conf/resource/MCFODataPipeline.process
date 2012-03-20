@@ -6,43 +6,40 @@
 	
 	    <!-- Import variables from the MCFODataPipelineTask -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
-            <input name="TASK_PARAMETER_1" value="list of input directories"/>
-            <input name="PROCESS_VARIABLE_1" value="INPUT_DIR_LIST"/>
-            <input name="TASK_PARAMETER_2" value="top level folder name"/>
-            <input name="PROCESS_VARIABLE_2" value="ROOT_ENTITY_NAME"/>
-            <input name="TASK_PARAMETER_3" value="refresh processing"/>
-            <input name="PROCESS_VARIABLE_3" value="REFRESH_PROCESSING"/>
-            <input name="TASK_PARAMETER_4" value="refresh alignment"/>
-            <input name="PROCESS_VARIABLE_4" value="REFRESH_ALIGNMENT"/>
-            <input name="TASK_PARAMETER_5" value="refresh separation"/>
-            <input name="PROCESS_VARIABLE_5" value="REFRESH_SEPARATION"/>
-	        <output name="INPUT_DIR_LIST"/>
+            <input name="TASK_PARAMETER_1" value="top level folder name"/>
+            <input name="PROCESS_VARIABLE_1" value="ROOT_ENTITY_NAME"/>
+            <input name="TASK_PARAMETER_2" value="refresh processing"/>
+            <input name="PROCESS_VARIABLE_2" value="REFRESH_PROCESSING"/>
+            <input name="TASK_PARAMETER_3" value="refresh alignment"/>
+            <input name="PROCESS_VARIABLE_3" value="REFRESH_ALIGNMENT"/>
+            <input name="TASK_PARAMETER_4" value="refresh separation"/>
+            <input name="PROCESS_VARIABLE_4" value="REFRESH_SEPARATION"/>
 	        <output name="ROOT_ENTITY_NAME"/>
 	        <output name="REFRESH_PROCESSING"/>
 	        <output name="REFRESH_ALIGNMENT"/>
 	        <output name="REFRESH_SEPARATION"/>
 	    </operation>
 	    
-	    <!-- Discover samples in the fileshare and load them into the database as Entities -->
-		<operation name="Initial File Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SampleDiscoveryService">
-			<input name="INPUT_DIR_LIST"/>
+	    <!-- Discover samples in Sage and load them into the database as Entities -->
+		<operation name="Initial Image Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SageImageDiscoveryService">
 			<input name="ROOT_ENTITY_NAME"/>
 			<input name="OUTVAR_ENTITY_ID" value="TOP_LEVEL_ENTITY_ID"/>
 		</operation>
 		
-	    <!-- Find all the Sample Entities in the database -->
+	    <!-- Find all the Sample Entities in the database 
 		<operation name="Entity Tree Traversal" processor="org.janelia.it.jacs.compute.service.entity.EntityTreeTraversalService">
 			<input name="ENTITY_TYPE_NAME" value="Sample"/>
 			<input name="TOP_LEVEL_ENTITY_ID"/>
 			<input name="ROOT_ENTITY_ID" value="$V{TOP_LEVEL_ENTITY_ID}"/>
 			<input name="OUTVAR_ENTITY_ID" value="SAMPLE_ENTITY_ID"/>
 		</operation>
+		-->
 		
 	    <!-- Process each Sample Entity -->
         <sequence forEach="SAMPLE_ENTITY_ID">
             <sequence>
 			
-				<!-- Spawn a new task to process the Sample -->
+				<!-- Spawn a new task to process the Sample 
 		        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
         			<input name="TASK_CLASS" value="org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOSamplePipelineTask"/>
         			<input name="WAIT_FOR_COMPLETION" value="false"/>
@@ -60,7 +57,7 @@
 		            <input name="REFRESH_PROCESSING"/>
 		            <input name="PARAMETER_4_VALUE" value="$V{REFRESH_SEPARATION}"/>
 		        </operation>
-				
+				-->
 			</sequence>
 	    </sequence>
 	    

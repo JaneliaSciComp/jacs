@@ -9,12 +9,18 @@ import org.janelia.it.jacs.compute.api.support.SolrUtils;
  */
 public class SimpleAnnotation extends KeyValuePair {
 
-	public SimpleAnnotation(String key, String value) {
+	private String owner;
+	
+	public SimpleAnnotation(String key, String value, String owner) {
 		super(key, value);
+		this.owner = owner;
 	}
 	
 	public String getTag() {
     	return SolrUtils.getAnnotationTag(getKey(), getValue());
 	}
 
+	public String getOwner() {
+		return owner;
+	}
 }

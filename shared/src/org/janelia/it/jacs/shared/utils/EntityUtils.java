@@ -92,6 +92,18 @@ public class EntityUtils {
 		}
 		return null;
     }
+
+    public static EntityData findChildEntityDataWithName(Entity entity, String childName) {
+		for (EntityData ed : entity.getEntityData()) {
+			Entity child = ed.getChildEntity();
+			if (child!=null) {
+				if (child.getName().equals(childName)) {
+					return ed;
+				}
+			}
+		}
+		return null;
+    }
     
     public static Entity getSupportingData(Entity entity) {
     	for(EntityData ed : entity.getEntityData()) {

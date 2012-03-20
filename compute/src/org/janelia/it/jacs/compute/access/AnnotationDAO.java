@@ -5,7 +5,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 
 import org.apache.log4j.Logger;
@@ -26,7 +28,13 @@ import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
 import org.janelia.it.jacs.model.user_data.User;
 
 public class AnnotationDAO extends ComputeBaseDAO {
-    
+
+	/** Most amount of nodes a tree can have before it's considered a "large" tree */
+	private static final Long MAX_SMALL_TREE_SIZE = 1000L;
+	
+	/** Batch fetch size for JDBC result sets */
+	protected final static int JDBC_FETCH_SIZE = 200;
+	
     private static final Map<String, EntityType> entityByName = Collections.synchronizedMap(new HashMap<String, EntityType>());
     private static final Map<String, EntityAttribute> attrByName = Collections.synchronizedMap(new HashMap<String, EntityAttribute>());
 	
@@ -204,9 +212,16 @@ public class AnnotationDAO extends ComputeBaseDAO {
      * @throws DaoException
      */
     public void deleteEntityTree(String owner, Entity entity) throws DaoException {
-    	//deleteEntityTree(owner, entity, true, false, 0);
         try {
-            deleteLargeEntityTree(owner, entity);
+	    	Long count = countDescendants(entity, MAX_SMALL_TREE_SIZE);
+	    	if (count <= MAX_SMALL_TREE_SIZE) {
+	    		_logger.info("Running small tree algorithm");
+	        	deleteSmallEntityTree(owner, entity, true, false, 0);
+	    	}
+	    	else {
+	    		_logger.info("Running large tree algorithm");
+	            deleteLargeEntityTree(owner, entity);
+	    	}
         } catch (Exception ex) {
             throw new DaoException(ex.getMessage(), ex);
         }
@@ -227,8 +242,9 @@ public class AnnotationDAO extends ComputeBaseDAO {
         Map<Long,Set<Long[]>> entityMap=new HashMap<Long, Set<Long[]>>();
         Map<Long,Set<Long>> parentMap=new HashMap<Long, Set<Long>>();
         Set<Long> commonRootSet =  new HashSet<Long>();
+        _logger.info("Building entity graph for user "+owner);
         getEntityTreeForUserByJdbc(user.getUserId(), entityMap, parentMap, commonRootSet);
-        if (debugDeletions) _logger.info("Built entity graph for user "+owner+". entityMap.size="+entityMap.size()+" parentMap.size="+parentMap.size());
+        _logger.info("Built entity graph for user "+owner+". entityMap.size="+entityMap.size()+" parentMap.size="+parentMap.size());
         
         // Next, get the sub-entity-graph we care about
         Set<Long> entitySetCandidatesToDelete=walkEntityMap(entity.getId(), entityMap, new HashSet<Long>());
@@ -346,7 +362,12 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
         finally {
             connection.commit();
-            connection.close();
+        	try {
+                if (connection!=null) connection.close();	
+        	}
+        	catch (SQLException e) {
+        		_logger.warn("Ignoring error encountered while closing JDBC connection",e);
+        	}
         }
     }
     
@@ -387,10 +408,11 @@ public class AnnotationDAO extends ComputeBaseDAO {
     }
 
     protected void getEntityTreeForUserByJdbc(Long userId, Map<Long, Set<Long[]>> entityMap, Map<Long, Set<Long>> parentMap, Set<Long> commonRootSet) throws Exception {
-    	Connection connection=null;
-    	java.sql.Statement statement=null;
+    	
+    	Connection conn = null;
+    	PreparedStatement stmt = null;
     	try {
-	        connection=getJdbcConnection();
+	        conn = getJdbcConnection();
 	        
 	        StringBuffer sql = new StringBuffer();
 	        sql.append("select e.id, ed.id, ce.id, ce.user_id, ea.name ");
@@ -402,9 +424,10 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
 	        if (debugDeletions) _logger.info("getEntityTreeForUserByJdbc userId="+userId);
 	        if (debugDeletions) _logger.info("getEntityTreeForUserByJdbc sql="+sql);
-	        statement=connection.createStatement();
+	        stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 	        
-			ResultSet rs = statement.executeQuery(sql.toString());
+	        stmt.setFetchSize(JDBC_FETCH_SIZE);
+			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {
 				Long entityId = rs.getBigDecimal(1).longValue();
 				BigDecimal entityDataBD = rs.getBigDecimal(2);
@@ -459,8 +482,13 @@ public class AnnotationDAO extends ComputeBaseDAO {
 			}
     	}
         finally {
-            statement.close();
-            connection.close();
+        	try {
+                if (stmt!=null) stmt.close();
+                if (conn!=null) conn.close();	
+        	}
+        	catch (SQLException e) {
+        		_logger.warn("Ignoring error encountered while closing JDBC connection",e);
+        	}
         }
     }
 
@@ -537,7 +565,6 @@ public class AnnotationDAO extends ComputeBaseDAO {
             }
         }
     }
-
     
     public void deleteSmallEntityTree(String owner, Entity entity, boolean ignoreRefs, boolean ignoreAncestorRefs, int level) throws DaoException {
 
@@ -968,15 +995,19 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
-    // todo This probably needs to be changed to account for the Entity Data first
     public boolean deleteEntityById(Long entityId) throws DaoException {
         try {
             Session session = getCurrentSession();
+            Set<EntityData> parentEds = getParentEntityDatas(entityId);
+            for(EntityData parentEd : parentEds) {
+                session.delete(parentEd);
+            	_logger.debug("The parent entity data with id=" + parentEd.getId() + " has been deleted.");
+            }
             Criteria c = session.createCriteria(Entity.class);
             c.add(Expression.eq("id", Long.valueOf(entityId)));
             Entity entity = (Entity) c.uniqueResult();
             session.delete(entity);
-            _logger.debug("The entity id=" + entityId + " has been deleted.");
+            _logger.debug("The entity with id=" + entityId + " has been deleted.");
             return true;
         }
         catch (Exception e) {
@@ -1629,6 +1660,27 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	return entity;
     }
 
+    public Long countDescendants(Entity entity, Long stopAfterReaching) {
+    	return countDescendants(entity, new HashSet<Long>(), stopAfterReaching);
+    }
+
+    private Long countDescendants(Entity entity, Set<Long> visited, Long stopAfterReaching) {
+    	long count = 1;
+    	if (entity == null) return null;
+    	if (visited.contains(entity.getId())) {
+    		return count;
+    	}
+    	visited.add(entity.getId());
+    	for(EntityData ed : entity.getEntityData()) {
+    		Entity child = ed.getChildEntity();
+    		if (child != null) {
+    			count += countDescendants(child, visited, stopAfterReaching);
+    			if (count > stopAfterReaching) return count;
+    		}
+    	}
+    	return count;
+    }
+    
     /**
      * Perform combination of queries to populate entity graph.
      * @param id

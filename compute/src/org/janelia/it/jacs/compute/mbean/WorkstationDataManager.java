@@ -109,11 +109,11 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
     
-    public void runMCFODataPipeline(String user, String inputDirList, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation) {
+    public void runMCFODataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation) {
         try {
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
-            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), 
-            		inputDirList, topLevelFolderName, refreshProcessing, refreshAlignment, refreshSeparation);
+            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), null,
+            		topLevelFolderName, refreshProcessing, refreshAlignment, refreshSeparation);
             task.setJobName("MultiColor FlipOut Data Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("MCFODataPipeline", task.getObjectId());

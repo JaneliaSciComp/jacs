@@ -455,31 +455,24 @@ Here is an example of CacheManager level resource tuning, which will use up to 4
     The defaultCache has an implicit name "default" which is a reserved cache name.
     -->
     <defaultCache
-            maxEntriesLocalHeap="10000"
-            eternal="false"
-            timeToIdleSeconds="120"
-            timeToLiveSeconds="120"
+            maxEntriesLocalHeap="1000"
+            eternal="true"
             overflowToDisk="true"
             diskSpoolBufferSizeMB="30"
-            maxEntriesLocalDisk="10000000"
-            diskPersistent="false"
-            diskExpiryThreadIntervalSeconds="120"
-            memoryStoreEvictionPolicy="LRU"
-            statistics="false"
             />
 
     <cache name="annotationMapCache"
-           maxEntriesLocalHeap="1000"
+           maxEntriesLocalHeap="100"
            eternal="true"
            overflowToDisk="true"
-           diskSpoolBufferSizeMB="30"
+           diskSpoolBufferSizeMB="40"
             />
 
     <cache name="ancestorMapCache"
-           maxEntriesLocalHeap="1000"
+           maxEntriesLocalHeap="100"
            eternal="true"
            overflowToDisk="true"
-           diskSpoolBufferSizeMB="100"
+           diskSpoolBufferSizeMB="40"
             />
             
 </ehcache>

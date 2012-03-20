@@ -9,11 +9,11 @@ import javax.ejb.TransactionAttributeType;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
-import org.janelia.it.jacs.compute.access.solr.SolrDAO;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 
@@ -596,5 +596,29 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
     }
 
-    
+    public void loadLazyEntity(Entity entity, boolean recurse) throws DaoException {
+		
+        if (!EntityUtils.areLoaded(entity.getEntityData())) {
+            Set<Entity> childEntitySet = _annotationDAO.getChildEntities(entity.getId());
+            Map<Long, Entity> childEntityMap = new HashMap<Long, Entity>();
+            for (Entity childEntity : childEntitySet) {
+                childEntityMap.put(childEntity.getId(), childEntity);
+            }
+
+            // Replace the entity data with real objects
+            for (EntityData ed : entity.getEntityData()) {
+                if (ed.getChildEntity() != null) {
+                    ed.setChildEntity(childEntityMap.get(ed.getChildEntity().getId()));
+                }
+            }
+        }
+
+        if (recurse) {
+            for (EntityData ed : entity.getEntityData()) {
+                if (ed.getChildEntity() != null) {
+                    loadLazyEntity(ed.getChildEntity(), true);
+                }
+            }
+        }
+    }
 }

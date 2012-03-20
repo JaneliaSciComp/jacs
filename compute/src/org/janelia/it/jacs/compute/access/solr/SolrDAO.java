@@ -34,7 +34,6 @@ import org.janelia.it.jacs.model.entity.*;
  */
 public class SolrDAO extends AnnotationDAO {
 
-	protected final static int SOLR_LOADER_FETCH_SIZE = 500;
     protected final static int SOLR_LOADER_BATCH_SIZE = 25000;
     protected final static int SOLR_LOADER_COMMIT_SIZE = 500000;
 	protected static final int SOLR_LOADER_QUEUE_SIZE = 100;
@@ -107,11 +106,12 @@ public class SolrDAO extends AnnotationDAO {
 	        conn = getJdbcConnection();
 	        
 	        StringBuffer sql = new StringBuffer();
-	        sql.append("select a.id, aedt.value, aedk.value, aedv.value ");
+	        sql.append("select a.id, aedt.value, aedk.value, aedv.value, u.user_login ");
 	        sql.append("from entity a ");
 	        sql.append("left outer join entityData aedt on a.id=aedt.parent_entity_id ");
 	        sql.append("left outer join entityData aedk on a.id=aedk.parent_entity_id ");
 	        sql.append("left outer join entityData aedv on a.id=aedv.parent_entity_id ");
+	        sql.append("left outer join user_accounts u on a.user_id=u.user_id ");
 	        sql.append("where a.entity_type_id = ? ");
 	        sql.append("and aedt.entity_att_id = ? ");
 	        sql.append("and aedk.entity_att_id = ? ");
@@ -123,17 +123,21 @@ public class SolrDAO extends AnnotationDAO {
 	        EntityAttribute valueAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM);
 
 	        stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+	        stmt.setFetchSize(Integer.MIN_VALUE);
+	        
 	        stmt.setLong(1, annotationType.getId());
 	        stmt.setLong(2, targetAttr.getId());
 	        stmt.setLong(3, keyAttr.getId());
 	        stmt.setLong(4, valueAttr.getId());
 	        
 			ResultSet rs = stmt.executeQuery();
+			_logger.info("    Processing results");
 			while (rs.next()) {
 				Long annotationId = rs.getBigDecimal(1).longValue();
 				String entityIdStr = rs.getString(2);
 				String key = rs.getString(3);
 				String value = rs.getString(4);
+				String owner = rs.getString(5);
 				
 				Long entityId = null;
 				try {
@@ -148,7 +152,7 @@ public class SolrDAO extends AnnotationDAO {
 					annots = new HashSet<SimpleAnnotation>();
 					putValue(annotationMapCache, entityId, annots);
 				}
-				annots.add(new SimpleAnnotation(key, value));
+				annots.add(new SimpleAnnotation(key, value, owner));
 			}
     	}
     	catch (SQLException e) {
@@ -183,23 +187,35 @@ public class SolrDAO extends AnnotationDAO {
 	        conn = getJdbcConnection();
 	        
 	        StringBuffer sql = new StringBuffer();
-	        sql.append("select e.id, ed.child_entity_id ");
+	        sql.append("select ed.child_entity_id, e.id ");
     		sql.append("from entity e ");
 	        sql.append("join entityData ed on e.id=ed.parent_entity_id ");
 	        sql.append("where ed.child_entity_id is not null ");
-	       	         
+	        sql.append("order by ed.child_entity_id ");
+	        
+	        Long currChildId = null;
+	        AncestorSet ancestorSet = new AncestorSet();
+	        	
 	        stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+	        stmt.setFetchSize(Integer.MIN_VALUE);
+	    	
 			ResultSet rs = stmt.executeQuery();
+	    	_logger.info("    Processing results");
 			while (rs.next()) {
-				Long entityId = rs.getBigDecimal(1).longValue();
-				Long childId = rs.getBigDecimal(2).longValue();
-				AncestorSet ancestorSet = (AncestorSet)getValue(ancestorMapCache, childId);
-				if (ancestorSet == null) {
+				Long childId = rs.getBigDecimal(1).longValue();
+				Long entityId = rs.getBigDecimal(2).longValue();
+				if (currChildId!=null && !childId.equals(currChildId)) {
+					putValue(ancestorMapCache, currChildId, ancestorSet);
 					ancestorSet = new AncestorSet();
-					putValue(ancestorMapCache, childId, ancestorSet);
 				}
+				currChildId = childId;
 				ancestorSet.getAncestors().add(entityId);
 			}
+			
+			if (currChildId!=null) {
+				putValue(ancestorMapCache, currChildId, ancestorSet);
+			}	
+			
     	}
     	catch (SQLException e) {
     		throw new DaoException(e);
@@ -312,12 +328,11 @@ public class SolrDAO extends AnnotationDAO {
 	        EntityType annotationType = getEntityTypeByName(EntityConstants.TYPE_ANNOTATION);
 	        
 	        stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+	        stmt.setFetchSize(Integer.MIN_VALUE);
 	        stmt.setLong(1, annotationType.getId());
-	        stmt.setFetchSize(SOLR_LOADER_FETCH_SIZE);
+	        
 			ResultSet rs = stmt.executeQuery();
-
-	    	_logger.info("Processing entities");
-	    	
+	    	_logger.info("    Processing results");
 			while (rs.next()) {
 				Long entityId = rs.getBigDecimal(1).longValue();
 				SimpleEntity entity = entityMap.get(entityId);
@@ -326,11 +341,11 @@ public class SolrDAO extends AnnotationDAO {
 		            	if (i%SOLR_LOADER_BATCH_SIZE==0) {
 		                    List<SolrInputDocument> docs = createEntityDocs(solr, entityMap.values());
 		                    entityMap.clear();
-		            		_logger.info("  Adding "+docs.size()+" docs (i="+i+")");
+		            		_logger.info("    Adding "+docs.size()+" docs (i="+i+")");
 		            		solr.index(docs);
 		            	}
 	            		if (i%SOLR_LOADER_COMMIT_SIZE==0) {
-	            	    	_logger.info("  Committing SOLR index");
+	            	    	_logger.info("    Committing SOLR index");
 	            			solr.commit();
 	            		}
 					}
@@ -361,7 +376,7 @@ public class SolrDAO extends AnnotationDAO {
 
         	if (!entityMap.isEmpty()) {
                 List<SolrInputDocument> docs = createEntityDocs(solr, entityMap.values());
-        		_logger.info("  Adding "+docs.size()+" docs (i="+i+")");
+        		_logger.info("    Adding "+docs.size()+" docs (i="+i+")");
         		solr.index(docs);
         	}
     	}
@@ -491,7 +506,7 @@ public class SolrDAO extends AnnotationDAO {
     	
     	for(KeyValuePair kv : entity.getAttrValues()) {
     		if (kv.getValue()!=null) {
-    			doc.addField(SolrUtils.getFieldName(kv.getKey()), kv.getValue(), 1.0f);	
+    			doc.addField(SolrUtils.getDynamicFieldName(kv.getKey()), kv.getValue(), 1.0f);	
     		}
     	}
     	
@@ -501,10 +516,9 @@ public class SolrDAO extends AnnotationDAO {
     	
     	if (annotations != null) {
     		for(SimpleAnnotation annotation : annotations) {
-    			doc.addField("annotations", annotation.getTag(), 1.0f);
-    			doc.addField("key_annot", annotation.getKey(), 1.0f);
+    			doc.addField(annotation.getOwner()+"_annotations", annotation.getTag(), 1.0f);
     			if (annotation.getValue()!=null) {
-    				doc.addField(SolrUtils.getFieldName(annotation.getKey()), annotation.getValue(), 1.0f);
+    				doc.addField(annotation.getOwner()+"_"+SolrUtils.getFormattedName(annotation.getKey())+"_annot", annotation.getValue(), 1.0f);
     			}
     		}
     	}

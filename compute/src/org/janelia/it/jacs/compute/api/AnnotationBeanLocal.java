@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.api;
 
+import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -79,5 +80,6 @@ public interface AnnotationBeanLocal {
     public List<Long> getPathToRoot(Long entityId, Long rootId) throws ComputeException;
     public List<Entity> getEntitiesWithAttributeValue(String attrName, String attrValue) throws ComputeException;
     public Map<Entity, Map<String, Double>> getPatternAnnotationQuantifiers() throws ComputeException;
-
+    
+    public void loadLazyEntity(Entity entity, boolean recurse) throws DaoException;
 }

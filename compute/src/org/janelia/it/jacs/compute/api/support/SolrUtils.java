@@ -21,14 +21,23 @@ public class SolrUtils {
     public static String formatDate(Date date) {
     	return dateFormat.format(date);
     }
+
+	/**
+	 * Format the given name in lowercase, with underscores instead of spaces. For example, "Tiling Pattern" -> "tiling_pattern"
+	 * @param name
+	 * @return
+	 */
+    public static String getFormattedName(String name) {
+    	return name.toLowerCase().replaceAll("\\s+", "_");
+    }
     
 	/**
 	 * Get the SOLR field name from an attribute name. For example, "Tiling Pattern" -> "tiling_pattern_txt"
 	 * @param name
 	 * @return
 	 */
-    public static String getFieldName(String name) {
-    	return name.toLowerCase().replaceAll("\\s+", "_")+"_txt";
+    public static String getDynamicFieldName(String name) {
+    	return getFormattedName(name)+"_txt";
     }
     
     /**
