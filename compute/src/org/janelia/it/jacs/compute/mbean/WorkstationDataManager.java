@@ -8,6 +8,7 @@ import org.janelia.it.jacs.compute.service.entity.SampleFileNodeSyncService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FlyScreenDiscoveryService;
 import org.janelia.it.jacs.compute.service.fly.ScreenSampleLineCoordinationService;
 import org.janelia.it.jacs.compute.service.solr.SolrIndexingService;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -22,10 +23,8 @@ import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.io.File;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -282,7 +281,6 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
-
     public void runTicPipeline(String user, String rootDirectoryPath){
         try {
             TicTask task = new TicTask(new HashSet<Node>(), user, new ArrayList<Event>(), new HashSet<TaskParameter>());
@@ -294,4 +292,20 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
+
+
+    // This file has the format:
+    //
+    //
+    public void createPatternAnnotationQuantifierSummaryFile() {
+        try {
+            Map<Entity, Map<String, Double>> entityQuantifierMap=EJBFactory.getLocalAnnotationBean().getPatternAnnotationQuantifiers();
+            String resourceDirString=SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationResourceDir");
+            File patternAnnotationSummaryFile=new File(resourceDirString, SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationQuantifierSummaryFile"));
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
 }

@@ -41,4 +41,7 @@ public interface WorkstationDataManagerMBean {
     public void runFileTreeLoaderPipeline(String user, String rootDirectoryPath, String topLevelFolderName);
     
     public void runTicPipeline(String user, String rootDirectoryPath);
+
+    public void createPatternAnnotationQuantifierSummaryFile();
+
 }

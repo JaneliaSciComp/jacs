@@ -242,6 +242,11 @@
     </operation>
 
     <operation>
+        <description>Test createPatternAnnotationQuantifierSummaryFile</description>
+        <name>patternAnnotationQuantifierTest</name>
+    </operation>
+
+    <operation>
         <description>Run the Transcription Imaging Consortium Pipeline</description>
         <name>runTICPipeline</name>
         <parameter>
@@ -255,5 +260,5 @@
             <type>java.lang.String</type>
         </parameter>
     </operation>
-
+    
 </mbean>

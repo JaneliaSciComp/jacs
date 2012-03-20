@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.api;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.Remote;
@@ -78,4 +79,6 @@ public interface AnnotationBeanRemote {
     public List<List<Long>> searchTreeForNameStartingWith(Long rootId, String searchString) throws ComputeException;
     public List<Long> getPathToRoot(Long entityId, Long rootId) throws ComputeException;
     public List<Entity> getEntitiesWithAttributeValue(String attrName, String attrValue) throws ComputeException;
+    public Map<Entity, Map<String, Double>> getPatternAnnotationQuantifiers() throws ComputeException;
+
 }

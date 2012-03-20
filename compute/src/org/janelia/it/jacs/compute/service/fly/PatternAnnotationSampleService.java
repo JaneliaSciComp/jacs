@@ -52,7 +52,7 @@ public class PatternAnnotationSampleService  implements IService {
     final public String MODE_SETUP="SETUP";
     final public String MODE_COMPLETE="COMPLETE";
 
-    protected String patternAnnotationResourceDir=SystemConfigurationProperties.getString("FlyScreen.CompartmentAnnotationResourceDir");
+    protected String patternAnnotationResourceDir=SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationResourceDir");
     protected String patternChannel=SystemConfigurationProperties.getString("FlyScreen.AlignedStackPatternChannel");
 
     protected AnnotationBeanLocal annotationBean;
