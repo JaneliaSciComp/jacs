@@ -599,4 +599,14 @@ public class DataServiceImpl extends JcviGWTSpringController implements DataServ
         }
 
     }
+
+    @Override
+    public void syncUserData(String username) throws GWTServiceException {
+        try {
+            dataSetAPI.syncUserData(getSessionUser(), username);
+        }
+        catch (SystemException e) {
+            throw new GWTServiceException("Error syncing the user data", e);
+        }
+    }
 }

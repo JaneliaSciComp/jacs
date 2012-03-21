@@ -63,4 +63,6 @@ public interface DataServiceAsync {
     public void findPotentialResultNodes(String filePath, AsyncCallback asyncCallback);
 
     public void getNodeNamesForUserByName(String nodeClassName, AsyncCallback asyncCallback);
+
+    public void syncUserData(String username, AsyncCallback asyncCallback) throws GWTServiceException;
 }

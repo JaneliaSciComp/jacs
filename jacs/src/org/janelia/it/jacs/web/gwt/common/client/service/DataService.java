@@ -71,4 +71,6 @@ public interface DataService extends RemoteService {
     public List<GeciImageDirectoryVO> findPotentialResultNodes(String filePath) throws GWTServiceException;
 
     public List<String> getNodeNamesForUserByName(String nodeClassName) throws GWTServiceException;
+
+    public void syncUserData(String username) throws GWTServiceException;
 }

@@ -10,6 +10,7 @@ import org.janelia.it.jacs.model.common.UserDataNodeVO;
 import org.janelia.it.jacs.model.metadata.BioMaterial;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.ap16s.AnalysisPipeline16sTask;
 import org.janelia.it.jacs.model.tasks.barcodeDesigner.BarcodeDesignerTask;
 import org.janelia.it.jacs.model.tasks.blast.CreateBlastDatabaseTask;
@@ -26,6 +27,7 @@ import org.janelia.it.jacs.model.tasks.rnaSeq.RnaSeqPipelineTask;
 import org.janelia.it.jacs.model.tasks.rnaSeq.UploadRnaSeqReferenceGenomeTask;
 import org.janelia.it.jacs.model.tasks.tic.TicTask;
 import org.janelia.it.jacs.model.tasks.utility.FtpFileTask;
+import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.tasks.utility.UploadFastqDirectoryTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
@@ -355,6 +357,11 @@ public class DataSetAPI {
             else if (newTask instanceof InspectTask){
                 processName = "Inspect";
             }
+            else if (newTask instanceof GenericTask){
+                if ("sampleSync".equals(newTask.getTaskName())) {
+                    processName = "SampleFileNodeSync";
+                }
+            }
             logger.info("DataSetAPI submitJob using processName=" + processName);
             computeBean.submitJob(processName, newTask.getObjectId());
             jobId = newTask.getObjectId().toString();
@@ -515,5 +522,19 @@ public class DataSetAPI {
         catch (DaoException e) {
             throw new SystemException(e);
         }
+    }
+
+    /**
+     * I could probably create this task in the web page but oh well.
+     * @param sessionUser person asking for the cleanup
+     * @param username target cleanup account
+     * @throws SystemException thrown when a problem runing the sync occurs
+     */
+    public void syncUserData(User sessionUser, String username) throws SystemException {
+        HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        Task task = new GenericTask(new HashSet<Node>(), username, new ArrayList<Event>(),
+                taskParameters, "sampleSync", "Sample Sync");
+        task.setJobName("MultiColor FlipOut Sample Fileshare Sync Task");
+        submitJob(sessionUser, task);
     }
 }

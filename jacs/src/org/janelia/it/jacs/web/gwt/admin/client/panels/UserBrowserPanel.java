@@ -2,6 +2,7 @@
 package org.janelia.it.jacs.web.gwt.admin.client.panels;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 import com.google.gwt.user.client.ui.*;
@@ -11,15 +12,14 @@ import org.janelia.it.jacs.web.gwt.common.client.SystemWebTracker;
 import org.janelia.it.jacs.web.gwt.common.client.panel.TitledPanel;
 import org.janelia.it.jacs.web.gwt.common.client.panel.user.RemoveUserListener;
 import org.janelia.it.jacs.web.gwt.common.client.panel.user.RemoveUserPopup;
+import org.janelia.it.jacs.web.gwt.common.client.popup.InfoPopupPanel;
 import org.janelia.it.jacs.web.gwt.common.client.popup.launcher.PopupAboveLauncher;
+import org.janelia.it.jacs.web.gwt.common.client.popup.launcher.PopupCenteredLauncher;
 import org.janelia.it.jacs.web.gwt.common.client.popup.launcher.PopupLauncher;
 import org.janelia.it.jacs.web.gwt.common.client.service.DataService;
 import org.janelia.it.jacs.web.gwt.common.client.service.DataServiceAsync;
 import org.janelia.it.jacs.web.gwt.common.client.service.log.Logger;
-import org.janelia.it.jacs.web.gwt.common.client.ui.DoubleClickSelectionListener;
-import org.janelia.it.jacs.web.gwt.common.client.ui.HoverImageSetter;
-import org.janelia.it.jacs.web.gwt.common.client.ui.LoadingLabel;
-import org.janelia.it.jacs.web.gwt.common.client.ui.SelectionListener;
+import org.janelia.it.jacs.web.gwt.common.client.ui.*;
 import org.janelia.it.jacs.web.gwt.common.client.ui.imagebundles.ControlImageBundle;
 import org.janelia.it.jacs.web.gwt.common.client.ui.imagebundles.ImageBundleFactory;
 import org.janelia.it.jacs.web.gwt.common.client.ui.suggest.SearchOracleListener;
@@ -70,6 +70,8 @@ public class UserBrowserPanel extends TitledPanel {
     private static final int DEFAULT_NUM_ROWS = 15;
     private static final String[] DEFAULT_NUM_ROWS_OPTIONS = new String[]{"10", "15", "20"};
 
+    private static final String SYNC_LABEL = "Sync Selected User Data";
+
     private Panel userListPanel;
     private SearchOraclePanel oraclePanel;
     private String _searchString;
@@ -78,20 +80,55 @@ public class UserBrowserPanel extends TitledPanel {
     private RemotingPaginator userPaginator;
     private boolean haveData = false;
     private HashMap<String, UserDataVO> userMap = new HashMap<String, UserDataVO>();
-
+    private RoundedButton syncButton;
+    
     public UserBrowserPanel() {
         super();
-        VerticalPanel previousSequencePanel = new VerticalPanel();
+        VerticalPanel userPanel = new VerticalPanel();
         setupOraclePanel();
         setupUserListPanel();
+        syncButton = new RoundedButton(SYNC_LABEL);
+        syncButton.addClickListener(new ClickListener() {
+            @Override
+            public void onClick(Widget sender) {
+                try {
+                    if (null==userTable.getSelectedRow() || userTable.getSelectedRow().getRowIndex()<=0) {
+                        new PopupCenteredLauncher(new InfoPopupPanel("A row must be selected in the table."), 250).showPopup(userTable);
+                        return;
+                    }
+                    String targetUser = userTable.getSelectedRow().getRowObject().getTableCell(1).getValue().toString();
+                    syncButton.setText("Syncing user "+targetUser);
+                    syncButton.setEnabled(false);
+                    _dataservice.syncUserData(targetUser,
+                            new AsyncCallback() {
+                                @Override
+                                public void onFailure(Throwable throwable) {
+                                    Window.alert("There was a problem syncing the user data");
+                                    syncButton.setText(SYNC_LABEL);
+                                    syncButton.setEnabled(true);
+                                }
 
-        previousSequencePanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
-        previousSequencePanel.add(oraclePanel);
-        previousSequencePanel.add(HtmlUtils.getHtml("&nbsp;", "smallSpacer"));
-        previousSequencePanel.add(userListPanel);
+                                @Override
+                                public void onSuccess(Object o) {
+                                    // todo This is an async pipeline so we should check status before reenabling the button
+                                    syncButton.setText(SYNC_LABEL);
+                                    syncButton.setEnabled(true);
+                                }
+                            });
+                }
+                catch (Exception ex) {
+                    Window.alert("There was a problem syncing the user data");
+                }
+            }
+        });
+        userPanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
+        userPanel.add(oraclePanel);
+        userPanel.add(HtmlUtils.getHtml("&nbsp;", "smallSpacer"));
+        userPanel.add(userListPanel);
+        userPanel.add(syncButton);
 
         TitledPanel userSelectionPanel = new TitledPanel("Browse Users");
-        userSelectionPanel.add(previousSequencePanel);
+        userSelectionPanel.add(userPanel);
 
         LoadingLabel loadingLabel = new LoadingLabel("Loading...", false);
         TitledPanel userNodePanel = new TitledPanel("User Nodes");

@@ -32,21 +32,26 @@ public class DiskUsagePanel extends TitledPanel {
     public DiskUsagePanel() {
         super();
         init();
-        _adminservice.getDiskUsageReport(new AsyncCallback() {
-            public void onFailure(Throwable throwable) {
-                Window.alert("Boom! " + throwable.getMessage());
-                _logger.error("Problem getting the user disk usage info. " + throwable.getMessage());
-            }
-
-            public void onSuccess(Object o) {
-                if (null == o) {
-                    _logger.error("Disk usage information is null");
-                    return;
+        try {
+            _adminservice.getDiskUsageReport(new AsyncCallback() {
+                public void onFailure(Throwable throwable) {
+                    Window.alert("Boom! " + throwable.getMessage());
+                    _logger.error("Problem getting the user disk usage info. " + throwable.getMessage());
                 }
-                ArrayList<String> diskInfo = (ArrayList<String>) o;
-                addInformation(diskInfo);
-            }
-        });
+    
+                public void onSuccess(Object o) {
+                    if (null == o) {
+                        _logger.error("Disk usage information is null");
+                        return;
+                    }
+                    ArrayList<String> diskInfo = (ArrayList<String>) o;
+                    addInformation(diskInfo);
+                }
+            });
+        }
+        catch (Exception e) {
+            Window.alert("Problem getting the Disk Usage data");
+        }
         realize();
     }
 
