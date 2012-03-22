@@ -21,9 +21,12 @@ import org.janelia.it.jacs.model.tasks.fly.FlyScreenPatternAnnotationTask;
 import org.janelia.it.jacs.model.tasks.tic.TicTask;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.util.*;
 
 /**
@@ -293,16 +296,10 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
-
-    // This file has the format:
-    //
-    //
     public void createPatternAnnotationQuantifierSummaryFile() {
         try {
             Map<Entity, Map<String, Double>> entityQuantifierMap=EJBFactory.getLocalAnnotationBean().getPatternAnnotationQuantifiers();
-            String resourceDirString=SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationResourceDir");
-            File patternAnnotationSummaryFile=new File(resourceDirString, SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationQuantifierSummaryFile"));
-
+            PatternAnnotationDataManager.createPatternAnnotationQuantifierSummaryFile(entityQuantifierMap);
         } catch (Exception ex) {
             ex.printStackTrace();
         }

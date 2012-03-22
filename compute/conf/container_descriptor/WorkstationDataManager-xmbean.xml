@@ -237,8 +237,8 @@
     </operation>
 
     <operation>
-        <description>Test createPatternAnnotationQuantifierSummaryFile</description>
-        <name>patternAnnotationQuantifierTest</name>
+        <description>createPatternAnnotationQuantifierSummaryFile</description>
+        <name>createPatternAnnotationQuantifierSummaryFile</name>
     </operation>
 
     <operation>
