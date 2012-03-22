@@ -17,7 +17,11 @@ public class SimpleAnnotation extends KeyValuePair {
 	}
 	
 	public String getTag() {
-    	return SolrUtils.getAnnotationTag(getKey(), getValue());
+		Object value = getValue();
+		if (value==null || value instanceof String) {
+			return SolrUtils.getAnnotationTag(getKey(), (String)getValue());
+		}
+		return "";
 	}
 
 	public String getOwner() {

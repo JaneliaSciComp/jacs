@@ -1,8 +1,6 @@
 package org.janelia.it.jacs.compute.access.solr;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Simplified entity, holding those things we need to load into the SOLR index.
@@ -18,7 +16,7 @@ public class SimpleEntity {
     private Date creationDate;
     private Date updatedDate;
     private Set<Long> childIds = new HashSet<Long>();
-    private Set<KeyValuePair> attrValues = new HashSet<KeyValuePair>();
+    private final Set<KeyValuePair> attributes = new HashSet<KeyValuePair>();
     
 	public Long getId() {
 		return id;
@@ -59,14 +57,7 @@ public class SimpleEntity {
 	public Set<Long> getChildIds() {
 		return childIds;
 	}
-	public void setChildIds(Set<Long> childIds) {
-		this.childIds = childIds;
+	public Set<KeyValuePair> getAttributes() {
+		return attributes;
 	}
-	public Set<KeyValuePair> getAttrValues() {
-		return attrValues;
-	}
-	public void setAttrValues(Set<KeyValuePair> attrValues) {
-		this.attrValues = attrValues;
-	}
-	
 }

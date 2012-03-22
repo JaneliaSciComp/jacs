@@ -73,8 +73,8 @@ public class SageDAO {
 
         	Connection conn = getJdbcConnection();
         	PreparedStatement stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+	        stmt.setFetchSize(Integer.MIN_VALUE);
     		ResultSet rs = stmt.executeQuery();
-    		_logger.info("Got result set");
     		return new ResultSetIterator(conn, stmt, rs);    		
     	}
     	catch (SQLException e) {

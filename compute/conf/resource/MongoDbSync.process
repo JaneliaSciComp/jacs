@@ -1,0 +1,9 @@
+<!-- 
+	Synchronize index with entities in the database. 
+-->
+<process name="MongoDB Index Synchronization" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
+	<sequence>
+		<operation name="MongoDB Sync" processor="org.janelia.it.jacs.compute.service.mongodb.MongoDbLoadService">
+		</operation>
+    </sequence>
+</process>

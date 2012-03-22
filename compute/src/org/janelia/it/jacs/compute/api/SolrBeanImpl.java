@@ -15,6 +15,7 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.compute.access.mongodb.MongoDbDAO;
 import org.janelia.it.jacs.compute.access.solr.SolrDAO;
 import org.janelia.it.jacs.compute.api.support.SolrResults;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -53,6 +54,21 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     	}
     }
 
+    // TODO: move this to its own bean, or rename this one
+    public void mongoAllEntities(boolean clearDb) throws ComputeException {
+    	try {
+    		MongoDbDAO mongodbDAO = new MongoDbDAO(_logger);
+    		if (clearDb) {
+    			mongodbDAO.dropDatabase();
+    		}
+    		mongodbDAO.loadAllEntities();
+    	}
+    	catch (DaoException e) {
+            _logger.error("Error indexing all entities",e);
+    		throw new ComputeException("Error indexing all entities",e);
+    	}
+    }
+    
 	public SolrResults search(SolrQuery query, boolean mapToEntities) throws ComputeException {
 		
 		SolrDAO solrDAO = new SolrDAO(_logger, false);

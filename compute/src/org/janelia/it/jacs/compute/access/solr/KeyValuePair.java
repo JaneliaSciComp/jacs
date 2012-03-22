@@ -11,10 +11,20 @@ public class KeyValuePair implements Serializable {
 
 	private String key;
 	private String value;
+	private Long childId;
 	
-	public KeyValuePair(String key, String value) {
+	public KeyValuePair(String key, String value, Long childId) {
 		this.key = key;
 		this.value = value;
+		this.childId = childId;
+	}
+
+	public KeyValuePair(String key, String value) {
+		this(key, value, null);
+	}
+	
+	public KeyValuePair(String key, Long childId) {
+		this(key, null, childId);
 	}
 	
 	public String getKey() {
@@ -23,5 +33,9 @@ public class KeyValuePair implements Serializable {
 	
 	public String getValue() {
 		return value;
+	}
+	
+	public Long getChildId() {
+		return childId;
 	}
 }

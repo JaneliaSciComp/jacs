@@ -66,6 +66,11 @@
         <java>commons-codec-1.5.jar</java>
     </module>
     
+    <!-- for MongoDB -->
+    <module>
+        <java>mongo-2.7.3.jar</java>
+    </module>
+    
     <!-- for ehcache  -->
     <module>
         <java>ehcache-core-2.5.1.jar</java>

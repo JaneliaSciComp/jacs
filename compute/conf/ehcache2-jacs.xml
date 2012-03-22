@@ -462,17 +462,17 @@ Here is an example of CacheManager level resource tuning, which will use up to 4
             />
 
     <cache name="annotationMapCache"
-           maxEntriesLocalHeap="100"
+           maxEntriesLocalHeap="10"
            eternal="true"
            overflowToDisk="true"
-           diskSpoolBufferSizeMB="40"
+           diskSpoolBufferSizeMB="50"
             />
 
     <cache name="ancestorMapCache"
-           maxEntriesLocalHeap="100"
+           maxEntriesLocalHeap="10"
            eternal="true"
            overflowToDisk="true"
-           diskSpoolBufferSizeMB="40"
+           diskSpoolBufferSizeMB="50"
             />
             
 </ehcache>

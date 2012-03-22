@@ -6,10 +6,10 @@ package org.janelia.it.jacs.compute.mbean;
  * Date: 5/24/11
  * Time: 10:38 AM
  */
-
-
 public interface WorkstationDataManagerMBean {
     	
+	public void runMongoDbSync(Boolean clearDb);
+	
 	public void runSolrIndexSync(Boolean clearIndex); 
 	
     public void runSampleSyncService(String user, Boolean testRun);

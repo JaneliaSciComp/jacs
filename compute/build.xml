@@ -184,6 +184,9 @@
         	<fileset dir="${common.module}/Solrj">
         		<include name="**/*.jar"/>
         	</fileset>
+        	<fileset dir="${common.module}/MongoDB">
+        		<include name="**/*.jar"/>
+        	</fileset>
             <fileset dir="${basedir}/../shared/lib">
                 <include name="**/*.jar"/>
             </fileset>

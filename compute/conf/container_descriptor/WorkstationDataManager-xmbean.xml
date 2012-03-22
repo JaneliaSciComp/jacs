@@ -12,6 +12,16 @@
     </constructor>
 
     <operation>
+        <description>Synchronize the MongoDb to the database</description>
+        <name>runMongoDbSync</name>
+        <parameter>
+           <description>Clear the MongoDB first?</description>
+           <name>clearDb</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+    </operation>
+    
+    <operation>
         <description>Synchronize the SOLR indexes to the database</description>
         <name>runSolrIndexSync</name>
         <parameter>

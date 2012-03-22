@@ -13,4 +13,6 @@ public interface SolrBeanLocal {
 	
 	public void indexAllEntities(boolean clearIndex) throws ComputeException;
 
+	public void mongoAllEntities(boolean clearDb) throws ComputeException;
+	
 }

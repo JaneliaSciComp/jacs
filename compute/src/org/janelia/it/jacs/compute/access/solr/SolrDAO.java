@@ -9,10 +9,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
-import net.sf.ehcache.Cache;
-import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.Element;
-
 import org.apache.log4j.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
@@ -23,9 +19,13 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrInputDocument;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.compute.access.large.LargeOperations;
 import org.janelia.it.jacs.compute.api.support.SolrUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.entity.*;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.entity.EntityType;
 
 /**
  * Data access to the SOLR indexes.
@@ -40,7 +40,7 @@ public class SolrDAO extends AnnotationDAO {
 	protected static final int SOLR_LOADER_THREAD_COUNT = 2;
 	protected static final String SOLR_SERVER_URL = SystemConfigurationProperties.getString("Solr.ServerURL");
 
-	protected static CacheManager manager;
+	protected LargeOperations largeOp;
     protected SolrServer solr;
     protected boolean streamingUpdates;
 
@@ -51,11 +51,7 @@ public class SolrDAO extends AnnotationDAO {
     public SolrDAO(Logger _logger, boolean streamingUpdates) {
         super(_logger);
         this.streamingUpdates = streamingUpdates;
-        synchronized (SolrDAO.class) {
-	        if (manager==null) {
-	        	manager = new CacheManager(getClass().getResource("/ehcache2-jacs.xml"));
-	        }
-        }
+        this.largeOp = new LargeOperations(this);
     }
 
     private void init() throws DaoException {
@@ -80,249 +76,28 @@ public class SolrDAO extends AnnotationDAO {
         }
     }
     
-    private Object getValue(Cache cache, Object key) {
-		Element e = cache.get(key);
-		return e!=null ? e.getObjectValue() : null;
-    }
-
-    private void putValue(Cache cache, Object key, Object value) {
-		Element e = new Element(key, value);
-		cache.put(e);
-    }
-    
-    /**
-     * Builds a map of entity ids to sets of SimpleAnnotations on disk using EhCache.
-     * @param annotationMapCache
-     * @throws DaoException
-     */
-    private void buildAnnotationMap() throws DaoException {
-
-    	_logger.info("Building annotation map of all entities and annotations");
-    	Cache annotationMapCache = manager.getCache("annotationMapCache");
-    	
-    	Connection conn = null;
-    	PreparedStatement stmt = null;
-    	try {
-	        conn = getJdbcConnection();
-	        
-	        StringBuffer sql = new StringBuffer();
-	        sql.append("select a.id, aedt.value, aedk.value, aedv.value, u.user_login ");
-	        sql.append("from entity a ");
-	        sql.append("left outer join entityData aedt on a.id=aedt.parent_entity_id ");
-	        sql.append("left outer join entityData aedk on a.id=aedk.parent_entity_id ");
-	        sql.append("left outer join entityData aedv on a.id=aedv.parent_entity_id ");
-	        sql.append("left outer join user_accounts u on a.user_id=u.user_id ");
-	        sql.append("where a.entity_type_id = ? ");
-	        sql.append("and aedt.entity_att_id = ? ");
-	        sql.append("and aedk.entity_att_id = ? ");
-	        sql.append("and aedv.entity_att_id = ? ");
-
-	        EntityType annotationType = getEntityTypeByName(EntityConstants.TYPE_ANNOTATION);
-	        EntityAttribute targetAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
-	        EntityAttribute keyAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_TERM);
-	        EntityAttribute valueAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM);
-
-	        stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-	        stmt.setFetchSize(Integer.MIN_VALUE);
-	        
-	        stmt.setLong(1, annotationType.getId());
-	        stmt.setLong(2, targetAttr.getId());
-	        stmt.setLong(3, keyAttr.getId());
-	        stmt.setLong(4, valueAttr.getId());
-	        
-			ResultSet rs = stmt.executeQuery();
-			_logger.info("    Processing results");
-			while (rs.next()) {
-				Long annotationId = rs.getBigDecimal(1).longValue();
-				String entityIdStr = rs.getString(2);
-				String key = rs.getString(3);
-				String value = rs.getString(4);
-				String owner = rs.getString(5);
-				
-				Long entityId = null;
-				try {
-					entityId = new Long(entityIdStr);
-				}
-				catch (NumberFormatException e) {
-					_logger.warn("Cannot parse annotation target id for annotation="+annotationId);
-				}
-				
-				Set<SimpleAnnotation> annots = (Set<SimpleAnnotation>)getValue(annotationMapCache, entityId);
-				if (annots == null) {
-					annots = new HashSet<SimpleAnnotation>();
-					putValue(annotationMapCache, entityId, annots);
-				}
-				annots.add(new SimpleAnnotation(key, value, owner));
-			}
-    	}
-    	catch (SQLException e) {
-    		throw new DaoException(e);
-    	}
-        finally {
-        	try {
-        		stmt.close();
-                conn.close();	
-        	}
-            catch (Exception e) {
-        		throw new DaoException(e);
-            }
-        }
-    	
-        _logger.info("    Done, annotationMap.size="+annotationMapCache.getSize());
-    }
-    
-    /**
-     * Builds a map of entity ids to sets of ancestor ids on disk using EhCache.
-     * @param ancestorMapCache
-     * @throws DaoException
-     */
-    private void buildAncestorMap() throws DaoException {
-
-    	_logger.info("Building ancestor map for all entities");
-    	Cache ancestorMapCache = manager.getCache("ancestorMapCache");
-    	
-    	Connection conn = null;
-    	PreparedStatement stmt = null;
-    	try {
-	        conn = getJdbcConnection();
-	        
-	        StringBuffer sql = new StringBuffer();
-	        sql.append("select ed.child_entity_id, e.id ");
-    		sql.append("from entity e ");
-	        sql.append("join entityData ed on e.id=ed.parent_entity_id ");
-	        sql.append("where ed.child_entity_id is not null ");
-	        sql.append("order by ed.child_entity_id ");
-	        
-	        Long currChildId = null;
-	        AncestorSet ancestorSet = new AncestorSet();
-	        	
-	        stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-	        stmt.setFetchSize(Integer.MIN_VALUE);
-	    	
-			ResultSet rs = stmt.executeQuery();
-	    	_logger.info("    Processing results");
-			while (rs.next()) {
-				Long childId = rs.getBigDecimal(1).longValue();
-				Long entityId = rs.getBigDecimal(2).longValue();
-				if (currChildId!=null && !childId.equals(currChildId)) {
-					putValue(ancestorMapCache, currChildId, ancestorSet);
-					ancestorSet = new AncestorSet();
-				}
-				currChildId = childId;
-				ancestorSet.getAncestors().add(entityId);
-			}
-			
-			if (currChildId!=null) {
-				putValue(ancestorMapCache, currChildId, ancestorSet);
-			}	
-			
-    	}
-    	catch (SQLException e) {
-    		throw new DaoException(e);
-    	}
-        finally {
-        	try {
-        		stmt.close();
-                conn.close();	
-        	}
-            catch (Exception e) {
-        		throw new DaoException(e);
-            }
-        }
-
-    	_logger.info("    Loaded entity graph, now to find the ancestors...");
-
-    	int i = 0;
-    	for(Object entityIdObj : ancestorMapCache.getKeys()) {
-    		calculateAncestors((Long)entityIdObj, new HashSet<Long>(), 0);
-    		i++;
-    	}
-
-    	_logger.info("    Verifying ancestors...");
-    	
-    	for(Object entityIdObj : ancestorMapCache.getKeys()) {
-    		Long entityId = (Long)entityIdObj;
-    		AncestorSet ancestorSet = (AncestorSet)getValue(ancestorMapCache, entityId);
-    		if (!ancestorSet.isComplete()) {
-    			_logger.warn("Incomplete ancestor set for "+entityId);
-    		}
-    	}
-    
-    	_logger.info("    Done, ancestorMap.size="+ancestorMapCache.getSize());
-    }
-    
-    boolean debugAncestors = false;
-    private Set<Long> calculateAncestors(Long entityId, Set<Long> visited, int level) {
-
-    	if (level>10000) {
-    		throw new IllegalStateException("Something went wrong calculating ancestors");
-    	}
-    	
-    	StringBuffer b = new StringBuffer();
-    	for(int i=0; i<level; i++) {
-    		b.append("    ");
-    	}
-    	if (debugAncestors) _logger.info(b+""+entityId);
-    	
-    	Cache ancestorMapCache = manager.getCache("ancestorMapCache");
-    	AncestorSet ancestorSet = (AncestorSet)getValue(ancestorMapCache, entityId);
-    	
-    	if (ancestorSet==null) {
-    		// Hit a root, it has no ancestors
-    		if (debugAncestors) _logger.info(b+""+entityId+" is root");
-    		return new HashSet<Long>();
-    	}
-    		
-    	if (ancestorSet.isComplete()) {
-    		// The work's already been done
-    		if (debugAncestors) _logger.info(b+""+entityId+" is complete");
-    		return ancestorSet.getAncestors();
-    	}
-
-    	if (visited.contains(entityId)) {
-    		// Loop detected because the set isn't complete but we're hitting the same entity again. Break out of it..
-    		ancestorSet.setComplete(true);
-    		putValue(ancestorMapCache, entityId, ancestorSet);
-    		if (debugAncestors) _logger.info(b+""+entityId+" is loop");
-    		return ancestorSet.getAncestors();
-    	}
-
-    	visited.add(entityId);
-    	
-    	Set<Long> ancestors = ancestorSet.getAncestors();
-    	for(Long parentId : new HashSet<Long>(ancestors)) {
-    		ancestors.addAll(calculateAncestors(parentId, visited, level+1));
-    	}
-    	
-    	ancestorSet.setComplete(true);
-    	putValue(ancestorMapCache, entityId, ancestorSet);
-    	
-    	if (debugAncestors) _logger.info(b+""+entityId+" has "+ancestorSet.getAncestors().size()+" ancestors");
-    	return ancestorSet.getAncestors();
-    }
-    
     public void indexAllEntities() throws DaoException {
     	
-    	buildAnnotationMap();
-    	buildAncestorMap();
+    	largeOp.buildAnnotationMap();
+    	largeOp.buildAncestorMap();
  
     	_logger.info("Getting entities");
     	
-    	SolrDAO solr = new SolrDAO(_logger, true);
     	Map<Long,SimpleEntity> entityMap = new HashMap<Long,SimpleEntity>();
         int i = 0;
     	Connection conn = null;
     	PreparedStatement stmt = null;
+    	ResultSet rs = null;
     	try {
 	        conn = getJdbcConnection();
 	        
 	        StringBuffer sql = new StringBuffer();
 	        sql.append("select e.id, e.name, e.creation_date, e.updated_date, et.name, u.user_login, ea.name, ed.value, ed.child_entity_id ");
 	        sql.append("from entity e ");
-	        sql.append("join entityData ed on e.id=ed.parent_entity_id ");
 	        sql.append("join user_accounts u on e.user_id = u.user_id ");
 	        sql.append("join entityType et on e.entity_type_id = et.id ");
-	        sql.append("join entityAttribute ea on ed.entity_att_id = ea.id ");
+	        sql.append("left outer join entityData ed on e.id=ed.parent_entity_id ");
+	        sql.append("left outer join entityAttribute ea on ed.entity_att_id = ea.id ");
 	        sql.append("where e.entity_type_id != ? ");
 	        
 	        EntityType annotationType = getEntityTypeByName(EntityConstants.TYPE_ANNOTATION);
@@ -331,7 +106,7 @@ public class SolrDAO extends AnnotationDAO {
 	        stmt.setFetchSize(Integer.MIN_VALUE);
 	        stmt.setLong(1, annotationType.getId());
 	        
-			ResultSet rs = stmt.executeQuery();
+			rs = stmt.executeQuery();
 	    	_logger.info("    Processing results");
 			while (rs.next()) {
 				Long entityId = rs.getBigDecimal(1).longValue();
@@ -339,14 +114,14 @@ public class SolrDAO extends AnnotationDAO {
 				if (entity==null) {
 					if (i>0) {
 		            	if (i%SOLR_LOADER_BATCH_SIZE==0) {
-		                    List<SolrInputDocument> docs = createEntityDocs(solr, entityMap.values());
+		                    List<SolrInputDocument> docs = createEntityDocs(entityMap.values());
 		                    entityMap.clear();
 		            		_logger.info("    Adding "+docs.size()+" docs (i="+i+")");
-		            		solr.index(docs);
+		            		index(docs);
 		            	}
 	            		if (i%SOLR_LOADER_COMMIT_SIZE==0) {
 	            	    	_logger.info("    Committing SOLR index");
-	            			solr.commit();
+	            			commit();
 	            		}
 					}
 					
@@ -366,7 +141,7 @@ public class SolrDAO extends AnnotationDAO {
 				BigDecimal childIdBD = rs.getBigDecimal(9);
 				
 				if (key!=null && value!=null) {
-					entity.getAttrValues().add(new KeyValuePair(key, value));
+					entity.getAttributes().add(new KeyValuePair(key, value));
 				}
 				
 				if (childIdBD != null) {
@@ -375,9 +150,9 @@ public class SolrDAO extends AnnotationDAO {
 			}
 
         	if (!entityMap.isEmpty()) {
-                List<SolrInputDocument> docs = createEntityDocs(solr, entityMap.values());
+                List<SolrInputDocument> docs = createEntityDocs(entityMap.values());
         		_logger.info("    Adding "+docs.size()+" docs (i="+i+")");
-        		solr.index(docs);
+        		index(docs);
         	}
     	}
     	catch (SQLException e) {
@@ -385,8 +160,9 @@ public class SolrDAO extends AnnotationDAO {
     	}
         finally {
         	try {
-        		stmt.close();
-                conn.close();	
+        		if (rs!=null) rs.close();
+        		if (stmt!=null) stmt.close();
+        		if (conn!=null) conn.close();
         	}
             catch (Exception e) {
         		throw new DaoException(e);
@@ -394,24 +170,21 @@ public class SolrDAO extends AnnotationDAO {
         }
 
     	_logger.info("  Committing SOLR index");
-		solr.commit();
+		commit();
     	_logger.info("  Optimizing SOLR index");
-		solr.optimize();
+		optimize();
     	_logger.info("Completed indexing "+i+" entities");
     	
     }
     
-    private List<SolrInputDocument> createEntityDocs(SolrDAO solr, Collection<SimpleEntity> entities) {
-
-    	Cache ancestorMapCache = manager.getCache("ancestorMapCache");
-    	Cache annotationMapCache = manager.getCache("annotationMapCache");
+    private List<SolrInputDocument> createEntityDocs(Collection<SimpleEntity> entities) {
     	
         List<SolrInputDocument> docs = new ArrayList<SolrInputDocument>();
         for(SimpleEntity se : entities) {
-        	Set<SimpleAnnotation> annotations = (Set<SimpleAnnotation>)getValue(annotationMapCache, se.getId());
-        	AncestorSet ancestorSet = (AncestorSet)getValue(ancestorMapCache, se.getId());
+        	Set<SimpleAnnotation> annotations = (Set<SimpleAnnotation>)largeOp.getValue("annotationMapCache", se.getId());
+        	AncestorSet ancestorSet = (AncestorSet)largeOp.getValue("ancestorMapCache", se.getId());
         	Set<Long> ancestors = ancestorSet==null ? null : ancestorSet.getAncestors(); 
-        	SolrInputDocument doc = solr.createDoc(se, annotations, ancestors);
+        	SolrInputDocument doc = createDoc(se, annotations, ancestors);
         	docs.add(doc);
         }
         return docs;
@@ -478,7 +251,7 @@ public class SolrDAO extends AnnotationDAO {
     	for(EntityData ed : entity.getEntityData()) {
     		if (ed.getValue()!=null) {
     			String attr = (ed.getEntityAttribute().getName());
-    			simpleEntity.getAttrValues().add(new KeyValuePair(attr, ed.getValue()));
+    			simpleEntity.getAttributes().add(new KeyValuePair(attr, ed.getValue()));
     		}
     		else if (ed.getChildEntity()!=null) {
     			childrenIds.add(ed.getChildEntity().getId());
@@ -504,7 +277,7 @@ public class SolrDAO extends AnnotationDAO {
     	doc.addField("username", entity.getUserLogin(), 1.0f);
     	doc.addField("entity_type", entity.getEntityTypeName(), 1.0f);
     	
-    	for(KeyValuePair kv : entity.getAttrValues()) {
+    	for(KeyValuePair kv : entity.getAttributes()) {
     		if (kv.getValue()!=null) {
     			doc.addField(SolrUtils.getDynamicFieldName(kv.getKey()), kv.getValue(), 1.0f);	
     		}

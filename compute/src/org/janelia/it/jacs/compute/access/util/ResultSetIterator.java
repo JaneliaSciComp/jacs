@@ -71,8 +71,9 @@ public class ResultSetIterator implements Iterator<Object[]> {
      */
     public void close() {
     	try {
-        	if (stmt!=null) stmt.close();
-        	if (conn!=null) conn.close();
+    		if (rs!=null) rs.close();
+    		if (stmt!=null) stmt.close();
+    		if (conn!=null) conn.close();
     	}
     	catch (SQLException e) {
             rethrow(e);
