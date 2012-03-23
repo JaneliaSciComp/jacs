@@ -294,10 +294,11 @@ public class SageImageDiscoveryService implements IService {
         	}
     	}
     	
-		EntityData lsmStackPairEd = EntityUtils.findChildEntityDataWithName(supportingFiles, filePair.getPairTag());
-		Entity lsmStackPair = lsmStackPairEd.getChildEntity();
+		EntityData lsmStackPairEd = EntityUtils.findChildEntityDataWithNameAndType(supportingFiles, filePair.getPairTag(), EntityConstants.TYPE_LSM_STACK_PAIR);
+		Entity lsmStackPair = null;
 		
-		if (lsmStackPair != null) {
+		if (lsmStackPairEd != null) {
+			lsmStackPair = lsmStackPairEd.getChildEntity();
 			// The LSM pair already exists, check if the LSMs have changed
 			Entity stack1 = lsmStackPair.getChildByAttributeName(EntityConstants.ATTRIBUTE_LSM_STACK_1);
 			Entity stack2 = lsmStackPair.getChildByAttributeName(EntityConstants.ATTRIBUTE_LSM_STACK_2);

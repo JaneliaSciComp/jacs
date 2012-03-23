@@ -94,10 +94,14 @@ public class EntityUtils {
     }
 
     public static EntityData findChildEntityDataWithName(Entity entity, String childName) {
+		return findChildEntityDataWithNameAndType(entity, childName, null);
+    }
+
+    public static EntityData findChildEntityDataWithNameAndType(Entity entity, String childName, String type) {
 		for (EntityData ed : entity.getEntityData()) {
 			Entity child = ed.getChildEntity();
 			if (child!=null) {
-				if (child.getName().equals(childName)) {
+				if (child.getName().equals(childName) && (type==null||type.equals(child.getEntityType().getName()))) {
 					return ed;
 				}
 			}
