@@ -201,6 +201,10 @@
             <fileset dir="${basedir}/conf">
                 <include name="ehcache2-jacs.xml"/>
             </fileset>
+            <fileset dir="${basedir}/conf">
+                <include name="hibernate.properties"/>
+                <include name="c3p0.properties"/>
+            </fileset>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
                 <attribute name="Build-Date" value="${DSTAMP} ${TSTAMP}"/>
