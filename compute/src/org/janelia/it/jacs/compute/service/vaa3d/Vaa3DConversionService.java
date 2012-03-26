@@ -73,8 +73,8 @@ public class Vaa3DConversionService extends ParallelFileProcessingService {
     @Override
     protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
     	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
-    	// Reserve 4 out of the 8 slots on a node. This gives us 12 GB of memory. 
-    	jt.setNativeSpecification("-pe batch 4");
+    	// Reserve all 8 slots on a node. This gives us 24 GB of memory. 
+    	jt.setNativeSpecification("-pe batch 8");
     	return jt;
     }
 }
