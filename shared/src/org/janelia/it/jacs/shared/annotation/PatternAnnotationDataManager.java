@@ -4,9 +4,7 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -18,9 +16,6 @@ import java.util.*;
  */
 
 public class PatternAnnotationDataManager {
-
-    public static final String resourceDirString= SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationResourceDir");
-    public static final String quantifierSummaryFilename=SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationQuantifierSummaryFile");
 
     // QS stands for "Quality Summary"
     public static final String QS_NAME_COL = "ScreenSampleName";
@@ -131,6 +126,13 @@ public class PatternAnnotationDataManager {
 
     }
 
+    public static File getPatternAnnotationSummaryFile() {
+        String resourceDirString= SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationResourceDir");
+        String quantifierSummaryFilename=SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationQuantifierSummaryFile");
+        File patternAnnotationSummaryFile=new File(resourceDirString, quantifierSummaryFilename);
+        return patternAnnotationSummaryFile;
+    }
+
     public static void createPatternAnnotationQuantifierSummaryFile(Map<Entity, Map<String, Double>> entityQuantifierMap) throws Exception {
         List<Entity> screenSampleKeyList=new ArrayList<Entity>();
         screenSampleKeyList.addAll(entityQuantifierMap.keySet());
@@ -142,7 +144,7 @@ public class PatternAnnotationDataManager {
         });
 
         // Initialize output file
-        File patternAnnotationSummaryFile=new File(resourceDirString, quantifierSummaryFilename);
+        File patternAnnotationSummaryFile=getPatternAnnotationSummaryFile();
         BufferedWriter bw=new BufferedWriter(new FileWriter(patternAnnotationSummaryFile));
 
         // Create header line
@@ -210,5 +212,25 @@ public class PatternAnnotationDataManager {
         bw.close();
     }
 
+    public static void loadPatternAnnotationQuantifierSummaryFile(File patternAnnotationSummaryFile, Map<Long, Map<String, String>> sampleInfo, double sampleQuantifiers[][]) throws Exception {
+        System.out.println("loadPatternAnnotationQuantifierSummaryFile start()");
+        BufferedReader bw=new BufferedReader(new FileReader(patternAnnotationSummaryFile));
+
+        String firstLine=bw.readLine();
+        if (firstLine==null) {
+            throw new Exception("Could not read first line of file="+patternAnnotationSummaryFile.getAbsolutePath());
+        }
+        String[] firstLineColumnNames=firstLine.split(",");
+        int expectedColumnCount=3 /* path */ + 9 /* Global */ + (QS_COMPARTMENT_LIST.size() * (QS_Z_INDEX_LIST.size() + QS_C_INDEX_LIST.size()));
+        if (firstLineColumnNames.length!=expectedColumnCount) {
+            throw new Exception("Expected columnCount="+expectedColumnCount+" but found "+firstLineColumnNames.length);
+        }
+        int columnHeaderIndex=0;
+        for (int columnIndex=0;columnIndex<firstLineColumnNames.length;columnIndex++) {
+
+        }
+        bw.close();
+        System.out.println("loadPatternAnnotationQuantifierSummaryFile end()");
+    }
 
 }
