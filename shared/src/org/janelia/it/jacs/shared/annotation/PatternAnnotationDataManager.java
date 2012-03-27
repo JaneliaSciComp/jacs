@@ -189,8 +189,19 @@ public class PatternAnnotationDataManager {
                 throw new Exception("Could not find default image filepath for screenSample id="+screenSample.getId());
             }
             bw.write(heatmapFilepath); // comma intentionally not included
+            
+            // Global info
+            Double g0=entityValueMap.get(QS_GLOBAL_PREFIX+".t0"); bw.write(","+g0);
+            Double g1=entityValueMap.get(QS_GLOBAL_PREFIX+".t1"); bw.write(","+g1);
+            Double g2=entityValueMap.get(QS_GLOBAL_PREFIX+".t2"); bw.write(","+g2);
+            Double g3=entityValueMap.get(QS_GLOBAL_PREFIX+".t3"); bw.write(","+g3);
+            Double g4=entityValueMap.get(QS_GLOBAL_PREFIX+".z0"); bw.write(","+g4);
+            Double g5=entityValueMap.get(QS_GLOBAL_PREFIX+".z1"); bw.write(","+g5);
+            Double g6=entityValueMap.get(QS_GLOBAL_PREFIX+".z2"); bw.write(","+g6);
+            Double g7=entityValueMap.get(QS_GLOBAL_PREFIX+".z3"); bw.write(","+g7);
+            Double g8=entityValueMap.get(QS_GLOBAL_PREFIX+".z4"); bw.write(","+g8);
 
-            // Numerical info
+            // Compartmental Numerical info
             for (String compartmentAbbreviation : QS_COMPARTMENT_LIST) {
                 for (String zIndex : QS_Z_INDEX_LIST) {
                     Double value=entityValueMap.get(compartmentAbbreviation+zIndex);
@@ -215,6 +226,7 @@ public class PatternAnnotationDataManager {
     // This method returns: Map<Long, Map<String, String>> sampleInfoMap, Map<Long, List<Double>> quantifierInfoMap
     public static Object[] loadPatternAnnotationQuantifierSummaryFile() throws Exception {
         File patternAnnotationSummaryFile=getPatternAnnotationSummaryFile();
+        Long startTime=new Date().getTime();
         System.out.println("loadPatternAnnotationQuantifierSummaryFile start()");
         BufferedReader bw=new BufferedReader(new FileReader(patternAnnotationSummaryFile));
 
@@ -227,13 +239,32 @@ public class PatternAnnotationDataManager {
         if (firstLineColumnNames.length!=expectedColumnCount) {
             throw new Exception("Expected columnCount="+expectedColumnCount+" but found "+firstLineColumnNames.length);
         }
-        int columnHeaderIndex=0;
-        for (int columnIndex=0;columnIndex<firstLineColumnNames.length;columnIndex++) {
-
+        Map<Long, Map<String, String>> sampleInfoMap=new HashMap<Long, Map<String, String>>();
+        Map<Long, List<Double>> quantifierInfoMap=new HashMap<Long, List<Double>>();
+        String quantifierLine=null;
+        while((quantifierLine=bw.readLine())!=null) {
+            String[] qArr=quantifierLine.split(",");
+            if (qArr.length>0) {
+                Long qId = new Long(qArr[1]);
+                Map<String, String> sampleInfo = new HashMap<String, String>();
+                sampleInfo.put(QS_NAME_COL, qArr[0]);
+                sampleInfo.put(QS_SAMPLE_ID_COL, qArr[1]);
+                sampleInfo.put(QS_HEATMAP_PATH_COL, qArr[2]);
+                sampleInfoMap.put(qId, sampleInfo);
+                List<Double> qList = new ArrayList<Double>();
+                for (int columnIndex = 3; columnIndex < firstLineColumnNames.length; columnIndex++) {
+                    qList.add(new Double(qArr[columnIndex]));
+                }
+                quantifierInfoMap.put(qId, qList);
+            }
         }
         bw.close();
-        System.out.println("loadPatternAnnotationQuantifierSummaryFile end()");
-        return null;
+        Object[] returnArr=new Object[2];
+        returnArr[0]=sampleInfoMap;
+        returnArr[1]=quantifierInfoMap;
+        Long elapsedTime=new Date().getTime()-startTime;
+        System.out.println("loadPatternAnnotationQuantifierSummaryFile end() elapsedTime="+elapsedTime);
+        return returnArr;
     }
 
 }
