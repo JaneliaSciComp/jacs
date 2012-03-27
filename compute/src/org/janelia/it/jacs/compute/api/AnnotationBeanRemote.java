@@ -80,5 +80,6 @@ public interface AnnotationBeanRemote {
     public List<Long> getPathToRoot(Long entityId, Long rootId) throws ComputeException;
     public List<Entity> getEntitiesWithAttributeValue(String attrName, String attrValue) throws ComputeException;
     public Map<Entity, Map<String, Double>> getPatternAnnotationQuantifiers() throws ComputeException;
+    public Object[] getPatternAnnotationQuantifierMapsFromSummary() throws ComputeException;
 
 }

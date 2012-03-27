@@ -26,6 +26,7 @@ import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
 import org.janelia.it.jacs.model.user_data.User;
+import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
 
 public class AnnotationDAO extends ComputeBaseDAO {
 
@@ -1843,6 +1844,17 @@ public class AnnotationDAO extends ComputeBaseDAO {
             count++;
         }
         return entityQuantMap;
+    }
+
+    // This method returns two objects,  Map<Long, Map<String, String>> sampleInfoMap, Map<Long, List<Double>> quantifierInfoMap
+    public Object[] getPatternAnnotationQuantifierMapsFromSummary() throws DaoException {
+        try {
+            Object[] mapObjects = PatternAnnotationDataManager.loadPatternAnnotationQuantifierSummaryFile();
+            return mapObjects;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw new DaoException(ex);
+        }
     }
 
 }

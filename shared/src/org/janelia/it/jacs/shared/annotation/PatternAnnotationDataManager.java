@@ -212,7 +212,9 @@ public class PatternAnnotationDataManager {
         bw.close();
     }
 
-    public static void loadPatternAnnotationQuantifierSummaryFile(File patternAnnotationSummaryFile, Map<Long, Map<String, String>> sampleInfo, double sampleQuantifiers[][]) throws Exception {
+    // This method returns: Map<Long, Map<String, String>> sampleInfoMap, Map<Long, List<Double>> quantifierInfoMap
+    public static Object[] loadPatternAnnotationQuantifierSummaryFile() throws Exception {
+        File patternAnnotationSummaryFile=getPatternAnnotationSummaryFile();
         System.out.println("loadPatternAnnotationQuantifierSummaryFile start()");
         BufferedReader bw=new BufferedReader(new FileReader(patternAnnotationSummaryFile));
 
@@ -231,6 +233,7 @@ public class PatternAnnotationDataManager {
         }
         bw.close();
         System.out.println("loadPatternAnnotationQuantifierSummaryFile end()");
+        return null;
     }
 
 }

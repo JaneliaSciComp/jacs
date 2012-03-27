@@ -596,6 +596,15 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
     }
 
+    public Object[] getPatternAnnotationQuantifierMapsFromSummary() throws ComputeException {
+        try {
+            return _annotationDAO.getPatternAnnotationQuantifierMapsFromSummary();
+        } catch (DaoException e) {
+            _logger.error("Error in getPatternAnnotationQuantifierMapsFromSummary(): "+e.getMessage());
+            throw new ComputeException("Error in getPatternAnnotationQuantifierMapsFromSummary(): "+e.getMessage(), e);
+        }
+    }
+
     public void loadLazyEntity(Entity entity, boolean recurse) throws DaoException {
 		
         if (!EntityUtils.areLoaded(entity.getEntityData())) {
