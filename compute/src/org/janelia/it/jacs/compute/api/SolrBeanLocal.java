@@ -15,4 +15,6 @@ public interface SolrBeanLocal {
 
 	public void mongoAllEntities(boolean clearDb) throws ComputeException;
 	
+	public void neo4jAllEntities(boolean clearDb) throws ComputeException;
+
 }

@@ -59,7 +59,32 @@
         </javac>
     </target>
 
-    <target name="local-jar" depends="local-compile, compile, make-jars-dir">
+    <target name="local-jar" depends="local-compile, compile, make-jars-dir" unless="manifest.classpath">  
+  
+    	<property name="dep.dir" value="${build.jars.dir}/lib"/>
+        <delete dir="${dep.dir}"/>
+        <mkdir dir="${dep.dir}" />
+			
+		<path id="compute.classpath">
+			<fileset dir="${common.dir}/Apache-Commons" includes="**/*.jar"/>
+			<fileset dir="${common.dir}/Solrj" includes="**/*.jar"/>
+			<fileset dir="${common.dir}/ehcache" includes="**/*.jar"/>
+			<fileset dir="${common.dir}/MongoDB" includes="**/*.jar"/>
+			<fileset dir="${common.dir}/Spring-3" includes="**/*.jar"/>
+        </path>
+    		
+    	<copy todir="${dep.dir}" flatten="true">
+    	  	<path refid="compute.classpath"/>
+    	</copy>
+    	
+		<path id="dependency.classpath">
+			<fileset dir="${dep.dir}" includes="**/*.jar"/>
+        </path>	
+    	
+    	<manifestclasspath property="manifest.classpath" jarfile="${build.jars.dir}/empty.ear">
+       		<classpath refid="dependency.classpath" />
+        </manifestclasspath>
+    
 		<jar destfile="${build.jars.dir}/${jar.name}">
             <fileset dir="${build.classes.dir}">
                 <include name="**/*.class"/>
@@ -70,7 +95,7 @@
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
                 <attribute name="Build-Date" value="${DSTAMP} ${TSTAMP}"/>
-                <attribute name="Class-Path" value="lucene-core-2.3.1.jar xerces_2_5_0.jar xml-apis.jar pdf-transcoder.jar js.jar commons-net-2.0.jar commons-vfs-1.0.jar"/>
+                <attribute name="Class-Path" value="${manifest.classpath}"/>
             </manifest>
         </jar>
 
@@ -190,6 +215,7 @@
             <fileset dir="${basedir}/../shared/lib">
                 <include name="**/*.jar"/>
             </fileset>
+            <zipfileset dir="${dep.dir}" prefix="lib"/>
             <fileset file="${basedir}/../common/Spring/jxl.jar"/>
             <!--
             <fileset dir="${basedir}/conf">
@@ -199,11 +225,10 @@
                 <include name="jacs.properties"/>
             </fileset>
             <fileset dir="${basedir}/conf">
-                <include name="ehcache2-jacs.xml"/>
-            </fileset>
-            <fileset dir="${basedir}/conf">
-                <include name="hibernate.properties"/>
+            	<include name="hibernate.properties"/>
                 <include name="c3p0.properties"/>
+            	<include name="ehcache2-jacs.xml"/>
+            	<include name="neo4j-beans.xml"/>
             </fileset>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>

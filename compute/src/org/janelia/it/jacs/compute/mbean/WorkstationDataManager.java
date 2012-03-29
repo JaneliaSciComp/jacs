@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.compute.mbean;
 
+import java.util.*;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
@@ -9,7 +11,6 @@ import org.janelia.it.jacs.compute.service.fileDiscovery.FlyScreenDiscoveryServi
 import org.janelia.it.jacs.compute.service.fly.ScreenSampleLineCoordinationService;
 import org.janelia.it.jacs.compute.service.mongodb.MongoDbLoadService;
 import org.janelia.it.jacs.compute.service.solr.SolrIndexingService;
-import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -25,11 +26,6 @@ import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.util.*;
-
 /**
  * Created by IntelliJ IDEA.
  * User: murphys
@@ -44,6 +40,20 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     public WorkstationDataManager() {
     }
 
+    public void runNeo4jSync(Boolean clearDb) {
+        try {
+        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        	taskParameters.add(new TaskParameter(MongoDbLoadService.PARAM_clearDb, Boolean.toString(clearDb), null)); 
+        	Task task = new GenericTask(new HashSet<Node>(), "system", new ArrayList<Event>(), 
+        			taskParameters, "neo4jSync", "Neo4j Sync");
+            task.setJobName("Neo4j Sync Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("Neo4jSync", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
     public void runMongoDbSync(Boolean clearDb) {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();

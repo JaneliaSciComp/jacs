@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.service.mongodb;
+package org.janelia.it.jacs.compute.service.neo4j;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -10,11 +10,11 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.tasks.Task;
 
 /**
- * Update the MongoDB.
+ * Update the Neo4j database.
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class MongoDbLoadService implements IService {
+public class Neo4jLoadService implements IService {
 
     public transient static final String PARAM_clearDb = "clear db";
 	
@@ -32,13 +32,13 @@ public class MongoDbLoadService implements IService {
             solrBean = EJBFactory.getLocalSolrBean();
             username = task.getOwner();
             cleardb = Boolean.parseBoolean(task.getParameter(PARAM_clearDb));
-            solrBean.mongoAllEntities(cleardb);
+            solrBean.neo4jAllEntities(cleardb);
     	}
         catch (Exception e) {
         	if (e instanceof ServiceException) {
             	throw (ServiceException)e;
             }
-            throw new ServiceException("Error running MongoDbLoadService", e);
+            throw new ServiceException("Error running Neo4jLoadService", e);
         }
     }    
 }

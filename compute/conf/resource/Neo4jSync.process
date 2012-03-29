@@ -1,0 +1,9 @@
+<!-- 
+	Synchronize index with entities in the database. 
+-->
+<process name="Neo4j Index Synchronization" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
+	<sequence>
+		<operation name="Neo4j Sync" processor="org.janelia.it.jacs.compute.service.neo4j.Neo4jLoadService">
+		</operation>
+    </sequence>
+</process>

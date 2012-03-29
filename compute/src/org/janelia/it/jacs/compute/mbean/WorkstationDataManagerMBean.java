@@ -8,6 +8,8 @@ package org.janelia.it.jacs.compute.mbean;
  */
 public interface WorkstationDataManagerMBean {
     	
+	public void runNeo4jSync(Boolean clearDb);
+	
 	public void runMongoDbSync(Boolean clearDb);
 	
 	public void runSolrIndexSync(Boolean clearIndex); 
