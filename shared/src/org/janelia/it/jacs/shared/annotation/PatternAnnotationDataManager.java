@@ -125,6 +125,14 @@ public class PatternAnnotationDataManager {
         QS_C_INDEX_LIST.add(".c4");
 
     }
+    
+    public static List<String> getCompartmentListInstance() {
+        List<String> compartmentListInstance = new ArrayList<String>();
+        for (String c : QS_COMPARTMENT_LIST) {
+            compartmentListInstance.add(c);
+        }
+        return compartmentListInstance;
+    }
 
     public static File getPatternAnnotationSummaryFile() {
         String resourceDirString= SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationResourceDir");
