@@ -34,4 +34,4 @@
 %>
 
 <!-- Load Google Maps code -->
-<script src="http://maps.google.com/maps?file=api&v=2&key=<%=mapKey%>" type="text/javascript"></script>
+<script src="http://maps.google.com/maps?file=api&userIp=jacs&v=2&key=<%=mapKey%>" type="text/javascript"></script>

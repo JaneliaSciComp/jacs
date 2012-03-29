@@ -36,7 +36,7 @@
         <meta name='gwt:module' content='org.janelia.it.jacs.web.gwt.download.ProjectSamplesPage'>
 
         <jsp:include page="/WEB-INF/jsp/common/GWTIncludes.jsp"/>
-        <jsp:include page="/WEB-INF/jsp/common/GoogleMapsIncludes.jsp"/>
+        <%--<jsp:include page="/WEB-INF/jsp/common/GoogleMapsIncludes.jsp"/>--%>
         <jsp:include page="/WEB-INF/jsp/common/Preferences.jsp">
             <jsp:param name="prefCategoryNames" value="samples,BasePaginatorRowsPerPage" />
         </jsp:include>

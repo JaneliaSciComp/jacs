@@ -2,12 +2,6 @@
 package org.janelia.it.jacs.web.gwt.status.client.wizard;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.maps.client.InfoWindowContent;
-import com.google.gwt.maps.client.MapType;
-import com.google.gwt.maps.client.event.MarkerClickHandler;
-import com.google.gwt.maps.client.geom.LatLng;
-import com.google.gwt.maps.client.overlay.Marker;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
@@ -15,7 +9,6 @@ import com.google.gwt.user.client.ui.*;
 import org.janelia.it.jacs.shared.tasks.BlastJobInfo;
 import org.janelia.it.jacs.web.gwt.common.client.Constants;
 import org.janelia.it.jacs.web.gwt.common.client.model.genomics.BlastHit;
-import org.janelia.it.jacs.web.gwt.common.client.model.metadata.Site;
 import org.janelia.it.jacs.web.gwt.common.client.panel.TitledBoxActionLinkUtils;
 import org.janelia.it.jacs.web.gwt.common.client.service.DataService;
 import org.janelia.it.jacs.web.gwt.common.client.service.DataServiceAsync;
@@ -25,11 +18,9 @@ import org.janelia.it.jacs.web.gwt.common.client.service.log.Logger;
 import org.janelia.it.jacs.web.gwt.common.client.ui.RoundedButton;
 import org.janelia.it.jacs.web.gwt.common.client.ui.link.BackActionLink;
 import org.janelia.it.jacs.web.gwt.common.client.ui.link.HelpActionLink;
-import org.janelia.it.jacs.web.gwt.common.client.ui.table.comparables.PopperUpperHTML;
 import org.janelia.it.jacs.web.gwt.common.client.util.HtmlUtils;
 import org.janelia.it.jacs.web.gwt.common.client.wizard.WizardController;
 import org.janelia.it.jacs.web.gwt.common.shared.data.EntityListener;
-import org.janelia.it.jacs.web.gwt.map.client.GoogleMap;
 import org.janelia.it.jacs.web.gwt.status.client.JobResultsData;
 import org.janelia.it.jacs.web.gwt.status.client.Status;
 import org.janelia.it.jacs.web.gwt.status.client.panel.AlignmentListener;
@@ -37,9 +28,12 @@ import org.janelia.it.jacs.web.gwt.status.client.panel.BlastHitsPanel;
 import org.janelia.it.jacs.web.gwt.status.client.panel.JobSummaryPanel;
 import org.janelia.it.jacs.web.gwt.status.client.panel.SequenceAlignmentPanel;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+//import com.google.gwt.maps.client.InfoWindowContent;
+//import com.google.gwt.maps.client.MapType;
+//import com.google.gwt.maps.client.event.MarkerClickHandler;
+//import com.google.gwt.maps.client.geom.LatLng;
+//import com.google.gwt.maps.client.overlay.Marker;
+//import org.janelia.it.jacs.web.gwt.map.client.GoogleMap;
 
 /**
  * This is part of the job results wizard; this page shows one job's results.
@@ -257,7 +251,7 @@ public class JobDetailsPage extends JobResultsWizardPage {
         _logger.trace("JobDetailsPage.setupPanels()");
         _summaryPanel.setJob((BlastJobInfo) getData().getJob());
         _hitPanel.setJob((BlastJobInfo) getData().getJob());
-        new MapTimer().schedule(1000); // 1 sec delay for hit table to update onscreen
+//        new MapTimer().schedule(1000); // 1 sec delay for hit table to update onscreen
     }
 
     /**
@@ -292,126 +286,126 @@ public class JobDetailsPage extends JobResultsWizardPage {
     }
 
     // TODO: move this into a MapBox subclass to manage
-    public class MapTimer extends Timer {
-        public void run() {
-            _dataservice.getSitesForBlastResult(getData().getJob().getJobId(), new MapDataRetrieved());
-        }
-    }
+//    public class MapTimer extends Timer {
+//        public void run() {
+//            _dataservice.getSitesForBlastResult(getData().getJob().getJobId(), new MapDataRetrieved());
+//        }
+//    }
 
-    private class MapDataRetrieved implements AsyncCallback {
-        public static final int MAP_SIZE = 400;
-
-        public void onFailure(Throwable throwable) {
-            _logger.error("getSitesForBlastResult().onFailure(): ", throwable);
-            setMapError();
-        }
-
-        public void onSuccess(Object object) {
-            _logger.debug("getSitesForBlastResult().onSuccess()");
-            if (object == null) {
-                _logger.debug("got null map sites, setting no data message");
-                setMapNoDataMessage();
-            }
-            else if (((Map) object).size() == 0) {
-                _logger.debug("got empty map sites, setting no data message");
-                setMapNoDataMessage();
-            }
-            else {
-                if (_logger.isDebugEnabled()) _logger.debug("retrieved " + ((Map) object).size() + " sites for map");
-                Map sites = (Map) object;
-
-                // Create site markers and retrieve the map
-                _logger.debug("creating map");
-                Set<Marker> markers = getSiteMarkers(sites);
-                GoogleMap map = new GoogleMap((markers.iterator().next()).getLatLng(), /*zoom*/3, markers, MAP_SIZE, MAP_SIZE);
-                map.setMapType(MapType.getHybridMap());
-//                _mapPanel.setMap(map);
-
-                // Configure the number of sites text and popup
-                updateSiteNumLabel(sites);
-                _logger.debug("map complete");
-            }
-        }
-
-        private Set<Marker> getSiteMarkers(Map sites) {
-            Set<Marker> markers = new HashSet<Marker>();
-            for (Object o : sites.keySet()) {
-                Site site = (Site) o;
-                if (site.getLatitudeDouble() != null && site.getLongitudeDouble() != null) {
-                    final Marker marker = new Marker(LatLng.newInstance(site.getLatitudeDouble(), site.getLongitudeDouble()));
-                    final String html = getSiteMarkerHtml(site, (Integer) sites.get(site));
-                    marker.addMarkerClickHandler(new MarkerClickHandler() {
-                        public void onClick(MarkerClickEvent clickEvent) {
-                            clickEvent.getSender().showMapBlowup(new InfoWindowContent(html));
-                        }
-                    });
-
-                    markers.add(marker);
-                }
-            }
-            return markers;
-        }
-
-        private void updateSiteNumLabel(Map markers) {
-            // PopperUpper to show the sites
-            Widget link = new PopperUpperHTML(String.valueOf(markers.size()) + " sample site" + ((markers.size() > 1) ? "s" : ""),
-                    getSampleSitePopup(markers));
-            DOM.setStyleAttribute(link.getElement(), "display", "inline");
-
-            // Text after the popperupper
-            HTML text = HtmlUtils.getHtml(((markers.size() > 1) ? "are" : "is") + " represented in this data set", "text");
-            DOM.setStyleAttribute(text.getElement(), "display", "inline");
-
-            // Create a panel with ">> N sites are represented in this data set" and add the link and text
-            HTMLPanel numSites = new HTMLPanel(
-                    "<span class='greaterGreater'>&gt;&gt;&nbsp;</span>" +
-                            "<span id='numSitesLink'></span>&nbsp;<span id='numSitesCaption'></span>");
-            numSites.setStyleName("text"); // for the space
-            DOM.setStyleAttribute(numSites.getElement(), "display", "inline");
-
-            numSites.add(link, "numSitesLink");
-            numSites.add(text, "numSitesCaption");
-
-            _numSitesPanel.add(numSites);
-            _numSitesPanel.setVisible(true);
-        }
-
-        private HTML getSampleSitePopup(Map sites) {
-            StringBuffer buf = new StringBuffer();
-            for (Object o : sites.keySet()) {
-                Site site = (Site) o;
-                buf.append("<span class='infoPrompt'>&bull;&nbsp; ").append(site.getSiteId()).append("&nbsp;</span>");
-                buf.append("<span class='infoText'>").append(site.getSampleLocation()).append("</span>");
-                buf.append("<br>");
-            }
-            return HtmlUtils.getHtml(buf.toString(), "infoText");
-        }
-
-        private String getSiteMarkerHtml(Site site, Integer numHits) {
-            return
-                    "<span class='infoPrompt'>" + site.getSiteId() + "</span><br>" +
-                            "<span class='infoText'>" + site.getSampleLocation() + "</span><br><br>" +
-                            "<span class='infoText'>" + numHits + " matching sequence" + ((numHits > 1) ? "s" : "") + "</span>";
-            //"<br>"
-            //"<span class='greaterGreater'>&gt;&gt;</span>&nbsp;<span class='smallTextLink'>View matching sequences</span><br>" +
-            //"<span class='greaterGreater'>&gt;&gt;</span>&nbsp;<span class='smallTextLink'>View sample data</span><br>" +
-            //"&nbsp;"
-            //);
-        }
-
-        private void setMapError() {
-            _logger.error("Failure retrieving blast result node for job " + getData().getJob().getJobId());
-//            _mapPanel.setMessage("Error retrieving geographical information.", "error");
-            _numSitesPanel.setVisible(false);
-        }
-
-        private void setMapNoDataMessage() {
-            _logger.debug("No sites to map");
-//            _mapPanel.setMessage("No geographical information is available for these sequences.", "text");
-            _numSitesPanel.setVisible(false);
-        }
-
-    }
+//    private class MapDataRetrieved implements AsyncCallback {
+//        public static final int MAP_SIZE = 400;
+//
+//        public void onFailure(Throwable throwable) {
+//            _logger.error("getSitesForBlastResult().onFailure(): ", throwable);
+//            setMapError();
+//        }
+//
+//        public void onSuccess(Object object) {
+//            _logger.debug("getSitesForBlastResult().onSuccess()");
+//            if (object == null) {
+//                _logger.debug("got null map sites, setting no data message");
+//                setMapNoDataMessage();
+//            }
+//            else if (((Map) object).size() == 0) {
+//                _logger.debug("got empty map sites, setting no data message");
+//                setMapNoDataMessage();
+//            }
+//            else {
+//                if (_logger.isDebugEnabled()) _logger.debug("retrieved " + ((Map) object).size() + " sites for map");
+//                Map sites = (Map) object;
+//
+//                // Create site markers and retrieve the map
+//                _logger.debug("creating map");
+//                Set<Marker> markers = getSiteMarkers(sites);
+//                GoogleMap map = new GoogleMap((markers.iterator().next()).getLatLng(), /*zoom*/3, markers, MAP_SIZE, MAP_SIZE);
+//                map.setMapType(MapType.getHybridMap());
+////                _mapPanel.setMap(map);
+//
+//                // Configure the number of sites text and popup
+//                updateSiteNumLabel(sites);
+//                _logger.debug("map complete");
+//            }
+//        }
+//
+//        private Set<Marker> getSiteMarkers(Map sites) {
+//            Set<Marker> markers = new HashSet<Marker>();
+//            for (Object o : sites.keySet()) {
+//                Site site = (Site) o;
+//                if (site.getLatitudeDouble() != null && site.getLongitudeDouble() != null) {
+//                    final Marker marker = new Marker(LatLng.newInstance(site.getLatitudeDouble(), site.getLongitudeDouble()));
+//                    final String html = getSiteMarkerHtml(site, (Integer) sites.get(site));
+//                    marker.addMarkerClickHandler(new MarkerClickHandler() {
+//                        public void onClick(MarkerClickEvent clickEvent) {
+//                            clickEvent.getSender().showMapBlowup(new InfoWindowContent(html));
+//                        }
+//                    });
+//
+//                    markers.add(marker);
+//                }
+//            }
+//            return markers;
+//        }
+//
+//        private void updateSiteNumLabel(Map markers) {
+//            // PopperUpper to show the sites
+//            Widget link = new PopperUpperHTML(String.valueOf(markers.size()) + " sample site" + ((markers.size() > 1) ? "s" : ""),
+//                    getSampleSitePopup(markers));
+//            DOM.setStyleAttribute(link.getElement(), "display", "inline");
+//
+//            // Text after the popperupper
+//            HTML text = HtmlUtils.getHtml(((markers.size() > 1) ? "are" : "is") + " represented in this data set", "text");
+//            DOM.setStyleAttribute(text.getElement(), "display", "inline");
+//
+//            // Create a panel with ">> N sites are represented in this data set" and add the link and text
+//            HTMLPanel numSites = new HTMLPanel(
+//                    "<span class='greaterGreater'>&gt;&gt;&nbsp;</span>" +
+//                            "<span id='numSitesLink'></span>&nbsp;<span id='numSitesCaption'></span>");
+//            numSites.setStyleName("text"); // for the space
+//            DOM.setStyleAttribute(numSites.getElement(), "display", "inline");
+//
+//            numSites.add(link, "numSitesLink");
+//            numSites.add(text, "numSitesCaption");
+//
+//            _numSitesPanel.add(numSites);
+//            _numSitesPanel.setVisible(true);
+//        }
+//
+//        private HTML getSampleSitePopup(Map sites) {
+//            StringBuffer buf = new StringBuffer();
+//            for (Object o : sites.keySet()) {
+//                Site site = (Site) o;
+//                buf.append("<span class='infoPrompt'>&bull;&nbsp; ").append(site.getSiteId()).append("&nbsp;</span>");
+//                buf.append("<span class='infoText'>").append(site.getSampleLocation()).append("</span>");
+//                buf.append("<br>");
+//            }
+//            return HtmlUtils.getHtml(buf.toString(), "infoText");
+//        }
+//
+//        private String getSiteMarkerHtml(Site site, Integer numHits) {
+//            return
+//                    "<span class='infoPrompt'>" + site.getSiteId() + "</span><br>" +
+//                            "<span class='infoText'>" + site.getSampleLocation() + "</span><br><br>" +
+//                            "<span class='infoText'>" + numHits + " matching sequence" + ((numHits > 1) ? "s" : "") + "</span>";
+//            //"<br>"
+//            //"<span class='greaterGreater'>&gt;&gt;</span>&nbsp;<span class='smallTextLink'>View matching sequences</span><br>" +
+//            //"<span class='greaterGreater'>&gt;&gt;</span>&nbsp;<span class='smallTextLink'>View sample data</span><br>" +
+//            //"&nbsp;"
+//            //);
+//        }
+//
+//        private void setMapError() {
+//            _logger.error("Failure retrieving blast result node for job " + getData().getJob().getJobId());
+////            _mapPanel.setMessage("Error retrieving geographical information.", "error");
+//            _numSitesPanel.setVisible(false);
+//        }
+//
+//        private void setMapNoDataMessage() {
+//            _logger.debug("No sites to map");
+////            _mapPanel.setMessage("No geographical information is available for these sequences.", "text");
+//            _numSitesPanel.setVisible(false);
+//        }
+//
+//    }
 
 
 }
