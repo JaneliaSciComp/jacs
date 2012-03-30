@@ -97,6 +97,21 @@
     </operation>
     
     <operation>
+        <description>Run the Whole Brain 63x Alignment Pipeline</description>
+        <name>runAlignWholeBrainPipeline</name>
+        <parameter>
+           <description>User to run as (e.g. "system")</description>
+           <name>user</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Re-run brain alignments?</description>
+           <name>refreshAlignment</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+    </operation>
+    
+    <operation>
         <description>Run the entire MCFO Data Pipeline</description>
         <name>runMCFODataPipeline</name>
         <parameter>

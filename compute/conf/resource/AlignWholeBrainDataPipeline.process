@@ -1,0 +1,40 @@
+<!-- 
+	Run the 63x whole brain aligner on every WHOLE_BRAIN sample in the single neuron data. 
+-->
+<process name="Align Whole Brain Data Pipeline" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
+	<sequence>
+	
+	    <!-- Import variables from the MCFODataPipelineTask -->
+	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="TASK_PARAMETER_1" value="refresh alignment"/>
+            <input name="PROCESS_VARIABLE_1" value="REFRESH_ALIGNMENT"/>
+	        <output name="REFRESH_ALIGNMENT"/>
+	    </operation>
+		
+	    <!-- Find all the WHOLE_BRAIN sample entities -->
+		<operation name="Entity Tree Traversal" processor="org.janelia.it.jacs.compute.service.entity.WholeBrainTraversalService">
+			<input name="OUTVAR_ENTITY_ID" value="SAMPLE_ENTITY_ID"/>
+		</operation>
+		
+	    <!-- Process each Sample Entity -->
+        <sequence forEach="SAMPLE_ENTITY_ID">
+            <sequence>
+			
+				<!-- Spawn a new task to process the Sample	-->
+		        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
+        			<input name="TASK_CLASS" value="org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOSamplePipelineTask"/>
+        			<input name="WAIT_FOR_COMPLETION" value="false"/>
+		            <input name="PROCESS_DEF_NAME" value="AlignWholeBrainSamplePipeline"/>
+		            <input name="PARAMETER_1_KEY" value="sample entity id"/>
+		            <input name="SAMPLE_ENTITY_ID"/>
+		            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
+		            <input name="REFRESH_ALIGNMENT"/>
+		            <input name="PARAMETER_2_VALUE" value="$V{REFRESH_ALIGNMENT}"/>
+		            <input name="PARAMETER_2_KEY" value="refresh alignment"/>
+		        </operation>
+		        
+			</sequence>
+	    </sequence>
+	    
+    </sequence>
+</process>

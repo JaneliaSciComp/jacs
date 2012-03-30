@@ -77,7 +77,7 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
         for (File resultFile : files) {
         	
         	String filename = resultFile.getName();
-            if (filename.contains(".chk")) {
+            if (filename.contains(".chk") || filename.endsWith(".nsp")) {
                 addResultItem(filesFolder, image3D, resultFile);
             }
             else {

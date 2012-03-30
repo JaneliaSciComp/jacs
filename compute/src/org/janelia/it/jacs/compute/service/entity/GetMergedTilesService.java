@@ -43,7 +43,7 @@ public class GetMergedTilesService implements IService {
         	
         	List<MergedTile> tiles = new ArrayList<MergedTile>();
         	
-        	for(Entity lsmPairEntity : sampleEntity.getDescendantsOfType(EntityConstants.TYPE_LSM_STACK_PAIR)) {
+        	for(Entity lsmPairEntity : sampleEntity.getDescendantsOfType(EntityConstants.TYPE_LSM_STACK_PAIR, true)) {
         		Entity mergedStack = lsmPairEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_MERGED_STACK);
         		if (mergedStack != null) {
         			File mergedFile = new File(mergedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));

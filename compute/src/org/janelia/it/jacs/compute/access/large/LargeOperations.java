@@ -27,11 +27,16 @@ import org.janelia.it.jacs.model.entity.EntityType;
  */
 public class LargeOperations {
 
+	public static final String ANNOTATION_MAP = "annotationMapCache";
+	public static final String ANCESTOR_MAP = "ancestorMapCache";
+	public static final String NEO4J_MAP = "neo4jMapCache";
+	
     private static final Logger logger = Logger.getLogger(LargeOperations.class);
 	
 	protected static CacheManager manager;
 	protected static Cache annotationMapCache;
 	protected static Cache ancestorMapCache;
+	protected static Cache neo4jMapCache;
 	
 	protected AnnotationDAO annotationDAO;
 	
@@ -40,8 +45,9 @@ public class LargeOperations {
         synchronized (LargeOperations.class) {
 	        if (manager==null) {
 	        	manager = new CacheManager(getClass().getResource("/ehcache2-jacs.xml"));
-	        	annotationMapCache = manager.getCache("annotationMapCache");
-	        	ancestorMapCache = manager.getCache("ancestorMapCache");
+	        	annotationMapCache = manager.getCache(ANNOTATION_MAP);
+	        	ancestorMapCache = manager.getCache(ANCESTOR_MAP);
+	        	neo4jMapCache = manager.getCache(NEO4J_MAP);
 	        }
         }
     }
@@ -268,11 +274,14 @@ public class LargeOperations {
     }
 
     private Cache getCache(String cacheName) {
-    	if ("ancestorMapCache".equals(cacheName)) {
+    	if (ANCESTOR_MAP.equals(cacheName)) {
     		return ancestorMapCache;
     	}
-    	else if ("annotationMapCache".equals(cacheName)) {
+    	else if (ANNOTATION_MAP.equals(cacheName)) {
     		return annotationMapCache;
+    	}
+    	else if (NEO4J_MAP.equals(cacheName)) {
+    		return neo4jMapCache;
     	}
     	else {
     		throw new IllegalArgumentException("Unknown cache: "+cacheName);

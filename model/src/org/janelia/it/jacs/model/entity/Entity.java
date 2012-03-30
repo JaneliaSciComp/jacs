@@ -290,25 +290,34 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     	return orderedData;
     }
 
+    public List<Entity> getDescendantsOfType(String typeName) {
+    	return getDescendantsOfType(typeName, false);
+    }
+    
     /**
      * Get all the descendants (including self) which are of a certain type. Depends on the subtree of entities 
      * "below" this one being loaded.
      *
      * @param typeName
+     * @param ignoreNested short circuit on searching a subtree once an entity of the given type is found
      * @return
      */
-    public List<Entity> getDescendantsOfType(String typeName) {
+    public List<Entity> getDescendantsOfType(String typeName, boolean ignoreNested) {
 
+    	boolean found = false;
         List<Entity> items = new ArrayList<Entity>();
         if (typeName==null || typeName.equals(getEntityType().getName())) {
             items.add(this);
+            found = true;
         }
-
-        for (EntityData entityData : getOrderedEntityData()) {
-            Entity child = entityData.getChildEntity();
-            if (child != null) {
-                items.addAll(child.getDescendantsOfType(typeName));
-            }
+        
+        if (!found || !ignoreNested) {
+            for (EntityData entityData : getOrderedEntityData()) {
+                Entity child = entityData.getChildEntity();
+                if (child != null) {
+                    items.addAll(child.getDescendantsOfType(typeName));
+                }
+            }	
         }
 
         return items;

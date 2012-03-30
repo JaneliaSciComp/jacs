@@ -62,7 +62,7 @@ public class InitSampleProcessingParametersService implements IService {
         	List<String> tags = new ArrayList<String>();
         	List<MergedLsmPair> mergedLsmPairs = new ArrayList<MergedLsmPair>();
         	
-        	for(Entity lsmPairEntity : sampleEntity.getDescendantsOfType(EntityConstants.TYPE_LSM_STACK_PAIR)) {
+        	for(Entity lsmPairEntity : sampleEntity.getDescendantsOfType(EntityConstants.TYPE_LSM_STACK_PAIR, true)) {
         		String lsmFilepath1 = null;
         		String lsmFilepath2 = null;
         		

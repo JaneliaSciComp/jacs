@@ -45,17 +45,24 @@ public class InitAlignmentParametersService implements IService {
     			return;
     		}
     		
-    		TilingPattern pattern = TilingPattern.valueOf(strTilingPattern);
-
-    		if (pattern == TilingPattern.OPTIC_TILE) {
-            	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.OpticLobeAlignmentService");
-            	processData.putItem("ALIGNMENT_RESULT_NAME", "Optic Lobe Alignment");
+    		String run63xAligner = (String)processData.getItem("RUN_63X_ALIGNER");
+    		
+    		if (run63xAligner!=null && "true".equalsIgnoreCase(run63xAligner)) {
+            	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.WholeBrain63xAlignmentService");
+            	processData.putItem("ALIGNMENT_RESULT_NAME", "Whole Brain 63x Alignment");
     		}
     		else {
-            	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.BrainAlignmentService");
-            	processData.putItem("ALIGNMENT_RESULT_NAME", "Central Brain Alignment");
-    		}
+        		TilingPattern pattern = TilingPattern.valueOf(strTilingPattern);
 
+        		if (pattern == TilingPattern.OPTIC_TILE) {
+                	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.OpticLobeAlignmentService");
+                	processData.putItem("ALIGNMENT_RESULT_NAME", "Optic Lobe Alignment");
+        		}
+        		else {
+                	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.BrainAlignmentService");
+                	processData.putItem("ALIGNMENT_RESULT_NAME", "Central Brain Alignment");
+        		}
+    		}
         	
         } catch (Exception e) {
             throw new ServiceException(e);

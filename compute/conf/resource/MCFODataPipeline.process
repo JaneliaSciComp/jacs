@@ -1,5 +1,5 @@
 <!-- 
-	Discover samples in the fileshare, load them into the database and run the MCFOSamplePipeline for each one 
+	Discover images in SAGE, add them into the database and run the MCFOSamplePipeline for each one 
 -->
 <process name="MultiColor FlipOut Data Pipeline" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
 	<sequence>
@@ -50,10 +50,10 @@
 		            <input name="REFRESH_PROCESSING"/>
 		            <input name="PARAMETER_2_VALUE" value="$V{REFRESH_PROCESSING}"/>
 		            <input name="PARAMETER_3_KEY" value="refresh alignment"/>
-		            <input name="REFRESH_PROCESSING"/>
+		            <input name="REFRESH_ALIGNMENT"/>
 		            <input name="PARAMETER_3_VALUE" value="$V{REFRESH_ALIGNMENT}"/>
 		            <input name="PARAMETER_4_KEY" value="refresh separation"/>
-		            <input name="REFRESH_PROCESSING"/>
+		            <input name="REFRESH_SEPARATION"/>
 		            <input name="PARAMETER_4_VALUE" value="$V{REFRESH_SEPARATION}"/>
 		        </operation>
 			</sequence>

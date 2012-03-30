@@ -8,23 +8,22 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.fileDiscovery.TilingPattern;
 import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Traverses the entity tree starting from a given root entity and builds a flattened list of ancestor
- * entities. Parameters must be provided in the ProcessData:
- *   ENTITY_TYPE_NAME (The entityType to traverse. If null, all entities will be returned)
- *   ENTITY_FILTER_CLASSNAME (The EntityFilter to use to narrow the resultset)
- *   ROOT_ENTITY_ID (The entity to start at)
+ * Returns all the samples in the Whole Brain folder, and finds all the whole brains.
+ * Parameters must be provided in the ProcessData:
  *   OUTVAR_ENTITY_ID (The output variable to populate with a List of Entities)
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class EntityTreeTraversalService implements IService {
+public class WholeBrainTraversalService implements IService {
 
     protected Logger logger;
     protected Task task;
@@ -39,26 +38,7 @@ public class EntityTreeTraversalService implements IService {
             annotationBean = EJBFactory.getLocalAnnotationBean();
             computeBean = EJBFactory.getLocalComputeBean();
             
-            String entityTypeName = (String)processData.getItem("ENTITY_TYPE_NAME");
-            String entityFilterClassName = (String)processData.getItem("ENTITY_FILTER_CLASS");
-            
-            EntityFilter entityFilter = null;            
-            if (entityFilterClassName!=null) {
-                try {
-                	entityFilter = (EntityFilter)Class.forName(entityFilterClassName).newInstance();
-                }
-                catch (RuntimeException e) {
-            		throw new IllegalArgumentException("Error instantiating ENTITY_FILTER_CLASS, "+entityFilterClassName,e);
-                }
-            }
-
-            Object rootEntityIdObj = processData.getItem("ROOT_ENTITY_ID");
-        	Long rootEntityId = (rootEntityIdObj instanceof Long) ? (Long)rootEntityIdObj : Long.parseLong(rootEntityIdObj.toString());
-        	if (rootEntityId == null) {
-        		throw new IllegalArgumentException("ROOT_ENTITY_ID may not be null");
-        	}
-
-        	boolean outputObjects = false;
+            boolean outputObjects = false;
         	
         	String outvar = (String)processData.getItem("OUTVAR_ENTITY_ID");
         	if (outvar == null) {
@@ -69,21 +49,13 @@ public class EntityTreeTraversalService implements IService {
             	}
         	}
         	
-        	Entity rootEntity = annotationBean.getEntityTree(rootEntityId);
+        	List<Entity> wholeBrains = annotationBean.getEntitiesWithAttributeValue(EntityConstants.ATTRIBUTE_TILING_PATTERN, TilingPattern.WHOLE_BRAIN.toString());
         	
-        	if (rootEntity == null) {
-        		throw new IllegalArgumentException("Root entity not found with id="+rootEntityId);
-        	}
-        	
-        	logger.info("Traversing entity tree rooted at "+rootEntity.getName()+" and searching for "+entityTypeName+"...");
-        	
-        	List<Entity> entities = rootEntity.getDescendantsOfType(entityTypeName, true);
-
-    		logger.info("Found "+entities.size()+" entities. Filtering...");
+    		logger.info("Found "+wholeBrains.size()+" whole brains. Filtering by owner...");
     		
     		List outObjects = new ArrayList();
-        	for(Entity entity : entities) {
-        		if (entityFilter==null || entityFilter.includeEntity(processData, entity)) {
+        	for(Entity entity : wholeBrains) {
+        		if (entity.getUser().getUserLogin().equals(task.getOwner())) {
         			outObjects.add(outputObjects ? entity : entity.getId());	
         		}
         	}

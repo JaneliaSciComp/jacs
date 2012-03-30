@@ -1,8 +1,10 @@
 package org.janelia.it.jacs.compute.service.entity;
 
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
-import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
@@ -11,10 +13,6 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.fileDiscovery.TilingPattern;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Decides which types of MCFO processing will be run for a Sample based on user preferences and 
@@ -22,7 +20,7 @@ import java.util.List;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class ChooseMCFOSampleStepsService implements IService {
+public class ChooseAlignWholeBrainSampleStepsService implements IService {
 
     protected Logger logger;
     protected AnnotationBeanLocal annotationBean;
@@ -35,9 +33,7 @@ public class ChooseMCFOSampleStepsService implements IService {
             this.annotationBean = EJBFactory.getLocalAnnotationBean();
             this.processData = processData;
             
-        	boolean refreshProcessing = getBoolean("REFRESH_PROCESSING");
         	boolean refreshAlignment = getBoolean("REFRESH_ALIGNMENT");
-        	boolean refreshSeparation = getBoolean("REFRESH_SEPARATION");
         	
         	String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
         	if (sampleEntityId == null || "".equals(sampleEntityId)) {
@@ -48,42 +44,30 @@ public class ChooseMCFOSampleStepsService implements IService {
         	if (sampleEntity == null) {
         		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
         	}
-        	
-    		String strTilingPattern = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN);
-    		TilingPattern pattern = null;
-    		
-    		// If the Sample has no tiling pattern then it was not created correctly. But we can fix it on-the-fly.
-    		if (strTilingPattern==null) {
-    			pattern = fixMissingTilingPattern(sampleEntity);
-    		}
-    		else {
-    			pattern = TilingPattern.valueOf(strTilingPattern);
-    		}
-    		
-    		boolean isAlignable = pattern.isAlignable();
 
-    		// TODO: currently Left optic lobe alignments are not supported. This work-around should be removed in the future.
-    		if (pattern == TilingPattern.OPTIC_TILE && sampleEntity.getName().contains("Left")) {
-    			isAlignable = false;
+    		if (!canSkipProcessing(processData, sampleEntity)) {
+    			logger.info("No stitched result found, skipping Sample "+sampleEntity.getName());
+    			processData.putItem("IS_ALIGNABLE", new Boolean(false));
+    			processData.putItem("RUN_ALIGNMENT", new Boolean(false));
+    			processData.putItem("RUN_ALIGNED_SEPARATION", new Boolean(false));
+    			return;
     		}
     		
-    		boolean runProcessing = refreshProcessing || !canSkipProcessing(processData, sampleEntity);
-    		boolean runAlignment = isAlignable && (runProcessing || refreshAlignment || !canSkipAlignment(processData, sampleEntity));
-    		boolean runSeparation = runProcessing || refreshSeparation || !canSkipPrealignedSeparation(processData, sampleEntity);
-    		boolean runAlignedSeparation = runAlignment || refreshSeparation || (isAlignable && !canSkipAlignedSeparation(processData, sampleEntity));
+    		String strTilingPattern = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN);
+    		TilingPattern pattern = TilingPattern.valueOf(strTilingPattern);
+
+    		boolean isAlignable = pattern.isAlignable();
+    		boolean runAlignment = isAlignable && (pattern == TilingPattern.WHOLE_BRAIN) && (refreshAlignment || !canSkipAlignment(processData, sampleEntity));
+    		boolean runAlignedSeparation = false;//runAlignment || (isAlignable && !canSkipAlignedSeparation(processData, sampleEntity));
     		
     		logger.info("Sample "+sampleEntity.getName()+" (id="+sampleEntityId+") has tiling pattern "+pattern.getName()+" (alignable="+isAlignable+")");
     		
-    		processData.putItem("RUN_PROCESSING", new Boolean(runProcessing));
+    		processData.putItem("IS_ALIGNABLE", new Boolean(isAlignable));
     		processData.putItem("RUN_ALIGNMENT", new Boolean(runAlignment));
-    		processData.putItem("RUN_SEPARATION", new Boolean(runSeparation));
     		processData.putItem("RUN_ALIGNED_SEPARATION", new Boolean(runAlignedSeparation));
-        	processData.putItem("IS_ALIGNABLE", new Boolean(isAlignable));
-
+        	
         	logger.info("Pipeline steps to execute for Sample "+sampleEntity.getName()+":");
-        	logger.info("    Processing = "+processData.getItem("RUN_PROCESSING"));
         	logger.info("    Alignment = "+processData.getItem("RUN_ALIGNMENT"));
-        	logger.info("    Prealigned Separation = "+processData.getItem("RUN_SEPARATION"));
         	logger.info("    Aligned Separation = "+processData.getItem("RUN_ALIGNED_SEPARATION"));
         	
         } catch (Exception e) {
@@ -147,15 +131,23 @@ public class ChooseMCFOSampleStepsService implements IService {
 
 		return true;
     }
-    
+	
     public boolean canSkipAlignment(IProcessData processData, Entity sampleEntity) {
 
-		Entity sampleAlignment = sampleEntity.getLatestChildOfType(EntityConstants.TYPE_ALIGNMENT_RESULT);
-		if (sampleAlignment == null) {
+		List<Entity> sampleAlignments = sampleEntity.getChildrenOfType(EntityConstants.TYPE_ALIGNMENT_RESULT);
+		if (sampleAlignments == null || sampleAlignments.isEmpty()) {
 			logger.warn("Cannot find existing alignment result for Sample with id="+sampleEntity.getId());
 			return false;
 		}
 
+    	Collections.reverse(sampleAlignments);
+    	Entity sampleAlignment = null;
+    	for (Entity entity : sampleAlignments) {
+    		if (entity.getName().contains("63x")) {
+    			sampleAlignment = entity;
+    		}
+    	}
+    	
 		Entity alignedFile = null;
 		Entity supportingFiles = sampleAlignment.getLatestChildOfType(EntityConstants.TYPE_SUPPORTING_DATA);
 		if (supportingFiles != null) {
@@ -177,17 +169,6 @@ public class ChooseMCFOSampleStepsService implements IService {
 		return true;
     }
     
-    public boolean canSkipPrealignedSeparation(IProcessData processData, Entity sampleEntity) {
-
-		List<Entity> separations = sampleEntity.getChildrenOfType(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
-    	for(Entity separation : separations) {
-    		if (separation.getName().startsWith("Prealigned")) return true;
-    	}
-
-		logger.warn("Cannot find existing prealigned separation result for Sample with id="+sampleEntity.getId());
-		return false;
-    }
-    
     public boolean canSkipAlignedSeparation(IProcessData processData, Entity sampleEntity) {
 
 		List<Entity> separations = sampleEntity.getChildrenOfType(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
@@ -206,30 +187,4 @@ public class ChooseMCFOSampleStepsService implements IService {
     	}
     	return Boolean.parseBoolean(boolStr);
     }
-    
-    private TilingPattern fixMissingTilingPattern(Entity sample) {
-
-    	Entity supportingFiles = EntityUtils.getSupportingData(sample);
-    	
-    	TilingPattern tiling = TilingPattern.OTHER;
-    	if (supportingFiles!=null) {
-        	List<String> tags = new ArrayList<String>();
-        	for(Entity lsmPairEntity : supportingFiles.getDescendantsOfType(EntityConstants.TYPE_LSM_STACK_PAIR, true)) {
-    			tags.add(lsmPairEntity.getName());
-            }
-            tiling = TilingPattern.getTilingPattern(tags);
-    	}
-        
-        sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN, tiling.toString());
-        
-        try {
-            annotationBean.saveOrUpdateEntity(sample);
-            logger.info("Fixed sample "+sample.getName()+" by adding its tiling pattern: "+tiling.getName());
-        }
-        catch (ComputeException e) {
-        	logger.warn("Unable to fix sample "+sample.getName()+" by adding its tiling pattern ("+tiling.getName()+") but proceeding anyway.",e);
-        }
-        
-        return tiling;
-	}
 }

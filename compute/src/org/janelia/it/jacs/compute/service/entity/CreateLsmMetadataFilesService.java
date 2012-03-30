@@ -62,7 +62,7 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
     	}
     	
-    	for(Entity lsmPairEntity : sampleEntity.getDescendantsOfType(EntityConstants.TYPE_LSM_STACK_PAIR)) {
+    	for(Entity lsmPairEntity : sampleEntity.getDescendantsOfType(EntityConstants.TYPE_LSM_STACK_PAIR, true)) {
         	for(EntityData ed : lsmPairEntity.getOrderedEntityData()) {
         		Entity lsmStack = ed.getChildEntity();
         		if (lsmStack != null && lsmStack.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK)) {
