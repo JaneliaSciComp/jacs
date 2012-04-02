@@ -35,7 +35,7 @@ import org.janelia.it.jacs.model.entity.EntityType;
 public class SolrDAO extends AnnotationDAO {
 
     protected final static int SOLR_LOADER_BATCH_SIZE = 25000;
-    protected final static int SOLR_LOADER_COMMIT_SIZE = 500000;
+    protected final static int SOLR_LOADER_COMMIT_SIZE = 250000;
 	protected static final int SOLR_LOADER_QUEUE_SIZE = 100;
 	protected static final int SOLR_LOADER_THREAD_COUNT = 2;
 	protected static final String SOLR_SERVER_URL = SystemConfigurationProperties.getString("Solr.ServerURL");
