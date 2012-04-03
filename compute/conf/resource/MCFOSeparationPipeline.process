@@ -27,6 +27,14 @@
 	        <output name="CONVERT_RESULT_FILE_NODE"/>
 	    </operation>
             
+	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
+	    <operation name="Create Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitSeparationParametersService">
+			<input name="SAMPLE_ENTITY_ID"/>
+			<input name="RESULT_ENTITY_NAME"/>
+			<output name="PREVIOUS_RESULT_ID"/>
+			<output name="PREVIOUS_RESULT_FILENAME"/>
+		</operation>
+		
 	    <!-- Run neuron separation on the stitched result -->
         <sequence name="Neuron Separation" waitForAsync="true">
 		    <operation name="Neuron Separation" processor="queue/gridSubmitAndWait">
@@ -34,6 +42,7 @@
 				<input name="SEPARATE_RESULT_FILE_NODE"/>
 	    		<input name="RESULT_FILE_NODE" value="$V{SEPARATE_RESULT_FILE_NODE}"/>
 				<input name="INPUT_FILENAME"/>
+				<input name="PREVIOUS_RESULT_FILENAME"/>
 		    </operation>
         </sequence>
 

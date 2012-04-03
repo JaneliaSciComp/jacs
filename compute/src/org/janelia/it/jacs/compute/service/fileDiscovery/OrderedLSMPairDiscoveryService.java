@@ -69,7 +69,7 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
         		if (sample == null) {
     	        	// Create the sample
     	            sample = createSample(lsmPair);
-    	            NeuronSeparatorHelper.addToParent(folder, sample, i++, EntityConstants.ATTRIBUTE_ENTITY);
+    	            addToParent(folder, sample, i++, EntityConstants.ATTRIBUTE_ENTITY);
         		}
         	}
         	catch (ComputeException e) {
@@ -245,9 +245,9 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
         lsmStackPair.setName("Scans");
         lsmStackPair = annotationBean.saveOrUpdateEntity(lsmStackPair);
         logger.info("Saved LSM stack pair as "+lsmStackPair.getId());
-        NeuronSeparatorHelper.addToParent(supportingFiles, lsmStackPair, 0, EntityConstants.ATTRIBUTE_ENTITY);
-        NeuronSeparatorHelper.addToParent(lsmStackPair, lsmPair.lsmEntity1, 0, EntityConstants.ATTRIBUTE_ENTITY);
-        NeuronSeparatorHelper.addToParent(lsmStackPair, lsmPair.lsmEntity2, 1, EntityConstants.ATTRIBUTE_ENTITY);
+        addToParent(supportingFiles, lsmStackPair, 0, EntityConstants.ATTRIBUTE_ENTITY);
+        addToParent(lsmStackPair, lsmPair.lsmEntity1, 0, EntityConstants.ATTRIBUTE_ENTITY);
+        addToParent(lsmStackPair, lsmPair.lsmEntity2, 1, EntityConstants.ATTRIBUTE_ENTITY);
         
         return sample;
     }
