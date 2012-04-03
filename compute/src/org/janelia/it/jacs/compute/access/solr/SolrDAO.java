@@ -15,8 +15,10 @@ import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
 import org.apache.solr.client.solrj.impl.StreamingUpdateSolrServer;
+import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.common.params.CoreAdminParams;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.large.LargeOperations;
@@ -39,29 +41,31 @@ public class SolrDAO extends AnnotationDAO {
 	protected static final int SOLR_LOADER_QUEUE_SIZE = 100;
 	protected static final int SOLR_LOADER_THREAD_COUNT = 2;
 	protected static final String SOLR_SERVER_URL = SystemConfigurationProperties.getString("Solr.ServerURL");
-
+	protected static final String SOLR_MAIN_CORE = SystemConfigurationProperties.getString("Solr.MainCore");
+	protected static final String SOLR_BUILD_CORE = SystemConfigurationProperties.getString("Solr.BuildCore");
+	
 	protected LargeOperations largeOp;
     protected SolrServer solr;
-    protected boolean streamingUpdates;
+    protected boolean build;
 
     public SolrDAO(Logger _logger) {
     	this(_logger, false);
     }
     
-    public SolrDAO(Logger _logger, boolean streamingUpdates) {
+    public SolrDAO(Logger _logger, boolean build) {
         super(_logger);
-        this.streamingUpdates = streamingUpdates;
+        this.build = build;
         this.largeOp = new LargeOperations(this);
     }
 
     private void init() throws DaoException {
     	if (solr!=null) return;
         try {
-        	if (streamingUpdates) {
-        		solr = new StreamingUpdateSolrServer(SOLR_SERVER_URL, SOLR_LOADER_QUEUE_SIZE, SOLR_LOADER_THREAD_COUNT);	
+        	if (build) {
+        		solr = new StreamingUpdateSolrServer(SOLR_SERVER_URL+SOLR_BUILD_CORE, SOLR_LOADER_QUEUE_SIZE, SOLR_LOADER_THREAD_COUNT);	
         	}
         	else {
-        		solr = new CommonsHttpSolrServer(SOLR_SERVER_URL);
+        		solr = new CommonsHttpSolrServer(SOLR_SERVER_URL+SOLR_MAIN_CORE);
         	}
         	solr.ping();
         }
@@ -169,12 +173,27 @@ public class SolrDAO extends AnnotationDAO {
             }
         }
 
-    	_logger.info("  Committing SOLR index");
-		commit();
-    	_logger.info("  Optimizing SOLR index");
-		optimize();
-    	_logger.info("Completed indexing "+i+" entities");
-    	
+        try {
+        	_logger.info("  Committing SOLR index");
+    		commit();
+        	_logger.info("  Optimizing SOLR index");
+    		optimize();
+        	_logger.info("Completed indexing "+i+" entities");
+            swapBuildCore();
+            _logger.info("Build core swapped to main core. The new index is now live.");
+        }
+        catch (Exception e) {
+        	throw new DaoException(e);
+        }
+        
+    }
+    
+    private void swapBuildCore() throws Exception {
+    	CoreAdminRequest car = new CoreAdminRequest();
+    	car.setCoreName(SOLR_BUILD_CORE);
+    	car.setOtherCoreName(SOLR_MAIN_CORE);
+    	car.setAction(CoreAdminParams.CoreAdminAction.SWAP);
+    	car.process(new CommonsHttpSolrServer(SOLR_SERVER_URL));
     }
     
     private List<SolrInputDocument> createEntityDocs(Collection<SimpleEntity> entities) {
@@ -189,7 +208,6 @@ public class SolrDAO extends AnnotationDAO {
         }
         return docs;
     }
-    
     
     public void clearIndex() throws DaoException {
     	init();
