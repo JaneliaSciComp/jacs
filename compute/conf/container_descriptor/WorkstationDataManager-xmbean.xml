@@ -97,11 +97,26 @@
     </operation>
     
     <operation>
-        <description>Run the Whole Brain 63x Alignment Pipeline</description>
-        <name>runAlignWholeBrainPipeline</name>
+        <description>Run the entire Whole Brain 63x Alignment Pipeline</description>
+        <name>runAlignWholeBrainDataPipeline</name>
         <parameter>
            <description>User to run as (e.g. "system")</description>
            <name>user</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Re-run brain alignments?</description>
+           <name>refreshAlignment</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+    </operation>
+    
+    <operation>
+        <description>Run the Whole Brain 63x Alignment Pipeline for a single Sample</description>
+        <name>runAlignWholeBrainSamplePipeline</name>
+        <parameter>
+           <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
+           <name>sampleEntityId</name>
            <type>java.lang.String</type>
         </parameter>
         <parameter>
