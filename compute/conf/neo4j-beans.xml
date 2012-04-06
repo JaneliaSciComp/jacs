@@ -29,13 +29,12 @@
 	     
 	<bean id="graphDatabaseService" class="org.neo4j.kernel.EmbeddedGraphDatabase" destroy-method="shutdown">
 		<constructor-arg index="0" value="/home/rokickik/dev/neo4j-1.7.M01/data/load.db" />
-		<!-- optionally pass in neo4j-config parameters to the graph database 
 		<constructor-arg index="1">
 			<map>
-				<entry key="allow_store_upgrade" value="true" />
+				<entry key="neostore.nodestore.db.mapped_memory" value="80M" />
+				<entry key="neostore.relationshipstore.db.mapped_memory" value="200M" />
 			</map>
-		</constructor-arg> 
-		-->
+		</constructor-arg>
 	</bean>
 
 	<!-- 

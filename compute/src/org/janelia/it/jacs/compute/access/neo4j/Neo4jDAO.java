@@ -21,7 +21,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
  */
 public class Neo4jDAO extends AnnotationDAO {
 
-    protected final static int NEO4J_LOADER_BATCH_SIZE = 5000;
+    protected final static int NEO4J_LOADER_BATCH_SIZE = 3000;
 	
 	protected static final String NEO4J_SERVER_URL = SystemConfigurationProperties.getString("Neo4j.ServerURL");
 
