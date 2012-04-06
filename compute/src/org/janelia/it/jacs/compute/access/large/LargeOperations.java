@@ -4,8 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
@@ -14,11 +13,14 @@ import net.sf.ehcache.Element;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.solr.AncestorSet;
 import org.janelia.it.jacs.compute.access.solr.SimpleAnnotation;
+import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.model.user_data.User;
 
 /**
  * Large operations which need to be done on disk using EhCache, lest we run out of memory.
@@ -26,17 +28,19 @@ import org.janelia.it.jacs.model.entity.EntityType;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class LargeOperations {
+	
+    private static final Logger logger = Logger.getLogger(LargeOperations.class);
 
 	public static final String ANNOTATION_MAP = "annotationMapCache";
 	public static final String ANCESTOR_MAP = "ancestorMapCache";
 	public static final String NEO4J_MAP = "neo4jMapCache";
-	
-    private static final Logger logger = Logger.getLogger(LargeOperations.class);
+	public static final String SAGE_IMAGEPROP_MAP = "sageImagePropCache";
 	
 	protected static CacheManager manager;
 	protected static Cache annotationMapCache;
 	protected static Cache ancestorMapCache;
 	protected static Cache neo4jMapCache;
+	protected static Cache sageImagePropCache;
 	
 	protected AnnotationDAO annotationDAO;
 	
@@ -48,13 +52,13 @@ public class LargeOperations {
 	        	annotationMapCache = manager.getCache(ANNOTATION_MAP);
 	        	ancestorMapCache = manager.getCache(ANCESTOR_MAP);
 	        	neo4jMapCache = manager.getCache(NEO4J_MAP);
+	        	sageImagePropCache = manager.getCache(SAGE_IMAGEPROP_MAP);
 	        }
         }
     }
 
     /**
      * Builds a map of entity ids to sets of SimpleAnnotations on disk using EhCache.
-     * @param annotationMapCache
      * @throws DaoException
      */
     public void buildAnnotationMap() throws DaoException {
@@ -136,7 +140,6 @@ public class LargeOperations {
     
     /**
      * Builds a map of entity ids to sets of ancestor ids on disk using EhCache.
-     * @param ancestorMapCache
      * @throws DaoException
      */
     public void buildAncestorMap() throws DaoException {
@@ -264,6 +267,66 @@ public class LargeOperations {
     	return ancestorSet.getAncestors();
     }
     
+    /**
+     * Builds a map of image paths to Sage properties.
+     * @throws DaoException
+     */
+    public void buildSageImagePropMap() throws DaoException {
+
+    	User systemUser = annotationDAO.getUserByName("system");
+    	
+    	logger.info("Building property map for all Sage images");
+    	SageDAO sage = new SageDAO(logger);
+    	ResultSetIterator iterator = sage.getFlylightImageProperties();
+    	
+    	try {
+    		String currImagePath = null;
+    		Map<String,String> currImageProps = null;
+    		
+        	while (iterator.hasNext()) {
+        		Object[] row = iterator.next();
+				
+				if (row.length<3) {
+					throw new DaoException("Unexpected number of values returned by getFlylightImageProperties. Got:"+row.length+" Expected:7");
+				}
+				
+				String imagePath = (String)row[0];
+				String key = (String)row[1];
+				String value = (String)row[2];
+				
+				if (!imagePath.equals(currImagePath)) {
+					if (currImagePath!=null) {
+						associateImageProperties(systemUser.getUserId(), currImagePath, currImageProps);
+					}
+					currImageProps = new HashMap<String,String>();
+					currImagePath = imagePath;
+				}
+				
+				currImageProps.put(key, value);
+        	}	
+        	
+        	associateImageProperties(systemUser.getUserId(), currImagePath, currImageProps);
+    	}
+    	catch (RuntimeException e) {
+    		if (e.getCause() instanceof SQLException) {
+    			throw new DaoException(e);
+    		}
+    		throw e;
+    	}
+        finally {
+        	if (iterator!=null) iterator.close();
+        }
+    }
+    
+    private void associateImageProperties(Long systemUserId, String imagePath, Map<String,String> imageProps) throws DaoException {
+    	String[] path = imagePath.split("/"); // take just the filename
+    	String filename = path[path.length-1];
+    	String slideCode = imageProps.get("slide_code");
+    	List<Long> imageIds = annotationDAO.getImageIdsWithPath(systemUserId, filename, slideCode);
+		for(Long imageId : imageIds) {
+			putValue(sageImagePropCache, imageId, imageProps);
+		}
+    }
     
     public Object getValue(String cacheName, Object key) {
 		return getValue(getCache(cacheName), key);
@@ -282,6 +345,9 @@ public class LargeOperations {
     	}
     	else if (NEO4J_MAP.equals(cacheName)) {
     		return neo4jMapCache;
+    	}
+    	else if (SAGE_IMAGEPROP_MAP.equals(cacheName)) {
+    		return sageImagePropCache;
     	}
     	else {
     		throw new IllegalArgumentException("Unknown cache: "+cacheName);

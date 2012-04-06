@@ -2,6 +2,7 @@ package org.janelia.it.jacs.compute.api.support;
 
 import java.util.*;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.ORDER;
 import org.janelia.it.jacs.compute.api.ComputeException;
@@ -14,6 +15,7 @@ import org.janelia.it.jacs.compute.api.ComputeException;
 public class SolrQueryBuilder {
 
 	private String searchString;
+	private String auxString;
 	private Long rootId;
 	private String username;
 	private Map<String,Set<String>> filters = new HashMap<String,Set<String>>();
@@ -32,6 +34,14 @@ public class SolrQueryBuilder {
 
 	public void setSearchString(String searchString) {
 		this.searchString = searchString;
+	}
+
+	public String getAuxString() {
+		return auxString;
+	}
+
+	public void setAuxString(String auxString) {
+		this.auxString = auxString;
 	}
 
 	public Long getRootId() {
@@ -97,7 +107,11 @@ public class SolrQueryBuilder {
 	public void setEndDate(Date endDate) {
 		this.endDate = endDate;
 	}
-
+	
+	public boolean hasQuery() {
+		return !StringUtils.isEmpty(searchString) || !StringUtils.isEmpty(auxString) || rootId!=null || !filters.isEmpty() || startDate!=null || endDate != null;
+	}
+	
 	public SolrQuery getQuery() throws ComputeException {
     	
     	StringBuffer qs = new StringBuffer();
@@ -111,6 +125,8 @@ public class SolrQueryBuilder {
     		qs.append(" AND (ancestor_ids:"+rootId+")");
     	}
     	
+    	qs.append(" +doc_type:"+SolrUtils.DocType.ENTITY.toString());
+    	
     	qs.append(" -entity_type:Ontology*");
 
 		if (startDate!=null || endDate!=null) {
@@ -118,15 +134,21 @@ public class SolrQueryBuilder {
 			String endDateStr = endDate==null ? "*" : SolrUtils.formatDate(endDate);
 			qs.append(" +updated_date:["+startDateStr+" TO "+endDateStr+"]");
 		}
-    	
-    	qs.append(" AND (("+searchString+")");
-    	
-    	if (!searchString.contains(":")) {
-    		qs.append(" OR "+username+"_annotations:("+searchString+"))");
-    	}
-    	else {
-    		qs.append(")");
-    	}
+
+		if (!StringUtils.isEmpty(auxString)) {
+			qs.append(" ");
+			qs.append(auxString);	
+		}
+		
+		if (!StringUtils.isEmpty(searchString)) {
+	    	qs.append(" AND (("+searchString+")");
+	    	if (!searchString.contains(":")) {
+	    		qs.append(" OR "+username+"_annotations:("+searchString+"))");
+	    	}
+	    	else {
+	    		qs.append(")");
+	    	}
+		}
     	
     	SolrQuery query = new SolrQuery();
         query.setQuery(qs.toString());

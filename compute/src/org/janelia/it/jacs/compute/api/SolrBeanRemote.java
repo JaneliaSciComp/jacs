@@ -1,9 +1,12 @@
 
 package org.janelia.it.jacs.compute.api;
 
+import java.util.Map;
+
 import javax.ejb.Remote;
 
 import org.apache.solr.client.solrj.SolrQuery;
+import org.janelia.it.jacs.compute.api.support.SageTerm;
 import org.janelia.it.jacs.compute.api.support.SolrResults;
 
 /**
@@ -23,4 +26,10 @@ public interface SolrBeanRemote {
 	 * @throws ComputeException
 	 */
 	public SolrResults search(SolrQuery query, boolean mapToEntities) throws ComputeException;
+	
+	/**
+	 * Returns the FlyLight imagery vocabulary from Sage.
+	 * @return Map of simple vocabulary term names to objects describing them more fully.
+	 */
+	public Map<String, SageTerm> getFlyLightVocabulary() throws ComputeException;
 }

@@ -10,6 +10,11 @@ import java.util.Date;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class SolrUtils {
+
+	public enum DocType {
+		ENTITY,
+		SAGE_TERM
+	}
 	
 	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
@@ -38,6 +43,26 @@ public class SolrUtils {
 	 */
     public static String getDynamicFieldName(String name) {
     	return getFormattedName(name)+"_txt";
+    }
+    
+    /**
+     * Get the SOLR field name for a Sage CV term. For example, "effector" -> "effector_t"
+     * @param term
+     * @param sageType a data type from Sage, such as "float" or "integer" or "text"
+     * @return
+     */
+    public static String getSageFieldName(String term, SageTerm sageTerm) {
+		String solrSuffix = "_t"; // default to text-based indexing
+		String sageType = sageTerm.getDataType();
+		if (sageType != null) {
+			if ("float".equals(sageType)) {
+				solrSuffix = "_d";
+			}
+			else if ("integer".equals(sageType)) {
+				solrSuffix = "_l";		
+			}
+		}
+		return term+solrSuffix;
     }
     
     /**

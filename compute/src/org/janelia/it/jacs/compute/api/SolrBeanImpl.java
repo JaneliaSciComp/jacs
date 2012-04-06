@@ -1,9 +1,7 @@
 
 package org.janelia.it.jacs.compute.api;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -11,14 +9,18 @@ import javax.ejb.TransactionAttributeType;
 
 import org.apache.log4j.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrQuery.ORDER;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.mongodb.MongoDbDAO;
 import org.janelia.it.jacs.compute.access.neo4j.Neo4jDAO;
 import org.janelia.it.jacs.compute.access.solr.SolrDAO;
+import org.janelia.it.jacs.compute.api.support.SageTerm;
 import org.janelia.it.jacs.compute.api.support.SolrResults;
+import org.janelia.it.jacs.compute.api.support.SolrUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
@@ -42,12 +44,21 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     }
 
     public void indexAllEntities(boolean clearIndex) throws ComputeException {
+
+    	Map<String, SageTerm> sageVocab = null;
+    	try {
+    		sageVocab = new SageDAO(_logger).getFlylightImageVocabulary();	
+    	}
+    	catch (DaoException e) {
+    		_logger.error("Error retrieving Sage vocabularies",e);
+    	}
+    	
     	try {
     		SolrDAO solrDAO = new SolrDAO(_logger, true);
     		if (clearIndex) {
     			solrDAO.clearIndex();
     		}
-    		solrDAO.indexAllEntities();
+    		solrDAO.indexAllEntities(sageVocab);
     	}
     	catch (DaoException e) {
             _logger.error("Error indexing all entities",e);
@@ -86,7 +97,6 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     }
     
 	public SolrResults search(SolrQuery query, boolean mapToEntities) throws ComputeException {
-		
 		SolrDAO solrDAO = new SolrDAO(_logger, false);
 		
 		QueryResponse response = solrDAO.search(query);
@@ -114,4 +124,33 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
 		
 		return new SolrResults(response, resultList);
 	}
+    
+    public Map<String, SageTerm> getFlyLightVocabulary() throws ComputeException {
+    	SolrDAO solrDAO = new SolrDAO(_logger, false);
+		Map<String, SageTerm> vocab = new HashMap<String, SageTerm>();
+		
+		SolrQuery query = new SolrQuery("doc_type:"+SolrUtils.DocType.SAGE_TERM);
+		query.setSortField("name", ORDER.asc);
+		query.setRows(Integer.MAX_VALUE);
+		QueryResponse response = solrDAO.search(query);
+		
+		Iterator<SolrDocument> i = response.getResults().iterator();
+		while (i.hasNext()) {
+			SolrDocument doc = i.next();
+			SageTerm term = new SageTerm();
+			term.setName(getStringValue(doc,"name"));
+			term.setDataType(getStringValue(doc,"data_type_t"));
+			term.setDisplayName(getStringValue(doc,"display_name_t"));
+			term.setDefinition(getStringValue(doc,"definition_t"));
+			vocab.put(term.getName(), term);
+		}
+		
+    	return vocab;
+    }
+    
+    private String getStringValue(SolrDocument doc, String key) {
+    	Object value = doc.getFieldValue(key);
+    	if (value == null) return null;
+    	return value.toString();
+    }
 }

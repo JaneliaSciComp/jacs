@@ -22,6 +22,7 @@ import org.apache.solr.common.params.CoreAdminParams;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.large.LargeOperations;
+import org.janelia.it.jacs.compute.api.support.SageTerm;
 import org.janelia.it.jacs.compute.api.support.SolrUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -35,56 +36,79 @@ import org.janelia.it.jacs.model.entity.EntityType;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class SolrDAO extends AnnotationDAO {
-
-    protected final static int SOLR_LOADER_BATCH_SIZE = 25000;
-    protected final static int SOLR_LOADER_COMMIT_SIZE = 250000;
+	
+    protected static final int SOLR_LOADER_BATCH_SIZE = 25000;
+    protected static final int SOLR_LOADER_COMMIT_SIZE = 250000;
 	protected static final int SOLR_LOADER_QUEUE_SIZE = 100;
 	protected static final int SOLR_LOADER_THREAD_COUNT = 2;
 	protected static final String SOLR_SERVER_URL = SystemConfigurationProperties.getString("Solr.ServerURL");
 	protected static final String SOLR_MAIN_CORE = SystemConfigurationProperties.getString("Solr.MainCore");
 	protected static final String SOLR_BUILD_CORE = SystemConfigurationProperties.getString("Solr.BuildCore");
 	
-	protected LargeOperations largeOp;
-    protected SolrServer solr;
-    protected boolean build;
-
+	protected final boolean build;
+	
+	protected SolrServer solr;
+	protected LargeOperations largeOp;    
+    protected Map<String, SageTerm> sageVocab;
+    protected Set<SageTerm> usedSageVocab;
+    
+    /**
+     * Create a SolrDAO for querying SOLR. No building is allowed.
+     * @param _logger
+     */
     public SolrDAO(Logger _logger) {
     	this(_logger, false);
     }
     
+    /**
+     * Create a SolrDAO, specifying if the DAO will be used for building an index. 
+     * @param _logger
+     * @param build
+     */
     public SolrDAO(Logger _logger, boolean build) {
         super(_logger);
         this.build = build;
-        this.largeOp = new LargeOperations(this);
     }
 
     private void init() throws DaoException {
-    	if (solr!=null) return;
-        try {
-        	if (build) {
-        		solr = new StreamingUpdateSolrServer(SOLR_SERVER_URL+SOLR_BUILD_CORE, SOLR_LOADER_QUEUE_SIZE, SOLR_LOADER_THREAD_COUNT);	
-        	}
-        	else {
-        		solr = new CommonsHttpSolrServer(SOLR_SERVER_URL+SOLR_MAIN_CORE);
-        	}
-        	solr.ping();
-        }
-        catch (MalformedURLException e) {
-        	throw new RuntimeException("Illegal Solr.ServerURL value in system properties: "+SOLR_SERVER_URL);
-        }
-        catch (IOException e) {
-        	throw new DaoException("Problem pinging SOLR at: "+SOLR_SERVER_URL);
-        }
-        catch (SolrServerException e) {
-        	throw new DaoException("Problem pinging SOLR at: "+SOLR_SERVER_URL);
-        }
+    	if (solr==null) {
+            try {
+            	if (build) {
+            		solr = new StreamingUpdateSolrServer(SOLR_SERVER_URL+SOLR_BUILD_CORE, SOLR_LOADER_QUEUE_SIZE, SOLR_LOADER_THREAD_COUNT);	
+            	}
+            	else {
+            		solr = new CommonsHttpSolrServer(SOLR_SERVER_URL+SOLR_MAIN_CORE);
+            	}
+            	solr.ping();
+            }
+            catch (MalformedURLException e) {
+            	throw new RuntimeException("Illegal Solr.ServerURL value in system properties: "+SOLR_SERVER_URL);
+            }
+            catch (IOException e) {
+            	throw new DaoException("Problem pinging SOLR at: "+SOLR_SERVER_URL);
+            }
+            catch (SolrServerException e) {
+            	throw new DaoException("Problem pinging SOLR at: "+SOLR_SERVER_URL);
+            }
+    	}
     }
     
-    public void indexAllEntities() throws DaoException {
+    public void indexAllEntities(Map<String, SageTerm> sageVocab) throws DaoException {
     	
+    	if (!build) {
+    		throw new IllegalStateException("indexAllEntities called on SolrDAO which has build=false");
+    	}
+    	
+    	this.sageVocab = sageVocab;
+    	this.usedSageVocab = new HashSet<SageTerm>();
+    	
+    	_logger.info("Building disk-based entity maps");
+    	
+    	this.largeOp = new LargeOperations(this);
+    	largeOp.buildSageImagePropMap();
     	largeOp.buildAnnotationMap();
     	largeOp.buildAncestorMap();
- 
+    	
     	_logger.info("Getting entities");
     	
     	Map<Long,SimpleEntity> entityMap = new HashMap<Long,SimpleEntity>();
@@ -174,6 +198,11 @@ public class SolrDAO extends AnnotationDAO {
         }
 
         try {
+        	_logger.info("Indexing Sage vocabularies");
+        	
+        	index(createSageDocs(usedSageVocab));
+        	commit();
+        	
         	_logger.info("  Committing SOLR index");
     		commit();
         	_logger.info("  Optimizing SOLR index");
@@ -195,59 +224,52 @@ public class SolrDAO extends AnnotationDAO {
     	car.setAction(CoreAdminParams.CoreAdminAction.SWAP);
     	car.process(new CommonsHttpSolrServer(SOLR_SERVER_URL));
     }
+
+    private List<SolrInputDocument> createSageDocs(Collection<SageTerm> terms) {
+    	
+    	String dt = SolrUtils.DocType.SAGE_TERM.toString();
+    	
+    	int id = 0;
+        List<SolrInputDocument> docs = new ArrayList<SolrInputDocument>();
+        for(SageTerm term : terms) {
+        	SolrInputDocument doc = new SolrInputDocument();
+        	doc.addField("id", dt+"_"+id, 1.0f);
+        	doc.addField("doc_type", dt, 1.0f);
+        	doc.addField("name", term.getName(), 1.0f);
+        	doc.addField("data_type_t", term.getDataType(), 1.0f);
+        	doc.addField("definition_t", term.getDefinition(), 1.0f);
+        	doc.addField("display_name_t", term.getDisplayName(), 1.0f);        	
+        	docs.add(doc);
+        	id++;
+        }
+        return docs;
+    }
     
     private List<SolrInputDocument> createEntityDocs(Collection<SimpleEntity> entities) {
     	
         List<SolrInputDocument> docs = new ArrayList<SolrInputDocument>();
         for(SimpleEntity se : entities) {
-        	Set<SimpleAnnotation> annotations = (Set<SimpleAnnotation>)largeOp.getValue("annotationMapCache", se.getId());
-        	AncestorSet ancestorSet = (AncestorSet)largeOp.getValue("ancestorMapCache", se.getId());
+        	
+        	Set<SimpleAnnotation> annotations = (Set<SimpleAnnotation>)largeOp.getValue(LargeOperations.ANNOTATION_MAP, se.getId());
+        	
+        	AncestorSet ancestorSet = (AncestorSet)largeOp.getValue(LargeOperations.ANCESTOR_MAP, se.getId());
         	Set<Long> ancestors = ancestorSet==null ? null : ancestorSet.getAncestors(); 
-        	SolrInputDocument doc = createDoc(se, annotations, ancestors);
+        	
+        	Map<String,String> sageProps = (Map<String,String>)largeOp.getValue(LargeOperations.SAGE_IMAGEPROP_MAP, se.getId());
+        	
+        	SolrInputDocument doc = createDoc(se, annotations, ancestors, sageProps);
         	docs.add(doc);
         }
         return docs;
     }
     
-    public void clearIndex() throws DaoException {
-    	init();
-		try {
-	    	solr.deleteByQuery("*:*");
-	    	solr.commit();
-		}
-		catch (Exception e) {
-			throw new DaoException("Error clearing index with SOLR",e);
-		}
-    }
-
-    public void commit() throws DaoException {
-    	init();
-		try {
-	    	solr.commit();
-		}
-		catch (Exception e) {
-			throw new DaoException("Error commiting index with SOLR",e);
-		}
-    }
-
-    public void optimize() throws DaoException {
-    	init();
-		try {
-	    	solr.optimize();
-		}
-		catch (Exception e) {
-			throw new DaoException("Error optimizing index with SOLR",e);
-	
-		}
-    }
-    
-    public void index(Entity entity, Set<SimpleAnnotation> annotations, Set<Long> ancestorIds) throws DaoException {
+    private void index(Entity entity, Set<SimpleAnnotation> annotations, Set<Long> ancestorIds, Map<String,String> sageProps) throws DaoException {
     	List<SolrInputDocument> docs = new ArrayList<SolrInputDocument>();
-    	docs.add(createDoc(entity, annotations, ancestorIds));
+    	docs.add(createDoc(entity, annotations, ancestorIds, sageProps));
     	index(docs);
     }
     
-    public void index(List<SolrInputDocument> docs) throws DaoException {
+    private void index(List<SolrInputDocument> docs) throws DaoException {
     	init();
     	if (docs==null) return;
     	try {
@@ -280,20 +302,33 @@ public class SolrDAO extends AnnotationDAO {
     	return simpleEntity;
     }
     
-    public SolrInputDocument createDoc(Entity entity, Set<SimpleAnnotation> annotations, Set<Long> ancestorIds) {
+    private SolrInputDocument createDoc(Entity entity, Set<SimpleAnnotation> annotations, Set<Long> ancestorIds, Map<String,String> sageProps) {
     	SimpleEntity simpleEntity = simpleEntityFromEntity(entity);
-    	return createDoc(simpleEntity, annotations, ancestorIds);
+    	return createDoc(simpleEntity, annotations, ancestorIds, sageProps);
     }
 
-    public SolrInputDocument createDoc(SimpleEntity entity, Set<SimpleAnnotation> annotations, Set<Long> ancestorIds) {
+    private SolrInputDocument createDoc(SimpleEntity entity, Set<SimpleAnnotation> annotations, Set<Long> ancestorIds, Map<String,String> sageProps) {
 
     	SolrInputDocument doc = new SolrInputDocument();
     	doc.addField("id", entity.getId(), 1.0f);
+    	doc.addField("doc_type", SolrUtils.DocType.ENTITY.toString(), 1.0f);
     	doc.addField("name", entity.getName(), 1.0f);
     	doc.addField("creation_date", entity.getCreationDate(), 0.8f);
     	doc.addField("updated_date", entity.getUpdatedDate(), 0.9f);
     	doc.addField("username", entity.getUserLogin(), 1.0f);
     	doc.addField("entity_type", entity.getEntityTypeName(), 1.0f);
+    	
+    	if (sageVocab!=null && sageProps!=null) {
+    		for(String key : sageProps.keySet()) {
+    			String value = sageProps.get(key);
+    			if (value != null) {
+    				SageTerm sageTerm = sageVocab.get(key);
+    				// Keep track of the terms we use, so that they can be indexed as well
+    				if (!usedSageVocab.contains(sageTerm)) usedSageVocab.add(sageTerm);
+    				doc.addField(SolrUtils.getSageFieldName(key, sageTerm), value, 0.9f);
+    			}
+    		}
+    	}
     	
     	for(KeyValuePair kv : entity.getAttributes()) {
     		if (kv.getValue()!=null) {
@@ -321,6 +356,55 @@ public class SolrDAO extends AnnotationDAO {
     	return doc;
     }
 
+    /** 
+     * Commit any outstanding changes to the index.
+     * @throws DaoException
+     */
+    public void commit() throws DaoException {
+    	init();
+		try {
+	    	solr.commit();
+		}
+		catch (Exception e) {
+			throw new DaoException("Error commiting index with SOLR",e);
+		}
+    }
+    
+    /**
+     * Clear the entire index and commit.
+     * @throws DaoException
+     */
+    public void clearIndex() throws DaoException {
+    	init();
+		try {
+	    	solr.deleteByQuery("*:*");
+	    	solr.commit();
+		}
+		catch (Exception e) {
+			throw new DaoException("Error clearing index with SOLR",e);
+		}
+    }
+
+    /**
+     * Optimize the index (this is a very expensive operation, especially if the index is large!)
+     * @throws DaoException
+     */
+    public void optimize() throws DaoException {
+    	init();
+		try {
+	    	solr.optimize();
+		}
+		catch (Exception e) {
+			throw new DaoException("Error optimizing index with SOLR",e);
+		}
+    }
+    
+    /**
+     * Run the given query against the index.
+     * @param query
+     * @return
+     * @throws DaoException
+     */
     public QueryResponse search(SolrQuery query) throws DaoException {
     	init();
     	try {

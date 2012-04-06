@@ -1756,6 +1756,65 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	return null;
     }
 
+    /**
+     * Returns the ids of LSM images matching the given image path and belonging to the given slide code.
+     * @param userId
+     * @param imagePath
+     * @param slideCode
+     * @return
+     * @throws DaoException
+     */
+    public List<Long> getImageIdsWithPath(Long userId, String imagePath, String slideCode) throws DaoException {
+    	
+    	List<Long> sampleIds = new ArrayList<Long>();
+        Connection conn = null;
+    	PreparedStatement stmt = null;
+    	try {
+
+            StringBuffer sql = new StringBuffer("select distinct i.id from entity i ");
+            sql.append("join entityData ed1 on i.id = ed1.child_entity_id ");
+            sql.append("join entityData ed2 on ed1.parent_entity_id = ed2.child_entity_id ");
+            sql.append("join entityData ed3 on ed2.parent_entity_id = ed3.child_entity_id ");
+            sql.append("join entityData ed4 on ed3.parent_entity_id = ed4.child_entity_id ");
+            sql.append("join entity s on ed3.parent_entity_id = s.id ");
+            sql.append("join entity f on ed4.parent_entity_id = f.id ");
+            sql.append("where i.name = ? ");
+            sql.append("and s.user_id = ? ");
+            
+            if (slideCode!=null) {
+            	// TODO: slide code should be an attribute of the Sample; we shouldn't rely on the containing folder name
+            	sql.append("and f.name = ? ");
+            }
+            
+	        conn = getJdbcConnection();
+	        stmt = conn.prepareStatement(sql.toString());
+	        stmt.setString(1, imagePath);
+	        stmt.setLong(2, userId);
+	        if (slideCode!=null) {
+	        	stmt.setString(3, slideCode);
+	        }
+	        
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				sampleIds.add(rs.getBigDecimal(1).longValue());
+			}
+		}
+    	catch (SQLException e) {
+    		throw new DaoException(e);
+    	}
+	    finally {
+	    	try {
+	            if (stmt!=null) stmt.close();
+	            if (conn!=null) conn.close();	
+	    	}
+	    	catch (SQLException e) {
+	    		_logger.warn("Ignoring error encountered while closing JDBC connection",e);
+	    	}
+	    }
+        
+    	return sampleIds;
+    }
+    
     public List<Entity> getEntitiesWithAttributeValue(String attrName, String attrValue) throws DaoException {
         try {
             Session session = getCurrentSession();
