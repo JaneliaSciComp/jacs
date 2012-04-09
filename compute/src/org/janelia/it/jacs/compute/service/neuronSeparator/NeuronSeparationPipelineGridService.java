@@ -1,9 +1,6 @@
 package org.janelia.it.jacs.compute.service.neuronSeparator;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
-import java.io.IOException;
+import java.io.*;
 
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
@@ -98,8 +95,8 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
     @Override
     protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
     	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
-    	// Reserve all 8 slots on 96 GB node. 
-    	jt.setNativeSpecification("-pe batch 8 -l mem96=true");
+    	// Reserve all 8 slots on a node. This gives us 24 GB of memory. 
+    	jt.setNativeSpecification("-pe batch 8");
     	return jt;
     }
     
@@ -121,12 +118,12 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
     	File[] csFiles = outputDir.listFiles(new FilenameFilter() {
 			@Override
 			public boolean accept(File dir, String name) {
-	            return name.startsWith("Consolidated");
+	            return name.startsWith("Consolidated") || name.equals("SeparationResult.nsp");
 			}
 		});
 
-    	if (csFiles.length < 2) {
-    		throw new MissingDataException("ConsolidatedSignal and ConsolidatedLabel not found for "+resultFileNode.getDirectoryPath());
+    	if (csFiles.length < 3) {
+    		throw new MissingDataException("SeparationResult, ConsolidatedSignal, and ConsolidatedLabel not found for "+resultFileNode.getDirectoryPath());
     	}
 	}
 }

@@ -116,8 +116,8 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
     @Override
     protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
     	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
-    	// Reserve all 8 slots on 96 GB node. Greed.
-    	jt.setNativeSpecification("-pe batch 8 -l mem96=true");
+    	// Reserve all 8 slots on a node. This gives us 24 GB of memory. 
+    	jt.setNativeSpecification("-pe batch 8");
     	return jt;
     }
 

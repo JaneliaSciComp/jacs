@@ -31,7 +31,7 @@ import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
 public class AnnotationDAO extends ComputeBaseDAO {
 
 	/** Most amount of nodes a tree can have before it's considered a "large" tree */
-	private static final Long MAX_SMALL_TREE_SIZE = 1000L;
+	private static final Long MAX_SMALL_TREE_SIZE = 2000L;
 	
 	/** Batch fetch size for JDBC result sets */
 	protected final static int JDBC_FETCH_SIZE = 200;
@@ -216,11 +216,11 @@ public class AnnotationDAO extends ComputeBaseDAO {
         try {
 	    	Long count = countDescendants(entity, MAX_SMALL_TREE_SIZE);
 	    	if (count <= MAX_SMALL_TREE_SIZE) {
-	    		_logger.info("Running small tree algorithm");
+	    		_logger.info("Running small tree algorithm (count="+count+")");
 	        	deleteSmallEntityTree(owner, entity, true, false, 0);
 	    	}
 	    	else {
-	    		_logger.info("Running large tree algorithm");
+	    		_logger.info("Running large tree algorithm (count="+count+")");
 	            deleteLargeEntityTree(owner, entity);
 	    	}
         } catch (Exception ex) {

@@ -1,9 +1,6 @@
 package org.janelia.it.jacs.shared.utils;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.log4j.Logger;
 import org.hibernate.Hibernate;
@@ -26,6 +23,10 @@ public class EntityUtils {
         public void saveUnit(Object o) throws Exception;
     }
 
+    public static boolean isInitialized(Object obj) {
+    	return Hibernate.isInitialized(obj);
+    }
+    
     public static boolean areLoaded(Collection<EntityData> eds) {
         for (EntityData entityData : eds) {
             if (!Hibernate.isInitialized(entityData.getChildEntity())) {
@@ -197,4 +198,18 @@ public class EntityUtils {
 		return false;
 	}
 
+	public static void replaceChildNodes(Entity entity, Set<Entity> childEntitySet) {
+
+        Map<Long, Entity> childEntityMap = new HashMap<Long, Entity>();
+        for (Entity childEntity : childEntitySet) {
+            childEntityMap.put(childEntity.getId(), childEntity);
+        }
+
+        // Replace the entity data with real objects
+        for (EntityData ed : entity.getEntityData()) {
+            if (ed.getChildEntity() != null) {
+                ed.setChildEntity(childEntityMap.get(ed.getChildEntity().getId()));
+            }
+        }
+	}
 }

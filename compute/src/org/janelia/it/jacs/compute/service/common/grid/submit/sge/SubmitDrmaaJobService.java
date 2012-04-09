@@ -429,8 +429,10 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         return -1;
     }
 
-    class StdErrorFilenameFilter implements FilenameFilter {
-        public boolean accept(File dir, String name) {
+    protected class StdErrorFilenameFilter implements FilenameFilter {
+        public StdErrorFilenameFilter() {
+        }
+    	public boolean accept(File dir, String name) {
             return name.startsWith(getGridServicePrefixName() + "Error.");
         }
     }

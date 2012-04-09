@@ -31,8 +31,11 @@
 		<constructor-arg index="0" value="/home/rokickik/dev/neo4j-1.7.M01/data/load.db" />
 		<constructor-arg index="1">
 			<map>
-				<entry key="neostore.nodestore.db.mapped_memory" value="80M" />
+				<entry key="neostore.nodestore.db.mapped_memory" value="100M" />
 				<entry key="neostore.relationshipstore.db.mapped_memory" value="200M" />
+				<entry key="neostore.propertystore.db.mapped_memory" value="50M" />
+				<entry key="neostore.propertystore.db.strings.mapped_memory" value="100M" />
+				<entry key="neostore.propertystore.db.arrays.mapped_memory" value="0M" />
 			</map>
 		</constructor-arg>
 	</bean>

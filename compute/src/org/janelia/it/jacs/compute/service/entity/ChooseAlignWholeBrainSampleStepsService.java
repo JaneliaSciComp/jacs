@@ -57,7 +57,7 @@ public class ChooseAlignWholeBrainSampleStepsService implements IService {
     		TilingPattern pattern = TilingPattern.valueOf(strTilingPattern);
 
     		boolean isAlignable = pattern.isAlignable();
-    		boolean runAlignment = isAlignable && (pattern == TilingPattern.WHOLE_BRAIN) && (refreshAlignment || !canSkipAlignment(processData, sampleEntity));
+    		boolean runAlignment = isAlignable && (pattern == TilingPattern.WHOLE_BRAIN) && (refreshAlignment || !canSkipWholeBrainAlignment(processData, sampleEntity));
     		boolean runAlignedSeparation = false;//runAlignment || (isAlignable && !canSkipAlignedSeparation(processData, sampleEntity));
     		
     		logger.info("Sample "+sampleEntity.getName()+" (id="+sampleEntityId+") has tiling pattern "+pattern.getName()+" (alignable="+isAlignable+")");
@@ -132,7 +132,7 @@ public class ChooseAlignWholeBrainSampleStepsService implements IService {
 		return true;
     }
 	
-    public boolean canSkipAlignment(IProcessData processData, Entity sampleEntity) {
+    public boolean canSkipWholeBrainAlignment(IProcessData processData, Entity sampleEntity) {
 
 		List<Entity> sampleAlignments = sampleEntity.getChildrenOfType(EntityConstants.TYPE_ALIGNMENT_RESULT);
 		if (sampleAlignments == null || sampleAlignments.isEmpty()) {
@@ -148,6 +148,10 @@ public class ChooseAlignWholeBrainSampleStepsService implements IService {
     		}
     	}
     	
+    	if (sampleAlignment==null) {
+			logger.warn("Cannot find existing whole brain alignment result for Sample with id="+sampleEntity.getId());
+    	}
+    	
 		Entity alignedFile = null;
 		Entity supportingFiles = sampleAlignment.getLatestChildOfType(EntityConstants.TYPE_SUPPORTING_DATA);
 		if (supportingFiles != null) {
@@ -159,7 +163,7 @@ public class ChooseAlignWholeBrainSampleStepsService implements IService {
 		}
 
 		if (alignedFile == null) {
-			logger.warn("Cannot find existing alignment for Sample with id="+sampleEntity.getId());
+			logger.warn("Cannot find existing aligned image for Sample with id="+sampleEntity.getId());
 			return false;
 		}
 		

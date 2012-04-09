@@ -2,7 +2,6 @@ package org.janelia.it.jacs.compute.access.neo4j;
 
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
-import org.jboss.logging.Logger;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
@@ -50,8 +49,8 @@ public class GraphAccess {
 //			Node userReferenceNode = gds.createNode();
 //			gds.getReferenceNode().createRelationshipTo(userReferenceNode, RelTypes.USER_REFERENCE);
 
-			entityReferenceNode = gds.createNode();
-			gds.getReferenceNode().createRelationshipTo(entityReferenceNode, RelTypes.ENTITY_REFERENCE);
+//			entityReferenceNode = gds.createNode();
+//			gds.getReferenceNode().createRelationshipTo(entityReferenceNode, RelTypes.ENTITY_REFERENCE);
 			
 //			tx.success();
 //		}
@@ -82,7 +81,7 @@ public class GraphAccess {
         	}
         }
         
-        entityReferenceNode.createRelationshipTo(node, RelTypes.ENTITY);
+//        entityReferenceNode.createRelationshipTo(node, RelTypes.ENTITY);
         return node;
 	}
 	

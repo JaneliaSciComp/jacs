@@ -22,9 +22,6 @@
 	        <output name="RESULT_FILE_NODE"/>
 	        <output name="RESULT_FILE_NODE_ID"/>
 	        <output name="SEPARATE_RESULT_FILE_NODE"/>
-	        <output name="COMPRESS_RESULT_FILE_NODE"/>
-	        <output name="MIPS_RESULT_FILE_NODE"/>
-	        <output name="CONVERT_RESULT_FILE_NODE"/>
 	    </operation>
             
 	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
