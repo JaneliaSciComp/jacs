@@ -22,6 +22,8 @@ public interface WorkstationDataManagerMBean {
     
     public void runMCFODataUpgrade(String user, Boolean testRun);
     
+    public void runCentralBrainDataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
+    
     public void runAlignWholeBrainDataPipeline(String user, Boolean refreshAlignment);
     
     public void runAlignWholeBrainSamplePipeline(String user, Boolean refreshAlignment);

@@ -137,6 +137,19 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
+    public void runCentralBrainDataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation) {
+        try {
+        	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
+            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), null,
+            		topLevelFolderName, refreshProcessing, refreshAlignment, refreshSeparation);
+            task.setJobName("Central Brain Data Pipeline Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("CentralBrainDataPipeline", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
     public void runAlignWholeBrainDataPipeline(String user, Boolean refreshAlignment) {
         try {
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
