@@ -157,7 +157,7 @@ echo "~ Moving output to final location: $FINAL_OUTPUT"
 mv $OUTPUT $FINAL_OUTPUT
 mv $FILETRNSTYPE "$FINAL_STUB-tt.txt"
 
-echo "~ Removing temp files"
+echo "~ Removing working directory $WORKING_DIR"
 rm -rf $WORKING_DIR
 
 echo ""
