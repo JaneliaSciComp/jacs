@@ -109,12 +109,9 @@ public class WholeToCentralBrainConversionService implements IService {
     	
     	logger.info("Ensure that central brain sample "+centralName+" exists in " +folder.getName());
     	
-    	for(EntityData ed : folder.getEntityData()) {
-			Entity child = ed.getChildEntity();
-    		if (child == null) continue;
+    	for(Entity child : folder.getChildren()) {
     		if (!EntityConstants.TYPE_SAMPLE.equals(child.getEntityType().getName())) continue;
     		if (child.getName().equals(centralName)) {
-    			// Found the sample
     			return child;
     		}
     	}
