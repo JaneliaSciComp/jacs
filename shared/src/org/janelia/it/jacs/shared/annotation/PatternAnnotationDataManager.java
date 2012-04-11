@@ -260,4 +260,54 @@ public class PatternAnnotationDataManager {
         return returnArr;
     }
 
+    // Returns 0-intensity 1-distribution
+    public static Double[] getCompartmentScoresByQuantifiers(List<Double> globalList, List<Double> quantifierList) {
+
+        // Global info
+        double gt0=globalList.get(0);  // 1st-stage threshold (hard-coded to 31)
+        double gt1=globalList.get(1);  // <average-low>
+        double gt2=globalList.get(2);  // <overall average>
+        double gt3=globalList.get(3);  // <average high>
+
+        double gz0=globalList.get(4);  // 0-31 hard-coded intensity, as a ratio
+        double gz1=globalList.get(5);  // 32-<average low>, as ratio
+        double gz2=globalList.get(6);  // <average-low> - <overall average above 31>, as ratio
+        double gz3=globalList.get(7);  // <overall average above 31> - <average high>, as ratio
+        double gz4=globalList.get(8);  // <average high> - max, as ratio
+
+        // Compartment info
+        double z0=quantifierList.get(0); // 0-31 hard-coded intensity, as a ratio
+        double z1=quantifierList.get(1); // 32-<average low>, as ratio
+        double z2=quantifierList.get(2); // <average-low> - <overall average above 31>, as ratio
+        double z3=quantifierList.get(3); // <overall average above 31> - <average high>, as ratio
+        double z4=quantifierList.get(4); // <average high> - max, as ratio
+
+        // Compartment info as 5x5x5 cubes
+        double c0=quantifierList.get(5); // 0-31 hard-coded intensity, as a ratio
+        double c1=quantifierList.get(6); // 32-<average low>, as ratio
+        double c2=quantifierList.get(7); // <average-low> - <overall average above 31>, as ratio
+        double c3=quantifierList.get(8); // <overall average above 31> - <average high>, as ratio
+        double c4=quantifierList.get(9); // <average high> - max, as ratio
+
+        // Intensity-Score
+        double intensityScore = 0.0;
+        if (gz4>0.0) {
+            intensityScore=(3.0*c3 + c2) / (gz4*4.0);
+        }
+
+        // Distribution Score
+        double distributionScore = 0.0;
+        double gd = gz3+gz4;
+        if (gd > 0.0) {
+            distributionScore = (2.0*z3 + z4) / (gd*3.0);
+        }
+
+        Double[] returnArr = new Double[2];
+        returnArr[0]=intensityScore;
+        returnArr[1]=distributionScore;
+
+        return returnArr;
+    }
+
+
 }
