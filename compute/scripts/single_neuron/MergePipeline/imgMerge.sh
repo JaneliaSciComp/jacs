@@ -13,8 +13,8 @@ Vaa3D="$DIR/../../../vaa3d-redhat/vaa3d"
 ANTS="$DIR/Toolkits/ANTS"
 WARP="$DIR/Toolkits/WarpImageMultiTransform"
 SAMPLE="$DIR/Toolkits/ResampleImageBySpacing"
-SCRATCH_DIR="/scratch/jacs/"
-WORKING_DIR=`mktemp -d -p $SCRATCH_DIR`
+
+export TMPDIR=""
 
 ####
 # Inputs
@@ -36,15 +36,20 @@ FINAL_OUTPUT=$3
 FINAL_DIR=${FINAL_OUTPUT%/*}
 FINAL_STUB=${FINAL_OUTPUT%.*}
 OUTPUT_FILENAME=`basename $FINAL_OUTPUT`
+#SCRATCH_DIR="/scratch/jacs/"
+SCRATCH_DIR=$FINAL_DIR
+WORKING_DIR=`mktemp -d -p $SCRATCH_DIR`
 OUTPUT="$WORKING_DIR/merged.v3draw"
 FILEPATH=$WORKING_DIR
 FILETRNSTYPE="$FILEPATH/TransformationType.txt"
 
 echo "Run Dir: $DIR"
 echo "Working Dir: $WORKING_DIR"
-echo "Filepath: $FILEPATH"
+echo "Output Dir: $FINAL_DIR"
 echo "Input 1: $INPUT1"
 echo "Input 2: $INPUT2"
+
+cd $WORKING_DIR
 
 ####
 # detect transformation type
