@@ -112,7 +112,7 @@ fi
 # Build NeuronSeparator
 ################################################################
 if [ $BUILD_NEUSEP == 1 ]; then
-    echo "Building NeuronSeparator"
+    echo "Building NeuronSeparator (not really; just checking it out and grabbing the binaries)"
     cd $COMPILE_DIR
 
     echo "  Removing $NEUSEP_COMPILE_REDHAT_DIR"
@@ -124,12 +124,11 @@ if [ $BUILD_NEUSEP == 1 ]; then
         echo "SVN tag not found for NeuronSeparator: FlySuite_${FWVER}"
         exit 1
     fi
-    cp "$SCRIPT_DIR/qsub_neusep_build.sh" $NEUSEP_COMPILE_REDHAT_DIR
-
-    echo "  Building NeuronSeparator for the grid (in the background)"
-    echo "sh \"$NEUSEP_COMPILE_REDHAT_DIR/qsub_neusep_build.sh\" $FWVER $SERVER" > "$NEUSEP_COMPILE_REDHAT_DIR/build.sh"
-    qsub -sync y "$NEUSEP_COMPILE_REDHAT_DIR/build.sh" &
-    NEUSEP_QSUB_PID=$!
+    #cp "$SCRIPT_DIR/qsub_neusep_build.sh" $NEUSEP_COMPILE_REDHAT_DIR
+    #echo "  Building NeuronSeparator for the grid (in the background)"
+    #echo "sh \"$NEUSEP_COMPILE_REDHAT_DIR/qsub_neusep_build.sh\" $FWVER $SERVER" > "$NEUSEP_COMPILE_REDHAT_DIR/build.sh"
+    #qsub -sync y "$NEUSEP_COMPILE_REDHAT_DIR/build.sh" &
+    #NEUSEP_QSUB_PID=$!
 fi
 
 ################################################################

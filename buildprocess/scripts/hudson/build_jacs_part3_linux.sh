@@ -79,11 +79,13 @@ fi
 if [ $INSTALL_NEUSEP == 1 ]; then
     echo "Installing NeuronSeparator in $NEUSEP_INSTALL_REDHAT_DIR"
     rm -rf $NEUSEP_INSTALL_REDHAT_DIR || true
-    cd "$NEUSEP_COMPILE_REDHAT_DIR/build_cmake.redhat"
     mkdir -p $NEUSEP_INSTALL_REDHAT_DIR
-    cp mylib/sampsepNALoadRaw $NEUSEP_INSTALL_REDHAT_DIR
-    cp tools/setup4 $NEUSEP_INSTALL_REDHAT_DIR
-    cp tools/finish4 $NEUSEP_INSTALL_REDHAT_DIR
+    #cd "$NEUSEP_COMPILE_REDHAT_DIR/build_cmake.redhat"
+    #cp mylib/sampsepNALoadRaw $NEUSEP_INSTALL_REDHAT_DIR
+    #cp tools/setup4 $NEUSEP_INSTALL_REDHAT_DIR
+    #cp tools/finish4 $NEUSEP_INSTALL_REDHAT_DIR
+    cd $NEUSEP_COMPILE_REDHAT_DIR
+    cp bin/* $NEUSEP_INSTALL_REDHAT_DIR
 
     rm $NEUSEP_INSTALL_SYMLINK || true
     echo "Creating symbolic link at $NEUSEP_INSTALL_SYMLINK"
