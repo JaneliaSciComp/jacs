@@ -225,8 +225,6 @@
                 <include name="jacs.properties"/>
             </fileset>
             <fileset dir="${basedir}/conf">
-            	<include name="hibernate.properties"/>
-                <include name="c3p0.properties"/>
             	<include name="ehcache2-jacs.xml"/>
             	<include name="neo4j-beans.xml"/>
             </fileset>
