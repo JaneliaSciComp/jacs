@@ -289,17 +289,18 @@ public class PatternAnnotationDataManager {
         double c3=quantifierList.get(8); // <overall average above 31> - <average high>, as ratio
         double c4=quantifierList.get(9); // <average high> - max, as ratio
 
+        double gd = gz3+gz4;
+
         // Intensity-Score
         double intensityScore = 0.0;
         if (gz4>0.0) {
-            intensityScore=(3.0*c3 + c2) / (gz4*4.0);
+            intensityScore=(c3 + c4) / gd;
         }
 
         // Distribution Score
         double distributionScore = 0.0;
-        double gd = gz3+gz4;
         if (gd > 0.0) {
-            distributionScore = (2.0*z3 + z4) / (gd*3.0);
+            distributionScore = (z3 + z4) / gd;
         }
 
         Double[] returnArr = new Double[2];
