@@ -78,7 +78,7 @@ public class TICManagementPanel extends VerticalPanel {
     private Panel resultsListPanel;
     private SearchOraclePanel oraclePanel;
     private TitledBox _discoveryPanel;
-    private TextBox _geciImagePath;
+    private TextBox _imagePath;
     private RoundedButton _scanDirForResultsButton;
     private SortableTable naaResultsTable;
     private RemotePagingPanel naaResultsPagingPanel;
@@ -111,7 +111,7 @@ public class TICManagementPanel extends VerticalPanel {
         previousNAAPanel.add(getSubmitButtonPanel());
         previousNAAPanel.add(getStatusMessage());
 
-        TitledPanel userSelectionPanel = new TitledPanel("Browse Neuronal Assay Analysis Folders");
+        TitledPanel userSelectionPanel = new TitledPanel("Browse Folders");
         userSelectionPanel.add(previousNAAPanel);
 
         add(userSelectionPanel);
@@ -129,13 +129,13 @@ public class TICManagementPanel extends VerticalPanel {
 
     private void setUpDiscoveryPanel() {
         _discoveryPanel = new TitledBox("Scan For New Directories");
-        _geciImagePath = new TextBox();
-        _geciImagePath.setVisibleLength(60);
-        _geciImagePath.setText("/groups/scicomp/jacsData/GECI/20111018/");
+        _imagePath = new TextBox();
+        _imagePath.setVisibleLength(60);
+        _imagePath.setText("");
         _scanDirForResultsButton = new RoundedButton("Scan Directory", new ClickListener() {
             @Override
             public void onClick(Widget sender) {
-                _dataservice.findPotentialResultNodes(_geciImagePath.getText(), new AsyncCallback() {
+                _dataservice.findPotentialResultNodes(_imagePath.getText(), new AsyncCallback() {
                     public void onFailure(Throwable throwable) {
                         new PopupCenteredLauncher(new ErrorPopupPanel("There was a problem discovering the image directories."), 250).showPopup(_scanDirForResultsButton);
                     }
@@ -152,7 +152,7 @@ public class TICManagementPanel extends VerticalPanel {
         HorizontalPanel sourcePanel = new HorizontalPanel();
         sourcePanel.add(HtmlUtils.getHtml("Image Directory", "prompt"));
         sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
-        sourcePanel.add(_geciImagePath);
+        sourcePanel.add(_imagePath);
         sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
         sourcePanel.add(_scanDirForResultsButton);
         _discoveryPanel.add(sourcePanel);

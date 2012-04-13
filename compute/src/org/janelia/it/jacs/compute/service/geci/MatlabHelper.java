@@ -8,7 +8,12 @@ package org.janelia.it.jacs.compute.service.geci;
  */
 public class MatlabHelper {
     public static final String MATLAB_GRID_CONFIG = "-l matlab=1";
-
+    public static final String MATLAB_EXPORT = "export matlabroot=/misc/local/matlab-2010bSP1;" +
+            "export PATH=\"$PATH:$matlabroot/bin/\";" +
+            "export LD_LIBRARY_PATH=\"$LD_LIBRARY_PATH:$matlabroot/bin/glnxa64:$matlabroot/runtime/glnxa64:" +
+            "$matlabroot/sys/os/glnxa64:$matlabroot/sys/java/jre/glnxa64/jre/lib/amd64/native_threads:" +
+            "$matlabroot/sys/java/jre/glnxa64/jre/lib/amd64/server:$matlabroot/sys/java/jre/glnxa64/jre/lib/amd64\";" +
+            "export XAPPLRESDIR=\"$matlabroot/X11/app-defaults\";export MCR_INHIBIT_CTF_LOCK=1;";
 
 /**
  * We have 4 full floating Matlab licenses available on the cluster with the following toolboxes: Curve Fitting, Image, Optimization, Signal, Statistics, Wavelet, Neural.

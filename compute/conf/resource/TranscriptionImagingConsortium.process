@@ -27,9 +27,13 @@
             <output name="RESULT_FILE_NODE_ID"/>          
             <output name="RESULT_FILE_NODE"/>
         </operation>
+        <operation name="Define Input List" processor="org.janelia.it.jacs.compute.service.tic.TIFInputFileDiscoveryService">
+            <output name="INPUT_FILES"/>
+        </operation>
         <sequence name="Submit TIC Image Processing Job" waitForAsync="true">
             <operation name="Submit Job" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.tic.TICSubmitJobService"/>
+                <input name="INPUT_FILES"/>
                 <input name="RESULT_FILE_NODE_ID"/>
                 <input name="RESULT_FILE_NODE"/>
             </operation>

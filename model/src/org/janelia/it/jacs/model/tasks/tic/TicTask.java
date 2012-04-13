@@ -4,10 +4,7 @@ import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.user_data.Node;
-import org.janelia.it.jacs.model.vo.MultiSelectVO;
-import org.janelia.it.jacs.model.vo.ParameterException;
-import org.janelia.it.jacs.model.vo.ParameterVO;
-import org.janelia.it.jacs.model.vo.TextParameterVO;
+import org.janelia.it.jacs.model.vo.*;
 
 import java.util.List;
 import java.util.Set;
@@ -24,10 +21,10 @@ public class TicTask extends Task {
     transient public static final String DISPLAY_NAME = "Transcription Imaging Consortium";
 
     // Parameter Keys
-    transient public static final String PARAM_inputFile = "input files";
-    transient public static final String PARAM_inputFileType = "inputFileType";
-    transient public static final String PARAM_fretType = "fretType";
-
+    transient public static final String PARAM_inputFile            = "input files";
+    transient public static final String PARAM_borderValue          = "border value";
+    transient public static final String PARAM_calibrationFile      = "calibration file";
+    transient public static final String PARAM_correctionFactorFile = "correction factor file";
 
     public TicTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet) {
         super(inputNodes, owner, events, taskParameterSet);
@@ -40,8 +37,9 @@ public class TicTask extends Task {
 
     private void setDefaultValues() {
         setParameter(PARAM_inputFile, "");
-        setParameter(PARAM_inputFileType, "");
-        setParameter(PARAM_fretType, "");
+        setParameter(PARAM_borderValue, "");
+        setParameter(PARAM_calibrationFile, "");
+        setParameter(PARAM_correctionFactorFile, "");
         this.taskName = TASK_NAME;
     }
 
@@ -51,11 +49,14 @@ public class TicTask extends Task {
         String value = getParameter(key);
         if (value == null)
             return null;
-        if (key.equals(PARAM_fretType)) {
+        if (key.equals(PARAM_calibrationFile) || key.equals(PARAM_correctionFactorFile)) {
             return new TextParameterVO(value);
         }
         if (key.equals(PARAM_inputFile)) {
             return new MultiSelectVO(listOfStringsFromCsvString(value), listOfStringsFromCsvString(value));
+        }
+        if (key.equals(PARAM_borderValue)) {
+            return new DoubleParameterVO(Double.valueOf(value));
         }
         // No match
         return null;

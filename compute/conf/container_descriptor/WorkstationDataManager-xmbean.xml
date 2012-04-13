@@ -323,7 +323,7 @@
 
     <operation>
         <description>Run the Transcription Imaging Consortium Pipeline</description>
-        <name>runTICPipeline</name>
+        <name>runTicPipeline</name>
         <parameter>
             <description>User to run as (e.g. "system")</description>
             <name>user</name>

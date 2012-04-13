@@ -3,10 +3,10 @@ package org.janelia.it.jacs.compute.service.tic;
 import org.ggf.drmaa.DrmaaException;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.compute.service.geci.MatlabHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.tic.TicTask;
-import org.janelia.it.jacs.model.user_data.tic.TICResultNode;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -31,30 +31,47 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
      */
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
         //ProfileComparisonTask profileComparisonTask = (ProfileComparisonTask) task;
-        TICResultNode tmpResultNode = (TICResultNode) resultFileNode;
-
-        // Creating the default config file for the Drmaa Template
-        File configFile = new File(getSGEConfigurationDirectory() + File.separator + CONFIG_PREFIX + "1");
-        boolean fileSuccess = configFile.createNewFile();
-        if (!fileSuccess) {
-            logger.error("Unable to create configFile for TIC process.");
+        //Get the input file list
+        List<String> inputFileList = Task.listOfStringsFromCsvString(processData.getString("INPUT_FILES"));
+        String calibrationFilePath = task.getParameter(TicTask.PARAM_calibrationFile);
+        String correctionFactorFilePath = task.getParameter(TicTask.PARAM_correctionFactorFile);
+        // Creating the config files for the Drmaa Template
+        for (int i = 0; i < inputFileList.size(); i++) {
+            String tmpInputFile = inputFileList.get(i);
+            FileWriter fw = new FileWriter(getSGEConfigurationDirectory() + File.separator + CONFIG_PREFIX + (i+1));
+            File tmpFile= new File(tmpInputFile);
+            String tmpName=tmpFile.getName();
+            String outputPath = resultFileNode.getDirectoryPath()+File.separator+tmpName.substring(0,tmpName.lastIndexOf("."));
+            try {
+                // Path to the input file
+                fw.write(tmpInputFile+"\n");
+                // Input file name
+                fw.write(tmpName+"\n");
+                // Result Node path to the specific results
+                fw.write(outputPath+"\n");
+            }
+            finally {
+                fw.close();
+            }
         }
 
         String basePath = SystemConfigurationProperties.getString("Executables.ModuleBase");
-        String pipelineCmd = basePath + SystemConfigurationProperties.getString("TIC.Cmd");
-        String tmpDirectoryName = SystemConfigurationProperties.getString("Upload.ScratchDir");
-        List<String> inputFiles = Task.listOfStringsFromCsvString(task.getParameter(TicTask.PARAM_inputFile));
+        String reconstructionCmd = basePath + SystemConfigurationProperties.getString("TIC.Reconstruction.Cmd");
+        String correctionCmd = basePath + SystemConfigurationProperties.getString("TIC.Correction.Cmd");
+//        String fishQuantCmd = basePath + SystemConfigurationProperties.getString("TIC.FishQuant.Cmd");
 
         // Takes a list of files, smart enough to figure out the file type based on extension
-        String fullCmd = pipelineCmd + " -o " + tmpResultNode.getDirectoryPath();
-        for (String inputFile : inputFiles) {
-            fullCmd += " -f " + tmpDirectoryName + File.separator + inputFile;
-        }
-        fullCmd = "export PATH=$PATH:" + basePath + ";" + fullCmd;
-        StringBuilder script = new StringBuilder();
-        script.append(fullCmd).append("\n");
-        writer.write(script.toString());
-        setJobIncrementStop(1);
+        writer.write("read INPUT_FILE\n");
+        writer.write("read INPUT_FILE_NAME\n");
+        writer.write("read OUTPUT_DIR\n");
+        writer.write("mkdir $OUTPUT_DIR\n");
+        writer.write("cp $INPUT_FILE $OUTPUT_DIR"+File.separator+".\n");
+        String fullReconstructionCmd = reconstructionCmd + " $OUTPUT_DIR"+File.separator+" $INPUT_FILE_NAME "+calibrationFilePath+"\n";
+        fullReconstructionCmd = MatlabHelper.MATLAB_EXPORT + fullReconstructionCmd;
+        writer.write(fullReconstructionCmd);
+        String fullCorrectionCmd = correctionCmd + " $OUTPUT_DIR"+File.separator+"Reconstructed"+File.separator+" "+correctionFactorFilePath+"\n";
+        writer.write(fullCorrectionCmd);
+        setJobIncrementStop(inputFileList.size());
     }
 
     protected void setQueue(SerializableJobTemplate jt) throws DrmaaException {
