@@ -104,9 +104,7 @@ public class WholeToCentralBrainConversionService implements IService {
     }
     
     private Entity ensureCorrespondingCentralBrainSampleExists(Entity sample, Entity folder) throws Exception {
-
     	String centralName = sample.getName()+"_Central_Brain_Tiles";
-    	
     	logger.info("Ensure that central brain sample "+centralName+" exists in " +folder.getName());
     	
     	for(Entity child : folder.getChildren()) {
@@ -137,25 +135,14 @@ public class WholeToCentralBrainConversionService implements IService {
 	}
 
     protected Entity createSupportingFilesFolder() throws Exception {
-        Entity filesFolder = new Entity();
-        filesFolder.setUser(user);
-        filesFolder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
-        filesFolder.setCreationDate(createDate);
-        filesFolder.setUpdatedDate(createDate);
-        filesFolder.setName("Supporting Files");
+    	Entity filesFolder = newEntity("Supporting Files", EntityConstants.TYPE_SUPPORTING_DATA);
         filesFolder = annotationBean.saveOrUpdateEntity(filesFolder);
         logger.info("Saved supporting files folder as "+filesFolder.getId());
         return filesFolder;
     }
 
     private Entity cloneLsmStackPair(Entity lsmStackPair) throws Exception {
-
-		Entity newLsmStackPair = new Entity();
-		newLsmStackPair.setUser(user);
-		newLsmStackPair.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK_PAIR));
-		newLsmStackPair.setCreationDate(createDate);
-		newLsmStackPair.setUpdatedDate(createDate);
-		newLsmStackPair.setName(lsmStackPair.getName());
+    	Entity newLsmStackPair = newEntity(lsmStackPair.getName(), EntityConstants.TYPE_LSM_STACK_PAIR);
 		newLsmStackPair = annotationBean.saveOrUpdateEntity(newLsmStackPair);
         logger.info("Saved LSM stack pair for '"+newLsmStackPair.getName()+"' as "+newLsmStackPair.getId());
     	
@@ -173,12 +160,7 @@ public class WholeToCentralBrainConversionService implements IService {
     }
     
     private Entity cloneLsmStack(Entity lsmStack) throws Exception {
-        Entity newLsmStack = new Entity();
-        newLsmStack.setUser(user);
-        newLsmStack.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK));
-        newLsmStack.setCreationDate(createDate);
-        newLsmStack.setUpdatedDate(createDate);
-        newLsmStack.setName(lsmStack.getName());
+    	Entity newLsmStack = newEntity(lsmStack.getName(), EntityConstants.TYPE_LSM_STACK);
         newLsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         newLsmStack = annotationBean.saveOrUpdateEntity(newLsmStack);
         logger.info("Saved LSM stack as "+newLsmStack.getId());
@@ -186,12 +168,7 @@ public class WholeToCentralBrainConversionService implements IService {
     }
     
     protected Entity createSample(String name, TilingPattern tiling) throws Exception {
-        Entity sample = new Entity();
-        sample.setUser(user);
-        sample.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_SAMPLE));
-        sample.setCreationDate(createDate);
-        sample.setUpdatedDate(createDate);
-        sample.setName(name);
+        Entity sample = newEntity(name, EntityConstants.TYPE_SAMPLE);
         sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN, tiling.toString());
         sample = annotationBean.saveOrUpdateEntity(sample);
         logger.info("Saved sample as "+sample.getId());
@@ -230,12 +207,7 @@ public class WholeToCentralBrainConversionService implements IService {
         if (topLevelFolder == null) {
             if (createIfNecessary) {
                 logger.info("Creating new topLevelFolder with name=" + topLevelFolderName);
-                topLevelFolder = new Entity();
-                topLevelFolder.setCreationDate(createDate);
-                topLevelFolder.setUpdatedDate(createDate);
-                topLevelFolder.setUser(user);
-                topLevelFolder.setName(topLevelFolderName);
-                topLevelFolder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+                topLevelFolder = newEntity(topLevelFolderName, EntityConstants.TYPE_FOLDER);
                 topLevelFolder.addAttributeAsTag(EntityConstants.ATTRIBUTE_COMMON_ROOT);
                 topLevelFolder = annotationBean.saveOrUpdateEntity(topLevelFolder);
                 logger.info("Saved top level folder as " + topLevelFolder.getId());
@@ -252,16 +224,14 @@ public class WholeToCentralBrainConversionService implements IService {
 
         Entity folder = null;
         
-        for (EntityData ed : parentFolder.getEntityData()) {
-            Entity child = ed.getChildEntity();
-            
-            if (child != null && child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+        for (Entity child : parentFolder.getChildren()) {
+            if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
                 if (child.getName().equals(childName)) {
                     if (folder != null) {
                     	logger.warn("Unexpectedly found multiple child folders with name=" + childName+" for parent folder id="+parentFolder.getId());
                     }
                     else {
-                    	folder = ed.getChildEntity();	
+                    	folder = child;	
                     }
                 }
             }
@@ -269,12 +239,7 @@ public class WholeToCentralBrainConversionService implements IService {
         
         if (folder == null) {
             // We need to create a new folder
-            folder = new Entity();
-            folder.setCreationDate(createDate);
-            folder.setUpdatedDate(createDate);
-            folder.setUser(user);
-            folder.setName(childName);
-            folder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+            folder = newEntity(childName, EntityConstants.TYPE_FOLDER);
             folder = annotationBean.saveOrUpdateEntity(folder);
             addToParent(parentFolder, folder, null, EntityConstants.ATTRIBUTE_ENTITY);
         }
@@ -288,6 +253,16 @@ public class WholeToCentralBrainConversionService implements IService {
         EJBFactory.getLocalAnnotationBean().saveOrUpdateEntityData(ed);
         logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
         		" as child of "+parent.getEntityType().getName()+"#"+parent.getId());
+    }
+    
+    protected Entity newEntity(String name, String type) {
+        Entity e = new Entity();
+        e.setCreationDate(createDate);
+        e.setUpdatedDate(createDate);
+        e.setUser(user);
+        e.setName(name);
+        e.setEntityType(annotationBean.getEntityTypeByName(type));
+        return e;
     }
 
 }
