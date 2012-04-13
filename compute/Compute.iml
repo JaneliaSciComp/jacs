@@ -33,6 +33,7 @@
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/build" />
     </content>
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library">
       <library>
@@ -52,7 +53,6 @@
     <orderEntry type="library" name="Hibernate" level="project" />
     <orderEntry type="library" name="Spring" level="project" />
     <orderEntry type="library" name="Apache Commons" level="project" />
-    <orderEntry type="inheritedJdk" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -63,6 +63,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="MongoDB" level="project" />
+    <orderEntry type="library" name="Spring-3" level="project" />
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">
