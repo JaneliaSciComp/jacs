@@ -2,10 +2,10 @@ package org.janelia.it.jacs.compute.api.support;
 
 import java.util.*;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.ORDER;
 import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * A helper class for clients building SOLR queries against the Entity model.
