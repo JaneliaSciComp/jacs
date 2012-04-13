@@ -79,6 +79,8 @@ public interface AnnotationBeanRemote {
     public List<List<Long>> searchTreeForNameStartingWith(Long rootId, String searchString) throws ComputeException;
     public List<Long> getPathToRoot(Long entityId, Long rootId) throws ComputeException;
     public List<Entity> getEntitiesWithAttributeValue(String attrName, String attrValue) throws ComputeException;
+    public void addChildren(String userLogin, Long parentId, List<Long> childrenIds, String attributeName) throws ComputeException;
+    
     public Map<Entity, Map<String, Double>> getPatternAnnotationQuantifiers() throws ComputeException;
     public Object[] getPatternAnnotationQuantifierMapsFromSummary() throws ComputeException;
 

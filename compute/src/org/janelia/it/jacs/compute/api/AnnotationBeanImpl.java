@@ -586,7 +586,16 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     public EntityAttribute getEntityAttributeByName(String attrName) {
     	return _annotationDAO.getEntityAttributeByName(attrName);
     }
-
+    
+    public void addChildren(String userLogin, Long parentId, List<Long> childrenIds, String attributeName) throws ComputeException {
+        try {
+        	_annotationDAO.addChildren(userLogin, parentId, childrenIds, attributeName);
+        } catch (DaoException e) {
+            _logger.error("Error in addChildren(): "+e.getMessage());
+            throw new ComputeException("Error in addChildren(): "+e.getMessage(), e);
+        }
+    }
+    
     public Map<Entity, Map<String, Double>> getPatternAnnotationQuantifiers() throws ComputeException {
         try {
             return _annotationDAO.getPatternAnnotationQuantifiers();

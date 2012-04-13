@@ -1847,6 +1847,33 @@ public class AnnotationDAO extends ComputeBaseDAO {
         EntityAttribute attribute = getEntityAttributeByName(attrName);
         return new EntityData(null, attribute, parent, null, owner, null, date, date, null);
     }
+    
+    public void addChildren(String userLogin, Long parentId, List<Long> childrenIds, String attributeName) throws DaoException {
+    	
+    	User user = getUserByName(userLogin);
+    	EntityAttribute attribute = getEntityAttributeByName(attributeName);
+    	Date createDate = new Date();
+    	
+    	Entity parent = new Entity();
+    	parent.setId(parentId);
+    	
+        for (Long childId : childrenIds) {
+        	
+        	Entity child = new Entity();
+        	child.setId(childId);
+        	
+        	EntityData ed = new EntityData();
+        	ed.setParentEntity(parent);
+        	ed.setChildEntity(child);
+        	ed.setUser(user);
+            ed.setCreationDate(createDate);
+            ed.setUpdatedDate(createDate);
+            
+            if (attribute!=null) ed.setEntityAttribute(attribute);
+            
+            saveOrUpdate(ed);
+        }
+    }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
