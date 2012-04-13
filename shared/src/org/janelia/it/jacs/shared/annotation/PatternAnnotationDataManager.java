@@ -26,9 +26,10 @@ public class PatternAnnotationDataManager {
     public static final List<String> QS_COMPARTMENT_LIST = new ArrayList<String>();
     public static final List<String> QS_Z_INDEX_LIST = new ArrayList<String>();
     public static final List<String> QS_C_INDEX_LIST = new ArrayList<String>();
+    public static final Map<String,String> QS_DESCRIPTION_MAP = new HashMap<String, String>();
 
     static {
-        QS_COMPARTMENT_LIST.add("AL_L");
+        QS_COMPARTMENT_LIST.add("AL_L"); QS_DESCRIPTION_MAP.put("AL_L", "");
         QS_COMPARTMENT_LIST.add("AL_R");
         QS_COMPARTMENT_LIST.add("AME_L");
         QS_COMPARTMENT_LIST.add("AME_R");
@@ -308,6 +309,10 @@ public class PatternAnnotationDataManager {
         returnArr[1]=distributionScore;
 
         return returnArr;
+    }
+
+    public static String getCompartmentDescription(String key) {
+        return key + "_description";
     }
 
 
