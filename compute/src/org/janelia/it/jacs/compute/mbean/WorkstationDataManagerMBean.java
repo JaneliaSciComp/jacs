@@ -24,9 +24,9 @@ public interface WorkstationDataManagerMBean {
     
     public void runCentralBrainDataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
     
-    public void runAlignWholeBrainDataPipeline(String user, Boolean refreshAlignment);
+    public void runAlignWholeBrainDataPipeline(String user, Boolean refreshAlignment, Boolean refreshSeparation);
     
-    public void runAlignWholeBrainSamplePipeline(String user, Boolean refreshAlignment);
+    public void runAlignWholeBrainSamplePipeline(String user, Boolean refreshAlignment, Boolean refreshSeparation);
     
     public void runMCFODataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
 

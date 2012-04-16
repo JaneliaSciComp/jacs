@@ -10,7 +10,11 @@
             <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
             <input name="TASK_PARAMETER_2" value="refresh alignment"/>
             <input name="PROCESS_VARIABLE_2" value="REFRESH_ALIGNMENT"/>
+            <input name="TASK_PARAMETER_3" value="refresh separation"/>
+            <input name="PROCESS_VARIABLE_3" value="REFRESH_SEPARATION"/>
 	        <output name="SAMPLE_ENTITY_ID"/>
+	        <output name="REFRESH_ALIGNMENT"/>
+	        <output name="REFRESH_SEPARATION"/>
 	    </operation>
 	    
 	    <!-- Decide which types of processing will be run -->
@@ -76,7 +80,7 @@
 		            <input name="SAMPLE_ENTITY_ID"/>
 		            <input name="ALIGNED_FILENAME"/>
 		            <input name="INPUT_FILENAME" value="$V{ALIGNED_FILENAME}"/>
-		            <input name="RESULT_ENTITY_NAME" value="Aligned Neuron Separation"/>
+		            <input name="RESULT_ENTITY_NAME" value="Aligned 63x Neuron Separation"/>
 		        </include>
 		        
 	    	</sequence>

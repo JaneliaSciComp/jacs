@@ -150,11 +150,11 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
-    public void runAlignWholeBrainDataPipeline(String user, Boolean refreshAlignment) {
+    public void runAlignWholeBrainDataPipeline(String user, Boolean refreshAlignment, Boolean refreshSeparation) {
         try {
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
             		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), null,
-            		null, null, refreshAlignment, null);
+            		null, null, refreshAlignment, refreshSeparation);
             task.setJobName("Align Whole Brain Data Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("AlignWholeBrainDataPipeline", task.getObjectId());
@@ -163,13 +163,13 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
-    public void runAlignWholeBrainSamplePipeline(String sampleEntityId, Boolean refreshAlignment) {
+    public void runAlignWholeBrainSamplePipeline(String sampleEntityId, Boolean refreshAlignment, Boolean refreshSeparation) {
         try {
         	Entity sampleEntity = EJBFactory.getLocalAnnotationBean().getEntityById(sampleEntityId);
         	if (sampleEntity==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
         	Task task = new MCFOSamplePipelineTask(new HashSet<Node>(), 
         			sampleEntity.getUser().getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>(), 
-        			sampleEntityId, false, refreshAlignment, false);
+        			sampleEntityId, false, refreshAlignment, refreshSeparation);
             task.setJobName("Align Whole Brain Sample Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("AlignWholeBrainSamplePipeline", task.getObjectId());

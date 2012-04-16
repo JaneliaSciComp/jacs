@@ -58,7 +58,7 @@ public class ChooseAlignWholeBrainSampleStepsService implements IService {
 
     		boolean isAlignable = pattern.isAlignable();
     		boolean runAlignment = isAlignable && (pattern == TilingPattern.WHOLE_BRAIN) && (refreshAlignment || !canSkipWholeBrainAlignment(processData, sampleEntity));
-    		boolean runAlignedSeparation = false;//runAlignment || (isAlignable && !canSkipAlignedSeparation(processData, sampleEntity));
+    		boolean runAlignedSeparation = runAlignment || (isAlignable && !canSkipWholeBrainAlignedSeparation(processData, sampleEntity));
     		
     		logger.info("Sample "+sampleEntity.getName()+" (id="+sampleEntityId+") has tiling pattern "+pattern.getName()+" (alignable="+isAlignable+")");
     		
@@ -173,14 +173,14 @@ public class ChooseAlignWholeBrainSampleStepsService implements IService {
 		return true;
     }
     
-    public boolean canSkipAlignedSeparation(IProcessData processData, Entity sampleEntity) {
+    public boolean canSkipWholeBrainAlignedSeparation(IProcessData processData, Entity sampleEntity) {
 
 		List<Entity> separations = sampleEntity.getChildrenOfType(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
     	for(Entity separation : separations) {
-    		if (separation.getName().startsWith("Aligned")) return true;
+    		if (separation.getName().startsWith("Aligned 63x ")) return true;
     	}
 
-		logger.warn("Cannot find existing aligned separation result for Sample with id="+sampleEntity.getId());
+		logger.warn("Cannot find existing aligned 63x separation result for Sample with id="+sampleEntity.getId());
 		return false;
     }
     

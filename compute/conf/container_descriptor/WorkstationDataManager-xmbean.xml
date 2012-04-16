@@ -139,6 +139,11 @@
            <name>refreshAlignment</name>
            <type>java.lang.Boolean</type>
         </parameter>
+        <parameter>
+           <description>Re-run neuron separations?</description>
+           <name>refreshSeparation</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
     </operation>
     
     <operation>
@@ -152,6 +157,11 @@
         <parameter>
            <description>Re-run brain alignments?</description>
            <name>refreshAlignment</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+           <description>Re-run neuron separations?</description>
+           <name>refreshSeparation</name>
            <type>java.lang.Boolean</type>
         </parameter>
     </operation>
