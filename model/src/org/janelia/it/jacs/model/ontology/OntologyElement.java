@@ -52,8 +52,11 @@ public class OntologyElement {
             if (type != null) type.init(entity);
         }
 
-        getRoot().populateElementMap(this, false);
-        getRoot().populateInternalReferences(this, false);
+        OntologyRoot root = getRoot();
+        if (root!=null) {
+        	root.populateElementMap(this, false);
+        	root.populateInternalReferences(this, false);
+        }
         
         // Only reinitialize children if they've already been initialized already
         if (children != null) {
@@ -98,9 +101,12 @@ public class OntologyElement {
 	public OntologyRoot getRoot() {
 		OntologyElement ancestor = this;
 		int i = 0;
-		while (!(ancestor instanceof OntologyRoot)) {
+		while (!(ancestor instanceof OntologyRoot) && ancestor!=null) {
 			ancestor = ancestor.getParent();
 			if (i++>10000) return null; // Avoid infinite loop in the case of an orphan tree branch
+		}
+		if (ancestor==null) {
+			System.out.println("WARNING: could not find root for ontology element "+name+" id="+entity.getId());
 		}
 		return (OntologyRoot)ancestor;
 	}
