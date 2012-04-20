@@ -162,6 +162,15 @@ echo "~ Running NiftiImageConverter on:\n  $DEFORMEDC1\n  $DEFORMEDC2\n  $DEFORM
 LA_OUTPUT=$SUBPREFIX"Aligned.v3draw"
 $Vaa3D -x ireg -f NiftiImageConverter -i $DEFORMEDC1 $DEFORMEDC2 $DEFORMEDC3 $DEFORMEDC4 -o $LA_OUTPUT -p "#b 1 #v 2"
 
+EXT=${FINAL_OUTPUT##*.}
+if [ "$EXT" == "v3dpbd" ]
+then
+    ALIGNED_COMPRESSED="$WORKING_DIR/Aligned.v3dpbd"
+    echo "~ Compressing output file to 8-bit PBD: $ALIGNED_COMPRESSED"
+    $Vaa3D -cmd image-loader -convert8 $OUTPUT $ALIGNED_COMPRESSED
+    OUTPUT=$ALIGNED_COMPRESSED
+fi
+
 echo "~ Computations complete"
 echo "~ Space usage: " `du -h $WORKING_DIR`
 
