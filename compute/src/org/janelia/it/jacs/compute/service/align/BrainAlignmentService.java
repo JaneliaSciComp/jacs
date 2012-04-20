@@ -60,7 +60,7 @@ public class BrainAlignmentService extends SubmitDrmaaJobService {
         	throw new ServiceException("Input parameter INPUT_FILENAME may not be null");
         }
         
-        File outputFile = new File(outputFileNode.getDirectoryPath(),"Aligned.v3draw");
+        File outputFile = new File(outputFileNode.getDirectoryPath(),"Aligned.v3dpbd");
         processData.putItem("ALIGNED_FILENAME", outputFile.getAbsolutePath());
     }
 
@@ -125,12 +125,12 @@ public class BrainAlignmentService extends SubmitDrmaaJobService {
     	File[] alignedFiles = alignDir.listFiles(new FilenameFilter() {
 			@Override
 			public boolean accept(File dir, String name) {
-	            return name.equals("Aligned.v3draw");
+	            return name.equals("Aligned.v3dpbd");
 			}
 		});
 
     	if (alignedFiles.length < 1) {
-    		throw new MissingDataException("Expected Aligned.v3draw - not found for "+alignFileNode.getDirectoryPath());
+    		throw new MissingDataException("Expected Aligned.v3dpbd - not found for "+alignFileNode.getDirectoryPath());
     	}
 	}
 }

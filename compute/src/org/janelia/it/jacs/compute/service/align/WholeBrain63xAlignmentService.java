@@ -36,7 +36,7 @@ public class WholeBrain63xAlignmentService extends BrainAlignmentService {
         	"sh " + EXECUTABLE_DIR + WB63X_ALIGNER_SCRIPT_CMD +
             " " +  EXECUTABLE_DIR + WB63X_TEMPLATE_DIR +
             " " + inputFilename + 
-            " " + alignFileNode.getDirectoryPath()+"/Aligned.v3draw\n");
+            " " + alignFileNode.getDirectoryPath()+"/Aligned.v3dpbd\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix() + "\n");
         writer.write(script.toString());
 	}

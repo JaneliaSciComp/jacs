@@ -131,7 +131,7 @@ public class WholeToCentralBrainConversionService implements IService {
 			}
 		}
 		
-        return sample;
+        return newSample;
 	}
 
     protected Entity createSupportingFilesFolder() throws Exception {
