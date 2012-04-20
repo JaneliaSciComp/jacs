@@ -17,6 +17,8 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.criterion.Expression;
 import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.api.support.MappedId;
+import org.janelia.it.jacs.compute.api.support.EntityMapStep;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.ontology.types.Category;
@@ -31,7 +33,7 @@ import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
 public class AnnotationDAO extends ComputeBaseDAO {
 
 	/** Most amount of nodes a tree can have before it's considered a "large" tree */
-	private static final Long MAX_SMALL_TREE_SIZE = 2000L;
+	private static final Long MAX_SMALL_TREE_SIZE = 5000L;
 	
 	/** Batch fetch size for JDBC result sets */
 	protected final static int JDBC_FETCH_SIZE = 200;
@@ -1756,14 +1758,109 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	return null;
     }
 
-    /**
-     * Returns the ids of LSM images matching the given image path and belonging to the given slide code.
-     * @param userId
-     * @param imagePath
-     * @param slideCode
-     * @return
-     * @throws DaoException
-     */
+    public List<MappedId> getProjectedResults(List<Long> entityIds, List<EntityMapStep> upProjection, List<EntityMapStep> downProjection) throws DaoException {
+    	
+    	if (entityIds.isEmpty()) {
+    		throw new DaoException("getProjectedResults: entity ids cannot be empty");
+    	}
+    	
+    	if (upProjection.isEmpty() && downProjection.isEmpty()) {
+    		throw new DaoException("getProjectedResults: both up and down projections cannot be empty");
+    	}
+    	
+    	List<MappedId> list = new ArrayList<MappedId>();
+    	
+    	StringBuffer entityCommaList = new StringBuffer();
+    	for(Long id : entityIds) {
+    		if (entityCommaList.length()>0) entityCommaList.append(",");
+    		entityCommaList.append(id);
+    	}
+    	
+
+    	List<Long> upTypeProjection = new ArrayList<Long>();
+    	for(EntityMapStep step : upProjection) {
+    		upTypeProjection.add(getEntityTypeByName(step.getEntityType()).getId());
+    	}
+
+    	List<Long> downTypeProjection = new ArrayList<Long>();
+    	for(EntityMapStep step : downProjection) {
+    		downTypeProjection.add(getEntityTypeByName(step.getEntityType()).getId());
+    	}
+    	
+        Connection conn = null;
+    	PreparedStatement stmt = null;
+    	try {
+            StringBuffer sql = new StringBuffer();
+            
+            int i = 1;
+            String prevTable = "i";
+            String prevFk = "id";
+            String targetIdAlias = "i.id";
+            
+            for(Long attrId : upTypeProjection) {
+            	sql.append("join entityData ed"+i+" on ed"+i+".child_entity_id = "+prevTable+"."+prevFk+" \n");	
+            	sql.append("join entity e"+i+" on ed"+i+".parent_entity_id = e"+i+".id \n");
+            	prevTable = "ed"+i;
+            	prevFk = "parent_entity_id";
+            	targetIdAlias = prevTable+".parent_entity_id";
+            	i++;
+            }
+            
+            for(Long attrId : downTypeProjection) {
+            	sql.append("join entityData ed"+i+" on ed"+i+".parent_entity_id = "+prevTable+"."+prevFk+" \n");	
+            	sql.append("join entity e"+i+" on ed"+i+".child_entity_id = e"+i+".id \n");
+            	prevTable = "ed"+i;
+            	prevFk = "child_entity_id";
+            	targetIdAlias = prevTable+".child_entity_id";
+            	i++;
+            }
+            
+            sql.insert(0, "select distinct i.id,"+targetIdAlias+" from entity i \n");
+            sql.append("where i.id in ("+entityCommaList+") \n");
+            
+            i = 1;
+            
+            for(Long typeId : upTypeProjection) {
+            	sql.append("and e"+i+".entity_type_id = "+typeId+" \n");	
+            	i++;
+            }
+
+            for(Long typeId : downTypeProjection) {
+            	sql.append("and e"+i+".entity_type_id = "+typeId+" \n");	
+            	i++;
+            }
+            
+            sql.append("and "+targetIdAlias+" is not null");
+            
+            
+            _logger.info("SQL:\n"+sql+"\n");
+            
+	        conn = getJdbcConnection();
+	        stmt = conn.prepareStatement(sql.toString());
+	        	        
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				Long entityId = rs.getBigDecimal(1).longValue();
+				Long projId = rs.getBigDecimal(2).longValue();
+				list.add(new MappedId(entityId, projId));
+			}
+		}
+    	catch (SQLException e) {
+    		throw new DaoException(e);
+    	}
+	    finally {
+	    	try {
+	            if (stmt!=null) stmt.close();
+	            if (conn!=null) conn.close();	
+	    	}
+	    	catch (SQLException e) {
+	    		_logger.warn("Ignoring error encountered while closing JDBC connection",e);
+	    	}
+	    }
+        
+    	return list;
+    }
+    
     public List<Long> getImageIdsWithPath(Long userId, String imagePath, String slideCode) throws DaoException {
     	
     	List<Long> sampleIds = new ArrayList<Long>();

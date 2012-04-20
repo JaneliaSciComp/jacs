@@ -6,6 +6,8 @@ import java.util.Set;
 
 import javax.ejb.Remote;
 
+import org.janelia.it.jacs.compute.api.support.MappedId;
+import org.janelia.it.jacs.compute.api.support.EntityMapStep;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -80,6 +82,7 @@ public interface AnnotationBeanRemote {
     public List<Long> getPathToRoot(Long entityId, Long rootId) throws ComputeException;
     public List<Entity> getEntitiesWithAttributeValue(String attrName, String attrValue) throws ComputeException;
     public void addChildren(String userLogin, Long parentId, List<Long> childrenIds, String attributeName) throws ComputeException;
+    public List<MappedId> getProjectedResults(List<Long> entityIds, List<EntityMapStep> upMapping, List<EntityMapStep> downMapping) throws ComputeException;
     
     public Map<Entity, Map<String, Double>> getPatternAnnotationQuantifiers() throws ComputeException;
     public Object[] getPatternAnnotationQuantifierMapsFromSummary() throws ComputeException;

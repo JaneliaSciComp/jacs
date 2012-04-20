@@ -9,6 +9,8 @@ import javax.ejb.TransactionAttributeType;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.compute.api.support.MappedId;
+import org.janelia.it.jacs.compute.api.support.EntityMapStep;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
@@ -593,6 +595,15 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         } catch (DaoException e) {
             _logger.error("Error in addChildren(): "+e.getMessage());
             throw new ComputeException("Error in addChildren(): "+e.getMessage(), e);
+        }
+    }
+    
+    public List<MappedId> getProjectedResults(List<Long> entityIds, List<EntityMapStep> upMapping, List<EntityMapStep> downMapping) throws ComputeException {
+    	try {
+        	return _annotationDAO.getProjectedResults(entityIds, upMapping, downMapping);
+        } catch (DaoException e) {
+            _logger.error("Error in getProjectedResults(): "+e.getMessage());
+            throw new ComputeException("Error in getProjectedResults(): "+e.getMessage(), e);
         }
     }
     
