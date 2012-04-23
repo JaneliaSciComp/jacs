@@ -68,9 +68,6 @@ public class Vaa3DHelper {
     public static String getVaa3DGridCommandPrefix(String displayPort) {
         StringBuffer prefix = new StringBuffer();
 
-        // Exit the entire script if anything returns a non-zero exit code
-        prefix.append("set -o errexit\n");
-
         // Skip ports that are currently in use, or "locked"
         prefix.append("PORT="+displayPort+"\n");
         prefix.append("while (test -f \"/tmp/.X${PORT}-lock\") || (netstat -atwn | grep \"^.*:${PORT}.*:\\*\\s*LISTEN\\s*$\")\n");
