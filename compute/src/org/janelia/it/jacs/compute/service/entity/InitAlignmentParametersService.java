@@ -57,6 +57,10 @@ public class InitAlignmentParametersService implements IService {
         		if (pattern == TilingPattern.OPTIC_TILE) {
                 	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.OpticLobeAlignmentService");
                 	processData.putItem("ALIGNMENT_RESULT_NAME", "Optic Lobe Alignment");
+                	// TODO: there should be a better way to get this...
+                	String[] parts = sampleEntity.getName().split("-");
+                	String tileName = parts[parts.length-1].replaceAll("_", " ");
+                	processData.putItem("ALIGNMENT_TILE_NAME", tileName);
         		}
         		else {
                 	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.BrainAlignmentService");

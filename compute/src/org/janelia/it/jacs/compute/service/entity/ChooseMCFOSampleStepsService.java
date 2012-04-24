@@ -60,13 +60,7 @@ public class ChooseMCFOSampleStepsService implements IService {
     			pattern = TilingPattern.valueOf(strTilingPattern);
     		}
     		
-    		boolean isAlignable = pattern.isAlignable();
-
-    		// TODO: currently Left optic lobe alignments are not supported. This work-around should be removed in the future.
-    		if (pattern == TilingPattern.OPTIC_TILE && sampleEntity.getName().contains("Left")) {
-    			isAlignable = false;
-    		}
-    		
+    		boolean isAlignable = pattern.isAlignable();    		
     		boolean runProcessing = refreshProcessing || !canSkipProcessing(processData, sampleEntity);
     		boolean runAlignment = isAlignable && (runProcessing || refreshAlignment || !canSkipAlignment(processData, sampleEntity));
     		boolean runSeparation = runProcessing || refreshSeparation || !canSkipPrealignedSeparation(processData, sampleEntity);

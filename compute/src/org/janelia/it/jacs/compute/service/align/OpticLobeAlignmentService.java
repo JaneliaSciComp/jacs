@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.service.align;
 
+import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
@@ -19,6 +20,17 @@ public class OpticLobeAlignmentService extends BrainAlignmentService {
 	protected static final String OPTIC_ALIGNER_SCRIPT_CMD = SystemConfigurationProperties.getString("OpticLobeAligner.ScriptPath");
 	protected static final String OPTIC_TEMPLATE_DIR = SystemConfigurationProperties.getString("OpticLobeAligner.TemplateDir");
 
+	private String tileName;
+	
+    @Override
+    protected void init(IProcessData processData) throws Exception {
+    	super.init(processData);
+    	tileName = (String)processData.getItem("ALIGNMENT_TILE_NAME");
+        if (tileName==null) {
+        	throw new ServiceException("Input parameter ALIGNMENT_TILE_NAME may not be null");
+        }
+    }
+    
     @Override
 	protected void createShellScript(FileWriter writer) throws IOException, ParameterException, MissingDataException,
 			InterruptedException, ServiceException {
@@ -36,7 +48,8 @@ public class OpticLobeAlignmentService extends BrainAlignmentService {
             " -b " +  EXECUTABLE_DIR + ALIGNER_EXE_PATH +
             " -t " +  EXECUTABLE_DIR + OPTIC_TEMPLATE_DIR +
             " -w " +  alignFileNode.getDirectoryPath() +
-            " -i " +  inputFilename + "\n");
+            " -n \"" +  tileName + "\"" + 
+            " -i \"" +  inputFilename + "\"\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix() + "\n");
         writer.write(script.toString());
 	}
