@@ -3,18 +3,23 @@
 use Getopt::Std;
 use strict;
 
-our ($opt_v, $opt_b, $opt_l, $opt_t, $opt_w, $opt_i);
+our ($opt_v, $opt_b, $opt_l, $opt_t, $opt_w, $opt_i, $opt_n);
 
-getopts("v:b:l:t:w:i:") || &usage("");
+getopts("v:b:l:t:w:i:n:") || &usage("");
 
 my $v3d         = $opt_v;
 my $ba          = $opt_b;
 my $templateDir = $opt_t;
 my $workingDir  = $opt_w;
 my $inputStack  = $opt_i;
+my $tileName    = $opt_n;
+
+if (($tileName ne "") and ($tileName ne "Right Optic Lobe") and ($tileName ne "Left Optic Lobe")) {
+    &usage("Invalid tile name: $tileName");
+}
 
 if (! -e $v3d) {
-    &usage("Could not locate v3d progam at location $v3d");;
+    &usage("Could not locate v3d progam at location $v3d");
 }
 
 if (! -e $ba) {
@@ -34,7 +39,21 @@ if (! -d $workingDir) {
 }
 
 if (! -e $inputStack) {
-    &usage("Could not locate input stack $inputStack");
+    &usage("could not locate input stack $inputStack");
+}
+
+if ($inputStack =~ /.*?v3dpbd$/) {
+    print "Decompress input file...";
+    my $baseName=&getBaseNameFromFile($inputStack);
+    print "baseName=$baseName\n";
+    my $outputFileBase="$workingDir\/$baseName";
+    print "outputFileBase=$outputFileBase\n";
+    my $decompressed = "$outputFileBase.v3draw";
+    my $cmd = "$v3d -cmd image-loader -convert $inputStack $decompressed";
+    print "cmd=$cmd\n";
+    my $logFile="$workingDir\/initialConversion.log";
+    system( "$cmd 1>$logFile 2>&1" );
+    $inputStack = $decompressed;
 }
 
 &runInitialGlobalAlignment($inputStack);
@@ -121,13 +140,26 @@ sub opticLocalAlignment {
 #
 #$BRAINALIGN_PATH -t "$TEMPLATE_DIR/local/target_C1-110506_Slide1_110411_57C10_pos15_ROL__L5_Sum.tif.8bit.tif" -s "$OUTPUT_DIR/GlobalAlignedReference_8bit.v3draw" -o "$OUTPUT_DIR/LocalAlignedReference_8bit.v3draw" -w 10 -L "$TEMPLATE_DIR/local/target_C1-110506_Slide1_110411_57C10_pos15_ROL__L5_Sum.tif.8bit.tif.marker"
     
+    my $templateFile="";
+    my $templateMarker="";
+    if ($tileName eq "Left Optic Lobe") {
+        print "Using left optic lobe template\n";
+        $templateFile = "flipped_target_C1-110506_Slide1_110411_57C10_pos15_ROL__L5_Sum.tif.8bit.v3draw";
+        $templateMarker="flipped_target_C1-110506_Slide1_110411_57C10_pos15_ROL__L5_Sum.tif.8bit.tif.marker";
+    }
+    else {
+        print "Using right optic lobe template\n";
+        $templateFile = "target_C1-110506_Slide1_110411_57C10_pos15_ROL__L5_Sum.tif.8bit.tif";
+        $templateMarker="target_C1-110506_Slide1_110411_57C10_pos15_ROL__L5_Sum.tif.8bit.tif.marker";
+    }
+
     my $cmd = sanitize(qq{
         $ba 
-        -t "$templateDir/local/target_C1-110506_Slide1_110411_57C10_pos15_ROL__L5_Sum.tif.8bit.tif" 
+        -t "$templateDir/local/$templateFile"
         -s "$outputFileBase\_GlobalAlignedReference_8bit.v3draw" 
         -o "$outputFileBase\_LocalAlignedReference_8bit.v3draw" 
         -w 10 
-        -L "$templateDir/local/target_C1-110506_Slide1_110411_57C10_pos15_ROL__L5_Sum.tif.8bit.tif.marker"
+        -L "$templateDir/local/$templateMarker"
     });
 
     print "cmd=$cmd\n";
@@ -176,7 +208,7 @@ sub generateOutputFiles {
     my $resultFile = "$outputFileBase\_LocalAligned.v3draw";
     die "Could not find result file $resultFile\n" unless (-e $resultFile);
 
-    my $cmd = "$v3d -cmd image-loader -convert $resultFile $workingDir\/Aligned\.v3draw";
+    my $cmd = "$v3d -cmd image-loader -convert $resultFile $workingDir\/Aligned\.v3dpbd";
     #$cmd = "mv $resultFile $workingDir\/Aligned\.v3draw";
     #$cmd = "$v3d -cmd image-loader -mapchannels $resultFile $workingDir\/Aligned\.v3draw \"3,0,0,1,1,2,2,3\"";
     print "cmd=$cmd\n";
@@ -192,12 +224,10 @@ sub cleanup {
     my $outputFileBase="$workingDir\/$baseName";
     print "outputFileBase=$outputFileBase\n";
     my $logFile="$workingDir\/cleanup.log";
-
     my $cmd = "rm $outputFileBase" . "*\.v3draw";
     print "cmd=$cmd\n";
     system( "$cmd 1>$logFile 2>&1" );
 }
-
 
 __END__
 

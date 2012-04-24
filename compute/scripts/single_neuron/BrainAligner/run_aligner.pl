@@ -249,7 +249,7 @@ sub generateOutputFiles {
 	die "Could not find result file $resultFile\n";
     }
 
-    my $cmd = "$v3d -cmd image-loader -convert $resultFile $workingDir\/Aligned\.v3draw";
+    my $cmd = "$v3d -cmd image-loader -convert $resultFile $workingDir\/Aligned\.v3dpbd";
     #my $cmd = "mv $resultFile $workingDir\/Aligned\.v3draw";
     #$cmd = "$v3d -cmd image-loader -mapchannels $resultFile $workingDir\/Aligned\.v3draw \"3,0,0,1,1,2,2,3\"";
     print "cmd=$cmd\n";
