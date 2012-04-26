@@ -78,16 +78,17 @@ $NSDIR/setup10 -c6.0 -e4.5 -s800 -r4 SeparationResultUnmapped $INPUT_FILE
 
 if [ -s SeparationResultUnmapped.nsp ]; then
 
-    if [ "$PREVFILE" ]; then
-        echo "~ Mapping neurons to previous fragment indexes"
-        $NSDIR/map_neurons SeparationResultUnmapped.nsp $PREVFILE > SeparationResult.nsp
-        if [ ! -s "SeparationResult.nsp" ]; then
-            echo "~ Mapping was not successful, proceeding with unmapped result"
-            mv SeparationResultUnmapped.nsp SeparationResult.nsp
-        fi
-    else
+    # temporarily disabled because map_neurons is crashing
+    #if [ "$PREVFILE" ]; then
+    #    echo "~ Mapping neurons to previous fragment indexes"
+    #    $NSDIR/map_neurons SeparationResultUnmapped.nsp $PREVFILE > SeparationResult.nsp
+    #    if [ ! -s "SeparationResult.nsp" ]; then
+    #        echo "~ Mapping was not successful, proceeding with unmapped result"
+    #        mv SeparationResultUnmapped.nsp SeparationResult.nsp
+    #    fi
+    #else
         mv SeparationResultUnmapped.nsp SeparationResult.nsp
-    fi
+    #fi
 
     if [ -s SeparationResult.nsp ]; then
 
