@@ -11,6 +11,7 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.fileDiscovery.TilingPattern;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 import java.util.ArrayList;
@@ -181,16 +182,28 @@ public class ChooseMCFOSampleStepsService implements IService {
 		logger.warn("Cannot find existing prealigned separation result for Sample with id="+sampleEntity.getId());
 		return false;
     }
-    
+    	
     public boolean canSkipAlignedSeparation(IProcessData processData, Entity sampleEntity) {
 
-		List<Entity> separations = sampleEntity.getChildrenOfType(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
-    	for(Entity separation : separations) {
-    		if (separation.getName().startsWith("Aligned")) return true;
+    	// Ensure there is an alignment separation after the last alignment
+    	boolean found = false;
+    	for(EntityData ed : EntityUtils.getOrderedEntityDataForAttribute(sampleEntity, EntityConstants.ATTRIBUTE_RESULT)) {
+    		Entity child = ed.getChildEntity();
+    		if (child==null) continue;
+    		if (child.getEntityType().getName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
+    			if (child.getName().startsWith("Aligned")) found = true;
+    		}
+    		else if (child.getEntityType().getName().equals(EntityConstants.TYPE_ALIGNMENT_RESULT)) {
+    			if (!child.getName().contains("63x")) found = false;
+    		}    		
     	}
-
-		logger.warn("Cannot find existing aligned separation result for Sample with id="+sampleEntity.getId());
-		return false;
+    	
+    	if (!found) {
+			logger.warn("Cannot find existing aligned separation result for Sample with id="+sampleEntity.getId());
+			return false;
+    	}
+    	
+    	return true;
     }
     
     private boolean getBoolean(String key) {
