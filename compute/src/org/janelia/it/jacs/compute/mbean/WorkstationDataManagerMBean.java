@@ -28,6 +28,10 @@ public interface WorkstationDataManagerMBean {
     
     public void runAlignWholeBrainSamplePipeline(String user, Boolean refreshAlignment, Boolean refreshSeparation);
     
+    public void runTwoChanDataPipeline(String user);
+    
+    public void runTwoChanSamplePipeline(String sampleEntityId);
+    
     public void runMCFODataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
 
     public void runMCFOSamplePipeline(String sampleEntityId, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);

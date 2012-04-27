@@ -167,6 +167,26 @@
     </operation>
     
     <operation>
+        <description>Run the entire Two Channel Pipeline</description>
+        <name>runTwoChanDataPipeline</name>
+        <parameter>
+           <description>User to run as (e.g. "system")</description>
+           <name>user</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+
+    <operation>
+        <description>Run the Two Channel Pipeline for a single Sample</description>
+        <name>runTwoChanSamplePipeline</name>
+        <parameter>
+           <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
+           <name>sampleEntityId</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
         <description>Run the entire MCFO Data Pipeline</description>
         <name>runMCFODataPipeline</name>
         <parameter>

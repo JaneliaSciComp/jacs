@@ -1,7 +1,7 @@
 <!-- 
-	Run the 63x whole brain aligner on every WHOLE_BRAIN sample in the single neuron data. 
+	Run the two chan pipeline for all optic lobes.
 -->
-<process name="Align Whole Brain Data Pipeline" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
+<process name="Two Chan Data Pipeline" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
 	<sequence>
 	
 	    <!-- Import variables from the MCFODataPipelineTask -->
@@ -11,10 +11,10 @@
 	        <output name="REFRESH_ALIGNMENT"/>
 	    </operation>
 		
-	    <!-- Find all the WHOLE_BRAIN sample entities -->
-		<operation name="Entity Tree Traversal" processor="org.janelia.it.jacs.compute.service.entity.WholeBrainTraversalService">
+	    <!-- Find all the OPTIC_TILE sample entities -->
+		<operation name="Entity Tree Traversal" processor="org.janelia.it.jacs.compute.service.entity.TilingPatternTraversalService">
 			<input name="OUTVAR_ENTITY_ID" value="SAMPLE_ENTITY_ID"/>
-			<input name="TILING_PATTERN" value="WHOLE_BRAIN"/>
+			<input name="TILING_PATTERN" value="OPTIC_TILE"/>
 		</operation>
 		
 	    <!-- Process each Sample Entity -->
@@ -25,13 +25,10 @@
 		        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
         			<input name="TASK_CLASS" value="org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOSamplePipelineTask"/>
         			<input name="WAIT_FOR_COMPLETION" value="false"/>
-		            <input name="PROCESS_DEF_NAME" value="AlignWholeBrainSamplePipeline"/>
+		            <input name="PROCESS_DEF_NAME" value="TwoChanSamplePipeline"/>
 		            <input name="PARAMETER_1_KEY" value="sample entity id"/>
 		            <input name="SAMPLE_ENTITY_ID"/>
 		            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
-		            <input name="REFRESH_ALIGNMENT"/>
-		            <input name="PARAMETER_2_VALUE" value="$V{REFRESH_ALIGNMENT}"/>
-		            <input name="PARAMETER_2_KEY" value="refresh alignment"/>
 		        </operation>
 		        
 			</sequence>

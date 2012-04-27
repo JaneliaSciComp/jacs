@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.compute.service.entity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
@@ -8,22 +11,18 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
-import org.janelia.it.jacs.compute.service.fileDiscovery.TilingPattern;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * Returns all the samples in the Whole Brain folder, and finds all the whole brains.
+ * Returns all the samples with a given tiling pattern.
  * Parameters must be provided in the ProcessData:
  *   OUTVAR_ENTITY_ID (The output variable to populate with a List of Entities)
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class WholeBrainTraversalService implements IService {
+public class TilingPatternTraversalService implements IService {
 
     protected Logger logger;
     protected Task task;
@@ -49,12 +48,17 @@ public class WholeBrainTraversalService implements IService {
             	}
         	}
         	
-        	List<Entity> wholeBrains = annotationBean.getEntitiesWithAttributeValue(EntityConstants.ATTRIBUTE_TILING_PATTERN, TilingPattern.WHOLE_BRAIN.toString());
+        	String tilingPattern = (String)processData.getItem("TILING_PATTERN");
+        	if (tilingPattern == null) {
+        		throw new IllegalArgumentException("TILING_PATTERN may not be null");
+        	}
         	
-    		logger.info("Found "+wholeBrains.size()+" whole brains. Filtering by owner...");
+        	List<Entity> samples = annotationBean.getEntitiesWithAttributeValue(EntityConstants.ATTRIBUTE_TILING_PATTERN, tilingPattern);
+        	
+    		logger.info("Found "+samples.size()+" samples with tiling pattern "+tilingPattern+". Filtering by owner...");
     		
     		List outObjects = new ArrayList();
-        	for(Entity entity : wholeBrains) {
+        	for(Entity entity : samples) {
         		if (entity.getUser().getUserLogin().equals(task.getOwner())) {
         			outObjects.add(outputObjects ? entity : entity.getId());	
         		}

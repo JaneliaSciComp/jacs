@@ -177,6 +177,34 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
+
+    public void runTwoChanDataPipeline(String user) {
+        try {
+        	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
+            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), null,
+            		null, null, null, null);
+            task.setJobName("Two Channel Data Pipeline Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("TwoChanDataPipeline", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
+    public void runTwoChanSamplePipeline(String sampleEntityId) {
+        try {
+        	Entity sampleEntity = EJBFactory.getLocalAnnotationBean().getEntityById(sampleEntityId);
+        	if (sampleEntity==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
+        	Task task = new MCFOSamplePipelineTask(new HashSet<Node>(), 
+        			sampleEntity.getUser().getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>(), 
+        			sampleEntityId, null, null, null);
+            task.setJobName("Two Channel Sample Pipeline Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("TwoChanSamplePipeline", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
     
     public void runMCFODataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation) {
         try {
