@@ -26,12 +26,12 @@
       <sourceFolder url="file://$MODULE_DIR$/conf" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/build" />
     </content>
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="GWT" level="project" />
     <orderEntry type="library" name="Hibernate" level="project" />
     <orderEntry type="library" name="JUnit" level="project" />
     <orderEntry type="library" name="Apache Commons" level="project" />
-    <orderEntry type="inheritedJdk" />
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">
