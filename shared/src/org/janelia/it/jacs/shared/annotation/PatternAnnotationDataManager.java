@@ -90,7 +90,7 @@ public class PatternAnnotationDataManager {
         QS_COMPARTMENT_LIST.add("SLP_R"); QS_DESCRIPTION_MAP.put("SLP_R", "Superior Lateral Protocerebrum R");
         QS_COMPARTMENT_LIST.add("SMP_L"); QS_DESCRIPTION_MAP.put("SMP_L", "Superior Medial Protocerebrum L");
         QS_COMPARTMENT_LIST.add("SMP_R"); QS_DESCRIPTION_MAP.put("SMP_R", "Superior Medial Protocerebrum R");
-        QS_COMPARTMENT_LIST.add("SOG"); QS_DESCRIPTION_MAP.put("SOG", "Supraesophageal Ganglion");
+        QS_COMPARTMENT_LIST.add("SOG"); QS_DESCRIPTION_MAP.put("SOG", "Subesophageal Ganglion");
         QS_COMPARTMENT_LIST.add("SPS_L"); QS_DESCRIPTION_MAP.put("SPS_L", "Superior Posterior Slope L");
         QS_COMPARTMENT_LIST.add("SPS_R"); QS_DESCRIPTION_MAP.put("SPS_R", "Superior Posterior Slope R");
         QS_COMPARTMENT_LIST.add("VES_L"); QS_DESCRIPTION_MAP.put("VES_L", "Vest L");
