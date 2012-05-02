@@ -150,6 +150,7 @@ public class ChooseAlignWholeBrainSampleStepsService implements IService {
     	
     	if (sampleAlignment==null) {
 			logger.warn("Cannot find existing whole brain alignment result for Sample with id="+sampleEntity.getId());
+			return false;
     	}
     	
 		Entity alignedFile = null;
