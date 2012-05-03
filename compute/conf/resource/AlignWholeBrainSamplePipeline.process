@@ -21,6 +21,7 @@
 	    <operation name="Choose Sample Processing Steps" processor="org.janelia.it.jacs.compute.service.entity.ChooseAlignWholeBrainSampleStepsService">
 			<input name="SAMPLE_ENTITY_ID"/>
 			<input name="REFRESH_ALIGNMENT"/>
+			<input name="REFRESH_SEPARATION"/>
 			<output name="RUN_ALIGNMENT"/>
 			<output name="RUN_ALIGNED_SEPARATION"/>
 			<output name="IS_ALIGNABLE"/>

@@ -34,6 +34,7 @@ public class ChooseAlignWholeBrainSampleStepsService implements IService {
             this.processData = processData;
             
         	boolean refreshAlignment = getBoolean("REFRESH_ALIGNMENT");
+        	boolean refreshSeparation = getBoolean("REFRESH_SEPARATION");
         	
         	String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
         	if (sampleEntityId == null || "".equals(sampleEntityId)) {
@@ -58,7 +59,7 @@ public class ChooseAlignWholeBrainSampleStepsService implements IService {
 
     		boolean isAlignable = pattern.isAlignable();
     		boolean runAlignment = isAlignable && (pattern == TilingPattern.WHOLE_BRAIN) && (refreshAlignment || !canSkipWholeBrainAlignment(processData, sampleEntity));
-    		boolean runAlignedSeparation = runAlignment || (isAlignable && !canSkipWholeBrainAlignedSeparation(processData, sampleEntity));
+    		boolean runAlignedSeparation = runAlignment || refreshSeparation || (isAlignable && !canSkipWholeBrainAlignedSeparation(processData, sampleEntity));
     		
     		logger.info("Sample "+sampleEntity.getName()+" (id="+sampleEntityId+") has tiling pattern "+pattern.getName()+" (alignable="+isAlignable+")");
     		
