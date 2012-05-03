@@ -8,6 +8,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.user_data.FileNode;
 
 /**
@@ -82,7 +83,10 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
         script.append("read NAME\n");
         script.append("read INPUT_FILE\n");
         script.append("read PREVIOUS_OUTPUT\n");
+        script.append(Vaa3DHelper.getVaa3DGridCommandPrefix() + "\n");
+        script.append(Vaa3DHelper.getVaa3dLibrarySetupCmd()+"\n");
         script.append(NeuronSeparatorHelper.getNeuronSeparationCommands());
+        script.append(Vaa3DHelper.getVaa3DGridCommandSuffix() + "\n");
         script.append("\n");
         writer.write(script.toString());
     }
