@@ -105,8 +105,13 @@ if [ -s SeparationResultUnmapped.nsp ]; then
         $Vaa3D -cmd image-loader -convert Reference.v3draw Reference.v3dpbd
 
         echo "~ Generating sample MIPs"
-        cat ConsolidatedSignal.v3draw | $NSDIR/v3draw_to_mip | $NSDIR/v3draw_flip_y | $NSDIR/v3draw_to_ppm | $NETPBM_BIN/pnmtopng > ConsolidatedSignalMIP.png
-        cat Reference.v3draw | $NSDIR/v3draw_to_8bit | $NSDIR/v3draw_to_mip | $NSDIR/v3draw_to_ppm | $NETPBM_BIN/pnmtopng > ReferenceMIP.png
+        cat ConsolidatedSignal.v3draw | $NSDIR/v3draw_to_mip | $NSDIR/v3draw_flip_y | $NSDIR/v3draw_to_ppm | $NETPBM_BIN/pamtotiff -truecolor > ConsolidatedSignalMIP.tif
+        $Vaa3D -x ireg -f iContrastEnhancer -i ConsolidatedSignalMIP.tif -o ConsolidatedSignalMIP2.tif -p "#m 5.0"
+        $NETPBM_BIN/tifftopnm ConsolidatedSignalMIP2.tif | $NETPBM_BIN/pnmtopng > ConsolidatedSignalMIP.png
+
+        cat Reference.v3draw | $NSDIR/v3draw_to_8bit | $NSDIR/v3draw_to_mip | $NSDIR/v3draw_to_ppm | $NETPBM_BIN/pamtotiff -truecolor > ReferenceMIP.tif
+        $Vaa3D -x ireg -f iContrastEnhancer -i ReferenceMIP.tif -o ReferenceMIP2.tif
+        $NETPBM_BIN/tifftopnm ReferenceMIP2.tif | $NETPBM_BIN/pnmtopng > ReferenceMIP.png
 
         echo "~ Generating fragment MIPs"
         $NSDIR/nsp10_to_neuron_mips "." $NAME SeparationResult.nsp
