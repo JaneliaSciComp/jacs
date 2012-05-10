@@ -18,6 +18,7 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.fileDiscovery.*;
 import org.janelia.it.jacs.model.tasks.fly.FlyScreenPatternAnnotationTask;
+import org.janelia.it.jacs.model.tasks.fly.MaskSampleAnnotationTask;
 import org.janelia.it.jacs.model.tasks.tic.TicTask;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
@@ -400,5 +401,19 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
+
+    public void runMaskAnnotationPipeline(String user, String maskFolderName, Boolean refresh) {
+        try {
+            Task task = new MaskSampleAnnotationTask(new HashSet<Node>(),
+                    user, new ArrayList<Event>(), new HashSet<TaskParameter>(),
+                    maskFolderName, refresh);
+            task.setJobName("Mask Annotation Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("MaskSampleAnnotation", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
 
 }

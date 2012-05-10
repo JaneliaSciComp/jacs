@@ -365,5 +365,25 @@
             <type>java.lang.String</type>
         </parameter>
     </operation>
-    
+
+    <operation>
+        <description>Run the Mask Annotation Pipeline</description>
+        <name>runMaskAnnotationPipeline</name>
+        <parameter>
+            <description>User to run as (e.g. "system")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Mask Folder Name</description>
+            <name>maskFolderName</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Re-run the Samples that already have results?</description>
+            <name>refresh</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+    </operation>
+
 </mbean>

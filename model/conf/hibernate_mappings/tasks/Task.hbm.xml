@@ -269,6 +269,10 @@
               discriminator-value="flyScreenPatternAnnotationTask">
     </subclass>
 
+    <subclass name="org.janelia.it.jacs.model.tasks.fly.MaskSampleAnnotationTask" extends="org.janelia.it.jacs.model.tasks.Task"
+              discriminator-value="maskSampleAnnotationTask">
+    </subclass>
+
     <subclass name="org.janelia.it.jacs.model.tasks.fileDiscovery.FileTreeLoaderPipelineTask" extends="org.janelia.it.jacs.model.tasks.Task"
               discriminator-value="fileTreeLoaderPipelineTask">
     </subclass>
