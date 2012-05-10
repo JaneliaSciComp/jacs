@@ -91,8 +91,8 @@ if [ $BUILD_VAA3D == 1 ]; then
         exit 1
     fi
     svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/BrainAligner/trunk/jba $VAA3D_COMPILE_REDHAT_DIR/jba
-    #svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/BrainAligner/trunk/opticLobeAlign/ssd_registration $VAA3D_COMPILE_REDHAT_DIR/released_plugins/v3d_plugins/ssd_registration
     svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/BrainAligner/trunk/flybrainAlign/ireg $VAA3D_COMPILE_REDHAT_DIR/released_plugins/v3d_plugins/ireg
+    svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/BrainAligner/trunk/imath $VAA3D_COMPILE_REDHAT_DIR/released_plugins/v3d_plugins/imath
 
     cp "$SCRIPT_DIR/build_vaa3d_linux.sh" $VAA3D_COMPILE_REDHAT_DIR
     cp "$SCRIPT_DIR/qsub_vaa3d_build.sh" $VAA3D_COMPILE_REDHAT_DIR
@@ -152,9 +152,6 @@ if [ $BUILD_JACS == 1 ]; then
     cd $JACS_COMPILE_DIR
     cd buildprocess
     ant -buildfile build-all.xml
-    cd ../compute
-    # TODO: deploy to jacs and jacs-data?
-    #ant "deploy-[your-server]-dev"
     cd ../console
     ant "build-run-jar"
 fi
