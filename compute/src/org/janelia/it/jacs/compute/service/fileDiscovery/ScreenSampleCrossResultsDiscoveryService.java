@@ -1,0 +1,125 @@
+package org.janelia.it.jacs.compute.service.fileDiscovery;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
+import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
+import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.compute.engine.service.IService;
+import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.entity.EntityHelper;
+import org.janelia.it.jacs.compute.service.vaa3d.CombinedFile;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.model.user_data.User;
+
+/**
+ * File discovery service for sample crossing results.
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
+public class ScreenSampleCrossResultsDiscoveryService implements IService {
+
+    protected Logger logger;
+    protected AnnotationBeanLocal annotationBean;
+    protected ComputeBeanLocal computeBean;
+    protected User user;
+    protected Date createDate;
+    protected IProcessData processData;
+	protected Long parentEntityId;
+
+	@Override
+    public void execute(IProcessData processData) throws ServiceException {
+		try {
+	    	this.processData=processData;
+	        logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
+	        annotationBean = EJBFactory.getLocalAnnotationBean();
+	        computeBean = EJBFactory.getLocalComputeBean();
+	        user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
+	        createDate = new Date();
+	        
+	        String outputParentIdListStr = (String)processData.getItem("OUTPUT_ENTITY_ID_LIST");
+	        if (outputParentIdListStr==null) {
+	        	throw new ServiceException("Input parameter OUTPUT_ENTITY_ID_LIST may not be null");
+	        }
+	        
+	        String[] outputParentIds = outputParentIdListStr.split(",");
+	        
+	        List<CombinedFile> filePairs = (List<CombinedFile>)processData.getItem("FILE_PAIRS");
+	        if (filePairs==null) {
+	        	throw new ServiceException("Input parameter FILE_PAIRS may not be null");
+	        }
+	        
+	        if (outputParentIds.length!=filePairs.size()) {
+	        	throw new ServiceException("OUTPUT_ENTITY_ID_LIST must contain the same number of ids as the input lists");
+	        }
+
+	        EntityType image2D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
+			EntityType image3D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+	        EntityHelper entityHelper = new EntityHelper(false);
+
+	        int i = 0;
+	        for(CombinedFile combinedFile : filePairs) {
+	        	Long parentId = new Long(outputParentIds[i++]);
+		        try {
+		            	Entity resultEntity = annotationBean.getEntityTree(parentId);
+		            	if (resultEntity == null) {
+		            		throw new IllegalArgumentException("Result entity not found with id="+parentId);
+		            	}
+		            	
+		                File outputStack = new File(combinedFile.getOutputFilepath());
+		                if (!outputStack.exists()) {
+		                	throw new ServiceException("Missing output stack: "+outputStack.getAbsolutePath());
+		                }
+		                
+		                File outputMip = new File(combinedFile.getOutputFilepath().replaceAll("v3dpbd", "png"));
+		                if (!outputMip.exists()) {
+		                	throw new ServiceException("Missing output MIP: "+outputMip.getAbsolutePath());
+		                }
+		
+		                Entity stack = createFileEntity(image3D, outputStack, "Intersection Stack");
+		                annotationBean.addEntityToParent(resultEntity, stack, resultEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+		                
+		                // Add default images
+		                Entity mip = createFileEntity(image2D, outputMip, "Intersection MIP");
+		                entityHelper.removeDefaultImage(resultEntity);
+		                entityHelper.addDefaultImage(stack, mip);
+		                entityHelper.addDefaultImage(resultEntity, mip);
+		        }
+		        catch (Exception e) {
+		        	throw new Exception("Error processing cross results for id="+parentId, e);
+		        }
+	        }
+		} 
+		catch (Exception e) {
+		    throw new ServiceException(e);
+		}
+    }
+
+    protected Entity createFileEntity(EntityType type, File file, String entityName) throws Exception {
+        Entity entity = new Entity();
+        entity.setUser(user);
+        entity.setCreationDate(createDate);
+        entity.setUpdatedDate(createDate);
+        entity.setEntityType(type);
+        entity.setName(entityName);
+        entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
+
+        if (type.getName().equals(EntityConstants.TYPE_IMAGE_2D)) {
+        	String filename = file.getName();
+        	String fileFormat = filename.substring(filename.lastIndexOf('.')+1);
+        	entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, fileFormat);
+        }
+        
+        entity = annotationBean.saveOrUpdateEntity(entity);
+        logger.info("Saved "+type.getName()+" as "+entity.getId());
+        return entity;
+    }
+}

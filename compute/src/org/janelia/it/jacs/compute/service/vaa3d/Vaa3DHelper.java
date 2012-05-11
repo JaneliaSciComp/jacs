@@ -22,6 +22,10 @@ public class Vaa3DHelper {
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
                     SystemConfigurationProperties.getString("MergePipeline.ScriptPath");
 
+    protected static final String INTERSECTION_CMD =
+            SystemConfigurationProperties.getString("Executables.ModuleBase") +
+                    SystemConfigurationProperties.getString("Intersection.ScriptPath");
+    
     public static String getFormattedMergePipelineCommand(String inputFilePath1, String inputFilePath2, String outputFilePath) {
         return "sh "+MERGE_PIPELINE_CMD+" \""+inputFilePath1+"\" \""+inputFilePath2+"\" \""+outputFilePath+"\"";
     }
@@ -112,6 +116,22 @@ public class Vaa3DHelper {
         return VAA3D_BASE_CMD +" -cmd image-loader -convert"+saveTo8bit+" \""+inputFilepath+"\" \""+outputFilepath+"\" ;";
     }
 
+    /**
+     * Compute the intersection of two images using one of the following methods to combine 2 pixel intensity values:
+     * 0: minimum value 
+     * 1: geometric mean 
+     * 2: scaled product
+     * @param inputFilepath1
+     * @param inputFilepath2
+     * @param outputFilepath
+     * @param method
+     * @return
+     * @throws ServiceException
+     */
+    public static String getFormattedIntersectionCommand(String inputFilepath1, String inputFilepath2, String outputFilepath, String method) throws ServiceException {
+        return INTERSECTION_CMD +" \""+inputFilepath1+"\" \""+inputFilepath2+"\" \""+outputFilepath+"\" "+method;
+    }
+    
     public static int getRandomPort() {
         return getRandomPort(STARTING_DISPLAY_PORT);
     }

@@ -212,4 +212,29 @@ public class EntityUtils {
             }
         }
 	}
+
+	public static List<String> getPathFromUniqueId(String uniqueId) {
+		List<String> path = new ArrayList<String>();
+		String[] pathParts = uniqueId.split("/");
+		String part = "";
+		for(int i=0; i<pathParts.length; i+=2) {
+			part += "/";
+			if (!StringUtils.isEmpty(pathParts[i])) {
+				part += pathParts[i]+"/";
+			}
+			if (pathParts.length>i+1) {
+				part += pathParts[i+1];
+				path.add(part);
+			}
+		}
+		
+		return path;
+	}
+	
+	public static Long getEntityIdFromUniqueId(String uniqueId) {
+		String[] pathParts = uniqueId.split("/");
+		String lastPart = pathParts[pathParts.length-1];
+		if (!lastPart.startsWith("e_")) return null;
+		return new Long(lastPart.substring(2));
+	}
 }

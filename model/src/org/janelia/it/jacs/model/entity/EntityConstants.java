@@ -29,6 +29,7 @@ public class EntityConstants {
     public static final String TYPE_SUPPORTING_DATA                  = "Supporting Data";
     public static final String TYPE_SAMPLE                           = "Sample";
     public static final String TYPE_SCREEN_SAMPLE                    = "Screen Sample";
+    public static final String TYPE_SCREEN_SAMPLE_CROSS              = "Screen Sample Cross";
     public static final String TYPE_FLY_LINE                         = "Fly Line";
     public static final String TYPE_LSM_STACK_PAIR                   = "LSM Stack Pair";
     public static final String TYPE_NEURON_SEPARATOR_PIPELINE_RESULT = "Neuron Separator Pipeline Result";
