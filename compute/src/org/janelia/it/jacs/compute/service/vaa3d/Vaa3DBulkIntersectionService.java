@@ -23,6 +23,7 @@ import org.janelia.it.jacs.model.user_data.FileNode;
  *      0: minimum value 
  *      1: geometric mean 
  *      2: scaled product
+ *   KERNEL_SIZE - integer indicating the size of the gaussian kernel used for blurring the first stack
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -34,6 +35,7 @@ public class Vaa3DBulkIntersectionService extends SubmitDrmaaJobService {
     private static int randomPort;
     
     private int intersectionMethod;
+    private int kernelSize;
     
     protected void init(IProcessData processData) throws Exception {
     	super.init(processData);
@@ -43,6 +45,12 @@ public class Vaa3DBulkIntersectionService extends SubmitDrmaaJobService {
         	throw new ServiceException("Input parameter INTERSECTION_METHOD may not be null");
         }
         intersectionMethod = Integer.parseInt(intersectionMethodStr.toString());
+
+        Object kernelSizeStr = processData.getItem("KERNEL_SIZE");
+        if (kernelSizeStr==null) {
+        	throw new ServiceException("Input parameter KERNEL_SIZE may not be null");
+        }
+        kernelSize = Integer.parseInt(kernelSizeStr.toString());
     }
 
     @Override
@@ -83,6 +91,7 @@ public class Vaa3DBulkIntersectionService extends SubmitDrmaaJobService {
             fw.write(combinedFile.getFilepath2() + "\n");
             fw.write(combinedFile.getOutputFilepath() + "\n");
             fw.write(intersectionMethod + "\n");
+            fw.write(kernelSize + "\n");
             fw.write((randomPort+configIndex) + "\n");
         }
         catch (IOException e) {
@@ -99,10 +108,11 @@ public class Vaa3DBulkIntersectionService extends SubmitDrmaaJobService {
         script.append("read FILENAME_2\n");
         script.append("read OUTPUT_FILENAME\n");
         script.append("read METHOD\n");
+        script.append("read KERNEL_SIZE\n");
         script.append("read DISPLAY_PORT\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix("$DISPLAY_PORT"));
         script.append("\n");
-        script.append(Vaa3DHelper.getFormattedIntersectionCommand("$FILENAME_1", "$FILENAME_2", "$OUTPUT_FILENAME", "$METHOD"));
+        script.append(Vaa3DHelper.getFormattedIntersectionCommand("$FILENAME_1", "$FILENAME_2", "$OUTPUT_FILENAME", "$METHOD", "$KERNEL_SIZE"));
         script.append("\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix());
         script.append("\n");

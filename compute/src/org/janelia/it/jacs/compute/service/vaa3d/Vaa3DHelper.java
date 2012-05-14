@@ -128,8 +128,8 @@ public class Vaa3DHelper {
      * @return
      * @throws ServiceException
      */
-    public static String getFormattedIntersectionCommand(String inputFilepath1, String inputFilepath2, String outputFilepath, String method) throws ServiceException {
-        return INTERSECTION_CMD +" \""+inputFilepath1+"\" \""+inputFilepath2+"\" \""+outputFilepath+"\" "+method;
+    public static String getFormattedIntersectionCommand(String inputFilepath1, String inputFilepath2, String outputFilepath, String method, String kernelSize) throws ServiceException {
+        return INTERSECTION_CMD +" \""+inputFilepath1+"\" \""+inputFilepath2+"\" \""+outputFilepath+"\" "+method+"\" "+kernelSize;
     }
     
     public static int getRandomPort() {
