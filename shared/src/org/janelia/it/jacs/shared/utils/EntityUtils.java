@@ -69,7 +69,7 @@ public class EntityUtils {
 	    	// TODO: This is for backwards compatibility with old data. Remove this in the future.
 	    	path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
 	    	if (path!=null) {
-	    		System.out.println("Warning: old data detected. Using deprecated attribute '"+EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH+"'");
+//	    		System.out.println("Warning: old data detected. Using deprecated attribute '"+EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH+"'");
 	    	}
 	    	
 		}
