@@ -251,7 +251,11 @@ public class SolrDAO extends AnnotationDAO {
         for(SimpleEntity se : entities) {
         	
         	Set<SimpleAnnotation> annotations = (Set<SimpleAnnotation>)largeOp.getValue(LargeOperations.ANNOTATION_MAP, se.getId());
-        	
+
+			if (se.getId() == 1679282476884688994L) {
+				_logger.info("        "+se.getId()+ ", name:"+se.getName()+", annotations:"+(annotations==null?0:annotations.size()));
+			}
+			
         	AncestorSet ancestorSet = (AncestorSet)largeOp.getValue(LargeOperations.ANCESTOR_MAP, se.getId());
         	Set<Long> ancestors = ancestorSet==null ? null : ancestorSet.getAncestors(); 
         	

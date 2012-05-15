@@ -82,6 +82,7 @@ public class LargeOperations {
 	        sql.append("and aedt.entity_att_id = ? ");
 	        sql.append("and aedk.entity_att_id = ? ");
 	        sql.append("and aedv.entity_att_id = ? ");
+	        sql.append("order by u.user_login, aedt.value");
 
 	        EntityType annotationType = annotationDAO.getEntityTypeByName(EntityConstants.TYPE_ANNOTATION);
 	        EntityAttribute targetAttr = annotationDAO.getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
@@ -98,6 +99,7 @@ public class LargeOperations {
 	        
 			rs = stmt.executeQuery();
 			logger.info("    Processing results");
+			int i = 0;
 			while (rs.next()) {
 				Long annotationId = rs.getBigDecimal(1).longValue();
 				String entityIdStr = rs.getString(2);
@@ -116,10 +118,17 @@ public class LargeOperations {
 				Set<SimpleAnnotation> annots = (Set<SimpleAnnotation>)getValue(annotationMapCache, entityId);
 				if (annots == null) {
 					annots = new HashSet<SimpleAnnotation>();
-					putValue(annotationMapCache, entityId, annots);
 				}
+
+				if (entityId == 1679282476884688994L) {
+					logger.info("        Found annotation, id:"+annotationId+", owner:"+owner+", target:"+entityId+", key:"+key+" value:"+value);
+				}
+				
 				annots.add(new SimpleAnnotation(key, value, owner));
+				putValue(annotationMapCache, entityId, annots);
+				i++;
 			}
+			logger.info("    Processed "+i+" annotations on "+annotationMapCache.getSize()+" targets");
     	}
     	catch (SQLException e) {
     		throw new DaoException(e);
