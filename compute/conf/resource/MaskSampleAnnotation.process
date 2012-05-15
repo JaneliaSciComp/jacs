@@ -111,7 +111,7 @@
                     <!-- This creates appropriate entities for all results in the proper hierarchy and also cleans up
                          any temporary files -->
 
-        		    <operation name="Completion phase of Pattern Annotation Service" processor="org.janelia.it.jacs.compute.service.fly.MaskAnnotationSampleService">
+        		    <operation name="Completion phase of Pattern Annotation Service" processor="org.janelia.it.jacs.compute.service.fly.MaskSampleAnnotationService">
                         <input name="MODE" value="COMPLETE"/>
        	                <input name="FLY_LINE_GROUP_LIST"/>
     		            <input name="SAMPLE_ID_LIST"/>
