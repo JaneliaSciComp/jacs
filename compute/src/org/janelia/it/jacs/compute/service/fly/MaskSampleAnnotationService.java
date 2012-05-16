@@ -331,7 +331,7 @@ public class MaskSampleAnnotationService  implements IService {
 
         processData.putItem("SAMPLE_ID_LIST", finalSampleIdList);
         processData.putItem("SAMPLE_NAME_LIST", finalSampleNameList);
-        processData.putItem("PATTERN_ANNOTATION_PATH", finalAnnotationDirList);
+        processData.putItem("MASK_ANNOTATION_PATH", finalAnnotationDirList);
         processData.putItem("MIPS_CONVERSION_PATH", finalMipConversionDirList);
         processData.putItem("ALIGNED_STACK_PATH_LIST", finalAlignedStackList);
         processData.putItem("RESOURCE_DIR_PATH", maskAnnotationResourceDir);
@@ -528,20 +528,20 @@ public class MaskSampleAnnotationService  implements IService {
 
         List<String> sampleIdList=(List<String>)processData.getItem("SAMPLE_ID_LIST");
         List<String> sampleNameList=(List<String>)processData.getItem("SAMPLE_NAME_LIST");
-        List<String> patternAnnotationPathList=(List<String>)processData.getItem("PATTERN_ANNOTATION_PATH");
+        List<String> maskAnnotationPathList=(List<String>)processData.getItem("MASK_ANNOTATION_PATH");
         List<String> alignedStackPathList=(List<String>)processData.getItem(("ALIGNED_STACK_PATH_LIST"));
         PatternAnnotationResultNode resultNode=(PatternAnnotationResultNode)processData.getItem(ProcessDataConstants.RESULT_FILE_NODE);
 
         int index=0;
 
-        for (String patternAnnotationPath : patternAnnotationPathList) {
+        for (String maskAnnotationPath : maskAnnotationPathList) {
             String sampleName=sampleNameList.get(index);
-            File patternAnnotationDir=new File(patternAnnotationPath);
+            File maskAnnotationDir=new File(maskAnnotationPath);
             //logger.info("Top of doComplete() loop, index="+index+" sampleName="+sampleName+" patternAnnotationDir="+patternAnnotationPath);
-            if (!patternAnnotationDir.exists()) {
-                throw new Exception("Could not find expected pattern annotation dir="+patternAnnotationDir.getAbsolutePath());
+            if (!maskAnnotationDir.exists()) {
+                throw new Exception("Could not find expected pattern annotation dir="+maskAnnotationDir.getAbsolutePath());
             }
-            File mipDir=new File(patternAnnotationDir, MIPS_SUBFOLDER_NAME);
+            File mipDir=new File(maskAnnotationDir, MIPS_SUBFOLDER_NAME);
             cleanFilesFromDirectory(".tif", mipDir);
 
             // We are going to move responsibility for placing the output files in this subdirectory structure on the
@@ -552,10 +552,10 @@ public class MaskSampleAnnotationService  implements IService {
             //moveFilesToSubDirectory("quant", patternAnnotationDir, new File(patternAnnotationDir, SUPPORTING_FILE_SUBFOLDER_NAME));
 
             //logger.info("Calling patternAnnotationDirIsComplete with sampleName="+sampleName);
-            if (!maskAnnotationDirIsComplete(sampleName, patternAnnotationDir, true /* verbose */)) {
-                throw new Exception("Pattern annotation in this dir is incomplete="+patternAnnotationPath);
+            if (!maskAnnotationDirIsComplete(sampleName, maskAnnotationDir, true /* verbose */)) {
+                throw new Exception("Pattern annotation in this dir is incomplete="+maskAnnotationPath);
             } else {
-                addMaskAnnotationResultEntitiesToSample(sampleIdList.get(index), sampleName, patternAnnotationDir);
+                addMaskAnnotationResultEntitiesToSample(sampleIdList.get(index), sampleName, maskAnnotationDir);
             }
             index++;
         }
