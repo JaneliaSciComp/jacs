@@ -108,6 +108,11 @@ public class Vaa3DHelper {
         return cmd+" ;";
     }
 
+    public static String getMaskAnnotationCommand(String inputStackFilepath, int patternChannel, String outputPrefix, String resourceDirPath, String outputDirPath) throws ServiceException {
+        String cmd = VAA3D_BASE_CMD +" -cmd screen-mask-annotator -input \""+inputStackFilepath+"\" -pattern_channel "+patternChannel+" -prefix "+outputPrefix+" -resourceDir "+resourceDirPath+" -outputDir \""+outputDirPath+"\"";
+        return cmd+" ;";
+    }
+
     public static String getFormattedConvertCommand(String inputFilepath, String outputFilepath) throws ServiceException {
         return getFormattedConvertCommand(inputFilepath, outputFilepath, "");
     }
