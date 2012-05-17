@@ -1,8 +1,17 @@
 
 package org.janelia.it.jacs.compute.access;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.*;
+
 import org.apache.log4j.Logger;
-import org.hibernate.*;
+import org.hibernate.HibernateException;
+import org.hibernate.Query;
+import org.hibernate.SQLQuery;
+import org.hibernate.Session;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
 import org.janelia.it.jacs.model.genomics.BioSequence;
 import org.janelia.it.jacs.model.genomics.Read;
@@ -23,9 +32,6 @@ import org.janelia.it.jacs.model.user_data.blast.BlastResultNode;
 import org.janelia.it.jacs.model.user_data.recruitment.RecruitmentResultFileNode;
 import org.janelia.it.jacs.model.user_data.tools.GenericServiceDefinitionNode;
 import org.janelia.it.jacs.model.vo.ParameterException;
-
-import java.math.BigInteger;
-import java.util.*;
 
 /**
  * This class encapsulates all DB access operations.  It wraps RuntimeExceptions with checked DaoException
@@ -810,5 +816,21 @@ public class ComputeDAO extends ComputeBaseDAO {
         catch (DaoException e) {
             throw handleException(e, "createUser");
         }
+    }
+    
+    public String createTempFile(String prefix, String content) throws DaoException {
+    	
+    	try {
+        	File file = File.createTempFile(prefix, null);
+        	
+        	FileWriter writer = new FileWriter(file);
+        	writer.write(content);
+        	writer.close();
+        	
+        	return file.getAbsolutePath();
+    	}
+    	catch (IOException e) {
+    		throw new DaoException("Error creating temp file", e);
+    	}
     }
 }

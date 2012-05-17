@@ -48,7 +48,6 @@ public class AnnotationDAO extends ComputeBaseDAO {
     }
 
     private void preloadData() {
-
         try {
             if (entityByName.isEmpty()) {
                 for(EntityType entityType : getAllEntityTypes()) {
@@ -1096,13 +1095,13 @@ public class AnnotationDAO extends ComputeBaseDAO {
         	if (entityIds.isEmpty()) {
         		return new ArrayList<Entity>();
         	}
-        	if (userLogin==null) {
-        		throw new DaoException("No username provided");
-        	}
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed where ");
             hql.append("ed.entityAttribute.name = ? ");
-            hql.append("and (ed.parentEntity.user.userLogin=? or ed.parentEntity.user.userLogin='system') ");
+            
+            if (userLogin!=null) {
+            	hql.append("and (ed.parentEntity.user.userLogin=? or ed.parentEntity.user.userLogin='system') ");
+            }
             
             if (entityIds.size()==1) {
                 hql.append("and ed.value = ?");
@@ -1120,10 +1119,17 @@ public class AnnotationDAO extends ComputeBaseDAO {
             
             Query query = session.createQuery(hql.toString());
             query.setString(0, EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
-            query.setString(1, userLogin);
-
-            if (entityIds.size()==1) {
-                query.setLong(2, entityIds.get(0));
+            
+            if (userLogin!=null) {
+            	query.setString(1, userLogin);
+                if (entityIds.size()==1) {
+                    query.setLong(2, entityIds.get(0));
+                }
+            }
+            else {
+                if (entityIds.size()==1) {
+                    query.setLong(1, entityIds.get(0));
+                }	
             }
             
             return query.list();
