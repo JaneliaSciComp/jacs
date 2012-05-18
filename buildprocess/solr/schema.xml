@@ -498,16 +498,15 @@
 
    <!-- strings -->
    <field name="id" type="string" indexed="true" stored="true" required="true" /> 
+   <field name="doc_type" type="string" indexed="true" stored="true"/>
    <field name="name" type="string" indexed="true" stored="true"/>
    <field name="username" type="string" indexed="true" stored="true"/>
    <field name="entity_type" type="string" indexed="true" stored="true"/>
    <field name="annotations" type="string" indexed="true" stored="true" multiValued="true"/>
 
    <!-- ids and counts -->
-   <field name="child_count" type="long" indexed="true" stored="true"/>
-   <field name="child_ids" type="long" indexed="true" stored="false" multiValued="true"/>
-   <field name="ancestor_count" type="long" indexed="true" stored="true"/>
-   <field name="ancestor_ids" type="long" indexed="true" stored="false" multiValued="true"/>
+   <field name="child_ids" type="long" indexed="true" stored="true" multiValued="true"/>
+   <field name="ancestor_ids" type="long" indexed="true" stored="true" multiValued="true"/>
 
    <!-- dates -->
    <field name="creation_date" type="date" indexed="true" stored="true"/>
@@ -517,7 +516,7 @@
    <field name="all_strings" type="string" indexed="true" stored="false" multiValued="true"/>
  
    <!-- This is the field we'll use for MoreLikeThis matching, so we have termVectors, etc -->
-   <field name="all_gen" type="text_general" indexed="true" stored="false" multiValued="true" termVectors="true" termPositions="true" termOffsets="true"/>
+   <field name="mlt_text" type="text_general" indexed="true" stored="false" multiValued="true" termVectors="true" termPositions="true" termOffsets="true"/>
    
    <!-- General text search field -->
    <field name="text" type="text_en_splitting" indexed="true" stored="false" multiValued="true" termVectors="true"/>
@@ -566,6 +565,7 @@
    <dynamicField name="random_*" type="random" />
 
    <dynamicField name="*_annot" type="string" stored="true" multiValued="true"/>
+   <dynamicField name="*_annotations" type="text_en_splitting" indexed="true" stored="true" multiValued="true"/>
    
    <!-- uncomment the following to ignore any fields that don't already match an existing 
         field name or dynamic field, rather than reporting them as an error. 
@@ -590,25 +590,27 @@
         is added to the index.  It's used either to index the same field differently,
         or to add multiple fields to the same field for easier/faster searching.  -->
 
+   <!-- all_strings gets searched first, for exact matches -->
    <copyField source="id" dest="all_strings"/>
    <copyField source="name" dest="all_strings"/>
    <copyField source="username" dest="all_strings"/>
    <copyField source="entity_type" dest="all_strings"/> 
    <copyField source="*_txt" dest="all_strings"/> 
-   <copyField source="*_annot" dest="all_strings"/>
+   <copyField source="*_t" dest="all_strings"/> 
 
-   <copyField source="name" dest="all_gen"/>
-   <copyField source="username" dest="all_gen"/>
-   <copyField source="entity_type" dest="all_gen"/> 
-   <copyField source="*_txt" dest="all_gen"/> 
-   <copyField source="*_annot" dest="all_gen"/>
- 
+   <!-- text gets searched last, since it does all the fancy splitting and tokenizing -->
    <copyField source="name" dest="text"/>
    <copyField source="username" dest="text"/>
    <copyField source="entity_type" dest="text"/> 
    <copyField source="*_txt" dest="text"/> 
-   <copyField source="*_annot" dest="text"/>
+   <copyField source="*_t" dest="text"/> 
 	
+   <!-- this is for MLT search -->
+   <copyField source="name" dest="mlt_text"/>
+   <copyField source="username" dest="mlt_text"/>
+   <copyField source="entity_type" dest="mlt_text"/> 
+   <copyField source="*_txt" dest="mlt_text"/> 
+   <copyField source="*_t" dest="mlt_text"/> 
 
  <!-- Similarity is the scoring routine for each document vs. a query.
       A custom similarity may be specified here, but the default is fine
