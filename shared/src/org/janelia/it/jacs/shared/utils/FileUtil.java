@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -948,6 +949,45 @@ public class FileUtil {
             zos.close();
         }
     }
+
+    public static void zipUncompress(File sourceFile, String destinationDirectory) throws Exception {
+        FileInputStream fis=null;
+        ZipInputStream zis=null;
+        BufferedOutputStream bos=null;
+        FileOutputStream fos=null;
+        try {
+            fis = new FileInputStream(sourceFile);
+            zis = new ZipInputStream(new BufferedInputStream(fis));
+            ZipEntry entry;
+
+            // Grab all the entries one by one
+            while ((entry = zis.getNextEntry()) != null) {
+                System.out.println("Unzipping: " + entry.getName());
+
+                int size;
+                byte[] buffer = new byte[2048];
+
+                fos = new FileOutputStream(destinationDirectory+File.separator+entry.getName());
+                bos = new BufferedOutputStream(fos, buffer.length);
+
+                while ((size = zis.read(buffer, 0, buffer.length)) != -1) {
+                    bos.write(buffer, 0, size);
+                }
+                bos.flush();
+                bos.close();
+            }
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        finally {
+            if (null!=fis) {fis.close();}
+            if (null!=zis) {zis.close();}
+            if (null!=bos) {bos.close();}
+            if (null!=fos) {fos.close();}
+        }
+    }
+
 
     public static String tarCompressDirectoryWithSystemCall(File sourceDirectory, String destinationArchiveFilename) {
         SystemCall call = new SystemCall(logger);
