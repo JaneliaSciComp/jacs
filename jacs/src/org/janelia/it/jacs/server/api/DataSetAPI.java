@@ -25,7 +25,7 @@ import org.janelia.it.jacs.model.tasks.prokAnnotation.*;
 import org.janelia.it.jacs.model.tasks.recruitment.GenomeProjectRecruitmentSamplingTask;
 import org.janelia.it.jacs.model.tasks.rnaSeq.RnaSeqPipelineTask;
 import org.janelia.it.jacs.model.tasks.rnaSeq.UploadRnaSeqReferenceGenomeTask;
-import org.janelia.it.jacs.model.tasks.tic.TicTask;
+import org.janelia.it.jacs.model.tasks.tic.BatchTicTask;
 import org.janelia.it.jacs.model.tasks.utility.FtpFileTask;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.tasks.utility.UploadFastqDirectoryTask;
@@ -351,8 +351,8 @@ public class DataSetAPI {
             else if (newTask instanceof NeuronalAssayAnalysisTask) {
                 processName = "NeuronalAssayAnalysis";
             }
-            else if (newTask instanceof TicTask) {
-                processName = "TranscriptionImagingConsortium";
+            else if (newTask instanceof BatchTicTask) {
+                processName = "TranscriptionImagingConsortiumBatch";
             }
             else if (newTask instanceof InspectTask){
                 processName = "Inspect";

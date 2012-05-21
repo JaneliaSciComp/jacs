@@ -42,7 +42,6 @@ import javax.naming.Context;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.*;
@@ -567,18 +566,6 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
             }
         }
         return !containsFasta;
-    }
-
-    protected void createDummyFastaFileNode(File dir, String type) throws Exception {
-        String filename = "nucleotide.fasta";
-        if (type.trim().toLowerCase().equals("peptide")) {
-            filename = "peptide.fasta";
-        }
-        File file = new File(dir, filename);
-        FileWriter fileWriter = new FileWriter(file);
-        fileWriter.write(">null\n");
-        fileWriter.write("NNNNN\n");
-        fileWriter.close();
     }
 
     public List<Node> getNodeByName(String nodeName) throws DaoException {

@@ -21,13 +21,13 @@ import javax.ejb.MessageDriven;
         @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
         @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/ticLauncher"),
-        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "5"),
+        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "30"),
 //        @ActivationConfigProperty(propertyName = "MaxMessages", propertyValue = "30"),
         @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
         // DLQMaxResent is a JBoss-specific management property. 0 = no resent messages
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 5, timeout = 10000)
+@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 30, timeout = 10000)
 public class TICLauncherMDB extends SeriesLauncherMDB {
 
 }

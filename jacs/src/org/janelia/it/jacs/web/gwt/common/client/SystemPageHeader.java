@@ -100,8 +100,7 @@ public class SystemPageHeader {
         menubar.addMenu(pipelineMenu);
 
         menubar.addMenu(new SimpleMenu(getMenuLabel("Projects"), new SimpleMenuItem[]{
-                new SimpleMenuItem("GECI Image Processing", new OpenInSameWindowCommand(UrlBuilder.getNeuronalAssayAnalysisUrl())),
-                new SimpleMenuItem("Transcription Imaging Consortium", new OpenInSameWindowCommand(UrlBuilder.getTICUrl())),
+                new SimpleMenuItem("Transcription Imaging Consortium", new OpenInSameWindowCommand(UrlBuilder.getTICUrl()))
 //                new SimpleMenuItem("Zlatic Lab", new OpenInSameWindowCommand(UrlBuilder.getZlaticLabUrl())),
         }));
 

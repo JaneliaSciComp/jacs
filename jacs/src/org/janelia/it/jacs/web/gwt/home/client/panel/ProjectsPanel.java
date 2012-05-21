@@ -39,7 +39,7 @@ public class ProjectsPanel extends TitledBox {
 //        });
 
         // Add all the links to the titlebox.
-        add(geciLink);
+//        add(geciLink);
         add(ticLink);
 //        add(zlaticLabLink);
     }

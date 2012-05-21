@@ -355,8 +355,28 @@
             <type>java.lang.String</type>
         </parameter>
         <parameter>
-            <description>Root directory path for the image files</description>
-            <name>rootDirectoryPath</name>
+            <description>input file directory</description>
+            <name>dirOfInputFile</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>input file name</description>
+            <name>inputFileName</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>transformation matrix file</description>
+            <name>transformationMatrixFile</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>border value (may be blank)</description>
+            <name>borderValue</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>correction file path</description>
+            <name>correctionFile</name>
             <type>java.lang.String</type>
         </parameter>
     </operation>
