@@ -179,11 +179,11 @@ public class SampleDiscoveryService extends FileDiscoveryService {
 		if (lsmStackPair == null) {
 			lsmStackPair = new Entity();
             lsmStackPair.setUser(user);
-            lsmStackPair.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK_PAIR));
+            lsmStackPair.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK_PAIR));
             lsmStackPair.setCreationDate(createDate);
             lsmStackPair.setUpdatedDate(createDate);
             lsmStackPair.setName(filePair.getPairTag());
-            lsmStackPair = annotationBean.saveOrUpdateEntity(lsmStackPair);
+            lsmStackPair = entityBean.saveOrUpdateEntity(lsmStackPair);
             logger.info("Saved LSM stack pair for '"+filePair.getPairTag()+"' as "+lsmStackPair.getId());
         	addToParent(supportingFiles, lsmStackPair, null, EntityConstants.ATTRIBUTE_ENTITY);
 		}
@@ -223,12 +223,12 @@ public class SampleDiscoveryService extends FileDiscoveryService {
     protected Entity createSample(String name, TilingPattern tiling) throws Exception {
         Entity sample = new Entity();
         sample.setUser(user);
-        sample.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_SAMPLE));
+        sample.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SAMPLE));
         sample.setCreationDate(createDate);
         sample.setUpdatedDate(createDate);
         sample.setName(name);
         sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN, tiling.toString());
-        sample = annotationBean.saveOrUpdateEntity(sample);
+        sample = entityBean.saveOrUpdateEntity(sample);
         logger.info("Saved sample as "+sample.getId());
         return sample;
     }
@@ -236,11 +236,11 @@ public class SampleDiscoveryService extends FileDiscoveryService {
     protected Entity createSupportingFilesFolder() throws Exception {
         Entity filesFolder = new Entity();
         filesFolder.setUser(user);
-        filesFolder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
+        filesFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
         filesFolder.setCreationDate(createDate);
         filesFolder.setUpdatedDate(createDate);
         filesFolder.setName("Supporting Files");
-        filesFolder = annotationBean.saveOrUpdateEntity(filesFolder);
+        filesFolder = entityBean.saveOrUpdateEntity(filesFolder);
         logger.info("Saved supporting files folder as "+filesFolder.getId());
         return filesFolder;
     }
@@ -248,12 +248,12 @@ public class SampleDiscoveryService extends FileDiscoveryService {
     private Entity createLsmStackFromFile(File file) throws Exception {
         Entity lsmStack = new Entity();
         lsmStack.setUser(user);
-        lsmStack.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK));
+        lsmStack.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK));
         lsmStack.setCreationDate(createDate);
         lsmStack.setUpdatedDate(createDate);
         lsmStack.setName(file.getName());
         lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
-        lsmStack = annotationBean.saveOrUpdateEntity(lsmStack);
+        lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
         logger.info("Saved LSM stack as "+lsmStack.getId());
         return lsmStack;
     }

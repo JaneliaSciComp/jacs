@@ -1,7 +1,11 @@
 package org.janelia.it.jacs.compute.service.entity;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
@@ -13,11 +17,6 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.user_data.FileNode;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Extracts stuff about the Sample from the entity model and loads it into simplified objects for use by other services.
  *   
@@ -26,13 +25,11 @@ import java.util.List;
 public class InitSampleProcessingParametersService implements IService {
 
     protected Logger logger;
-    protected AnnotationBeanLocal annotationBean;
 
     public void execute(IProcessData processData) throws ServiceException {
         try {
         	
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-            annotationBean = EJBFactory.getLocalAnnotationBean();
         	
         	FileNode sampleResultNode = (FileNode)processData.getItem("SAMPLE_RESULT_FILE_NODE");
         	if (sampleResultNode == null) {
@@ -54,7 +51,7 @@ public class InitSampleProcessingParametersService implements IService {
         		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
         	}
         	
-        	Entity sampleEntity = annotationBean.getEntityTree(new Long(sampleEntityId));
+        	Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityTree(new Long(sampleEntityId));
         	if (sampleEntity == null) {
         		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
         	}

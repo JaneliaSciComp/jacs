@@ -72,7 +72,7 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     
     protected void addFilesToSupportingFiles(Entity filesFolder, List<File> files) throws Exception {
 
-		EntityType image3D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+		EntityType image3D = entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
 
         for (File resultFile : files) {
         	
@@ -93,7 +93,7 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
         Entity fragmentsFolder = createFragmentCollection();
         addToParent(resultEntity, fragmentsFolder, 1, EntityConstants.ATTRIBUTE_NEURON_FRAGMENTS);
         
-        EntityType fragmentType = annotationBean.getEntityTypeByName(EntityConstants.TYPE_NEURON_FRAGMENT);
+        EntityType fragmentType = entityBean.getEntityTypeByName(EntityConstants.TYPE_NEURON_FRAGMENT);
         
         ArrayList<File> fragmentFiles = new ArrayList<File>();
         
@@ -159,7 +159,7 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
         if (fragmentMIP != null) {
         	fragmentEntity.addChildEntity(fragmentMIP, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
         }
-        fragmentEntity = annotationBean.saveOrUpdateEntity(fragmentEntity);
+        fragmentEntity = entityBean.saveOrUpdateEntity(fragmentEntity);
         logger.info("Saved fragment entity as "+fragmentEntity.getId());
         return fragmentEntity;
     }
@@ -167,11 +167,11 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     protected Entity createFragmentCollection() throws Exception {
         Entity fragmentsEntity = new Entity();
         fragmentsEntity.setUser(user);
-        fragmentsEntity.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION));
+        fragmentsEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION));
         fragmentsEntity.setCreationDate(createDate);
         fragmentsEntity.setUpdatedDate(createDate);
         fragmentsEntity.setName("Neuron Fragments");
-        fragmentsEntity = annotationBean.saveOrUpdateEntity(fragmentsEntity);
+        fragmentsEntity = entityBean.saveOrUpdateEntity(fragmentsEntity);
         logger.info("Saved fragment collection as "+fragmentsEntity.getId());
         return fragmentsEntity;
     }

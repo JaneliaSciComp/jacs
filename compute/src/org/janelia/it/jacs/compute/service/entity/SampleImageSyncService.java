@@ -3,9 +3,9 @@ package org.janelia.it.jacs.compute.service.entity;
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -25,7 +25,7 @@ public class SampleImageSyncService implements IService {
     protected Logger logger;
     protected Task task;
     protected String username;
-    protected AnnotationBeanLocal annotationBean;
+    protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
     
     public void execute(IProcessData processData) throws ServiceException {
@@ -33,14 +33,14 @@ public class SampleImageSyncService implements IService {
     	try {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             task = ProcessDataHelper.getTask(processData);
-            annotationBean = EJBFactory.getLocalAnnotationBean();
+            entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
             username = task.getOwner();
 
-            List<Entity> samples = annotationBean.getEntitiesByTypeName(EntityConstants.TYPE_SAMPLE);
+            List<Entity> samples = entityBean.getEntitiesByTypeName(EntityConstants.TYPE_SAMPLE);
             
             for(Entity s : samples) {
-                Entity sample = annotationBean.getEntityTree(s.getId());
+                Entity sample = entityBean.getEntityTree(s.getId());
                 if (!username.equals(sample.getUser().getUserLogin())) continue;
                 
                 String sampleFilepath = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
@@ -52,13 +52,13 @@ public class SampleImageSyncService implements IService {
                 	EntityData ed = sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
                 	if (ed != null) {
     	                logger.info("Removing default 2d image from Sample (id="+sample.getId()+") which has no results");
-                		annotationBean.removeEntityFromFolder(ed);
+                		entityBean.deleteEntityData(ed);
                 	}
                 }
                 else if (!resultFilepath.equals(sampleFilepath)) {
 	                logger.info("Updating Sample (id="+sample.getId()+") with filepath from latest Separation Result (id="+result.getId()+")");
 	                sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, resultFilepath);
-	                sample = annotationBean.saveOrUpdateEntity(sample);
+	                sample = entityBean.saveOrUpdateEntity(sample);
                 }
                 else {
                 	logger.info("Sample (id="+sample.getId()+") is already up-to-date");

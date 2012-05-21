@@ -1,9 +1,14 @@
 package org.janelia.it.jacs.compute.service.fly;
 
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -15,10 +20,6 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.user_data.User;
-
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -44,8 +45,8 @@ public class ScreenSampleLineCoordinationService implements IService {
     protected List <Entity> flyLineList;
     protected List<Entity> screenSampleList;
 
-    ComputeBeanLocal computeBean;
-    AnnotationBeanLocal annotationBean;
+    private ComputeBeanLocal computeBean;
+    private EntityBeanLocal entityBean;
 
 
     @Override
@@ -54,7 +55,7 @@ public class ScreenSampleLineCoordinationService implements IService {
             this.processData = processData;
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             computeBean = EJBFactory.getLocalComputeBean();
-            annotationBean = EJBFactory.getLocalAnnotationBean();
+            entityBean = EJBFactory.getLocalEntityBean();
             user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
             createDate = new Date();
 
@@ -142,7 +143,7 @@ public class ScreenSampleLineCoordinationService implements IService {
 
     protected List<Entity> getRecursiveEntitiesFromFolderByType(Entity folder, String typeName) throws Exception {
         List<Entity> entityList = new ArrayList<Entity>();
-        Set<Entity> childList = annotationBean.getChildEntities(folder.getId());
+        Set<Entity> childList = entityBean.getChildEntities(folder.getId());
         for (Entity child : childList) {
             if (child != null && child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
                 entityList.addAll(getRecursiveEntitiesFromFolderByType(child, typeName));
@@ -179,7 +180,7 @@ public class ScreenSampleLineCoordinationService implements IService {
             }
             // Now, check if the pw folder contains an appropriate FlyLine entity with which to
             // associate the screen sample
-            Set<Entity> pwChildren=annotationBean.getChildEntities(pwFolder.getId());
+            Set<Entity> pwChildren=entityBean.getChildEntities(pwFolder.getId());
             Entity flyLineEntity=null;
             if (pwChildren!=null) {
                 for (Entity pwChild : pwChildren) {
@@ -200,7 +201,7 @@ public class ScreenSampleLineCoordinationService implements IService {
             }
             // Now we can check if the flyLineEntity contains the current screen sample, and if not, add it
             boolean foundSample=false;
-            Set<Entity> flyLineChildren=annotationBean.getChildEntities(flyLineEntity.getId());
+            Set<Entity> flyLineChildren=entityBean.getChildEntities(flyLineEntity.getId());
             if (flyLineChildren!=null) {
                 for (Entity flyChild : flyLineChildren) {
                     if (flyChild!=null) {
@@ -250,12 +251,12 @@ public class ScreenSampleLineCoordinationService implements IService {
 
     protected void populateFlyLineFolderMaps() {
         logger.info("Populating Folder Maps");
-        Set<Entity> topChildren = annotationBean.getChildEntities(screenPatternTopLevelFolder.getId());
+        Set<Entity> topChildren = entityBean.getChildEntities(screenPatternTopLevelFolder.getId());
         for (Entity child : topChildren) {
             if (child!=null && child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
                 logger.info("Found plate-level folder name="+child.getName());
                 flyLineFolderByPlateMap.put(child.getName(), child);
-                Set<Entity> plateChildren = annotationBean.getChildEntities(child.getId());
+                Set<Entity> plateChildren = entityBean.getChildEntities(child.getId());
                 for (Entity plateChild : plateChildren) {
                     if (plateChild!=null && plateChild.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
                         logger.info("Found line-level folder name="+plateChild.getName());
@@ -273,43 +274,40 @@ public class ScreenSampleLineCoordinationService implements IService {
     protected Entity addSubFolder(Entity parentFolder, String childFolderName) throws Exception {
         if (!parentFolder.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER))
             throw new Exception("A folder entity is required rather than type=" + parentFolder.getEntityType().getName());
-        AnnotationBeanLocal annotationBean = EJBFactory.getLocalAnnotationBean();
         Entity folder = new Entity();
         folder.setCreationDate(createDate);
         folder.setUpdatedDate(createDate);
         folder.setUser(user);
         folder.setName(childFolderName);
-        folder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
-        folder = annotationBean.saveOrUpdateEntity(folder);
+        folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+        folder = entityBean.saveOrUpdateEntity(folder);
         EntityData ed = parentFolder.addChildEntity(folder, EntityConstants.ATTRIBUTE_ENTITY);
-        EJBFactory.getLocalAnnotationBean().saveOrUpdateEntityData(ed);
+        entityBean.saveOrUpdateEntityData(ed);
         return folder;
     }
 
     protected Entity createFlyLineAndAddToFolder(String lineName, Entity folder) throws Exception {
         if (!folder.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER))
             throw new Exception("A folder entity is required rather than type=" + folder.getEntityType().getName());
-        AnnotationBeanLocal annotationBean = EJBFactory.getLocalAnnotationBean();
         Entity flyLine = new Entity();
         flyLine.setCreationDate(createDate);
         flyLine.setUpdatedDate(createDate);
         flyLine.setUser(user);
         flyLine.setName(lineName);
-        EntityType flyLineType=annotationBean.getEntityTypeByName(EntityConstants.TYPE_FLY_LINE);
+        EntityType flyLineType=entityBean.getEntityTypeByName(EntityConstants.TYPE_FLY_LINE);
         if (flyLineType==null) {
             throw new Exception("Could not find EntityType for name="+EntityConstants.TYPE_FLY_LINE);
         }
         flyLine.setEntityType(flyLineType);
-        flyLine = annotationBean.saveOrUpdateEntity(flyLine);
+        flyLine = entityBean.saveOrUpdateEntity(flyLine);
         EntityData ed = folder.addChildEntity(flyLine, EntityConstants.ATTRIBUTE_ENTITY);
-        EJBFactory.getLocalAnnotationBean().saveOrUpdateEntityData(ed);
+        entityBean.saveOrUpdateEntityData(ed);
         return flyLine;
     }
 
     protected void addScreenSampleToFlyLine(Entity sample, Entity flyLine) throws Exception {
-      AnnotationBeanLocal annotationBean = EJBFactory.getLocalAnnotationBean();
       EntityData ed = flyLine.addChildEntity(sample, EntityConstants.ATTRIBUTE_ENTITY);
-      annotationBean.saveOrUpdateEntityData(ed);
+      entityBean.saveOrUpdateEntityData(ed);
     }
 
 }

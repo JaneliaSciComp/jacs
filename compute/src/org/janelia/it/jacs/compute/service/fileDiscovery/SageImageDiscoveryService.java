@@ -8,9 +8,9 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -35,7 +35,7 @@ public class SageImageDiscoveryService implements IService {
     protected Map<TilingPattern,Integer> patterns = new EnumMap<TilingPattern,Integer>(TilingPattern.class);
     
     protected Logger logger;
-    protected AnnotationBeanLocal annotationBean;
+    protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
     protected User user;
     protected Date createDate;
@@ -45,7 +45,7 @@ public class SageImageDiscoveryService implements IService {
         try {
         	this.processData=processData;
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-            annotationBean = EJBFactory.getLocalAnnotationBean();
+            entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
             user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
             createDate = new Date();
@@ -63,7 +63,7 @@ public class SageImageDiscoveryService implements IService {
             	if (rootEntityId==null) {
             		throw new IllegalArgumentException("Both ROOT_ENTITY_NAME and ROOT_ENTITY_ID may not be null");
             	}
-            	topLevelFolder = annotationBean.getEntityById(rootEntityId);
+            	topLevelFolder = entityBean.getEntityById(rootEntityId);
             }
             
         	if (topLevelFolder==null) {
@@ -96,13 +96,13 @@ public class SageImageDiscoveryService implements IService {
     protected void processSageData(Entity topLevelFolder) throws Exception {
 
     	if (!EntityUtils.areLoaded(topLevelFolder.getEntityData())) {
-    		annotationBean.loadLazyEntity(topLevelFolder, false);
+    		entityBean.loadLazyEntity(topLevelFolder, false);
     	}
 
 		Entity tilesFolder = verifyOrCreateChildFolder(topLevelFolder, "tiles");
 
     	if (!EntityUtils.areLoaded(tilesFolder.getEntityData())) {
-    		annotationBean.loadLazyEntity(tilesFolder, false);
+    		entityBean.loadLazyEntity(tilesFolder, false);
     	}
     	
     	SageDAO sageDAO = new SageDAO(logger);
@@ -167,7 +167,7 @@ public class SageImageDiscoveryService implements IService {
     protected void processSlideGroup(List<SlideImage> slideGroup, Entity folder) throws Exception {
 
     	if (!EntityUtils.areLoaded(folder.getEntityData())) {
-    		annotationBean.loadLazyEntity(folder, false);
+    		entityBean.loadLazyEntity(folder, false);
     	}
     	
         HashMap<String, FilePair> filePairings = new HashMap<String, FilePair>();
@@ -273,7 +273,7 @@ public class SageImageDiscoveryService implements IService {
         }
         else {
         	if (!EntityUtils.areLoaded(sample.getEntityData())) {
-        		annotationBean.loadLazyEntity(sample, false);
+        		entityBean.loadLazyEntity(sample, false);
         	}
         }
         return sample;
@@ -290,7 +290,7 @@ public class SageImageDiscoveryService implements IService {
     	}
     	else {
         	if (!EntityUtils.areLoaded(supportingFiles.getEntityData())) {
-        		annotationBean.loadLazyEntity(supportingFiles, true);
+        		entityBean.loadLazyEntity(supportingFiles, true);
         	}
     	}
     	
@@ -305,16 +305,16 @@ public class SageImageDiscoveryService implements IService {
 			if (stack1==null && stack2==null) {
 				// Both pairs are missing, this stack pair is vestigial and can be trashed
 				logger.warn("Stack pair exists, but has no stacks. Deleting it (id="+lsmStackPair.getId()+")");
-				annotationBean.deleteEntityById(lsmStackPair.getId());
+				entityBean.deleteEntityById(lsmStackPair.getId());
 				lsmStackPair = null;
 			}
 			else if (stack1==null || !stack1.getName().equals(filePair.getFile1().getName()) || 
 					stack2==null || !stack2.getName().equals(filePair.getFile2().getName())) {
 				// One or more of the LSMs have changed, so move the old pair out of the way and then recreate it
 				logger.warn("One or more of the LSMs have changed. Renaming the stack pair and recreating it.");
-				lsmStackPair.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+				lsmStackPair.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
 				lsmStackPair.setName(lsmStackPair.getName()+" (old)");
-				annotationBean.saveOrUpdateEntity(lsmStackPair);
+				entityBean.saveOrUpdateEntity(lsmStackPair);
 	            logger.info("Renamed old LSM stack pair to '"+lsmStackPair.getName()+"' (id="+lsmStackPair.getId()+")");
 				lsmStackPair = null;
 			}
@@ -323,11 +323,11 @@ public class SageImageDiscoveryService implements IService {
 		if (lsmStackPair == null) {
 			lsmStackPair = new Entity();
             lsmStackPair.setUser(user);
-            lsmStackPair.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK_PAIR));
+            lsmStackPair.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK_PAIR));
             lsmStackPair.setCreationDate(createDate);
             lsmStackPair.setUpdatedDate(createDate);
             lsmStackPair.setName(filePair.getPairTag());
-            lsmStackPair = annotationBean.saveOrUpdateEntity(lsmStackPair);
+            lsmStackPair = entityBean.saveOrUpdateEntity(lsmStackPair);
             logger.info("Saved LSM stack pair for '"+filePair.getPairTag()+"' as "+lsmStackPair.getId());
         	addToParent(supportingFiles, lsmStackPair, null, EntityConstants.ATTRIBUTE_ENTITY);
         	
@@ -361,12 +361,12 @@ public class SageImageDiscoveryService implements IService {
     protected Entity createSample(String name, TilingPattern tiling) throws Exception {
         Entity sample = new Entity();
         sample.setUser(user);
-        sample.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_SAMPLE));
+        sample.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SAMPLE));
         sample.setCreationDate(createDate);
         sample.setUpdatedDate(createDate);
         sample.setName(name);
         sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN, tiling.toString());
-        sample = annotationBean.saveOrUpdateEntity(sample);
+        sample = entityBean.saveOrUpdateEntity(sample);
         logger.info("Saved sample as "+sample.getId());
         return sample;
     }
@@ -374,11 +374,11 @@ public class SageImageDiscoveryService implements IService {
     protected Entity createSupportingFilesFolder() throws Exception {
         Entity filesFolder = new Entity();
         filesFolder.setUser(user);
-        filesFolder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
+        filesFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
         filesFolder.setCreationDate(createDate);
         filesFolder.setUpdatedDate(createDate);
         filesFolder.setName("Supporting Files");
-        filesFolder = annotationBean.saveOrUpdateEntity(filesFolder);
+        filesFolder = entityBean.saveOrUpdateEntity(filesFolder);
         logger.info("Saved supporting files folder as "+filesFolder.getId());
         return filesFolder;
     }
@@ -386,12 +386,12 @@ public class SageImageDiscoveryService implements IService {
     private Entity createLsmStackFromFile(File file) throws Exception {
         Entity lsmStack = new Entity();
         lsmStack.setUser(user);
-        lsmStack.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK));
+        lsmStack.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK));
         lsmStack.setCreationDate(createDate);
         lsmStack.setUpdatedDate(createDate);
         lsmStack.setName(file.getName());
         lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
-        lsmStack = annotationBean.saveOrUpdateEntity(lsmStack);
+        lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
         logger.info("Saved LSM stack as "+lsmStack.getId());
         return lsmStack;
     }
@@ -406,17 +406,17 @@ public class SageImageDiscoveryService implements IService {
     }
 
     protected Entity createOrVerifyRootEntity(String topLevelFolderName, User user, Date createDate, org.apache.log4j.Logger logger, boolean createIfNecessary, boolean loadTree) throws Exception {
-        Set<Entity> topLevelFolders = annotationBean.getEntitiesByName(topLevelFolderName);
+        Set<Entity> topLevelFolders = entityBean.getEntitiesByName(topLevelFolderName);
         Entity topLevelFolder = null;
         if (topLevelFolders != null) {
             // Only accept the current user's top level folder
             for (Entity entity : topLevelFolders) {
                 if (entity.getUser().getUserLogin().equals(user.getUserLogin())
-                        && entity.getEntityType().getName().equals(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER).getName())
+                        && entity.getEntityType().getName().equals(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER).getName())
                         && entity.getAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
                     // This is the folder we want, now load the entire folder hierarchy
                     if (loadTree) {
-                        topLevelFolder = annotationBean.getFolderTree(entity.getId());
+                        topLevelFolder = entityBean.getEntityTree(entity.getId());
                     } else {
                         topLevelFolder = entity;
                     }
@@ -434,9 +434,9 @@ public class SageImageDiscoveryService implements IService {
                 topLevelFolder.setUpdatedDate(createDate);
                 topLevelFolder.setUser(user);
                 topLevelFolder.setName(topLevelFolderName);
-                topLevelFolder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+                topLevelFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
                 topLevelFolder.addAttributeAsTag(EntityConstants.ATTRIBUTE_COMMON_ROOT);
-                topLevelFolder = annotationBean.saveOrUpdateEntity(topLevelFolder);
+                topLevelFolder = entityBean.saveOrUpdateEntity(topLevelFolder);
                 logger.info("Saved top level folder as " + topLevelFolder.getId());
             } else {
                 throw new Exception("Could not find top-level folder by name=" + topLevelFolderName);
@@ -473,8 +473,8 @@ public class SageImageDiscoveryService implements IService {
             folder.setUpdatedDate(createDate);
             folder.setUser(user);
             folder.setName(childName);
-            folder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
-            folder = annotationBean.saveOrUpdateEntity(folder);
+            folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+            folder = entityBean.saveOrUpdateEntity(folder);
             addToParent(parentFolder, folder, null, EntityConstants.ATTRIBUTE_ENTITY);
         }
         
@@ -484,7 +484,7 @@ public class SageImageDiscoveryService implements IService {
     protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
         EntityData ed = parent.addChildEntity(entity, attrName);
         ed.setOrderIndex(index);
-        EJBFactory.getLocalAnnotationBean().saveOrUpdateEntityData(ed);
+        EJBFactory.getLocalEntityBean().saveOrUpdateEntityData(ed);
         logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
         		" as child of "+parent.getEntityType().getName()+"#"+parent.getId());
     }

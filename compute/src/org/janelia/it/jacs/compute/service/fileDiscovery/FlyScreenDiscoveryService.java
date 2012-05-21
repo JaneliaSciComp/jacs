@@ -130,7 +130,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         Long sampleTotal=0L;
         Integer sampleCount=0;
         List<String> sampleIdList=new ArrayList<String>();
-        EntityType screenSampleType= EJBFactory.getLocalAnnotationBean().getEntityTypeByName(EntityConstants.TYPE_SCREEN_SAMPLE);
+        EntityType screenSampleType= EJBFactory.getLocalEntityBean().getEntityTypeByName(EntityConstants.TYPE_SCREEN_SAMPLE);
         if (screenSampleType==null) {
             String errorMsg="EntityType screenSampleType  returned  NULL";
             logger.error(errorMsg);
@@ -149,7 +149,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
                 screenSampleEntity.setUser(user);
                 screenSampleEntity.setName(key);
                 screenSampleEntity.setEntityType(screenSampleType);
-                screenSampleEntity = EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(screenSampleEntity);
+                screenSampleEntity = EJBFactory.getLocalEntityBean().saveOrUpdateEntity(screenSampleEntity);
                 logger.info("Created new Screen Sample " + key + " id=" + screenSampleEntity.getId());
                 addToParent(dateFolder, screenSampleEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
             } else {
@@ -307,7 +307,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         if (alignedStack==null) {
             alignedStack = new Entity();
             alignedStack.setUser(user);
-            alignedStack.setEntityType(EJBFactory.getLocalAnnotationBean().getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK));
+            alignedStack.setEntityType(EJBFactory.getLocalEntityBean().getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK));
             alignedStack.setCreationDate(createDate);
             alignedStack.setUpdatedDate(createDate);
             alignedStack.setName(screenSampleEntity.getName()+" aligned stack");
@@ -318,7 +318,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
             logger.info("Adding fresh quality scores to stack");
             alignedStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE, alignmentScores[0]);
             alignedStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE, alignmentScores[1]);
-            alignedStack = EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(alignedStack);
+            alignedStack = EJBFactory.getLocalEntityBean().saveOrUpdateEntity(alignedStack);
             logger.info("Saved stack " + alignedStack.getName() + " as "+alignedStack.getId());
         }
         if (!alreadyHasStack) {
@@ -347,14 +347,14 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         }
         // Assume we don't have a folder for this date yet
         Entity dateFolder = new Entity();
-        EntityType dateFolderType=EJBFactory.getLocalAnnotationBean().getEntityTypeByName(EntityConstants.TYPE_FOLDER);
+        EntityType dateFolderType=EJBFactory.getLocalEntityBean().getEntityTypeByName(EntityConstants.TYPE_FOLDER);
         dateFolder.setUser(user);
         dateFolder.setEntityType(dateFolderType);
         dateFolder.setCreationDate(createDate);
         dateFolder.setUpdatedDate(createDate);
         dateFolder.setName(monthSection);
         dateFolder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, folderPath);
-        EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(dateFolder);
+        EJBFactory.getLocalEntityBean().saveOrUpdateEntity(dateFolder);
         addToParent(topFolder, dateFolder, null, EntityConstants.ATTRIBUTE_ENTITY);
         return dateFolder;
     }
@@ -379,7 +379,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         for (int i=0;i<dateNumberList.size();i++) {
             EntityData ed=folderMapByDateNumber.get(dateNumberList.get(i));
             ed.setOrderIndex(i);
-            EJBFactory.getLocalAnnotationBean().saveOrUpdateEntityData(ed);
+            EJBFactory.getLocalEntityBean().saveOrUpdateEntityData(ed);
         }
     }
 

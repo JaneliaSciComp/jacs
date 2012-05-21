@@ -4,10 +4,7 @@ import java.io.File;
 import java.util.*;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
-import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
-import org.janelia.it.jacs.compute.api.ComputeException;
-import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.*;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -35,6 +32,7 @@ public class MCFODataCompressService implements IService {
     protected Task task;
     protected String username;
     protected AnnotationBeanLocal annotationBean;
+    protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
     
     protected int numChanges;
@@ -53,6 +51,7 @@ public class MCFODataCompressService implements IService {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             task = ProcessDataHelper.getTask(processData);
             annotationBean = EJBFactory.getLocalAnnotationBean();
+            entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
             username = task.getOwner();
             isDebug = Boolean.parseBoolean(task.getParameter(PARAM_testRun));
@@ -137,7 +136,7 @@ public class MCFODataCompressService implements IService {
         List<Entity> entities=annotationBean.getCommonRootEntitiesByTypeName(username, EntityConstants.TYPE_FOLDER);
         for(Entity topEntity : entities) {
         	logger.info("Found top-level entity name="+topEntity.getName());
-        	processEntityTree(annotationBean.getEntityTree(topEntity.getId()));
+        	processEntityTree(entityBean.getEntityTree(topEntity.getId()));
         }
 		logger.info("The processing was a success.");
     }
@@ -159,7 +158,7 @@ public class MCFODataCompressService implements IService {
 	    			// How did the name get out of sync? Let's fix it. 
 	    			if (filepath.endsWith(".v3dpbd")) {
 	    				entity.setName(entity.getName().replaceAll("v3draw", "v3dpbd"));
-	    	        	annotationBean.saveOrUpdateEntity(entity);
+	    	        	entityBean.saveOrUpdateEntity(entity);
 	    	        	logger.info("Fixed entity name: "+entity.getName()+" (id="+entity.getId()+")");	
 	    			}
         		}
@@ -235,7 +234,7 @@ public class MCFODataCompressService implements IService {
         			entity.setName(entity.getName().replaceAll("v3draw", "v3dpbd"));
         		}
         		if (!isDebug) {
-	            	Entity savedEntity = annotationBean.saveOrUpdateEntity(entity);
+	            	Entity savedEntity = entityBean.saveOrUpdateEntity(entity);
 	            	logger.info("Updated entity: "+savedEntity.getName()+" (id="+savedEntity.getId()+")");
         		}
         		else {

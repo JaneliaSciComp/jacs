@@ -1,7 +1,12 @@
 package org.janelia.it.jacs.compute.service.entity;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -13,12 +18,6 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.user_data.FileNode;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Takes a Sample Entity and finds all the LSM stacks which are part of it, then creates lsmFileNames.txt with all the
@@ -35,7 +34,6 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     
     protected File outputDir;
     protected Logger logger;
-    protected AnnotationBeanLocal annotationBean;
     
     private List<File> inputFiles = new ArrayList<File>();
     private Entity sampleEntity;
@@ -44,7 +42,6 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     	super.init(processData);
     	
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-        annotationBean = EJBFactory.getLocalAnnotationBean();
 
     	FileNode outputNode = (FileNode)processData.getItem("OUTPUT_FILE_NODE");
     	if (outputNode == null) {
@@ -57,7 +54,7 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
     	}
     	
-    	sampleEntity = annotationBean.getEntityTree(new Long(sampleEntityId));
+    	sampleEntity = EJBFactory.getLocalEntityBean().getEntityTree(new Long(sampleEntityId));
     	if (sampleEntity == null) {
     		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
     	}

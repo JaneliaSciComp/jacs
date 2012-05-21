@@ -1,9 +1,12 @@
 package org.janelia.it.jacs.compute.service.entity;
 
+import java.util.*;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -14,8 +17,6 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.User;
 
-import java.util.*;
-
 /**
  * Creates or updates a view of the given entities.
  * 
@@ -25,6 +26,7 @@ public class EntityViewCreationService implements IService {
 
     protected Logger logger;
     protected Task task;
+    protected EntityBeanLocal entityBean;
     protected AnnotationBeanLocal annotationBean;
     protected ComputeBeanLocal computeBean;
     protected User user;
@@ -35,6 +37,7 @@ public class EntityViewCreationService implements IService {
         try {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             task = ProcessDataHelper.getTask(processData);
+            entityBean = EJBFactory.getLocalEntityBean();
             annotationBean = EJBFactory.getLocalAnnotationBean();
             computeBean = EJBFactory.getLocalComputeBean();
             user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
@@ -51,7 +54,7 @@ public class EntityViewCreationService implements IService {
             	if (entityIdList == null) {
             		throw new IllegalArgumentException("Both ENTITY_LIST and ENTITY_ID_LIST may not be null");
             	}
-            	entities = annotationBean.getEntitiesById(entityIdList);
+            	entities = entityBean.getEntitiesById(entityIdList);
             	// TODO: in this case, we need to worry about lazy loaded entities, but currently this case is not used
         	}
         	
@@ -116,7 +119,7 @@ public class EntityViewCreationService implements IService {
 	        			break;
 	        		}
 	                // This is the folder we want, now load the entire folder hierarchy
-	                topLevelFolder = annotationBean.getFolderTree(entity.getId());
+	                topLevelFolder = entityBean.getEntityTree(entity.getId());
 	                logger.info("Found existing topLevelFolder, name=" + topLevelFolder.getName());
 	        	}
 	        }
@@ -129,9 +132,9 @@ public class EntityViewCreationService implements IService {
             topLevelFolder.setUpdatedDate(createDate);
             topLevelFolder.setUser(user);
             topLevelFolder.setName(topLevelFolderName);
-            topLevelFolder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+            topLevelFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
             topLevelFolder.addAttributeAsTag(EntityConstants.ATTRIBUTE_COMMON_ROOT);
-            topLevelFolder = annotationBean.saveOrUpdateEntity(topLevelFolder);
+            topLevelFolder = entityBean.saveOrUpdateEntity(topLevelFolder);
             logger.info("Saved top level view as "+topLevelFolder.getId());
         }
         
@@ -142,7 +145,7 @@ public class EntityViewCreationService implements IService {
     protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
         EntityData ed = parent.addChildEntity(entity, attrName);
         ed.setOrderIndex(index);
-        EJBFactory.getLocalAnnotationBean().saveOrUpdateEntityData(ed);
+        entityBean.saveOrUpdateEntityData(ed);
         logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
         		" as child of "+parent.getEntityType().getName()+"#"+parent.getId());
     }

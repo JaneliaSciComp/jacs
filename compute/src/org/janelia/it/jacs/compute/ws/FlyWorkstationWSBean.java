@@ -1,17 +1,14 @@
 package org.janelia.it.jacs.compute.ws;
 
-import java.util.List;
-
 import javax.ejb.Remote;
 import javax.ejb.Stateless;
 import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 
-import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanRemote;
 import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.tasks.Task;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 
@@ -66,8 +63,8 @@ public class FlyWorkstationWSBean extends BaseWSBean {
         logger.debug("Web Services - getEntity() acknowledged");
         Entity entity = null;
         try {
-            AnnotationBeanRemote annotationBean = EJBFactory.getRemoteAnnotationBean();
-            entity = annotationBean.getEntityById(entityId);
+            EntityBeanRemote entityBean = EJBFactory.getRemoteEntityBean();
+            entity = entityBean.getEntityById(entityId);
             logger.debug("Web Services - getEntity() complete");
         }
         catch (Exception e) {

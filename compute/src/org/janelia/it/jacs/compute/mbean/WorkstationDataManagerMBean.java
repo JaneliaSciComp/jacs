@@ -44,10 +44,6 @@ public interface WorkstationDataManagerMBean {
 
     public void runFlyScreenPatternAnnotationPipeline(String user, Boolean refresh);
 
-    public void deleteEntityById(String entityId);
-
-    public void doEntityTreePerformanceTest();
-
     public void performScreenPipelineSurgery(String user);
 
     public void runFileTreeLoaderPipeline(String user, String rootDirectoryPath, String topLevelFolderName);

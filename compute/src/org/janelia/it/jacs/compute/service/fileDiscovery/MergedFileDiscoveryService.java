@@ -92,7 +92,7 @@ public class MergedFileDiscoveryService extends FileDiscoveryService {
             }
             else {
             	logger.info("Found sample for "+sampleIdentifier+", id="+sample.getId());
-            	sample = annotationBean.getEntityTree(sample.getId());
+            	sample = entityBean.getEntityTree(sample.getId());
             	addMergedFileToSample(sample, anatomicLocation, mergedFile);	
             }
             
@@ -149,11 +149,11 @@ public class MergedFileDiscoveryService extends FileDiscoveryService {
      */
     private Entity findExistingSample(Entity commonRoot, String sampleIdentifier) throws Exception {
 
-    	Set<Entity> entities = annotationBean.getEntitiesByName(sampleIdentifier);
+    	Set<Entity> entities = entityBean.getEntitiesByName(sampleIdentifier);
 
     	Entity sample = null;
     	for(Entity entity : entities) {
-    		List<Long> path = annotationBean.getPathToRoot(entity.getId(), commonRoot.getId());
+    		List<Long> path = entityBean.getPathToRoot(entity.getId(), commonRoot.getId());
     		if (path != null) {
     			if (sample != null) {
     				logger.warn("Found multiple entities with name "+sampleIdentifier+" rooted in "+commonRoot.getName());
@@ -169,11 +169,11 @@ public class MergedFileDiscoveryService extends FileDiscoveryService {
     protected Entity createSample(String name) throws Exception {
         Entity sample = new Entity();
         sample.setUser(user);
-        sample.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_SAMPLE));
+        sample.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SAMPLE));
         sample.setCreationDate(createDate);
         sample.setUpdatedDate(createDate);
         sample.setName(name);
-        sample = annotationBean.saveOrUpdateEntity(sample);
+        sample = entityBean.saveOrUpdateEntity(sample);
         logger.info("Saved sample as "+sample.getId());
         return sample;
     }
@@ -181,11 +181,11 @@ public class MergedFileDiscoveryService extends FileDiscoveryService {
     protected Entity createSupportingFilesFolder() throws Exception {
         Entity filesFolder = new Entity();
         filesFolder.setUser(user);
-        filesFolder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
+        filesFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
         filesFolder.setCreationDate(createDate);
         filesFolder.setUpdatedDate(createDate);
         filesFolder.setName("Supporting Files");
-        filesFolder = annotationBean.saveOrUpdateEntity(filesFolder);
+        filesFolder = entityBean.saveOrUpdateEntity(filesFolder);
         logger.info("Saved supporting files folder as "+filesFolder.getId());
         return filesFolder;
     }
@@ -193,14 +193,14 @@ public class MergedFileDiscoveryService extends FileDiscoveryService {
     private Entity createImageFromFile(File file) throws Exception {
         Entity imageEntity = new Entity();
         imageEntity.setUser(user);
-        imageEntity.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D));
+        imageEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D));
         imageEntity.setCreationDate(createDate);
         imageEntity.setUpdatedDate(createDate);
         imageEntity.setName(file.getName());
         imageEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
         imageEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, "v3draw");
         imageEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IS_ZIPPED, new Boolean(file.getName().endsWith(".zip")).toString());
-        imageEntity = annotationBean.saveOrUpdateEntity(imageEntity);
+        imageEntity = entityBean.saveOrUpdateEntity(imageEntity);
         logger.info("Saved merged file as "+imageEntity.getId());
         return imageEntity;
     }
@@ -208,7 +208,7 @@ public class MergedFileDiscoveryService extends FileDiscoveryService {
     public void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
         EntityData ed = parent.addChildEntity(entity, attrName);
         ed.setOrderIndex(index);
-        EJBFactory.getLocalAnnotationBean().saveOrUpdateEntityData(ed);
+        EJBFactory.getLocalEntityBean().saveOrUpdateEntityData(ed);
         logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
         		" as child of "+parent.getEntityType().getName()+"#"+parent.getId());
     }

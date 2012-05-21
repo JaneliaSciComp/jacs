@@ -137,7 +137,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         try {
             this.processData=processData;
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-            annotationBean = EJBFactory.getLocalAnnotationBean();
+            entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
             user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
             createDate = new Date();
@@ -355,7 +355,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         fileEntity.setName(f.getName());
         fileEntity.setEntityType(entityType);
         fileEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, f.getAbsolutePath());
-        fileEntity = annotationBean.saveOrUpdateEntity(fileEntity);
+        fileEntity = entityBean.saveOrUpdateEntity(fileEntity);
         logger.info("Saved file "+f.getAbsolutePath()+" as entity="+fileEntity.getId());
         return fileEntity;
     }
@@ -419,7 +419,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
             ai.artifactPath=outputPath;
             outputPathList.add(outputPath);
             // Add mip entry
-            Entity sourceEntity=annotationBean.getEntityById(ai.sourceEntityId.toString());
+            Entity sourceEntity=entityBean.getEntityById(ai.sourceEntityId.toString());
             addToArtifactList(sourceEntity, outputPath, mipGroupMap);
         }
         logger.info("doPbdList() putting vars in processData, inputListSize="+inputPathList.size()+" outputListSize="+outputPathList.size());
@@ -488,7 +488,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         Map<Long, Entity> sourceEntityIdToPbdEntityMap=new HashMap<Long, Entity>();
 
         // Handle PBDs
-        EntityType pbdResultEntityType=annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+        EntityType pbdResultEntityType=entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
         List<Long> pbdGroupKeyList=new ArrayList(pbdGroupMap.keySet());
         Collections.sort(pbdGroupKeyList);
         logger.info("doComplete() pbdGroupKeyList has "+pbdGroupKeyList.size()+" entries");
@@ -510,14 +510,14 @@ public class FileTreeLoaderService extends FileDiscoveryService {
                         Entity pbdResultEntity=createEntityForFile(pbdResultFile, pbdResultEntityType);
                         pbdResultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_ARTIFACT_SOURCE_ID, ai.sourceEntityId.toString());
                         logger.info("doComplete() saving pbdResultEntity");
-                        annotationBean.saveOrUpdateEntity(pbdResultEntity);
+                        entityBean.saveOrUpdateEntity(pbdResultEntity);
                         addToParent(supportingFilesFolder, pbdResultEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
                         // Second, add this entity as the proxy attribute of the source Entity
                         logger.info("doComplete() adding entity as performance proxy");
-                        Entity sourceEntity=annotationBean.getEntityById(ai.sourceEntityId.toString());
+                        Entity sourceEntity=entityBean.getEntityById(ai.sourceEntityId.toString());
                         logger.info("doComplete() adding entityData to entity of type="+sourceEntity.getEntityType().getName());
                         EntityData ed=sourceEntity.addChildEntity(pbdResultEntity, EntityConstants.ATTRIBUTE_PERFORMANCE_PROXY_IMAGE);
-                        annotationBean.saveOrUpdateEntityData(ed);
+                        entityBean.saveOrUpdateEntityData(ed);
                         // Populate map
                         logger.info("doComplete() populating entityIdToPbdEntity map");
                         sourceEntityIdToPbdEntityMap.put(ai.sourceEntityId, pbdResultEntity);
@@ -528,7 +528,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         logger.info("doComplete() finished PBD section, beginning MIP section");
 
         // Handle MIPs
-        EntityType mipResultEntityType=annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
+        EntityType mipResultEntityType=entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
         List<Long> mipGroupKeyList=new ArrayList<Long>(mipGroupMap.keySet());
         Collections.sort(mipGroupKeyList);
         for (Long mipGroupKey : mipGroupKeyList) {
@@ -545,20 +545,20 @@ public class FileTreeLoaderService extends FileDiscoveryService {
                         // Create the mip entity
                         Entity mipResultEntity=createEntityForFile(mipResultFile, mipResultEntityType);
                         mipResultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_ARTIFACT_SOURCE_ID, ai.sourceEntityId.toString());
-                        annotationBean.saveOrUpdateEntity(mipResultEntity);
+                        entityBean.saveOrUpdateEntity(mipResultEntity);
                         addToParent(supportingFilesFolder, mipResultEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
                         // Add as default 2D image
-                        Entity sourceEntity=annotationBean.getEntityById(ai.sourceEntityId.toString());
+                        Entity sourceEntity=entityBean.getEntityById(ai.sourceEntityId.toString());
                         File sourceFile=new File(sourceEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
                         logger.info("Creating entityData DEFAULT_2D_IMAGE for sourceEntity id="+sourceEntity.getId()+" type="+sourceEntity.getEntityType().getName()+" sourceFile="+sourceFile.getAbsolutePath());
                         EntityData ed=sourceEntity.addChildEntity(mipResultEntity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-                        annotationBean.saveOrUpdateEntityData(ed);
+                        entityBean.saveOrUpdateEntityData(ed);
                         logger.info("Done with entityData save");
                         // Get PBD and add 2D default image for this
                         Entity pbdForMip=sourceEntityIdToPbdEntityMap.get(ai.sourceEntityId);
                         if (pbdForMip!=null) {
                             EntityData pbdEd=pbdForMip.addChildEntity(mipResultEntity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-                            annotationBean.saveOrUpdateEntityData(pbdEd);
+                            entityBean.saveOrUpdateEntityData(pbdEd);
                         }
                         // Delete extra tif file
                         String pngName=mipResultFile.getName();

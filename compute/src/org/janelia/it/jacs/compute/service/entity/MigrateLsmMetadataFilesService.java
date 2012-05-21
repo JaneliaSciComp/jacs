@@ -1,8 +1,13 @@
 package org.janelia.it.jacs.compute.service.entity;
 
+import java.io.File;
+import java.io.FilenameFilter;
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -13,11 +18,6 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.SystemCall;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.util.Arrays;
-import java.util.List;
-
 /**
  * Copy LSM metadata files into a separation result node. The files must be present for NeuronAnnotator to get 
  * an accurate z height for the stack.
@@ -27,14 +27,14 @@ import java.util.List;
 public class MigrateLsmMetadataFilesService implements IService {
 
     protected Logger logger;
-    protected AnnotationBeanLocal annotationBean;
+    protected EntityBeanLocal entityBean;
 
 
     public void execute(IProcessData processData) throws ServiceException {
         try {
         	
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-            annotationBean = EJBFactory.getLocalAnnotationBean();
+            entityBean = EJBFactory.getLocalEntityBean();
 
         	String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
         	if (sampleEntityId == null) {
@@ -48,7 +48,7 @@ public class MigrateLsmMetadataFilesService implements IService {
         	
         	File targetDir = new File(resultFileNode.getDirectoryPath());
         	
-        	Entity sampleEntity = annotationBean.getEntityTree(new Long(sampleEntityId));
+        	Entity sampleEntity = entityBean.getEntityTree(new Long(sampleEntityId));
         	if (sampleEntity == null) {
         		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
         	}

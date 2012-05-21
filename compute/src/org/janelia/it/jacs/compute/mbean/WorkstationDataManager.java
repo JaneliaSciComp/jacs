@@ -1,9 +1,13 @@
 package org.janelia.it.jacs.compute.mbean;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
-import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.service.entity.SampleFileNodeSyncService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FlyScreenDiscoveryService;
 import org.janelia.it.jacs.compute.service.fly.ScreenSampleLineCoordinationService;
@@ -24,8 +28,6 @@ import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
-
-import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -166,7 +168,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
 
     public void runAlignWholeBrainSamplePipeline(String sampleEntityId, Boolean refreshAlignment, Boolean refreshSeparation) {
         try {
-        	Entity sampleEntity = EJBFactory.getLocalAnnotationBean().getEntityById(sampleEntityId);
+        	Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
         	if (sampleEntity==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
         	Task task = new MCFOSamplePipelineTask(new HashSet<Node>(), 
         			sampleEntity.getUser().getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>(), 
@@ -194,7 +196,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     
     public void runTwoChanSamplePipeline(String sampleEntityId) {
         try {
-        	Entity sampleEntity = EJBFactory.getLocalAnnotationBean().getEntityById(sampleEntityId);
+        	Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
         	if (sampleEntity==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
         	Task task = new MCFOSamplePipelineTask(new HashSet<Node>(), 
         			sampleEntity.getUser().getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>(), 
@@ -222,7 +224,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     
     public void runMCFOSamplePipeline(String sampleEntityId, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation) {
         try {
-        	Entity sampleEntity = EJBFactory.getLocalAnnotationBean().getEntityById(sampleEntityId);
+        	Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
         	if (sampleEntity==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
         	Task task = new MCFOSamplePipelineTask(new HashSet<Node>(), 
         			sampleEntity.getUser().getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>(), 
@@ -237,7 +239,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
 
     public void runMCFOSeparationPipeline(String sampleEntityId, String inputFilename, String resultEntityName) {
         try {
-        	Entity sampleEntity = EJBFactory.getLocalAnnotationBean().getEntityById(sampleEntityId);
+        	Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
         	if (sampleEntity==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
         	Task task = new MCFOSeparationPipelineTask(new HashSet<Node>(), 
         			sampleEntity.getUser().getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>(), sampleEntityId, inputFilename, resultEntityName);
@@ -251,7 +253,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     
     public void runMCFOSampleViewCreation(String sourceEntityId, String targetEntityName) {
         try {
-        	Entity sourceEntity = EJBFactory.getLocalAnnotationBean().getEntityById(sourceEntityId);
+        	Entity sourceEntity = EJBFactory.getLocalEntityBean().getEntityById(sourceEntityId);
         	if (sourceEntity==null) throw new IllegalArgumentException("Entity with id "+sourceEntityId+" does not exist");
         	Task task = new EntityViewCreationTask(new HashSet<Node>(), 
         			sourceEntity.getUser().getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>(), sourceEntityId, targetEntityName);
@@ -292,48 +294,19 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
     
-    public void deleteEntityById(String entityId) {
-     try {
-         Long id=new Long(entityId);
-         AnnotationBeanRemote annotationBean=EJBFactory.getRemoteAnnotationBean();
-         annotationBean.deleteEntityById(id);
-     } catch (Exception ex) {
-         ex.printStackTrace();
-     }
-    }
-
-    public void doEntityTreePerformanceTest() {
-        try {
-            AnnotationBeanLocal annotationBean = EJBFactory.getLocalAnnotationBean();
-            Set<Entity> entities=annotationBean.getEntitiesByName("FlyLight Screen Data");
-
-            if (entities.size()==1) {
-                Entity topEntity=entities.iterator().next();
-                logger.info("Found top-level entity name="+topEntity.getName());
-//                Date start=new Date();
-//                Entity populatedEntity=annotationBean.getEntityTree(topEntity.getId());
-//                Date end=new Date();
-//                Long ms=end.getTime()-start.getTime();
-//                logger.info("Entity tree took "+ms+" milliseconds");
-//
-                Date start=new Date();
-                Entity testEntity=annotationBean.getEntityTreeQuery(topEntity.getId());
-                Date end=new Date();
-                Long ms=end.getTime()-start.getTime();
-                logger.info("Test Entity tree took "+ms+" milliseconds");
-
-            } else {
-                logger.error("Found more than one top-level entity");
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
+//    public void deleteEntityById(String entityId) {
+//     try {
+//         Long id=new Long(entityId);
+//         EJBFactory.getLocalEntityBean().deleteEntityById(id);
+//     } catch (Exception ex) {
+//         ex.printStackTrace();
+//     }
+//    }
 
     public void performScreenPipelineSurgery(String username) {
         try {
-            final AnnotationBeanLocal annotationBean = EJBFactory.getLocalAnnotationBean();
-            Set<Entity> entities=annotationBean.getEntitiesByName("FlyLight Screen Data");
+            final EntityBeanLocal entityBean = EJBFactory.getLocalEntityBean();
+            Set<Entity> entities=entityBean.getEntitiesByName("FlyLight Screen Data");
             Set<Entity> userEntities=new HashSet<Entity>();
             for (Entity e : entities) {
                 if (e.getUser().getUserLogin().equals(username)) {
@@ -344,20 +317,20 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             if (userEntities.size()==1) {
                 Entity topEntity=entities.iterator().next();
                 logger.info("Found top-level entity name="+topEntity.getName()+" , now changing attributes");
-                Entity screenTree=annotationBean.getEntityTree(topEntity.getId());
-                EntityAttribute pEa=annotationBean.getEntityAttributeByName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-                EntityAttribute nEa=annotationBean.getEntityAttributeByName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
+                Entity screenTree=entityBean.getEntityTree(topEntity.getId());
+                EntityAttribute pEa=entityBean.getEntityAttributeByName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+                EntityAttribute nEa=entityBean.getEntityAttributeByName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
 
                 EntityUtils.replaceAllAttributeTypesInEntityTree(screenTree, pEa, nEa, new EntityUtils.SaveUnit() {
                     public void saveUnit(Object o) throws Exception {
                         EntityData ed=(EntityData)o;
                         logger.info("Saving attribute change for ed="+ed.getId());
-                        annotationBean.saveOrUpdateEntityData(ed);
+                        entityBean.saveOrUpdateEntityData(ed);
                     }
                 }
                 );
                 logger.info("Done replacement, now saving");
-                annotationBean.saveOrUpdateEntity(topEntity);
+                entityBean.saveOrUpdateEntity(topEntity);
                 logger.info("Done with save");
             } else {
                 logger.error("Found more than one top-level entity - this is unexpected - exiting");

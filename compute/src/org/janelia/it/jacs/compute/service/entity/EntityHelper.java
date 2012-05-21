@@ -3,10 +3,10 @@ package org.janelia.it.jacs.compute.service.entity;
 import java.util.Date;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -15,12 +15,12 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
 public class EntityHelper {
 
     protected Logger logger = Logger.getLogger(EntityHelper.class);
-    protected AnnotationBeanLocal annotationBean;
+    protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
     protected boolean isDebug = true;
     
 	public EntityHelper(boolean isDebug) {
-        annotationBean = EJBFactory.getLocalAnnotationBean();
+        entityBean = EJBFactory.getLocalEntityBean();
         computeBean = EJBFactory.getLocalComputeBean();
         this.isDebug = isDebug;
 	}
@@ -31,7 +31,7 @@ public class EntityHelper {
             logger.info("Removing default 2d image filepath for id="+entity.getId()+" name="+entity.getName());
             if (!isDebug) {
             	// Update database
-            	annotationBean.deleteEntityData(filepathEd);
+            	entityBean.deleteEntityData(filepathEd);
             	// Update in-memory model
             	entity.getEntityData().remove(filepathEd);
             }
@@ -44,7 +44,7 @@ public class EntityHelper {
         if (ed1!=null) {
 	        if (!isDebug) {
 	        	// Update database
-	        	annotationBean.deleteEntityData(ed1);
+	        	entityBean.deleteEntityData(ed1);
 	        	// Update in-memory model
 	        	entity.getEntityData().remove(ed1);
 	        }
@@ -57,7 +57,7 @@ public class EntityHelper {
         if (ed!=null) {
         	if (!isDebug) {
             	// Update database
-	        	annotationBean.deleteEntityData(ed);
+	        	entityBean.deleteEntityData(ed);
             	// Update in-memory model
 	        	entity.getEntityData().remove(ed);
         	}
@@ -66,7 +66,7 @@ public class EntityHelper {
         if (ed!=null) {
         	if (!isDebug) {
 	        	// Update database
-	        	annotationBean.deleteEntityData(ed);
+	        	entityBean.deleteEntityData(ed);
 	        	// Update in-memory model
 	        	entity.getEntityData().remove(ed);
         	}
@@ -83,7 +83,7 @@ public class EntityHelper {
 	    	ed.setValue(filepath);
 	    	// Update database
 	    	if (!isDebug) {
-	    		EntityData savedEd = annotationBean.saveOrUpdateEntityData(ed);
+	    		EntityData savedEd = entityBean.saveOrUpdateEntityData(ed);
 	    		EntityUtils.replaceEntityData(entity, ed, savedEd);
 	    	}
         }
@@ -101,7 +101,7 @@ public class EntityHelper {
         	ed.setValue(signalMIPfilepath);
         	// Update database
         	if (!isDebug) {
-        		EntityData savedEd = annotationBean.saveOrUpdateEntityData(ed);
+        		EntityData savedEd = entityBean.saveOrUpdateEntityData(ed);
         		EntityUtils.replaceEntityData(entity, ed, savedEd);
         	}
         }
@@ -115,7 +115,7 @@ public class EntityHelper {
         	ed.setValue(referenceMIPfilepath);
         	// Update database
         	if (!isDebug) {
-        		EntityData savedEd = annotationBean.saveOrUpdateEntityData(ed);
+        		EntityData savedEd = entityBean.saveOrUpdateEntityData(ed);
         		EntityUtils.replaceEntityData(entity, ed, savedEd);
         	}
         }
@@ -127,13 +127,13 @@ public class EntityHelper {
 	public Entity createSupportingFilesFolder(String username) throws ComputeException {
         Entity filesFolder = new Entity();
         filesFolder.setUser(computeBean.getUserByName(username));
-        filesFolder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
+        filesFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
         Date createDate = new Date();
         filesFolder.setCreationDate(createDate);
         filesFolder.setUpdatedDate(createDate);
         filesFolder.setName("Supporting Files");
     	// Update database
-        if (!isDebug) filesFolder = annotationBean.saveOrUpdateEntity(filesFolder);
+        if (!isDebug) filesFolder = entityBean.saveOrUpdateEntity(filesFolder);
         logger.info("Saved supporting files folder as "+filesFolder.getId());
     	// Return the new object so that we can update in-memory model
         return filesFolder;

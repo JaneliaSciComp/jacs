@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
@@ -26,13 +25,11 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
 public class InitScreenSampleCrossParametersService implements IService {
 
     protected Logger logger;
-    protected AnnotationBeanLocal annotationBean;
     protected FileNode resultFileNode;
     
     public void execute(IProcessData processData) throws ServiceException {
         try {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-            annotationBean = EJBFactory.getLocalAnnotationBean();
             resultFileNode = ProcessDataHelper.getResultFileNode(processData);
             
         	String sampleEntity1IdStr = (String)processData.getItem("SCREEN_SAMPLE_1_ID_LIST");
@@ -58,12 +55,12 @@ public class InitScreenSampleCrossParametersService implements IService {
         		long s1 = Long.parseLong(sampleEntity1Ids[i]);
         		long s2 = Long.parseLong(sampleEntity2Ids[i]);
 
-            	Entity sampleEntity1 = annotationBean.getEntityTree(s1);
+            	Entity sampleEntity1 = EJBFactory.getLocalEntityBean().getEntityTree(s1);
             	if (sampleEntity1 == null) {
             		throw new IllegalArgumentException("Sample entity not found with id="+s1);
             	}
             	
-            	Entity sampleEntity2 = annotationBean.getEntityTree(s2);
+            	Entity sampleEntity2 = EJBFactory.getLocalEntityBean().getEntityTree(s2);
             	if (sampleEntity2 == null) {
             		throw new IllegalArgumentException("Sample entity not found with id="+s2);
             	}	

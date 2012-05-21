@@ -307,11 +307,6 @@
      </operation>
 
     <operation>
-        <description>Do Entity load performance test and report results to log</description>
-        <name>doEntityTreePerformanceTest</name>
-    </operation>
-
-    <operation>
         <description>Load entity types from Java class AnnotationDAO</description>
         <name>setupEntityTypes</name>
     </operation>

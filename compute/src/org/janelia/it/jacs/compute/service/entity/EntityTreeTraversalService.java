@@ -28,16 +28,12 @@ public class EntityTreeTraversalService implements IService {
 
     protected Logger logger;
     protected Task task;
-    protected AnnotationBeanLocal annotationBean;
-    protected ComputeBeanLocal computeBean;
 
     public void execute(IProcessData processData) throws ServiceException {
         try {
         	
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             task = ProcessDataHelper.getTask(processData);
-            annotationBean = EJBFactory.getLocalAnnotationBean();
-            computeBean = EJBFactory.getLocalComputeBean();
             
             String entityTypeName = (String)processData.getItem("ENTITY_TYPE_NAME");
             String entityFilterClassName = (String)processData.getItem("ENTITY_FILTER_CLASS");
@@ -69,7 +65,7 @@ public class EntityTreeTraversalService implements IService {
             	}
         	}
         	
-        	Entity rootEntity = annotationBean.getEntityTree(rootEntityId);
+        	Entity rootEntity = EJBFactory.getLocalEntityBean().getEntityTree(rootEntityId);
         	
         	if (rootEntity == null) {
         		throw new IllegalArgumentException("Root entity not found with id="+rootEntityId);

@@ -1,9 +1,15 @@
 package org.janelia.it.jacs.compute.service.screen;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -20,13 +26,6 @@ import org.janelia.it.jacs.model.user_data.entity.ScreenSampleResultNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.SystemCall;
 
-import javax.mail.Folder;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-
 /**
  * Created by IntelliJ IDEA.
  * User: murphys
@@ -42,7 +41,7 @@ public class FlyScreenSampleService implements EntityFilter, IService {
     final public String MODE_SETUP="SETUP";
     final public String MODE_COMPLETE="COMPLETE";
 
-    protected AnnotationBeanLocal annotationBean;
+    protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
     protected User user;
     protected Date createDate;
@@ -66,7 +65,7 @@ public class FlyScreenSampleService implements EntityFilter, IService {
             task = ProcessDataHelper.getTask(processData);
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
             visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
-            annotationBean = EJBFactory.getLocalAnnotationBean();
+            entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
             user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
             createDate = new Date();
@@ -117,9 +116,9 @@ public class FlyScreenSampleService implements EntityFilter, IService {
             logger.info(creationMessage);
             resultNodeList.add(resultNode);
             resultNodeIdList.add(resultNode.getObjectId().toString());
-            Entity screenSampleEntity=EJBFactory.getLocalAnnotationBean().getEntityTree(new Long(sampleEntityId.trim()));
+            Entity screenSampleEntity=entityBean.getEntityTree(new Long(sampleEntityId.trim()));
             screenSampleEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_RESULT_NODE_ID, resultNode.getObjectId()+"");
-            annotationBean.saveOrUpdateEntity(screenSampleEntity);
+            entityBean.saveOrUpdateEntity(screenSampleEntity);
             String stackPath=getStackPath(screenSampleEntity);
             stackPathList.add(stackPath);
             logger.info("FlyScreenSampleService  doSetup()   stackPath="+stackPath);
@@ -137,7 +136,7 @@ public class FlyScreenSampleService implements EntityFilter, IService {
 
         int index=0;
         for (ScreenSampleResultNode resultNode : resultNodeList) {
-            Entity screenSampleEntity=EJBFactory.getLocalAnnotationBean().getEntityTree(new Long(sampleEntityIdList.get(index).trim()));
+            Entity screenSampleEntity=entityBean.getEntityTree(new Long(sampleEntityIdList.get(index).trim()));
             File resultDir=new File(resultNode.getDirectoryPath());
             logger.info("FlyScreenSampleService  doComplete()  using resultDir="+resultDir.getAbsolutePath());
             File[] resultFiles=resultDir.listFiles();
@@ -186,16 +185,16 @@ public class FlyScreenSampleService implements EntityFilter, IService {
 
                 // Add default image to screen sample
                 screenSampleEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
-                EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(screenSampleEntity);
+                entityBean.saveOrUpdateEntity(screenSampleEntity);
 
                 // Add default image to stack
                 Entity stackEntity=getStackEntityFromScreenSample(screenSampleEntity);
                 stackEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
-                EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(stackEntity);
+                entityBean.saveOrUpdateEntity(stackEntity);
 
                 // Add default image to mip
                 mipEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
-                EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(mipEntity);
+                entityBean.saveOrUpdateEntity(mipEntity);
 
                 // Add link to stack file
                 SystemCall sc=new SystemCall(logger);
@@ -261,19 +260,19 @@ public class FlyScreenSampleService implements EntityFilter, IService {
     protected Entity createMipEntity(File pngFile, String name) throws Exception {
         Entity mipEntity = new Entity();
         mipEntity.setUser(user);
-        mipEntity.setEntityType(EJBFactory.getLocalAnnotationBean().getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D));
+        mipEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D));
         mipEntity.setCreationDate(createDate);
         mipEntity.setUpdatedDate(createDate);
         mipEntity.setName(name);
         mipEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, pngFile.getAbsolutePath());
-        mipEntity = EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(mipEntity);
+        mipEntity = entityBean.saveOrUpdateEntity(mipEntity);
         return mipEntity;
     }
 
     protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
         EntityData ed = parent.addChildEntity(entity, attrName);
         ed.setOrderIndex(index);
-        EJBFactory.getLocalAnnotationBean().saveOrUpdateEntityData(ed);
+        entityBean.saveOrUpdateEntityData(ed);
         logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
         		" as child of "+parent.getEntityType().getName()+"#"+parent.getId());
     }
@@ -293,11 +292,11 @@ public class FlyScreenSampleService implements EntityFilter, IService {
         folder.setUpdatedDate(createDate);
         folder.setUser(user);
         folder.setName(name);
-        folder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+        folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
         if (directoryPath!=null) {
             folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, directoryPath);
         }
-        folder = annotationBean.saveOrUpdateEntity(folder);
+        folder = entityBean.saveOrUpdateEntity(folder);
         logger.info("Saved folder " + name+" as " + folder.getId());
         addToParent(parent, folder, null, EntityConstants.ATTRIBUTE_ENTITY);
         return folder;

@@ -1,9 +1,16 @@
 package org.janelia.it.jacs.compute.service.fly;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -22,13 +29,6 @@ import org.janelia.it.jacs.model.user_data.entity.NamedFileNode;
 import org.janelia.it.jacs.model.user_data.entity.PatternAnnotationResultNode;
 import org.janelia.it.jacs.model.user_data.entity.ScreenSampleResultNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -55,7 +55,7 @@ public class PatternAnnotationSampleService  implements IService {
     protected String patternAnnotationResourceDir=SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationResourceDir");
     protected String patternChannel=SystemConfigurationProperties.getString("FlyScreen.AlignedStackPatternChannel");
 
-    protected AnnotationBeanLocal annotationBean;
+    protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
     protected User user;
     protected Date createDate;
@@ -80,7 +80,7 @@ public class PatternAnnotationSampleService  implements IService {
             logger.info("PatternAnnotationSampleService running under TaskId="+task.getObjectId());
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
             visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
-            annotationBean = EJBFactory.getLocalAnnotationBean();
+            entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
             user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
             createDate = new Date();
@@ -178,7 +178,7 @@ public class PatternAnnotationSampleService  implements IService {
         // Generate the list of samples from the FlyLine list
         logger.info("Processing " + flyLineIdList.size() + " FlyLine entries");
         for (String flyLineEntityId : flyLineIdList) {
-            Entity flyLineEntity=annotationBean.getEntityTree(new Long(flyLineEntityId.trim()));
+            Entity flyLineEntity=entityBean.getEntityTree(new Long(flyLineEntityId.trim()));
             for (EntityData ed : flyLineEntity.getEntityData()) {
                 if (ed.getChildEntity().getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
                     sampleList.add(ed.getChildEntity());
@@ -192,13 +192,13 @@ public class PatternAnnotationSampleService  implements IService {
 
             // Refresh beans
             logger.info("Refreshing EJB instances");
-            annotationBean = EJBFactory.getLocalAnnotationBean();
+            entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
             user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
 
             logger.info("Processing sample name="+sample.getName());
 
-            sample=annotationBean.getEntityTree(sample.getId());
+            sample=entityBean.getEntityTree(sample.getId());
 
             // This is the directory containing the link to the stack, and will have a pattern annotation
             // subdirectory, as well as a separte supportingFiles directory.
@@ -210,7 +210,7 @@ public class PatternAnnotationSampleService  implements IService {
             }
 
             // refresh again after sample dir update
-            sample=annotationBean.getEntityTree(sample.getId());
+            sample=entityBean.getEntityTree(sample.getId());
 
             // This method ensures that there is a supporting directory for the sample in the sample
             // result node directory, and that the mip has been relocated to this directory.
@@ -229,7 +229,7 @@ public class PatternAnnotationSampleService  implements IService {
                 }
                 // Refresh sample after delete
                 logger.info("Refreshing sample after clean operation");
-                sample=annotationBean.getEntityTree(sample.getId());
+                sample=entityBean.getEntityTree(sample.getId());
             } else {
                 logger.info("Refresh is false - using prior data");
             }
@@ -242,7 +242,7 @@ public class PatternAnnotationSampleService  implements IService {
             String QiScore=null;
 
             // Do another refresh
-            sample=annotationBean.getEntityTree(sample.getId());
+            sample=entityBean.getEntityTree(sample.getId());
 
             for (EntityData ed : sample.getEntityData()) {
                 Entity child=ed.getChildEntity();
@@ -387,7 +387,7 @@ public class PatternAnnotationSampleService  implements IService {
             if (checkDir.getAbsolutePath().equals(nodeDir.getAbsolutePath())) {
                 logger.info("Verified nodeId="+nodeId+" now saving as sample attribute");
                 sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_RESULT_NODE_ID, nodeId.toString());
-                annotationBean.saveOrUpdateEntity(sample);
+                entityBean.saveOrUpdateEntity(sample);
             } else {
                 throw new Exception("Could not verify result node id="+nodeId);
             }
@@ -457,26 +457,26 @@ public class PatternAnnotationSampleService  implements IService {
                 logger.info("Creating new supporting folder in location="+supportingDir.getAbsolutePath());
                 supportingFolder=addChildFolderToEntity(sample, FlyScreenSampleService.SUPPORTING_FILES_FOLDER_NAME, supportingDir.getAbsolutePath());
                 // refresh sample
-                sample = annotationBean.getEntityById(sample.getId().toString());
+                sample = entityBean.getEntityById(sample.getId().toString());
             }
-            annotationBean.deleteEntityData(rawMipEd);
+            entityBean.deleteEntityData(rawMipEd);
             File newMipFile=new File(supportingDir, rawMipFile.getName());
             logger.info("Moving mip to new location="+newMipFile.getAbsolutePath());
             FileUtil.moveFileUsingSystemCall(rawMipFile, newMipFile);
             addToParent(supportingFolder, rawMip, null, EntityConstants.ATTRIBUTE_ENTITY);
             rawMip.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, newMipFile.getAbsolutePath());
             rawMip.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, newMipFile.getAbsolutePath());
-            annotationBean.saveOrUpdateEntity(rawMip);
+            entityBean.saveOrUpdateEntity(rawMip);
             if (replaceSampleDefault2DImage) {
                 logger.info("Resetting default 2D image for screen sample to new image location - refreshing sample");
-                sample = annotationBean.getEntityById(sample.getId().toString());
+                sample = entityBean.getEntityById(sample.getId().toString());
                 sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, newMipFile.getAbsolutePath());
-                sample = annotationBean.saveOrUpdateEntity(sample);
+                sample = entityBean.saveOrUpdateEntity(sample);
                 logger.info("Done updating default 2D image for sample="+sample.getName());
                 logger.info("Now updating location of mip for aligned screen stack");
-                screenStack = annotationBean.getEntityById(screenStack.getId().toString());
+                screenStack = entityBean.getEntityById(screenStack.getId().toString());
                 screenStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, newMipFile.getAbsolutePath());
-                annotationBean.saveOrUpdateEntity(screenStack);
+                entityBean.saveOrUpdateEntity(screenStack);
                 logger.info("Done updating aligned screen stack with mip path="+newMipFile.getAbsolutePath());
             }
         } else {
@@ -500,9 +500,9 @@ public class PatternAnnotationSampleService  implements IService {
                 }
                 if (postMovedAlignedMip!=null) {
                     logger.info("Updating mip location for aligned stack");
-                    screenStack = annotationBean.getEntityById(screenStack.getId().toString());
+                    screenStack = entityBean.getEntityById(screenStack.getId().toString());
                     screenStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, newMipPath);
-                    annotationBean.saveOrUpdateEntity(screenStack);
+                    entityBean.saveOrUpdateEntity(screenStack);
                     logger.info("Done updating aligned screen stack with mip path="+newMipPath);
                 } else {
                     throw new Exception("Could not locate aligned mip in sample name="+sample.getName()+" id="+sample.getId());
@@ -525,7 +525,7 @@ public class PatternAnnotationSampleService  implements IService {
             if (!actualPath.equals(subFolderDir.getAbsolutePath())) {
                 // Need to correct
                 subFolder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, subFolderDir.getAbsolutePath());
-                annotationBean.saveOrUpdateEntity(subFolder);
+                entityBean.saveOrUpdateEntity(subFolder);
             }
         }
         if (!subFolderDir.exists() && !subFolderDir.mkdir()) {
@@ -536,7 +536,7 @@ public class PatternAnnotationSampleService  implements IService {
     File getOrUpdatePatternAnnotationDir(Entity sample) throws Exception {
         File sampleDir=getOrUpdateSampleResultDir(sample);
 
-        sample=annotationBean.getEntityTree(sample.getId());
+        sample=entityBean.getEntityTree(sample.getId());
 
         // Check to see if the sample already has a patternAnnotation folder
         Entity patternAnnotationFolder=null;
@@ -558,7 +558,7 @@ public class PatternAnnotationSampleService  implements IService {
             String patternAnnotationActualDirPath=patternAnnotationFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
             if (!patternAnnotationActualDirPath.equals(patternAnnotationCorrectDir.getAbsolutePath())) {
                 patternAnnotationFolder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, patternAnnotationCorrectDir.getAbsolutePath());
-                annotationBean.saveOrUpdateEntity(patternAnnotationFolder);
+                entityBean.saveOrUpdateEntity(patternAnnotationFolder);
             }
         }
         // Now check to make sure the physical dir exists
@@ -609,7 +609,7 @@ public class PatternAnnotationSampleService  implements IService {
 
         // Now we know the files to delete, so we can delete the folder entity tree
         logger.info("Deleting entity tree for prior pattern annotation folderId="+patternAnnotationFolder.getId());
-        annotationBean.deleteSmallEntityTree(task.getOwner(), patternAnnotationFolder.getId());
+        entityBean.deleteSmallEntityTree(task.getOwner(), patternAnnotationFolder.getId());
         logger.info("Finished deleting entity tree");
         // Now we can delete the files and then directories
         for (File fileToDelete : filesToDelete) {
@@ -647,11 +647,11 @@ public class PatternAnnotationSampleService  implements IService {
         folder.setUpdatedDate(createDate);
         folder.setUser(user);
         folder.setName(name);
-        folder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+        folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
         if (directoryPath!=null) {
             folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, directoryPath);
         }
-        folder = annotationBean.saveOrUpdateEntity(folder);
+        folder = entityBean.saveOrUpdateEntity(folder);
         logger.info("Saved folder " + name+" as " + folder.getId()+" , will now add as child to parent entity name="+parent.getName()+" parentId="+parent.getId());
         addToParent(parent, folder, null, EntityConstants.ATTRIBUTE_ENTITY);
         return folder;
@@ -684,7 +684,7 @@ public class PatternAnnotationSampleService  implements IService {
     protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
         EntityData ed = parent.addChildEntity(entity, attrName);
         ed.setOrderIndex(index);
-        EJBFactory.getLocalAnnotationBean().saveOrUpdateEntityData(ed);
+        entityBean.saveOrUpdateEntityData(ed);
         logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
                 " as child of "+parent.getEntityType().getName()+"#"+parent.getId());
     }
@@ -836,7 +836,7 @@ public class PatternAnnotationSampleService  implements IService {
 
     public void addPatternAnnotationResultEntitiesToSample(String sampleId, String sampleName, File patternAnnotationDir) throws Exception {
 
-        Entity screenSample=annotationBean.getEntityTree(new Long(sampleId));
+        Entity screenSample=entityBean.getEntityTree(new Long(sampleId));
         if (screenSample==null) {
             throw new Exception("Could not find screenSample by id="+sampleId);
         }
@@ -912,31 +912,31 @@ public class PatternAnnotationSampleService  implements IService {
 
         // We also want to replace the sample 2D image with the heatmap, for those samples where it is available
         screenSample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, mipPath);
-        annotationBean.saveOrUpdateEntity(screenSample);
+        entityBean.saveOrUpdateEntity(screenSample);
     }
 
     protected Entity createSupportingEntity(File supportingFile, String name) throws Exception {
         Entity supportingEntity = new Entity();
         supportingEntity.setUser(user);
-        supportingEntity.setEntityType(EJBFactory.getLocalAnnotationBean().getEntityTypeByName(EntityConstants.TYPE_TEXT_FILE));
+        supportingEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_TEXT_FILE));
         supportingEntity.setCreationDate(createDate);
         supportingEntity.setUpdatedDate(createDate);
         supportingEntity.setName(name);
         supportingEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, supportingFile.getAbsolutePath());
-        supportingEntity = EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(supportingEntity);
+        supportingEntity = entityBean.saveOrUpdateEntity(supportingEntity);
         return supportingEntity;
     }
 
     protected Entity createMipEntity(File pngFile, String name) throws Exception {
         Entity mipEntity = new Entity();
         mipEntity.setUser(user);
-        mipEntity.setEntityType(EJBFactory.getLocalAnnotationBean().getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D));
+        mipEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D));
         mipEntity.setCreationDate(createDate);
         mipEntity.setUpdatedDate(createDate);
         mipEntity.setName(name);
         mipEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, pngFile.getAbsolutePath());
         mipEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
-        mipEntity = EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(mipEntity);
+        mipEntity = entityBean.saveOrUpdateEntity(mipEntity);
         return mipEntity;
     }
 
@@ -944,13 +944,13 @@ public class PatternAnnotationSampleService  implements IService {
         Entity stack = new Entity();
         String mipFilePath=mipEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         stack.setUser(user);
-        stack.setEntityType(EJBFactory.getLocalAnnotationBean().getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK));
+        stack.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK));
         stack.setCreationDate(createDate);
         stack.setUpdatedDate(createDate);
         stack.setName(entityName);
         stack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
         stack.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, mipFilePath);
-        stack = EJBFactory.getLocalAnnotationBean().saveOrUpdateEntity(stack);
+        stack = entityBean.saveOrUpdateEntity(stack);
         logger.info("Saved stack " + stack.getName() + " as "+stack.getId());
         return stack;
     }

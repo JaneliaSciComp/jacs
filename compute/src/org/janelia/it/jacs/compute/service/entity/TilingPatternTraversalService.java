@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -26,7 +26,7 @@ public class TilingPatternTraversalService implements IService {
 
     protected Logger logger;
     protected Task task;
-    protected AnnotationBeanLocal annotationBean;
+    protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
 
     public void execute(IProcessData processData) throws ServiceException {
@@ -34,7 +34,7 @@ public class TilingPatternTraversalService implements IService {
         	
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             task = ProcessDataHelper.getTask(processData);
-            annotationBean = EJBFactory.getLocalAnnotationBean();
+            entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
             
             boolean outputObjects = false;
@@ -53,7 +53,7 @@ public class TilingPatternTraversalService implements IService {
         		throw new IllegalArgumentException("TILING_PATTERN may not be null");
         	}
         	
-        	List<Entity> samples = annotationBean.getEntitiesWithAttributeValue(EntityConstants.ATTRIBUTE_TILING_PATTERN, tilingPattern);
+        	List<Entity> samples = entityBean.getEntitiesWithAttributeValue(EntityConstants.ATTRIBUTE_TILING_PATTERN, tilingPattern);
         	
     		logger.info("Found "+samples.size()+" samples with tiling pattern "+tilingPattern+". Filtering by owner...");
     		

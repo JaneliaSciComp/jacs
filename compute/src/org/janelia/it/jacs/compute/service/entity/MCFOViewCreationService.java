@@ -66,11 +66,11 @@ public class MCFOViewCreationService extends EntityViewCreationService {
     private Entity createTilingPatternFolder(TilingPattern pattern) throws Exception {
         Entity patternFolder = new Entity();
         patternFolder.setUser(user);
-        patternFolder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+        patternFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
         patternFolder.setCreationDate(createDate);
         patternFolder.setUpdatedDate(createDate);
         patternFolder.setName(pattern.getName());
-        patternFolder = annotationBean.saveOrUpdateEntity(patternFolder);
+        patternFolder = entityBean.saveOrUpdateEntity(patternFolder);
         logger.info("Saved Tiling Pattern Folder as "+patternFolder.getId());
         return patternFolder;
     }

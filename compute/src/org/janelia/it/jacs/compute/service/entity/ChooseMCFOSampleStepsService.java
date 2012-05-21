@@ -26,14 +26,12 @@ import java.util.List;
 public class ChooseMCFOSampleStepsService implements IService {
 
     protected Logger logger;
-    protected AnnotationBeanLocal annotationBean;
     protected IProcessData processData;
     
     public void execute(IProcessData processData) throws ServiceException {
         try {
         	
             this.logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-            this.annotationBean = EJBFactory.getLocalAnnotationBean();
             this.processData = processData;
             
         	boolean refreshProcessing = getBoolean("REFRESH_PROCESSING");
@@ -45,7 +43,7 @@ public class ChooseMCFOSampleStepsService implements IService {
         		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
         	}
         	
-        	Entity sampleEntity = annotationBean.getEntityTree(new Long(sampleEntityId));
+        	Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityTree(new Long(sampleEntityId));
         	if (sampleEntity == null) {
         		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
         	}
@@ -230,7 +228,7 @@ public class ChooseMCFOSampleStepsService implements IService {
         sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN, tiling.toString());
         
         try {
-            annotationBean.saveOrUpdateEntity(sample);
+        	EJBFactory.getLocalEntityBean().saveOrUpdateEntity(sample);
             logger.info("Fixed sample "+sample.getName()+" by adding its tiling pattern: "+tiling.getName());
         }
         catch (ComputeException e) {

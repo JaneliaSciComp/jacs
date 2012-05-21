@@ -25,6 +25,8 @@ public class EJBFactory {
     private static final String REMOTE_ANNOTATION_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("AnnotationEJB.Name") + "/remote";
     private static final String LOCAL_COMPUTE_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("ComputeEJB.Name") + "/local";
     private static final String REMOTE_COMPUTE_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("ComputeEJB.Name") + "/remote";
+    private static final String LOCAL_ENTITY_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("EntityEJB.Name") + "/local";
+    private static final String REMOTE_ENTITY_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("EntityEJB.Name") + "/remote";
     private static final String LOCAL_SEARCH_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("SearchEJB.Name") + "/local";
     private static final String REMOTE_SEARCH_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("SearchEJB.Name") + "/remote";
     private static final String LOCAL_SOLR_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("SolrEJB.Name") + "/local";
@@ -84,6 +86,10 @@ public class EJBFactory {
         return (ComputeBeanLocal) getLocalInterface(LOCAL_COMPUTE_JNDI_NAME);
     }
 
+    public static EntityBeanLocal getLocalEntityBean() {
+        return (EntityBeanLocal) getLocalInterface(LOCAL_ENTITY_JNDI_NAME);
+    }
+    
     public static SearchBeanLocal getLocalSearchBean() {
         return (SearchBeanLocal) getLocalInterface(LOCAL_SEARCH_JNDI_NAME);
     }
@@ -158,6 +164,10 @@ public class EJBFactory {
         return (ComputeBeanRemote) getRemoteInterface(REMOTE_COMPUTE_JNDI_NAME);
     }
 
+    public static EntityBeanRemote getRemoteEntityBean() {
+        return (EntityBeanRemote) getRemoteInterface(REMOTE_ENTITY_JNDI_NAME);
+    }
+    
     public static SearchBeanRemote getRemoteSearchBean() {
         return (SearchBeanRemote) getRemoteInterface(REMOTE_SEARCH_JNDI_NAME);
     }

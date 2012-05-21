@@ -9,13 +9,13 @@ import javax.ejb.TransactionAttributeType;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
-import org.janelia.it.jacs.compute.api.support.MappedId;
-import org.janelia.it.jacs.compute.api.support.EntityMapStep;
-import org.janelia.it.jacs.model.entity.*;
+import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
 import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 
@@ -27,35 +27,164 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
 	
     private Logger _logger = Logger.getLogger(this.getClass());
     
-    public static final String APP_VERSION = "jacs.version";
-    public static final String SEARCH_EJB_PROP = "AnnotationEJB.Name";
-    public static final String MDB_PROVIDER_URL_PROP = "AsyncMessageInterface.ProviderURL";
-
     private final AnnotationDAO _annotationDAO = new AnnotationDAO(_logger);
+
+
+    public Entity createOntologyRoot(String userLogin, String rootName) throws ComputeException {
+        try {
+            Entity ontologyRoot = _annotationDAO.createOntologyRoot(userLogin, rootName);
+        	_logger.info(userLogin+" creating ontology "+ontologyRoot.getId());
+        	return ontologyRoot;
+        }
+        catch (Exception e) {
+            _logger.error("Error creating new ontology ("+rootName+") for user "+userLogin,e);
+            throw new ComputeException("Error creating new ontology ("+rootName+") for user "+userLogin,e);
+        }
+    }
+
+    public EntityData createOntologyTerm(String userLogin, Long ontologyTermParentId, String termName, OntologyElementType type, Integer orderIndex) throws ComputeException {
+        try {
+        	EntityData ed = _annotationDAO.createOntologyTerm(userLogin, ontologyTermParentId, termName, type, orderIndex);
+            _logger.info(userLogin+" created ontology term "+ed.getChildEntity().getId());
+            return ed;
+        }
+        catch (Exception e) {
+            _logger.error("Error creating new term ("+termName+") for user "+userLogin,e);
+            throw new ComputeException("Error creating new term ("+termName+") for user "+userLogin,e);
+        }
+    }
+
+    public void removeOntologyTerm(String userLogin, Long ontologyTermId) throws ComputeException {
+    	try {
+    		_annotationDAO.deleteOntologyTerm(userLogin, ontologyTermId.toString());
+    		_logger.info(userLogin+" deleted ontology term "+ontologyTermId);
+    	}
+    	catch (DaoException e) {
+    		_logger.error("Could not delete ontology term with id="+ontologyTermId+" for user "+userLogin);
+    		throw new ComputeException("Could not delete ontology term", e);
+    	}
+    }
+   
+    public Entity cloneEntityTree(String userLogin, Long sourceRootId, String targetRootName) throws ComputeException {
+        try {
+        	Entity ontologyRoot = _annotationDAO.getEntityById(""+sourceRootId);
+            if (ontologyRoot==null) {
+                throw new Exception("Ontology not found: "+sourceRootId);
+            }
+        	if (!"system".equals(ontologyRoot.getUser().getUserLogin()) && !userLogin.equals(ontologyRoot.getUser().getUserLogin())) {
+        		throw new ComputeException("User "+userLogin+" cannot clone ontology tree "+sourceRootId);
+        	}
+            Entity clonedTree = _annotationDAO.cloneEntityTree(sourceRootId, userLogin, targetRootName);
+            _logger.info(userLogin+" cloned ontology tree "+sourceRootId+" as "+targetRootName);
+            return clonedTree;
+        }
+        catch (Exception e) {
+            _logger.error("Error cloning ontology ("+sourceRootId+")",e);
+            throw new ComputeException("Error cloning ontology",e);
+        }
+    }
+
+    public Entity publishOntology(String userLogin, Long sourceRootId, String targetRootName) throws ComputeException {
+        try {
+        	Entity ontologyRoot = _annotationDAO.getEntityById(""+sourceRootId);
+            if (ontologyRoot==null) {
+                throw new Exception("Ontology not found: "+sourceRootId);
+            }
+        	if (!"system".equals(ontologyRoot.getUser().getUserLogin()) && !userLogin.equals(ontologyRoot.getUser().getUserLogin())) {
+        		throw new ComputeException("User "+userLogin+" cannot publish ontology tree "+sourceRootId);
+        	}
+            Entity publishedTree = _annotationDAO.publishOntology(sourceRootId, targetRootName);
+            _logger.info(userLogin+" publishing ontology tree "+sourceRootId+" as "+targetRootName);
+            return publishedTree;
+        }
+        catch (Exception e) {
+            _logger.error("Error publishing ontology ("+sourceRootId+")",e);
+            throw new ComputeException("Error publishing ontology",e);
+        }
+    }
+
+	public Entity createOntologyAnnotation(String userLogin, OntologyAnnotation annotation) throws ComputeException {
+
+        try {
+            Entity annotEntity = _annotationDAO.createOntologyAnnotation(userLogin, annotation);
+            _logger.info(userLogin+" added annotation "+annotEntity.getId());
+            IndexingHelper.updateIndex(annotation.getTargetEntityId());
+            return annotEntity;
+        }
+        catch (Exception e) {
+            _logger.error("Error creating ontology annotation for user "+userLogin,e);
+            throw new ComputeException("Error creating ontology annotation for user "+userLogin,e);
+        }
+	}
+
+	public void removeOntologyAnnotation(String userLogin, long annotationId) throws ComputeException {
+        try {
+            Long targetEntityId = _annotationDAO.removeOntologyAnnotation(userLogin, annotationId);
+            _logger.info(userLogin+" removed annotation "+annotationId);
+            IndexingHelper.updateIndex(targetEntityId);
+        } 
+        catch (DaoException e) {
+            _logger.error("Error trying to removeAnnotation");
+            throw new ComputeException("Error trying to removeAnnotation",e);
+        }
+	}
+	
+	public void removeAllOntologyAnnotationsForSession(String userLogin, long sessionId) throws ComputeException {
+        try {
+            List<Entity> annotations = _annotationDAO.removeAllOntologyAnnotationsForSession(userLogin, sessionId);
+            _logger.info(userLogin+" removed all annotations for session "+sessionId);
+            updateIndexForAnnotationTargets(annotations);
+        } 
+        catch (DaoException e) {
+            _logger.error("Error trying to removeAllOntologyAnnotationsForSession");
+            throw new ComputeException("Error trying to removeAllOntologyAnnotationsForSession",e);
+        }
+	}
+	
+    public Entity getOntologyTree(String userLogin, Long id) throws ComputeException {
+
+        try {
+            Entity root = _annotationDAO.getEntityById(id);
+            if (root == null) return null;
+
+            if (!root.getUser().getUserLogin().equals(userLogin)) {
+            	if (root.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PUBLIC) == null) {
+            		throw new DaoException("User '"+userLogin+"' does not have access to this private ontology");
+            	}
+            }
+            
+            return _annotationDAO.populateDescendants(root);
+        }
+        catch (Exception e) {
+            _logger.error("Error getting ontology tree",e);
+            throw new ComputeException("Error getting ontology tree", e);
+        }
+    }
+
+    public List<Entity> getPublicOntologies() throws ComputeException {
+        try {
+            return _annotationDAO.getPublicOntologies();
+        }
+        catch (Exception e) {
+            _logger.error("Error getting public ontologies",e);
+            throw new ComputeException("Error getting public ontologies",e);
+        }
+    }
     
-    private static final Map<Long, Entity> entityTrees = Collections.synchronizedMap(new HashMap<Long, Entity>());
-
-
-    public void removeEntityFromFolder(EntityData folderEntityData) throws ComputeException {
+    public List<Entity> getPrivateOntologies(String userLogin) throws ComputeException {
+    	if (userLogin == null || "".equals(userLogin)) {
+            return new ArrayList<Entity>();
+    	}
+    	
         try {
-            _annotationDAO.genericDelete(folderEntityData);
+            return _annotationDAO.getPrivateOntologies(userLogin);
         }
         catch (Exception e) {
-            _logger.error("Unexpected error while trying to delete folder entity data "+folderEntityData.getId());
-            throw new ComputeException("Unexpected error while trying to delete folder entity data "+folderEntityData.getId(),e);
+            _logger.error("Error getting private ontologies for "+userLogin,e);
+            throw new ComputeException("Error getting private ontologies for "+userLogin,e);
         }
     }
-
-    public void deleteEntityData(EntityData ed) throws ComputeException {
-        try {
-            _annotationDAO.genericDelete(ed);
-        }
-        catch (Exception e) {
-            _logger.error("Unexpected error while trying to delete entity data "+ed.getId());
-            throw new ComputeException("Unexpected error while trying to delete entity data "+ed.getId(),e);
-        }
-    }
-
+    
     public List<Task> getAnnotationSessionTasks(String username) throws ComputeException {
         try {
              return _annotationDAO.getAnnotationSessions(username);
@@ -66,6 +195,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
     }
 
+    
     public List<Entity> getAnnotationsForEntities(String username, List<Long> entityIds) throws ComputeException {
         try {
             return _annotationDAO.getAnnotationsByEntityId(username, entityIds);
@@ -101,16 +231,6 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             throw new ComputeException("Coud not get entities in session",e);
         }
     }
-
-    public List<Entity> getEntitiesById(List<Long> ids) throws ComputeException {
-        try {
-            return _annotationDAO.getEntitiesInList(ids);
-        }
-        catch (Exception e) {
-            _logger.error("Unexpected error occurred while trying to get multiple entities", e);
-            throw new ComputeException("Coud not get entities in session",e);
-        }
-    }
     
     public List<Entity> getCategoriesForAnnotationSession(String username, long sessionId) throws ComputeException {
         try {
@@ -131,278 +251,6 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             throw new ComputeException("Coud not get completed entities",e);
         }
     }
-
-    public List<Entity> getEntitiesWithFilePath(String filePath) {
-        try {
-            return _annotationDAO.getEntitiesWithFilePath(filePath);
-        } catch (Exception e) {
-            _logger.error("Unexpected error finding Entities matching path = " + filePath);
-        }
-        return null;
-    }
-    
-    public Entity getFolderTree(Long id) throws ComputeException {
-
-        try {
-            Entity root = getEntityById(id.toString());
-            if (root == null) return null;
-
-            if (!root.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
-            	throw new DaoException("Entity (id="+id+") is not a folder");
-            }
-            
-            return _annotationDAO.populateDescendants(root);
-        }
-        catch (Exception e) {
-            _logger.error("Error getting folder tree",e);
-            throw new ComputeException("Error getting folder tree",e);
-        }
-    }
-    
-    /**
-     * Ontology Section
-     */
-
-    public Entity createOntologyRoot(String userLogin, String rootName) throws ComputeException {
-        try {
-            return _annotationDAO.createOntologyRoot(userLogin, rootName);
-        }
-        catch (Exception e) {
-            _logger.error("Error creating new ontology ("+rootName+") for user "+userLogin,e);
-            throw new ComputeException("Error creating new ontology ("+rootName+") for user "+userLogin,e);
-        }
-    }
-
-    public EntityData createOntologyTerm(String userLogin, Long ontologyTermParentId, String termName, OntologyElementType type, Integer orderIndex) throws ComputeException {
-        try {
-            return _annotationDAO.createOntologyTerm(userLogin, ontologyTermParentId, termName, type, orderIndex);
-        }
-        catch (Exception e) {
-            _logger.error("Error creating new term ("+termName+") for user "+userLogin,e);
-            throw new ComputeException("Error creating new term ("+termName+") for user "+userLogin,e);
-        }
-    }
-
-    public void removeOntologyTerm(String userLogin, Long ontologyTermId) throws ComputeException {
-    	try {
-    		_annotationDAO.deleteOntologyTerm(userLogin, ontologyTermId.toString());
-    	}
-    	catch (DaoException e) {
-    		_logger.error("Could not delete ontology term with id="+ontologyTermId+" for user "+userLogin);
-    		throw new ComputeException("Could not delete ontology term", e);
-    	}
-    }
-   
-    public Entity cloneEntityTree(Long sourceRootId, String targetUserLogin, String targetRootName) throws ComputeException {
-        try {
-            return _annotationDAO.cloneEntityTree(sourceRootId, targetUserLogin, targetRootName);
-        }
-        catch (Exception e) {
-            _logger.error("Error cloning ontology ("+sourceRootId+")",e);
-            throw new ComputeException("Error cloning ontology",e);
-        }
-    }
-
-    public Entity publishOntology(Long sourceRootId, String targetRootName) throws ComputeException {
-        try {
-            return _annotationDAO.publishOntology(sourceRootId, targetRootName);
-        }
-        catch (Exception e) {
-            _logger.error("Error publishing ontology ("+sourceRootId+")",e);
-            throw new ComputeException("Error publishing ontology",e);
-        }
-    }
-
-    public Entity getOntologyTree(String userLogin, Long id) throws ComputeException {
-
-        try {
-            Entity root = getEntityById(id.toString());
-            if (root == null) return null;
-
-            if (!root.getUser().getUserLogin().equals(userLogin)) {
-            	if (root.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PUBLIC) == null) {
-            		throw new DaoException("User '"+userLogin+"' does not have access to this private ontology");
-            	}
-            }
-            
-            return _annotationDAO.populateDescendants(root);
-        }
-        catch (Exception e) {
-            _logger.error("Error getting ontology tree",e);
-            throw new ComputeException("Error getting ontology tree", e);
-        }
-    }
-    
-    public List<Entity> getPublicOntologies() throws ComputeException {
-        try {
-            return _annotationDAO.getPublicOntologies();
-        }
-        catch (Exception e) {
-            _logger.error("Error getting public ontologies",e);
-            throw new ComputeException("Error getting public ontologies",e);
-        }
-    }
-    
-    public List<Entity> getPrivateOntologies(String userLogin) throws ComputeException {
-    	if (userLogin == null || "".equals(userLogin)) {
-            return new ArrayList<Entity>();
-    	}
-    	
-        try {
-            return _annotationDAO.getPrivateOntologies(userLogin);
-        }
-        catch (Exception e) {
-            _logger.error("Error getting private ontologies for "+userLogin,e);
-            throw new ComputeException("Error getting private ontologies for "+userLogin,e);
-        }
-    }
-
-	public Entity createOntologyAnnotation(String userLogin, OntologyAnnotation annotation) throws ComputeException {
-
-        try {
-            return _annotationDAO.createOntologyAnnotation(userLogin, annotation);
-        }
-        catch (Exception e) {
-            _logger.error("Error creating ontology annotation for user "+userLogin,e);
-            throw new ComputeException("Error creating ontology annotation for user "+userLogin,e);
-        }
-	}
-
-	public void removeOntologyAnnotation(String userLogin, long annotationId) throws ComputeException {
-        try {
-            _annotationDAO.removeOntologyAnnotation(userLogin, annotationId);
-        } 
-        catch (DaoException e) {
-            _logger.error("Error trying to removeAnnotation");
-            throw new ComputeException("Error trying to removeAnnotation",e);
-        }
-	}
-	
-	public void removeAllOntologyAnnotationsForSession(String userLogin, long sessionId) throws ComputeException {
-        try {
-            _annotationDAO.removeAllOntologyAnnotationsForSession(userLogin, sessionId);
-        } 
-        catch (DaoException e) {
-            _logger.error("Error trying to removeAllOntologyAnnotationsForSession");
-            throw new ComputeException("Error trying to removeAllOntologyAnnotationsForSession",e);
-        }
-	}
-	
-    public Entity saveOrUpdateEntity(Entity entity) throws ComputeException {
-        try {
-        	entity.setUpdatedDate(new Date());
-            _annotationDAO.saveOrUpdate(entity);
-            return entity;
-        } catch (DaoException e) {
-            _logger.error("Error trying to save or update Entity");
-            throw new ComputeException("Error trying to save or update Entity",e);
-        }
-    }
-
-    public EntityData saveOrUpdateEntityData(EntityData newData) throws ComputeException {
-        try {
-        	newData.setUpdatedDate(new Date());
-            _annotationDAO.saveOrUpdate(newData);
-            return newData;
-        } catch (DaoException e) {
-            _logger.error("Error trying to save or update EntityData");
-            throw new ComputeException("Error trying to save or update EntityData",e);
-        }
-    }
-
-    public Entity createEntity(String userLogin, String entityTypeName, String entityName) throws ComputeException {
-        try {
-            return _annotationDAO.createEntity(userLogin, entityTypeName, entityName);
-        } catch (DaoException e) {
-            _logger.error("Error trying to create entity");
-            throw new ComputeException("Error trying to create entity",e);
-        }
-    }
-
-    public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName) throws ComputeException {
-        try {
-            return _annotationDAO.addEntityToParent(parent, entity, index, attrName);
-        } catch (DaoException e) {
-            _logger.error("Error trying to add entity to parent");
-            throw new ComputeException("Error trying to add entity to parent",e);
-        }
-    }
-    
-    public Entity getEntityById(Long id) {
-        try {
-            return _annotationDAO.getEntityById(""+id);
-        }
-        catch (Exception e) {
-            _logger.error("Error trying to get the entity with id "+id,e);
-        }
-        return null;
-    }
-    
-    public Entity getEntityById(String id) {
-        try {
-            return _annotationDAO.getEntityById(id);
-        }
-        catch (Exception e) {
-            _logger.error("Error trying to get the entity with id "+id,e);
-        }
-        return null;
-    }
-    
-    public Entity getEntityTree(Long id) {
-    	return _annotationDAO.populateDescendants(getEntityById(id.toString()));
-    }
-
-    public Entity getEntityTreeQuery(Long id) {
-        return _annotationDAO.getEntityTreeQuery(id);
-    }
-    
-    public Entity getCachedEntityTree(Long id) {
-    	Entity entity = entityTrees.get(id);
-
-    	if (entity == null) {
-    		entity = getEntityTree(id);
-    		entityTrees.put(id, entity);
-    		_logger.info("Caching entity with id="+id);
-    	}
-
-    	_logger.info("Returning cached entity tree for id="+id);
-    	
-    	return entity;
-    }
-    
-    public Entity getUserEntityById(String userLogin, long entityId) {
-        try {
-            return _annotationDAO.getUserEntityById(userLogin, entityId);
-        }
-        catch (DaoException e) {
-            _logger.error("Error trying to get the entities of id "+entityId+" for user "+userLogin, e);
-        }
-        return null;
-    }
-
-    public List<EntityType> getEntityTypes() {
-        try {
-            List<EntityType> returnList = _annotationDAO.getAllEntityTypes();
-            _logger.debug("Entity types returned:"+returnList.size());
-            return returnList;
-        }
-        catch (DaoException e) {
-            _logger.error("Error trying to get the entity types", e);
-        }
-        return null;
-    }
-
-    public List<EntityAttribute> getEntityAttributes() {
-        try {
-            List<EntityAttribute> returnList = _annotationDAO.getAllEntityAttributes();
-            _logger.debug("Entity attributes returned:"+returnList.size());
-            return returnList;
-        }
-        catch (DaoException e) {
-            _logger.error("Error trying to get the entity attributes", e);
-        }
-        return null;
-    }
     
     public List<Entity> getCommonRootEntitiesByTypeName(String entityTypeName) {
     	return getCommonRootEntitiesByTypeName(null, entityTypeName);
@@ -418,195 +266,15 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         return null;
     }
 
-    public List<Entity> getEntitiesByTypeName(String entityTypeName) {
+    public List<Entity> getEntitiesWithFilePath(String filePath) {
         try {
-            List<Entity> returnList = _annotationDAO.getUserEntitiesByTypeName(null, entityTypeName);
-            _logger.debug("Entities returned:"+returnList.size());
-            return returnList;
-        }
-        catch (DaoException e) {
-            _logger.error("Error trying to get the entities of type "+entityTypeName, e);
+            return _annotationDAO.getEntitiesWithFilePath(filePath);
+        } catch (Exception e) {
+            _logger.error("Unexpected error finding Entities matching path = " + filePath);
         }
         return null;
     }
 
-    public void setupEntityTypes() {
-        try {
-            _annotationDAO.setupEntityTypes();
-        } catch (DaoException e) {
-            _logger.error("Error calling annotationDAO.setupEntityTypes()",e);
-        }
-    }
-
-    public Set<Entity> getEntitiesByName(String name) {
-        try {
-            return _annotationDAO.getEntitiesByName(name);
-        } catch (DaoException e) {
-            _logger.error("Error trying to get EntityType by name = " + name, e);
-        }
-        return null;
-    }
-
-    public boolean deleteEntityById(Long entityId) {
-         try {
-            return _annotationDAO.deleteEntityById(entityId);
-        } catch (DaoException e) {
-            _logger.error("Error trying to get delete Entity id="+entityId, e);
-        }
-        return false;
-    }
-    
-    public boolean deleteEntityTree(String userLogin, long entityId) throws ComputeException {
-    	try {
-            Entity entity = _annotationDAO.getEntityById(""+entityId);
-            if (entity==null) {
-            	throw new Exception("Entity not found: "+entityId);
-            }
-    		_annotationDAO.deleteEntityTree(userLogin, entity);
-    		return true;
-    	}
-        catch (Exception e) {
-            _logger.error("Error deleting entity tree for user "+userLogin,e);
-            throw new ComputeException("Error deleting entity tree for user "+userLogin,e);
-        }
-    }
-
-    public boolean deleteSmallEntityTree(String userLogin, long entityId) throws ComputeException {
-        try {
-            Entity entity = _annotationDAO.getEntityById(""+entityId);
-            if (entity==null) {
-                throw new Exception("Entity not found: "+entityId);
-            }
-            _annotationDAO.deleteSmallEntityTree(userLogin, entity, true, false, 0);
-            return true;
-        }
-        catch (Exception e) {
-            _logger.error("Error deleting entity tree for user "+userLogin,e);
-            throw new ComputeException("Error deleting entity tree for user "+userLogin,e);
-        }
-    }
-    
-    public Set<Entity> getParentEntities(long entityId) {
-        try {
-            return _annotationDAO.getParentEntities(entityId);
-        } 
-        catch (DaoException e) {
-            _logger.error("Error trying to get parent entities for id="+entityId, e);
-        }
-        return null;
-    }
-
-    public Set<Entity> getChildEntities(long entityId) {
-        try {
-            return _annotationDAO.getChildEntities(entityId);
-        } 
-        catch (DaoException e) {
-            _logger.error("Error trying to get child entities for id="+entityId, e);
-        }
-        return null;
-    }
-    
-    public Set<EntityData> getParentEntityDatas(long entityId) {
-
-        try {
-            return _annotationDAO.getParentEntityDatas(entityId);
-        } 
-        catch (DaoException e) {
-            _logger.error("Error trying to get parent entity data for id="+entityId, e);
-        }
-        return null;
-    }
-    
-    public EntityType createNewEntityType(String entityTypeName) throws ComputeException {
-    	try {
-    		EntityType entityType = _annotationDAO.createNewEntityType(entityTypeName);	
-    		return entityType;
-    	}
-    	catch (DaoException e) {
-            _logger.error("Could not create entity type "+entityTypeName,e);
-    		throw new ComputeException("Could not create entity type "+entityTypeName,e);
-    	}
-    }
-
-    public EntityAttribute createNewEntityAttr(String entityTypeName, String attrName) throws ComputeException {
-    	try {
-    		return _annotationDAO.createNewEntityAttr(entityTypeName, attrName);	
-    	}
-    	catch (DaoException e) {
-            _logger.error("Could not create entity attr "+attrName,e);
-    		throw new ComputeException("Could not create entity attr "+attrName,e);
-    	}
-    }
-    
-    public Entity getAncestorWithType(Entity entity, String type) throws ComputeException {
-
-    	try {
-    		return _annotationDAO.getAncestorWithType(entity, type);
-    	}
-    	catch (DaoException e) {
-            _logger.error("Error finding ancestor of type "+type+" for "+entity.getId(),e);
-    		throw new ComputeException("Error finding ancestor of type "+type+" for "+entity.getId(),e);
-    	}
-    }
-    
-    public List<List<Long>> searchTreeForNameStartingWith(Long rootId, String searchString) throws ComputeException {
-
-    	try {
-    		return _annotationDAO.searchTree(rootId, searchString+"%");
-    	}
-    	catch (DaoException e) {
-            _logger.error("Error searching tree rooted at "+rootId+" for "+searchString,e);
-    		throw new ComputeException("Error searching tree rooted at "+rootId+" for "+searchString,e);
-    	}
-    }
-
-    public List<Long> getPathToRoot(Long entityId, Long rootId) throws ComputeException {
-
-    	try {
-    		return _annotationDAO.getPathToRoot(entityId, rootId);
-    	}
-    	catch (DaoException e) {
-            _logger.error("Error searching tree rooted at "+rootId+" for "+entityId,e);
-    		throw new ComputeException("Error searching tree rooted at "+rootId+" for "+entityId,e);
-    	}
-    }
-    
-    public List<Entity> getEntitiesWithAttributeValue(String attrName, String attrValue) throws ComputeException {
-    	try {
-    		return _annotationDAO.getEntitiesWithAttributeValue(attrName, attrValue);
-    	}
-    	catch (DaoException e) {
-            _logger.error("Error searching for entities with "+attrName+" like "+attrValue,e);
-    		throw new ComputeException("Error searching for entities with "+attrName+" like "+attrValue,e);
-    	}
-    }
-
-    public EntityType getEntityTypeByName(String entityTypeName) {
-		return _annotationDAO.getEntityTypeByName(entityTypeName);
-    }
-    
-    public EntityAttribute getEntityAttributeByName(String attrName) {
-    	return _annotationDAO.getEntityAttributeByName(attrName);
-    }
-    
-    public void addChildren(String userLogin, Long parentId, List<Long> childrenIds, String attributeName) throws ComputeException {
-        try {
-        	_annotationDAO.addChildren(userLogin, parentId, childrenIds, attributeName);
-        } catch (DaoException e) {
-            _logger.error("Error in addChildren(): "+e.getMessage());
-            throw new ComputeException("Error in addChildren(): "+e.getMessage(), e);
-        }
-    }
-    
-    public List<MappedId> getProjectedResults(List<Long> entityIds, List<EntityMapStep> upMapping, List<EntityMapStep> downMapping) throws ComputeException {
-    	try {
-        	return _annotationDAO.getProjectedResults(entityIds, upMapping, downMapping);
-        } catch (DaoException e) {
-            _logger.error("Error in getProjectedResults(): "+e.getMessage());
-            throw new ComputeException("Error in getProjectedResults(): "+e.getMessage(), e);
-        }
-    }
-    
     public Map<Entity, Map<String, Double>> getPatternAnnotationQuantifiers() throws ComputeException {
         try {
             return _annotationDAO.getPatternAnnotationQuantifiers();
@@ -624,30 +292,23 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             throw new ComputeException("Error in getPatternAnnotationQuantifierMapsFromSummary(): "+e.getMessage(), e);
         }
     }
-
-    public void loadLazyEntity(Entity entity, boolean recurse) throws DaoException {
-		
-        if (!EntityUtils.areLoaded(entity.getEntityData())) {
-            Set<Entity> childEntitySet = _annotationDAO.getChildEntities(entity.getId());
-            Map<Long, Entity> childEntityMap = new HashMap<Long, Entity>();
-            for (Entity childEntity : childEntitySet) {
-                childEntityMap.put(childEntity.getId(), childEntity);
+    
+    
+    private void updateIndexForAnnotationTargets(List<Entity> annotations) {
+    	if (annotations==null) return;
+    	for(Entity annotation : annotations) {
+    		
+    		Long entityId = null;
+    		try {
+    			entityId = new Long(annotation.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID));
             }
-
-            // Replace the entity data with real objects
-            for (EntityData ed : entity.getEntityData()) {
-                if (ed.getChildEntity() != null) {
-                    ed.setChildEntity(childEntityMap.get(ed.getChildEntity().getId()));
-                }
+            catch (Exception e) {
+            	_logger.error("Error getting entity id for annotation id="+annotation.getId(),e);
             }
-        }
-
-        if (recurse) {
-            for (EntityData ed : entity.getEntityData()) {
-                if (ed.getChildEntity() != null) {
-                    loadLazyEntity(ed.getChildEntity(), true);
-                }
+            
+            if (entityId!=null) {
+            	IndexingHelper.updateIndex(entityId);
             }
-        }
+    	}
     }
 }

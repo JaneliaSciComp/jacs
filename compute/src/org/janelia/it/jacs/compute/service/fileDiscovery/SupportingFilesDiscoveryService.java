@@ -104,9 +104,9 @@ public class SupportingFilesDiscoveryService extends FileDiscoveryService {
 
     protected void addFilesToSupportingFiles(Entity filesFolder, List<File> files) throws Exception {
 
-        EntityType textFile = annotationBean.getEntityTypeByName(EntityConstants.TYPE_TEXT_FILE);
-		EntityType image3D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
-		EntityType image2D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
+        EntityType textFile = entityBean.getEntityTypeByName(EntityConstants.TYPE_TEXT_FILE);
+		EntityType image3D = entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+		EntityType image2D = entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
 
         for (File resultFile : files) {
         	
@@ -138,11 +138,11 @@ public class SupportingFilesDiscoveryService extends FileDiscoveryService {
     protected Entity createSupportingFilesFolder() throws Exception {
         Entity filesFolder = new Entity();
         filesFolder.setUser(user);
-        filesFolder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
+        filesFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
         filesFolder.setCreationDate(createDate);
         filesFolder.setUpdatedDate(createDate);
         filesFolder.setName("Supporting Files");
-        filesFolder = annotationBean.saveOrUpdateEntity(filesFolder);
+        filesFolder = entityBean.saveOrUpdateEntity(filesFolder);
         logger.info("Saved supporting files folder as "+filesFolder.getId());
         return filesFolder;
     }
@@ -150,13 +150,13 @@ public class SupportingFilesDiscoveryService extends FileDiscoveryService {
     protected Entity createResultEntity(String path, String name, String resultEntityType) throws Exception {
         Entity resultEntity = new Entity();
         resultEntity.setUser(user);
-        resultEntity.setEntityType(annotationBean.getEntityTypeByName(resultEntityType));
+        resultEntity.setEntityType(entityBean.getEntityTypeByName(resultEntityType));
         resultEntity.setCreationDate(createDate);
         resultEntity.setUpdatedDate(createDate);
         resultEntity.setName(name);
         resultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, path);
         
-        resultEntity = annotationBean.saveOrUpdateEntity(resultEntity);
+        resultEntity = entityBean.saveOrUpdateEntity(resultEntity);
         logger.info("Saved result entity as "+resultEntity.getId());
 
         return resultEntity;
@@ -178,7 +178,7 @@ public class SupportingFilesDiscoveryService extends FileDiscoveryService {
         	entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, fileFormat);
         }
         
-        entity = annotationBean.saveOrUpdateEntity(entity);
+        entity = entityBean.saveOrUpdateEntity(entity);
         logger.info("Saved "+type.getName()+" as "+entity.getId());
         addToParent(resultEntity, entity, resultEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
         return entity;

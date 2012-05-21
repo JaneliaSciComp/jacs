@@ -1229,7 +1229,12 @@ public class AnnotationDAO extends ComputeBaseDAO {
         return completedEntityIds;
     }
     
-	private void updateAnnotationSession(long sessionId) throws ComputeException {
+    /**
+     * Updates the given session and returns all the annotations within it. 
+     * @param sessionId
+     * @throws ComputeException
+     */
+	private List<Entity> updateAnnotationSession(long sessionId) throws ComputeException {
 
 		Task task = getTaskById(sessionId);
         if (task == null) 
@@ -1307,6 +1312,8 @@ public class AnnotationDAO extends ComputeBaseDAO {
 		
         task.setParameter(AnnotationSessionTask.PARAM_completedTargets, buf.toString());
         saveOrUpdate(task);
+        
+        return annotations;
 	}
 	
     public List<Entity> getPublicOntologies() throws ComputeException {
@@ -1573,19 +1580,29 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
 	}
 
-	public void removeOntologyAnnotation(String userLogin, long annotationId) throws ComputeException {
+	public Long removeOntologyAnnotation(String userLogin, long annotationId) throws ComputeException {
         Entity entity = getUserEntityById(userLogin, annotationId);
         getCurrentSession().delete(entity);	
         
         // Notify the session 
         String sessionId = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_SESSION_ID);
         if (sessionId != null) updateAnnotationSession(Long.parseLong(sessionId));
+        
+        return new Long(entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID));
 	}
 
-    public void removeAllOntologyAnnotationsForSession(String userLogin, long sessionId) throws DaoException {
+	/**
+	 * Removes all annotations in the given session and then returns them.
+	 * @param userLogin
+	 * @param sessionId
+	 * @return
+	 * @throws DaoException
+	 */
+    public List<Entity> removeAllOntologyAnnotationsForSession(String userLogin, long sessionId) throws DaoException {
 
         try {
-            for(Object o : getAnnotationsForSession(userLogin, sessionId)) {
+        	List<Entity> annotations = getAnnotationsForSession(userLogin, sessionId);
+            for(Object o : annotations) {
                 Entity entity = (Entity)o;
                 if (!entity.getUser().getUserLogin().equals(userLogin)) {
                 	_logger.info("Cannot remove annotation "+entity.getId()+" not owned by "+userLogin);
@@ -1597,6 +1614,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
             }
             // Notify the session 
             updateAnnotationSession(sessionId);
+            return annotations;
         }
         catch (Exception e) {
             throw new DaoException(e);
@@ -1688,18 +1706,6 @@ public class AnnotationDAO extends ComputeBaseDAO {
     		}
     	}
     	return count;
-    }
-    
-    /**
-     * Perform combination of queries to populate entity graph.
-     * @param id
-     * @return
-     */
-    public Entity getEntityTreeQuery(Long id) {
-        Session session=this.getCurrentSession();
-        Criteria c = session.createCriteria(Entity.class);
-        List allEntities=c.list();
-        return null;
     }
     
     /**

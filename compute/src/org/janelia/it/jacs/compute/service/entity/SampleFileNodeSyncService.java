@@ -1,9 +1,12 @@
 package org.janelia.it.jacs.compute.service.entity;
 
+import java.io.File;
+import java.util.List;
+
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -17,9 +20,6 @@ import org.janelia.it.jacs.model.user_data.entity.AlignmentResultNode;
 import org.janelia.it.jacs.model.user_data.entity.SampleResultNode;
 import org.janelia.it.jacs.model.user_data.entity.SeparationResultNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
-
-import java.io.File;
-import java.util.List;
 
 /**
  * Synchronizes the Samples in the database to the FileNodes on the fileshare.
@@ -35,7 +35,7 @@ public class SampleFileNodeSyncService implements IService {
     protected Logger logger;
     protected Task task;
     protected String username;
-    protected AnnotationBeanLocal annotationBean;
+    protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
     
     private boolean isDebug = false;
@@ -48,7 +48,7 @@ public class SampleFileNodeSyncService implements IService {
     	try {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             task = ProcessDataHelper.getTask(processData);
-            annotationBean = EJBFactory.getLocalAnnotationBean();
+            entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
             username = task.getOwner();
             isDebug = Boolean.parseBoolean(task.getParameter(PARAM_testRun));
@@ -114,7 +114,7 @@ public class SampleFileNodeSyncService implements IService {
         else if (node instanceof SampleResultNode || node instanceof AlignmentResultNode || node instanceof SeparationResultNode) {
         	numResultNodes++;
         	
-        	List<Entity> entities = annotationBean.getEntitiesWithAttributeValue(EntityConstants.ATTRIBUTE_FILE_PATH, dir.getAbsolutePath()+"%");
+        	List<Entity> entities = entityBean.getEntitiesWithAttributeValue(EntityConstants.ATTRIBUTE_FILE_PATH, dir.getAbsolutePath()+"%");
         	if (entities.isEmpty()) {
                 if (!isDebug) computeBean.trashNode(username, node.getObjectId(), true);
                 logger.debug("Trashed unreferenced node: " + node.getObjectId());	

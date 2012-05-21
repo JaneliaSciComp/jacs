@@ -1,14 +1,13 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -28,7 +27,7 @@ import org.janelia.it.jacs.model.user_data.User;
 public class ScreenSampleCrossResultsDiscoveryService implements IService {
 
     protected Logger logger;
-    protected AnnotationBeanLocal annotationBean;
+    protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
     protected User user;
     protected Date createDate;
@@ -40,7 +39,7 @@ public class ScreenSampleCrossResultsDiscoveryService implements IService {
 		try {
 	    	this.processData=processData;
 	        logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-	        annotationBean = EJBFactory.getLocalAnnotationBean();
+	        entityBean = EJBFactory.getLocalEntityBean();
 	        computeBean = EJBFactory.getLocalComputeBean();
 	        user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
 	        createDate = new Date();
@@ -61,15 +60,15 @@ public class ScreenSampleCrossResultsDiscoveryService implements IService {
 	        	throw new ServiceException("OUTPUT_ENTITY_ID_LIST must contain the same number of ids as the input lists");
 	        }
 
-	        EntityType image2D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
-			EntityType image3D = annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+	        EntityType image2D = entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
+			EntityType image3D = entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
 	        EntityHelper entityHelper = new EntityHelper(false);
 
 	        int i = 0;
 	        for(CombinedFile combinedFile : filePairs) {
 	        	Long parentId = new Long(outputParentIds[i++]);
 		        try {
-		            	Entity resultEntity = annotationBean.getEntityTree(parentId);
+		            	Entity resultEntity = entityBean.getEntityTree(parentId);
 		            	if (resultEntity == null) {
 		            		throw new IllegalArgumentException("Result entity not found with id="+parentId);
 		            	}
@@ -85,7 +84,7 @@ public class ScreenSampleCrossResultsDiscoveryService implements IService {
 		                }
 		
 		                Entity stack = createFileEntity(image3D, outputStack, "Intersection Stack");
-		                annotationBean.addEntityToParent(resultEntity, stack, resultEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+		                entityBean.addEntityToParent(resultEntity, stack, resultEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
 		                
 		                // Add default images
 		                Entity mip = createFileEntity(image2D, outputMip, "Intersection MIP");
@@ -118,7 +117,7 @@ public class ScreenSampleCrossResultsDiscoveryService implements IService {
         	entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, fileFormat);
         }
         
-        entity = annotationBean.saveOrUpdateEntity(entity);
+        entity = entityBean.saveOrUpdateEntity(entity);
         logger.info("Saved "+type.getName()+" as "+entity.getId());
         return entity;
     }

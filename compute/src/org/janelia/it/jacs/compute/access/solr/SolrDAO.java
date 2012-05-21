@@ -17,6 +17,9 @@ import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
 import org.apache.solr.client.solrj.impl.StreamingUpdateSolrServer;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.client.solrj.util.ClientUtils;
+import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.CoreAdminParams;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
@@ -216,7 +219,53 @@ public class SolrDAO extends AnnotationDAO {
         }
         
     }
+
+    public void updateIndex(Entity entity) throws DaoException {
+
+    	if (entity==null) return;
+    	_logger.info("Updating index for "+entity.getId());
+    	
+		Set<SimpleAnnotation> annotations = new HashSet<SimpleAnnotation>();
+		for(Entity annotationEntity : getAnnotationsByEntityId(null, entity.getId())) {
+			String key = annotationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_TERM);
+			String value = annotationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM);
+			String owner = annotationEntity.getUser().getUserLogin();
+			annotations.add(new SimpleAnnotation(key, value, owner));
+		}
+		
+    	SolrQuery query = new SolrQuery("id:"+entity.getId());
+    	QueryResponse qr = search(query);
+    	SolrDocumentList docs = qr.getResults();
+    	SolrInputDocument inputDoc = null;
+    	
+    	if (docs.getNumFound()==1) {
+    		SolrDocument existingDoc = docs.get(0);
+    		inputDoc = createDoc(existingDoc, simpleEntityFromEntity(entity), annotations, null, null);
+    	}
+    	else if (docs.getNumFound()==0) {
+    		inputDoc = createDoc(null, simpleEntityFromEntity(entity), annotations, null, null);
+    	}
+    	else {
+    		throw new DaoException("Found more than one document for entity with id="+entity.getId());
+    	}
+    	
+    	List<SolrInputDocument> inputDocs = new ArrayList<SolrInputDocument>();
+    	inputDocs.add(inputDoc);
+    	index(inputDocs);
+    	commit();
+    }
     
+    private void index(List<SolrInputDocument> docs) throws DaoException {
+    	init();
+    	if (docs==null) return;
+    	try {
+	    	solr.add(docs);
+		}
+		catch (Exception e) {
+			throw new DaoException("Error indexing with SOLR",e);
+		}
+    }
+
     private void swapBuildCore() throws Exception {
     	CoreAdminRequest car = new CoreAdminRequest();
     	car.setCoreName(SOLR_BUILD_CORE);
@@ -224,7 +273,7 @@ public class SolrDAO extends AnnotationDAO {
     	car.setAction(CoreAdminParams.CoreAdminAction.SWAP);
     	car.process(new CommonsHttpSolrServer(SOLR_SERVER_URL));
     }
-
+    
     private List<SolrInputDocument> createSageDocs(Collection<SageTerm> terms) {
     	
     	String dt = SolrUtils.DocType.SAGE_TERM.toString();
@@ -267,29 +316,94 @@ public class SolrDAO extends AnnotationDAO {
         return docs;
     }
     
-    private void index(Entity entity, Set<SimpleAnnotation> annotations, Set<Long> ancestorIds, Map<String,String> sageProps) throws DaoException {
-    	List<SolrInputDocument> docs = new ArrayList<SolrInputDocument>();
-    	docs.add(createDoc(entity, annotations, ancestorIds, sageProps));
-    	index(docs);
+    private SolrInputDocument createDoc(SimpleEntity entity, Set<SimpleAnnotation> annotations, Set<Long> ancestorIds, Map<String,String> sageProps) {
+    	return createDoc(null, entity, annotations, ancestorIds, sageProps);
     }
     
-    private void index(List<SolrInputDocument> docs) throws DaoException {
-    	init();
-    	if (docs==null) return;
-    	try {
-	    	solr.add(docs);
+    private SolrInputDocument createDoc(SolrDocument existingDoc, SimpleEntity entity, Set<SimpleAnnotation> annotations, Set<Long> ancestorIds, Map<String,String> sageProps) {
+
+    	SolrInputDocument doc = existingDoc==null ? new SolrInputDocument() : ClientUtils.toSolrInputDocument(existingDoc);
+    	
+    	doc.setField("id", entity.getId(), 1.0f);
+    	doc.setField("doc_type", SolrUtils.DocType.ENTITY.toString(), 1.0f);
+    	doc.setField("name", entity.getName(), 1.0f);
+    	doc.setField("creation_date", entity.getCreationDate(), 0.8f);
+    	doc.setField("updated_date", entity.getUpdatedDate(), 0.9f);
+    	doc.setField("username", entity.getUserLogin(), 1.0f);
+    	doc.setField("entity_type", entity.getEntityTypeName(), 1.0f);
+    	
+    	if (sageVocab!=null && sageProps!=null) {
+    		if (existingDoc!=null) {
+        		for(String key : sageProps.keySet()) {
+    				SageTerm sageTerm = sageVocab.get(key);
+    				doc.removeField(SolrUtils.getSageFieldName(key, sageTerm));
+        		}
+    		}
+    		for(String key : sageProps.keySet()) {
+    			String value = sageProps.get(key);
+    			if (value != null) {
+    				SageTerm sageTerm = sageVocab.get(key);
+    				// Keep track of the terms we use, so that they can be indexed as well
+    				if (!usedSageVocab.contains(sageTerm)) usedSageVocab.add(sageTerm);
+    				doc.addField(SolrUtils.getSageFieldName(key, sageTerm), value, 0.9f);
+    			}
+    		}
+    	}
+
+		if (existingDoc!=null) {
+			// This is slightly flawed in that attributes are not removed from the index if they are removed from 
+			// the entity. However, in that case we can tolerate a 1-day reindexing delay.
+			for(KeyValuePair kv : entity.getAttributes()) {
+    			doc.removeField(SolrUtils.getDynamicFieldName(kv.getKey()));
+	    	}
 		}
-		catch (Exception e) {
-			throw new DaoException("Error indexing with SOLR",e);
-		}
+    	for(KeyValuePair kv : entity.getAttributes()) {
+    		if (kv.getValue()!=null) {
+    			doc.addField(SolrUtils.getDynamicFieldName(kv.getKey()), kv.getValue(), 1.0f);	
+    		}
+    	}
+    	
+    	if (!entity.getChildIds().isEmpty()) {
+    		if (existingDoc!=null) {
+    			doc.removeField("child_ids");
+    		}
+    		doc.addField("child_ids", entity.getChildIds(), 0.2f);
+    	}
+    	
+    	if (annotations != null) {
+    		if (existingDoc!=null) {
+        		for(String fieldName : new ArrayList<String>(doc.getFieldNames())) {
+        			if (fieldName.endsWith("_annotations") || fieldName.endsWith("_annot")) {
+        				doc.removeField(fieldName);
+        			}
+        		}
+    		}
+    		for(SimpleAnnotation annotation : annotations) {
+    			doc.addField(annotation.getOwner()+"_annotations", annotation.getTag(), 1.0f);
+    			if (annotation.getValue()!=null) {
+    				doc.addField(annotation.getOwner()+"_"+SolrUtils.getFormattedName(annotation.getKey())+"_annot", annotation.getValue(), 1.0f);
+    			}
+    		}
+    	}
+    	
+    	if (ancestorIds != null) {
+    		if (existingDoc!=null) {
+    			doc.removeField("ancestor_ids");
+    		}
+    		doc.addField("ancestor_ids", ancestorIds, 0.2f);
+    	}
+    	
+    	return doc;
     }
-    
+
     private SimpleEntity simpleEntityFromEntity(Entity entity) {
     	SimpleEntity simpleEntity = new SimpleEntity();
     	simpleEntity.setId(entity.getId());
     	simpleEntity.setName(entity.getName());
     	simpleEntity.setCreationDate(entity.getCreationDate());
     	simpleEntity.setUpdatedDate(entity.getUpdatedDate());
+    	simpleEntity.setEntityTypeName(entity.getEntityType().getName());
+    	simpleEntity.setUserLogin(entity.getUser().getUserLogin());
     	
     	Set<Long> childrenIds = new HashSet<Long>();
     	for(EntityData ed : entity.getEntityData()) {
@@ -306,60 +420,6 @@ public class SolrDAO extends AnnotationDAO {
     	return simpleEntity;
     }
     
-    private SolrInputDocument createDoc(Entity entity, Set<SimpleAnnotation> annotations, Set<Long> ancestorIds, Map<String,String> sageProps) {
-    	SimpleEntity simpleEntity = simpleEntityFromEntity(entity);
-    	return createDoc(simpleEntity, annotations, ancestorIds, sageProps);
-    }
-
-    private SolrInputDocument createDoc(SimpleEntity entity, Set<SimpleAnnotation> annotations, Set<Long> ancestorIds, Map<String,String> sageProps) {
-
-    	SolrInputDocument doc = new SolrInputDocument();
-    	doc.addField("id", entity.getId(), 1.0f);
-    	doc.addField("doc_type", SolrUtils.DocType.ENTITY.toString(), 1.0f);
-    	doc.addField("name", entity.getName(), 1.0f);
-    	doc.addField("creation_date", entity.getCreationDate(), 0.8f);
-    	doc.addField("updated_date", entity.getUpdatedDate(), 0.9f);
-    	doc.addField("username", entity.getUserLogin(), 1.0f);
-    	doc.addField("entity_type", entity.getEntityTypeName(), 1.0f);
-    	
-    	if (sageVocab!=null && sageProps!=null) {
-    		for(String key : sageProps.keySet()) {
-    			String value = sageProps.get(key);
-    			if (value != null) {
-    				SageTerm sageTerm = sageVocab.get(key);
-    				// Keep track of the terms we use, so that they can be indexed as well
-    				if (!usedSageVocab.contains(sageTerm)) usedSageVocab.add(sageTerm);
-    				doc.addField(SolrUtils.getSageFieldName(key, sageTerm), value, 0.9f);
-    			}
-    		}
-    	}
-    	
-    	for(KeyValuePair kv : entity.getAttributes()) {
-    		if (kv.getValue()!=null) {
-    			doc.addField(SolrUtils.getDynamicFieldName(kv.getKey()), kv.getValue(), 1.0f);	
-    		}
-    	}
-    	
-    	if (!entity.getChildIds().isEmpty()) {
-    		doc.addField("child_ids", entity.getChildIds(), 0.2f);
-    	}
-    	
-    	if (annotations != null) {
-    		for(SimpleAnnotation annotation : annotations) {
-    			doc.addField(annotation.getOwner()+"_annotations", annotation.getTag(), 1.0f);
-    			if (annotation.getValue()!=null) {
-    				doc.addField(annotation.getOwner()+"_"+SolrUtils.getFormattedName(annotation.getKey())+"_annot", annotation.getValue(), 1.0f);
-    			}
-    		}
-    	}
-    	
-    	if (ancestorIds != null) {
-    		doc.addField("ancestor_ids", ancestorIds, 0.2f);
-    	}
-    	
-    	return doc;
-    }
-
     /** 
      * Commit any outstanding changes to the index.
      * @throws DaoException

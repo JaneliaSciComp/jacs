@@ -4,8 +4,8 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -23,14 +23,14 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 public class ChooseAlignWholeBrainSampleStepsService implements IService {
 
     protected Logger logger;
-    protected AnnotationBeanLocal annotationBean;
+    protected EntityBeanLocal entityBean;
     protected IProcessData processData;
     
     public void execute(IProcessData processData) throws ServiceException {
         try {
         	
             this.logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-            this.annotationBean = EJBFactory.getLocalAnnotationBean();
+            this.entityBean = EJBFactory.getLocalEntityBean();
             this.processData = processData;
             
         	boolean refreshAlignment = getBoolean("REFRESH_ALIGNMENT");
@@ -41,7 +41,7 @@ public class ChooseAlignWholeBrainSampleStepsService implements IService {
         		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
         	}
         	
-        	Entity sampleEntity = annotationBean.getEntityTree(new Long(sampleEntityId));
+        	Entity sampleEntity = entityBean.getEntityTree(new Long(sampleEntityId));
         	if (sampleEntity == null) {
         		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
         	}

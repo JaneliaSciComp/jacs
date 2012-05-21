@@ -3,10 +3,7 @@ package org.janelia.it.jacs.compute.service.entity;
 import java.util.*;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
-import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
-import org.janelia.it.jacs.compute.api.ComputeException;
-import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.*;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -30,6 +27,7 @@ public class MCFODataUpgradeService implements IService {
     protected Task task;
     protected String username;
     protected AnnotationBeanLocal annotationBean;
+    protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
     protected EntityHelper entityHelper;
     
@@ -45,6 +43,7 @@ public class MCFODataUpgradeService implements IService {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             task = ProcessDataHelper.getTask(processData);
             annotationBean = EJBFactory.getLocalAnnotationBean();
+            entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
             username = task.getOwner();
             isDebug = Boolean.parseBoolean(task.getParameter(PARAM_testRun));
@@ -78,7 +77,7 @@ public class MCFODataUpgradeService implements IService {
         List<Entity> entities=annotationBean.getCommonRootEntitiesByTypeName(username, EntityConstants.TYPE_FOLDER);
         for(Entity topEntity : entities) {
             logger.info("Found top-level entity name="+topEntity.getName());
-            Entity tree = annotationBean.getEntityTree(topEntity.getId());
+            Entity tree = entityBean.getEntityTree(topEntity.getId());
             processEntityTree(tree);
         }
 		logger.info("The surgery was a success.");
@@ -132,7 +131,7 @@ public class MCFODataUpgradeService implements IService {
     			EntityData ed = sample.addChildEntity(supportingFiles, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
     	        if (!isDebug) {
                 	// Update database
-    	        	annotationBean.saveOrUpdateEntityData(ed);
+    	        	entityBean.saveOrUpdateEntityData(ed);
     	        }
         	}
 
@@ -141,7 +140,7 @@ public class MCFODataUpgradeService implements IService {
                 if (!isDebug) {
                 	// Update database
                 	ed.setParentEntity(supportingFiles);
-                	annotationBean.saveOrUpdateEntityData(ed);
+                	entityBean.saveOrUpdateEntityData(ed);
                 	// Update in-memory model
                 	supportingFiles.getEntityData().add(ed);
                 	sample.getEntityData().remove(ed);

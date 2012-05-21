@@ -1,9 +1,12 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
+import java.io.File;
+import java.util.*;
+
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -14,9 +17,6 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.User;
-
-import java.io.File;
-import java.util.*;
 
 /**
  * Discover files in a set of input directories and create corresponding entities in the database. This class
@@ -30,7 +30,7 @@ import java.util.*;
 public class FileDiscoveryService implements IService {
 
     protected Logger logger;
-    protected AnnotationBeanLocal annotationBean;
+    protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
     protected User user;
     protected Date createDate;
@@ -42,7 +42,7 @@ public class FileDiscoveryService implements IService {
         try {
         	this.processData=processData;
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-            annotationBean = EJBFactory.getLocalAnnotationBean();
+            entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
             user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
             createDate = new Date();
@@ -60,7 +60,7 @@ public class FileDiscoveryService implements IService {
             	if (rootEntityId==null) {
             		throw new IllegalArgumentException("Both ROOT_ENTITY_NAME and ROOT_ENTITY_ID may not be null");
             	}
-            	topLevelFolder = annotationBean.getEntityById(rootEntityId);
+            	topLevelFolder = entityBean.getEntityById(rootEntityId);
             }
             
         	if (topLevelFolder==null) {
@@ -140,18 +140,18 @@ public class FileDiscoveryService implements IService {
     }
 
     public static Entity createOrVerifyRootEntity(String topLevelFolderName, User user, Date createDate, org.apache.log4j.Logger logger, boolean createIfNecessary, boolean loadTree) throws Exception {
-        AnnotationBeanLocal annotationBean = EJBFactory.getLocalAnnotationBean();
-        Set<Entity> topLevelFolders = annotationBean.getEntitiesByName(topLevelFolderName);
+        EntityBeanLocal entityBean = EJBFactory.getLocalEntityBean();
+        Set<Entity> topLevelFolders = entityBean.getEntitiesByName(topLevelFolderName);
         Entity topLevelFolder = null;
         if (topLevelFolders != null) {
             // Only accept the current user's top level folder
             for (Entity entity : topLevelFolders) {
                 if (entity.getUser().getUserLogin().equals(user.getUserLogin())
-                        && entity.getEntityType().getName().equals(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER).getName())
+                        && entity.getEntityType().getName().equals(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER).getName())
                         && entity.getAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
                     // This is the folder we want, now load the entire folder hierarchy
                     if (loadTree) {
-                        topLevelFolder = annotationBean.getFolderTree(entity.getId());
+                        topLevelFolder = entityBean.getEntityTree(entity.getId());
                     } else {
                         topLevelFolder = entity;
                     }
@@ -169,9 +169,9 @@ public class FileDiscoveryService implements IService {
                 topLevelFolder.setUpdatedDate(createDate);
                 topLevelFolder.setUser(user);
                 topLevelFolder.setName(topLevelFolderName);
-                topLevelFolder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+                topLevelFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
                 topLevelFolder.addAttributeAsTag(EntityConstants.ATTRIBUTE_COMMON_ROOT);
-                topLevelFolder = annotationBean.saveOrUpdateEntity(topLevelFolder);
+                topLevelFolder = entityBean.saveOrUpdateEntity(topLevelFolder);
                 logger.info("Saved top level folder as " + topLevelFolder.getId());
             } else {
                 throw new Exception("Could not find top-level folder by name=" + topLevelFolderName);
@@ -213,9 +213,9 @@ public class FileDiscoveryService implements IService {
             folder.setUpdatedDate(createDate);
             folder.setUser(user);
             folder.setName(dir.getName());
-            folder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+            folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
             folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, dir.getAbsolutePath());
-            folder = annotationBean.saveOrUpdateEntity(folder);
+            folder = entityBean.saveOrUpdateEntity(folder);
             logger.info("Saved folder as "+folder.getId());
             addToParent(parentFolder, folder, index, EntityConstants.ATTRIBUTE_ENTITY);
         }
@@ -229,7 +229,7 @@ public class FileDiscoveryService implements IService {
     protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
         EntityData ed = parent.addChildEntity(entity, attrName);
         ed.setOrderIndex(index);
-        EJBFactory.getLocalAnnotationBean().saveOrUpdateEntityData(ed);
+        entityBean.saveOrUpdateEntityData(ed);
         logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
         		" as child of "+parent.getEntityType().getName()+"#"+parent.getId());
     }
@@ -273,37 +273,37 @@ public class FileDiscoveryService implements IService {
     EntityType getEntityTypeForFile(File file) throws Exception {
         String filenameLowerCase=file.getName().toLowerCase();
         if (filenameLowerCase.endsWith(".lsm")) {
-            return annotationBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK);
+            return entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK);
         } else if (filenameLowerCase.endsWith(".tif")) {
             if (file.length()>=FILE_3D_SIZE_THRESHOLD) {
-                return annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+                return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
             } else {
-                return annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
+                return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
             }
         } else if (filenameLowerCase.endsWith(".txt")) {
-            return annotationBean.getEntityTypeByName(EntityConstants.TYPE_TEXT_FILE);
+            return entityBean.getEntityTypeByName(EntityConstants.TYPE_TEXT_FILE);
         } else if (filenameLowerCase.endsWith(".swc")) {
-            return annotationBean.getEntityTypeByName(EntityConstants.TYPE_SWC_FILE);
+            return entityBean.getEntityTypeByName(EntityConstants.TYPE_SWC_FILE);
         } else if (filenameLowerCase.endsWith(".ano")) {
-            return annotationBean.getEntityTypeByName(EntityConstants.TYPE_V3D_ANO_FILE);
+            return entityBean.getEntityTypeByName(EntityConstants.TYPE_V3D_ANO_FILE);
         } else if (filenameLowerCase.endsWith(".png")) {
-            return annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
+            return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
         } else if (filenameLowerCase.endsWith(".raw")) {
             if (filenameLowerCase.contains(".local.")) {
-                return annotationBean.getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
+                return entityBean.getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
             } else {
-                return annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+                return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
             }
         } else if (filenameLowerCase.endsWith(".v3draw")) {
-            return annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+            return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
         } else if (filenameLowerCase.endsWith(".vaa3draw")) {
-            return annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+            return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
         } else if (filenameLowerCase.endsWith(".pbd")) {
-            return annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+            return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
         } else if (filenameLowerCase.endsWith(".v3dpbd")) {
-            return annotationBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+            return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
         } else {
-            return annotationBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA);
+            return entityBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA);
         }
     }
 
@@ -325,11 +325,11 @@ public class FileDiscoveryService implements IService {
         folder.setUpdatedDate(createDate);
         folder.setUser(user);
         folder.setName(name);
-        folder.setEntityType(annotationBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+        folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
         if (directoryPath!=null) {
             folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, directoryPath);
         }
-        folder = annotationBean.saveOrUpdateEntity(folder);
+        folder = entityBean.saveOrUpdateEntity(folder);
         logger.info("Saved folder " + name+" as " + folder.getId()+" , will now add as child to parent entity name="+parent.getName()+" parentId="+parent.getId());
         addToParent(parent, folder, null, EntityConstants.ATTRIBUTE_ENTITY);
         return folder;
