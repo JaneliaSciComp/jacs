@@ -23,7 +23,7 @@ if [ $NUMPARAMS -lt 3  ]
 then
     echo " "
     echo " USAGE ::  "
-    echo " sh imgIntersect.sh input1.v3dpbd input2.v3dpbd output.v3dpbd [0|1|2]"
+    echo " sh imgIntersect.sh input1.v3dpbd input2.v3dpbd output.v3dpbd <Method> <GaussianKernelSize>"
     echo " "
     exit
 fi
@@ -32,6 +32,7 @@ INPUT1=$1
 INPUT2=$2
 FINAL_OUTPUT=$3
 METHOD=$4
+KERNEL_SIZE=$5
 FINAL_DIR=${FINAL_OUTPUT%/*}
 FINAL_STUB=${FINAL_OUTPUT%.*}
 OUTPUT_FILENAME=`basename $FINAL_OUTPUT`
@@ -67,7 +68,7 @@ if [ $EXT == "v3dpbd" ]; then
 fi
 
 OUTPUT="$WORKING_DIR/out.v3draw"
-$Vaa3D -x imath -f intersection -o "$OUTPUT" -p "#s $INPUT1 #t $INPUT2 #m $METHOD"
+$Vaa3D -x imath -f intersection -o "$OUTPUT" -p "#s $INPUT1 #t $INPUT2 #m $METHOD #w $KERNEL_SIZE #n 1"
 
 OUTPUT_MIP="$WORKING_DIR/out.png"
 $Vaa3D -cmd image-loader -mip "$OUTPUT" "$WORKING_DIR/out.tif"
