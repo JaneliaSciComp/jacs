@@ -18,7 +18,6 @@ import java.util.Set;
  * User: murphys
  * Date: 2/16/12
  * Time: 9:37 AM
- * To change this template use File | Settings | File Templates.
  */
 public class FileTreeLoaderPipelineTask extends Task {
 

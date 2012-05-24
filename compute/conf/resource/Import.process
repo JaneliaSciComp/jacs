@@ -1,0 +1,29 @@
+<!--
+
+	General loader for adding filesystem content to JACS/Workstation.
+
+	This pipeline will add the folder tree under the root directory path by creating an entity tree which matches
+	the loaded tree.
+-->
+
+ <process name="Import" processor="queue/fileImportFilePipelineLauncher" startEvent="pending" updateProcessStatus="on_success" >
+     <sequence>
+         <!-- Import variables from the FileDiscoveryTask -->
+         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+             <input name="TASK_PARAMETER_1" value="list of input directories"/>
+             <input name="PROCESS_VARIABLE_1" value="INPUT_DIR_LIST"/>
+             <input name="TASK_PARAMETER_2" value="top level folder name"/>
+             <input name="PROCESS_VARIABLE_2" value="ROOT_ENTITY_NAME"/>
+             <input name="REFRESH" value="false"/>
+             <output name="INPUT_DIR_LIST"/>
+             <output name="ROOT_ENTITY_NAME"/>
+         </operation>
+
+         <!-- Discover samples in the fileshare and load them into the database as Entities -->
+         <operation name="Initial File Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryService">
+             <input name="INPUT_DIR_LIST"/>
+             <input name="ROOT_ENTITY_NAME"/>
+             <input name="OUTVAR_ENTITY_ID" value="TOP_LEVEL_ENTITY_ID"/>
+         </operation>
+    </sequence>
+</process>
