@@ -11,7 +11,9 @@ import javax.ejb.MessageDriven;
  * User: murphys
  * Date: 5/24/11
  * Time: 12:55 PM
+ *
  */
+
 @MessageDriven(name = "MCFODataPipelineLauncherMDB", activationConfig = {
         @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
         @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
