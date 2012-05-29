@@ -18,7 +18,7 @@ import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.fileDiscovery.*;
 import org.janelia.it.jacs.model.tasks.fly.FlyScreenPatternAnnotationTask;
 import org.janelia.it.jacs.model.tasks.fly.MaskSampleAnnotationTask;
-import org.janelia.it.jacs.model.tasks.tic.TicTask;
+import org.janelia.it.jacs.model.tasks.tic.SingleTicTask;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
@@ -355,12 +355,12 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     public void runTicPipeline(String user, String dirOfInputFile, String inputFileName, String transformationMatrixFile,
                                String borderValue, String correctionFile, String microscopeSettingsFile){
         try {
-            TicTask task = new TicTask(new HashSet<Node>(), user, new ArrayList<Event>(), new HashSet<TaskParameter>());
-            task.setParameter(TicTask.PARAM_inputFile, "/groups/scicomp/jacsData/saffordTest/tic/StackSeries20Copy.tif");
-            task.setParameter(TicTask.PARAM_transformationFile, "/groups/scicomp/jacsData/saffordTest/tic/PSF3stack.mat");
-            task.setParameter(TicTask.PARAM_intensityCorrectionFactorFile, "/groups/scicomp/jacsData/saffordTest/tic/kpos-int-cor.mat");
+            SingleTicTask task = new SingleTicTask(new HashSet<Node>(), user, new ArrayList<Event>(), new HashSet<TaskParameter>());
+            task.setParameter(SingleTicTask.PARAM_inputFilePrefix, "/groups/scicomp/jacsData/saffordTest/tic/StackSeries20Copy.tif");
+            task.setParameter(SingleTicTask.PARAM_transformationFile, "/groups/scicomp/jacsData/saffordTest/tic/PSF3stack.mat");
+            task.setParameter(SingleTicTask.PARAM_intensityCorrectionFactorFile, "/groups/scicomp/jacsData/saffordTest/tic/kpos-int-cor.mat");
             task.setJobName("Transcription Imaging Consortium Pipeline Task");
-            task = (TicTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            task = (SingleTicTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("TranscriptionImagingConsortium", task.getObjectId());
         }
         catch (Exception ex) {

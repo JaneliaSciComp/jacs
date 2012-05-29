@@ -14,16 +14,15 @@ import java.util.Set;
  * Time: 3:03:13 PM
  * Modified by naxelrod
  */
-public class BatchTicTask extends TicTask {
-    transient public static final String TASK_NAME = "batchTIC";
-    transient protected String DISPLAY_NAME = "Batch Transcription Imaging Consortium";
-    transient public static final String PARAM_inputFile = "input files";
+public class SingleTicTask extends TicTask {
+    transient public static final String TASK_NAME = "singleTIC";
+    transient protected String DISPLAY_NAME = "Transcription Imaging Consortium";
 
-    public BatchTicTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet) {
+    public SingleTicTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet) {
         super(inputNodes, owner, events, taskParameterSet);
     }
 
-    public BatchTicTask() {
+    public SingleTicTask() {
         super();
     }
 

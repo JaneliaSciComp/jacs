@@ -5,12 +5,12 @@ import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
-import org.janelia.it.jacs.compute.service.geci.MatlabHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.tic.TicTask;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileWriter;
 import java.util.List;
 
@@ -33,11 +33,11 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
      */
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
         //ProfileComparisonTask profileComparisonTask = (ProfileComparisonTask) task;
-        //Get the input file list
-        List<String> inputFileList = Task.listOfStringsFromCsvString(task.getParameter(TicTask.PARAM_inputFile));
-        if (null==inputFileList||0==inputFileList.size()) {
-            logger.error("TIC Pipeline cannot be run with no input files.");
-            throw new ServiceException("Found no input files to run against.");
+        //Get the input file prefix
+        String inputFilePath = task.getParameter(TicTask.PARAM_inputFilePrefix);
+        if (null==inputFilePath||0==inputFilePath.length()) {
+            logger.error("TIC Pipeline cannot be run with no input file prefix.");
+            throw new ServiceException("Found no input file prefix to run against.");
         }
         String transformationFilePath = task.getParameter(TicTask.PARAM_transformationFile);
         String correctionFactorFilePath = task.getParameter(TicTask.PARAM_intensityCorrectionFactorFile);
@@ -61,17 +61,25 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
             }
         }
 
+        File tmpInputFile = new File(inputFilePath);
+        String targetPrefixMinusLast = tmpInputFile.getName().substring(0, tmpInputFile.getName().lastIndexOf("_"));
+        final String targetPrefix = targetPrefixMinusLast.substring(0,targetPrefixMinusLast.lastIndexOf("_"));
+        File tmpDir = tmpInputFile.getParentFile();
+        File[] relatedFiles = tmpDir.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                return file.isFile() && file.getName().startsWith(targetPrefix);
+            }
+        });
 
-        // Creating the config files for the Drmaa Template
-        for (int i = 0; i < inputFileList.size(); i++) {
-            String tmpInputFile = inputFileList.get(i);
+        for (int i = 0; i < relatedFiles.length; i++) {
             FileWriter fw = new FileWriter(getSGEConfigurationDirectory() + File.separator + CONFIG_PREFIX + (i+1));
-            File tmpFile= new File(tmpInputFile);
+            File tmpFile= relatedFiles[i];
             String tmpName=tmpFile.getName();
             String outputPath = resultFileNode.getDirectoryPath()+File.separator+tmpName.substring(0,tmpName.lastIndexOf(".")).replaceAll(" ","_");
             try {
                 // Path to the input file
-                fw.write(tmpInputFile+"\n");
+                fw.write(tmpFile.getAbsolutePath()+"\n");
                 // Input file name
                 fw.write(tmpName+"\n");
                 // Result Node path to the specific results
@@ -93,26 +101,26 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
         writer.write("read INPUT_FILE_NAME\n");
         writer.write("read OUTPUT_DIR\n");
         writer.write("mkdir $OUTPUT_DIR\n");
+//        writer.write("mkdir /scratch/"+task.getObjectId()+"/"+"mcr_cache_root.$RANDOM");
         writer.write("cp $INPUT_FILE $OUTPUT_DIR"+File.separator+"$INPUT_FILE_NAME\n");
+        writer.write(MatlabHelper.MATLAB_EXPORT + MatlabHelper.getCacheRootExportCommand("/scratch/jacs/"+task.getObjectId()+"/mcr_cache_root.$RANDOM")+"\n");
+
         if (null!=task.getParameter(TicTask.PARAM_runApplyCalibrationToFrame) && Boolean.valueOf(task.getParameter(TicTask.PARAM_runApplyCalibrationToFrame))) {
             String fullReconstructionCmd = reconstructionCmd + " $OUTPUT_DIR"+File.separator+" $INPUT_FILE_NAME "+transformationFilePath+" "+borderValue+"\n";
-            fullReconstructionCmd = MatlabHelper.MATLAB_EXPORT + fullReconstructionCmd;
             writer.write(fullReconstructionCmd);
         }
         if (null!=task.getParameter(TicTask.PARAM_runIlluminationCorrection) && Boolean.valueOf(task.getParameter(TicTask.PARAM_runIlluminationCorrection))) {
             String fullCorrectionCmd = correctionCmd + " $OUTPUT_DIR"+File.separator+"Reconstructed"+File.separator+" "+correctionFactorFilePath+" "+noiseFile+"\n";
-            fullCorrectionCmd = MatlabHelper.MATLAB_EXPORT + fullCorrectionCmd;
             writer.write(fullCorrectionCmd);
         }
         if (null!=task.getParameter(TicTask.PARAM_runFQBatch) && Boolean.valueOf(task.getParameter(TicTask.PARAM_runFQBatch))) {
             String fileListPath = "$OUTPUT_DIR"+File.separator+"Reconstructed"+File.separator+"corrected"+File.separator;
             writer.write("ls -1 "+fileListPath+"*.tif > "+fileListPath+"batchList.txt\n");
             String fullFQCmd = fishQuantCmd + " "+microscopeSettingsFilePath+" "+fileListPath+"batchList.txt\n";
-            fullFQCmd = MatlabHelper.MATLAB_EXPORT + fullFQCmd;
             writer.write(fullFQCmd);
-            writer.write("mv "+fileListPath+"FISH-QUANT__* ../../.");
+            writer.write("mv "+fileListPath+"FISH-QUANT__all_spots_* $OUTPUT_DIR/$INPUT_FILE_NAME.all_spots.txt\n");
         }
-        setJobIncrementStop(inputFileList.size());
+        setJobIncrementStop(relatedFiles.length);
     }
 
     protected void setQueue(SerializableJobTemplate jt) throws DrmaaException {
@@ -124,7 +132,7 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
     protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
         SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
         // Reserve all 3 slots.
-        jt.setNativeSpecification("-pe batch 3");
+        jt.setNativeSpecification("-pe batch 1");
         return jt;
     }
 

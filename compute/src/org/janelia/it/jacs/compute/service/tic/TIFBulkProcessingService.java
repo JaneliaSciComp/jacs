@@ -9,11 +9,12 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.tic.BatchTicTask;
-import org.janelia.it.jacs.model.tasks.tic.TicTask;
+import org.janelia.it.jacs.model.tasks.tic.SingleTicTask;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -32,14 +33,14 @@ public class TIFBulkProcessingService implements IService {
         try {
             Logger logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             this.task = (BatchTicTask) ProcessDataHelper.getTask(processData);
-            String inputFilePath = task.getParameter(TicTask.PARAM_inputFile);
+            String inputFilePath = task.getParameter(BatchTicTask.PARAM_inputFile);
+            HashMap<String, List<String>> relatedFileMap = new HashMap<String, List<String>>();
             List<String> tmpFiles;
-            List<String> finalFileList = new ArrayList<String>();
             if (null!=inputFilePath) {
                 tmpFiles = Task.listOfStringsFromCsvString(inputFilePath);
                 for (String tmpFilePath : tmpFiles) {
                     File tmpFile = new File(tmpFilePath);
-                    if (tmpFile.isDirectory()) {
+                    if (tmpFile.isDirectory() && !tmpFilePath.contains("PipelineResults")) {
                         File[] tmpTifFiles = tmpFile.listFiles(new FilenameFilter() {
                             @Override
                             public boolean accept(File file, String accession) {
@@ -47,37 +48,45 @@ public class TIFBulkProcessingService implements IService {
                             }
                         });
                         for (File tmpTifFile : tmpTifFiles) {
-                            finalFileList.add(tmpTifFile.getAbsolutePath());
+                            addFileToMap(tmpTifFile, relatedFileMap);
                         }
                     }
                     else {
-                        if (tmpFile.getName().toLowerCase().contains(".tif")&&tmpFile.exists()) {finalFileList.add(tmpFile.getAbsolutePath());}
+                        if (tmpFile.getName().toLowerCase().contains(".tif")&&tmpFile.exists()) {
+                            addFileToMap(tmpFile,relatedFileMap);
+                        }
                     }
                 }
             }
 
-            for (String tmpInputFile : finalFileList) {
-                logger.debug("Starting TIC analysis of input file: " + tmpInputFile);
+            for (String key : relatedFileMap.keySet()) {
+                logger.debug("Starting TIC analysis of input file: " + key);
                 // Submit the task
                 try {
-                    TicTask _currentTask = new TicTask();
-                    _currentTask.setJobName(new File(tmpInputFile).getName());
+                    SingleTicTask _currentTask = new SingleTicTask();
+                    _currentTask.setJobName(new File(key).getName());
                     _currentTask.setOwner(task.getOwner());
                     // Copy all the old parameters
                     for (TaskParameter taskParameter : task.getTaskParameterSet()) {
                         _currentTask.setParameter(taskParameter.getName(),taskParameter.getValue());
                     }
-                    // Override the input for the specific instance
-                    _currentTask.setParameter(task.PARAM_inputFile,tmpInputFile);
-
+                    // Override the input for the specific instance - only need an example of the file
+                    String testPath = relatedFileMap.get(key).get(0);
+                    File tmpParent = new File(testPath).getParentFile();
+                    _currentTask.setParameter(SingleTicTask.PARAM_inputFilePrefix,relatedFileMap.get(key).get(0));
+                    File tmpInputFile = new File(testPath);
+                    String targetPrefixMinusLast = tmpInputFile.getName().substring(0, tmpInputFile.getName().lastIndexOf("_"));
+                    final String targetPrefix = targetPrefixMinusLast.substring(0,targetPrefixMinusLast.lastIndexOf("_"));
+                    _currentTask.setParameter(SingleTicTask.PARAM_finalOutputDirectory, tmpParent.getAbsolutePath()+
+                            File.separator+"PipelineResults-"+task.getObjectId().toString()+"-"+targetPrefix);
                     // Save the child task
-                    _currentTask = (TicTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(_currentTask);
+                    _currentTask = (SingleTicTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(_currentTask);
                     // Submit
                     EJBFactory.getRemoteComputeBean().submitJob("TranscriptionImagingConsortium", _currentTask.getObjectId());
                 }
                 catch (Exception e) {
-                    logger.error("There was an error running the TIC pipeline for: " + tmpInputFile, e);
-                    throw new ServiceException("There was an error running the TIC pipeline for: " + tmpInputFile);
+                    logger.error("There was an error running the TIC pipeline for: " + key, e);
+                    throw new ServiceException("There was an error running the TIC pipeline for: " + key);
                 }
             }
         }
@@ -88,4 +97,31 @@ public class TIFBulkProcessingService implements IService {
             }
         }
     }
+
+
+    /**
+     * The contract here is that the file will look like
+     * 001_a_red.nd2_99_RC.tif where the 99 can be any integer 0..whatever
+     * Find everything up to the 99 and make that a unique prefix.  We'll group all files with the same prefix and submit
+     * as a single grid job
+     * @param targetItem file to test in the collection
+     * @param targetMap collection of all file prefix and the list of all file paths with that prefix
+     */
+    private void addFileToMap(File targetItem, HashMap<String, List<String>> targetMap) {
+        String targetPrefixMinusLast = targetItem.getName().substring(0, targetItem.getName().lastIndexOf("_"));
+        String targetPrefix = targetPrefixMinusLast.substring(0,targetPrefixMinusLast.lastIndexOf("_"));
+        if (!targetMap.containsKey(targetPrefix)) {
+            ArrayList<String> targetFilePaths = new ArrayList<String>();
+            targetFilePaths.add(targetItem.getAbsolutePath());
+            targetMap.put(targetPrefix, targetFilePaths);
+        }
+        else {
+            ArrayList<String> targetFilePaths = (ArrayList<String>)targetMap.get(targetPrefix);
+            if (!targetFilePaths.contains(targetItem.getAbsolutePath())) {
+                targetFilePaths.add(targetItem.getAbsolutePath());
+                targetMap.put(targetPrefix,targetFilePaths);
+            }
+        }
+    }
+
 }

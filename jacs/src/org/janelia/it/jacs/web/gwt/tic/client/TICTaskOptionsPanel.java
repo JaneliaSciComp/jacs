@@ -13,6 +13,6 @@ import org.janelia.it.jacs.web.gwt.common.client.panel.user.TaskOptionsPanel;
 public class TICTaskOptionsPanel extends TaskOptionsPanel {
     protected boolean displayParameter(String parameterKeyName, ParameterVO tmpParam) {
         return super.displayParameter(parameterKeyName, tmpParam) && !(
-                TicTask.PARAM_inputFile.equalsIgnoreCase(parameterKeyName));
+                TicTask.PARAM_inputFilePrefix.equalsIgnoreCase(parameterKeyName));
     }
 }

@@ -222,7 +222,7 @@ public class TICManagementPanel extends VerticalPanel {
         sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
         sourcePanel.add(_inputFileOrDirTextBox);
         sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
-        sourcePanel.add(_validateInputFileOrDirButton);
+//        sourcePanel.add(_validateInputFileOrDirButton);
         _inputFileOrDirPanel.add(sourcePanel);
     }
 
@@ -250,7 +250,7 @@ public class TICManagementPanel extends VerticalPanel {
         sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
         sourcePanel.add(_transformationFileTextBox);
         sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
-        sourcePanel.add(_validateTransformationFileButton);
+//        sourcePanel.add(_validateTransformationFileButton);
         _transformationFilePanel.add(sourcePanel);
     }
 
@@ -266,7 +266,7 @@ public class TICManagementPanel extends VerticalPanel {
         sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
         sourcePanel.add(_intensityCorrectionMatrixFileTextBox);
         sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
-        sourcePanel.add(_validateIntensityCorrectionFileButton);
+//        sourcePanel.add(_validateIntensityCorrectionFileButton);
         _intensityCorrectionPanel.add(sourcePanel);
     }
 
@@ -282,7 +282,7 @@ public class TICManagementPanel extends VerticalPanel {
         sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
         sourcePanel.add(_microscopeSettingsTextBox);
         sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
-        sourcePanel.add(_validateMicroscopeSettingsFileButton);
+//        sourcePanel.add(_validateMicroscopeSettingsFileButton);
         _microscopeSettingsPanel.add(sourcePanel);
     }
 

@@ -13,6 +13,7 @@
         <subclass name="TicTask" extends="org.janelia.it.jacs.model.tasks.Task"
                   discriminator-value="ticTask" abstract="false">
             <subclass name="BatchTicTask" discriminator-value="batchTICTask" abstract="false"/>
+            <subclass name="SingleTicTask" discriminator-value="singleTICTask" abstract="false"/>
         </subclass>
 
 </hibernate-mapping>

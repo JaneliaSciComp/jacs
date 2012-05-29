@@ -32,7 +32,14 @@
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.tic.TICSubmitJobService"/>
                 <input name="RESULT_FILE_NODE_ID"/>
                 <input name="RESULT_FILE_NODE"/>
+                <output name="RESULT_FILE_NODE_ID"/>
+                <output name="RESULT_FILE_NODE"/>
             </operation>
         </sequence>
+        <operation name="Collect Spot Data" processor="org.janelia.it.jacs.compute.service.tic.SpotCollectionService">
+            <input name="RESULT_FILE_NODE_ID"/>
+            <input name="RESULT_FILE_NODE"/>
+        </operation>
+
     </sequence>
 </process>

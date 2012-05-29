@@ -2,6 +2,7 @@ package org.janelia.it.jacs.web.gwt.tic.client;
 
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -19,7 +20,7 @@ import org.janelia.it.jacs.web.gwt.common.client.util.HtmlUtils;
 import org.janelia.it.jacs.web.gwt.common.client.util.UrlBuilder;
 
 public class TIC extends BaseEntryPoint {
-    public static final String TASK_IMAGE_ANALYSIS = "TicTask";
+    public static final String TASK_IMAGE_ANALYSIS = "SingleTicTask";
     public static final String TASK_ID_PARAM = "taskId";
     public static final String DATASET_PARAM = "dataset";
 
@@ -91,6 +92,12 @@ public class TIC extends BaseEntryPoint {
         } // **submission** failed, so no need to update results panel
 
         public void onSuccess(String jobId) {
+            new TempTimer().schedule(5000);
+        }
+    }
+
+    public class TempTimer extends Timer {
+        public void run() {
             _ticJobResultsPanel.refresh();
         }
     }

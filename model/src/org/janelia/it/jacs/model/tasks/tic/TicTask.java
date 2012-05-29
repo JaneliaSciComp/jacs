@@ -16,12 +16,12 @@ import java.util.Set;
  * Time: 3:03:13 PM
  * Modified by naxelrod
  */
-public class TicTask extends Task {
+public abstract class TicTask extends Task {
     transient public static final String TASK_NAME = "tic";
     transient protected String BASE_DISPLAY_NAME = "Transcription Imaging Consortium";
 
     // Parameter Keys
-    transient public static final String PARAM_inputFile                    = "input files";
+    transient public static final String PARAM_inputFilePrefix              = "input file prefix";
     transient public static final String PARAM_borderValue                  = "border crop value";
     transient public static final String PARAM_transformationFile           = "transformation file";
     transient public static final String PARAM_intensityCorrectionFactorFile= "intensity correction file";
@@ -43,7 +43,7 @@ public class TicTask extends Task {
     }
 
     private void setDefaultValues() {
-        setParameter(PARAM_inputFile, "");
+        setParameter(PARAM_inputFilePrefix, "");
         setParameter(PARAM_borderValue, "");
         setParameter(PARAM_transformationFile, "");
         setParameter(PARAM_intensityCorrectionFactorFile, "");
@@ -66,7 +66,7 @@ public class TicTask extends Task {
             key.equals(PARAM_microscopeSettingsFile) || key.equals(PARAM_avgReadNoise) || key.equals(PARAM_avgDark)) {
             return new TextParameterVO(value);
         }
-        if (key.equals(PARAM_inputFile)) {
+        if (key.equals(PARAM_inputFilePrefix)) {
             return new MultiSelectVO(listOfStringsFromCsvString(value), listOfStringsFromCsvString(value));
         }
         if (key.equals(PARAM_borderValue)) {

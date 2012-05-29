@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.service.geci;
+package org.janelia.it.jacs.compute.service.tic;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,6 +14,19 @@ public class MatlabHelper {
             "$matlabroot/sys/os/glnxa64:$matlabroot/sys/java/jre/glnxa64/jre/lib/amd64/native_threads:" +
             "$matlabroot/sys/java/jre/glnxa64/jre/lib/amd64/server:$matlabroot/sys/java/jre/glnxa64/jre/lib/amd64\";" +
             "export XAPPLRESDIR=\"$matlabroot/X11/app-defaults\";export MCR_INHIBIT_CTF_LOCK=1;";
+
+
+    // export MCR_CACHE_VERBOSE=1; sets the process to be complete verbose
+
+    /**
+     * Method to dynamically format the Cache Root Directory
+     * Example: export MCR_CACHE_ROOT=/scratch/saffordt/mcr_cache_root.$RANDOM
+     * @param targetCacheDir place for the lock files on the node
+     * @return return the full export command
+     */
+    public static final String getCacheRootExportCommand(String targetCacheDir) {
+        return "export MCR_CACHE_ROOT="+targetCacheDir;
+    }
 
 /**
  * We have 4 full floating Matlab licenses available on the cluster with the following toolboxes: Curve Fitting, Image, Optimization, Signal, Statistics, Wavelet, Neural.

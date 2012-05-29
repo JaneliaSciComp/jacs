@@ -206,7 +206,7 @@ public class FileService implements IService {
         File source = new File(copyTask.getPathToOriginal());
         File destination = new File(copyTask.getPathToDestination());
         if (source.isDirectory() && destination.isDirectory()) {
-            FileUtil.copyDirectory(source, destination);
+            FileUtil.copyDirectory(source.getAbsolutePath(), destination.getAbsolutePath());
             logger.debug("FileService - Directory copied from " + source + " to " + destination);
             return;
         }
