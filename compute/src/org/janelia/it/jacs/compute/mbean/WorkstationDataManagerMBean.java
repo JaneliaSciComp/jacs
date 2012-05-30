@@ -8,6 +8,8 @@ package org.janelia.it.jacs.compute.mbean;
  */
 public interface WorkstationDataManagerMBean {
     	
+	public void runSplitLinesLoading(String topLevelFolderName, String representativesPath, String splitConstructsPath);
+	
 	public void runNeo4jSync(Boolean clearDb);
 	
 	public void runMongoDbSync(Boolean clearDb);

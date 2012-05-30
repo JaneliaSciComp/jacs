@@ -9,7 +9,7 @@
         <id name="id" access="field" column="id" type="java.lang.Long">
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
         </id>
-        <property name="name" type="string" not-null="true" >
+        <property name="name" type="string" not-null="true" lazy="false">
             <column name="name" length="60" unique="true" />
         </property>
         <property name="possibleValues" type="string">

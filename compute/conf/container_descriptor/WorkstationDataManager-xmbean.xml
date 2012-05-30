@@ -12,6 +12,26 @@
     </constructor>
 
     <operation>
+        <description>Load in Arnim's representatives and split constructs spreadsheets and combine them with the screen data into a new hierarchy for split line representative determination.</description>
+        <name>runSplitLinesLoading</name>
+        <parameter>
+           <description>Name of top level folder for split lines (e.g. "FlyLight Screen Split Constructs")</description>
+           <name>topLevelFolderName</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Path to representatives file which picks a representative specimen for each flyline (e.g. "/groups/scicomp/jacsData/SplitPicking/representatives.txt")</description>
+           <name>representativesPath</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Path to split constructs file which annotates flylines with an AD or DBD designation (e.g. "/groups/scicomp/jacsData/SplitPicking/splitConstructs.txt")</description>
+           <name>splitConstructsPath</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
         <description>Synchronize Neo4j to the database</description>
         <name>runNeo4jSync</name>
         <parameter>

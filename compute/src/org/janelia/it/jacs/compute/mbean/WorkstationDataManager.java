@@ -43,6 +43,22 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     public WorkstationDataManager() {
     }
 
+    public void runSplitLinesLoading(String topLevelFolderName, String representativesPath, String splitConstructsPath) {
+        try {
+        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        	taskParameters.add(new TaskParameter("top level folder name", topLevelFolderName, null));
+        	taskParameters.add(new TaskParameter("representatives filepath", representativesPath, null));
+        	taskParameters.add(new TaskParameter("split constructs filepath", splitConstructsPath, null)); 
+        	Task task = new GenericTask(new HashSet<Node>(), "system", new ArrayList<Event>(), 
+        			taskParameters, "splitLinesLoading", "Split Lines Loading");
+            task.setJobName("Split Lines Loading Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("SplitLinesLoadingPipeline", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
     public void runNeo4jSync(Boolean clearDb) {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();

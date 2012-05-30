@@ -188,13 +188,13 @@ public class MCFODataUpgradeService implements IService {
 	            		fragImages.put(fragNum, fileEntity);
 	            	}
 	            	
-	            	entityHelper.removeDefaultImage(fileEntity);
+	            	entityHelper.removeDefaultImages(fileEntity);
 	            	entityHelper.removeDefaultImageFilePath(fileEntity);
 	            }
 
 	            Entity fragments = EntityUtils.findChildWithName(result, "Neuron Fragments");
 	            for(Entity fragmentEntity : fragments.getOrderedChildren()) {
-	            	entityHelper.removeDefaultImage(fragmentEntity);
+	            	entityHelper.removeDefaultImages(fragmentEntity);
 	            	entityHelper.removeDefaultImageFilePath(fragmentEntity);
 	            	String fragNumStr = fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER); 
 	            	Entity fragMip = fragImages.get(fragNumStr);
@@ -202,7 +202,7 @@ public class MCFODataUpgradeService implements IService {
 	            		logger.warn("Could not find MIP image for "+fragmentEntity.getName());
 	            	}
 	            	else {
-	            		entityHelper.addDefaultImage(fragmentEntity, fragMip);
+	            		entityHelper.addDefault2dImage(fragmentEntity, fragMip);
 	            	}	
 	            }
 	            
@@ -210,10 +210,10 @@ public class MCFODataUpgradeService implements IService {
     			if (referenceMIP!=null) logger.info("Found referenceMIP, id="+referenceMIP.getId());
     			
     			entityHelper.removeMIPs(result);
-    			entityHelper.removeDefaultImage(result);
+    			entityHelper.removeDefaultImages(result);
     			entityHelper.removeDefaultImageFilePath(result);
     			entityHelper.addMIPs(result, signalMIP, referenceMIP);
-    			entityHelper.addDefaultImage(result, signalMIP);
+    			entityHelper.addDefault2dImage(result, signalMIP);
         		
 	        	latestSignalMIP = signalMIP;
 	        	latestReferenceMIP = referenceMIP;
@@ -224,10 +224,10 @@ public class MCFODataUpgradeService implements IService {
 		if (latestReferenceMIP!=null) logger.info("Latest referenceMIP, id="+latestReferenceMIP.getId());
 		
 		entityHelper.removeMIPs(sample);
-		entityHelper.removeDefaultImage(sample);
+		entityHelper.removeDefaultImages(sample);
 		entityHelper.removeDefaultImageFilePath(sample);
 		entityHelper.addMIPs(sample, latestSignalMIP, latestReferenceMIP);
-		entityHelper.addDefaultImage(sample, latestSignalMIP);
+		entityHelper.addDefault2dImage(sample, latestSignalMIP);
     }
 
     protected String getIndex(String filename) {

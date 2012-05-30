@@ -87,7 +87,9 @@ public class EJBFactory {
     }
 
     public static EntityBeanLocal getLocalEntityBean() {
-        return (EntityBeanLocal) getLocalInterface(LOCAL_ENTITY_JNDI_NAME);
+    	EntityBeanLocal ebl = (EntityBeanLocal) getLocalInterface(LOCAL_ENTITY_JNDI_NAME);
+    	ebl.setUpdateIndexOnChange(false);
+    	return ebl;
     }
     
     public static SearchBeanLocal getLocalSearchBean() {

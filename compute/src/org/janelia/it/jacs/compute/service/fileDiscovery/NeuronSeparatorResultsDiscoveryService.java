@@ -60,14 +60,14 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
         // Remove current images
 		entityHelper.removeMIPs(resultEntity);
 		entityHelper.removeMIPs(sampleEntity);
-		entityHelper.removeDefaultImage(resultEntity);
-		entityHelper.removeDefaultImage(sampleEntity);
+		entityHelper.removeDefaultImages(resultEntity);
+		entityHelper.removeDefaultImages(sampleEntity);
 
 		// Add new images
 		entityHelper.addMIPs(resultEntity, signalMIP, referenceMIP);
 		entityHelper.addMIPs(sampleEntity, signalMIP, referenceMIP);
-		entityHelper.addDefaultImage(resultEntity, signalMIP);
-		entityHelper.addDefaultImage(sampleEntity, signalMIP);
+		entityHelper.addDefault2dImage(resultEntity, signalMIP);
+		entityHelper.addDefault2dImage(sampleEntity, signalMIP);
     }
     
     protected void addFilesToSupportingFiles(Entity filesFolder, List<File> files) throws Exception {

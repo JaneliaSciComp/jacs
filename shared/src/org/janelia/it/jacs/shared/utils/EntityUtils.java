@@ -76,7 +76,40 @@ public class EntityUtils {
 		
 		return path;
     }
-
+    
+    /**
+     * TODO: refactor this
+     */
+    public EntityData setValueByAttributeName(Entity entity, String attributeName, String value) {
+        Set<EntityData> matchingData=new HashSet<EntityData>();
+        for (EntityData ed : entity.getEntityData()) {
+            if (ed.getEntityAttribute().getName().matches(attributeName)) {
+                matchingData.add(ed);
+            }
+        }
+        if (matchingData.size()==0) {
+            // Ok, we will add this
+            EntityAttribute attribute=entity.getAttributeByName(attributeName);
+            if (attribute==null) {
+                throw new IllegalArgumentException("Entity "+entity.getId()+" with type "+entity.getEntityType().getName()+" does not have attribute: "+attributeName);
+            }
+            EntityData ed=new EntityData();
+            ed.setParentEntity(entity);
+            ed.setEntityAttribute(attribute);
+            ed.setValue(value);
+            ed.setUser(entity.getUser());
+            entity.getEntityData().add(ed);
+            return ed;
+        } else if (matchingData.size()==1) {
+            // Update the value of the existing entry
+            EntityData ed=matchingData.iterator().next();
+            ed.setValue(value);
+            return ed;
+        }
+        // More than one EntityData matching the attribute - do nothing
+        return null;
+    }
+    
     public static String getAnyFilePath(Entity entity) {
     	String filePath = getFilePath(entity);
     	if (filePath != null) {
@@ -191,8 +224,10 @@ public class EntityUtils {
 	public static boolean isHidden(EntityData entityData) {
 		String attrName = entityData.getEntityAttribute().getName();
 		if (EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE.equals(attrName) 
+				|| EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE.equals(attrName) 
 				|| EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE.equals(attrName) 
-				|| EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE.equals(attrName)) {
+				|| EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE.equals(attrName)
+				|| EntityConstants.ATTRIBUTE_REPRESENTATIVE_SAMPLE.equals(attrName)) {
 			return true;
 		}
 		return false;
