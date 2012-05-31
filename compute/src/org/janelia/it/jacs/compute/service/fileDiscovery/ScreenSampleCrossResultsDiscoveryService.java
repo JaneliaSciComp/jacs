@@ -88,9 +88,8 @@ public class ScreenSampleCrossResultsDiscoveryService implements IService {
 		                
 		                // Add default images
 		                Entity mip = createFileEntity(image2D, outputMip, "Intersection MIP");
-		                entityHelper.removeDefaultImages(resultEntity);
-		                entityHelper.addDefault2dImage(stack, mip);
-		                entityHelper.addDefault2dImage(resultEntity, mip);
+		                entityHelper.setDefault2dImage(stack, mip);
+		                entityHelper.setDefault2dImage(resultEntity, mip);
 		        }
 		        catch (Exception e) {
 		        	throw new Exception("Error processing cross results for id="+parentId, e);

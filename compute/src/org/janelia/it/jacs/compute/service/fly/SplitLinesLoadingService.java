@@ -358,14 +358,13 @@ public class SplitLinesLoadingService implements IService {
 			populateChildren(flyline);
 			populateChildren(screenSample);
 			EntityHelper helper = new EntityHelper();
-			helper.removeDefaultImages(flyline);
 			EntityData paFolderEd = EntityUtils.findChildEntityDataWithNameAndType(screenSample, "Pattern Annotation", EntityConstants.TYPE_FOLDER);
 			if (paFolderEd!=null) {
 				populateChildren(paFolderEd.getChildEntity());
 				EntityData heatmapEd = EntityUtils.findChildEntityDataWithNameAndType(paFolderEd.getChildEntity(), "Heatmap", EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
 				if (heatmapEd!=null) {
 					populateChildren(heatmapEd.getChildEntity());
-					helper.addDefaultImages(flyline, heatmapEd.getChildEntity());
+					helper.setDefault3dImage(flyline, heatmapEd.getChildEntity());
 				}
 			}
 		}

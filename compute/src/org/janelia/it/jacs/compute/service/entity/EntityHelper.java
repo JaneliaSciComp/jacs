@@ -2,6 +2,8 @@ package org.janelia.it.jacs.compute.service.entity;
 
 import java.io.File;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
@@ -13,6 +15,11 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
+/**
+ * A helper class for dealing with common entities such as default images. 
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 public class EntityHelper {
 
     protected Logger logger = Logger.getLogger(EntityHelper.class);
@@ -30,87 +37,73 @@ public class EntityHelper {
         this.isDebug = isDebug;
 	}
     
-	public void removeDefaultImageFilePath(Entity entity) throws ComputeException {
-    	EntityData filepathEd = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
-    	if (filepathEd != null) {
-            logger.info("Removing default 2d image filepath for id="+entity.getId()+" name="+entity.getName());
-            if (!isDebug) {
-            	// Update database
-            	entityBean.deleteEntityData(filepathEd);
-            	// Update in-memory model
-            	entity.getEntityData().remove(filepathEd);
-            }
-    	}
-    }
-
 	/**
-	 * Remove the default 2d and 3d image references. Does NOT delete the images that are pointed to. 
+	 * Remove the old-style default 2d image file path. 
 	 * @param entity
 	 * @throws ComputeException
 	 */
-	public void removeDefaultImages(Entity entity) throws ComputeException {
-    	logger.info("Removing default images for id="+entity.getId()+" name="+entity.getName());
-        if (isDebug) return;
-        EntityData ed1 = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-        if (ed1!=null) {
-        	// Update database
-        	entityBean.deleteEntityData(ed1);
-        	// Update in-memory model
-        	entity.getEntityData().remove(ed1);
-        }
-        EntityData ed2 = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-        if (ed2!=null) {
-        	// Update database
-        	entityBean.deleteEntityData(ed2);
-        	// Update in-memory model
-        	entity.getEntityData().remove(ed2);
-        }
+	public void removeDefaultImageFilePath(Entity entity) throws ComputeException {
+		removeEntityDataForAttributeName(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
     }
-    
+
 	/**
 	 * Add the default 3d image, and the default 3d image's default 2d image as the default 2d image. Hah!
 	 * @param entity
 	 * @param default3dImage
 	 * @throws ComputeException
 	 */
-	public void addDefaultImages(Entity entity, Entity default3dImage) throws ComputeException {
-        addImage(entity, default3dImage, EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+	public void setDefault3dImage(Entity entity, Entity default3dImage) throws ComputeException {
+        setImage(entity, EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE, default3dImage);
         EntityData ed = default3dImage.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
         if (ed!=null) {
         	if (!EntityUtils.isInitialized(ed.getChildEntity())) {
         		ed.setChildEntity(entityBean.getEntityById(""+ed.getChildEntity().getId()));
         	}
-        	addImage(entity, ed.getChildEntity(), EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);	
+        	setImage(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, ed.getChildEntity());	
         }
         else {
         	// TODO: this shouldn't be necessary in the future
         	EntityData oldEd = default3dImage.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
         	if (oldEd!=null) {
-        		addDefault2dImage(entity, oldEd.getValue());		
+        		setDefault2dImage(entity, oldEd.getValue());		
         	}
         }
     }
 
 	/**
-	 * Add the given image as the default 2d image for the given entity.
+	 * Sets the given image as the default 2d image for the given entity.
 	 * @param entity
-	 * @param defaultImage
+	 * @param default2dImage
 	 * @throws ComputeException
 	 */
-	public void addDefault2dImage(Entity entity, Entity defaultImage) throws ComputeException {
-        addImage(entity, defaultImage, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+	public void setDefault2dImage(Entity entity, Entity default2dImage) throws ComputeException {
+        setImage(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, default2dImage);
     }
 
 	/**
-	 * This is not recommended. It's only for when you don't have an entity to point to, and only a filepath. It will
-	 * automatically create a 2d image entity with the filename as the entity name, and point to that. 
+	 * Sets the default 2d image for the given entity. This creates a new entity with the given filename as the name.
+	 * @param entity
+	 * @param defaultImageFilepath
+	 * @throws ComputeException
 	 */
-	public void addDefault2dImage(Entity entity, String defaultImageFilepath) throws ComputeException {
+	public void setDefault2dImage(Entity entity, String defaultImageFilepath) throws ComputeException {
         logger.info("Adding default 2d image to id="+entity.getId()+" name="+entity.getName());
         Entity default2dImage = create2dImage(entity.getUser().getUserLogin(), defaultImageFilepath);
-        addDefault2dImage(entity, default2dImage);
+        setDefault2dImage(entity, default2dImage);
     }
-    
+
+	/**
+	 * Sets the given image as an image property to the given entity. Removes any existing images for that property.
+	 * @param entity
+	 * @param image
+	 * @param attributeName
+	 * @throws ComputeException
+	 */
+	public void setImage(Entity entity, String attributeName, Entity image) throws ComputeException {
+		removeEntityDataForAttributeName(entity, attributeName);
+		addImage(entity, attributeName, image);
+	}
+	
 	/**
 	 * Adds the given image as an image property to the given entity.
 	 * @param entity
@@ -118,75 +111,50 @@ public class EntityHelper {
 	 * @param attributeName
 	 * @throws ComputeException
 	 */
-	public void addImage(Entity entity, Entity image, String attributeName) throws ComputeException {
-        logger.info("Adding "+attributeName+" to id="+entity.getId()+" name="+entity.getName());
+	public void addImage(Entity entity, String attributeName, Entity image) throws ComputeException {
+        logger.info("Adding "+attributeName+" ("+image.getName()+") to id="+entity.getId()+" name="+entity.getName());
+    	if (isDebug) return;
         if (image != null) {
 	    	// Update in-memory model
 	    	String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
 	    	EntityData ed = entity.addChildEntity(image, attributeName);
 	    	ed.setValue(filepath);
 	    	// Update database
-	    	if (!isDebug) {
-	    		EntityData savedEd = entityBean.saveOrUpdateEntityData(ed);
-	    		EntityUtils.replaceEntityData(entity, ed, savedEd);
-	    	}
-        }
-        else {
-            logger.info("  No "+attributeName+" available");
+    		EntityData savedEd = entityBean.saveOrUpdateEntityData(ed);
+    		EntityUtils.replaceEntityData(entity, ed, savedEd);
         }
     }
 
-	public void removeMIPs(Entity entity) throws ComputeException {
-    	logger.info("Removing MIP images for id="+entity.getId()+" name="+entity.getName());
-        EntityData ed = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE);
-    	if (isDebug) return;
-        if (ed!=null) {
+	/**
+	 * Remove the given image property. Does NOT delete the image that is pointed to. 
+	 * @param entity
+	 * @throws ComputeException
+	 */
+	public void removeEntityDataForAttributeName(Entity entity, String attributeName) throws ComputeException {
+    	logger.info("Removing "+attributeName+" for id="+entity.getId()+" name="+entity.getName());
+        if (isDebug) return;
+        
+        Set<EntityData> toDelete = new HashSet<EntityData>();
+        for(EntityData ed : entity.getEntityData()) {
+        	if (ed.getEntityAttribute().getName().equals(attributeName)) {
+        		toDelete.add(ed);
+        	}
+        }
+        
+        for (EntityData ed : toDelete) {
         	// Update database
         	entityBean.deleteEntityData(ed);
         	// Update in-memory model
         	entity.getEntityData().remove(ed);
         }
-        ed = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE);
-        if (ed!=null) {
-        	// Update database
-        	entityBean.deleteEntityData(ed);
-        	// Update in-memory model
-        	entity.getEntityData().remove(ed);
-        }
     }
-
-	public void addMIPs(Entity entity, Entity signalMIP, Entity referenceMIP) throws ComputeException {
-        logger.info("Adding MIPs to id="+entity.getId()+" name="+entity.getName());
-        if (signalMIP != null) {
-        	// Update in-memory model
-        	String signalMIPfilepath = signalMIP.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        	EntityData ed = entity.addChildEntity(signalMIP, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE);
-        	ed.setValue(signalMIPfilepath);
-        	// Update database
-        	if (!isDebug) {
-        		EntityData savedEd = entityBean.saveOrUpdateEntityData(ed);
-        		EntityUtils.replaceEntityData(entity, ed, savedEd);
-        	}
-        }
-        else {
-            logger.info("  No signal MIP available");
-        }
-        if (referenceMIP != null) {
-        	// Update in-memory model
-        	String referenceMIPfilepath = referenceMIP.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        	EntityData ed = entity.addChildEntity(referenceMIP, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE);
-        	ed.setValue(referenceMIPfilepath);
-        	// Update database
-        	if (!isDebug) {
-        		EntityData savedEd = entityBean.saveOrUpdateEntityData(ed);
-        		EntityUtils.replaceEntityData(entity, ed, savedEd);
-        	}
-        }
-        else {
-            logger.info("  No reference MIP available");
-        }
-    }
-    
+	
+	/**
+	 * Create and save a new supporting files folder with the given owner. 
+	 * @param username
+	 * @return
+	 * @throws ComputeException
+	 */
 	public Entity createSupportingFilesFolder(String username) throws ComputeException {
         Entity filesFolder = new Entity();
         filesFolder.setUser(computeBean.getUserByName(username));
@@ -202,6 +170,13 @@ public class EntityHelper {
         return filesFolder;
     }
 
+	/**
+	 * Create and save a new 2d image entity with the given owner and filepath. 
+	 * @param username
+	 * @param filepath
+	 * @return
+	 * @throws ComputeException
+	 */
 	public Entity create2dImage(String username, String filepath) throws ComputeException {
 		
 		File file = new File(filepath);

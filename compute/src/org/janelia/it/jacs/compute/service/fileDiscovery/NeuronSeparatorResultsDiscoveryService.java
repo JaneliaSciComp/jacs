@@ -56,18 +56,13 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
         Entity filesFolder = EntityUtils.getSupportingData(resultEntity);
         Entity signalMIP = EntityUtils.findChildWithName(filesFolder, "ConsolidatedSignalMIP.png");
         Entity referenceMIP = EntityUtils.findChildWithName(filesFolder, "ReferenceMIP.png");
-        
-        // Remove current images
-		entityHelper.removeMIPs(resultEntity);
-		entityHelper.removeMIPs(sampleEntity);
-		entityHelper.removeDefaultImages(resultEntity);
-		entityHelper.removeDefaultImages(sampleEntity);
 
-		// Add new images
-		entityHelper.addMIPs(resultEntity, signalMIP, referenceMIP);
-		entityHelper.addMIPs(sampleEntity, signalMIP, referenceMIP);
-		entityHelper.addDefault2dImage(resultEntity, signalMIP);
-		entityHelper.addDefault2dImage(sampleEntity, signalMIP);
+		entityHelper.setImage(resultEntity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMIP);
+		entityHelper.setImage(resultEntity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, referenceMIP);
+		entityHelper.setImage(sampleEntity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMIP);
+		entityHelper.setImage(sampleEntity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, referenceMIP);
+		entityHelper.setDefault2dImage(resultEntity, signalMIP);
+		entityHelper.setDefault2dImage(sampleEntity, signalMIP);
     }
     
     protected void addFilesToSupportingFiles(Entity filesFolder, List<File> files) throws Exception {
