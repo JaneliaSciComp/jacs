@@ -16,6 +16,7 @@ import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.entity.EntityHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -638,6 +639,10 @@ public class MaskSampleAnnotationService  implements IService {
                 entityName="Cube Image";
             } else if (filename.contains("quantifiers")) {
                 entityName="Quantifiers";
+            } else if (filename.contains("compositeMask")) {
+                entityName="Mask";
+            } else if (filename.contains("compositeMaskMIP")) {
+                entityName="Mask";
             }
         }
         return entityName;
@@ -698,7 +703,9 @@ public class MaskSampleAnnotationService  implements IService {
 
         // Now we can add mips to the stacks because their entityName should match
         for (File file : fileList) {
-            if (file.getName().endsWith(".v3dpbd") && file.getName().toLowerCase().contains("heatmap")) {
+            if (file.getName().endsWith(".v3dpbd") &&
+                    (file.getName().toLowerCase().contains("heatmap") ||
+                    (file.getName().toLowerCase().contains("composite")))) {
                 String entityName=getMaskAnnotationEntityNameFromFilename(file.getName());
                 Entity stackEntity=null;
                 Entity stackFolder=null;
@@ -753,21 +760,21 @@ public class MaskSampleAnnotationService  implements IService {
         mipEntity.setUpdatedDate(createDate);
         mipEntity.setName(name);
         mipEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, pngFile.getAbsolutePath());
-        mipEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, pngFile.getAbsolutePath());
         mipEntity = entityBean.saveOrUpdateEntity(mipEntity);
         return mipEntity;
     }
 
     protected Entity createStackEntity(File file, String entityName, Entity mipEntity) throws Exception {
         Entity stack = new Entity();
+        EntityHelper entityHelper = new EntityHelper();
         String mipFilePath=mipEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         stack.setUser(user);
         stack.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK));
         stack.setCreationDate(createDate);
         stack.setUpdatedDate(createDate);
         stack.setName(entityName);
+        entityHelper.setDefault2dImage(stack, mipEntity);
         stack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
-        stack.setValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, mipFilePath);
         stack = entityBean.saveOrUpdateEntity(stack);
         logger.info("Saved stack " + stack.getName() + " as "+stack.getId());
         return stack;
@@ -837,6 +844,12 @@ public class MaskSampleAnnotationService  implements IService {
                     expectedFiles.add(file);
                 } else if (tokens[1].equals("heatmap16Color.v3dpbd")) {
                     File file=new File(maskAnnotationDir, filename);
+                    expectedFiles.add(file);
+                } else if (tokens[1].equals("compositeMask.v3dpbd")) {
+                    File file=new File(maskAnnotationDir, filename);
+                    expectedFiles.add(file);
+                } else if (tokens[1].equals("compositeMaskMIP.png")) {
+                    File file=new File(mipSubFolder, filename);
                     expectedFiles.add(file);
                 }
             } else if (tokens.length==3) {
