@@ -86,10 +86,11 @@ public class EntityHelper {
 	 * @param defaultImageFilepath
 	 * @throws ComputeException
 	 */
-	public void setDefault2dImage(Entity entity, String defaultImageFilepath) throws ComputeException {
+	public Entity setDefault2dImage(Entity entity, String defaultImageFilepath) throws ComputeException {
         logger.info("Adding default 2d image to id="+entity.getId()+" name="+entity.getName());
         Entity default2dImage = create2dImage(entity.getUser().getUserLogin(), defaultImageFilepath);
         setDefault2dImage(entity, default2dImage);
+        return default2dImage;
     }
 
 	/**
@@ -148,6 +149,26 @@ public class EntityHelper {
         	entity.getEntityData().remove(ed);
         }
     }
+	
+	/**
+	 * Tries to get the supporting data for an entity. If none exists, adds it and then returns it. 
+	 * @param entity
+	 * @return
+	 * @throws ComputeException
+	 */
+	public Entity getOrCreateSupportingFilesFolder(Entity entity) throws ComputeException {
+        Entity supportingFiles = EntityUtils.getSupportingData(entity);
+    	if (supportingFiles == null) {
+        	// Update in-memory model
+    		supportingFiles = createSupportingFilesFolder(entity.getUser().getUserLogin());
+			EntityData ed = entity.addChildEntity(supportingFiles, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
+	        if (!isDebug) {
+            	// Update database
+	        	entityBean.saveOrUpdateEntityData(ed);
+	        }
+    	}
+    	return supportingFiles;
+	}
 	
 	/**
 	 * Create and save a new supporting files folder with the given owner. 

@@ -123,17 +123,7 @@ public class MCFODataUpgradeService implements IService {
 		
 		if (!toMove.isEmpty()) {
 			logger.info("Found old-style sample, id="+sample.getId()+" name="+sample.getName());
-			
-            Entity supportingFiles = EntityUtils.getSupportingData(sample);
-        	if (supportingFiles == null) {
-            	// Update in-memory model
-        		supportingFiles = entityHelper.createSupportingFilesFolder(username);
-    			EntityData ed = sample.addChildEntity(supportingFiles, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
-    	        if (!isDebug) {
-                	// Update database
-    	        	entityBean.saveOrUpdateEntityData(ed);
-    	        }
-        	}
+            Entity supportingFiles = entityHelper.getOrCreateSupportingFilesFolder(sample);
 
     		for(EntityData ed : toMove) {
                 logger.info("    Moving ed="+ed.getId()+" to new parent "+supportingFiles.getId());
