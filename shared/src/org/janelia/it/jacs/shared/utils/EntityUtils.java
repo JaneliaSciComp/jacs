@@ -58,7 +58,7 @@ public class EntityUtils {
 			// Always attempt to get the shortcut image path for the role requested
 	    	path = entity.getValueByAttributeName(imageRole);
 		}
-
+    		
 		if (imageRole.equals(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE)) {
 			// If the entity is a 3D image, just return its path
 	        if (type.equals(EntityConstants.TYPE_IMAGE_3D) ||
@@ -79,6 +79,13 @@ public class EntityUtils {
 			}
 		}
 
+    	if (path == null) {
+    		EntityData ed = entity.getEntityDataByAttributeName(imageRole);
+    		if (ed!=null && isInitialized(ed.getChildEntity())) {
+    			path = getFilePath(ed.getChildEntity());
+    		}
+    	}
+    	
 		if (path == null && EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE.equals(imageRole)) {
 	    	// TODO: This is for backwards compatibility with old data. Remove this in the future.
 	    	path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);	    	
@@ -224,7 +231,16 @@ public class EntityUtils {
             }
         }
 	}
-
+	
+	public static Map<Long,Entity> getEntityMap(List<Entity> entities) {
+        Map<Long, Entity> entityMap = new HashMap<Long, Entity>();
+        for (Entity entity : entities) {
+            entityMap.put(entity.getId(), entity);
+        }
+		return entityMap;
+	}
+	
+	
 	public static List<String> getPathFromUniqueId(String uniqueId) {
 		List<String> path = new ArrayList<String>();
 		String[] pathParts = uniqueId.split("/");
@@ -248,5 +264,13 @@ public class EntityUtils {
 		String lastPart = pathParts[pathParts.length-1];
 		if (!lastPart.startsWith("e_")) return null;
 		return new Long(lastPart.substring(2));
+	}
+
+	public static List<Long> getEntityIdsFromUniqueId(String uniqueId) {
+		List<Long> entityIds = new ArrayList<Long>();
+		for(String ancestorUniqueId : getPathFromUniqueId(uniqueId)) {
+			entityIds.add(getEntityIdFromUniqueId(ancestorUniqueId));
+		}
+		return entityIds;
 	}
 }
