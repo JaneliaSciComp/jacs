@@ -397,7 +397,7 @@ public class SplitLinesLoadingService implements IService {
     		return null;
     	}
     	
-    	logger.info("  Finding best representative for "+line.getFlylineName()+" (splitPart="+splitPart+")");
+//    	logger.info("  Finding best representative for "+line.getFlylineName()+" (splitPart="+splitPart+")");
     	
 		if ("DBD".equals(splitPart)) {
 			// Prefer Gal4 representative for DBD, with a matching insert
@@ -405,7 +405,7 @@ public class SplitLinesLoadingService implements IService {
 				if (!isLexA(vector)) {
 					for(String insert : keys(vectors.get(vector))) {
 						if (line.getInsertionSite().equals(insert)) {
-							logger.info("  -> Found Gal4 with matching insert");
+//							logger.info("  -> Found Gal4 with matching insert");
 							return chooseInsert(vectors.get(vector), insert);
 						}
 					}
@@ -415,7 +415,7 @@ public class SplitLinesLoadingService implements IService {
 			for(String vector : keys(vectors)) {
 				if (!isLexA(vector)) {
 					for(String insert : keys(vectors.get(vector))) {
-						logger.info("  -> Found Gal4");
+//						logger.info("  -> Found Gal4");
 						return chooseInsert(vectors.get(vector), insert);
 					}
 				}
@@ -427,7 +427,7 @@ public class SplitLinesLoadingService implements IService {
 				if (isLexA(vector)) {
 					for(String insert : keys(vectors.get(vector))) {
 						if ("21".equals(insert)) {
-							logger.info("  -> Found LexA/21");
+//							logger.info("  -> Found LexA/21");
 							return chooseInsert(vectors.get(vector), insert);
 						}
 					}
@@ -439,7 +439,7 @@ public class SplitLinesLoadingService implements IService {
 				if (isLexA(vector)) {
 					for(String insert : keys(vectors.get(vector))) {
 						if (line.getInsertionSite().equals(insert)) {
-							logger.info("  -> Found LexA with matching insert");
+//							logger.info("  -> Found LexA with matching insert");
 							return chooseInsert(vectors.get(vector), insert);
 						}
 					}
@@ -450,7 +450,7 @@ public class SplitLinesLoadingService implements IService {
 			for(String vector : keys(vectors)) {
 				if (isLexA(vector)) {
 					for(String insert : keys(vectors.get(vector))) {
-						logger.info("  -> Found LexA");
+//						logger.info("  -> Found LexA");
 						return chooseInsert(vectors.get(vector), insert);
 					}
 				}
@@ -461,7 +461,7 @@ public class SplitLinesLoadingService implements IService {
 				if (!isLexA(vector)) {
 					for(String insert : keys(vectors.get(vector))) {
 						if (line.getInsertionSite().equals(insert)) {
-							logger.info("  -> Found Gal4 with matching insert");
+//							logger.info("  -> Found Gal4 with matching insert");
 							return chooseInsert(vectors.get(vector), insert);
 						}
 					}
@@ -472,14 +472,14 @@ public class SplitLinesLoadingService implements IService {
 			for(String vector : keys(vectors)) {
 				if (!isLexA(vector)) {
 					for(String insert : keys(vectors.get(vector))) {
-						logger.info("  -> Found Gal4");
+//						logger.info("  -> Found Gal4");
 						return chooseInsert(vectors.get(vector), insert);
 					}
 				}
 			}
 		}
 
-		logger.info("     Could not find a representative");
+//		logger.info("     Could not find a representative");
 		return null;
     }
     

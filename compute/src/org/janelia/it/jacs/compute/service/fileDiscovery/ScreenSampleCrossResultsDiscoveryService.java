@@ -60,8 +60,6 @@ public class ScreenSampleCrossResultsDiscoveryService implements IService {
 	        	throw new ServiceException("OUTPUT_ENTITY_ID_LIST must contain the same number of ids as the input lists");
 	        }
 
-	        EntityType image2D = entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
-			EntityType image3D = entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
 	        EntityHelper entityHelper = new EntityHelper(false);
 
 	        int i = 0;
@@ -83,13 +81,13 @@ public class ScreenSampleCrossResultsDiscoveryService implements IService {
 		                	throw new ServiceException("Missing output MIP: "+outputMip.getAbsolutePath());
 		                }
 		
-		                Entity stack = createFileEntity(image3D, outputStack, "Intersection Stack");
+		                Entity stack = entityHelper.create3dImage(user.getUserLogin(), outputStack.getAbsolutePath(), "Intersection Stack");
 		                entityBean.addEntityToParent(resultEntity, stack, resultEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
 		                
 		                // Add default images
-		                Entity mip = createFileEntity(image2D, outputMip, "Intersection MIP");
+		                Entity mip = entityHelper.create2dImage(user.getUserLogin(), outputMip.getAbsolutePath(), "Intersection MIP");
 		                entityHelper.setDefault2dImage(stack, mip);
-		                entityHelper.setDefault2dImage(resultEntity, mip);
+		                entityHelper.setDefault3dImage(resultEntity, stack);
 		        }
 		        catch (Exception e) {
 		        	throw new Exception("Error processing cross results for id="+parentId, e);
@@ -110,7 +108,7 @@ public class ScreenSampleCrossResultsDiscoveryService implements IService {
         entity.setName(entityName);
         entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
 
-        if (type.getName().equals(EntityConstants.TYPE_IMAGE_2D)) {
+        if (type.getName().equals(EntityConstants.TYPE_IMAGE_2D) || type.getName().equals(EntityConstants.TYPE_IMAGE_3D)) {
         	String filename = file.getName();
         	String fileFormat = filename.substring(filename.lastIndexOf('.')+1);
         	entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, fileFormat);

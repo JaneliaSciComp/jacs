@@ -125,7 +125,8 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
             	logger.warn("Could not find "+resultFile.getName()+" in supporting files for result entity id="+resultEntity.getId());
             }
     		Integer index = getIndex(resultFile.getName());
-        	Entity fragmentEntity = createFragmentEntity(fragmentType, fragmentMIP, index);
+        	Entity fragmentEntity = createFragmentEntity(fragmentType, index);
+    		entityHelper.setDefault2dImage(fragmentEntity, fragmentMIP);
         	addToParent(fragmentsFolder, fragmentEntity, index, EntityConstants.ATTRIBUTE_ENTITY);	
         }
     }
@@ -143,7 +144,7 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     	return null;
     }
     
-    protected Entity createFragmentEntity(EntityType fragmentType, Entity fragmentMIP, Integer index) throws Exception {
+    protected Entity createFragmentEntity(EntityType fragmentType, Integer index) throws Exception {
         Entity fragmentEntity = new Entity();
         fragmentEntity.setUser(user);
         fragmentEntity.setEntityType(fragmentType);
@@ -151,9 +152,6 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
         fragmentEntity.setUpdatedDate(createDate);
         fragmentEntity.setName("Neuron Fragment "+index);
         fragmentEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER, index.toString());
-        if (fragmentMIP != null) {
-        	fragmentEntity.addChildEntity(fragmentMIP, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-        }
         fragmentEntity = entityBean.saveOrUpdateEntity(fragmentEntity);
         logger.info("Saved fragment entity as "+fragmentEntity.getId());
         return fragmentEntity;

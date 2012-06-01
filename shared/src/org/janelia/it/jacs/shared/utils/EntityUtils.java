@@ -42,72 +42,49 @@ public class EntityUtils {
     }
 
     public static String getDefaultImageFilePath(Entity entity) {
-    	return getDefaultImageFilePath(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+    	return getImageFilePath(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
     }
     
-    public static String getDefaultImageFilePath(Entity entity, String imageRole) {
+    public static String getDefault3dImageFilePath(Entity entity) {
+    	return getImageFilePath(entity, EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+    }
+    
+    public static String getImageFilePath(Entity entity, String imageRole) {
 
     	String type = entity.getEntityType().getName();
     	String path = null;
-    	
-    	// If the entity is a 2D image, just return its path
-		if (type.equals(EntityConstants.TYPE_IMAGE_2D)) {
-			path = getFilePath(entity);
-		}
-    	
+
 		if (path == null) {
-			// If the entity has a default 2D image, then just return the cached path
+			// Always attempt to get the shortcut image path for the role requested
 	    	path = entity.getValueByAttributeName(imageRole);
 		}
-		
-		if (path == null) {
-	    	// This should never be non-null if the previous attempt was null, but just in case...
-	    	path = getFilePath(entity.getChildByAttributeName(imageRole));
+
+		if (imageRole.equals(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE)) {
+			// If the entity is a 3D image, just return its path
+	        if (type.equals(EntityConstants.TYPE_IMAGE_3D) ||
+	        		type.equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK) ||
+	        		type.equals(EntityConstants.TYPE_LSM_STACK) ||
+	        		type.equals(EntityConstants.TYPE_SWC_FILE) ||
+	        		type.equals(EntityConstants.TYPE_V3D_ANO_FILE) ||
+	        		type.equals(EntityConstants.TYPE_STITCHED_V3D_RAW) ||
+	        		type.equals(EntityConstants.TYPE_TIF_3D)) {
+	        	path = getFilePath(entity);
+	        }
+		}
+		else if (imageRole.equals(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)) {
+			// If the entity is a 2D image, just return its path
+			if (type.equals(EntityConstants.TYPE_IMAGE_2D) || 
+	        		type.equals(EntityConstants.TYPE_TIF_2D)) {
+				path = getFilePath(entity);
+			}
 		}
 
 		if (path == null && EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE.equals(imageRole)) {
 	    	// TODO: This is for backwards compatibility with old data. Remove this in the future.
-	    	path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
-	    	if (path!=null) {
-//	    		System.out.println("Warning: old data detected. Using deprecated attribute '"+EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH+"'");
-	    	}
-	    	
+	    	path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);	    	
 		}
 		
 		return path;
-    }
-    
-    /**
-     * TODO: refactor this
-     */
-    public EntityData setValueByAttributeName(Entity entity, String attributeName, String value) {
-        Set<EntityData> matchingData=new HashSet<EntityData>();
-        for (EntityData ed : entity.getEntityData()) {
-            if (ed.getEntityAttribute().getName().matches(attributeName)) {
-                matchingData.add(ed);
-            }
-        }
-        if (matchingData.size()==0) {
-            // Ok, we will add this
-            EntityAttribute attribute=entity.getAttributeByName(attributeName);
-            if (attribute==null) {
-                throw new IllegalArgumentException("Entity "+entity.getId()+" with type "+entity.getEntityType().getName()+" does not have attribute: "+attributeName);
-            }
-            EntityData ed=new EntityData();
-            ed.setParentEntity(entity);
-            ed.setEntityAttribute(attribute);
-            ed.setValue(value);
-            ed.setUser(entity.getUser());
-            entity.getEntityData().add(ed);
-            return ed;
-        } else if (matchingData.size()==1) {
-            // Update the value of the existing entry
-            EntityData ed=matchingData.iterator().next();
-            ed.setValue(value);
-            return ed;
-        }
-        // More than one EntityData matching the attribute - do nothing
-        return null;
     }
     
     public static String getAnyFilePath(Entity entity) {

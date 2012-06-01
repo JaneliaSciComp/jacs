@@ -37,10 +37,6 @@ public class EntityConstants {
     public static final String TYPE_ALIGNMENT_RESULT                 = "Alignment Result";
     public static final String TYPE_IMAGE_2D                         = "Image 2D";
     public static final String TYPE_IMAGE_3D                         = "Image 3D";
-    public static final String TYPE_TIF_2D                           = "Tif 2D Image";
-    public static final String TYPE_TIF_3D                           = "Tif 3D Image";
-    public static final String TYPE_TIF_3D_LABEL_MASK                = "Tif 3D Label Mask";
-    public static final String TYPE_STITCHED_V3D_RAW                 = "Stitched V3D Raw Stack";
     public static final String TYPE_NEURON_FRAGMENT                  = "Neuron Fragment";
     public static final String TYPE_NEURON_FRAGMENT_COLLECTION       = "Neuron Fragment Collection";
     public static final String TYPE_ALIGNED_BRAIN_STACK              = "Aligned Brain Stack";
@@ -89,6 +85,26 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ARTIFACT_SOURCE_ID                  = "Artifact Source Entity Id";
     public static final String ATTRIBUTE_SPLIT_PART                          = "Split Part";
     public static final String ATTRIBUTE_REPRESENTATIVE_SAMPLE               = "Representative Sample";
+    
+    /**
+     * @deprecated Use TYPE_IMAGE_2D instead. This will be removed someday.
+     */
+    public static final String TYPE_TIF_2D                           = "Tif 2D Image";
+
+    /**
+     * @deprecated Use TYPE_IMAGE_3D instead. This will be removed someday.
+     */
+    public static final String TYPE_TIF_3D                           = "Tif 3D Image";
+
+    /**
+     * @deprecated Use TYPE_IMAGE_3D instead. This will be removed someday.
+     */
+    public static final String TYPE_TIF_3D_LABEL_MASK                = "Tif 3D Label Mask";
+    
+    /**
+     * @deprecated Use TYPE_IMAGE_3D instead. This will be removed someday.
+     */
+    public static final String TYPE_STITCHED_V3D_RAW                 	     = "Stitched V3D Raw Stack";
     
     /**
      * @deprecated Use ATTRIBUTE_DEFAULT_2D_IMAGE instead. This will be removed someday.

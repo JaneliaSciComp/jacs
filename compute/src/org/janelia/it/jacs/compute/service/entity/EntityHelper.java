@@ -87,7 +87,7 @@ public class EntityHelper {
 	 * @throws ComputeException
 	 */
 	public Entity setDefault2dImage(Entity entity, String defaultImageFilepath) throws ComputeException {
-        logger.info("Adding default 2d image to id="+entity.getId()+" name="+entity.getName());
+        logger.info("Adding Default 2D Image to id="+entity.getId()+" name="+entity.getName());
         Entity default2dImage = create2dImage(entity.getUser().getUserLogin(), defaultImageFilepath);
         setDefault2dImage(entity, default2dImage);
         return default2dImage;
@@ -190,7 +190,7 @@ public class EntityHelper {
     	// Return the new object so that we can update in-memory model
         return filesFolder;
     }
-
+	
 	/**
 	 * Create and save a new 2d image entity with the given owner and filepath. 
 	 * @param username
@@ -199,25 +199,63 @@ public class EntityHelper {
 	 * @throws ComputeException
 	 */
 	public Entity create2dImage(String username, String filepath) throws ComputeException {
-		
 		File file = new File(filepath);
+		return createImage(username, EntityConstants.TYPE_IMAGE_2D, filepath, file.getName());
+	}
+	
+	/**
+	 * Create and save a new 2d image entity with the given owner and filepath. 
+	 * @param username
+	 * @param filepath
+	 * @return
+	 * @throws ComputeException
+	 */
+	public Entity create2dImage(String username, String filepath, String name) throws ComputeException {
+		return createImage(username, EntityConstants.TYPE_IMAGE_2D, filepath, name);
+	}
+
+	/**
+	 * Create and save a new 3d image entity with the given owner and filepath. 
+	 * @param username
+	 * @param filepath
+	 * @return
+	 * @throws ComputeException
+	 */
+	public Entity create3dImage(String username, String filepath) throws ComputeException {
+		File file = new File(filepath);
+		return createImage(username, EntityConstants.TYPE_IMAGE_3D, filepath, file.getName());
+	}
+	
+	/**
+	 * Create and save a new 3d image entity with the given owner and filepath. 
+	 * @param username
+	 * @param filepath
+	 * @return
+	 * @throws ComputeException
+	 */
+	public Entity create3dImage(String username, String filepath, String name) throws ComputeException {
+		return createImage(username, EntityConstants.TYPE_IMAGE_3D, filepath, name);
+	}
+	
+	public Entity createImage(String username, String entityTypeName, String filepath, String name) throws ComputeException {
 		
         Entity entity = new Entity();
         entity.setUser(computeBean.getUserByName(username));
-        entity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D));
+        entity.setEntityType(entityBean.getEntityTypeByName(entityTypeName));
         Date createDate = new Date();
         entity.setCreationDate(createDate);
         entity.setUpdatedDate(createDate);
-        entity.setName(file.getName());
-        entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
+        entity.setName(name);
+        entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, filepath);
 
+		File file = new File(filepath);
     	String filename = file.getName();
     	String fileFormat = filename.substring(filename.lastIndexOf('.')+1);
     	entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, fileFormat);
         
     	// Update database
         if (!isDebug) entity = entityBean.saveOrUpdateEntity(entity);
-        logger.info("Saved new 2d image as "+entity.getId());
+        logger.info("Saved new "+entityTypeName+" as "+entity.getId());
     	// Return the new object so that we can update in-memory model
         return entity;
     }
