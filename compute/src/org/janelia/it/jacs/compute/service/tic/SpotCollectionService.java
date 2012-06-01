@@ -20,6 +20,12 @@ import java.util.TreeMap;
 public class SpotCollectionService implements IService {
 
     public static final String SPOT_FILE_NAME = "spotFiles.txt";
+    public static final int POSX_INDEX=1;
+    public static final int POSY_INDEX=2;
+    public static final int POSZ_INDEX=3;
+    public static final int SIGX_INDEX=7;
+    public static final int SIGY_INDEX=8;
+    public static final int SIGZ_INDEX=9;
     private Logger _logger;
     private Task task;
     private TICResultNode resultFileNode;
@@ -58,25 +64,26 @@ public class SpotCollectionService implements IService {
             Scanner spotScanner=null;
             try {
                 int maxFramesPerFile = 0;
-                int frameIndex = 0;
+                boolean addedHeader = false;
                 for (Integer integer : spotFiles.keySet()) {
                     spotScanner = new Scanner(new File(spotFiles.get(integer)));
                     boolean hitFileFlag = false;
                     while(spotScanner.hasNextLine()) {
                         String tmpLine = spotScanner.nextLine();
-                        if (1==integer || hitFileFlag) {
+                        if (!addedHeader || hitFileFlag) {
                             if (hitFileFlag) {
                                 String index = tmpLine.substring(0,tmpLine.indexOf("\t"));
                                 maxFramesPerFile = Integer.valueOf(index)+1;
                                 // Make sure the frame is correct
                                 tmpLine = adjustFrameColumn(tmpLine, maxFramesPerFile, integer);
                             }
-                            writer.write(tmpLine+"\n");
+                            if (null!=tmpLine) {writer.write(tmpLine+"\n");}
                         }
                         if (!hitFileFlag) {
                             hitFileFlag = tmpLine.startsWith("File#");
                         }
                     }
+                    if (!addedHeader) {addedHeader=true;}
                 }
                 _logger.debug("Max frames per file is "+maxFramesPerFile);
             }
@@ -95,15 +102,46 @@ public class SpotCollectionService implements IService {
 
     private String adjustFrameColumn(String tmpLine, int maxFramesPerFile, Integer index) {
         String tmpFrame = tmpLine.substring(0,tmpLine.indexOf("\t"));
+        String[] pieces = tmpLine.split("\t");
+        if (valueFails(pieces[POSX_INDEX],-120,22000)) {
+            _logger.debug("Throwing out data that exceeds X threshold: "+tmpLine);
+            return null;
+        }
+        if (valueFails(pieces[POSY_INDEX],-120,22000)) {
+            _logger.debug("Throwing out data that exceeds Y threshold: "+tmpLine);
+            return null;
+        }
+        if (valueFails(pieces[POSZ_INDEX],-500,5000))  {
+            _logger.debug("Throwing out data that exceeds Z threshold: "+tmpLine);
+            return null;
+        }
+        if (valueFails(pieces[SIGX_INDEX],30,600)) {
+            _logger.debug("Throwing out data that exceeds Sig X threshold: "+tmpLine);
+            return null;
+        }
+        if (valueFails(pieces[SIGY_INDEX],30,600)) {
+            _logger.debug("Throwing out data that exceeds Sig Y threshold: "+tmpLine);
+            return null;
+        }
+        if (valueFails(pieces[SIGZ_INDEX],50,800)) {
+            _logger.debug("Throwing out data that exceeds Sig Z threshold: "+tmpLine);
+            return null;
+        }
+
         try {
             Integer tmpFrameValue = Integer.valueOf(tmpFrame);
-            tmpFrameValue = (index-1)*maxFramesPerFile+tmpFrameValue;
+            tmpFrameValue = (index*maxFramesPerFile)+tmpFrameValue;
             tmpLine = tmpLine.replaceFirst(tmpFrame,tmpFrameValue.toString());
         }
         catch (Exception e) {
             // ignore errors here
         }
         return tmpLine;
+    }
+
+    private boolean valueFails(String columnValue, float minimumValue, float maximumValue) {
+        Float testValue = Float.valueOf(columnValue);
+        return (testValue < minimumValue || testValue > maximumValue);
     }
 
 }
