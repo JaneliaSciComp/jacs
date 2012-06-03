@@ -21,6 +21,7 @@ import org.janelia.it.jacs.model.tasks.fly.MaskSampleAnnotationTask;
 import org.janelia.it.jacs.model.tasks.tic.SingleTicTask;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
 import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
@@ -388,6 +389,16 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         try {
             Map<Entity, Map<String, Double>> entityQuantifierMap=EJBFactory.getLocalAnnotationBean().getPatternAnnotationQuantifiers();
             PatternAnnotationDataManager.createPatternAnnotationQuantifierSummaryFile(entityQuantifierMap);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void createMaskSummaryFile(String maskFolderName) {
+        try {
+            Map<Entity, Map<String, Double>> entityQuantifierMap=EJBFactory.getLocalAnnotationBean().getMaskQuantifiers(maskFolderName);
+            MaskAnnotationDataManager maskManager=new MaskAnnotationDataManager();
+            maskManager.createMaskAnnotationQuantifierSummaryFile(maskFolderName, entityQuantifierMap);
         } catch (Exception ex) {
             ex.printStackTrace();
         }

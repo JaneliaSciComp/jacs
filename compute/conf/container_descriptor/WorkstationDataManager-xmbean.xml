@@ -402,6 +402,16 @@
     </operation>
 
     <operation>
+        <description>Create Mask Summary File</description>
+        <name>createMaskSummaryFile</name>
+        <parameter>
+            <description>Mask folder name</description>
+            <name>maskFolderName</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+
+    <operation>
         <description>Run the Mask Annotation Pipeline</description>
         <name>runMaskAnnotationPipeline</name>
         <parameter>

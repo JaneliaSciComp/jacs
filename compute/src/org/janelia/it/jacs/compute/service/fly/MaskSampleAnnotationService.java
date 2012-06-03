@@ -50,7 +50,7 @@ public class MaskSampleAnnotationService  implements IService {
     private static final Logger logger = Logger.getLogger(MaskSampleAnnotationService.class);
 
     final public String MASK_ANNOTATION_SUBDIR_NAME="maskAnnotation";
-    final public String MASK_ANNOTATION_FOLDER_NAME="Mask Annotation";
+    final static public String MASK_ANNOTATION_FOLDER_NAME="Mask Annotation";
     final public String MIPS_SUBFOLDER_NAME="mips";
     final public String SUPPORTING_FILE_SUBFOLDER_NAME="supportingFiles";
     final public String NORMALIZED_SUBFOLDER_NAME="normalized";

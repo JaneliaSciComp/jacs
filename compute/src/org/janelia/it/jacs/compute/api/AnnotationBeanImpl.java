@@ -284,6 +284,15 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
     }
 
+    public Map<Entity, Map<String, Double>> getMaskQuantifiers(String maskFolderName) throws ComputeException {
+        try {
+            return _annotationDAO.getMaskQuantifiers(maskFolderName);
+        } catch (DaoException e) {
+            _logger.error("Error in getMaskQuantifiers(): "+e.getMessage());
+            throw new ComputeException("Error in getMaskQuantifiers(): "+e.getMessage(), e);
+        }
+    }
+
     public Object[] getPatternAnnotationQuantifierMapsFromSummary() throws ComputeException {
         try {
             return _annotationDAO.getPatternAnnotationQuantifierMapsFromSummary();

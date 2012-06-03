@@ -19,6 +19,7 @@ import org.hibernate.criterion.Expression;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.api.support.EntityMapStep;
+import org.janelia.it.jacs.compute.service.fly.MaskSampleAnnotationService;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.ontology.types.Category;
@@ -2040,6 +2041,68 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
         return entityQuantMap;
     }
+
+
+    public Map<Entity, Map<String, Double>> getMaskQuantifiers(String maskFolderName) throws DaoException {
+        _logger.info("getMaskQuantifiers() folder name=" + maskFolderName + " : starting search for entities of type=" + EntityConstants.TYPE_SCREEN_SAMPLE);
+        List<Entity> flyScreenSampleEntityList = getUserEntitiesByTypeName("system", EntityConstants.TYPE_SCREEN_SAMPLE);
+        _logger.info("getPatternQuantifiersForScreenSample: found " + flyScreenSampleEntityList.size() + " entities of type=" + EntityConstants.TYPE_SCREEN_SAMPLE);
+        Map<Entity, Map<String, Double>> entityQuantMap = new HashMap<Entity, Map<String, Double>>();
+        long count = 0;
+        for (Entity screenSample : flyScreenSampleEntityList) {
+            // Get the file-path for the quantifier file
+            _logger.info("Exploring screenSample name=" + screenSample.getName() + " index=" + count + " of " + flyScreenSampleEntityList.size());
+            Set<Entity> topChildren = screenSample.getChildren();
+            for (Entity topChild : topChildren) {
+                if (topChild.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) &&
+                        topChild.getName().toLowerCase().equals(MaskSampleAnnotationService.MASK_ANNOTATION_FOLDER_NAME)) {
+                    Set<Entity> children = topChild.getChildren();
+                    for (Entity child : children) {
+                        if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) &&
+                                child.getName().equals(maskFolderName)) {
+                            Set<Entity> children2 = child.getChildren();
+                            for (Entity child2 : children2) {
+                                // _logger.info("Child2 id="+child2.getId()+" type="+child2.getEntityType().getName()+" name="+child2.getName());
+                                if (child2.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) &&
+                                        child2.getName().toLowerCase().equals("supportingfiles")) {
+                                    Set<Entity> children3 = child2.getChildren();
+                                    for (Entity child3 : children3) {
+                                        //_logger.info("Child3 id="+child3.getId()+" type="+child3.getEntityType().getName()+" name="+child3.getName());
+                                        if (child3.getEntityType().getName().equals(EntityConstants.TYPE_TEXT_FILE) && child3.getName().endsWith("quantifiers.txt")) {
+                                            String quantifierFilePath = child3.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                                            _logger.info("Quantifier file path=" + quantifierFilePath);
+                                            File quantFile = new File(quantifierFilePath);
+                                            Map<String, Double> quantMap = new HashMap<String, Double>();
+                                            try {
+                                                BufferedReader br = new BufferedReader(new FileReader(quantFile));
+                                                String currentLine = "";
+                                                while ((currentLine = br.readLine()) != null) {
+                                                    String[] kv = currentLine.split("=");
+                                                    if (kv.length == 2) {
+                                                        Double d = new Double(kv[1].trim());
+                                                        quantMap.put(kv[0], d);
+                                                    }
+                                                }
+                                                br.close();
+                                                _logger.info("Added " + quantMap.size() + " entries");
+                                                entityQuantMap.put(screenSample, quantMap);
+                                            }
+                                            catch (Exception ex) {
+                                                throw new DaoException(ex);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            count++;
+        }
+        return entityQuantMap;
+    }
+
 
     // This method returns two objects,  Map<Long, Map<String, String>> sampleInfoMap, Map<Long, List<Double>> quantifierInfoMap
     public Object[] getPatternAnnotationQuantifierMapsFromSummary() throws DaoException {
