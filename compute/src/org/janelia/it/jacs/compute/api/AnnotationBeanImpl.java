@@ -301,8 +301,18 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             throw new ComputeException("Error in getPatternAnnotationQuantifierMapsFromSummary(): "+e.getMessage(), e);
         }
     }
-    
-    
+
+    public Object[] getMaskQuantifierMapsFromSummary(String maskFolderName) throws ComputeException {
+        try {
+            return _annotationDAO.getMaskQuantifierMapsFromSummary(maskFolderName);
+        } catch (DaoException e) {
+            _logger.error("Error in getMaskQuantifierMapsFromSummary(): "+e.getMessage());
+            throw new ComputeException("Error in getMaskQuantifierMapsFromSummary(): "+e.getMessage(), e);
+        }
+    }
+
+
+
     private void updateIndexForAnnotationTargets(List<Entity> annotations) {
     	if (annotations==null) return;
     	for(Entity annotation : annotations) {

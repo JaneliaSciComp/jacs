@@ -51,5 +51,6 @@ public interface AnnotationBeanRemote {
     public Map<Entity, Map<String, Double>> getPatternAnnotationQuantifiers() throws ComputeException;
     public Object[] getPatternAnnotationQuantifierMapsFromSummary() throws ComputeException;
     public Map<Entity, Map<String, Double>> getMaskQuantifiers(String maskFolderName) throws ComputeException;
+    public Object[] getMaskQuantifierMapsFromSummary(String maskFolderName) throws ComputeException;
 
    }

@@ -29,6 +29,7 @@ import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
 import org.janelia.it.jacs.model.user_data.User;
+import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
 import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
 
 public class AnnotationDAO extends ComputeBaseDAO {
@@ -2108,6 +2109,17 @@ public class AnnotationDAO extends ComputeBaseDAO {
     public Object[] getPatternAnnotationQuantifierMapsFromSummary() throws DaoException {
         try {
             Object[] mapObjects = PatternAnnotationDataManager.loadPatternAnnotationQuantifierSummaryFile();
+            return mapObjects;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw new DaoException(ex);
+        }
+    }
+
+    public Object[] getMaskQuantifierMapsFromSummary(String maskFolderName) throws DaoException {
+        try {
+            MaskAnnotationDataManager maskManager=new MaskAnnotationDataManager();
+            Object[] mapObjects=maskManager.loadMaskSummaryFile(maskFolderName);
             return mapObjects;
         } catch (Exception ex) {
             ex.printStackTrace();
