@@ -34,6 +34,9 @@
         <java>drmaa.jar</java>
     </module>
     <module>
+        <java>JGoogleAnalytics_0.4.jar</java>
+    </module>
+    <module>
         <java>gwt-servlet.jar</java>
     </module>
     <module>
