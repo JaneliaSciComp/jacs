@@ -29,7 +29,8 @@ public class UsageInterceptor {
     private String serverName;
     private String jacsVersion;
     private String googleTrackingCode;
-    
+    private JGoogleAnalyticsTracker tracker;
+
     public UsageInterceptor() {
         SystemConfigurationProperties properties = SystemConfigurationProperties.getInstance();
         googleTrackingCode = properties.getProperty(GA_CODE_PROP);
@@ -43,6 +44,7 @@ public class UsageInterceptor {
                 " and tracking code=" + googleTrackingCode
             );
         }
+        tracker = new JGoogleAnalyticsTracker( APPNAME_PREFIX + serverName, jacsVersion, googleTrackingCode );
     }
 
     @AroundInvoke
@@ -52,16 +54,15 @@ public class UsageInterceptor {
             logger.debug("Before invoking " + targetMessage);
         }
 
-        JGoogleAnalyticsTracker tracker;
-        tracker = new JGoogleAnalyticsTracker( APPNAME_PREFIX + serverName, jacsVersion, googleTrackingCode );
-
-        FocusPoint focusPoint = new FocusPoint( targetMessage + ":start" );
+        // Focus point before....
+        FocusPoint focusPoint = new FocusPoint( targetMessage );
         tracker.trackAsynchronously( focusPoint );
 
         Object rtnObj = ctx.proceed();
 
-        focusPoint = new FocusPoint( targetMessage + ":end" );
-        tracker.trackAsynchronously( focusPoint );
+        // ...and again after.
+        // NOTE: this apparently makes 2x usual tracking stats.
+        //  tracker.trackAsynchronously( focusPoint );
 
         if ( logger.isDebugEnabled() ) {
             logger.debug( "After invoking " + ctx.getTarget().getClass().getSimpleName() + "." + ctx.getMethod().getName() );

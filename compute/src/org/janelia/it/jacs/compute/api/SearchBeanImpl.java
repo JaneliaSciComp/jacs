@@ -7,6 +7,7 @@ import org.apache.lucene.search.Hits;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.engine.launcher.ProcessManager;
+import org.janelia.it.jacs.compute.interceptor.UsageInterceptor;
 import org.janelia.it.jacs.compute.service.search.SearchQuerySessionContainer;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.search.SearchTask;
@@ -19,6 +20,7 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.interceptor.Interceptors;
 import java.util.Iterator;
 import java.util.List;
 
@@ -31,6 +33,7 @@ import java.util.List;
 @Stateless(name = "SearchEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
+@Interceptors({UsageInterceptor.class})
 @PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 100, timeout = 10000)
 public class SearchBeanImpl implements SearchBeanLocal, SearchBeanRemote {
     private Logger _logger = Logger.getLogger(this.getClass());

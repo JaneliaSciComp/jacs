@@ -411,6 +411,7 @@
         <property name="scp.common.params" value=""/>
 
         <echo message="Testing connection" />
+        <echo message="SSH Common Params ${ssh.common.params} for ${ssh}"/>
         <exec executable="${ssh}" description="Testing connection"
               outputproperty="exec.output" failonerror="true">
             <arg line="${ssh.common.params} ls -ld /tmp"/>
