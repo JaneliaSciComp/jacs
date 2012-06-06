@@ -335,7 +335,7 @@ public class MaskSampleAnnotationService  implements IService {
         processData.putItem("MASK_ANNOTATION_PATH", finalAnnotationDirList);
         processData.putItem("MIPS_CONVERSION_PATH", finalMipConversionDirList);
         processData.putItem("ALIGNED_STACK_PATH_LIST", finalAlignedStackList);
-        processData.putItem("RESOURCE_DIR_PATH", maskAnnotationResourceDir);
+        processData.putItem("RESOURCE_DIR_PATH", maskAnnotationResourceDir.getAbsolutePath());
         processData.putItem(ProcessDataConstants.RESULT_FILE_NODE, resultNode);
         processData.putItem("PATTERN_CHANNEL", patternChannel);
         processData.putItem("IMAGE_CONVERSION_RESULT_NODE_MAP", mipResultNodeMap);
