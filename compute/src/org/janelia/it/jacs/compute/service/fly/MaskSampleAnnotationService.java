@@ -29,6 +29,7 @@ import org.janelia.it.jacs.model.user_data.entity.MaskAnnotationResultNode;
 import org.janelia.it.jacs.model.user_data.entity.NamedFileNode;
 import org.janelia.it.jacs.model.user_data.entity.PatternAnnotationResultNode;
 import org.janelia.it.jacs.model.user_data.entity.ScreenSampleResultNode;
+import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
 /**
@@ -797,11 +798,12 @@ public class MaskSampleAnnotationService  implements IService {
             BufferedReader br=new BufferedReader(fr);
             String nextLine=null;
             while ((nextLine=br.readLine())!=null) {
-                String[] tokens=nextLine.trim().split(" ");
-                if (tokens.length!=2) {
+                List<String> nameLineList= MaskAnnotationDataManager.parseMaskNameIndexLine(nextLine);
+                if (nameLineList.size()<3) {
                     throw new Exception("Could not parse line from file="+abbreviationIndexFile.getAbsolutePath()+" line="+nextLine);
                 }
-                abbrevationList.add(tokens[1]);
+                logger.info("Adding "+nameLineList.get(2)+" to abbreviation list");
+                abbrevationList.add(nameLineList.get(2));
             }
             br.close();
         }

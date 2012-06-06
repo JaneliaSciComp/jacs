@@ -33,8 +33,9 @@ public class MaskAnnotationDataManager {
     public final Map<String, Integer> QS_GREEN_MAP = new HashMap<String, Integer>();
     public final Map<String, Integer> QS_BLUE_MAP = new HashMap<String, Integer>();
 
-    static {
+    public static Pattern nameListPattern;
 
+    static {
         QS_Z_INDEX_LIST.add(".z0");
         QS_Z_INDEX_LIST.add(".z1");
         QS_Z_INDEX_LIST.add(".z2");
@@ -47,25 +48,36 @@ public class MaskAnnotationDataManager {
         QS_C_INDEX_LIST.add(".c3");
         QS_C_INDEX_LIST.add(".c4");
 
+        nameListPattern=Pattern.compile("(\\S+)\\s+(\\S+)\\s+\"(.+)\"\\s+\\(\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)\\s*\\)");
+    }
+
+    public static List<String> parseMaskNameIndexLine(String line) {
+        List<String> returnList=new ArrayList<String>();
+        Matcher m=nameListPattern.matcher(line.trim());
+        if (m.matches()) {
+            for (int i=0;i<(m.groupCount()+1);i++) {
+                returnList.add(m.group(i));
+            }
+        }
+        return returnList;
     }
 
     public void loadMaskCompartmentList(String maskFolderName) {
         try {
-            File baseDir=getBaseMaskDir(maskFolderName);
-            File nameFile=new File(baseDir, "maskNameIndex.txt");
-            BufferedReader br=new BufferedReader(new FileReader(nameFile));
-            String line=null;
-            Pattern namePattern=Pattern.compile("(\\S+)\\s+(\\S+)\\s+\"(\\.+)\"\\s+\\(\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)\\s*\\)");
-            while((line=br.readLine())!=null) {
-                if (line.trim().length()>0) {
-                    Matcher m=namePattern.matcher(line.trim());
-                    if (m.matches()) {
-                        int index=new Integer(m.group(1));
-                        String name=m.group(2);
-                        String description=m.group(3);
-                        int red=new Integer(m.group(4));
-                        int green=new Integer(m.group(5));
-                        int blue=new Integer(m.group(6));
+            File baseDir = getBaseMaskDir(maskFolderName);
+            File nameFile = new File(baseDir, "maskNameIndex.txt");
+            BufferedReader br = new BufferedReader(new FileReader(nameFile));
+            String line = null;
+            while ((line = br.readLine()) != null) {
+                if (line.trim().length() > 0) {
+                    List<String> groupList = parseMaskNameIndexLine(line);
+                    if (groupList.size() > 6) {
+                        int index = new Integer(groupList.get(1));
+                        String name = groupList.get(2);
+                        String description = groupList.get(3);
+                        int red = new Integer(groupList.get(4));
+                        int green = new Integer(groupList.get(5));
+                        int blue = new Integer(groupList.get(6));
                         QS_COMPARTMENT_LIST.add(name);
                         QS_DESCRIPTION_MAP.put(name, description);
                         QS_RED_MAP.put(name, red);
@@ -74,7 +86,8 @@ public class MaskAnnotationDataManager {
                     }
                 }
             }
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             ex.printStackTrace();
         }
     }
