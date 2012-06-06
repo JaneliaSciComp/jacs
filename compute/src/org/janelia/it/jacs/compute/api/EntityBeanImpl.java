@@ -431,9 +431,20 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     		throw new ComputeException("Error searching tree rooted at "+rootId+" for "+searchString,e);
     	}
     }
-
+    
+    public List<List<EntityData>> getPathsToRoots(String userLogin, Entity entity) throws ComputeException {
+    	try {
+    		EntityData fakeEd = new EntityData();
+    		fakeEd.setParentEntity(entity);
+    		return _annotationDAO.getEntityDataPathsToRoots(userLogin, fakeEd);
+    	}
+    	catch (DaoException e) {
+            _logger.error("Error getting paths to root from "+entity.getId(),e);
+    		throw new ComputeException("Error getting paths to root from "+entity.getId(),e);
+    	}
+    }
+    
     public List<Long> getPathToRoot(Long entityId, Long rootId) throws ComputeException {
-
     	try {
     		return _annotationDAO.getPathToRoot(entityId, rootId);
     	}

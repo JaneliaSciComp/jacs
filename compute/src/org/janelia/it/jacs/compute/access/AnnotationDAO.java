@@ -11,10 +11,7 @@ import java.sql.SQLException;
 import java.util.*;
 
 import org.apache.log4j.Logger;
-import org.hibernate.Criteria;
-import org.hibernate.HibernateException;
-import org.hibernate.Query;
-import org.hibernate.Session;
+import org.hibernate.*;
 import org.hibernate.criterion.Expression;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.support.MappedId;
@@ -157,7 +154,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
         return null;
     }
-
+    
     public Entity getEntityById(Long targetId) {
         Session session = getCurrentSession();
         Criteria c = session.createCriteria(Entity.class);
@@ -925,7 +922,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
     public List<EntityType> getAllEntityTypes() throws DaoException {
         try {
-            StringBuffer hql = new StringBuffer("select clazz from EntityType clazz");
+            StringBuffer hql = new StringBuffer("select et from EntityType et");
             Query query = getCurrentSession().createQuery(hql.toString());
             return query.list();
         }
@@ -937,7 +934,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
     public List<EntityAttribute> getAllEntityAttributes() throws DaoException {
         try {
-            StringBuffer hql = new StringBuffer("select clazz from EntityAttribute clazz");
+            StringBuffer hql = new StringBuffer("select ea from EntityAttribute ea");
             Query query = getCurrentSession().createQuery(hql.toString());
             return query.list();
         }
@@ -949,12 +946,18 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
     public List<Entity> getUserEntitiesByTypeName(String userLogin, String entityTypeName) throws DaoException {
         try {
-            StringBuffer hql = new StringBuffer("select clazz from Entity clazz");
-            hql.append(" where clazz.entityType.name='").append(entityTypeName).append("'");
+            StringBuffer hql = new StringBuffer("select e from Entity e");
+            hql.append("join fetch e.user ");
+            hql.append("join fetch e.entityType ");
+            hql.append("where e.entityType.name=? ");
             if (null != userLogin) {
-                hql.append(" and clazz.user.userLogin='").append(userLogin).append("'");
+                hql.append("and e.user.userLogin=? ");
             }
             Query query = getCurrentSession().createQuery(hql.toString());
+            query.setString(0, entityTypeName);
+            if (null != userLogin) {
+                query.setString(1, userLogin);
+            }
             return query.list();
         }
         catch (Exception e) {
@@ -1023,14 +1026,16 @@ public class AnnotationDAO extends ComputeBaseDAO {
         try {
         	EntityAttribute attr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT);
             Session session = getCurrentSession();
-            StringBuffer hql = new StringBuffer("select e from Entity e");
-            hql.append(" join e.entityData as ed ");
-            hql.append(" where e.entityType.name=?");
-            hql.append(" and ed.entityAttribute.id=?");
+            StringBuffer hql = new StringBuffer("select e from Entity e ");
+            hql.append("join fetch e.user ");
+            hql.append("join fetch e.entityType ");
+            hql.append("join e.entityData as ed ");
+            hql.append("where e.entityType.name=? ");
+            hql.append("and ed.entityAttribute.id=? ");
             if (null != userLogin) {
-                hql.append(" and e.user.userLogin=?");
+                hql.append("and e.user.userLogin=? ");
             }
-            hql.append(" order by e.id ");
+            hql.append("order by e.id ");
             Query query = session.createQuery(hql.toString());
             query.setString(0, entityTypeName);
             query.setLong(1, attr.getId());
@@ -1046,7 +1051,16 @@ public class AnnotationDAO extends ComputeBaseDAO {
     public Set<EntityData> getParentEntityDatas(long childEntityId) throws DaoException {
         try {
             Session session = getCurrentSession();
-            StringBuffer hql = new StringBuffer("select clazz from EntityData clazz where clazz.childEntity.id=?");
+            StringBuffer hql = new StringBuffer("select ed from EntityData ed ");
+            hql.append("join fetch ed.user ");
+            hql.append("join fetch ed.entityAttribute ");
+            hql.append("join fetch ed.childEntity ");
+            hql.append("join fetch ed.childEntity.user ");
+            hql.append("join fetch ed.childEntity.entityType ");
+            hql.append("join fetch ed.parentEntity ");
+            hql.append("join fetch ed.parentEntity.user ");
+            hql.append("join fetch ed.parentEntity.entityType ");
+            hql.append("where ed.childEntity.id=?");
             Query query = session.createQuery(hql.toString()).setLong(0, childEntityId);
             return new HashSet(query.list());
         } catch (Exception e) {
@@ -1057,7 +1071,10 @@ public class AnnotationDAO extends ComputeBaseDAO {
     public Set<Entity> getParentEntities(long entityId) throws DaoException {
         try {
             Session session = getCurrentSession();
-            StringBuffer hql = new StringBuffer("select clazz.parentEntity from EntityData clazz where clazz.childEntity.id=?");
+            StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
+            hql.append("join fetch ed.parentEntity.user ");
+            hql.append("join fetch ed.parentEntity.entityAttribute ");
+            hql.append("where ed.childEntity.id=? ");
             Query query = session.createQuery(hql.toString()).setLong(0, entityId);
             return new HashSet(query.list());
         } catch (Exception e) {
@@ -1068,7 +1085,10 @@ public class AnnotationDAO extends ComputeBaseDAO {
     public Set<Entity> getChildEntities(long entityId) throws DaoException {
         try {
             Session session = getCurrentSession();
-            StringBuffer hql = new StringBuffer("select clazz.childEntity from EntityData clazz where clazz.parentEntity.id=?");
+            StringBuffer hql = new StringBuffer("select ed.childEntity from EntityData ed ");
+            hql.append("join fetch ed.childEntity.user ");
+            hql.append("join fetch ed.childEntity.entityType ");
+            hql.append("where ed.parentEntity.id=? ");
             Query query = session.createQuery(hql.toString()).setLong(0, entityId);
             return new HashSet(query.list());
         } catch (Exception e) {
@@ -1098,8 +1118,10 @@ public class AnnotationDAO extends ComputeBaseDAO {
         		return new ArrayList<Entity>();
         	}
             Session session = getCurrentSession();
-            StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed where ");
-            hql.append("ed.entityAttribute.name = ? ");
+            StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
+            hql.append("join fetch ed.parentEntity.user ");
+            hql.append("join fetch ed.parentEntity.entityType ");
+            hql.append("where ed.entityAttribute.name = ? ");
             
             if (userLogin!=null) {
             	hql.append("and (ed.parentEntity.user.userLogin=? or ed.parentEntity.user.userLogin='system') ");
@@ -1152,9 +1174,12 @@ public class AnnotationDAO extends ComputeBaseDAO {
 		
         try {
             Session session = getCurrentSession();
-            StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed where " +
-                    "ed.entityAttribute.name = ? " +
-                    "and ed.value = ? order by ed.parentEntity.id ");
+            StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
+            hql.append("join fetch ed.parentEntity.user ");
+            hql.append("join fetch ed.parentEntity.entityType ");
+            hql.append("where ed.entityAttribute.name = ? ");
+    		hql.append("and ed.value = ? ");
+    		hql.append("order by ed.parentEntity.id ");
             Query query = session.createQuery(hql.toString());
             query.setString(0, EntityConstants.ATTRIBUTE_ANNOTATION_SESSION_ID);
             query.setString(1, ""+sessionId);
@@ -1323,9 +1348,11 @@ public class AnnotationDAO extends ComputeBaseDAO {
         EntityType tmpType = getEntityTypeByName(EntityConstants.TYPE_ONTOLOGY_ROOT);
         EntityAttribute tmpAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_IS_PUBLIC);
         
-        StringBuffer hql = new StringBuffer("select clazz from Entity clazz");
-        hql.append(" where clazz.entityType.id=?");
-        hql.append(" and exists (from EntityData as attr where attr.parentEntity = clazz and attr.entityAttribute.id = ?)");
+        StringBuffer hql = new StringBuffer("select e from Entity e ");
+        hql.append("join fetch e.user ");
+        hql.append("join fetch e.entityType ");
+        hql.append("where e.entityType.id=? ");
+        hql.append("and exists (from EntityData as attr where attr.parentEntity = e and attr.entityAttribute.id = ?)");
         Query query = getCurrentSession().createQuery(hql.toString());
         query.setLong(0, tmpType.getId());
         query.setLong(1, tmpAttr.getId());
@@ -1337,12 +1364,14 @@ public class AnnotationDAO extends ComputeBaseDAO {
         EntityType tmpType = getEntityTypeByName(EntityConstants.TYPE_ONTOLOGY_ROOT);
         EntityAttribute tmpAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_IS_PUBLIC);
         
-        StringBuffer hql = new StringBuffer("select clazz from Entity clazz");
-        hql.append(" where clazz.entityType.id=?");
+        StringBuffer hql = new StringBuffer("select e from Entity e ");
+        hql.append("join fetch e.user ");
+        hql.append("join fetch e.entityType ");
+        hql.append("where e.entityType.id=? ");
         if (null != userLogin) {
-            hql.append(" and clazz.user.userLogin=?");
+            hql.append("and e.user.userLogin=? ");
         }
-        hql.append(" and not exists (from EntityData as attr where attr.parentEntity = clazz and attr.entityAttribute.id = ?)");
+        hql.append("and not exists (from EntityData as attr where attr.parentEntity = e and attr.entityAttribute.id = ?)");
         Query query = getCurrentSession().createQuery(hql.toString());
         query.setLong(0, tmpType.getId());
         query.setString(1, userLogin);
@@ -1638,7 +1667,11 @@ public class AnnotationDAO extends ComputeBaseDAO {
         		return new ArrayList<Entity>();
         	}
             Session session = getCurrentSession();
-            StringBuffer hql = new StringBuffer("select e from Entity e where e.id in (:ids)");
+            StringBuffer hql = new StringBuffer("select e from Entity e ");
+            hql.append("join fetch e.user ");
+            hql.append("join fetch e.entityType ");
+            hql.append("where e.id in (:ids) ");
+            
             Query query = session.createQuery(hql.toString());
             query.setParameterList("ids", entityIds);
 
@@ -1749,6 +1782,54 @@ public class AnnotationDAO extends ComputeBaseDAO {
         _logger.info("searchTree limited to "+matches.size());
         
         return matches;
+    }
+
+    public List<List<Entity>> getEntityPathsToRoots(Entity entity) throws DaoException {
+    	List<List<Entity>> paths = new ArrayList<List<Entity>>();
+    	Set<Entity> parents = getParentEntities(entity.getId());
+    	StringBuffer sb = new StringBuffer();
+    	for(Entity parent : parents) {
+    		if (sb.length()>0) sb.append(", ");
+    		sb.append(parent.getName());
+    	}
+    	if (parents.isEmpty()) {
+    		List<Entity> path = new ArrayList<Entity>();
+			path.add(entity);
+			paths.add(path);
+    	}
+    	else {
+        	for(Entity parent : parents) {
+        		List<List<Entity>> ancestorPaths = getEntityPathsToRoots(parent);
+        		for(List<Entity> ancestorPath : ancestorPaths) {
+        			ancestorPath.add(entity);
+        			paths.add(ancestorPath);
+        		}
+        	}
+    	}
+    	return paths;
+    }
+
+    public List<List<EntityData>> getEntityDataPathsToRoots(String userLogin, EntityData entityData) throws DaoException {
+    	Entity entity = entityData.getParentEntity();
+    	List<List<EntityData>> paths = new ArrayList<List<EntityData>>();
+    	Set<EntityData> parents = getParentEntityDatas(entity.getId());
+    	if (parents.isEmpty()) {
+    		List<EntityData> path = new ArrayList<EntityData>();
+			path.add(entityData);
+			paths.add(path);
+    	}
+    	else {
+        	for(EntityData parent : parents) {
+        		String owner = parent.getUser().getUserLogin();
+        		if (!owner.equals("system") && !owner.equals(userLogin)) continue;
+        		List<List<EntityData>> ancestorPaths = getEntityDataPathsToRoots(userLogin, parent);
+        		for(List<EntityData> ancestorPath : ancestorPaths) {
+        			if (entityData.getId()!=null) ancestorPath.add(entityData);
+        			paths.add(ancestorPath);
+        		}
+        	}
+    	}
+    	return paths;
     }
     
     public List<Long> getPathToRoot(Long entityId, Long rootId) throws DaoException {
@@ -1929,7 +2010,10 @@ public class AnnotationDAO extends ComputeBaseDAO {
     public List<Entity> getEntitiesWithAttributeValue(String attrName, String attrValue) throws DaoException {
         try {
             Session session = getCurrentSession();
-            StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed where ed.entityAttribute.name=? and ed.value like ?");
+            StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
+            hql.append("join fetch ed.parentEntity.user ");
+            hql.append("join fetch ed.parentEntity.entityType ");
+            hql.append("where ed.entityAttribute.name=? and ed.value like ?");
             Query query = session.createQuery(hql.toString()).setString(0, attrName).setString(1, attrValue);
             return query.list();
         } catch (Exception e) {

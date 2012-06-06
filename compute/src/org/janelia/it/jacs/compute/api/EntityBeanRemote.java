@@ -58,6 +58,7 @@ public interface EntityBeanRemote {
     public Set<EntityData> getParentEntityDatas(long childEntityId);
     public Entity getAncestorWithType(Entity entity, String type) throws ComputeException;
     public List<List<Long>> searchTreeForNameStartingWith(Long rootId, String searchString) throws ComputeException;
+    public List<List<EntityData>> getPathsToRoots(String userLogin, Entity entity) throws ComputeException;
     public List<Long> getPathToRoot(Long entityId, Long rootId) throws ComputeException;
     
     public List<MappedId> getProjectedResults(List<Long> entityIds, List<EntityMapStep> upMapping, List<EntityMapStep> downMapping) throws ComputeException;

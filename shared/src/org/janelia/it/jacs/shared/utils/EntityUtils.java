@@ -273,4 +273,18 @@ public class EntityUtils {
 		}
 		return entityIds;
 	}
+	
+	public static String getUniqueIdFromParentEntityPath(List<EntityData> path) {
+		StringBuffer sb = new StringBuffer();
+		for(EntityData ed : path) {
+			if (sb.length()<=0) {
+				sb.append("/e_"+ed.getParentEntity().getId());
+			}
+			if (ed.getChildEntity()!=null) {
+				sb.append("/ed_"+ed.getId());
+				sb.append("/e_"+ed.getChildEntity().getId());
+			}
+		}
+		return sb.toString();
+	}
 }

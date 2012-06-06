@@ -17,5 +17,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Spring3"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Spring"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/GWT"/>
+	<classpathentry kind="lib" path="lib/JGoogleAnalytics_0.4.jar"/>
 	<classpathentry kind="output" path="build/eclipse"/>
 </classpath>
