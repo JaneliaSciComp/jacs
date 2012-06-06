@@ -27,7 +27,6 @@ import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.MaskAnnotationResultNode;
 import org.janelia.it.jacs.model.user_data.entity.NamedFileNode;
-import org.janelia.it.jacs.model.user_data.entity.PatternAnnotationResultNode;
 import org.janelia.it.jacs.model.user_data.entity.ScreenSampleResultNode;
 import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
 import org.janelia.it.jacs.shared.utils.FileUtil;
@@ -532,7 +531,7 @@ public class MaskSampleAnnotationService  implements IService {
         List<String> sampleNameList=(List<String>)processData.getItem("SAMPLE_NAME_LIST");
         List<String> maskAnnotationPathList=(List<String>)processData.getItem("MASK_ANNOTATION_PATH");
         List<String> alignedStackPathList=(List<String>)processData.getItem(("ALIGNED_STACK_PATH_LIST"));
-        PatternAnnotationResultNode resultNode=(PatternAnnotationResultNode)processData.getItem(ProcessDataConstants.RESULT_FILE_NODE);
+        MaskAnnotationResultNode resultNode=(MaskAnnotationResultNode)processData.getItem(ProcessDataConstants.RESULT_FILE_NODE);
 
         int index=0;
 
