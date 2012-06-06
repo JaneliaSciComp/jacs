@@ -792,7 +792,7 @@ public class MaskSampleAnnotationService  implements IService {
         //otherSuffixArray[1]="_inputImageCubified.v3dpbd";
         otherSuffixArray[0]="_quantifiers.txt";
         if (abbrevationList.size()==0) {
-            File abbreviationIndexFile=new File(maskAnnotationResourceDir+File.separator+maskAnnotationFolderName+File.separator+MASK_NAME_INDEX_FILENAME);
+            File abbreviationIndexFile=new File(maskAnnotationResourceDir+File.separator+MASK_NAME_INDEX_FILENAME);
             FileReader fr=new FileReader(abbreviationIndexFile);
             BufferedReader br=new BufferedReader(fr);
             String nextLine=null;
