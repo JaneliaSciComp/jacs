@@ -119,10 +119,6 @@ public class LargeOperations {
 				if (annots == null) {
 					annots = new HashSet<SimpleAnnotation>();
 				}
-
-				if (entityId == 1679282476884688994L) {
-					logger.info("        Found annotation, id:"+annotationId+", owner:"+owner+", target:"+entityId+", key:"+key+" value:"+value);
-				}
 				
 				annots.add(new SimpleAnnotation(key, value, owner));
 				putValue(annotationMapCache, entityId, annots);
@@ -288,33 +284,26 @@ public class LargeOperations {
     	SageDAO sage = new SageDAO(logger);
     	ResultSetIterator iterator = sage.getFlylightImageProperties();
     	
+    	List<String> colNames = iterator.getColumnNames();
+    	
     	try {
-    		String currImagePath = null;
-    		Map<String,String> currImageProps = null;
+    		ResultSet rs = iterator.getResultSet();
     		
-        	while (iterator.hasNext()) {
-        		Object[] row = iterator.next();
+        	while (rs.next()) {
+        		
+				Map<String,Object>  currImageProps = new HashMap<String,Object>();
 				
-				if (row.length<3) {
-					throw new DaoException("Unexpected number of values returned by getFlylightImageProperties. Got:"+row.length+" Expected:7");
+				for(int i=0; i<colNames.size(); i++) {
+					String colName = colNames.get(i);
+					Object value = rs.getObject(colName);
+					if (value!=null) currImageProps.put(colName, value);
 				}
-				
-				String imagePath = (String)row[0];
-				String key = (String)row[1];
-				String value = (String)row[2];
-				
-				if (!imagePath.equals(currImagePath)) {
-					if (currImagePath!=null) {
-						associateImageProperties(systemUser.getUserId(), currImagePath, currImageProps);
-					}
-					currImageProps = new HashMap<String,String>();
-					currImagePath = imagePath;
-				}
-				
-				currImageProps.put(key, value);
-        	}	
-        	
-        	associateImageProperties(systemUser.getUserId(), currImagePath, currImageProps);
+
+				associateImageProperties(systemUser.getUserId(), currImageProps);
+        	}
+    	}
+    	catch (SQLException e) {
+    		throw new DaoException(e);
     	}
     	catch (RuntimeException e) {
     		if (e.getCause() instanceof SQLException) {
@@ -327,10 +316,11 @@ public class LargeOperations {
         }
     }
     
-    private void associateImageProperties(Long systemUserId, String imagePath, Map<String,String> imageProps) throws DaoException {
+    private void associateImageProperties(Long systemUserId, Map<String,Object> imageProps) throws DaoException {
+    	String imagePath = (String)imageProps.get("name");
     	String[] path = imagePath.split("/"); // take just the filename
     	String filename = path[path.length-1];
-    	String slideCode = imageProps.get("slide_code");
+    	String slideCode = (String)imageProps.get("slide_code");
     	List<Long> imageIds = annotationDAO.getImageIdsWithPath(systemUserId, filename, slideCode);
 		for(Long imageId : imageIds) {
 			putValue(sageImagePropCache, imageId, imageProps);

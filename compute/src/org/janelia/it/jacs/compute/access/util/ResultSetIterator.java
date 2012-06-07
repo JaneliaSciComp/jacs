@@ -1,7 +1,10 @@
 package org.janelia.it.jacs.compute.access.util;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
+
 
 /**
  * Iterator-style wrapper for JDBC ResultSets. 
@@ -80,6 +83,24 @@ public class ResultSetIterator implements Iterator<Object[]> {
     	}
     }
     
+    public List<String> getColumnNames() {
+		List<String> cols = new ArrayList<String>();
+    	try {
+        	ResultSetMetaData md = rs.getMetaData();
+        	for (int i = 1; i <= md.getColumnCount(); i++) {
+        		cols.add(md.getColumnName(i));
+        	}
+    	}
+    	catch (SQLException e) {
+            rethrow(e);
+    	}
+    	return cols;
+    }
+    
+    public ResultSet getResultSet() {
+    	return rs;
+    }
+    
     private Object[] toArray(ResultSet rs) throws SQLException {
         ResultSetMetaData meta = rs.getMetaData();
         int cols = meta.getColumnCount();
@@ -92,7 +113,6 @@ public class ResultSetIterator implements Iterator<Object[]> {
         return result;
     }
     
-
     private void rethrow(SQLException e) {
         throw new RuntimeException(e.getMessage(), e);
     }

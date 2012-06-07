@@ -1073,7 +1073,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
             hql.append("join fetch ed.parentEntity.user ");
-            hql.append("join fetch ed.parentEntity.entityAttribute ");
+            hql.append("join fetch ed.parentEntity.entityType ");
             hql.append("where ed.childEntity.id=? ");
             Query query = session.createQuery(hql.toString()).setLong(0, entityId);
             return new HashSet(query.list());

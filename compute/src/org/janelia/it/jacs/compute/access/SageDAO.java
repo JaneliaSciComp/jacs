@@ -95,12 +95,8 @@ public class SageDAO {
     }
 
     /**
-     * Returns all the images in the FlyLight project. The result rows have the following columns:
-     * <ol>
-     * <li>image path (e.g. "20110407/FLFL_20110911231819146_1571.lsm")</li> 
-     * <li>property name (e.g. "scan_type")</li> 
-     * <li>value (e.g. "normal x-y-z scan")</li> 
-     * </ol>
+     * Returns all the images in the FlyLight project, with properties as columns. You can get the column names
+     * by calling getColumnNames() on the returned ResultSetIterator object.
      * The client must call close() on the returned iterator when finished with it. 
      * @return Iterator over the JDBC result set. 
      * @throws DaoException
@@ -108,11 +104,7 @@ public class SageDAO {
     public ResultSetIterator getFlylightImageProperties() throws DaoException {
 
     	try {
-	    	String sql = "select i.name image_path, getCvTermName(prop.type_id) prop_name, prop.value prop_value " +
-		    	"from image i " +
-		    	"join image_property prop on i.id = prop.image_id " +
-		    	"where i.family_id = getCvTermId('family','flylight_flip', NULL) " +
-		    	"order by i.name ";
+	    	String sql = "select * from image_data_mv where family = 'flylight_flip' ";
         	Connection conn = getJdbcConnection();
         	PreparedStatement stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 	        stmt.setFetchSize(Integer.MIN_VALUE);
@@ -122,6 +114,7 @@ public class SageDAO {
     	catch (SQLException e) {
     		throw new DaoException("Error querying Sage", e);
     	}
+    	
     }
 
     /**
@@ -133,6 +126,7 @@ public class SageDAO {
 
     	String getUrl = "http://sage.int.janelia.org/sage-ws/cvs/light_imagery/with-all-related-cvs";
     	Map<String,SageTerm> map = new HashMap<String,SageTerm>();
+		map.putAll(getStaticTerms());
     	
     	try {
     		HttpClient client = new HttpClient();
@@ -172,8 +166,8 @@ public class SageDAO {
 				else {
 					_logger.warn("Expecting <term>, got "+o);
 				}
-				
 			}
+			
     	}
     	catch (Exception e) {
     		throw new DaoException("Error querying Sage Web Service", e);
@@ -181,4 +175,39 @@ public class SageDAO {
     	
     	return map;
     }
+
+    /**
+     * Some static terms which are not part of any vocabulary. 
+     * @return
+     */
+    private Map<String,SageTerm> getStaticTerms() {
+    	
+    	Map<String,SageTerm> map = new HashMap<String,SageTerm>();
+		
+		SageTerm sageId = new SageTerm();
+		sageId.setName("id");
+		sageId.setDataType("integer");
+		sageId.setDisplayName("SAGE Id");
+		sageId.setDefinition("Identifier within SAGE database");
+		map.put(sageId.getName(),sageId);
+
+		SageTerm imagePath = new SageTerm();
+		imagePath.setName("name");
+		imagePath.setDataType("text");
+		imagePath.setDisplayName("Image Path");
+		imagePath.setDefinition("Relative path to the image");
+		map.put(imagePath.getName(),imagePath);
+		
+		SageTerm line = new SageTerm();
+		line.setName("line");
+		line.setDataType("text");
+		line.setDisplayName("Fly line");
+		line.setDefinition("Name of the fly line");
+		map.put(line.getName(),line);
+		
+		return map;
+    }
+    
+    
+    
 }

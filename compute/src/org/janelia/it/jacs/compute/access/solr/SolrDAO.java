@@ -301,14 +301,10 @@ public class SolrDAO extends AnnotationDAO {
         	
         	Set<SimpleAnnotation> annotations = (Set<SimpleAnnotation>)largeOp.getValue(LargeOperations.ANNOTATION_MAP, se.getId());
 
-			if (se.getId() == 1679282476884688994L) {
-				_logger.info("        "+se.getId()+ ", name:"+se.getName()+", annotations:"+(annotations==null?0:annotations.size()));
-			}
-			
         	AncestorSet ancestorSet = (AncestorSet)largeOp.getValue(LargeOperations.ANCESTOR_MAP, se.getId());
         	Set<Long> ancestors = ancestorSet==null ? null : ancestorSet.getAncestors(); 
         	
-        	Map<String,String> sageProps = (Map<String,String>)largeOp.getValue(LargeOperations.SAGE_IMAGEPROP_MAP, se.getId());
+        	Map<String,Object> sageProps = (Map<String,Object>)largeOp.getValue(LargeOperations.SAGE_IMAGEPROP_MAP, se.getId());
         	
         	SolrInputDocument doc = createDoc(se, annotations, ancestors, sageProps);
         	docs.add(doc);
@@ -316,11 +312,11 @@ public class SolrDAO extends AnnotationDAO {
         return docs;
     }
     
-    private SolrInputDocument createDoc(SimpleEntity entity, Set<SimpleAnnotation> annotations, Set<Long> ancestorIds, Map<String,String> sageProps) {
+    private SolrInputDocument createDoc(SimpleEntity entity, Set<SimpleAnnotation> annotations, Set<Long> ancestorIds, Map<String,Object> sageProps) {
     	return createDoc(null, entity, annotations, ancestorIds, sageProps);
     }
     
-    private SolrInputDocument createDoc(SolrDocument existingDoc, SimpleEntity entity, Set<SimpleAnnotation> annotations, Set<Long> ancestorIds, Map<String,String> sageProps) {
+    private SolrInputDocument createDoc(SolrDocument existingDoc, SimpleEntity entity, Set<SimpleAnnotation> annotations, Set<Long> ancestorIds, Map<String,Object> sageProps) {
 
     	SolrInputDocument doc = existingDoc==null ? new SolrInputDocument() : ClientUtils.toSolrInputDocument(existingDoc);
     	
@@ -336,16 +332,26 @@ public class SolrDAO extends AnnotationDAO {
     		if (existingDoc!=null) {
         		for(String key : sageProps.keySet()) {
     				SageTerm sageTerm = sageVocab.get(key);
-    				doc.removeField(SolrUtils.getSageFieldName(key, sageTerm));
+    				if (sageTerm==null) {
+    					_logger.warn("Unrecognized SAGE term: "+key);
+    					continue;
+    				}
+    				doc.removeField(SolrUtils.getSageFieldName(sageTerm));
         		}
     		}
     		for(String key : sageProps.keySet()) {
-    			String value = sageProps.get(key);
+    			Object value = sageProps.get(key);
     			if (value != null) {
     				SageTerm sageTerm = sageVocab.get(key);
+    				if (sageTerm==null) {
+    					_logger.warn("Unrecognized SAGE term: "+key);
+    					continue;
+    				}
+    				
     				// Keep track of the terms we use, so that they can be indexed as well
     				if (!usedSageVocab.contains(sageTerm)) usedSageVocab.add(sageTerm);
-    				doc.addField(SolrUtils.getSageFieldName(key, sageTerm), value, 0.9f);
+    				String fieldName = SolrUtils.getSageFieldName(sageTerm);
+    				doc.addField(fieldName, value, 0.9f);
     			}
     		}
     	}

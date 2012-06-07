@@ -63,4 +63,9 @@ public class SageTerm implements Serializable {
 			return false;
 		return true;
 	}
+	
+	@Override
+	public String toString() {
+		return "SageTerm[name:"+name+",displayName:"+displayName+",dataType:"+dataType+"]";
+	}
 }

@@ -46,25 +46,31 @@ public class SolrUtils {
     }
     
     /**
-     * Get the SOLR field name for a Sage CV term. For example, "effector" -> "effector_t"
+     * Get the SOLR field name for a Sage CV term. For example, "effector" -> "sage_effector_t"
      * @param term
-     * @param sageType a data type from Sage, such as "float" or "integer" or "text"
+     * @param sageType a data type from Sage, such as "float" or "integer" or "text" or "date_time"
      * @return
      */
-    public static String getSageFieldName(String term, SageTerm sageTerm) {
+    public static String getSageFieldName(SageTerm sageTerm) {
+    	String sageType = sageTerm.getDataType();
 		String solrSuffix = "_t"; // default to text-based indexing
-		String sageType = sageTerm.getDataType();
 		if (sageType != null) {
 			if ("float".equals(sageType)) {
 				solrSuffix = "_d";
+			}
+			else if ("date".equals(sageType) || "date_time".equals(sageType)) {
+				solrSuffix = "_dt";
+			}
+			else if ("boolean".equals(sageType)) {
+				solrSuffix = "_b";
 			}
 			else if ("integer".equals(sageType)) {
 				solrSuffix = "_l";		
 			}
 		}
-		return term+solrSuffix;
+		return "sage_"+sageTerm.getName()+solrSuffix;
     }
-    
+	
     /**
      * Returns the formatted annotation tag for the given key/value annotation pair.
      * @param key
