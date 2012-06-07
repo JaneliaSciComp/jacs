@@ -773,6 +773,7 @@ public class MaskSampleAnnotationService  implements IService {
         stack.setCreationDate(createDate);
         stack.setUpdatedDate(createDate);
         stack.setName(entityName);
+        stack = entityBean.saveOrUpdateEntity(stack);
         entityHelper.setDefault2dImage(stack, mipEntity);
         stack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
         stack = entityBean.saveOrUpdateEntity(stack);
