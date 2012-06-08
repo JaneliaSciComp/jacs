@@ -34,6 +34,7 @@ public interface AnnotationBeanRemote {
 
     public Entity getOntologyTree(String userLogin, Long id) throws ComputeException;
     public List<Entity> getPublicOntologies() throws ComputeException;
+    public Entity getErrorOntology() throws ComputeException;
     public List<Entity> getPrivateOntologies(String userLogin) throws ComputeException;
     
 	public List<Task> getAnnotationSessionTasks(String username) throws ComputeException;

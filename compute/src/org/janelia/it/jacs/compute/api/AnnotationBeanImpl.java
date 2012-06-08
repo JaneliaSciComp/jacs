@@ -173,6 +173,16 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             throw new ComputeException("Error getting public ontologies",e);
         }
     }
+
+    public Entity getErrorOntology() throws ComputeException {
+        try {
+            return _annotationDAO.getErrorOntology();
+        }
+        catch (Exception e) {
+            _logger.error("Error getting error ontology",e);
+            throw new ComputeException("Error getting error ontology",e);
+        }
+    }
     
     public List<Entity> getPrivateOntologies(String userLogin) throws ComputeException {
     	if (userLogin == null || "".equals(userLogin)) {

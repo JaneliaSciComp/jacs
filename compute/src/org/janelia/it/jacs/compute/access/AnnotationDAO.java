@@ -1358,6 +1358,17 @@ public class AnnotationDAO extends ComputeBaseDAO {
         query.setLong(1, tmpAttr.getId());
         return query.list();
     }
+
+    public Entity getErrorOntology() throws ComputeException {
+
+        List<Entity> list = getPublicOntologies();
+        for (Entity tmpEntity : list) {
+            if (tmpEntity.getName().equals("Error Ontology")) {
+                return tmpEntity;
+            }
+        }
+        return null;
+    }
     
     public List<Entity> getPrivateOntologies(String userLogin) throws ComputeException {
     	
