@@ -1,12 +1,5 @@
 package org.janelia.it.jacs.compute.api;
 
-import java.util.*;
-
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import javax.interceptor.Interceptors;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
@@ -20,6 +13,15 @@ import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
+
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import javax.interceptor.Interceptors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Stateless(name = "AnnotationEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
@@ -74,8 +76,8 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             if (ontologyRoot==null) {
                 throw new Exception("Ontology not found: "+sourceRootId);
             }
-        	if (!"system".equals(ontologyRoot.getUser().getUserLogin()) && !userLogin.equals(ontologyRoot.getUser().getUserLogin())) {
-        		throw new ComputeException("User "+userLogin+" cannot clone ontology tree "+sourceRootId);
+        	if (null==ontologyRoot.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PUBLIC)) {
+        		throw new ComputeException("Cannot copy a private ontology:"+ontologyRoot.getId());
         	}
             Entity clonedTree = _annotationDAO.cloneEntityTree(sourceRootId, userLogin, targetRootName);
             _logger.info(userLogin+" cloned ontology tree "+sourceRootId+" as "+targetRootName);
