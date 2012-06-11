@@ -16,6 +16,8 @@ public interface WorkstationDataManagerMBean {
 	
 	public void runSolrIndexSync(Boolean clearIndex); 
 	
+	public void runSolrTreeIndexing(Long rootId);
+	
     public void runSampleSyncService(String user, Boolean testRun);
     
     public void runSampleImageSync(String user);

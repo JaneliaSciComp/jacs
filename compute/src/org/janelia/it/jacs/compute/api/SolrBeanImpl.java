@@ -14,6 +14,7 @@ import org.apache.solr.client.solrj.SolrQuery.ORDER;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
+import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.mongodb.MongoDbDAO;
@@ -23,7 +24,9 @@ import org.janelia.it.jacs.compute.api.support.SageTerm;
 import org.janelia.it.jacs.compute.api.support.SolrResults;
 import org.janelia.it.jacs.compute.api.support.SolrUtils;
 import org.janelia.it.jacs.compute.interceptor.UsageInterceptor;
+import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 
@@ -69,6 +72,31 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     	}
     }
 
+    public void indexAllEntitiesInTree(Long entityId) throws ComputeException {
+    	AnnotationDAO _annotationDAO = new AnnotationDAO(_logger);
+    	Entity root = _annotationDAO.getEntityById(entityId.toString());
+    	indexAllEntitiesInTree(root, new HashSet<Long>());
+    }
+
+    private Entity indexAllEntitiesInTree(Entity entity, Set<Long> visited) {
+    	if (entity == null) return null;
+    	if (visited.contains(entity.getId())) {
+    		return entity;
+    	}
+    	visited.add(entity.getId());
+    	IndexingHelper.updateIndex(entity);
+    	for(EntityData ed : entity.getEntityData()) {
+    		Entity child = ed.getChildEntity();
+    		if (child != null) {
+    			indexAllEntitiesInTree(child, visited);
+    		}
+    	}
+    	if (entity.getId()%2==0) {
+    		IndexingHelper.updateIndex(entity);
+    	}
+    	return entity;
+    }
+    
     // TODO: move this to its own bean, or rename this one
     public void mongoAllEntities(boolean clearDb) throws ComputeException {
     	try {

@@ -14,12 +14,13 @@ import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.support.EntityMapStep;
 import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.interceptor.UsageInterceptor;
-import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
+import org.janelia.it.jacs.compute.launcher.indexing.IndexingManagerManagement;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.jboss.annotation.ejb.Depends;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 
@@ -33,15 +34,24 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 @TransactionTimeout(432000)
 @Interceptors({UsageInterceptor.class})
 @PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 100, timeout = 10000)
+@Depends({"jboss:custom=IndexingManager"})
 public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
 	
-    private Logger _logger = Logger.getLogger(this.getClass());
+    private static Logger _logger = Logger.getLogger(EntityBeanImpl.class);
+    
+    @Depends({"jboss:custom=IndexingManager"})
+	private IndexingManagerManagement indexingManager;
+	
     private final AnnotationDAO _annotationDAO = new AnnotationDAO(_logger);
     
     private boolean updateIndexOnChange = true;
     
     public void setUpdateIndexOnChange(boolean updateIndexOnChange) {
     	this.updateIndexOnChange = updateIndexOnChange;
+    }
+
+    private void updateIndex(Entity entity) {
+    	if (updateIndexOnChange) indexingManager.scheduleIndexing(entity.getId());
     }
     
     public EntityType createNewEntityType(String entityTypeName) throws ComputeException {
@@ -96,12 +106,12 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     public EntityAttribute getEntityAttributeByName(String attrName) {
     	return _annotationDAO.getEntityAttributeByName(attrName);
     }
-
+    
     public Entity saveOrUpdateEntity(Entity entity) throws ComputeException {
         try {
         	entity.setUpdatedDate(new Date());
             _annotationDAO.saveOrUpdate(entity);
-            if (updateIndexOnChange) IndexingHelper.updateIndex(entity);
+            updateIndex(entity);
             return entity;
         } catch (DaoException e) {
             _logger.error("Error trying to save or update Entity");
@@ -113,8 +123,8 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         try {
         	newData.setUpdatedDate(new Date());
             _annotationDAO.saveOrUpdate(newData);
-            if (updateIndexOnChange && newData.getParentEntity()!=null) {
-            	IndexingHelper.updateIndex(newData.getParentEntity());
+            if (newData.getParentEntity()!=null) {
+            	updateIndex(newData.getParentEntity());
             }
             return newData;
         } catch (DaoException e) {
@@ -163,7 +173,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         	entity.setUpdatedDate(new Date());
             _annotationDAO.saveOrUpdate(entity);
             _logger.info(userLogin+" "+(isNew?"created":"saved")+" entity "+entity.getId());
-            if (updateIndexOnChange) IndexingHelper.updateIndex(entity);
+            updateIndex(entity);
             return entity;
         } 
         catch (DaoException e) {
@@ -181,8 +191,8 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         	ed.setUpdatedDate(new Date());
             _annotationDAO.saveOrUpdate(ed);
         	_logger.info(userLogin+" "+(isNew?"created":"saved")+" entity data "+ed.getId());
-            if (updateIndexOnChange && ed.getValue()!=null && ed.getParentEntity()!=null) {
-            	IndexingHelper.updateIndex(ed.getParentEntity());
+            if (ed.getValue()!=null && ed.getParentEntity()!=null) {
+            	updateIndex(ed.getParentEntity());
             }
             return ed;
         } 
@@ -196,7 +206,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         try {
             Entity entity = _annotationDAO.createEntity(userLogin, entityTypeName, entityName);
         	_logger.info(userLogin+" created entity "+entity.getId());
-        	if (updateIndexOnChange) IndexingHelper.updateIndex(entity);
+        	updateIndex(entity);
             return entity;
         } catch (DaoException e) {
             _logger.error("Error trying to create entity",e);

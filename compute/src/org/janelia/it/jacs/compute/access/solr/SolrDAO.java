@@ -19,7 +19,6 @@ import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrDocument;
-import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.CoreAdminParams;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
@@ -40,6 +39,7 @@ import org.janelia.it.jacs.model.entity.EntityType;
  */
 public class SolrDAO extends AnnotationDAO {
 	
+	protected static final int MAX_ID_LIST_SIZE = 200;
     protected static final int SOLR_LOADER_BATCH_SIZE = 25000;
     protected static final int SOLR_LOADER_COMMIT_SIZE = 250000;
 	protected static final int SOLR_LOADER_QUEUE_SIZE = 100;
@@ -217,40 +217,72 @@ public class SolrDAO extends AnnotationDAO {
         catch (Exception e) {
         	throw new DaoException(e);
         }
-        
     }
 
     public void updateIndex(Entity entity) throws DaoException {
-
     	if (entity==null) return;
-    	_logger.info("Updating index for "+entity.getId());
+    	List<Entity> entities = new ArrayList<Entity>();
+    	entities.add(entity);
+    	updateIndex(entities);
+    }
+    
+    public void updateIndex(List<Entity> entities) throws DaoException {
     	
-		Set<SimpleAnnotation> annotations = new HashSet<SimpleAnnotation>();
-		for(Entity annotationEntity : getAnnotationsByEntityId(null, entity.getId())) {
+    	List<Long> entityIds = new ArrayList<Long>();
+    	for(Entity entity : entities) {
+        	_logger.info("Updating index for "+entity.getName()+" (id="+entity.getId()+")");
+    		entityIds.add(entity.getId());
+    	}
+    	
+    	// Get all annotations
+    	
+    	Map<Long,Set<SimpleAnnotation>> annotationMap = new HashMap<Long,Set<SimpleAnnotation>>();
+		for(Entity annotationEntity : getAnnotationsByEntityId(null, entityIds)) {
 			String key = annotationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_TERM);
 			String value = annotationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM);
 			String owner = annotationEntity.getUser().getUserLogin();
+			String entityIdStr = annotationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
+			
+			Long entityId = null;
+			try {
+				entityId = new Long(entityIdStr);
+			}
+			catch (NumberFormatException e) {
+				_logger.warn("Cannot parse annotation target id for annotation="+annotationEntity.getId());
+			}
+			
+			Set<SimpleAnnotation> annotations = annotationMap.get(entityId);
+			if (annotations == null) {
+				annotations = new HashSet<SimpleAnnotation>();	
+				annotationMap.put(entityId, annotations);
+			}
+			
 			annotations.add(new SimpleAnnotation(key, value, owner));
 		}
 		
-    	SolrQuery query = new SolrQuery("id:"+entity.getId());
-    	QueryResponse qr = search(query);
-    	SolrDocumentList docs = qr.getResults();
-    	SolrInputDocument inputDoc = null;
-    	
-    	if (docs.getNumFound()==1) {
-    		SolrDocument existingDoc = docs.get(0);
-    		inputDoc = createDoc(existingDoc, simpleEntityFromEntity(entity), annotations, null, null);
-    	}
-    	else if (docs.getNumFound()==0) {
-    		inputDoc = createDoc(null, simpleEntityFromEntity(entity), annotations, null, null);
-    	}
-    	else {
-    		throw new DaoException("Found more than one document for entity with id="+entity.getId());
-    	}
+		// Get all Solr documents
+    	Map<Long,SolrDocument> solrDocMap = search(entityIds);
+
+    	// Create updated Solr documents
     	
     	List<SolrInputDocument> inputDocs = new ArrayList<SolrInputDocument>();
-    	inputDocs.add(inputDoc);
+    	for(Entity entity : entities) {
+    		SolrInputDocument inputDoc = null;
+    		SolrDocument existingDoc = solrDocMap.get(entity.getId());
+    		Set<SimpleAnnotation> annotations = annotationMap.get(entity.getId());
+    		
+        	if (existingDoc!=null) {
+        		inputDoc = createDoc(existingDoc, simpleEntityFromEntity(entity), annotations, null, null);
+        	}
+        	else {
+        		inputDoc = createDoc(null, simpleEntityFromEntity(entity), annotations, null, null);
+        	}
+        	
+        	inputDocs.add(inputDoc);
+    	}
+    
+    	// Index the entire batch
+    	
     	index(inputDocs);
     	commit();
     }
@@ -484,4 +516,55 @@ public class SolrDAO extends AnnotationDAO {
 			throw new DaoException("Error searching with SOLR",e);
 		}
     }
+    
+    /**
+     * Runs a special id query against the index, breaking it up into several queries if necessary.
+     * @param query
+     * @return
+     * @throws DaoException
+     */
+    public Map<Long,SolrDocument> search(List<Long> entityIds) throws DaoException {
+    	init();
+    	Map<Long,SolrDocument> docMap = new HashMap<Long,SolrDocument>();
+    	try {
+    		int currSize = 0;
+			StringBuffer sqBuf = new StringBuffer();
+    		for(Long entityId : entityIds) {
+    			
+    			if (currSize>=MAX_ID_LIST_SIZE) {
+        	    	SolrQuery query = new SolrQuery(sqBuf.toString());
+        	    	QueryResponse qr = search(query);
+        			Iterator<SolrDocument> i = qr.getResults().iterator();
+        			while (i.hasNext()) {
+        				SolrDocument doc = i.next();
+        				docMap.put(new Long(doc.get("id").toString()), doc);
+        			}
+    				sqBuf = new StringBuffer();
+    				currSize = 0;
+    			}
+    			
+    			if (sqBuf.length()>0) sqBuf.append(" OR ");
+    			sqBuf.append("id:"+entityId);
+    			currSize++;
+    		}
+
+    		if (currSize>0) {
+		    	SolrQuery query = new SolrQuery(sqBuf.toString());
+		    	QueryResponse qr = search(query);
+				Iterator<SolrDocument> i = qr.getResults().iterator();
+				while (i.hasNext()) {
+					SolrDocument doc = i.next();
+					docMap.put(new Long(doc.get("id").toString()), doc);
+				}
+    		}
+    		
+            return docMap;
+    	}
+		catch (Exception e) {
+			throw new DaoException("Error searching with SOLR",e);
+		}
+    }
+    
+    
+    
 }

@@ -12,7 +12,9 @@ import javax.ejb.Local;
 public interface SolrBeanLocal {
 	
 	public void indexAllEntities(boolean clearIndex) throws ComputeException;
-
+	
+	public void indexAllEntitiesInTree(Long entityId) throws ComputeException;
+	
 	public void mongoAllEntities(boolean clearDb) throws ComputeException;
 	
 	public void neo4jAllEntities(boolean clearDb) throws ComputeException;

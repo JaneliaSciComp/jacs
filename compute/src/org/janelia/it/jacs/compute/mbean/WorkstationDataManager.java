@@ -102,6 +102,14 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
     
+    public void runSolrTreeIndexing(Long rootId) {
+    	try {
+            EJBFactory.getLocalSolrBean().indexAllEntitiesInTree(rootId);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
     public void runSampleSyncService(String user, Boolean testRun) {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();

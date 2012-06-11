@@ -88,7 +88,7 @@ public class EJBFactory {
 
     public static EntityBeanLocal getLocalEntityBean() {
     	EntityBeanLocal ebl = (EntityBeanLocal) getLocalInterface(LOCAL_ENTITY_JNDI_NAME);
-    	ebl.setUpdateIndexOnChange(false);
+//    	ebl.setUpdateIndexOnChange(false);
     	return ebl;
     }
     
@@ -153,6 +153,16 @@ public class EJBFactory {
         }
     }
 
+    public static Object lookup(String lookupName) {
+        try {
+            InitialContext ic = createInitialContext(); 
+            return ic.lookup(lookupName);
+        }
+        catch (NamingException e) {
+            throw new EJBException(e);
+        }
+    }
+    
     /**
      * Used by Junit test
      *
