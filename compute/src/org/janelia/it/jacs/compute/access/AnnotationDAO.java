@@ -2151,7 +2151,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
             Set<Entity> topChildren = screenSample.getChildren();
             for (Entity topChild : topChildren) {
                 if (topChild.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) &&
-                        topChild.getName().toLowerCase().equals(MaskSampleAnnotationService.MASK_ANNOTATION_FOLDER_NAME)) {
+                        topChild.getName().equals(MaskSampleAnnotationService.MASK_ANNOTATION_FOLDER_NAME)) {
                     Set<Entity> children = topChild.getChildren();
                     for (Entity child : children) {
                         if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) &&
