@@ -946,7 +946,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
     public List<Entity> getUserEntitiesByTypeName(String userLogin, String entityTypeName) throws DaoException {
         try {
-            StringBuffer hql = new StringBuffer("select e from Entity e");
+            StringBuffer hql = new StringBuffer("select e from Entity e ");
             hql.append("join fetch e.user ");
             hql.append("join fetch e.entityType ");
             hql.append("where e.entityType.name=? ");
