@@ -80,6 +80,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         		throw new ComputeException("Cannot copy a private ontology:"+ontologyRoot.getId());
         	}
             Entity clonedTree = _annotationDAO.cloneEntityTree(sourceRootId, userLogin, targetRootName);
+            _annotationDAO.fixInternalOntologyConsistency(clonedTree.getId());
             _logger.info(userLogin+" cloned ontology tree "+sourceRootId+" as "+targetRootName);
             return clonedTree;
         }
@@ -100,6 +101,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         	}
             Entity publishedTree = _annotationDAO.publishOntology(sourceRootId, targetRootName);
             _logger.info(userLogin+" publishing ontology tree "+sourceRootId+" as "+targetRootName);
+            _annotationDAO.fixInternalOntologyConsistency(publishedTree.getId());
             return publishedTree;
         }
         catch (Exception e) {

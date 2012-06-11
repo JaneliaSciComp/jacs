@@ -11,11 +11,14 @@ import java.sql.SQLException;
 import java.util.*;
 
 import org.apache.log4j.Logger;
-import org.hibernate.*;
+import org.hibernate.Criteria;
+import org.hibernate.HibernateException;
+import org.hibernate.Query;
+import org.hibernate.Session;
 import org.hibernate.criterion.Expression;
 import org.janelia.it.jacs.compute.api.ComputeException;
-import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.api.support.EntityMapStep;
+import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.service.fly.MaskSampleAnnotationService;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
@@ -1505,9 +1508,11 @@ public class AnnotationDAO extends ComputeBaseDAO {
         EntityAttribute tmpAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_IS_PUBLIC);
         
         // Create new ontology element
-        Entity newOntologyElement = new Entity(null, targetName, targetUser, null, source.getEntityType(), new Date(), new Date(), null);
+        Entity newOntologyElement = newEntity(source.getEntityType(), targetName, targetUser);
         saveOrUpdate(newOntologyElement);
 
+        _logger.info("newOntologyElement.id="+newOntologyElement.getId());
+        
         // Add the children 
     	for(EntityData ed : source.getEntityData()) {
 
@@ -1519,10 +1524,10 @@ public class AnnotationDAO extends ComputeBaseDAO {
     		if (childEntity != null) {
     			newChildEntity = cloneEntityTree(childEntity, targetUser, childEntity.getName(), false);	
     		}
-
-            EntityData newEd = new EntityData(null, ed.getEntityAttribute(), newOntologyElement, newChildEntity,
-            		targetUser, ed.getValue(), new Date(), new Date(), ed.getOrderIndex());
-
+    		
+            EntityData newEd = newOntologyElement.addChildEntity(newChildEntity, ed.getEntityAttribute().getName());
+            newEd.setOrderIndex(ed.getOrderIndex());
+            newEd.setValue(ed.getValue());
             saveOrUpdate(newEd);
     	}
 
@@ -1544,6 +1549,53 @@ public class AnnotationDAO extends ComputeBaseDAO {
         saveOrUpdate(publicEd);
         
         return clonedEntity;
+    }
+    
+    public void fixInternalOntologyConsistency(Long sourceRootId) throws DaoException {
+    	Entity ontologyRoot = populateDescendants(getEntityById(sourceRootId));
+    	if (ontologyRoot==null) return;
+    	_logger.warn("Fixing internal consistency for ontology "+ontologyRoot.getName()+" (id="+ontologyRoot.getId()+")");
+    	Map<String,Long> enumMap = new HashMap<String,Long>();
+    	buildEnumMap(ontologyRoot, enumMap);
+    	updateEnumTexts(ontologyRoot, enumMap);
+    }
+    
+    public void buildEnumMap(Entity entity, Map<String,Long> enumMap) {
+		if ("Enum".equals(entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE))) {
+			enumMap.put(entity.getName(), entity.getId());
+		}
+    	for(Entity child : entity.getChildren()) {
+    		buildEnumMap(child, enumMap);
+    	}
+    }
+
+    public void updateEnumTexts(Entity entity, Map<String,Long> enumMap) throws DaoException {
+		if ("EnumText".equals(entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE))) {
+			EntityData oldEnumIdEd = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_ENUMTEXT_ENUMID);
+			if (oldEnumIdEd != null && oldEnumIdEd.getValue()!=null) {
+				Entity oldEnum = getEntityById(oldEnumIdEd.getValue());
+				if (oldEnum!=null) {
+					Long newEnumId = enumMap.get(oldEnum.getName());
+					if (newEnumId!=null) {
+						oldEnumIdEd.setValue(newEnumId.toString());
+						_logger.warn("Updating EnumText "+entity.getName()+" to reference the correct Enum id="+newEnumId);
+						saveOrUpdate(oldEnumIdEd);
+					}
+					else {
+						_logger.warn("Cannot find enum with name "+oldEnum.getName()+" in ontology");
+					}
+				}
+				else {
+					_logger.warn("Cannot find old EnumText entity with id="+oldEnumIdEd.getValue());
+				}
+			}
+			else {
+				_logger.warn("EnumText (id="+entity.getId()+") does not reference an Enum");
+			}
+		}
+    	for(Entity child : entity.getChildren()) {
+    		updateEnumTexts(child, enumMap);
+    	}
     }
     
 	public Entity createOntologyAnnotation(String userLogin, OntologyAnnotation annotation) throws ComputeException {
@@ -1715,6 +1767,10 @@ public class AnnotationDAO extends ComputeBaseDAO {
      * @return
      */
     public Entity populateDescendants(Entity entity) {
+    	if (entity.getId()==null) {
+    		_logger.warn("Cannot populate descendants for entity with null id");
+    		return entity;
+    	}
     	return populateDescendants(entity, new HashSet<Long>());
     }
     
@@ -2041,18 +2097,27 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	preloadData();
         return attrByName.get(attrName);	
     }
-    
+
     private Entity newEntity(String entityTypeName, String name, User owner) {
-    	Date date = new Date();
         EntityType tmpType = getEntityTypeByName(entityTypeName);
-        return new Entity(null, name, owner, null, tmpType, date, date, new HashSet<EntityData>());	
+        return newEntity(tmpType, name, owner);
+    }
+
+    private Entity newEntity(EntityType entityType, String name, User owner) {
+    	Date date = new Date();
+        return new Entity(null, name, owner, null, entityType, date, date, new HashSet<EntityData>());	
     }
     
     private EntityData newData(Entity parent, String attrName, User owner) {
-    	Date date = new Date();
         EntityAttribute attribute = getEntityAttributeByName(attrName);
+        return newData(parent, attribute, owner);
+    }
+    
+    private EntityData newData(Entity parent, EntityAttribute attribute, User owner) {
+    	Date date = new Date();
         return new EntityData(null, attribute, parent, null, owner, null, date, date, null);
     }
+    
     
     public void addChildren(String userLogin, Long parentId, List<Long> childrenIds, String attributeName) throws DaoException {
     	
