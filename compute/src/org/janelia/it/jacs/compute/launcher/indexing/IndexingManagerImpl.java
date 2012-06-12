@@ -15,7 +15,7 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 
 /**
  * The indexing manager is a singleton service responsible for keeping track of entities to be indexed, and then
- * running a batch of indexing. 
+ * running a batch of indexing. It can be injected into other beans via the @Depends annotation.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -50,7 +50,7 @@ public class IndexingManagerImpl implements IndexingManagerManagement {
 				}
 			}
 		};
-		queue.setWorkItemDelay(10000); // Wait 10 seconds before indexing anything, to limit duplicates
+		queue.setWorkItemDelay(3000); // Wait 3 seconds before indexing anything, to limit duplicates
 	}
 
 	public void start() throws Exception {
@@ -69,21 +69,21 @@ public class IndexingManagerImpl implements IndexingManagerManagement {
 	@TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 	@TransactionTimeout(500000)
 	public int runNextBatch() {
-		if (isProcessing()) {
-			return 0;
+		synchronized (this) {
+			if (processing) {
+				return 0;
+			}
+			this.processing = true;
 		}
-		setProcessing(true);
 		solrDAO = new SolrDAO(logger, true);
+		int numQueued = queue.getQueueSize();
 		int numIndexed = queue.process(MAX_BATCH_SIZE);
-		setProcessing(false);
+		if (numIndexed>0) {
+			logger.info("Indexing batch complete. Num distinct ids queued: "+numQueued+", Num processed in this batch: "+numIndexed);
+		}
+		synchronized (this) {
+			this.processing = false;
+		}
 		return numIndexed;
-	}
-
-	private synchronized void setProcessing(boolean processing) {
-		this.processing = processing;
-	}
-	
-	public synchronized boolean isProcessing() {
-		return processing;
 	}
 }

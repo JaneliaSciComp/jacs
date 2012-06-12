@@ -4,7 +4,7 @@ import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
 /**
- * An object with a delay. 
+ * A work item with a delay. 
  * 
  * Adapted from
  * http://aredko.blogspot.com/2012/04/using-delayed-queues-in-practice.html
@@ -39,7 +39,8 @@ public class PostponedWorkItem<T> implements Delayed {
 		}
 
 		if (delayed instanceof PostponedWorkItem) {
-			long diff = delay - ((PostponedWorkItem) delayed).delay;
+			PostponedWorkItem other = ((PostponedWorkItem) delayed);
+			long diff = (origin+delay) - (other.origin+other.delay);
 			return ((diff == 0) ? 0 : ((diff < 0) ? -1 : 1));
 		}
 

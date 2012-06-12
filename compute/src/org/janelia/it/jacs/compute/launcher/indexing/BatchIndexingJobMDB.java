@@ -18,8 +18,8 @@ import org.quartz.JobExecutionException;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @MessageDriven(activationConfig = {
-        // Wake up every 15 seconds
-        @ActivationConfigProperty(propertyName = "cronTrigger", propertyValue = "*/15 * * * * ?")
+        // Wake up every 20 seconds
+        @ActivationConfigProperty(propertyName = "cronTrigger", propertyValue = "*/20 * * * * ?")
 })
 @ResourceAdapter("quartz-ra.rar")
 @Depends ({"jboss:custom=IndexingManager"})
@@ -28,6 +28,7 @@ public class BatchIndexingJobMDB implements Job {
 	@Depends({"jboss:custom=IndexingManager"})
 	private IndexingManagerManagement indexingManager;
 	
+	// Eliminate (unneeded) transactions on this method, because they cause some strange JTA exceptions 
 	@TransactionAttribute(value = TransactionAttributeType.NEVER)
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
     	try {

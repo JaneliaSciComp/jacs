@@ -9,9 +9,8 @@ import java.util.concurrent.DelayQueue;
 import org.apache.log4j.Logger;
 
 /**
- * A delay queue which does not accept duplicates. 
- * 
- * Adapted from http://aredko.blogspot.com/2012/04/using-delayed-queues-in-practice.html
+ * A delayed processing queue which does not accept duplicates, thereby eliminating any duplicates that occur within
+ * a certain predefined delay time. 
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -22,36 +21,55 @@ public abstract class DedupingDelayQueue<T> {
 	private long workItemDelay = 5000; // Wait 5 seconds for each item by default
 
 	private final BlockingQueue<PostponedWorkItem<T>> delayed = new DelayQueue<PostponedWorkItem<T>>();
-
-	private int numAdded = 0;
-	private int numProcessed = 0;
 	
+	/**
+	 * Get the delay that is applied to each work item before it can be processed.
+	 * @return delay in milliseconds
+	 */
 	public long getWorkItemDelay() {
 		return workItemDelay;
 	}
 
+	/**
+	 * Set the delay that is applied to each work item before it can be processed.
+	 * @param workItemDelay delay in milliseconds
+	 */
 	public void setWorkItemDelay(long workItemDelay) {
 		this.workItemDelay = workItemDelay;
 	}
 
+	/**
+	 * Add a work item to the queue for processing at some later time.
+	 * @param workItem
+	 */
 	public void addWorkItem(final T workItem) {
 		PostponedWorkItem<T> postponed = new PostponedWorkItem<T>(workItem, workItemDelay);
 		synchronized (this) {
 			if (!delayed.contains(postponed)) {
-				numAdded++;
 				delayed.offer(postponed);
 			}
 		}
 	}
-
+	
+    /**
+     * Returns the current size of the queue.
+     * @return
+     */
+	public int getQueueSize() {
+		return delayed.size();
+	}
+	
+	/**
+	 * Process as many expired work items in the queue as possible, limited only by the given batch size. 
+	 * @param maxBatchSize max number of items to process
+	 * @return the number of items that were processed
+	 */
 	public synchronized int process(int maxBatchSize) {
 
 		Collection<PostponedWorkItem<T>> expired = new ArrayList<PostponedWorkItem<T>>();
 		synchronized (this) {
 			if (delayed.isEmpty()) return 0;
-			logger.info("Draining max "+maxBatchSize +" elements from "+delayed.size()+" total elements");
 			delayed.drainTo(expired, maxBatchSize);
-			logger.info("Got "+expired.size()+" elements");
 		}
 		
 		List<T> workItems = new ArrayList<T>();
@@ -61,13 +79,16 @@ public abstract class DedupingDelayQueue<T> {
 		
 		if (!workItems.isEmpty()) {
 			process(workItems);
-			numProcessed += workItems.size();
-			logger.info("Processing completed. Total offered: "+numAdded+", total processed: "+numProcessed+", current batch: "+expired.size());
 		}
 
 		return expired.size();
 	}
 	
+	/**
+	 * Override this method to provide logic for processing a batch of work items. These items are about to be 
+	 * removed from the queue. 
+	 * @param workItems list of work items to process
+	 */
 	public abstract void process(List<T> workItems);
 	
 }
