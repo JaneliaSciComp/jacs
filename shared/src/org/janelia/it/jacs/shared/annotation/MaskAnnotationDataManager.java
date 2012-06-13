@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.shared.annotation;
 
+import org.apache.tools.ant.util.facade.FacadeTaskHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -62,11 +63,9 @@ public class MaskAnnotationDataManager {
         return returnList;
     }
 
-    public void loadMaskCompartmentList(String maskFolderName) {
+    public void loadMaskCompartmentList(File maskNameIndexFile) {
         try {
-            File baseDir = getBaseMaskDir(maskFolderName);
-            File nameFile = new File(baseDir, "maskNameIndex.txt");
-            BufferedReader br = new BufferedReader(new FileReader(nameFile));
+            BufferedReader br = new BufferedReader(new FileReader(maskNameIndexFile));
             String line = null;
             while ((line = br.readLine()) != null) {
                 if (line.trim().length() > 0) {
@@ -100,22 +99,9 @@ public class MaskAnnotationDataManager {
         return compartmentListInstance;
     }
 
-    public static File getBaseMaskDir(String maskFolderName) {
-        String resourceDirString= SystemConfigurationProperties.getString("MaskSampleAnnotation.ResourceDir");
-        File maskBaseDir=new File(resourceDirString, maskFolderName);
-        return maskBaseDir;
-    }
-
-    public static File getMaskSummaryFile(String maskFolderName) {
-        String quantifierSummaryFilename=SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationQuantifierSummaryFile");
-        File baseMaskDir=getBaseMaskDir(maskFolderName);
-        File maskSummaryFile=new File(baseMaskDir, quantifierSummaryFilename);
-        return maskSummaryFile;
-    }
-
-    public void createMaskAnnotationQuantifierSummaryFile(String maskFolderName, Map<Entity, Map<String, Double>> entityQuantifierMap) throws Exception {
+    public void createMaskAnnotationQuantifierSummaryFile(File patternSummaryFile, Map<Entity, Map<String, Double>> entityQuantifierMap) throws Exception {
         if (QS_COMPARTMENT_LIST==null || QS_COMPARTMENT_LIST.size()==0) {
-            loadMaskCompartmentList(maskFolderName);
+            throw new Exception("Compartment list must be loaded");
         }
         List<Entity> screenSampleKeyList=new ArrayList<Entity>();
         screenSampleKeyList.addAll(entityQuantifierMap.keySet());
@@ -127,8 +113,7 @@ public class MaskAnnotationDataManager {
         });
 
         // Initialize output file
-        File patternAnnotationSummaryFile=getMaskSummaryFile(maskFolderName);
-        BufferedWriter bw=new BufferedWriter(new FileWriter(patternAnnotationSummaryFile));
+        BufferedWriter bw=new BufferedWriter(new FileWriter(patternSummaryFile));
 
         // Create header line
         bw.write(QS_NAME_COL+",");
@@ -205,10 +190,11 @@ public class MaskAnnotationDataManager {
     }
 
     // This method returns: Map<Long, Map<String, String>> sampleInfoMap, Map<Long, List<Double>> quantifierInfoMap
-    public Object[] loadMaskSummaryFile(String maskFolderName) throws Exception {
+    public Object[] loadMaskSummaryFile(File patternAnnotationSummaryFile) throws Exception {
         System.out.println("loadMaskSummaryFile start()");
-        loadMaskCompartmentList(maskFolderName);
-        File patternAnnotationSummaryFile=getMaskSummaryFile(maskFolderName);
+        if (QS_COMPARTMENT_LIST.size()==0) {
+            throw new Exception("Compartment list must be loaded");
+        }
         Long startTime=new Date().getTime();
         System.out.println("Reading mask annotation summary file="+patternAnnotationSummaryFile.getAbsolutePath());
         BufferedReader bw=new BufferedReader(new FileReader(patternAnnotationSummaryFile));

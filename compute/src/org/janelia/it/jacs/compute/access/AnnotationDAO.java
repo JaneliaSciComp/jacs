@@ -20,6 +20,7 @@ import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.support.EntityMapStep;
 import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.service.fly.MaskSampleAnnotationService;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.ontology.types.Category;
@@ -2282,7 +2283,12 @@ public class AnnotationDAO extends ComputeBaseDAO {
     public Object[] getMaskQuantifierMapsFromSummary(String maskFolderName) throws DaoException {
         try {
             MaskAnnotationDataManager maskManager=new MaskAnnotationDataManager();
-            Object[] mapObjects=maskManager.loadMaskSummaryFile(maskFolderName);
+            String resourceDirString= SystemConfigurationProperties.getString("MaskSampleAnnotation.ResourceDir");
+            String quantifierSummaryFilename= SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationQuantifierSummaryFile");
+            File summaryFile=new File(resourceDirString + File.separator+maskFolderName, quantifierSummaryFilename);
+            File nameIndexFile=new File(resourceDirString + File.separator+maskFolderName, "maskNameIndex.txt");
+            maskManager.loadMaskCompartmentList(nameIndexFile);
+            Object[] mapObjects=maskManager.loadMaskSummaryFile(summaryFile);
             return mapObjects;
         } catch (Exception ex) {
             ex.printStackTrace();

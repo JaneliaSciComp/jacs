@@ -5,9 +5,11 @@ import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.service.entity.SampleFileNodeSyncService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FlyScreenDiscoveryService;
+import org.janelia.it.jacs.compute.service.fly.MaskGuideService;
 import org.janelia.it.jacs.compute.service.fly.ScreenSampleLineCoordinationService;
 import org.janelia.it.jacs.compute.service.mongodb.MongoDbLoadService;
 import org.janelia.it.jacs.compute.service.solr.SolrIndexingService;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -25,6 +27,7 @@ import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
 import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
@@ -406,7 +409,12 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         try {
             Map<Entity, Map<String, Double>> entityQuantifierMap=EJBFactory.getLocalAnnotationBean().getMaskQuantifiers(maskFolderName);
             MaskAnnotationDataManager maskManager=new MaskAnnotationDataManager();
-            maskManager.createMaskAnnotationQuantifierSummaryFile(maskFolderName, entityQuantifierMap);
+            String resourceDirString= SystemConfigurationProperties.getString("MaskSampleAnnotation.ResourceDir");
+            String quantifierSummaryFilename= SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationQuantifierSummaryFile");
+            File summaryFile=new File(resourceDirString + File.separator+maskFolderName, quantifierSummaryFilename);
+            File nameIndexFile=new File(resourceDirString + File.separator+maskFolderName, "maskNameIndex.txt");
+            maskManager.loadMaskCompartmentList(nameIndexFile);
+            maskManager.createMaskAnnotationQuantifierSummaryFile(summaryFile, entityQuantifierMap);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -420,6 +428,21 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             task.setJobName("Mask Annotation Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("MaskSampleAnnotation", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void runMaskGuideService(String user, String maskFolderName, Boolean refresh) {
+        try {
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter(MaskGuideService.PARAM_maskFolderName, maskFolderName, null));
+            taskParameters.add(new TaskParameter(MaskGuideService.PARAM_refresh, refresh.toString(), null));
+            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(),
+                    taskParameters, "runMaskGuideService", "Mask Guide Service");
+            task.setJobName("Mask Guide Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("MaskGuide", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }
