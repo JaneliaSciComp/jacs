@@ -382,7 +382,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	Set<Long> additionalExclusions=new HashSet<Long>();
     	for(Long candidateId : entitySetCandidatesToDelete) {
     		if (exclusionList.contains(candidateId)) continue; // Skip things we've already excluded
-    		if (areAncestorsExcluded(candidateId, parentMap, exclusionList)) {
+    		if (areAncestorsExcluded(candidateId, parentMap, exclusionList, new HashSet<Long>())) {
             	if (debugDeletions) _logger.info("    Marking candidateId=" + candidateId + " for exclusion");
     			additionalExclusions.add(candidateId);
     		}
@@ -392,8 +392,11 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	return additionalExclusions;
     }
     
-    protected boolean areAncestorsExcluded(Long entityId, Map<Long, Set<Long>> parentMap, Set<Long> exclusionList) {
+    protected boolean areAncestorsExcluded(Long entityId, Map<Long, Set<Long>> parentMap, Set<Long> exclusionList, Set<Long> visited) {
 
+    	if (visited.contains(entityId)) return false;
+    	visited.add(entityId);
+    	
     	if (debugDeletions) _logger.info("    Checking if any ancestors of "+entityId+" were excluded");
     	Set<Long> parents = parentMap.get(entityId);
     	if (parents != null) {
@@ -402,7 +405,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 			    	if (debugDeletions) _logger.info("    Parent of "+entityId+" (parentId="+parentId+") was excluded");
 					return true;
 				}
-				if (areAncestorsExcluded(parentId, parentMap, exclusionList)) {
+				if (areAncestorsExcluded(parentId, parentMap, exclusionList, visited)) {
 					if (debugDeletions) _logger.info("    Some ancestor of "+entityId+" (via parentId="+parentId+") was excluded");
 					return true;
 				}
