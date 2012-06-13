@@ -206,23 +206,28 @@ public class MaskAnnotationDataManager {
 
     // This method returns: Map<Long, Map<String, String>> sampleInfoMap, Map<Long, List<Double>> quantifierInfoMap
     public Object[] loadMaskSummaryFile(String maskFolderName) throws Exception {
+        System.out.println("loadMaskSummaryFile start()");
+        loadMaskCompartmentList(maskFolderName);
         File patternAnnotationSummaryFile=getMaskSummaryFile(maskFolderName);
         Long startTime=new Date().getTime();
-        System.out.println("loadPatternAnnotationQuantifierSummaryFile start()");
+        System.out.println("Reading mask annotation summary file="+patternAnnotationSummaryFile.getAbsolutePath());
         BufferedReader bw=new BufferedReader(new FileReader(patternAnnotationSummaryFile));
-
         String firstLine=bw.readLine();
         if (firstLine==null) {
             throw new Exception("Could not read first line of file="+patternAnnotationSummaryFile.getAbsolutePath());
         }
         String[] firstLineColumnNames=firstLine.split(",");
+        int qsoSize=QS_COMPARTMENT_LIST.size();
+        int qszSize=QS_Z_INDEX_LIST.size();
+        int qscSize=QS_C_INDEX_LIST.size();
         int expectedColumnCount=3 /* path */ + 9 /* Global */ + (QS_COMPARTMENT_LIST.size() * (QS_Z_INDEX_LIST.size() + QS_C_INDEX_LIST.size()));
         if (firstLineColumnNames.length!=expectedColumnCount) {
-            throw new Exception("Expected columnCount="+expectedColumnCount+" but found "+firstLineColumnNames.length);
+            throw new Exception("Expected columnCount="+expectedColumnCount+" but found "+firstLineColumnNames.length+" , qso="+qsoSize+" qsz="+qszSize+" qsc="+qscSize);
         }
         Map<Long, Map<String, String>> sampleInfoMap=new HashMap<Long, Map<String, String>>();
         Map<Long, List<Double>> quantifierInfoMap=new HashMap<Long, List<Double>>();
         String quantifierLine=null;
+        long lineCount=0;
         while((quantifierLine=bw.readLine())!=null) {
             String[] qArr=quantifierLine.split(",");
             if (qArr.length>0) {
@@ -238,13 +243,14 @@ public class MaskAnnotationDataManager {
                 }
                 quantifierInfoMap.put(qId, qList);
             }
+            lineCount++;
         }
         bw.close();
         Object[] returnArr=new Object[2];
         returnArr[0]=sampleInfoMap;
         returnArr[1]=quantifierInfoMap;
         Long elapsedTime=new Date().getTime()-startTime;
-        System.out.println("loadPatternAnnotationQuantifierSummaryFile end() elapsedTime="+elapsedTime);
+        System.out.println("loadMaskSummaryFile end() elapsedTime="+elapsedTime+" lineCount="+lineCount+" sampleInfoMap="+sampleInfoMap.size()+" quantifierInfoMap="+quantifierInfoMap.size());
         return returnArr;
     }
 
