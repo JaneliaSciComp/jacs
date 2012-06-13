@@ -40,6 +40,10 @@
             <input name="RESULT_FILE_NODE_ID"/>
             <input name="RESULT_FILE_NODE"/>
         </operation>
+        <operation name="Cleanup data" processor="org.janelia.it.jacs.compute.service.tic.DataCleanupService">
+            <input name="RESULT_FILE_NODE_ID"/>
+            <input name="RESULT_FILE_NODE"/>
+        </operation>
 
     </sequence>
 </process>

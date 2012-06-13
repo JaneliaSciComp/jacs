@@ -6,6 +6,7 @@ import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.tasks.tic.TicTask;
 import org.janelia.it.jacs.model.user_data.tic.TICResultNode;
 import org.janelia.it.jacs.shared.utils.SystemCall;
 
@@ -30,6 +31,7 @@ public class SpotCollectionService implements IService {
     private Task task;
     private TICResultNode resultFileNode;
     private String sessionName;
+    private int thrownOutCounter;
 
     public void execute(IProcessData processData) throws ServiceException {
         try {
@@ -60,7 +62,7 @@ public class SpotCollectionService implements IService {
             }
 
             // Write a final spot file
-            FileWriter writer=new FileWriter(resultFileNode.getDirectoryPath()+File.separator+"FISH_QUANT_"+targetName+"final_spots.txt");
+            FileWriter writer=new FileWriter(resultFileNode.getDirectoryPath()+File.separator+"FISH_QUANT_"+targetName+"_final_spots.txt");
             Scanner spotScanner=null;
             try {
                 int maxFramesPerFile = 0;
@@ -86,6 +88,7 @@ public class SpotCollectionService implements IService {
                     if (!addedHeader) {addedHeader=true;}
                 }
                 _logger.debug("Max frames per file is "+maxFramesPerFile);
+                _logger.debug("There were "+this.thrownOutCounter+" spot lines thrown out for exceeding thresholds.");
             }
             catch (Exception e) {
                 throw new ServiceException(e);
@@ -103,28 +106,40 @@ public class SpotCollectionService implements IService {
     private String adjustFrameColumn(String tmpLine, int maxFramesPerFile, Integer index) {
         String tmpFrame = tmpLine.substring(0,tmpLine.indexOf("\t"));
         String[] pieces = tmpLine.split("\t");
-        if (valueFails(pieces[POSX_INDEX],-120,22000)) {
-            _logger.debug("Throwing out data that exceeds X threshold: "+tmpLine);
+        if (valueFails(pieces[POSX_INDEX],Integer.valueOf(task.getParameter(TicTask.PARAM_positionXMin)),
+                Integer.valueOf(task.getParameter(TicTask.PARAM_positionXMax)))) {
+//            _logger.debug("Throwing out data that exceeds X threshold: "+tmpLine);
+            thrownOutCounter++;
             return null;
         }
-        if (valueFails(pieces[POSY_INDEX],-120,22000)) {
-            _logger.debug("Throwing out data that exceeds Y threshold: "+tmpLine);
+        if (valueFails(pieces[POSY_INDEX],Integer.valueOf(task.getParameter(TicTask.PARAM_positionYMin)),
+                Integer.valueOf(task.getParameter(TicTask.PARAM_positionYMax)))) {
+//            _logger.debug("Throwing out data that exceeds Y threshold: "+tmpLine);
+            thrownOutCounter++;
             return null;
         }
-        if (valueFails(pieces[POSZ_INDEX],-500,5000))  {
-            _logger.debug("Throwing out data that exceeds Z threshold: "+tmpLine);
+        if (valueFails(pieces[POSZ_INDEX],Integer.valueOf(task.getParameter(TicTask.PARAM_positionZMin)),
+                Integer.valueOf(task.getParameter(TicTask.PARAM_positionZMax))))  {
+//            _logger.debug("Throwing out data that exceeds Z threshold: "+tmpLine);
+            thrownOutCounter++;
             return null;
         }
-        if (valueFails(pieces[SIGX_INDEX],30,600)) {
-            _logger.debug("Throwing out data that exceeds Sig X threshold: "+tmpLine);
+        if (valueFails(pieces[SIGX_INDEX],Integer.valueOf(task.getParameter(TicTask.PARAM_sigmaXMin)),
+                Integer.valueOf(task.getParameter(TicTask.PARAM_sigmaXMax)))) {
+//            _logger.debug("Throwing out data that exceeds Sig X threshold: "+tmpLine);
+            thrownOutCounter++;
             return null;
         }
-        if (valueFails(pieces[SIGY_INDEX],30,600)) {
-            _logger.debug("Throwing out data that exceeds Sig Y threshold: "+tmpLine);
+        if (valueFails(pieces[SIGY_INDEX],Integer.valueOf(task.getParameter(TicTask.PARAM_sigmaYMin)),
+                Integer.valueOf(task.getParameter(TicTask.PARAM_sigmaYMax)))) {
+//            _logger.debug("Throwing out data that exceeds Sig Y threshold: "+tmpLine);
+            thrownOutCounter++;
             return null;
         }
-        if (valueFails(pieces[SIGZ_INDEX],50,800)) {
-            _logger.debug("Throwing out data that exceeds Sig Z threshold: "+tmpLine);
+        if (valueFails(pieces[SIGZ_INDEX],Integer.valueOf(task.getParameter(TicTask.PARAM_sigmaZMin)),
+                Integer.valueOf(task.getParameter(TicTask.PARAM_sigmaZMax)))) {
+//            _logger.debug("Throwing out data that exceeds Sig Z threshold: "+tmpLine);
+            thrownOutCounter++;
             return null;
         }
 

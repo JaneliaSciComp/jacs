@@ -77,7 +77,7 @@ public class TIFBulkProcessingService implements IService {
                     File tmpInputFile = new File(testPath);
                     String targetPrefixMinusLast = tmpInputFile.getName().substring(0, tmpInputFile.getName().lastIndexOf("_"));
                     final String targetPrefix = targetPrefixMinusLast.substring(0,targetPrefixMinusLast.lastIndexOf("_"));
-                    _currentTask.setParameter(SingleTicTask.PARAM_finalOutputDirectory, tmpParent.getAbsolutePath()+
+                    _currentTask.setParameter(SingleTicTask.PARAM_finalOutputLocation, tmpParent.getAbsolutePath()+
                             File.separator+"PipelineResults-"+task.getObjectId().toString()+"-"+targetPrefix);
                     // Save the child task
                     _currentTask = (SingleTicTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(_currentTask);

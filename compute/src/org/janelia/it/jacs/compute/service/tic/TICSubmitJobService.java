@@ -120,6 +120,7 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
             writer.write(fullFQCmd);
             writer.write("mv "+fileListPath+"FISH-QUANT__all_spots_* $OUTPUT_DIR/$INPUT_FILE_NAME.all_spots.txt\n");
         }
+        writer.write("chmod -R ug+rwx $OUTPUT_DIR\n");
         setJobIncrementStop(relatedFiles.length);
     }
 

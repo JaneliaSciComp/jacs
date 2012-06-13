@@ -31,6 +31,20 @@ public abstract class TicTask extends Task {
     transient public static final String PARAM_runApplyCalibrationToFrame   = "run apply calibration to frame";
     transient public static final String PARAM_runIlluminationCorrection    = "run illumination correction";
     transient public static final String PARAM_runFQBatch                   = "run FISH QUANT V4";
+    transient public static final String PARAM_spotDataOnly                 = "save spot data only";
+    transient public static final String PARAM_positionXMin                 = "position x min";
+    transient public static final String PARAM_positionXMax                 = "position x max";
+    transient public static final String PARAM_positionYMin                 = "position y min";
+    transient public static final String PARAM_positionYMax                 = "position y max";
+    transient public static final String PARAM_positionZMin                 = "position z min";
+    transient public static final String PARAM_positionZMax                 = "position z max";
+    transient public static final String PARAM_sigmaXMin                    = "sigma x min";
+    transient public static final String PARAM_sigmaXMax                    = "sigma x max";
+    transient public static final String PARAM_sigmaYMin                    = "sigma y min";
+    transient public static final String PARAM_sigmaYMax                    = "sigma y max";
+    transient public static final String PARAM_sigmaZMin                    = "sigma z min";
+    transient public static final String PARAM_sigmaZMax                    = "sigma z max";
+    transient public static final String PARAM_finalOutputLocation          = "finalOutputLocation";
 
 
     public TicTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet) {
@@ -53,6 +67,19 @@ public abstract class TicTask extends Task {
         setParameter(PARAM_runApplyCalibrationToFrame, Boolean.FALSE.toString());
         setParameter(PARAM_runIlluminationCorrection, Boolean.FALSE.toString());
         setParameter(PARAM_runFQBatch, Boolean.FALSE.toString());
+        setParameter(PARAM_spotDataOnly, Boolean.FALSE.toString());
+        setParameter(PARAM_positionXMin, "");
+        setParameter(PARAM_positionXMax, "");
+        setParameter(PARAM_positionYMin, "");
+        setParameter(PARAM_positionYMax, "");
+        setParameter(PARAM_positionZMin, "");
+        setParameter(PARAM_positionZMax, "");
+        setParameter(PARAM_sigmaXMin, "");
+        setParameter(PARAM_sigmaXMax, "");
+        setParameter(PARAM_sigmaYMin, "");
+        setParameter(PARAM_sigmaYMax, "");
+        setParameter(PARAM_sigmaZMin, "");
+        setParameter(PARAM_sigmaZMax, "");
         this.taskName = TASK_NAME;
     }
 
@@ -69,10 +96,14 @@ public abstract class TicTask extends Task {
         if (key.equals(PARAM_inputFilePrefix)) {
             return new MultiSelectVO(listOfStringsFromCsvString(value), listOfStringsFromCsvString(value));
         }
-        if (key.equals(PARAM_borderValue)) {
+        if (key.equals(PARAM_borderValue) || key.equals(PARAM_positionXMax)|| key.equals(PARAM_positionXMin)|| key.equals(PARAM_positionYMax)
+                || key.equals(PARAM_positionYMin)|| key.equals(PARAM_positionZMax)|| key.equals(PARAM_positionZMin)|| 
+                key.equals(PARAM_sigmaXMax)|| key.equals(PARAM_sigmaXMin)|| key.equals(PARAM_sigmaYMax)
+                || key.equals(PARAM_sigmaYMin)|| key.equals(PARAM_sigmaZMax)|| key.equals(PARAM_sigmaZMin)) {
             return new DoubleParameterVO(Double.valueOf(value));
         }
-        if (key.equals(PARAM_runApplyCalibrationToFrame) || key.equals(PARAM_runIlluminationCorrection) || key.equals(PARAM_runFQBatch)) {
+        if (key.equals(PARAM_runApplyCalibrationToFrame) || key.equals(PARAM_runIlluminationCorrection) ||
+            key.equals(PARAM_runFQBatch) || key.equals(PARAM_spotDataOnly)) {
             return new BooleanParameterVO(Boolean.valueOf(value));
         }
         // No match

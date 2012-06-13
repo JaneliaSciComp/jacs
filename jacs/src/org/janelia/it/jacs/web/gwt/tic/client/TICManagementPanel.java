@@ -88,12 +88,28 @@ public class TICManagementPanel extends VerticalPanel {
 
     private TextBox _microscopeSettingsTextBox;
     private TitledBox _microscopeSettingsPanel;
+
+    private TextBox _positionXMinTextBox;
+    private TextBox _positionXMaxTextBox;
+    private TextBox _positionYMinTextBox;
+    private TextBox _positionYMaxTextBox;
+    private TextBox _positionZMinTextBox;
+    private TextBox _positionZMaxTextBox;
+    private TextBox _sigmaXMinTextBox;
+    private TextBox _sigmaXMaxTextBox;
+    private TextBox _sigmaYMinTextBox;
+    private TextBox _sigmaYMaxTextBox;
+    private TextBox _sigmaZMinTextBox;
+    private TextBox _sigmaZMaxTextBox;
+    private TitledBox _thresholdPanel;
+    
     private RoundedButton _validateMicroscopeSettingsFileButton;
+    private CheckBox _spotsOnlyCheckBox;
 
     //    private RoundedButton _scanDirForResultsButton;
-//    private SortableTable naaResultsTable;
-//    private RemotePagingPanel naaResultsPagingPanel;
-//    private RemotingPaginator naaResultsPaginator;
+    //    private SortableTable naaResultsTable;
+    //    private RemotePagingPanel naaResultsPagingPanel;
+    //    private RemotingPaginator naaResultsPaginator;
     private String _validationFilePath;
     private boolean haveData = false;
     private RoundedButton _submitButton;
@@ -117,6 +133,10 @@ public class TICManagementPanel extends VerticalPanel {
         stepPanel.add(_applyCalibrationCheckBox);
         stepPanel.add(_illuminationCorrectionCheckBox);
         stepPanel.add(_fqbatchCheckBox);
+        _spotsOnlyCheckBox = new CheckBox("Only persist spots data");
+
+        HorizontalPanel _spotsPanel = new HorizontalPanel();
+        _spotsPanel.add(_spotsOnlyCheckBox);
 
         HorizontalPanel jobPanel = new HorizontalPanel();
         _jobNameTextBox = new TextBox();
@@ -134,12 +154,15 @@ public class TICManagementPanel extends VerticalPanel {
         setUpAvgDarkPanel();
         setUpIntensityCorrectionPanel();
         setUpMicroscopeSettingsPanel();
+        setUpThresholdPanel();
         createButtons();
 
-        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
+        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "smallSpacer"));
         settingsPanel.add(jobPanel);
-        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
+        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "smallSpacer"));
         settingsPanel.add(stepPanel);
+        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "smallSpacer"));
+        settingsPanel.add(_spotsPanel);
         settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
 //        settingsPanel.add(_discoveryPanel);
 //        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
@@ -159,6 +182,8 @@ public class TICManagementPanel extends VerticalPanel {
         settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
         settingsPanel.add(_microscopeSettingsPanel);
         settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
+        settingsPanel.add(_thresholdPanel);
+        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
 //        settingsPanel.add(resultsListPanel);
         settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "smallSpacer"));
         settingsPanel.add(getSubmitButtonPanel());
@@ -175,6 +200,87 @@ public class TICManagementPanel extends VerticalPanel {
 //            naaResultsPagingPanel.first();
 //        }
 //        realize();
+    }
+
+    private void setUpThresholdPanel() {
+        _thresholdPanel= new TitledBox("Thresholds");
+        _positionXMinTextBox = new TextBox();
+        _positionXMinTextBox.setVisibleLength(10);
+        _positionXMinTextBox.setText("-120");
+        _positionXMaxTextBox = new TextBox();
+        _positionXMaxTextBox.setVisibleLength(10);
+        _positionXMaxTextBox.setText("22000");
+
+        _positionYMinTextBox = new TextBox();
+        _positionYMinTextBox.setVisibleLength(10);
+        _positionYMinTextBox.setText("-120");
+        _positionYMaxTextBox = new TextBox();
+        _positionYMaxTextBox.setVisibleLength(10);
+        _positionYMaxTextBox.setText("22000");
+
+        _positionZMinTextBox = new TextBox();
+        _positionZMinTextBox.setVisibleLength(10);
+        _positionZMinTextBox.setText("-500");
+        _positionZMaxTextBox = new TextBox();
+        _positionZMaxTextBox.setVisibleLength(10);
+        _positionZMaxTextBox.setText("5000");
+
+        _sigmaXMinTextBox = new TextBox();
+        _sigmaXMinTextBox.setVisibleLength(10);
+        _sigmaXMinTextBox.setText("30");
+        _sigmaXMaxTextBox = new TextBox();
+        _sigmaXMaxTextBox.setVisibleLength(10);
+        _sigmaXMaxTextBox.setText("600");
+
+        _sigmaYMinTextBox = new TextBox();
+        _sigmaYMinTextBox.setVisibleLength(10);
+        _sigmaYMinTextBox.setText("30");
+        _sigmaYMaxTextBox = new TextBox();
+        _sigmaYMaxTextBox.setVisibleLength(10);
+        _sigmaYMaxTextBox.setText("600");
+
+        _sigmaZMinTextBox = new TextBox();
+        _sigmaZMinTextBox.setVisibleLength(10);
+        _sigmaZMinTextBox.setText("50");
+        _sigmaZMaxTextBox = new TextBox();
+        _sigmaZMaxTextBox.setVisibleLength(10);
+        _sigmaZMaxTextBox.setText("800");
+
+        _validateIntensityCorrectionFileButton = getValidationButton(_intensityCorrectionMatrixFileTextBox.getText());
+
+        HorizontalPanel thresholdPanel = new HorizontalPanel();
+        Grid thrPosGrid = new Grid(4,3);
+        thrPosGrid.setWidget(0,0,HtmlUtils.getHtml("Position","prompt"));
+        thrPosGrid.setWidget(0,1,HtmlUtils.getHtml("Min","prompt"));
+        thrPosGrid.setWidget(0,2,HtmlUtils.getHtml("Max","prompt"));
+        thrPosGrid.setWidget(1,0,HtmlUtils.getHtml("X","prompt"));
+        thrPosGrid.setWidget(1,1,_positionXMinTextBox);
+        thrPosGrid.setWidget(1,2,_positionXMaxTextBox);
+        thrPosGrid.setWidget(2,0,HtmlUtils.getHtml("Y","prompt"));
+        thrPosGrid.setWidget(2,1,_positionYMinTextBox);
+        thrPosGrid.setWidget(2,2,_positionYMaxTextBox);
+        thrPosGrid.setWidget(3,0,HtmlUtils.getHtml("Z","prompt"));
+        thrPosGrid.setWidget(3,1,_positionZMinTextBox);
+        thrPosGrid.setWidget(3,2,_positionZMaxTextBox);
+
+        Grid thrSigGrid = new Grid(4,3);
+        thrSigGrid.setWidget(0,0,HtmlUtils.getHtml("Sigma","prompt"));
+        thrSigGrid.setWidget(0,1,HtmlUtils.getHtml("Min","prompt"));
+        thrSigGrid.setWidget(0,2,HtmlUtils.getHtml("Max","prompt"));
+        thrSigGrid.setWidget(1,0,HtmlUtils.getHtml("X","prompt"));
+        thrSigGrid.setWidget(1,1,_sigmaXMinTextBox);
+        thrSigGrid.setWidget(1,2,_sigmaXMaxTextBox);
+        thrSigGrid.setWidget(2,0,HtmlUtils.getHtml("Y","prompt"));
+        thrSigGrid.setWidget(2,1,_sigmaYMinTextBox);
+        thrSigGrid.setWidget(2,2,_sigmaYMaxTextBox);
+        thrSigGrid.setWidget(3,0,HtmlUtils.getHtml("Z","prompt"));
+        thrSigGrid.setWidget(3,1,_sigmaZMinTextBox);
+        thrSigGrid.setWidget(3,2,_sigmaZMaxTextBox);
+
+        thresholdPanel.add(thrPosGrid);
+        thresholdPanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
+        thresholdPanel.add(thrSigGrid);
+        _thresholdPanel.add(thresholdPanel);
     }
 
     protected void popuplateContentPanel() {
@@ -216,7 +322,6 @@ public class TICManagementPanel extends VerticalPanel {
         _inputFileOrDirTextBox.setVisibleLength(90);
         _inputFileOrDirTextBox.setText("");
         _validateInputFileOrDirButton = getValidationButton(_inputFileOrDirTextBox.getText());
-        // Grid(int rows, int columns)
         HorizontalPanel sourcePanel = new HorizontalPanel();
         sourcePanel.add(HtmlUtils.getHtml("Path: ", "prompt"));
         sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
@@ -231,7 +336,6 @@ public class TICManagementPanel extends VerticalPanel {
         _borderCropPixelsTextBox = new TextBox();
         _borderCropPixelsTextBox.setVisibleLength(10);
         _borderCropPixelsTextBox.setText("");
-        // Grid(int rows, int columns)
         HorizontalPanel sourcePanel = new HorizontalPanel();
         sourcePanel.add(HtmlUtils.getHtml("Pixels to Crop: ", "prompt"));
         sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
@@ -260,7 +364,6 @@ public class TICManagementPanel extends VerticalPanel {
         _intensityCorrectionMatrixFileTextBox.setVisibleLength(90);
         _intensityCorrectionMatrixFileTextBox.setText("");
         _validateIntensityCorrectionFileButton = getValidationButton(_intensityCorrectionMatrixFileTextBox.getText());
-        // Grid(int rows, int columns)
         HorizontalPanel sourcePanel = new HorizontalPanel();
         sourcePanel.add(HtmlUtils.getHtml("Path: ", "prompt"));
         sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
@@ -276,7 +379,6 @@ public class TICManagementPanel extends VerticalPanel {
         _microscopeSettingsTextBox.setVisibleLength(90);
         _microscopeSettingsTextBox.setText("");
         _validateMicroscopeSettingsFileButton = getValidationButton(_microscopeSettingsTextBox.getText());
-        // Grid(int rows, int columns)
         HorizontalPanel sourcePanel = new HorizontalPanel();
         sourcePanel.add(HtmlUtils.getHtml("Path: ", "prompt"));
         sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
@@ -291,7 +393,6 @@ public class TICManagementPanel extends VerticalPanel {
         _avgReadNoiseTextBox = new TextBox();
         _avgReadNoiseTextBox.setVisibleLength(90);
         _avgReadNoiseTextBox.setText("107.089,107.39,107.395,107.41,107.711,107.739,107.609,107.958,107.932");
-        // Grid(int rows, int columns)
         HorizontalPanel sourcePanel = new HorizontalPanel();
         sourcePanel.add(HtmlUtils.getHtml("Path: ", "prompt"));
         sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
@@ -305,7 +406,6 @@ public class TICManagementPanel extends VerticalPanel {
         _avgDarkTextBox = new TextBox();
         _avgDarkTextBox.setVisibleLength(90);
         _avgDarkTextBox.setText("50,50,50,50,50,50,50,50,50");
-        // Grid(int rows, int columns)
         HorizontalPanel sourcePanel = new HorizontalPanel();
         sourcePanel.add(HtmlUtils.getHtml("Path: ", "prompt"));
         sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
@@ -716,8 +816,21 @@ public class TICManagementPanel extends VerticalPanel {
         _ticTask.setParameter(BatchTicTask.PARAM_runApplyCalibrationToFrame, _applyCalibrationCheckBox.getValue().toString());
         _ticTask.setParameter(BatchTicTask.PARAM_runIlluminationCorrection, _illuminationCorrectionCheckBox.getValue().toString());
         _ticTask.setParameter(BatchTicTask.PARAM_runFQBatch, _fqbatchCheckBox.getValue().toString());
+        _ticTask.setParameter(BatchTicTask.PARAM_spotDataOnly, _spotsOnlyCheckBox.getValue().toString());
         _ticTask.setParameter(BatchTicTask.PARAM_avgReadNoise, _avgReadNoiseTextBox.getText());
         _ticTask.setParameter(BatchTicTask.PARAM_avgDark, _avgDarkTextBox.getText());
+        _ticTask.setParameter(BatchTicTask.PARAM_positionXMin, _positionXMinTextBox.getText());
+        _ticTask.setParameter(BatchTicTask.PARAM_positionXMax, _positionXMaxTextBox.getText());
+        _ticTask.setParameter(BatchTicTask.PARAM_positionYMin, _positionYMinTextBox.getText());
+        _ticTask.setParameter(BatchTicTask.PARAM_positionYMax, _positionYMaxTextBox.getText());
+        _ticTask.setParameter(BatchTicTask.PARAM_positionZMin, _positionZMinTextBox.getText());
+        _ticTask.setParameter(BatchTicTask.PARAM_positionZMax, _positionZMaxTextBox.getText());
+        _ticTask.setParameter(BatchTicTask.PARAM_sigmaXMin, _sigmaXMinTextBox.getText());
+        _ticTask.setParameter(BatchTicTask.PARAM_sigmaXMax, _sigmaXMaxTextBox.getText());
+        _ticTask.setParameter(BatchTicTask.PARAM_sigmaYMin, _sigmaYMinTextBox.getText());
+        _ticTask.setParameter(BatchTicTask.PARAM_sigmaYMax, _sigmaYMaxTextBox.getText());
+        _ticTask.setParameter(BatchTicTask.PARAM_sigmaZMin, _sigmaZMinTextBox.getText());
+        _ticTask.setParameter(BatchTicTask.PARAM_sigmaZMax, _sigmaZMaxTextBox.getText());
 //        _submitButton.setEnabled(false);
         _statusMessage.showSubmittingMessage();
 

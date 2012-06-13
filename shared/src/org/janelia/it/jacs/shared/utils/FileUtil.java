@@ -1096,4 +1096,15 @@ public class FileUtil {
         return "\""+path+"\"";
     }
 
+    public static void moveOnlyFiles(File sourceDir, File destinationDir) throws IOException {
+        File[] sourceFiles = sourceDir.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                return !file.isDirectory();
+            }
+        });
+        for (File sourceFile : sourceFiles) {
+            moveFileUsingSystemCall(sourceFile, new File(destinationDir.getAbsolutePath()+File.separator+sourceFile.getName()));
+        }
+    }
 }
