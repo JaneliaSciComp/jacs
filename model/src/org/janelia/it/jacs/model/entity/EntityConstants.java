@@ -85,6 +85,8 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ARTIFACT_SOURCE_ID                  = "Artifact Source Entity Id";
     public static final String ATTRIBUTE_SPLIT_PART                          = "Split Part";
     public static final String ATTRIBUTE_REPRESENTATIVE_SAMPLE               = "Representative Sample";
+    public static final String ATTRIBUTE_BALANCED_FLYLINE                    = "Balanced Fly Line";
+    public static final String ATTRIBUTE_ORIGINAL_FLYLINE                    = "Original Fly Line";
     
     /**
      * @deprecated Use TYPE_IMAGE_2D instead. This will be removed someday.

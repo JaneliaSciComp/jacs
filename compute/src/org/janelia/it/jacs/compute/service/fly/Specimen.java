@@ -88,6 +88,10 @@ public class Specimen {
 		this.normalizedName = lab+"_"+fragmentId+"_"+vector+"_"+insertionSite+"_"+specimen+"-"+descriptor+"_"+scanningDate+"_"+guid;
 	}
 	
+	public boolean isValidLine() {
+		return (lab!=null && fragmentId!=null && vector!=null && insertionSite != null);
+	}
+	
 	public static Specimen createSpecimenFromFullName(String fullName) throws Exception {
 		return new Specimen(fullName);
 	}

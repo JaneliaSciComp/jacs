@@ -44,7 +44,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
     private static final Map<String, EntityType> entityByName = Collections.synchronizedMap(new HashMap<String, EntityType>());
     private static final Map<String, EntityAttribute> attrByName = Collections.synchronizedMap(new HashMap<String, EntityAttribute>());
 	
-    private boolean debugDeletions = false;
+    private boolean debugDeletions = true;
     
     public AnnotationDAO(Logger logger) {
         super(logger);
@@ -218,15 +218,20 @@ public class AnnotationDAO extends ComputeBaseDAO {
      */
     public void deleteEntityTree(String owner, Entity entity) throws DaoException {
         try {
-	    	Long count = countDescendants(entity, MAX_SMALL_TREE_SIZE);
-	    	if (count <= MAX_SMALL_TREE_SIZE) {
-	    		_logger.info("Running small tree algorithm (count="+count+")");
-	        	deleteSmallEntityTree(owner, entity, true, false, 0);
-	    	}
-	    	else {
-	    		_logger.info("Running large tree algorithm (count="+count+")");
-	            deleteLargeEntityTree(owner, entity);
-	    	}
+        	if ("system".equals(owner)) {
+        		deleteSmallEntityTree(owner, entity, true, false, 0);
+        	}
+        	else {
+    	    	Long count = countDescendants(entity, MAX_SMALL_TREE_SIZE);
+    	    	if (count <= MAX_SMALL_TREE_SIZE) {
+    	    		_logger.info("Running small tree algorithm (count="+count+")");
+    	        	deleteSmallEntityTree(owner, entity, true, false, 0);
+    	    	}
+    	    	else {
+    	    		_logger.info("Running large tree algorithm (count="+count+")");
+    	            deleteLargeEntityTree(owner, entity);
+    	    	}
+        	}
         } catch (Exception ex) {
             throw new DaoException(ex.getMessage(), ex);
         }
@@ -246,10 +251,12 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
         Map<Long,Set<Long[]>> entityMap=new HashMap<Long, Set<Long[]>>();
         Map<Long,Set<Long>> parentMap=new HashMap<Long, Set<Long>>();
+        Map<Long,Set<Long>> nonOwnedParentEdMap=new HashMap<Long, Set<Long>>();
         Set<Long> commonRootSet =  new HashSet<Long>();
         _logger.info("Building entity graph for user "+owner);
         getEntityTreeForUserByJdbc(user.getUserId(), entityMap, parentMap, commonRootSet);
         _logger.info("Built entity graph for user "+owner+". entityMap.size="+entityMap.size()+" parentMap.size="+parentMap.size());
+        getNonOwnedParents(user.getUserId(), nonOwnedParentEdMap);
         
         // Next, get the sub-entity-graph we care about
         Set<Long> entitySetCandidatesToDelete=walkEntityMap(entity.getId(), entityMap, new HashSet<Long>());
@@ -338,17 +345,28 @@ public class AnnotationDAO extends ComputeBaseDAO {
             }
         }
 
+        // Add all EDs from parents we don't own 
+        for (Long entityId : entitySetToDelete) {
+        	Set<Long> parentEdIds = nonOwnedParentEdMap.get(entityId);
+        	if (parentEdIds!=null) {
+	        	for(Long parentEdId : parentEdIds) {
+	        		_logger.info("Adding ED reference (id="+parentEdId+") from non-owned entity, to owned entity with id="+entityId);	
+	        	}
+	        	entityDataSetToDelete.addAll(parentEdIds);
+        	}
+        }
+        
         if (debugDeletions) {
 	        for (Long entityId : entitySetToDelete) {
 	            _logger.info("Entity for deletion="+entityId);
-	            for (Long ei : entityMap.keySet()) {
-	                Set<Long[]> childSet = entityMap.get(ei);
-	                for (Long[] cl : childSet) {
-	                    if (cl[1]!=null && cl[1].longValue()==entityId.longValue()) {
-	                        _logger.info("Found child entityDataId="+cl[0]+" parentEntityId="+ei);
-	                    }
-	                }
-	            }
+//	            for (Long ei : entityMap.keySet()) {
+//	                Set<Long[]> childSet = entityMap.get(ei);
+//	                for (Long[] cl : childSet) {
+//	                    if (cl[1]!=null && cl[1].longValue()==entityId.longValue()) {
+//	                        _logger.info("Found child entityDataId="+cl[0]+" parentEntityId="+ei);
+//	                    }
+//	                }
+//	            }
 	        }
         }
 
@@ -499,6 +517,60 @@ public class AnnotationDAO extends ComputeBaseDAO {
         	}
         }
     }
+    protected void getNonOwnedParents(Long userId, Map<Long, Set<Long>> nonOwnedParentEdMap) throws Exception {
+    	
+    	Connection conn = null;
+    	PreparedStatement stmt = null;
+    	try {
+	        conn = getJdbcConnection();
+	        
+	        StringBuffer sql = new StringBuffer();
+	        sql.append("select e.id, ed.id, ce.id, ce.user_id, ea.name ");
+	        sql.append("from entity e ");
+	        sql.append("left outer join entityData ed on e.id=ed.parent_entity_id ");
+	        sql.append("left outer join entityAttribute ea on ed.entity_att_id = ea.id ");
+	        sql.append("join entity ce on ed.child_entity_id=ce.id and ce.user_id="+userId+" ");
+	        sql.append("where e.user_id!="+userId+" ");
+
+	        if (debugDeletions) _logger.info("getNonOwnedParents userId="+userId);
+	        if (debugDeletions) _logger.info("getNonOwnedParents sql="+sql);
+	        stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+	        
+	        stmt.setFetchSize(JDBC_FETCH_SIZE);
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				BigDecimal entityDataBD = rs.getBigDecimal(2);
+				Long entityDataId = null;
+				if (entityDataBD != null) {
+					entityDataId = entityDataBD.longValue();
+				}
+				BigDecimal childIdBD = rs.getBigDecimal(3);
+				Long childId = null;
+				if (childIdBD != null) {
+					childId = childIdBD.longValue();
+				}
+				
+				if (childId != null) {
+					Set<Long> parentSet = nonOwnedParentEdMap.get(childId);
+					if (parentSet == null) {
+						parentSet = new HashSet<Long>();
+						nonOwnedParentEdMap.put(childId, parentSet);
+					}
+					parentSet.add(entityDataId);
+				}
+			}
+    	}
+        finally {
+        	try {
+                if (stmt!=null) stmt.close();
+                if (conn!=null) conn.close();	
+        	}
+        	catch (SQLException e) {
+        		_logger.warn("Ignoring error encountered while closing JDBC connection",e);
+        	}
+        }
+    }
+
 
     protected void deleteIdSetByJdbc(Connection connection, Set<Long> idSet, String tableName, String identifierColumnName) throws Exception {
         int batchSize=200;

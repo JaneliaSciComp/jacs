@@ -53,7 +53,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         	taskParameters.add(new TaskParameter("top level folder name", topLevelFolderName, null));
         	taskParameters.add(new TaskParameter("representatives filepath", representativesPath, null));
         	taskParameters.add(new TaskParameter("split constructs filepath", splitConstructsPath, null)); 
-        	Task task = new GenericTask(new HashSet<Node>(), "system", new ArrayList<Event>(), 
+        	Task task = new GenericTask(new HashSet<Node>(), "rokickik", new ArrayList<Event>(), 
         			taskParameters, "splitLinesLoading", "Split Lines Loading");
             task.setJobName("Split Lines Loading Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
