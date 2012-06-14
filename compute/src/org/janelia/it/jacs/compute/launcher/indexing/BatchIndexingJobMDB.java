@@ -19,7 +19,7 @@ import org.quartz.JobExecutionException;
  */
 @MessageDriven(activationConfig = {
         // Wake up every 20 seconds
-        @ActivationConfigProperty(propertyName = "cronTrigger", propertyValue = "*/20 * * * * ?")
+        @ActivationConfigProperty(propertyName = "cronTrigger", propertyValue = "*/15 * * * * ?")
 })
 @ResourceAdapter("quartz-ra.rar")
 @Depends ({"jboss:custom=IndexingManager"})

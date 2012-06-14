@@ -48,7 +48,8 @@ public class SolrDAO extends AnnotationDAO {
 	protected static final String SOLR_MAIN_CORE = SystemConfigurationProperties.getString("Solr.MainCore");
 	protected static final String SOLR_BUILD_CORE = SystemConfigurationProperties.getString("Solr.BuildCore");
 	
-	protected final boolean build;
+	protected final boolean useBuildCore;
+	protected final boolean streamingUpdates;
 	
 	protected SolrServer solr;
 	protected LargeOperations largeOp;    
@@ -56,31 +57,24 @@ public class SolrDAO extends AnnotationDAO {
     protected Set<SageTerm> usedSageVocab;
     
     /**
-     * Create a SolrDAO for querying SOLR. No building is allowed.
-     * @param _logger
-     */
-    public SolrDAO(Logger _logger) {
-    	this(_logger, false);
-    }
-    
-    /**
      * Create a SolrDAO, specifying if the DAO will be used for building an index. 
      * @param _logger
      * @param build
      */
-    public SolrDAO(Logger _logger, boolean build) {
+    public SolrDAO(Logger _logger, boolean useBuildCore, boolean streamingUpdates) {
         super(_logger);
-        this.build = build;
+        this.useBuildCore = useBuildCore;
+        this.streamingUpdates = streamingUpdates;
     }
 
     private void init() throws DaoException {
     	if (solr==null) {
             try {
-            	if (build) {
-            		solr = new StreamingUpdateSolrServer(SOLR_SERVER_URL+SOLR_BUILD_CORE, SOLR_LOADER_QUEUE_SIZE, SOLR_LOADER_THREAD_COUNT);	
+            	if (streamingUpdates) {
+            		solr = new StreamingUpdateSolrServer(SOLR_SERVER_URL+(useBuildCore?SOLR_BUILD_CORE:SOLR_MAIN_CORE), SOLR_LOADER_QUEUE_SIZE, SOLR_LOADER_THREAD_COUNT);	
             	}
             	else {
-            		solr = new CommonsHttpSolrServer(SOLR_SERVER_URL+SOLR_MAIN_CORE);
+            		solr = new CommonsHttpSolrServer(SOLR_SERVER_URL+(useBuildCore?SOLR_BUILD_CORE:SOLR_MAIN_CORE));
             	}
             	solr.ping();
             }
@@ -98,8 +92,8 @@ public class SolrDAO extends AnnotationDAO {
     
     public void indexAllEntities(Map<String, SageTerm> sageVocab) throws DaoException {
     	
-    	if (!build) {
-    		throw new IllegalStateException("indexAllEntities called on SolrDAO which has build=false");
+    	if (!useBuildCore || !streamingUpdates) {
+    		throw new IllegalStateException("indexAllEntities called on SolrDAO which has useBuildCore=false or streamingUpdates=false");
     	}
     	
     	this.sageVocab = sageVocab;
@@ -204,11 +198,8 @@ public class SolrDAO extends AnnotationDAO {
         	_logger.info("Indexing Sage vocabularies");
         	
         	index(createSageDocs(usedSageVocab));
-        	commit();
         	
-        	_logger.info("  Committing SOLR index");
     		commit();
-        	_logger.info("  Optimizing SOLR index");
     		optimize();
         	_logger.info("Completed indexing "+i+" entities");
             swapBuildCore();
@@ -230,7 +221,6 @@ public class SolrDAO extends AnnotationDAO {
     	
     	List<Long> entityIds = new ArrayList<Long>();
     	for(Entity entity : entities) {
-        	_logger.info("Updating index for "+entity.getName()+" (id="+entity.getId()+")");
     		entityIds.add(entity.getId());
     	}
     	
@@ -257,7 +247,7 @@ public class SolrDAO extends AnnotationDAO {
 				annotationMap.put(entityId, annotations);
 			}
 			
-			annotations.add(new SimpleAnnotation(key, value, owner));
+			annotations.add(new SimpleAnnotation(annotationEntity.getName(), key, value, owner));
 		}
 		
 		// Get all Solr documents
@@ -279,10 +269,12 @@ public class SolrDAO extends AnnotationDAO {
         	}
         	
         	inputDocs.add(inputDoc);
+
+        	_logger.info("Updating index for "+entity.getName()+" (id="+entity.getId()+") ");
     	}
     
     	// Index the entire batch
-    	
+
     	index(inputDocs);
     	commit();
     }
@@ -479,6 +471,7 @@ public class SolrDAO extends AnnotationDAO {
     public void clearIndex() throws DaoException {
     	init();
 		try {
+        	_logger.info("Clearing SOLR index");
 	    	solr.deleteByQuery("*:*");
 	    	solr.commit();
 		}
@@ -494,6 +487,7 @@ public class SolrDAO extends AnnotationDAO {
     public void optimize() throws DaoException {
     	init();
 		try {
+        	_logger.info("Optimizing SOLR index");
 	    	solr.optimize();
 		}
 		catch (Exception e) {

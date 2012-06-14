@@ -70,14 +70,4 @@ public class SolrUtils {
 		}
 		return "sage_"+sageTerm.getName()+solrSuffix;
     }
-	
-    /**
-     * Returns the formatted annotation tag for the given key/value annotation pair.
-     * @param key
-     * @param value
-     * @return
-     */
-    public static String getAnnotationTag(String key, String value) {
-    	return (value == null) ? key : key + " = " + value;
-    }
 }

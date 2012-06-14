@@ -32,6 +32,7 @@ import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
 import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 public class AnnotationDAO extends ComputeBaseDAO {
 
@@ -1081,6 +1082,27 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
+
+    public Set<Entity> getUserEntitiesByName(String userLogin, String name) throws DaoException {
+        try {
+            Session session = getCurrentSession();
+            Criteria c = session.createCriteria(Entity.class);
+            c.add(Expression.eq("name", name));
+            c.add(Expression.eq("user.userLogin", userLogin));
+            List l = c.list();
+            Set<Entity> resultSet = new HashSet<Entity>();
+            for (Object o : l) {
+                Entity e = (Entity) o;
+                resultSet.add(e);
+            }
+            return resultSet;
+        }
+        catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+
+
     public boolean deleteEntityById(Long entityId) throws DaoException {
         try {
             Session session = getCurrentSession();
@@ -1696,10 +1718,20 @@ public class AnnotationDAO extends ComputeBaseDAO {
         	if (tmpUser == null) {
         		throw new IllegalArgumentException("User "+userLogin+" not found");
         	}
-        	
-        	String tag = (annotation.getValueString() == null) ? 
-        				annotation.getKeyString() : 
-        				annotation.getKeyString() + " = " + annotation.getValueString();
+
+        	Entity keyEntity = null;
+        	boolean isCustom = false;
+            if (annotation.getKeyEntityId() != null) {
+            	keyEntity = getEntityById(annotation.getKeyEntityId());
+            	isCustom = keyEntity!=null && "Custom".equals(keyEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE));
+            	if (isCustom && StringUtils.isEmpty(annotation.getValueString())) {
+            		throw new ComputeException("Value cannot be empty for custom annotation");
+            	}
+            }
+            
+        	String tag = isCustom ? annotation.getValueString() : 
+        				(annotation.getValueString()==null ? annotation.getKeyString() : 
+        				 annotation.getKeyString() + " = " + annotation.getValueString());
             
             Entity newAnnotation = newEntity(EntityConstants.TYPE_ANNOTATION, tag, tmpUser);
             
@@ -1726,7 +1758,6 @@ public class AnnotationDAO extends ComputeBaseDAO {
 			
 			// Add the key entity
             if (annotation.getKeyEntityId() != null) {
-            	Entity keyEntity = getEntityById(annotation.getKeyEntityId());
 				EntityData keyEntityData = newData(newAnnotation,
 						EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID, tmpUser);
 				keyEntityData.setChildEntity(keyEntity);

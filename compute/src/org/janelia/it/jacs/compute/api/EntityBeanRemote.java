@@ -47,6 +47,7 @@ public interface EntityBeanRemote {
     public Entity getEntityById(String targetId);
     public List<Entity> getEntitiesById(List<Long> ids) throws ComputeException;
     public Entity getUserEntityById(String userLogin, long entityId);
+    public Set<Entity> getUserEntitiesByName(String userLogin, String name);
     
     public Set<Entity> getEntitiesByName(String name);
     public List<Entity> getEntitiesByTypeName(String entityTypeName);

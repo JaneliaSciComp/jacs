@@ -72,7 +72,7 @@ public class LargeOperations {
 	        conn = annotationDAO.getJdbcConnection();
 	        
 	        StringBuffer sql = new StringBuffer();
-	        sql.append("select a.id, aedt.value, aedk.value, aedv.value, u.user_login ");
+	        sql.append("select a.id, a.name, aedt.value, aedk.value, aedv.value, u.user_login ");
 	        sql.append("from entity a ");
 	        sql.append("left outer join entityData aedt on a.id=aedt.parent_entity_id ");
 	        sql.append("left outer join entityData aedk on a.id=aedk.parent_entity_id ");
@@ -102,10 +102,11 @@ public class LargeOperations {
 			int i = 0;
 			while (rs.next()) {
 				Long annotationId = rs.getBigDecimal(1).longValue();
-				String entityIdStr = rs.getString(2);
-				String key = rs.getString(3);
-				String value = rs.getString(4);
-				String owner = rs.getString(5);
+				String annotationName = rs.getString(2);
+				String entityIdStr = rs.getString(3);
+				String key = rs.getString(4);
+				String value = rs.getString(5);
+				String owner = rs.getString(6);
 				
 				Long entityId = null;
 				try {
@@ -120,7 +121,7 @@ public class LargeOperations {
 					annots = new HashSet<SimpleAnnotation>();
 				}
 				
-				annots.add(new SimpleAnnotation(key, value, owner));
+				annots.add(new SimpleAnnotation(annotationName, key, value, owner));
 				putValue(annotationMapCache, entityId, annots);
 				i++;
 			}

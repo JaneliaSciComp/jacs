@@ -1,5 +1,15 @@
 package org.janelia.it.jacs.compute.api;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import javax.interceptor.Interceptors;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
@@ -14,15 +24,6 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import javax.interceptor.Interceptors;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 @Stateless(name = "AnnotationEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
@@ -31,9 +32,18 @@ import java.util.Set;
 public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRemote {
 	
     private Logger _logger = Logger.getLogger(this.getClass());
-    
+
     private final AnnotationDAO _annotationDAO = new AnnotationDAO(_logger);
 
+    private boolean updateIndexOnChange = true;
+    
+    public void setUpdateIndexOnChange(boolean updateIndexOnChange) {
+    	this.updateIndexOnChange = updateIndexOnChange;
+    }
+
+    private void updateIndex(Long entityId) {
+    	if (updateIndexOnChange) IndexingHelper.updateIndex(entityId);
+    }
 
     public Entity createOntologyRoot(String userLogin, String rootName) throws ComputeException {
         try {
@@ -115,7 +125,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         try {
             Entity annotEntity = _annotationDAO.createOntologyAnnotation(userLogin, annotation);
             _logger.info(userLogin+" added annotation "+annotEntity.getId());
-            IndexingHelper.updateIndex(annotation.getTargetEntityId());
+            updateIndex(annotation.getTargetEntityId());
             return annotEntity;
         }
         catch (Exception e) {
@@ -128,7 +138,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         try {
             Long targetEntityId = _annotationDAO.removeOntologyAnnotation(userLogin, annotationId);
             _logger.info(userLogin+" removed annotation "+annotationId);
-            IndexingHelper.updateIndex(targetEntityId);
+            updateIndex(targetEntityId);
         } 
         catch (DaoException e) {
             _logger.error("Error trying to removeAnnotation");
@@ -328,12 +338,9 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
     }
 
-
-
     private void updateIndexForAnnotationTargets(List<Entity> annotations) {
     	if (annotations==null) return;
     	for(Entity annotation : annotations) {
-    		
     		Long entityId = null;
     		try {
     			entityId = new Long(annotation.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID));
@@ -343,7 +350,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             }
             
             if (entityId!=null) {
-            	IndexingHelper.updateIndex(entityId);
+            	updateIndex(entityId);
             }
     	}
     }

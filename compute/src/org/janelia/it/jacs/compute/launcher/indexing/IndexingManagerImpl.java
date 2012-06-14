@@ -75,7 +75,7 @@ public class IndexingManagerImpl implements IndexingManagerManagement {
 			}
 			this.processing = true;
 		}
-		solrDAO = new SolrDAO(logger, true);
+		solrDAO = new SolrDAO(logger, false, true);
 		int numQueued = queue.getQueueSize();
 		int numIndexed = queue.process(MAX_BATCH_SIZE);
 		if (numIndexed>0) {

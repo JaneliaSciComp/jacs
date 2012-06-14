@@ -14,13 +14,12 @@ import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.support.EntityMapStep;
 import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.interceptor.UsageInterceptor;
-import org.janelia.it.jacs.compute.launcher.indexing.IndexingManagerManagement;
+import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
-import org.jboss.annotation.ejb.Depends;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 
@@ -34,14 +33,10 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 @TransactionTimeout(432000)
 @Interceptors({UsageInterceptor.class})
 @PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 100, timeout = 10000)
-@Depends({"jboss:custom=IndexingManager"})
 public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
 	
     private static Logger _logger = Logger.getLogger(EntityBeanImpl.class);
     
-    @Depends({"jboss:custom=IndexingManager"})
-	private IndexingManagerManagement indexingManager;
-	
     private final AnnotationDAO _annotationDAO = new AnnotationDAO(_logger);
     
     private boolean updateIndexOnChange = true;
@@ -51,7 +46,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     }
 
     private void updateIndex(Entity entity) {
-    	if (updateIndexOnChange) indexingManager.scheduleIndexing(entity.getId());
+    	if (updateIndexOnChange) IndexingHelper.updateIndex(entity.getId());
     }
     
     public EntityType createNewEntityType(String entityTypeName) throws ComputeException {
@@ -353,7 +348,17 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         }
         return null;
     }
-
+    
+    public Set<Entity> getUserEntitiesByName(String userLogin, String name) {
+        try {
+            return _annotationDAO.getUserEntitiesByName(userLogin, name);
+        }
+        catch (DaoException e) {
+            _logger.error("Error trying to get the entities with name "+name+" for user "+userLogin, e);
+        }
+        return null;
+    }
+    
     public Set<Entity> getEntitiesByName(String name) {
         try {
             return _annotationDAO.getEntitiesByName(name);

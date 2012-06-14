@@ -41,12 +41,19 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 @Interceptors({UsageInterceptor.class})
 @PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 100, timeout = 10000)
 public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
-	
-    private Logger _logger = Logger.getLogger(this.getClass());
-    
+
     public static final String SOLR_EJB_PROP = "SolrEJB.Name";
     
-    public SolrBeanImpl() {
+    private Logger _logger = Logger.getLogger(this.getClass());
+
+    private boolean updateIndexOnChange = true;
+    
+    public void setUpdateIndexOnChange(boolean updateIndexOnChange) {
+    	this.updateIndexOnChange = updateIndexOnChange;
+    }
+
+    private void updateIndex(Long entityId) {
+    	if (updateIndexOnChange) IndexingHelper.updateIndex(entityId);
     }
 
     public void indexAllEntities(boolean clearIndex) throws ComputeException {
@@ -60,7 +67,7 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     	}
     	
     	try {
-    		SolrDAO solrDAO = new SolrDAO(_logger, true);
+    		SolrDAO solrDAO = new SolrDAO(_logger, true, true);
     		if (clearIndex) {
     			solrDAO.clearIndex();
     		}
@@ -84,15 +91,12 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     		return entity;
     	}
     	visited.add(entity.getId());
-    	IndexingHelper.updateIndex(entity);
+    	updateIndex(entity.getId());
     	for(EntityData ed : entity.getEntityData()) {
     		Entity child = ed.getChildEntity();
     		if (child != null) {
     			indexAllEntitiesInTree(child, visited);
     		}
-    	}
-    	if (entity.getId()%2==0) {
-    		IndexingHelper.updateIndex(entity);
     	}
     	return entity;
     }
@@ -128,7 +132,7 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     }
     
 	public SolrResults search(SolrQuery query, boolean mapToEntities) throws ComputeException {
-		SolrDAO solrDAO = new SolrDAO(_logger, false);
+		SolrDAO solrDAO = new SolrDAO(_logger, false, false);
 		
 		QueryResponse response = solrDAO.search(query);
 		List<Entity> resultList = null;
@@ -157,7 +161,7 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
 	}
     
     public Map<String, SageTerm> getFlyLightVocabulary() throws ComputeException {
-    	SolrDAO solrDAO = new SolrDAO(_logger, false);
+    	SolrDAO solrDAO = new SolrDAO(_logger, false, false);
 		Map<String, SageTerm> vocab = new HashMap<String, SageTerm>();
 		
 		SolrQuery query = new SolrQuery("doc_type:"+SolrUtils.DocType.SAGE_TERM);
