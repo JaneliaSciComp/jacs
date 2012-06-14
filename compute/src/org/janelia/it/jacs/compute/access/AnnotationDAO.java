@@ -1129,7 +1129,6 @@ public class AnnotationDAO extends ComputeBaseDAO {
     
     public Set<EntityData> getParentEntityDatas(long childEntityId) throws DaoException {
         try {
-//        	_logger.info("Getting parent entity datas for "+childEntityId);
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed from EntityData ed ");
             hql.append("join fetch ed.user ");
@@ -1142,6 +1141,21 @@ public class AnnotationDAO extends ComputeBaseDAO {
             hql.append("join fetch ed.parentEntity.entityType ");
             hql.append("where ed.childEntity.id=?");
             Query query = session.createQuery(hql.toString()).setLong(0, childEntityId);
+            return new HashSet(query.list());
+        } catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+
+    public Set<Long> getParentIdsForAttribute(long childEntityId, String attributeName) throws DaoException {
+        try {
+            Session session = getCurrentSession();
+            StringBuffer hql = new StringBuffer("select ed.parentEntity.id from EntityData ed ");
+            hql.append("where ed.childEntity.id=? ");
+            hql.append("and ed.entityAttribute.name=? ");
+            Query query = session.createQuery(hql.toString());
+            query.setLong(0, childEntityId);
+            query.setString(1, attributeName);
             return new HashSet(query.list());
         } catch (Exception e) {
             throw new DaoException(e);
@@ -1164,7 +1178,6 @@ public class AnnotationDAO extends ComputeBaseDAO {
     
     public Set<Entity> getChildEntities(long entityId) throws DaoException {
         try {
-//        	_logger.info("getting children of "+entityId);
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.childEntity from EntityData ed ");
             hql.append("join fetch ed.childEntity.user ");

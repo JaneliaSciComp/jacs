@@ -410,7 +410,6 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     }
     
     public Set<EntityData> getParentEntityDatas(long entityId) {
-
         try {
             return _annotationDAO.getParentEntityDatas(entityId);
         } 
@@ -420,8 +419,17 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         return null;
     }
     
+    public Set<Long> getParentIdsForAttribute(long childEntityId, String attributeName) {
+        try {
+            return _annotationDAO.getParentIdsForAttribute(childEntityId, attributeName);
+        } 
+        catch (DaoException e) {
+            _logger.error("Error trying to get parent ids for id="+childEntityId+", attr="+attributeName, e);
+        }
+        return null;
+    }
+    
     public Entity getAncestorWithType(Entity entity, String type) throws ComputeException {
-
     	try {
     		return _annotationDAO.getAncestorWithType(entity, type);
     	}
@@ -432,7 +440,6 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     }
     
     public List<List<Long>> searchTreeForNameStartingWith(Long rootId, String searchString) throws ComputeException {
-
     	try {
     		return _annotationDAO.searchTree(rootId, searchString+"%");
     	}

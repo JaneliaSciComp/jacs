@@ -211,6 +211,7 @@ public class EntityUtils {
 				|| EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE.equals(attrName) 
 				|| EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE.equals(attrName) 
 				|| EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE.equals(attrName)
+				|| EntityConstants.ATTRIBUTE_ORIGINAL_FLYLINE.equals(attrName)
 				|| EntityConstants.ATTRIBUTE_REPRESENTATIVE_SAMPLE.equals(attrName)) {
 			return true;
 		}
