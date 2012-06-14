@@ -44,7 +44,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
     private static final Map<String, EntityType> entityByName = Collections.synchronizedMap(new HashMap<String, EntityType>());
     private static final Map<String, EntityAttribute> attrByName = Collections.synchronizedMap(new HashMap<String, EntityAttribute>());
 	
-    private boolean debugDeletions = true;
+    private boolean debugDeletions = false;
     
     public AnnotationDAO(Logger logger) {
         super(logger);
@@ -1129,6 +1129,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
     
     public Set<EntityData> getParentEntityDatas(long childEntityId) throws DaoException {
         try {
+//        	_logger.info("Getting parent entity datas for "+childEntityId);
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed from EntityData ed ");
             hql.append("join fetch ed.user ");
@@ -1163,6 +1164,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
     
     public Set<Entity> getChildEntities(long entityId) throws DaoException {
         try {
+//        	_logger.info("getting children of "+entityId);
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.childEntity from EntityData ed ");
             hql.append("join fetch ed.childEntity.user ");
