@@ -1,0 +1,9 @@
+<!--
+	Create a guide for the specified Mask directory
+-->
+<process name="Mask Guide" processor="queue/maskSampleAnnotationPipelineLauncher" startEvent="pending">
+	<sequence>
+		<operation name="Mask Guide" processor="org.janelia.it.jacs.compute.service.fly.MaskGuideService">
+		</operation>
+    </sequence>
+</process>

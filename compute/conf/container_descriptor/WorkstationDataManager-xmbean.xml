@@ -441,4 +441,24 @@
         </parameter>
     </operation>
 
+    <operation>
+        <description>Run the Mask Guide Service</description>
+        <name>runMaskGuideService</name>
+        <parameter>
+            <description>User to run as (e.g. "system")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Mask Folder Name</description>
+            <name>maskFolderName</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Refresh prior data?</description>
+            <name>refresh</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+    </operation>
+
 </mbean>

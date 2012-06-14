@@ -1,11 +1,7 @@
 package org.janelia.it.jacs.compute.service.fly;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
@@ -14,22 +10,12 @@ import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
-import org.janelia.it.jacs.compute.service.entity.EntityHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
-import org.janelia.it.jacs.model.user_data.entity.MaskAnnotationResultNode;
-import org.janelia.it.jacs.model.user_data.entity.NamedFileNode;
-import org.janelia.it.jacs.model.user_data.entity.ScreenSampleResultNode;
-import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
-import org.janelia.it.jacs.shared.utils.FileUtil;
+
 
 /**
  * Created by IntelliJ IDEA.
@@ -48,7 +34,6 @@ public class MaskGuideService  implements IService {
     public static final String PARAM_refresh = "Refresh";
 
     protected String maskAnnotationTopResourceDir=SystemConfigurationProperties.getString("MaskSampleAnnotation.ResourceDir");
-    protected String patternChannel=SystemConfigurationProperties.getString("FlyScreen.AlignedStackPatternChannel");
 
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
@@ -59,35 +44,32 @@ public class MaskGuideService  implements IService {
     protected String visibility;
     protected IProcessData processData;
     protected Boolean refresh;
-    protected String maskAnnotationFolderName;
+    protected String maskFolderName;
     protected File maskAnnotationResourceDir;
-    protected List<String> abbrevationList=new ArrayList<String>();
 
 
     public void execute(IProcessData processData) throws ServiceException {
         try {
-
             logger.info("MaskGuideService execute() start");
-
             this.processData=processData;
             task = ProcessDataHelper.getTask(processData);
-            logger.info("MaskSampleAnnotationService running under TaskId="+task.getObjectId());
+            logger.info("MaskGuideService running under TaskId="+task.getObjectId());
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
             visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
             user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
             createDate = new Date();
-            refresh=processData.getString("REFRESH").trim().toLowerCase().equals("true");
-            maskAnnotationFolderName=processData.getString("ROOT_ENTITY_NAME");
+            refresh=task.getParameter(PARAM_refresh).trim().toLowerCase().equals("true");
+            maskFolderName=task.getParameter(PARAM_maskFolderName);
 
-            if (maskAnnotationFolderName==null) {
-                throw new Exception("ROOT_ENTITY_NAME must be defined in processData to determine maskAnnotationFolder");
+            if (maskFolderName==null) {
+                throw new Exception("Mask Folder name must be defined in task");
             } else {
-                maskAnnotationResourceDir=new File(maskAnnotationTopResourceDir, maskAnnotationFolderName);
+                maskAnnotationResourceDir=new File(maskAnnotationTopResourceDir, maskFolderName);
                 logger.info("Using maskAnnotationFolder="+maskAnnotationResourceDir.getAbsolutePath());
             }
-
+            logger.info("MaskGuideService execute() end");
         }
         catch (Exception e) {
             throw new ServiceException(e);
