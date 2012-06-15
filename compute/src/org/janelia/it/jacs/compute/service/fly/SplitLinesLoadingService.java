@@ -471,22 +471,41 @@ public class SplitLinesLoadingService implements IService {
     }
 
     private void setFlylineBalance(Entity flyline, Entity balancedFlyline) throws Exception {
-    	
-		if (balancedFlyline!=null) {
-			EntityData repEd2 = balancedFlyline.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_ORIGINAL_FLYLINE);
-			if (repEd2!=null) {
-				if (!repEd2.getChildEntity().getId().equals(flyline.getId())) {
-					logger.info("FlyLine "+balancedFlyline.getName()+" has a new original flyline: "+flyline.getName()+" (old one was "+repEd2.getChildEntity().getId()+")");
-					repEd2.setChildEntity(flyline);
-					entityBean.saveOrUpdateEntityData(repEd2);
+
+		if (flyline!=null) {
+			EntityData repEd = flyline.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_BALANCED_FLYLINE);
+			if (repEd!=null) {
+				if (balancedFlyline==null) {
+					entityBean.deleteEntityData(repEd);
+				}
+				else if (!repEd.getChildEntity().getId().equals(balancedFlyline.getId())) {
+					logger.info("FlyLine "+flyline.getName()+" has a new balanced flyline: "+balancedFlyline.getName()+" (old one was "+repEd.getChildEntity().getId()+")");
+					repEd.setChildEntity(balancedFlyline);
+					entityBean.saveOrUpdateEntityData(repEd);
 				}
 			}
-			else {
-				logger.info("FlyLine "+balancedFlyline.getName()+" has original flyline: "+flyline.getName());
-				addToParent(balancedFlyline, flyline, null, EntityConstants.ATTRIBUTE_ORIGINAL_FLYLINE);
-				entityBean.saveOrUpdateEntity(balancedFlyline);
+			else if (balancedFlyline!=null) {
+				logger.info("FlyLine "+flyline.getName()+" has balanced flyline: "+balancedFlyline.getName());
+				addToParent(flyline, balancedFlyline, null, EntityConstants.ATTRIBUTE_BALANCED_FLYLINE);
+				entityBean.saveOrUpdateEntity(flyline);
 			}
 	    }
+		
+//		if (balancedFlyline!=null) {
+//			EntityData repEd = balancedFlyline.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_ORIGINAL_FLYLINE);
+//			if (repEd!=null) {
+//				if (!repEd.getChildEntity().getId().equals(flyline.getId())) {
+//					logger.info("FlyLine "+balancedFlyline.getName()+" has a new original flyline: "+flyline.getName()+" (old one was "+repEd.getChildEntity().getId()+")");
+//					repEd.setChildEntity(flyline);
+//					entityBean.saveOrUpdateEntityData(repEd);
+//				}
+//			}
+//			else {
+//				logger.info("FlyLine "+balancedFlyline.getName()+" has original flyline: "+flyline.getName());
+//				addToParent(balancedFlyline, flyline, null, EntityConstants.ATTRIBUTE_ORIGINAL_FLYLINE);
+//				entityBean.saveOrUpdateEntity(balancedFlyline);
+//			}
+//	    }
     }
     
     private void setFlylineRepresentative(Entity flyline, Entity screenSample) throws Exception {

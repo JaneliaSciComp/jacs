@@ -4,15 +4,13 @@ import java.io.File;
 import java.util.*;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
-import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
-import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.api.EntityBeanLocal;
+import org.janelia.it.jacs.compute.api.*;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
@@ -38,7 +36,9 @@ public class AnnotationImportService implements IService {
     protected ComputeBeanLocal computeBean;
     protected AnnotationBeanLocal annotationBean;
     
-    protected Map<String, HashSet<String>> annotations = new HashMap<String,HashSet<String>>();
+    protected Map<String, HashSet<String>> annotationMap = new HashMap<String,HashSet<String>>();
+    protected Entity textAnnot;
+	protected int count = 0;
 	
     public void execute(IProcessData processData) throws ServiceException {
     	
@@ -77,7 +77,7 @@ public class AnnotationImportService implements IService {
         	ontologyTree = annotationBean.createOntologyRoot(user.getUserLogin(), ontologyName);
         	
         	EntityData textAnnotEd = annotationBean.createOntologyTerm(user.getUserLogin(), ontologyTree.getId(), "Annotation", OntologyElementType.createTypeByName("Custom"), 0);
-        	Entity textAnnot = textAnnotEd.getChildEntity();
+        	textAnnot = textAnnotEd.getChildEntity();
         	
 //        	EntityData enums = annotationBean.createOntologyTerm(user.getUserLogin(), ontologyTree.getId(), "Enumerations", OntologyElementType.createTypeByName("Category"), 0);
 //        	EntityData yesNoEnum = annotationBean.createOntologyTerm(user.getUserLogin(), enums.getId(), "Boolean", OntologyElementType.createTypeByName("Enum"), 0);
@@ -86,35 +86,48 @@ public class AnnotationImportService implements IService {
 
         	logger.info("Creating annotations");
 
-        	int c = 0;
-        	for(String entityName : annotations.keySet()) {
+        	for(String entityName : annotationMap.keySet()) {
         		Set<Entity> entities = entityBean.getEntitiesByName(entityName);
         		if (entities==null || entities.isEmpty()) {
-        			logger.error("Could not find entity with the name: "+entityName);
+        			logger.warn("Could not find entity with the name: "+entityName);
         			continue;
         		}
         		if (entities.size()>1) {
-        			logger.error("Found more than 1 entity with the name: "+entityName);
+        			logger.warn("Found more than 1 entity with the name: "+entityName);
         			continue;
         		}
         		Entity entity = entities.iterator().next();
-        		List<String> annots = new ArrayList<String>(annotations.get(entityName));
+        		List<String> annots = new ArrayList<String>(annotationMap.get(entityName));
         		Collections.sort(annots);
-        		for(String annot : annots) {
-            		OntologyAnnotation annotation = new OntologyAnnotation(null, entity.getId(), textAnnot.getId(), textAnnot.getName(), null, annot);
-            		annotationBean.createOntologyAnnotation(user.getUserLogin(), annotation);
-            		c++;
+        		annotate(entity, annots);
+
+        		if (EntityConstants.TYPE_SCREEN_SAMPLE.equals(entity.getEntityType().getName())) {
+    	    		Set<Long> parentIds = entityBean.getParentIdsForAttribute(entity.getId(), EntityConstants.ATTRIBUTE_REPRESENTATIVE_SAMPLE);
+    	    		if (parentIds != null) {
+    	    			List<Entity> represented = entityBean.getEntitiesById(new ArrayList<Long>(parentIds));	
+    	    			for(Entity rep : represented) {
+    	    				annotate(rep, annots);
+    	    			}
+    	    		}
         		}
-        		logger.info("Annotated entity: "+entity.getName()+" (id="+entity.getId()+")");
         	}
 
-        	logger.info("Created "+c+" annotations");
+        	logger.info("Created "+count+" annotations");
         } 
         catch (Exception e) {
             throw new ServiceException(e);
         }
     }
 
+    private void annotate(Entity entity, List<String> annots) throws ComputeException {
+		for(String annot : annots) {
+    		OntologyAnnotation annotation = new OntologyAnnotation(null, entity.getId(), textAnnot.getId(), textAnnot.getName(), null, annot);
+    		annotationBean.createOntologyAnnotation(user.getUserLogin(), annotation);
+    		count++;
+		}
+		logger.info("Annotated entity: "+entity.getName()+" (id="+entity.getId()+")");
+    }
+    
     private void readAnnotations(File representativesFile) throws Exception {
 		Scanner scanner = new Scanner(representativesFile);
         try {
@@ -123,17 +136,17 @@ public class AnnotationImportService implements IService {
             	String line = scanner.nextLine();
             	if (StringUtils.isEmpty(entityName) || StringUtils.isEmpty(line)) continue;
             	
-                HashSet<String> annotSet = annotations.get(entityName);
+                HashSet<String> annotSet = annotationMap.get(entityName);
                 if (annotSet==null) {
                 	annotSet = new HashSet<String>();
-                	annotations.put(entityName, annotSet);
+                	annotationMap.put(entityName, annotSet);
                 }
                 
                 // Some Arnim-specific processing
                 for(String annot : line.split("\t")) {
                 	if (!StringUtils.isEmpty(annot)) {
                 		if (annot.startsWith("Qi:")) {
-                			annot = annot.replaceFirst(":", ".");
+                			annot = annot.replaceFirst("(\\d+):(\\d+)", "$1.$2");
                 		}
                 		annot = annot.replaceAll(":", "_");
                 		annotSet.add(annot);
