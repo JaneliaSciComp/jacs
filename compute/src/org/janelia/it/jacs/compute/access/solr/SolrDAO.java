@@ -399,15 +399,16 @@ public class SolrDAO extends AnnotationDAO {
 //    		}
 //    		doc.addField("child_ids", entity.getChildIds(), 0.2f);
 //    	}
-    	
-    	if (annotations != null) {
-    		if (existingDoc!=null) {
-        		for(String fieldName : new ArrayList<String>(doc.getFieldNames())) {
-        			if (fieldName.endsWith("_annotations") || fieldName.endsWith("_annot")) {
-        				doc.removeField(fieldName);
-        			}
-        		}
+
+		if (existingDoc!=null) {
+    		for(String fieldName : new ArrayList<String>(doc.getFieldNames())) {
+    			if (fieldName.endsWith("_annotations") || fieldName.endsWith("_annot")) {
+    				doc.removeField(fieldName);
+    			}
     		}
+		}
+		
+    	if (annotations != null) {
     		for(SimpleAnnotation annotation : annotations) {
     			doc.addField(annotation.getOwner()+"_annotations", annotation.getTag(), 1.0f);
     			if (annotation.getValue()!=null) {
