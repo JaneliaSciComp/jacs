@@ -28,21 +28,15 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
 @Interceptors({UsageInterceptor.class})
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 60, timeout = 10000)
+@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 200, timeout = 10000)
 public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRemote {
 	
-    private Logger _logger = Logger.getLogger(this.getClass());
+    private static final Logger _logger = Logger.getLogger(AnnotationBeanImpl.class);
 
     private final AnnotationDAO _annotationDAO = new AnnotationDAO(_logger);
 
-    private boolean updateIndexOnChange = true;
-    
-    public void setUpdateIndexOnChange(boolean updateIndexOnChange) {
-    	this.updateIndexOnChange = updateIndexOnChange;
-    }
-
     private void updateIndex(Long entityId) {
-    	if (updateIndexOnChange) IndexingHelper.updateIndex(entityId);
+    	IndexingHelper.updateIndex(entityId);
     }
 
     public Entity createOntologyRoot(String userLogin, String rootName) throws ComputeException {

@@ -30,7 +30,7 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>Path to split constructs file which annotates flylines with an AD or DBD designation (e.g. "/groups/scicomp/jacsData/SplitPicking/splitConstructs.txt")</description>
+           <description>Path to split constructs file which annotates flylines with an AD or DBD designation (e.g. "/groups/scicomp/jacsData/SplitPicking/splitReps.txt")</description>
            <name>splitConstructsPath</name>
            <type>java.lang.String</type>
         </parameter>

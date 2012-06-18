@@ -33,7 +33,8 @@ public class ScreenSampleCrossResultsDiscoveryService implements IService {
     protected Date createDate;
     protected IProcessData processData;
 	protected Long parentEntityId;
-
+	protected EntityHelper entityHelper;
+	
 	@Override
     public void execute(IProcessData processData) throws ServiceException {
 		try {
@@ -60,7 +61,7 @@ public class ScreenSampleCrossResultsDiscoveryService implements IService {
 	        	throw new ServiceException("OUTPUT_ENTITY_ID_LIST must contain the same number of ids as the input lists");
 	        }
 
-	        EntityHelper entityHelper = new EntityHelper(false);
+	        entityHelper = new EntityHelper(entityBean, computeBean);
 
 	        int i = 0;
 	        for(CombinedFile combinedFile : filePairs) {

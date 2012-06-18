@@ -70,6 +70,7 @@ public class MaskSampleAnnotationService  implements IService {
     protected Date createDate;
     protected String mode=MODE_UNDEFINED;
     protected Task task;
+    protected EntityHelper entityHelper;
     protected String sessionName;
     protected String visibility;
     protected IProcessData processData;
@@ -98,7 +99,8 @@ public class MaskSampleAnnotationService  implements IService {
             mode = processData.getString("MODE");
             refresh=processData.getString("REFRESH").trim().toLowerCase().equals("true");
             maskAnnotationFolderName=processData.getString("ROOT_ENTITY_NAME");
-
+            entityHelper = new EntityHelper(entityBean, computeBean);
+            
             if (maskAnnotationFolderName==null) {
                 throw new Exception("ROOT_ENTITY_NAME must be defined in processData to determine maskAnnotationFolder");
             } else {
@@ -766,7 +768,6 @@ public class MaskSampleAnnotationService  implements IService {
 
     protected Entity createStackEntity(File file, String entityName, Entity mipEntity) throws Exception {
         Entity stack = new Entity();
-        EntityHelper entityHelper = new EntityHelper();
         String mipFilePath=mipEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         stack.setUser(user);
         stack.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK));

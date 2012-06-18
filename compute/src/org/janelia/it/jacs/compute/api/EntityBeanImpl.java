@@ -32,21 +32,15 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
 @Interceptors({UsageInterceptor.class})
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 100, timeout = 10000)
+@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 200, timeout = 10000)
 public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
 	
-    private static Logger _logger = Logger.getLogger(EntityBeanImpl.class);
-    
+    private static final Logger _logger = Logger.getLogger(EntityBeanImpl.class);
+
     private final AnnotationDAO _annotationDAO = new AnnotationDAO(_logger);
     
-    private boolean updateIndexOnChange = true;
-    
-    public void setUpdateIndexOnChange(boolean updateIndexOnChange) {
-    	this.updateIndexOnChange = updateIndexOnChange;
-    }
-
     private void updateIndex(Entity entity) {
-    	if (updateIndexOnChange) IndexingHelper.updateIndex(entity.getId());
+    	IndexingHelper.updateIndex(entity.getId());
     }
     
     public EntityType createNewEntityType(String entityTypeName) throws ComputeException {

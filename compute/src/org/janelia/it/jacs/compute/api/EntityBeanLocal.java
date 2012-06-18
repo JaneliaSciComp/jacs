@@ -17,8 +17,6 @@ import org.janelia.it.jacs.model.entity.EntityData;
  */
 @Local
 public interface EntityBeanLocal extends EntityBeanRemote {
-
-	public void setUpdateIndexOnChange(boolean updateIndexOnChange);
 	
 	public Entity saveOrUpdateEntity(Entity entity) throws ComputeException;
     public EntityData saveOrUpdateEntityData(EntityData newData) throws ComputeException;

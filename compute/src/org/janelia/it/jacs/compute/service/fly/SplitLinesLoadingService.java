@@ -15,6 +15,7 @@ import org.janelia.it.jacs.compute.service.entity.EntityHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
@@ -39,6 +40,10 @@ public class SplitLinesLoadingService implements IService {
     protected Date createDate;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
+	protected EntityHelper helper;
+    
+    protected EntityType flylineType;
+    protected EntityType folderType;
     
     protected Set<Specimen> representatives = new HashSet<Specimen>();
     protected Map<String, String> splitConstructs = new HashMap<String,String>();
@@ -54,6 +59,9 @@ public class SplitLinesLoadingService implements IService {
             computeBean = EJBFactory.getLocalComputeBean();
             user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
             createDate = new Date();
+            helper = new EntityHelper(entityBean, computeBean);
+            
+            // Process arguments
             
             String topLevelFolderName = (String)processData.getItem("TOP_LEVEL_FOLDER_NAME");
         	if (topLevelFolderName == null) {
@@ -70,18 +78,27 @@ public class SplitLinesLoadingService implements IService {
         		throw new IllegalArgumentException("SPLIT_CONSTRUCTS_FILEPATH may not be null");
         	}
         	
+        	
+        	// Preload entity types
+        	
+        	flylineType = entityBean.getEntityTypeByName(EntityConstants.TYPE_FLY_LINE);
+        	folderType = entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER);
+        	
+        	
+        	// Read the input files
+
         	readRepresentatives(new File(representativesFilepath));
         	readSplitConstructs(new File(splitConstructsFilepath));
         	
         	Entity topLevelFolder = populateChildren(createOrVerifyRootEntity(topLevelFolderName, user, createDate, true, false));
             logger.info("Using topLevelFolder with id=" + topLevelFolder.getId());
             
-        	// First create any necessary folders, and add any normal screen flyline that is not already there
-        	
+            
+        	// Create any necessary folders, and add any normal screen flyline that is not already there
+            
         	logger.info("Adding screen flylines");
         	
         	Map<String,Entity> flylineMap = new HashMap<String,Entity>();
-        	
         	Map<String,Entity> fragmentFolders = new HashMap<String,Entity>();
         	List<Entity> flylines = entityBean.getEntitiesByTypeName(EntityConstants.TYPE_FLY_LINE);
         	for(Entity flyline : flylines) {
@@ -96,12 +113,12 @@ public class SplitLinesLoadingService implements IService {
     				continue;
     			}
     			
-        		Entity prefixFolder = verifyOrCreateChild(topLevelFolder, specimen.getLab()+"_"+specimen.getPlate(), EntityConstants.TYPE_FOLDER);
+        		Entity prefixFolder = verifyOrCreateChildFolder(topLevelFolder, specimen.getLab()+"_"+specimen.getPlate());
         		populateChildren(prefixFolder);
         		
         		Entity fragmentFolder = fragmentFolders.get(specimen.getFragmentName());
         		if (fragmentFolder == null) {
-        			fragmentFolder = verifyOrCreateChild(prefixFolder, specimen.getFragmentName(), EntityConstants.TYPE_FOLDER);
+        			fragmentFolder = verifyOrCreateChildFolder(prefixFolder, specimen.getFragmentName());
             		fragmentFolders.put(specimen.getFragmentName(), fragmentFolder);	
         		}
         		populateChildren(fragmentFolder);
@@ -146,6 +163,7 @@ public class SplitLinesLoadingService implements IService {
         		}
         	}
         	
+        	
         	// Add balanced lines
         	logger.info("Adding balanced lines");
         	
@@ -179,6 +197,7 @@ public class SplitLinesLoadingService implements IService {
         		flylineMap.put(flyline.getName(), flyline);
     		}        	
         	
+    		
     		// Now add split lines 
         	logger.info("Adding split constructs");
         	
@@ -216,6 +235,7 @@ public class SplitLinesLoadingService implements IService {
     			setFlylineBalance(flyline, balancedFlyline);
     		}
 
+    		
     		// Renumber the children, re-add the new ones, and update the tree
 
     		logger.info("Renumbering flylines");
@@ -241,6 +261,7 @@ public class SplitLinesLoadingService implements IService {
     		}
 
     		logger.info("Marking reverse representatives");
+    		
     		
     		// All representatives are within the same fragment
     		for(Entity fragment : fragmentFolders.values()) {
@@ -531,7 +552,6 @@ public class SplitLinesLoadingService implements IService {
 		if (updated) {
 			populateChildren(flyline);
 			populateChildren(screenSample);
-			EntityHelper helper = new EntityHelper();
 			EntityData paFolderEd = EntityUtils.findChildEntityDataWithNameAndType(screenSample, "Pattern Annotation", EntityConstants.TYPE_FOLDER);
 			if (paFolderEd!=null) {
 				populateChildren(paFolderEd.getChildEntity());
@@ -678,7 +698,7 @@ public class SplitLinesLoadingService implements IService {
             // Only accept the current user's top level folder
             for (Entity entity : topLevelFolders) {
                 if (entity.getUser().getUserLogin().equals(user.getUserLogin())
-                        && entity.getEntityType().getName().equals(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER).getName())
+                        && entity.getEntityType().getName().equals(folderType.getName())
                         && entity.getAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
                     // This is the folder we want, now load the entire folder hierarchy
                     if (loadTree) {
@@ -699,7 +719,7 @@ public class SplitLinesLoadingService implements IService {
             topLevelFolder.setUpdatedDate(createDate);
             topLevelFolder.setUser(user);
             topLevelFolder.setName(topLevelFolderName);
-            topLevelFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+            topLevelFolder.setEntityType(folderType);
             topLevelFolder.addAttributeAsTag(EntityConstants.ATTRIBUTE_COMMON_ROOT);
             topLevelFolder = entityBean.saveOrUpdateEntity(topLevelFolder);
             logger.info("Saved top level folder as " + topLevelFolder.getId());
@@ -708,12 +728,12 @@ public class SplitLinesLoadingService implements IService {
         return topLevelFolder;
     }
 
-    protected Entity verifyOrCreateChild(Entity parent, String childName, String type) throws Exception {
+    protected Entity verifyOrCreateChildFolder(Entity parent, String childName) throws Exception {
 
         logger.info("Looking for child entity "+childName+" in parent entity "+parent.getId());
         for (EntityData ed : parent.getEntityData()) {
             Entity child = ed.getChildEntity();
-            if (child != null && child.getEntityType().getName().equals(type) && child.getName().equals(childName)) {
+            if (child != null && child.getEntityType().getName().equals(folderType.getName()) && child.getName().equals(childName)) {
             	Entity folder = ed.getChildEntity();	
                 logger.info("Found folder with id="+folder.getId());
                 return folder;
@@ -726,7 +746,7 @@ public class SplitLinesLoadingService implements IService {
         child.setUpdatedDate(createDate);
         child.setUser(user);
         child.setName(childName);
-        child.setEntityType(entityBean.getEntityTypeByName(type));
+        child.setEntityType(folderType);
         child = entityBean.saveOrUpdateEntity(child);
         logger.info("Saved child as "+child.getId());
         addToParent(parent, child, parent.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
@@ -740,7 +760,7 @@ public class SplitLinesLoadingService implements IService {
         folder.setUpdatedDate(createDate);
         folder.setUser(user);
         folder.setName(name);
-        folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+        folder.setEntityType(folderType);
         folder = entityBean.saveOrUpdateEntity(folder);
         logger.info("Saved folder " + name+" as " + folder.getId()+" , will now add as child to parent entity name="+parent.getName()+" parentId="+parent.getId());
         addToParent(parent, folder, null, EntityConstants.ATTRIBUTE_ENTITY);
@@ -750,7 +770,7 @@ public class SplitLinesLoadingService implements IService {
     protected Entity createFlylineEntity(String entityName, String splitPart) throws Exception {
         Entity flyline = new Entity();
         flyline.setUser(user);
-        flyline.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FLY_LINE));
+        flyline.setEntityType(flylineType);
         flyline.setCreationDate(createDate);
         flyline.setUpdatedDate(createDate);
         flyline.setName(entityName);

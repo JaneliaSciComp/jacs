@@ -47,7 +47,7 @@ public class MCFODataUpgradeService implements IService {
             computeBean = EJBFactory.getLocalComputeBean();
             username = task.getOwner();
             isDebug = Boolean.parseBoolean(task.getParameter(PARAM_testRun));
-            entityHelper = new EntityHelper(isDebug);
+            entityHelper = new EntityHelper(entityBean, computeBean, isDebug);
             
             final String serverVersion = computeBean.getAppVersion();
             logger.info("Updating data model to latest version: "+serverVersion);

@@ -44,16 +44,10 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
 
     public static final String SOLR_EJB_PROP = "SolrEJB.Name";
     
-    private Logger _logger = Logger.getLogger(this.getClass());
-
-    private boolean updateIndexOnChange = true;
-    
-    public void setUpdateIndexOnChange(boolean updateIndexOnChange) {
-    	this.updateIndexOnChange = updateIndexOnChange;
-    }
+    private static final Logger _logger = Logger.getLogger(SolrBeanImpl.class);
 
     private void updateIndex(Long entityId) {
-    	if (updateIndexOnChange) IndexingHelper.updateIndex(entityId);
+    	IndexingHelper.updateIndex(entityId);
     }
 
     public void indexAllEntities(boolean clearIndex) throws ComputeException {

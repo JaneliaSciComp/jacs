@@ -36,7 +36,17 @@ public class EntityHelper {
         computeBean = EJBFactory.getLocalComputeBean();
         this.isDebug = isDebug;
 	}
+	
+    public EntityHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean) {
+		this(entityBean, computeBean, false);
+	}
     
+	public EntityHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, boolean isDebug) {
+		this.entityBean = entityBean;
+        this.computeBean  = computeBean;
+        this.isDebug = isDebug;
+	}
+	
 	/**
 	 * Remove the old-style default 2d image file path. 
 	 * @param entity

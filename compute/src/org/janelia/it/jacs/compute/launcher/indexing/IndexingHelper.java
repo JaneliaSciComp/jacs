@@ -5,6 +5,7 @@ import javax.jms.ObjectMessage;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.engine.util.JmsUtil;
 import org.janelia.it.jacs.compute.jtc.AsyncMessageInterface;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 
 /**
@@ -13,6 +14,8 @@ import org.janelia.it.jacs.model.entity.Entity;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class IndexingHelper {
+	
+	private static final Boolean ENABLE_INDEXING = SystemConfigurationProperties.getBoolean("Solr.EnableIndexing");
 	
 	private static final String queueName = "queue/indexing";
 	
@@ -29,6 +32,7 @@ public class IndexingHelper {
 	}
 	
 	public static void updateIndex(Long entityId) {
+		if (!ENABLE_INDEXING) return;
 		try {
 			sendReindexingMessage(entityId);
 		}
