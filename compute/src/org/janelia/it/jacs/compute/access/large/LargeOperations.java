@@ -1,15 +1,8 @@
 package org.janelia.it.jacs.compute.access.large;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
-
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Element;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
@@ -21,6 +14,12 @@ import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.user_data.User;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
 
 /**
  * Large operations which need to be done on disk using EhCache, lest we run out of memory.
@@ -283,7 +282,7 @@ public class LargeOperations {
     	
     	logger.info("Building property map for all Sage images");
     	SageDAO sage = new SageDAO(logger);
-    	ResultSetIterator iterator = sage.getFlylightImageProperties();
+    	ResultSetIterator iterator = sage.getFlylightImageProperties("flylight_flip");
     	
     	List<String> colNames = iterator.getColumnNames();
     	

@@ -6,6 +6,7 @@ import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.vo.BooleanParameterVO;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.model.vo.ParameterVO;
+import org.janelia.it.jacs.model.vo.TextParameterVO;
 
 import java.util.List;
 import java.util.Set;
@@ -24,15 +25,21 @@ public class MCFODataPipelineTask extends FileDiscoveryTask {
     transient public static final String PARAM_refreshProcessing = "refresh processing";
     transient public static final String PARAM_refreshAlignment = "refresh alignment";
     transient public static final String PARAM_refreshSeparation = "refresh separation";
-    
+    transient public static final String PARAM_confocalStacksDir = "confocal stacks directory path";
+    transient public static final String PARAM_sageFamily = "Sage image family";
+
+
     public MCFODataPipelineTask(Set<Node> inputNodes, String owner, List<Event> events,
     		Set<TaskParameter> taskParameterSet, String inputDirList, String topLevelFolderName, 
-    		Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation) {
+    		Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation, String inputStacksDirPath,
+            String sageImageFamily) {
         super(inputNodes, owner, events, taskParameterSet, inputDirList, topLevelFolderName, false);
         setDefaultValues();
         setParameter(PARAM_refreshProcessing, refreshProcessing==null?"false":refreshProcessing.toString());
         setParameter(PARAM_refreshAlignment, refreshAlignment==null?"false":refreshAlignment.toString());
         setParameter(PARAM_refreshSeparation, refreshSeparation==null?"false":refreshSeparation.toString());
+        setParameter(PARAM_confocalStacksDir, inputStacksDirPath);
+        setParameter(PARAM_sageFamily, sageImageFamily);
     }
 
     public MCFODataPipelineTask() {
@@ -44,6 +51,8 @@ public class MCFODataPipelineTask extends FileDiscoveryTask {
         setParameter(PARAM_refreshProcessing, "false");
         setParameter(PARAM_refreshAlignment, "false");
         setParameter(PARAM_refreshSeparation, "false");
+        setParameter(PARAM_confocalStacksDir, null);
+        setParameter(PARAM_sageFamily,"");
         this.taskName = TASK_NAME;
     }
 
@@ -61,6 +70,9 @@ public class MCFODataPipelineTask extends FileDiscoveryTask {
         }
         if (key.equals(PARAM_refreshSeparation)) {
             return new BooleanParameterVO(Boolean.parseBoolean(value));
+        }
+        if (key.equals(PARAM_confocalStacksDir)||key.equals(PARAM_sageFamily)) {
+            return new TextParameterVO((value));
         }
         // No match
         return null;

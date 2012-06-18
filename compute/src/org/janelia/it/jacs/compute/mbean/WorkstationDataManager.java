@@ -187,7 +187,8 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         try {
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
             		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), null,
-            		topLevelFolderName, refreshProcessing, refreshAlignment, refreshSeparation);
+            		topLevelFolderName, refreshProcessing, refreshAlignment, refreshSeparation,
+                    "/groups/flylight/flylight/flip/confocalStacks","flylight_flip");
             task.setJobName("Central Brain Data Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("CentralBrainDataPipeline", task.getObjectId());
@@ -200,7 +201,8 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         try {
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
             		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), null,
-            		null, null, refreshAlignment, refreshSeparation);
+            		null, null, refreshAlignment, refreshSeparation,"/groups/flylight/flylight/flip/confocalStacks",
+                    "flylight_flip");
             task.setJobName("Align Whole Brain Data Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("AlignWholeBrainDataPipeline", task.getObjectId());
@@ -228,7 +230,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         try {
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
             		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), null,
-            		null, null, null, null);
+            		null, null, null, null,"/groups/flylight/flylight/flip/confocalStacks", "flylight_flip");
             task.setJobName("Two Channel Data Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("TwoChanDataPipeline", task.getObjectId());
@@ -256,7 +258,8 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         try {
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
             		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), null,
-            		topLevelFolderName, refreshProcessing, refreshAlignment, refreshSeparation);
+            		topLevelFolderName, refreshProcessing, refreshAlignment, refreshSeparation,"/groups/flylight/flylight/flip/confocalStacks",
+                    "flylight_flip");
             task.setJobName("MultiColor FlipOut Data Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("MCFODataPipeline", task.getObjectId());
@@ -307,7 +310,22 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
-    
+
+    public void runLeetCentralBrainDataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing,
+                                                Boolean refreshAlignment, Boolean refreshSeparation) {
+        try {
+            Task task = new MCFODataPipelineTask(new HashSet<Node>(),
+                    user, new ArrayList<Event>(), new HashSet<TaskParameter>(), null,
+                    topLevelFolderName, refreshProcessing, refreshAlignment, refreshSeparation,"/groups/leet/leetconfocal/lineage/leet_central_brain_lineage/confocalStacks/",
+                    "leet_central_brain_lineage");
+            task.setJobName("MultiColor FlipOut Data Pipeline Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("MCFODataPipeline", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
     public void runFlyScreenPipeline(String user, Boolean refresh) {
         try {
             String topLevelFolderName = FlyScreenDiscoveryService.SCREEN_SAMPLE_TOP_LEVEL_FOLDER_NAME;

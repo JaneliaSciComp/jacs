@@ -272,6 +272,36 @@
     </operation>
 
     <operation>
+        <description>Run the entire Leet Central Brain Data Pipeline</description>
+        <name>runLeetCentralBrainDataPipeline</name>
+        <parameter>
+            <description>User to run as (e.g. "system")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Name of the folder entity where results will be placed (e.g. "FlyLight Single Neuron Data")</description>
+            <name>topLevelFolderName</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Re-run merging and stitching?</description>
+            <name>refreshProcessing</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+            <description>Re-run brain alignments?</description>
+            <name>refreshAlignment</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+            <description>Re-run neuron separations?</description>
+            <name>refreshSeparation</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+    </operation>
+
+    <operation>
         <description>Run the MCFO Sample Pipeline for a single Sample</description>
         <name>runMCFOSamplePipeline</name>
         <parameter>

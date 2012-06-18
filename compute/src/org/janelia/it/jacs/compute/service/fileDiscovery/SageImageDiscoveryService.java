@@ -1,9 +1,5 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
-import java.io.File;
-import java.sql.SQLException;
-import java.util.*;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
@@ -15,12 +11,17 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
-import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.tasks.fileDiscovery.MCFODataPipelineTask;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+
+import java.io.File;
+import java.sql.SQLException;
+import java.util.*;
 
 /**
  * File discovery service for samples defined by a slide_group_info.txt metadata file.
@@ -30,7 +31,7 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
 public class SageImageDiscoveryService implements IService {
 
 	/** Absolute path prefix for Sage image paths */
-    protected final String CONFOCAL_STACKS_DIR = SystemConfigurationProperties.getString("FlyLight.ConfocalStacks.Dir");
+//    protected final String CONFOCAL_STACKS_DIR = SystemConfigurationProperties.getString("FlyLight.ConfocalStacks.Dir");
    
     protected Map<TilingPattern,Integer> patterns = new EnumMap<TilingPattern,Integer>(TilingPattern.class);
     
@@ -39,11 +40,16 @@ public class SageImageDiscoveryService implements IService {
     protected ComputeBeanLocal computeBean;
     protected User user;
     protected Date createDate;
+    protected String confocalStacksDir;
+    protected String sageImageFamily;
     protected IProcessData processData;
 
     public void execute(IProcessData processData) throws ServiceException {
         try {
         	this.processData=processData;
+            Task task = ProcessDataHelper.getTask(processData);
+            confocalStacksDir = task.getParameter(MCFODataPipelineTask.PARAM_confocalStacksDir);
+            sageImageFamily = task.getParameter(MCFODataPipelineTask.PARAM_sageFamily);
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
@@ -112,7 +118,7 @@ public class SageImageDiscoveryService implements IService {
     		List<SlideImage> slideGroup = null;
     		String currSlideCode = null;
     		
-    		iterator = sageDAO.getFlylightImages();
+    		iterator = sageDAO.getFlylightImages(sageImageFamily);
 			while (iterator.hasNext()) {
 
 				Object[] row = iterator.next();
@@ -181,7 +187,7 @@ public class SageImageDiscoveryService implements IService {
             	
             	FilePair filePair = new FilePair(slideImage.tileType);
 
-            	File lsmFile1 = new File(CONFOCAL_STACKS_DIR,slideImage.imagePath);
+            	File lsmFile1 = new File(confocalStacksDir,slideImage.imagePath);
             	filePair.setFilename1(lsmFile1.getAbsolutePath());
         		if (!lsmFile1.exists()) {
         			logger.warn("File referenced by SAGE does not exist: "+filePair.getFilename1());
@@ -193,7 +199,7 @@ public class SageImageDiscoveryService implements IService {
             }
             else {
             	FilePair filePair = filePairings.get(slideImage.tileType);
-            	File lsmFile2 = new File(CONFOCAL_STACKS_DIR,slideImage.imagePath);
+            	File lsmFile2 = new File(confocalStacksDir,slideImage.imagePath);
             	filePair.setFilename2(lsmFile2.getAbsolutePath());
         		if (!lsmFile2.exists()) {
         			logger.warn("File referenced by SAGE does not exist: "+filePair.getFilename2());

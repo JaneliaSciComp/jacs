@@ -1,12 +1,6 @@
 
 package org.janelia.it.jacs.compute.access;
 
-import java.io.InputStream;
-import java.sql.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -18,6 +12,12 @@ import org.dom4j.io.SAXReader;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.api.support.SageTerm;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+
+import java.io.InputStream;
+import java.sql.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Simple JDBC access to the Sage database.
@@ -63,7 +63,7 @@ public class SageDAO {
      * @return Iterator over the JDBC result set. 
      * @throws DaoException
      */
-    public ResultSetIterator getFlylightImages() throws DaoException {
+    public ResultSetIterator getFlylightImages(String sageFamily) throws DaoException {
 
     	try {
         	String sql = "select slide.value slide_code, i.name image_path, tile.value tile_type, " +
@@ -75,7 +75,7 @@ public class SageDAO {
     	    	"join image_property age on i.id = age.image_id "+
     	    	"join image_property gender on i.id = gender.image_id "+
     	    	"join image_property effector on i.id = effector.image_id "+
-    	    	"where i.family_id = getCvTermId('family','flylight_flip', NULL) "+
+    	    	"where i.family_id = getCvTermId('family','"+sageFamily+"', NULL) "+
     	    	"and slide.type_id =  getCvTermId('light_imagery','slide_code', NULL) "+
     	    	"and tile.type_id =  getCvTermId('light_imagery','tile', NULL) "+
     	    	"and age.type_id =  getCvTermId('light_imagery','age', NULL) "+
@@ -101,10 +101,10 @@ public class SageDAO {
      * @return Iterator over the JDBC result set. 
      * @throws DaoException
      */
-    public ResultSetIterator getFlylightImageProperties() throws DaoException {
+    public ResultSetIterator getFlylightImageProperties(String sageImageFamily) throws DaoException {
 
     	try {
-	    	String sql = "select * from image_data_mv where family = 'flylight_flip' ";
+	    	String sql = "select * from image_data_mv where family = '"+sageImageFamily+"' ";
         	Connection conn = getJdbcConnection();
         	PreparedStatement stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 	        stmt.setFetchSize(Integer.MIN_VALUE);

@@ -37,7 +37,7 @@ public interface WorkstationDataManagerMBean {
     public void runTwoChanDataPipeline(String user);
     
     public void runTwoChanSamplePipeline(String sampleEntityId);
-    
+
     public void runMCFODataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
 
     public void runMCFOSamplePipeline(String sampleEntityId, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
@@ -63,4 +63,7 @@ public interface WorkstationDataManagerMBean {
 
     public void runMaskAnnotationPipeline(String user, String maskFolderName, Boolean refresh);
 
-}
+    public void runLeetCentralBrainDataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing,
+                                                Boolean refreshAlignment, Boolean refreshSeparation);
+
+    }
