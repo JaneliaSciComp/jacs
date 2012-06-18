@@ -1086,10 +1086,21 @@ public class AnnotationDAO extends ComputeBaseDAO {
     public Set<Entity> getUserEntitiesByName(String userLogin, String name) throws DaoException {
         try {
             Session session = getCurrentSession();
-            Criteria c = session.createCriteria(Entity.class);
-            c.add(Expression.eq("name", name));
-            c.add(Expression.eq("user.userLogin", userLogin));
-            List l = c.list();
+            StringBuffer hql = new StringBuffer("select e from Entity e ");
+            hql.append("join fetch e.user ");
+            hql.append("join fetch e.entityType ");
+            hql.append("where e.name=? ");
+            if (null != userLogin) {
+                hql.append("and e.user.userLogin=? ");
+            }
+            hql.append("order by e.id ");
+            
+            Query query = session.createQuery(hql.toString());
+            query.setString(0, name);
+            if (null != userLogin) {
+                query.setString(1, userLogin);
+            }
+            List l = query.list();
             Set<Entity> resultSet = new HashSet<Entity>();
             for (Object o : l) {
                 Entity e = (Entity) o;
