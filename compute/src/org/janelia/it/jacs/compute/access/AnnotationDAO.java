@@ -1244,43 +1244,28 @@ public class AnnotationDAO extends ComputeBaseDAO {
         	if (entityIds.isEmpty()) {
         		return new ArrayList<Entity>();
         	}
+
+            List<String> entityIdStrs = new ArrayList<String>();
+        	for(Long id : entityIds) {
+        		entityIdStrs.add(""+id);
+        	}
+            
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
             hql.append("join fetch ed.parentEntity.user ");
             hql.append("join fetch ed.parentEntity.entityType ");
-            hql.append("where ed.entityAttribute.name = ? ");
-            
+            hql.append("where ed.entityAttribute.name = :attrName ");
+            hql.append("and ed.value in (:entityIds) ");
             if (userLogin!=null) {
-            	hql.append("and (ed.parentEntity.user.userLogin=? or ed.parentEntity.user.userLogin='system') ");
+            	hql.append("and (ed.parentEntity.user.userLogin=:userLogin or ed.parentEntity.user.userLogin='system') ");
             }
-            
-            if (entityIds.size()==1) {
-                hql.append("and ed.value = ?");
-            }
-            else {
-            	StringBuffer entityCommaList = new StringBuffer();
-            	for(Long id : entityIds) {
-            		if (entityCommaList.length()>0) entityCommaList.append(",");
-            		entityCommaList.append(id);
-            	}
-                hql.append("and ed.value in ("+entityCommaList+") ");
-            }
-            
-            hql.append(" order by ed.parentEntity.id ");
+            hql.append("order by ed.parentEntity.id ");
             
             Query query = session.createQuery(hql.toString());
-            query.setString(0, EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
-            
+            query.setString("attrName", EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
+        	query.setParameterList("entityIds", entityIdStrs);
             if (userLogin!=null) {
-            	query.setString(1, userLogin);
-                if (entityIds.size()==1) {
-                    query.setLong(2, entityIds.get(0));
-                }
-            }
-            else {
-                if (entityIds.size()==1) {
-                    query.setLong(1, entityIds.get(0));
-                }	
+            	query.setString("userLogin", userLogin);
             }
             
             return query.list();
