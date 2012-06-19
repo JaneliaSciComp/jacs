@@ -28,7 +28,7 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
 @Interceptors({UsageInterceptor.class})
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 200, timeout = 10000)
+@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 500, timeout = 10000)
 public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRemote {
 	
     private static final Logger _logger = Logger.getLogger(AnnotationBeanImpl.class);
