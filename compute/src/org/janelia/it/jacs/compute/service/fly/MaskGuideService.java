@@ -12,15 +12,23 @@ import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
+import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.compute.service.entity.EntityHelper;
+import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryService;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.MaskAnnotationResultNode;
+import org.neo4j.kernel.impl.cache.StrongReferenceCache;
 
 
 /**
@@ -53,9 +61,13 @@ import org.janelia.it.jacs.model.user_data.entity.MaskAnnotationResultNode;
  */
 
 
-public class MaskGuideService  extends SubmitDrmaaJobService {
+public class MaskGuideService extends SubmitDrmaaJobService implements IService {
 
     private static final Logger logger = Logger.getLogger(MaskGuideService.class);
+
+    private static final String MODE = "MODE";
+    private static final String MODE_SETUP = "MODE_SETUP";
+    private static final String MODE_COMPLETE = "MODE_COMPLETE";
 
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
     private static final String CONFIG_PREFIX = "maskGuideConfiguration.";
@@ -66,6 +78,8 @@ public class MaskGuideService  extends SubmitDrmaaJobService {
     public static final String NAME_INDEX_FILENAME = "maskNameIndex.txt";
     public static final String RGB_FILENAME = "maskRGB.v3dpbd";
 
+    public static final String TOP_LEVEL_GUIDE_DIR_NAME = "Pattern Guides";
+
     protected String maskAnnotationTopResourceDir=SystemConfigurationProperties.getString("MaskSampleAnnotation.ResourceDir");
 
     protected EntityBeanLocal entityBean;
@@ -75,52 +89,26 @@ public class MaskGuideService  extends SubmitDrmaaJobService {
     protected Task task;
     protected String sessionName;
     protected String visibility;
-    protected IProcessData processData;
     protected Boolean refresh;
     protected String maskFolderName;
+    protected Entity guideFolder;
     protected File maskAnnotationResourceDir;
     protected File guideDir;
     protected File rgbFile;
     protected File maskNameIndexFile;
+    protected IProcessData processData;
+    protected String mode;
+    EntityHelper entityHelper;
+
 
     protected void init(IProcessData processData) throws Exception {
         try {
-            logger.info("MaskGuideService execute() start");
-            this.processData = processData;
-            task = ProcessDataHelper.getTask(processData);
-            logger.info("MaskGuideService running under TaskId=" + task.getObjectId());
-            sessionName = ProcessDataHelper.getSessionRelativePath(processData);
-            visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
-            entityBean = EJBFactory.getLocalEntityBean();
-            computeBean = EJBFactory.getLocalComputeBean();
-            user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
-            createDate = new Date();
-            refresh = task.getParameter(PARAM_refresh).trim().toLowerCase().equals("true");
-            maskFolderName = task.getParameter(PARAM_maskFolderName);
+            this.processData=processData;
+            configure();
 
-            if (maskFolderName == null) {
-                throw new Exception("Mask Folder name must be defined in task");
-            } else {
-                maskAnnotationResourceDir = new File(maskAnnotationTopResourceDir, maskFolderName);
-                logger.info("Using maskAnnotationFolder=" + maskAnnotationResourceDir.getAbsolutePath());
+            if (!mode.equals(MODE_SETUP)) {
+                throw new Exception("When MaskGuideService is run in grid mode, it must be as mode MODE_SETUP");
             }
-
-            guideDir = new File(maskAnnotationResourceDir, "guide");
-            if (!guideDir.exists()) {
-                if (!guideDir.mkdir()) {
-                    throw new Exception("Could not create guide dir=" + guideDir.getAbsolutePath());
-                }
-            }
-
-            maskNameIndexFile = new File(maskAnnotationResourceDir, NAME_INDEX_FILENAME);
-            if (!maskNameIndexFile.exists()) {
-                throw new Exception("Could not locate expected name index file=" + maskNameIndexFile.getAbsolutePath());
-            }
-            rgbFile = new File(maskAnnotationResourceDir, RGB_FILENAME);
-            if (!rgbFile.exists()) {
-                throw new Exception("Could not locate expected RGB file=" + rgbFile.getAbsolutePath());
-            }
-
             MaskAnnotationResultNode maskGuideResultNode = new MaskAnnotationResultNode(task.getOwner(), task, "MaskAnnotationResultNode",
                     "MaskAnnotationResultNode for task " + task.getObjectId(), visibility, sessionName);
             EJBFactory.getLocalComputeBean().saveOrUpdateNode(maskGuideResultNode);
@@ -133,6 +121,89 @@ public class MaskGuideService  extends SubmitDrmaaJobService {
             throw new ServiceException(e);
         }
     }
+
+    protected void configure() throws Exception {
+        logger.info("MaskGuideService execute() start");
+        task = ProcessDataHelper.getTask(processData);
+        logger.info("MaskGuideService running under TaskId=" + task.getObjectId());
+        sessionName = ProcessDataHelper.getSessionRelativePath(processData);
+        visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
+        entityBean = EJBFactory.getLocalEntityBean();
+        computeBean = EJBFactory.getLocalComputeBean();
+        entityHelper = new EntityHelper(entityBean, computeBean);
+
+        user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
+        createDate = new Date();
+        refresh = task.getParameter(PARAM_refresh).trim().toLowerCase().equals("true");
+        maskFolderName = task.getParameter(PARAM_maskFolderName);
+
+        if (maskFolderName == null) {
+            throw new Exception("Mask Folder name must be defined in task");
+        } else {
+            maskAnnotationResourceDir = new File(maskAnnotationTopResourceDir, maskFolderName);
+            logger.info("Using maskAnnotationFolder=" + maskAnnotationResourceDir.getAbsolutePath());
+        }
+
+        guideDir = new File(maskAnnotationResourceDir, "guide");
+        if (!guideDir.exists()) {
+            if (!guideDir.mkdir()) {
+                throw new Exception("Could not create guide dir=" + guideDir.getAbsolutePath());
+            }
+        }
+
+        maskNameIndexFile = new File(maskAnnotationResourceDir, NAME_INDEX_FILENAME);
+        if (!maskNameIndexFile.exists()) {
+            throw new Exception("Could not locate expected name index file=" + maskNameIndexFile.getAbsolutePath());
+        }
+        rgbFile = new File(maskAnnotationResourceDir, RGB_FILENAME);
+        if (!rgbFile.exists()) {
+            throw new Exception("Could not locate expected RGB file=" + rgbFile.getAbsolutePath());
+        }
+
+        mode = processData.getString(MODE);
+        if (mode==null) {
+            throw new Exception("MODE must be non-null");
+        }
+        if (mode.equals(MODE_SETUP)) {
+            logger.info("mode is SETUP");
+        } else if (mode.equals(MODE_COMPLETE)) {
+            logger.info("mode is COMPLETE");
+        } else {
+            throw new Exception("Do not recognize mode="+mode);
+        }
+
+        Entity topLevelFolder = FileDiscoveryService.createOrVerifyRootEntity(TOP_LEVEL_GUIDE_DIR_NAME, user, new Date(), logger, true, true);
+        Map<String, Entity> subfolderMap = new HashMap<String, Entity>();
+        Set<Entity> children = topLevelFolder.getChildren();
+        if (children != null && children.size() > 0) {
+            for (Entity child : topLevelFolder.getChildren()) {
+                if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+                    subfolderMap.put(child.getName(), child);
+                }
+            }
+        }
+        guideFolder=subfolderMap.get(maskFolderName);
+        if (guideFolder==null) {
+            logger.info("Could not find Guide subfolder - creating new one");
+            guideFolder=verifyOrCreateSubFolder(topLevelFolder, maskFolderName, guideDir.getAbsolutePath());
+        }
+
+    }
+
+    public void execute(IProcessData processData) throws ServiceException {
+        try {
+            this.processData=processData;
+            configure();
+            if (!mode.equals(MODE_COMPLETE)) {
+                throw new Exception("When MaskGuideService is run as a regular service, it must be with mode = MODE_COMPLETE");
+            }
+        }
+        catch (Exception e) {
+            throw new ServiceException(e);
+        }
+    }
+
+
 
     @Override
     protected String getGridServicePrefixName() {
@@ -178,8 +249,184 @@ public class MaskGuideService  extends SubmitDrmaaJobService {
 
     @Override
     public void postProcess() throws MissingDataException {
-        logger.info("Creating Mask Guide entities");
+        try {
+            if (mode.equals(MODE_SETUP)) {
+                setupPostProcess();
+            }
+            if (mode.equals(MODE_COMPLETE)) {
+                completePostProcess();
+            }
+        }
+        catch (Exception ex) {
+            throw new MissingDataException(ex.toString());
+        }
+    }
 
+    protected void setupPostProcess() {
+        Map<String, FileNode> nodeMap=new HashMap<String, FileNode>();
+        List<String> convertList=new ArrayList<String>();
+        File[] maskResultFiles=guideDir.listFiles();
+        for (File maskFile : maskResultFiles) {
+            if (maskFile.getName().endsWith(".tif")) {
+                nodeMap.put(maskFile.getAbsolutePath(), resultFileNode);
+            }
+            convertList.add(maskFile.getAbsolutePath());
+        }
+        processData.putItem("MIPS_CONVERSION_PATH", convertList);
+        processData.putItem("IMAGE_CONVERSION_RESULT_NODE_MAP", nodeMap);
+    }
+
+    protected void completePostProcess() throws Exception {
+        logger.info("Creating Mask Guide entities");
+        File[] maskFiles = guideDir.listFiles();
+
+        // Delete tifs
+        for (File maskFile : maskFiles) {
+            if (maskFile.getName().endsWith(".tif")) {
+                logger.info("Deleting tif file="+maskFile.getAbsolutePath());
+                maskFile.delete();
+            }
+        }
+        // Create mips
+        Map<String, Entity> mipMap=new HashMap<String, Entity>();
+        for (File maskFile : maskFiles) {
+            if (maskFile.getName().endsWith(".png")) {
+                String base=getBaseMaskNameFromFile(maskFile);
+                Entity mip=createMipEntity(maskFile, base);
+                mipMap.put(base, mip);
+            }
+        }
+        // Create stacks
+        for (File maskFile : maskFiles) {
+            if (maskFile.getName().endsWith(".v3dpbd")) {
+                String base=getBaseMaskNameFromFile(maskFile);
+                Entity mip=mipMap.get(base);
+                if (mip==null) {
+                    throw new Exception("Could not find mip for basename="+base);
+                }
+                Entity stack=createStackEntity(maskFile, base, mip);
+                if (base.equals("Mask")) {
+                    addToParent(guideFolder, stack, 0, EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+                } else {
+                    addToParent(guideFolder, stack, 0, EntityConstants.ATTRIBUTE_ENTITY);
+                }
+            }
+        }
+        logger.info("Done creating Mask Guide entities");
+    }
+
+    protected String getBaseMaskNameFromFile(File f) {
+        String fileName=f.getName();
+        String[] components=fileName.split(".");
+        String b1=components[0];
+        if (b1.contains("_")) {
+            String[] c2=b1.split("_");
+            if (c2.length==2) {
+                return c2[0];
+            }
+            StringBuffer allButLast=new StringBuffer("");
+            int count=0;
+            while (count<c2.length-1) {
+                allButLast.append(c2[count]);
+                if (count<(c2.length-2)) {
+                    allButLast.append("_");
+                }
+            }
+            return allButLast.toString();
+        } else {
+            return b1;
+        }
+    }
+
+    Entity verifyOrCreateSubFolder(Entity parent, String subFolderName, String subFolderPathName) throws Exception {
+        Entity subFolder=getSubFolderByName(parent, subFolderName);
+        String parentDirPath=parent.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        File subFolderDir;
+        if (parentDirPath==null) {
+            subFolderDir=new File(subFolderPathName);
+            File testParent=subFolderDir.getParentFile();
+            if (!testParent.isDirectory()) {
+                throw new Exception("Could not find implied parent dir="+testParent.getAbsolutePath());
+            }
+        } else {
+            subFolderDir=new File(parentDirPath, subFolderPathName);
+        }
+        if (subFolder==null) {
+            subFolder=addChildFolderToEntity(parent, subFolderName, subFolderDir.getAbsolutePath());
+        } else {
+            String actualPath=subFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+            if (!actualPath.equals(subFolderDir.getAbsolutePath())) {
+                // Need to correct
+                subFolder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, subFolderDir.getAbsolutePath());
+                entityBean.saveOrUpdateEntity(subFolder);
+            }
+        }
+        if (!subFolderDir.exists() && !subFolderDir.mkdir()) {
+            throw new Exception("Could not create subfolder="+subFolderDir.getAbsolutePath());
+        }
+        return subFolder;
+    }
+
+    protected Entity getSubFolderByName(Entity parentEntity, String folderName) {
+        for (EntityData ed : parentEntity.getEntityData()) {
+            Entity child=ed.getChildEntity();
+            if (child!=null && child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) & child.getName().equals(folderName)) {
+                return child;
+            }
+        }
+        return null;
+    }
+
+    protected Entity addChildFolderToEntity(Entity parent, String name, String directoryPath) throws Exception {
+        Entity folder = new Entity();
+        folder.setCreationDate(createDate);
+        folder.setUpdatedDate(createDate);
+        folder.setUser(user);
+        folder.setName(name);
+        folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+        if (directoryPath!=null) {
+            folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, directoryPath);
+        }
+        folder = entityBean.saveOrUpdateEntity(folder);
+        logger.info("Saved folder " + name+" as " + folder.getId()+" , will now add as child to parent entity name="+parent.getName()+" parentId="+parent.getId());
+        addToParent(parent, folder, null, EntityConstants.ATTRIBUTE_ENTITY);
+        return folder;
+    }
+
+    protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
+        EntityData ed = parent.addChildEntity(entity, attrName);
+        ed.setOrderIndex(index);
+        entityBean.saveOrUpdateEntityData(ed);
+        logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
+                " as child of "+parent.getEntityType().getName()+"#"+parent.getId());
+    }
+
+    protected Entity createMipEntity(File pngFile, String name) throws Exception {
+        Entity mipEntity = new Entity();
+        mipEntity.setUser(user);
+        mipEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D));
+        mipEntity.setCreationDate(createDate);
+        mipEntity.setUpdatedDate(createDate);
+        mipEntity.setName(name);
+        mipEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, pngFile.getAbsolutePath());
+        mipEntity = entityBean.saveOrUpdateEntity(mipEntity);
+        return mipEntity;
+    }
+
+    protected Entity createStackEntity(File file, String entityName, Entity mipEntity) throws Exception {
+        Entity stack = new Entity();
+        String mipFilePath=mipEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        stack.setUser(user);
+        stack.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK));
+        stack.setCreationDate(createDate);
+        stack.setUpdatedDate(createDate);
+        stack.setName(entityName);
+        stack = entityBean.saveOrUpdateEntity(stack);
+        entityHelper.setDefault2dImage(stack, mipEntity);
+        stack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
+        stack = entityBean.saveOrUpdateEntity(stack);
+        logger.info("Saved stack " + stack.getName() + " as "+stack.getId());
+        return stack;
     }
 
 }
