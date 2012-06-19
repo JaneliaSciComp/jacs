@@ -92,15 +92,13 @@ public class MaskSampleAnnotationService  implements IService {
             logger.info("MaskSampleAnnotationService running under TaskId="+task.getObjectId());
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
             visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
-            entityBean = EJBFactory.getLocalEntityBean();
-            computeBean = EJBFactory.getLocalComputeBean();
+
             user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
             createDate = new Date();
             mode = processData.getString("MODE");
             refresh=processData.getString("REFRESH").trim().toLowerCase().equals("true");
             maskAnnotationFolderName=processData.getString("ROOT_ENTITY_NAME");
-            entityHelper = new EntityHelper(entityBean, computeBean);
-            
+
             if (maskAnnotationFolderName==null) {
                 throw new Exception("ROOT_ENTITY_NAME must be defined in processData to determine maskAnnotationFolder");
             } else {
@@ -127,6 +125,12 @@ public class MaskSampleAnnotationService  implements IService {
         catch (Exception e) {
             throw new ServiceException(e);
         }
+    }
+
+    protected void refreshEntityBeans() throws Exception {
+        entityBean = EJBFactory.getLocalEntityBean();
+        computeBean = EJBFactory.getLocalComputeBean();
+        entityHelper = new EntityHelper(entityBean, computeBean); // can't be in constructor or will timeout
     }
 
 
@@ -218,8 +222,8 @@ public class MaskSampleAnnotationService  implements IService {
 
             // Refresh beans
             logger.info("Refreshing EJB instances");
-            entityBean = EJBFactory.getLocalEntityBean();
-            computeBean = EJBFactory.getLocalComputeBean();
+            refreshEntityBeans();
+
             user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
 
             logger.info("Processing sample name="+sample.getName());
