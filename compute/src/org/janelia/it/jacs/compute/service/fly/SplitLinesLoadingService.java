@@ -46,6 +46,7 @@ public class SplitLinesLoadingService implements IService {
     protected EntityType folderType;
     
     protected Set<Specimen> representatives = new HashSet<Specimen>();
+    protected Map<String, String> robotIds = new HashMap<String,String>();
     protected Map<String, String> splitConstructs = new HashMap<String,String>();
     protected Map<String, String> splitRepresentatives = new HashMap<String,String>();
     protected Map<String, String> splitBalancedLines = new HashMap<String,String>();
@@ -175,10 +176,11 @@ public class SplitLinesLoadingService implements IService {
     			}
     			
     			logger.info("  Got balanced line: " +flylineName);
+    			String robotId = robotIds.get(flylineName);
     			
     			Entity flyline = flylineMap.get(flylineName);
     			if (flyline == null) {
-    				flyline = createFlylineEntity(flylineName, null);
+    				flyline = createFlylineEntity(flylineName, null, robotId);
             		Entity fragmentFolder = fragmentFolders.get(specimen.getFragmentName());
             		if (fragmentFolder == null) {
             			logger.warn("    No existing fragment folder: "+specimen.getFragmentName());
@@ -192,6 +194,9 @@ public class SplitLinesLoadingService implements IService {
             				logger.warn("    Already part of fragment folder: "+specimen.getFragmentName());
             			}
             		}
+    			}
+    			else {
+    				setFlylineRobotId(flyline, robotId);
     			}
     			
         		flylineMap.put(flyline.getName(), flyline);
@@ -209,10 +214,11 @@ public class SplitLinesLoadingService implements IService {
     			}
     			
     			logger.info("  Got split line: " +flylineName+" ("+splitConstructs.get(flylineName)+")");
+    			String robotId = robotIds.get(flylineName);
     			
     			Entity flyline = flylineMap.get(flylineName);
     			if (flyline == null) {
-    				flyline = createFlylineEntity(flylineName, splitConstructs.get(flylineName));
+    				flyline = createFlylineEntity(flylineName, splitConstructs.get(flylineName), robotId);
             		Entity fragmentFolder = fragmentFolders.get(specimen.getFragmentName());
             		if (fragmentFolder == null) {
             			logger.warn("    No existing fragment folder: "+specimen.getFragmentName());
@@ -229,6 +235,7 @@ public class SplitLinesLoadingService implements IService {
     			}
     			else {
         			setFlylineSplitPart(flyline, splitConstructs.get(flylineName));
+        			setFlylineRobotId(flyline, robotId);
     			}
     			
     			Entity balancedFlyline = flylineMap.get(splitBalancedLines.get(flylineName));
@@ -466,6 +473,9 @@ public class SplitLinesLoadingService implements IService {
                 }
                 
                 if (!StringUtils.isEmpty(splitLineTransId)) {
+                	
+                	robotIds.put(splitLineTransId, splitLineRobotId);
+                	
                     if (splitConstructs.containsKey(splitLineTransId)) {
                     	String registeredSplitPart = splitConstructs.get(splitLineTransId);
                     	if (!registeredSplitPart.equals(splitPart)) {
@@ -478,6 +488,7 @@ public class SplitLinesLoadingService implements IService {
                     
                     if (!StringUtils.isEmpty(balancedLineTransId)) {
                     	splitBalancedLines.put(splitLineTransId, balancedLineTransId);
+                    	robotIds.put(balancedLineTransId, balancedLineRobotId);
                     }
                     
                     if (!StringUtils.isEmpty(repSpecimen)) {
@@ -566,18 +577,53 @@ public class SplitLinesLoadingService implements IService {
     
     private void setFlylineSplitPart(Entity flyline, String splitPart) throws Exception {
 
-		String currSplitPart = flyline.getValueByAttributeName(EntityConstants.ATTRIBUTE_SPLIT_PART);
-		if (currSplitPart != null) {
-			if (!currSplitPart.equals(splitPart)) {
-				logger.warn("FlyLine "+flyline.getName()+" used to be "+currSplitPart+" but now "+splitPart);
-				flyline.setValueByAttributeName(EntityConstants.ATTRIBUTE_SPLIT_PART, splitPart);
-    			entityBean.saveOrUpdateEntity(flyline);
+		EntityData currSplitPartEd = flyline.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SPLIT_PART);
+		if (currSplitPartEd != null) {
+			String currSplitPart = currSplitPartEd.getValue();
+			if (StringUtils.isEmpty(splitPart)) {
+				logger.warn("FlyLine "+flyline.getName()+" used to be "+currSplitPart+" but is no longer a split part");
+				entityBean.deleteEntityData(currSplitPartEd);
+			}
+			else {
+				if (!currSplitPart.equals(splitPart)) {
+					logger.warn("FlyLine "+flyline.getName()+" used to be "+currSplitPart+" but now "+splitPart);
+					flyline.setValueByAttributeName(EntityConstants.ATTRIBUTE_SPLIT_PART, splitPart);
+	    			entityBean.saveOrUpdateEntity(flyline);
+				}
 			}
 		}
 		else {
-			logger.info("FlyLine "+flyline.getName()+" is now marked as "+splitPart);
-			flyline.setValueByAttributeName(EntityConstants.ATTRIBUTE_SPLIT_PART, splitPart);
-			entityBean.saveOrUpdateEntity(flyline);	
+			if (!StringUtils.isEmpty(splitPart)) {
+				logger.info("FlyLine "+flyline.getName()+" is now marked as "+splitPart);
+				flyline.setValueByAttributeName(EntityConstants.ATTRIBUTE_SPLIT_PART, splitPart);
+				entityBean.saveOrUpdateEntity(flyline);	
+			}
+		}
+    }
+
+    private void setFlylineRobotId(Entity flyline, String robotId) throws Exception {
+
+		EntityData currRobotIdEd = flyline.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_ROBOT_ID);
+		if (currRobotIdEd != null) {
+			String currRobotId = currRobotIdEd.getValue();
+			if (StringUtils.isEmpty(robotId)) {
+				logger.warn("FlyLine "+flyline.getName()+" used to be associated to robot id "+currRobotId+" but now has none");
+				entityBean.deleteEntityData(currRobotIdEd);
+			}
+			else {
+				if (!currRobotId.equals(robotId)) {
+					logger.warn("FlyLine "+flyline.getName()+" used to be associated to robot id "+currRobotId+" but now "+robotId);
+					flyline.setValueByAttributeName(EntityConstants.ATTRIBUTE_ROBOT_ID, robotId);
+	    			entityBean.saveOrUpdateEntity(flyline);	
+				}
+			}
+		}
+		else {
+			if (!StringUtils.isEmpty(robotId)) {
+				logger.info("FlyLine "+flyline.getName()+" is now associated with robot id "+robotId);
+				flyline.setValueByAttributeName(EntityConstants.ATTRIBUTE_ROBOT_ID, robotId);
+				entityBean.saveOrUpdateEntity(flyline);	
+			}
 		}
     }
     
@@ -767,7 +813,7 @@ public class SplitLinesLoadingService implements IService {
         return folder;
     }
 
-    protected Entity createFlylineEntity(String entityName, String splitPart) throws Exception {
+    protected Entity createFlylineEntity(String entityName, String splitPart, String robotId) throws Exception {
         Entity flyline = new Entity();
         flyline.setUser(user);
         flyline.setEntityType(flylineType);
@@ -776,6 +822,9 @@ public class SplitLinesLoadingService implements IService {
         flyline.setName(entityName);
         if (splitPart!=null) {
         	flyline.setValueByAttributeName(EntityConstants.ATTRIBUTE_SPLIT_PART, splitPart);
+        }
+        if (robotId!=null) {
+        	flyline.setValueByAttributeName(EntityConstants.ATTRIBUTE_ROBOT_ID, robotId);
         }
         flyline = entityBean.saveOrUpdateEntity(flyline);
         logger.info("Saved flyline " + flyline.getName() + " as "+flyline.getId());

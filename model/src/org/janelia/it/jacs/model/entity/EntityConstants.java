@@ -87,6 +87,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_REPRESENTATIVE_SAMPLE               = "Representative Sample";
     public static final String ATTRIBUTE_ORIGINAL_FLYLINE                    = "Original Fly Line";
     public static final String ATTRIBUTE_BALANCED_FLYLINE                    = "Balanced Fly Line";
+    public static final String ATTRIBUTE_ROBOT_ID                            = "Robot Id";
     
     /**
      * @deprecated Use TYPE_IMAGE_2D instead. This will be removed someday.
