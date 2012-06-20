@@ -376,7 +376,7 @@
         </condition>
 
         <!-- set connection params, and check connection -->
-        <property name="ssh.common.params" value="${ssh.options} ${ssh.password.option} ${server.password} ${server.username}@${server.address}"/>
+        <property name="ssh.common.params" value="${ssh.options} ${ssh.password.option} ${server.password} ${user.server.login}@${server.address}"/>
         <property name="scp.common.params" value="${scp.options} ${ssh.password.option} ${server.password}"/>
         <!--<property name="ssh.common.params" value="${server.username}@${server.address}"/>-->
         <!--<property name="scp.common.params" value=""/>-->
