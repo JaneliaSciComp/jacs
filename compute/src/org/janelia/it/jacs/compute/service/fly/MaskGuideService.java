@@ -28,7 +28,6 @@ import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.MaskAnnotationResultNode;
-import org.neo4j.kernel.impl.cache.StrongReferenceCache;
 
 
 /**
@@ -197,6 +196,7 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
             if (!mode.equals(MODE_COMPLETE)) {
                 throw new Exception("When MaskGuideService is run as a regular service, it must be with mode = MODE_COMPLETE");
             }
+            completePostProcess();
         }
         catch (Exception e) {
             throw new ServiceException(e);
@@ -253,9 +253,6 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
             if (mode.equals(MODE_SETUP)) {
                 setupPostProcess();
             }
-            if (mode.equals(MODE_COMPLETE)) {
-                completePostProcess();
-            }
         }
         catch (Exception ex) {
             throw new MissingDataException(ex.toString());
@@ -265,14 +262,11 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
     protected void setupPostProcess() {
         Map<String, FileNode> nodeMap=new HashMap<String, FileNode>();
         List<String> convertList=new ArrayList<String>();
-        File[] maskResultFiles=guideDir.listFiles();
-        for (File maskFile : maskResultFiles) {
-            if (maskFile.getName().endsWith(".tif")) {
-                nodeMap.put(maskFile.getAbsolutePath(), resultFileNode);
-            }
-            convertList.add(maskFile.getAbsolutePath());
-        }
+        convertList.add(guideDir.getAbsolutePath());
+        nodeMap.put(guideDir.getAbsolutePath(), resultFileNode);
+        logger.info("Adding to processData MIPS_CONVERSION_PATH of size="+convertList.size());
         processData.putItem("MIPS_CONVERSION_PATH", convertList);
+        logger.info("Adding to processData IMAGE_CONVERSION_RESULT_NODE_MAP of size="+nodeMap.size());
         processData.putItem("IMAGE_CONVERSION_RESULT_NODE_MAP", nodeMap);
     }
 
@@ -315,24 +309,33 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
         logger.info("Done creating Mask Guide entities");
     }
 
-    protected String getBaseMaskNameFromFile(File f) {
-        String fileName=f.getName();
-        String[] components=fileName.split(".");
-        String b1=components[0];
+    protected String getBaseMaskNameFromFile(File f) throws Exception {
+        logger.info("getBaseMaskNameFromFile f=" + f.getAbsolutePath());
+        String fileName = f.getName();
+        logger.info("Getting base name for fileName=" + fileName);
+        String[] components = fileName.split("\\.");
+        logger.info("components has length=" + components.length);
+        String b1 = components[0];
         if (b1.contains("_")) {
-            String[] c2=b1.split("_");
-            if (c2.length==2) {
+            String[] c2 = b1.split("_");
+            if (c2.length == 2 && c2[1].toLowerCase().equals("mip")) {
                 return c2[0];
             }
-            StringBuffer allButLast=new StringBuffer("");
-            int count=0;
-            while (count<c2.length-1) {
-                allButLast.append(c2[count]);
-                if (count<(c2.length-2)) {
-                    allButLast.append("_");
-                }
+            else if (c2.length == 3 && c2[2].toLowerCase().equals("mip")) {
+                return c2[0] + "_" + c2[1];
             }
-            return allButLast.toString();
+            else if (c2.length == 4 && c2[3].toLowerCase().equals("mip")) {
+                return c2[0] + "_" + c2[1] + "_" + c2[2];
+            }
+            else if (c2.length == 2) {
+                return c2[0] + "_" + c2[1];
+            }
+            else if (c2.length == 3)  {
+                return c2[0] + "_" + c2[1] + "_" + c2[2];
+            }
+            else {
+                throw new Exception("Cannot parse filename="+fileName);
+            }
         } else {
             return b1;
         }
