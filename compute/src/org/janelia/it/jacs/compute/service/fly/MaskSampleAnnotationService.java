@@ -87,6 +87,8 @@ public class MaskSampleAnnotationService  implements IService {
 
             logger.info("MaskSampleAnnotationService execute() start");
 
+            refreshEntityBeans();
+
             this.processData=processData;
             task = ProcessDataHelper.getTask(processData);
             logger.info("MaskSampleAnnotationService running under TaskId="+task.getObjectId());
