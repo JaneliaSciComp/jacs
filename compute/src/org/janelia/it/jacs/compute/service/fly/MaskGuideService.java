@@ -299,11 +299,7 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
                     throw new Exception("Could not find mip for basename="+base);
                 }
                 Entity stack=createStackEntity(maskFile, base, mip);
-                if (base.equals("Mask")) {
-                    addToParent(guideFolder, stack, 0, EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-                } else {
-                    addToParent(guideFolder, stack, 0, EntityConstants.ATTRIBUTE_ENTITY);
-                }
+                addToParent(guideFolder, stack, 0, EntityConstants.ATTRIBUTE_ENTITY);
             }
         }
         logger.info("Done creating Mask Guide entities");
