@@ -20,7 +20,7 @@
          </operation>
 
          <!-- Discover samples in the fileshare and load them into the database as Entities -->
-         <operation name="Initial File Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryService">
+         <operation name="Initial File Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.ImportFileService">
              <input name="INPUT_DIR_LIST"/>
              <input name="ROOT_ENTITY_NAME"/>
              <input name="OUTVAR_ENTITY_ID" value="TOP_LEVEL_ENTITY_ID"/>

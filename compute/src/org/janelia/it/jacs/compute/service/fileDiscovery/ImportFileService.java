@@ -86,10 +86,6 @@ public class ImportFileService extends FileDiscoveryService{
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-    final public String MODE_UNDEFINED="UNDEFINED";
-    final public String MODE_SETUP="SETUP";
-    final public String MODE_COMPLETE="COMPLETE";
-
     final public String SUPPORTING_FILES_FOLDER_NAME="supportingFiles";
 
     protected Task task;
@@ -101,15 +97,6 @@ public class ImportFileService extends FileDiscoveryService{
     protected Entity supportingFilesFolder;
     protected File rootDirectory;
     protected FileTreeLoaderResultNode resultNode;
-    protected String mode;
-    protected int groupSize;
-
-
-    protected static class ArtifactInfo {
-        public Long sourceEntityId;
-        public String sourcePath;
-        public String artifactPath;
-    }
 
 
     @Override
@@ -126,33 +113,28 @@ public class ImportFileService extends FileDiscoveryService{
             visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
 
             logger.info("Creating top-level folder");
-            topLevelFolderName=processData.getString("TOP_LEVEL_FOLDER_NAME");
+            topLevelFolderName=processData.getString("ROOT_ENTITY_NAME");
             topLevelFolder=createOrVerifyRootEntity(topLevelFolderName);
 
-            logger.info("Creating supporting files folder");
-            supportingFilesFolder=verifyOrCreateVirtualSubFolder(topLevelFolder, SUPPORTING_FILES_FOLDER_NAME);
-
             logger.info("Validating root directorypath");
-            rootDirectoryPath=processData.getString("FILE_TREE_ROOT_DIRECTORY");
+            rootDirectoryPath=processData.getString("INPUT_DIR_LIST");
             rootDirectory=new File(rootDirectoryPath);
             if (!rootDirectory.exists()) {
                 throw new Exception("Could not find rootDirectory="+rootDirectory.getAbsolutePath());
             }
 
-            logger.info("Getting GROUP_SIZE");
-            groupSize = new Integer(processData.getString("GROUP_SIZE").trim());
+            resultNode = new FileTreeLoaderResultNode(task.getOwner(), task, "FileTreeLoaderResultNode",
+                    "FileTreeLoaderResultNode for task " + task.getObjectId(), visibility, sessionName);
+            EJBFactory.getLocalComputeBean().saveOrUpdateNode(resultNode);
+            logger.info("FileTreeLoaderService  doSetup()  resultNodeId="+resultNode.getObjectId()+ " intended path="+resultNode.getDirectoryPath());
+            FileUtil.ensureDirExists(resultNode.getDirectoryPath());
+            FileUtil.cleanDirectory(resultNode.getDirectoryPath());
+            processData.putItem(ProcessDataConstants.RESULT_FILE_NODE, resultNode);
+            processData.putItem(ProcessDataConstants.RESULT_FILE_NODE_ID, resultNode.getObjectId());
 
-            logger.info("Getting MODE");
-            mode = processData.getString("MODE");
 
+            addDirectoryAndContentsToFolder(topLevelFolder, rootDirectory, 0 /*index*/);
 
-            if (mode.equals(MODE_SETUP)) {
-                doSetup();
-            } else if (mode.equals(MODE_COMPLETE)) {
-                //doComplete();
-            } else {
-                throw new Exception("Do not recognize mode="+mode);
-            }
 
         } catch (Exception e) {
             logger.error("Error in FileTreeLoader execute() : " + e.getMessage());
@@ -160,31 +142,6 @@ public class ImportFileService extends FileDiscoveryService{
         }
     }
 
-
-
-    protected void doSetup() throws Exception {
-        logger.info("Starting doSetup()");
-
-        // First, set up result node
-        resultNode = new FileTreeLoaderResultNode(task.getOwner(), task, "FileTreeLoaderResultNode",
-                "FileTreeLoaderResultNode for task " + task.getObjectId(), visibility, sessionName);
-        EJBFactory.getLocalComputeBean().saveOrUpdateNode(resultNode);
-        logger.info("FileTreeLoaderService  doSetup()  resultNodeId="+resultNode.getObjectId()+ " intended path="+resultNode.getDirectoryPath());
-        FileUtil.ensureDirExists(resultNode.getDirectoryPath());
-        FileUtil.cleanDirectory(resultNode.getDirectoryPath());
-        processData.putItem(ProcessDataConstants.RESULT_FILE_NODE, resultNode);
-        processData.putItem(ProcessDataConstants.RESULT_FILE_NODE_ID, resultNode.getObjectId());
-
-        // Next, we will recursively traverse the file tree, and as we do so, we will create entities for
-        // directories and files. We will also create lists of files for PBD and MIP generation.
-        // In the 'COMPLETION' phase we will create entities for the MIPs and PBDs, and set the attributes
-        // of the source entities to match these results.
-
-        addDirectoryAndContentsToFolder(topLevelFolder, rootDirectory, 0 /*index*/);
-        processData.putItem("GROUP_SIZE", new Long(groupSize).toString());
-
-        logger.info("Finishing doSetup()");
-    }
 
     protected void addDirectoryAndContentsToFolder(Entity folder, File dir, Integer index) throws Exception {
         Entity dirEntity=verifyOrCreateChildFolderFromDir(folder, dir, index);
@@ -247,45 +204,7 @@ public class ImportFileService extends FileDiscoveryService{
         return fileEntity;
     }
 
-    protected void addToArtifactList(Entity pbdSourceEntity, String altSourcePath, Map<Long, List<ArtifactInfo>> groupMap) {
-        long currentIndex=groupMap.size()-1;
-        List<ArtifactInfo> artifactList=null;
-        if (currentIndex<0) {
-            currentIndex=0L;
-            artifactList=new ArrayList<ArtifactInfo>();
-            groupMap.put(currentIndex, artifactList);
-        } else {
-            artifactList=groupMap.get(currentIndex);
-        }
-        if (artifactList.size()>=groupSize) {
-            // Then we need to start a new list
-            artifactList=new ArrayList<ArtifactInfo>();
-            currentIndex++;
-            groupMap.put(currentIndex, artifactList);
-        }
-        ArtifactInfo newInfo=new ArtifactInfo();
-        newInfo.sourceEntityId=pbdSourceEntity.getId();
-        if (altSourcePath!=null) {
-            newInfo.sourcePath=altSourcePath;
-        } else {
-            newInfo.sourcePath=pbdSourceEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        }
-        // leave artifactPath null for now
-        artifactList.add(newInfo);
-    }
 
-    protected boolean shouldHaveArtifact(File file, Collection<String> collection) {
-        String[] exComponents=file.getName().split("\\.");
-        if (exComponents.length<2) {
-            return false;
-        }
-        String extension=exComponents[exComponents.length-1];
-        if (collection.contains(extension.toUpperCase())) {
-            return true;
-        } else {
-            return false;
-        }
-    }
 
 
 }
