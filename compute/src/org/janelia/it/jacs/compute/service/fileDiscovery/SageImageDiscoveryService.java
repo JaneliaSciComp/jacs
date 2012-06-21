@@ -20,6 +20,7 @@ import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 import java.io.File;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -117,24 +118,18 @@ public class SageImageDiscoveryService implements IService {
     	try {
     		List<SlideImage> slideGroup = null;
     		String currSlideCode = null;
-    		
-    		iterator = sageDAO.getFlylightImages(sageImageFamily);
-			while (iterator.hasNext()) {
 
-				Object[] row = iterator.next();
-				
-				if (row.length<7) {
-					throw new Exception("Unexpected number of values returned by getFlylightImages. Got:"+row.length+" Expected:7");
-				}
-				
-				SlideImage slideImage = new SlideImage();			
-				slideImage.slideCode = (String)row[0];
-				slideImage.imagePath = (String)row[1];
-				slideImage.tileType = (String)row[2];
-				slideImage.age = (String)row[3];
-				slideImage.gender = (String)row[4];
-				slideImage.effector = (String)row[5];
-				slideImage.line = (String)row[6];
+            iterator = sageDAO.getFlylightImageProperties(sageImageFamily);
+            ResultSet rs = iterator.getResultSet();
+            while (rs.next()) {
+                SlideImage slideImage = new SlideImage();
+				slideImage.slideCode = rs.getString("slide_code");
+				slideImage.imagePath = rs.getString("name");
+				slideImage.tileType = rs.getString("tile");
+				slideImage.age = rs.getString("age");
+				slideImage.gender = rs.getString("gender");
+				slideImage.effector = rs.getString("effector");
+				slideImage.line = rs.getString("line");
 
 				if (!slideImage.slideCode.equals(currSlideCode)) {
 

@@ -49,52 +49,6 @@ public class SageDAO {
     }
 
     /**
-     * Returns all the images in the FlyLight project. The result rows have the following columns:
-     * <ol>
-     * <li>slide code (e.g. "20110325_3_B2")</li> 
-     * <li>image path (e.g. "20110407/FLFL_20110911231819146_1571.lsm")</li> 
-     * <li>tile type (e.g. "Right Optic Lobe")</li> 
-     * <li>age (e.g. "A01")</li> 
-     * <li>gender (e.g. "f")</li> 
-     * <li>effector (e.g. "1xLwt_attp40_4stop1")</li> 
-     * <li>fly line (e.g. "GMR_57C10_AD_01")</li> 
-     * </ol>
-     * The client must call close() on the returned iterator when finished with it. 
-     * @return Iterator over the JDBC result set. 
-     * @throws DaoException
-     */
-    public ResultSetIterator getFlylightImages(String sageFamily) throws DaoException {
-
-    	try {
-        	String sql = "select slide.value slide_code, i.name image_path, tile.value tile_type, " +
-        			"age.value age, gender.value gender, effector.value effector, l.name line "+
-    	    	"from image i "+
-    	    	"join line l on i.line_id = l.id "+
-    	    	"join image_property slide on i.id = slide.image_id "+ 
-    	    	"join image_property tile on i.id = tile.image_id "+ 
-    	    	"join image_property age on i.id = age.image_id "+
-    	    	"join image_property gender on i.id = gender.image_id "+
-    	    	"join image_property effector on i.id = effector.image_id "+
-    	    	"where i.family_id = getCvTermId('family','"+sageFamily+"', NULL) "+
-    	    	"and slide.type_id =  getCvTermId('light_imagery','slide_code', NULL) "+
-    	    	"and tile.type_id =  getCvTermId('light_imagery','tile', NULL) "+
-    	    	"and age.type_id =  getCvTermId('light_imagery','age', NULL) "+
-    	    	"and gender.type_id =  getCvTermId('light_imagery','gender', NULL) "+
-    	    	"and effector.type_id =  getCvTermId('light_imagery','effector', NULL) "+
-    	    	"order by slide.value, i.name ";
-
-        	Connection conn = getJdbcConnection();
-        	PreparedStatement stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-	        stmt.setFetchSize(Integer.MIN_VALUE);
-    		ResultSet rs = stmt.executeQuery();
-    		return new ResultSetIterator(conn, stmt, rs);    		
-    	}
-    	catch (SQLException e) {
-    		throw new DaoException("Error querying Sage", e);
-    	}
-    }
-
-    /**
      * Returns all the images in the FlyLight project, with properties as columns. You can get the column names
      * by calling getColumnNames() on the returned ResultSetIterator object.
      * The client must call close() on the returned iterator when finished with it. 
