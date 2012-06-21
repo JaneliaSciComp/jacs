@@ -416,7 +416,7 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
         Entity stack = new Entity();
         String mipFilePath=mipEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         stack.setUser(user);
-        stack.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK));
+        stack.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D));
         stack.setCreationDate(createDate);
         stack.setUpdatedDate(createDate);
         stack.setName(entityName);
