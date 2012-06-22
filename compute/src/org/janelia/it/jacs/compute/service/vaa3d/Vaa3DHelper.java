@@ -39,8 +39,8 @@ public class Vaa3DHelper {
         return VAA3D_BASE_CMD +" -x imageStitch.so -f istitch-grouping -p \"#c 4\" -i \""+inputDirectoryPath+"\" -o \""+outputFilePath+"\";";
     }
 
-    public static String getFormattedStitcherCommand(String inputDirectoryPath) {
-        return VAA3D_BASE_CMD +" -x imageStitch.so -f v3dstitch -i \""+inputDirectoryPath+"\" -p \"#c 4 #si 0\";";
+    public static String getFormattedStitcherCommand(int referenceChannelIndex, String inputDirectoryPath) {
+        return VAA3D_BASE_CMD +" -x imageStitch.so -f v3dstitch -i \""+inputDirectoryPath+"\" -p \"#c "+referenceChannelIndex+" #si 0\";";
     }
 
     public static String getFormattedBlendCommand(String inputDirectoryPath, String outputFilePath) {

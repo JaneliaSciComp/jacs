@@ -42,9 +42,14 @@ public class InitAlignmentParametersService implements IService {
     			return;
     		}
     		
+    		String run40xAligner = (String)processData.getItem("RUN_40X_ALIGNER");
     		String run63xAligner = (String)processData.getItem("RUN_63X_ALIGNER");
     		
-    		if (run63xAligner!=null && "true".equalsIgnoreCase(run63xAligner)) {
+    		if (run40xAligner!=null && "true".equalsIgnoreCase(run40xAligner)) {
+            	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.WholeBrain40xAlignmentService");
+            	processData.putItem("ALIGNMENT_RESULT_NAME", "Whole Brain 40x Alignment");
+    		}
+    		else if (run63xAligner!=null && "true".equalsIgnoreCase(run63xAligner)) {
             	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.WholeBrain63xAlignmentService");
             	processData.putItem("ALIGNMENT_RESULT_NAME", "Whole Brain 63x Alignment");
     		}

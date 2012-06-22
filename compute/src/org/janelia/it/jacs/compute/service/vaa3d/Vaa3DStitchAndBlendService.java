@@ -27,6 +27,8 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
     private static final String CONFIG_PREFIX = "stitchConfiguration.";
     
+    private int referenceChannelIndex = 4;
+    
     protected void init(IProcessData processData) throws Exception {
     	super.init(processData);
     }
@@ -47,6 +49,11 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
         String stitchedFilename = (String)processData.getItem("STITCHED_FILENAME");
         if (stitchedFilename==null) {
         	throw new ServiceException("Input parameter STITCHED_FILENAME may not be null");
+        }
+
+        String referenceChannelIndexStr = (String)processData.getItem("REFERENCE_CHANNEL_INDEX");
+        if (referenceChannelIndexStr!=null) {
+        	referenceChannelIndex = Integer.parseInt(referenceChannelIndexStr);	
         }
         
         writeInstanceFiles();
@@ -104,7 +111,7 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
         StringBuffer script = new StringBuffer();
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix());
         script.append("\n");
-        script.append(Vaa3DHelper.getFormattedStitcherCommand(mergedFilepath));
+        script.append(Vaa3DHelper.getFormattedStitcherCommand(referenceChannelIndex, mergedFilepath));
         script.append("\n");
         script.append(Vaa3DHelper.getFormattedBlendCommand(mergedFilepath, stitchedFilepath));
         script.append("\n");
