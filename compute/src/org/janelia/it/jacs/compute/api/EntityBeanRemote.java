@@ -64,4 +64,8 @@ public interface EntityBeanRemote {
     public List<Long> getPathToRoot(Long entityId, Long rootId) throws ComputeException;
     
     public List<MappedId> getProjectedResults(List<Long> entityIds, List<EntityMapStep> upMapping, List<EntityMapStep> downMapping) throws ComputeException;
+    public EntityData saveOrUpdateEntityData(EntityData newData) throws ComputeException;
+    public void deleteEntityData(EntityData ed) throws ComputeException;
+    public Entity saveOrUpdateEntity(Entity entity) throws ComputeException;
+
 }

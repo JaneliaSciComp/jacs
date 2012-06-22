@@ -112,4 +112,5 @@ public interface ComputeBeanRemote {
     public List<Task> getUserTasksByType(String simpleName, String userName) throws RemoteException;
     public List<Event> getEventsForTask(long taskId) throws DaoException;
     public ControlledVocabElement[] getControlledVocab(Long objectId, int vocabIndex) throws ServiceException;
+
 }

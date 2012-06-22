@@ -6,10 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
-import org.janelia.it.jacs.compute.api.ComputeException;
-import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.api.EntityBeanLocal;
+import org.janelia.it.jacs.compute.api.*;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -23,8 +20,10 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
 public class EntityHelper {
 
     protected Logger logger = Logger.getLogger(EntityHelper.class);
-    protected EntityBeanLocal entityBean;
-    protected ComputeBeanLocal computeBean;
+    protected EntityBeanLocal entityBeanLocal;
+    protected ComputeBeanLocal computeBeanLocal;
+    protected EntityBeanRemote entityBeanRemote;
+    protected ComputeBeanRemote computeBeanRemote;
     protected boolean isDebug;
     
     public EntityHelper() {
@@ -32,20 +31,30 @@ public class EntityHelper {
 	}
     
 	public EntityHelper(boolean isDebug) {
-        entityBean = EJBFactory.getLocalEntityBean();
-        computeBean = EJBFactory.getLocalComputeBean();
+        entityBeanLocal = EJBFactory.getLocalEntityBean();
+        computeBeanLocal = EJBFactory.getLocalComputeBean();
         this.isDebug = isDebug;
 	}
 	
     public EntityHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean) {
 		this(entityBean, computeBean, false);
 	}
+
+    public EntityHelper(EntityBeanRemote entityBean, ComputeBeanRemote computeBean) {
+        this(entityBean, computeBean, false);
+    }
     
 	public EntityHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, boolean isDebug) {
-		this.entityBean = entityBean;
-        this.computeBean  = computeBean;
+		this.entityBeanLocal = entityBean;
+        this.computeBeanLocal  = computeBean;
         this.isDebug = isDebug;
 	}
+
+    public EntityHelper(EntityBeanRemote entityBean, ComputeBeanRemote computeBean, boolean isDebug) {
+        this.entityBeanRemote = entityBean;
+        this.computeBeanRemote  = computeBean;
+        this.isDebug = isDebug;
+    }
 	
 	/**
 	 * Remove the old-style default 2d image file path. 
@@ -67,7 +76,11 @@ public class EntityHelper {
         EntityData ed = default3dImage.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
         if (ed!=null) {
         	if (!EntityUtils.isInitialized(ed.getChildEntity())) {
-        		ed.setChildEntity(entityBean.getEntityById(""+ed.getChildEntity().getId()));
+                if (entityBeanLocal!=null) {
+        		    ed.setChildEntity(entityBeanLocal.getEntityById(""+ed.getChildEntity().getId()));
+                } else {
+                    ed.setChildEntity(entityBeanRemote.getEntityById(""+ed.getChildEntity().getId()));
+                }
         	}
         	setImage(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, ed.getChildEntity());	
         }
@@ -131,7 +144,12 @@ public class EntityHelper {
 	    	EntityData ed = entity.addChildEntity(image, attributeName);
 	    	ed.setValue(filepath);
 	    	// Update database
-    		EntityData savedEd = entityBean.saveOrUpdateEntityData(ed);
+    		EntityData savedEd;
+            if (entityBeanLocal!=null) {
+                savedEd=entityBeanLocal.saveOrUpdateEntityData(ed);
+            } else {
+                savedEd=entityBeanRemote.saveOrUpdateEntityData(ed);
+            }
     		EntityUtils.replaceEntityData(entity, ed, savedEd);
         }
     }
@@ -154,7 +172,11 @@ public class EntityHelper {
         
         for (EntityData ed : toDelete) {
         	// Update database
-        	entityBean.deleteEntityData(ed);
+            if (entityBeanLocal!=null) {
+        	    entityBeanLocal.deleteEntityData(ed);
+            } else {
+                entityBeanRemote.deleteEntityData(ed);
+            }
         	// Update in-memory model
         	entity.getEntityData().remove(ed);
         }
@@ -174,7 +196,11 @@ public class EntityHelper {
 			EntityData ed = entity.addChildEntity(supportingFiles, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
 	        if (!isDebug) {
             	// Update database
-	        	entityBean.saveOrUpdateEntityData(ed);
+                if (entityBeanLocal!=null) {
+	        	    entityBeanLocal.saveOrUpdateEntityData(ed);
+                } else {
+                    entityBeanRemote.saveOrUpdateEntityData(ed);
+                }
 	        }
     	}
     	return supportingFiles;
@@ -188,14 +214,32 @@ public class EntityHelper {
 	 */
 	public Entity createSupportingFilesFolder(String username) throws ComputeException {
         Entity filesFolder = new Entity();
-        filesFolder.setUser(computeBean.getUserByName(username));
-        filesFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
+        if (entityBeanLocal!=null) {
+            filesFolder.setUser(computeBeanLocal.getUserByName(username));
+        } else {
+            try {
+                filesFolder.setUser(computeBeanRemote.getUserByName(username));
+            } catch (Exception ex) {
+                throw new ComputeException(ex);
+            }
+        }
+        if (entityBeanLocal!=null) {
+            filesFolder.setEntityType(entityBeanLocal.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
+        } else {
+            filesFolder.setEntityType(entityBeanRemote.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
+        }
         Date createDate = new Date();
         filesFolder.setCreationDate(createDate);
         filesFolder.setUpdatedDate(createDate);
         filesFolder.setName("Supporting Files");
     	// Update database
-        if (!isDebug) filesFolder = entityBean.saveOrUpdateEntity(filesFolder);
+        if (!isDebug) {
+            if (entityBeanLocal!=null) {
+                filesFolder = entityBeanLocal.saveOrUpdateEntity(filesFolder);
+            } else {
+                filesFolder = entityBeanRemote.saveOrUpdateEntity(filesFolder);
+            }
+        }
         logger.info("Saved supporting files folder as "+filesFolder.getId());
     	// Return the new object so that we can update in-memory model
         return filesFolder;
@@ -250,8 +294,20 @@ public class EntityHelper {
 	public Entity createImage(String username, String entityTypeName, String filepath, String name) throws ComputeException {
 		
         Entity entity = new Entity();
-        entity.setUser(computeBean.getUserByName(username));
-        entity.setEntityType(entityBean.getEntityTypeByName(entityTypeName));
+        if (entityBeanLocal!=null) {
+            entity.setUser(computeBeanLocal.getUserByName(username));
+        } else {
+            try {
+                entity.setUser(computeBeanRemote.getUserByName(username));
+            } catch (Exception ex) {
+                throw new ComputeException(ex);
+            }
+        }
+        if (entityBeanLocal!=null) {
+            entity.setEntityType(entityBeanLocal.getEntityTypeByName(entityTypeName));
+        } else {
+            entity.setEntityType(entityBeanRemote.getEntityTypeByName(entityTypeName));
+        }
         Date createDate = new Date();
         entity.setCreationDate(createDate);
         entity.setUpdatedDate(createDate);
@@ -264,7 +320,13 @@ public class EntityHelper {
     	entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, fileFormat);
         
     	// Update database
-        if (!isDebug) entity = entityBean.saveOrUpdateEntity(entity);
+        if (!isDebug) {
+            if (entityBeanLocal!=null) {
+                entity = entityBeanLocal.saveOrUpdateEntity(entity);
+            } else {
+                entity = entityBeanRemote.saveOrUpdateEntity(entity);
+            }
+        }
         logger.info("Saved new "+entityTypeName+" as "+entity.getId());
     	// Return the new object so that we can update in-memory model
         return entity;

@@ -8,9 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
-import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.api.EntityBeanLocal;
+import org.janelia.it.jacs.compute.api.*;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -64,8 +62,13 @@ public class MaskSampleAnnotationService  implements IService {
     protected String maskAnnotationTopResourceDir=SystemConfigurationProperties.getString("MaskSampleAnnotation.ResourceDir");
     protected String patternChannel=SystemConfigurationProperties.getString("FlyScreen.AlignedStackPatternChannel");
 
-    protected EntityBeanLocal entityBean;
-    protected ComputeBeanLocal computeBean;
+    //protected EntityBeanLocal entityBean;
+    //protected ComputeBeanLocal computeBean;
+
+    protected EntityBeanRemote entityBean;
+    protected ComputeBeanRemote computeBean;
+
+
     protected User user;
     protected Date createDate;
     protected String mode=MODE_UNDEFINED;
@@ -130,8 +133,8 @@ public class MaskSampleAnnotationService  implements IService {
     }
 
     protected void refreshEntityBeans() throws Exception {
-        entityBean = EJBFactory.getLocalEntityBean();
-        computeBean = EJBFactory.getLocalComputeBean();
+        entityBean = EJBFactory.getRemoteEntityBean();
+        computeBean = EJBFactory.getRemoteComputeBean();
         entityHelper = new EntityHelper(entityBean, computeBean); // can't be in constructor or will timeout
     }
 
@@ -400,7 +403,7 @@ public class MaskSampleAnnotationService  implements IService {
         }
     }
 
-    File getResultNodeDirFromSample(Entity sample) {
+    File getResultNodeDirFromSample(Entity sample) throws Exception {
         String resultNodeIdString=sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_RESULT_NODE_ID);
         Long resultNodeId=new Long(resultNodeIdString.trim());
         ScreenSampleResultNode resultNode=(ScreenSampleResultNode)computeBean.getNodeById(resultNodeId);
