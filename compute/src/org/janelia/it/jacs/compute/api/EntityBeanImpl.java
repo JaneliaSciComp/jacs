@@ -1,19 +1,11 @@
 
 package org.janelia.it.jacs.compute.api;
 
-import java.util.*;
-
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import javax.interceptor.Interceptors;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.support.EntityMapStep;
 import org.janelia.it.jacs.compute.api.support.MappedId;
-import org.janelia.it.jacs.compute.interceptor.UsageInterceptor;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
@@ -23,6 +15,11 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import java.util.*;
+
 /**
  * Implementation of queries against the entity model. 
  * 
@@ -31,7 +28,7 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 @Stateless(name = "EntityEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
-@Interceptors({UsageInterceptor.class})
+//@Interceptors({UsageInterceptor.class})
 @PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 500, timeout = 10000)
 public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
 	

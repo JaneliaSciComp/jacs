@@ -1,13 +1,6 @@
 
 package org.janelia.it.jacs.compute.api;
 
-import java.util.*;
-
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import javax.interceptor.Interceptors;
-
 import org.apache.log4j.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.ORDER;
@@ -23,12 +16,16 @@ import org.janelia.it.jacs.compute.access.solr.SolrDAO;
 import org.janelia.it.jacs.compute.api.support.SageTerm;
 import org.janelia.it.jacs.compute.api.support.SolrResults;
 import org.janelia.it.jacs.compute.api.support.SolrUtils;
-import org.janelia.it.jacs.compute.interceptor.UsageInterceptor;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
+
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import java.util.*;
 
 /**
  * Implementation of SOLR indexing and searching operations. 
@@ -38,7 +35,7 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 @Stateless(name = "SolrEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
-@Interceptors({UsageInterceptor.class})
+//@Interceptors({UsageInterceptor.class})
 @PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 100, timeout = 10000)
 public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
 

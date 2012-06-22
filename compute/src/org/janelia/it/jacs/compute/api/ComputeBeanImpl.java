@@ -12,7 +12,6 @@ import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 import org.janelia.it.jacs.compute.engine.launcher.ProcessManager;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.interceptor.UsageInterceptor;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
@@ -39,7 +38,6 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
-import javax.interceptor.Interceptors;
 import javax.naming.Context;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
@@ -58,7 +56,7 @@ import java.util.*;
 @Stateless(name = "ComputeEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
-@Interceptors({UsageInterceptor.class})
+//@Interceptors({UsageInterceptor.class})
 @PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 200, timeout = 10000)
 public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     private Logger logger = Logger.getLogger(this.getClass());
