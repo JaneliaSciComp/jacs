@@ -19,6 +19,7 @@ import java.util.List;
  *   RESULT_FILE_NODE - the directory to use for SGE config and output
  *   BULK_MERGE_PARAMETERS - a list of MergedLsmPair
  *   STITCHED_FILENAME - the output file to create
+ *   REFERENCE_CHANNEL_INDEX (optional; defaults to 4) - the index of the reference channel in each image
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -53,7 +54,7 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
 
         String referenceChannelIndexStr = (String)processData.getItem("REFERENCE_CHANNEL_INDEX");
         if (referenceChannelIndexStr!=null) {
-        	referenceChannelIndex = Integer.parseInt(referenceChannelIndexStr);	
+        	referenceChannelIndex = Integer.parseInt(referenceChannelIndexStr)+1;	
         }
         
         writeInstanceFiles();

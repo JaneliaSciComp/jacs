@@ -16,7 +16,7 @@ public class NeuronSeparatorHelper {
             SystemConfigurationProperties.getString("Separator.ScriptPath");
 
 	public static String getNeuronSeparationCommands() throws ServiceException {
-        return "sh "+SEPARATOR_SCRIPT+" $OUTPUT_DIR neuronSeparatorPipeline $INPUT_FILE $PREVIOUS_OUTPUT";
+        return "sh "+SEPARATOR_SCRIPT+" $OUTPUT_DIR neuronSeparatorPipeline $INPUT_FILE \"$SIGNAL_CHAN\" \"$REF_CHAN\" $PREVIOUS_OUTPUT";
 	}
     
 }

@@ -15,6 +15,12 @@
             <input name="PROCESS_VARIABLE_3" value="REFRESH_ALIGNMENT"/>
             <input name="TASK_PARAMETER_4" value="refresh separation"/>
             <input name="PROCESS_VARIABLE_4" value="REFRESH_SEPARATION"/>
+            <input name="TASK_PARAMETER_5" value="alignment type"/>
+            <input name="PROCESS_VARIABLE_5" value="ALIGNMENT_TYPE"/>
+            <input name="TASK_PARAMETER_6" value="signal channel indexes"/>
+            <input name="PROCESS_VARIABLE_6" value="SIGNAL_CHANNEL_INDEXES"/>
+            <input name="TASK_PARAMETER_7" value="reference channel index"/>
+            <input name="PROCESS_VARIABLE_7" value="REFERENCE_CHANNEL_INDEX"/>
 	        <output name="SAMPLE_ENTITY_ID"/>
 	    </operation>
 	    
@@ -54,6 +60,7 @@
 				<input name="SAMPLE_ENTITY_ID"/>
 				<output name="BULK_MERGE_PARAMETERS"/>
 				<output name="STITCHED_FILENAME"/>
+				<output name="RUN_MERGE"/>
 			</operation>
 		
 		    <!-- Asynchronously create the metadata describing the input LSM files -->
@@ -68,16 +75,21 @@
 		        </operation>
 	        </sequence>
 		    
-		    <!-- Merge all the LSM pairs in parallel -->
-	        <sequence name="Merge Lsm Pairs" waitForAsync="true">
-		        <operation name="Merge Lsm Pairs" processor="queue/gridSubmitAndWait">
-		            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DBulkMergeService"/>
-					<input name="MERGE_RESULT_FILE_NODE"/>
-		    		<input name="RESULT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
-					<input name="BULK_MERGE_PARAMETERS"/>
-		        </operation>
+		    <!-- Do we have tile pairs that need to be merged? -->
+        	<sequence if="RUN_MERGE=true">
+			    
+			    <!-- Merge all the LSM pairs in parallel -->
+		        <sequence name="Merge Lsm Pairs" waitForAsync="true">
+			        <operation name="Merge Lsm Pairs" processor="queue/gridSubmitAndWait">
+			            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DBulkMergeService"/>
+						<input name="MERGE_RESULT_FILE_NODE"/>
+			    		<input name="RESULT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
+						<input name="BULK_MERGE_PARAMETERS"/>
+			        </operation>
+		        </sequence>
+			
 	        </sequence>
-		
+        	
         	<sequence if="NUM_PAIRS=1">
         	
 			    <!-- In the case of a single tile, it is considered the "stitched" file used in downstream processing -->
@@ -87,7 +99,7 @@
 				</operation>
 				
 	        </sequence>
-        	
+	        
         	<sequence if="NUM_PAIRS>1"> <!-- else -->
         	
 			    <!-- Determine tile groupings and pick the largest group for processing -->
@@ -99,6 +111,7 @@
 						<input name="MERGE_RESULT_FILE_NODE"/>
 			    		<input name="INPUT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
 						<input name="BULK_MERGE_PARAMETERS"/>
+						<input name="REFERENCE_CHANNEL_INDEX"/>
 						<output name="BULK_MERGE_PARAMETERS"/>
 			        </operation>
 		        </sequence>
@@ -112,6 +125,7 @@
 						<input name="GROUP_RESULT_FILE_NODE"/>
 			    		<input name="INPUT_FILE_NODE" value="$V{GROUP_RESULT_FILE_NODE}"/>
 						<input name="BULK_MERGE_PARAMETERS"/>
+						<input name="REFERENCE_CHANNEL_INDEX"/>
 						<input name="STITCHED_FILENAME"/>
 			        </operation>
 		        </sequence>
@@ -138,6 +152,8 @@
 	            <input name="STITCHED_FILENAME"/>
 	            <input name="INPUT_FILENAME" value="$V{STITCHED_FILENAME}"/>
 	            <input name="RESULT_ENTITY_NAME" value="Prealigned Neuron Separation"/>
+				<input name="SIGNAL_CHANNEL_INDEXES"/>
+				<input name="REFERENCE_CHANNEL_INDEX"/>
 	        </include>
 
 		</sequence>
@@ -156,6 +172,7 @@
 			    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
 			    <operation name="Create Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitAlignmentParametersService">
 					<input name="SAMPLE_ENTITY_ID"/>
+					<input name="ALIGNMENT_TYPE"/>
 					<output name="ALIGNMENT_SERVICE_CLASS"/>
 					<output name="ALIGNMENT_RESULT_NAME"/>
 					<output name="ALIGNMENT_TILE_NAME"/>
@@ -196,6 +213,8 @@
 		            <input name="ALIGNED_FILENAME"/>
 		            <input name="INPUT_FILENAME" value="$V{ALIGNED_FILENAME}"/>
 		            <input name="RESULT_ENTITY_NAME" value="Aligned Neuron Separation"/>
+		            <input name="SIGNAL_CHANNEL_INDEXES"/>
+					<input name="REFERENCE_CHANNEL_INDEX"/>
 		        </include>
 		        
 	    	</sequence>

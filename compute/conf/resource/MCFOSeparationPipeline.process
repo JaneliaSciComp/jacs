@@ -12,6 +12,10 @@
             <input name="PROCESS_VARIABLE_2" value="INPUT_FILENAME"/>
             <input name="TASK_PARAMETER_3" value="result entity name"/>
             <input name="PROCESS_VARIABLE_3" value="RESULT_ENTITY_NAME"/>
+            <input name="TASK_PARAMETER_5" value="signal channel indexes"/>
+            <input name="PROCESS_VARIABLE_5" value="SIGNAL_CHANNEL_INDEXES"/>
+            <input name="TASK_PARAMETER_6" value="reference channel index"/>
+            <input name="PROCESS_VARIABLE_6" value="REFERENCE_CHANNEL_INDEX"/>
 	        <output name="SAMPLE_ENTITY_ID"/>
 	        <output name="INPUT_FILENAME"/>
 	        <output name="RESULT_ENTITY_NAME"/>
@@ -39,6 +43,8 @@
 				<input name="SEPARATE_RESULT_FILE_NODE"/>
 	    		<input name="RESULT_FILE_NODE" value="$V{SEPARATE_RESULT_FILE_NODE}"/>
 				<input name="INPUT_FILENAME"/>
+	            <input name="SIGNAL_CHANNEL_INDEXES"/>
+				<input name="REFERENCE_CHANNEL_INDEX"/>
 				<input name="PREVIOUS_RESULT_FILENAME"/>
 		    </operation>
         </sequence>

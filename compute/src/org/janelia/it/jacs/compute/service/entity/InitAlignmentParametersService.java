@@ -18,6 +18,11 @@ import org.mortbay.log.Log;
  */
 public class InitAlignmentParametersService implements IService {
 
+	private static final String ALIGN_TYPE_WHOLE_40X = "WHOLE_40X";
+	private static final String ALIGN_TYPE_WHOLE_63X = "WHOLE_63X";
+	private static final String ALIGN_TYPE_OPTIC = "OPTIC";
+	private static final String ALIGN_TYPE_CENTRAL = "CENTRAL";
+	
     protected Logger logger;
 
     public void execute(IProcessData processData) throws ServiceException {
@@ -42,20 +47,19 @@ public class InitAlignmentParametersService implements IService {
     			return;
     		}
     		
-    		String run40xAligner = (String)processData.getItem("RUN_40X_ALIGNER");
-    		String run63xAligner = (String)processData.getItem("RUN_63X_ALIGNER");
+    		String alignmentType = (String)processData.getItem("ALIGNMENT_TYPE");
     		
-    		if (run40xAligner!=null && "true".equalsIgnoreCase(run40xAligner)) {
+    		if (alignmentType!=null && ALIGN_TYPE_WHOLE_40X.equalsIgnoreCase(alignmentType)) {
             	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.WholeBrain40xAlignmentService");
             	processData.putItem("ALIGNMENT_RESULT_NAME", "Whole Brain 40x Alignment");
     		}
-    		else if (run63xAligner!=null && "true".equalsIgnoreCase(run63xAligner)) {
+    		else if (alignmentType!=null && ALIGN_TYPE_WHOLE_63X.equalsIgnoreCase(alignmentType)) {
             	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.WholeBrain63xAlignmentService");
             	processData.putItem("ALIGNMENT_RESULT_NAME", "Whole Brain 63x Alignment");
     		}
     		else {
+    			// TODO: move this into an earlier step which then sets ALIGNMENT_TYPE
         		TilingPattern pattern = TilingPattern.valueOf(strTilingPattern);
-
         		if (pattern == TilingPattern.OPTIC_TILE) {
                 	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.OpticLobeAlignmentService");
                 	processData.putItem("ALIGNMENT_RESULT_NAME", "Optic Lobe Alignment");

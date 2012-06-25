@@ -19,6 +19,7 @@ import java.util.List;
  * Parameters:
  *   RESULT_FILE_NODE - the directory to use for SGE config and output
  *   BULK_MERGE_PARAMETERS - a list of MergedLsmPair
+ *   REFERENCE_CHANNEL_INDEX (optional; defaults to 4) - the index of the reference channel in each image
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -27,6 +28,7 @@ public class Vaa3DStitchGroupingService extends SubmitDrmaaJobService {
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
     private static final String CONFIG_PREFIX = "groupConfiguration.";
     private File groupedFile;
+    private int referenceChannelIndex = 4;
     
     protected void init(IProcessData processData) throws Exception {
     	super.init(processData);
@@ -43,6 +45,11 @@ public class Vaa3DStitchGroupingService extends SubmitDrmaaJobService {
         FileNode inputFileNode = (FileNode)processData.getItem("INPUT_FILE_NODE");
         if (inputFileNode==null) {
         	throw new ServiceException("Input parameter INPUT_FILE_NODE may not be null");
+        }
+
+        String referenceChannelIndexStr = (String)processData.getItem("REFERENCE_CHANNEL_INDEX");
+        if (referenceChannelIndexStr!=null) {
+        	referenceChannelIndex = Integer.parseInt(referenceChannelIndexStr)+1;	
         }
         
         groupedFile = new File(resultFileNode.getDirectoryPath(),"igroups.txt");
@@ -71,7 +78,7 @@ public class Vaa3DStitchGroupingService extends SubmitDrmaaJobService {
         StringBuffer script = new StringBuffer();
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix());
         script.append("\n");
-        script.append(Vaa3DHelper.getFormattedGrouperCommand(mergedFilepath, groupedFilepath));
+        script.append(Vaa3DHelper.getFormattedGrouperCommand(referenceChannelIndex, mergedFilepath, groupedFilepath));
         script.append("\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix());
         script.append("\n");

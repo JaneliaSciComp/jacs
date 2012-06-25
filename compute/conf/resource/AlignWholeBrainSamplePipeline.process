@@ -43,7 +43,7 @@
 			    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
 			    <operation name="Create Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitAlignmentParametersService">
 					<input name="SAMPLE_ENTITY_ID"/>
-					<input name="RUN_63X_ALIGNER" value="true"/>
+					<input name="ALIGNMENT_TYPE" value="ALIGN_TYPE_WHOLE_63X"/>
 					<output name="ALIGNMENT_SERVICE_CLASS"/>
 					<output name="ALIGNMENT_RESULT_NAME"/>
 				</operation>

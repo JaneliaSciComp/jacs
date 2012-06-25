@@ -1,16 +1,15 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
-import org.janelia.it.jacs.compute.api.ComputeException;
-import org.janelia.it.jacs.compute.service.neuronSeparator.NeuronSeparatorHelper;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
-
 import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * File discovery service for LSM pairs ordered by suffix.

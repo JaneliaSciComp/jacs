@@ -152,6 +152,41 @@
     </operation>
     
     <operation>
+        <description>Run Leet File-based Data Pipeline</description>
+        <name>runLeetFileBasedDataPipeline</name>
+        <parameter>
+           <description>User to run as (e.g. "system")</description>
+           <name>user</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Name of the folder entity where results will be placed (e.g. "Lee Lab Stitched Data")</description>
+           <name>topLevelFolderName</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Directory to discovery LSMs within (e.g. "/groups/leet/leetimg/leetlab/WYC/stitching/")</description>
+           <name>rootDirectoryPath</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Re-run merging and stitching?</description>
+           <name>refreshProcessing</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+           <description>Re-run brain alignments?</description>
+           <name>refreshAlignment</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+           <description>Re-run neuron separations?</description>
+           <name>refreshSeparation</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+    </operation>
+    
+    <operation>
         <description>Run Central Brain Pipeline</description>
         <name>runCentralBrainDataPipeline</name>
         <parameter>

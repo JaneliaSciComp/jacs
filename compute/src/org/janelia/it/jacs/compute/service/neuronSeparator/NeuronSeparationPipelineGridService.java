@@ -28,6 +28,8 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
     private FileNode outputFileNode;
     private String inputFilename;
     private String previousResultFile;
+    private String signalChannels;
+    private String referenceChannel;
     
     @Override
     protected String getGridServicePrefixName() {
@@ -49,8 +51,18 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
     	
         previousResultFile = (String)processData.getItem("PREVIOUS_RESULT_FILENAME");
         
+        signalChannels = (String)processData.getItem("SIGNAL_CHANNEL_INDEXES");
+        if (signalChannels==null) {
+        	signalChannels = "0 1 2";
+        }
+        
+        referenceChannel = (String)processData.getItem("REFERENCE_CHANNEL_INDEX");
+        if (referenceChannel==null) {
+        	referenceChannel = "3";
+        }
+        
         logger.info("Starting NeuronSeparationPipelineService with taskId=" + task.getObjectId() + " resultNodeId=" + resultFileNode.getObjectId() + " resultDir=" + resultFileNode.getDirectoryPath()+
-                " workingDir="+outputFileNode.getDirectoryPath() + " inputFilename="+inputFilename);
+                " workingDir="+outputFileNode.getDirectoryPath() + " inputFilename="+inputFilename+ " signalChannels="+signalChannels+ " referenceChannel="+referenceChannel);
     }
     
     @Override
@@ -67,6 +79,8 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
             fw.write(outputFileNode.getDirectoryPath() + "\n");
             fw.write("neuronSeparatorPipeline\n");
             fw.write(inputFilename + "\n");
+            fw.write(signalChannels + "\n");
+            fw.write(referenceChannel + "\n");
             fw.write(previousResultFile==null?"":previousResultFile + "\n");
         }
         catch (IOException e) {
@@ -82,10 +96,12 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
         script.append("read OUTPUT_DIR\n");
         script.append("read NAME\n");
         script.append("read INPUT_FILE\n");
+        script.append("read SIGNAL_CHAN\n");
+        script.append("read REF_CHAN\n");
         script.append("read PREVIOUS_OUTPUT\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix() + "\n");
         script.append(Vaa3DHelper.getVaa3dLibrarySetupCmd()+"\n");
-        script.append(NeuronSeparatorHelper.getNeuronSeparationCommands());
+        script.append(NeuronSeparatorHelper.getNeuronSeparationCommands() + "\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix() + "\n");
         script.append("\n");
         writer.write(script.toString());
