@@ -47,12 +47,15 @@ public class MaskSampleAnnotationService  implements IService {
 
     private static final Logger logger = Logger.getLogger(MaskSampleAnnotationService.class);
 
+    private final boolean DEBUG = false;
+
     final public String MASK_ANNOTATION_SUBDIR_NAME="maskAnnotation";
     final static public String MASK_ANNOTATION_FOLDER_NAME="Mask Annotation";
     final public String MIPS_SUBFOLDER_NAME="mips";
     final public String SUPPORTING_FILE_SUBFOLDER_NAME="supportingFiles";
     final public String NORMALIZED_SUBFOLDER_NAME="normalized";
     final public String MASK_NAME_INDEX_FILENAME="maskNameIndex.txt";
+    final public String COMPLETE_MARKER_FILENAME="FilesCompleteMarker";
 
 
     final public String MODE_UNDEFINED="UNDEFINED";
@@ -213,10 +216,12 @@ public class MaskSampleAnnotationService  implements IService {
         // Generate the list of samples from the FlyLine list
         logger.info("Processing " + flyLineIdList.size() + " FlyLine entries");
         for (String flyLineEntityId : flyLineIdList) {
-            Entity flyLineEntity=entityBean.getEntityTree(new Long(flyLineEntityId.trim()));
-            for (EntityData ed : flyLineEntity.getEntityData()) {
-                if (ed.getChildEntity().getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
-                    sampleList.add(ed.getChildEntity());
+            //Entity flyLineEntity=entityBean.getEntityTree(new Long(flyLineEntityId.trim()));
+            Entity flyLineEntity=entityBean.getEntityById(flyLineEntityId.trim());
+            Set<Entity> flyLineChildren=entityBean.getChildEntities(new Long(flyLineEntityId));
+            for (Entity flyLineChild : flyLineChildren) {
+                if (flyLineChild.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
+                    sampleList.add(flyLineChild);
                 }
             }
         }
@@ -226,14 +231,34 @@ public class MaskSampleAnnotationService  implements IService {
         for (Entity sample : sampleList) {
 
             // Refresh beans
-            logger.info("Refreshing EJB instances");
-            refreshEntityBeans();
+//            logger.info("Refreshing EJB instances");
+//            refreshEntityBeans();
 
-            user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
+            // user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
 
             logger.info("Processing sample name="+sample.getName());
 
-            sample=entityBean.getEntityTree(sample.getId());
+            if (!refresh) {
+                Entity maskTopLevelFolder=getSubFolderByNameWithoutSession(sample, MASK_ANNOTATION_FOLDER_NAME);
+                if (maskTopLevelFolder!=null) {
+                    String maskDirPath=maskTopLevelFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                    if (maskDirPath!=null) {
+                        File maskFolderDir=new File(maskDirPath, maskAnnotationFolderName);
+                        File doneFile=new File(maskFolderDir.getAbsolutePath(), COMPLETE_MARKER_FILENAME);
+                        if (doneFile.exists()) {
+                            logger.info("Found done marker file - skipping sample "+sample.getName());
+                            continue;
+                        } else {
+                            logger.info("done marker file "+doneFile.getAbsolutePath()+" does not exist - processing sample "+sample.getName());
+                        }
+                    } else {
+                        logger.info("maskDirPath is null - cannot done-check sample "+sample.getName());
+                    }
+                } else {
+                    logger.info("maskTopLevelFolder is null - cannot done-check sample "+sample.getName());
+                }
+            }
+
 
             // This is the directory containing the link to the stack, and will have a mask annotation
             // subdirectory, as well as a separte supportingFiles directory.
@@ -249,19 +274,19 @@ public class MaskSampleAnnotationService  implements IService {
 
             // If refresh, then delete previous mask contents
             if (refresh) {
-                logger.info("Refresh is true - checking status of mask annotation folder="+maskAnnotationFolderName+" for sample="+sample.getName());
+                if (DEBUG) logger.info("Refresh is true - checking status of mask annotation folder="+maskAnnotationFolderName+" for sample="+sample.getName());
                 Entity maskAnnotationFolder=getMaskAnnotationFolderFromSampleByName(sample, sampleResultDir, maskAnnotationFolderName, false);
                 if (maskAnnotationFolder!=null) {
-                        logger.info("Deleting mask annotation folder id="+maskAnnotationFolder.getId()+" dir="+maskAnnotationFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+                        if (DEBUG) logger.info("Deleting mask annotation folder id="+maskAnnotationFolder.getId()+" dir="+maskAnnotationFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
                         cleanFullOrIncompleteMaskAnnotationFolderAndFiles(maskAnnotationFolder);
                 } else {
-                    logger.info("mask annotation folder is null - nothing to clean");
+                    if (DEBUG) logger.info("mask annotation folder is null - nothing to clean");
                 }
                 // Refresh sample after delete
                 logger.info("Refreshing sample after clean operation");
                 sample=entityBean.getEntityTree(sample.getId());
             } else {
-                logger.info("Refresh is false - using prior data");
+                if (DEBUG) logger.info("Refresh is false - using prior data");
             }
 
             // This ensures that the mask annotation directory and its subdirs are correctly setup.
@@ -280,11 +305,11 @@ public class MaskSampleAnnotationService  implements IService {
                 Entity child=ed.getChildEntity();
                 if (child!=null) {
                     if (child.getEntityType().getName().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
-                        logger.info("Found Aligned Brain Stack child");
+                        if (DEBUG) logger.info("Found Aligned Brain Stack child");
                         stackFile=new File(child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
                         QmScore=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE);
                         QiScore=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
-                        logger.info("QmScore="+QmScore+" QiScore="+QiScore);
+                        if (DEBUG) logger.info("QmScore="+QmScore+" QiScore="+QiScore);
                     }
                 }
             }
@@ -292,17 +317,17 @@ public class MaskSampleAnnotationService  implements IService {
             if (QmScore!=null && QiScore!=null) {
                 Double qm=new Double(QmScore.trim());
                 Double qi=new Double(QiScore.trim());
-                logger.info("Using Double-valued Qm="+qm+" Qi="+qi+" QM_MAXIMUM="+QM_MAXIMUM+" QI_MAXIMUM="+QI_MAXIMUM);
+                if (DEBUG) logger.info("Using Double-valued Qm="+qm+" Qi="+qi+" QM_MAXIMUM="+QM_MAXIMUM+" QI_MAXIMUM="+QI_MAXIMUM);
                 boolean qScoresUndefined=(qm==0.0 && qi==0.0);
                 if (!qScoresUndefined && qm<=QM_MAXIMUM && qi<=QI_MAXIMUM) {
-                    logger.info("Adding properly-aligned sampleName="+sample.getName());
+                    if (DEBUG) logger.info("Adding properly-aligned sampleName="+sample.getName());
                     properlyAlignedSampleList.add(sample);
                     properlyAlignedSampleIdList.add(sample.getId().toString());
                     maskAnnotationDirList.add(maskAnnotationDir.getAbsolutePath());
                     alignedStackPathList.add(stackFile.getAbsolutePath());
-                    logger.info("This stack has valid Qm and Qi scores="+stackFile.getAbsolutePath());
+                    if (DEBUG) logger.info("This stack has valid Qm and Qi scores="+stackFile.getAbsolutePath());
                 } else {
-                    logger.info("Skipping stack="+stackFile.getAbsolutePath()+" due to poor or undefined Qm and Qi scores");
+                    if (DEBUG) logger.info("Skipping stack="+stackFile.getAbsolutePath()+" due to poor or undefined Qm and Qi scores");
                 }
             } else {
                 logger.error("Could not find expected QmScore and QiScore attributes from aligned brain stack of sample="+sample.getId());
@@ -353,7 +378,7 @@ public class MaskSampleAnnotationService  implements IService {
         processData.putItem("SAMPLE_COUNT", sampleCount);
 
         for (String sampleName : finalSampleNameList) {
-            logger.info("doSetup() : Adding sampleName to list="+sampleName);
+            if (DEBUG) logger.info("doSetup() : Adding sampleName to list="+sampleName);
         }
 
         logger.info("End of doSetup() - including "+finalSampleNameList.size()+" samples - skipped "+alreadyCompleteSampleCount+
@@ -370,9 +395,9 @@ public class MaskSampleAnnotationService  implements IService {
     Entity getMaskAnnotationFolderFromSampleByName(Entity sample, File sampleDir, String maskFolderName, boolean create) throws Exception {
         Entity maskSubFolder=null;
         if (!create) {
-            Entity maskTopLevelFolder=getSubFolderByName(sample, MASK_ANNOTATION_FOLDER_NAME);
+            Entity maskTopLevelFolder=getSubFolderByNameWithoutSession(sample, MASK_ANNOTATION_FOLDER_NAME);
             if (maskTopLevelFolder!=null) {
-                maskSubFolder=getSubFolderByName(maskTopLevelFolder, maskFolderName);
+                maskSubFolder=getSubFolderByNameWithoutSession(maskTopLevelFolder, maskFolderName);
             }
         } else {
             File maskTopLevelDir=new File(sampleDir, MASK_ANNOTATION_SUBDIR_NAME);
@@ -388,7 +413,7 @@ public class MaskSampleAnnotationService  implements IService {
             NamedFileNode mipResultNode=new NamedFileNode(task.getOwner(), task, "mipConversion", "mipConversion", visibility, sessionName);
             mipResultNode=(NamedFileNode)computeBean.saveOrUpdateNode(mipResultNode);
             nodeMap.put(dirPath, mipResultNode);
-            logger.info("For mip input dir="+dirPath+" sessionName="+sessionName+" created output result dir="+mipResultNode.getDirectoryPath());
+            if (DEBUG) logger.info("For mip input dir="+dirPath+" sessionName="+sessionName+" created output result dir="+mipResultNode.getDirectoryPath());
         }
         return nodeMap;
     }
@@ -446,11 +471,11 @@ public class MaskSampleAnnotationService  implements IService {
         }
         String maskDirPath=maskAnnotationFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         if (maskDirPath==null) {
-            logger.info("Could not find directory path for previous mask folder id="+maskAnnotationFolder.getId());
+            if (DEBUG) logger.info("Could not find directory path for previous mask folder id="+maskAnnotationFolder.getId());
             return;
         }
         File maskDir=new File(maskDirPath);
-        logger.info("Removing prior mask annotation folder at location="+maskDir.getAbsolutePath());
+        if (DEBUG) logger.info("Removing prior mask annotation folder at location="+maskDir.getAbsolutePath());
         List<File> filesToDelete=new ArrayList<File>();
 
         // We need to iterate through the entities and delete - note we only want to delete 'official'
@@ -473,34 +498,43 @@ public class MaskSampleAnnotationService  implements IService {
         }
 
         // Now we know the files to delete, so we can delete the folder entity tree
-        logger.info("Deleting entity tree for prior mask annotation folderId="+maskAnnotationFolder.getId());
+        if (DEBUG) logger.info("Deleting entity tree for prior mask annotation folderId="+maskAnnotationFolder.getId());
         entityBean.deleteSmallEntityTree(task.getOwner(), maskAnnotationFolder.getId());
-        logger.info("Finished deleting entity tree");
+        if (DEBUG) logger.info("Finished deleting entity tree");
         // Now we can delete the files and then directories
         for (File fileToDelete : filesToDelete) {
             if (fileToDelete.exists() && !fileToDelete.isDirectory()) {
-                logger.info("Deleting prior mask annotation file="+fileToDelete.getAbsolutePath());
+                if (DEBUG) logger.info("Deleting prior mask annotation file="+fileToDelete.getAbsolutePath());
                 fileToDelete.delete();
             }
         }
         for (File fileToDelete : filesToDelete) {
             if (fileToDelete.exists() && fileToDelete.isDirectory()) {
-                logger.info("Deleting prior mask dir="+fileToDelete.getAbsolutePath());
+                if (DEBUG) logger.info("Deleting prior mask dir="+fileToDelete.getAbsolutePath());
                 fileToDelete.delete();
             }
         }
     }
 
     protected boolean maskAnnotationDirIsComplete(String sampleName, File maskDir, boolean verbose) throws Exception {
-        boolean missingAFile=false;
-        logger.info("Calling maskAnnotationDirIsComplete() with sampleName="+sampleName);
-        List<File> filenameList=getExpectedMaskAnnotationResultFiles(maskDir, sampleName);
-        for (File file : filenameList) {
-            if (!file.exists()) {
-                if (verbose) {
-                    logger.info("Missing expected mask annotation file="+file.getAbsolutePath());
+        boolean missingAFile = false;
+        if (DEBUG) logger.info("Calling maskAnnotationDirIsComplete() with sampleName=" + sampleName);
+        File completeMarkerFile = new File(maskDir, COMPLETE_MARKER_FILENAME);
+        if (completeMarkerFile.exists()) {
+            if (DEBUG) logger.info("Found complete marker file for sample=" + sampleName + " - assuming complete");
+            missingAFile = false;
+        } else {
+            List<File> filenameList = getExpectedMaskAnnotationResultFiles(maskDir, sampleName);
+            for (File file : filenameList) {
+                if (!file.exists()) {
+                    if (verbose) {
+                        if (DEBUG) logger.info("Missing expected mask annotation file=" + file.getAbsolutePath());
+                    }
+                    missingAFile = true;
                 }
-                missingAFile=true;
+            }
+            if (!missingAFile) {
+                completeMarkerFile.createNewFile();
             }
         }
         return !missingAFile;
@@ -517,7 +551,7 @@ public class MaskSampleAnnotationService  implements IService {
             folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, directoryPath);
         }
         folder = entityBean.saveOrUpdateEntity(folder);
-        logger.info("Saved folder " + name+" as " + folder.getId()+" , will now add as child to parent entity name="+parent.getName()+" parentId="+parent.getId());
+        if (DEBUG) logger.info("Saved folder " + name+" as " + folder.getId()+" , will now add as child to parent entity name="+parent.getName()+" parentId="+parent.getId());
         addToParent(parent, folder, null, EntityConstants.ATTRIBUTE_ENTITY);
         return folder;
     }
@@ -526,7 +560,7 @@ public class MaskSampleAnnotationService  implements IService {
         EntityData ed = parent.addChildEntity(entity, attrName);
         ed.setOrderIndex(index);
         entityBean.saveOrUpdateEntityData(ed);
-        logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
+        if (DEBUG) logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
                 " as child of "+parent.getEntityType().getName()+"#"+parent.getId());
     }
 
@@ -589,7 +623,7 @@ public class MaskSampleAnnotationService  implements IService {
         }
         for (File fromFile : fromList) {
             File toFile=new File(toDir, fromFile.getName());
-            logger.info("Moving "+fromFile.getAbsolutePath()+" to "+toFile.getAbsolutePath());
+            if (DEBUG) logger.info("Moving "+fromFile.getAbsolutePath()+" to "+toFile.getAbsolutePath());
             FileUtil.moveFileUsingSystemCall(fromFile, toFile);
         }
     }
@@ -598,10 +632,20 @@ public class MaskSampleAnnotationService  implements IService {
         File[] fileArr=dir.listFiles();
         for (File f : fileArr) {
             if (!f.isDirectory() && f.getName().toLowerCase().contains(nameFragment)) {
-                logger.info("Deleting file "+f.getAbsolutePath());
+                if (DEBUG) logger.info("Deleting file "+f.getAbsolutePath());
                 f.delete();
             }
         }
+    }
+
+    protected Entity getSubFolderByNameWithoutSession(Entity parentEntity, String folderName) {
+        Set<Entity> children = entityBean.getChildEntities(parentEntity.getId());
+        for (Entity child : children) {
+            if (child != null && child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) & child.getName().equals(folderName)) {
+                return child;
+            }
+        }
+        return null;
     }
 
     protected Entity getSubFolderByName(Entity parentEntity, String folderName) {
@@ -787,7 +831,7 @@ public class MaskSampleAnnotationService  implements IService {
         entityHelper.setDefault2dImage(stack, mipEntity);
         stack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
         stack = entityBean.saveOrUpdateEntity(stack);
-        logger.info("Saved stack " + stack.getName() + " as "+stack.getId());
+        if (DEBUG) logger.info("Saved stack " + stack.getName() + " as "+stack.getId());
         return stack;
     }
 
@@ -812,7 +856,7 @@ public class MaskSampleAnnotationService  implements IService {
                 if (nameLineList.size()<3) {
                     throw new Exception("Could not parse line from file="+abbreviationIndexFile.getAbsolutePath()+" line="+nextLine);
                 }
-                logger.info("Adding "+nameLineList.get(2)+" to abbreviation list");
+                if (DEBUG) logger.info("Adding "+nameLineList.get(2)+" to abbreviation list");
                 abbrevationList.add(nameLineList.get(2));
             }
             br.close();

@@ -47,13 +47,15 @@
     	     The intention is that each group is then processable as a unit downstream. -->
 
     	<operation name="Fly Line Screen Sample Coordination" processor="org.janelia.it.jacs.compute.service.fly.ScreenSampleLineCoordinationService">
-            <input name="FLY_LINE_GROUP_SIZE" value="50"/>
+            <input name="FLY_LINE_GROUP_SIZE" value="5"/>
             <output name="FLY_LINE_GROUP_LIST"/>
         </operation>
 
     	<!-- Process each Sample Entity -->
 	    <sequence forEach="FLY_LINE_GROUP_LIST" waitForAsync="true">
-	            <sequence>
+	            <sequence async="true">
+
+	                <sequence processor="queue/maskSampleAnnotationPipelineLauncher">
 
 				    <!-- Service instance for processing each Fly Line Group.
 				         This service creates result nodes for processing the Fly Line group, and attaches them to the samples.
@@ -120,6 +122,8 @@
     	                <input name="ALIGNED_STACK_PATH_LIST"/>
     	                <input name="RESULT_FILE_NODE"/>
      	            </operation>
+
+     	            </sequence>
 
      	            </sequence>
 

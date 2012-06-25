@@ -38,13 +38,13 @@ import java.util.List;
         @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
         @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/baseService"),
-        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "75"),
+        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "300"),
 //        @ActivationConfigProperty(propertyName = "MaxMessages", propertyValue = "75"),
         @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
         // DLQMaxResent is a JBoss-specific management property. 0 = no resent messages
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 75, timeout = 10000)
+@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 300, timeout = 10000)
 public class BaseServiceMDB implements MessageListener {
     protected Logger logger;
 
