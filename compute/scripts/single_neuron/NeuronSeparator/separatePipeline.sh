@@ -13,9 +13,6 @@ Vaa3D="$DIR/../../../vaa3d-redhat/vaa3d"
 NSDIR="$DIR/../../../neusep-redhat"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$NETPBM_PATH/lib"
 
-#export TMPDIR=""
-#SCRATCH_DIR="/scratch/jacs/"
-
 ##################
 # inputs
 ##################
@@ -25,7 +22,8 @@ if [ $NUMPARAMS -lt 3 ]
 then
     echo " "
     echo " USAGE ::  "
-    echo " sh separatePipeline.sh <output dir> <name> <input file> <prev result file (OPTIONAL)>"
+    echo " sh separatePipeline.sh <output dir> <name> <input file> \"<signal channels>\" \"<ref channel>\" <prev result file (OPTIONAL)>"
+    echo " Note: channel numbers are separated by spaces, and zero indexed."
     echo " "
     exit
 fi
@@ -33,14 +31,17 @@ fi
 OUTDIR=$1
 NAME=$2
 INPUT_FILE=$3
-PREVFILE=$4
-#WORKING_DIR=`mktemp -d -p $SCRATCH_DIR`
+SIGNAL_CHAN=$4
+REF_CHAN=$5
+PREVFILE=$6
 WORKING_DIR=$OUTDIR/temp
 
 echo "Run Dir: $DIR"
 echo "Working Dir: $WORKING_DIR"
 echo "Input file: $INPUT_FILE"
 echo "Output dir: $OUTDIR"
+echo "Signal channels: $SIGNAL_CHAN"
+echo "Reference channel: $REF_CHAN"
 
 mkdir $WORKING_DIR
 cd $WORKING_DIR
@@ -72,9 +73,14 @@ fi
 # Decrease "s" to get more (smaller) neurons
 # Decrease "e" to get more neurons
 
+
+REF_CHAN_ONE_INDEXED=`expr $REF_CHAN + 1`
+
+echo "Reference chan (1-indexed): $REF_CHAN_ONE_INDEXED"
+
 echo "~ Generating separation"
 # -c6.0 -e4.5 -s800
-$NSDIR/setup10 -c6.0 -e4.5 -s800 -r4 SeparationResultUnmapped $INPUT_FILE
+$NSDIR/setup10 -c6.0 -e4.5 -s800 -r$REF_CHAN_ONE_INDEXED SeparationResultUnmapped $INPUT_FILE
 
 if [ -s SeparationResultUnmapped.nsp ]; then
 
@@ -93,7 +99,7 @@ if [ -s SeparationResultUnmapped.nsp ]; then
     if [ -s SeparationResult.nsp ]; then
 
         echo "~ Generating consolidated signal"
-        cat $INPUT_FILE | $NSDIR/v3draw_select_channels 0 1 2 | $NSDIR/v3draw_flip_y | $NSDIR/v3draw_to_8bit > ConsolidatedSignal.v3draw
+        cat $INPUT_FILE | $NSDIR/v3draw_select_channels $SIGNAL_CHAN | $NSDIR/v3draw_flip_y | $NSDIR/v3draw_to_8bit > ConsolidatedSignal.v3draw
         $Vaa3D -cmd image-loader -convert ConsolidatedSignal.v3draw ConsolidatedSignal.v3dpbd
 
         echo "~ Generating consolidated label"
@@ -101,7 +107,7 @@ if [ -s SeparationResultUnmapped.nsp ]; then
         $Vaa3D -cmd image-loader -convert ConsolidatedLabel.v3draw ConsolidatedLabel.v3dpbd
 
         echo "~ Generating reference"
-        cat $INPUT_FILE | $NSDIR/v3draw_select_channels 3 > Reference.v3draw
+        cat $INPUT_FILE | $NSDIR/v3draw_select_channels $REF_CHAN > Reference.v3draw
         $Vaa3D -cmd image-loader -convert Reference.v3draw Reference.v3dpbd
 
         echo "~ Generating sample MIPs"

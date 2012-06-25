@@ -10,6 +10,7 @@ DIR=$(cd "$(dirname "$0")"; pwd)
 ####
 
 Vaa3D="$DIR/../../../vaa3d-redhat/vaa3d"
+BRAINALIGNER="$DIR/../../../vaa3d-redhat/brainaligner"
 
 ##################
 # inputs
@@ -69,9 +70,9 @@ TARGET_REFNO=1
 TARGET_MARKER="$TEMPLATE_DIR/wfb_atx_template_rec2.marker"
 
 # mips
-MIP1=$SUBPREFIX"_mip1.tif"
-MIP2=$SUBPREFIX"_mip2.tif"
-MIP3="_mip3.tif"
+MIP1=$SUBPREFIX"mip1.tif"
+MIP2=$SUBPREFIX"mip2.tif"
+MIP3=$SUBPREFIX"mip3.tif"
 
 
 ####################################
@@ -147,7 +148,7 @@ TPUT
 # resize output
 ####################################
 
-PREPARED_OUTPUT=$SUBPREFIX"_Aligned.v3draw"
+PREPARED_OUTPUT=$SUBPREFIX"Aligned.v3draw"
 echo "~ Running prepare20xData to generate final output"
 $Vaa3D -x ireg -f prepare20xData -o $PREPARED_OUTPUT -p "#s $LA_OUTPUT #t $ATLAS"
 
@@ -156,10 +157,10 @@ $Vaa3D -x ireg -f prepare20xData -o $PREPARED_OUTPUT -p "#s $LA_OUTPUT #t $ATLAS
 ####################################
 
 # GAOUTPUT_C3 is the reference
-AOUTPUT_C0=$SUBPREFIX"_Aligned_c0.v3draw"
-AOUTPUT_C1=$SUBPREFIX"_Aligned_c1.v3draw"
-AOUTPUT_C2=$SUBPREFIX"_Aligned_c2.v3draw"
-AOUTPUT_C3=$SUBPREFIX"_Aligned_c3.v3draw"
+AOUTPUT_C0=$SUBPREFIX"Aligned_c0.v3draw"
+AOUTPUT_C1=$SUBPREFIX"Aligned_c1.v3draw"
+AOUTPUT_C2=$SUBPREFIX"Aligned_c2.v3draw"
+AOUTPUT_C3=$SUBPREFIX"Aligned_c3.v3draw"
 
 echo "~ Running splitColorChannels on $FINAL_OUTPUT"
 $Vaa3D -x ireg -f splitColorChannels -i $FINAL_OUTPUT
@@ -170,10 +171,9 @@ $Vaa3D -x ireg -f mergeColorChannels -i $AOUTPUT_C0 $AOUTPUT_C1 $AOUTPUT_C2 -o $
 echo "~ Running ireg's zmip on $TMPOUTPUT"
 $Vaa3D -x ireg -f zmip -i $TMPOUTPUT -o $MIP3
 
-SUBPREFIX=`echo $MIP3 | awk -F\. '{print $1}'`
-TOUTPUT_C0=$SUBPREFIX"_c0.v3draw"
-TOUTPUT_C1=$SUBPREFIX"_c1.v3draw"
-TOUTPUT_C2=$SUBPREFIX"_c2.v3draw"
+TOUTPUT_C0=$SUBPREFIX"c0.v3draw"
+TOUTPUT_C1=$SUBPREFIX"c1.v3draw"
+TOUTPUT_C2=$SUBPREFIX"c2.v3draw"
 
 echo "~ Running splitColorChannels on $MIP3"
 $Vaa3D -x ireg -f splitColorChannels -i $MIP3
