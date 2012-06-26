@@ -62,7 +62,7 @@ SUBPREFIX=$OUTPUT
 
 # subject
 SUBJECT=$INPUT_FILE
-SUBJET_REFNO=3
+SUBJECT_REFNO=3
 
 # target
 TARGET="$TEMPLATE_DIR/wfb_atx_template_rec2.tif"
@@ -73,7 +73,6 @@ TARGET_MARKER="$TEMPLATE_DIR/wfb_atx_template_rec2.marker"
 MIP1=$SUBPREFIX"mip1.tif"
 MIP2=$SUBPREFIX"mip2.tif"
 MIP3=$SUBPREFIX"mip3.tif"
-
 
 ####################################
 # sampling from 0.3um 0.58um to 0.62um
@@ -141,8 +140,7 @@ $BRAINALIGNER -t $TARGET -s $GAOUTPUT_C1 -w 10 -o $LAOUTPUT_C1 -L $CSVT -l $CSVS
 
 LA_OUTPUT=$SUBPREFIX"Warped.v3draw"
 echo "~ Running mergeColorChannels"
-$Vaa3D -x ireg -f mergeColorChannels -i $LAOUTPUT_C1 $LAOUTPUT_C0 $LAOUTPUT_C2 $CMPBND -o $LA_OU
-TPUT
+$Vaa3D -x ireg -f mergeColorChannels -i $LAOUTPUT_C1 $LAOUTPUT_C0 $LAOUTPUT_C2 $CMPBND -o $LA_OUTPUT
 
 ####################################
 # resize output
@@ -162,8 +160,8 @@ AOUTPUT_C1=$SUBPREFIX"Aligned_c1.v3draw"
 AOUTPUT_C2=$SUBPREFIX"Aligned_c2.v3draw"
 AOUTPUT_C3=$SUBPREFIX"Aligned_c3.v3draw"
 
-echo "~ Running splitColorChannels on $FINAL_OUTPUT"
-$Vaa3D -x ireg -f splitColorChannels -i $FINAL_OUTPUT
+echo "~ Running splitColorChannels on $PREPARED_OUTPUT"
+$Vaa3D -x ireg -f splitColorChannels -i $PREPARED_OUTPUT
 TMPOUTPUT=$OUTPUT"_tmp.v3draw"
 
 echo "~ Running mergeColorChannels to generate $TMPOUTPUT"
@@ -179,7 +177,7 @@ echo "~ Running splitColorChannels on $MIP3"
 $Vaa3D -x ireg -f splitColorChannels -i $MIP3
 echo "~ Running mergeColorChannels to generate $MIP2"
 $Vaa3D -x ireg -f mergeColorChannels -i $TOUTPUT_C0 $TMPMIPNULL $TOUTPUT_C2 -o $MIP2
-echo "~ Running mergeColorChannels to generate $MIP3"
+echo "~ Running mergeColorChannels to generate $MIP1"
 $Vaa3D -x ireg -f mergeColorChannels -i $TMPMIPNULL $TOUTPUT_C1 $TOUTPUT_C2 -o $MIP1
 
 echo "~ Running iContrastEnhancer"
@@ -192,7 +190,7 @@ if [ "$EXT" == "v3dpbd" ]
 then
     ALIGNED_COMPRESSED="$WORKING_DIR/Aligned.v3dpbd"
     echo "~ Compressing output file to 8-bit PBD: $ALIGNED_COMPRESSED"
-    $Vaa3D -cmd image-loader -convert8 $OUTPUT $ALIGNED_COMPRESSED
+    $Vaa3D -cmd image-loader -convert8 $PREPARED_OUTPUT $ALIGNED_COMPRESSED
     PREPARED_OUTPUT=$ALIGNED_COMPRESSED
 fi
 
