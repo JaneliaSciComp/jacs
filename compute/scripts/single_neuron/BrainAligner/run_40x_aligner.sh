@@ -162,16 +162,17 @@ AOUTPUT_C3=$SUBPREFIX"Aligned_c3.v3draw"
 
 echo "~ Running splitColorChannels on $PREPARED_OUTPUT"
 $Vaa3D -x ireg -f splitColorChannels -i $PREPARED_OUTPUT
-TMPOUTPUT=$OUTPUT"_tmp.v3draw"
+TMPOUTPUT=$SUBPREFIX"tmp.v3draw"
 
 echo "~ Running mergeColorChannels to generate $TMPOUTPUT"
 $Vaa3D -x ireg -f mergeColorChannels -i $AOUTPUT_C0 $AOUTPUT_C1 $AOUTPUT_C2 -o $TMPOUTPUT
 echo "~ Running ireg's zmip on $TMPOUTPUT"
 $Vaa3D -x ireg -f zmip -i $TMPOUTPUT -o $MIP3
 
-TOUTPUT_C0=$SUBPREFIX"c0.v3draw"
-TOUTPUT_C1=$SUBPREFIX"c1.v3draw"
-TOUTPUT_C2=$SUBPREFIX"c2.v3draw"
+STR=`echo $MIP3 | awk -F\. '{print $1}'`
+TOUTPUT_C0=$STR"_c0.v3draw"
+TOUTPUT_C1=$STR"_c1.v3draw"
+TOUTPUT_C2=$STR"_c2.v3draw"
 
 echo "~ Running splitColorChannels on $MIP3"
 $Vaa3D -x ireg -f splitColorChannels -i $MIP3
