@@ -223,7 +223,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
         		deleteSmallEntityTree(owner, entity, true, false, 0);
         	}
         	else {
-    	    	Long count = countDescendants(entity, MAX_SMALL_TREE_SIZE);
+    	    	Long count = countDescendants(owner, entity, MAX_SMALL_TREE_SIZE);
     	    	if (count <= MAX_SMALL_TREE_SIZE) {
     	    		_logger.info("Running small tree algorithm (count="+count+")");
     	        	deleteSmallEntityTree(owner, entity, true, false, 0);
@@ -1907,13 +1907,14 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	return entity;
     }
 
-    public Long countDescendants(Entity entity, Long stopAfterReaching) {
-    	return countDescendants(entity, new HashSet<Long>(), stopAfterReaching);
+    public Long countDescendants(String owner, Entity entity, Long stopAfterReaching) {
+    	return countDescendants(owner, entity, new HashSet<Long>(), stopAfterReaching);
     }
 
-    private Long countDescendants(Entity entity, Set<Long> visited, Long stopAfterReaching) {
+    private Long countDescendants(String owner, Entity entity, Set<Long> visited, Long stopAfterReaching) {
     	long count = 1;
     	if (entity == null) return null;
+    	if (!entity.getUser().getUserLogin().equals(owner)) return new Long(0);
     	if (visited.contains(entity.getId())) {
     		return count;
     	}
@@ -1921,7 +1922,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	for(EntityData ed : entity.getEntityData()) {
     		Entity child = ed.getChildEntity();
     		if (child != null) {
-    			count += countDescendants(child, visited, stopAfterReaching);
+    			count += countDescendants(owner, child, visited, stopAfterReaching);
     			if (count > stopAfterReaching) return count;
     		}
     	}
