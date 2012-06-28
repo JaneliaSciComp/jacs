@@ -4,8 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 
+import org.hibernate.Hibernate;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.ontology.types.EnumText;
 
 /**
@@ -28,7 +30,12 @@ public class OntologyRoot extends OntologyElement {
 	}
 
     public boolean isFullyLoaded(){
-        return !getChildren().isEmpty();
+        for (EntityData entityData : getEntity().getEntityData()) {
+            if (!Hibernate.isInitialized(entityData.getChildEntity())) {
+                return false;
+            }
+        }
+        return true;
     }
 
 	public void populateElementMap(OntologyElement element, boolean recurse) {
