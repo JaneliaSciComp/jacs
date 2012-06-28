@@ -3,6 +3,8 @@ package org.janelia.it.jacs.model.ontology;
 import java.util.HashMap;
 import java.util.Map;
 
+
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.ontology.types.EnumText;
@@ -25,6 +27,10 @@ public class OntologyRoot extends OntologyElement {
         
         init();
 	}
+
+    public boolean isFullyLoaded(){
+        return EntityUtils.areLoaded(getEntity().getEntityData());
+    }
 
 	public void populateElementMap(OntologyElement element, boolean recurse) {
 
