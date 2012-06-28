@@ -32,6 +32,7 @@
     <orderEntry type="library" name="Hibernate" level="project" />
     <orderEntry type="library" name="JUnit" level="project" />
     <orderEntry type="library" name="Apache Commons" level="project" />
+    <orderEntry type="module" module-name="Shared" />
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">
