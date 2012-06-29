@@ -43,6 +43,7 @@ public class EntityConstants {
     public static final String TYPE_TEXT_FILE                        = "Text File";
     public static final String TYPE_SWC_FILE                         = "SWC File";
     public static final String TYPE_V3D_ANO_FILE                     = "Vaa3d ANO File";
+    public static final String TYPE_FILE                             = "File";
 
     // Entity Data Attributes
     

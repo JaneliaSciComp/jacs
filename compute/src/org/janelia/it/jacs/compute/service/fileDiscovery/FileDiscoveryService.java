@@ -274,7 +274,7 @@ public class FileDiscoveryService implements IService {
         String filenameLowerCase=file.getName().toLowerCase();
         if (filenameLowerCase.endsWith(".lsm")) {
             return entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK);
-        } else if (filenameLowerCase.endsWith(".tif")) {
+        } else if (filenameLowerCase.endsWith(".tif")||filenameLowerCase.endsWith(".tiff")) {
             if (file.length()>=FILE_3D_SIZE_THRESHOLD) {
                 return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
             } else {
@@ -286,7 +286,9 @@ public class FileDiscoveryService implements IService {
             return entityBean.getEntityTypeByName(EntityConstants.TYPE_SWC_FILE);
         } else if (filenameLowerCase.endsWith(".ano")) {
             return entityBean.getEntityTypeByName(EntityConstants.TYPE_V3D_ANO_FILE);
-        } else if (filenameLowerCase.endsWith(".png")) {
+        } else if (filenameLowerCase.endsWith(".png")||filenameLowerCase.endsWith(".jpg")
+                ||filenameLowerCase.endsWith(".gif")||filenameLowerCase.endsWith(".jpeg")
+                ||filenameLowerCase.endsWith(".bmp")) {
             return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
         } else if (filenameLowerCase.endsWith(".raw")) {
             if (filenameLowerCase.contains(".local.")) {
@@ -303,7 +305,7 @@ public class FileDiscoveryService implements IService {
         } else if (filenameLowerCase.endsWith(".v3dpbd")) {
             return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
         } else {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA);
+            return entityBean.getEntityTypeByName(EntityConstants.TYPE_FILE);
         }
     }
 
