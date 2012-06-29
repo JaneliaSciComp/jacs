@@ -73,13 +73,31 @@ fi
 # Decrease "s" to get more (smaller) neurons
 # Decrease "e" to get more neurons
 
+# The following assumes that the reference channel comes after the signal channels. 
+# It could be more robust.
 
-REF_CHAN_ONE_INDEXED=`expr $REF_CHAN + 1`
+if [ `echo $SIGNAL_CHAN | wc -m` -lt 5 ] ; then
+    # Less than 5 characters, which means less than 3 signal channels. 
+    MAPPED_INPUT=mapped.v3draw
+    if [ `echo $SIGNAL_CHAN | wc -m` -lt 2 ] ; then
+        # Single channel
+        $Vaa3D -cmd image-loader -mapchannels $INPUT_FILE $MAPPED_INPUT "0,0,0,1,0,2,${REF_CHAN},3"
+    else
+        # Dual channel
+        $Vaa3D -cmd image-loader -mapchannels $INPUT_FILE $MAPPED_INPUT "0,0,1,1,1,2,${REF_CHAN},3"
+    fi
+    INPUT_FILE=$MAPPED_INPUT
+fi
 
+# The above logic forces the reference onto the fourth channel
+REF_CHAN_ONE_INDEXED=4
 echo "Reference chan (1-indexed): $REF_CHAN_ONE_INDEXED"
 
+#echo "~ Extracting signal and reference channels"
+#FILTERED_INPUT=filtered.v3draw
+#cat $INPUT_FILE | $NSDIR/v3draw_select_channels $SIGNAL_CHAN $REF_CHAN > $FILTERED_INPUT
+
 echo "~ Generating separation"
-# -c6.0 -e4.5 -s800
 $NSDIR/setup10 -c6.0 -e4.5 -s800 -r$REF_CHAN_ONE_INDEXED SeparationResultUnmapped $INPUT_FILE
 
 if [ -s SeparationResultUnmapped.nsp ]; then
