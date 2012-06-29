@@ -11,6 +11,7 @@ DIR=$(cd "$(dirname "$0")"; pwd)
 
 Vaa3D="$DIR/../../../vaa3d-redhat/vaa3d"
 BRAINALIGNER="$DIR/../../../vaa3d-redhat/brainaligner"
+MAGICK="$DIR/../../../ImageMagick-6.7.3-2/bin"
 
 ##################
 # inputs
@@ -73,6 +74,11 @@ TARGET_MARKER="$TEMPLATE_DIR/wfb_atx_template_rec2.marker"
 MIP1=$SUBPREFIX"mip1.tif"
 MIP2=$SUBPREFIX"mip2.tif"
 MIP3=$SUBPREFIX"mip3.tif"
+
+# png mips
+PNG_MIP1=$SUBPREFIX"mip1.png"
+PNG_MIP2=$SUBPREFIX"mip2.png"
+PNG_MIP3=$SUBPREFIX"mip3.png"
 
 ####################################
 # sampling from 0.3um 0.58um to 0.62um
@@ -186,6 +192,10 @@ $Vaa3D -x ireg -f iContrastEnhancer -i $MIP1 -o $MIP1 -p "#m 5"
 $Vaa3D -x ireg -f iContrastEnhancer -i $MIP2 -o $MIP2 -p "#m 5"
 $Vaa3D -x ireg -f iContrastEnhancer -i $MIP3 -o $MIP3 -p "#m 5"
 
+$MAGICK/convert $MIP1 $PNG_MIP1
+$MAGICK/convert $MIP2 $PNG_MIP2
+$MAGICK/convert $MIP3 $PNG_MIP3
+
 EXT=${FINAL_OUTPUT##*.}
 if [ "$EXT" == "v3dpbd" ]
 then
@@ -198,11 +208,9 @@ fi
 echo "~ Computations complete"
 echo "~ Space usage: " `du -h $WORKING_DIR`
 
-echo "~ Moving final output to $FINAL_OUTPUT"
+echo "~ Moving final output to $FINAL_DIR"
 mv $PREPARED_OUTPUT $FINAL_OUTPUT
-mv $MIP1 $FINAL_DIR
-mv $MIP2 $FINAL_DIR
-mv $MIP3 $FINAL_DIR
+mv $WORKING_DIR/*.png $FINAL_DIR
 
 echo "~ Removing temp files"
 rm -rf $WORKING_DIR
