@@ -20,6 +20,8 @@ public interface WorkstationDataManagerMBean {
 	
 	public void runSolrTreeIndexing(Long rootId);
 	
+	public void runSampleCleaningService(String user, Boolean testRun);
+	
     public void runSampleSyncService(String user, Boolean testRun);
     
     public void runSampleImageSync(String user);
@@ -29,6 +31,8 @@ public interface WorkstationDataManagerMBean {
     public void runMCFODataUpgrade(String user, Boolean testRun);
     
     public void runLeetFileBasedDataPipeline(String user, String topLevelFolderName, String rootDirectoryPath, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
+    
+    public void runLeetSageBasedDataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
     
     public void runCentralBrainDataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
     
@@ -64,8 +68,5 @@ public interface WorkstationDataManagerMBean {
     public void createMaskSummaryFile(String maskFolderName);
 
     public void runMaskAnnotationPipeline(String user, String maskFolderName, Boolean refresh);
-
-    public void runLeetCentralBrainDataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing,
-                                                Boolean refreshAlignment, Boolean refreshSeparation);
 
     }

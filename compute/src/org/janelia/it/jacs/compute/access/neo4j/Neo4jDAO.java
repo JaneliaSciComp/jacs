@@ -48,7 +48,7 @@ public class Neo4jDAO extends AnnotationDAO {
     	ga.initRefNodes();
     	
     	try {
-    		List<Entity> roots = getEntitiesWithAttributeValue(EntityConstants.ATTRIBUTE_COMMON_ROOT, EntityConstants.ATTRIBUTE_COMMON_ROOT);
+    		List<Entity> roots = getUserEntitiesWithAttributeValue(null, EntityConstants.ATTRIBUTE_COMMON_ROOT, EntityConstants.ATTRIBUTE_COMMON_ROOT);
     		
     		_logger.info("Found "+roots.size()+" common roots");
     		

@@ -49,16 +49,16 @@ public class SageDAO {
     }
 
     /**
-     * Returns all the images in the FlyLight project, with properties as columns. You can get the column names
+     * Returns all the images in a given image family, with their properties as columns. You can get the column names
      * by calling getColumnNames() on the returned ResultSetIterator object.
      * The client must call close() on the returned iterator when finished with it. 
      * @return Iterator over the JDBC result set. 
      * @throws DaoException
      */
-    public ResultSetIterator getFlylightImageProperties(String sageImageFamily) throws DaoException {
+    public ResultSetIterator getImages(String sageImageFamily) throws DaoException {
 
     	try {
-	    	String sql = "select * from image_data_mv where family = '"+sageImageFamily+"' ";
+	    	String sql = "select * from image_data_mv where family = '"+sageImageFamily+"' order by slide_code,name ";
         	Connection conn = getJdbcConnection();
         	PreparedStatement stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 	        stmt.setFetchSize(Integer.MIN_VALUE);

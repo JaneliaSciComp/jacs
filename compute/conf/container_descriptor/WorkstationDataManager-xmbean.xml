@@ -97,6 +97,21 @@
     </operation>
     
     <operation>
+        <description>Clean old, non-annotated results from Sample entities</description>
+        <name>runSampleCleaningService</name>
+        <parameter>
+           <description>User to run as (e.g. "system")</description>
+           <name>user</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Should this run as a test without making any real changes?</description>
+           <name>testRun</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+    </operation>
+    
+    <operation>
         <description>Synchronize the given user's Sample fileshare with the database</description>
         <name>runSampleSyncService</name>
         <parameter>
@@ -167,6 +182,36 @@
         <parameter>
            <description>Directory to discovery LSMs within (e.g. "/groups/leet/leetimg/leetlab/WYC/stitching/")</description>
            <name>rootDirectoryPath</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Re-run merging and stitching?</description>
+           <name>refreshProcessing</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+           <description>Re-run brain alignments?</description>
+           <name>refreshAlignment</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+           <description>Re-run neuron separations?</description>
+           <name>refreshSeparation</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+    </operation>
+    
+    <operation>
+        <description>Run Leet SAGE-based Data Pipeline</description>
+        <name>runLeetSageBasedDataPipeline</name>
+        <parameter>
+           <description>User to run as (e.g. "system")</description>
+           <name>user</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Name of the folder entity where results will be placed (e.g. "Lee Lab Stitched Data")</description>
+           <name>topLevelFolderName</name>
            <type>java.lang.String</type>
         </parameter>
         <parameter>
@@ -303,36 +348,6 @@
            <description>Re-run neuron separations?</description>
            <name>refreshSeparation</name>
            <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
-
-    <operation>
-        <description>Run the entire Leet Central Brain Data Pipeline</description>
-        <name>runLeetCentralBrainDataPipeline</name>
-        <parameter>
-            <description>User to run as (e.g. "system")</description>
-            <name>user</name>
-            <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-            <description>Name of the folder entity where results will be placed (e.g. "FlyLight Single Neuron Data")</description>
-            <name>topLevelFolderName</name>
-            <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-            <description>Re-run merging and stitching?</description>
-            <name>refreshProcessing</name>
-            <type>java.lang.Boolean</type>
-        </parameter>
-        <parameter>
-            <description>Re-run brain alignments?</description>
-            <name>refreshAlignment</name>
-            <type>java.lang.Boolean</type>
-        </parameter>
-        <parameter>
-            <description>Re-run neuron separations?</description>
-            <name>refreshSeparation</name>
-            <type>java.lang.Boolean</type>
         </parameter>
     </operation>
 

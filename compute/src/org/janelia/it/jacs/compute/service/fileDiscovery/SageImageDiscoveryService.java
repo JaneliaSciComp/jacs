@@ -1,5 +1,9 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
+import java.io.File;
+import java.sql.SQLException;
+import java.util.*;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
@@ -14,15 +18,8 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.tasks.fileDiscovery.MCFODataPipelineTask;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
-
-import java.io.File;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
 
 /**
  * File discovery service for samples defined by a slide_group_info.txt metadata file.
@@ -30,9 +27,6 @@ import java.util.*;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class SageImageDiscoveryService implements IService {
-
-	/** Absolute path prefix for Sage image paths */
-//    protected final String CONFOCAL_STACKS_DIR = SystemConfigurationProperties.getString("FlyLight.ConfocalStacks.Dir");
    
     protected Map<TilingPattern,Integer> patterns = new EnumMap<TilingPattern,Integer>(TilingPattern.class);
     
@@ -48,16 +42,21 @@ public class SageImageDiscoveryService implements IService {
     public void execute(IProcessData processData) throws ServiceException {
         try {
         	this.processData=processData;
-            Task task = ProcessDataHelper.getTask(processData);
-            confocalStacksDir = task.getParameter(MCFODataPipelineTask.PARAM_confocalStacksDir);
-            sageImageFamily = task.getParameter(MCFODataPipelineTask.PARAM_sageFamily);
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
             user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
             createDate = new Date();
 
-            // What database entity do we load into?
+            confocalStacksDir = (String)processData.getItem("CONFOCAL_STACKS_DIR");
+            if (confocalStacksDir==null) {
+        		throw new IllegalArgumentException("SAGE_IMAGE_FAMILY may not be null");
+            }
+            
+            sageImageFamily = (String)processData.getItem("SAGE_IMAGE_FAMILY");
+            if (sageImageFamily==null) {
+        		throw new IllegalArgumentException("SAGE_IMAGE_FAMILY may not be null");
+            }
             
             String topLevelFolderName;
             Entity topLevelFolder;
@@ -76,10 +75,15 @@ public class SageImageDiscoveryService implements IService {
         	if (topLevelFolder==null) {
         		throw new IllegalArgumentException("Both ROOT_ENTITY_NAME and ROOT_ENTITY_ID may not be null");
         	}
+
+        	String folderName = (String)processData.getItem("FOLDER_NAME");
         	
             logger.info("Will put discovered entities into top level entity "+topLevelFolder.getName()+", id="+topLevelFolder.getId());
+            if (folderName != null) {
+            	logger.info("... into a child folder with name "+folderName);
+            }
             
-            processSageData(topLevelFolder);
+            processSageData(topLevelFolder, folderName);
             
         	String outvar = (String)processData.getItem("OUTVAR_ENTITY_ID");
         	if (outvar != null) {
@@ -100,18 +104,21 @@ public class SageImageDiscoveryService implements IService {
         }
     }
     
-    protected void processSageData(Entity topLevelFolder) throws Exception {
+    protected void processSageData(Entity topLevelFolder, String childFolderName) throws Exception {
 
     	if (!EntityUtils.areLoaded(topLevelFolder.getEntityData())) {
     		entityBean.loadLazyEntity(topLevelFolder, false);
     	}
 
-		Entity tilesFolder = verifyOrCreateChildFolder(topLevelFolder, "tiles");
-
-    	if (!EntityUtils.areLoaded(tilesFolder.getEntityData())) {
-    		entityBean.loadLazyEntity(tilesFolder, false);
-    	}
+    	Entity slideCodesFolder = topLevelFolder;
     	
+    	if (childFolderName!=null) {
+    		slideCodesFolder = verifyOrCreateChildFolder(topLevelFolder, childFolderName);
+        	if (!EntityUtils.areLoaded(slideCodesFolder.getEntityData())) {
+        		entityBean.loadLazyEntity(slideCodesFolder, false);
+        	}
+    	}
+
     	SageDAO sageDAO = new SageDAO(logger);
     		
     	ResultSetIterator iterator = null;
@@ -119,23 +126,25 @@ public class SageImageDiscoveryService implements IService {
     		List<SlideImage> slideGroup = null;
     		String currSlideCode = null;
 
-            iterator = sageDAO.getFlylightImageProperties(sageImageFamily);
-            ResultSet rs = iterator.getResultSet();
-            while (rs.next()) {
+            iterator = sageDAO.getImages(sageImageFamily);
+
+        	while (iterator.hasNext()) {
+        		Map<String,Object> row = iterator.next();
                 SlideImage slideImage = new SlideImage();
-				slideImage.slideCode = rs.getString("slide_code");
-				slideImage.imagePath = rs.getString("name");
-				slideImage.tileType = rs.getString("tile");
-				slideImage.age = rs.getString("age");
-				slideImage.gender = rs.getString("gender");
-				slideImage.effector = rs.getString("effector");
-				slideImage.line = rs.getString("line");
+				slideImage.slideCode = (String)row.get("slide_code");
+				slideImage.imagePath = (String)row.get("name");
+				slideImage.tileType = (String)row.get("tile");
+				slideImage.age = (String)row.get("age");
+				slideImage.gender = (String)row.get("gender");
+				slideImage.effector = (String)row.get("effector");
+				slideImage.line = (String)row.get("line");
 
 				if (!slideImage.slideCode.equals(currSlideCode)) {
 
 					// Process the current group
 					if (slideGroup != null) {
-		                Entity folder = verifyOrCreateChildFolder(tilesFolder, currSlideCode);
+		                Entity folder = verifyOrCreateChildFolder(slideCodesFolder, currSlideCode);
+		                logger.info("Created new folder for slide group "+currSlideCode);
 		                processSlideGroup(slideGroup, folder);
 					}
 					
@@ -149,7 +158,7 @@ public class SageImageDiscoveryService implements IService {
 
 			// Process the last group
 			if (slideGroup != null) {
-                Entity folder = verifyOrCreateChildFolder(tilesFolder, currSlideCode);
+                Entity folder = verifyOrCreateChildFolder(slideCodesFolder, currSlideCode);
                 processSlideGroup(slideGroup, folder);
 			}
             
@@ -216,8 +225,15 @@ public class SageImageDiscoveryService implements IService {
         	}
         }
 
-        // Make sure we actually have a sample here    
-        if (filePairs.isEmpty()) return;
+        if (filePairs.isEmpty()) {
+        	if (!filePairings.isEmpty()) {
+        		// No complete pairs, but some singles. That probably means these images are not meant to be paired.
+        		filePairs.addAll(filePairings.values());
+        	}
+        	else {
+        		return;
+        	}
+        }
     	
         // Sort the pairs by their tag name
         Collections.sort(filePairs, new Comparator<FilePair>() {
@@ -230,6 +246,7 @@ public class SageImageDiscoveryService implements IService {
         List<String> tags = new ArrayList<String>();
         for(FilePair filePair : filePairs) {
         	tags.add(filePair.getPairTag());
+        	logger.info("    "+filePair.getPairTag()+" = "+filePair.getFile1().getName());
         }
         
         TilingPattern tiling = TilingPattern.getTilingPattern(tags);
@@ -309,8 +326,8 @@ public class SageImageDiscoveryService implements IService {
 				entityBean.deleteEntityById(lsmStackPair.getId());
 				lsmStackPair = null;
 			}
-			else if (stack1==null || !stack1.getName().equals(filePair.getFile1().getName()) || 
-					stack2==null || !stack2.getName().equals(filePair.getFile2().getName())) {
+			else if ((stack1==null&&filePair.getFile1()!=null) || (stack1!=null && filePair.getFile1()!=null && !stack1.getName().equals(filePair.getFile1().getName())) || 
+					(stack2==null&&filePair.getFile2()!=null) || (stack2!=null && filePair.getFile2()!=null && !stack2.getName().equals(filePair.getFile2().getName()))) {
 				// One or more of the LSMs have changed, so move the old pair out of the way and then recreate it
 				logger.warn("One or more of the LSMs have changed. Renaming the stack pair and recreating it.");
 				lsmStackPair.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
@@ -336,9 +353,11 @@ public class SageImageDiscoveryService implements IService {
 			Entity lsmEntity1 = createLsmStackFromFile(filePair.getFile1());
             addToParent(lsmStackPair, lsmEntity1, 0, EntityConstants.ATTRIBUTE_LSM_STACK_1);
 
-			logger.info("Adding LSM file to sample: "+filePair.getFile2().getAbsolutePath());
-			Entity lsmEntity2 = createLsmStackFromFile(filePair.getFile2());
-            addToParent(lsmStackPair, lsmEntity2, 1, EntityConstants.ATTRIBUTE_LSM_STACK_2);
+            if (filePair.getFile2()!=null) {
+				logger.info("Adding LSM file to sample: "+filePair.getFile2().getAbsolutePath());
+				Entity lsmEntity2 = createLsmStackFromFile(filePair.getFile2());
+	            addToParent(lsmStackPair, lsmEntity2, 1, EntityConstants.ATTRIBUTE_LSM_STACK_2);
+            }
 		}
     }
     

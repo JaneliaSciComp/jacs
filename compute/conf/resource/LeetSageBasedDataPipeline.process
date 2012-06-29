@@ -1,10 +1,10 @@
 <!-- 
-	Discover images in SAGE, add them into the database and run the MCFOSamplePipeline for each one 
+	Discover images in the Lee lab's file system, add them into the database and run the MCFOSamplePipeline for each one 
 -->
-<process name="MultiColor FlipOut Data Pipeline" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
+<process name="Leet File-based Pipeline" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
 	<sequence>
 	
-	    <!-- Import variables from the MCFODataPipelineTask -->
+	    <!-- Import variables from the task -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="TASK_PARAMETER_1" value="top level folder name"/>
             <input name="PROCESS_VARIABLE_1" value="ROOT_ENTITY_NAME"/>
@@ -14,10 +14,12 @@
             <input name="PROCESS_VARIABLE_3" value="REFRESH_ALIGNMENT"/>
             <input name="TASK_PARAMETER_4" value="refresh separation"/>
             <input name="PROCESS_VARIABLE_4" value="REFRESH_SEPARATION"/>
-            <input name="TASK_PARAMETER_5" value="confocal stacks directory path"/>
-            <input name="PROCESS_VARIABLE_5" value="CONFOCAL_STACKS_DIR"/>
-            <input name="TASK_PARAMETER_6" value="Sage image family"/>
-            <input name="PROCESS_VARIABLE_6" value="SAGE_IMAGE_FAMILY"/>
+            <input name="TASK_PARAMETER_5" value="input dir list"/>
+            <input name="PROCESS_VARIABLE_5" value="INPUT_DIR_LIST"/>
+            <input name="TASK_PARAMETER_6" value="confocal stacks directory path"/>
+            <input name="PROCESS_VARIABLE_6" value="CONFOCAL_STACKS_DIR"/>
+            <input name="TASK_PARAMETER_7" value="Sage image family"/>
+            <input name="PROCESS_VARIABLE_7" value="SAGE_IMAGE_FAMILY"/>
 	        <output name="ROOT_ENTITY_NAME"/>
 	        <output name="REFRESH_PROCESSING"/>
 	        <output name="REFRESH_ALIGNMENT"/>
@@ -29,7 +31,9 @@
 	    <!-- Discover samples in Sage and load them into the database as Entities -->
 		<operation name="Initial Image Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SageImageDiscoveryService">
 			<input name="ROOT_ENTITY_NAME"/>
-			<input name="FOLDER_NAME" value="tiles"/>
+	        <input name="CONFOCAL_STACKS_DIR"/>
+	        <input name="SAGE_IMAGE_FAMILY"/>
+			<input name="FOLDER_NAME" value="fw"/>
 			<input name="OUTVAR_ENTITY_ID" value="TOP_LEVEL_ENTITY_ID"/>
 		</operation>
 		
@@ -62,6 +66,12 @@
 		            <input name="PARAMETER_4_KEY" value="refresh separation"/>
 		            <input name="REFRESH_SEPARATION"/>
 		            <input name="PARAMETER_4_VALUE" value="$V{REFRESH_SEPARATION}"/>
+		            <input name="PARAMETER_5_KEY" value="alignment type"/>
+		            <input name="PARAMETER_5_VALUE" value="WHOLE_40X"/>
+		            <input name="PARAMETER_6_KEY" value="signal channel indexes"/>
+		            <input name="PARAMETER_6_VALUE" value="0 1"/>
+		            <input name="PARAMETER_7_KEY" value="reference channel index"/>
+		            <input name="PARAMETER_7_VALUE" value="2"/>
 		        </operation>
 			</sequence>
 	    </sequence>

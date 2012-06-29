@@ -1,0 +1,9 @@
+<!-- 
+	Clean old, unannotated results from Samples.
+-->
+<process name="Sample File Node Synchronization" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
+	<sequence>
+		<operation name="Sample Cleaning" processor="org.janelia.it.jacs.compute.service.entity.SampleCleaningService">
+		</operation>
+    </sequence>
+</process>

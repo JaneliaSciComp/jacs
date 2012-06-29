@@ -276,7 +276,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             if (entity==null) {
                 throw new Exception("Entity not found: "+entityId);
             }
-            _annotationDAO.deleteSmallEntityTree(userLogin, entity, true, false, 0);
+            _annotationDAO.deleteSmallEntityTree(userLogin, entity);
             _logger.info(userLogin+" deleted small entity tree "+entityId);
             return true;
         }
@@ -359,6 +359,18 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         return null;
     }
 
+    public List<Entity> getUserEntitiesByTypeName(String userLogin, String entityTypeName) {
+        try {
+            List<Entity> returnList = _annotationDAO.getUserEntitiesByTypeName(userLogin, entityTypeName);
+            _logger.debug("Entities returned:"+returnList.size());
+            return returnList;
+        }
+        catch (DaoException e) {
+            _logger.error("Error trying to get the entities of type "+entityTypeName, e);
+        }
+        return null;
+    }
+    
     public List<Entity> getEntitiesByTypeName(String entityTypeName) {
         try {
             List<Entity> returnList = _annotationDAO.getUserEntitiesByTypeName(null, entityTypeName);
@@ -370,10 +382,20 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         }
         return null;
     }
-    
+
     public List<Entity> getEntitiesWithAttributeValue(String attrName, String attrValue) throws ComputeException {
     	try {
-    		return _annotationDAO.getEntitiesWithAttributeValue(attrName, attrValue);
+    		return _annotationDAO.getUserEntitiesWithAttributeValue(null, attrName, attrValue);
+    	}
+    	catch (DaoException e) {
+            _logger.error("Error searching for entities with "+attrName+" like "+attrValue,e);
+    		throw new ComputeException("Error searching for entities with "+attrName+" like "+attrValue,e);
+    	}
+    }
+    
+    public List<Entity> getUserEntitiesWithAttributeValue(String userLogin, String attrName, String attrValue) throws ComputeException {
+    	try {
+    		return _annotationDAO.getUserEntitiesWithAttributeValue(userLogin, attrName, attrValue);
     	}
     	catch (DaoException e) {
             _logger.error("Error searching for entities with "+attrName+" like "+attrValue,e);

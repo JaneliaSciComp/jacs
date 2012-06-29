@@ -11,6 +11,24 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
  */
 public class Vaa3DHelper {
 
+//	buf.append("INPUT_FILE="+inputFilepath);
+//	buf.append("OUTPUT_FILE="+outputFilepath);
+//	
+//	buf.append("EXT=${INPUT_FILE#*.}\n");
+//	buf.append("if [ $EXT == \"v3dpbd\" ]; then\n");
+//	buf.append("    PBD_INPUT_FILE=$INPUT_FILE");
+//	buf.append("    INPUT_FILE_STUB=`basename $PBD_INPUT_FILE`");
+//	buf.append("    INPUT_FILE=\"${INPUT_FILE_STUB%.*}.v3draw\"");
+//	buf.append("    "+VAA3D_BASE_CMD+" -cmd image-loader -convert \"$PBD_INPUT_FILE\" \"$INPUT_FILE\"");
+//	buf.append("fi");	
+
+//	buf.append("EXT=${OUTPUT_FILE#*.}\n");
+//	buf.append("if [ $EXT == \"v3draw\" ]; then\n");
+//	buf.append("    mv output.v3draw $OUTPUT_FILE");
+//	buf.append("else");
+//	buf.append("    "+VAA3D_BASE_CMD+" -cmd image-loader -convert output.v3draw $OUTPUT_FILE");
+//	buf.append("fi");	
+	
     protected static final int STARTING_DISPLAY_PORT = 966;
 
     protected static final String VAA3D_BASE_CMD = "export LD_LIBRARY_PATH="+
@@ -44,7 +62,16 @@ public class Vaa3DHelper {
     }
 
     public static String getFormattedBlendCommand(String inputDirectoryPath, String outputFilePath) {
-        return VAA3D_BASE_CMD +" -x ifusion.so -f iblender -i \""+inputDirectoryPath+"\" -o \""+outputFilePath+"\" -p \"#s 1\"";
+    	StringBuffer buf = new StringBuffer();
+    	buf.append("OUTPUT_FILE="+outputFilePath+"\n");
+    	buf.append(VAA3D_BASE_CMD +" -x ifusion.so -f iblender -i \""+inputDirectoryPath+"\" -o \"output.v3draw\" -p \"#s 1\"\n");
+    	buf.append("EXT=${OUTPUT_FILE#*.}\n");
+    	buf.append("if [ $EXT == \"v3draw\" ]; then\n");
+    	buf.append("    mv output.v3draw $OUTPUT_FILE\n");
+    	buf.append("else\n");
+    	buf.append("    "+VAA3D_BASE_CMD+" -cmd image-loader -convert output.v3draw $OUTPUT_FILE\n");
+    	buf.append("fi\n");	
+    	return buf.toString();
     }
 
     /**
@@ -123,9 +150,9 @@ public class Vaa3DHelper {
     }
 
     public static String getFormattedConvertCommand(String inputFilepath, String outputFilepath, String saveTo8bit) throws ServiceException {
-        return VAA3D_BASE_CMD +" -cmd image-loader -convert"+saveTo8bit+" \""+inputFilepath+"\" \""+outputFilepath+"\" ;";
+    	return VAA3D_BASE_CMD +" -cmd image-loader -convert"+saveTo8bit+" \""+inputFilepath+"\" \""+outputFilepath+"\" ;";
     }
-
+    
     /**
      * Compute the intersection of two images using one of the following methods to combine 2 pixel intensity values:
      * 0: minimum value 

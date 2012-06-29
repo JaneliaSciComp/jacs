@@ -220,13 +220,13 @@ public class AnnotationDAO extends ComputeBaseDAO {
     public void deleteEntityTree(String owner, Entity entity) throws DaoException {
         try {
         	if ("system".equals(owner)) {
-        		deleteSmallEntityTree(owner, entity, true, false, 0);
+        		deleteSmallEntityTree(owner, entity);
         	}
         	else {
     	    	Long count = countDescendants(owner, entity, MAX_SMALL_TREE_SIZE);
     	    	if (count <= MAX_SMALL_TREE_SIZE) {
     	    		_logger.info("Running small tree algorithm (count="+count+")");
-    	        	deleteSmallEntityTree(owner, entity, true, false, 0);
+    	        	deleteSmallEntityTree(owner, entity);
     	    	}
     	    	else {
     	    		_logger.info("Running large tree algorithm (count="+count+")");
@@ -647,8 +647,12 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
     
-    public void deleteSmallEntityTree(String owner, Entity entity, boolean ignoreRefs, boolean ignoreAncestorRefs, int level) throws DaoException {
-
+    public void deleteSmallEntityTree(String userLogin, Entity entity) throws DaoException {
+    	deleteSmallEntityTree(userLogin, entity, 0);
+    }
+    
+    public void deleteSmallEntityTree(String userLogin, Entity entity, int level) throws DaoException {
+    	
     	StringBuffer indent = new StringBuffer();
 		for (int i = 0; i < level; i++) {
 			indent.append("  ");
@@ -661,26 +665,31 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	}
 		
 		// Ownership check
-    	if (!entity.getUser().getUserLogin().equals(owner)) {
-    		_logger.info(indent+"Cannot delete entity because owner ("+entity.getUser().getUserLogin()+") does not match invoker ("+owner+")");
+    	if (!entity.getUser().getUserLogin().equals(userLogin)) {
+    		_logger.info(indent+"Cannot delete entity because owner ("+entity.getUser().getUserLogin()+") does not match invoker ("+userLogin+")");
     		return;
     	}
 
-    	_logger.info(indent+"Deleting "+entity.getName());
-    	
-    	// Reference check - does this entity have more than one parent pointing to it?
+    	// Common root check
+    	if (level>0 && entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT)!=null) {
+    		_logger.info(indent+"Cannot delete "+entity.getName()+" because it is a common root");
+    		return;
+    	}
+    	// Multiple parent check
     	Set<EntityData> eds = getParentEntityDatas(entity.getId());
     	boolean moreThanOneParent = eds.size() > 1;
-        if (moreThanOneParent && !ignoreRefs) {
-        	_logger.info(indent+"  Cannot delete "+entity.getName()+" because more than one parent is pointing to it");
+        if (level>0 && moreThanOneParent) {
+        	_logger.info(indent+"Cannot delete "+entity.getName()+" because more than one parent is pointing to it");
         	return;
         }
+        
+    	_logger.info(indent+"Deleting "+entity.getName());
 
         // Delete all ancestors first
         for(EntityData ed : new ArrayList<EntityData>(entity.getEntityData())) {
         	Entity child = ed.getChildEntity();
         	if (child != null) {
-        		deleteSmallEntityTree(owner, child, ignoreAncestorRefs, ignoreAncestorRefs, level + 1);
+        		deleteSmallEntityTree(userLogin, child, level + 1);
         	}
         	// We have to manually remove the EntityData from its parent, otherwise we get this error: 
         	// "deleted object would be re-saved by cascade (remove deleted object from associations)"
@@ -1928,7 +1937,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	}
     	return count;
     }
-    
+
     /**
      * Searches the tree for the given entity and returns its ancestor of a given type, or null if the entity or 
      * ancestor does not exist.
@@ -2193,14 +2202,22 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	return sampleIds;
     }
     
-    public List<Entity> getEntitiesWithAttributeValue(String attrName, String attrValue) throws DaoException {
+    public List<Entity> getUserEntitiesWithAttributeValue(String userLogin, String attrName, String attrValue) throws DaoException {
         try {
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
             hql.append("join fetch ed.parentEntity.user ");
             hql.append("join fetch ed.parentEntity.entityType ");
-            hql.append("where ed.entityAttribute.name=? and ed.value like ?");
-            Query query = session.createQuery(hql.toString()).setString(0, attrName).setString(1, attrValue);
+            hql.append("where ed.entityAttribute.name=? and ed.value like ? ");
+            if (null != userLogin) {
+                hql.append("and ed.parentEntity.user.userLogin=? ");
+            }
+            Query query = session.createQuery(hql.toString());
+            query.setString(0, attrName);
+            query.setString(1, attrValue);
+            if (null != userLogin) {
+                query.setString(2, userLogin);
+            }
             return query.list();
         } catch (Exception e) {
             throw new DaoException(e);

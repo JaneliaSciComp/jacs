@@ -67,7 +67,6 @@ public class SampleFileNodeSyncService implements IService {
             processChildren(new File(userFilestore, "Sample"));
             processChildren(new File(userFilestore, "Alignment"));
             processChildren(new File(userFilestore, "Separation"));
-
             
 			logger.info("Processed "+numDirs+" directories. Found "+numResultNodes+" result nodes. Trashed "+
 					numDeletedResultNodes+" nodes. Left "+(numResultNodes-numDeletedResultNodes)+" nodes alone.");

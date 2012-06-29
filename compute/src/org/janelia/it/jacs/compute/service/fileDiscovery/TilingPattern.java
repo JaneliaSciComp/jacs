@@ -41,7 +41,8 @@ public enum TilingPattern {
 	}
 
 	/**
-     * Known tiling patterns as of 11/2011, enumerated by Chris Z. 
+     * Known tiling patterns as of 11/2011, enumerated by Chris Z.
+     * Added two-tile whole brains for Lee Lab on 6/2012.  
      * 
      * @param filePairs
      * @return
@@ -56,6 +57,8 @@ public enum TilingPattern {
         boolean hasRightDorsalBrain = false;
         boolean hasVentralBrain = false;
         boolean hasCentralBrain = false;
+        boolean hasLeftBrain = false;
+        boolean hasRightBrain = false;
         
         for(String tag : tags) {
         	if ("Left Optic Lobe".equals(tag)) hasLeftOptic = true;
@@ -66,6 +69,8 @@ public enum TilingPattern {
         	if ("Right Dorsal Brain".equals(tag)) hasRightDorsalBrain = true;
         	if ("Ventral Brain".equals(tag)) hasVentralBrain = true;
         	if ("Central Brain".equals(tag)) hasCentralBrain = true;
+        	if ("Left Brain".equals(tag)) hasLeftBrain = true;
+        	if ("Right Brain".equals(tag)) hasRightBrain = true;
         }
         
         if (hasLeftOptic && hasLeftDorsalBrain && hasVentralBrain && hasRightDorsalBrain && hasRightOptic) return TilingPattern.WHOLE_BRAIN;
@@ -73,6 +78,8 @@ public enum TilingPattern {
         if (hasLeftOptic && hasCentralBrain && hasRightOptic) return TilingPattern.OPTIC_SPAN;
         if (hasLeftDorsalBrain && hasVentralBrain && hasRightDorsalBrain) return TilingPattern.CENTRAL_BRAIN;
         if ((hasLeftOptic && hasLeftCentralBrain) || (hasRightOptic && hasRightCentralBrain)) return TilingPattern.OPTIC_CENTRAL_BORDER;
+        if (hasLeftBrain && hasRightBrain) return TilingPattern.WHOLE_BRAIN;
+        
         		
         if (tags.size()==1) {
         	if (hasLeftOptic || hasRightOptic) return TilingPattern.OPTIC_TILE;

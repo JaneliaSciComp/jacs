@@ -127,6 +127,20 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
+
+    public void runSampleCleaningService(String user, Boolean testRun) {
+        try {
+        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        	taskParameters.add(new TaskParameter(SampleFileNodeSyncService.PARAM_testRun, Boolean.toString(testRun), null)); 
+        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
+        			taskParameters, "sampleCleaning", "Sample Cleaning");
+            task.setJobName("Sample Cleaning Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("SampleCleaning", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
     
     public void runSampleSyncService(String user, Boolean testRun) {
         try {
@@ -196,6 +210,20 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             task.setJobName("Leet Data Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("LeetFileBasedDataPipeline", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void runLeetSageBasedDataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation) {
+        try {
+        	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
+            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), null,
+            		topLevelFolderName, refreshProcessing, refreshAlignment, refreshSeparation,
+            		"/groups/leet/leetimg/leetlab/lineage/leet_pan_lineage/confocalStacks", "leet_pan_lineage");
+            task.setJobName("Leet Data Pipeline Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("LeetSageBasedDataPipeline", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -324,21 +352,6 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             task.setJobName("Sample View Creation Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("MCFOSampleViewCreation", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    public void runLeetCentralBrainDataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing,
-                                                Boolean refreshAlignment, Boolean refreshSeparation) {
-        try {
-            Task task = new MCFODataPipelineTask(new HashSet<Node>(),
-                    user, new ArrayList<Event>(), new HashSet<TaskParameter>(), null,
-                    topLevelFolderName, refreshProcessing, refreshAlignment, refreshSeparation,"/groups/leet/leetconfocal/lineage/leet_central_brain_lineage/confocalStacks/",
-                    "leet_central_brain_lineage");
-            task.setJobName("MultiColor FlipOut Data Pipeline Task");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("MCFODataPipeline", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }

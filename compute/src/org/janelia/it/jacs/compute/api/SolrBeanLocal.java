@@ -9,7 +9,7 @@ import javax.ejb.Local;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @Local
-public interface SolrBeanLocal {
+public interface SolrBeanLocal extends SolrBeanRemote {
 	
 	public void indexAllEntities(boolean clearIndex) throws ComputeException;
 	

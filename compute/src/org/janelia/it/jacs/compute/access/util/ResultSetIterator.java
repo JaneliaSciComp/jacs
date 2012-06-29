@@ -1,9 +1,7 @@
 package org.janelia.it.jacs.compute.access.util;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -11,13 +9,13 @@ import java.util.List;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class ResultSetIterator implements Iterator<Object[]> {
+public class ResultSetIterator implements Iterator<Map<String,Object>> {
 
 	private final Connection conn;
 	private final Statement stmt;
 	private final ResultSet rs;
-    
-	private Object[] nextRow;
+	
+	private Map<String,Object> nextRow;
    
     public ResultSetIterator(Connection conn, Statement stmt, ResultSet rs) {
     	this.conn = conn;
@@ -25,7 +23,7 @@ public class ResultSetIterator implements Iterator<Object[]> {
         this.rs = rs;
         try {
         	rs.next();
-        	nextRow = toArray(rs);
+        	nextRow = toMap(rs);
         }
         catch (SQLException e) {
             rethrow(e);
@@ -44,11 +42,11 @@ public class ResultSetIterator implements Iterator<Object[]> {
      * Return the next row in the result set. Only call this if hasNext() was just called and returned true.
      */
     @Override
-    public Object[] next() {
+    public Map<String,Object> next() {
         try {
-        	Object[] toReturn = nextRow;
+        	Map<String,Object> toReturn = nextRow;
             if (rs.next()) {
-            	nextRow = toArray(rs);
+            	nextRow = toMap(rs);
             }
             else {
             	nextRow = null;	
@@ -100,17 +98,16 @@ public class ResultSetIterator implements Iterator<Object[]> {
     public ResultSet getResultSet() {
     	return rs;
     }
-    
-    private Object[] toArray(ResultSet rs) throws SQLException {
-        ResultSetMetaData meta = rs.getMetaData();
-        int cols = meta.getColumnCount();
-        Object[] result = new Object[cols];
 
-        for (int i = 0; i < cols; i++) {
-            result[i] = rs.getObject(i + 1);
-        }
-
-        return result;
+    private Map<String,Object> toMap(ResultSet rs) throws SQLException {
+    	Map<String,Object> map = new HashMap<String,Object>();
+        ResultSetMetaData md = rs.getMetaData();
+    	for (int i = 1; i <= md.getColumnCount(); i++) {
+    		String columnName = md.getColumnName(i);
+    		Object value = rs.getObject(columnName);
+    		map.put(columnName, value);
+    	}
+        return map;
     }
     
     private void rethrow(SQLException e) {

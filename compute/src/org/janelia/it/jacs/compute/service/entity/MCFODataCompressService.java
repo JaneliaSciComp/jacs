@@ -21,6 +21,8 @@ import org.janelia.it.jacs.model.tasks.Task;
  */
 public class MCFODataCompressService implements IService {
 
+	public transient static final String CENTRAL_DIR_PROP = "FileStore.CentralDir";
+	
     public static final String MODE_UNDEFINED = "UNDEFINED";
     public static final String MODE_CREATE_INPUT_LIST = "CREATE_INPUT_LIST";
     public static final String MODE_CREATE_OUTPUT_LIST = "CREATE_OUTPUT_LIST";
@@ -37,7 +39,6 @@ public class MCFODataCompressService implements IService {
     
     protected int numChanges;
     
-    private Set<Long> visited = new HashSet<Long>();
     private boolean isDebug = false;
     private String mode = MODE_UNDEFINED;
     protected IProcessData processData;
@@ -91,7 +92,7 @@ public class MCFODataCompressService implements IService {
         	logger.info("This is the real thing. Files will get compressed, and then the originals will be deleted!");
         }
         
-        processCommonRootFolders();
+        processV3dRawEntities();
         
         List<List<String>> inputGroups = createGroups(inputFiles, GROUP_SIZE);
         processData.putItem("INPUT_PATH_LIST", inputGroups);
@@ -103,7 +104,6 @@ public class MCFODataCompressService implements IService {
     private List<List<String>> createGroups(Collection<String> fullList, int groupSize) {
         List<List<String>> groupList = new ArrayList<List<String>>();
         List<String> currentGroup = null;
-        int i = 0;
         for (String s : fullList) {
             if (currentGroup==null) {
                 currentGroup = new ArrayList<String>();
@@ -122,7 +122,7 @@ public class MCFODataCompressService implements IService {
     
     private void doCreateOutputList() throws ComputeException {
 
-    	List<String> inputPaths = (List<String> )processData.getItem("INPUT_PATH_LIST");
+    	List<String> inputPaths = (List<String>)processData.getItem("INPUT_PATH_LIST");
     	
     	List<String> outputPaths = new ArrayList<String>();
     	for(String s : inputPaths) {
@@ -131,43 +131,24 @@ public class MCFODataCompressService implements IService {
         processData.putItem("OUTPUT_PATH_LIST", outputPaths);
     }
     
-	public void processCommonRootFolders() throws ComputeException {
+	public void processV3dRawEntities() throws ComputeException {
 		
-        List<Entity> entities=annotationBean.getCommonRootEntitiesByTypeName(username, EntityConstants.TYPE_FOLDER);
-        for(Entity topEntity : entities) {
-        	logger.info("Found top-level entity name="+topEntity.getName());
-        	processEntityTree(entityBean.getEntityTree(topEntity.getId()));
-        }
-		logger.info("The processing was a success.");
-    }
-    
-    public void processEntityTree(Entity entity) throws ComputeException {
-    	
-    	if (visited.contains(entity.getId())) return;
-    	visited.add(entity.getId());
-
-    	String entityTypeName = entity.getEntityType().getName();
-    	
-    	if (entityTypeName.equals(EntityConstants.TYPE_IMAGE_3D)) {
-    		String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-    		if (filepath.endsWith(".v3draw")) {
-    			addV3dRawFile(entity);
-    		}
-    		else if (entity.getName().endsWith(".v3draw")) {
-        		if (!isDebug) {
-	    			// How did the name get out of sync? Let's fix it. 
-	    			if (filepath.endsWith(".v3dpbd")) {
-	    				entity.setName(entity.getName().replaceAll("v3draw", "v3dpbd"));
-	    	        	entityBean.saveOrUpdateEntity(entity);
-	    	        	logger.info("Fixed entity name: "+entity.getName()+" (id="+entity.getId()+")");	
-	    			}
-        		}
-    		}
-    	}
-    	
-		for(Entity child : entity.getChildren()) {
-			processEntityTree(child);
+		List<Entity> entities = entityBean.getUserEntitiesWithAttributeValue(username, EntityConstants.ATTRIBUTE_FILE_PATH, "%v3draw");
+		
+		for(Entity entity : entities) {
+			if (!entity.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_3D)) {
+				logger.warn("Ignoring entity with v3draw filepath that is not an Image 3D: "+entity.getId());
+				continue;
+			}
+			if (!entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH).contains(CENTRAL_DIR_PROP)) {
+				logger.warn("Ignoring entity with which does not contain the FileStore.CentralDir: "+entity.getId());
+				continue;
+			}
+			addV3dRawFile(entity);
 		}
+		
+
+		logger.info("The processing was a success.");
     }
     
     private void addV3dRawFile(Entity imageEntity) throws ComputeException {
@@ -197,8 +178,8 @@ public class MCFODataCompressService implements IService {
     private void doComplete() throws ComputeException {
 
     	this.entities = (Map<String,Set<Entity>>)processData.getItem("ENTITY_MAP");
-    	List<String> inputPaths = (List<String> )processData.getItem("INPUT_PATH_LIST");
-    	List<String> outputPaths = (List<String> )processData.getItem("OUTPUT_PATH_LIST");
+    	List<String> inputPaths = (List<String>)processData.getItem("INPUT_PATH_LIST");
+    	List<String> outputPaths = (List<String>)processData.getItem("OUTPUT_PATH_LIST");
     	
     	for(int i=0; i<inputPaths.size(); i++) {
     		String inputPath = inputPaths.get(i);

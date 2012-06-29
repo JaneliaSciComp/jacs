@@ -70,21 +70,8 @@ public class InitSampleProcessingParametersService implements IService {
                 		throw new FileNotFoundException("LSM file does not exist or is not readable: "+lsmFile.getAbsolutePath());
                 	}
                 	File mergedFile = new File(mergeResultNode.getDirectoryPath(), lsmFile.getName());
+                	createSymLink(lsmFile, mergedFile);
                 	mergedLsmPairs.add(new MergedLsmPair(lsmFilepath, null, mergedFile.getAbsolutePath()));
-
-                    try {
-                        String cmd = "ln -s "+lsmFile.getAbsolutePath()+" "+mergedFile.getAbsolutePath();
-                		String[] args = cmd.split("\\s+");
-                        StringBuffer stdout = new StringBuffer();
-                        StringBuffer stderr = new StringBuffer();
-                        SystemCall call = new SystemCall(stdout, stderr);
-                    	int exitCode = call.emulateCommandLine(args, null, null, 3600);	
-                    	if (exitCode!=0) throw new Exception("Could not create fake merged symlink");
-                    }
-                    catch (Exception e) {
-                    	throw new MissingDataException("Error creating fake merged file symlinks");
-                    }
-                	
         		}
         		processData.putItem("RUN_MERGE", Boolean.FALSE);
         	}
@@ -109,17 +96,23 @@ public class InitSampleProcessingParametersService implements IService {
                 	}
                 	
                 	File lsmFile1 = new File(lsmFilepath1);
-                	File lsmFile2 = new File(lsmFilepath2);
-                	
                 	if (!lsmFile1.exists()||!lsmFile1.canRead()) {
                 		throw new FileNotFoundException("LSM file does not exist or is not readable: "+lsmFile1.getAbsolutePath());
                 	}
-
-                	if (!lsmFile2.exists()||!lsmFile2.canRead()) {
-                		throw new FileNotFoundException("LSM file does not exist or is not readable: "+lsmFile2.getAbsolutePath());
+                	
+                	File mergedFile = null;
+                	if (lsmFilepath2!=null) {
+                		File lsmFile2 = new File(lsmFilepath2);	
+                    	if (!lsmFile2.exists()||!lsmFile2.canRead()) {
+                    		throw new FileNotFoundException("LSM file does not exist or is not readable: "+lsmFile2.getAbsolutePath());
+                    	}
+                    	mergedFile = new File(mergeResultNode.getDirectoryPath(), "merged-"+lsmPairEntity.getId()+".v3draw");
+                	}
+                	else {
+                    	mergedFile = new File(mergeResultNode.getDirectoryPath(), lsmFile1.getName());
+                    	createSymLink(lsmFile1, mergedFile);
                 	}
 
-                	File mergedFile = new File(mergeResultNode.getDirectoryPath(), "merged-"+lsmPairEntity.getId()+".v3draw");
                 	mergedLsmPairs.add(new MergedLsmPair(lsmFilepath1, lsmFilepath2, mergedFile.getAbsolutePath()));
             	}
 
@@ -130,7 +123,7 @@ public class InitSampleProcessingParametersService implements IService {
         		throw new Exception("Sample (id="+sampleEntityId+") has no LSM pairs");
         	}
 
-        	File stitchedFile = new File(stitchResultNode.getDirectoryPath(), "stitched-"+sampleEntity.getId()+".v3draw");
+        	File stitchedFile = new File(stitchResultNode.getDirectoryPath(), "stitched-"+sampleEntity.getId()+".v3dpbd");
         	processData.putItem("STITCHED_FILENAME", stitchedFile.getAbsolutePath());
         	processData.putItem("BULK_MERGE_PARAMETERS", mergedLsmPairs);
         	processData.putItem("NUM_PAIRS", new Long(mergedLsmPairs.size()));
@@ -138,5 +131,15 @@ public class InitSampleProcessingParametersService implements IService {
         catch (Exception e) {
             throw new ServiceException(e);
         }
+    }
+    
+    private void createSymLink(File targetFile, File symLink) throws Exception {
+        String cmd = "ln -s "+targetFile.getAbsolutePath()+" "+symLink.getAbsolutePath();
+		String[] args = cmd.split("\\s+");
+        StringBuffer stdout = new StringBuffer();
+        StringBuffer stderr = new StringBuffer();
+        SystemCall call = new SystemCall(stdout, stderr);
+    	int exitCode = call.emulateCommandLine(args, null, null, 3600);	
+    	if (exitCode!=0) throw new Exception("Could not create symlink");
     }
 }

@@ -143,7 +143,7 @@ public class SolrQueryBuilder {
 		if (!StringUtils.isEmpty(searchString)) {
 	    	qs.append(" AND (("+searchString+")");
 	    	if (!searchString.contains(":")) {
-	    		qs.append(" OR "+username+"_annotations:("+searchString+"))");
+	    		qs.append(" OR "+username+"_annotations:("+searchString+") OR "+username+"_annotations_exact:("+searchString+"))");
 	    	}
 	    	else {
 	    		qs.append(")");
