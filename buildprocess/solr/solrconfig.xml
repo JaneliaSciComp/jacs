@@ -68,19 +68,19 @@
        the classpath, this is useful for including all jars in a
        directory.
     -->
-  <lib dir="../contrib/extraction/lib" />
-  <lib dir="../contrib/clustering/lib/" />
-  <lib dir="../contrib/velocity/lib" />
+  <lib dir="../../contrib/extraction/lib" />
+  <lib dir="../../contrib/clustering/lib/" />
+  <lib dir="../../contrib/velocity/lib" />
 
   <!-- When a regex is specified in addition to a directory, only the
        files in that directory which completely match the regex
        (anchored on both ends) will be included.
     -->
-  <lib dir="../dist/" regex="apache-solr-cell-\d.*\.jar" />
-  <lib dir="../dist/" regex="apache-solr-clustering-\d.*\.jar" />
-  <lib dir="../dist/" regex="apache-solr-dataimporthandler-\d.*\.jar" />
-  <lib dir="../dist/" regex="apache-solr-langid-\d.*\.jar" />
-  <lib dir="../dist/" regex="apache-solr-velocity-\d.*\.jar" />
+  <lib dir="../../dist/" regex="apache-solr-cell-\d.*\.jar" />
+  <lib dir="../../dist/" regex="apache-solr-clustering-\d.*\.jar" />
+  <lib dir="../../dist/" regex="apache-solr-dataimporthandler-\d.*\.jar" />
+  <lib dir="../../dist/" regex="apache-solr-langid-\d.*\.jar" />
+  <lib dir="../../dist/" regex="apache-solr-velocity-\d.*\.jar" />
 
   <!-- If a dir option (with or without a regex) is used and nothing
        is found that matches, it will be ignored
@@ -101,8 +101,9 @@
        other than the default ./data under the Solr home.  If
        replication is in use, this should match the replication
        configuration.
+  <dataDir>${solr.data.dir:/groups/scicomp/jacsData/servers/rokicki-ws/solr/jacs/core_FlyWorkstation/data}</dataDir>
     -->
-  <dataDir>${solr.data.dir:/groups/scicomp/jacsData/servers/rokicki-ws/solr/jacs/data}</dataDir>
+  <dataDir>${solr.data.dir:/home/rokickik/dev/solr/jacs/core0/data}</dataDir>
 
 
   <!-- The DirectoryFactory to use for indexes.
@@ -783,7 +784,7 @@
        <str name="echoParams">explicit</str>
        <int name="rows">10</int>
        <str name="qf">
-          id^10.0 all_strings^0.7 all_gen^0.6 text^0.5 
+          id^1.0 all_strings^0.8 text^0.5 
        </str>
        <str name="defType">edismax</str>
 

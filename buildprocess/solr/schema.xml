@@ -502,10 +502,12 @@
    <field name="name" type="string" indexed="true" stored="true"/>
    <field name="username" type="string" indexed="true" stored="true"/>
    <field name="entity_type" type="string" indexed="true" stored="true"/>
-   <field name="annotations" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="all_annotations" type="text_ws" indexed="true" stored="false" multiValued="true"/>
 
    <!-- ids and counts -->
-   <field name="child_ids" type="long" indexed="true" stored="true" multiValued="true"/>
+   <!--
+   <field name="child_ids" type="long" indexed="true" stored="false" multiValued="true"/>
+   -->
    <field name="ancestor_ids" type="long" indexed="true" stored="true" multiValued="true"/>
 
    <!-- dates -->
@@ -564,8 +566,11 @@
 
    <dynamicField name="random_*" type="random" />
 
-   <dynamicField name="*_annot" type="string" stored="true" multiValued="true"/>
+   <!--
+        <dynamicField name="*_annot" type="string" stored="true" multiValued="true"/>
+   -->
    <dynamicField name="*_annotations" type="text_en_splitting" indexed="true" stored="true" multiValued="true"/>
+   <dynamicField name="*_annotations_exact" type="text_ws" indexed="true" stored="false" multiValued="true"/>
    
    <!-- uncomment the following to ignore any fields that don't already match an existing 
         field name or dynamic field, rather than reporting them as an error. 
@@ -589,6 +594,13 @@
   <!-- copyField commands copy one field to another at the time a document
         is added to the index.  It's used either to index the same field differently,
         or to add multiple fields to the same field for easier/faster searching.  -->
+
+   <!-- capture all annotations in a single field so that we can easily 
+        check if a tree is annotated at all -->
+   <copyField source="*_annotations" dest="all_annotations"/> 
+
+    <!-- index all annotations exactly, so that we can do certain types of searches -->
+   <copyField source="*_annotations" dest="*_annotations_exact"/> 
 
    <!-- all_strings gets searched first, for exact matches -->
    <copyField source="id" dest="all_strings"/>
