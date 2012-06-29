@@ -97,7 +97,7 @@
     </operation>
     
     <operation>
-        <description>Clean old, non-annotated results from Sample entities</description>
+        <description>Clean old, non-annotated results from Sample entities. WARNING: this depends heavily on the Solr index, and should be run at an off-peak time, directly after runSolrIndexSync.</description>
         <name>runSampleCleaningService</name>
         <parameter>
            <description>User to run as (e.g. "system")</description>
@@ -167,41 +167,6 @@
     </operation>
     
     <operation>
-        <description>Run Leet File-based Data Pipeline</description>
-        <name>runLeetFileBasedDataPipeline</name>
-        <parameter>
-           <description>User to run as (e.g. "system")</description>
-           <name>user</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Name of the folder entity where results will be placed (e.g. "Lee Lab Stitched Data")</description>
-           <name>topLevelFolderName</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Directory to discovery LSMs within (e.g. "/groups/leet/leetimg/leetlab/WYC/stitching/")</description>
-           <name>rootDirectoryPath</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Re-run merging and stitching?</description>
-           <name>refreshProcessing</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-        <parameter>
-           <description>Re-run brain alignments?</description>
-           <name>refreshAlignment</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-        <parameter>
-           <description>Re-run neuron separations?</description>
-           <name>refreshSeparation</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
-    
-    <operation>
         <description>Run Leet SAGE-based Data Pipeline</description>
         <name>runLeetSageBasedDataPipeline</name>
         <parameter>
@@ -240,7 +205,7 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>Name of the folder entity where results will be placed (e.g. "FlyLight Single Neuron Data")</description>
+           <description>Name of the folder entity where results will be placed (e.g. "FlyLight Single Neuron Samples")</description>
            <name>topLevelFolderName</name>
            <type>java.lang.String</type>
         </parameter>
@@ -330,7 +295,7 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>Name of the folder entity where results will be placed (e.g. "FlyLight Single Neuron Data")</description>
+           <description>Name of the folder entity where results will be placed (e.g. "FlyLight Single Neuron Samples")</description>
            <name>topLevelFolderName</name>
            <type>java.lang.String</type>
         </parameter>

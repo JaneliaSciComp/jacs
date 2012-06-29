@@ -70,6 +70,7 @@ public class Vaa3DHelper {
     	buf.append("    mv output.v3draw $OUTPUT_FILE\n");
     	buf.append("else\n");
     	buf.append("    "+VAA3D_BASE_CMD+" -cmd image-loader -convert output.v3draw $OUTPUT_FILE\n");
+    	buf.append("    rm -f output.v3draw\n");
     	buf.append("fi\n");	
     	return buf.toString();
     }

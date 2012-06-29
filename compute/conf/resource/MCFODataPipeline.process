@@ -29,7 +29,10 @@
 	    <!-- Discover samples in Sage and load them into the database as Entities -->
 		<operation name="Initial Image Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SageImageDiscoveryService">
 			<input name="ROOT_ENTITY_NAME"/>
-			<input name="FOLDER_NAME" value="tiles"/>
+	        <input name="CONFOCAL_STACKS_DIR"/>
+	        <input name="SAGE_IMAGE_FAMILY"/>
+			<input name="SIGNAL CHANNELS" value="0 1 2"/>
+			<input name="REFERENCE CHANNEL" value="3"/>
 			<input name="OUTVAR_ENTITY_ID" value="TOP_LEVEL_ENTITY_ID"/>
 		</operation>
 		

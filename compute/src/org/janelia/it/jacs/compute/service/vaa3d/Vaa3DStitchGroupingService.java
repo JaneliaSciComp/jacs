@@ -47,7 +47,7 @@ public class Vaa3DStitchGroupingService extends SubmitDrmaaJobService {
         	throw new ServiceException("Input parameter INPUT_FILE_NODE may not be null");
         }
 
-        String referenceChannelIndexStr = (String)processData.getItem("REFERENCE_CHANNEL_INDEX");
+        String referenceChannelIndexStr = (String)processData.getItem("REFERENCE_CHANNEL");
         if (referenceChannelIndexStr!=null) {
         	referenceChannelIndex = Integer.parseInt(referenceChannelIndexStr)+1;	
         }

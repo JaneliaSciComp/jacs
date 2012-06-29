@@ -13,12 +13,14 @@
             <input name="TASK_PARAMETER_3" value="result entity name"/>
             <input name="PROCESS_VARIABLE_3" value="RESULT_ENTITY_NAME"/>
             <input name="TASK_PARAMETER_5" value="signal channel indexes"/>
-            <input name="PROCESS_VARIABLE_5" value="SIGNAL_CHANNEL_INDEXES"/>
+            <input name="PROCESS_VARIABLE_5" value="SIGNAL_CHANNELS"/>
             <input name="TASK_PARAMETER_6" value="reference channel index"/>
-            <input name="PROCESS_VARIABLE_6" value="REFERENCE_CHANNEL_INDEX"/>
+            <input name="PROCESS_VARIABLE_6" value="REFERENCE_CHANNELS"/>
 	        <output name="SAMPLE_ENTITY_ID"/>
 	        <output name="INPUT_FILENAME"/>
 	        <output name="RESULT_ENTITY_NAME"/>
+	        <output name="SIGNAL_CHANNELS"/>
+	        <output name="REFERENCE_CHANNELS"/>
 	    </operation>
 	    
 	    <!-- Create a sample result node, with nested result nodes for all the pipeline steps -->
@@ -43,8 +45,8 @@
 				<input name="SEPARATE_RESULT_FILE_NODE"/>
 	    		<input name="RESULT_FILE_NODE" value="$V{SEPARATE_RESULT_FILE_NODE}"/>
 				<input name="INPUT_FILENAME"/>
-	            <input name="SIGNAL_CHANNEL_INDEXES"/>
-				<input name="REFERENCE_CHANNEL_INDEX"/>
+	            <input name="SIGNAL_CHANNELS"/>
+				<input name="REFERENCE_CHANNEL"/>
 				<input name="PREVIOUS_RESULT_FILENAME"/>
 		    </operation>
         </sequence>

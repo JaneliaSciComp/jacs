@@ -51,12 +51,12 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
     	
         previousResultFile = (String)processData.getItem("PREVIOUS_RESULT_FILENAME");
         
-        signalChannels = (String)processData.getItem("SIGNAL_CHANNEL_INDEXES");
+        signalChannels = (String)processData.getItem("SIGNAL_CHANNELS");
         if (signalChannels==null) {
         	signalChannels = "0 1 2";
         }
         
-        referenceChannel = (String)processData.getItem("REFERENCE_CHANNEL_INDEX");
+        referenceChannel = (String)processData.getItem("REFERENCE_CHANNEL");
         if (referenceChannel==null) {
         	referenceChannel = "3";
         }

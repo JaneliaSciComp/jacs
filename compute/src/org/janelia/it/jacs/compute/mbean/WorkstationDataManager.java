@@ -197,24 +197,6 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
-    public void runLeetFileBasedDataPipeline(String user, String topLevelFolderName, String rootDirectoryPath, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation) {
-        try {
-        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	taskParameters.add(new TaskParameter("top level folder name", topLevelFolderName, null));
-        	taskParameters.add(new TaskParameter("input dir list", rootDirectoryPath, null));
-        	taskParameters.add(new TaskParameter("refresh processing", Boolean.toString(refreshProcessing), null)); 
-        	taskParameters.add(new TaskParameter("refresh alignment", Boolean.toString(refreshAlignment), null)); 
-        	taskParameters.add(new TaskParameter("refresh separation", Boolean.toString(refreshSeparation), null)); 
-        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-        			taskParameters, "leetDataPipeline", "Leet Data Pipeline");
-            task.setJobName("Leet Data Pipeline Task");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("LeetFileBasedDataPipeline", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
     public void runLeetSageBasedDataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation) {
         try {
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 

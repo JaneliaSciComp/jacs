@@ -80,7 +80,6 @@ public enum TilingPattern {
         if ((hasLeftOptic && hasLeftCentralBrain) || (hasRightOptic && hasRightCentralBrain)) return TilingPattern.OPTIC_CENTRAL_BORDER;
         if (hasLeftBrain && hasRightBrain) return TilingPattern.WHOLE_BRAIN;
         
-        		
         if (tags.size()==1) {
         	if (hasLeftOptic || hasRightOptic) return TilingPattern.OPTIC_TILE;
         	if (hasCentralBrain) return TilingPattern.CENTRAL_TILE;

@@ -38,7 +38,9 @@ public class SageImageDiscoveryService implements IService {
     protected String confocalStacksDir;
     protected String sageImageFamily;
     protected IProcessData processData;
-
+    protected String signalChannels;
+    protected String referenceChannel;
+    
     public void execute(IProcessData processData) throws ServiceException {
         try {
         	this.processData=processData;
@@ -58,6 +60,16 @@ public class SageImageDiscoveryService implements IService {
         		throw new IllegalArgumentException("SAGE_IMAGE_FAMILY may not be null");
             }
             
+            signalChannels = (String)processData.getItem("SIGNAL CHANNELS");
+            if (signalChannels==null) {
+        		throw new IllegalArgumentException("SIGNAL CHANNELS may not be null");
+            }
+            
+            referenceChannel = (String)processData.getItem("REFERENCE CHANNEL");
+            if (referenceChannel==null) {
+        		throw new IllegalArgumentException("REFERENCE CHANNEL may not be null");
+            }
+            
             String topLevelFolderName;
             Entity topLevelFolder;
             if (processData.getItem("ROOT_ENTITY_NAME") != null) {
@@ -75,15 +87,10 @@ public class SageImageDiscoveryService implements IService {
         	if (topLevelFolder==null) {
         		throw new IllegalArgumentException("Both ROOT_ENTITY_NAME and ROOT_ENTITY_ID may not be null");
         	}
-
-        	String folderName = (String)processData.getItem("FOLDER_NAME");
         	
             logger.info("Will put discovered entities into top level entity "+topLevelFolder.getName()+", id="+topLevelFolder.getId());
-            if (folderName != null) {
-            	logger.info("... into a child folder with name "+folderName);
-            }
             
-            processSageData(topLevelFolder, folderName);
+            processSageData(topLevelFolder);
             
         	String outvar = (String)processData.getItem("OUTVAR_ENTITY_ID");
         	if (outvar != null) {
@@ -104,21 +111,20 @@ public class SageImageDiscoveryService implements IService {
         }
     }
     
-    protected void processSageData(Entity topLevelFolder, String childFolderName) throws Exception {
+    protected void processSageData(Entity topLevelFolder) throws Exception {
 
+    	// Load all the tiling pattern folders
     	if (!EntityUtils.areLoaded(topLevelFolder.getEntityData())) {
     		entityBean.loadLazyEntity(topLevelFolder, false);
     	}
-
-    	Entity slideCodesFolder = topLevelFolder;
     	
-    	if (childFolderName!=null) {
-    		slideCodesFolder = verifyOrCreateChildFolder(topLevelFolder, childFolderName);
-        	if (!EntityUtils.areLoaded(slideCodesFolder.getEntityData())) {
-        		entityBean.loadLazyEntity(slideCodesFolder, false);
-        	}
+    	// Load all the children (Samples) for each tiling pattern 
+    	for(Entity tilingPatternFolder : topLevelFolder.getChildren()) {
+    		if (tilingPatternFolder.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+    			entityBean.loadLazyEntity(tilingPatternFolder, false);
+    		}
     	}
-
+    	
     	SageDAO sageDAO = new SageDAO(logger);
     		
     	ResultSetIterator iterator = null;
@@ -143,9 +149,7 @@ public class SageImageDiscoveryService implements IService {
 
 					// Process the current group
 					if (slideGroup != null) {
-		                Entity folder = verifyOrCreateChildFolder(slideCodesFolder, currSlideCode);
-		                logger.info("Created new folder for slide group "+currSlideCode);
-		                processSlideGroup(slideGroup, folder);
+		                processSlideGroup(topLevelFolder, currSlideCode, slideGroup);
 					}
 					
 					// Start a new group
@@ -158,8 +162,7 @@ public class SageImageDiscoveryService implements IService {
 
 			// Process the last group
 			if (slideGroup != null) {
-                Entity folder = verifyOrCreateChildFolder(slideCodesFolder, currSlideCode);
-                processSlideGroup(slideGroup, folder);
+                processSlideGroup(topLevelFolder, currSlideCode, slideGroup);
 			}
             
     	}
@@ -174,23 +177,17 @@ public class SageImageDiscoveryService implements IService {
         }
     }
     
-    protected void processSlideGroup(List<SlideImage> slideGroup, Entity folder) throws Exception {
-
-    	if (!EntityUtils.areLoaded(folder.getEntityData())) {
-    		entityBean.loadLazyEntity(folder, false);
-    	}
+    protected void processSlideGroup(Entity topLevelFolder, String slideCode, List<SlideImage> slideGroup) throws Exception {
     	
         HashMap<String, FilePair> filePairings = new HashMap<String, FilePair>();
         String sampleIdentifier = null;
 
-        logger.info("Processing "+folder.getName()+", slideGroup.size="+slideGroup.size());
+        logger.info("Processing "+slideCode+", "+slideGroup.size()+" tiles");
         
         for(SlideImage slideImage : slideGroup) {
     	
             if (!filePairings.containsKey(slideImage.tileType)) {
-            	
             	FilePair filePair = new FilePair(slideImage.tileType);
-
             	File lsmFile1 = new File(confocalStacksDir,slideImage.imagePath);
             	filePair.setFilename1(lsmFile1.getAbsolutePath());
         		if (!lsmFile1.exists()) {
@@ -212,8 +209,9 @@ public class SageImageDiscoveryService implements IService {
 
         		filePair.setFile2(lsmFile2);
             }
-            if (null==sampleIdentifier) {
-                sampleIdentifier = slideImage.line + "-" + folder.getName();
+            
+            if (sampleIdentifier==null) {
+                sampleIdentifier = slideImage.line + "-" + slideCode;
             }
         }
         
@@ -250,7 +248,7 @@ public class SageImageDiscoveryService implements IService {
         }
         
         TilingPattern tiling = TilingPattern.getTilingPattern(tags);
-        logger.info("Sample "+sampleIdentifier+" has tiling pattern: "+(tiling==null?"Unknown":tiling.getName()));
+        logger.info("Sample "+sampleIdentifier+" has tiling pattern: "+tiling.getName());
         
         if (tiling != null) {
         	Integer count = patterns.get(tiling);
@@ -266,7 +264,7 @@ public class SageImageDiscoveryService implements IService {
         if (tiling != null && tiling.isStitchable()) {
         	// This is a stitchable case
         	logger.info("Sample "+sampleIdentifier+" is stitchable");
-            Entity sample = createOrVerifySample(sampleIdentifier, folder, tiling);
+            Entity sample = createOrVerifySample(topLevelFolder, sampleIdentifier, tiling);
         	// Add the LSM pairs to the Sample's Supporting Files folder
             for (FilePair filePair : filePairs) {
             	addLsmPairToSample(sample, filePair);
@@ -277,17 +275,19 @@ public class SageImageDiscoveryService implements IService {
         	logger.info("Sample "+sampleIdentifier+" is not stitchable");
             for (FilePair filePair : filePairs) {
             	String sampleName = sampleIdentifier+"-"+filePair.getPairTag().replaceAll(" ", "_");
-                Entity sample = createOrVerifySample(sampleName, folder, tiling);
+                Entity sample = createOrVerifySample(topLevelFolder, sampleName, tiling);
             	addLsmPairToSample(sample, filePair);
             }
         }
     }
     
-    private Entity createOrVerifySample(String name, Entity folder, TilingPattern tiling) throws Exception {
-        Entity sample = findExistingSample(folder, name);
+    private Entity createOrVerifySample(Entity topLevelFolder, String name, TilingPattern tiling) throws Exception {
+    	
+    	Entity tilingPatternFolder = verifyOrCreateChildFolder(topLevelFolder, tiling.getName());
+        Entity sample = findExistingSample(tilingPatternFolder, name);
         if (sample == null) {
 	        sample = createSample(name, tiling);
-	        addToParent(folder, sample, null, EntityConstants.ATTRIBUTE_ENTITY);
+	        addToParent(tilingPatternFolder, sample, null, EntityConstants.ATTRIBUTE_ENTITY);
         }
         else {
         	if (!EntityUtils.areLoaded(sample.getEntityData())) {
@@ -386,6 +386,8 @@ public class SageImageDiscoveryService implements IService {
         sample.setUpdatedDate(createDate);
         sample.setName(name);
         sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN, tiling.toString());
+        sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_CHANNELS, signalChannels);
+        sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_CHANNEL, referenceChannel);
         sample = entityBean.saveOrUpdateEntity(sample);
         logger.info("Saved sample as "+sample.getId());
         return sample;

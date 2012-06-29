@@ -17,13 +17,17 @@
             <input name="PROCESS_VARIABLE_4" value="REFRESH_SEPARATION"/>
             <input name="TASK_PARAMETER_5" value="alignment type"/>
             <input name="PROCESS_VARIABLE_5" value="ALIGNMENT_TYPE"/>
-            <input name="TASK_PARAMETER_6" value="signal channel indexes"/>
-            <input name="PROCESS_VARIABLE_6" value="SIGNAL_CHANNEL_INDEXES"/>
-            <input name="TASK_PARAMETER_7" value="reference channel index"/>
-            <input name="PROCESS_VARIABLE_7" value="REFERENCE_CHANNEL_INDEX"/>
 	        <output name="SAMPLE_ENTITY_ID"/>
 	    </operation>
 	    
+	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
+	    <operation name="Get Sample Attributes" processor="org.janelia.it.jacs.compute.service.entity.InitSampleAttributesService">
+			<input name="SAMPLE_ENTITY_ID"/>
+			<output name="TILING_PATTERN"/>
+			<output name="SIGNAL_CHANNELS"/>
+			<output name="REFERENCE_CHANNEL"/>
+		</operation>
+		
 	    <!-- Decide which types of processing will be run -->
 	    <operation name="Choose Sample Processing Steps" processor="org.janelia.it.jacs.compute.service.entity.ChooseMCFOSampleStepsService">
 			<input name="SAMPLE_ENTITY_ID"/>
@@ -111,7 +115,7 @@
 						<input name="MERGE_RESULT_FILE_NODE"/>
 			    		<input name="INPUT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
 						<input name="BULK_MERGE_PARAMETERS"/>
-						<input name="REFERENCE_CHANNEL_INDEX"/>
+						<input name="REFERENCE_CHANNEL"/>
 						<output name="BULK_MERGE_PARAMETERS"/>
 			        </operation>
 		        </sequence>
@@ -125,7 +129,7 @@
 						<input name="GROUP_RESULT_FILE_NODE"/>
 			    		<input name="INPUT_FILE_NODE" value="$V{GROUP_RESULT_FILE_NODE}"/>
 						<input name="BULK_MERGE_PARAMETERS"/>
-						<input name="REFERENCE_CHANNEL_INDEX"/>
+						<input name="REFERENCE_CHANNEL"/>
 						<input name="STITCHED_FILENAME"/>
 			        </operation>
 		        </sequence>
@@ -152,8 +156,8 @@
 	            <input name="STITCHED_FILENAME"/>
 	            <input name="INPUT_FILENAME" value="$V{STITCHED_FILENAME}"/>
 	            <input name="RESULT_ENTITY_NAME" value="Prealigned Neuron Separation"/>
-				<input name="SIGNAL_CHANNEL_INDEXES"/>
-				<input name="REFERENCE_CHANNEL_INDEX"/>
+				<input name="SIGNAL_CHANNELS"/>
+				<input name="REFERENCE_CHANNEL"/>
 	        </include>
 
 		</sequence>
@@ -213,8 +217,8 @@
 		            <input name="ALIGNED_FILENAME"/>
 		            <input name="INPUT_FILENAME" value="$V{ALIGNED_FILENAME}"/>
 		            <input name="RESULT_ENTITY_NAME" value="Aligned Neuron Separation"/>
-		            <input name="SIGNAL_CHANNEL_INDEXES"/>
-					<input name="REFERENCE_CHANNEL_INDEX"/>
+		            <input name="SIGNAL_CHANNELS"/>
+					<input name="REFERENCE_CHANNEL"/>
 		        </include>
 		        
 	    	</sequence>

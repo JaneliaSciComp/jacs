@@ -30,8 +30,6 @@ public interface WorkstationDataManagerMBean {
     
     public void runMCFODataUpgrade(String user, Boolean testRun);
     
-    public void runLeetFileBasedDataPipeline(String user, String topLevelFolderName, String rootDirectoryPath, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
-    
     public void runLeetSageBasedDataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
     
     public void runCentralBrainDataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
