@@ -91,6 +91,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ROBOT_ID                            = "Robot Id";
     public static final String ATTRIBUTE_REFERENCE_CHANNEL                   = "Reference Channel";
     public static final String ATTRIBUTE_SIGNAL_CHANNELS                     = "Signal Channels";
+    public static final String ATTRIBUTE_ALIGNMENT_TYPES                     = "Alignment Types";
     
     /**
      * @deprecated Use TYPE_IMAGE_2D instead. This will be removed someday.

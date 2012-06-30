@@ -15,8 +15,6 @@
             <input name="PROCESS_VARIABLE_3" value="REFRESH_ALIGNMENT"/>
             <input name="TASK_PARAMETER_4" value="refresh separation"/>
             <input name="PROCESS_VARIABLE_4" value="REFRESH_SEPARATION"/>
-            <input name="TASK_PARAMETER_5" value="alignment type"/>
-            <input name="PROCESS_VARIABLE_5" value="ALIGNMENT_TYPE"/>
 	        <output name="SAMPLE_ENTITY_ID"/>
 	    </operation>
 	    
@@ -26,6 +24,7 @@
 			<output name="TILING_PATTERN"/>
 			<output name="SIGNAL_CHANNELS"/>
 			<output name="REFERENCE_CHANNEL"/>
+			<output name="ALIGNMENT_TYPES"/>
 		</operation>
 		
 	    <!-- Decide which types of processing will be run -->
@@ -163,66 +162,73 @@
 		</sequence>
 	    	        
     	<sequence if="IS_ALIGNABLE=true">
-    	
-	        <sequence if="RUN_ALIGNMENT=true">
-			
-			    <!-- Create a alignment result node, with nested result nodes for all the pipeline steps -->
-			    <operation name="Create Alignment Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateAlignmentResultFileNodeService">
-			        <output name="RESULT_FILE_NODE"/>
-			        <output name="RESULT_FILE_NODE_ID"/>
-			        <output name="ALIGN_RESULT_FILE_NODE"/>
-			    </operation>
-		                
-			    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
-			    <operation name="Create Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitAlignmentParametersService">
-					<input name="SAMPLE_ENTITY_ID"/>
-					<input name="ALIGNMENT_TYPE"/>
-					<output name="ALIGNMENT_SERVICE_CLASS"/>
-					<output name="ALIGNMENT_RESULT_NAME"/>
-					<output name="ALIGNMENT_TILE_NAME"/>
-				</operation>
-			    
-		   	    <!-- Align the sample -->
-		        <sequence name="Align" waitForAsync="true">
-			        <operation name="Align" processor="queue/gridSubmitAndWait">
-						<input name="ALIGNMENT_SERVICE_CLASS"/>
-			            <input name="iservice" value="$V{ALIGNMENT_SERVICE_CLASS}"/>
-						<input name="ALIGN_RESULT_FILE_NODE"/>
-			    		<input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
-			    		<input name="STITCHED_FILENAME"/>
-						<input name="INPUT_FILENAME" value="$V{STITCHED_FILENAME}"/>
-						<input name="ALIGNMENT_TILE_NAME"/>
-						<output name="ALIGNED_FILENAME"/>
-			        </operation>
-		        </sequence>
-		        
-			    <!-- Load the alignment results into the database -->
-				<operation name="Discover Alignment Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SupportingFilesDiscoveryService">
-					<input name="ALIGN_RESULT_FILE_NODE"/>
-					<input name="ROOT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
-					<input name="SAMPLE_ENTITY_ID"/>
-					<input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
-					<input name="RESULT_ENTITY_TYPE" value="Alignment Result"/>
-					<input name="ALIGNMENT_RESULT_NAME"/>
-					<input name="RESULT_ENTITY_NAME" value="$V{ALIGNMENT_RESULT_NAME}"/>
-			    </operation>
-			    
-		    </sequence>
-		    
-	    	<sequence if="RUN_ALIGNED_SEPARATION=true">
-		        	
-				<!-- Run neuron separation on aligned data -->
-		        <include name="Aligned Neuron Separation" process="MCFOSeparationPipeline">
-		            <input name="SAMPLE_ENTITY_ID"/>
-		            <input name="ALIGNED_FILENAME"/>
-		            <input name="INPUT_FILENAME" value="$V{ALIGNED_FILENAME}"/>
-		            <input name="RESULT_ENTITY_NAME" value="Aligned Neuron Separation"/>
-		            <input name="SIGNAL_CHANNELS"/>
-					<input name="REFERENCE_CHANNEL"/>
-		        </include>
-		        
-	    	</sequence>
+    		
+		    <!-- Process each type of alignment -->
+	        <sequence forEach="ALIGNMENT_TYPE">
+	            <sequence>
 	    	
+			        <sequence if="RUN_ALIGNMENT=true">
+					
+					    <!-- Create a alignment result node, with nested result nodes for all the pipeline steps -->
+					    <operation name="Create Alignment Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateAlignmentResultFileNodeService">
+					        <output name="RESULT_FILE_NODE"/>
+					        <output name="RESULT_FILE_NODE_ID"/>
+					        <output name="ALIGN_RESULT_FILE_NODE"/>
+					    </operation>
+				                
+					    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
+					    <operation name="Create Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitAlignmentParametersService">
+							<input name="SAMPLE_ENTITY_ID"/>
+							<input name="ALIGNMENT_TYPE"/>
+							<output name="ALIGNMENT_SERVICE_CLASS"/>
+							<output name="ALIGNMENT_RESULT_NAME"/>
+							<output name="ALIGNMENT_TILE_NAME"/>
+						</operation>
+					    
+				   	    <!-- Align the sample -->
+				        <sequence name="Align" waitForAsync="true">
+					        <operation name="Align" processor="queue/gridSubmitAndWait">
+								<input name="ALIGNMENT_SERVICE_CLASS"/>
+					            <input name="iservice" value="$V{ALIGNMENT_SERVICE_CLASS}"/>
+								<input name="ALIGN_RESULT_FILE_NODE"/>
+					    		<input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
+					    		<input name="STITCHED_FILENAME"/>
+								<input name="INPUT_FILENAME" value="$V{STITCHED_FILENAME}"/>
+								<input name="ALIGNMENT_TILE_NAME"/>
+								<output name="ALIGNED_FILENAME"/>
+					        </operation>
+				        </sequence>
+				        
+					    <!-- Load the alignment results into the database -->
+						<operation name="Discover Alignment Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SupportingFilesDiscoveryService">
+							<input name="ALIGN_RESULT_FILE_NODE"/>
+							<input name="ROOT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
+							<input name="SAMPLE_ENTITY_ID"/>
+							<input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
+							<input name="RESULT_ENTITY_TYPE" value="Alignment Result"/>
+							<input name="ALIGNMENT_RESULT_NAME"/>
+							<input name="RESULT_ENTITY_NAME" value="$V{ALIGNMENT_RESULT_NAME}"/>
+					    </operation>
+					    
+				    </sequence>
+				    
+			    	<sequence if="RUN_ALIGNED_SEPARATION=true">
+				        	
+						<!-- Run neuron separation on aligned data -->
+				        <include name="Aligned Neuron Separation" process="MCFOSeparationPipeline">
+				            <input name="SAMPLE_ENTITY_ID"/>
+				            <input name="ALIGNED_FILENAME"/>
+				            <input name="INPUT_FILENAME" value="$V{ALIGNED_FILENAME}"/>
+				            <input name="RESULT_ENTITY_NAME" value="Aligned Neuron Separation"/>
+				            <input name="SIGNAL_CHANNELS"/>
+							<input name="REFERENCE_CHANNEL"/>
+				        </include>
+				        
+			    	</sequence>
+		    	
+		    	</sequence>
+	    	</sequence>
+	    
 	    </sequence>
     	
     </sequence>

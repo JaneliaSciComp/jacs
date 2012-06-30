@@ -33,6 +33,7 @@
 	        <input name="SAGE_IMAGE_FAMILY"/>
 			<input name="SIGNAL CHANNELS" value="0 1"/>
 			<input name="REFERENCE CHANNEL" value="2"/>
+			<input name="ALIGNMENT_TYPES" value="WHOLE_40X"/>
 			<input name="OUTVAR_ENTITY_ID" value="TOP_LEVEL_ENTITY_ID"/>
 		</operation>
 		
@@ -65,8 +66,6 @@
 		            <input name="PARAMETER_4_KEY" value="refresh separation"/>
 		            <input name="REFRESH_SEPARATION"/>
 		            <input name="PARAMETER_4_VALUE" value="$V{REFRESH_SEPARATION}"/>
-		            <input name="PARAMETER_5_KEY" value="alignment type"/>
-		            <input name="PARAMETER_5_VALUE" value="WHOLE_40X"/>
 		        </operation>
 			</sequence>
 	    </sequence>

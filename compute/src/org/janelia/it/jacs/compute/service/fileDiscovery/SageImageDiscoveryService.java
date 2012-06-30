@@ -40,6 +40,7 @@ public class SageImageDiscoveryService implements IService {
     protected IProcessData processData;
     protected String signalChannels;
     protected String referenceChannel;
+    protected String alignmentTypes;
     
     public void execute(IProcessData processData) throws ServiceException {
         try {
@@ -68,6 +69,11 @@ public class SageImageDiscoveryService implements IService {
             referenceChannel = (String)processData.getItem("REFERENCE CHANNEL");
             if (referenceChannel==null) {
         		throw new IllegalArgumentException("REFERENCE CHANNEL may not be null");
+            }
+            
+            alignmentTypes = (String)processData.getItem("ALIGNMENT_TYPES");
+            if (alignmentTypes==null) {
+            	alignmentTypes = "AUTO";
             }
             
             String topLevelFolderName;
@@ -388,6 +394,7 @@ public class SageImageDiscoveryService implements IService {
         sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN, tiling.toString());
         sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_CHANNELS, signalChannels);
         sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_CHANNEL, referenceChannel);
+        sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_TYPES, alignmentTypes);
         sample = entityBean.saveOrUpdateEntity(sample);
         logger.info("Saved sample as "+sample.getId());
         return sample;

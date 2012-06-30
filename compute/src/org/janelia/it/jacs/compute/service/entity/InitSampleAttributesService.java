@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.compute.service.entity;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
@@ -36,6 +39,14 @@ public class InitSampleAttributesService implements IService {
         	processData.putItem("TILING_PATTERN", sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN));
         	processData.putItem("SIGNAL_CHANNELS", sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_CHANNELS));
         	processData.putItem("REFERENCE_CHANNEL", sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_CHANNEL));
+        	
+        	String types = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_TYPES);
+        	if (types == null || "".equals(types)) {
+        		types = "AUTO";
+        	}
+        	
+        	List<String> alignmentTypes = Arrays.asList(types.split(" "));
+        	processData.putItem("ALIGNMENT_TYPE", alignmentTypes);
         } 
         catch (Exception e) {
             throw new ServiceException(e);

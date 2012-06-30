@@ -18,6 +18,7 @@ import org.mortbay.log.Log;
  */
 public class InitAlignmentParametersService implements IService {
 
+	private static final String ALIGN_TYPE_AUTO = "AUTO";
 	private static final String ALIGN_TYPE_WHOLE_40X = "WHOLE_40X";
 	private static final String ALIGN_TYPE_WHOLE_63X = "WHOLE_63X";
 	private static final String ALIGN_TYPE_OPTIC = "OPTIC";
