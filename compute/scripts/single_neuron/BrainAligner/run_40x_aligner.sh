@@ -192,9 +192,9 @@ $Vaa3D -x ireg -f iContrastEnhancer -i $MIP1 -o $MIP1 -p "#m 5"
 $Vaa3D -x ireg -f iContrastEnhancer -i $MIP2 -o $MIP2 -p "#m 5"
 $Vaa3D -x ireg -f iContrastEnhancer -i $MIP3 -o $MIP3 -p "#m 5"
 
-$MAGICK/convert $MIP1 $PNG_MIP1
-$MAGICK/convert $MIP2 $PNG_MIP2
-$MAGICK/convert $MIP3 $PNG_MIP3
+$MAGICK/convert -flip $MIP1 $PNG_MIP1
+$MAGICK/convert -flip $MIP2 $PNG_MIP2
+$MAGICK/convert -flip $MIP3 $PNG_MIP3
 
 EXT=${FINAL_OUTPUT##*.}
 if [ "$EXT" == "v3dpbd" ]

@@ -76,29 +76,33 @@ fi
 # The following assumes that the reference channel comes after the signal channels. 
 # It could be more robust.
 
+SEP_INPUT_FILE=$INPUT_FILE
+
 if [ `echo $SIGNAL_CHAN | wc -m` -lt 5 ] ; then
     # Less than 5 characters, which means less than 3 signal channels. 
     MAPPED_INPUT=mapped.v3draw
     if [ `echo $SIGNAL_CHAN | wc -m` -lt 2 ] ; then
         # Single channel
+        echo "Detected single channel image, duplicating channel 0 in channels 1 and 2"
+        echo "$Vaa3D -cmd image-loader -mapchannels $INPUT_FILE $MAPPED_INPUT \"0,0,0,1,0,2,${REF_CHAN},3\""
         $Vaa3D -cmd image-loader -mapchannels $INPUT_FILE $MAPPED_INPUT "0,0,0,1,0,2,${REF_CHAN},3"
     else
         # Dual channel
+        echo "Detected two channel image, duplicating channel 1 in channel 2"
+        echo "$Vaa3D -cmd image-loader -mapchannels $INPUT_FILE $MAPPED_INPUT \"0,0,1,1,1,2,${REF_CHAN},3\""
         $Vaa3D -cmd image-loader -mapchannels $INPUT_FILE $MAPPED_INPUT "0,0,1,1,1,2,${REF_CHAN},3"
     fi
-    INPUT_FILE=$MAPPED_INPUT
+    SEP_INPUT_FILE=$MAPPED_INPUT
 fi
 
 # The above logic forces the reference onto the fourth channel
 REF_CHAN_ONE_INDEXED=4
 echo "Reference chan (1-indexed): $REF_CHAN_ONE_INDEXED"
 
-#echo "~ Extracting signal and reference channels"
-#FILTERED_INPUT=filtered.v3draw
-#cat $INPUT_FILE | $NSDIR/v3draw_select_channels $SIGNAL_CHAN $REF_CHAN > $FILTERED_INPUT
-
 echo "~ Generating separation"
-$NSDIR/setup10 -c6.0 -e4.5 -s800 -r$REF_CHAN_ONE_INDEXED SeparationResultUnmapped $INPUT_FILE
+$NSDIR/setup10 -c6.0 -e4.5 -s800 -r$REF_CHAN_ONE_INDEXED SeparationResultUnmapped $SEP_INPUT_FILE
+
+echo "~ Separation complete"
 
 if [ -s SeparationResultUnmapped.nsp ]; then
 
@@ -158,3 +162,4 @@ echo "~ Removing temp files"
 rm -rf $WORKING_DIR
 
 echo "~ Finished"
+
