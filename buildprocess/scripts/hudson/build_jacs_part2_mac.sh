@@ -75,7 +75,7 @@ if [ $BUILD_FLYSUITE == 1 ]; then
     BUNDLE_FILE="$PACKAGE_MAC_DIR/FlySuite.app"
 
     rm -rf $BUNDLE_FILE || true
-    /usr/local/bin/platypus -a 'FlySuite' -o 'Text Window' -p '/bin/sh' -u 'HHMI'  -V "${FWVER}"  -I 'org.janelia.FlySuite' -i "$ICON_FILE" -f "$WORKSTATION_JAR" -f "$WORKSTATION_LIB" -f "$VAA3D_BUNDLE" -f "$START_SCRIPT" -c "$BUNDLE_SCRIPT" "$BUNDLE_FILE"
+    /usr/local/bin/platypus -a 'FlySuite' -o 'None' -p '/bin/sh' -u 'HHMI'  -V "${FWVER}"  -I 'org.janelia.FlySuite' -i "$ICON_FILE" -f "$WORKSTATION_JAR" -f "$WORKSTATION_LIB" -f "$VAA3D_BUNDLE" -f "$START_SCRIPT" -c "$BUNDLE_SCRIPT" "$BUNDLE_FILE"
 
 fi
 
