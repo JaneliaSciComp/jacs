@@ -69,13 +69,13 @@ if [ $BUILD_FLYSUITE == 1 ]; then
     WORKSTATION_JAR="$PACKAGE_MAC_DIR/workstation.jar"
     WORKSTATION_LIB="$PACKAGE_MAC_DIR/workstation_lib"
     VAA3D_BUNDLE="$PACKAGE_MAC_DIR/vaa3d64.app"
-    COMPARTMENT_MAP="$PACKAGE_MAC_DIR/flybraincompartmentmap.v3ds"
+    #COMPARTMENT_MAP="$PACKAGE_MAC_DIR/flybraincompartmentmap.v3ds"
     BUNDLE_SCRIPT="$PACKAGE_MAC_DIR/workstation.sh"
     START_SCRIPT="$PACKAGE_MAC_DIR/start.sh"
     BUNDLE_FILE="$PACKAGE_MAC_DIR/FlySuite.app"
 
     rm -rf $BUNDLE_FILE || true
-    /usr/local/bin/platypus -a 'FlySuite' -o 'Text Window' -p '/bin/sh' -u 'HHMI'  -V "${FWVER}"  -I 'org.janelia.FlySuite' -i "$ICON_FILE" -f "$WORKSTATION_JAR" -f "$WORKSTATION_LIB" -f "$VAA3D_BUNDLE" -f "$COMPARTMENT_MAP" -f "$START_SCRIPT" -c "$BUNDLE_SCRIPT" "$BUNDLE_FILE"
+    /usr/local/bin/platypus -a 'FlySuite' -o 'Text Window' -p '/bin/sh' -u 'HHMI'  -V "${FWVER}"  -I 'org.janelia.FlySuite' -i "$ICON_FILE" -f "$WORKSTATION_JAR" -f "$WORKSTATION_LIB" -f "$VAA3D_BUNDLE" -f "$START_SCRIPT" -c "$BUNDLE_SCRIPT" "$BUNDLE_FILE"
 
 fi
 
