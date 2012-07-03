@@ -170,12 +170,12 @@
         <description>Run Leet SAGE-based Data Pipeline</description>
         <name>runLeetSageBasedDataPipeline</name>
         <parameter>
-           <description>User to run as (e.g. "system")</description>
+           <description>User to run as (e.g. "leetlab")</description>
            <name>user</name>
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>Name of the folder entity where results will be placed (e.g. "Lee Lab Stitched Data")</description>
+           <description>Name of the folder entity where results will be placed (e.g. "Pan Lineage Samples")</description>
            <name>topLevelFolderName</name>
            <type>java.lang.String</type>
         </parameter>
