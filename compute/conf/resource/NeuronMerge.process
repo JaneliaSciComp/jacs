@@ -1,0 +1,10 @@
+<!-- 
+	Synchronize index with entities in the database. 
+-->
+<process name="Neuron Merge Process" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
+    <sequence name="Neuron Merge" waitForAsync="true">
+        <operation name="Neuron Merge" processor="queue/gridSubmitAndWait">
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DNeuronMergeService"/>
+        </operation>
+    </sequence>
+</process>

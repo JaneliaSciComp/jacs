@@ -20,6 +20,7 @@ import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.fileDiscovery.*;
 import org.janelia.it.jacs.model.tasks.fly.FlyScreenPatternAnnotationTask;
 import org.janelia.it.jacs.model.tasks.fly.MaskSampleAnnotationTask;
+import org.janelia.it.jacs.model.tasks.neuron.NeuronMergeTask;
 import org.janelia.it.jacs.model.tasks.tic.SingleTicTask;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
@@ -119,7 +120,21 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
-    
+
+    public void runNeuronMergeTest(String taskOwner, String separationEntityId, String commaSeparatedNeuronFragmentList) {
+        try {
+            NeuronMergeTask task = new NeuronMergeTask(new HashSet<Node>(), taskOwner, new ArrayList<org.janelia.it.jacs.model.tasks.Event>(), new HashSet<TaskParameter>());
+            task.setJobName("Neuron Merge Task");
+            task.setParameter(NeuronMergeTask.PARAM_separationEntityId, separationEntityId);
+            task.setParameter(NeuronMergeTask.PARAM_commaSeparatedNeuronFragmentList, commaSeparatedNeuronFragmentList);
+            task = (NeuronMergeTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("NeuronMerge", task.getObjectId());
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
     public void runSolrTreeIndexing(Long rootId) {
     	try {
             EJBFactory.getLocalSolrBean().indexAllEntitiesInTree(rootId);

@@ -67,4 +67,6 @@ public interface WorkstationDataManagerMBean {
 
     public void runMaskAnnotationPipeline(String user, String maskFolderName, Boolean refresh);
 
+    public void runNeuronMergeTest(String taskOwner, String separationEntityId, String commaSeparatedNeuronFragmentList);
+
     }

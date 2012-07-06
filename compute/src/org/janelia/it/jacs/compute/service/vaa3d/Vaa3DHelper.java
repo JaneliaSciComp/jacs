@@ -170,6 +170,12 @@ public class Vaa3DHelper {
         return INTERSECTION_CMD +" \""+inputFilepath1+"\" \""+inputFilepath2+"\" \""+outputFilepath+"\" "+method+" "+kernelSize;
     }
     
+    public static String getFormattedNeuronMergeCommand(String originalImageFilePath, String consolidatedSignalLabelIndexFilePath,
+                                                        String commaSeparatedFragmentList, String newOutputMIPPath, String newOutputStackPath) throws ServiceException {
+        return VAA3D_BASE_CMD + " -cmd neuron-fragment-editor -sourceImage \""+originalImageFilePath+"\" -labelIndex \"" +consolidatedSignalLabelIndexFilePath+
+                "\" -fragments "+commaSeparatedFragmentList+" -outputMip \""+newOutputMIPPath+"\" -outputStack \""+newOutputStackPath+"\" ;";
+    }
+
     public static int getRandomPort() {
         return getRandomPort(STARTING_DISPLAY_PORT);
     }
