@@ -27,7 +27,7 @@
 set -o errexit
 
 # Configure SGE for doing grid builds
-. /sge/6.2u5/default/common/settings.sh
+. /sge/8.0.1p4/default/common/settings.sh
 
 FWVER=$1
 SERVER=$2
