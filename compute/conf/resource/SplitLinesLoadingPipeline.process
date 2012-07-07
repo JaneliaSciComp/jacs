@@ -24,5 +24,9 @@
 			<input name="SPLIT_CONSTRUCTS_FILEPATH"/>
 		</operation>
 		
+	    <!-- Delete anything that doesn't have a corresponding robot id in FlyBoy -->
+		<operation name="Load Split Lines" processor="org.janelia.it.jacs.compute.service.fly.SplitLinesVerificationService">
+		</operation>
+		
     </sequence>
 </process>

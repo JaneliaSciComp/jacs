@@ -44,8 +44,8 @@ public class WholeBrain63xAlignmentService extends BrainAlignmentService {
     @Override
     protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
     	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
-    	// Reserve all 8 slots on 96 GB node. 
-    	jt.setNativeSpecification("-pe batch 8 -l mem96=true -now n");
+    	// Reserve all 8 slots on 96 GB node (superclass already requests 8 nodes) 
+    	jt.setNativeSpecification("-l mem96=true -now n");
     	return jt;
     }
 }

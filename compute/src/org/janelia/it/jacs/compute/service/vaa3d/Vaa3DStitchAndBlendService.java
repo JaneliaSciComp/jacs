@@ -96,7 +96,14 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
      */
     private void createBypassShellScript(FileWriter writer, String mergedFilepath, String stitchedFilepath) throws Exception {
         StringBuffer script = new StringBuffer();
-        script.append("cp "+mergedFilepath+" "+stitchedFilepath);
+    	if ((mergedFilepath.endsWith("lsm")||mergedFilepath.endsWith("v3draw")) && stitchedFilepath.endsWith("v3dpbd")) {
+    		// need to convert
+    		script.append(Vaa3DHelper.getFormattedConvertCommand(mergedFilepath, stitchedFilepath));
+    	}
+    	else {
+    		// just copy 
+    		script.append("cp "+mergedFilepath+" "+stitchedFilepath);	
+    	}
         script.append("\n");
         writer.write(script.toString());
     }

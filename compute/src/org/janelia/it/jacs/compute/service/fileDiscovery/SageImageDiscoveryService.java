@@ -131,6 +131,8 @@ public class SageImageDiscoveryService implements IService {
     		}
     	}
     	
+    	fixOrderIndices(topLevelFolder);
+    	
     	SageDAO sageDAO = new SageDAO(logger);
     		
     	ResultSetIterator iterator = null;
@@ -293,7 +295,7 @@ public class SageImageDiscoveryService implements IService {
         Entity sample = findExistingSample(tilingPatternFolder, name);
         if (sample == null) {
 	        sample = createSample(name, tiling);
-	        addToParent(tilingPatternFolder, sample, null, EntityConstants.ATTRIBUTE_ENTITY);
+	        addToParent(tilingPatternFolder, sample, tilingPatternFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
         }
         else {
         	if (!EntityUtils.areLoaded(sample.getEntityData())) {
@@ -425,6 +427,39 @@ public class SageImageDiscoveryService implements IService {
         return lsmStack;
     }
 
+    protected void fixOrderIndices(Entity topLevelFolder) throws Exception {
+		logger.info("Fixing sample order indicies");
+		
+    	for(Entity tilingPatternFolder : topLevelFolder.getChildren()) {
+    		if (tilingPatternFolder.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+    			
+    			logger.info("Fixing order indicies in "+tilingPatternFolder.getName());
+
+    	    	List<EntityData> orderedData = new ArrayList<EntityData>();
+    			for(EntityData ed : tilingPatternFolder.getEntityData()) {
+    				if (ed.getChildEntity()!=null) {
+    					orderedData.add(ed);
+    				}
+    			}
+    	    	Collections.sort(orderedData, new Comparator<EntityData>() {
+    				@Override
+    				public int compare(EntityData o1, EntityData o2) {
+    					return o1.getChildEntity().getCreationDate().compareTo(o2.getChildEntity().getCreationDate());
+    				}
+    			});
+    			
+    	    	int orderIndex = 0;
+    			for(EntityData ed : orderedData) {
+    				if (orderIndex!=ed.getOrderIndex()) {
+    					logger.info("  Updating link (id="+ed.getId()+") to "+ed.getChildEntity().getName()+" with order index "+orderIndex+" (was "+ed.getOrderIndex()+")");
+    					ed.setOrderIndex(orderIndex);
+    					entityBean.saveOrUpdateEntityData(ed);
+    				}
+    				orderIndex++;
+    			}
+    		}
+    	}
+    }
     
     protected Entity createOrVerifyRootEntityButDontLoadTree(String topLevelFolderName) throws Exception {
         return createOrVerifyRootEntity(topLevelFolderName, user, createDate, logger, true /* create if necessary */, false /* load tree */);

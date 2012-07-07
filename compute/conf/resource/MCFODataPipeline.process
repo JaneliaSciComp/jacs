@@ -66,6 +66,7 @@
 		            <input name="REFRESH_SEPARATION"/>
 		            <input name="PARAMETER_4_VALUE" value="$V{REFRESH_SEPARATION}"/>
 		        </operation>
+		        
 			</sequence>
 	    </sequence>
 	    
