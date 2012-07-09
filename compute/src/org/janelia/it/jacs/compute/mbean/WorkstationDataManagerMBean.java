@@ -20,6 +20,8 @@ public interface WorkstationDataManagerMBean {
 	
 	public void runSolrTreeIndexing(Long rootId);
 	
+	public void runOrphanAnnotationCheckerService(String user, Boolean deleteAnnotationsMissingTargets, Boolean deleteAnnotationsMissingTerms);
+	
 	public void runSampleCleaningService(String user, Boolean testRun);
 	
     public void runSampleSyncService(String user, Boolean testRun);

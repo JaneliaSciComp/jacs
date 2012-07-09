@@ -1,0 +1,9 @@
+<!-- 
+	Check for orphan annotations, and potentially remove them.
+-->
+<process name="Orphan Annotation Checker" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
+	<sequence>
+		<operation name="Orphan Annotation" processor="org.janelia.it.jacs.compute.service.entity.OrphanAnnotationCheckerService">
+		</operation>
+    </sequence>
+</process>

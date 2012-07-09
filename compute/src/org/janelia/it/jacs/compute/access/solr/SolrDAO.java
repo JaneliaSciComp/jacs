@@ -281,7 +281,7 @@ public class SolrDAO extends AnnotationDAO {
     
     private void index(List<SolrInputDocument> docs) throws DaoException {
     	init();
-    	if (docs==null) return;
+    	if (docs==null||docs.isEmpty()) return;
     	try {
 	    	solr.add(docs);
 		}

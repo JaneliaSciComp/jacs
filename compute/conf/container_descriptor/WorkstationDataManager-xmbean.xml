@@ -97,6 +97,26 @@
     </operation>
     
     <operation>
+        <description>Check for orphan annotations, and possibly delete them.</description>
+        <name>runOrphanAnnotationCheckerService</name>
+        <parameter>
+           <description>User to run as (e.g. "system")</description>
+           <name>user</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Should we delete annotations which have nonexistent targets?</description>
+           <name>deleteAnnotationsMissingTargets</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+           <description>Should we delete annotations which have nonexistent ontology terms?</description>
+           <name>deleteAnnotationsMissingTerms</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+    </operation>
+    
+    <operation>
         <description>Clean old, non-annotated results from Sample entities. WARNING: this depends heavily on the Solr index, and should be run at an off-peak time, directly after runSolrIndexSync.</description>
         <name>runSampleCleaningService</name>
         <parameter>

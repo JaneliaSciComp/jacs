@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.mbean;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
+import org.janelia.it.jacs.compute.service.entity.OrphanAnnotationCheckerService;
 import org.janelia.it.jacs.compute.service.entity.SampleFileNodeSyncService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FlyScreenDiscoveryService;
 import org.janelia.it.jacs.compute.service.fly.MaskGuideService;
@@ -142,7 +143,22 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
-
+    
+    public void runOrphanAnnotationCheckerService(String user, Boolean deleteAnnotationsMissingTargets, Boolean deleteAnnotationsMissingTerms) {
+        try {
+        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        	taskParameters.add(new TaskParameter(OrphanAnnotationCheckerService.PARAM_removeAnnotationsMissingTargets, Boolean.toString(deleteAnnotationsMissingTargets), null)); 
+        	taskParameters.add(new TaskParameter(OrphanAnnotationCheckerService.PARAM_removeAnnotationsMissingTerms, Boolean.toString(deleteAnnotationsMissingTerms), null)); 
+        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
+        			taskParameters, "orphanAnnotationChecker", "Orphan Annotation Checker");
+            task.setJobName("Orphan Annotation Checker Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("OrphanAnnotationChecker", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
     public void runSampleCleaningService(String user, Boolean testRun) {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();

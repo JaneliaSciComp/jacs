@@ -2151,7 +2151,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	return list;
     }
     
-    public List<Long> getImageIdsWithPath(Long userId, String imagePath, String slideCode) throws DaoException {
+    public List<Long> getImageIdsWithName(Long userId, String imagePath) throws DaoException {
     	
     	List<Long> sampleIds = new ArrayList<Long>();
         Connection conn = null;
@@ -2159,27 +2159,14 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	try {
 
             StringBuffer sql = new StringBuffer("select distinct i.id from entity i ");
-            sql.append("join entityData ed1 on i.id = ed1.child_entity_id ");
-            sql.append("join entityData ed2 on ed1.parent_entity_id = ed2.child_entity_id ");
-            sql.append("join entityData ed3 on ed2.parent_entity_id = ed3.child_entity_id ");
-            sql.append("join entityData ed4 on ed3.parent_entity_id = ed4.child_entity_id ");
-            sql.append("join entity s on ed3.parent_entity_id = s.id ");
-            sql.append("join entity f on ed4.parent_entity_id = f.id ");
             sql.append("where i.name = ? ");
-            sql.append("and s.user_id = ? ");
-            
-            if (slideCode!=null) {
-            	// TODO: slide code should be an attribute of the Sample; we shouldn't rely on the containing folder name
-            	sql.append("and f.name = ? ");
-            }
+            sql.append("and i.user_id = ? ");
             
 	        conn = getJdbcConnection();
 	        stmt = conn.prepareStatement(sql.toString());
 	        stmt.setString(1, imagePath);
 	        stmt.setLong(2, userId);
-	        if (slideCode!=null) {
-	        	stmt.setString(3, slideCode);
-	        }
+
 	        
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {

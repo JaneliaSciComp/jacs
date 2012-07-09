@@ -306,8 +306,7 @@ public class LargeOperations {
     	String imagePath = (String)imageProps.get("name");
     	String[] path = imagePath.split("/"); // take just the filename
     	String filename = path[path.length-1];
-    	String slideCode = (String)imageProps.get("slide_code");
-    	List<Long> imageIds = annotationDAO.getImageIdsWithPath(systemUserId, filename, slideCode);
+    	List<Long> imageIds = annotationDAO.getImageIdsWithName(systemUserId, filename);
 		for(Long imageId : imageIds) {
 			putValue(sageImagePropCache, imageId, imageProps);
 		}
