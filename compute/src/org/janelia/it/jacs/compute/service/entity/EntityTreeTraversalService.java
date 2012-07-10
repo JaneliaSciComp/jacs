@@ -1,18 +1,16 @@
 package org.janelia.it.jacs.compute.service.entity;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
-import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Task;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Traverses the entity tree starting from a given root entity and builds a flattened list of ancestor
@@ -36,6 +34,7 @@ public class EntityTreeTraversalService implements IService {
             task = ProcessDataHelper.getTask(processData);
             
             String entityTypeName = (String)processData.getItem("ENTITY_TYPE_NAME");
+            Set<String> entityTypeSet = new HashSet<String>(Arrays.asList(entityTypeName.split(",")));
             String entityFilterClassName = (String)processData.getItem("ENTITY_FILTER_CLASS");
             
             EntityFilter entityFilter = null;            
@@ -73,7 +72,7 @@ public class EntityTreeTraversalService implements IService {
         	
         	logger.info("Traversing entity tree rooted at "+rootEntity.getName()+" and searching for "+entityTypeName+"...");
         	
-        	List<Entity> entities = rootEntity.getDescendantsOfType(entityTypeName, true);
+        	List<Entity> entities = getDescendantsOfType(entityTypeSet, true, rootEntity);
 
     		logger.info("Found "+entities.size()+" entities. Filtering...");
     		
@@ -90,5 +89,26 @@ public class EntityTreeTraversalService implements IService {
         } catch (Exception e) {
             throw new ServiceException(e);
         }
+    }
+
+    public List<Entity> getDescendantsOfType(Set types, boolean ignoreNested, Entity calledEntity) {
+
+        boolean found = false;
+        List<Entity> items = new ArrayList<Entity>();
+        if (types==null || types.contains(calledEntity.getEntityType().getName())) {
+            items.add(calledEntity);
+            found = true;
+        }
+
+        if (!found || !ignoreNested) {
+            for (EntityData entityData : calledEntity.getOrderedEntityData()) {
+                Entity child = entityData.getChildEntity();
+                if (child != null) {
+                    items.addAll(getDescendantsOfType(types,ignoreNested,child));
+                }
+            }
+        }
+
+        return items;
     }
 }

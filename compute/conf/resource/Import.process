@@ -25,5 +25,32 @@
              <input name="ROOT_ENTITY_NAME"/>
              <input name="OUTVAR_ENTITY_ID" value="TOP_LEVEL_ENTITY_ID"/>
          </operation>
+
+         <operation name="Entity Tree Traversal" processor="org.janelia.it.jacs.compute.service.entity.EntityTreeTraversalService">
+             <input name="ENTITY_TYPE_NAME" value="LSM Stack,Image 3D"/>
+             <input name="TOP_LEVEL_ENTITY_ID"/>
+             <input name="ROOT_ENTITY_ID" value="$V{TOP_LEVEL_ENTITY_ID}"/>
+             <input name="OUTVAR_ENTITY_ID" value="IMAGE_ENTITY_ID"/>
+         </operation>
+
+         <operation name="Create Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+             <input name="NAME" value="Imported_MIPs"/>
+             <output name="RESULT_FILE_NODE"/>
+             <output name="RESULT_FILE_NODE_ID"/>
+         </operation>
+
+         <sequence forEach="IMAGE_ENTITY_ID">
+             <sequence name="Channel conversion" waitForAsync="true">
+                 <operation name="MIP Generation" processor="queue/gridSubmitAndWait">
+                     <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.MIPGenerationService"/>
+                     <input name="RESULT_FILE_NODE"/>
+                     <input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
+                     <input name="MERGED_FILE"/>
+                     <input name="INPUT_PATH_1" value="$V{MERGED_FILE}"/>
+                     <input name="SAMPLE_FILE"/>
+                     <input name="OUTPUT_PATH_1" value="$V{SAMPLE_FILE}"/>
+                 </operation>
+             </sequence>
+         </sequence>
     </sequence>
 </process>

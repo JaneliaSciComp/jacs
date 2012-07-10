@@ -23,7 +23,6 @@ import java.util.*;
  * User: murphys
  * Date: 2/17/12
  * Time: 9:41 AM
- * To change this template use File | Settings | File Templates.
  */
 public class FileTreeLoaderService extends FileDiscoveryService {
 
