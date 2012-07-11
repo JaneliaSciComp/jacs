@@ -10,6 +10,7 @@ import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.util.FileUtils;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
@@ -22,6 +23,8 @@ import org.janelia.it.jacs.model.tasks.Task;
 public class MCFODataCompressService implements IService {
 
 	public transient static final String CENTRAL_DIR_PROP = "FileStore.CentralDir";
+	
+	private static final String centralDir = SystemConfigurationProperties.getString(CENTRAL_DIR_PROP);
 	
     public static final String MODE_UNDEFINED = "UNDEFINED";
     public static final String MODE_CREATE_INPUT_LIST = "CREATE_INPUT_LIST";
@@ -140,7 +143,7 @@ public class MCFODataCompressService implements IService {
 				logger.warn("Ignoring entity with v3draw filepath that is not an Image 3D: "+entity.getId());
 				continue;
 			}
-			if (!entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH).contains(CENTRAL_DIR_PROP)) {
+			if (!entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH).contains(centralDir)) {
 				logger.warn("Ignoring entity with which does not contain the FileStore.CentralDir: "+entity.getId());
 				continue;
 			}
