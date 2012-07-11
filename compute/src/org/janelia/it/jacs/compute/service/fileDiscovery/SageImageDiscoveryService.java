@@ -450,7 +450,7 @@ public class SageImageDiscoveryService implements IService {
     			
     	    	int orderIndex = 0;
     			for(EntityData ed : orderedData) {
-    				if (orderIndex!=ed.getOrderIndex()) {
+    				if (ed.getOrderIndex()==null || orderIndex!=ed.getOrderIndex()) {
     					logger.info("  Updating link (id="+ed.getId()+") to "+ed.getChildEntity().getName()+" with order index "+orderIndex+" (was "+ed.getOrderIndex()+")");
     					ed.setOrderIndex(orderIndex);
     					entityBean.saveOrUpdateEntityData(ed);
