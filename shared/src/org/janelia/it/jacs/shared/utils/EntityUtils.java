@@ -218,6 +218,18 @@ public class EntityUtils {
 		return false;
 	}
 
+	/**
+	 * Returns true if the given data plays an image thumbnail role. 
+	 * @param entityData
+	 * @return
+	 */
+	public static boolean hasImageRole(EntityData entityData) {
+		String attrName = entityData.getEntityAttribute().getName();
+		return (attrName.equals(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE) || 
+				attrName.equals(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE) || 
+				attrName.equals(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE));
+	}
+	
 	public static void replaceChildNodes(Entity entity, Set<Entity> childEntitySet) {
 
         Map<Long, Entity> childEntityMap = new HashMap<Long, Entity>();
