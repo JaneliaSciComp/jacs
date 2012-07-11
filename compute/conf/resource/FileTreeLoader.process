@@ -71,7 +71,8 @@
                         <sequence name="PBD Generation" waitForAsync="true">
         		            <operation name="PBD Generation" processor="queue/gridSubmitAndWait">
         				        <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DConversionService"/>
-        				        <input name="PBD_RESULT_NODE"/>
+                                <input name="IGNORE_ERRORS" value="true"/>
+                                <input name="PBD_RESULT_NODE"/>
         				        <input name="PBD_INPUT_LIST"/>
         				        <input name="PBD_OUTPUT_LIST"/>
         				        <input name="OUTPUT_8BIT" value="true"/>
@@ -115,7 +116,8 @@
                         <sequence name="MIP Generation" waitForAsync="true">
         		            <operation name="MIP Generation" processor="queue/gridSubmitAndWait">
         				        <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.MIPGenerationService"/>
-        				        <input name="MIP_RESULT_NODE"/>
+                                <input name="IGNORE_ERRORS" value="true"/>
+                                <input name="MIP_RESULT_NODE"/>
         				        <input name="MIP_INPUT_LIST"/>
         				        <input name="MIP_OUTPUT_LIST"/>
         				        <input name="RESULT_FILE_NODE" value="$V{MIP_RESULT_NODE}"/>
@@ -129,7 +131,8 @@
         		            <operation name="MIP Conversion to PNG" processor="queue/gridSubmitAndWait">
        			                <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ImageConversionService"/>
         				        <input name="MIP_RESULT_NODE"/>
-        		                <input name="RESULT_FILE_NODE" value="$V{MIP_RESULT_NODE}"/>
+                                <input name="IGNORE_ERRORS" value="true"/>
+                                <input name="RESULT_FILE_NODE" value="$V{MIP_RESULT_NODE}"/>
        		    		        <input name="OUTPUT_FILE_NODE" value="$V{MIP_RESULT_NODE}"/>
    						        <input name="INPUT_FILENAME_REGEX" value="(mip(.*?))\.tif$"/>
         				        <input name="OUTPUT_FILENAME_PATTERN" value="$1.png"/>
