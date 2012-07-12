@@ -278,8 +278,6 @@ public class LargeOperations {
      * @throws DaoException
      */
     public void buildSageImagePropMap(String imageFamily) throws DaoException {
-
-    	User systemUser = annotationDAO.getUserByName("system");
     	
     	logger.info("Building property map for all Sage images in image family '"+imageFamily+"'");
     	SageDAO sage = new SageDAO(logger);
@@ -288,7 +286,7 @@ public class LargeOperations {
     	try {
     		while (iterator.hasNext()) {
         		Map<String,Object> row = iterator.next();
-				associateImageProperties(systemUser.getUserId(), row);
+				associateImageProperties(row);
         	}
     	}
     	catch (RuntimeException e) {
@@ -302,12 +300,11 @@ public class LargeOperations {
         }
     }
     
-    private void associateImageProperties(Long systemUserId, Map<String,Object> imageProps) throws DaoException {
+    private void associateImageProperties(Map<String,Object> imageProps) throws DaoException {
     	String imagePath = (String)imageProps.get("name");
     	String[] path = imagePath.split("/"); // take just the filename
     	String filename = path[path.length-1];
-    	List<Long> imageIds = annotationDAO.getImageIdsWithName(systemUserId, filename);
-		for(Long imageId : imageIds) {
+		for(Long imageId : annotationDAO.getImageIdsWithName(null, filename)) {
 			putValue(sageImagePropCache, imageId, imageProps);
 		}
     }

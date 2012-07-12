@@ -2160,13 +2160,16 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
             StringBuffer sql = new StringBuffer("select distinct i.id from entity i ");
             sql.append("where i.name = ? ");
-            sql.append("and i.user_id = ? ");
+            if (userId!=null) {
+            	sql.append("and i.user_id = ? ");
+            }
             
 	        conn = getJdbcConnection();
 	        stmt = conn.prepareStatement(sql.toString());
 	        stmt.setString(1, imagePath);
-	        stmt.setLong(2, userId);
-
+            if (userId!=null) {
+            	stmt.setLong(2, userId);
+            }
 	        
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {
