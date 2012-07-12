@@ -489,7 +489,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     	}
     }
     
-    public List<MappedId> getProjectedResults(List<Long> entityIds, List<EntityMapStep> upMapping, List<EntityMapStep> downMapping) throws ComputeException {
+    public List<MappedId> getProjectedResults(List<Long> entityIds, List<String> upMapping, List<String> downMapping) throws ComputeException {
     	try {
         	return _annotationDAO.getProjectedResults(entityIds, upMapping, downMapping);
         } catch (DaoException e) {

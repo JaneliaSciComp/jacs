@@ -2048,7 +2048,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	return null;
     }
 
-    public List<MappedId> getProjectedResults(List<Long> entityIds, List<EntityMapStep> upProjection, List<EntityMapStep> downProjection) throws DaoException {
+    public List<MappedId> getProjectedResults(List<Long> entityIds, List<String> upProjection, List<String> downProjection) throws DaoException {
     	
     	if (entityIds.isEmpty()) {
     		throw new DaoException("getProjectedResults: entity ids cannot be empty");
@@ -2068,13 +2068,13 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	
 
     	List<Long> upTypeProjection = new ArrayList<Long>();
-    	for(EntityMapStep step : upProjection) {
-    		upTypeProjection.add(getEntityTypeByName(step.getEntityType()).getId());
+    	for(String entityType : upProjection) {
+    		upTypeProjection.add(getEntityTypeByName(entityType).getId());
     	}
 
     	List<Long> downTypeProjection = new ArrayList<Long>();
-    	for(EntityMapStep step : downProjection) {
-    		downTypeProjection.add(getEntityTypeByName(step.getEntityType()).getId());
+    	for(String entityType : downProjection) {
+    		downTypeProjection.add(getEntityTypeByName(entityType).getId());
     	}
     	
         Connection conn = null;
