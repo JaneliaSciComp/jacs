@@ -277,13 +277,13 @@ public class LargeOperations {
      * Builds a map of image paths to Sage properties.
      * @throws DaoException
      */
-    public void buildSageImagePropMap() throws DaoException {
+    public void buildSageImagePropMap(String imageFamily) throws DaoException {
 
     	User systemUser = annotationDAO.getUserByName("system");
     	
-    	logger.info("Building property map for all Sage images");
+    	logger.info("Building property map for all Sage images in image family '"+imageFamily+"'");
     	SageDAO sage = new SageDAO(logger);
-    	ResultSetIterator iterator = sage.getImages("flylight_flip");
+    	ResultSetIterator iterator = sage.getImages(imageFamily);
     	
     	try {
     		while (iterator.hasNext()) {
