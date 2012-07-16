@@ -816,7 +816,7 @@
 
     <target name="getHost" unless="host.provided" description="Ping the user for a host">
         <input message="Please enter server name, or set your user.server.machine property:" addproperty="server.address" />
-        <!--<input message="Please enter password for saffordt:" addproperty="server.password" />-->
+        <input message="Please enter password for saffordt:" addproperty="server.password" />
         <antcall target="deploy-server"/>
     </target>
 
