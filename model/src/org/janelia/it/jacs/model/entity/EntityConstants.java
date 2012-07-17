@@ -91,10 +91,19 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ORIGINAL_FLYLINE                    = "Original Fly Line";
     public static final String ATTRIBUTE_BALANCED_FLYLINE                    = "Balanced Fly Line";
     public static final String ATTRIBUTE_ROBOT_ID                            = "Robot Id";
-    public static final String ATTRIBUTE_REFERENCE_CHANNEL                   = "Reference Channel";
-    public static final String ATTRIBUTE_SIGNAL_CHANNELS                     = "Signal Channels";
     public static final String ATTRIBUTE_ALIGNMENT_TYPES                     = "Alignment Types";
+    public static final String ATTRIBUTE_CHANNEL_SPECIFICATION               = "Channel Specification";
     public static final String ATTRIBUTE_CROSS_LABEL                         = "Cross Label";
+
+    /**
+     * @deprecated Use ATTRIBUTE_SIGNAL_SPECIFICATION instead. This will be removed someday.
+     */
+    public static final String ATTRIBUTE_REFERENCE_CHANNEL                   = "Reference Channel";
+    
+    /**
+     * @deprecated Use ATTRIBUTE_SIGNAL_SPECIFICATION instead. This will be removed someday.
+     */
+    public static final String ATTRIBUTE_SIGNAL_CHANNELS                     = "Signal Channels";
     
     /**
      * @deprecated Use TYPE_IMAGE_2D instead. This will be removed someday.

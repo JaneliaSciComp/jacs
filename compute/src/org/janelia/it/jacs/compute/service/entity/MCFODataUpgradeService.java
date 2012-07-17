@@ -59,10 +59,9 @@ public class MCFODataUpgradeService implements IService {
             	logger.info("This is the real thing. Entities will be moved and/or deleted!");
             }
             
-            processCommonRootFolders();
+            processSamples();
     	}
         catch (Exception e) {
-			logger.info("Encountered an exception. Before dying, we...");
         	if (e instanceof ServiceException) {
             	throw (ServiceException)e;
             }
@@ -73,45 +72,82 @@ public class MCFODataUpgradeService implements IService {
         }
     }
 
-    public void processCommonRootFolders() throws ComputeException {
-        List<Entity> entities=annotationBean.getCommonRootEntitiesByTypeName(username, EntityConstants.TYPE_FOLDER);
-        for(Entity topEntity : entities) {
-            logger.info("Found top-level entity name="+topEntity.getName());
-            Entity tree = entityBean.getEntityTree(topEntity.getId());
-            processEntityTree(tree);
+    public void processSamples() throws ComputeException {
+    	List<Entity> samples = entityBean.getUserEntitiesByTypeName(username, EntityConstants.TYPE_SAMPLE);
+        for(Entity sample : samples) {
+            processSample(sample);
         }
 		logger.info("The surgery was a success.");
     }
     
-    public void processEntityTree(Entity entity) throws ComputeException {
+    public void processSample(Entity sample) throws ComputeException {
     	
-    	if (visited.contains(entity.getId())) return;
-    	visited.add(entity.getId());
+    	if (!sample.getUser().getUserLogin().equals(username)) return;
     	
-    	if (!entity.getUser().getUserLogin().equals(username)) return;
-
-		logger.info("Processing "+entity.getName()+" (id="+entity.getId()+")");
+    	if (visited.contains(sample.getId())) return;
+    	visited.add(sample.getId());
+    	
+		logger.info("Processing "+sample.getName()+" (id="+sample.getId()+")");
 		numEntities++;
-
-    	String entityTypeName = entity.getEntityType().getName();
-    	if (entityTypeName.equals(EntityConstants.TYPE_SAMPLE)) {
-    		migrateSampleLevelLsmPairs(entity);
-        	migrateDefault2dImages(entity);
-    	}
+		
+		entityBean.loadLazyEntity(sample, false);
+		
+		migrateSampleLevelLsmPairs(sample);
+//        	migrateDefault2dImages(entity);
+    	migrateSignalSpecs(sample);
+    }
+    
+    /**
+     * Check for old-style signal specs, and convert them to the new single-attribute format.
+     * @param sample
+     * @throws ComputeException
+     */
+    private void migrateSignalSpecs(Entity sample) throws ComputeException {
     	
-		for(Entity child : entity.getChildren()) {
-			processEntityTree(child);
-		}
+    	EntityData refEd = sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_CHANNEL);
+    	EntityData sigEd = sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_CHANNELS);
+    	EntityData specEd = sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+    	
+    	if (refEd!=null) {
+        	logger.info("  Found old-style ref spec "+refEd.getValue()+" (id="+refEd.getId()+")");
+        	sample.getEntityData().remove(refEd);
+        	
+        	if (sigEd!=null) {
+	        	logger.info("  Found old-style signal spec "+sigEd.getValue()+" (id="+sigEd.getId()+")");
+	        	sample.getEntityData().remove(sigEd);
+        	}
+        	
+        	if (specEd!=null) {
+        		logger.info("  Found new-style spec "+specEd.getValue()+" (id="+specEd.getId()+")");
+	        	sample.getEntityData().remove(specEd);
+        	}
+        	
+        	String spec = null;
+        	if ("2".equals(refEd.getValue())) {
+        		spec = "ssr";
+        	}
+        	else if ("3".equals(refEd.getValue())) {
+        		spec = "sssr";
+        	}
+        	else {
+        		logger.warn("  Unknown reference channel "+refEd.getValue()+" for sample "+sample.getId());
+        	}
+        	
+        	if (spec!=null) {
+            	logger.info("  Adding new signal spec '"+spec+"' and removing old-style specs.");
+            	sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, spec);
+                if (!isDebug) {
+                	entityBean.saveOrUpdateEntity(sample);
+                }
+                numChanges++;
+        	}
+    	}
     }
     
     /**
      * Check for Samples with LSM pairs as direct children, and move the LSMs into Supporting Data.
      */
     private void migrateSampleLevelLsmPairs(Entity sample) throws ComputeException {
-
-    	if (!sample.getUser().getUserLogin().equals(username)) return;
-    	
-    	logger.info("migrateSampleLevelLsmPairs for sample "+sample.getName());
     	
     	List<EntityData> toMove = new ArrayList<EntityData>();
 		for(EntityData ed : sample.getEntityData()) {
@@ -125,6 +161,10 @@ public class MCFODataUpgradeService implements IService {
 			logger.info("Found old-style sample, id="+sample.getId()+" name="+sample.getName());
             Entity supportingFiles = entityHelper.getOrCreateSupportingFilesFolder(sample);
 
+        	if (!EntityUtils.areLoaded(supportingFiles.getEntityData())) {
+        		entityBean.loadLazyEntity(supportingFiles, false);
+        	}
+        	
     		for(EntityData ed : toMove) {
                 logger.info("    Moving ed="+ed.getId()+" to new parent "+supportingFiles.getId());
                 if (!isDebug) {
@@ -145,8 +185,6 @@ public class MCFODataUpgradeService implements IService {
      */
     protected void migrateDefault2dImages(Entity sample) throws ComputeException {
 
-    	if (!sample.getUser().getUserLogin().equals(username)) return;
-    	
     	logger.info("migrateDefault2dImages for sample "+sample.getName());
     	
         Entity latestSignalMIP = null;
@@ -162,6 +200,11 @@ public class MCFODataUpgradeService implements IService {
     	        Entity signalMIP = null;
     	        Entity referenceMIP = null; 	    		
 	            Entity supportingFiles = EntityUtils.getSupportingData(result);
+	            
+	        	if (!EntityUtils.areLoaded(supportingFiles.getEntityData())) {
+	        		entityBean.loadLazyEntity(supportingFiles, false);
+	        	}
+	            
 	            for(Entity fileEntity : supportingFiles.getOrderedChildren()) {
 	            	if ("ConsolidatedSignalMIP.png".equals(fileEntity.getName())) {
 	            		signalMIP = fileEntity;

@@ -31,8 +31,7 @@
 			<input name="ROOT_ENTITY_NAME"/>
 	        <input name="CONFOCAL_STACKS_DIR"/>
 	        <input name="SAGE_IMAGE_FAMILY"/>
-			<input name="SIGNAL CHANNELS" value="0 1 2"/>
-			<input name="REFERENCE CHANNEL" value="3"/>
+	        <input name="DEFAULT CHANNEL SPECIFICATION" value="sssr"/>
 			<input name="OUTVAR_ENTITY_ID" value="TOP_LEVEL_ENTITY_ID"/>
 		</operation>
 		

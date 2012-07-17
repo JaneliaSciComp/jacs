@@ -22,7 +22,7 @@ import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
- * File discovery service for samples defined by a slide_group_info.txt metadata file.
+ * Discovers images in SAGE which are part of a particular image family, and creates Samples within the entity model.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -38,8 +38,7 @@ public class SageImageDiscoveryService implements IService {
     protected String confocalStacksDir;
     protected String sageImageFamily;
     protected IProcessData processData;
-    protected String signalChannels;
-    protected String referenceChannel;
+    protected String defaultChannelSpec;
     protected String alignmentTypes;
     
     public void execute(IProcessData processData) throws ServiceException {
@@ -60,16 +59,11 @@ public class SageImageDiscoveryService implements IService {
             if (sageImageFamily==null) {
         		throw new IllegalArgumentException("SAGE_IMAGE_FAMILY may not be null");
             }
-            
-            signalChannels = (String)processData.getItem("SIGNAL CHANNELS");
-            if (signalChannels==null) {
-        		throw new IllegalArgumentException("SIGNAL CHANNELS may not be null");
-            }
-            
-            referenceChannel = (String)processData.getItem("REFERENCE CHANNEL");
-            if (referenceChannel==null) {
-        		throw new IllegalArgumentException("REFERENCE CHANNEL may not be null");
-            }
+
+			defaultChannelSpec = (String) processData.getItem("DEFAULT CHANNEL SPECIFICATION");
+			if (defaultChannelSpec == null) {
+				throw new IllegalArgumentException("DEFAULT CHANNEL SPECIFICATION may not be null");
+			}
             
             alignmentTypes = (String)processData.getItem("ALIGNMENT_TYPES");
             if (alignmentTypes==null) {
@@ -152,6 +146,7 @@ public class SageImageDiscoveryService implements IService {
 				slideImage.gender = (String)row.get("gender");
 				slideImage.effector = (String)row.get("effector");
 				slideImage.line = (String)row.get("line");
+				slideImage.channelSpec = (String)row.get("channel_spec");
 
 				if (!slideImage.slideCode.equals(currSlideCode)) {
 
@@ -189,13 +184,21 @@ public class SageImageDiscoveryService implements IService {
     	
         HashMap<String, FilePair> filePairings = new HashMap<String, FilePair>();
         String sampleIdentifier = null;
+        String sampleChannelSpec = null;
 
         logger.info("Processing "+slideCode+", "+slideGroup.size()+" tiles");
         
+        int i = 0;
         for(SlideImage slideImage : slideGroup) {
     	
-            if (!filePairings.containsKey(slideImage.tileType)) {
-            	FilePair filePair = new FilePair(slideImage.tileType);
+            if (slideImage.tileType==null || !filePairings.containsKey(slideImage.tileType)) {
+            	
+            	String pairTag = slideImage.tileType;
+            	if (pairTag==null) {
+            		pairTag = "Tile "+(i+1);
+            	}
+            	
+            	FilePair filePair = new FilePair(pairTag);
             	File lsmFile1 = new File(confocalStacksDir,slideImage.imagePath);
             	filePair.setFilename1(lsmFile1.getAbsolutePath());
         		if (!lsmFile1.exists()) {
@@ -221,6 +224,20 @@ public class SageImageDiscoveryService implements IService {
             if (sampleIdentifier==null) {
                 sampleIdentifier = slideImage.line + "-" + slideCode;
             }
+            if (sampleChannelSpec==null) {
+            	if (slideImage.channelSpec!=null) {
+            		sampleChannelSpec = slideImage.channelSpec;
+            	}
+            }
+            else if (slideImage.channelSpec!=null && !sampleChannelSpec.equals(slideImage.channelSpec)) {
+            	logger.warn("Inconsistent channel specification for "+sampleIdentifier+" ("+sampleChannelSpec+" vs "+slideImage.channelSpec+")");
+            }
+            
+            i++;
+        }
+        
+        if (sampleChannelSpec==null) {
+        	sampleChannelSpec = defaultChannelSpec;
         }
         
         // Get a list of complete pairs
@@ -272,7 +289,7 @@ public class SageImageDiscoveryService implements IService {
         if (tiling != null && tiling.isStitchable()) {
         	// This is a stitchable case
         	logger.info("Sample "+sampleIdentifier+" is stitchable");
-            Entity sample = createOrVerifySample(topLevelFolder, sampleIdentifier, tiling);
+            Entity sample = createOrVerifySample(topLevelFolder, sampleIdentifier, tiling, sampleChannelSpec);
         	// Add the LSM pairs to the Sample's Supporting Files folder
             for (FilePair filePair : filePairs) {
             	addLsmPairToSample(sample, filePair);
@@ -283,18 +300,18 @@ public class SageImageDiscoveryService implements IService {
         	logger.info("Sample "+sampleIdentifier+" is not stitchable");
             for (FilePair filePair : filePairs) {
             	String sampleName = sampleIdentifier+"-"+filePair.getPairTag().replaceAll(" ", "_");
-                Entity sample = createOrVerifySample(topLevelFolder, sampleName, tiling);
+                Entity sample = createOrVerifySample(topLevelFolder, sampleName, tiling, sampleChannelSpec);
             	addLsmPairToSample(sample, filePair);
             }
         }
     }
     
-    private Entity createOrVerifySample(Entity topLevelFolder, String name, TilingPattern tiling) throws Exception {
+    private Entity createOrVerifySample(Entity topLevelFolder, String name, TilingPattern tiling, String channelSpec) throws Exception {
     	
     	Entity tilingPatternFolder = verifyOrCreateChildFolder(topLevelFolder, tiling.getName());
         Entity sample = findExistingSample(tilingPatternFolder, name);
         if (sample == null) {
-	        sample = createSample(name, tiling);
+	        sample = createSample(name, tiling, channelSpec);
 	        addToParent(tilingPatternFolder, sample, tilingPatternFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
         }
         else {
@@ -386,7 +403,7 @@ public class SageImageDiscoveryService implements IService {
     	return null;
     }
 
-    protected Entity createSample(String name, TilingPattern tiling) throws Exception {
+    protected Entity createSample(String name, TilingPattern tiling, String channelSpec) throws Exception {
         Entity sample = new Entity();
         sample.setUser(user);
         sample.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SAMPLE));
@@ -394,8 +411,7 @@ public class SageImageDiscoveryService implements IService {
         sample.setUpdatedDate(createDate);
         sample.setName(name);
         sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN, tiling.toString());
-        sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_CHANNELS, signalChannels);
-        sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_CHANNEL, referenceChannel);
+        sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec);
         sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_TYPES, alignmentTypes);
         sample = entityBean.saveOrUpdateEntity(sample);
         logger.info("Saved sample as "+sample.getId());
@@ -562,6 +578,7 @@ public class SageImageDiscoveryService implements IService {
     	String gender;
     	String effector;
     	String line;
+    	String channelSpec;
     }
     
     private class FilePair {
