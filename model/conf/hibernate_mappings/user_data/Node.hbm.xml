@@ -675,6 +675,12 @@
                       select-before-update="false">
             </subclass>
 
+            <subclass name="org.janelia.it.jacs.model.user_data.neuron.NeuronMergeResultNode" discriminator-value="NeuronMergeResultNode"
+                      dynamic-update="true"
+                      dynamic-insert="true"
+                      select-before-update="false">
+            </subclass>
+
             <subclass name="org.janelia.it.jacs.model.user_data.tic.TICResultNode" discriminator-value="TICResultNode"
                       dynamic-update="true"
                       dynamic-insert="true"

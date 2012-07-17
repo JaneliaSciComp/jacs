@@ -1,32 +1,38 @@
 package org.janelia.it.jacs.compute.service.vaa3d;
 
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
-import org.janelia.it.jacs.compute.service.entity.EntityHelper;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.neuron.NeuronMergeTask;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.util.ArrayList;
 
 /**
  * Merge neuron fragments.
  * Parameters:
- *   RESULT_FILE_NODE - the directory to use for SGE config and output
- *   BULK_MERGE_PARAMETERS - a list of MergedLsmPair
- * 
+ *
  * @author <a href="mailto:saffordt@janelia.hhmi.org">Todd Safford</a>
  */
 public class Vaa3DNeuronMergeService extends SubmitDrmaaJobService {
+
+    protected static final String CONVERT_BASE_CMD = SystemConfigurationProperties.getString("Executables.ModuleBase") +
+            SystemConfigurationProperties.getString("ImageMagick.Bin.Path")+"/convert";
 
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
     private static final String CONFIG_PREFIX = "neuMergeConfiguration.";
 
     protected void init(IProcessData processData) throws Exception {
+        //processData.
         super.init(processData);
     }
 
@@ -37,24 +43,27 @@ public class Vaa3DNeuronMergeService extends SubmitDrmaaJobService {
 
     @Override
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
+        EntityBeanLocal entityBean = EJBFactory.getLocalEntityBean();
+        ArrayList<String> tmpFragmentNumberList = new ArrayList<String>();
+        String commaSeparatedFragmentIdList=task.getParameter(NeuronMergeTask.PARAM_commaSeparatedNeuronFragmentList);
+        for (String tmpFragmentOid : Task.listOfStringsFromCsvString(commaSeparatedFragmentIdList)) {
+            tmpFragmentNumberList.add(entityBean.getEntityById(tmpFragmentOid).getValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER));
+        }
+        String commaSeparatedFragmentList = Task.csvStringFromCollection(tmpFragmentNumberList);
+        Entity separationEntity = entityBean.getEntityById(task.getParameter(NeuronMergeTask.PARAM_separationEntityId));
+        String tmpPath = separationEntity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH).getValue();
+        String originalImageFilePath = tmpPath+File.separator+"ConsolidatedSignal.v3dpbd";
+        String consolidatedSignalLabelIndexFilePath=tmpPath+File.separator+"ConsolidatedLabel.v3dpbd";
 
-        EntityHelper helper = new EntityHelper();
-        Entity separationEntity = EJBFactory.getLocalEntityBean().getEntityById(task.getParameter(NeuronMergeTask.PARAM_separationEntityId));
 
-//        String originalImageFilePath = separationEntity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-//        String consolidatedSignalLabelIndexFilePath;
-//        String commaSeparatedFragmentList;
-//        String newOutputMIPPath;
-//        String newOutputStackPath;
-//
-//        if (inputFileNode==null) {
-//            throw new ServiceException("Input parameter INPUT_FILE_NODE may not be null");
-//        }
+        // Get the next Neuron Fragment Number for this Separation
+        String originalOutputMIPPath=resultFileNode.getDirectoryPath()+File.separator+"CuratedNeuronMIP.tif";
+        String newOutputStackPath=resultFileNode.getDirectoryPath()+File.separator+"CuratedNeuronStack.v3dpbd";
 
         writeInstanceFiles();
         setJobIncrementStop(1);
-//        createShellScript(writer, originalImageFilePath, consolidatedSignalLabelIndexFilePath,
-//                commaSeparatedFragmentList, newOutputMIPPath, newOutputStackPath);
+        createShellScript(writer, originalImageFilePath, consolidatedSignalLabelIndexFilePath,
+                commaSeparatedFragmentList, originalOutputMIPPath, newOutputStackPath);
     }
 
     private void writeInstanceFiles() throws Exception {
@@ -73,6 +82,7 @@ public class Vaa3DNeuronMergeService extends SubmitDrmaaJobService {
      */
     private void createShellScript(FileWriter writer, String originalImageFilePath, String consolidatedSignalLabelIndexFilePath,
                                    String commaSeparatedFragmentList, String newOutputMIPPath, String newOutputStackPath) throws Exception {
+        String finalOutputMIPPath = resultFileNode.getDirectoryPath()+File.separator+"CuratedNeuronMIP.png";
         StringBuffer script = new StringBuffer();
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix());
         script.append("\n");
@@ -80,7 +90,8 @@ public class Vaa3DNeuronMergeService extends SubmitDrmaaJobService {
                 commaSeparatedFragmentList, newOutputMIPPath, newOutputStackPath));
         script.append("\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix());
-        script.append("\n");
+        script.append(CONVERT_BASE_CMD).append(" -flip ").append(newOutputMIPPath).append(" ").append(finalOutputMIPPath).append(" \n");
+        script.append("rm -f ").append(newOutputMIPPath).append("\n");
         writer.write(script.toString());
     }
 
@@ -88,7 +99,7 @@ public class Vaa3DNeuronMergeService extends SubmitDrmaaJobService {
     protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
         SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
         // Reserve 4 slots on a node. This gives us 12 GB of memory.
-        jt.setNativeSpecification("-pe batch 4");
+        jt.setNativeSpecification("-pe batch 4 -l short=true");
         return jt;
     }
 

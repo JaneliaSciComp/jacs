@@ -118,7 +118,7 @@ public class Vaa3DHelper {
 
     public static String getVaa3DGridCommandSuffix() {
         // Kill the Xvfb
-        return "kill $MYPID";
+        return "kill $MYPID \n";
     }
 
     public static String getFormattedMIPCommand(String inputFilepath, String outputFilepath, String extraOptions) throws ServiceException {
