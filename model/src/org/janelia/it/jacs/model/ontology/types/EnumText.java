@@ -20,6 +20,10 @@ public class EnumText extends OntologyElementType {
 	private Long valueEnumId;
 	transient private OntologyElement valueEnum;
 	
+	public void init(Long valueEnumId) {
+		this.valueEnumId = valueEnumId;
+	}
+	
 	public void init(OntologyElement valueEnum) {
 		this.valueEnum = valueEnum;
 		this.valueEnumId = valueEnum.getId();

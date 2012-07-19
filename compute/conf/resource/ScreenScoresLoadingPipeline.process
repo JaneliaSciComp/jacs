@@ -1,0 +1,20 @@
+<!-- 
+	Load in the screen pattern intensity scores.
+-->
+<process name="Screen Score Loading Pipeline" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
+	<sequence>
+	
+	    <!-- Import variables from the MCFODataPipelineTask -->
+	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="TASK_PARAMETER_1" value="top level folder name"/>
+            <input name="PROCESS_VARIABLE_1" value="TOP_LEVEL_FOLDER_NAME"/>
+	        <output name="TOP_LEVEL_FOLDER_NAME"/>
+	    </operation>
+		 
+	    <!-- Load everything and create entities as needed -->
+		<operation name="Load Screen Scores" processor="org.janelia.it.jacs.compute.service.fly.ScreenScoresLoadingService">
+			<input name="TOP_LEVEL_FOLDER_NAME"/>
+		</operation>
+		
+    </sequence>
+</process>

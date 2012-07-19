@@ -124,6 +124,18 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             throw new ComputeException("Error creating ontology annotation for user "+userLogin,e);
         }
 	}
+	
+	public Entity createSilentOntologyAnnotation(String userLogin, OntologyAnnotation annotation) throws ComputeException {
+
+        try {
+        	return _annotationDAO.createOntologyAnnotation(userLogin, annotation);
+        }
+        catch (Exception e) {
+            _logger.error("Error creating ontology annotation for user "+userLogin,e);
+            throw new ComputeException("Error creating ontology annotation for user "+userLogin,e);
+        }
+	}
+
 
 	public void removeOntologyAnnotation(String userLogin, long annotationId) throws ComputeException {
         try {

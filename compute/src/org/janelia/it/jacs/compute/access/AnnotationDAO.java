@@ -79,43 +79,6 @@ public class AnnotationDAO extends ComputeBaseDAO {
             throw new DaoException(e);
         }
     }
-    
-    /**
-     * This method gets the annotations for an entity and then removes the one that matches the value annotated.
-     * This would be better if we had the annotation entity id, though.
-     * @param owner person who annotated the entity
-     * @param annotatedEntityId the id of the entity that the annotation is for
-     * @param tag the value of the annotation that is to be removed
-     * @return returns boolean of success
-     * @throws DaoException error trying to delete the annotation
-     */
-    public boolean deleteAnnotation(String owner, String annotatedEntityId, String tag) throws DaoException {
-        try {
-            if (null==tag || "".equals(tag)) { return false; }
-            ArrayList<Long> tmpIds = new ArrayList<Long>();
-            tmpIds.add(Long.parseLong(annotatedEntityId));
-            List<Entity> tmpAnnotations = getAnnotationsByEntityId(owner, tmpIds);
-            Entity tmpAnnotation=null;
-            for (Entity annotation : tmpAnnotations) {
-                if (annotation.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM).getParentEntity().getName().equals(tag)) {
-                    tmpAnnotation = annotation;
-                }
-            }
-            if (null == tmpAnnotation) {
-                // This should never happen
-                throw new DaoException("Cannot complete deletion when there are more than one annotation with that identifier.");
-            }
-            if (!tmpAnnotation.getUser().getUserLogin().equals(owner)) {
-                throw new DaoException("Cannot delete the annotation as the requestor doesn't own the annotation.");
-            }
-            getCurrentSession().delete(tmpAnnotation);
-            _logger.debug("The annotation has been deleted.");
-            return true;
-        }
-        catch (Exception e) {
-            throw new DaoException(e);
-        }
-    }
 
     // This should be more generic!  Pass the Entity class and that should be it
     public boolean deleteAnnotationSession(String owner, String uniqueIdentifier) throws DaoException {
@@ -1231,6 +1194,24 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
+	public Map<Long, String> getChildEntityNames(long entityId) throws DaoException {
+		Map<Long,String> nameMap = new LinkedHashMap<Long,String>();
+        try {
+            Session session = getCurrentSession();
+            StringBuffer hql = new StringBuffer("select ed.childEntity.id, ed.childEntity.name from EntityData ed ");
+            hql.append("where ed.parentEntity.id=? ");
+            Query query = session.createQuery(hql.toString()).setLong(0, entityId);
+            List results = query.list();
+            for(Object o : results) {
+            	Object[] row = (Object[])o;
+            	nameMap.put((Long)row[0],(String)row[1]);
+            }
+            return nameMap;
+        } catch (Exception e) {
+            throw new DaoException(e);
+        }
+	}
+	
     public List<Task> getAnnotationSessions(String userLogin) throws DaoException {
 		try {
 	        String hql = "select clazz from Task clazz where subclass='" + AnnotationSessionTask.TASK_NAME + "' and clazz.owner='" + userLogin + "' order by clazz.objectId";
@@ -1722,14 +1703,29 @@ public class AnnotationDAO extends ComputeBaseDAO {
         	if (tmpUser == null) {
         		throw new IllegalArgumentException("User "+userLogin+" not found");
         	}
-
+        	
         	Entity keyEntity = null;
         	boolean isCustom = false;
+        	
             if (annotation.getKeyEntityId() != null) {
             	keyEntity = getEntityById(annotation.getKeyEntityId());
-            	isCustom = keyEntity!=null && "Custom".equals(keyEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE));
+            	String termType = keyEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE);
+            	
+            	isCustom = keyEntity!=null && "Custom".equals(termType);
             	if (isCustom && StringUtils.isEmpty(annotation.getValueString())) {
             		throw new ComputeException("Value cannot be empty for custom annotation");
+            	}
+
+            	if (!"Text".equals(termType) && !"Custom".equals(termType)) {
+            		// Non-text annotations are exclusive, so delete existing annotations first
+		            List<Entity> existingAnnotations = getAnnotationsByEntityId(userLogin, annotation.getTargetEntityId());
+		        	for(Entity existingAnnotation : existingAnnotations) {
+		        		EntityData eaKeyEd = existingAnnotation.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
+		        		if (eaKeyEd==null) continue;
+    	        		if (eaKeyEd.getChildEntity().getId().equals(annotation.getKeyEntityId())) {
+    	        			deleteEntityById(existingAnnotation.getId());
+    	        		}
+	            	}
             	}
             }
             
@@ -1765,6 +1761,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 				EntityData keyEntityData = newData(newAnnotation,
 						EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID, tmpUser);
 				keyEntityData.setChildEntity(keyEntity);
+				keyEntityData.setValue(""+keyEntity.getId());
 				eds.add(keyEntityData);
             }
 
@@ -1774,6 +1771,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 				EntityData valueEntityData = newData(newAnnotation,
 						EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_ENTITY_ID, tmpUser);
 				valueEntityData.setChildEntity(valueEntity);
+				valueEntityData.setValue(""+valueEntity.getId());
 				eds.add(valueEntityData);
             }
             

@@ -2,6 +2,9 @@ package org.janelia.it.jacs.compute.api;
 
 import javax.ejb.Local;
 
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
+
 /**
  * A local interface to queries against specific types in the entity model, mainly
  * ontologies and annotations. Affords access to everything in AnnotationBeanRemote. 
@@ -11,5 +14,15 @@ import javax.ejb.Local;
  */
 @Local
 public interface AnnotationBeanLocal extends AnnotationBeanRemote {
+
+	/**
+	 * Just like createOntologyAnnotation, but it doesn't log anything, or trigger a reindexing. Useful for pipelines 
+	 * which create annotations en-masse. 
+	 * @param userLogin
+	 * @param annotation
+	 * @return
+	 * @throws ComputeException
+	 */
+	public Entity createSilentOntologyAnnotation(String userLogin, OntologyAnnotation annotation) throws ComputeException;
 	
 }

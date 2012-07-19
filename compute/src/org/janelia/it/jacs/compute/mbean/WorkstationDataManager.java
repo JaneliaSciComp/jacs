@@ -65,6 +65,20 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
+    public void runScreenScoresLoading(String user, String topLevelFolderName) {
+        try {
+        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        	taskParameters.add(new TaskParameter("top level folder name", topLevelFolderName, null));
+        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
+        			taskParameters, "screenScoresLoading", "Screen Scores Loading");
+            task.setJobName("Screen Scores Loading Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("ScreenScoresLoadingPipeline", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
     public void runAnnotationImport(String user, String annotationsPath, String ontologyName) {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();

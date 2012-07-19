@@ -4,7 +4,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
@@ -20,10 +23,9 @@ import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityType;
-import org.janelia.it.jacs.model.user_data.User;
 
 /**
- * Large operations which need to be done on disk using EhCache, lest we run out of memory.
+ * Large, memory-bound operations which need to be done on disk using EhCache, lest we run out of heap space.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -35,24 +37,28 @@ public class LargeOperations {
 	public static final String ANCESTOR_MAP = "ancestorMapCache";
 	public static final String NEO4J_MAP = "neo4jMapCache";
 	public static final String SAGE_IMAGEPROP_MAP = "sageImagePropCache";
+	public static final String SCREEN_SCORE_MAP = "screenScoreCache";
 	
 	protected static CacheManager manager;
-	protected static Cache annotationMapCache;
-	protected static Cache ancestorMapCache;
-	protected static Cache neo4jMapCache;
-	protected static Cache sageImagePropCache;
+	// Local cache for faster access to caches, without all the unnecessary checking that the CacheManager does
+	protected static Map<String,Cache> caches = new HashMap<String,Cache>();
 	
 	protected AnnotationDAO annotationDAO;
-	
+
     public LargeOperations(AnnotationDAO annotationDAO) {
+    	this();
     	this.annotationDAO = annotationDAO;
+    }
+    
+    public LargeOperations() {
         synchronized (LargeOperations.class) {
 	        if (manager==null) {
 	        	manager = new CacheManager(getClass().getResource("/ehcache2-jacs.xml"));
-	        	annotationMapCache = manager.getCache(ANNOTATION_MAP);
-	        	ancestorMapCache = manager.getCache(ANCESTOR_MAP);
-	        	neo4jMapCache = manager.getCache(NEO4J_MAP);
-	        	sageImagePropCache = manager.getCache(SAGE_IMAGEPROP_MAP);
+	        	caches.put(ANNOTATION_MAP, manager.getCache(ANNOTATION_MAP));
+	        	caches.put(ANCESTOR_MAP, manager.getCache(ANCESTOR_MAP));
+	        	caches.put(NEO4J_MAP, manager.getCache(NEO4J_MAP));
+	        	caches.put(SAGE_IMAGEPROP_MAP, manager.getCache(SAGE_IMAGEPROP_MAP));
+	        	caches.put(SCREEN_SCORE_MAP, manager.getCache(SCREEN_SCORE_MAP));
 	        }
         }
     }
@@ -65,6 +71,7 @@ public class LargeOperations {
 
     	logger.info("Building annotation map of all entities and annotations");
     	
+    	Cache annotationMapCache = caches.get(ANNOTATION_MAP);    	
     	Connection conn = null;
     	PreparedStatement stmt = null;
     	ResultSet rs = null;
@@ -152,6 +159,7 @@ public class LargeOperations {
 
     	logger.info("Building ancestor map for all entities");
     	
+    	Cache ancestorMapCache = caches.get(ANCESTOR_MAP);
     	Connection conn = null;
     	PreparedStatement stmt = null;
     	ResultSet rs = null;
@@ -227,6 +235,8 @@ public class LargeOperations {
     boolean debugAncestors = false;
     private Set<Long> calculateAncestors(Long entityId, Set<Long> visited, int level) {
 
+    	Cache ancestorMapCache = caches.get(ANCESTOR_MAP);
+    	
     	if (level>10000) {
     		throw new IllegalStateException("Something went wrong calculating ancestors");
     	}
@@ -305,7 +315,7 @@ public class LargeOperations {
     	String[] path = imagePath.split("/"); // take just the filename
     	String filename = path[path.length-1];
 		for(Long imageId : annotationDAO.getImageIdsWithName(null, filename)) {
-			putValue(sageImagePropCache, imageId, imageProps);
+			putValue(SAGE_IMAGEPROP_MAP, imageId, imageProps);
 		}
     }
     
@@ -318,17 +328,8 @@ public class LargeOperations {
     }
 
     private Cache getCache(String cacheName) {
-    	if (ANCESTOR_MAP.equals(cacheName)) {
-    		return ancestorMapCache;
-    	}
-    	else if (ANNOTATION_MAP.equals(cacheName)) {
-    		return annotationMapCache;
-    	}
-    	else if (NEO4J_MAP.equals(cacheName)) {
-    		return neo4jMapCache;
-    	}
-    	else if (SAGE_IMAGEPROP_MAP.equals(cacheName)) {
-    		return sageImagePropCache;
+    	if (caches.containsKey(cacheName)) {
+    		return caches.get(cacheName);
     	}
     	else {
     		throw new IllegalArgumentException("Unknown cache: "+cacheName);

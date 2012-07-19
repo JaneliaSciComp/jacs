@@ -2,11 +2,11 @@
 package org.janelia.it.jacs.compute.api;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.Remote;
 
-import org.janelia.it.jacs.compute.api.support.EntityMapStep;
 import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
@@ -58,6 +58,7 @@ public interface EntityBeanRemote {
     public Entity getEntityTree(Long id);
     public Set<Entity> getParentEntities(long entityId);
     public Set<Entity> getChildEntities(long entityId);
+    public Map<Long,String> getChildEntityNames(long entityId);
     public Set<EntityData> getParentEntityDatas(long childEntityId);
     public Set<Long> getParentIdsForAttribute(long childEntityId, String attributeName);
     public Entity getAncestorWithType(Entity entity, String type) throws ComputeException;

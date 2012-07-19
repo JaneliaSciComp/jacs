@@ -427,6 +427,16 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         return null;
     }
     
+    public Map<Long,String> getChildEntityNames(long entityId) {
+    	try {
+            return _annotationDAO.getChildEntityNames(entityId);
+        } 
+        catch (DaoException e) {
+            _logger.error("Error trying to get child entities for id="+entityId, e);
+        }
+        return null;
+    }
+    
     public Set<EntityData> getParentEntityDatas(long entityId) {
         try {
             return _annotationDAO.getParentEntityDatas(entityId);
