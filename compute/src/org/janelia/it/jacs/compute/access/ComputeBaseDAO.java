@@ -1,14 +1,6 @@
 
 package org.janelia.it.jacs.compute.access;
 
-import java.math.BigInteger;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.util.*;
-
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-
 import org.apache.log4j.Logger;
 import org.hibernate.*;
 import org.hibernate.criterion.Expression;
@@ -21,6 +13,13 @@ import org.janelia.it.jacs.model.tasks.search.SearchTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.search.SearchResultNode;
+
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import java.math.BigInteger;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -292,6 +291,12 @@ public class ComputeBaseDAO {
         List l = c.list();
         if (l.size() == 0) return null;
         return (User) l.get(0);
+    }
+
+    public List getUsers(){
+        Session session = getCurrentSession();
+        Criteria c = session.createCriteria(User.class);
+        return c.list();
     }
 
     public Object genericGet(Class c, Long id) {

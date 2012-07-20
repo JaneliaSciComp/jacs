@@ -205,6 +205,10 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     public User getUserByName(String name) {
         return computeDAO.getUserByName(name);
     }
+
+    public List getUsers(){
+        return computeDAO.getUsers();
+    }
     
     public User saveOrUpdateUser(User user) throws DaoException{
         computeDAO.saveOrUpdate(user);

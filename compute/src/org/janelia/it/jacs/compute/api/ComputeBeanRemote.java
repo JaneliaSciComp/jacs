@@ -48,6 +48,7 @@ public interface ComputeBeanRemote {
     public void setTaskNote(long taskId, String note) throws DaoException;
     public void addTaskNote(long taskId, String note) throws DaoException;
     public User getUserByName(String name) throws RemoteException;
+    public List getUsers() throws RemoteException;
     public void removePreferenceCategory(String categoryName) throws DaoException;
     public Event saveEvent(Long taskId, String eventType, String description, Date timestamp) throws DaoException, RemoteException;
     public void submitJob(String processDefName,long taskId) throws RemoteException; //Note: Used by Blast API
