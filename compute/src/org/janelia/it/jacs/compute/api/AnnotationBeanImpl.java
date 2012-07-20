@@ -225,13 +225,22 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
     }
 
+    public List<Entity> getAnnotationsForChildren(String username, long entityId) throws ComputeException {
+        try {
+            return _annotationDAO.getAnnotationsForChildren(username, entityId);
+        }
+        catch (Exception e) {
+            _logger.error("Unexpected error occurred while trying to get annotations for child of "+username, e);
+            throw new ComputeException("Coud not get annotations for entities ",e);
+        }
+    }
     
     public List<Entity> getAnnotationsForEntities(String username, List<Long> entityIds) throws ComputeException {
         try {
             return _annotationDAO.getAnnotationsByEntityId(username, entityIds);
         }
         catch (Exception e) {
-            _logger.error("Unexpected error occurred while trying to get annotations for entities "+username, e);
+            _logger.error("Unexpected error occurred while trying to get annotations for "+username, e);
             throw new ComputeException("Coud not get annotations for entities ",e);
         }
     }

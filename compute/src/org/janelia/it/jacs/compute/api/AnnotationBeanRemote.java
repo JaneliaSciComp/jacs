@@ -39,6 +39,7 @@ public interface AnnotationBeanRemote {
     
 	public List<Task> getAnnotationSessionTasks(String username) throws ComputeException;
     public List<Entity> getAnnotationsForEntities(String username, List<Long> entityIds) throws ComputeException;
+    public List<Entity> getAnnotationsForChildren(String username, long entityId) throws ComputeException;
     public List<Entity> getAnnotationsForEntity(String username, long entityId) throws ComputeException;
     public List<Entity> getAnnotationsForSession(String username, long sessionId) throws ComputeException;
     public List<Entity> getEntitiesForAnnotationSession(String username, long sessionId) throws ComputeException;

@@ -1222,6 +1222,34 @@ public class AnnotationDAO extends ComputeBaseDAO {
 	    }
     }
 
+    public List<Entity> getAnnotationsForChildren(String userLogin, Long entityId) throws DaoException {
+        try {
+            Session session = getCurrentSession();
+            StringBuffer hql = new StringBuffer("select targetEd.parentEntity from EntityData targetEd, EntityData childEd ");
+            hql.append("join fetch targetEd.parentEntity.user ");
+            hql.append("join fetch targetEd.parentEntity.entityType ");
+            hql.append("where targetEd.entityAttribute.name = :attrName ");	
+            hql.append("and childEd.childEntity.id is not null ");
+            hql.append("and cast(childEd.childEntity.id as string) = targetEd.value ");
+            hql.append("and childEd.parentEntity.id = :entityId ");
+            if (userLogin!=null) {
+            	hql.append("and (targetEd.parentEntity.user.userLogin=:userLogin or targetEd.parentEntity.user.userLogin='system') ");
+            }
+            
+            Query query = session.createQuery(hql.toString());
+            query.setString("attrName", EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
+        	query.setLong("entityId", entityId);
+            if (userLogin!=null) {
+            	query.setString("userLogin", userLogin);
+            }
+            
+            return query.list();
+        } 
+        catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+
     public List<Entity> getAnnotationsByEntityId(String userLogin, Long entityId) throws DaoException {
     	List<Long> entityIds = new ArrayList<Long>();
     	entityIds.add(entityId);
