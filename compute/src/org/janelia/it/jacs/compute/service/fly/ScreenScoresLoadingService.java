@@ -194,7 +194,7 @@ public class ScreenScoresLoadingService implements IService {
             		
                 	for(int d=MAX_SCORE; d>=0; d--) {
                 		logger.info("  Processing distribution "+d);	
-                		Entity distValueTerm = distValueItems.get(i);
+                		Entity distValueTerm = distValueItems.get(d);
 	            		Entity distValueFolder = verifyOrCreateChildFolder(intValueFolder, "Distribution "+d);
 	            		
 	            		String key = compartment+"/"+i+"/"+d;

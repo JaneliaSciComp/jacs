@@ -1225,7 +1225,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
     public List<Entity> getAnnotationsForChildren(String userLogin, Long entityId) throws DaoException {
         try {
             Session session = getCurrentSession();
-            StringBuffer hql = new StringBuffer("select targetEd.parentEntity from EntityData targetEd, EntityData childEd ");
+            StringBuffer hql = new StringBuffer("select distinct targetEd.parentEntity from EntityData targetEd, EntityData childEd ");
             hql.append("join fetch targetEd.parentEntity.user ");
             hql.append("join fetch targetEd.parentEntity.entityType ");
             hql.append("where targetEd.entityAttribute.name = :attrName ");	
