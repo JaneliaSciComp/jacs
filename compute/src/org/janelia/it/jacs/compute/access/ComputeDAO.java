@@ -716,7 +716,7 @@ public class ComputeDAO extends ComputeBaseDAO {
         //_logger.info("Getting cumulative cpu time for task id " + taskId);
         long cpuTime = getCpuTime(taskId);
 
-        String sql = "select task_id from Task where parent_task_id =" + taskId;
+        String sql = "select task_id from task where parent_task_id =" + taskId;
         Query query = getCurrentSession().createSQLQuery(sql);
         List<BigInteger> returnList = query.list();
         if (null == returnList || returnList.size() <= 0) {
