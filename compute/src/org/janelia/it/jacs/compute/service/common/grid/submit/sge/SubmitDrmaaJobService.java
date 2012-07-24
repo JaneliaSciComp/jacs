@@ -21,12 +21,14 @@ import org.janelia.it.jacs.compute.service.common.grid.submit.WaitForJobExceptio
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.status.GridJobStatus;
 import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.tasks.TaskMessage;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -61,8 +63,6 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
      *
      * @param processData the running state of the process
      * @throws org.janelia.it.jacs.compute.service.common.grid.submit.SubmitJobException
-     *
-     * @deprecated use submitGridJob instead!
      */
     public void submitJobAndWait(IProcessData processData) throws SubmitJobException {
         try {
@@ -76,6 +76,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         }
     }
 
+
     /**
      * This method is invoked from GridSubmitAndWaitMDB
      *
@@ -86,21 +87,48 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         //logger.debug(getClass().getSimpleName() + " Process Data : " + processData);
         try {
             init(processData);
-            return submitAsynchronousJob(submissionKey);
+            if (logger.isInfoEnabled()) {
+                logger.info("Preparing " + task.getTaskName() + " (task id = " + this.task.getObjectId() + " for asyncronous DRMAA submission)");
+            }
+
+            DrmaaHelper drmaa = new DrmaaHelper(logger);
+            if (!checkSubmitJobPrecondition(drmaa)) {
+                throw new SubmitJobException("Precondition check prevented job from submission");
+            }
+
+            drmaa.setShellReturnMethod(DrmaaSubmitter.OPT_RETURN_VIA_QUEUE_VAL);
+            drmaa.setSubmissionKey(submissionKey);
+            SerializableJobTemplate jt = prepareJobTemplate(drmaa);
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("Calling drmaa.runBulkJobs() with jobIncrementStop=" + jobIncrementStop);
+            }
+
+            logger.info("Running runBulkJobs with nativeSpec=" + jt.getNativeSpecification());
+            Process proc = drmaa.runBulkJobsThroughShell(
+                    task.getObjectId(), task.getOwner(), resultFileNode.getDirectoryPath(),
+                    jt, 1, jobIncrementStop, 1, getJobTimeoutSeconds());
+
+            drmaa.deleteJobTemplate(jt);
+
+            return proc;
         }
         catch (Exception e) {
             throw new SubmitJobException(e);
         }
     }
 
+
     protected void setJobIncrementStop(int stop) {
         if (logger.isDebugEnabled()) logger.debug("setJobIncrementStop() called with stop=" + stop);
         this.jobIncrementStop = stop;
     }
 
+
     protected int getJobIncrementStop() {
         return this.jobIncrementStop;
     }
+
 
     protected void init(IProcessData processData) throws Exception {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
@@ -127,9 +155,10 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         FileUtil.ensureDirExists(getSGEErrorDirectory());
     }
 
+
     protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
 
-        SerializableJobTemplate jt = drmaa.createJobTemplate();
+        SerializableJobTemplate jt = drmaa.createJobTemplate(new SerializableJobTemplate());
 
         File configDir = new File(getSGEConfigurationDirectory());
         if (!configDir.exists()) {
@@ -177,38 +206,8 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         return jt;
     }
 
-    protected Process submitAsynchronousJob(String submissionKey) throws Exception {
-        if (logger.isInfoEnabled()) {
-            logger.info("Preparing " + task.getTaskName() + " (task id = " + this.task.getObjectId() + " for asyncronous DRMAA submission)");
-        }
-
-        DrmaaHelper drmaa = new DrmaaHelper(logger);
-        if (!checkSubmitJobPrecondition(drmaa)) {
-            throw new SubmitJobException("Precondition check prevented job from submission");
-        }
-
-        drmaa.setShellReturnMethod(DrmaaSubmitter.OPT_RETURN_VIA_QUEUE_VAL);
-        drmaa.setSubmissionKey(submissionKey);
-        SerializableJobTemplate jt = prepareJobTemplate(drmaa);
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("Calling drmaa.runBulkJobs() with jobIncrementStop=" + jobIncrementStop);
-        }
-
-        logger.info("Running runBulkJobs with nativeSpec=" + jt.getNativeSpecification());
-        Process proc = drmaa.runBulkJobsThroughShell(
-                task.getObjectId(), task.getOwner(), resultFileNode.getDirectoryPath(),
-                jt, 1, jobIncrementStop, 1, getJobTimeoutSeconds());
-
-        drmaa.deleteJobTemplate(jt);
-
-        return proc;
-
-    }
-
 
     protected Set<String> submitJob() throws Exception {
-
         if (logger.isInfoEnabled()) {
             logger.info("Preparing " + task.getTaskName() + " (task id = " + this.task.getObjectId() + " for DRMAA submission");
         }
@@ -254,9 +253,11 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         return jobSet;
     }
 
+
     public void postProcess() throws MissingDataException {
         // Optional processing after completion of jobs can be overridden here
     }
+
 
     public void handleErrors() throws Exception {
         collectStdErr();
@@ -269,6 +270,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
      * @return - unique (subclass) service prefix name. ie "blast"
      */
     protected abstract String getGridServicePrefixName();
+
 
     /**
      * This method will allow us to name the SGE queue directly in the process' definition
@@ -284,6 +286,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         return sgeQueue;
     }
 
+
     /**
      * This method is intended for adding native commands for sge queue
      * "-q <queue name>"
@@ -297,6 +300,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         jt.setNativeSpecification(queue);
     }
 
+
     protected String getQueueName(SerializableJobTemplate jt) {
         String queueName = "default";
         Pattern p = Pattern.compile("\\-l\\s+(\\w+)");
@@ -308,6 +312,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         }
         return queueName;
     }
+
 
     /**
      * This method is intended for adding native commands for sge to specify project
@@ -324,6 +329,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         }
     }
 
+
     /**
      * This method is intended for adding native commands for sge to specify account
      * "-A <account(userlogin)>"
@@ -338,6 +344,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
             jt.setNativeSpecification("-A " + account);
         }
     }
+
 
     /**
      * If the method returns false no job is submitted to the grid;
@@ -357,6 +364,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         return true;
     }
 
+
     /**
      * Method which defines the general job script and node configurations
      * which ultimately get executed by the grid nodes
@@ -370,6 +378,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
      */
     protected abstract void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception;
 
+
     protected void verifyConfigurationFiles() throws Exception {
     	for(int i=0; i<getJobIncrementStop(); i++) {
     		File configFile = new File(getSGEConfigurationDirectory(), getGridServicePrefixName()+"Configuration."+(i+1));
@@ -379,17 +388,21 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
     	}
     }
     
+
     protected String getSGEConfigurationDirectory() {
         return resultFileNode.getDirectoryPath() + File.separator + "sge_config";
     }
+
 
     protected String getSGEErrorDirectory() {
         return resultFileNode.getDirectoryPath() + File.separator + "sge_error";
     }
 
+
     protected String getSGEOutputDirectory() {
         return resultFileNode.getDirectoryPath() + File.separator + "sge_output";
     }
+
 
     protected void collectStdErr() throws WaitForJobException, DaoException {
         // Use this hash to avoid identical messages
@@ -400,24 +413,6 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         int numBytes = 0;
         for (File f : errorFiles) {
         	numBytes += f.length();
-            //if (logger.isInfoEnabled()) logger.info("Reading stderr file " + f.getAbsolutePath());
-//            if (f.length() > 0) {
-//                try {
-//                    BufferedReader br = new BufferedReader(new FileReader(f));
-//                    try {
-//                        String line;
-//                        while ((line = br.readLine()) != null) {
-//                            numLines++;
-//                        }
-//                    }
-//                    finally {
-//                        br.close();
-//                    }
-//                }
-//                catch (Exception e) {
-//                    throw new WaitForJobException("Error reading file " + f.getAbsolutePath());
-//                }
-//            }
         }
         if (numBytes > 0) {
         	String note = numBytes+" bytes of output were written to stderr files in dir="+configDir.getAbsolutePath();
@@ -425,9 +420,11 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         }
     }
 
+
     public int getJobTimeoutSeconds() {
         return -1;
     }
+
 
     protected class StdErrorFilenameFilter implements FilenameFilter {
         public StdErrorFilenameFilter() {

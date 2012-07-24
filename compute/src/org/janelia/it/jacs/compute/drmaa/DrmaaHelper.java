@@ -21,10 +21,10 @@ import java.util.*;
 public class DrmaaHelper {
     private Logger logger;
 
-    private Session sunSession;                 // DRMAA Session
+    private final Session sunSession;                 // DRMAA Session
     private static boolean initialized = false;
 
-    private static final String MAX_STATUS_CHECK_INTERVAL_PROP = "BlastServer.DrmaaMaxStatusCheckInterval";
+    private static final String MAX_STATUS_CHECK_INTERVAL_PROP = "Grid.DrmaaMaxStatusCheckInterval";
     private static final int MAX_STATUS_CHECK_INTERVAL = SystemConfigurationProperties.getInt(MAX_STATUS_CHECK_INTERVAL_PROP, 30000);
     private static final int MIN_STATUS_CHECK_INTERVAL = 1000; // one second
     private static final String JAVA_PATH = SystemConfigurationProperties.getString("Java.Path");
@@ -32,7 +32,6 @@ public class DrmaaHelper {
     private static final String DRMAA_SUBMITTER_SCRIPT_PATH = SystemConfigurationProperties.getFilePath("Local.Lib.Path", "Drmaa.Submitter.Script.Name");
     public static final String ROOT_SERVER_DIR_PROP = "ServerRoot.Dir";
     private static HashSet<String> _projectCodes = new HashSet<String>();
-    //Map<String, Integer> currentStatusMap = new HashMap<String, Integer>();
     private Map<String, Integer> currentStatusMap = new HashMap<String, Integer>();
 
 
@@ -40,7 +39,6 @@ public class DrmaaHelper {
     private String shellReturnMethod = DrmaaSubmitter.OPT_RETURN_VIA_QUEUE_VAL;
 
     private String submissionKey = "";
-    private int statusPoolPeriod = -1;
 
     public DrmaaHelper(Logger logger) throws DrmaaException {
         this.logger = logger;
@@ -83,7 +81,6 @@ public class DrmaaHelper {
      * @throws DrmaaException error with something inside the DRMAA submission library
      */
     public void exit() throws DrmaaException {
-        //To change body of implemented methods use File | Settings | File Templates.
         synchronized (sunSession) {
             //TODO: check if all jobs are completed
             if (initialized) {
@@ -92,10 +89,6 @@ public class DrmaaHelper {
             }
         }
 
-    }
-
-    public SerializableJobTemplate createJobTemplate() throws DrmaaException {
-        return createJobTemplate(new SerializableJobTemplate());
     }
 
     public SerializableJobTemplate createJobTemplate(SerializableJobTemplate existingTemplate) throws DrmaaException {
@@ -158,20 +151,12 @@ public class DrmaaHelper {
         }
     }
 
-    public boolean waitForJob(String jobId, String logPrefix) throws Exception {
-        return waitForJob(jobId, logPrefix, null, -1);
-    }
-
-    private boolean waitForJob(String jobId, String logPrefix, JobStatusLogger statusLogger, int statusPoolPeriod) throws Exception {
+    public boolean waitForJob(String jobId, String logPrefix, JobStatusLogger statusLogger, int statusPoolPeriod) throws Exception {
         Set<String> jobSet = new HashSet<String>();
         jobSet.add(jobId);
         return waitForJobs(jobSet, logPrefix, statusLogger, statusPoolPeriod, -1);
     }
                                                     
-//    public boolean waitForJobs(Set<String> jobSet, String logPrefix) throws InterruptedException {
-//        return waitForJobs(jobSet, logPrefix, null, -1);
-//    }
-
     /**
      * Method to wait for the jobs to finish on the Sun Grid
      *
@@ -228,15 +213,14 @@ public class DrmaaHelper {
             while (retry < maxRetries) {
                 try {
                     changedJobs = getBulkJobStatusChanges(currentStatusMap);
+                    logger.debug("Got changed jobs breaking loop");
                     break;
                 }
                 catch (DrmaaException e) {
                     logger.error("Caught DrmaaException while checking job status: " + e.toString() + ". Retry=" + retry + " of " + maxRetries);
                     errorText = e.getMessage();
-                    if (++retry >= maxRetries)
-                        return false;
-                    else
-                        Thread.sleep(60000); // one minute
+                    if (++retry >= maxRetries) {return false;}
+                    else {Thread.sleep(60000);} // one minute
                 }
             }
 
@@ -288,7 +272,9 @@ public class DrmaaHelper {
                         return false;
                     }
                 }
-
+                else {
+                    logger.error("jobStatus is "+jobStatus+" for "+jobId);
+                }
                 // update job info data
                 if (statusLogger != null && infoMap != null) {
                     statusLogger.updateJobInfo(jobId, changedJobs.get(jobId), infoMap);
@@ -359,6 +345,7 @@ public class DrmaaHelper {
 
     public Map<String, GridJobStatus.JobState> getBulkJobStatusChanges(Map<String, Integer> jobStatusMap) throws DrmaaException {
         synchronized (sunSession) {
+            logger.info("Calling for the job program status");
             Map<String, GridJobStatus.JobState> statusMap = new HashMap<String, GridJobStatus.JobState>();
             for (String jobId : jobStatusMap.keySet()) {
                 int status = sunSession.getJobProgramStatus(jobId);
@@ -371,47 +358,16 @@ public class DrmaaHelper {
         }
     }
 
-    public Map<String, GridJobStatus.JobState> getBulkJobStatus(Map<String, Integer> jobStatusMap) throws DrmaaException {
-        synchronized (sunSession) {
-            Map<String, GridJobStatus.JobState> statusMap = new HashMap<String, GridJobStatus.JobState>();
-            for (String jobId : jobStatusMap.keySet()) {
-                int status = sunSession.getJobProgramStatus(jobId);
-                statusMap.put(jobId, translateStatusCode(status));
-                jobStatusMap.put(jobId, status); // reset original
-            }
-            return statusMap;
-        }
-    }
-
-
-    public String getContact() {
-        synchronized (sunSession) {
-            return sunSession.getContact();
-        }
-    }
-
     public Version getVersion() {
         synchronized (sunSession) {
             return sunSession.getVersion();
         }
     }
 
-    public String getDrmSystem() {
-        synchronized (sunSession) {
-            return sunSession.getDrmSystem();
-        }
-    }
-
-    public String getDrmaaImplementation() {
-        synchronized (sunSession) {
-            return sunSession.getDrmaaImplementation();
-        }
-    }
-
     private void logJobError(JobInfo jobInfo, String jobId) {
         if (jobInfo != null && logger.isDebugEnabled()) {
             try {
-                StringBuffer jobstats = new StringBuffer();
+                StringBuilder jobstats = new StringBuilder();
                 Map<String, String> infoMap = jobInfo.getResourceUsage();
                 for (String key : infoMap.keySet()) {
                     jobstats.append("\t").append(key).append(": ").append(infoMap.get(key)).append("\n");
@@ -429,10 +385,6 @@ public class DrmaaHelper {
 
     public void setShellReturnMethod(String shellReturnMethod) {
         this.shellReturnMethod = shellReturnMethod;
-    }
-
-    public void setStatusPoolPeriod(int statusPoolPeriod) {
-        this.statusPoolPeriod = statusPoolPeriod;
     }
 
     public void setSubmissionKey(String submissionKey) {
@@ -456,6 +408,7 @@ public class DrmaaHelper {
         clParams.add(DrmaaSubmitter.OPT_RETURN_BY + DrmaaSubmitter.DELIMETER + shellReturnMethod);
         if (submissionKey != null && submissionKey.length() > 0)
             clParams.add(DrmaaSubmitter.OPT_SUBMISSION_KEY + DrmaaSubmitter.DELIMETER + submissionKey);
+        int statusPoolPeriod = -1;
         if (statusPoolPeriod > 0)
             clParams.add(DrmaaSubmitter.OPT_LOOP_SLEEP_PERIOD + DrmaaSubmitter.DELIMETER + statusPoolPeriod);
         if (start >= 0 && end > 0 && incr > 0) {
@@ -464,14 +417,6 @@ public class DrmaaHelper {
         if (0<timeoutInSeconds) {
             clParams.add(DrmaaSubmitter.OPT_TIMEOUT_SECONDS+DrmaaSubmitter.DELIMETER+timeoutInSeconds);
         }
-
-//        scriptWriter.write(JAVA_PATH + " -cp " + DRMAA_SUBMITTER_JAR_PATH +
-//                " " + DRMAA_SUBMITTER + " " + jtFile.getAbsolutePath() );
-//        for (String o: options)
-//            scriptWriter.write(" " + o);
-//        scriptWriter.write("\n");
-//        scriptWriter.close();
-
 
         List<String> cmdList = new LinkedList<String>();
 //        cmdList.add("bash");

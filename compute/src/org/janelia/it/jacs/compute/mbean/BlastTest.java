@@ -415,7 +415,7 @@ public class BlastTest implements BlastTestMBean {
             int i = 0;
             for (File dbFile : dbList) {
                 File outputFile = new File(outputPrefixPath + "_" + i);
-                SerializableJobTemplate jt = drmaa.createJobTemplate();
+                SerializableJobTemplate jt = drmaa.createJobTemplate(new SerializableJobTemplate());
                 jt.setRemoteCommand("bash");
                 File jobFile = new File(outputPrefixPath + "_" + i + ".sh");
                 FileWriter writer = new FileWriter(jobFile);
@@ -460,7 +460,7 @@ public class BlastTest implements BlastTestMBean {
             i = 0;
             for (String jobId : jobList) {
                 logger.info("Waiting for job=" + i);
-                drmaa.waitForJob(jobId, "waiting for job " + i);
+                drmaa.waitForJob(jobId, "waiting for job " + i, null, -1);
                 logger.info("done");
                 i++;
             }

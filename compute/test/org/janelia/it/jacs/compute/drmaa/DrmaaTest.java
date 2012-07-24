@@ -40,7 +40,7 @@ public class DrmaaTest
 
     public  SerializableJobTemplate createTemplate() throws DrmaaException, IOException
     {
-        SerializableJobTemplate jt = drmaa.createJobTemplate();
+        SerializableJobTemplate jt = drmaa.createJobTemplate(new SerializableJobTemplate());
 
         File jobScript = createJobScriptFile();
         jt.setRemoteCommand("bash");
@@ -50,8 +50,7 @@ public class DrmaaTest
         jt.setOutputPath(":" + currDir.getAbsolutePath() + File.separator + scriptFileNameBase + ".out");
         // Apply a RegEx to replace any non-alphanumeric character with "_".  SGE is finicky that way.
         jt.setJobName("DrmaaTest_" + pid);
-        jt.setNativeSpecification("-P 08020" );
-        jt.setNativeSpecification("-l fast" );
+        jt.setNativeSpecification("-A saffordt" );
 
         return jt;
     }
@@ -101,7 +100,7 @@ public class DrmaaTest
         System.out.println("Submitting job... waiting...");
 
         drmaa.setShellReturnMethod(DrmaaSubmitter.OPT_RETURN_VIA_SYSTEM_VAL);
-        Process shell = drmaa.runJobThroughShell(-1L, "lkagan", currDir.getAbsolutePath(), jt);
+        Process shell = drmaa.runJobThroughShell(-1L, "saffordt", currDir.getAbsolutePath(), jt);
         InputStream shellOut = shell.getInputStream(); // this is actual process output!
         InputStream shellErr = shell.getErrorStream(); // this is actual process output!
         int shellExitStatus = shell.waitFor();

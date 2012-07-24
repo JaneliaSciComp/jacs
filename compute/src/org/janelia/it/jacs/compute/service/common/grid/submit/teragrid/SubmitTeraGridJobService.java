@@ -40,8 +40,6 @@ public abstract class SubmitTeraGridJobService implements SubmitJobService {
      *
      * @param processData the running state of the process
      * @throws org.janelia.it.jacs.compute.service.common.grid.submit.SubmitJobException
-     *
-     * @deprecated use submitGridJob instead!
      */
     public void submitJobAndWait(IProcessData processData) throws SubmitJobException {
         try {

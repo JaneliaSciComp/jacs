@@ -93,7 +93,7 @@ public class GridSearchByCategory implements IService {
             }
 
             DrmaaHelper drmaa = new DrmaaHelper(_logger);
-            SerializableJobTemplate jt = drmaa.createJobTemplate();
+            SerializableJobTemplate jt = drmaa.createJobTemplate(new SerializableJobTemplate());
             Map<String, Integer> jobStatuses = new HashMap<String, Integer>();
             for (String topic : topics) {
                 // command line lucene execution parameters:

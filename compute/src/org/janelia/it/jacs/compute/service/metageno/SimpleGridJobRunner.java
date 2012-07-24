@@ -73,7 +73,7 @@ public class SimpleGridJobRunner {
         drmaa = new DrmaaHelper(logger);
         String uniqueId = TimebasedIdentifierGenerator.generate(1L).toString();
         scriptFile = new File(workingDir, uniqueId + ".sh");
-        jt = drmaa.createJobTemplate();
+        jt = drmaa.createJobTemplate(new SerializableJobTemplate());
         jt.setRemoteCommand("bash");
         FileWriter fw = new FileWriter(scriptFile);
         fw.write(command.trim() + "\n");

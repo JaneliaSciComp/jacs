@@ -203,16 +203,6 @@ public class GridSubmitAndWaitMDB extends BaseServiceMDB {
             Task task = (Task) queueMessage.getObjectMap().get("TASK");
             throw new ServiceException("Grid job definition error for operation " + operationToProcess.getName() +
                     " for task " + task.getObjectId() + ": Invalid usage of 'foreach' attribute in process file");
-
-//            List<IProcessData> pds = DataExtractor.createForEachPDs(queueMessage, operationToProcess.getForEachParam());
-//            if (pds != null) {
-//                for (IProcessData pd : pds) {
-//                    //Set subset = service.submitGridJob(pd);
-//                    Set subset = service.submitGridJob(queueMessage);
-//                    allIDS.addAll(subset);
-//                    DataExtractor.copyData(pd, queueMessage, operationToProcess.getOutputParameters());
-//                }
-//            }
         }
         else {
             return service.submitAsynchJob(queueMessage, String.valueOf(submissionKey));
