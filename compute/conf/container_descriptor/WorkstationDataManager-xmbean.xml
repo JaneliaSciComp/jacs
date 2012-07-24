@@ -586,4 +586,24 @@
         </parameter>
     </operation>
 
+    <operation>
+        <description>Slow Import Service</description>
+        <name>runSlowImportTask</name>
+        <parameter>
+            <description>Root path to directory</description>
+            <name>parentDirPath</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Top level folder name target</description>
+            <name>topLevelFolderName</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Import owner</description>
+            <name>owner</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+
 </mbean>

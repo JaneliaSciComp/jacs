@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.mbean;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.service.entity.OrphanAnnotationCheckerService;
@@ -30,6 +31,7 @@ import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
@@ -539,5 +541,30 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
+    public void runSlowImportTask(String parentDirPath, String topLevelFolderName, String owner) {
+        try {
+            String process = "FileTreeLoader";
+            File parentDir = new File(parentDirPath);
+            if (parentDir.isDirectory() && null!=parentDir.listFiles()) {
+                File[] childDirs = parentDir.listFiles(new FileFilter() {
+                    @Override
+                    public boolean accept(File file) {
+                        return file.isDirectory();
+                    }
+                });
+                for (File file : childDirs) {
+                    FileTreeLoaderPipelineTask task = new FileTreeLoaderPipelineTask(new HashSet<Node>(),
+                            owner, new ArrayList<Event>(), new HashSet<TaskParameter>(), file.getAbsolutePath(), topLevelFolderName);
+                    task.setJobName("Import Files Task");
+                    task = (FileTreeLoaderPipelineTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+                    EJBFactory.getLocalComputeBean().submitJob(process, task.getObjectId());
+                    Thread.sleep(120000);
+                }
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
 
+    }
 }
