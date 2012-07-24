@@ -190,7 +190,7 @@ public class GridJobStatus implements java.io.Serializable, IsSerializable {
     public void updateFromMap(Map<String, String> resources) {
         if (logger.isTraceEnabled()) {
             // print our the whole map
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             sb.append("Parsing jobInfo Map:\n     ");
             for (String key : resources.keySet()) {
                 sb.append(" ").append(key).append(":").append(resources.get(key)).append(" | ");
@@ -201,7 +201,9 @@ public class GridJobStatus implements java.io.Serializable, IsSerializable {
         DecimalFormat df = new DecimalFormat("0.0000");
 
         try {
-            setSubmitTime(new Date(df.parse(resources.get("submission_time")).longValue() * 1000));
+            if (null != resources.get("submission_time")) {
+                setSubmitTime(new Date(df.parse(resources.get("submission_time")).longValue() * 1000));
+            }
         }
         catch (Throwable t) {
             logger.error("Error parsing submission_time", t);
@@ -226,7 +228,9 @@ public class GridJobStatus implements java.io.Serializable, IsSerializable {
         }
 
         try {
-            setVmem(df.parse(resources.get("vmem")).intValue());
+            if (null != resources.get("vmem")) {
+                setVmem(df.parse(resources.get("vmem")).intValue());
+            }
         }
         catch (Throwable t) {
             logger.debug("Error parsing vmem");
@@ -234,49 +238,63 @@ public class GridJobStatus implements java.io.Serializable, IsSerializable {
         }
 
         try {
-            setSystemTime(df.parse(resources.get("ru_stime")).intValue());
+            if (null != resources.get("ru_stime")) {
+                setSystemTime(df.parse(resources.get("ru_stime")).intValue());
+            }
         }
         catch (Throwable t) {
             logger.debug("Error parsing ru_stime");
         }
 
         try {
-            setUserTime(df.parse(resources.get("ru_utime")).intValue());
+            if (null != resources.get("ru_utime")) {
+                setUserTime(df.parse(resources.get("ru_utime")).intValue());
+            }
         }
         catch (Throwable t) {
             logger.debug("Error parsing ru_utime");
         }
 
         try {
-            setWallclock(df.parse(resources.get("ru_wallclock")).intValue());
+            if (null != resources.get("ru_wallclock")) {
+                setWallclock(df.parse(resources.get("ru_wallclock")).intValue());
+            }
         }
         catch (Throwable t) {
             logger.debug("Error parsing ru_wallclock");
         }
 
         try {
-            setCpuTime(df.parse(resources.get("cpu")).intValue());
+            if (null != resources.get("cpu")) {
+                setCpuTime(df.parse(resources.get("cpu")).intValue());
+            }
         }
         catch (Throwable t) {
             logger.debug("Error parsing cpu");
         }
 
         try {
-            setMaxVMem(df.parse(resources.get("maxvmem")).intValue());
+            if (null != resources.get("maxvmem")) {
+                setMaxVMem(df.parse(resources.get("maxvmem")).intValue());
+            }
         }
         catch (Throwable t) {
             logger.debug("Error parsing maxvmem");
         }
 
         try {
-            setExitStatus(df.parse(resources.get("exit_status")).shortValue());
+            if (null != resources.get("exit_status")) {
+                setExitStatus(df.parse(resources.get("exit_status")).shortValue());
+            }
         }
         catch (Throwable t) {
             logger.debug("Error parsing exit_status");
         }
 
         try {
-            setMemory(df.parse(resources.get("mem")).floatValue());
+            if (null != resources.get("mem")) {
+                setMemory(df.parse(resources.get("mem")).floatValue());
+            }
         }
         catch (Throwable t) {
             logger.debug("Error parsing mem");
