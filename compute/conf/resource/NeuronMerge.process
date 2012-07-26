@@ -1,7 +1,7 @@
 <!-- 
 	Synchronize index with entities in the database. 
 -->
-<process name="Neuron Merge Process" processor="queue/mcfoDataPipelineLauncher" startEvent="pending" updateProcessStatus="on_success" >
+<process name="Neuron Merge Process" processor="queue/consolePipelineLauncher" startEvent="pending" updateProcessStatus="on_success" >
     <sequence name="Neuron Merge" waitForAsync="true">
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="TASK_PARAMETER_1" value="separationEntityId"/>

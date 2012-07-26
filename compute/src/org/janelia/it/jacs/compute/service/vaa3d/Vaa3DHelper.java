@@ -57,6 +57,10 @@ public class Vaa3DHelper {
         return VAA3D_BASE_CMD +" -x imageStitch.so -f istitch-grouping -p \"#c "+referenceChannelIndex+"\" -i \""+inputDirectoryPath+"\" -o \""+outputFilePath+"\";";
     }
 
+    public static String getFormattedSimilarityCommand(String targetPath, String inputListPath, String outputFilePath) {
+        return VAA3D_BASE_CMD +" -cmd screen-pattern-annotator -targetStack \""+targetPath+"\" -subjectStackList \""+inputListPath+"\" -outputSimilarityList  \""+outputFilePath+"\";";
+    }
+
     public static String getFormattedStitcherCommand(int referenceChannelIndex, String inputDirectoryPath) {
         return VAA3D_BASE_CMD +" -x imageStitch.so -f v3dstitch -i \""+inputDirectoryPath+"\" -p \"#c "+referenceChannelIndex+" #si 0\";";
     }
