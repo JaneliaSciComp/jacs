@@ -70,6 +70,7 @@ public interface ComputeBeanLocal {
     public List<HmmerPfamDatabaseNode> getHmmerPfamDatabases();
 
     public List<Task> getUserTasks(String userLogin) throws Exception;
+    public List<Task> getRecentUserParentTasks(String userLogin) throws Exception;
     public List<Task> getUserParentTasks(String userLogin) throws Exception;
     public List<Task> getUserTasksByType(String simpleName, String userName);
     public List<Event> getEventsForTask(long taskId) throws DaoException; 

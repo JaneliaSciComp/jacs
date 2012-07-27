@@ -688,6 +688,15 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return computeDAO.getRecruitmentFilterTaskByUserPipelineId(objectId);
     }
 
+    public List<Task> getRecentUserParentTasks(String userLogin) {
+    	List<Task> tasks = computeDAO.getRecentUserParentTasksByOwner(userLogin);
+        for(Task task : tasks) {
+        	// Init lazy-loading events
+        	task.getEvents().size();
+        }
+        return tasks;
+    }
+    
     public List<Task> getUserParentTasks(String userLogin) {
     	List<Task> tasks = computeDAO.getUserParentTasksByOwner(userLogin);
         for(Task task : tasks) {

@@ -109,6 +109,7 @@ public interface ComputeBeanRemote {
     public void validateFile(String filePath) throws Exception;
     public void stopContinuousExecution(long taskId) throws ServiceException;
     public List<Task> getUserTasks(String userLogin) throws Exception;
+    public List<Task> getRecentUserParentTasks(String userLogin) throws Exception;
     public List<Task> getUserParentTasks(String userLogin) throws Exception;
     public List<Task> getUserTasksByType(String simpleName, String userName) throws RemoteException;
     public List<Event> getEventsForTask(long taskId) throws DaoException;

@@ -657,6 +657,23 @@ public class ComputeDAO extends ComputeBaseDAO {
     }
 
 
+    public List<Task> getRecentUserParentTasksByOwner(String userLogin) {
+    	Calendar minDate = Calendar.getInstance();
+    	minDate.add(Calendar.DATE, -1);
+        StringBuffer hql = new StringBuffer();
+        hql.append("select distinct task from Task task ");
+        hql.append("join task.events event "); 
+        hql.append("where task.owner = :owner "); 
+        hql.append("and task.taskDeleted=false ");
+        hql.append("and task.parentTaskId is null ");
+        hql.append("and event.timestamp >=  :minDate ");
+        hql.append("order by task.objectId ");
+        Query query = sessionFactory.getCurrentSession().createQuery(hql.toString());
+        query.setString("owner", userLogin);
+        query.setTimestamp("minDate", minDate.getTime());
+        return query.list();
+    }
+
     public List<Task> getUserParentTasksByOwner(String userLogin) {
         String hql = "select clazz from Task clazz where clazz.owner='" + userLogin + "' and clazz.taskDeleted=false and clazz.parentTaskId is null order by clazz.objectId";
         Query query = sessionFactory.getCurrentSession().createQuery(hql);

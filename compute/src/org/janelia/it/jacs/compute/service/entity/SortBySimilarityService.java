@@ -105,12 +105,6 @@ public class SortBySimilarityService implements IService {
                 
         		List<EntityData> eds = new ArrayList<EntityData>(folder.getEntityData());
         		
-        		for(EntityData ed : eds) {
-        			String fp1 = ed.getChildEntity().getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        			Double s1 = scores.get(fp1);
-        			logger.info(ed.getId()+" "+ed.getChildEntity().getName()+" score="+s1+" filepath="+fp1);
-        		}
-        		
         		Collections.sort(eds, new Comparator<EntityData>() {
 					@Override
 					public int compare(EntityData o1, EntityData o2) {
