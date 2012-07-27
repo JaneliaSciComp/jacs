@@ -460,7 +460,11 @@ public class SageImageDiscoveryService implements IService {
     	    	Collections.sort(orderedData, new Comparator<EntityData>() {
     				@Override
     				public int compare(EntityData o1, EntityData o2) {
-    					return o1.getChildEntity().getCreationDate().compareTo(o2.getChildEntity().getCreationDate());
+    					int c = o1.getChildEntity().getCreationDate().compareTo(o2.getChildEntity().getCreationDate());
+    					if (c==0) {
+    						return o1.getChildEntity().getId().compareTo(o2.getChildEntity().getId());
+    					}
+    					return 0;
     				}
     			});
     			
