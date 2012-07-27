@@ -15,27 +15,28 @@ import java.util.*;
  * Time: 2:35 PM
  */
 @XmlAccessorType(XmlAccessType.NONE)
-public class DataCircle implements Serializable, IsSerializable {
+public class DataGroup implements Serializable, IsSerializable {
 
     private Long id;
     @XmlValue
     private String name;
     private String description;
-    private Set<User> dataCircleUsers;
+    private User owner;
+    private Set<User> dataGroupMembers;
 
-    public Set<User> getDataCircleUsers() {
-        return dataCircleUsers;
-    }
-
-    public void setDataCircleUsers(Set<User> dataCircleUsers) {
-        this.dataCircleUsers = dataCircleUsers;
-    }
-
-    public DataCircle(Long id, String name, String description, HashSet<User> dataCircleUsers) {
+    public DataGroup(Long id, String name, String description, HashSet<User> dataGroupMembers) {
         this.id = id;
         this.name = name;
         this.description = description;
-        this.dataCircleUsers = dataCircleUsers;
+        this.dataGroupMembers = dataGroupMembers;
+    }
+
+    public User getOwner(){
+        return owner;
+    }
+
+    public void setOwner(User owner){
+        this.owner = owner;
     }
 
     public Long getId() {
@@ -62,16 +63,16 @@ public class DataCircle implements Serializable, IsSerializable {
         this.description = description;
     }
 
-    public Set<User> getUsers() {
-        return dataCircleUsers;
+    public Set<User> getDataGroupMembers() {
+        return dataGroupMembers;
     }
 
-    public void setUsers(Set<User> dataCircleUsers) {
-        this.dataCircleUsers = dataCircleUsers;
+    public void setDataGroupMembers(Set<User> dataCircleUsers) {
+        this.dataGroupMembers = dataCircleUsers;
     }
 
-    public List<User> getOrderedUsers() {
-        List<User> users = new ArrayList<User>(getUsers());
+    public List<User> getOrderedMembers() {
+        List<User> users = new ArrayList<User>(getDataGroupMembers());
         Collections.sort(users, new Comparator<User>() {
             @Override
             public int compare(User o1, User o2) {
