@@ -107,7 +107,7 @@ if [ $BUILD_VAA3D == 1 ]; then
 
     echo "  Building Vaa3D for the grid (in the background)"
     echo "sh \"$VAA3D_COMPILE_REDHAT_DIR/qsub_vaa3d_build.sh\" $FWVER $SERVER" > "$VAA3D_COMPILE_REDHAT_DIR/build.sh"
-    qsub -sync y "$VAA3D_COMPILE_REDHAT_DIR/build.sh" &
+    qsub -l short=true -sync y "$VAA3D_COMPILE_REDHAT_DIR/build.sh" &
     VAA3D_QSUB_PID=$!
 
     echo "  Building Vaa3D for the linux client"
