@@ -92,7 +92,7 @@ public class Vaa3DSimilarityService extends SubmitDrmaaJobService {
     protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
     	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
     	// Reserve 8 slots on a short node. This gives us 24 GB of memory. 
-    	jt.setNativeSpecification("-pe batch 8 -l short=true");
+    	jt.setNativeSpecification("-pe batch 8 -now n");
     	return jt;
     }
 
