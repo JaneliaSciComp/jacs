@@ -52,6 +52,26 @@
     </operation>
     
     <operation>
+        <description>Export the screen intensity and distribution scores.</description>
+        <name>runScreenScoresExport</name>
+        <parameter>
+           <description>User to run as (e.g. "jenetta")</description>
+           <name>user</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Name of top level folder for split lines (e.g. "FlyLight Pattern Evaluation")</description>
+           <name>topLevelFolderName</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Full path for the output file (e.g. "/groups/scicomp/jacsData/rokickiTest/scoreExport.txt")</description>
+           <name>outputFilepath</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
         <description>Load in Arnim's annotations from Picasa.</description>
         <name>runAnnotationImport</name>
         <parameter>

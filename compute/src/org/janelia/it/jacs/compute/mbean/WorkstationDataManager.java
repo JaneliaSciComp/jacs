@@ -1,7 +1,13 @@
 package org.janelia.it.jacs.compute.mbean;
 
+import java.io.File;
+import java.io.FileFilter;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.service.entity.OrphanAnnotationCheckerService;
@@ -29,13 +35,6 @@ import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
 import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
-
-import java.io.File;
-import java.io.FileFilter;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -76,6 +75,21 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             task.setJobName("Screen Scores Loading Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("ScreenScoresLoadingPipeline", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
+    public void runScreenScoresExport(String user, String topLevelFolderName, String outputFilepath) {
+        try {
+        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        	taskParameters.add(new TaskParameter("top level folder name", topLevelFolderName, null));
+        	taskParameters.add(new TaskParameter("output filepath", outputFilepath, null));
+        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
+        			taskParameters, "screenScoresExport", "Screen Scores Export");
+            task.setJobName("Screen Scores Export Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("ScreenScoresExportPipeline", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }

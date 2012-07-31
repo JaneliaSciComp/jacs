@@ -36,13 +36,14 @@
 			<input name="OUTVAR_ENTITY_ID" value="TOP_LEVEL_ENTITY_ID"/>
 		</operation>
 		
-	    <!-- Find all the Sample Entities in the database -->
+	    <!-- Find all the Sample Entities in the database
 		<operation name="Entity Tree Traversal" processor="org.janelia.it.jacs.compute.service.entity.EntityTreeTraversalService">
 			<input name="ENTITY_TYPE_NAME" value="Sample"/>
 			<input name="TOP_LEVEL_ENTITY_ID"/>
 			<input name="ROOT_ENTITY_ID" value="$V{TOP_LEVEL_ENTITY_ID}"/>
 			<input name="OUTVAR_ENTITY_ID" value="SAMPLE_ENTITY_ID"/>
 		</operation>
+		 -->
 		
 	    <!-- Process each Sample Entity -->
         <sequence forEach="SAMPLE_ENTITY_ID">

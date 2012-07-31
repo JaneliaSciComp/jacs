@@ -64,7 +64,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     public List<EntityType> getEntityTypes() {
         try {
             List<EntityType> returnList = _annotationDAO.getAllEntityTypes();
-            _logger.debug("Entity types returned:"+returnList.size());
+//            _logger.debug("Entity types returned:"+returnList.size());
             return returnList;
         }
         catch (DaoException e) {
@@ -76,7 +76,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     public List<EntityAttribute> getEntityAttributes() {
         try {
             List<EntityAttribute> returnList = _annotationDAO.getAllEntityAttributes();
-            _logger.debug("Entity attributes returned:"+returnList.size());
+//            _logger.debug("Entity attributes returned:"+returnList.size());
             return returnList;
         }
         catch (DaoException e) {
@@ -362,7 +362,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     public List<Entity> getUserEntitiesByTypeName(String userLogin, String entityTypeName) {
         try {
             List<Entity> returnList = _annotationDAO.getUserEntitiesByTypeName(userLogin, entityTypeName);
-            _logger.debug("Entities returned:"+returnList.size());
+//            _logger.debug("Entities returned:"+returnList.size());
             return returnList;
         }
         catch (DaoException e) {
@@ -374,7 +374,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     public List<Entity> getEntitiesByTypeName(String entityTypeName) {
         try {
             List<Entity> returnList = _annotationDAO.getUserEntitiesByTypeName(null, entityTypeName);
-            _logger.debug("Entities returned:"+returnList.size());
+//            _logger.debug("Entities returned:"+returnList.size());
             return returnList;
         }
         catch (DaoException e) {

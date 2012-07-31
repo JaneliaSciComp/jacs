@@ -30,8 +30,14 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  */
 public class ScreenScoresLoadingService implements IService {
 	
-	private static final String SCORE_ONTOLOGY_NAME = "Expression Pattern Evaluation";
-	private static final int MAX_SCORE = 5;
+	public static final String SCORE_ONTOLOGY_NAME = "Expression Pattern Evaluation";
+
+	public static final String MAA_INTENSITY_NAME = "MAA Intensity Score";
+	public static final String MAA_DISTRIBUTION_NAME = "MAA Distribution Score";
+	public static final String CA_INTENSITY_NAME = "CA Intensity Score";
+	public static final String CA_DISTRIBUTION_NAME = "CA Distribution Score";
+	
+	public static final int MAX_SCORE = 5;
 	
 	private static final String maaUsername = "system";
 	
@@ -165,10 +171,10 @@ public class ScreenScoresLoadingService implements IService {
     		
         	ontologyTree = annotationBean.createOntologyRoot(user.getUserLogin(), SCORE_ONTOLOGY_NAME);
 
-        	maaIntensityEnum = newTerm(ontologyTree, "MAA Intensity Score", "Enum");
-        	maaDistributionEnum = newTerm(ontologyTree, "MAA Distribution Score", "Enum");
-        	Entity caIntensityEnum = newTerm(ontologyTree, "CA Intensity Score", "Enum");
-        	Entity caDistributionEnum = newTerm(ontologyTree, "CA Distribution Score", "Enum");
+        	maaIntensityEnum = newTerm(ontologyTree, MAA_INTENSITY_NAME, "Enum");
+        	maaDistributionEnum = newTerm(ontologyTree, MAA_DISTRIBUTION_NAME, "Enum");
+        	Entity caIntensityEnum = newTerm(ontologyTree, CA_INTENSITY_NAME, "Enum");
+        	Entity caDistributionEnum = newTerm(ontologyTree, CA_DISTRIBUTION_NAME, "Enum");
         	
         	for(int i=MAX_SCORE; i>=0; i--) {
         		Entity intTerm = newTerm(maaIntensityEnum, "i"+i, "EnumItem");

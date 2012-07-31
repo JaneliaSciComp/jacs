@@ -2147,9 +2147,6 @@ public class AnnotationDAO extends ComputeBaseDAO {
             
             sql.append("and "+targetIdAlias+" is not null");
             
-            
-            _logger.info("SQL:\n"+sql+"\n");
-            
 	        conn = getJdbcConnection();
 	        stmt = conn.prepareStatement(sql.toString());
 	        	        
