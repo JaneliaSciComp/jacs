@@ -261,10 +261,15 @@ public class ScreenScoresExportService implements IService {
         	FileWriter writer = new FileWriter(outputFile);
         	
         	writer.write("Compartment\tSample\tMAA Intensity\tMAA Distribution\tCA Intensity\tCA Distribution\tIntensity\tDistribution\n");
-        	
-        	for(String key : evalMap.keySet()) {
-        		writer.write(key+"\t");
-        		writer.write(evalMap.get(key)+"\n");
+
+        	for(Entity compartmentEntity : compartments) {
+        		String compartment = compartmentEntity.getName();
+        		for(String sampleName : sampleNameMap.values()) {
+        			String key  = compartment+"\t"+sampleName;
+        			String value = evalMap.get(key);
+        			writer.write(key+"\t");
+            		writer.write((value==null?"":value)+"\n");	
+        		}
         	}
         	writer.close();
         } 
