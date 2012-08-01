@@ -15,6 +15,7 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Sort a folder of images by similarity score to a target image.
@@ -103,8 +104,7 @@ public class SortBySimilarityService implements IService {
                     }
                 }
                 
-        		List<EntityData> eds = new ArrayList<EntityData>(folder.getEntityData());
-        		
+        		List<EntityData> eds = EntityUtils.getOrderedEntityDataWithChildren(folder);
         		Collections.sort(eds, new Comparator<EntityData>() {
 					@Override
 					public int compare(EntityData o1, EntityData o2) {
