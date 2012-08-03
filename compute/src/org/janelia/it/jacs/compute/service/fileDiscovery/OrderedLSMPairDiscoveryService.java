@@ -6,6 +6,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -17,7 +19,22 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
-    
+
+    protected String defaultChannelSpec;
+
+    public void execute(IProcessData processData) throws ServiceException {
+        try {
+			defaultChannelSpec = (String) processData.getItem("DEFAULT CHANNEL SPECIFICATION");
+			if (defaultChannelSpec == null) {
+				throw new IllegalArgumentException("DEFAULT CHANNEL SPECIFICATION may not be null");
+			}
+        } 
+        catch (Exception e) {
+            throw new ServiceException(e);
+        }
+        super.execute(processData);
+    }
+			
     protected void processFolderForData(Entity folder) throws Exception {
     	
         File dir = new File(folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
@@ -227,6 +244,7 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
         sample.setCreationDate(createDate);
         sample.setUpdatedDate(createDate);
         sample.setName(lsmPair.name);
+        sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, defaultChannelSpec);
         sample = entityBean.saveOrUpdateEntity(sample);
         logger.info("Saved sample as "+sample.getId());
 

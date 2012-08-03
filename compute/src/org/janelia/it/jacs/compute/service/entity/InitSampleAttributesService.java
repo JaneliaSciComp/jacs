@@ -20,6 +20,8 @@ import org.janelia.it.jacs.model.tasks.Task;
  */
 public class InitSampleAttributesService implements IService {
 
+	private static final String DEFAULT_CHANNEL_SPEC = "sssr";
+	
     protected Logger logger;
 
     public void execute(IProcessData processData) throws ServiceException {
@@ -42,7 +44,14 @@ public class InitSampleAttributesService implements IService {
         	}
         	 
         	String chanSpec = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-        	logger.info("Channel specification for sample "+sampleEntityId+" is "+chanSpec);
+        	if (chanSpec==null) {
+        		chanSpec = DEFAULT_CHANNEL_SPEC;
+        		logger.warn("Channel specification for sample is not specified. Assuming "+chanSpec);
+        	}
+        	else {
+        		logger.info("Channel specification for sample "+sampleEntityId+" is "+chanSpec);	
+        	}
+        	
         	
         	StringBuffer signalChannels = new StringBuffer();
         	StringBuffer referenceChannels = new StringBuffer();
