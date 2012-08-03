@@ -151,6 +151,17 @@
          </property>
         <property name="expectedType" value="org.janelia.it.jacs.compute.api.ComputeBeanRemote"/>
    </bean>
+    <bean id="remotePipelineService" class="org.springframework.jndi.JndiObjectFactoryBean">
+        <property name="jndiName" value="compute/ComputeEJB/remote"/>
+        <property name="jndiEnvironment">
+            <props>
+                <prop key="java.naming.factory.initial">org.jnp.interfaces.NamingContextFactory</prop>
+                <prop key="java.naming.provider.url">jnp://${pipeline.ejb.service}</prop>
+                <prop key="java.naming.factory.url.pkgs">org.jboss.naming:org.jnp.interfaces</prop>
+            </props>
+        </property>
+        <property name="expectedType" value="org.janelia.it.jacs.compute.api.ComputeBeanRemote"/>
+    </bean>
     <bean id="remoteSearchService" class="org.springframework.jndi.JndiObjectFactoryBean">
         <property name="jndiName" value="compute/SearchEJB/remote"/>
         <property name="jndiEnvironment">
@@ -193,6 +204,7 @@
         <property name="dataDao" ref="nodeDAO"/>
         <property name="taskDAO" ref="taskDAO"/>
         <property name="computeBean" ref="remoteComputeOrderService"/>
+        <property name="pipelineBean" ref="remotePipelineService"/>
     </bean>
     <bean name="recruitmentAPI" class="org.janelia.it.jacs.server.api.RecruitmentAPI">
         <property name="taskDao" ref="taskDAO"/>

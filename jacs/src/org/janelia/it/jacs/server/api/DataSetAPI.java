@@ -54,6 +54,7 @@ public class DataSetAPI {
     NodeDAOImpl dataDao;
     TaskDAO taskDAO;
     ComputeBeanRemote computeBean;
+    private ComputeBeanRemote pipelineBean;
 
     public void setDataDao(NodeDAOImpl dataDao) {
         this.dataDao = dataDao;
@@ -65,6 +66,15 @@ public class DataSetAPI {
 
     public void setComputeBean(ComputeBeanRemote computeBean) {
         this.computeBean = computeBean;
+    }
+
+
+    public void setPipelineBean(ComputeBeanRemote pipelineBean) {
+        this.pipelineBean = pipelineBean;
+    }
+
+    public ComputeBeanRemote getPipelineBean() {
+        return pipelineBean;
     }
 
     public List getUserSpecificData(String targetUser) throws SystemException {
@@ -363,7 +373,7 @@ public class DataSetAPI {
                 }
             }
             logger.info("DataSetAPI submitJob using processName=" + processName);
-            computeBean.submitJob(processName, newTask.getObjectId());
+            pipelineBean.submitJob(processName, newTask.getObjectId());
             jobId = newTask.getObjectId().toString();
         }
         catch (Throwable e) {
