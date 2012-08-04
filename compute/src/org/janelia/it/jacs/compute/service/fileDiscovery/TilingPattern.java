@@ -42,13 +42,26 @@ public enum TilingPattern {
 
 	/**
      * Known tiling patterns as of 11/2011, enumerated by Chris Z.
-     * Added two-tile whole brains for Lee Lab on 6/2012.  
+     * Added two-tile whole brains for Lee Lab as of 6/2012.  
+     * Added "unknown" stitched brains for Lee Lab as of 8/2012.
      * 
      * @param filePairs
      * @return
      */
     public static TilingPattern getTilingPattern(List<String> tags) {
 
+    	boolean allUnnamed = true;
+    	for(String tag : tags) {
+    		if (!tag.startsWith("Tile ")) {
+    			allUnnamed = false;
+    			break;
+    		}
+    	}
+    	
+    	if (allUnnamed) {
+    		return UNKNOWN;
+    	}
+    	
         boolean hasLeftOptic = false;
         boolean hasRightOptic = false;
         boolean hasLeftCentralBrain = false;
@@ -73,23 +86,23 @@ public enum TilingPattern {
         	if ("Right Brain".equals(tag)) hasRightBrain = true;
         }
         
-        if (hasLeftOptic && hasLeftDorsalBrain && hasVentralBrain && hasRightDorsalBrain && hasRightOptic) return TilingPattern.WHOLE_BRAIN;
-        if (hasLeftOptic && hasLeftCentralBrain && hasRightCentralBrain && hasRightOptic) return TilingPattern.OPTIC_SPAN;
-        if (hasLeftOptic && hasCentralBrain && hasRightOptic) return TilingPattern.OPTIC_SPAN;
-        if (hasLeftDorsalBrain && hasVentralBrain && hasRightDorsalBrain) return TilingPattern.CENTRAL_BRAIN;
-        if ((hasLeftOptic && hasLeftCentralBrain) || (hasRightOptic && hasRightCentralBrain)) return TilingPattern.OPTIC_CENTRAL_BORDER;
-        if (hasLeftBrain && hasRightBrain) return TilingPattern.WHOLE_BRAIN;
+        if (hasLeftOptic && hasLeftDorsalBrain && hasVentralBrain && hasRightDorsalBrain && hasRightOptic) return WHOLE_BRAIN;
+        if (hasLeftOptic && hasLeftCentralBrain && hasRightCentralBrain && hasRightOptic) return OPTIC_SPAN;
+        if (hasLeftOptic && hasCentralBrain && hasRightOptic) return OPTIC_SPAN;
+        if (hasLeftDorsalBrain && hasVentralBrain && hasRightDorsalBrain) return CENTRAL_BRAIN;
+        if ((hasLeftOptic && hasLeftCentralBrain) || (hasRightOptic && hasRightCentralBrain)) return OPTIC_CENTRAL_BORDER;
+        if (hasLeftBrain && hasRightBrain) return WHOLE_BRAIN;
         
         if (tags.size()==1) {
-        	if (hasLeftOptic || hasRightOptic) return TilingPattern.OPTIC_TILE;
-        	if (hasCentralBrain) return TilingPattern.CENTRAL_TILE;
+        	if (hasLeftOptic || hasRightOptic) return OPTIC_TILE;
+        	if (hasCentralBrain) return CENTRAL_TILE;
         }
         
         if (tags.size()==2) {
-        	if (hasLeftOptic && hasRightOptic) return TilingPattern.OPTIC_TILE;
+        	if (hasLeftOptic && hasRightOptic) return OPTIC_TILE;
         }
         
-        return TilingPattern.OTHER;	
+        return OTHER;	
     }
     
 }
