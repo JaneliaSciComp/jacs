@@ -1,0 +1,39 @@
+<!-- 
+	Process all neuron separation results and ensure they have all the necessary "fastLoad" artifacts.
+-->
+<process name="FastLoad Artifact Pipeline" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
+	<sequence>
+	    
+	    <!-- Create the input file list -->
+		<operation name="Fast Load" processor="org.janelia.it.jacs.compute.service.entity.FastLoadArtiactService">
+			<input name="MODE" value="CREATE_INPUT_LIST"/>
+			<output name="INPUT_PATH_LIST"/>
+			<output name="ENTITY_MAP"/>
+		</operation>
+		
+	    <sequence forEach="INPUT_PATH_LIST">
+        
+            <sequence>
+            
+			    <!-- Create a result node for this grid run -->
+			    <operation name="Create Group Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+				    <input name="NAME" value="Temp"/>
+			        <output name="RESULT_FILE_NODE"/>
+			        <output name="RESULT_FILE_NODE_ID"/>
+			    </operation>
+			    
+			    <!--Generate fast load artifacts for all the separations in the list -->
+		        <sequence name="Fast Load Artifacts" waitForAsync="true">
+				    <operation name="Fast Load Artifacts" processor="queue/gridSubmitAndWait">
+				        <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.FastLoadArtifactPipelineGridService"/>
+						<input name="RESULT_FILE_NODE"/>
+						<input name="INPUT_PATH_LIST"/>
+				    </operation>
+		        </sequence>
+    		
+    		</sequence>	
+		
+		</sequence>      
+	    
+    </sequence>
+</process>

@@ -15,8 +15,16 @@ public class NeuronSeparatorHelper {
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("Separator.ScriptPath");
 
+    protected static final String FAST_LOAD_SCRIPT = 
+            SystemConfigurationProperties.getString("Executables.ModuleBase") +
+            SystemConfigurationProperties.getString("FastLoad.ScriptPath");
+    
 	public static String getNeuronSeparationCommands() throws ServiceException {
         return "sh "+SEPARATOR_SCRIPT+" $OUTPUT_DIR neuronSeparatorPipeline $INPUT_FILE \"$SIGNAL_CHAN\" \"$REF_CHAN\" $PREVIOUS_OUTPUT";
+	}
+
+	public static String getFastLoadCommands() {
+		return "sh "+FAST_LOAD_SCRIPT+" $INPUT_DIR";
 	}
     
 }
