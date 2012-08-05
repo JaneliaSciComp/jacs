@@ -125,9 +125,6 @@ echo "~ Creating final output in: $OUTDIR"
 
 $Vaa3D -cmd image-loader -convert ConsolidatedLabel3.v3draw $OUTDIR/ConsolidatedLabel3.v3dpbd
 $Vaa3D -cmd image-loader -convert ConsolidatedSignal3.v3draw $OUTDIR/ConsolidatedSignal3.v3dpbd
-$Vaa3D -cmd image-loader -convert Reference3.v3draw $OUTDIR/Reference3.v3dpbd
-
-ln -s $OUTDIR/ConsolidatedLabel3.v3dpbd $OUTDIR/ConsolidatedLabel2.v3dpbd
 $Vaa3D -cmd image-loader -convert ConsolidatedSignal2.v3draw $OUTDIR/ConsolidatedSignal2.v3dpbd
 $Vaa3D -cmd image-loader -convert ConsolidatedSignal2.v3draw $OUTDIR/ConsolidatedSignal2.mp4
 $Vaa3D -cmd image-loader -convert Reference2.v3draw $OUTDIR/Reference2.v3dpbd
@@ -141,11 +138,8 @@ do
     echo "~ Compressing files for MV=$MV"
     $Vaa3D -cmd image-loader -convert ConsolidatedLabel2_$MV.v3draw $OUTDIR/ConsolidatedLabel2_$MV.v3dpbd
     $Vaa3D -cmd image-loader -convert ConsolidatedSignal2_$MV.v3draw $OUTDIR/ConsolidatedSignal2_$MV.v3dpbd
-    $Vaa3D -cmd image-loader -convert Reference2_$MV.v3draw $OUTDIR/Reference2_$MV.v3dpbd
-    $Vaa3D -cmd image-loader -convert ConsolidatedSignal2Red_$MV.v3draw $OUTDIR/ConsolidatedSignal2Red_$MV.v3dpbd
-    $Vaa3D -cmd image-loader -convert ConsolidatedSignal2Green_$MV.v3draw $OUTDIR/ConsolidatedSignal2Green_$MV.v3dpbd
-    $Vaa3D -cmd image-loader -convert ConsolidatedSignal2Blue_$MV.v3draw $OUTDIR/ConsolidatedSignal2Blue_$MV.v3dpbd
     $Vaa3D -cmd image-loader -convert ConsolidatedSignal2_$MV.v3draw $OUTDIR/ConsolidatedSignal2_$MV.mp4
+    $Vaa3D -cmd image-loader -convert Reference2_$MV.v3draw $OUTDIR/Reference2_$MV.v3dpbd
     $Vaa3D -cmd image-loader -convert Reference2_$MV.v3draw $OUTDIR/Reference2_$MV.mp4
     $Vaa3D -cmd image-loader -convert ConsolidatedSignal2Red_$MV.v3draw $OUTDIR/ConsolidatedSignal2Red_$MV.mp4
     $Vaa3D -cmd image-loader -convert ConsolidatedSignal2Green_$MV.v3draw $OUTDIR/ConsolidatedSignal2Green_$MV.mp4
@@ -154,12 +148,16 @@ done
 
 cp *.metadata $OUTDIR # 10 files
 
+cd $OUTDIR
+ln -s ../Reference.v3dpbd Reference3.v3dpbd
+ln -s ConsolidatedLabel3.v3dpbd ConsolidatedLabel2.v3dpbd
+
 if ls core* &> /dev/null; then
     touch $OUTDIR/core
 fi
 
 echo "~ Removing temp files"
-#rm -rf $WORKING_DIR
+rm -rf $WORKING_DIR
 
 echo "~ Finished"
 
