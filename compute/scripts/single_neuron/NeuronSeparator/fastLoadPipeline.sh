@@ -27,7 +27,7 @@ then
     exit
 fi
 
-MV_SIZES=( 25 50 100 200 ) # subsample sizes, in millions of voxels
+MV_SIZES=( 25 50 100 ) # subsample sizes, in millions of voxels
 SEPDIR=$1 # e.g. /groups/scicomp/jacsData/filestore/.../separate
 INPUT_FILE=$2 # e.g. /groups/scicomp/jacsData/filestore/.../stitched-1679282762445488226.v3draw
 
@@ -126,8 +126,9 @@ echo "~ Creating final output in: $OUTDIR"
 $Vaa3D -cmd image-loader -convert ConsolidatedLabel3.v3draw $OUTDIR/ConsolidatedLabel3.v3dpbd
 $Vaa3D -cmd image-loader -convert ConsolidatedSignal3.v3draw $OUTDIR/ConsolidatedSignal3.v3dpbd
 $Vaa3D -cmd image-loader -convert ConsolidatedSignal2.v3draw $OUTDIR/ConsolidatedSignal2.v3dpbd
-$Vaa3D -cmd image-loader -convert ConsolidatedSignal2.v3draw $OUTDIR/ConsolidatedSignal2.mp4
 $Vaa3D -cmd image-loader -convert Reference2.v3draw $OUTDIR/Reference2.v3dpbd
+
+$Vaa3D -cmd image-loader -convert ConsolidatedSignal2.v3draw $OUTDIR/ConsolidatedSignal2.mp4
 $Vaa3D -cmd image-loader -convert Reference2.v3draw $OUTDIR/Reference2.mp4
 $Vaa3D -cmd image-loader -convert ConsolidatedSignal2Red.v3draw $OUTDIR/ConsolidatedSignal2Red.mp4
 $Vaa3D -cmd image-loader -convert ConsolidatedSignal2Green.v3draw $OUTDIR/ConsolidatedSignal2Green.mp4
@@ -136,10 +137,12 @@ $Vaa3D -cmd image-loader -convert ConsolidatedSignal2Blue.v3draw $OUTDIR/Consoli
 for MV in ${MV_SIZES[@]}
 do
     echo "~ Compressing files for MV=$MV"
+    
     $Vaa3D -cmd image-loader -convert ConsolidatedLabel2_$MV.v3draw $OUTDIR/ConsolidatedLabel2_$MV.v3dpbd
     $Vaa3D -cmd image-loader -convert ConsolidatedSignal2_$MV.v3draw $OUTDIR/ConsolidatedSignal2_$MV.v3dpbd
-    $Vaa3D -cmd image-loader -convert ConsolidatedSignal2_$MV.v3draw $OUTDIR/ConsolidatedSignal2_$MV.mp4
     $Vaa3D -cmd image-loader -convert Reference2_$MV.v3draw $OUTDIR/Reference2_$MV.v3dpbd
+    
+    $Vaa3D -cmd image-loader -convert ConsolidatedSignal2_$MV.v3draw $OUTDIR/ConsolidatedSignal2_$MV.mp4
     $Vaa3D -cmd image-loader -convert Reference2_$MV.v3draw $OUTDIR/Reference2_$MV.mp4
     $Vaa3D -cmd image-loader -convert ConsolidatedSignal2Red_$MV.v3draw $OUTDIR/ConsolidatedSignal2Red_$MV.mp4
     $Vaa3D -cmd image-loader -convert ConsolidatedSignal2Green_$MV.v3draw $OUTDIR/ConsolidatedSignal2Green_$MV.mp4
@@ -151,10 +154,6 @@ cp *.metadata $OUTDIR # 10 files
 cd $OUTDIR
 ln -s ../Reference.v3dpbd Reference3.v3dpbd
 ln -s ConsolidatedLabel3.v3dpbd ConsolidatedLabel2.v3dpbd
-
-if ls core* &> /dev/null; then
-    touch $OUTDIR/core
-fi
 
 echo "~ Removing temp files"
 rm -rf $WORKING_DIR
