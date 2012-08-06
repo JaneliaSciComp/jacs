@@ -36,6 +36,10 @@ public interface WorkstationDataManagerMBean {
     
     public void runMCFODataUpgrade(String user, Boolean testRun);
     
+    public void runSingleFastLoadArtifactPipeline(String user, String separationEntityId);
+    
+    public void runCompleteFastLoadArtifactPipeline(String user);
+    
     public void runLeetSageBasedDataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
     
     public void runCentralBrainDataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);

@@ -10,6 +10,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
+import org.janelia.it.jacs.compute.service.entity.FastLoadArtifactService;
 import org.janelia.it.jacs.compute.service.entity.OrphanAnnotationCheckerService;
 import org.janelia.it.jacs.compute.service.entity.SampleFileNodeSyncService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FlyScreenDiscoveryService;
@@ -258,6 +259,31 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
+    public void runSingleFastLoadArtifactPipeline(String user, String separationEntityId) {
+        try {
+        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        	taskParameters.add(new TaskParameter(FastLoadArtifactService.PARAM_separationId, separationEntityId, null)); 
+        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
+        			taskParameters, "fastLoadArtifactPipeline", "Fast Load Artifact Pipeline");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("FastLoadArtifactSinglePipeline", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void runCompleteFastLoadArtifactPipeline(String user) {
+        try {
+        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
+        			new HashSet<TaskParameter>(), "fastLoadArtifactPipeline", "Fast Load Artifact Pipeline");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("FastLoadArtifactCompletePipeline", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    
     public void runLeetSageBasedDataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation) {
         try {
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 

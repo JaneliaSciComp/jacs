@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.service.entity;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -10,6 +11,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
@@ -21,8 +23,13 @@ import org.janelia.it.jacs.model.tasks.Task;
  */
 public class FastLoadArtifactService implements IService {
 
+	private static final String centralDir = SystemConfigurationProperties.getString("FileStore.CentralDir");
+	
+	public static final String PARAM_separationId = "separation id";
+	
     public static final String MODE_UNDEFINED = "UNDEFINED";
     public static final String MODE_CREATE_INPUT_LIST = "CREATE_INPUT_LIST";
+    public static final String MODE_CREATE_SINGLE_INPUT_LIST = "CREATE_SINGLE_INPUT_LIST";
     public static final String MODE_COMPLETE = "COMPLETE";
     public static final int GROUP_SIZE = 200;
 	
@@ -51,6 +58,9 @@ public class FastLoadArtifactService implements IService {
             if (mode.equals(MODE_CREATE_INPUT_LIST)) {
                 doCreateInputList();
             }
+            if (mode.equals(MODE_CREATE_SINGLE_INPUT_LIST)) {
+                doCreateSingleInputList();
+            }
             else if (mode.equals(MODE_COMPLETE)) {
                 doComplete();
             } 
@@ -77,14 +87,53 @@ public class FastLoadArtifactService implements IService {
         	entityBean.loadLazyEntity(sample, false);
         	for(Entity result : sample.getChildrenOfType(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
         		String dir = result.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        		inputDirs.add(dir);
+        		if (!fastLoadDirExists(dir)) {
+        			if (!dir.contains(centralDir)) {
+        				logger.info("Ignoring entity with path which does not contain the FileStore.CentralDir: "+result.getId());
+        			}
+        			else {
+        				inputDirs.add(dir);		
+        			}
+        		}
         	}
         }
         
         List<List<String>> inputGroups = createGroups(inputDirs, GROUP_SIZE);
         processData.putItem("INPUT_PATH_LIST", inputGroups);
-        
 		logger.info("Processed "+inputDirs.size()+" entities into "+inputGroups.size()+" groups.");
+    }
+
+    private void doCreateSingleInputList() throws ComputeException {
+    	
+    	String sepId = processData.getString("SEPARATION_ID");
+        logger.info("Getting neuron separation "+sepId);
+
+    	if (sepId == null) {
+    		throw new IllegalArgumentException("SEPARATION_ID may not be null");
+    	}
+        
+        Entity result = entityBean.getEntityById(sepId);
+        
+        List<String> inputDirs = new ArrayList<String>();
+
+        if (!result.getEntityType().getName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
+        	throw new IllegalArgumentException("Entity with id="+sepId+" is not a neuron separation result");
+        }
+        
+		String dir = result.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+
+		if (fastLoadDirExists(dir)) {
+			logger.info("The fastLoad directory already exists under "+dir);
+			return;
+		}
+		
+		if (!dir.contains(centralDir)) {
+			logger.info("Ignoring entity with path which does not contain the FileStore.CentralDir: "+result.getId());
+		}
+		else {
+			inputDirs.add(dir);
+	        processData.putItem("INPUT_PATHS", inputDirs);
+		}
     }
 
     private List<List<String>> createGroups(Collection<String> fullList, int groupSize) {
@@ -105,7 +154,12 @@ public class FastLoadArtifactService implements IService {
         }
         return groupList;
     }
-        
+
+    private boolean fastLoadDirExists(String dir) {
+    	File fastLoadDir = new File(dir,"fastLoad");
+    	return fastLoadDir.exists();
+    }
+    
     private void doComplete() throws ComputeException {
 
     	// TODO: import some of the fast load artifacts as entities, if required

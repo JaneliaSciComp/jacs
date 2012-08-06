@@ -1,9 +1,8 @@
-package org.janelia.it.jacs.compute.service.neuronSeparator;
+package org.janelia.it.jacs.compute.service.utility;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
@@ -12,43 +11,43 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
-import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 
 /**
- * Run the fast load pipeline on a set of neuron separation result directories.
- *   INPUT_PATH_LIST - input paths
+ * Archive certain files in a certain directory and replace them with symbolic links to their archived versions. Parameters:
+ *   INPUT_PATHS - directory file
+ *   FILE_PATTERN - wildcard pattern for choosing files to archive and link
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class FastLoadArtifactPipelineGridService extends SubmitDrmaaJobService {
-	
+public class ArchivingGridService extends SubmitDrmaaJobService {
+
+    protected static final String ARCHIVE_CMD = SystemConfigurationProperties.getString("Executables.ModuleBase") +
+    		SystemConfigurationProperties.getString("MoveToArchive.ScriptPath");
+    
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
 
     private List<String> inputPaths;
-    private List<String> fastLoadPaths;
+    private String filePattern;
     
     @Override
     protected String getGridServicePrefixName() {
-        return "fastLoad";
+        return "archive";
     }
 
     protected void init(IProcessData processData) throws Exception {
     	super.init(processData);
 
-        inputPaths = (List<String>)processData.getItem("INPUT_PATH_LIST");
+        inputPaths = (List<String>)processData.getItem("INPUT_PATHS");
         if (inputPaths==null) {
-        	throw new ServiceException("Input parameter INPUT_PATH_LIST may not be empty");
+        	throw new ServiceException("Input parameter INPUT_PATHS may not be empty");
+        }
+
+        filePattern = (String)processData.getItem("FILE_PATTERN");
+        if (filePattern==null) {
+        	throw new ServiceException("Input parameter FILE_PATTERN may not be empty");
         }
         
-        fastLoadPaths = new ArrayList<String>();
-        for(String inputPath : inputPaths) {
-        	File path = new File(inputPath,"fastLoad");
-        	fastLoadPaths.add(path.getAbsolutePath());
-        }
-        
-        processData.putItem("FASTLOAD_PATHS", fastLoadPaths);
-        
-    	
         logger.info("Starting FastLoadArtifactPipelineGridService with taskId=" + task.getObjectId() + " resultNodeId=" + resultFileNode.getObjectId() + " resultDir=" + resultFileNode.getDirectoryPath());
     }
     
@@ -60,7 +59,6 @@ public class FastLoadArtifactPipelineGridService extends SubmitDrmaaJobService {
     	}
     	writeShellScript(writer);
         setJobIncrementStop(configIndex-1);
-        
     }
 
     private void writeInstanceFiles(String inputFile, int configIndex) throws Exception {
@@ -79,14 +77,15 @@ public class FastLoadArtifactPipelineGridService extends SubmitDrmaaJobService {
 
     protected void writeInstanceFile(FileWriter fw, String inputDir, int configIndex) throws IOException {
         fw.write(inputDir + "\n");
+        fw.write(filePattern + "\n");
     }
 
     protected void writeShellScript(FileWriter writer) throws Exception {
         StringBuffer script = new StringBuffer();
         script.append("read INPUT_DIR\n");
-        script.append(Vaa3DHelper.getVaa3DGridCommandPrefix() + "\n");
-        script.append(NeuronSeparatorHelper.getFastLoadCommands() + "\n");
-        script.append(Vaa3DHelper.getVaa3DGridCommandSuffix() + "\n");
+        script.append("read FILE_PATTERN\n");
+        script.append("cd $INPUT_DIR\n");
+        script.append(ARCHIVE_CMD + " $FILE_PATTERN\n");
         writer.write(script.toString());
     }
     
@@ -98,18 +97,12 @@ public class FastLoadArtifactPipelineGridService extends SubmitDrmaaJobService {
     @Override
     protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
     	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
-    	// Reserve all 2 slots on a node. This gives us 6 GB of memory. 
-    	jt.setNativeSpecification("-pe batch 2 ");
+    	// Reserve all 1 slots on a node. This gives us 3 GB of memory, which we don't need at all, but it's the least we can reserve. 
+    	jt.setNativeSpecification("-pe batch 1 -l limit50=1 ");
     	return jt;
     }
     
     @Override
 	public void postProcess() throws MissingDataException {
-    	for(String fastLoadDir : fastLoadPaths) {
-    		File file = new File(fastLoadDir);
-    		if (!file.exists()) {
-    			throw new MissingDataException("Missing fast load directory: "+fastLoadDir);
-    		}
-    	}
 	}
 }

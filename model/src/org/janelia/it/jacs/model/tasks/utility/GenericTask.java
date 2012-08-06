@@ -28,6 +28,7 @@ public class GenericTask extends Task {
         setDefaultValues();
         this.taskName = taskName;
         this.displayName = displayName;
+        setJobName(displayName+" Task");
     }
 
     public GenericTask() {
