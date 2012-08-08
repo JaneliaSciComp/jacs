@@ -37,6 +37,7 @@ public class EntityConstants {
     public static final String TYPE_ALIGNMENT_RESULT                 = "Alignment Result";
     public static final String TYPE_IMAGE_2D                         = "Image 2D";
     public static final String TYPE_IMAGE_3D                         = "Image 3D";
+    public static final String TYPE_MOVIE                            = "Movie";
     public static final String TYPE_NEURON_FRAGMENT                  = "Neuron Fragment";
     public static final String TYPE_NEURON_FRAGMENT_COLLECTION       = "Neuron Fragment Collection";
     public static final String TYPE_ALIGNED_BRAIN_STACK              = "Aligned Brain Stack";
