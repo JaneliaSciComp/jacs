@@ -18,7 +18,7 @@ public interface AdministrativeManagerMBean {
 
     public void cleanUpUsersAgainstLDAP();
 
-    public void resubmitJobs(String processDefinition, String taskId);
+    public void resubmitJobs(String processDefinition, String taskIds);
 
     public void showCurrentGridProcessMap();
     

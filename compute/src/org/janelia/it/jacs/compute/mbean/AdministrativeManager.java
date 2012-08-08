@@ -3,7 +3,6 @@ package org.janelia.it.jacs.compute.mbean;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
-import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.QueueMessage;
 import org.janelia.it.jacs.compute.engine.service.GridSubmitHelperMap;
@@ -178,10 +177,13 @@ public class AdministrativeManager implements AdministrativeManagerMBean {
         }
     }
 
-    public void resubmitJobs(String processDefinition, String taskId) {
+    public void resubmitJobs(String processDefinition, String taskIds) {
         try {
-            EJBFactory.getRemoteComputeBean().addEventToTask(Long.valueOf(taskId), new Event(Event.RESUBMIT_EVENT, new Date(), Event.RESUBMIT_EVENT));
-            EJBFactory.getRemoteComputeBean().submitJob(processDefinition, Long.valueOf(taskId));
+            List<String> jobs = Task.listOfStringsFromCsvString(taskIds);
+            for (String job : jobs) {
+                EJBFactory.getRemoteComputeBean().addEventToTask(Long.valueOf(job), new Event(Event.RESUBMIT_EVENT, new Date(), Event.RESUBMIT_EVENT));
+                EJBFactory.getRemoteComputeBean().submitJob(processDefinition, Long.valueOf(job));
+            }
         }
         catch (DaoException e) {
             e.printStackTrace();
