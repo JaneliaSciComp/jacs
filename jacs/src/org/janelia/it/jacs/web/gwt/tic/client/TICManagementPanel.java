@@ -803,7 +803,19 @@ public class TICManagementPanel extends VerticalPanel {
     }
 
     private void submitJob() {
-        // Validate job name
+        // Validate Information.  If any of the validations fail then leave
+        boolean inputFileGood       = checkValue("Input File Or Directory",_inputFileOrDirTextBox.getText());
+        if (!inputFileGood) { return; }
+
+        boolean intensityFileGood   = checkValue("Intensity Correction File", _intensityCorrectionMatrixFileTextBox.getText());
+        if (!intensityFileGood) { return; }
+
+        boolean microscopeFileGood  = checkValue("Microscope Settings File", _microscopeSettingsTextBox.getText());
+        if (!microscopeFileGood) { return; }
+
+        boolean transformFileGood   = checkValue("Transformation File", _transformationFileTextBox.getText());
+        if (!transformFileGood) { return; }
+
         // submit the job
         _ticTask = new BatchTicTask();
 //        String nodeId = "Test";//naaResultsTable.getValue(naaResultsTable.getSelectedRow().getRowIndex(), 0).toString();
@@ -835,6 +847,19 @@ public class TICManagementPanel extends VerticalPanel {
         _statusMessage.showSubmittingMessage();
 
         new SubmitJob(_ticTask, new JobSubmissionListener()).runJob();
+    }
+
+    private boolean checkValue(String valueName, String text) {
+        if (null==text || "".equals(text)) {
+            new PopupCenteredLauncher(new ErrorPopupPanel(valueName+" cannot be empty."), 250).showPopup(_submitButton);
+            return false;
+        }
+        String testTxt = text.trim();
+        if (testTxt.contains(" ")) {
+            new PopupCenteredLauncher(new ErrorPopupPanel(valueName+" cannot contain spaces.  Please fix."), 250).showPopup(_submitButton);
+            return false;
+        }
+        return true;
     }
 
     private class JobSubmissionListener implements org.janelia.it.jacs.web.gwt.common.client.jobs.JobSubmissionListener {
