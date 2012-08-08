@@ -188,6 +188,10 @@ public class GridJobStatus implements java.io.Serializable, IsSerializable {
 
     // Update fields from a Map
     public void updateFromMap(Map<String, String> resources) {
+        if (null==resources) {
+            logger.warn("Null resources for task="+taskID+", job="+jobID);
+            return;
+        }
         if (logger.isTraceEnabled()) {
             // print our the whole map
             StringBuilder sb = new StringBuilder();
