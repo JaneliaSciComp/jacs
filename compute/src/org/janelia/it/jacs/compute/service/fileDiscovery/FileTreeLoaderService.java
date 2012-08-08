@@ -1,10 +1,14 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
+import java.io.File;
+import java.util.*;
+
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -14,9 +18,6 @@ import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.FileTreeLoaderResultNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
-
-import java.io.File;
-import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -188,6 +189,18 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         }
     }
 
+   protected Entity verifyOrCreateVirtualSubFolder(Entity parentFolder, String subFolderName) throws Exception {
+       for (Entity child : parentFolder.getChildren()) {
+           if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) &&
+                   child.getName().equals(subFolderName)) {
+               return child;
+           }
+       }
+       // Need to create
+       Entity subFolder=helper.addChildFolderToEntity(parentFolder, subFolderName, null);
+       return subFolder;
+   }
+   
     protected static synchronized Map<Long, List<ArtifactInfo>> getPbdGroupMap(Task task, boolean remove) {
         Long taskId=task.getObjectId();
         if (taskId==null) {
@@ -272,7 +285,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
 
     protected void addDirectoryAndContentsToFolder(Entity folder, File dir, Integer index) throws Exception {
         Entity dirEntity=verifyOrCreateChildFolderFromDir(folder, dir, index);
-        List<File> orderedFiles=getOrderedFilesInDir(dir);
+        List<File> orderedFiles=FileUtils.getOrderedFilesInDir(dir);
         for (int i=0;i<orderedFiles.size();i++) {
             File f=orderedFiles.get(i);
             if (passesExclusionFilter(f)) {
@@ -308,9 +321,9 @@ public class FileTreeLoaderService extends FileDiscoveryService {
 
         if (!alreadyExists) {
             // Assume the entity needs to be created
-            EntityType entityType=getEntityTypeForFile(f);
+            EntityType entityType=helper.getEntityTypeForFile(f);
             fileEntity=createEntityForFile(f, entityType);
-            addToParent(folder, fileEntity, index, EntityConstants.ATTRIBUTE_ENTITY);
+            helper.addToParent(folder, fileEntity, index, EntityConstants.ATTRIBUTE_ENTITY);
         }
 
         // Handle artifacts
@@ -510,7 +523,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
                         pbdResultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_ARTIFACT_SOURCE_ID, ai.sourceEntityId.toString());
                         logger.info("doComplete() saving pbdResultEntity");
                         entityBean.saveOrUpdateEntity(pbdResultEntity);
-                        addToParent(supportingFilesFolder, pbdResultEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
+                        helper.addToParent(supportingFilesFolder, pbdResultEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
                         // Second, add this entity as the proxy attribute of the source Entity
                         logger.info("doComplete() adding entity as performance proxy");
                         Entity sourceEntity=entityBean.getEntityById(ai.sourceEntityId.toString());
@@ -545,7 +558,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
                         Entity mipResultEntity=createEntityForFile(mipResultFile, mipResultEntityType);
                         mipResultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_ARTIFACT_SOURCE_ID, ai.sourceEntityId.toString());
                         entityBean.saveOrUpdateEntity(mipResultEntity);
-                        addToParent(supportingFilesFolder, mipResultEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
+                        helper.addToParent(supportingFilesFolder, mipResultEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
                         // Add as default 2D image
                         Entity sourceEntity=entityBean.getEntityById(ai.sourceEntityId.toString());
                         File sourceFile=new File(sourceEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));

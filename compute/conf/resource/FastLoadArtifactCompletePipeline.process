@@ -1,18 +1,24 @@
 <!-- 
 	Process all neuron separation results and ensure they have all the necessary "fastLoad" artifacts.
 -->
-<process name="FastLoad Artifact Pipeline" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
+<process name="FastLoad Artifact Pipeline" processor="queue/mcfoDataPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	    
 	    <!-- Create the input file list -->
 		<operation name="Fast Load" processor="org.janelia.it.jacs.compute.service.entity.FastLoadArtifactService">
 			<input name="MODE" value="CREATE_INPUT_LIST"/>
-			<output name="INPUT_PATH_LIST"/>
+			<output name="ENTITY_LIST"/>
 		</operation>
 		
-	    <sequence forEach="INPUT_PATH_LIST">
+	    <sequence forEach="ENTITY_LIST">
         
             <sequence>
+            
+			    <!-- Create the input file list -->
+				<operation name="Get File Paths" processor="org.janelia.it.jacs.compute.service.entity.GetFilePathsService">
+					<input name="ENTITY_LIST" />
+					<output name="FILE_PATHS"/>
+				</operation>
             
 			    <!-- Create a result node for this grid run -->
 			    <operation name="Create Group Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
@@ -26,7 +32,7 @@
 				    <operation name="Fast Load Artifacts" processor="queue/gridSubmitAndWait">
 				        <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.FastLoadArtifactPipelineGridService"/>
 						<input name="RESULT_FILE_NODE"/>
-						<input name="INPUT_PATH_LIST"/>
+						<input name="FILE_PATHS"/>
 						<output name="FASTLOAD_PATHS"/>
 				    </operation>
 		        </sequence>
@@ -48,7 +54,13 @@
 						<input name="FILE_PATTERN" value="*.v3dpbd"/>
 				    </operation>
 		        </sequence>
-		        
+				        
+			    <!-- Load the separation results into the database -->
+				<operation name="Discover Bulk Fast Load Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FastLoadResultsDiscoveryService">
+					<input name="ENTITY_LIST"/>
+					<input name="SEPARATION_LIST" value="$V{ENTITY_LIST}"/>
+			    </operation>
+				        
     		</sequence>	
 		
 		</sequence>      

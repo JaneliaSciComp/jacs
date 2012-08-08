@@ -75,7 +75,7 @@ public class ScreenScoresLoadingService implements IService {
             annotationBean = EJBFactory.getLocalAnnotationBean();
             user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
             createDate = new Date();
-            helper = new EntityHelper(entityBean, computeBean);
+            helper = new EntityHelper(entityBean, computeBean, user);
             
             // Process arguments
             

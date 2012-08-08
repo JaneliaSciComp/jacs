@@ -15,12 +15,12 @@
             <input name="TASK_PARAMETER_5" value="signal channel indexes"/>
             <input name="PROCESS_VARIABLE_5" value="SIGNAL_CHANNELS"/>
             <input name="TASK_PARAMETER_6" value="reference channel index"/>
-            <input name="PROCESS_VARIABLE_6" value="REFERENCE_CHANNELS"/>
+            <input name="PROCESS_VARIABLE_6" value="REFERENCE_CHANNEL"/>
 	        <output name="SAMPLE_ENTITY_ID"/>
 	        <output name="INPUT_FILENAME"/>
 	        <output name="RESULT_ENTITY_NAME"/>
 	        <output name="SIGNAL_CHANNELS"/>
-	        <output name="REFERENCE_CHANNELS"/>
+	        <output name="REFERENCE_CHANNEL"/>
 	    </operation>
 	    
 	    <!-- Create a sample result node, with nested result nodes for all the pipeline steps -->
@@ -59,10 +59,10 @@
 			<input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
 			<input name="RESULT_ENTITY_NAME"/>
 	    </operation>
-
+	    
 	    <!-- Copy LSM metadata files -->
 	    <operation name="Copy Lsm Metadata Files" processor="org.janelia.it.jacs.compute.service.entity.MigrateLsmMetadataFilesService">
-	        <input name="SAMPLE_ENTITY_ID"/>
+		    <input name="SAMPLE_ENTITY_ID"/>
 	        <input name="SEPARATE_RESULT_FILE_NODE"/>
 	    </operation>
 			

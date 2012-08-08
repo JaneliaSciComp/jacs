@@ -1,6 +1,9 @@
 
 package org.janelia.it.jacs.compute.service.search;
 
+import java.io.*;
+import java.util.*;
+
 import org.apache.log4j.Logger;
 import org.ggf.drmaa.DrmaaException;
 import org.ggf.drmaa.JobInfo;
@@ -27,9 +30,6 @@ import org.janelia.it.jacs.shared.lucene.LuceneDataFactory;
 import org.janelia.it.jacs.shared.lucene.SearchLuceneCmd;
 import org.janelia.it.jacs.shared.lucene.searchers.LuceneSearcher;
 import org.janelia.it.jacs.shared.utils.FileUtil;
-
-import java.io.*;
-import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -270,7 +270,12 @@ public class GridSearchByCategory implements IService {
         Object o = SearchSetup.getSynchObjectForTask(searchTask.getObjectId());
 //        _logger.debug("For task " + task.getObjectId() + " synch object hash = " + System.identityHashCode(o));
         synchronized (o) {
-            computeBean.saveEvent(searchTask.getObjectId(), eventType, topic, new Date());
+        	try {
+        		computeBean.saveEvent(searchTask.getObjectId(), eventType, topic, new Date());
+        	}
+        	catch (Exception e) {
+        		throw new DaoException(e);
+        	}
         }
     }
 

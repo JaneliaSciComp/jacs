@@ -56,7 +56,7 @@ public class SplitLinesVerificationService implements IService {
             computeBean = EJBFactory.getLocalComputeBean();
             user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
             createDate = new Date();
-            helper = new EntityHelper(entityBean, computeBean);
+            helper = new EntityHelper(entityBean, computeBean, user);
             
         	// Preload entity types
         	

@@ -58,7 +58,15 @@ public class InitSeparationParametersService implements IService {
     			logger.info("Putting "+prevResult.getId()+" in PREVIOUS_RESULT_ID");
     			processData.putItem("PREVIOUS_RESULT_ID", prevResult.getId());
     			Entity supportingData = EntityUtils.getSupportingData(prevResult);
-    			Entity prevResultFile = EntityUtils.findChildWithName(supportingData, "SeparationResult.nsp");
+    			
+    			Entity prevResultFile = null;
+    			for(Entity file : supportingData.getChildren()) {
+    				if (file.getName().endsWith(".nsp")) {
+    					prevResultFile = file;
+    					break;
+    				}
+    			}
+    			
     			if (prevResultFile!=null) {
     				String filepath = EntityUtils.getFilePath(prevResultFile);
     				if (filepath!=null && !"".equals(filepath)) {

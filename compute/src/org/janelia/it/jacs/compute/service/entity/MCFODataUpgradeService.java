@@ -8,6 +8,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -29,7 +30,7 @@ public class MCFODataUpgradeService implements IService {
     protected AnnotationBeanLocal annotationBean;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
-    protected EntityHelper entityHelper;
+    protected FileDiscoveryHelper helper;
     
     protected int numEntities;
     protected int numChanges;
@@ -47,7 +48,7 @@ public class MCFODataUpgradeService implements IService {
             computeBean = EJBFactory.getLocalComputeBean();
             username = task.getOwner();
             isDebug = Boolean.parseBoolean(task.getParameter(PARAM_testRun));
-            entityHelper = new EntityHelper(entityBean, computeBean, isDebug);
+            helper = new FileDiscoveryHelper(entityBean, computeBean, username);
             
             final String serverVersion = computeBean.getAppVersion();
             logger.info("Updating data model to latest version: "+serverVersion);
@@ -159,7 +160,7 @@ public class MCFODataUpgradeService implements IService {
 		
 		if (!toMove.isEmpty()) {
 			logger.info("Found old-style sample, id="+sample.getId()+" name="+sample.getName());
-            Entity supportingFiles = entityHelper.getOrCreateSupportingFilesFolder(sample);
+            Entity supportingFiles = helper.getOrCreateSupportingFilesFolder(sample);
 
         	if (!EntityUtils.areLoaded(supportingFiles.getEntityData())) {
         		entityBean.loadLazyEntity(supportingFiles, false);
@@ -224,24 +225,24 @@ public class MCFODataUpgradeService implements IService {
 
 	            Entity fragments = EntityUtils.findChildWithName(result, "Neuron Fragments");
 	            for(Entity fragmentEntity : fragments.getOrderedChildren()) {
-	            	entityHelper.removeDefaultImageFilePath(fragmentEntity);
+	            	helper.removeDefaultImageFilePath(fragmentEntity);
 	            	String fragNumStr = fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER); 
 	            	Entity fragMip = fragImages.get(fragNumStr);
 	            	if (fragMip==null) {
 	            		logger.warn("Could not find MIP image for "+fragmentEntity.getName());
 	            	}
 	            	else {
-	            		entityHelper.setDefault2dImage(fragmentEntity, fragMip);
+	            		helper.setDefault2dImage(fragmentEntity, fragMip);
 	            	}	
 	            }
 	            
     			if (signalMIP!=null) logger.info("Found signalMIP, id="+signalMIP.getId());
     			if (referenceMIP!=null) logger.info("Found referenceMIP, id="+referenceMIP.getId());
     			
-    			entityHelper.removeDefaultImageFilePath(result);    			
-    			entityHelper.setImage(result, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMIP);
-    			entityHelper.setImage(result, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, referenceMIP);
-    			entityHelper.setDefault2dImage(result, signalMIP);
+    			helper.removeDefaultImageFilePath(result);    			
+    			helper.setImage(result, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMIP);
+    			helper.setImage(result, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, referenceMIP);
+    			helper.setDefault2dImage(result, signalMIP);
         		
 	        	latestSignalMIP = signalMIP;
 	        	latestReferenceMIP = referenceMIP;
@@ -251,10 +252,10 @@ public class MCFODataUpgradeService implements IService {
     	if (latestSignalMIP!=null) logger.info("Latest signalMIP, id="+latestSignalMIP.getId());
 		if (latestReferenceMIP!=null) logger.info("Latest referenceMIP, id="+latestReferenceMIP.getId());
 		
-		entityHelper.removeDefaultImageFilePath(sample);
-		entityHelper.setImage(sample, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, latestSignalMIP);
-		entityHelper.setImage(sample, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, latestReferenceMIP);
-		entityHelper.setDefault2dImage(sample, latestSignalMIP);
+		helper.removeDefaultImageFilePath(sample);
+		helper.setImage(sample, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, latestSignalMIP);
+		helper.setImage(sample, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, latestReferenceMIP);
+		helper.setDefault2dImage(sample, latestSignalMIP);
     }
 
     protected String getIndex(String filename) {

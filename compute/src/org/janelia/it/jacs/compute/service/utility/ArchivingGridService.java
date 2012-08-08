@@ -98,7 +98,7 @@ public class ArchivingGridService extends SubmitDrmaaJobService {
     protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
     	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
     	// Reserve all 1 slots on a node. This gives us 3 GB of memory, which we don't need at all, but it's the least we can reserve. 
-    	jt.setNativeSpecification("-pe batch 1 -l limit50=1 ");
+    	jt.setNativeSpecification("-pe batch 1 ");
     	return jt;
     }
     

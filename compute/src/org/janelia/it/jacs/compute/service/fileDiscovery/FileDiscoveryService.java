@@ -1,7 +1,9 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
@@ -11,10 +13,10 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.User;
 
@@ -35,9 +37,8 @@ public class FileDiscoveryService implements IService {
     protected User user;
     protected Date createDate;
     protected IProcessData processData;
-
-    public final Long FILE_3D_SIZE_THRESHOLD = new Long(5000000L);
-
+    protected FileDiscoveryHelper helper;
+    
     public void execute(IProcessData processData) throws ServiceException {
         try {
         	this.processData=processData;
@@ -46,7 +47,10 @@ public class FileDiscoveryService implements IService {
             computeBean = EJBFactory.getLocalComputeBean();
             user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
             createDate = new Date();
-
+            helper = new FileDiscoveryHelper(entityBean, computeBean, user);
+            helper.addFileExclusion("DrmaaSubmitter.log");
+            helper.addFileExclusion("oos");
+        	
             // What database entity do we load into?
             
             String topLevelFolderName;
@@ -132,54 +136,11 @@ public class FileDiscoveryService implements IService {
     }
 
     protected Entity createOrVerifyRootEntityButDontLoadTree(String topLevelFolderName) throws Exception {
-        return createOrVerifyRootEntity(topLevelFolderName, user, createDate, logger, true /* create if necessary */, false /* load tree */);
+        return helper.createOrVerifyRootEntity(topLevelFolderName, true /* create if necessary */, false /* load tree */);
     }
 
     protected Entity createOrVerifyRootEntity(String topLevelFolderName) throws Exception {
-        return createOrVerifyRootEntity(topLevelFolderName, user, createDate, logger, true /* create if necessary */, true);
-    }
-
-    public static Entity createOrVerifyRootEntity(String topLevelFolderName, User user, Date createDate, org.apache.log4j.Logger logger, boolean createIfNecessary, boolean loadTree) throws Exception {
-        EntityBeanLocal entityBean = EJBFactory.getLocalEntityBean();
-        Set<Entity> topLevelFolders = entityBean.getEntitiesByName(topLevelFolderName);
-        Entity topLevelFolder = null;
-        if (topLevelFolders != null) {
-            // Only accept the current user's top level folder
-            for (Entity entity : topLevelFolders) {
-                if (entity.getUser().getUserLogin().equals(user.getUserLogin())
-                        && entity.getEntityType().getName().equals(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER).getName())
-                        && entity.getAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
-                    // This is the folder we want, now load the entire folder hierarchy
-                    if (loadTree) {
-                        topLevelFolder = entityBean.getEntityTree(entity.getId());
-                    } else {
-                        topLevelFolder = entity;
-                    }
-                    logger.info("Found existing topLevelFolder common root, name=" + topLevelFolder.getName());
-                    break;
-                }
-            }
-        }
-
-        if (topLevelFolder == null) {
-            if (createIfNecessary) {
-                logger.info("Creating new topLevelFolder with name=" + topLevelFolderName);
-                topLevelFolder = new Entity();
-                topLevelFolder.setCreationDate(createDate);
-                topLevelFolder.setUpdatedDate(createDate);
-                topLevelFolder.setUser(user);
-                topLevelFolder.setName(topLevelFolderName);
-                topLevelFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
-                topLevelFolder.addAttributeAsTag(EntityConstants.ATTRIBUTE_COMMON_ROOT);
-                topLevelFolder = entityBean.saveOrUpdateEntity(topLevelFolder);
-                logger.info("Saved top level folder as " + topLevelFolder.getId());
-            } else {
-                throw new Exception("Could not find top-level folder by name=" + topLevelFolderName);
-            }
-        }
-
-        logger.info("Using topLevelFolder with id=" + topLevelFolder.getId());
-        return topLevelFolder;
+        return helper.createOrVerifyRootEntity(topLevelFolderName,true /* create if necessary */, true);
     }
 
     protected Entity verifyOrCreateChildFolderFromDir(Entity parentFolder, File dir, Integer index) throws Exception {
@@ -217,21 +178,13 @@ public class FileDiscoveryService implements IService {
             folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, dir.getAbsolutePath());
             folder = entityBean.saveOrUpdateEntity(folder);
             logger.info("Saved folder as "+folder.getId());
-            addToParent(parentFolder, folder, index, EntityConstants.ATTRIBUTE_ENTITY);
+            helper.addToParent(parentFolder, folder, index, EntityConstants.ATTRIBUTE_ENTITY);
         }
         else {
             logger.info("Found folder with id="+folder.getId());
         }
         
         return folder;
-    }
-
-    protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
-        EntityData ed = parent.addChildEntity(entity, attrName);
-        ed.setOrderIndex(index);
-        entityBean.saveOrUpdateEntityData(ed);
-        logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
-        		" as child of "+parent.getEntityType().getName()+"#"+parent.getId());
     }
     
     /**
@@ -246,95 +199,12 @@ public class FileDiscoveryService implements IService {
     
 	protected void processChildFolders(Entity folder) throws Exception {
         File dir = new File(folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-	    for (File file : getOrderedFilesInDir(dir)) {
+	    for (File file : FileUtils.getOrderedFilesInDir(dir)) {
 	        if (file.isDirectory()) {
                 Entity subfolder = verifyOrCreateChildFolderFromDir(folder, file, null /*index*/);
                 processFolderForData(subfolder);
 	        } 
 	    }
 	}
-    
-    /**
-     * Returns the child files of the given directory, sorted by name.
-     * @param dir
-     * @return
-     */
-    protected List<File> getOrderedFilesInDir(File dir) {
-        List<File> files = Arrays.asList(dir.listFiles());
-        Collections.sort(files, new Comparator<File>() {
-        	@Override
-        	public int compare(File file1, File file2) {
-        		return file1.getName().compareTo(file2.getName());
-        	}
-		});
-        return files;
-    }
-
-    EntityType getEntityTypeForFile(File file) throws Exception {
-        String filenameLowerCase=file.getName().toLowerCase();
-        if (filenameLowerCase.endsWith(".lsm")) {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK);
-        } else if (filenameLowerCase.endsWith(".tif")||filenameLowerCase.endsWith(".tiff")) {
-            if (file.length()>=FILE_3D_SIZE_THRESHOLD) {
-                return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
-            } else {
-                return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
-            }
-        } else if (filenameLowerCase.endsWith(".txt")) {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_TEXT_FILE);
-        } else if (filenameLowerCase.endsWith(".swc")) {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_SWC_FILE);
-        } else if (filenameLowerCase.endsWith(".ano")) {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_V3D_ANO_FILE);
-        } else if (filenameLowerCase.endsWith(".png")||filenameLowerCase.endsWith(".jpg")
-                ||filenameLowerCase.endsWith(".gif")||filenameLowerCase.endsWith(".jpeg")
-                ||filenameLowerCase.endsWith(".bmp")) {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
-        } else if (filenameLowerCase.endsWith(".raw")) {
-            if (filenameLowerCase.contains(".local.")) {
-                return entityBean.getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
-            } else {
-                return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
-            }
-        } else if (filenameLowerCase.endsWith(".v3draw")) {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
-        } else if (filenameLowerCase.endsWith(".vaa3draw")) {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
-        } else if (filenameLowerCase.endsWith(".pbd")) {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
-        } else if (filenameLowerCase.endsWith(".v3dpbd")) {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
-        } else {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_FILE);
-        }
-    }
-
-    protected Entity verifyOrCreateVirtualSubFolder(Entity parentFolder, String subFolderName) throws Exception {
-        for (Entity child : parentFolder.getChildren()) {
-            if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) &&
-                    child.getName().equals(subFolderName)) {
-                return child;
-            }
-        }
-        // Need to create
-        Entity subFolder=addChildFolderToEntity(parentFolder, subFolderName, null);
-        return subFolder;
-    }
-
-    protected Entity addChildFolderToEntity(Entity parent, String name, String directoryPath) throws Exception {
-        Entity folder = new Entity();
-        folder.setCreationDate(createDate);
-        folder.setUpdatedDate(createDate);
-        folder.setUser(user);
-        folder.setName(name);
-        folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
-        if (directoryPath!=null) {
-            folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, directoryPath);
-        }
-        folder = entityBean.saveOrUpdateEntity(folder);
-        logger.info("Saved folder " + name+" as " + folder.getId()+" , will now add as child to parent entity name="+parent.getName()+" parentId="+parent.getId());
-        addToParent(parent, folder, null, EntityConstants.ATTRIBUTE_ENTITY);
-        return folder;
-    }
 
 }

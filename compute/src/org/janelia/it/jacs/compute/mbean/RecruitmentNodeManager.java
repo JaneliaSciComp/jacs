@@ -709,7 +709,7 @@ public class RecruitmentNodeManager implements RecruitmentNodeManagerMBean {
             fastaTask = (FRVSamplingFastaGenerationTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(fastaTask);
             EJBFactory.getLocalComputeBean().submitJob("FRVSamplingFastaGeneration", fastaTask.getObjectId());
         }
-        catch (DaoException e) {
+        catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -739,7 +739,7 @@ public class RecruitmentNodeManager implements RecruitmentNodeManagerMBean {
             builderTask = (RecruitmentSamplingBlastDatabaseBuilderTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(builderTask);
             EJBFactory.getLocalComputeBean().submitJob("FRVSamplingBlastDatabaseBuilder", builderTask.getObjectId());
         }
-        catch (DaoException e) {
+        catch (Exception e) {
             e.printStackTrace();
         }
     }

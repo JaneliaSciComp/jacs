@@ -17,7 +17,7 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.compute.service.entity.EntityHelper;
-import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryService;
+import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -97,8 +97,7 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
     protected File maskNameIndexFile;
     protected IProcessData processData;
     protected String mode;
-    EntityHelper entityHelper;
-
+    FileDiscoveryHelper helper;
 
     protected void init(IProcessData processData) throws Exception {
         try {
@@ -129,7 +128,7 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
         visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
         entityBean = EJBFactory.getLocalEntityBean();
         computeBean = EJBFactory.getLocalComputeBean();
-        entityHelper = new EntityHelper(entityBean, computeBean);
+        helper = new FileDiscoveryHelper(entityBean, computeBean, user);
 
         user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
         createDate = new Date();
@@ -171,7 +170,7 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
             throw new Exception("Do not recognize mode="+mode);
         }
 
-        Entity topLevelFolder = FileDiscoveryService.createOrVerifyRootEntity(TOP_LEVEL_GUIDE_DIR_NAME, user, new Date(), logger, true, true);
+        Entity topLevelFolder = helper.createOrVerifyRootEntity(TOP_LEVEL_GUIDE_DIR_NAME, true, true);
         Map<String, Entity> subfolderMap = new HashMap<String, Entity>();
         Set<Entity> children = topLevelFolder.getChildren();
         if (children != null && children.size() > 0) {
@@ -421,7 +420,7 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
         stack.setUpdatedDate(createDate);
         stack.setName(entityName);
         stack = entityBean.saveOrUpdateEntity(stack);
-        entityHelper.setDefault2dImage(stack, mipEntity);
+        helper.setDefault2dImage(stack, mipEntity);
         stack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
         stack = entityBean.saveOrUpdateEntity(stack);
         logger.info("Saved stack " + stack.getName() + " as "+stack.getId());

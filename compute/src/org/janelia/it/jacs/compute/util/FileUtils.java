@@ -3,6 +3,10 @@ package org.janelia.it.jacs.compute.util;
 import org.apache.log4j.Logger;
 
 import java.io.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Some methods for dealing with files and directories.
@@ -161,5 +165,29 @@ public class FileUtils {
 
         return !fileInCanonicalDir.getCanonicalFile().equals(fileInCanonicalDir.getAbsoluteFile());
     }
+
+
+    /**
+     * Returns the child files of the given directory, sorted by name.
+     * @param dir
+     * @return
+     */
+    public static List<File> getOrderedFilesInDir(File dir) {
+        List<File> files = Arrays.asList(dir.listFiles());
+        sortFilesByName(files);
+        return files;
+    }
     
+    /**
+     * Sort the given list of files in place, by name.
+     * @param files
+     */
+    public static void sortFilesByName(List<File> files) {
+        Collections.sort(files, new Comparator<File>() {
+        	@Override
+        	public int compare(File file1, File file2) {
+        		return file1.getName().compareTo(file2.getName());
+        	}
+		});
+    }
 }

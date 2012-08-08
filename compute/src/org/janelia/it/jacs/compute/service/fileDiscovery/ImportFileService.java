@@ -1,22 +1,23 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
+import java.io.File;
+import java.util.Date;
+import java.util.List;
+
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.FileTreeLoaderResultNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
-
-import java.io.File;
-import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -145,7 +146,7 @@ public class ImportFileService extends FileDiscoveryService{
 
     protected void addDirectoryAndContentsToFolder(Entity folder, File dir, Integer index) throws Exception {
         Entity dirEntity=verifyOrCreateChildFolderFromDir(folder, dir, index);
-        List<File> orderedFiles=getOrderedFilesInDir(dir);
+        List<File> orderedFiles=FileUtils.getOrderedFilesInDir(dir);
         for (int i=0;i<orderedFiles.size();i++) {
             File f=orderedFiles.get(i);
             if (passesExclusionFilter(f)) {
@@ -181,27 +182,13 @@ public class ImportFileService extends FileDiscoveryService{
 
         if (!alreadyExists) {
             // Assume the entity needs to be created
-            EntityType entityType=getEntityTypeForFile(f);
-            fileEntity=createEntityForFile(f, entityType);
-            addToParent(folder, fileEntity, index, EntityConstants.ATTRIBUTE_ENTITY);
+            EntityType entityType=helper.getEntityTypeForFile(f);
+            fileEntity=helper.createFileEntity(f.getAbsolutePath(), f.getName(), entityType);
+            helper.addToParent(folder, fileEntity, index, EntityConstants.ATTRIBUTE_ENTITY);
         }
 
 
 
-    }
-
-
-    protected Entity createEntityForFile(File f, EntityType entityType) throws Exception {
-        Entity fileEntity=new Entity();
-        fileEntity.setCreationDate(createDate);
-        fileEntity.setUpdatedDate(createDate);
-        fileEntity.setUser(user);
-        fileEntity.setName(f.getName());
-        fileEntity.setEntityType(entityType);
-        fileEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, f.getAbsolutePath());
-        fileEntity = entityBean.saveOrUpdateEntity(fileEntity);
-        logger.info("Saved file "+f.getAbsolutePath()+" as entity="+fileEntity.getId());
-        return fileEntity;
     }
 
 

@@ -4,11 +4,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.entity.EntityHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityType;
@@ -22,11 +20,9 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
 public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDiscoveryService {
 
 	protected Entity sampleEntity;
-	protected EntityHelper entityHelper;
 
 	@Override
     public void execute(IProcessData processData) throws ServiceException {
-        entityHelper = new EntityHelper(false);
     	processData.putItem("RESULT_ENTITY_TYPE", EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
     	super.execute(processData);
     }
@@ -39,7 +35,6 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     	}
     	
     	sampleEntity = parentFolder;
-    	
     	return super.verifyOrCreateChildFolderFromDir(parentFolder, dir, index);
     }
     
@@ -50,43 +45,27 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     		throw new IllegalStateException("Expected Separator Result as input");
     	}
     	
-    	super.processFolderForData(resultEntity);
+    	helper.addFileExclusion("sh");
+    	
+    	super.processFolderForData(resultEntity); // This creates the Supporting Files folder if it doesn't exist
         processSeparationFolder(resultEntity);
 
         Entity filesFolder = EntityUtils.getSupportingData(resultEntity);
         Entity signalMIP = EntityUtils.findChildWithName(filesFolder, "ConsolidatedSignalMIP.png");
         Entity referenceMIP = EntityUtils.findChildWithName(filesFolder, "ReferenceMIP.png");
 
-		entityHelper.setImage(resultEntity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMIP);
-		entityHelper.setImage(resultEntity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, referenceMIP);
-		entityHelper.setImage(sampleEntity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMIP);
-		entityHelper.setImage(sampleEntity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, referenceMIP);
-		entityHelper.setDefault2dImage(resultEntity, signalMIP);
-		entityHelper.setDefault2dImage(sampleEntity, signalMIP);
-    }
-    
-    protected void addFilesToSupportingFiles(Entity filesFolder, List<File> files) throws Exception {
-
-		EntityType image3D = entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
-
-        for (File resultFile : files) {
-        	
-        	String filename = resultFile.getName();
-            if (filename.contains(".chk") || filename.endsWith(".nsp")) {
-                addResultItem(filesFolder, image3D, resultFile);
-            }
-            else {
-                // ignore other files
-            }
-        }
-
-    	super.addFilesToSupportingFiles(filesFolder, files);
+		helper.setImage(resultEntity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMIP);
+		helper.setImage(resultEntity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, referenceMIP);
+		helper.setImage(sampleEntity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMIP);
+		helper.setImage(sampleEntity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, referenceMIP);
+		helper.setDefault2dImage(resultEntity, signalMIP);
+		helper.setDefault2dImage(sampleEntity, signalMIP);
     }
     
     protected void processSeparationFolder(Entity resultEntity) throws Exception {
     	
         Entity fragmentsFolder = createFragmentCollection();
-        addToParent(resultEntity, fragmentsFolder, 1, EntityConstants.ATTRIBUTE_NEURON_FRAGMENTS);
+        helper.addToParent(resultEntity, fragmentsFolder, 1, EntityConstants.ATTRIBUTE_NEURON_FRAGMENTS);
         
         EntityType fragmentType = entityBean.getEntityTypeByName(EntityConstants.TYPE_NEURON_FRAGMENT);
         
@@ -118,7 +97,17 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
         });
 
         Entity filesFolder = EntityUtils.getSupportingData(resultEntity);
-        
+
+        String filepath = resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+    	File fastloadDir = new File(filepath, "fastLoad");
+    	if (fastloadDir.exists()) {
+    		Entity fastLoadFolder = helper.createOrVerifyFolderEntity(filesFolder, "Fast Load", fastloadDir, 0);
+    		processFastLoadFolder(fastLoadFolder);
+    	}
+    	else {
+    		logger.warn("No fastLoad dir found for separationId="+resultEntity.getId());
+    	}
+    	
         for(File resultFile : fragmentFiles) {
             Entity fragmentMIP = EntityUtils.findChildWithName(filesFolder, resultFile.getName());
             if (fragmentMIP == null) {
@@ -126,9 +115,22 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
             }
     		Integer index = getIndex(resultFile.getName());
         	Entity fragmentEntity = createFragmentEntity(fragmentType, index);
-    		entityHelper.setDefault2dImage(fragmentEntity, fragmentMIP);
-        	addToParent(fragmentsFolder, fragmentEntity, index, EntityConstants.ATTRIBUTE_ENTITY);	
+        	helper.setDefault2dImage(fragmentEntity, fragmentMIP);
+    		helper.addToParent(fragmentsFolder, fragmentEntity, index, EntityConstants.ATTRIBUTE_ENTITY);	
         }
+    }
+
+    protected void processFastLoadFolder(Entity folder) throws Exception {
+        File dir = new File(folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+
+        logger.info("Processing "+folder.getName()+" results in "+dir.getAbsolutePath());
+        
+        if (!dir.canRead()) {
+        	logger.info("Cannot read from folder "+dir.getAbsolutePath());
+        	return;
+        }
+
+		helper.addFilesInDirToFolder(folder, dir);
     }
     
     protected Integer getIndex(String filename) {

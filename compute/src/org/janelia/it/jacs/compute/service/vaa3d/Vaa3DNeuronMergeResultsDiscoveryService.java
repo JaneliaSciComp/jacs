@@ -41,11 +41,10 @@ public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
     public void execute(IProcessData processData) throws ServiceException {
         try {
             logger = ProcessDataHelper.getLoggerForTask(processData, Vaa3DNeuronMergeResultsDiscoveryService.class);
-            entityHelper = new EntityHelper(false);
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
-            NeuronMergeResultNode tmpNode = (NeuronMergeResultNode)ProcessDataHelper.getResultFileNode(processData);
             user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
+            entityHelper = new EntityHelper(entityBean, computeBean, user);
             createDate = new Date();
             task = ProcessDataHelper.getTask(processData);
             Entity separationResultEntity = entityBean.getEntityTree(Long.valueOf(task.getParameter(NeuronMergeTask.PARAM_separationEntityId)));
@@ -56,8 +55,10 @@ public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
             Entity tmpCuratedNeuron =  createCuratedNeuronEntity(tmpCuratedNeuronCollection);
 
             addToParent(tmpCuratedNeuronCollection, tmpCuratedNeuron, tmpCuratedNeuronCollection.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
-            Entity tmp2DMIP = entityHelper.create2dImage(user.getUserLogin(), tmpNode.getFilePathByTag(NeuronMergeResultNode.TAG_MIP));
-            Entity tmp3DStack = entityHelper.create3dImage(user.getUserLogin(), tmpNode.getFilePathByTag(NeuronMergeResultNode.TAG_STACK));
+            
+            NeuronMergeResultNode tmpNode = (NeuronMergeResultNode)ProcessDataHelper.getResultFileNode(processData);
+            Entity tmp2DMIP = entityHelper.create2dImage(tmpNode.getFilePathByTag(NeuronMergeResultNode.TAG_MIP));
+            Entity tmp3DStack = entityHelper.create3dImage(tmpNode.getFilePathByTag(NeuronMergeResultNode.TAG_STACK));
             entityHelper.setDefault2dImage(tmp3DStack, tmp2DMIP);
             entityHelper.setDefault3dImage(tmpCuratedNeuron, tmp3DStack);
         }

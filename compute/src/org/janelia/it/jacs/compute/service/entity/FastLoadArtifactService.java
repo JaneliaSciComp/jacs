@@ -81,7 +81,7 @@ public class FastLoadArtifactService implements IService {
 
         logger.info("Finding neuron separations...");
         
-        List<String> inputDirs = new ArrayList<String>();
+        List<Entity> entities = new ArrayList<Entity>();
         for(Entity sample : entityBean.getUserEntitiesByTypeName(username, EntityConstants.TYPE_SAMPLE)) {
         	logger.info("Processing "+sample.getName());
         	entityBean.loadLazyEntity(sample, false);
@@ -92,15 +92,15 @@ public class FastLoadArtifactService implements IService {
         				logger.info("Ignoring entity with path which does not contain the FileStore.CentralDir: "+result.getId());
         			}
         			else {
-        				inputDirs.add(dir);		
+        				entities.add(result);		
         			}
         		}
         	}
         }
         
-        List<List<String>> inputGroups = createGroups(inputDirs, GROUP_SIZE);
-        processData.putItem("INPUT_PATH_LIST", inputGroups);
-		logger.info("Processed "+inputDirs.size()+" entities into "+inputGroups.size()+" groups.");
+        List<List> inputGroups = createGroups(entities, GROUP_SIZE);
+        processData.putItem("ENTITY_LIST", inputGroups);
+		logger.info("Processed "+entities.size()+" entities into "+inputGroups.size()+" groups.");
     }
 
     private void doCreateSingleInputList() throws ComputeException {
@@ -114,7 +114,7 @@ public class FastLoadArtifactService implements IService {
         
         Entity result = entityBean.getEntityById(sepId);
         
-        List<String> inputDirs = new ArrayList<String>();
+        List<Entity> entities = new ArrayList<Entity>();
 
         if (!result.getEntityType().getName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
         	throw new IllegalArgumentException("Entity with id="+sepId+" is not a neuron separation result");
@@ -128,24 +128,24 @@ public class FastLoadArtifactService implements IService {
 		}
 		
 		if (!dir.contains(centralDir)) {
-			logger.info("Ignoring entity with path which does not contain the FileStore.CentralDir: "+result.getId());
+			throw new ComputeException("Entity path does not contain the FileStore.CentralDir: "+result.getId());
 		}
 		else {
-			inputDirs.add(dir);
-	        processData.putItem("INPUT_PATHS", inputDirs);
+			entities.add(result);
+			processData.putItem("ENTITY_LIST", entities);
 		}
     }
 
-    private List<List<String>> createGroups(Collection<String> fullList, int groupSize) {
-        List<List<String>> groupList = new ArrayList<List<String>>();
-        List<String> currentGroup = null;
-        for (String s : fullList) {
+    private List<List> createGroups(Collection fullList, int groupSize) {
+        List<List> groupList = new ArrayList<List>();
+        List currentGroup = null;
+        for (Object s : fullList) {
             if (currentGroup==null) {
-                currentGroup = new ArrayList<String>();
+                currentGroup = new ArrayList();
             } 
             else if (currentGroup.size()==groupSize) {
                 groupList.add(currentGroup);
-                currentGroup = new ArrayList<String>();
+                currentGroup = new ArrayList();
             }
             currentGroup.add(s);
         }

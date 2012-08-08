@@ -1,11 +1,17 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.util.*;
+
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.screen.FlyScreenSampleService;
+import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -15,11 +21,6 @@ import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.ScreenPipelineResultNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -42,7 +43,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
     Entity topFolder;
     ScreenPipelineResultNode resultNode;
     Integer sampleGroupSize;
-
+    
     protected static class FlyScreenSample {
         public String StackPath;
         public String QualityCsvPath;
@@ -151,7 +152,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
                 screenSampleEntity.setEntityType(screenSampleType);
                 screenSampleEntity = EJBFactory.getLocalEntityBean().saveOrUpdateEntity(screenSampleEntity);
                 logger.info("Created new Screen Sample " + key + " id=" + screenSampleEntity.getId());
-                addToParent(dateFolder, screenSampleEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
+                helper.addToParent(dateFolder, screenSampleEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
             } else {
                 logger.info("Re-using incomplete Screen Sample " + key +" id="+screenSampleEntity.getId());
             }
@@ -227,7 +228,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
                                                   Map<String, FlyScreenSample> sampleMap) throws Exception {
 
         // First, find the new sample stack and quality files in the directory
-        List<File> fileList=getOrderedFilesInDir(dir);
+        List<File> fileList=FileUtils.getOrderedFilesInDir(dir);
 
         for (File file : fileList) {
             if (!file.isDirectory()) {
@@ -323,7 +324,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         }
         if (!alreadyHasStack) {
             logger.info("Adding stack to parent entity");
-            addToParent(screenSampleEntity, alignedStack, null, EntityConstants.ATTRIBUTE_ENTITY);
+            helper.addToParent(screenSampleEntity, alignedStack, null, EntityConstants.ATTRIBUTE_ENTITY);
         }
         if (alreadyHasQualityScores && alreadyHasStack) {
             logger.info("Screen sample id="+screenSampleEntity.getId() + " already has stack and quality values");
@@ -355,7 +356,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         dateFolder.setName(monthSection);
         dateFolder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, folderPath);
         EJBFactory.getLocalEntityBean().saveOrUpdateEntity(dateFolder);
-        addToParent(topFolder, dateFolder, null, EntityConstants.ATTRIBUTE_ENTITY);
+        helper.addToParent(topFolder, dateFolder, null, EntityConstants.ATTRIBUTE_ENTITY);
         return dateFolder;
     }
 

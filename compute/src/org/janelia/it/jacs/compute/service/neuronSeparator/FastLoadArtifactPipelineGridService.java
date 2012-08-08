@@ -35,9 +35,9 @@ public class FastLoadArtifactPipelineGridService extends SubmitDrmaaJobService {
     protected void init(IProcessData processData) throws Exception {
     	super.init(processData);
 
-        inputPaths = (List<String>)processData.getItem("INPUT_PATH_LIST");
+        inputPaths = (List<String>)processData.getItem("FILE_PATHS");
         if (inputPaths==null) {
-        	throw new ServiceException("Input parameter INPUT_PATH_LIST may not be empty");
+        	throw new ServiceException("Input parameter FILE_PATHS may not be empty");
         }
         
         fastLoadPaths = new ArrayList<String>();
@@ -99,7 +99,7 @@ public class FastLoadArtifactPipelineGridService extends SubmitDrmaaJobService {
     protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
     	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
     	// Reserve all 2 slots on a node. This gives us 6 GB of memory. 
-    	jt.setNativeSpecification("-pe batch 2 ");
+    	jt.setNativeSpecification("-pe batch 2 -l limit50=1 ");
     	return jt;
     }
     

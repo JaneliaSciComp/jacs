@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -53,7 +54,7 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
         File dir = new File(folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         logger.info("Processing folder as unstitched data="+dir.getAbsolutePath());
         List<File> lsmFileList = new ArrayList<File>();
-        for (File file : getOrderedFilesInDir(dir)) {
+        for (File file : FileUtils.getOrderedFilesInDir(dir)) {
             if (file.isDirectory()) {
                 Entity subfolder = verifyOrCreateChildFolderFromDir(folder, file, null /*index*/);
                 processFolderForData(subfolder);
@@ -85,7 +86,7 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
         		if (sample == null) {
     	        	// Create the sample
     	            sample = createSample(lsmPair);
-    	            addToParent(folder, sample, i++, EntityConstants.ATTRIBUTE_ENTITY);
+    	            helper.addToParent(folder, sample, i++, EntityConstants.ATTRIBUTE_ENTITY);
         		}
         	}
         	catch (ComputeException e) {
@@ -251,7 +252,7 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
         Entity supportingFiles = EntityUtils.getSupportingData(sample);
     	if (supportingFiles == null) {
     		supportingFiles = createSupportingFilesFolder();
-    		addToParent(sample, supportingFiles, 0, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
+    		helper.addToParent(sample, supportingFiles, 0, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
     	}
     	
     	Entity lsmStackPair = new Entity();
@@ -262,9 +263,9 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
         lsmStackPair.setName("Scans");
         lsmStackPair = entityBean.saveOrUpdateEntity(lsmStackPair);
         logger.info("Saved LSM stack pair as "+lsmStackPair.getId());
-        addToParent(supportingFiles, lsmStackPair, 0, EntityConstants.ATTRIBUTE_ENTITY);
-        addToParent(lsmStackPair, lsmPair.lsmEntity1, 0, EntityConstants.ATTRIBUTE_ENTITY);
-        addToParent(lsmStackPair, lsmPair.lsmEntity2, 1, EntityConstants.ATTRIBUTE_ENTITY);
+        helper.addToParent(supportingFiles, lsmStackPair, 0, EntityConstants.ATTRIBUTE_ENTITY);
+        helper.addToParent(lsmStackPair, lsmPair.lsmEntity1, 0, EntityConstants.ATTRIBUTE_ENTITY);
+        helper.addToParent(lsmStackPair, lsmPair.lsmEntity2, 1, EntityConstants.ATTRIBUTE_ENTITY);
         
         return sample;
     }

@@ -61,7 +61,7 @@ public class ScreenSampleCrossResultsDiscoveryService implements IService {
 	        	throw new ServiceException("OUTPUT_ENTITY_ID_LIST must contain the same number of ids as the input lists");
 	        }
 
-	        entityHelper = new EntityHelper(entityBean, computeBean);
+	        entityHelper = new EntityHelper(entityBean, computeBean, user);
 
 	        int i = 0;
 	        for(CombinedFile combinedFile : filePairs) {
@@ -82,11 +82,11 @@ public class ScreenSampleCrossResultsDiscoveryService implements IService {
 		                	throw new ServiceException("Missing output MIP: "+outputMip.getAbsolutePath());
 		                }
 		
-		                Entity stack = entityHelper.create3dImage(user.getUserLogin(), outputStack.getAbsolutePath(), "Intersection Stack");
+		                Entity stack = entityHelper.create3dImage(outputStack.getAbsolutePath(), "Intersection Stack");
 		                entityBean.addEntityToParent(resultEntity, stack, resultEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
 		                
 		                // Add default images
-		                Entity mip = entityHelper.create2dImage(user.getUserLogin(), outputMip.getAbsolutePath(), "Intersection MIP");
+		                Entity mip = entityHelper.create2dImage(outputMip.getAbsolutePath(), "Intersection MIP");
 		                entityHelper.setDefault2dImage(stack, mip);
 		                entityHelper.setDefault3dImage(resultEntity, stack);
 		        }

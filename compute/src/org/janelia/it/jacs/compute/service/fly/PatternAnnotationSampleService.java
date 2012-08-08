@@ -398,9 +398,14 @@ public class PatternAnnotationSampleService  implements IService {
     File getResultNodeDirFromSample(Entity sample) {
         String resultNodeIdString=sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_RESULT_NODE_ID);
         Long resultNodeId=new Long(resultNodeIdString.trim());
-        ScreenSampleResultNode resultNode=(ScreenSampleResultNode)computeBean.getNodeById(resultNodeId);
-        File dir=new File(resultNode.getDirectoryPath());
-        return dir;
+        try {
+	        ScreenSampleResultNode resultNode=(ScreenSampleResultNode)computeBean.getNodeById(resultNodeId);
+	        return new File(resultNode.getDirectoryPath());
+        }
+        catch (Exception e) {
+        	logger.error("Error",e);
+        	return null;
+        }
     }
 
     protected Entity updateSampleSupportingDirIfNecessary(Entity sample) throws Exception {

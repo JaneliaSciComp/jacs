@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -35,7 +36,7 @@ public class GroupedLSMDiscoveryService extends FileDiscoveryService {
 
         File dir = new File(folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         logger.info("Processing folder as unstitched data="+dir.getAbsolutePath());
-        for (File file : getOrderedFilesInDir(dir)) {
+        for (File file : FileUtils.getOrderedFilesInDir(dir)) {
             if (file.isDirectory()) {
             	if (dirContainsLsms(file)) {
             		processSampleDir(folder, file);
@@ -55,7 +56,7 @@ public class GroupedLSMDiscoveryService extends FileDiscoveryService {
     }
     
     private boolean dirContainsLsms(File dir) {
-        for (File file : getOrderedFilesInDir(dir)) {
+        for (File file : FileUtils.getOrderedFilesInDir(dir)) {
         	if (file.getName().toUpperCase().endsWith(".LSM")) {
         		return true;
         	}
@@ -66,7 +67,7 @@ public class GroupedLSMDiscoveryService extends FileDiscoveryService {
     private void processSampleDir(Entity parentFolder, File sampleDir) throws Exception {
 
         List<File> lsmFileList = new ArrayList<File>();
-        for (File file : getOrderedFilesInDir(sampleDir)) {
+        for (File file : FileUtils.getOrderedFilesInDir(sampleDir)) {
         	if (file.getName().toUpperCase().endsWith(".LSM")) {
         		lsmFileList.add(file);
             }
@@ -78,7 +79,7 @@ public class GroupedLSMDiscoveryService extends FileDiscoveryService {
     		if (sample == null) {
 	        	// Create the sample
 	            sample = createSample(sampleDir.getName(), lsmFileList);
-	            addToParent(parentFolder, sample, parentFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+	            helper.addToParent(parentFolder, sample, parentFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
     		}
     	}
     	catch (ComputeException e) {
@@ -117,13 +118,13 @@ public class GroupedLSMDiscoveryService extends FileDiscoveryService {
         Entity supportingFiles = EntityUtils.getSupportingData(sample);
     	if (supportingFiles == null) {
     		supportingFiles = createSupportingFilesFolder();
-    		addToParent(sample, supportingFiles, 0, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
+    		helper.addToParent(sample, supportingFiles, 0, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
     	}
     	
     	int i = 0;
     	for(File file : lsmFileList) {
     		Entity lsmStack = createLsmStackFromFile(file);
-            addToParent(supportingFiles, lsmStack, i++, EntityConstants.ATTRIBUTE_ENTITY);
+    		helper.addToParent(supportingFiles, lsmStack, i++, EntityConstants.ATTRIBUTE_ENTITY);
     	}
     	
         return sample;

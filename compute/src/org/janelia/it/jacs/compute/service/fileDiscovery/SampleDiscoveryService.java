@@ -161,7 +161,7 @@ public class SampleDiscoveryService extends FileDiscoveryService {
         Entity sample = findExistingSample(folder, name);
         if (sample == null) {
 	        sample = createSample(name, tiling);
-	        addToParent(folder, sample, null, EntityConstants.ATTRIBUTE_ENTITY);
+	        helper.addToParent(folder, sample, null, EntityConstants.ATTRIBUTE_ENTITY);
         }
         return sample;
     }
@@ -172,7 +172,7 @@ public class SampleDiscoveryService extends FileDiscoveryService {
         Entity supportingFiles = EntityUtils.getSupportingData(sample);
     	if (supportingFiles == null) {
     		supportingFiles = createSupportingFilesFolder();
-    		addToParent(sample, supportingFiles, 0, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
+    		helper.addToParent(sample, supportingFiles, 0, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
     	}
     	
 		Entity lsmStackPair = EntityUtils.findChildWithName(supportingFiles, filePair.getPairTag());
@@ -185,20 +185,20 @@ public class SampleDiscoveryService extends FileDiscoveryService {
             lsmStackPair.setName(filePair.getPairTag());
             lsmStackPair = entityBean.saveOrUpdateEntity(lsmStackPair);
             logger.info("Saved LSM stack pair for '"+filePair.getPairTag()+"' as "+lsmStackPair.getId());
-        	addToParent(supportingFiles, lsmStackPair, null, EntityConstants.ATTRIBUTE_ENTITY);
+            helper.addToParent(supportingFiles, lsmStackPair, null, EntityConstants.ATTRIBUTE_ENTITY);
 		}
 
 		Entity lsmEntity1 = EntityUtils.findChildWithName(lsmStackPair, filePair.getFilename1());
 		if (lsmEntity1 == null) {
             lsmEntity1 = createLsmStackFromFile(filePair.getFile1());
-            addToParent(lsmStackPair, lsmEntity1, 0, EntityConstants.ATTRIBUTE_LSM_STACK_1);
+            helper.addToParent(lsmStackPair, lsmEntity1, 0, EntityConstants.ATTRIBUTE_LSM_STACK_1);
             logger.info("Adding lsm file to sample parent entity="+filePair.getFile1().getAbsolutePath());
 		}
 
 		Entity lsmEntity2 = EntityUtils.findChildWithName(lsmStackPair, filePair.getFilename2());
 		if (lsmEntity2 == null) {
             lsmEntity2 = createLsmStackFromFile(filePair.getFile2());
-            addToParent(lsmStackPair, lsmEntity2, 1, EntityConstants.ATTRIBUTE_LSM_STACK_2);
+            helper.addToParent(lsmStackPair, lsmEntity2, 1, EntityConstants.ATTRIBUTE_LSM_STACK_2);
             logger.info("Adding lsm file to sample parent entity="+filePair.getFile2().getAbsolutePath());
 		}
     }

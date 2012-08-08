@@ -1,7 +1,7 @@
 <!-- 
 	Process all neuron separation results and ensure they have all the necessary "fastLoad" artifacts.
 -->
-<process name="FastLoad Artifact Pipeline" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
+<process name="FastLoad Artifact Pipeline" processor="queue/mcfoDataPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	    
     	<operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
@@ -13,24 +13,28 @@
 	    <!-- Create the input file list -->
 		<operation name="Fast Load" processor="org.janelia.it.jacs.compute.service.entity.FastLoadArtifactService">
 			<input name="MODE" value="CREATE_SINGLE_INPUT_LIST"/>
-			<output name="INPUT_PATHS"/>
-			<output name="FASTLOAD_INPUT_PATHS"/>
+			<output name="ENTITY_LIST"/>
 		</operation>
-    
+
+	    <!-- Create the input file list -->
+		<operation name="Get File Paths" processor="org.janelia.it.jacs.compute.service.entity.GetFilePathsService">
+			<input name="ENTITY_LIST" />
+			<output name="FILE_PATHS"/>
+		</operation>
+		
 	    <!-- Create a result node for this grid run -->
-	    <operation name="Create Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+	    <operation name="Create Group Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
 		    <input name="NAME" value="Temp"/>
 	        <output name="RESULT_FILE_NODE"/>
 	        <output name="RESULT_FILE_NODE_ID"/>
 	    </operation>
 	    
-	    <!--Generate fast load artifacts for all the separations in the list -->
+	    <!-- Generate fast load artifacts for all the separations in the list -->
         <sequence name="Fast Load Artifacts" waitForAsync="true">
 		    <operation name="Fast Load Artifacts" processor="queue/gridSubmitAndWait">
 		        <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.FastLoadArtifactPipelineGridService"/>
-		        <input name="RESULT_FILE_NODE"/>
-				<input name="INPUT_PATHS"/>
-				<input name="INPUT_PATH_LIST" value="$V{INPUT_PATHS}"/>
+				<input name="RESULT_FILE_NODE"/>
+				<input name="FILE_PATHS"/>
 				<output name="FASTLOAD_PATHS"/>
 		    </operation>
         </sequence>
@@ -52,6 +56,12 @@
 				<input name="FILE_PATTERN" value="*.v3dpbd"/>
 		    </operation>
         </sequence>
-        
+		        
+	    <!-- Load the separation results into the database -->
+		<operation name="Discover Bulk Fast Load Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FastLoadResultsDiscoveryService">
+			<input name="ENTITY_LIST"/>
+			<input name="SEPARATION_LIST" value="$V{ENTITY_LIST}"/>
+	    </operation>
+		        
     </sequence>
 </process>

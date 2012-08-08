@@ -35,7 +35,7 @@ public interface ComputeBeanRemote {
     public String getAppVersion() throws RemoteException;
     public boolean login(String userLogin, String password) throws ComputeException;
     public Node saveOrUpdateNode(Node node) throws DaoException, RemoteException;
-    public Task saveOrUpdateTask(Task task) throws DaoException, RemoteException;
+    public Task saveOrUpdateTask(Task task) throws DaoException;
     public User saveOrUpdateUser(User user) throws DaoException;
     public Node getResultNodeByTaskId(long taskId) throws DaoException, RemoteException;
     public List<Node> getResultNodesByTaskId(long taskId) throws DaoException, RemoteException;
@@ -47,13 +47,13 @@ public interface ComputeBeanRemote {
     public Task getTaskWithMessages(long taskId) throws RemoteException;
     public void setTaskNote(long taskId, String note) throws DaoException;
     public void addTaskNote(long taskId, String note) throws DaoException;
-    public User getUserByName(String name) throws RemoteException;
+    public User getUserByName(String name) throws ComputeException;
     public List getUsers() throws RemoteException;
     public void removePreferenceCategory(String categoryName) throws DaoException;
-    public Event saveEvent(Long taskId, String eventType, String description, Date timestamp) throws DaoException, RemoteException;
+    public Event saveEvent(Long taskId, String eventType, String description, Date timestamp) throws DaoException;
     public void submitJob(String processDefName,long taskId) throws RemoteException; //Note: Used by Blast API
-    public Long submitJob(String processDefName,Map<String, Object> processConfiguration)throws RemoteException; // Note: Used by test
-    public void submitJobs(String processDefName, List<Long> taskIds)throws RemoteException; //Note: Used by test
+    public Long submitJob(String processDefName,Map<String, Object> processConfiguration) throws RemoteException; // Note: Used by test
+    public void submitJobs(String processDefName, List<Long> taskIds) throws RemoteException; //Note: Used by test
     public Long getBlastHitCountByTaskId(Long taskId) throws RemoteException, DaoException;
     public BlastResultFileNode getBlastResultFileNodeByTaskId(Long taskId) throws DaoException, RemoteException;
     public BlastResultNode getBlastHitResultDataNodeByTaskId(Long taskId) throws DaoException, RemoteException;

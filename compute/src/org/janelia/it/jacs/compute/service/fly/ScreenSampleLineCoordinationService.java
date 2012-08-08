@@ -5,7 +5,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
@@ -13,7 +12,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
-import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryService;
+import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FlyScreenDiscoveryService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -47,6 +46,7 @@ public class ScreenSampleLineCoordinationService implements IService {
 
     private ComputeBeanLocal computeBean;
     private EntityBeanLocal entityBean;
+    private FileDiscoveryHelper helper;
 
 
     @Override
@@ -58,7 +58,8 @@ public class ScreenSampleLineCoordinationService implements IService {
             entityBean = EJBFactory.getLocalEntityBean();
             user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
             createDate = new Date();
-
+            helper = new FileDiscoveryHelper(entityBean, computeBean, user);
+            
             screenPatternTopLevelFolder = getTopLevelFolder(ScreenSampleLineCoordinationService.SCREEN_PATTERN_TOP_LEVEL_FOLDER_NAME, true /* create */);
             screenSampleTopLevelFolder = getTopLevelFolder(FlyScreenDiscoveryService.SCREEN_SAMPLE_TOP_LEVEL_FOLDER_NAME, false /* create */);
 
@@ -112,7 +113,7 @@ public class ScreenSampleLineCoordinationService implements IService {
     }
 
     protected Entity getTopLevelFolder(String topLevelFolderName, boolean createIfNecessary) throws Exception {
-        return FileDiscoveryService.createOrVerifyRootEntity(topLevelFolderName, user, createDate, logger, createIfNecessary, false /* load tree */);
+        return helper.createOrVerifyRootEntity(topLevelFolderName, createIfNecessary, false /* load tree */);
     }
 
     protected List<Entity> getFlyLineList() throws Exception {
