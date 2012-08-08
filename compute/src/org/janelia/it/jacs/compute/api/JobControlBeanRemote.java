@@ -52,6 +52,8 @@ public interface JobControlBeanRemote {
 
     public void bulkUpdateGridJobStatus(long taskId, Map<String, GridJobStatus.JobState> jobStates) throws RemoteException;
 
+    public void bulkUpdateGridJobInfo(long taskId, Map<String,GridJobStatus.JobState> changedJobStateMap, Map<String, Map<String, String>> changedJobResourceMap) throws RemoteException;
+
     public void cleanUpJobStatus(long taskId) throws RemoteException;
 
 }

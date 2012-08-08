@@ -64,6 +64,18 @@ public class TextJobStatusLogger implements JobStatusLogger {
 
     }
 
+    @Override
+    public void bulkUpdateJobInfo(Map<String, GridJobStatus.JobState> changedJobStateMap, Map<String, Map<String, String>> changedJobResourceMap) {
+        try {
+            for (String jobId : changedJobStateMap.keySet()) {
+                updateJobInfo(jobId, changedJobStateMap.get(jobId), changedJobResourceMap.get(jobId));
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public void cleanUpData() {
         // NOTHING TO DO HERE
     }

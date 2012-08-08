@@ -40,10 +40,13 @@
             <input name="RESULT_FILE_NODE_ID"/>
             <input name="RESULT_FILE_NODE"/>
         </operation>
-        <operation name="Cleanup data" processor="org.janelia.it.jacs.compute.service.tic.DataCleanupService">
-            <input name="RESULT_FILE_NODE_ID"/>
-            <input name="RESULT_FILE_NODE"/>
-        </operation>
+        <sequence name="Move results" waitForAsync="true" startEvent="running">
+            <operation name="Submit Job" processor="queue/gridSubmitAndWait">
+                <input name="iservice" value="org.janelia.it.jacs.compute.service.tic.GridResultNodeCopyService"/>
+                <input name="RESULT_FILE_NODE_ID"/>
+                <input name="RESULT_FILE_NODE"/>
+            </operation>
+        </sequence>
 
     </sequence>
 </process>

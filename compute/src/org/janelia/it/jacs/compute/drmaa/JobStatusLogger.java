@@ -23,5 +23,7 @@ public interface JobStatusLogger {
 
     void updateJobInfo(String jobId, GridJobStatus.JobState state, Map<String, String> infoMap);
 
+    void bulkUpdateJobInfo(Map<String, GridJobStatus.JobState> changedJobStateMap, Map<String, Map<String, String>> changedJobResourceMap);
+
     void cleanUpData();
 }

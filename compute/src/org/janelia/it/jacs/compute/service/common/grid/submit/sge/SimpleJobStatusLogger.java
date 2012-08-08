@@ -44,6 +44,11 @@ public class SimpleJobStatusLogger implements JobStatusLogger {
             EJBFactory.getLocalJobControlBean().updateJobInfo(this.taskId, jobId, state, infoMap);
     }
 
+    @Override
+    public void bulkUpdateJobInfo(Map<String, GridJobStatus.JobState> changedJobStateMap, Map<String, Map<String, String>> changedJobResourceMap) {
+        EJBFactory.getLocalJobControlBean().bulkUpdateGridJobInfo(this.taskId, changedJobStateMap, changedJobResourceMap);
+    }
+
     public void cleanUpData() {
         EJBFactory.getLocalJobControlBean().cleanUpJobStatus(this.taskId);
     }

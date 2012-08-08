@@ -54,4 +54,5 @@ public interface JobControlBeanLocal {
 
     public void cancelTask(long taskId);
 
+    public void bulkUpdateGridJobInfo(long taskId, Map<String,GridJobStatus.JobState> changedJobStateMap, Map<String,Map<String, String>> changedJobResourceMap);
 }

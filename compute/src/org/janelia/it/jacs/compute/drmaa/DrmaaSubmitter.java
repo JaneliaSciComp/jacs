@@ -116,8 +116,9 @@ public class DrmaaSubmitter {
         // load Spring application context which has beans for EJB and JMS access
         ApplicationContext ctx = new ClassPathXmlApplicationContext("classpath*:drmaaSubmitterApp.xml");
         JobControlBeanRemote jobControlBean = (JobControlBeanRemote) ctx.getBean("remoteJobControlService");
+        DrmaaSubmitter ds=null;
         try {
-            DrmaaSubmitter ds = new DrmaaSubmitter(params);
+            ds = new DrmaaSubmitter(params);
             Set<String> jobs = ds.submitJob();
             String mainJobID = DrmaaHelper.getMainJobId(jobs);
             // now wait for jobs to be completed
@@ -160,6 +161,14 @@ public class DrmaaSubmitter {
         catch (Throwable t) {
             logger.error("DrmaaSubmit Error: " + t.getMessage(), t);
             System.err.println(t.getClass().getName() + ": " + t.getMessage());
+            try {
+                if (null!=ds) {
+                    ds.drmaa.exit();
+                }
+            }
+            catch (DrmaaException e) {
+                logger.error(e.getMessage());
+            }
             int exitCode = 1;
             logger.info("Exiting with code "+exitCode);
             System.exit(exitCode);

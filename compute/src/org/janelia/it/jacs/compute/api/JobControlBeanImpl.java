@@ -153,6 +153,28 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
         }
     }
 
+    /**
+     * Method to pass all the info objects at once and to eliminate thousands of individual update calls
+     * @param taskId - task the jobs relate to
+     * @param changedJobStateMap map of the job id to GridJobStatus.JobState
+     * @param changedJobResourceMap
+     */
+    @Override
+    public void bulkUpdateGridJobInfo(long taskId, Map<String, GridJobStatus.JobState> changedJobStateMap, Map<String, Map<String, String>> changedJobResourceMap) {
+        try {
+
+            logger.debug("bulkUpdateGridJobInfo - Updating Job state and Resource usage for "+changedJobStateMap.size()+" jobs (task="+taskId+").");
+            ComputeDAO computeDAO = new ComputeDAO(logger);
+            for (String jobId : changedJobStateMap.keySet()) {
+                computeDAO.updateJobInfo(taskId, jobId, changedJobStateMap.get(jobId), changedJobResourceMap.get(jobId));
+            }
+            logger.debug("bulkUpdateGridJobInfo - Done updating Job state and Resource usage (task="+taskId+")");
+        }
+        catch (Exception e) {
+            logger.error("Error while attempting to update info gridJobStatus:", e);
+        }
+    }
+
     /////////// ------ LOCAL INTERFACES ------- /////////////
     public void updateJobStatus(long taskId, String jobId, GridJobStatus.JobState state) {
         try {

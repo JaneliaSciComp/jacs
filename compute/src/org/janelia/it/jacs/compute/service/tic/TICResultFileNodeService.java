@@ -13,6 +13,7 @@ import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.tic.TICResultNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -32,6 +33,8 @@ public class TICResultFileNodeService implements IService {
             resultNodeId = createResultFileNode();
             processData.putItem(ProcessDataConstants.RESULT_FILE_NODE_ID, resultNodeId);
             processData.putItem(ProcessDataConstants.RESULT_FILE_NODE, resultFileNode);
+            FileUtil.ensureDirExists(resultFileNode.getDirectoryPath()+File.separator+"Reconstructed");
+            FileUtil.ensureDirExists(resultFileNode.getDirectoryPath()+File.separator+"Reconstructed"+File.separator+"corrected");
         }
         catch (Exception e) {
             throw new CreateRecruitmentFileNodeException(e);

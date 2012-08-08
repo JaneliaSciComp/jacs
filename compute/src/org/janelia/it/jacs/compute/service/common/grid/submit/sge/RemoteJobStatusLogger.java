@@ -75,6 +75,24 @@ public class RemoteJobStatusLogger implements JobStatusLogger {
     }
 
     @Override
+    public void bulkUpdateJobInfo(Map<String, GridJobStatus.JobState> changedJobStateMap, Map<String, Map<String, String>> changedJobResourceMap) {
+        if (changedJobResourceMap == null) {
+            bulkUpdateJobStatus(changedJobStateMap);
+        }
+        else {
+            try {
+                logger.debug("Calling to bulk update the JobInfo resource usage for task="+taskId+", "+changedJobStateMap.size()+" job items.");
+                jobControlRemoteBean.bulkUpdateGridJobInfo(this.taskId, changedJobStateMap, changedJobResourceMap);
+                logger.debug("Completed bulk update the JobInfo resource usage for task=" + taskId);
+            }
+            catch (RemoteException e) {
+                logger.error("Unable to save job state. Error:" + e.getMessage());
+            }
+
+        }
+    }
+
+    @Override
     public void cleanUpData() {
         try {
             jobControlRemoteBean.cleanUpJobStatus(this.taskId);

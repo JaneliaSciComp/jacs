@@ -15,31 +15,20 @@ import org.janelia.it.jacs.shared.utils.SystemCall;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.Scanner;
 
 /**
  * @author Todd Safford
  */
 public class DataCleanupService implements IService {
 
-    public static final String SPOT_FILE_NAME = "spotFiles.txt";
-    public static final int POSX_INDEX=1;
-    public static final int POSY_INDEX=2;
-    public static final int POSZ_INDEX=3;
-    public static final int SIGX_INDEX=7;
-    public static final int SIGY_INDEX=8;
-    public static final int SIGZ_INDEX=9;
     private Logger _logger;
     private Task task;
     private TICResultNode resultFileNode;
-    private String sessionName;
-    private int thrownOutCounter;
 
     public void execute(IProcessData processData) throws ServiceException {
         try {
             _logger = ProcessDataHelper.getLoggerForTask(processData, DataCleanupService.class);
             this.task = ProcessDataHelper.getTask(processData);
-            sessionName = ProcessDataHelper.getSessionRelativePath(processData);
             resultFileNode = (TICResultNode)ProcessDataHelper.getResultFileNode(processData);
 
             // There should be only one final spots file
@@ -58,21 +47,7 @@ public class DataCleanupService implements IService {
                 }
             }
             // else regroup the broken apart files into Reconstructed and corrected dirs like it was a single submission to the grid
-            // todo This is unnecessary and the grid slots should position these results automatically
             else {
-                File mainDir = new File(resultFileNode.getDirectoryPath());
-                File reconDir = FileUtil.ensureDirExists(resultFileNode.getDirectoryPath()+File.separator+"Reconstructed");
-                File correctDir = FileUtil.ensureDirExists(resultFileNode.getDirectoryPath()+File.separator+"Reconstructed"+File.separator+"corrected");
-                Scanner scanner = new Scanner(new File(resultFileNode.getDirectoryPath()+ File.separator+SPOT_FILE_NAME));
-                while (scanner.hasNextLine()) {
-                    File tmpBaseDir = new File(scanner.nextLine()).getParentFile();
-                    File tmpReconDir = new File(tmpBaseDir+File.separator+"Reconstructed");
-                    File tmpCorrectedDir = new File(tmpReconDir.getAbsolutePath()+File.separator+"corrected");
-                    FileUtil.moveOnlyFiles(tmpBaseDir, mainDir);
-                    FileUtil.moveOnlyFiles(tmpReconDir, reconDir);
-                    FileUtil.moveOnlyFiles(tmpCorrectedDir, correctDir);
-                    FileUtil.deleteDirectory(tmpBaseDir);
-                }
                 try {
                     FileUtil.copyDirectory(resultFileNode.getDirectoryPath(), tmpDestination);
                 }

@@ -1,12 +1,6 @@
 
 package org.janelia.it.jacs.compute.access;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.util.*;
-
 import org.apache.log4j.Logger;
 import org.hibernate.HibernateException;
 import org.hibernate.Query;
@@ -32,6 +26,12 @@ import org.janelia.it.jacs.model.user_data.blast.BlastResultNode;
 import org.janelia.it.jacs.model.user_data.recruitment.RecruitmentResultFileNode;
 import org.janelia.it.jacs.model.user_data.tools.GenericServiceDefinitionNode;
 import org.janelia.it.jacs.model.vo.ParameterException;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.*;
 
 /**
  * This class encapsulates all DB access operations.  It wraps RuntimeExceptions with checked DaoException
@@ -397,11 +397,13 @@ public class ComputeDAO extends ComputeBaseDAO {
     }
 
     public void bulkAddGridJobStatus(long taskId, String queue, Set<String> jobIds, GridJobStatus.JobState state) throws DaoException {
+        _logger.debug("bulkAddGridJobStatus - Setting "+jobIds.size()+" jobs to status "+state.name()+" for task "+taskId);
         for (String jobId : jobIds) {
             GridJobStatus s = new GridJobStatus(taskId, jobId, queue, state);
             checkAndRecordError(s);
             saveOrUpdate(s);
         }
+        _logger.debug("bulkAddGridJobStatus - completed");
     }
 
     /**
@@ -417,9 +419,11 @@ public class ComputeDAO extends ComputeBaseDAO {
     }
 
     public void bulkUpdateGridJobStatus(long taskId, Map<String, GridJobStatus.JobState> jobStates) throws DaoException {
+        _logger.debug("Starting db update of task("+taskId+") with "+jobStates.size()+" job items");
         for (String jobId : jobStates.keySet()) {
             updateJobStatus(taskId, jobId, jobStates.get(jobId));
         }
+        _logger.debug("Done updating the job status for task "+taskId);
     }
 
     public void saveOrUpdateGridJobStatus(GridJobStatus gridJobStatus) throws DaoException {

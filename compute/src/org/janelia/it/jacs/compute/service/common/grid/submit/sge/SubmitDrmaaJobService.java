@@ -404,7 +404,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
     }
 
 
-    protected void collectStdErr() throws WaitForJobException, DaoException {
+    protected boolean collectStdErr() throws WaitForJobException, DaoException {
         // Use this hash to avoid identical messages
         File configDir = new File(getSGEErrorDirectory());
         File[] errorFiles = configDir.listFiles(new StdErrorFilenameFilter());
@@ -417,7 +417,9 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         if (numBytes > 0) {
         	String note = numBytes+" bytes of output were written to stderr files in dir="+configDir.getAbsolutePath();
             EJBFactory.getLocalComputeBean().addTaskNote(task.getObjectId(), note);
+            return true;
         }
+        return false;
     }
 
 
