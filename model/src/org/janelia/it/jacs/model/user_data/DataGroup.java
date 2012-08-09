@@ -24,10 +24,8 @@ public class DataGroup implements Serializable, IsSerializable {
     private User owner;
     private Set<User> dataGroupMembers;
 
-    public DataGroup(Long id, String name, String description, HashSet<User> dataGroupMembers) {
-        this.id = id;
+    public DataGroup(String name, HashSet<User> dataGroupMembers) {
         this.name = name;
-        this.description = description;
         this.dataGroupMembers = dataGroupMembers;
     }
 
