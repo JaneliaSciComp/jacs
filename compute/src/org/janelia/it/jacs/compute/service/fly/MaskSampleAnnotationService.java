@@ -87,6 +87,9 @@ public class MaskSampleAnnotationService  implements IService {
     protected File maskAnnotationResourceDir;
     protected List<String> abbrevationList=new ArrayList<String>();
 
+    protected Long subfolderCreationCount=0L;
+    protected Long mipsFolderEntityCount=0L;
+
 
     public void execute(IProcessData processData) throws ServiceException {
         try {
@@ -228,6 +231,8 @@ public class MaskSampleAnnotationService  implements IService {
 
         logger.info("Processing " + sampleList.size() + " Screen Samples");
         long sampleDirFailureCount=0;
+        Map<Entity, Long> entityNewSubfolderCountMap=new HashMap<Entity, Long>();
+        Map<Entity, Long> entityNewMipEntityCountMap=new HashMap<Entity, Long>();
         for (Entity sample : sampleList) {
 
             // Refresh beans
@@ -290,8 +295,14 @@ public class MaskSampleAnnotationService  implements IService {
             }
 
             // This ensures that the mask annotation directory and its subdirs are correctly setup.
+            Long startingSubfolderCount=subfolderCreationCount;
+            Long startingMipsEntityCount=mipsFolderEntityCount;
             Entity maskAnnotationFolder=getMaskAnnotationFolderFromSampleByName(sample, sampleResultDir, maskAnnotationFolderName, true);
             maskAnnotationFolder=configureMaskSubdirectories(maskAnnotationFolder);
+            Long newMipsEntityCount=mipsFolderEntityCount-startingMipsEntityCount;
+
+            // This is to detect and track the case where the results are precomputed but the entity tree is not yet created
+            Long newSubfoldersForThisSample=subfolderCreationCount-startingSubfolderCount;
             File maskAnnotationDir=new File(maskAnnotationFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
 
             File stackFile=null;
@@ -300,6 +311,8 @@ public class MaskSampleAnnotationService  implements IService {
 
             // Do another refresh
             sample=entityBean.getEntityTree(sample.getId());
+            entityNewSubfolderCountMap.put(sample, newSubfoldersForThisSample);
+            entityNewMipEntityCountMap.put(sample, newMipsEntityCount);
 
             for (EntityData ed : sample.getEntityData()) {
                 Entity child=ed.getChildEntity();
@@ -319,7 +332,8 @@ public class MaskSampleAnnotationService  implements IService {
                 Double qi=new Double(QiScore.trim());
                 if (DEBUG) logger.info("Using Double-valued Qm="+qm+" Qi="+qi+" QM_MAXIMUM="+QM_MAXIMUM+" QI_MAXIMUM="+QI_MAXIMUM);
                 boolean qScoresUndefined=(qm==0.0 && qi==0.0);
-                if (!qScoresUndefined && qm<=QM_MAXIMUM && qi<=QI_MAXIMUM) {
+                //if (!qScoresUndefined && qm<=QM_MAXIMUM && qi<=QI_MAXIMUM) {
+                if (!qScoresUndefined && qi<=QI_MAXIMUM) {
                     if (DEBUG) logger.info("Adding properly-aligned sampleName="+sample.getName());
                     properlyAlignedSampleList.add(sample);
                     properlyAlignedSampleIdList.add(sample.getId().toString());
@@ -349,14 +363,24 @@ public class MaskSampleAnnotationService  implements IService {
         long alreadyCompleteSampleCount=0;
         for (Entity alignedSample : properlyAlignedSampleList) {
             logger.info("Checking to see if aligned Sample name="+alignedSample.getName()+" is complete");
-            if (!maskAnnotationDirIsComplete(alignedSample.getName(), new File(maskAnnotationDirList.get(sampleIndex)), false)) {
-                finalSampleIdList.add(alignedSample.getId().toString());
-                finalSampleNameList.add(alignedSample.getName());
-                finalAnnotationDirList.add(maskAnnotationDirList.get(sampleIndex));
-                finalMipConversionDirList.add(maskAnnotationDirList.get(sampleIndex)+File.separator+MIPS_SUBFOLDER_NAME);
-                finalAlignedStackList.add(alignedStackPathList.get(sampleIndex));
+            File maskAnnotationDir=new File(maskAnnotationDirList.get(sampleIndex));
+            if (!maskAnnotationDirIsComplete(alignedSample.getName(), maskAnnotationDir, false)) {
+                logger.info("Warning: mask annotation dir is incomplete: "+maskAnnotationDir.getAbsolutePath());
+//                finalSampleIdList.add(alignedSample.getId().toString());
+//                finalSampleNameList.add(alignedSample.getName());
+//                finalAnnotationDirList.add(maskAnnotationDirList.get(sampleIndex));
+//                finalMipConversionDirList.add(maskAnnotationDirList.get(sampleIndex)+File.separator+MIPS_SUBFOLDER_NAME);
+//                finalAlignedStackList.add(alignedStackPathList.get(sampleIndex));
             } else {
-                logger.info("Sample is complete - skipping");
+                Long newSubfoldersForThisSample=entityNewSubfolderCountMap.get(alignedSample);
+                Long newMipEntityCount=entityNewMipEntityCountMap.get(alignedSample);
+                if (newSubfoldersForThisSample>0 || newMipEntityCount==0) {
+                    logger.info("Mask annotation dir content is complete but the entity tree needs to be created");
+                    addMaskAnnotationResultEntitiesToSample(alignedSample.getId().toString(), alignedSample.getName(), maskAnnotationDir);
+                    logger.info("Done creating entity tree");
+                } else {
+                    logger.info("Sample is complete - skipping");
+                }
                 alreadyCompleteSampleCount++;
             }
             sampleIndex++;
@@ -366,15 +390,17 @@ public class MaskSampleAnnotationService  implements IService {
 
         long sampleCount=finalSampleNameList.size();
 
-        processData.putItem("SAMPLE_ID_LIST", finalSampleIdList);
-        processData.putItem("SAMPLE_NAME_LIST", finalSampleNameList);
-        processData.putItem("MASK_ANNOTATION_PATH", finalAnnotationDirList);
-        processData.putItem("MIPS_CONVERSION_PATH", finalMipConversionDirList);
-        processData.putItem("ALIGNED_STACK_PATH_LIST", finalAlignedStackList);
-        processData.putItem("RESOURCE_DIR_PATH", maskAnnotationResourceDir.getAbsolutePath());
-        processData.putItem(ProcessDataConstants.RESULT_FILE_NODE, resultNode);
-        processData.putItem("PATTERN_CHANNEL", patternChannel);
-        processData.putItem("IMAGE_CONVERSION_RESULT_NODE_MAP", mipResultNodeMap);
+// Commented-out to test the entity-creation-only mode
+
+//        processData.putItem("SAMPLE_ID_LIST", finalSampleIdList);
+//        processData.putItem("SAMPLE_NAME_LIST", finalSampleNameList);
+//        processData.putItem("MASK_ANNOTATION_PATH", finalAnnotationDirList);
+//        processData.putItem("MIPS_CONVERSION_PATH", finalMipConversionDirList);
+//        processData.putItem("ALIGNED_STACK_PATH_LIST", finalAlignedStackList);
+//        processData.putItem("RESOURCE_DIR_PATH", maskAnnotationResourceDir.getAbsolutePath());
+//        processData.putItem(ProcessDataConstants.RESULT_FILE_NODE, resultNode);
+//        processData.putItem("PATTERN_CHANNEL", patternChannel);
+//        processData.putItem("IMAGE_CONVERSION_RESULT_NODE_MAP", mipResultNodeMap);
         processData.putItem("SAMPLE_COUNT", sampleCount);
 
         for (String sampleName : finalSampleNameList) {
@@ -386,7 +412,8 @@ public class MaskSampleAnnotationService  implements IService {
     }
 
     Entity configureMaskSubdirectories(Entity maskFolder) throws Exception {
-        verifyOrCreateSubFolder(maskFolder, MIPS_SUBFOLDER_NAME, MIPS_SUBFOLDER_NAME);
+        Entity mipsSubFolder=verifyOrCreateSubFolder(maskFolder, MIPS_SUBFOLDER_NAME, MIPS_SUBFOLDER_NAME);
+        mipsFolderEntityCount+=mipsSubFolder.getChildren().size();
         verifyOrCreateSubFolder(maskFolder, SUPPORTING_FILE_SUBFOLDER_NAME, SUPPORTING_FILE_SUBFOLDER_NAME);
         verifyOrCreateSubFolder(maskFolder, NORMALIZED_SUBFOLDER_NAME, NORMALIZED_SUBFOLDER_NAME);
         return maskFolder;
@@ -451,6 +478,7 @@ public class MaskSampleAnnotationService  implements IService {
         }
         if (subFolder==null) {
             subFolder=addChildFolderToEntity(parent, subFolderName, subFolderDir.getAbsolutePath());
+            subfolderCreationCount++;
         } else {
             String actualPath=subFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
             if (!actualPath.equals(subFolderDir.getAbsolutePath())) {
