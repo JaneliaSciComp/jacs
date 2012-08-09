@@ -1,0 +1,20 @@
+<!-- 
+	Remove rejects.
+-->
+<process name="Screen Score Loading Pipeline 3" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
+	<sequence>
+	
+	    <!-- Import variables -->
+	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="TASK_PARAMETER_1" value="rejects file path"/>
+            <input name="PROCESS_VARIABLE_1" value="REJECTS_FILE_PATH"/>
+	        <output name="REJECTS_FILE_PATH"/>
+	    </operation>
+		 
+	    <!-- Remove the rejects -->
+		<operation name="Remove Rejects" processor="org.janelia.it.jacs.compute.service.fly.ScreenScoresLoadingService3">
+			<input name="REJECTS_FILE_PATH"/>
+		</operation>
+		
+    </sequence>
+</process>

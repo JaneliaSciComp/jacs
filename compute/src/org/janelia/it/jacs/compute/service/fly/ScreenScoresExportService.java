@@ -51,10 +51,6 @@ public class ScreenScoresExportService implements IService {
             
             // Process arguments
             
-            String topLevelFolderName = (String)processData.getItem("TOP_LEVEL_FOLDER_NAME");
-        	if (topLevelFolderName == null) {
-        		throw new IllegalArgumentException("TOP_LEVEL_FOLDER_NAME may not be null");
-        	}
             String outputFilepath = (String)processData.getItem("OUTPUT_FILEPATH");
         	if (outputFilepath == null) {
         		throw new IllegalArgumentException("OUTPUT_FILEPATH may not be null");
@@ -78,7 +74,7 @@ public class ScreenScoresExportService implements IService {
         	logger.info("Processing folder-by-folder");
         	Map<String,String> evalMap = new HashMap<String,String>();
         	
-        	Entity topLevelFolder = populateChildren(getRootEntity(topLevelFolderName));
+        	Entity topLevelFolder = populateChildren(getRootEntity(ScreenScoresLoadingService.TOP_LEVEL_EVALUATION_FOLDER));
         	List<Entity> compartments = topLevelFolder.getOrderedChildren();
         	for(Entity compartmentEntity : compartments) {
         		

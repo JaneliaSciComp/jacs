@@ -100,6 +100,10 @@ public class Specimen {
 		return lab+"_"+fragmentId+"_"+vector+"_"+insertionSite;
 	}
 	
+	public String getSpecimenName() {
+		return getFlylineName()+"_"+specimen;
+	}
+	
 	public String getFragmentName() {
 		return lab+"_"+fragmentId;
 	}

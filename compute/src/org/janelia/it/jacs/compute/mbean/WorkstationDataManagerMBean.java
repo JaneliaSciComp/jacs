@@ -10,9 +10,11 @@ public interface WorkstationDataManagerMBean {
     	
 	public void runSplitLinesLoading(String user, String topLevelFolderName, String representativesPath, String splitConstructsPath);
 	
-	public void runScreenScoresLoading(String user, String topLevelFolderName);
+	public void runScreenScoresLoading(String user);
 
-	public void runScreenScoresExport(String user, String topLevelFolderName, String outputFilepath);
+	public void runScreenScoresLoading3(String user, String rejectsPath);
+	
+	public void runScreenScoresExport(String user, String outputFilepath);
 	
 	public void runAnnotationImport(String user, String annotationsPath, String ontologyName);
 	

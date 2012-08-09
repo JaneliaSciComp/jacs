@@ -212,9 +212,8 @@ public class FileDiscoveryHelper extends EntityHelper {
         logger.info("Saved folder " + name+" as " + folder.getId());
         return folder;
     }
-
-    public Entity createOrVerifyRootEntity(String topLevelFolderName, boolean createIfNecessary, boolean loadTree) throws Exception {
-    	
+    
+    public Entity getRootEntity(String topLevelFolderName, boolean loadTree) {
         Set<Entity> topLevelFolders = entityBean.getEntitiesByName(topLevelFolderName);
         Entity topLevelFolder = null;
         if (topLevelFolders != null) {
@@ -234,7 +233,12 @@ public class FileDiscoveryHelper extends EntityHelper {
                 }
             }
         }
+        return topLevelFolder;
+    }
 
+    public Entity createOrVerifyRootEntity(String topLevelFolderName, boolean createIfNecessary, boolean loadTree) throws Exception {
+    	
+    	Entity topLevelFolder = getRootEntity(topLevelFolderName, loadTree);
         if (topLevelFolder == null) {
             if (createIfNecessary) {
             	topLevelFolder = createFolderForFile(topLevelFolderName, true, null);

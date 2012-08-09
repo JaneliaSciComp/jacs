@@ -44,9 +44,19 @@
            <name>user</name>
            <type>java.lang.String</type>
         </parameter>
+    </operation>
+    
+    <operation>
+        <description>Remove rejected specimens from the evaluation area.</description>
+        <name>runScreenScoresLoading3</name>
         <parameter>
-           <description>Name of top level folder for split lines (e.g. "FlyLight Pattern Evaluation")</description>
-           <name>topLevelFolderName</name>
+           <description>User to run as (e.g. "jenetta")</description>
+           <name>user</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Full path of rejects file (e.g. "/groups/scicomp/jacsData/PipelineInputFiles/ScreenEvaluation/rejects.txt")</description>
+           <name>rejectsPath</name>
            <type>java.lang.String</type>
         </parameter>
     </operation>
@@ -57,11 +67,6 @@
         <parameter>
            <description>User to run as (e.g. "jenetta")</description>
            <name>user</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Name of top level folder for split lines (e.g. "FlyLight Pattern Evaluation")</description>
-           <name>topLevelFolderName</name>
            <type>java.lang.String</type>
         </parameter>
         <parameter>

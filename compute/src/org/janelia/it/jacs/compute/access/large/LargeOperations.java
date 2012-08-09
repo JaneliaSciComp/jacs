@@ -63,6 +63,11 @@ public class LargeOperations {
         }
     }
 
+    public void clearCache(String cacheName) {
+    	Cache cache = getCache(cacheName);
+    	cache.removeAll();
+    }
+    
     /**
      * Builds a map of entity ids to sets of SimpleAnnotations on disk using EhCache.
      * @throws DaoException

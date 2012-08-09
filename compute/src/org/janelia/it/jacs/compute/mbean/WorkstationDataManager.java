@@ -67,10 +67,9 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
-    public void runScreenScoresLoading(String user, String topLevelFolderName) {
+    public void runScreenScoresLoading(String user) {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	taskParameters.add(new TaskParameter("top level folder name", topLevelFolderName, null));
         	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
         			taskParameters, "screenScoresLoading", "Screen Scores Loading");
             task.setJobName("Screen Scores Loading Task");
@@ -80,11 +79,24 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
-    
-    public void runScreenScoresExport(String user, String topLevelFolderName, String outputFilepath) {
+
+    public void runScreenScoresLoading3(String user, String rejectsPath) {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	taskParameters.add(new TaskParameter("top level folder name", topLevelFolderName, null));
+        	taskParameters.add(new TaskParameter("rejects file path", rejectsPath, null));
+        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
+        			taskParameters, "screenScoresLoading3", "Screen Scores Loading 3");
+            task.setJobName("Screen Scores Loading 3 Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("ScreenScoresLoadingPipeline3", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
+    public void runScreenScoresExport(String user, String outputFilepath) {
+        try {
+        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
         	taskParameters.add(new TaskParameter("output filepath", outputFilepath, null));
         	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
         			taskParameters, "screenScoresExport", "Screen Scores Export");
