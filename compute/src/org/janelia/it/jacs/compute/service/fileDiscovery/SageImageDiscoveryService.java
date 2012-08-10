@@ -464,7 +464,7 @@ public class SageImageDiscoveryService implements IService {
     					if (c==0) {
     						return o1.getChildEntity().getId().compareTo(o2.getChildEntity().getId());
     					}
-    					return 0;
+    					return c;
     				}
     			});
     			

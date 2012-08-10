@@ -50,18 +50,17 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
 	
     public WorkstationDataManager() {
     }
-
-    public void runSplitLinesLoading(String user, String topLevelFolderName, String representativesPath, String splitConstructsPath) {
+    
+    public void runAnnotationImport(String user, String annotationsPath, String ontologyName) {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	taskParameters.add(new TaskParameter("top level folder name", topLevelFolderName, null));
-        	taskParameters.add(new TaskParameter("representatives filepath", representativesPath, null));
-        	taskParameters.add(new TaskParameter("split constructs filepath", splitConstructsPath, null)); 
+        	taskParameters.add(new TaskParameter("annotations filepath", annotationsPath, null)); 
+        	taskParameters.add(new TaskParameter("ontology name", ontologyName, null)); 
         	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-        			taskParameters, "splitLinesLoading", "Split Lines Loading");
-            task.setJobName("Split Lines Loading Task");
+        			taskParameters, "annotationImport", "annotationImport");
+            task.setJobName("Annotation Import Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("SplitLinesLoadingPipeline", task.getObjectId());
+            EJBFactory.getLocalComputeBean().submitJob("AnnotationImportPipeline", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -80,6 +79,19 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
+    public void runScreenScoresLoading2(String user) {
+        try {
+        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
+        			taskParameters, "screenScoresLoading2", "Screen Scores Loading 2");
+            task.setJobName("Screen Scores Loading 2 Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("ScreenScoresLoadingPipeline2", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
     public void runScreenScoresLoading3(String user, String rejectsPath) {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
@@ -107,17 +119,18 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
-    
-    public void runAnnotationImport(String user, String annotationsPath, String ontologyName) {
+
+    public void runSplitLinesLoading(String user, String topLevelFolderName, String representativesPath, String splitConstructsPath) {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	taskParameters.add(new TaskParameter("annotations filepath", annotationsPath, null)); 
-        	taskParameters.add(new TaskParameter("ontology name", ontologyName, null)); 
+        	taskParameters.add(new TaskParameter("top level folder name", topLevelFolderName, null));
+        	taskParameters.add(new TaskParameter("representatives filepath", representativesPath, null));
+        	taskParameters.add(new TaskParameter("split constructs filepath", splitConstructsPath, null)); 
         	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-        			taskParameters, "annotationImport", "annotationImport");
-            task.setJobName("Annotation Import Pipeline Task");
+        			taskParameters, "splitLinesLoading", "Split Lines Loading");
+            task.setJobName("Split Lines Loading Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("AnnotationImportPipeline", task.getObjectId());
+            EJBFactory.getLocalComputeBean().submitJob("SplitLinesLoadingPipeline", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }

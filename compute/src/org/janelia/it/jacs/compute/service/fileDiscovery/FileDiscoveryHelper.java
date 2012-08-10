@@ -132,7 +132,10 @@ public class FileDiscoveryHelper extends EntityHelper {
         return folder;
     }
 
-	
+    public Entity addChildFolderToEntity(Entity parent, String name) throws Exception {
+        return addChildFolderToEntity(parent, name, null);
+    }
+    
 	/**
 	 * Tries to get the supporting data for an entity. If none exists, adds it and then returns it. 
 	 * @param entity
@@ -256,19 +259,22 @@ public class FileDiscoveryHelper extends EntityHelper {
     	return createOrVerifyFolderEntity(parentFolder, dir.getName(), dir);
     }
     
+    public Entity createOrVerifyFolderEntity(Entity parentFolder, String name) throws Exception {
+    	return createOrVerifyFolderEntity(parentFolder, name, null);
+    }
+    
     public Entity createOrVerifyFolderEntity(Entity parentFolder, String name, File dir) throws Exception {
         return createOrVerifyFolderEntity(parentFolder, name, dir, parentFolder.getMaxOrderIndex()+1);
     }
 
     public Entity createOrVerifyFolderEntity(Entity parentFolder, String name, File dir, Integer orderIndex) throws Exception {
 
-        logger.info("Looking for fast load entity in parent folder "+parentFolder.getId());
         EntityData folderEd = EntityUtils.findChildEntityDataWithName(parentFolder, name);
         if (folderEd!=null) {
         	return folderEd.getChildEntity();
         }
         
-        Entity folder = createFolderForFile(name, false, dir.getAbsolutePath());
+        Entity folder = createFolderForFile(name, false, dir==null?null:dir.getAbsolutePath());
         addToParent(parentFolder, folder, orderIndex, EntityConstants.ATTRIBUTE_ENTITY);
         return folder;
     }

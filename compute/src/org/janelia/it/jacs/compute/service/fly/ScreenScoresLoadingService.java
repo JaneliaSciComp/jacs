@@ -11,7 +11,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
-import org.janelia.it.jacs.compute.service.entity.EntityHelper;
+import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -33,14 +33,13 @@ public class ScreenScoresLoadingService implements IService {
 	public static final String TOP_LEVEL_EVALUATION_FOLDER = "FlyLight Pattern Evaluation";
 	public static final String SCORE_ONTOLOGY_NAME = "Expression Pattern Evaluation";
 
+	public static final String MAA_USERNAME = "system";
 	public static final String MAA_INTENSITY_NAME = "MAA Intensity Score";
 	public static final String MAA_DISTRIBUTION_NAME = "MAA Distribution Score";
 	public static final String CA_INTENSITY_NAME = "CA Intensity Score";
 	public static final String CA_DISTRIBUTION_NAME = "CA Distribution Score";
 	
 	public static final int MAX_SCORE = 5;
-	
-	private static final String maaUsername = "system";
 	
     protected Logger logger;
     protected Task task;
@@ -49,7 +48,7 @@ public class ScreenScoresLoadingService implements IService {
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
     protected AnnotationBeanLocal annotationBean;
-	protected EntityHelper helper;
+	protected FileDiscoveryHelper helper;
     
     protected EntityType folderType;
     
@@ -76,7 +75,7 @@ public class ScreenScoresLoadingService implements IService {
             annotationBean = EJBFactory.getLocalAnnotationBean();
             user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
             createDate = new Date();
-            helper = new EntityHelper(entityBean, computeBean, user);
+            helper = new FileDiscoveryHelper(entityBean, computeBean, user);
             
         	// Preload entity types
         	
@@ -150,34 +149,7 @@ public class ScreenScoresLoadingService implements IService {
         	}
         	
         	// Get or create score ontology
-
-        	Entity ontologyTree = null;
-        		
-        	Set<Entity> matchingOntologies = entityBean.getUserEntitiesByName(user.getUserLogin(), SCORE_ONTOLOGY_NAME);
-        	
-        	if (matchingOntologies!=null && !matchingOntologies.isEmpty()) {
-        		//ontologyTree = matchingOntologies.iterator().next();
-        		//ontologyTree = annotationBean.getOntologyTree(user.getUserLogin(), ontologyTree.getId());
-        		throw new Exception("Reusing an existing ontology is not yet supported. Delete the ontology first.");
-        	}
-
-    		logger.info("Creating ontology called '"+SCORE_ONTOLOGY_NAME+"'");
-    		
-        	ontologyTree = annotationBean.createOntologyRoot(user.getUserLogin(), SCORE_ONTOLOGY_NAME);
-
-        	maaIntensityEnum = newTerm(ontologyTree, MAA_INTENSITY_NAME, "Enum");
-        	maaDistributionEnum = newTerm(ontologyTree, MAA_DISTRIBUTION_NAME, "Enum");
-        	Entity caIntensityEnum = newTerm(ontologyTree, CA_INTENSITY_NAME, "Enum");
-        	Entity caDistributionEnum = newTerm(ontologyTree, CA_DISTRIBUTION_NAME, "Enum");
-        	
-        	for(int i=MAX_SCORE; i>=0; i--) {
-        		Entity intTerm = newTerm(maaIntensityEnum, "i"+i, "EnumItem");
-        		Entity distTerm = newTerm(maaDistributionEnum, "d"+i, "EnumItem");
-        		intValueItems.put(i, intTerm);
-        		distValueItems.put(i, distTerm);
-        		newTerm(caIntensityEnum, "i"+i, "EnumItem");
-        		newTerm(caDistributionEnum, "d"+i, "EnumItem");
-        	}
+        	getOrCreateOntology();
     		
         	// Create the folder structure and annotate each sample
         	
@@ -219,9 +191,51 @@ public class ScreenScoresLoadingService implements IService {
         }
     }
     
-    private void annotate(Long targetId, Entity key, Entity value) throws ComputeException {
+    protected void getOrCreateOntology() throws Exception {
+
+		Set<Entity> matching = entityBean.getUserEntitiesByName(user.getUserLogin(), SCORE_ONTOLOGY_NAME);
+		if (matching.size()>1) {
+			throw new Exception("More than one ontology named "+SCORE_ONTOLOGY_NAME);
+		}
+		
+		if (matching.isEmpty()) {
+    		logger.info("Creating ontology called '"+SCORE_ONTOLOGY_NAME+"'");
+    		
+    		Entity ontologyTree = annotationBean.createOntologyRoot(user.getUserLogin(), SCORE_ONTOLOGY_NAME);
+
+        	maaIntensityEnum = newTerm(ontologyTree, MAA_INTENSITY_NAME, "Enum");
+        	maaDistributionEnum = newTerm(ontologyTree, MAA_DISTRIBUTION_NAME, "Enum");
+        	Entity caIntensityEnum = newTerm(ontologyTree, CA_INTENSITY_NAME, "Enum");
+        	Entity caDistributionEnum = newTerm(ontologyTree, CA_DISTRIBUTION_NAME, "Enum");
+        	
+        	for(int i=MAX_SCORE; i>=0; i--) {
+        		Entity intTerm = newTerm(maaIntensityEnum, "i"+i, "EnumItem");
+        		Entity distTerm = newTerm(maaDistributionEnum, "d"+i, "EnumItem");
+        		intValueItems.put(i, intTerm);
+        		distValueItems.put(i, distTerm);
+        		newTerm(caIntensityEnum, "i"+i, "EnumItem");
+        		newTerm(caDistributionEnum, "d"+i, "EnumItem");
+        	}
+		}
+		else {
+			long ontologyId = matching.iterator().next().getId();
+			logger.info("Reusing existing ontology called '"+SCORE_ONTOLOGY_NAME+"' (id="+ontologyId+")");
+			
+			Entity ontologyTree = annotationBean.getOntologyTree(user.getUserLogin(), ontologyId);
+
+			maaIntensityEnum = EntityUtils.findChildWithName(ontologyTree, ScreenScoresLoadingService.MAA_INTENSITY_NAME);
+			maaDistributionEnum = EntityUtils.findChildWithName(ontologyTree, ScreenScoresLoadingService.MAA_DISTRIBUTION_NAME);
+			
+	    	for(int i=ScreenScoresLoadingService.MAX_SCORE; i>=0; i--) {
+	    		intValueItems.put(i, EntityUtils.findChildWithName(maaIntensityEnum, "i"+i));
+	    		distValueItems.put(i, EntityUtils.findChildWithName(maaDistributionEnum, "d"+i));
+	    	}
+		}
+    }
+    
+    protected void annotate(Long targetId, Entity key, Entity value) throws ComputeException {
 		OntologyAnnotation annotation = new OntologyAnnotation(null, targetId, key.getId(), key.getName(), value.getId(), value.getName());
-		annotationBean.createSilentOntologyAnnotation(maaUsername, annotation);
+		annotationBean.createSilentOntologyAnnotation(MAA_USERNAME, annotation);
 		numAnnotationsCreated++;
     }
     
@@ -235,7 +249,7 @@ public class ScreenScoresLoadingService implements IService {
     	return newTerm(parent, name, OntologyElementType.createTypeByName(type));
     }
     
-    private Map<String,Score> readScoresFile(File scoresFile) throws Exception {
+    protected Map<String,Score> readScoresFile(File scoresFile) throws Exception {
     	
     	Map<String,Score> scores = new HashMap<String,Score>();
     	
@@ -281,24 +295,24 @@ public class ScreenScoresLoadingService implements IService {
         return scores;
     }
 
-    private class Score {
+    protected class Score {
     	Long compartmentId;
     	Integer distribution;
     	Integer intensity;    	
     }
 
-    private String getCol(String[] cols, int index) {
+    protected String getCol(String[] cols, int index) {
     	if (index > cols.length-1) return null;
     	return cols[index];
     }
     
-    private Entity populateChildren(Entity entity) {
+    protected Entity populateChildren(Entity entity) {
     	if (entity==null || EntityUtils.areLoaded(entity.getEntityData())) return entity;
 		EntityUtils.replaceChildNodes(entity, entityBean.getChildEntities(entity.getId()));
 		return entity;
     }
     
-    public Entity createOrVerifyRootEntity(String topLevelFolderName, User user, Date createDate, boolean createIfNecessary, boolean loadTree) throws Exception {
+    protected Entity createOrVerifyRootEntity(String topLevelFolderName, User user, Date createDate, boolean createIfNecessary, boolean loadTree) throws Exception {
         Set<Entity> topLevelFolders = entityBean.getEntitiesByName(topLevelFolderName);
         Entity topLevelFolder = null;
         if (topLevelFolders != null) {

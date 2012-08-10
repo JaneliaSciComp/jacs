@@ -12,26 +12,21 @@
     </constructor>
 
     <operation>
-        <description>Load in Arnim's representatives and split constructs spreadsheets and combine them with the screen data into a new hierarchy for split line representative determination.</description>
-        <name>runSplitLinesLoading</name>
+        <description>Load in Arnim's annotations from Picasa.</description>
+        <name>runAnnotationImport</name>
         <parameter>
            <description>User to run as (e.g. "system")</description>
            <name>user</name>
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>Name of top level folder for split lines (e.g. "FlyLight Screen Split Constructs")</description>
-           <name>topLevelFolderName</name>
+           <description>Path to annotations file which annotates fly specimens with a list of annotations (e.g. "/groups/scicomp/jacsData/SplitPicking/annotations.txt")</description>
+           <name>annotationsPath</name>
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>Path to representatives file which picks a representative specimen for each flyline (e.g. "/groups/scicomp/jacsData/SplitPicking/representatives.txt")</description>
-           <name>representativesPath</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Path to split constructs file which annotates flylines with an AD or DBD designation (e.g. "/groups/scicomp/jacsData/SplitPicking/splitReps.txt")</description>
-           <name>splitConstructsPath</name>
+           <description>Name of the ontology to use, or create if it doesn't exist (e.g. "Picasa Imported Ontology")</description>
+           <name>ontologyName</name>
            <type>java.lang.String</type>
         </parameter>
     </operation>
@@ -39,6 +34,16 @@
     <operation>
         <description>Load in the screen intensity and distribution scores as annotations, and create a folder structure to organize them.</description>
         <name>runScreenScoresLoading</name>
+        <parameter>
+           <description>User to run as (e.g. "jenetta")</description>
+           <name>user</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
+        <description>Load in the screen intensity and distribution scores for ArnimUpdate1.</description>
+        <name>runScreenScoresLoading2</name>
         <parameter>
            <description>User to run as (e.g. "jenetta")</description>
            <name>user</name>
@@ -77,21 +82,26 @@
     </operation>
     
     <operation>
-        <description>Load in Arnim's annotations from Picasa.</description>
-        <name>runAnnotationImport</name>
+        <description>Load in Arnim's representatives and split constructs spreadsheets and combine them with the screen data into a new hierarchy for split line representative determination.</description>
+        <name>runSplitLinesLoading</name>
         <parameter>
            <description>User to run as (e.g. "system")</description>
            <name>user</name>
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>Path to annotations file which annotates fly specimens with a list of annotations (e.g. "/groups/scicomp/jacsData/SplitPicking/annotations.txt")</description>
-           <name>annotationsPath</name>
+           <description>Name of top level folder for split lines (e.g. "FlyLight Screen Split Constructs")</description>
+           <name>topLevelFolderName</name>
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>Name of the ontology to use, or create if it doesn't exist (e.g. "Picasa Imported Ontology")</description>
-           <name>ontologyName</name>
+           <description>Path to representatives file which picks a representative specimen for each flyline (e.g. "/groups/scicomp/jacsData/SplitPicking/representatives.txt")</description>
+           <name>representativesPath</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Path to split constructs file which annotates flylines with an AD or DBD designation (e.g. "/groups/scicomp/jacsData/SplitPicking/splitReps.txt")</description>
+           <name>splitConstructsPath</name>
            <type>java.lang.String</type>
         </parameter>
     </operation>

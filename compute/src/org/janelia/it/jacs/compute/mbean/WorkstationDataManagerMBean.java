@@ -8,15 +8,13 @@ package org.janelia.it.jacs.compute.mbean;
  */
 public interface WorkstationDataManagerMBean {
     	
-	public void runSplitLinesLoading(String user, String topLevelFolderName, String representativesPath, String splitConstructsPath);
-	
-	public void runScreenScoresLoading(String user);
-
-	public void runScreenScoresLoading3(String user, String rejectsPath);
-	
-	public void runScreenScoresExport(String user, String outputFilepath);
-	
+	// Pipelines for Arnim
 	public void runAnnotationImport(String user, String annotationsPath, String ontologyName);
+	public void runScreenScoresLoading(String user);
+	public void runScreenScoresLoading2(String user);
+	public void runScreenScoresLoading3(String user, String rejectsPath);
+	public void runScreenScoresExport(String user, String outputFilepath);
+	public void runSplitLinesLoading(String user, String topLevelFolderName, String representativesPath, String splitConstructsPath);
 	
 	public void runNeo4jSync(Boolean clearDb);
 	
