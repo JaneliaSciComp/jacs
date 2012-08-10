@@ -370,6 +370,9 @@ public class DataSetAPI {
             else if (newTask instanceof GenericTask){
                 if ("sampleSync".equals(newTask.getTaskName())) {
                     processName = "SampleFileNodeSync";
+                    String tmpOwner = newTask.getParameter("TargetUser");
+                    newTask.setOwner(tmpOwner);
+                    taskDAO.saveOrUpdateTask(newTask);
                 }
             }
             logger.info("DataSetAPI submitJob using processName=" + processName);
@@ -545,6 +548,7 @@ public class DataSetAPI {
         Task task = new GenericTask(new HashSet<Node>(), username, new ArrayList<Event>(),
                 taskParameters, "sampleSync", "Sample Sync");
         task.setJobName("MultiColor FlipOut Sample Fileshare Sync Task");
+        task.setParameter("TargetUser",username);
         submitJob(sessionUser, task);
     }
 }
