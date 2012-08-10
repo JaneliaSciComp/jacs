@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.service.fly;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.util.*;
 
 import org.apache.log4j.Logger;
@@ -41,7 +42,8 @@ public class ScreenScoresLoadingService3 implements IService {
 	protected FileDiscoveryHelper helper;
     
     private Set<String> rejects = new HashSet<String>();
-    	
+    private SortedSet<String> accepted = new TreeSet<String>();
+    
     public void execute(IProcessData processData) throws ServiceException {
     	
         try {
@@ -59,6 +61,16 @@ public class ScreenScoresLoadingService3 implements IService {
             String rejectsFile = (String)processData.getItem("REJECTS_FILE_PATH");
         	if (rejectsFile == null) {
         		throw new IllegalArgumentException("REJECTS_FILE_PATH may not be null");
+        	}
+
+            String outputFilepath = (String)processData.getItem("ACCEPTS_FILE_PATH");
+        	if (outputFilepath == null) {
+        		throw new IllegalArgumentException("ACCEPTS_FILE_PATH may not be null");
+        	}
+        	
+        	File outputFile = new File(outputFilepath);
+        	if (!outputFile.getParentFile().canWrite()) {
+        		throw new IllegalArgumentException("Cannot write to output file: "+outputFilepath);
         	}
         	
         	readRejects(new File(rejectsFile));
@@ -112,6 +124,9 @@ public class ScreenScoresLoadingService3 implements IService {
                     			if (rejects.contains(specimenName)) {
                     				toDelete.add(maskImageEd);
                     			}
+                    			else {
+                    				accepted.add(specimenName);
+                    			}
                     		}
                     	}
                     	
@@ -125,6 +140,14 @@ public class ScreenScoresLoadingService3 implements IService {
         	
         	logger.info("Done cleaning rejects from "+topLevelFolder.getName());
 
+        	logger.info("Writing output to "+outputFile.getAbsolutePath());
+        	
+        	FileWriter writer = new FileWriter(outputFile);
+        	
+        	for(String name : accepted) {
+        		writer.write(name+"\n");
+        	}
+        	writer.close();
         } 
         catch (Exception e) {
             throw new ServiceException(e);

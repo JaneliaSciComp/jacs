@@ -92,10 +92,11 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
     
-    public void runScreenScoresLoading3(String user, String rejectsPath) {
+    public void runScreenScoresLoading3(String user, String rejectsPath, String acceptsPath) {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
         	taskParameters.add(new TaskParameter("rejects file path", rejectsPath, null));
+        	taskParameters.add(new TaskParameter("accepts file path", acceptsPath, null));
         	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
         			taskParameters, "screenScoresLoading3", "Screen Scores Loading 3");
             task.setJobName("Screen Scores Loading 3 Task");

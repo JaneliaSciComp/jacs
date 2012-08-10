@@ -1,7 +1,7 @@
 <!-- 
 	Load in the additional marks with screen pattern intensity scores.
 -->
-<process name="Screen Score Loading Pipeline" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
+<process name="Screen Score Loading Pipeline" processor="queue/mcfoDataPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	
 	    <!-- Load everything and create entities as needed -->

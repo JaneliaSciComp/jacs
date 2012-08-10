@@ -60,8 +60,13 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>Full path of rejects file (e.g. "/groups/scicomp/jacsData/PipelineInputFiles/ScreenEvaluation/rejects.txt")</description>
+           <description>Full path of rejects file to read from (e.g. "/groups/scicomp/jacsData/PipelineInputFiles/ScreenEvaluation/rejects.txt")</description>
            <name>rejectsPath</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Full path of accepts file to write to (e.g. "/groups/scicomp/jacsData/rokickiTest/accepts.txt")</description>
+           <name>acceptsPath</name>
            <type>java.lang.String</type>
         </parameter>
     </operation>
