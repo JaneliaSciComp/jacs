@@ -121,11 +121,13 @@ public class ScreenScoresLoadingService3 implements IService {
                     	for(EntityData maskImageEd : distFolder.getEntityData()) {
                     		if (maskImageEd.getChildEntity()!=null) {
                     			String specimenName = (String)largeOp.getValue(LargeOperations.SCREEN_SCORE_MAP, maskImageEd.getChildEntity().getId());
-                    			if (rejects.contains(specimenName)) {
-                    				toDelete.add(maskImageEd);
-                    			}
-                    			else {
-                    				accepted.add(specimenName);
+                    			if (specimenName!=null) {
+                        			if (rejects.contains(specimenName)) {
+                        				toDelete.add(maskImageEd);
+                        			}
+                        			else {
+                        				accepted.add(specimenName);
+                        			}
                     			}
                     		}
                     	}
