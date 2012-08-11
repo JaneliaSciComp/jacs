@@ -159,7 +159,7 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
     protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
         SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
         // Reserve all 3 slots.
-        jt.setNativeSpecification("-pe batch 1");
+        jt.setNativeSpecification("-pe batch 4");
         return jt;
     }
 
