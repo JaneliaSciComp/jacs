@@ -33,7 +33,7 @@ public class DrmaaHelper {
     public static final String ROOT_SERVER_DIR_PROP = "ServerRoot.Dir";
     private static HashSet<String> _projectCodes = new HashSet<String>();
     private Map<String, Integer> currentStatusMap = new HashMap<String, Integer>();
-    private String mainJobID;
+
 
     private String errorText = "";
     private String shellReturnMethod = DrmaaSubmitter.OPT_RETURN_VIA_QUEUE_VAL;
@@ -82,14 +82,7 @@ public class DrmaaHelper {
      */
     public void exit() throws DrmaaException {
         synchronized (sunSession) {
-            try {
-                if (null!=mainJobID && currentStatusMap.size()>0) {
-                    sunSession.control(mainJobID, Session.TERMINATE);
-                }
-            }
-            catch (DrmaaException e) {
-                logger.error("Unable to terminate the grid jobs after error and terminate call.");
-            }
+            //TODO: check if all jobs are completed
             if (initialized) {
                 sunSession.exit();
                 initialized = false;
@@ -178,24 +171,19 @@ public class DrmaaHelper {
      */
     public boolean waitForJobs(Set<String> jobSet, String logPrefix, JobStatusLogger statusLogger, int statusPoolPeriod,
                                int timeoutInSeconds) throws Exception {
+        //String logPrefix = "Computing results for " +resultNode.getObjectId() + " - Grid status: ";
         Date startTime=null;
         int jobStatus;
-        mainJobID = getMainJobId(jobSet);
-        String parentJobId=mainJobID.substring(0, mainJobID.lastIndexOf('.'));
+        String mainJobID = getMainJobId(jobSet);
         // changedJobs - map of jobs that changed it's status since last check
-        Map<String, GridJobStatus.JobState> changedJobStateMap = null;
-        Map<String, Map<String, String>> changedJobResourceMap;
-
+        Map<String, GridJobStatus.JobState> changedJobs = null;
         int dynamicCheckInterval = MIN_STATUS_CHECK_INTERVAL; // start with 2 seconds
-        boolean parentJobDone = false;
 
         // prepopulate current status map
-        for (String id : jobSet) {
+        for (String id : jobSet)
             currentStatusMap.put(id, Session.QUEUED_ACTIVE);
-        }
 
-        while (currentStatusMap.size() > 0 && !parentJobDone) {
-            logger.debug("Inquiring about "+mainJobID+":"+currentStatusMap.size()+" items.");
+        while (currentStatusMap.size() > 0) {
             // If timeout is set, check for expiration
             try {
                 if (0<timeoutInSeconds && null!=startTime) {
@@ -214,7 +202,8 @@ public class DrmaaHelper {
             }
             // sleep for a short while then restart loop
             int nappingTime = (statusPoolPeriod > 0) ? statusPoolPeriod : dynamicCheckInterval;
-            if (logger.isDebugEnabled()) {logger.debug(logPrefix + " Going to sleep for " + nappingTime + " milliseconds");}
+            if (logger.isDebugEnabled())
+                logger.debug(logPrefix + " Going to sleep for " + nappingTime + " milliseconds");
             Thread.sleep(nappingTime);
 
             // get status changes and update current map
@@ -223,7 +212,7 @@ public class DrmaaHelper {
             int maxRetries = 3;
             while (retry < maxRetries) {
                 try {
-                    changedJobStateMap = getBulkJobStatusChanges(currentStatusMap);
+                    changedJobs = getBulkJobStatusChanges(currentStatusMap);
                     logger.debug("Got changed jobs breaking loop");
                     break;
                 }
@@ -235,14 +224,13 @@ public class DrmaaHelper {
                 }
             }
 
-            // update status log, if necessary
-            if (statusLogger != null && 0<changedJobStateMap.size()) {
-                statusLogger.bulkUpdateJobStatus(changedJobStateMap);
+            // update status log
+            if (statusLogger != null) {
+                statusLogger.bulkUpdateJobStatus(changedJobs);
             }
-
-            // Loop through the changed jobs and get their info
-            changedJobResourceMap = new HashMap<String, Map<String, String>>();
-            for (String jobId : changedJobStateMap.keySet()) {
+            // reset doneList
+//            doneList.clear();
+            for (String jobId : changedJobs.keySet()) {
                 if (logger.isDebugEnabled()) {
                     String newState;
                     switch (currentStatusMap.get(jobId)) {
@@ -269,10 +257,11 @@ public class DrmaaHelper {
                 }
                 jobStatus = currentStatusMap.get(jobId);
                 JobInfo jobInfo = null;
+                Map<String, String> infoMap = null;
                 if (jobStatus == Session.DONE || jobStatus == Session.FAILED) {
                     try {
                         jobInfo = wait(jobId, Session.TIMEOUT_NO_WAIT);
-                        changedJobResourceMap.put(jobId, jobInfo.getResourceUsage());
+                        infoMap = (Map<String, String>)jobInfo.getResourceUsage();
                     }
                     catch (ExitTimeoutException e) {
                         // this is a valid error when job is done
@@ -284,7 +273,11 @@ public class DrmaaHelper {
                     }
                 }
                 else {
-                    logger.error("jobStatus is " + jobStatus + " for " + jobId);
+                    logger.error("jobStatus is "+jobStatus+" for "+jobId);
+                }
+                // update job info data
+                if (statusLogger != null && infoMap != null) {
+                    statusLogger.updateJobInfo(jobId, changedJobs.get(jobId), infoMap);
                 }
 
                 // if done - remove from set and continue
@@ -299,84 +292,21 @@ public class DrmaaHelper {
                     errorText = "Job " + jobId + " failed on compute grid";
                     return false;
                 }
-            } // end of for loop for changed jobs
-
-            // update job info data - assumes job is terminal (DONE or FAILED)
-            // Make a single call instead of looped
-            if (statusLogger != null && changedJobResourceMap != null && changedJobResourceMap.size()>0) {
-                statusLogger.bulkUpdateJobInfo(changedJobStateMap, changedJobResourceMap);
-            }
-
-
+            } // end of for loop
             // if there where no changes - increase wait time
-            if (changedJobStateMap.size() == 0) {
+            if (changedJobs.size() == 0) {
                 // - at least one is not done - break inner loop, and increase wait time
                 if (dynamicCheckInterval < MAX_STATUS_CHECK_INTERVAL)
                     dynamicCheckInterval *= 2;
             }
-            // reset interval
-            else {
+            else // reset interval
+            {
                 // reset check interval to min - jobs are coming back now
                 dynamicCheckInterval = MIN_STATUS_CHECK_INTERVAL;
             }
-
-            if (changedJobStateMap.size()==0) {
-                logger.debug("Nothing has changed.  Sample status of some remaining jobs:");
-                int x=0;
-                for (String jobId : currentStatusMap.keySet()) {
-                    GridJobStatus.JobState tmpState = translateStatusCode(currentStatusMap.get(jobId));
-                    logger.debug(jobId+" - "+tmpState);
-                    if (GridJobStatus.JobState.UNKNOWN==tmpState) {
-                        logger.warn("Defaulted state "+currentStatusMap.get(jobId)+" to UNKNOWN!");
-                    }
-                    x++;
-                    if (x>=20) {break;}
-                }
-            }
-            // Check the parent job
-//            GridJobStatus.JobState parentState = translateStatusCode(getJobProgramStatus(parentJobId));
-//            logger.debug("The parent state is "+parentState.name());
-//            if (GridJobStatus.JobState.DONE==parentState || GridJobStatus.JobState.FAILED==parentState) {
-//                logger.debug("The job "+parentJobId+" is terminal with "+currentStatusMap.size()+" left in the currentStatusMap");
-//                JobInfo finalInfo = wait(parentJobId,Session.TIMEOUT_NO_WAIT);
-//                // Interrogate job exit status
-//                if (finalInfo.wasAborted ()) {
-//                    System.out.println("Job " + finalInfo.getJobId () + " never ran");
-//                }
-//                else if (finalInfo.hasExited ()) {
-//                    System.out.println("Job " + finalInfo.getJobId () +
-//                            " finished regularly with exit status " +
-//                            finalInfo.getExitStatus ());
-//                }
-//                else if (finalInfo.hasSignaled ()) {
-//                    System.out.println("Job " + finalInfo.getJobId () +
-//                            " finished due to signal " +
-//                            finalInfo.getTerminatingSignal ());
-//
-//                    if (finalInfo.hasCoreDump()) {
-//                        System.out.println("A core dump is available.");
-//                    }
-//                }
-//                else {
-//                    System.out.println("Job " + finalInfo.getJobId () +
-//                            " finished with unclear conditions");
-//                }
-//
-//                System.out.println ("\nJob Usage:");
-//
-//                Map rmap = finalInfo.getResourceUsage ();
-//
-//                for (Object o : rmap.keySet()) {
-//                    String name = (String) o;
-//                    String value = (String) rmap.get(name);
-//
-//                    System.out.println("  " + name + "=" + value);
-//                }
-//
-//                parentJobDone = true;
-//            }
         } // end of while loop
-        if (logger.isDebugEnabled()) {logger.debug(logPrefix + " - all parts are done or assumed done");}
+        if (logger.isDebugEnabled())
+            logger.debug(logPrefix + " - all parts are done");
         return true;
     }
 
@@ -417,19 +347,13 @@ public class DrmaaHelper {
         synchronized (sunSession) {
             logger.info("Calling for the job program status");
             Map<String, GridJobStatus.JobState> statusMap = new HashMap<String, GridJobStatus.JobState>();
-            logger.debug("Asking SGE in a loop about info for "+jobStatusMap.keySet().size()+" jobs");
             for (String jobId : jobStatusMap.keySet()) {
                 int status = sunSession.getJobProgramStatus(jobId);
                 if (status != jobStatusMap.get(jobId)) {
-                    GridJobStatus.JobState tmpState = translateStatusCode(status);
-                    if (null==tmpState || GridJobStatus.JobState.UNKNOWN==tmpState) {
-                        logger.debug("Job:"+jobId+" has null or state unknown: "+tmpState);
-                    }
-                    statusMap.put(jobId, tmpState);
+                    statusMap.put(jobId, translateStatusCode(status));
                     jobStatusMap.put(jobId, status); // reset original
                 }
             }
-            logger.debug("Done asking SGE in a loop about info for "+jobStatusMap.keySet().size()+" jobs");
             return statusMap;
         }
     }
