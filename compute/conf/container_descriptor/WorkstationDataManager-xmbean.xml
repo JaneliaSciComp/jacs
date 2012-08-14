@@ -280,6 +280,11 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
+           <description>Name of the image family to load (e.g. "leet_pan_lineage")</description>
+           <name>imageFamily</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
            <description>Re-run merging and stitching?</description>
            <name>refreshProcessing</name>
            <type>java.lang.Boolean</type>

@@ -310,12 +310,12 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     }
 
     
-    public void runLeetSageBasedDataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation) {
+    public void runLeetSageBasedDataPipeline(String user, String topLevelFolderName, String imageFamily, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation) {
         try {
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
             		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), null,
             		topLevelFolderName, refreshProcessing, refreshAlignment, refreshSeparation,
-            		"/groups/leet/leetimg/leetlab/lineage/leet_pan_lineage/confocalStacks", "leet_pan_lineage");
+            		"/groups/leet/leetimg/leetlab/lineage/"+imageFamily+"/confocalStacks", imageFamily);
             task.setJobName("Leet Data Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("LeetSageBasedDataPipeline", task.getObjectId());

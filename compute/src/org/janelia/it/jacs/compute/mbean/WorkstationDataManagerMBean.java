@@ -40,7 +40,7 @@ public interface WorkstationDataManagerMBean {
     
     public void runCompleteFastLoadArtifactPipeline(String user);
     
-    public void runLeetSageBasedDataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
+    public void runLeetSageBasedDataPipeline(String user, String topLevelFolderName, String imageFamily, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
     
     public void runCentralBrainDataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
     
