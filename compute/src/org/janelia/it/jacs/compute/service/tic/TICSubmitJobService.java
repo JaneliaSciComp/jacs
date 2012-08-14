@@ -102,21 +102,36 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
         String specificCorrectionPath       = "$OUTPUT_DIR"+File.separator+"Reconstructed"+File.separator+"corrected"+File.separator;
         File reconDir   = new File(resultFileNode.getDirectoryPath() + File.separator + "Reconstructed");
         File correctDir = new File(resultFileNode.getDirectoryPath() + File.separator + "Reconstructed" + File.separator + "corrected");
-        String scratchLocation = "/scratch/jacs/"+task.getOwner()+File.separator+task.getObjectId()+"/$JOB_ID/mcr_cache_root.$TMP_INDEX";
+        String scratchLocation = "/scratch/jacs/"+task.getOwner();
 
         // Takes a list of files, smart enough to figure out the file type based on extension
-        writer.write("set -o errexit\n");
         writer.write("read INPUT_FILE\n");
         writer.write("read INPUT_FILE_NAME\n");
         writer.write("read OUTPUT_DIR\n");
         writer.write("read TMP_INDEX\n");
+        
+        // Prepare output dir
+        writer.write("rm -rf $OUTPUT_DIR\n");
         writer.write("mkdir $OUTPUT_DIR\n");
-//        writer.write("mkdir /scratch/"+task.getObjectId()+"/"+"mcr_cache_root.$RANDOM");
         writer.write("cp $INPUT_FILE $OUTPUT_DIR"+File.separator+"$INPUT_FILE_NAME\n");
-        // Pre-clean the scratch area
-        writer.write("rm -rf "+scratchLocation+"\n");
-        writer.write(MatlabHelper.MATLAB_EXPORT + MatlabHelper.getCacheRootExportCommand(scratchLocation)+"\n");
-
+        
+        writer.write("trap '\n");
+        writer.write("echo \"SIGTERM detected. Removing temp directory $SCRATCH_DIR\"\n");
+		writer.write("rm -rf $SCRATCH_DIR\n");
+		writer.write("' TERM\n");
+        
+        // Prepare scratch directory for cache        
+		writer.write("export TMPDIR="+scratchLocation+"\n");
+		writer.write("mkdir -p $TMPDIR\n");	
+		writer.write("SCRATCH_DIR=`mktemp -d`\n"); // mktemp uses the TMPDIR defined above
+        
+		// Export variables
+        writer.write(MatlabHelper.MATLAB_EXPORT + MatlabHelper.getCacheRootExportCommand("$SCRATCH_DIR")+"\n");
+        
+        writer.write("echo \"MCR Cache Dir: $MCR_CACHE_ROOT\"\n");
+        
+        writer.write("if [ -s $MCR_CACHE_ROOT ]; then\n");
+        
         if (null!=task.getParameter(TicTask.PARAM_runApplyCalibrationToFrame) && Boolean.valueOf(task.getParameter(TicTask.PARAM_runApplyCalibrationToFrame))) {
             String fullReconstructionCmd = reconstructionCmd + " $OUTPUT_DIR"+File.separator+" $INPUT_FILE_NAME "+transformationFilePath+" "+borderValue+"\n";
             writer.write(fullReconstructionCmd);
@@ -145,8 +160,11 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
             writer.write("mv "+specificBasePath+"*tif* "+resultFileNode.getDirectoryPath()+File.separator+".\n");
             writer.write("rm -rf "+specificBasePath+"\n");
         }
+        
+        writer.write("fi\n");
         // Post clean the scratch area
-        writer.write("rm -rf "+scratchLocation+"\n");
+        writer.write("echo \"Finished. Removing temp directory $SCRATCH_DIR\"\n");
+        writer.write("rm -rf $SCRATCH_DIR\n");
         setJobIncrementStop(relatedFiles.length);
     }
 
