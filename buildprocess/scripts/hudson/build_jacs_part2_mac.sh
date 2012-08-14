@@ -42,7 +42,7 @@ if [ $BUILD_VAA3D == 1 ]; then
     echo "Building Vaa3D"
     cd $COMPILE_DIR
 
-    echo "  Removing VAA3D_COMPILE_MAC_DIR"
+    echo "  Removing $VAA3D_COMPILE_MAC_DIR"
     rm -rf "$VAA3D_COMPILE_MAC_DIR" || true
 
     echo "  Checking out from SVN"
