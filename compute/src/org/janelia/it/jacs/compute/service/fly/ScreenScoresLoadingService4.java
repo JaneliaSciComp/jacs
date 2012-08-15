@@ -58,10 +58,11 @@ public class ScreenScoresLoadingService4 extends ScreenScoresLoadingService {
             	for(Entity intFolder : compartment.getOrderedChildren()) {
             		populateChildren(intFolder);
             		int i = getValueFromFolderName(intFolder);
+            		if (i<0) continue;
             		
                 	for(Entity distFolder : intFolder.getOrderedChildren()) {
-                		populateChildren(distFolder);
                 		int d = getValueFromFolderName(distFolder);
+                		if (d<0) continue;
                 		
                 		String key = compartment.getName()+"/"+i+"/"+d;
                 		distFolders.put(key, distFolder);
@@ -183,7 +184,12 @@ public class ScreenScoresLoadingService4 extends ScreenScoresLoadingService {
 	}
 	
 	private int getValueFromFolderName(String folderName) {
-		return Integer.parseInt(""+folderName.charAt(folderName.length()-1));
+		try {
+			return Integer.parseInt(""+folderName.charAt(folderName.length()-1));
+		}
+		catch (Exception e) {
+			logger.error("Error parsing folder name "+folderName+": "+e.getMessage());
+		}
+		return -1;
 	}
-	
 }
