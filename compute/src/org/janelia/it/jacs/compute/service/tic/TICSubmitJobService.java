@@ -102,7 +102,7 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
         String specificCorrectionPath       = "$OUTPUT_DIR"+File.separator+"Reconstructed"+File.separator+"corrected"+File.separator;
         File reconDir   = new File(resultFileNode.getDirectoryPath() + File.separator + "Reconstructed");
         File correctDir = new File(resultFileNode.getDirectoryPath() + File.separator + "Reconstructed" + File.separator + "corrected");
-        String scratchLocation = "/scratch/jacs/"+task.getOwner();
+        String scratchLocation = "/scratch/jacs/";
 
         // Takes a list of files, smart enough to figure out the file type based on extension
         writer.write("read INPUT_FILE\n");
