@@ -106,6 +106,20 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
+
+    public void runScreenScoresLoading4(String user, String addsPath) {
+        try {
+        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        	taskParameters.add(new TaskParameter("adds file path", addsPath, null));
+        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
+        			taskParameters, "screenScoresLoading4", "Screen Scores Loading 4");
+            task.setJobName("Screen Scores Loading 4 Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("ScreenScoresLoadingPipeline4", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
     
     public void runScreenScoresExport(String user, String outputFilepath) {
         try {

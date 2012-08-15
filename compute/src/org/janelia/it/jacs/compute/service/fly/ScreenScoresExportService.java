@@ -161,7 +161,7 @@ public class ScreenScoresExportService implements IService {
 							else if (ScreenScoresLoadingService.CA_INTENSITY_NAME.equals(annotation.getKeyString())) {
 								caIntensity = annotation.getValueString();
 							}
-							if (ScreenScoresLoadingService.MAA_DISTRIBUTION_NAME.equals(annotation.getKeyString())) {
+							else if (ScreenScoresLoadingService.MAA_DISTRIBUTION_NAME.equals(annotation.getKeyString())) {
 								maaDistribution = annotation.getValueString();
 							}
 							else if (ScreenScoresLoadingService.CA_DISTRIBUTION_NAME.equals(annotation.getKeyString())) {
