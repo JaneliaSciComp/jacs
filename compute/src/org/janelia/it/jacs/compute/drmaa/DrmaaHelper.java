@@ -193,7 +193,7 @@ public class DrmaaHelper {
         }
 
         while (currentStatusMap.size() > 0 && !parentJobDone) {
-            logger.debug("Inquiring about jobId "+mainJobID+" ("+currentStatusMap.size()+" items)");
+            logger.info("Inquiring about jobId "+mainJobID+" ("+currentStatusMap.size()+" items)");
             // If timeout is set, check for expiration
             try {
                 if (0<timeoutInSeconds && null!=startTime) {
@@ -212,14 +212,14 @@ public class DrmaaHelper {
             }
             // sleep for a short while then restart loop
             int nappingTime = (statusPoolPeriod > 0) ? statusPoolPeriod : dynamicCheckInterval;
-            if (logger.isDebugEnabled()) {logger.debug(logPrefix + " Going to sleep for " + nappingTime + " milliseconds");}
+            logger.info(logPrefix + " Going to sleep for " + nappingTime + " milliseconds");
             Thread.sleep(nappingTime);
 
 
             // Check for completed jobs in the currentStatusMap. This should not happen, but it does, probably because of the delay in getting to this point?
             for (String jobId : currentStatusMap.keySet()) {
                 if (currentStatusMap.get(jobId) == Session.DONE) {
-                	if (logger.isDebugEnabled()) logger.debug(logPrefix + " Job " + jobId + " completed while we weren't looking!");
+                	logger.info(logPrefix + " Job " + jobId + " completed while we weren't looking!");
                     currentStatusMap.remove(jobId);
                 }
             }
@@ -378,7 +378,7 @@ public class DrmaaHelper {
 //                parentJobDone = true;
 //            }
         } // end of while loop
-        if (logger.isDebugEnabled()) {logger.debug(logPrefix + " - all parts are done or assumed done");}
+        logger.info(logPrefix + " - all parts are done or assumed done");
         return true;
     }
 
