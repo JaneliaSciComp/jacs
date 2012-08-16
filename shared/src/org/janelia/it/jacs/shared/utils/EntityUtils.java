@@ -245,14 +245,21 @@ public class EntityUtils {
         }
 	}
 	
-	public static Map<Long,Entity> getEntityMap(List<Entity> entities) {
+	public static Map<Long,Entity> getEntityMap(Collection<Entity> entities) {
         Map<Long, Entity> entityMap = new HashMap<Long, Entity>();
         for (Entity entity : entities) {
             entityMap.put(entity.getId(), entity);
         }
 		return entityMap;
 	}
-	
+
+	public static List<Long> getEntityIdList(Collection<Entity> entities) {
+        List<Long> ids = new ArrayList<Long>();
+        for (Entity entity : entities) {
+        	ids.add(entity.getId());
+        }
+		return ids;
+	}
 	
 	public static List<String> getPathFromUniqueId(String uniqueId) {
 		List<String> path = new ArrayList<String>();
@@ -287,7 +294,7 @@ public class EntityUtils {
 		return entityIds;
 	}
 	
-	public static String getUniqueIdFromParentEntityPath(List<EntityData> path) {
+	public static String getUniqueIdFromParentEntityPath(Collection<EntityData> path) {
 		StringBuffer sb = new StringBuffer();
 		for(EntityData ed : path) {
 			if (sb.length()<=0) {

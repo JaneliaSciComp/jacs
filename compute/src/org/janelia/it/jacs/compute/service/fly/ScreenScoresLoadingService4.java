@@ -20,7 +20,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class ScreenScoresLoadingService4 extends ScreenScoresLoadingService {
+public class ScreenScoresLoadingService4 extends ScreenScoresLoadingService3 {
 	
     private Set<String> adds = new HashSet<String>();
     private int numAdded = 0;
@@ -47,12 +47,15 @@ public class ScreenScoresLoadingService4 extends ScreenScoresLoadingService {
         	readAdds(new File(addsFile));
 
         	// Precache distribution folder ids
+        	logger.info("Precaching evaluation hierarchy...");
+        	
         	Map<String,Entity> distFolders = new HashMap<String,Entity>();
         	
         	Entity topLevelFolder = helper.getRootEntity(ScreenScoresLoadingService.TOP_LEVEL_EVALUATION_FOLDER, false);
         	populateChildren(topLevelFolder);
 
         	for(Entity compartment : topLevelFolder.getOrderedChildren()) {
+        		logger.info("    Compartment "+compartment.getName());
         		populateChildren(compartment);
         		
             	for(Entity intFolder : compartment.getOrderedChildren()) {
@@ -70,37 +73,33 @@ public class ScreenScoresLoadingService4 extends ScreenScoresLoadingService {
             	}
         	}
         	
+        	logger.info("Processing screen samples...");
+        	
         	for(Entity sample : entityBean.getEntitiesByTypeName(EntityConstants.TYPE_SCREEN_SAMPLE)) {
 
         		Specimen specimen = Specimen.createSpecimenFromFullName(sample.getName());
         		if (!adds.contains(specimen.getSpecimenName())) continue;
-        			
-        		populateChildren(sample);
-        		Entity patternAnnotation = EntityUtils.findChildWithName(sample, "Pattern Annotation");
-        		if (patternAnnotation==null) continue;
         		
         		numAdded++;
-        		logger.info("Readding "+sample.getName());
+        		logger.info("  Reading "+sample.getName());
         		
-        		Map<Long,List<OntologyAnnotation>> annotMap = new HashMap<Long,List<OntologyAnnotation>>();
-        		for(Entity annotEntity : annotationBean.getAnnotationsForChildren(MAA_USERNAME, patternAnnotation.getId())) {
-        			OntologyAnnotation annototation = new OntologyAnnotation();
-        			annototation.init(annotEntity);
-        			List<OntologyAnnotation> entityAnnots = annotMap.get(annototation.getTargetEntityId());
-        			if (entityAnnots==null) {
-        				entityAnnots = new ArrayList<OntologyAnnotation>();
-        				annotMap.put(annototation.getTargetEntityId(), entityAnnots);
-        			}
-        			entityAnnots.add(annototation);
-        		}
+        		// Get all mask images
+        		Map<Long,String> masks = getSampleMaskImages(sample);
         		
-        		populateChildren(patternAnnotation);
-        		for(Entity mask : patternAnnotation.getChildren()) {
+        		// Get annotations for all mask images
+        		Map<Long,List<OntologyAnnotation>> annotMap = getAnnotationMap(masks.keySet());
+        		
+        		int numMasksAdded = 0;
+        		for(Long maskId : masks.keySet()) {
+        			String maskName = masks.get(maskId);
+        			List<OntologyAnnotation> annots = annotMap.get(maskId);
+        			if (annots==null) continue;
+        			
 					String maaIntensity = null;
 					String maaDistribution = null;
 					String caIntensity = null;
 					String caDistribution = null;
-					for(OntologyAnnotation annotation : annotMap.get(mask.getId())) {
+					for(OntologyAnnotation annotation : annots) {
 						if (ScreenScoresLoadingService.MAA_INTENSITY_NAME.equals(annotation.getKeyString())) {
 							maaIntensity = annotation.getValueString();
 						}
@@ -115,7 +114,7 @@ public class ScreenScoresLoadingService4 extends ScreenScoresLoadingService {
 						}
 					}	
         			
-					if (maaIntensity!=null && maaDistribution!=null) {
+					if (!StringUtils.isEmpty(maaIntensity) && !StringUtils.isEmpty(maaDistribution)) {
 						// The current evaluation
 						int mi = getValueFromAnnotation(maaIntensity);
 						int md = getValueFromAnnotation(maaDistribution);
@@ -123,43 +122,61 @@ public class ScreenScoresLoadingService4 extends ScreenScoresLoadingService {
 						int fd = md;
 						
 						if (!StringUtils.isEmpty(caIntensity)) {
-							int ci = getValueFromAnnotation(caIntensity);
-							fi = ci;
+							fi = getValueFromAnnotation(caIntensity);
 						}
 						
 						if (!StringUtils.isEmpty(caDistribution)) {
-							int cd = getValueFromAnnotation(caDistribution);
-							fd = cd;
+							fd = getValueFromAnnotation(caDistribution);
 						}
 						
-						String key = mask.getName()+"/"+fi+"/"+fd;
+						String key = maskName+"/"+fi+"/"+fd;
 						Entity targetDistFolder = (Entity)distFolders.get(key);
 						populateChildren(targetDistFolder);
 						
 						boolean exists = false;
 						for(Entity child : targetDistFolder.getChildren()) {
-							if (child.getId().equals(mask.getId())) {
+							if (child.getId().equals(maskId)) {
 								exists = true;
 							}
 						}
 						
 						if (exists) {
-							logger.info("  "+mask.getName()+" already exists in "+targetDistFolder.getId()+" ("+key+")");
+							logger.info("    "+maskName+" already exists in "+targetDistFolder.getId()+" ("+key+")");
 						}
 						else  {
-							logger.info("  Adding "+mask.getName()+" to "+targetDistFolder.getId()+" ("+key+")");
-							EntityData ed = targetDistFolder.addChildEntity(mask);
-							entityBean.saveOrUpdateEntityData(ed);
+							logger.info("    Adding "+maskName+" to "+targetDistFolder.getId()+" ("+key+")");
+							List<Long> childIds = new ArrayList<Long>();
+							childIds.add(maskId);
+							entityBean.addChildren(user.getUserLogin(), targetDistFolder.getId(), childIds, EntityConstants.ATTRIBUTE_ENTITY);
+							numMasksAdded++;
 						}
 					}
         		}
+        		
+        		logger.info("  Added "+numMasksAdded+" masks for "+sample.getName());
         	}
         	
-        	logger.info("Done readding "+numAdded+" specimens out of requested "+adds.size());
+        	logger.info("Done adding "+numAdded+" specimens out of requested "+adds.size());
         } 
         catch (Exception e) {
             throw new ServiceException(e);
         }
+    }
+    
+    protected Map<Long,List<OntologyAnnotation>> getAnnotationMap(Collection<Long> entityIds) throws Exception {
+		List<Long> maskIds = new ArrayList<Long>(entityIds);
+		Map<Long,List<OntologyAnnotation>> annotMap = new HashMap<Long,List<OntologyAnnotation>>();
+		for(Entity annotEntity : annotationBean.getAnnotationsForEntities(MAA_USERNAME, maskIds)) {
+			OntologyAnnotation annototation = new OntologyAnnotation();
+			annototation.init(annotEntity);
+			List<OntologyAnnotation> entityAnnots = annotMap.get(annototation.getTargetEntityId());
+			if (entityAnnots==null) {
+				entityAnnots = new ArrayList<OntologyAnnotation>();
+				annotMap.put(annototation.getTargetEntityId(), entityAnnots);
+			}
+			entityAnnots.add(annototation);
+		}
+		return annotMap;
     }
 
     private void readAdds(File addsFile) throws Exception {

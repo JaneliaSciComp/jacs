@@ -4,22 +4,15 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
 
-import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.large.LargeOperations;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
-import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
@@ -28,19 +21,8 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class ScreenScoresLoadingService3 implements IService {
+public class ScreenScoresLoadingService3 extends ScreenScoresLoadingService2 {
 	
-	private static final boolean DEBUG = false;
-	
-    protected Logger logger;
-    protected Task task;
-    protected User user;
-    protected Date createDate;
-    protected EntityBeanLocal entityBean;
-    protected ComputeBeanLocal computeBean;
-    protected AnnotationBeanLocal annotationBean;
-	protected FileDiscoveryHelper helper;
-    
     private Set<String> rejects = new HashSet<String>();
     private SortedSet<String> accepted = new TreeSet<String>();
     
@@ -83,20 +65,13 @@ public class ScreenScoresLoadingService3 implements IService {
         	largeOp.clearCache(LargeOperations.SCREEN_SCORE_MAP);
 
         	for(Entity sample : entityBean.getEntitiesByTypeName(EntityConstants.TYPE_SCREEN_SAMPLE)) {
-
-        		populateChildren(sample);
-        		Entity patternAnnotation = EntityUtils.findChildWithName(sample, "Pattern Annotation");
-        		if (patternAnnotation==null) {
-        			continue;
-        		}
-        		
-        		Specimen specimen = Specimen.createSpecimenFromFullName(sample.getName());
-        		
-        		Map<Long,String> maskMap = entityBean.getChildEntityNames(patternAnnotation.getId());        		
-        		logger.info("  Precaching "+maskMap.size()+" children for "+specimen.getSpecimenName());
-        		
-        		for(Map.Entry<Long, String> entry : maskMap.entrySet()) {
-        			largeOp.putValue(LargeOperations.SCREEN_SCORE_MAP, entry.getKey(), specimen.getSpecimenName());
+        		String specimenName = Specimen.createSpecimenFromFullName(sample.getName()).getSpecimenName();
+        		// Get all mask images
+        		Map<Long,String> masks = getSampleMaskImages(sample);
+        		     		
+        		logger.info("  Precaching "+masks.size()+" potential masks for "+specimenName);
+        		for(Long maskId : masks.keySet()) {
+        			largeOp.putValue(LargeOperations.SCREEN_SCORE_MAP, maskId, specimenName);
         		}
         	}
         	
@@ -134,7 +109,7 @@ public class ScreenScoresLoadingService3 implements IService {
                     	
                     	logger.info("      Deleting "+toDelete.size()+" mask images");
                     	for(EntityData ed : toDelete) {
-                    		if (!DEBUG) entityBean.deleteEntityData(ed);
+                    		entityBean.deleteEntityData(ed);
                     	}
                 	}
             	}
@@ -169,9 +144,27 @@ public class ScreenScoresLoadingService3 implements IService {
         }
     }
 
-    private Entity populateChildren(Entity entity) {
-    	if (entity==null || EntityUtils.areLoaded(entity.getEntityData())) return entity;
-		EntityUtils.replaceChildNodes(entity, entityBean.getChildEntities(entity.getId()));
-		return entity;
+    protected Map<Long,String> getSampleMaskImages(Entity sample) {
+
+    	Map<Long,String> childNames = new HashMap<Long,String>();
+
+		populateChildren(sample);
+		Entity patternAnnotation = EntityUtils.findChildWithName(sample, "Pattern Annotation");
+		if (patternAnnotation!=null) {
+			childNames.putAll(entityBean.getChildEntityNames(patternAnnotation.getId()));
+		}
+		
+		populateChildren(sample);
+		Entity maskAnnotation = EntityUtils.findChildWithName(sample, "Mask Annotation");
+		if (maskAnnotation!=null) {
+			populateChildren(maskAnnotation);
+			for(Entity updateFolder : maskAnnotation.getChildren()) {
+				if (updateFolder.getName().startsWith("ArnimUpdate")) {
+					childNames.putAll(entityBean.getChildEntityNames(updateFolder.getId()));
+				}
+			}
+		}
+		
+		return childNames;
     }
 }
