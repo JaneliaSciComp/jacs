@@ -11,6 +11,7 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
@@ -59,20 +60,31 @@ public class FileDiscoveryHelper extends EntityHelper {
     }
     
     public List<File> collectFiles(File dir) throws Exception {
+    	return collectFiles(dir, false);
+    }
+    
+    public List<File> collectFiles(File dir, boolean recurse) throws Exception {
     	
     	List<File> allFiles = new ArrayList<File>();
         List<File> files = FileUtils.getOrderedFilesInDir(dir);
         logger.info("Found "+files.size()+" files in "+dir.getAbsolutePath());
+        logger.info("Applying file exclusions: "+Task.csvStringFromCollection(exclusions));
         
         for (File resultFile : files) {
-        	if (resultFile.isDirectory()) continue;
         	String filename = resultFile.getName();
-        	if (FileUtils.isSymlink(resultFile)) continue;
 			if (isExcluded(filename)) {
-				logger.info("Excluding "+filename);
+				logger.info("Excluding file "+filename);
 				continue; 
 			}
-        	allFiles.add(resultFile);
+        	
+        	if (resultFile.isDirectory()) {
+        		if (recurse) {
+            		allFiles.addAll(collectFiles(resultFile, true));
+            	}
+        	}
+        	else {
+        		allFiles.add(resultFile);	
+        	}
         }
         
         return allFiles;
@@ -90,9 +102,16 @@ public class FileDiscoveryHelper extends EntityHelper {
     }
     
     public void addFilesInDirToFolder(Entity folder, File dir) throws Exception {
-        List<File> files = collectFiles(dir);
-        FileUtils.sortFilesByName(files);        
-		addFilesToFolder(folder, files);
+    	addFilesInDirToFolder(folder, dir, false);
+    }
+    
+    public void addFilesInDirToFolder(Entity folder, File dir, boolean recurse) throws Exception {
+        List<File> files = collectFiles(dir, recurse);
+        logger.info("Collected "+files.size()+" files for addition to "+folder.getName());
+        if (!files.isEmpty()) {
+        	FileUtils.sortFilesByName(files);
+    		addFilesToFolder(folder, files);
+        }
     }
     
     public Entity addResultItem(Entity resultEntity, EntityType type, File file) throws Exception {
@@ -280,7 +299,7 @@ public class FileDiscoveryHelper extends EntityHelper {
     }
 
     public EntityType getEntityTypeForFile(File file) throws Exception {
-        String filenameLowerCase=file.getName().toLowerCase();
+        String filenameLowerCase = file.getName().toLowerCase();
         if (filenameLowerCase.endsWith(".lsm")) {
             return entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK);
         } 

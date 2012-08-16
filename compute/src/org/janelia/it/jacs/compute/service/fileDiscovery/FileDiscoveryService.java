@@ -50,6 +50,9 @@ public class FileDiscoveryService implements IService {
             helper = new FileDiscoveryHelper(entityBean, computeBean, user);
             helper.addFileExclusion("DrmaaSubmitter.log");
             helper.addFileExclusion("oos");
+            helper.addFileExclusion("sge_config");
+            helper.addFileExclusion("sge_error");
+            helper.addFileExclusion("sge_output");
         	
             // What database entity do we load into?
             
