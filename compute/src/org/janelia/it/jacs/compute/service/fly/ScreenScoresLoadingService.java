@@ -125,6 +125,13 @@ public class ScreenScoresLoadingService implements IService {
         		// Don't read the score files until we need them
         		Map<String,Score> sampleScores = new HashMap<String,Score>();
         		boolean sampleScoresLoaded = false;
+        		
+        		// Have to read at least one score file set to get all the compartment names
+        		if (compartments.isEmpty()) {
+					sampleScoresLoaded = true;
+					sampleScores.putAll(getSampleScores(sample));
+        		}
+        		
         		numSamples++;        		
         		
         		// We need to get all the individual mask images for the sample. This child set might contain extra 
