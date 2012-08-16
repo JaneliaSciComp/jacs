@@ -1,10 +1,7 @@
 package org.janelia.it.jacs.compute.service.fly;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.janelia.it.jacs.compute.access.large.LargeOperations;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -35,6 +32,12 @@ public class ScreenScoresLoadingService2 extends ScreenScoresLoadingService {
             createDate = new Date();
             helper = new FileDiscoveryHelper(entityBean, computeBean, user);
             
+            String acceptsFilepath = (String)processData.getItem("ACCEPTS_FILE_PATH");
+        	if (acceptsFilepath == null) {
+        		throw new IllegalArgumentException("ACCEPTS_FILE_PATH may not be null");
+        	}
+        	Set<String> accepted = readNameFile(new File(acceptsFilepath));
+        	
         	// Preload entity types
         	
         	folderType = entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER);
@@ -52,6 +55,9 @@ public class ScreenScoresLoadingService2 extends ScreenScoresLoadingService {
         	// Process each screen sample and save off its expression scores for later use
         	
         	for(Entity sample : entityBean.getEntitiesByTypeName(EntityConstants.TYPE_SCREEN_SAMPLE)) {
+
+        		Specimen specimen = Specimen.createSpecimenFromFullName(sample.getName());
+        		if (!accepted.contains(specimen.getSpecimenName())) continue;
         		
         		logger.info("Processing "+sample);
         		
@@ -101,19 +107,19 @@ public class ScreenScoresLoadingService2 extends ScreenScoresLoadingService {
         		for(Map.Entry<Long, String> entry : maskMap.entrySet()) {
         			Score score = scores.get(entry.getValue());
         			if (score==null) continue;
-        			score.compartmentId = entry.getKey();
+        			score.maskId = entry.getKey();
         		}
         		
         		// Now go through the scores for this sample, and hash them into the disk-based map for later use
         		for(String compartment : scores.keySet()) {
         			Score score = scores.get(compartment);
-        			if (score.compartmentId==null) continue;
+        			if (score.maskId==null) continue;
         			String key = compartment+"/"+score.intensity+"/"+score.distribution;
         			List<Long> sampleCompIds = (List<Long>)largeOp.getValue(LargeOperations.SCREEN_SCORE_MAP, key);
         			if (sampleCompIds==null) {
         				sampleCompIds = new ArrayList<Long>();
         			}
-        			sampleCompIds.add(score.compartmentId);
+        			sampleCompIds.add(score.maskId);
         			largeOp.putValue(LargeOperations.SCREEN_SCORE_MAP,key,sampleCompIds);
         		}
         		

@@ -10,9 +10,7 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
@@ -22,7 +20,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  */
 public class ScreenScoresLoadingService4 extends ScreenScoresLoadingService3 {
 	
-    private Set<String> adds = new HashSet<String>();
+    private Set<String> adds;
     private int numAdded = 0;
     
     public void execute(IProcessData processData) throws ServiceException {
@@ -44,7 +42,7 @@ public class ScreenScoresLoadingService4 extends ScreenScoresLoadingService3 {
         		throw new IllegalArgumentException("ADDS_FILE_PATH may not be null");
         	}
         	
-        	readAdds(new File(addsFile));
+        	adds = readNameFile(new File(addsFile));
 
         	// Precache distribution folder ids
         	logger.info("Precaching evaluation hierarchy...");
@@ -162,51 +160,4 @@ public class ScreenScoresLoadingService4 extends ScreenScoresLoadingService3 {
             throw new ServiceException(e);
         }
     }
-    
-    protected Map<Long,List<OntologyAnnotation>> getAnnotationMap(Collection<Long> entityIds) throws Exception {
-		List<Long> maskIds = new ArrayList<Long>(entityIds);
-		Map<Long,List<OntologyAnnotation>> annotMap = new HashMap<Long,List<OntologyAnnotation>>();
-		for(Entity annotEntity : annotationBean.getAnnotationsForEntities(MAA_USERNAME, maskIds)) {
-			OntologyAnnotation annototation = new OntologyAnnotation();
-			annototation.init(annotEntity);
-			List<OntologyAnnotation> entityAnnots = annotMap.get(annototation.getTargetEntityId());
-			if (entityAnnots==null) {
-				entityAnnots = new ArrayList<OntologyAnnotation>();
-				annotMap.put(annototation.getTargetEntityId(), entityAnnots);
-			}
-			entityAnnots.add(annototation);
-		}
-		return annotMap;
-    }
-
-    private void readAdds(File addsFile) throws Exception {
-		Scanner scanner = new Scanner(addsFile);
-        try {
-            while (scanner.hasNextLine()){
-                String specimen = scanner.nextLine();
-                adds.add(specimen);
-            }
-        }
-        finally {
-        	scanner.close();
-        }
-    }
-
-	private int getValueFromAnnotation(String annotationValue) {
-		return Integer.parseInt(""+annotationValue.charAt(1));
-	}
-	
-	private int getValueFromFolderName(Entity entity) {
-		return getValueFromFolderName(entity.getName());
-	}
-	
-	private int getValueFromFolderName(String folderName) {
-		try {
-			return Integer.parseInt(""+folderName.charAt(folderName.length()-1));
-		}
-		catch (Exception e) {
-			logger.error("Error parsing folder name "+folderName+": "+e.getMessage());
-		}
-		return -1;
-	}
 }

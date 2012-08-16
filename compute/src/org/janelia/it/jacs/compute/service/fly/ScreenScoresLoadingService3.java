@@ -23,7 +23,7 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  */
 public class ScreenScoresLoadingService3 extends ScreenScoresLoadingService2 {
 	
-    private Set<String> rejects = new HashSet<String>();
+    private Set<String> rejects;
     private SortedSet<String> accepted = new TreeSet<String>();
     
     public void execute(IProcessData processData) throws ServiceException {
@@ -55,7 +55,7 @@ public class ScreenScoresLoadingService3 extends ScreenScoresLoadingService2 {
         		throw new IllegalArgumentException("Cannot write to output file: "+outputFilepath);
         	}
         	
-        	readRejects(new File(rejectsFile));
+        	rejects = readNameFile(new File(rejectsFile));
         	
         	// Precache mask image parent relationships
         	
@@ -129,42 +129,5 @@ public class ScreenScoresLoadingService3 extends ScreenScoresLoadingService2 {
         catch (Exception e) {
             throw new ServiceException(e);
         }
-    }
-
-    private void readRejects(File rejectsFile) throws Exception {
-		Scanner scanner = new Scanner(rejectsFile);
-        try {
-            while (scanner.hasNextLine()){
-                String specimen = scanner.nextLine();
-                rejects.add(specimen);
-            }
-        }
-        finally {
-        	scanner.close();
-        }
-    }
-
-    protected Map<Long,String> getSampleMaskImages(Entity sample) {
-
-    	Map<Long,String> childNames = new HashMap<Long,String>();
-
-		populateChildren(sample);
-		Entity patternAnnotation = EntityUtils.findChildWithName(sample, "Pattern Annotation");
-		if (patternAnnotation!=null) {
-			childNames.putAll(entityBean.getChildEntityNames(patternAnnotation.getId()));
-		}
-		
-		populateChildren(sample);
-		Entity maskAnnotation = EntityUtils.findChildWithName(sample, "Mask Annotation");
-		if (maskAnnotation!=null) {
-			populateChildren(maskAnnotation);
-			for(Entity updateFolder : maskAnnotation.getChildren()) {
-				if (updateFolder.getName().startsWith("ArnimUpdate")) {
-					childNames.putAll(entityBean.getChildEntityNames(updateFolder.getId()));
-				}
-			}
-		}
-		
-		return childNames;
     }
 }

@@ -66,9 +66,11 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
-    public void runScreenScoresLoading(String user) {
+    public void runScreenScoresLoading(String user, String acceptsPath, String loadedPath) {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        	taskParameters.add(new TaskParameter("accepts file path", acceptsPath, null));
+        	taskParameters.add(new TaskParameter("loaded file path", loadedPath, null));
         	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
         			taskParameters, "screenScoresLoading", "Screen Scores Loading");
             task.setJobName("Screen Scores Loading Task");
@@ -79,9 +81,10 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
-    public void runScreenScoresLoading2(String user) {
+    public void runScreenScoresLoading2(String user, String acceptsPath) {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        	taskParameters.add(new TaskParameter("accepts file path", acceptsPath, null));
         	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
         			taskParameters, "screenScoresLoading2", "Screen Scores Loading 2");
             task.setJobName("Screen Scores Loading 2 Task");
