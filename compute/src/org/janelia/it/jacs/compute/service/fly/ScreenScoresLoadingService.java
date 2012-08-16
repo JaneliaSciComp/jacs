@@ -208,7 +208,7 @@ public class ScreenScoresLoadingService implements IService {
         		// Now go through the scores for this sample, and hash them into the disk-based map for later use
         		for(String maskName : sampleScores.keySet()) {
         			Score score = sampleScores.get(maskName);
-        			if (score.maskId==null) continue;
+        			if (score==null || score.maskId==null) continue;
         			String key = maskName+"/"+score.intensity+"/"+score.distribution;
         			List<Long> sampleCompIds = (List<Long>)largeOp.getValue(LargeOperations.SCREEN_SCORE_MAP, key);
         			if (sampleCompIds==null) {
@@ -218,7 +218,9 @@ public class ScreenScoresLoadingService implements IService {
         			largeOp.putValue(LargeOperations.SCREEN_SCORE_MAP,key,sampleCompIds);
         		}
         		
-        		loaded.add(specimen.getSpecimenName());
+        		if (!sampleScores.isEmpty()) {
+        			loaded.add(specimen.getSpecimenName());
+        		}
         		logger.info("  Processed "+sampleScores.size()+" compartments");
         	}
         	
@@ -262,7 +264,7 @@ public class ScreenScoresLoadingService implements IService {
             	}
         	}
         	
-        	logger.info("Processed "+numSamples+" samples. "+
+        	logger.info("Processed "+numSamples+" samples, loaded "+loaded.size()+". "+
         			numAnnotationsCreated+" annotations were created. "+numAnnotatedMasks+" mask images were annotated.");
 
         	logger.info("Writing output to "+outputFile.getAbsolutePath());
