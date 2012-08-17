@@ -12,7 +12,7 @@
 	    </operation>
 		
 	    <!-- Find all the WHOLE_BRAIN sample entities -->
-		<operation name="Entity Tree Traversal" processor="org.janelia.it.jacs.compute.service.entity.WholeBrainTraversalService">
+		<operation name="Entity Tree Traversal" processor="org.janelia.it.jacs.compute.service.entity.TilingPatternTraversalService">
 			<input name="OUTVAR_ENTITY_ID" value="SAMPLE_ENTITY_ID"/>
 			<input name="TILING_PATTERN" value="WHOLE_BRAIN"/>
 		</operation>
