@@ -68,12 +68,12 @@ public class FileDiscoveryHelper extends EntityHelper {
     	List<File> allFiles = new ArrayList<File>();
         List<File> files = FileUtils.getOrderedFilesInDir(dir);
         logger.info("Found "+files.size()+" files in "+dir.getAbsolutePath());
-        logger.info("Applying file exclusions: "+Task.csvStringFromCollection(exclusions));
+        logger.debug("Applying file exclusions: "+Task.csvStringFromCollection(exclusions));
         
         for (File resultFile : files) {
         	String filename = resultFile.getName();
 			if (isExcluded(filename)) {
-				logger.info("Excluding file "+filename);
+				logger.debug("Excluding file "+filename);
 				continue; 
 			}
         	
