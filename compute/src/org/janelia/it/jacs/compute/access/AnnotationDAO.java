@@ -31,6 +31,7 @@ import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
 import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
+import org.janelia.it.jacs.shared.annotation.RelativePatternAnnotationDataManager;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 public class AnnotationDAO extends ComputeBaseDAO {
@@ -2416,8 +2417,9 @@ public class AnnotationDAO extends ComputeBaseDAO {
     // This method returns two objects,  Map<Long, Map<String, String>> sampleInfoMap, Map<Long, List<Double>> quantifierInfoMap
     public Object[] getPatternAnnotationQuantifierMapsFromSummary() throws DaoException {
         try {
-            Object[] mapObjects = PatternAnnotationDataManager.loadPatternAnnotationQuantifierSummaryFile();
-            return mapObjects;
+            //Object[] mapObjects = PatternAnnotationDataManager.loadPatternAnnotationQuantifierSummaryFile();
+            //return mapObjects;
+            return null;
         } catch (Exception ex) {
             ex.printStackTrace();
             throw new DaoException(ex);
@@ -2434,6 +2436,22 @@ public class AnnotationDAO extends ComputeBaseDAO {
             maskManager.loadMaskCompartmentList(nameIndexFile);
             Object[] mapObjects=maskManager.loadMaskSummaryFile(summaryFile);
             return mapObjects;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw new DaoException(ex);
+        }
+    }
+
+    public PatternAnnotationDataManager getPatternAnnotationDataManagerByType(String type) throws DaoException {
+        try {
+            PatternAnnotationDataManager dataManager=null;
+            if (type.equals(RelativePatternAnnotationDataManager.RELATIVE_TYPE)) {
+                dataManager=new RelativePatternAnnotationDataManager();
+                dataManager.setup();
+                return dataManager;
+            } else {
+                throw new Exception("Do not recognize PatternAnnotationDataManager type="+type);
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
             throw new DaoException(ex);

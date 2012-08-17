@@ -575,7 +575,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     public void createPatternAnnotationQuantifierSummaryFile() {
         try {
             Map<Entity, Map<String, Double>> entityQuantifierMap=EJBFactory.getLocalAnnotationBean().getPatternAnnotationQuantifiers();
-            PatternAnnotationDataManager.createPatternAnnotationQuantifierSummaryFile(entityQuantifierMap);
+            //PatternAnnotationDataManager.createPatternAnnotationQuantifierSummaryFile(entityQuantifierMap);
         } catch (Exception ex) {
             ex.printStackTrace();
         }

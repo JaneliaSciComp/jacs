@@ -1,10 +1,6 @@
 package org.janelia.it.jacs.shared.annotation;
 
-import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-
-import java.io.*;
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -15,7 +11,7 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 
-public class PatternAnnotationDataManager {
+public abstract class PatternAnnotationDataManager implements Serializable {
 
     // QS stands for "Quality Summary"
     public static final String QS_NAME_COL = "ScreenSampleName";
@@ -24,8 +20,6 @@ public class PatternAnnotationDataManager {
     public static final String QS_GLOBAL_PREFIX = "Global";
 
     public static final List<String> QS_COMPARTMENT_LIST = new ArrayList<String>();
-    public static final List<String> QS_Z_INDEX_LIST = new ArrayList<String>();
-    public static final List<String> QS_C_INDEX_LIST = new ArrayList<String>();
     public static final Map<String,String> QS_DESCRIPTION_MAP = new HashMap<String, String>();
 
     static {
@@ -98,20 +92,8 @@ public class PatternAnnotationDataManager {
         QS_COMPARTMENT_LIST.add("WED_L"); QS_DESCRIPTION_MAP.put("WED_L", "Wedge L");
         QS_COMPARTMENT_LIST.add("WED_R"); QS_DESCRIPTION_MAP.put("WED_R", "Wedge R");
 
-        QS_Z_INDEX_LIST.add(".z0");
-        QS_Z_INDEX_LIST.add(".z1");
-        QS_Z_INDEX_LIST.add(".z2");
-        QS_Z_INDEX_LIST.add(".z3");
-        QS_Z_INDEX_LIST.add(".z4");
-
-        QS_C_INDEX_LIST.add(".c0");
-        QS_C_INDEX_LIST.add(".c1");
-        QS_C_INDEX_LIST.add(".c2");
-        QS_C_INDEX_LIST.add(".c3");
-        QS_C_INDEX_LIST.add(".c4");
-
     }
-    
+
     public static List<String> getCompartmentListInstance() {
         List<String> compartmentListInstance = new ArrayList<String>();
         for (String c : QS_COMPARTMENT_LIST) {
@@ -120,199 +102,39 @@ public class PatternAnnotationDataManager {
         return compartmentListInstance;
     }
 
-    public static File getPatternAnnotationSummaryFile() {
-        String resourceDirString= SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationResourceDir");
-        String quantifierSummaryFilename=SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationQuantifierSummaryFile");
-        File patternAnnotationSummaryFile=new File(resourceDirString, quantifierSummaryFilename);
-        return patternAnnotationSummaryFile;
-    }
-
-    public static void createPatternAnnotationQuantifierSummaryFile(Map<Entity, Map<String, Double>> entityQuantifierMap) throws Exception {
-        List<Entity> screenSampleKeyList=new ArrayList<Entity>();
-        screenSampleKeyList.addAll(entityQuantifierMap.keySet());
-        Collections.sort(screenSampleKeyList, new Comparator<Entity>() {
-            @Override
-            public int compare(Entity o, Entity o1) {
-                return o.getName().compareTo(o1.getName());
-            }
-        });
-
-        // Initialize output file
-        File patternAnnotationSummaryFile=getPatternAnnotationSummaryFile();
-        BufferedWriter bw=new BufferedWriter(new FileWriter(patternAnnotationSummaryFile));
-
-        // Create header line
-        bw.write(QS_NAME_COL+",");
-        bw.write(QS_SAMPLE_ID_COL+",");
-        bw.write(QS_HEATMAP_PATH_COL+",");
-        bw.write(QS_GLOBAL_PREFIX+".t0,");
-        bw.write(QS_GLOBAL_PREFIX+".t1,");
-        bw.write(QS_GLOBAL_PREFIX+".t2,");
-        bw.write(QS_GLOBAL_PREFIX+".t3,");
-        bw.write(QS_GLOBAL_PREFIX+".z0,");
-        bw.write(QS_GLOBAL_PREFIX+".z1,");
-        bw.write(QS_GLOBAL_PREFIX+".z2,");
-        bw.write(QS_GLOBAL_PREFIX+".z3,");
-        bw.write(QS_GLOBAL_PREFIX+".z4"); // missing comma is intentional
-
-        for (String compartmentAbbreviation : QS_COMPARTMENT_LIST) {
-            for (String zIndex : QS_Z_INDEX_LIST) {
-                bw.write(","+compartmentAbbreviation+zIndex);
-            }
-            for (String cIndex : QS_C_INDEX_LIST) {
-                bw.write(","+compartmentAbbreviation+cIndex);
-            }
-        }
-        bw.write("\n");
-
-        // Iterate over screenSamples and write info
-        for (Entity screenSample : screenSampleKeyList) {
-
-            Map<String, Double> entityValueMap = entityQuantifierMap.get(screenSample);
-
-            // General screen sample info
-            bw.write(screenSample.getName()+",");
-            bw.write(screenSample.getId()+",");
-            String heatmapFilepath=screenSample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
-//                if (heatmapFilepath==null) {
-//                    String imageEntityIdString=screenSample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-//                    Entity imageEntity=EJBFactory.getLocalAnnotationBean().getEntityById(imageEntityIdString);
-//                    heatmapFilepath=imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-//                }
-            if (heatmapFilepath==null) {
-                throw new Exception("Could not find default image filepath for screenSample id="+screenSample.getId());
-            }
-            bw.write(heatmapFilepath); // comma intentionally not included
-            
-            // Global info
-            Double g0=entityValueMap.get(QS_GLOBAL_PREFIX+".t0"); bw.write(","+g0);
-            Double g1=entityValueMap.get(QS_GLOBAL_PREFIX+".t1"); bw.write(","+g1);
-            Double g2=entityValueMap.get(QS_GLOBAL_PREFIX+".t2"); bw.write(","+g2);
-            Double g3=entityValueMap.get(QS_GLOBAL_PREFIX+".t3"); bw.write(","+g3);
-            Double g4=entityValueMap.get(QS_GLOBAL_PREFIX+".z0"); bw.write(","+g4);
-            Double g5=entityValueMap.get(QS_GLOBAL_PREFIX+".z1"); bw.write(","+g5);
-            Double g6=entityValueMap.get(QS_GLOBAL_PREFIX+".z2"); bw.write(","+g6);
-            Double g7=entityValueMap.get(QS_GLOBAL_PREFIX+".z3"); bw.write(","+g7);
-            Double g8=entityValueMap.get(QS_GLOBAL_PREFIX+".z4"); bw.write(","+g8);
-
-            // Compartmental Numerical info
-            for (String compartmentAbbreviation : QS_COMPARTMENT_LIST) {
-                for (String zIndex : QS_Z_INDEX_LIST) {
-                    Double value=entityValueMap.get(compartmentAbbreviation+zIndex);
-                    if (value==null) {
-                        throw new Exception("Could not find value for key="+compartmentAbbreviation+zIndex+" in sample="+screenSample.getName());
-                    }
-                    bw.write(","+value.toString());
-                }
-                for (String cIndex : QS_C_INDEX_LIST) {
-                    Double value=entityValueMap.get(compartmentAbbreviation+cIndex);
-                    if (value==null) {
-                        throw new Exception("Could not find value for key="+compartmentAbbreviation+cIndex+" in sample="+screenSample.getName());
-                    }
-                    bw.write(","+value.toString());
-                }
-            }
-            bw.write("\n");
-        }
-        bw.close();
-    }
-
-    // This method returns: Map<Long, Map<String, String>> sampleInfoMap, Map<Long, List<Double>> quantifierInfoMap
-    public static Object[] loadPatternAnnotationQuantifierSummaryFile() throws Exception {
-        File patternAnnotationSummaryFile=getPatternAnnotationSummaryFile();
-        Long startTime=new Date().getTime();
-        System.out.println("loadPatternAnnotationQuantifierSummaryFile start()");
-        BufferedReader bw=new BufferedReader(new FileReader(patternAnnotationSummaryFile));
-
-        String firstLine=bw.readLine();
-        if (firstLine==null) {
-            throw new Exception("Could not read first line of file="+patternAnnotationSummaryFile.getAbsolutePath());
-        }
-        String[] firstLineColumnNames=firstLine.split(",");
-        int expectedColumnCount=3 /* path */ + 9 /* Global */ + (QS_COMPARTMENT_LIST.size() * (QS_Z_INDEX_LIST.size() + QS_C_INDEX_LIST.size()));
-        if (firstLineColumnNames.length!=expectedColumnCount) {
-            throw new Exception("Expected columnCount="+expectedColumnCount+" but found "+firstLineColumnNames.length);
-        }
-        Map<Long, Map<String, String>> sampleInfoMap=new HashMap<Long, Map<String, String>>();
-        Map<Long, List<Double>> quantifierInfoMap=new HashMap<Long, List<Double>>();
-        String quantifierLine=null;
-        while((quantifierLine=bw.readLine())!=null) {
-            String[] qArr=quantifierLine.split(",");
-            if (qArr.length>0) {
-                Long qId = new Long(qArr[1]);
-                Map<String, String> sampleInfo = new HashMap<String, String>();
-                sampleInfo.put(QS_NAME_COL, qArr[0]);
-                sampleInfo.put(QS_SAMPLE_ID_COL, qArr[1]);
-                sampleInfo.put(QS_HEATMAP_PATH_COL, qArr[2]);
-                sampleInfoMap.put(qId, sampleInfo);
-                List<Double> qList = new ArrayList<Double>();
-                for (int columnIndex = 3; columnIndex < firstLineColumnNames.length; columnIndex++) {
-                    qList.add(new Double(qArr[columnIndex]));
-                }
-                quantifierInfoMap.put(qId, qList);
-            }
-        }
-        bw.close();
-        Object[] returnArr=new Object[2];
-        returnArr[0]=sampleInfoMap;
-        returnArr[1]=quantifierInfoMap;
-        Long elapsedTime=new Date().getTime()-startTime;
-        System.out.println("loadPatternAnnotationQuantifierSummaryFile end() elapsedTime="+elapsedTime);
-        return returnArr;
-    }
-
-    // Returns 0-intensity 1-distribution
-    public static Double[] getCompartmentScoresByQuantifiers(List<Double> globalList, List<Double> quantifierList) {
-
-        // Global info
-        double gt0=globalList.get(0);  // 1st-stage threshold (hard-coded to 31)
-        double gt1=globalList.get(1);  // <average-low>
-        double gt2=globalList.get(2);  // <overall average>
-        double gt3=globalList.get(3);  // <average high>
-
-        double gz0=globalList.get(4);  // 0-31 hard-coded intensity, as a ratio
-        double gz1=globalList.get(5);  // 32-<average low>, as ratio
-        double gz2=globalList.get(6);  // <average-low> - <overall average above 31>, as ratio
-        double gz3=globalList.get(7);  // <overall average above 31> - <average high>, as ratio
-        double gz4=globalList.get(8);  // <average high> - max, as ratio
-
-        // Compartment info
-        double z0=quantifierList.get(0); // 0-31 hard-coded intensity, as a ratio
-        double z1=quantifierList.get(1); // 32-<average low>, as ratio
-        double z2=quantifierList.get(2); // <average-low> - <overall average above 31>, as ratio
-        double z3=quantifierList.get(3); // <overall average above 31> - <average high>, as ratio
-        double z4=quantifierList.get(4); // <average high> - max, as ratio
-
-        // Compartment info as 5x5x5 cubes
-        double c0=quantifierList.get(5); // 0-31 hard-coded intensity, as a ratio
-        double c1=quantifierList.get(6); // 32-<average low>, as ratio
-        double c2=quantifierList.get(7); // <average-low> - <overall average above 31>, as ratio
-        double c3=quantifierList.get(8); // <overall average above 31> - <average high>, as ratio
-        double c4=quantifierList.get(9); // <average high> - max, as ratio
-
-        double gd = gz3+gz4;
-
-        // Intensity-Score
-        double intensityScore = 0.0;
-        if (gz4>0.0) {
-            intensityScore=(c3 + c4) / gd;
-        }
-
-        // Distribution Score
-        double distributionScore = 0.0;
-        if (gd > 0.0) {
-            distributionScore = (z3 + z4) / gd;
-        }
-
-        Double[] returnArr = new Double[2];
-        returnArr[0]=intensityScore;
-        returnArr[1]=distributionScore;
-
-        return returnArr;
-    }
-
     public static String getCompartmentDescription(String key) {
         return QS_DESCRIPTION_MAP.get(key);
+    }
+
+    protected List<DataDescriptor> descriptorList = new ArrayList<DataDescriptor>();
+
+    protected Map<DataDescriptor, Map<Long, List<Float>>> descriptorScoreMap = new HashMap<DataDescriptor, Map<Long, List<Float>>>();
+    protected Map<DataDescriptor, Map<Long, String>> descriptorNameMap = new HashMap<DataDescriptor, Map<Long, String>>();
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    abstract public void populateScoreListByDescriptor(DataDescriptor dataDescriptor) throws Exception;
+
+    abstract public String getDataManagerType();
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    public List<DataDescriptor> getDataDescriptors() {
+        return descriptorList;
+    }
+
+    public Map<Long, List<Float>> getScoreMapByDescriptor(DataDescriptor dataDescriptor) {
+        return descriptorScoreMap.get(dataDescriptor);
+    }
+
+    public Map<Long, String> getNameMapByDescriptor(DataDescriptor dataDescriptor) {
+        return descriptorNameMap.get(dataDescriptor);
+    }
+
+    public void setup() throws Exception {
+        for (DataDescriptor dataDescriptor : descriptorList) {
+            populateScoreListByDescriptor(dataDescriptor);
+        }
     }
 
 

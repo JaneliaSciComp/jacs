@@ -11,6 +11,7 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
 
 /**
  * A remote interface to queries having to do with specific types in the entity model, mainly
@@ -54,5 +55,6 @@ public interface AnnotationBeanRemote {
     public Object[] getPatternAnnotationQuantifierMapsFromSummary() throws ComputeException;
     public Map<Entity, Map<String, Double>> getMaskQuantifiers(String maskFolderName) throws ComputeException;
     public Object[] getMaskQuantifierMapsFromSummary(String maskFolderName) throws ComputeException;
+    public PatternAnnotationDataManager getPatternAnnotationDataManagerByType(String type) throws ComputeException;
 
    }

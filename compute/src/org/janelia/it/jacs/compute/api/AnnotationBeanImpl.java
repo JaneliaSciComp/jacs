@@ -10,6 +10,7 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 
@@ -347,6 +348,15 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         } catch (DaoException e) {
             _logger.error("Error in getMaskQuantifierMapsFromSummary(): "+e.getMessage());
             throw new ComputeException("Error in getMaskQuantifierMapsFromSummary(): "+e.getMessage(), e);
+        }
+    }
+
+    public PatternAnnotationDataManager getPatternAnnotationDataManagerByType(String type) throws ComputeException {
+        try {
+            return _annotationDAO.getPatternAnnotationDataManagerByType(type);
+        } catch (DaoException e) {
+            _logger.error("Error in getPatternAnnotationDataManagerByType(): "+e.getMessage());
+            throw new ComputeException("Error in getPatternAnnotationDataManagerByType(): "+e.getMessage(), e);
         }
     }
 
