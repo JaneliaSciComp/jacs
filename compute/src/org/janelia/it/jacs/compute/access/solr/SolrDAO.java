@@ -102,8 +102,10 @@ public class SolrDAO extends AnnotationDAO {
     	_logger.info("Building disk-based entity maps");
     	
     	this.largeOp = new LargeOperations(this);
+    	// TODO: this should be configured elsewhere
     	largeOp.buildSageImagePropMap("flylight_flip");
     	largeOp.buildSageImagePropMap("leet_pan_lineage");
+    	largeOp.buildSageImagePropMap("leet_central_brain_lineage");
     	largeOp.buildAnnotationMap();
     	largeOp.buildAncestorMap();
     	

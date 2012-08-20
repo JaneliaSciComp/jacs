@@ -49,13 +49,15 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
 
     public void indexAllEntities(boolean clearIndex) throws ComputeException {
 
+    	_logger.info("Getting FlyLight vocabularies from SAGE web service...");
     	Map<String, SageTerm> sageVocab = null;
     	try {
     		sageVocab = new SageDAO(_logger).getFlylightImageVocabulary();	
     	}
     	catch (DaoException e) {
-    		_logger.error("Error retrieving Sage vocabularies",e);
+    		_logger.error("Error retrieving FlyLight vocabularies",e);
     	}
+    	_logger.info("Got "+sageVocab.size()+" vocabulary terms from SAGE web service");
     	
     	try {
     		SolrDAO solrDAO = new SolrDAO(_logger, true, true);
