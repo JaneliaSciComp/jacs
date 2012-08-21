@@ -53,6 +53,7 @@ public class FileDiscoveryService implements IService {
             helper.addFileExclusion("sge_config");
             helper.addFileExclusion("sge_error");
             helper.addFileExclusion("sge_output");
+            helper.addFileExclusion("temp");
         	
             // What database entity do we load into?
             

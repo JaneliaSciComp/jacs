@@ -46,6 +46,7 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     	}
     	
     	helper.addFileExclusion("sh");
+    	helper.addFileExclusion("fastLoad");
     	
     	super.processFolderForData(resultEntity); // This creates the Supporting Files folder if it doesn't exist
         processSeparationFolder(resultEntity);
