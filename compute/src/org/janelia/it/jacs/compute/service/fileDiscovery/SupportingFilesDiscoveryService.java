@@ -59,6 +59,6 @@ public class SupportingFilesDiscoveryService extends FileDiscoveryService {
         }
 
         Entity supportingFiles = helper.getOrCreateSupportingFilesFolder(folder);
-		helper.addFilesInDirToFolder(supportingFiles, dir, true);
+        allFiles.addAll(helper.addFilesInDirToFolder(supportingFiles, dir, true));
     }
 }

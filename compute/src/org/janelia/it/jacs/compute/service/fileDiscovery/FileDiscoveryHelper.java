@@ -105,13 +105,14 @@ public class FileDiscoveryHelper extends EntityHelper {
     	addFilesInDirToFolder(folder, dir, false);
     }
     
-    public void addFilesInDirToFolder(Entity folder, File dir, boolean recurse) throws Exception {
+    public List<File> addFilesInDirToFolder(Entity folder, File dir, boolean recurse) throws Exception {
         List<File> files = collectFiles(dir, recurse);
         logger.info("Collected "+files.size()+" files for addition to "+folder.getName());
         if (!files.isEmpty()) {
         	FileUtils.sortFilesByName(files);
     		addFilesToFolder(folder, files);
         }
+        return files;
     }
     
     public Entity addResultItem(Entity resultEntity, EntityType type, File file) throws Exception {
