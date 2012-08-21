@@ -104,28 +104,29 @@ $NSDIR/setup10 -c6.0 -e4.5 -s800 -r$REF_CHAN_ONE_INDEXED SeparationResultUnmappe
 
 echo "~ Separation complete"
 
+RESULT='SeparationResult.nsp'
+
 if [ -s SeparationResultUnmapped.nsp ]; then
 
-    # temporarily disabled because map_neurons is crashing
-    #if [ "$PREVFILE" ]; then
-    #    echo "~ Mapping neurons to previous fragment indexes"
-    #    $NSDIR/map_neurons SeparationResultUnmapped.nsp $PREVFILE > SeparationResult.nsp
-    #    if [ ! -s "SeparationResult.nsp" ]; then
-    #        echo "~ Mapping was not successful, proceeding with unmapped result"
-    #        mv SeparationResultUnmapped.nsp SeparationResult.nsp
-    #    fi
-    #else
-        mv SeparationResultUnmapped.nsp SeparationResult.nsp
-    #fi
+    if [ "$PREVFILE" ]; then
+        echo "~ Mapping neurons to previous fragment indexes found in $PREVFILE"
+        $NSDIR/map_neurons SeparationResultUnmapped.nsp $PREVFILE > SeparationResult.nsp
+        if [ ! -s "SeparationResult.nsp" ]; then
+            echo "~ Mapping was not successful, proceeding with unmapped result"
+            RESULT='SeparationResultUnmapped.nsp'
+        fi
+    else
+        RESULT='SeparationResultUnmapped.nsp'
+    fi
 
-    if [ -s SeparationResult.nsp ]; then
+    if [ -s $RESULT ]; then
 
         echo "~ Generating consolidated signal"
         cat $INPUT_FILE | $NSDIR/v3draw_select_channels $SIGNAL_CHAN | $NSDIR/v3draw_flip_y | $NSDIR/v3draw_to_8bit > ConsolidatedSignal.v3draw
         $Vaa3D -cmd image-loader -convert ConsolidatedSignal.v3draw ConsolidatedSignal.v3dpbd
 
         echo "~ Generating consolidated label"
-        $NSDIR/nsp10_to_labelv3draw16 < SeparationResult.nsp > ConsolidatedLabel.v3draw
+        $NSDIR/nsp10_to_labelv3draw16 < $RESULT > ConsolidatedLabel.v3draw
         $Vaa3D -cmd image-loader -convert ConsolidatedLabel.v3draw ConsolidatedLabel.v3dpbd
 
         echo "~ Generating reference"
@@ -142,10 +143,11 @@ if [ -s SeparationResultUnmapped.nsp ]; then
         $NETPBM_BIN/tifftopnm ReferenceMIP2.tif | $NETPBM_BIN/pnmtopng > ReferenceMIP.png
 
         echo "~ Generating fragment MIPs"
-        $NSDIR/nsp10_to_neuron_mips "." $NAME SeparationResult.nsp
+        $NSDIR/nsp10_to_neuron_mips "." $NAME $RESULT
 
         echo "~ Copying final output to: $OUTDIR"
-        cp SeparationResult.nsp $OUTDIR
+        cp $RESULT $OUTDIR
+        cp *.pbd $OUTDIR # companion file for the result
         cp ConsolidatedSignal.v3dpbd $OUTDIR
         cp ConsolidatedLabel.v3dpbd $OUTDIR
         cp Reference.v3dpbd $OUTDIR
@@ -162,4 +164,9 @@ echo "~ Removing temp files"
 rm -rf $WORKING_DIR
 
 echo "~ Finished"
+
+if [ -s "$OUTDIR/ConsolidatedLabel.v3dpbd" ]; then
+    echo "~ Launching fastLoad pipeline..."
+    $DIR/fastLoadPipeline.sh $OUTDIR
+fi
 

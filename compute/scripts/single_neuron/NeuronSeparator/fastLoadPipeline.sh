@@ -124,7 +124,7 @@ done
 echo "~ Creating final output in: $OUTDIR"
 
 $Vaa3D -cmd image-loader -convert ConsolidatedLabel3.v3draw $OUTDIR/ConsolidatedLabel3.v3dpbd
-$Vaa3D -cmd image-loader -convert ConsolidatedSignal3.v3draw $OUTDIR/ConsolidatedSignal3.v3dpbd
+#$Vaa3D -cmd image-loader -convert ConsolidatedSignal3.v3draw $OUTDIR/ConsolidatedSignal3.v3dpbd
 $Vaa3D -cmd image-loader -convert ConsolidatedSignal2.v3draw $OUTDIR/ConsolidatedSignal2.v3dpbd
 $Vaa3D -cmd image-loader -convert Reference2.v3draw $OUTDIR/Reference2.v3dpbd
 
@@ -152,7 +152,7 @@ done
 cp *.metadata $OUTDIR # 10 files
 
 cd $OUTDIR
-ln -s ../Reference.v3dpbd Reference3.v3dpbd
+#ln -s ../Reference.v3dpbd Reference3.v3dpbd
 ln -s ConsolidatedLabel3.v3dpbd ConsolidatedLabel2.v3dpbd
 
 echo "~ Removing temp files"
