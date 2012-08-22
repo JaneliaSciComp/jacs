@@ -165,8 +165,8 @@ rm -rf $WORKING_DIR
 
 echo "~ Finished"
 
-if [ -s "$OUTDIR/ConsolidatedLabel.v3dpbd" ]; then
-    echo "~ Launching fastLoad pipeline..."
-    $DIR/fastLoadPipeline.sh $OUTDIR
-fi
+#if [ -s "$OUTDIR/ConsolidatedLabel.v3dpbd" ]; then
+#    echo "~ Launching fastLoad pipeline..."
+#    $DIR/fastLoadPipeline.sh $OUTDIR
+#fi
 
