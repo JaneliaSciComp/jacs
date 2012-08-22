@@ -8,6 +8,8 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
+import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
@@ -16,7 +18,6 @@ import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.user_data.FileNode;
 
 /**
@@ -133,4 +134,14 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     private String createLsmMetadataFilename(File lsmFile) {
         return lsmFile.getName().replaceAll("\\s+","_");
     }
+
+    @Override
+    protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {    	
+    	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
+    	// May need to access /archive, so we need limit 50.
+    	// Reserve 1 slot on a node. This gives us 3 GB of memory. 
+    	jt.setNativeSpecification("-pe batch 1 -l limit50=1 ");
+    	return jt;
+    }
+
 }

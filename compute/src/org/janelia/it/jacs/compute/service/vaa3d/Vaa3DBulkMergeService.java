@@ -96,9 +96,10 @@ public class Vaa3DBulkMergeService extends SubmitDrmaaJobService {
     }
 
     @Override
-    protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
+    protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {    	
     	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
-    	// Reserve all 8 slots on a node. This gives us 24 GB of memory. 
+    	// May need to access /archive, so we need limit 50.
+    	// Reserve all 8 slots on a node. This gives us 24 GB of memory.  
     	jt.setNativeSpecification("-pe batch 8 -l limit50=1 ");
     	return jt;
     }

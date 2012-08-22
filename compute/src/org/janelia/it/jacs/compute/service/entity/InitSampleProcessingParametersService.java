@@ -6,16 +6,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.model.user_data.User;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.SystemCall;
 
 /**
@@ -26,12 +31,20 @@ import org.janelia.it.jacs.shared.utils.SystemCall;
 public class InitSampleProcessingParametersService implements IService {
 
     protected Logger logger;
+    protected EntityBeanLocal entityBean;
+    protected ComputeBeanLocal computeBean;
+    protected User user;
+    protected FileDiscoveryHelper helper;
 
     public void execute(IProcessData processData) throws ServiceException {
         try {
         	
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-        	
+            entityBean = EJBFactory.getLocalEntityBean();
+            computeBean = EJBFactory.getLocalComputeBean();
+            user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
+            helper = new FileDiscoveryHelper(user);
+            
         	FileNode sampleResultNode = (FileNode)processData.getItem("SAMPLE_RESULT_FILE_NODE");
         	if (sampleResultNode == null) {
         		throw new IllegalArgumentException("SAMPLE_RESULT_FILE_NODE may not be null");
@@ -59,7 +72,12 @@ public class InitSampleProcessingParametersService implements IService {
         	
         	List<MergedLsmPair> mergedLsmPairs = new ArrayList<MergedLsmPair>();
         	
-        	List<Entity> lsmStackPairs = sampleEntity.getDescendantsOfType(EntityConstants.TYPE_LSM_STACK_PAIR, true);
+        	Entity supportingFiles = EntityUtils.getSupportingData(sampleEntity);
+        	if (supportingFiles == null) {
+        		throw new IllegalStateException("Sample does not have Supporting Files child: "+sampleEntityId);
+        	}
+        	
+        	List<Entity> lsmStackPairs = supportingFiles.getDescendantsOfType(EntityConstants.TYPE_LSM_STACK_PAIR, true);
         	
         	if (lsmStackPairs.isEmpty()) {
         		for(Entity lsmStack : sampleEntity.getDescendantsOfType(EntityConstants.TYPE_LSM_STACK, true)) {
@@ -99,19 +117,16 @@ public class InitSampleProcessingParametersService implements IService {
                 		throw new FileNotFoundException("LSM file does not exist or is not readable: "+lsmFile1.getAbsolutePath());
                 	}
                 	
-                	File mergedFile = null;
+                	
                 	if (lsmFilepath2!=null) {
                 		File lsmFile2 = new File(lsmFilepath2);	
                     	if (!lsmFile2.exists()||!lsmFile2.canRead()) {
                     		throw new FileNotFoundException("LSM file does not exist or is not readable: "+lsmFile2.getAbsolutePath());
                     	}
-                    	mergedFile = new File(mergeResultNode.getDirectoryPath(), "merged-"+lsmPairEntity.getId()+".v3draw");
-                	}
-                	else {
-                    	mergedFile = new File(mergeResultNode.getDirectoryPath(), lsmFile1.getName());
-                    	createSymLink(lsmFile1, mergedFile);
                 	}
 
+                	// lsmFilepath2 may be null
+                	File mergedFile = new File(mergeResultNode.getDirectoryPath(), "merged-"+lsmPairEntity.getId()+".v3draw");
                 	mergedLsmPairs.add(new MergedLsmPair(lsmFilepath1, lsmFilepath2, mergedFile.getAbsolutePath()));
             	}
 
