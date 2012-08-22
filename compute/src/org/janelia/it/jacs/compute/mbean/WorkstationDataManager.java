@@ -582,6 +582,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     }
 
     public void createMaskSummaryFile(String maskFolderName) {
+        logger.info("createMaskSummaryFile : maskFolderName="+maskFolderName);
         try {
             Map<Entity, Map<String, Double>> entityQuantifierMap=EJBFactory.getLocalAnnotationBean().getMaskQuantifiers(maskFolderName);
             MaskAnnotationDataManager maskManager=new MaskAnnotationDataManager();
@@ -597,12 +598,14 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     }
 
     public void runMaskAnnotationPipeline(String user, String maskFolderName, Boolean refresh) {
+        logger.info("runMaskAnnotationPipeline maskFolderName="+maskFolderName);
         try {
             Task task = new MaskSampleAnnotationTask(new HashSet<Node>(),
                     user, new ArrayList<Event>(), new HashSet<TaskParameter>(),
                     maskFolderName, refresh);
             task.setJobName("Mask Annotation Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            logger.info("runMaskAnnotationPipeline: submitting job MaskSampleAnnotation maskFolderName="+maskFolderName);
             EJBFactory.getLocalComputeBean().submitJob("MaskSampleAnnotation", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
