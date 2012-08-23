@@ -147,26 +147,28 @@ public class ScreenScoresLoadingService implements IService {
         			if (DEBUG) logger.info("  Processing "+maskName);
         			
         			List<OntologyAnnotation> annots = annotMap.get(maskId);
-        			if (annots==null) continue;
         			
 					String maaIntensity = null;
 					String maaDistribution = null;
 					String caIntensity = null;
 					String caDistribution = null;
-					for(OntologyAnnotation annotation : annots) {
-						if (ScreenScoresLoadingService.MAA_INTENSITY_NAME.equals(annotation.getKeyString())) {
-							maaIntensity = annotation.getValueString();
-						}
-						else if (ScreenScoresLoadingService.MAA_DISTRIBUTION_NAME.equals(annotation.getKeyString())) {
-							maaDistribution = annotation.getValueString();
-						}
-						else if (ScreenScoresLoadingService.CA_INTENSITY_NAME.equals(annotation.getKeyString())) {
-							caIntensity = annotation.getValueString();
-						}
-						else if (ScreenScoresLoadingService.CA_DISTRIBUTION_NAME.equals(annotation.getKeyString())) {
-							caDistribution = annotation.getValueString();
-						}
-					}	
+					
+					if (annots!=null) {
+						for(OntologyAnnotation annotation : annots) {
+							if (ScreenScoresLoadingService.MAA_INTENSITY_NAME.equals(annotation.getKeyString())) {
+								maaIntensity = annotation.getValueString();
+							}
+							else if (ScreenScoresLoadingService.MAA_DISTRIBUTION_NAME.equals(annotation.getKeyString())) {
+								maaDistribution = annotation.getValueString();
+							}
+							else if (ScreenScoresLoadingService.CA_INTENSITY_NAME.equals(annotation.getKeyString())) {
+								caIntensity = annotation.getValueString();
+							}
+							else if (ScreenScoresLoadingService.CA_DISTRIBUTION_NAME.equals(annotation.getKeyString())) {
+								caDistribution = annotation.getValueString();
+							}
+						}	
+					}
         			
 					if (!StringUtils.isEmpty(maaIntensity) && !StringUtils.isEmpty(maaDistribution)) {
 						// The current evaluation
@@ -328,7 +330,7 @@ public class ScreenScoresLoadingService implements IService {
 		Entity maskAnnotation = EntityUtils.findChildWithName(sample, "Mask Annotation");
 		if (maskAnnotation!=null) {
 			populateChildren(maskAnnotation);
-			for(Entity updateFolder : maskAnnotation.getChildren()) {
+			for(Entity updateFolder : maskAnnotation.getOrderedChildren()) {
 				if (updateFolder.getName().startsWith("ArnimUpdate")) {
 
 	        		populateChildren(updateFolder);
@@ -489,7 +491,7 @@ public class ScreenScoresLoadingService implements IService {
 		Entity maskAnnotation = EntityUtils.findChildWithName(sample, "Mask Annotation");
 		if (maskAnnotation!=null) {
 			populateChildren(maskAnnotation);
-			for(Entity updateFolder : maskAnnotation.getChildren()) {
+			for(Entity updateFolder : maskAnnotation.getOrderedChildren()) {
 				if (updateFolder.getName().startsWith("ArnimUpdate")) {
 					childNames.putAll(entityBean.getChildEntityNames(updateFolder.getId()));
 				}
