@@ -9,9 +9,7 @@ import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
-import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -20,7 +18,6 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.User;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
@@ -28,7 +25,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class ScreenScoresExportService implements IService {
+public class ScreenScoresExportService extends ScreenScoresLoadingService {
 
     protected Logger logger;
     protected Task task;
@@ -38,7 +35,6 @@ public class ScreenScoresExportService implements IService {
     protected ComputeBeanLocal computeBean;
     protected AnnotationBeanLocal annotationBean;
 
-	
     public void execute(IProcessData processData) throws ServiceException {
     	
         try {
@@ -61,15 +57,20 @@ public class ScreenScoresExportService implements IService {
         		throw new IllegalArgumentException("Cannot write to output file: "+outputFilepath);
         	}
         	
-        	logger.info("Caching sample names");
+        	logger.info("Caching sample names and masks");
         	
         	Map<Long,String> sampleNameMap = new HashMap<Long,String>();
+        	Map<Long,Long> maskParentMap = new HashMap<Long,Long>();
+        	
         	for(Entity sample : entityBean.getUserEntitiesByTypeName("system", EntityConstants.TYPE_SCREEN_SAMPLE)) {
         		sampleNameMap.put(sample.getId(), sample.getName());
+        		Map<Long,String> masks = getSampleMaskImages(sample);      
+        		for(Long maskId : masks.keySet()) {
+        			maskParentMap.put(maskId, sample.getId());
+        		}
         	}
         	
-        	
-        	logger.info("    ... got "+sampleNameMap.size()+" sample names");
+        	logger.info("    ... got "+sampleNameMap.size()+" sample names and "+maskParentMap.size()+" mask/parent mappings");
         	
         	logger.info("Processing folder-by-folder");
         	Map<String,String> evalMap = new HashMap<String,String>();
@@ -124,31 +125,12 @@ public class ScreenScoresExportService implements IService {
             		
             		if (annotMap.isEmpty()) continue;
             		
-            		List<String> upMapping = new ArrayList<String>();
-            		upMapping.add(EntityConstants.TYPE_FOLDER);
-            		upMapping.add(EntityConstants.TYPE_SCREEN_SAMPLE);
-            		List<String> downMapping = new ArrayList<String>();
-            		List<MappedId> mappedIds = entityBean.getProjectedResults(entityIds, upMapping, downMapping);
-            		List<Long> sampleIds = new ArrayList<Long>();
-            		for(MappedId mappedId : mappedIds) {
-            			sampleIds.add(mappedId.getMappedId());
-            		}
-            		
-            		Map<String,String> maskNameMap = new HashMap<String,String>();
-            		
-            		for(MappedId mappedId : mappedIds) {
-            			String sampleName = sampleNameMap.get(mappedId.getMappedId());
-            			if (sampleName==null) {
-            				logger.warn("Could not find sample with id="+mappedId.getMappedId());
-            				continue;
-            			}
-            			maskNameMap.put(mappedId.getOriginalId()+"", sampleName);
-            		}
-            		
             		for(String entityId : annotMap.keySet()) {
             			
-            			String sampleName = maskNameMap.get(entityId);
-//            			logger.warn("    Processing "+compartment+" "+sampleName);
+            			Long maskId = new Long(entityId);
+            			Long sampleId = maskParentMap.get(maskId);
+            			String sampleName = sampleNameMap.get(sampleId);
+//            			logger.warn("    Processing maskId="+entityId+" "+sampleName);
             			
 						String maaIntensity = null;
 						String maaDistribution = null;
@@ -316,12 +298,6 @@ public class ScreenScoresExportService implements IService {
 			
 	}
     
-    private Entity populateChildren(Entity entity) {
-    	if (entity==null || EntityUtils.areLoaded(entity.getEntityData())) return entity;
-		EntityUtils.replaceChildNodes(entity, entityBean.getChildEntities(entity.getId()));
-		return entity;
-    }
-    
     public Entity getRootEntity(String topLevelFolderName) throws Exception {
         Set<Entity> topLevelFolders = entityBean.getEntitiesByName(topLevelFolderName);
         Entity topLevelFolder = null;
@@ -339,16 +315,4 @@ public class ScreenScoresExportService implements IService {
         }
         return topLevelFolder;
     }
-
-	private int getValueFromAnnotation(String annotationValue) {
-		return Integer.parseInt(""+annotationValue.charAt(1));
-	}
-	
-	private int getValueFromFolderName(Entity entity) {
-		return getValueFromFolderName(entity.getName());
-	}
-	
-	private int getValueFromFolderName(String folderName) {
-		return Integer.parseInt(""+folderName.charAt(folderName.length()-1));
-	}
 }
