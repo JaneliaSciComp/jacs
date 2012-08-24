@@ -4,20 +4,16 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
 
-import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
-import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
+import org.janelia.it.jacs.compute.access.large.LargeOperations;
 import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
-import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
@@ -26,14 +22,6 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class ScreenScoresExportService extends ScreenScoresLoadingService {
-
-    protected Logger logger;
-    protected Task task;
-    protected User user;
-    protected Date createDate;
-    protected EntityBeanLocal entityBean;
-    protected ComputeBeanLocal computeBean;
-    protected AnnotationBeanLocal annotationBean;
 
     public void execute(IProcessData processData) throws ServiceException {
     	
@@ -44,6 +32,8 @@ public class ScreenScoresExportService extends ScreenScoresLoadingService {
             computeBean = EJBFactory.getLocalComputeBean();
             annotationBean = EJBFactory.getLocalAnnotationBean();
             user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
+            createDate = new Date();
+            helper = new FileDiscoveryHelper(entityBean, computeBean, user);
             
             // Process arguments
             
@@ -59,18 +49,18 @@ public class ScreenScoresExportService extends ScreenScoresLoadingService {
         	
         	logger.info("Caching sample names and masks");
         	
+        	LargeOperations largeOp = new LargeOperations();
         	Map<Long,String> sampleNameMap = new HashMap<Long,String>();
-        	Map<Long,Long> maskParentMap = new HashMap<Long,Long>();
         	
         	for(Entity sample : entityBean.getUserEntitiesByTypeName("system", EntityConstants.TYPE_SCREEN_SAMPLE)) {
         		sampleNameMap.put(sample.getId(), sample.getName());
         		Map<Long,String> masks = getSampleMaskImages(sample);      
         		for(Long maskId : masks.keySet()) {
-        			maskParentMap.put(maskId, sample.getId());
+        			largeOp.putValue(LargeOperations.SCREEN_SCORE_MAP, maskId, sample.getName());
         		}
         	}
         	
-        	logger.info("    ... got "+sampleNameMap.size()+" sample names and "+maskParentMap.size()+" mask/parent mappings");
+        	logger.info("    ... got "+sampleNameMap.size()+" sample names");
         	
         	logger.info("Processing folder-by-folder");
         	Map<String,String> evalMap = new HashMap<String,String>();
@@ -128,8 +118,7 @@ public class ScreenScoresExportService extends ScreenScoresLoadingService {
             		for(String entityId : annotMap.keySet()) {
             			
             			Long maskId = new Long(entityId);
-            			Long sampleId = maskParentMap.get(maskId);
-            			String sampleName = sampleNameMap.get(sampleId);
+            			String sampleName = (String)largeOp.getValue(LargeOperations.SCREEN_SCORE_MAP, maskId);
 //            			logger.warn("    Processing maskId="+entityId+" "+sampleName);
             			
 						String maaIntensity = null;
