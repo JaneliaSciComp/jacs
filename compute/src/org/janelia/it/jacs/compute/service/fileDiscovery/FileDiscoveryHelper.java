@@ -27,6 +27,7 @@ public class FileDiscoveryHelper extends EntityHelper {
     public final Long FILE_3D_SIZE_THRESHOLD = new Long(5000000L);
 
     private Set<String> exclusions = new HashSet<String>();
+    private boolean excludeSymLinks = true;
     
 	public FileDiscoveryHelper(String username) {
 		super(username);
@@ -48,7 +49,11 @@ public class FileDiscoveryHelper extends EntityHelper {
     	exclusions.add(filePattern);
     }
     
-    private boolean isExcluded(String filename) {
+	public void setExcludeSymLinks(boolean excludeSymLinks) {
+		this.excludeSymLinks = excludeSymLinks;
+	}
+
+	private boolean isExcluded(String filename) {
     	int dot = filename.lastIndexOf('.');
     	if (dot>0) {
     		String extension = filename.substring(dot+1);	
@@ -72,8 +77,12 @@ public class FileDiscoveryHelper extends EntityHelper {
         
         for (File resultFile : files) {
         	String filename = resultFile.getName();
+        	
 			if (isExcluded(filename)) {
-				logger.debug("Excluding file "+filename);
+				continue; 
+			}
+			
+			if (FileUtils.isSymlink(resultFile) && excludeSymLinks) {
 				continue; 
 			}
         	
