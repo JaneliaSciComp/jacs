@@ -70,7 +70,7 @@ public class ScreenScoresExportService extends ScreenScoresLoadingService {
         	for(Entity compartmentEntity : compartments) {
         		
         		String compartment = compartmentEntity.getName();
-        		logger.info("    Processing "+compartment);
+        		logger.info("  Processing "+compartment);
         		
         		Map<String,Entity> folderMap = new HashMap<String,Entity>();
         		populateChildren(compartmentEntity);
@@ -91,6 +91,7 @@ public class ScreenScoresExportService extends ScreenScoresLoadingService {
         			int i = Integer.parseInt(parts[0]);
         			int d = Integer.parseInt(parts[1]);
         			Entity distFolder = folderMap.get(key);
+        			logger.info("    Processing int="+i+" dist="+d);
         			
         			if (distFolder.getChildren().isEmpty()) {
         				// Skip empty folders
@@ -119,7 +120,7 @@ public class ScreenScoresExportService extends ScreenScoresLoadingService {
             			
             			Long maskId = new Long(entityId);
             			String sampleName = (String)largeOp.getValue(LargeOperations.SCREEN_SCORE_MAP, maskId);
-//            			logger.warn("    Processing maskId="+entityId+" "+sampleName);
+            			logger.info("      Processing maskId="+entityId+" "+sampleName);
             			
 						String maaIntensity = null;
 						String maaDistribution = null;
@@ -149,7 +150,7 @@ public class ScreenScoresExportService extends ScreenScoresLoadingService {
 						}
 						
 						if (maaDistribution==null) {
-							logger.warn("No MAA Distribution for "+entityId);
+							logger.warn("        No MAA Distribution for "+entityId);
 							for(OntologyAnnotation annotation : annotMap.get(entityId)) {
 								logger.warn("            Got "+annotation.getKeyString());
 							}
@@ -182,15 +183,18 @@ public class ScreenScoresExportService extends ScreenScoresLoadingService {
 						
 						buf.append(fi).append("\t").append(fd);
 						
-						evalMap.put(compartment+"\t"+sampleName, buf.toString());
-						
+						String evalKey = compartment+"\t"+sampleName;
+						evalMap.put(evalKey, buf.toString());
+            			
+						logger.info("          \""+evalKey+"\" -> i"+fi+"/d"+fd);
+            			
 						if (fi!=i) {
-							logger.warn("    Processing "+compartment+" "+sampleName);
-							logger.warn("        Incorrect intensity folder ("+i+" but expecting "+fi+")");
+							logger.warn("      Processing "+compartment+" "+sampleName);
+							logger.warn("          Incorrect intensity folder ("+i+" but expecting "+fi+")");
 						}
 						if (fd!=d) {
-							logger.warn("    Processing "+compartment+" "+sampleName);
-							logger.warn("        Incorrect distribution folder ("+d+" but expecting "+fd+")");
+							logger.warn("      Processing "+compartment+" "+sampleName);
+							logger.warn("          Incorrect distribution folder ("+d+" but expecting "+fd+")");
 						}
 						
 						if (fi!=i || fd!=d) {
@@ -201,7 +205,7 @@ public class ScreenScoresExportService extends ScreenScoresLoadingService {
         		}
         		
         		if (!movingMap.isEmpty()) {
-	        		logger.info("        Moving "+movingMap.size()+" images into correct folders");
+	        		logger.info("          Moving "+movingMap.size()+" images into correct folders");
 	        		for(String entityId : movingMap.keySet()) {
 	        			String currKey = currFolderMap.get(entityId);
 	        			String targetKey = movingMap.get(entityId);
@@ -209,17 +213,6 @@ public class ScreenScoresExportService extends ScreenScoresLoadingService {
 	        			Entity targetFolder = folderMap.get(targetKey);
 	        			moveToFolder(Long.parseLong(entityId), currFolder, targetFolder);
 	        		}
-        		}
-        	}
-        	
-        	logger.info("Verifying that we have all the samples");
-        	
-        	for(Entity compartmentEntity : compartments) {
-        		String compartment = compartmentEntity.getName();
-        		for(String sampleName : sampleNameMap.values()) {	
-        			if (!evalMap.containsKey(compartment+"\t"+sampleName)) {
-        				logger.warn("Missing "+compartment+" for "+sampleName);
-        			}
         		}
         	}
         		
@@ -231,12 +224,17 @@ public class ScreenScoresExportService extends ScreenScoresLoadingService {
 
         	for(Entity compartmentEntity : compartments) {
         		String compartment = compartmentEntity.getName();
+        		int c = 0;
         		for(String sampleName : sampleNameMap.values()) {
         			String key  = compartment+"\t"+sampleName;
         			String value = evalMap.get(key);
-        			writer.write(key+"\t");
-            		writer.write((value==null?"":value)+"\n");	
+        			if (value!=null) {
+	        			writer.write(key+"\t");
+	            		writer.write((value==null?"":value)+"\n");	
+	            		c++;
+        			}
         		}
+        		logger.info("Wrote "+c+" sample lines for "+compartment);
         	}
         	writer.close();
         } 
