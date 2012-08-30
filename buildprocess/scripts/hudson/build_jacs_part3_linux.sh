@@ -126,9 +126,9 @@ if [ $INSTALL_CLIENT == 1 ]; then
     cd $FLYSUITE_CLIENTS_DIR
     echo "Sync filesystem"
     sync
-    sleep 2
+    sleep 4
 
-    echo "Create tarballls"
+    echo "Create tarballs"
     tar cvfz $FLYSUITE_TARBALL $FLYSUITE_NAME
     tar cvfz $FLYSUITE_LINUX_TARBALL $FLYSUITE_LINUX_NAME
     
