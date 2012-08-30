@@ -3,9 +3,17 @@
 -->
 <process name="Sample Data Compression" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
 	<sequence>
+	
+	    <!-- Import variables from the task -->
+	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="TASK_PARAMETER_1" value="root entity id"/>
+            <input name="PROCESS_VARIABLE_1" value="ROOT_ENTITY_ID"/>
+	        <output name="ROOT_ENTITY_ID"/>
+	    </operation>
 	    
 	    <!-- Create the input file list -->
 		<operation name="MCFO Data Compress" processor="org.janelia.it.jacs.compute.service.entity.MCFODataCompressService">
+			<input name="ROOT_ENTITY_ID"/>
 	        <input name="MODE" value="CREATE_INPUT_LIST"/>
 			<output name="INPUT_PATH_LIST"/>
 			<output name="ENTITY_MAP"/>

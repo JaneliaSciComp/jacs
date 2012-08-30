@@ -272,6 +272,16 @@
     </operation>
     
     <operation>
+        <description>Run routine maintenance tasks on all the user's Samples</description>
+        <name>runSampleMaintenancePipeline</name>
+        <parameter>
+            <description>User to run as (e.g. "system")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
         <description>Create the fastLoad artifacts for a single neuron separation</description>
         <name>runSingleFastLoadArtifactPipeline</name>
         <parameter>
@@ -298,7 +308,7 @@
     
     <operation>
         <description>Run Leet SAGE-based Data Pipeline</description>
-        <name>runLeetSageBasedDataPipeline</name>
+        <name>runLeetDataPipeline</name>
         <parameter>
            <description>User to run as (e.g. "leetlab")</description>
            <name>user</name>
@@ -324,9 +334,24 @@
            <name>refreshAlignment</name>
            <type>java.lang.Boolean</type>
         </parameter>
+    </operation>
+    
+    <operation>
+        <description>Run the Leet Sample Pipeline for a single Sample</description>
+        <name>runLeetSamplePipeline</name>
         <parameter>
-           <description>Re-run neuron separations?</description>
-           <name>refreshSeparation</name>
+           <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
+           <name>sampleEntityId</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Re-run merging and stitching?</description>
+           <name>refreshProcessing</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+           <description>Re-run brain alignments?</description>
+           <name>refreshAlignment</name>
            <type>java.lang.Boolean</type>
         </parameter>
     </operation>

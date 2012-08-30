@@ -21,7 +21,6 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
-import org.janelia.it.jacs.shared.utils.SystemCall;
 
 /**
  * Extracts stuff about the Sample from the entity model and loads it into simplified objects for use by other services.
@@ -86,11 +85,9 @@ public class InitSampleProcessingParametersService implements IService {
                 	if (!lsmFile.exists()||!lsmFile.canRead()) {
                 		throw new FileNotFoundException("LSM file does not exist or is not readable: "+lsmFile.getAbsolutePath());
                 	}
-                	File mergedFile = new File(mergeResultNode.getDirectoryPath(), lsmFile.getName());
-                	createSymLink(lsmFile, mergedFile);
+                	File mergedFile = new File(mergeResultNode.getDirectoryPath(), "tile-"+lsmStack.getId()+".v3draw");
                 	mergedLsmPairs.add(new MergedLsmPair(lsmFilepath, null, mergedFile.getAbsolutePath()));
         		}
-        		processData.putItem("RUN_MERGE", Boolean.FALSE);
         	}
         	else {
             	for(Entity lsmPairEntity : lsmStackPairs) {
@@ -112,6 +109,8 @@ public class InitSampleProcessingParametersService implements IService {
                 		}
                 	}
                 	
+                	File mergedFile = null;
+                		
                 	File lsmFile1 = new File(lsmFilepath1);
                 	if (!lsmFile1.exists()||!lsmFile1.canRead()) {
                 		throw new FileNotFoundException("LSM file does not exist or is not readable: "+lsmFile1.getAbsolutePath());
@@ -123,37 +122,38 @@ public class InitSampleProcessingParametersService implements IService {
                     	if (!lsmFile2.exists()||!lsmFile2.canRead()) {
                     		throw new FileNotFoundException("LSM file does not exist or is not readable: "+lsmFile2.getAbsolutePath());
                     	}
+                    	mergedFile = new File(mergeResultNode.getDirectoryPath(), "merged-"+lsmPairEntity.getId()+".v3draw");
                 	}
-
-                	// lsmFilepath2 may be null
-                	File mergedFile = new File(mergeResultNode.getDirectoryPath(), "merged-"+lsmPairEntity.getId()+".v3draw");
+                	else {
+                		// lsmFilepath2 may be null
+                    	mergedFile = new File(mergeResultNode.getDirectoryPath(), "tile-"+lsmPairEntity.getId()+".v3draw");	
+                	}
+                	
                 	mergedLsmPairs.add(new MergedLsmPair(lsmFilepath1, lsmFilepath2, mergedFile.getAbsolutePath()));
             	}
 
-            	processData.putItem("RUN_MERGE", Boolean.TRUE);
         	}
 
         	if (mergedLsmPairs.isEmpty()) {
         		throw new Exception("Sample (id="+sampleEntityId+") has no LSM pairs");
         	}
 
-        	File stitchedFile = new File(stitchResultNode.getDirectoryPath(), "stitched-"+sampleEntity.getId()+".v3dpbd");
+        	File stitchedFile = new File(stitchResultNode.getDirectoryPath(), "stitched-"+sampleEntity.getId()+".v3draw");
+        	
+        	List<String> stackFilenames = new ArrayList<String>();
+        	stackFilenames.add(stitchedFile.getAbsolutePath());
+        	for (MergedLsmPair mergedLsmPair : mergedLsmPairs) {
+        		stackFilenames.add(mergedLsmPair.getMergedFilepath());
+        	}
+        	
         	processData.putItem("STITCHED_FILENAME", stitchedFile.getAbsolutePath());
         	processData.putItem("BULK_MERGE_PARAMETERS", mergedLsmPairs);
+        	processData.putItem("STACK_FILENAMES", stackFilenames);
         	processData.putItem("NUM_PAIRS", new Long(mergedLsmPairs.size()));
+        	processData.putItem("RUN_MERGE", Boolean.TRUE);
         } 
         catch (Exception e) {
             throw new ServiceException(e);
         }
-    }
-    
-    private void createSymLink(File targetFile, File symLink) throws Exception {
-        String cmd = "ln -s "+targetFile.getAbsolutePath()+" "+symLink.getAbsolutePath();
-		String[] args = cmd.split("\\s+");
-        StringBuffer stdout = new StringBuffer();
-        StringBuffer stderr = new StringBuffer();
-        SystemCall call = new SystemCall(stdout, stderr);
-    	int exitCode = call.emulateCommandLine(args, null, null, 3600);	
-    	if (exitCode!=0) throw new Exception("Could not create symlink");
     }
 }

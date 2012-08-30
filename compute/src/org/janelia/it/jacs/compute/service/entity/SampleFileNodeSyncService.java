@@ -51,7 +51,11 @@ public class SampleFileNodeSyncService implements IService {
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
             username = task.getOwner();
-            isDebug = Boolean.parseBoolean(task.getParameter(PARAM_testRun));
+            
+            String testRun = task.getParameter(PARAM_testRun);
+            if (testRun!=null) {
+            	isDebug = Boolean.parseBoolean(testRun);	
+            }
             
             File userFilestore = new File(SystemConfigurationProperties.getString(CENTRAL_DIR_PROP) + File.separator + username + File.separator);
             

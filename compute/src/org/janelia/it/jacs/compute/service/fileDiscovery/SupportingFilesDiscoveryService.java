@@ -44,6 +44,8 @@ public class SupportingFilesDiscoveryService extends FileDiscoveryService {
         Entity resultEntity = helper.createFileEntity(dir.getAbsolutePath(), resultEntityName, resultEntityType);
         helper.addToParent(parentFolder, resultEntity, parentFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_RESULT);
     	
+        processData.putItem("RESULT_ENTITY_ID", resultEntity.getId().toString());
+        
     	return resultEntity;
     }
     

@@ -1,7 +1,7 @@
 <!-- 
-	Discover images in the Lee lab's file system, add them into the database and run the MCFOSamplePipeline for each one 
+	Discover images in SAGE, add them into the database and run the LeetSamplePipeline for each one 
 -->
-<process name="Leet File-based Pipeline" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
+<process name="T. Lee Data Pipeline" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
 	<sequence>
 	
 	    <!-- Import variables from the task -->
@@ -12,8 +12,6 @@
             <input name="PROCESS_VARIABLE_2" value="REFRESH_PROCESSING"/>
             <input name="TASK_PARAMETER_3" value="refresh alignment"/>
             <input name="PROCESS_VARIABLE_3" value="REFRESH_ALIGNMENT"/>
-            <input name="TASK_PARAMETER_4" value="refresh separation"/>
-            <input name="PROCESS_VARIABLE_4" value="REFRESH_SEPARATION"/>
             <input name="TASK_PARAMETER_5" value="confocal stacks directory path"/>
             <input name="PROCESS_VARIABLE_5" value="CONFOCAL_STACKS_DIR"/>
             <input name="TASK_PARAMETER_6" value="Sage image family"/>
@@ -21,7 +19,6 @@
 	        <output name="ROOT_ENTITY_NAME"/>
 	        <output name="REFRESH_PROCESSING"/>
 	        <output name="REFRESH_ALIGNMENT"/>
-	        <output name="REFRESH_SEPARATION"/>
 	        <output name="CONFOCAL_STACKS_DIR"/>
 	        <output name="SAGE_IMAGE_FAMILY"/>
 	    </operation>
@@ -52,7 +49,7 @@
 		        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
         			<input name="TASK_CLASS" value="org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOSamplePipelineTask"/>
         			<input name="WAIT_FOR_COMPLETION" value="false"/>
-		            <input name="PROCESS_DEF_NAME" value="MCFOSamplePipeline"/>
+		            <input name="PROCESS_DEF_NAME" value="LeetSamplePipeline"/>
 		            <input name="PARAMETER_1_KEY" value="sample entity id"/>
 		            <input name="SAMPLE_ENTITY_ID"/>
 		            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
@@ -62,9 +59,6 @@
 		            <input name="PARAMETER_3_KEY" value="refresh alignment"/>
 		            <input name="REFRESH_ALIGNMENT"/>
 		            <input name="PARAMETER_3_VALUE" value="$V{REFRESH_ALIGNMENT}"/>
-		            <input name="PARAMETER_4_KEY" value="refresh separation"/>
-		            <input name="REFRESH_SEPARATION"/>
-		            <input name="PARAMETER_4_VALUE" value="$V{REFRESH_SEPARATION}"/>
 		        </operation>
 			</sequence>
 	    </sequence>

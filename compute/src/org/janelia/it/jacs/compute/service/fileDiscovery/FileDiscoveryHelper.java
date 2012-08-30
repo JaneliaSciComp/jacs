@@ -2,16 +2,19 @@ package org.janelia.it.jacs.compute.service.fileDiscovery;
 
 import java.io.File;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.*;
+import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
+import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.api.EntityBeanRemote;
 import org.janelia.it.jacs.compute.service.entity.EntityHelper;
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
-import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
@@ -26,7 +29,7 @@ public class FileDiscoveryHelper extends EntityHelper {
 
     public final Long FILE_3D_SIZE_THRESHOLD = new Long(5000000L);
 
-    private Set<String> exclusions = new HashSet<String>();
+    private Set<Pattern> exclusions = new HashSet<Pattern>();
     private boolean excludeSymLinks = true;
     
 	public FileDiscoveryHelper(String username) {
@@ -46,22 +49,23 @@ public class FileDiscoveryHelper extends EntityHelper {
     }
     
     public void addFileExclusion(String filePattern) {
-    	exclusions.add(filePattern);
+    	Pattern p = Pattern.compile(filePattern.replaceAll("\\*", "(.*?)"));
+    	exclusions.add(p);
     }
     
 	public void setExcludeSymLinks(boolean excludeSymLinks) {
 		this.excludeSymLinks = excludeSymLinks;
 	}
 
-	private boolean isExcluded(String filename) {
-    	int dot = filename.lastIndexOf('.');
-    	if (dot>0) {
-    		String extension = filename.substring(dot+1);	
-    		if (exclusions.contains(extension)) {
-    			return true;
-    		}
-    	}
-    	return exclusions.contains(filename);
+	private boolean isExcluded(String filename) {		
+		for(Pattern p : exclusions) {
+			Matcher m = p.matcher(filename);
+			if (m.matches()) {
+				//logger.debug("Excluding "+filename+" based on pattern "+p.pattern());
+				return true;
+			}
+		}
+		return false;
     }
     
     public List<File> collectFiles(File dir) throws Exception {
@@ -73,7 +77,6 @@ public class FileDiscoveryHelper extends EntityHelper {
     	List<File> allFiles = new ArrayList<File>();
         List<File> files = FileUtils.getOrderedFilesInDir(dir);
         logger.info("Found "+files.size()+" files in "+dir.getAbsolutePath());
-        logger.debug("Applying file exclusions: "+Task.csvStringFromCollection(exclusions));
         
         for (File resultFile : files) {
         	String filename = resultFile.getName();

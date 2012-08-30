@@ -49,12 +49,11 @@ public class FileDiscoveryService implements IService {
             createDate = new Date();
             helper = new FileDiscoveryHelper(entityBean, computeBean, user);
             helper.addFileExclusion("DrmaaSubmitter.log");
-            helper.addFileExclusion("oos");
-            helper.addFileExclusion("sge_config");
-            helper.addFileExclusion("sge_error");
-            helper.addFileExclusion("sge_output");
+            helper.addFileExclusion("*.oos");
+            helper.addFileExclusion("sge_*");
             helper.addFileExclusion("temp");
-        	
+            helper.addFileExclusion("core.*");
+            
             // What database entity do we load into?
             
             String topLevelFolderName;

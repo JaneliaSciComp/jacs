@@ -4,7 +4,7 @@
 <process name="MultiColor FlipOut Data Pipeline" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
 	<sequence>
 	
-	    <!-- Import variables from the MCFODataPipelineTask -->
+	    <!-- Import variables from the task -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="TASK_PARAMETER_1" value="top level folder name"/>
             <input name="PROCESS_VARIABLE_1" value="ROOT_ENTITY_NAME"/>

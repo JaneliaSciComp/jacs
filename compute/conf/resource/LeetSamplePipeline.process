@@ -1,6 +1,6 @@
  <!-- 
       Fully process a Sample in the database by merging its LSMs, stitching and blending them, aligning,
-      and running neuron separation. Any of the steps can be skipped if the Sample already has a result of that type.
+      and generating MIPs for every output stack. Any of the steps can be skipped if the Sample already has a result of that type.
  -->
  <process name="MultiColor FlipOut Sample Pipeline" processor="queue/mcfoSamplePipelineLauncher" startEvent="pending">
 	<sequence>
@@ -13,8 +13,6 @@
             <input name="PROCESS_VARIABLE_2" value="REFRESH_PROCESSING"/>
             <input name="TASK_PARAMETER_3" value="refresh alignment"/>
             <input name="PROCESS_VARIABLE_3" value="REFRESH_ALIGNMENT"/>
-            <input name="TASK_PARAMETER_4" value="refresh separation"/>
-            <input name="PROCESS_VARIABLE_4" value="REFRESH_SEPARATION"/>
 	        <output name="SAMPLE_ENTITY_ID"/>
 	    </operation>
 	    
@@ -32,11 +30,8 @@
 			<input name="SAMPLE_ENTITY_ID"/>
 			<input name="REFRESH_PROCESSING"/>
 			<input name="REFRESH_ALIGNMENT"/>
-			<input name="REFRESH_SEPARATION"/>
 			<output name="RUN_PROCESSING"/>
 			<output name="RUN_ALIGNMENT"/>
-			<output name="RUN_SEPARATION"/>
-			<output name="RUN_ALIGNED_SEPARATION"/>
 			<output name="IS_ALIGNABLE"/>
 			<output name="STITCHED_FILENAME"/>
 			<output name="ALIGNED_FILENAME"/>
@@ -67,18 +62,6 @@
 				<output name="RUN_MERGE"/>
 			</operation>
 		
-		    <!-- Asynchronously create the metadata describing the input LSM files -->
-	        <sequence name="Create Lsm Metadata Files" waitForAsync="true">
-		        <operation name="Create Lsm Metadata Files" processor="queue/gridSubmitAndWait">
-		            <input name="iservice" value="org.janelia.it.jacs.compute.service.entity.CreateLsmMetadataFilesService"/>
-			        <input name="SAMPLE_ENTITY_ID"/>
-					<input name="METADATA_RESULT_FILE_NODE"/>
-			        <input name="RESULT_FILE_NODE" value="$V{METADATA_RESULT_FILE_NODE}"/>
-					<input name="SAMPLE_RESULT_FILE_NODE"/>
-		    		<input name="OUTPUT_FILE_NODE" value="$V{METADATA_RESULT_FILE_NODE}"/>
-		        </operation>
-	        </sequence>
-		    
 		    <!-- Do we have tile pairs that need to be merged? -->
         	<sequence if="RUN_MERGE=true">
 			    
@@ -105,20 +88,6 @@
 	        </sequence>
 	        
         	<sequence if="NUM_PAIRS>1"> <!-- else -->
-        	
-			    <!-- Determine tile groupings and pick the largest group for processing -->
-		        <sequence name="Determine Stitch Grouping" waitForAsync="true">
-			        <operation name="Stitch Grouping" processor="queue/gridSubmitAndWait">
-			            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DStitchGroupingService"/>
-						<input name="GROUP_RESULT_FILE_NODE"/>
-			    		<input name="RESULT_FILE_NODE" value="$V{GROUP_RESULT_FILE_NODE}"/>
-						<input name="MERGE_RESULT_FILE_NODE"/>
-			    		<input name="INPUT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
-						<input name="BULK_MERGE_PARAMETERS"/>
-						<input name="REFERENCE_CHANNEL"/>
-						<output name="BULK_MERGE_PARAMETERS"/>
-			        </operation>
-		        </sequence>
 		        
 			    <!-- Stitch the merged files into a single result -->
 		        <sequence name="Stitch and Blend" waitForAsync="true">
@@ -126,8 +95,8 @@
 			            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DStitchAndBlendService"/>
 						<input name="STITCH_RESULT_FILE_NODE"/>
 			    		<input name="RESULT_FILE_NODE" value="$V{STITCH_RESULT_FILE_NODE}"/>
-						<input name="GROUP_RESULT_FILE_NODE"/>
-			    		<input name="INPUT_FILE_NODE" value="$V{GROUP_RESULT_FILE_NODE}"/>
+						<input name="MERGE_RESULT_FILE_NODE"/>
+			    		<input name="INPUT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
 						<input name="BULK_MERGE_PARAMETERS"/>
 						<input name="REFERENCE_CHANNEL"/>
 						<input name="STITCHED_FILENAME"/>
@@ -159,7 +128,7 @@
 				<input name="RESULT_ENTITY_NAME" value="Sample Processing"/>
 				<output name="RESULT_ENTITY_ID"/>
 		    </operation>
-	    	
+		    
 		    <!-- Register images -->
 			<operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.EntityImage2dRegistrationService">
 				<input name="RESULT_ENTITY_ID"/>
@@ -167,113 +136,123 @@
 				<input name="STITCHED_FILENAME"/>
 				<input name="DEFAULT_IMAGE_FILENAME" value="$V{STITCHED_FILENAME}"/>
 		    </operation>
-		    
+	        
 	    </sequence>
 	    
-        <sequence if="RUN_SEPARATION=true">
-	
-			<!-- Run neuron separation on prealigned data -->
-	        <include name="Prealigned Neuron Separation" process="MCFOSeparationPipeline">
-	            <input name="SAMPLE_ENTITY_ID"/>
-	            <input name="STITCHED_FILENAME"/>
-	            <input name="INPUT_FILENAME" value="$V{STITCHED_FILENAME}"/>
-	            <input name="RESULT_ENTITY_NAME" value="Prealigned Neuron Separation"/>
-				<input name="SIGNAL_CHANNELS"/>
-				<input name="REFERENCE_CHANNEL"/>
-	        </include>
-
-		</sequence>
-	    	        
-    	<sequence if="IS_ALIGNABLE=true">
-    		
+    	<sequence if="RUN_ALIGNMENT=true">
+    		            
+    		<sequence if="SIGNAL_CHANNELS=0 2">
+    	
+			    <!-- Create a result node for this group -->
+			    <operation name="Create Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+				    <input name="NAME" value="Temp"/>
+			        <output name="RESULT_FILE_NODE"/>
+			        <output name="RESULT_FILE_NODE_ID"/>
+			    </operation>
+			    
+			    <!-- Remap channels to the SSR pattern expected by the aligner -->
+		        <sequence name="Channel conversion" waitForAsync="true">
+				    <operation name="MIP Generation" processor="queue/gridSubmitAndWait">
+				        <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.MapChannelService"/>
+			    		<input name="RESULT_FILE_NODE"/>
+			    		<input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
+			    		<input name="STITCHED_FILENAME"/>
+						<input name="INPUT_PATH_1" value="$V{STITCHED_FILENAME}"/>
+						<input name="OUTPUT_FILENAME_1" value="mapped.v3draw"/>
+						<input name="MAP_CHANNEL_STRING" value="0,0,1,2,2,1"/>
+						<output name="OUTPUT_PATH_1"/>
+					</operation>
+		        </sequence>
+			        
+				<operation name="Update the stitched filename" processor="org.janelia.it.jacs.compute.service.common.CopyVariablesService">
+					<input name="PROCESS_VARIABLE_IN_1" value="OUTPUT_PATH_1"/>
+					<input name="PROCESS_VARIABLE_OUT_1" value="STITCHED_FILENAME"/>
+					<input name="PROCESS_VARIABLE_IN_2" value="RESULT_FILE_NODE_ID"/>
+					<input name="PROCESS_VARIABLE_OUT_2" value="TEMP_FILE_NODE_ID"/>
+			    </operation>
+			    
+	        </sequence>
+	        
 		    <!-- Process each type of alignment -->
 	        <sequence forEach="ALIGNMENT_TYPE">
 	            <sequence>
 	    	
-			        <sequence if="RUN_ALIGNMENT=true">
-					
-					    <!-- Create a alignment result node, with nested result nodes for all the pipeline steps -->
-					    <operation name="Create Alignment Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateAlignmentResultFileNodeService">
-					        <output name="RESULT_FILE_NODE"/>
-					        <output name="RESULT_FILE_NODE_ID"/>
-					        <output name="ALIGN_RESULT_FILE_NODE"/>
-					    </operation>
-				                
-					    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
-					    <operation name="Create Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitAlignmentParametersService">
-							<input name="SAMPLE_ENTITY_ID"/>
-							<input name="ALIGNMENT_TYPE"/>
-							<output name="ALIGNMENT_SERVICE_CLASS"/>
-							<output name="ALIGNMENT_RESULT_NAME"/>
-							<output name="ALIGNMENT_TILE_NAME"/>
-						</operation>
-					    
-				   	    <!-- Align the sample -->
-				        <sequence name="Align" waitForAsync="true">
-					        <operation name="Align" processor="queue/gridSubmitAndWait">
-								<input name="ALIGNMENT_SERVICE_CLASS"/>
-					            <input name="iservice" value="$V{ALIGNMENT_SERVICE_CLASS}"/>
-								<input name="ALIGN_RESULT_FILE_NODE"/>
-					    		<input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
-					    		<input name="STITCHED_FILENAME"/>
-								<input name="INPUT_FILENAME" value="$V{STITCHED_FILENAME}"/>
-								<input name="ALIGNMENT_TILE_NAME"/>
-								<output name="ALIGNED_FILENAME"/>
-					        </operation>
-				        </sequence>
-				        
-					    <!-- Generate MIP for the stitched file -->
-				        <sequence name="Generate sample MIPs" waitForAsync="true">
-					        <operation name="Generate MIPs" processor="queue/gridSubmitAndWait">
-					            <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.MIPGenerationService"/>
-								<input name="ALIGN_RESULT_FILE_NODE"/>
-								<input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
-					    		<input name="ALIGNED_FILENAME"/>
-								<input name="INPUT_FILENAME" value="$V{ALIGNED_FILENAME}"/>
-								<input name="SIGNAL_CHANNELS"/>
-								<input name="REFERENCE_CHANNEL"/>
-					        </operation>
-				        </sequence>
-				        
-					    <!-- Load the alignment results into the database -->
-						<operation name="Discover Alignment Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SupportingFilesDiscoveryService">
+				    <!-- Create a alignment result node, with nested result nodes for all the pipeline steps -->
+				    <operation name="Create Alignment Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateAlignmentResultFileNodeService">
+				        <output name="RESULT_FILE_NODE"/>
+				        <output name="RESULT_FILE_NODE_ID"/>
+				        <output name="ALIGN_RESULT_FILE_NODE"/>
+				    </operation>
+			                
+				    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
+				    <operation name="Create Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitAlignmentParametersService">
+						<input name="SAMPLE_ENTITY_ID"/>
+						<input name="ALIGNMENT_TYPE"/>
+						<output name="ALIGNMENT_SERVICE_CLASS"/>
+						<output name="ALIGNMENT_RESULT_NAME"/>
+						<output name="ALIGNMENT_TILE_NAME"/>
+					</operation>
+			        
+			   	    <!-- Align the sample -->
+			        <sequence name="Align" waitForAsync="true">
+				        <operation name="Align" processor="queue/gridSubmitAndWait">
+							<input name="ALIGNMENT_SERVICE_CLASS"/>
+				            <input name="iservice" value="$V{ALIGNMENT_SERVICE_CLASS}"/>
 							<input name="ALIGN_RESULT_FILE_NODE"/>
-							<input name="ROOT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
-							<input name="SAMPLE_ENTITY_ID"/>
-							<input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
-							<input name="RESULT_ENTITY_TYPE" value="Alignment Result"/>
-							<input name="ALIGNMENT_RESULT_NAME"/>
-							<input name="RESULT_ENTITY_NAME" value="$V{ALIGNMENT_RESULT_NAME}"/>
-							<output name="RESULT_ENTITY_ID"/>
-					    </operation>
-					    
-					    <!-- Register images -->
-						<operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.EntityImage2dRegistrationService">
-							<input name="RESULT_ENTITY_ID"/>
-							<input name="ROOT_ENTITY_ID" value="$V{RESULT_ENTITY_ID}"/>
-							<input name="ALIGNED_FILENAME"/>
-							<input name="DEFAULT_IMAGE_FILENAME" value="$V{ALIGNED_FILENAME}"/>
-					    </operation>
-					    
-				    </sequence>
+				    		<input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
+				    		<input name="STITCHED_FILENAME"/>
+							<input name="INPUT_FILENAME" value="$V{STITCHED_FILENAME}"/>
+							<input name="ALIGNMENT_TILE_NAME"/>
+							<output name="ALIGNED_FILENAME"/>
+				        </operation>
+			        </sequence>
+			        
+				    <!-- Generate MIP for the stitched file -->
+			        <sequence name="Generate sample MIPs" waitForAsync="true">
+				        <operation name="Generate MIPs" processor="queue/gridSubmitAndWait">
+				            <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.MIPGenerationService"/>
+							<input name="ALIGN_RESULT_FILE_NODE"/>
+							<input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
+				    		<input name="ALIGNED_FILENAME"/>
+							<input name="INPUT_FILENAME" value="$V{ALIGNED_FILENAME}"/>
+							<input name="SIGNAL_CHANNELS" value="0 1"/>
+							<input name="REFERENCE_CHANNEL" value="2"/>
+				        </operation>
+			        </sequence>
+			        
+				    <!-- Load the alignment results into the database -->
+					<operation name="Discover Alignment Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SupportingFilesDiscoveryService">
+						<input name="ALIGN_RESULT_FILE_NODE"/>
+						<input name="ROOT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
+						<input name="SAMPLE_ENTITY_ID"/>
+						<input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
+						<input name="RESULT_ENTITY_TYPE" value="Alignment Result"/>
+						<input name="ALIGNMENT_RESULT_NAME"/>
+						<input name="RESULT_ENTITY_NAME" value="$V{ALIGNMENT_RESULT_NAME}"/>
+						<output name="RESULT_ENTITY_ID"/>
+				    </operation>
 				    
-			    	<sequence if="RUN_ALIGNED_SEPARATION=true">
-				        	
-						<!-- Run neuron separation on aligned data -->
-				        <include name="Aligned Neuron Separation" process="MCFOSeparationPipeline">
-				            <input name="SAMPLE_ENTITY_ID"/>
-				            <input name="ALIGNED_FILENAME"/>
-				            <input name="INPUT_FILENAME" value="$V{ALIGNED_FILENAME}"/>
-				            <input name="RESULT_ENTITY_NAME" value="Aligned Neuron Separation"/>
-				            <input name="SIGNAL_CHANNELS"/>
-							<input name="REFERENCE_CHANNEL"/>
-				        </include>
-				        
-			    	</sequence>
-		    	
+				    <!-- Register images -->
+					<operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.EntityImage2dRegistrationService">
+						<input name="RESULT_ENTITY_ID"/>
+						<input name="ROOT_ENTITY_ID" value="$V{RESULT_ENTITY_ID}"/>
+						<input name="ALIGNED_FILENAME"/>
+						<input name="DEFAULT_IMAGE_FILENAME" value="$V{ALIGNED_FILENAME}"/>
+				    </operation>
+					    
 		    	</sequence>
 	    	</sequence>
 	    
+    		<sequence if="TEMP_FILE_NODE_ID!=">
+		
+			    <!-- Clean up the temporary result node -->
+			    <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
+			        <input name="TEMP_FILE_NODE_ID"/>
+			        <input name="FILE_NODE_ID" value="$V{TEMP_FILE_NODE_ID}"/>
+			    </operation>
+			    
+			</sequence>
+    		
 	    </sequence>
     	
 		<!-- Compress all the v3draw files we created -->

@@ -45,7 +45,7 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     		throw new IllegalStateException("Expected Separator Result as input");
     	}
     	
-    	helper.addFileExclusion("sh");
+    	helper.addFileExclusion("*.sh");
     	helper.addFileExclusion("fastLoad");
     	
     	super.processFolderForData(resultEntity); // This creates the Supporting Files folder if it doesn't exist

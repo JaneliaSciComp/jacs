@@ -51,9 +51,13 @@ public class SampleCleaningService implements IService {
             computeBean = EJBFactory.getLocalComputeBean();
             solrBean = EJBFactory.getLocalSolrBean();
             username = task.getOwner();
-            isDebug = Boolean.parseBoolean(task.getParameter(PARAM_testRun));
 
-            logger.info("Cleaning samples for user: "+username);
+            String testRun = task.getParameter(PARAM_testRun);
+            if (testRun!=null) {
+            	isDebug = Boolean.parseBoolean(testRun);	
+            }            
+            
+            logger.info("Cleaning old results from samples for user: "+username);
             
             List<Entity> samples = entityBean.getUserEntitiesByTypeName(username, EntityConstants.TYPE_SAMPLE);
 

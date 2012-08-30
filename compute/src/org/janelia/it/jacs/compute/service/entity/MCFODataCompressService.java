@@ -46,6 +46,7 @@ public class MCFODataCompressService implements IService {
     private String mode = MODE_UNDEFINED;
     protected IProcessData processData;
     
+    private String rootEntityId;
     private Set<String> inputFiles = new HashSet<String>();
     private Map<String,Set<Entity>> entities = new HashMap<String,Set<Entity>>();
     
@@ -58,10 +59,17 @@ public class MCFODataCompressService implements IService {
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
             username = task.getOwner();
-            isDebug = Boolean.parseBoolean(task.getParameter(PARAM_testRun));
+            
+            String testRun = task.getParameter(PARAM_testRun);
+            if (testRun!=null) {
+            	isDebug = Boolean.parseBoolean(testRun);	
+            }
+            
             mode = processData.getString("MODE");
             this.processData = processData;
 
+        	rootEntityId = (String)processData.getItem("ROOT_ENTITY_ID");
+        	
             if (mode.equals(MODE_CREATE_INPUT_LIST)) {
                 doCreateInputList();
             }
@@ -94,7 +102,7 @@ public class MCFODataCompressService implements IService {
         else {
         	logger.info("This is the real thing. Files will get compressed, and then the originals will be deleted!");
         }
-        
+    	
         processV3dRawEntities();
         
         List<List<String>> inputGroups = createGroups(inputFiles, GROUP_SIZE);
@@ -135,22 +143,38 @@ public class MCFODataCompressService implements IService {
     }
     
 	public void processV3dRawEntities() throws ComputeException {
-		
-		List<Entity> entities = entityBean.getUserEntitiesWithAttributeValue(username, EntityConstants.ATTRIBUTE_FILE_PATH, "%v3draw");
-		
-		for(Entity entity : entities) {
-			if (!entity.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_3D)) {
-				logger.warn("Ignoring entity with v3draw filepath that is not an Image 3D: "+entity.getId());
-				continue;
-			}
-			if (!entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH).contains(centralDir)) {
-				logger.warn("Ignoring entity with which does not contain the FileStore.CentralDir: "+entity.getId());
-				continue;
-			}
-			addV3dRawFile(entity);
-		}
-		
 
+        if (rootEntityId!=null) {
+        	logger.info("Finding V3DRAW files under id="+rootEntityId);
+        	
+        	Entity entity = EJBFactory.getLocalEntityBean().getEntityTree(new Long(rootEntityId));
+        	if (entity == null) {
+        		throw new IllegalArgumentException("Entity not found with id="+rootEntityId);
+        	}
+        	
+        	for(Entity image : entity.getDescendantsOfType(EntityConstants.TYPE_IMAGE_3D)) {
+        		String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        		if (filepath!=null && filepath.endsWith("v3draw")) {
+        			addV3dRawFile(image);
+        		}
+        	}
+        }
+        else {
+        	logger.info("Finding V3DRAW files belonging to "+username);
+        	
+    		for(Entity entity : entityBean.getUserEntitiesWithAttributeValue(username, EntityConstants.ATTRIBUTE_FILE_PATH, "%v3draw")) {
+    			if (!entity.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_3D)) {
+    				logger.warn("Ignoring entity with v3draw filepath that is not an Image 3D: "+entity.getId());
+    				continue;
+    			}
+    			if (!entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH).contains(centralDir)) {
+    				logger.warn("Ignoring entity with which does not contain the FileStore.CentralDir: "+entity.getId());
+    				continue;
+    			}
+    			addV3dRawFile(entity);
+    		}
+        }
+    	
 		logger.info("The processing was a success.");
     }
     
@@ -159,6 +183,12 @@ public class MCFODataCompressService implements IService {
     	if (!imageEntity.getUser().getUserLogin().equals(username)) return;
     	
     	String filepath = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+    	
+    	if (filepath==null) {
+    		logger.warn("File path for "+imageEntity.getId()+" is null");
+    		return;
+    	}
+    	
     	File file = new File(filepath);
     	
     	if (!file.exists()) {

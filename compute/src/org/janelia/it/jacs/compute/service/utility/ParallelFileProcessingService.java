@@ -263,7 +263,7 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
                         else {
                             if (!outputNameList.isEmpty()) {
                                 if (DEBUG) logger.info("      Case 1: outputNameList:"+outputNameList.size());
-                                outputFile=new File(inputDir.getAbsolutePath(), outputNameList.get(argIndex));
+                                outputFile=new File(outputFileNode==null?inputDir.getAbsolutePath():outputFileNode.getDirectoryPath(), outputNameList.get(argIndex));
                             }
                             else if (!outputPathList.isEmpty()) {
                                 if (DEBUG) logger.info("      Case 2: outputPathList:"+outputPathList.size());
@@ -293,6 +293,7 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
     	int configIndex = 1;
     	for(File inputFile : inputFiles) {
     		File outputFile = outputFiles.get(i++);
+    		processData.putItem("OUTPUT_PATH_"+configIndex, outputFile.getAbsolutePath());
     		writeInstanceFiles(inputFile, outputFile, configIndex++);
     	}
     	writeShellScript(writer);

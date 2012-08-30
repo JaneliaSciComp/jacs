@@ -34,7 +34,6 @@ import org.janelia.it.jacs.model.tasks.tic.SingleTicTask;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
-import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
@@ -301,6 +300,19 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
+    
+    public void runSampleMaintenancePipeline(String user) {
+        try {
+        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
+        			taskParameters, "sampleMaintenancePipeline", "Sample Maintenance Pipeline");
+            task.setJobName("Sample Maintenance Pipeline Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("SampleMaintenancePipeline", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
 
     public void runSingleFastLoadArtifactPipeline(String user, String separationEntityId) {
         try {
@@ -327,15 +339,30 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     }
 
     
-    public void runLeetSageBasedDataPipeline(String user, String topLevelFolderName, String imageFamily, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation) {
+    public void runLeetDataPipeline(String user, String topLevelFolderName, String imageFamily, Boolean refreshProcessing, Boolean refreshAlignment) {
         try {
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
             		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), null,
-            		topLevelFolderName, refreshProcessing, refreshAlignment, refreshSeparation,
+            		topLevelFolderName, refreshProcessing, refreshAlignment, null,
             		"/groups/leet/leetimg/leetlab/lineage/"+imageFamily+"/confocalStacks", imageFamily);
             task.setJobName("Leet Data Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("LeetSageBasedDataPipeline", task.getObjectId());
+            EJBFactory.getLocalComputeBean().submitJob("LeetDataPipeline", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void runLeetSamplePipeline(String sampleEntityId, Boolean refreshProcessing, Boolean refreshAlignment) {
+        try {
+        	Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
+        	if (sampleEntity==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
+        	Task task = new MCFOSamplePipelineTask(new HashSet<Node>(), 
+        			sampleEntity.getUser().getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>(), 
+        			sampleEntityId, refreshProcessing, refreshAlignment, null);
+            task.setJobName("Leet Sample Pipeline Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("LeetSamplePipeline", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }
