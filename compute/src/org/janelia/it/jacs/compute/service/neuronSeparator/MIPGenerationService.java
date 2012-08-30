@@ -24,7 +24,6 @@ import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 public class MIPGenerationService extends SubmitDrmaaJobService {
 
 	private static final int START_DISPLAY_PORT = 990;
-    private static int randomPort;
     private String signalChannels;
     private String referenceChannel;
     private List<String> inputFilenames;
@@ -64,8 +63,7 @@ public class MIPGenerationService extends SubmitDrmaaJobService {
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
 
     	int configIndex = 1;
-        randomPort = Vaa3DHelper.getRandomPort(START_DISPLAY_PORT);
-
+        
     	for(String inputFilename : inputFilenames) {	
         	File inputFile = new File(inputFilename);
         	File outputDir = inputFile.getParentFile();
@@ -100,6 +98,7 @@ public class MIPGenerationService extends SubmitDrmaaJobService {
      * @throws IOException
      */
     protected void writeInstanceFile(FileWriter fw, File inputFile, File outputFile, int configIndex) throws IOException {
+    	int randomPort = Vaa3DHelper.getRandomPort(START_DISPLAY_PORT);
     	fw.write(outputFile.getAbsolutePath() + "\n");
     	fw.write(inputFile.getAbsolutePath() + "\n");
         fw.write(signalChannels + "\n");

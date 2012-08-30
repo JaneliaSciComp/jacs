@@ -102,6 +102,22 @@
     </operation>
     
     <operation>
+        <description>Creates a parallel hierarchy of scored split line representatives.</description>
+        <name>runScreenScoresLoading5</name>
+        <parameter>
+           <description>User to run as (e.g. "jenetta")</description>
+           <name>user</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Compartments to load, empty means all (e.g. "FB,EB,NO")</description>
+           <name>compartmentList</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    
+    <operation>
         <description>Export the screen intensity and distribution scores.</description>
         <name>runScreenScoresExport</name>
         <parameter>

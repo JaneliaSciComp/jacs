@@ -1,0 +1,19 @@
+<!-- 
+	Create a new hierarchy of AD/DBD split lines based on the screen scores.
+-->
+<process name="Screen Score Loading Pipeline 5" processor="queue/mcfoDataPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+	<sequence>
+	
+	    <!-- Import variables -->
+	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="TASK_PARAMETER_1" value="compartments"/>
+            <input name="PROCESS_VARIABLE_1" value="COMPARTMENTS"/>
+	        <output name="ADDS_FILE_PATH"/>
+	    </operation>
+		 
+		<operation name="Create scored split hierarchy" processor="org.janelia.it.jacs.compute.service.fly.ScreenScoresLoadingService5">
+			<input name="COMPARTMENTS"/>
+		</operation>
+		
+    </sequence>
+</process>
