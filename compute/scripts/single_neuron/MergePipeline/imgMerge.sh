@@ -33,6 +33,7 @@ INPUT2=$2
 FINAL_OUTPUT=$3
 FINAL_DIR=${FINAL_OUTPUT%/*}
 FINAL_STUB=${FINAL_OUTPUT%.*}
+EXT=${FINAL_OUTPUT##*.}
 
 export TMPDIR="$FINAL_DIR"
 WORKING_DIR=`mktemp -d`
@@ -48,13 +49,12 @@ echo "Input 2: $INPUT2"
 
 cd $WORKING_DIR
 
-EXT=${FINAL_OUTPUT##*.}
 if [ "$INPUT2" == "null" ]
 then
-    MERGED_COMPRESSED="$WORKING_DIR/merged.v3dpbd"
-    echo "~ Compressing single LSM file to PBD: $MERGED_COMPRESSED"
-    $Vaa3D -cmd image-loader -convert $INPUT1 $MERGED_COMPRESSED
-    OUTPUT=$MERGED_COMPRESSED
+    MERGED="$WORKING_DIR/output.${EXT}"
+    echo "~ Converting single LSM file to: $MERGED"
+    $Vaa3D -cmd image-loader -convert $INPUT1 $MERGED
+    OUTPUT=$MERGED
 else 
 
     ####
@@ -150,7 +150,6 @@ else
         let count++
     done
 
-    EXT=${FINAL_OUTPUT##*.}
     if [ "$EXT" == "v3dpbd" ]
     then
         MERGED_COMPRESSED="$WORKING_DIR/merged.v3dpbd"
