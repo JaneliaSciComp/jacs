@@ -12,10 +12,10 @@
             <input name="PROCESS_VARIABLE_2" value="REFRESH_PROCESSING"/>
             <input name="TASK_PARAMETER_3" value="refresh alignment"/>
             <input name="PROCESS_VARIABLE_3" value="REFRESH_ALIGNMENT"/>
-            <input name="TASK_PARAMETER_5" value="confocal stacks directory path"/>
-            <input name="PROCESS_VARIABLE_5" value="CONFOCAL_STACKS_DIR"/>
-            <input name="TASK_PARAMETER_6" value="Sage image family"/>
-            <input name="PROCESS_VARIABLE_6" value="SAGE_IMAGE_FAMILY"/>
+            <input name="TASK_PARAMETER_4" value="confocal stacks directory path"/>
+            <input name="PROCESS_VARIABLE_4" value="CONFOCAL_STACKS_DIR"/>
+            <input name="TASK_PARAMETER_5" value="Sage image family"/>
+            <input name="PROCESS_VARIABLE_5" value="SAGE_IMAGE_FAMILY"/>
 	        <output name="ROOT_ENTITY_NAME"/>
 	        <output name="REFRESH_PROCESSING"/>
 	        <output name="REFRESH_ALIGNMENT"/>
