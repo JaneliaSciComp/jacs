@@ -243,7 +243,7 @@
 		    	</sequence>
 	    	</sequence>
 	    
-    		<sequence if="TEMP_FILE_NODE_ID!=">
+    		<sequence if="SIGNAL_CHANNELS=0 2">
 		
 			    <!-- Clean up the temporary result node -->
 			    <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
