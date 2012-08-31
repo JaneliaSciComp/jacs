@@ -41,18 +41,18 @@ SCRIPTS_INSTALL_SYMLINK="$INSTALL_DIR/scripts"
 ALIGN_TEMPLATES_DIR="$JACSDATA_DIR/AlignTemplates"
 ALIGN_TEMPLATES_SYMLINK="$INSTALL_DIR/scripts/single_neuron/BrainAligner/AlignTemplates"
 
-STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
-PACKAGE_MAC_DIR="$STAGING_DIR/FlySuite_${FWVER}"
-PACKAGE_LINUX_DIR="$STAGING_DIR/FlySuite_linux_${FWVER}"
-FLYSUITE_CLIENTS_DIR="$JACSDATA_DIR/FlySuite"
-
 FLYSUITE_NAME="FlySuite_${FWVER}"
-FLYSUITE_INSTALL_DIR="$FLYSUITE_CLIENTS_DIR/$FLYSUITE_NAME"
-FLYSUITE_TARBALL="${FLYSUITE_NAME}.tgz"
-
 FLYSUITE_LINUX_NAME="FlySuite_linux_${FWVER}"
+
+STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
+PACKAGE_MAC_DIR="$STAGING_DIR/$FLYSUITE_NAME"
+PACKAGE_LINUX_DIR="$STAGING_DIR/$FLYSUITE_LINUX_NAME"
+
+FLYSUITE_CLIENTS_DIR="$JACSDATA_DIR/FlySuite"
+FLYSUITE_INSTALL_DIR="$FLYSUITE_CLIENTS_DIR/$FLYSUITE_NAME"
 FLYSUITE_LINUX_INSTALL_DIR="$FLYSUITE_CLIENTS_DIR/$FLYSUITE_LINUX_NAME"
-FLYSUITE_LINUX_TARBALL="${FLYSUITE_LINUX_NAME}.tgz"
+FLYSUITE_TARBALL="$FLYSUITE_INSTALL_DIR.tgz"
+FLYSUITE_LINUX_TARBALL="$FLYSUITE_LINUX_INSTALL_DIR.tgz"
 
 echo "Installing FlySuite version $FWVER (Part 3)"
 
@@ -123,22 +123,23 @@ if [ $INSTALL_CLIENT == 1 ]; then
     rm -rf $FLYSUITE_LINUX_INSTALL_DIR || true
     cp -R $PACKAGE_LINUX_DIR $FLYSUITE_LINUX_INSTALL_DIR
 
-    cd $FLYSUITE_CLIENTS_DIR
-    echo "Sync filesystem"
-    sync
-    sleep 4
+    #cd $FLYSUITE_CLIENTS_DIR
+    #echo "Sync filesystem"
+    #sync
+    #sleep 4
 
     echo "Create tarballs"
-    tar cvfz $FLYSUITE_TARBALL $FLYSUITE_NAME
-    tar cvfz $FLYSUITE_LINUX_TARBALL $FLYSUITE_LINUX_NAME
+    cd $STAGING_DIR
+    tar cvfz "$FLYSUITE_TARBALL" $FLYSUITE_NAME
+    tar cvfz "$FLYSUITE_LINUX_TARBALL" $FLYSUITE_LINUX_NAME
     
     echo "FlySuite Version ${FWVER} (client) was successfully installed into the following locations:"
     echo "  Mac: $FLYSUITE_INSTALL_DIR"
     echo "  Linux: $FLYSUITE_LINUX_INSTALL_DIR"
     echo ""
     echo "Tarballs are also available (these are used by the auto-updater):"
-    echo "  Mac: $FLYSUITE_CLIENTS_DIR/$FLYSUITE_TARBALL"
-    echo "  Linux: $FLYSUITE_CLIENTS_DIR/$FLYSUITE_LINUX_TARBALL"
+    echo "  Mac: $FLYSUITE_TARBALL"
+    echo "  Linux: $FLYSUITE_LINUX_TARBALL"
     echo ""
 fi
 
