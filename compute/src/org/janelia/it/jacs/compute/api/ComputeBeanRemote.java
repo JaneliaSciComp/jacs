@@ -34,6 +34,8 @@ public interface ComputeBeanRemote {
 
     public String getAppVersion() throws RemoteException;
     public boolean login(String userLogin, String password) throws ComputeException;
+    public void beginSession(String userLogin, String clientVersion);
+    public void endSession(String userLogin);
     public Node saveOrUpdateNode(Node node) throws DaoException, RemoteException;
     public Task saveOrUpdateTask(Task task) throws DaoException;
     public User saveOrUpdateUser(User user) throws DaoException;

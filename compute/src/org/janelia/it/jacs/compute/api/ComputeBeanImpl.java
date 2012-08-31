@@ -80,6 +80,14 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return appVersion;
     }
 
+    public void beginSession(String userLogin, String clientVersion) {
+    	logger.info("Begin session for "+userLogin+" using "+clientVersion);
+    }
+
+    public void endSession(String userLogin) {
+    	logger.info("End session for "+userLogin);
+    }
+    
     public boolean login(String userLogin, String password) {
     	
     	// Extremely temporary hack
