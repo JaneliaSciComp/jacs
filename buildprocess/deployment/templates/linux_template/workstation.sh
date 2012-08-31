@@ -13,7 +13,7 @@ if echo "$INSTALL" |grep -q "/Contents/Resources"; then
 fi
 
 java -cp workstation.jar -Xms512m -Xmx1024m org.janelia.it.FlyWorkstation.gui.application.AutoUpdater > autoupdate.log 2>&1
-DOWNLOAD=`cat autoupdate.log | tail -1`
+DOWNLOAD=`cat autoupdate.log | sed '/^$/d' | tail -1`
 if [ "$DOWNLOAD" != "" ] && [ -e "$DOWNLOAD" ] ; then
   echo "Updater downloaded a new version to $DOWNLOAD."
 
