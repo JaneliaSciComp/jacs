@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.api;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.compute.access.PatternSearchDAO;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -10,6 +11,9 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.shared.annotation.DataDescriptor;
+import org.janelia.it.jacs.shared.annotation.DataFilter;
+import org.janelia.it.jacs.shared.annotation.FilterResult;
 import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
@@ -351,15 +355,6 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
     }
 
-    public PatternAnnotationDataManager getPatternAnnotationDataManagerByType(String type) throws ComputeException {
-        try {
-            return _annotationDAO.getPatternAnnotationDataManagerByType(type);
-        } catch (DaoException e) {
-            _logger.error("Error in getPatternAnnotationDataManagerByType(): "+e.getMessage());
-            throw new ComputeException("Error in getPatternAnnotationDataManagerByType(): "+e.getMessage(), e);
-        }
-    }
-
     private void updateIndexForAnnotationTargets(List<Entity> annotations) {
     	if (annotations==null) return;
     	for(Entity annotation : annotations) {
@@ -376,4 +371,21 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             }
     	}
     }
+
+    public List<DataDescriptor> patternSearchGetDataDescriptors(String type) {
+        return PatternSearchDAO.getDataDescriptors(type);
+    }
+
+    public int patternSearchGetState() {
+        return PatternSearchDAO.getState();
+    }
+
+    public List<String> patternSearchGetCompartmentList(String type) {
+        return PatternSearchDAO.getCompartmentList(type);
+    }
+
+    public FilterResult patternSearchGetFilteredResults(String type, Map<DataDescriptor, Set<DataFilter>> filterMap) {
+        return PatternSearchDAO.getFilteredResults(type, filterMap);
+    }
+
 }

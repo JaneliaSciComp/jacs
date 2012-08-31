@@ -11,6 +11,9 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.shared.annotation.DataDescriptor;
+import org.janelia.it.jacs.shared.annotation.DataFilter;
+import org.janelia.it.jacs.shared.annotation.FilterResult;
 import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
 
 /**
@@ -55,6 +58,10 @@ public interface AnnotationBeanRemote {
     public Object[] getPatternAnnotationQuantifierMapsFromSummary() throws ComputeException;
     public Map<Entity, Map<String, Double>> getMaskQuantifiers(String maskFolderName) throws ComputeException;
     public Object[] getMaskQuantifierMapsFromSummary(String maskFolderName) throws ComputeException;
-    public PatternAnnotationDataManager getPatternAnnotationDataManagerByType(String type) throws ComputeException;
 
-   }
+    public List<DataDescriptor> patternSearchGetDataDescriptors(String type) throws ComputeException;
+    public int patternSearchGetState() throws ComputeException;
+    public List<String> patternSearchGetCompartmentList(String type) throws ComputeException;
+    public FilterResult patternSearchGetFilteredResults(String type, Map<DataDescriptor, Set<DataFilter>> filterMap) throws ComputeException;
+
+}

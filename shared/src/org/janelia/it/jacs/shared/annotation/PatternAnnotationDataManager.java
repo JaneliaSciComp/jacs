@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.shared.annotation;
 
+import org.apache.log4j.Logger;
+
 import java.io.Serializable;
 import java.util.*;
 
@@ -12,6 +14,14 @@ import java.util.*;
  */
 
 public abstract class PatternAnnotationDataManager implements Serializable {
+
+    private Logger logger = Logger.getLogger(PatternAnnotationDataManager.class);
+
+    public static final int STATE_UNDEFINED=0;
+    public static final int STATE_STARTING=1;
+    public static final int STATE_LOADING=2;
+    public static final int STATE_READY=3;
+    public static final int STATE_ERROR=4;
 
     // QS stands for "Quality Summary"
     public static final String QS_NAME_COL = "ScreenSampleName";
@@ -94,7 +104,7 @@ public abstract class PatternAnnotationDataManager implements Serializable {
 
     }
 
-    public static List<String> getCompartmentListInstance() {
+    public List<String> getCompartmentListInstance() {
         List<String> compartmentListInstance = new ArrayList<String>();
         for (String c : QS_COMPARTMENT_LIST) {
             compartmentListInstance.add(c);
@@ -109,11 +119,11 @@ public abstract class PatternAnnotationDataManager implements Serializable {
     protected List<DataDescriptor> descriptorList = new ArrayList<DataDescriptor>();
 
     protected Map<DataDescriptor, Map<Long, List<Float>>> descriptorScoreMap = new HashMap<DataDescriptor, Map<Long, List<Float>>>();
-    protected Map<DataDescriptor, Map<Long, String>> descriptorNameMap = new HashMap<DataDescriptor, Map<Long, String>>();
+    //protected Map<DataDescriptor, Map<Long, String>> descriptorNameMap = new HashMap<DataDescriptor, Map<Long, String>>();
 
     ///////////////////////////////////////////////////////////////////////////
 
-    abstract public void populateScoreListByDescriptor(DataDescriptor dataDescriptor) throws Exception;
+    abstract protected void populateScores() throws Exception;
 
     abstract public String getDataManagerType();
 
@@ -127,15 +137,116 @@ public abstract class PatternAnnotationDataManager implements Serializable {
         return descriptorScoreMap.get(dataDescriptor);
     }
 
-    public Map<Long, String> getNameMapByDescriptor(DataDescriptor dataDescriptor) {
-        return descriptorNameMap.get(dataDescriptor);
-    }
+//    public Map<Long, String> getNameMapByDescriptor(DataDescriptor dataDescriptor) {
+//        return descriptorNameMap.get(dataDescriptor);
+//    }
 
     public void setup() throws Exception {
-        for (DataDescriptor dataDescriptor : descriptorList) {
-            populateScoreListByDescriptor(dataDescriptor);
+        populateScores();
+    }
+
+    protected void computePercentiles(Map<Long, List<Float>> scoreMap, Float scaleMin, Float scaleMax) {
+
+        class PercentileScore implements Comparable {
+
+            public Long sampleId;
+            public Float score;
+
+            @Override
+            public int compareTo(Object o) {
+                PercentileScore other=(PercentileScore)o;
+                if (score > other.score) {
+                    return 1;
+                } else if (score < other.score) {
+                    return -1;
+                } else {
+                    return 0;
+                }
+            }
+        }
+
+        List<String> compartmentAbbreviationList=getCompartmentListInstance();
+        List<PercentileScore> sortList = new ArrayList<PercentileScore>();
+
+        int compartmentIndex=0;
+        for (String compartmentAbbreviation : compartmentAbbreviationList) {
+            sortList.clear();
+            for (Long sampleId : scoreMap.keySet()) {
+                List<Float> intensityList = scoreMap.get(sampleId);
+                PercentileScore ps=new PercentileScore();
+                ps.sampleId=sampleId;
+                ps.score=intensityList.get(compartmentIndex);
+                sortList.add(ps);
+            }
+            Collections.sort(sortList);
+            float listLength=sortList.size()-1.0f;
+
+            float index=0.0f;
+            for (PercentileScore ps : sortList) {
+                float sortScore = index / listLength;
+                sortScore=(sortScore*(scaleMax-scaleMin))+scaleMin;
+                List<Float> scoreList=scoreMap.get(ps.sampleId);
+                scoreList.set(compartmentIndex, sortScore);
+                index+=1.0;
+            }
+            compartmentIndex++;
         }
     }
 
+    public FilterResult getFilteredResults(Map<DataDescriptor, Set<DataFilter>> filterMap) {
+        List<String> compartmentList=getCompartmentListInstance();
+        Map<String, Integer> compartmentIndex=new HashMap<String, Integer>();
+        for (int i=0;i<compartmentList.size();i++) {
+            compartmentIndex.put(compartmentList.get(i), i);
+        }
+        Set<DataDescriptor> dataDescriptors=filterMap.keySet();
+        List<Long> sampleResultSet=new ArrayList<Long>();
+        Map<String, Long> countMap=new HashMap<String, Long>();
+        for (DataDescriptor d : dataDescriptors) {
+            Map<Long, List<Float>> sampleMap=descriptorScoreMap.get(d);
+            Set<Long> samples=sampleMap.keySet();
+            Set<DataFilter> filterSet=filterMap.get(d);
+            List<DataFilter> filterList=new ArrayList<DataFilter>();
+            filterList.addAll(filterSet);
+            List<Float> minList=new ArrayList<Float>();
+            List<Float> maxList=new ArrayList<Float>();
+            long[] countArray=new long[filterList.size()];
+            int i=0;
+            for (DataFilter f : filterList) {
+                countArray[i]=0;
+                minList.add(f.getMin());
+                maxList.add(f.getMax());
+                i++;
+            }
+            for (Long sampleId : samples) {
+                List<Float> scores=sampleMap.get(sampleId);
+                int fi=0;
+                int filterListSize=filterList.size();
+                Long excludeCount=0L;
+                while(fi<filterListSize) {
+                    DataFilter f = filterList.get(fi);
+                    String filterName=f.getName();
+                    int index=compartmentIndex.get(filterName);
+                    float score=scores.get(index);
+                    float min=minList.get(fi);
+                    float max=maxList.get(fi);
+                    if (score<min || score>max) {
+                        excludeCount++;
+                    } else {
+                        countArray[fi]++;
+                    }
+                    fi++;
+                }
+                if (excludeCount==0) {
+                    sampleResultSet.add(sampleId);
+                }
+            }
+            for (i=0;i<filterList.size();i++) {
+                String name=filterList.get(i).getName();
+                countMap.put(name, (countMap.get(name)==null?0:countMap.get(name))+countArray[i]);
+            }
+        }
+        return new FilterResult(countMap, sampleResultSet);
+    }
 
 }

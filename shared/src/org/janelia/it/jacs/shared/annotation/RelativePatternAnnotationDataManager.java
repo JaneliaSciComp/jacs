@@ -23,6 +23,9 @@ public class RelativePatternAnnotationDataManager extends PatternAnnotationDataM
     public static final String INTENSITY_DATA="Intensity";
     public static final String DISTRIBUTION_DATA="Distribution";
 
+    Map<Long, List<Float>> intensityScoreMap;        // ordered by getCompartmentListInstance()
+    Map<Long, List<Float>> distributionScoreMap;     // ditto
+
     static {
         QS_Z_INDEX_LIST.add(".z0");
         QS_Z_INDEX_LIST.add(".z1");
@@ -37,29 +40,14 @@ public class RelativePatternAnnotationDataManager extends PatternAnnotationDataM
         QS_C_INDEX_LIST.add(".c4");
     }
 
-    boolean scoresPopulated=false;
+    File summaryFile;
 
     public RelativePatternAnnotationDataManager() {
-        DataDescriptor intensityDescriptor = new DataDescriptor(INTENSITY_DATA, 0.0, 100.0, DataDescriptor.DataType.CONTINUOUS);
-        DataDescriptor distributionDescriptor = new DataDescriptor(DISTRIBUTION_DATA, 0.0, 100.0, DataDescriptor.DataType.CONTINUOUS);
+        DataDescriptor intensityDescriptor = new DataDescriptor(INTENSITY_DATA, 0.0f, 100.0f, DataDescriptor.Type.CONTINUOUS);
+        DataDescriptor distributionDescriptor = new DataDescriptor(DISTRIBUTION_DATA, 0.0f, 100.0f, DataDescriptor.Type.CONTINUOUS);
         descriptorList.add(intensityDescriptor);
         descriptorList.add(distributionDescriptor);
-    }
-
-    public String getDataManagerType() {
-        return RELATIVE_TYPE;
-    }
-
-    public void populateScoreListByDescriptor(DataDescriptor dataDescriptor) throws Exception {
-        // For this class, all descriptors are populated with the first call to this method
-        if (!scoresPopulated) {
-            Object[] quantifierMapArr=loadPatternAnnotationQuantifierSummaryFile();
-            Map<Long, Map<String,String>> sampleInfoMap=(Map<Long, Map<String,String>>)quantifierMapArr[0];
-            Map<Long, List<Float>> quantifierInfoMap=(Map<Long, List<Float>>)quantifierMapArr[1];
-            computeScores(sampleInfoMap, quantifierInfoMap);
-            computePercentiles();
-            scoresPopulated=true;
-        }
+        summaryFile=getPatternAnnotationSummaryFile();
     }
 
     private static File getPatternAnnotationSummaryFile() {
@@ -67,6 +55,18 @@ public class RelativePatternAnnotationDataManager extends PatternAnnotationDataM
         String quantifierSummaryFilename=SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationQuantifierSummaryFile");
         File patternAnnotationSummaryFile=new File(resourceDirString, quantifierSummaryFilename);
         return patternAnnotationSummaryFile;
+    }
+
+    public String getDataManagerType() {
+        return RELATIVE_TYPE;
+    }
+
+    protected void populateScores() throws Exception {
+        Object[] quantifierMapArr = loadPatternAnnotationQuantifierSummaryFile();
+        Map<Long, List<Float>> quantifierInfoMap = (Map<Long, List<Float>>) quantifierMapArr[1];
+        computeScores(quantifierInfoMap);
+        computePercentiles(intensityScoreMap, 0.0f, 100.0f);
+        computePercentiles(distributionScoreMap, 0.0f, 100.0f);
     }
 
     public static void createPatternAnnotationQuantifierSummaryFile(Map<Entity, Map<String, Double>> entityQuantifierMap) throws Exception {
@@ -257,15 +257,15 @@ public class RelativePatternAnnotationDataManager extends PatternAnnotationDataM
         return QS_DESCRIPTION_MAP.get(key);
     }
 
-    protected void computeScores(Map<Long, Map<String,String>> sampleInfoMap, Map<Long, List<Float>> quantifierInfoMap) {
+    protected void computeScores(Map<Long, List<Float>> quantifierInfoMap) {
         long totalComputeCount=0;
         List<String> compartmentAbbreviationList=getCompartmentListInstance();
         DataDescriptor intensityDescriptor=descriptorList.get(0);
         DataDescriptor distributionDescriptor=descriptorList.get(1);
 
         // Populate descriptorScoreMap
-        Map<Long, List<Float>> intensityScoreMap=descriptorScoreMap.get(intensityDescriptor);
-        Map<Long, List<Float>> distributionScoreMap=descriptorScoreMap.get(distributionDescriptor);
+        intensityScoreMap=descriptorScoreMap.get(intensityDescriptor);
+        distributionScoreMap=descriptorScoreMap.get(distributionDescriptor);
         if (intensityScoreMap==null) {
             intensityScoreMap=new HashMap<Long, List<Float>>();
             descriptorScoreMap.put(intensityDescriptor, intensityScoreMap);
@@ -273,18 +273,6 @@ public class RelativePatternAnnotationDataManager extends PatternAnnotationDataM
         if (distributionScoreMap==null) {
             distributionScoreMap=new HashMap<Long, List<Float>>();
             descriptorScoreMap.put(distributionDescriptor, distributionScoreMap);
-        }
-
-        // Populate descriptorNameMap - note these should be rundundent but the general design adds future flexibility
-        Map<Long, String> intensityNameMap=descriptorNameMap.get(intensityDescriptor);
-        Map<Long, String> distributionNameMap=descriptorNameMap.get(distributionDescriptor);
-        if (intensityNameMap==null) {
-            intensityNameMap=new HashMap<Long, String>();
-            descriptorNameMap.put(intensityDescriptor, intensityNameMap);
-        }
-        if (distributionNameMap==null) {
-            distributionNameMap=new HashMap<Long, String>();
-            descriptorNameMap.put(distributionDescriptor, distributionNameMap);
         }
 
         for (Long sampleId : quantifierInfoMap.keySet()) {
@@ -295,6 +283,7 @@ public class RelativePatternAnnotationDataManager extends PatternAnnotationDataM
             List<Float> distributionList = new ArrayList<Float>();
             List<Float> globalList = new ArrayList<Float>();
             List<Float> compartmentList = new ArrayList<Float>();
+
             // We assume the compartment list here matches the order of the quantifierList
             final int GLOBAL_LIST_SIZE=9;
             for (int g=0;g<GLOBAL_LIST_SIZE;g++) {
@@ -316,84 +305,8 @@ public class RelativePatternAnnotationDataManager extends PatternAnnotationDataM
             }
             intensityScoreMap.put(sampleId, intensityList);
             distributionScoreMap.put(sampleId, distributionList);
-
-            // Populate Name
-            Map<String,String> sampleInfo = sampleInfoMap.get(sampleId);
-            String sampleName=sampleInfo.get(PatternAnnotationDataManager.QS_NAME_COL);
-            intensityNameMap.put(sampleId, sampleName);
-            distributionNameMap.put(sampleId, sampleName);
         }
         System.out.println("Total calls to getCompartmentScoresByQuantifiers() = "+totalComputeCount);
     }
-
-    protected void computePercentiles() {
-
-        class PercentileScore implements Comparable {
-
-            public Long sampleId;
-            public Float score;
-
-            @Override
-            public int compareTo(Object o) {
-                PercentileScore other=(PercentileScore)o;
-                if (score > other.score) {
-                    return 1;
-                } else if (score < other.score) {
-                    return -1;
-                } else {
-                    return 0;
-                }
-            }
-        }
-
-        List<String> compartmentAbbreviationList=getCompartmentListInstance();
-        DataDescriptor intensityDescriptor=descriptorList.get(0);
-        DataDescriptor distributionDescriptor=descriptorList.get(1);
-        Map<Long, List<Float>> intensityScoreMap=descriptorScoreMap.get(intensityDescriptor);
-        Map<Long, List<Float>> distributionScoreMap=descriptorScoreMap.get(distributionDescriptor);
-
-        List<PercentileScore> intensitySortList = new ArrayList<PercentileScore>();
-        List<PercentileScore> distributionSortList = new ArrayList<PercentileScore>();
-
-        int compartmentIndex=0;
-        for (String compartmentAbbreviation : compartmentAbbreviationList) {
-            intensitySortList.clear();
-            distributionSortList.clear();
-            for (Long sampleId : intensityScoreMap.keySet()) {
-                List<Float> intensityList = intensityScoreMap.get(sampleId);
-                PercentileScore ps=new PercentileScore();
-                ps.sampleId=sampleId;
-                ps.score=intensityList.get(compartmentIndex);
-                intensitySortList.add(ps);
-            }
-            for (Long sampleId : distributionScoreMap.keySet()) {
-                List<Float> distributionList = distributionScoreMap.get(sampleId);
-                PercentileScore ps=new PercentileScore();
-                ps.sampleId=sampleId;
-                ps.score=distributionList.get(compartmentIndex);
-                distributionSortList.add(ps);
-            }
-            Collections.sort(intensitySortList);
-            Collections.sort(distributionSortList);
-            float listLength=intensitySortList.size()-1.0f;
-
-            float index=0.0f;
-            for (PercentileScore ps : intensitySortList) {
-                float sortScore = index / listLength;
-                List<Float> intensityScoreList=intensityScoreMap.get(ps.sampleId);
-                intensityScoreList.set(compartmentIndex, sortScore);
-                index+=1.0;
-            }
-            index=0.0f;
-            for (PercentileScore ps : distributionSortList) {
-                float sortScore = index / listLength;
-                List<Float> distributionScoreList=distributionScoreMap.get(ps.sampleId);
-                distributionScoreList.set(compartmentIndex, sortScore);
-                index+=1.0;
-            }
-            compartmentIndex++;
-        }
-    }
-
 
 }

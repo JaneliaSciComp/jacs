@@ -11,30 +11,25 @@ import java.io.Serializable;
  */
 public class DataDescriptor implements Serializable {
 
-    public enum DataType {
+    public enum Type {
         DISCRETE,
-        CONTINUOUS
+        CONTINUOUS,
+        BOOLEAN
     }
 
     private String name;
-    private double min;
-    private double max;
-    private DataType dataType;
+    private Float min;
+    private Float max;
+    private Type type;
 
-    public DataDescriptor(String name, double min, double max, DataType dataType) {
-        this.name = name;
-        this.min = min;
-        this.max = max;
-        this.dataType = dataType;
+    DataDescriptor() {
     }
 
-    public DataType getDataType() {
-
-        return dataType;
-    }
-
-    public void setDataType(DataType dataType) {
-        this.dataType = dataType;
+    DataDescriptor(String name, float min, float max, Type type) {
+        this.name=name;
+        this.min=min;
+        this.max=max;
+        this.type=type;
     }
 
     public String getName() {
@@ -45,19 +40,20 @@ public class DataDescriptor implements Serializable {
         this.name = name;
     }
 
-    public double getMin() {
+    public Float getMin() {
         return min;
     }
 
-    public void setMin(double min) {
+    public void setMin(Float min) {
         this.min = min;
     }
 
-    public double getMax() {
+    public Float getMax() {
         return max;
     }
 
-    public void setMax(double max) {
+    public void setMax(Float max) {
         this.max = max;
     }
+
 }
