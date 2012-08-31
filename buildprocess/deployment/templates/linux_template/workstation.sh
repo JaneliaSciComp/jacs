@@ -19,7 +19,9 @@ if [ "$DOWNLOAD" != "" ] && [ -e "$DOWNLOAD" ] ; then
 
   cat > $TEMP/updateScript.sh << EOF
 #!/bin/sh
-if cp -fR $DOWNLOAD/* $INSTALL; then
+echo "Updating..."
+rm -rf $INSTALL/*
+if cp -fR $DOWNLOAD/* "$INSTALL"; then
   echo "done. Update complete."
 else
   echo "failed!"
