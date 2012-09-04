@@ -37,6 +37,11 @@ SIGNAL_CHAN=$4
 REF_CHAN=$5
 WORKING_DIR=$OUTDIR/temp
 
+if [ ! -s $INPUT_FILE ]; then
+    echo "Input file does not exist: $INPUT_FILE"
+    exit 1
+fi
+
 OUTEXT=$FORMAT
 if [ "$FORMAT" == "jpg" ]; then
     FORMAT="jpeg"
