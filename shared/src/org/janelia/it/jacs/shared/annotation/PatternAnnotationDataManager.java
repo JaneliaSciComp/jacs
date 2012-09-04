@@ -118,7 +118,7 @@ public abstract class PatternAnnotationDataManager implements Serializable {
 
     protected List<DataDescriptor> descriptorList = new ArrayList<DataDescriptor>();
 
-    protected Map<DataDescriptor, Map<Long, List<Float>>> descriptorScoreMap = new HashMap<DataDescriptor, Map<Long, List<Float>>>();
+    protected Map<String, Map<Long, List<Float>>> descriptorScoreMap = new HashMap<String, Map<Long, List<Float>>>();
     //protected Map<DataDescriptor, Map<Long, String>> descriptorNameMap = new HashMap<DataDescriptor, Map<Long, String>>();
 
     ///////////////////////////////////////////////////////////////////////////
@@ -134,7 +134,7 @@ public abstract class PatternAnnotationDataManager implements Serializable {
     }
 
     public Map<Long, List<Float>> getScoreMapByDescriptor(DataDescriptor dataDescriptor) {
-        return descriptorScoreMap.get(dataDescriptor);
+        return descriptorScoreMap.get(dataDescriptor.getName());
     }
 
 //    public Map<Long, String> getNameMapByDescriptor(DataDescriptor dataDescriptor) {
@@ -193,19 +193,28 @@ public abstract class PatternAnnotationDataManager implements Serializable {
         }
     }
 
-    public FilterResult getFilteredResults(Map<DataDescriptor, Set<DataFilter>> filterMap) {
+    public FilterResult getFilteredResults(Map<String, Set<DataFilter>> filterMap) throws Exception {
         List<String> compartmentList=getCompartmentListInstance();
         Map<String, Integer> compartmentIndex=new HashMap<String, Integer>();
         for (int i=0;i<compartmentList.size();i++) {
             compartmentIndex.put(compartmentList.get(i), i);
         }
-        Set<DataDescriptor> dataDescriptors=filterMap.keySet();
-        List<Long> sampleResultSet=new ArrayList<Long>();
+        Set<String> dataDescriptorStrings=filterMap.keySet();
+        Set<Long> sampleResultSet=new HashSet<Long>();
         Map<String, Long> countMap=new HashMap<String, Long>();
-        for (DataDescriptor d : dataDescriptors) {
-            Map<Long, List<Float>> sampleMap=descriptorScoreMap.get(d);
+        Long totalSampleCount=-1L;
+        Map<Long, Long> excludeCountMap=new HashMap<Long, Long>();
+        for (String ds : dataDescriptorStrings) {
+            Map<Long, List<Float>> sampleMap=descriptorScoreMap.get(ds);
             Set<Long> samples=sampleMap.keySet();
-            Set<DataFilter> filterSet=filterMap.get(d);
+            if (totalSampleCount<0L) {
+                totalSampleCount=new Long(samples.size());
+            } else {
+                if (totalSampleCount.longValue()!=new Long(samples.size()).longValue()) {
+                    throw new Exception("Sample counts between DataDescriptors unexpectedly vary: "+totalSampleCount+" vs "+samples.size());
+                }
+            }
+            Set<DataFilter> filterSet=filterMap.get(ds);
             List<DataFilter> filterList=new ArrayList<DataFilter>();
             filterList.addAll(filterSet);
             List<Float> minList=new ArrayList<Float>();
@@ -222,7 +231,10 @@ public abstract class PatternAnnotationDataManager implements Serializable {
                 List<Float> scores=sampleMap.get(sampleId);
                 int fi=0;
                 int filterListSize=filterList.size();
-                Long excludeCount=0L;
+                Long excludeCount=excludeCountMap.get(sampleId);
+                if (excludeCount==null) {
+                    excludeCount=new Long(0L);
+                }
                 while(fi<filterListSize) {
                     DataFilter f = filterList.get(fi);
                     String filterName=f.getName();
@@ -237,16 +249,25 @@ public abstract class PatternAnnotationDataManager implements Serializable {
                     }
                     fi++;
                 }
-                if (excludeCount==0) {
-                    sampleResultSet.add(sampleId);
-                }
+                excludeCountMap.put(sampleId, excludeCount);
             }
             for (i=0;i<filterList.size();i++) {
                 String name=filterList.get(i).getName();
                 countMap.put(name, (countMap.get(name)==null?0:countMap.get(name))+countArray[i]);
             }
         }
-        return new FilterResult(countMap, sampleResultSet);
+        for (Long sampleId : excludeCountMap.keySet()) {
+            Long excludeCount=excludeCountMap.get(sampleId);
+            if (excludeCount==0L) {
+                if (!sampleResultSet.contains(sampleId)) {
+                    sampleResultSet.add(sampleId);
+                }
+            }
+        }
+        List<Long> resultList=new ArrayList<Long>();
+        resultList.addAll(sampleResultSet);
+        Collections.sort(resultList);
+        return new FilterResult(countMap, resultList, totalSampleCount);
     }
 
 }

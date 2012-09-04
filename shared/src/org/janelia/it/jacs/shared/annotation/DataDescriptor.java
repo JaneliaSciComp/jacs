@@ -20,7 +20,7 @@ public class DataDescriptor implements Serializable {
     private String name;
     private Float min;
     private Float max;
-    private Type type;
+    transient private Type type;
 
     DataDescriptor() {
     }

@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.shared.annotation;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,7 +11,8 @@ import java.util.List;
  * Time: 1:46 PM
  * To change this template use File | Settings | File Templates.
  */
-public class DataFilter {
+
+public class DataFilter implements Serializable {
 
     private String name;
     private Float min;

@@ -62,6 +62,6 @@ public interface AnnotationBeanRemote {
     public List<DataDescriptor> patternSearchGetDataDescriptors(String type) throws ComputeException;
     public int patternSearchGetState() throws ComputeException;
     public List<String> patternSearchGetCompartmentList(String type) throws ComputeException;
-    public FilterResult patternSearchGetFilteredResults(String type, Map<DataDescriptor, Set<DataFilter>> filterMap) throws ComputeException;
+    public FilterResult patternSearchGetFilteredResults(String type, Map<String, Set<DataFilter>> filterMap) throws ComputeException;
 
 }

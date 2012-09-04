@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.shared.annotation;
 
+import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -16,6 +17,8 @@ import java.util.*;
  */
 
 public class RelativePatternAnnotationDataManager extends PatternAnnotationDataManager implements Serializable {
+
+    Logger logger = Logger.getLogger(RelativePatternAnnotationDataManager.class);
 
     public static final List<String> QS_Z_INDEX_LIST = new ArrayList<String>();
     public static final List<String> QS_C_INDEX_LIST = new ArrayList<String>();
@@ -267,12 +270,14 @@ public class RelativePatternAnnotationDataManager extends PatternAnnotationDataM
         intensityScoreMap=descriptorScoreMap.get(intensityDescriptor);
         distributionScoreMap=descriptorScoreMap.get(distributionDescriptor);
         if (intensityScoreMap==null) {
+            logger.info("Adding descriptorScoreMap entry for intensityScoreMap");
             intensityScoreMap=new HashMap<Long, List<Float>>();
-            descriptorScoreMap.put(intensityDescriptor, intensityScoreMap);
+            descriptorScoreMap.put(intensityDescriptor.getName(), intensityScoreMap);
         }
         if (distributionScoreMap==null) {
+            logger.info("Adding descriptorScoreMap entry for distributionScoreMap");
             distributionScoreMap=new HashMap<Long, List<Float>>();
-            descriptorScoreMap.put(distributionDescriptor, distributionScoreMap);
+            descriptorScoreMap.put(distributionDescriptor.getName(), distributionScoreMap);
         }
 
         for (Long sampleId : quantifierInfoMap.keySet()) {

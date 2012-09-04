@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.shared.annotation;
 
+import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 
 import java.io.*;
@@ -14,6 +15,8 @@ import java.util.*;
  */
 
 public class FuhuiPatternAnnotationDataManager extends PatternAnnotationDataManager implements Serializable {
+
+    Logger logger= Logger.getLogger(FuhuiPatternAnnotationDataManager.class);
 
     public static final String FUHUI_TYPE="Fuhui";
     public static final String CATEGORY_DATA="Category";
@@ -71,8 +74,9 @@ public class FuhuiPatternAnnotationDataManager extends PatternAnnotationDataMana
         computePercentiles(probabilityMap, 0.0f, 1.0f);
         DataDescriptor categoryDescriptor=descriptorList.get(0);
         DataDescriptor probabilityDescriptor=descriptorList.get(1);
-        descriptorScoreMap.put(categoryDescriptor, categoryMap);
-        descriptorScoreMap.put(probabilityDescriptor, probabilityMap);
+        logger.info("Adding descriptorScoreMap entries for categoryMap, probabilityMap");
+        descriptorScoreMap.put(categoryDescriptor.getName(), categoryMap);
+        descriptorScoreMap.put(probabilityDescriptor.getName(), probabilityMap);
     }
 
     public Map<String, List<Long>> loadSampleMap() throws Exception {

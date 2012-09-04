@@ -384,7 +384,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         return PatternSearchDAO.getCompartmentList(type);
     }
 
-    public FilterResult patternSearchGetFilteredResults(String type, Map<DataDescriptor, Set<DataFilter>> filterMap) {
+    public FilterResult patternSearchGetFilteredResults(String type, Map<String, Set<DataFilter>> filterMap) {
         return PatternSearchDAO.getFilteredResults(type, filterMap);
     }
 

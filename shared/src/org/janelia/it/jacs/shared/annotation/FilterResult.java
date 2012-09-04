@@ -17,15 +17,17 @@ public class FilterResult implements Serializable {
 
     Map<String, Long> countMap;
     List<Long> sampleList;
+    Long totalSampleCount;
 
     public FilterResult() {
         countMap=new HashMap<String, Long>();
         sampleList=new ArrayList<Long>();
     }
 
-    public FilterResult(Map<String, Long> countMap, List<Long> sampleList) {
+    public FilterResult(Map<String, Long> countMap, List<Long> sampleList, Long totalSamplesCount) {
         this.countMap = countMap;
         this.sampleList = sampleList;
+        this.totalSampleCount = totalSamplesCount;
     }
 
     public Map<String, Long> getCountMap() {
@@ -44,8 +46,17 @@ public class FilterResult implements Serializable {
         this.sampleList = sampleList;
     }
 
+    public Long getTotalSampleCount() {
+        return totalSampleCount;
+    }
+
+    public void setTotalSampleCount(Long totalSampleCount) {
+        this.totalSampleCount = totalSampleCount;
+    }
+
     public void clear() {
         countMap.clear();
         sampleList.clear();
+        totalSampleCount=0L;
     }
 }
