@@ -64,7 +64,6 @@ fi
 if [ $BUILD_FLYSUITE == 1 ]; then
 
     mkdir -p $PACKAGE_MAC_DIR # this should have been created by part 1
-    # we rename the bundle for backwards compatibility with other scripts 
     cp -R $VAA3D_COMPILE_MAC_DIR/bin/vaa3d64.app $PACKAGE_MAC_DIR/vaa3d64.app
 
     ICON_FILE="$JACS_COMPILE_DIR/console/src/main/java/images/fly.png"
