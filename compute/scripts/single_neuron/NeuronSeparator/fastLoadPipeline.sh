@@ -1,9 +1,9 @@
-#/bin/sh
+#!/bin/sh
 #
 # Run the neuron separation pipeline
 #
 # Usage:
-# sh separatePipeline.sh <output dir> <name> <input file> 
+# sh fastLoadPipeline.sh <separate dir> <original input file>
 
 DIR=$(cd "$(dirname "$0")"; pwd)
 
@@ -22,8 +22,9 @@ if [ $NUMPARAMS -lt 1 ]
 then
     echo " "
     echo " USAGE ::  "
-    echo " sh fastLoadPipeline.sh <separate dir>"
-    echo " "
+    echo " sh fastLoadPipeline.sh <separate dir> [original input file]"
+    echo " If the original input file is not provided, we will attempt to "
+    echo " locate it through the logs in separate dir."
     exit
 fi
 
@@ -34,6 +35,7 @@ INPUT_FILE=$2 # e.g. /groups/scicomp/jacsData/filestore/.../stitched-16792827624
 REF_FILE="$SEPDIR/Reference.v3dpbd"
 LABEL_FILE="$SEPDIR/ConsolidatedLabel.v3dpbd"
 OUTDIR=$SEPDIR/fastLoad
+OUTDIR_LARGE=$SEPDIR/archive/fastLoad
 WORKING_DIR=$OUTDIR/temp
 
 echo "Run Dir: $DIR"
@@ -158,5 +160,9 @@ ln -s ConsolidatedLabel3.v3dpbd ConsolidatedLabel2.v3dpbd
 echo "~ Removing temp files"
 rm -rf $WORKING_DIR
 
-echo "~ Finished"
+echo "~ Moving large files to archive directory: $OUTDIR_LARGE"
+mkdir -p $OUTDIR_LARGE
+mv $OUTDIR/*.v3dpbd $OUTDIR_LARGE
+
+echo "~ Finished with fastLoad pipeline"
 

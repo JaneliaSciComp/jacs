@@ -1,4 +1,4 @@
-#/bin/sh
+#!/bin/sh
 #
 # Create Maximum Intensity Pojections
 #
