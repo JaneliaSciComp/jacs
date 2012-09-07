@@ -1,6 +1,9 @@
 package org.janelia.it.jacs.compute.service.neuronSeparator;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.FilenameFilter;
+import java.io.IOException;
 
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
@@ -144,6 +147,14 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
 
     	if (csFiles.length < 3) {
     		throw new MissingDataException("SeparationResult, ConsolidatedSignal, and ConsolidatedLabel not found for "+resultFileNode.getDirectoryPath());
+    	}
+    	
+    	File archiveDir = new File(outputDir, "archive");
+    	if (archiveDir.exists()) {
+    		processData.putItem("ARCHIVE_FILE_PATH", archiveDir.getAbsolutePath());
+    	}
+    	else {
+    		logger.warn("No archive directory was generated at "+archiveDir.getAbsolutePath());
     	}
 	}
 }

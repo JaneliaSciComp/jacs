@@ -21,13 +21,13 @@ public class TrashFileNodeService implements IService {
             Task task = ProcessDataHelper.getTask(processData);
             String username = task.getOwner();
             
-            String fileNodeId = (String)processData.getItem("FILE_NODE_ID");
+            Long fileNodeId = (Long)processData.getItem("FILE_NODE_ID");
             
             if (fileNodeId==null) {
             	throw new IllegalArgumentException("FILE_NODE_ID may not be null");
             }
             
-            if (EJBFactory.getLocalComputeBean().trashNode(username, new Long(fileNodeId), true)) {
+            if (EJBFactory.getLocalComputeBean().trashNode(username, fileNodeId, true)) {
             	logger.info("Removed result node: "+fileNodeId);
             }
             else {

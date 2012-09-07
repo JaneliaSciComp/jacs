@@ -45,7 +45,11 @@ public class FastLoadResultsDiscoveryService implements IService {
 	        if (entityList==null) {
 	        	Entity entity = (Entity)processData.getItem("SEPARATION");
 	        	if (entity==null) {
-	        		throw new ServiceException("Both SEPARATION and SEPARATION_LIST may not be null");
+	        		String entityId = (String)processData.getItem("SEPARATION_ID");
+	        		if (entityId==null) {
+	        			throw new ServiceException("Both SEPARATION/SEPARATION_ID and SEPARATION_LIST may not be null");	
+	        		}
+	        		entity = entityBean.getEntityById(entityId);
 	        	}
 	        	entityList = new ArrayList<Entity>();
 	        	entityList.add(entity);
@@ -53,7 +57,7 @@ public class FastLoadResultsDiscoveryService implements IService {
 	        
 	        for(Entity entity : entityList) {
 	        	
-	        	if (entity.getEntityType().getName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
+	        	if (!entity.getEntityType().getName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
 	        		logger.info("Not a neuron separation result: "+entity.getId());
 	        		continue;
 	        	}
@@ -70,7 +74,6 @@ public class FastLoadResultsDiscoveryService implements IService {
 		        		Entity fastLoadFolder = helper.createOrVerifyFolderEntity(filesFolder, "Fast Load", fastloadDir);
 		        		processFastLoadFolder(fastLoadFolder);
 		        	}
-	        	
 	        	}
 	        	catch (Exception e) {
 	        		logger.error("Could not process fast load results for separationId="+entity.getId(),e);

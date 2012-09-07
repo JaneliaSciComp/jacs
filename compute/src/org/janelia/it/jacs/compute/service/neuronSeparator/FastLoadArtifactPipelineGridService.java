@@ -16,7 +16,14 @@ import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 
 /**
  * Run the fast load pipeline on a set of neuron separation result directories.
- *   INPUT_PATH_LIST - input paths
+ * 
+ * Inputs variables:
+ *   FILE_PATHS - input paths (e.g. /.../separate)
+ *   
+ * Output variables:
+ *   FASTLOAD_PATHS - resulting paths to the fastLoad artifacts (e.g. /.../separate/fastLoad)
+ *   ARCHIVE_FILE_PATHS - resulting paths to archive (e.g. /.../separate/archive)
+ *   ARCHIVE_FILE_PATH - first path, if there is just one (e.g. /.../separate/archive)
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -99,17 +106,34 @@ public class FastLoadArtifactPipelineGridService extends SubmitDrmaaJobService {
     protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
     	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
     	// Reserve all 2 slots on a node. This gives us 6 GB of memory. 
-    	jt.setNativeSpecification("-pe batch 2 -l limit50=1 ");
+    	jt.setNativeSpecification("-pe batch 2 ");
     	return jt;
     }
     
     @Override
 	public void postProcess() throws MissingDataException {
+    	
+    	List<String> archivePaths = new ArrayList<String>();
+    	
     	for(String fastLoadDir : fastLoadPaths) {
+    		
     		File file = new File(fastLoadDir);
     		if (!file.exists()) {
     			throw new MissingDataException("Missing fast load directory: "+fastLoadDir);
     		}
+    		
+    		File archiveDir = new File(file.getParentFile(), "archive");
+    		if (archiveDir.exists()) {
+    			archivePaths.add(archiveDir.getAbsolutePath());
+    		}
+        	else {
+        		logger.warn("No archive directory was generated at "+archiveDir.getAbsolutePath());
+        	}
+    	}
+
+    	processData.putItem("ARCHIVE_FILE_PATHS", archivePaths);
+    	if (archivePaths.size()==1) {
+    		processData.putItem("ARCHIVE_FILE_PATH", archivePaths.get(0));
     	}
 	}
 }
