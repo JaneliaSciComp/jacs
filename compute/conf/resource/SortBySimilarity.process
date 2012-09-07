@@ -19,31 +19,35 @@
 	        <output name="RESULT_FILE_NODE_ID"/>
 	    </operation>
 	    
-        <operation name="Prepare Inputs" processor="org.janelia.it.jacs.compute.service.entity.SortBySimilarityService">
-            <input name="MODE" value="SETUP"/>
-            <input name="RESULT_FILE_NODE"/>
-            <input name="TARGET_STACK_ID"/>
-            <input name="FOLDER_ID"/>
-            <output name="TARGET_STACK_FILEPATH"/>
-            <output name="INPUT_LIST_FILEPATH"/>
-            <output name="OUTPUT_LIST_FILEPATH"/>
-        </operation>
-        
-        <sequence name="Compute Similarity" waitForAsync="true">
-            <operation name="Compute Similarity" processor="queue/gridSubmitAndWait">
-                <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DSimilarityService"/>
-                <input name="RESULT_FILE_NODE"/>
-                <input name="TARGET_STACK_FILEPATH"/>
-                <input name="INPUT_LIST_FILEPATH"/>
-                <input name="OUTPUT_LIST_FILEPATH"/>
-            </operation>
-        </sequence>
-        
-        <operation name="Resort Entities" processor="org.janelia.it.jacs.compute.service.entity.SortBySimilarityService">
-            <input name="MODE" value="RESORT"/>
-            <input name="FOLDER_ID"/>
-            <input name="OUTPUT_LIST_FILEPATH"/>
-        </operation>
+	    <sequence startEvent="running">
+	    
+	        <operation name="Prepare Inputs" processor="org.janelia.it.jacs.compute.service.entity.SortBySimilarityService">
+	            <input name="MODE" value="SETUP"/>
+	            <input name="RESULT_FILE_NODE"/>
+	            <input name="TARGET_STACK_ID"/>
+	            <input name="FOLDER_ID"/>
+	            <output name="TARGET_STACK_FILEPATH"/>
+	            <output name="INPUT_LIST_FILEPATH"/>
+	            <output name="OUTPUT_LIST_FILEPATH"/>
+	        </operation>
+	        
+	        <sequence name="Compute Similarity" waitForAsync="true">
+	            <operation name="Compute Similarity" processor="queue/gridSubmitAndWait">
+	                <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DSimilarityService"/>
+	                <input name="RESULT_FILE_NODE"/>
+	                <input name="TARGET_STACK_FILEPATH"/>
+	                <input name="INPUT_LIST_FILEPATH"/>
+	                <input name="OUTPUT_LIST_FILEPATH"/>
+	            </operation>
+	        </sequence>
+	        
+	        <operation name="Resort Entities" processor="org.janelia.it.jacs.compute.service.entity.SortBySimilarityService">
+	            <input name="MODE" value="RESORT"/>
+	            <input name="FOLDER_ID"/>
+	            <input name="OUTPUT_LIST_FILEPATH"/>
+	        </operation>
+    
+    	</sequence>
         
     </sequence>
 </process>
