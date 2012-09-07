@@ -1,8 +1,8 @@
 <!-- 
 	Copy a file or directory structure from the archive to the main file share.
 -->
-<process name="Sync data from archive" processor="queue/consolePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
-    <sequence name="Sync data from archive" waitForAsync="true">
+<process name="Synchronize files from archive" processor="queue/consolePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+    <sequence name="Synchronize files from archive" waitForAsync="true">
 	
 	    <!-- Import variables from the task -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
@@ -12,7 +12,7 @@
 	    </operation>
 	    
 	    <!-- Move the files over if necessary -->
-	    <sequence startEvent="running">
+	    <sequence name="Synchronize files from archive" startEvent="running">
 			<operation name="Copy files from archive and move them into place" processor="org.janelia.it.jacs.compute.service.utility.SyncFromArchiveService">
 				<input name="FILE_PATH"/>
 			</operation>

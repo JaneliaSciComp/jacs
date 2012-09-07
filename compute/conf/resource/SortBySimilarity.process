@@ -19,7 +19,7 @@
 	        <output name="RESULT_FILE_NODE_ID"/>
 	    </operation>
 	    
-	    <sequence startEvent="running">
+	    <sequence name="Compute Similarity" startEvent="running">
 	    
 	        <operation name="Prepare Inputs" processor="org.janelia.it.jacs.compute.service.entity.SortBySimilarityService">
 	            <input name="MODE" value="SETUP"/>
@@ -41,6 +41,10 @@
 	            </operation>
 	        </sequence>
 	        
+    	</sequence>
+    	
+        <sequence name="Sort Entities" startEvent="postprocess">
+	    
 	        <operation name="Resort Entities" processor="org.janelia.it.jacs.compute.service.entity.SortBySimilarityService">
 	            <input name="MODE" value="RESORT"/>
 	            <input name="FOLDER_ID"/>
