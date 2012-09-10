@@ -7,7 +7,6 @@ import com.google.gwt.user.client.ui.*;
 import org.janelia.it.jacs.model.common.UserDataNodeVO;
 import org.janelia.it.jacs.model.tasks.tic.BatchTicTask;
 import org.janelia.it.jacs.web.gwt.common.client.panel.CenteredWidgetHorizontalPanel;
-import org.janelia.it.jacs.web.gwt.common.client.panel.TitledBox;
 import org.janelia.it.jacs.web.gwt.common.client.panel.TitledPanel;
 import org.janelia.it.jacs.web.gwt.common.client.popup.ErrorPopupPanel;
 import org.janelia.it.jacs.web.gwt.common.client.popup.InfoPopupPanel;
@@ -66,28 +65,21 @@ public class TICManagementPanel extends VerticalPanel {
     private CheckBox _fqbatchCheckBox;
 
     private TextBox _inputFileOrDirTextBox;
-    private TitledBox _inputFileOrDirPanel;
     private RoundedButton _validateInputFileOrDirButton;
 
     private TextBox _transformationFileTextBox;
-    private TitledBox _transformationFilePanel;
     private RoundedButton _validateTransformationFileButton;
 
     private TextBox _avgReadNoiseTextBox;
-    private TitledBox _avgReadNoisePanel;
 
     private TextBox _avgDarkTextBox;
-    private TitledBox _avgDarkPanel;
 
     private TextBox _borderCropPixelsTextBox;
-    private TitledBox _borderCropPanel;
 
     private TextBox _intensityCorrectionMatrixFileTextBox;
-    private TitledBox _intensityCorrectionPanel;
     private RoundedButton _validateIntensityCorrectionFileButton;
 
     private TextBox _microscopeSettingsTextBox;
-    private TitledBox _microscopeSettingsPanel;
 
     private TextBox _positionXMinTextBox;
     private TextBox _positionXMaxTextBox;
@@ -101,8 +93,7 @@ public class TICManagementPanel extends VerticalPanel {
     private TextBox _sigmaYMaxTextBox;
     private TextBox _sigmaZMinTextBox;
     private TextBox _sigmaZMaxTextBox;
-    private TitledBox _thresholdPanel;
-    
+
     private RoundedButton _validateMicroscopeSettingsFileButton;
     private CheckBox _spotsOnlyCheckBox;
 
@@ -134,6 +125,7 @@ public class TICManagementPanel extends VerticalPanel {
         stepPanel.add(_illuminationCorrectionCheckBox);
         stepPanel.add(_fqbatchCheckBox);
         _spotsOnlyCheckBox = new CheckBox("Only persist spots data");
+        _spotsOnlyCheckBox.setValue(Boolean.TRUE);
 
         HorizontalPanel _spotsPanel = new HorizontalPanel();
         _spotsPanel.add(_spotsOnlyCheckBox);
@@ -141,20 +133,13 @@ public class TICManagementPanel extends VerticalPanel {
         HorizontalPanel jobPanel = new HorizontalPanel();
         _jobNameTextBox = new TextBox();
         jobPanel.add(HtmlUtils.getHtml("Job Name:", "prompt"));
+        jobPanel.add(HtmlUtils.getHtml("&nbsp;", "smallSpacer"));
         jobPanel.add(_jobNameTextBox);
 
         VerticalPanel settingsPanel = new VerticalPanel();
 //        setUpDiscoveryPanel();
 //        setupOraclePanel();
 //        setupUserListPanel();
-        setUpInputFileOrDirectoryPanel();
-        setUpBorderCropPanel();
-        setUpTransformationFilePanel();
-        setUpAvgReadNoisePanel();
-        setUpAvgDarkPanel();
-        setUpIntensityCorrectionPanel();
-        setUpMicroscopeSettingsPanel();
-        setUpThresholdPanel();
         createButtons();
 
         settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "smallSpacer"));
@@ -168,22 +153,22 @@ public class TICManagementPanel extends VerticalPanel {
 //        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
 //        settingsPanel.add(oraclePanel);
 //        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "smallSpacer"));
-        settingsPanel.add(_inputFileOrDirPanel);
-        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
-        settingsPanel.add(_borderCropPanel);
-        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
-        settingsPanel.add(_transformationFilePanel);
-        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
-        settingsPanel.add(_intensityCorrectionPanel);
-        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
-        settingsPanel.add(_avgReadNoisePanel);
-        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
-        settingsPanel.add(_avgDarkPanel);
-        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
-        settingsPanel.add(_microscopeSettingsPanel);
-        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
-        settingsPanel.add(_thresholdPanel);
-        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "spacer"));
+        settingsPanel.add(setUpInputFileOrDirectoryPanel());
+        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "smallSpacer"));
+        settingsPanel.add(setUpBorderCropPanel());
+        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "smallSpacer"));
+        settingsPanel.add(setUpTransformationFilePanel());
+        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "smallSpacer"));
+        settingsPanel.add(setUpIntensityCorrectionPanel());
+        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "smallSpacer"));
+        settingsPanel.add(setUpAvgReadNoisePanel());
+        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "smallSpacer"));
+        settingsPanel.add(setUpAvgDarkPanel());
+        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "smallSpacer"));
+        settingsPanel.add(setUpMicroscopeSettingsPanel());
+        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "smallSpacer"));
+        settingsPanel.add(setUpThresholdPanel());
+        settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "smallSpacer"));
 //        settingsPanel.add(resultsListPanel);
         settingsPanel.add(HtmlUtils.getHtml("&nbsp;", "smallSpacer"));
         settingsPanel.add(getSubmitButtonPanel());
@@ -202,8 +187,132 @@ public class TICManagementPanel extends VerticalPanel {
 //        realize();
     }
 
-    private void setUpThresholdPanel() {
-        _thresholdPanel= new TitledBox("Thresholds");
+
+    protected void popuplateContentPanel() {
+    }
+
+//    private void setUpDiscoveryPanel() {
+//        _discoveryPanel = new TitledBox("Scan For New Directories");
+//        _imagePath = new TextBox();
+//        _imagePath.setVisibleLength(60);
+//        _imagePath.setText("");
+//        _scanDirForResultsButton = new RoundedButton("Scan Directory", new ClickListener() {
+//            @Override
+//            public void onClick(Widget sender) {
+//                _dataservice.findPotentialResultNodes(_imagePath.getText(), new AsyncCallback() {
+//                    public void onFailure(Throwable throwable) {
+//                        new PopupCenteredLauncher(new ErrorPopupPanel("There was a problem discovering the image directories."), 250).showPopup(_scanDirForResultsButton);
+//                    }
+//
+//                    public void onSuccess(Object o) {
+//                        // If successful, reload from scratch
+//                        naaResultsPagingPanel.first();
+//                        new PopupCenteredLauncher(new InfoPopupPanel("Scan completed successfully."), 250).showPopup(_scanDirForResultsButton);
+//                    }
+//                });
+//            }
+//        });
+//        HorizontalPanel sourcePanel = new HorizontalPanel();
+//        sourcePanel.add(HtmlUtils.getHtml("Image Directory", "prompt"));
+//        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
+//        sourcePanel.add(_imagePath);
+//        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
+//        sourcePanel.add(_scanDirForResultsButton);
+//        _discoveryPanel.add(sourcePanel);
+//    }
+
+    private HorizontalPanel setUpInputFileOrDirectoryPanel() {
+        _inputFileOrDirTextBox = new TextBox();
+        _inputFileOrDirTextBox.setVisibleLength(90);
+        _inputFileOrDirTextBox.setText("");
+        _validateInputFileOrDirButton = getValidationButton(_inputFileOrDirTextBox.getText());
+        HorizontalPanel sourcePanel = new HorizontalPanel();
+        sourcePanel.add(HtmlUtils.getHtml("Input File or Directory Path: ", "prompt"));
+        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "smallSpacer"));
+        sourcePanel.add(_inputFileOrDirTextBox);
+        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
+//        sourcePanel.add(_validateInputFileOrDirButton);
+        return sourcePanel;
+    }
+
+    private HorizontalPanel setUpBorderCropPanel() {
+        _borderCropPixelsTextBox = new TextBox();
+        _borderCropPixelsTextBox.setVisibleLength(10);
+        _borderCropPixelsTextBox.setText("");
+        HorizontalPanel sourcePanel = new HorizontalPanel();
+        sourcePanel.add(HtmlUtils.getHtml("Border Pixels to Crop: ", "prompt"));
+        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "smallSpacer"));
+        sourcePanel.add(_borderCropPixelsTextBox);
+        return sourcePanel;
+    }
+
+    private HorizontalPanel setUpTransformationFilePanel() {
+        _transformationFileTextBox = new TextBox();
+        _transformationFileTextBox.setVisibleLength(90);
+        _transformationFileTextBox.setText("");
+        _validateTransformationFileButton = getValidationButton(_transformationFileTextBox.getText());
+        HorizontalPanel sourcePanel = new HorizontalPanel();
+        sourcePanel.add(HtmlUtils.getHtml("Transformation File Path: ", "prompt"));
+        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "smallSpacer"));
+        sourcePanel.add(_transformationFileTextBox);
+        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
+//        sourcePanel.add(_validateTransformationFileButton);
+        return sourcePanel;
+    }
+
+    private HorizontalPanel setUpIntensityCorrectionPanel() {
+        _intensityCorrectionMatrixFileTextBox = new TextBox();
+        _intensityCorrectionMatrixFileTextBox.setVisibleLength(90);
+        _intensityCorrectionMatrixFileTextBox.setText("");
+        _validateIntensityCorrectionFileButton = getValidationButton(_intensityCorrectionMatrixFileTextBox.getText());
+        HorizontalPanel sourcePanel = new HorizontalPanel();
+        sourcePanel.add(HtmlUtils.getHtml("Intensity Correction File Path: ", "prompt"));
+        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "smallSpacer"));
+        sourcePanel.add(_intensityCorrectionMatrixFileTextBox);
+        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
+//        sourcePanel.add(_validateIntensityCorrectionFileButton);
+        return sourcePanel;
+    }
+
+    private HorizontalPanel setUpMicroscopeSettingsPanel() {
+        _microscopeSettingsTextBox = new TextBox();
+        _microscopeSettingsTextBox.setVisibleLength(90);
+        _microscopeSettingsTextBox.setText("");
+        _validateMicroscopeSettingsFileButton = getValidationButton(_microscopeSettingsTextBox.getText());
+        HorizontalPanel sourcePanel = new HorizontalPanel();
+        sourcePanel.add(HtmlUtils.getHtml("Microscope Settings File Path: ", "prompt"));
+        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "smallSpacer"));
+        sourcePanel.add(_microscopeSettingsTextBox);
+        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
+//        sourcePanel.add(_validateMicroscopeSettingsFileButton);
+        return sourcePanel;
+    }
+
+    private HorizontalPanel setUpAvgReadNoisePanel() {
+        _avgReadNoiseTextBox = new TextBox();
+        _avgReadNoiseTextBox.setVisibleLength(90);
+        _avgReadNoiseTextBox.setText("107.089,107.39,107.395,107.41,107.711,107.739,107.609,107.958,107.932");
+        HorizontalPanel sourcePanel = new HorizontalPanel();
+        sourcePanel.add(HtmlUtils.getHtml("Average Read Noise Settings: ", "prompt"));
+        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "smallSpacer"));
+        sourcePanel.add(_avgReadNoiseTextBox);
+        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
+        return sourcePanel;
+    }
+
+    private HorizontalPanel setUpAvgDarkPanel() {
+        _avgDarkTextBox = new TextBox();
+        _avgDarkTextBox.setVisibleLength(90);
+        _avgDarkTextBox.setText("0,0,0,0,0,0,0,0,0");
+        HorizontalPanel sourcePanel = new HorizontalPanel();
+        sourcePanel.add(HtmlUtils.getHtml("Averge Dark Settings: ", "prompt"));
+        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "smallSpacer"));
+        sourcePanel.add(_avgDarkTextBox);
+        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
+        return sourcePanel;
+    }
+
+    private HorizontalPanel setUpThresholdPanel() {
         _positionXMinTextBox = new TextBox();
         _positionXMinTextBox.setVisibleLength(10);
         _positionXMinTextBox.setText("-120");
@@ -249,169 +358,40 @@ public class TICManagementPanel extends VerticalPanel {
         _validateIntensityCorrectionFileButton = getValidationButton(_intensityCorrectionMatrixFileTextBox.getText());
 
         HorizontalPanel thresholdPanel = new HorizontalPanel();
-        Grid thrPosGrid = new Grid(4,3);
-        thrPosGrid.setWidget(0,0,HtmlUtils.getHtml("Position","prompt"));
-        thrPosGrid.setWidget(0,1,HtmlUtils.getHtml("Min","prompt"));
-        thrPosGrid.setWidget(0,2,HtmlUtils.getHtml("Max","prompt"));
-        thrPosGrid.setWidget(1,0,HtmlUtils.getHtml("X","prompt"));
-        thrPosGrid.setWidget(1,1,_positionXMinTextBox);
-        thrPosGrid.setWidget(1,2,_positionXMaxTextBox);
-        thrPosGrid.setWidget(2,0,HtmlUtils.getHtml("Y","prompt"));
-        thrPosGrid.setWidget(2,1,_positionYMinTextBox);
-        thrPosGrid.setWidget(2,2,_positionYMaxTextBox);
-        thrPosGrid.setWidget(3,0,HtmlUtils.getHtml("Z","prompt"));
-        thrPosGrid.setWidget(3,1,_positionZMinTextBox);
-        thrPosGrid.setWidget(3,2,_positionZMaxTextBox);
+        Grid thrPosGrid = new Grid(5,3);
+        thrPosGrid.setWidget(0,0,HtmlUtils.getHtml("Thresholds","prompt"));
+        thrPosGrid.setWidget(1,0,HtmlUtils.getHtml("Position","prompt"));
+        thrPosGrid.setWidget(1,1,HtmlUtils.getHtml("Min","prompt"));
+        thrPosGrid.setWidget(1,2,HtmlUtils.getHtml("Max","prompt"));
+        thrPosGrid.setWidget(2,0,HtmlUtils.getHtml("X","prompt"));
+        thrPosGrid.setWidget(2,1,_positionXMinTextBox);
+        thrPosGrid.setWidget(2,2,_positionXMaxTextBox);
+        thrPosGrid.setWidget(3,0,HtmlUtils.getHtml("Y","prompt"));
+        thrPosGrid.setWidget(3,1,_positionYMinTextBox);
+        thrPosGrid.setWidget(3,2,_positionYMaxTextBox);
+        thrPosGrid.setWidget(4,0,HtmlUtils.getHtml("Z","prompt"));
+        thrPosGrid.setWidget(4,1,_positionZMinTextBox);
+        thrPosGrid.setWidget(4,2,_positionZMaxTextBox);
 
-        Grid thrSigGrid = new Grid(4,3);
-        thrSigGrid.setWidget(0,0,HtmlUtils.getHtml("Sigma","prompt"));
-        thrSigGrid.setWidget(0,1,HtmlUtils.getHtml("Min","prompt"));
-        thrSigGrid.setWidget(0,2,HtmlUtils.getHtml("Max","prompt"));
-        thrSigGrid.setWidget(1,0,HtmlUtils.getHtml("X","prompt"));
-        thrSigGrid.setWidget(1,1,_sigmaXMinTextBox);
-        thrSigGrid.setWidget(1,2,_sigmaXMaxTextBox);
-        thrSigGrid.setWidget(2,0,HtmlUtils.getHtml("Y","prompt"));
-        thrSigGrid.setWidget(2,1,_sigmaYMinTextBox);
-        thrSigGrid.setWidget(2,2,_sigmaYMaxTextBox);
-        thrSigGrid.setWidget(3,0,HtmlUtils.getHtml("Z","prompt"));
-        thrSigGrid.setWidget(3,1,_sigmaZMinTextBox);
-        thrSigGrid.setWidget(3,2,_sigmaZMaxTextBox);
+        Grid thrSigGrid = new Grid(5,3);
+        thrSigGrid.setWidget(0,0,HtmlUtils.getHtml("&nbsp","prompt"));
+        thrSigGrid.setWidget(1,0,HtmlUtils.getHtml("Sigma","prompt"));
+        thrSigGrid.setWidget(1,1,HtmlUtils.getHtml("Min","prompt"));
+        thrSigGrid.setWidget(1,2,HtmlUtils.getHtml("Max","prompt"));
+        thrSigGrid.setWidget(2,0,HtmlUtils.getHtml("X","prompt"));
+        thrSigGrid.setWidget(2,1,_sigmaXMinTextBox);
+        thrSigGrid.setWidget(2,2,_sigmaXMaxTextBox);
+        thrSigGrid.setWidget(3,0,HtmlUtils.getHtml("Y","prompt"));
+        thrSigGrid.setWidget(3,1,_sigmaYMinTextBox);
+        thrSigGrid.setWidget(3,2,_sigmaYMaxTextBox);
+        thrSigGrid.setWidget(4,0,HtmlUtils.getHtml("Z","prompt"));
+        thrSigGrid.setWidget(4,1,_sigmaZMinTextBox);
+        thrSigGrid.setWidget(4,2,_sigmaZMaxTextBox);
 
         thresholdPanel.add(thrPosGrid);
         thresholdPanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
         thresholdPanel.add(thrSigGrid);
-        _thresholdPanel.add(thresholdPanel);
-    }
-
-    protected void popuplateContentPanel() {
-    }
-
-//    private void setUpDiscoveryPanel() {
-//        _discoveryPanel = new TitledBox("Scan For New Directories");
-//        _imagePath = new TextBox();
-//        _imagePath.setVisibleLength(60);
-//        _imagePath.setText("");
-//        _scanDirForResultsButton = new RoundedButton("Scan Directory", new ClickListener() {
-//            @Override
-//            public void onClick(Widget sender) {
-//                _dataservice.findPotentialResultNodes(_imagePath.getText(), new AsyncCallback() {
-//                    public void onFailure(Throwable throwable) {
-//                        new PopupCenteredLauncher(new ErrorPopupPanel("There was a problem discovering the image directories."), 250).showPopup(_scanDirForResultsButton);
-//                    }
-//
-//                    public void onSuccess(Object o) {
-//                        // If successful, reload from scratch
-//                        naaResultsPagingPanel.first();
-//                        new PopupCenteredLauncher(new InfoPopupPanel("Scan completed successfully."), 250).showPopup(_scanDirForResultsButton);
-//                    }
-//                });
-//            }
-//        });
-//        HorizontalPanel sourcePanel = new HorizontalPanel();
-//        sourcePanel.add(HtmlUtils.getHtml("Image Directory", "prompt"));
-//        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
-//        sourcePanel.add(_imagePath);
-//        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
-//        sourcePanel.add(_scanDirForResultsButton);
-//        _discoveryPanel.add(sourcePanel);
-//    }
-
-    private void setUpInputFileOrDirectoryPanel() {
-        _inputFileOrDirPanel = new TitledBox("Input File Or Directory");
-        _inputFileOrDirTextBox = new TextBox();
-        _inputFileOrDirTextBox.setVisibleLength(90);
-        _inputFileOrDirTextBox.setText("");
-        _validateInputFileOrDirButton = getValidationButton(_inputFileOrDirTextBox.getText());
-        HorizontalPanel sourcePanel = new HorizontalPanel();
-        sourcePanel.add(HtmlUtils.getHtml("Path: ", "prompt"));
-        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
-        sourcePanel.add(_inputFileOrDirTextBox);
-        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
-//        sourcePanel.add(_validateInputFileOrDirButton);
-        _inputFileOrDirPanel.add(sourcePanel);
-    }
-
-    private void setUpBorderCropPanel() {
-        _borderCropPanel = new TitledBox("Crop Border Size");
-        _borderCropPixelsTextBox = new TextBox();
-        _borderCropPixelsTextBox.setVisibleLength(10);
-        _borderCropPixelsTextBox.setText("");
-        HorizontalPanel sourcePanel = new HorizontalPanel();
-        sourcePanel.add(HtmlUtils.getHtml("Pixels to Crop: ", "prompt"));
-        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
-        sourcePanel.add(_borderCropPixelsTextBox);
-        _borderCropPanel.add(sourcePanel);
-    }
-
-    private void setUpTransformationFilePanel() {
-        _transformationFilePanel = new TitledBox("Transformation File");
-        _transformationFileTextBox = new TextBox();
-        _transformationFileTextBox.setVisibleLength(90);
-        _transformationFileTextBox.setText("");
-        _validateTransformationFileButton = getValidationButton(_transformationFileTextBox.getText());
-        HorizontalPanel sourcePanel = new HorizontalPanel();
-        sourcePanel.add(HtmlUtils.getHtml("Path: ", "prompt"));
-        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
-        sourcePanel.add(_transformationFileTextBox);
-        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
-//        sourcePanel.add(_validateTransformationFileButton);
-        _transformationFilePanel.add(sourcePanel);
-    }
-
-    private void setUpIntensityCorrectionPanel() {
-        _intensityCorrectionPanel = new TitledBox("Intensity Correction File");
-        _intensityCorrectionMatrixFileTextBox = new TextBox();
-        _intensityCorrectionMatrixFileTextBox.setVisibleLength(90);
-        _intensityCorrectionMatrixFileTextBox.setText("");
-        _validateIntensityCorrectionFileButton = getValidationButton(_intensityCorrectionMatrixFileTextBox.getText());
-        HorizontalPanel sourcePanel = new HorizontalPanel();
-        sourcePanel.add(HtmlUtils.getHtml("Path: ", "prompt"));
-        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
-        sourcePanel.add(_intensityCorrectionMatrixFileTextBox);
-        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
-//        sourcePanel.add(_validateIntensityCorrectionFileButton);
-        _intensityCorrectionPanel.add(sourcePanel);
-    }
-
-    private void setUpMicroscopeSettingsPanel() {
-        _microscopeSettingsPanel = new TitledBox("Microscope Settings File");
-        _microscopeSettingsTextBox = new TextBox();
-        _microscopeSettingsTextBox.setVisibleLength(90);
-        _microscopeSettingsTextBox.setText("");
-        _validateMicroscopeSettingsFileButton = getValidationButton(_microscopeSettingsTextBox.getText());
-        HorizontalPanel sourcePanel = new HorizontalPanel();
-        sourcePanel.add(HtmlUtils.getHtml("Path: ", "prompt"));
-        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
-        sourcePanel.add(_microscopeSettingsTextBox);
-        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
-//        sourcePanel.add(_validateMicroscopeSettingsFileButton);
-        _microscopeSettingsPanel.add(sourcePanel);
-    }
-
-    private void setUpAvgReadNoisePanel() {
-        _avgReadNoisePanel = new TitledBox("Average Read Noise Settings");
-        _avgReadNoiseTextBox = new TextBox();
-        _avgReadNoiseTextBox.setVisibleLength(90);
-        _avgReadNoiseTextBox.setText("107.089,107.39,107.395,107.41,107.711,107.739,107.609,107.958,107.932");
-        HorizontalPanel sourcePanel = new HorizontalPanel();
-        sourcePanel.add(HtmlUtils.getHtml("Path: ", "prompt"));
-        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
-        sourcePanel.add(_avgReadNoiseTextBox);
-        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
-        _avgReadNoisePanel.add(sourcePanel);
-    }
-
-    private void setUpAvgDarkPanel() {
-        _avgDarkPanel = new TitledBox("Average Dark Settings");
-        _avgDarkTextBox = new TextBox();
-        _avgDarkTextBox.setVisibleLength(90);
-        _avgDarkTextBox.setText("0,0,0,0,0,0,0,0,0");
-        HorizontalPanel sourcePanel = new HorizontalPanel();
-        sourcePanel.add(HtmlUtils.getHtml("Path: ", "prompt"));
-        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
-        sourcePanel.add(_avgDarkTextBox);
-        sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
-        _avgDarkPanel.add(sourcePanel);
+        return thresholdPanel;
     }
 
     private RoundedButton getValidationButton(String testFilePath) {
