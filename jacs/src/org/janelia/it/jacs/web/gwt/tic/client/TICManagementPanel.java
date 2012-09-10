@@ -405,7 +405,7 @@ public class TICManagementPanel extends VerticalPanel {
         _avgDarkPanel = new TitledBox("Average Dark Settings");
         _avgDarkTextBox = new TextBox();
         _avgDarkTextBox.setVisibleLength(90);
-        _avgDarkTextBox.setText("50,50,50,50,50,50,50,50,50");
+        _avgDarkTextBox.setText("0,0,0,0,0,0,0,0,0");
         HorizontalPanel sourcePanel = new HorizontalPanel();
         sourcePanel.add(HtmlUtils.getHtml("Path: ", "prompt"));
         sourcePanel.add(HtmlUtils.getHtml("&nbsp", "spacer"));
