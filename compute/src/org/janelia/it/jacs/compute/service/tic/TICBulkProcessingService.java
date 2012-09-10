@@ -24,14 +24,14 @@ import java.util.List;
  * Time: 2:20 PM
  * This class looks for all the tif files provided in the inputFile path
  */
-public class TIFBulkProcessingService implements IService {
+public class TICBulkProcessingService implements IService {
     private BatchTicTask task;
-
+    private Logger logger;
 
     @Override
     public void execute(IProcessData processData) throws ServiceException {
         try {
-            Logger logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
+            logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             this.task = (BatchTicTask) ProcessDataHelper.getTask(processData);
             String inputFilePath = task.getParameter(BatchTicTask.PARAM_inputFile);
             HashMap<String, List<String>> relatedFileMap = new HashMap<String, List<String>>();
@@ -75,8 +75,10 @@ public class TIFBulkProcessingService implements IService {
                     File tmpParent = new File(testPath).getParentFile();
                     _currentTask.setParameter(SingleTicTask.PARAM_inputFilePrefix,relatedFileMap.get(key).get(0));
                     File tmpInputFile = new File(testPath);
-                    String targetPrefixMinusLast = tmpInputFile.getName().substring(0, tmpInputFile.getName().lastIndexOf("_"));
-                    final String targetPrefix = targetPrefixMinusLast.substring(0,targetPrefixMinusLast.lastIndexOf("_"));
+                    final String targetPrefix = TICHelper.getTargetPrefix(tmpInputFile.getName());
+                    if (null==targetPrefix) {
+                        throw new ServiceException("TICBulkProcessingService - Cannot successfully determine prefix for files (example: "+tmpInputFile.getName()+")");
+                    }
                     _currentTask.setParameter(SingleTicTask.PARAM_finalOutputLocation, tmpParent.getAbsolutePath()+
                             File.separator+"PipelineResults-"+task.getObjectId().toString()+"-"+targetPrefix);
                     // Save the child task
@@ -100,16 +102,19 @@ public class TIFBulkProcessingService implements IService {
 
 
     /**
-     * The contract here is that the file will look like
-     * 001_a_red.nd2_99_RC.tif where the 99 can be any integer 0..whatever
+     * The contract here is that the file will look like 001_a_red.nd2_99_RC.tif where the 99 can be any integer 0..whatever
      * Find everything up to the 99 and make that a unique prefix.  We'll group all files with the same prefix and submit
-     * as a single grid job
+     * as a single grid job.  We also need to check for the file format of xxx_t0001.tif.
      * @param targetItem file to test in the collection
      * @param targetMap collection of all file prefix and the list of all file paths with that prefix
      */
     private void addFileToMap(File targetItem, HashMap<String, List<String>> targetMap) {
-        String targetPrefixMinusLast = targetItem.getName().substring(0, targetItem.getName().lastIndexOf("_"));
-        String targetPrefix = targetPrefixMinusLast.substring(0,targetPrefixMinusLast.lastIndexOf("_"));
+        String targetPrefix = TICHelper.getTargetPrefix(targetItem.getName());
+        if (null==targetPrefix) {
+            logger.warn("TICBulkProcessingService - Provided file name does not match either expected pattern: " + targetItem.getName());
+            return;
+        }
+
         if (!targetMap.containsKey(targetPrefix)) {
             ArrayList<String> targetFilePaths = new ArrayList<String>();
             targetFilePaths.add(targetItem.getAbsolutePath());

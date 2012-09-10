@@ -63,8 +63,8 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
         }
 
         File tmpInputFile = new File(inputFilePath);
-        String targetPrefixMinusLast = tmpInputFile.getName().substring(0, tmpInputFile.getName().lastIndexOf("_"));
-        final String targetPrefix = targetPrefixMinusLast.substring(0,targetPrefixMinusLast.lastIndexOf("_"));
+        final String targetPrefix = TICHelper.getTargetPrefix(tmpInputFile.getName());
+
         File tmpDir = tmpInputFile.getParentFile();
         File[] relatedFiles = tmpDir.listFiles(new FileFilter() {
             @Override
