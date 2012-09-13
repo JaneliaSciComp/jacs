@@ -116,7 +116,7 @@ sub runInitialGlobalAlignment {
 
     $cmd = sanitize(qq{
         $v3d
-        -x refExtract.so -f refExtract 
+        -x refextract -f refExtract
         -i "$outputFileBase\_GlobalAligned.v3draw"
         -o "$outputFileBase\_GlobalAlignedReference_8bit.v3draw" 
         -p "#c 4"
