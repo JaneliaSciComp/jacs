@@ -56,6 +56,7 @@ public interface EntityBeanRemote {
     public List<Entity> getEntitiesWithAttributeValue(String attrName, String attrValue) throws ComputeException;
     
     public Entity getEntityTree(Long id);
+    public Entity getEntityAndChildren(Long id);
     public Set<Entity> getParentEntities(long entityId);
     public Set<Entity> getChildEntities(long entityId);
     public Map<Long,String> getChildEntityNames(long entityId);

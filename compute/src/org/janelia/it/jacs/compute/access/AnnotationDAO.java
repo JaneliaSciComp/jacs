@@ -1942,6 +1942,22 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	return entity;
     }
 
+    public Entity getEntityAndChildren(Long id) {
+        Session session = getCurrentSession();
+        Criteria c = session.createCriteria(Entity.class);
+        c.add(Expression.eq("id",id));
+        Entity parent = (Entity) c.uniqueResult();
+        if (parent == null)
+            return null;
+        for (EntityData ed : parent.getEntityData()) {
+            Entity child=ed.getChildEntity();
+            if (child!=null) {
+                String childName=child.getName(); // forces load of attributes but not subchild entities
+            }
+        }
+        return parent;
+    }
+
     public Long countDescendants(String owner, Entity entity, Long stopAfterReaching) {
     	return countDescendants(owner, entity, new HashSet<Long>(), stopAfterReaching);
     }

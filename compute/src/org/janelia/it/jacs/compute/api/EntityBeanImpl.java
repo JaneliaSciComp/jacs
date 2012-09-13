@@ -406,6 +406,10 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     public Entity getEntityTree(Long id) {
     	return _annotationDAO.populateDescendants(getEntityById(id.toString()));
     }
+
+    public Entity getEntityAndChildren(Long id) {
+        return _annotationDAO.getEntityAndChildren(id);
+    }
     
     public Set<Entity> getParentEntities(long entityId) {
         try {
