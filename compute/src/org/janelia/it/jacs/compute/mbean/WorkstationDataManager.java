@@ -357,8 +357,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         try {
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
             		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), null,
-            		topLevelFolderName, refreshProcessing, refreshAlignment, null,
-            		"/groups/leet/leetimg/leetlab/lineage/"+imageFamily+"/confocalStacks", imageFamily);
+            		topLevelFolderName, refreshProcessing, refreshAlignment, null, imageFamily);
             task.setJobName("Leet Data Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("LeetDataPipeline", task.getObjectId());
@@ -386,8 +385,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         try {
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
             		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), null,
-            		topLevelFolderName, refreshProcessing, refreshAlignment, refreshSeparation,
-                    "/groups/flylight/flylight/flip/confocalStacks","flylight_flip");
+            		topLevelFolderName, refreshProcessing, refreshAlignment, refreshSeparation,"flylight_flip");
             task.setJobName("Central Brain Data Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("CentralBrainDataPipeline", task.getObjectId());
@@ -400,8 +398,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         try {
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
             		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), null,
-            		null, null, refreshAlignment, refreshSeparation,"/groups/flylight/flylight/flip/confocalStacks",
-                    "flylight_flip");
+            		null, null, refreshAlignment, refreshSeparation,"flylight_flip");
             task.setJobName("Align Whole Brain Data Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("AlignWholeBrainDataPipeline", task.getObjectId());
@@ -429,7 +426,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         try {
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
             		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), null,
-            		null, null, null, null,"/groups/flylight/flylight/flip/confocalStacks", "flylight_flip");
+            		null, null, null, null, "flylight_flip");
             task.setJobName("Two Channel Data Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("TwoChanDataPipeline", task.getObjectId());
@@ -457,8 +454,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         try {
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
             		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), null,
-            		topLevelFolderName, refreshProcessing, refreshAlignment, refreshSeparation,"/groups/flylight/flylight/flip/confocalStacks",
-                    "flylight_flip");
+            		topLevelFolderName, refreshProcessing, refreshAlignment, refreshSeparation, "flylight_flip");
             task.setJobName("MultiColor FlipOut Data Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("MCFODataPipeline", task.getObjectId());

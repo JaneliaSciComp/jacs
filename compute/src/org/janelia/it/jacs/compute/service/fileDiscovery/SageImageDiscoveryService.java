@@ -35,7 +35,6 @@ public class SageImageDiscoveryService implements IService {
     protected ComputeBeanLocal computeBean;
     protected User user;
     protected Date createDate;
-    protected String confocalStacksDir;
     protected String sageImageFamily;
     protected IProcessData processData;
     protected String defaultChannelSpec;
@@ -49,11 +48,6 @@ public class SageImageDiscoveryService implements IService {
             computeBean = EJBFactory.getLocalComputeBean();
             user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
             createDate = new Date();
-
-            confocalStacksDir = (String)processData.getItem("CONFOCAL_STACKS_DIR");
-            if (confocalStacksDir==null) {
-        		throw new IllegalArgumentException("SAGE_IMAGE_FAMILY may not be null");
-            }
             
             sageImageFamily = (String)processData.getItem("SAGE_IMAGE_FAMILY");
             if (sageImageFamily==null) {
@@ -140,7 +134,7 @@ public class SageImageDiscoveryService implements IService {
         		Map<String,Object> row = iterator.next();
                 SlideImage slideImage = new SlideImage();
 				slideImage.slideCode = (String)row.get("slide_code");
-				slideImage.imagePath = (String)row.get("name");
+				slideImage.imagePath = (String)row.get("path");
 				slideImage.tileType = (String)row.get("tile");
 				slideImage.age = (String)row.get("age");
 				slideImage.gender = (String)row.get("gender");
@@ -199,7 +193,7 @@ public class SageImageDiscoveryService implements IService {
             	}
             	
             	FilePair filePair = new FilePair(pairTag);
-            	File lsmFile1 = new File(confocalStacksDir,slideImage.imagePath);
+            	File lsmFile1 = new File(slideImage.imagePath);
             	filePair.setFilename1(lsmFile1.getAbsolutePath());
         		if (!lsmFile1.exists()) {
         			logger.warn("File referenced by SAGE does not exist: "+filePair.getFilename1());
@@ -211,7 +205,7 @@ public class SageImageDiscoveryService implements IService {
             }
             else {
             	FilePair filePair = filePairings.get(slideImage.tileType);
-            	File lsmFile2 = new File(confocalStacksDir,slideImage.imagePath);
+            	File lsmFile2 = new File(slideImage.imagePath);
             	filePair.setFilename2(lsmFile2.getAbsolutePath());
         		if (!lsmFile2.exists()) {
         			logger.warn("File referenced by SAGE does not exist: "+filePair.getFilename2());

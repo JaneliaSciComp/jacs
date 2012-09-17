@@ -151,6 +151,13 @@ public class SageDAO {
 		imagePath.setDisplayName("Image Path");
 		imagePath.setDefinition("Relative path to the image");
 		map.put(imagePath.getName(),imagePath);
+
+		SageTerm fullImagePath = new SageTerm();
+		fullImagePath.setName("path");
+		fullImagePath.setDataType("text");
+		fullImagePath.setDisplayName("Full Image Path");
+		fullImagePath.setDefinition("Absolute path to the image");
+		map.put(fullImagePath.getName(),fullImagePath);
 		
 		SageTerm line = new SageTerm();
 		line.setName("line");

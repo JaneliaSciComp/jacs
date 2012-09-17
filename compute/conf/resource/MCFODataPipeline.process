@@ -14,22 +14,18 @@
             <input name="PROCESS_VARIABLE_3" value="REFRESH_ALIGNMENT"/>
             <input name="TASK_PARAMETER_4" value="refresh separation"/>
             <input name="PROCESS_VARIABLE_4" value="REFRESH_SEPARATION"/>
-            <input name="TASK_PARAMETER_5" value="confocal stacks directory path"/>
-            <input name="PROCESS_VARIABLE_5" value="CONFOCAL_STACKS_DIR"/>
-            <input name="TASK_PARAMETER_6" value="Sage image family"/>
-            <input name="PROCESS_VARIABLE_6" value="SAGE_IMAGE_FAMILY"/>
+            <input name="TASK_PARAMETER_5" value="Sage image family"/>
+            <input name="PROCESS_VARIABLE_5" value="SAGE_IMAGE_FAMILY"/>
 	        <output name="ROOT_ENTITY_NAME"/>
 	        <output name="REFRESH_PROCESSING"/>
 	        <output name="REFRESH_ALIGNMENT"/>
 	        <output name="REFRESH_SEPARATION"/>
-	        <output name="CONFOCAL_STACKS_DIR"/>
 	        <output name="SAGE_IMAGE_FAMILY"/>
 	    </operation>
 	    
 	    <!-- Discover samples in Sage and load them into the database as Entities -->
 		<operation name="Initial Image Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SageImageDiscoveryService">
 			<input name="ROOT_ENTITY_NAME"/>
-	        <input name="CONFOCAL_STACKS_DIR"/>
 	        <input name="SAGE_IMAGE_FAMILY"/>
 	        <input name="DEFAULT CHANNEL SPECIFICATION" value="sssr"/>
 			<input name="OUTVAR_ENTITY_ID" value="TOP_LEVEL_ENTITY_ID"/>
