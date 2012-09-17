@@ -17,6 +17,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.entity.AlignmentResultNode;
+import org.janelia.it.jacs.model.user_data.entity.NamedFileNode;
 import org.janelia.it.jacs.model.user_data.entity.SampleResultNode;
 import org.janelia.it.jacs.model.user_data.entity.SeparationResultNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
@@ -71,6 +72,8 @@ public class SampleFileNodeSyncService implements IService {
             processChildren(new File(userFilestore, "Sample"));
             processChildren(new File(userFilestore, "Alignment"));
             processChildren(new File(userFilestore, "Separation"));
+            processChildren(new File(userFilestore, "Intersection"));
+            processChildren(new File(userFilestore, "Temp"));
             
 			logger.info("Processed "+numDirs+" directories. Found "+numResultNodes+" result nodes. Trashed "+
 					numDeletedResultNodes+" nodes. Left "+(numResultNodes-numDeletedResultNodes)+" nodes alone.");
@@ -114,7 +117,9 @@ public class SampleFileNodeSyncService implements IService {
             // This may be a node owned by another database... just leave it alone 
         	logger.info("Ignoring subdir because it is not a node: "+dir.getName());
         }
-        else if (node instanceof SampleResultNode || node instanceof AlignmentResultNode || node instanceof SeparationResultNode) {
+        else if (node instanceof SampleResultNode || node instanceof AlignmentResultNode 
+        		|| node instanceof SeparationResultNode || node instanceof NamedFileNode) {
+        	
         	numResultNodes++;
         	
         	List<Entity> entities = entityBean.getEntitiesWithAttributeValue(EntityConstants.ATTRIBUTE_FILE_PATH, dir.getAbsolutePath()+"%");
@@ -128,7 +133,7 @@ public class SampleFileNodeSyncService implements IService {
         	}
         }
         else {
-			logger.info("Ignoring subdir which is not a SampleResultNode but a "+node.getClass().getName());
+			logger.info("Ignoring subdir which is not a recognized node type (class is "+node.getClass().getName()+")");
         }
     }
     
