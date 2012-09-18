@@ -144,7 +144,7 @@
     <!-- <maxBufferedDocs>1000</maxBufferedDocs> -->
 
     <maxFieldLength>10000</maxFieldLength>
-    <writeLockTimeout>1000</writeLockTimeout>
+    <writeLockTimeout>20000</writeLockTimeout>
 
     <!-- Expert: Merge Policy 
 
