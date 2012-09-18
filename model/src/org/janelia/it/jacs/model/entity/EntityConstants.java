@@ -26,6 +26,7 @@ public class EntityConstants {
     public static final String TYPE_ONTOLOGY_ROOT                    = "Ontology Root";
     public static final String TYPE_ONTOLOGY_ELEMENT                 = "Ontology Element";
     public static final String TYPE_FOLDER                           = "Folder";
+    public static final String TYPE_DATA_SET                         = "Data Set";
     public static final String TYPE_SUPPORTING_DATA                  = "Supporting Data";
     public static final String TYPE_SAMPLE                           = "Sample";
     public static final String TYPE_SCREEN_SAMPLE                    = "Screen Sample";
@@ -96,7 +97,16 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ALIGNMENT_TYPES                     = "Alignment Types";
     public static final String ATTRIBUTE_CHANNEL_SPECIFICATION               = "Channel Specification";
     public static final String ATTRIBUTE_CROSS_LABEL                         = "Cross Label";
-
+    
+    // Data Set Attributes
+    public static final String ATTRIBUTE_MAGNIFICATION                       = "Magnification";
+    public static final String ATTRIBUTE_OPTICAL_RESOLUTION                  = "Optical Resolution";
+    public static final String ATTRIBUTE_PIPELINE_PROCESS                    = "Pipeline Process";
+    public static final String ATTRIBUTE_MERGE_ALGORITHMS                    = "Merge Algorithms";
+    public static final String ATTRIBUTE_STITCH_ALGORITHMS                   = "Stitch Algorithms";
+    public static final String ATTRIBUTE_ALIGNMENT_ALGORITHMS                = "Alignment Algorithms";
+    public static final String ATTRIBUTE_ANALYSIS_ALGORITHMS                 = "Analysis Algorithms";
+    
     /**
      * @deprecated Use ATTRIBUTE_SIGNAL_SPECIFICATION instead. This will be removed someday.
      */
