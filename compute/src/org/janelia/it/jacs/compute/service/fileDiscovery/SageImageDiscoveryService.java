@@ -141,7 +141,8 @@ public class SageImageDiscoveryService implements IService {
 				slideImage.effector = (String)row.get("effector");
 				slideImage.line = (String)row.get("line");
 				slideImage.channelSpec = (String)row.get("channel_spec");
-
+				slideImage.channels = (String)row.get("channels");
+				
 				if (!slideImage.slideCode.equals(currSlideCode)) {
 
 					// Process the current group
@@ -577,6 +578,7 @@ public class SageImageDiscoveryService implements IService {
     	String effector;
     	String line;
     	String channelSpec;
+    	String channels;
     }
     
     private class FilePair {

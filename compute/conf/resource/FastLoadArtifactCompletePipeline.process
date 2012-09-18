@@ -36,13 +36,6 @@
 						<output name="FASTLOAD_PATHS"/>
 				    </operation>
 		        </sequence>
-    		
-			    <!-- Create a result node for this grid run -->
-			    <operation name="Create Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
-				    <input name="NAME" value="Temp"/>
-			        <output name="RESULT_FILE_NODE"/>
-			        <output name="RESULT_FILE_NODE_ID"/>
-			    </operation>
 			    
 			    <!-- Move large files to archive -->
 		        <sequence name="Archive Artifacts" waitForAsync="true">
