@@ -54,6 +54,8 @@ FLYSUITE_LINUX_INSTALL_DIR="$FLYSUITE_CLIENTS_DIR/$FLYSUITE_LINUX_NAME"
 FLYSUITE_TARBALL="$FLYSUITE_INSTALL_DIR.tgz"
 FLYSUITE_LINUX_TARBALL="$FLYSUITE_LINUX_INSTALL_DIR.tgz"
 
+STAGING_FLYSUITE_LINUX_INSTALL_DIR="$STAGING_FLYSUITE_CLIENTS_DIR/$FLYSUITE_LINUX_NAME"
+
 echo "Installing FlySuite version $FWVER (Part 3)"
 
 ################################################################
@@ -107,13 +109,18 @@ if [ $INSTALL_SCRIPTS == 1 ]; then
 
     rm $ALIGN_TEMPLATES_SYMLINK || true
     echo "Creating symbolic links at $ALIGN_TEMPLATES_SYMLINK"
-    ln -s $ALIGN_TEMPLATES_DIR $ALIGN_TEMPLATES_SYMLINK
+    if [ $SERVER == "jacs" ]; then
+       $ln -s $ALIGN_TEMPLATES_DIR $ALIGN_TEMPLATES_SYMLINK
+    fi
+    if [ $SERVER == "jacs-staging" ]; then
+       $ln -s $STAGING_ALIGN_TEMPLATES_DIR $ALIGN_TEMPLATES_SYMLINK
+    fi
 fi
 
 ################################################################
 # Install FlySuite Deployment Packages
 ################################################################
-if [ $INSTALL_CLIENT == 1 ]; then
+if [ $INSTALL_CLIENT == 1 ] && [ $SERVER == "jacs" ]; then
     echo "Installing deployment packages"
     
     rm -rf $FLYSUITE_INSTALL_DIR || true
@@ -140,6 +147,35 @@ if [ $INSTALL_CLIENT == 1 ]; then
     echo "Tarballs are also available (these are used by the auto-updater):"
     echo "  Mac: $FLYSUITE_TARBALL"
     echo "  Linux: $FLYSUITE_LINUX_TARBALL"
+    echo ""
+fi
+
+if [ $INSTALL_CLIENT == 1 ] && [ $SERVER == "jacs-staging" ]; then
+    echo "Installing deployment packages"
+    
+    rm -rf $STAGING_FLYSUITE_INSTALL_DIR || true
+    mkdir -p $STAGING_FLYSUITE_INSTALL_DIR
+    cp -R $STAGING_PACKAGE_MAC_DIR/FlySuite.app $STAGING_FLYSUITE_INSTALL_DIR
+
+    rm -rf $STAGING_FLYSUITE_LINUX_INSTALL_DIR || true
+    cp -R $STAGING_PACKAGE_LINUX_DIR $STAGING_FLYSUITE_LINUX_INSTALL_DIR
+
+    cd $STAGING_FLYSUITE_CLIENTS_DIR
+    echo "Sync filesystem"
+    sync
+    sleep 2
+
+    echo "Create tarballls"
+    tar cvfz $FLYSUITE_TARBALL $FLYSUITE_NAME
+    tar cvfz $FLYSUITE_LINUX_TARBALL $FLYSUITE_LINUX_NAME
+    
+    echo "FlySuite Version ${FWVER} (client) was successfully installed into the following locations:"
+    echo "  Mac: $STAGING_FLYSUITE_INSTALL_DIR"
+    echo "  Linux: $STAGING_FLYSUITE_LINUX_INSTALL_DIR"
+    echo ""
+    echo "Tarballs are also available (these are used by the auto-updater):"
+    echo "  Mac: $STAGING_FLYSUITE_CLIENTS_DIR/$FLYSUITE_TARBALL"
+    echo "  Linux: $STAGING_FLYSUITE_CLIENTS_DIR/$FLYSUITE_LINUX_TARBALL"
     echo ""
 fi
 
