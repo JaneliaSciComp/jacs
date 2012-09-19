@@ -22,5 +22,5 @@ cp -R $BUILD_DIR/v3d/Mac_Fat/Vaa3d.app $BIN_DIR/vaa3d64.app
 
 MACOSDIR=$BIN_DIR/vaa3d64.app/Contents/MacOS
 mv $MACOSDIR/vaa3d $MACOSDIR/vaa3dbin
-sed s/vaa3d/vaa3dbin/ $MACOSDIR/vaa3d_script > $MACOSDIR/vaa3d
+sed "s/vaa3d/vaa3dbin \$\*/" $MACOSDIR/vaa3d_script > $MACOSDIR/vaa3d64
 
