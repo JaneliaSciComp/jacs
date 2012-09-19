@@ -99,7 +99,7 @@ public class Vaa3DNeuronMergeService extends SubmitDrmaaJobService {
     protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
         SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
         // Reserve 4 slots on a node. This gives us 12 GB of memory.
-        jt.setNativeSpecification("-pe batch 4 -l short=true");
+        jt.setNativeSpecification("-pe batch 4 -l short=true -now n");
         return jt;
     }
 
