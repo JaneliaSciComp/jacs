@@ -51,22 +51,22 @@ MAC_EXECUTOR_HOST="saffordt-wm1"
 SSH_OPTIONS=""
 
 COMPILE_DIR="$EXE_DIR/compile"
-VAA3D_COMPILE_REDHAT_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-redhat"
-VAA3D_COMPILE_FEDORA_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-fedora"
-NEUSEP_COMPILE_REDHAT_DIR="$COMPILE_DIR/neusep_FlySuite_${FWVER}-redhat"
-JACS_COMPILE_DIR="$COMPILE_DIR/jacs_FlySuite_${FWVER}"
+VAA3D_COMPILE_REDHAT_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-redhat-staging"
+VAA3D_COMPILE_FEDORA_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-fedora-staging"
+NEUSEP_COMPILE_REDHAT_DIR="$COMPILE_DIR/neusep_FlySuite_${FWVER}-redhat-staging"
+JACS_COMPILE_DIR="$COMPILE_DIR/jacs_FlySuite_${FWVER}-staging"
 
-STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
-TEMPLATE_DIR="$STAGING_DIR/templates"
+#STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
+#TEMPLATE_DIR="$STAGING_DIR/templates"
 
-PACKAGE_MAC_DIR="$STAGING_DIR/FlySuite_${FWVER}"
-PACKAGE_LINUX_DIR="$STAGING_DIR/FlySuite_linux_${FWVER}"
+#PACKAGE_MAC_DIR="$STAGING_DIR/FlySuite_${FWVER}"
+#PACKAGE_LINUX_DIR="$STAGING_DIR/FlySuite_linux_${FWVER}"
 
 STAGING_STAGING_DIR="$EXE_DIR/FlySuiteStaging"
 STAGING_TEMPLATE_DIR="$EXE_DIR/templates"
 
-STAGING_PACKAGE_MAC_DIR="$EXE_DIR/FlySuite_${FWVER}"
-STAGING_PACKAGE_LINUX_DIR="$EXE_DIR/FlySuite_linux_${FWVER}"
+STAGING_PACKAGE_MAC_DIR="$EXE_DIR/FlySuite_${FWVER}_staging"
+STAGING_PACKAGE_LINUX_DIR="$EXE_DIR/FlySuite_linux_${FWVER}_staging"
 
 echo "Building FlySuite version $FWVER (Part 1)"
 
@@ -166,24 +166,24 @@ fi
 ################################################################
 # Build FlySuite Deployment Packages
 ################################################################
-if [[ $SERVER == jacs ]] && [[ $BUILD_FLYSUITE == 1 ]]; then
-    echo "Creating deployment packages"
+#if [[ $SERVER == jacs ]] && [[ $BUILD_FLYSUITE == 1 ]]; then
+#    echo "Creating deployment packages"
+#    
+#    echo "  Removing $PACKAGE_MAC_DIR"
+#    rm -rf $PACKAGE_MAC_DIR
     
-    echo "  Removing $PACKAGE_MAC_DIR"
-    rm -rf $PACKAGE_MAC_DIR
+#    echo "  Removing $PACKAGE_LINUX_DIR"
+#    rm -rf $PACKAGE_LINUX_DIR
     
-    echo "  Removing $PACKAGE_LINUX_DIR"
-    rm -rf $PACKAGE_LINUX_DIR
+#    echo "  Creating new Mac package in $PACKAGE_MAC_DIR"
+#    cp -R $TEMPLATE_DIR/mac_template $PACKAGE_MAC_DIR
+#    cp -R $JACS_COMPILE_DIR/console/build/jars/* $PACKAGE_MAC_DIR
     
-    echo "  Creating new Mac package in $PACKAGE_MAC_DIR"
-    cp -R $TEMPLATE_DIR/mac_template $PACKAGE_MAC_DIR
-    cp -R $JACS_COMPILE_DIR/console/build/jars/* $PACKAGE_MAC_DIR
-    
-    echo "  Creating new Linux package in $PACKAGE_LINUX_DIR"
-    cp -R $TEMPLATE_DIR/linux_template $PACKAGE_LINUX_DIR
-    cp -R $JACS_COMPILE_DIR/console/build/jars/* $PACKAGE_LINUX_DIR 
-    cp $VAA3D_COMPILE_FEDORA_DIR/bin/vaa3d $PACKAGE_LINUX_DIR
-fi
+#    echo "  Creating new Linux package in $PACKAGE_LINUX_DIR"
+#    cp -R $TEMPLATE_DIR/linux_template $PACKAGE_LINUX_DIR
+#    cp -R $JACS_COMPILE_DIR/console/build/jars/* $PACKAGE_LINUX_DIR 
+#    cp $VAA3D_COMPILE_FEDORA_DIR/bin/vaa3d $PACKAGE_LINUX_DIR
+#fi
 
 if [[ $SERVER == "jacs-staging" ]] && [[ $BUILD_FLYSUITE == 1 ]]; then
     echo "Creating deployment packages"
