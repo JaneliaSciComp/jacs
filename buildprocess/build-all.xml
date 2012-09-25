@@ -40,6 +40,7 @@
                     <file name="model/build.xml"/>
                     <file name="shared/build.xml"/>
                     <file name="compute/build.xml"/>
+                    <file name="console/build.xml"/>
                     <file name="jacs/build.xml"/>
                 </filelist>
 			</subant>
@@ -54,6 +55,7 @@
                 <file name="model/build.xml"/>
                 <file name="shared/build.xml"/>
                 <file name="compute/build.xml"/>
+                <file name="console/build.xml"/>
                 <file name="jacs/build.xml"/>
             </filelist>
         </subant>
