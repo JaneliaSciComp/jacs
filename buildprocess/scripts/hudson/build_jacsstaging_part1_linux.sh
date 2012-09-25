@@ -215,12 +215,12 @@ echo "  Vaa3d (Fedora): $VAA3D_COMPILE_FEDORA_DIR"
 echo "  Vaa3d (Redhat): $VAA3D_COMPILE_REDHAT_DIR"
 echo "  Neusep (Redhat): $NEUSEP_COMPILE_REDHAT_DIR"
 echo "  Jacs: $JACS_COMPILE_DIR"
-echo "  Linux Package: $PACKAGE_LINUX_DIR"
-echo "  Mac Package (to be completed in part 2): $PACKAGE_MAC_DIR"
+echo "  Linux Package: $STAGING_PACKAGE_LINUX_DIR"
+echo "  Mac Package (to be completed in part 2): $STAGING_PACKAGE_MAC_DIR"
 echo ""
 
 if [ $RUN_PART2 == 1 ]; then
     echo "Now running part 2 on a Mac..."
-    ssh $SSH_OPTIONS $MAC_EXECUTOR_HOST "sh $SCRIPT_DIR/build_jacs_part2_mac.sh $FWVER $SERVER $PART2_BUILD_VAA3D $PART2_BUILD_FLYSUITE"
+    ssh $SSH_OPTIONS $MAC_EXECUTOR_HOST "sh $SCRIPT_DIR/build_jacsstaging_part2_mac.sh $FWVER $SERVER $PART2_BUILD_VAA3D $PART2_BUILD_FLYSUITE"
 fi
 
