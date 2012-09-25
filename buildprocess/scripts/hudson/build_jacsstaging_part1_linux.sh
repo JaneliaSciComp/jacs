@@ -199,7 +199,7 @@ if [[ $SERVER == "jacs-staging" ]] && [[ $BUILD_FLYSUITE == 1 ]]; then
     cp -R $JACS_COMPILE_DIR/console/build/jars/* $STAGING_PACKAGE_MAC_DIR
     
     echo "  Creating new Linux package in $STAGING_PACKAGE_LINUX_DIR"
-    cp -R $TEMPLATE_DIR/linux_template $STAGING_PACKAGE_LINUX_DIR
+    cp -R $STAGING_TEMPLATE_DIR/linux_template $STAGING_PACKAGE_LINUX_DIR
     cp -R $JACS_COMPILE_DIR/console/build/jars/* $STAGING_PACKAGE_LINUX_DIR 
     cp $VAA3D_COMPILE_FEDORA_DIR/bin/vaa3d $STAGING_PACKAGE_LINUX_DIR
 fi
