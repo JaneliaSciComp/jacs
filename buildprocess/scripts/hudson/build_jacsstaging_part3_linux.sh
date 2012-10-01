@@ -109,11 +109,8 @@ if [ $INSTALL_SCRIPTS == 1 ]; then
 
     rm $ALIGN_TEMPLATES_SYMLINK || true
     echo "Creating symbolic links at $ALIGN_TEMPLATES_SYMLINK"
-    if [ $SERVER == "jacs" ]; then
-       $ln -s $ALIGN_TEMPLATES_DIR $ALIGN_TEMPLATES_SYMLINK
-    fi
     if [ $SERVER == "jacs-staging" ]; then
-       $ln -s $STAGING_ALIGN_TEMPLATES_DIR $ALIGN_TEMPLATES_SYMLINK
+       $ln -s $ALIGN_TEMPLATES_DIR $ALIGN_TEMPLATES_SYMLINK
     fi
 fi
 
@@ -150,35 +147,6 @@ if [ $INSTALL_CLIENT == 1 ] && [ $SERVER == "jacs-staging" ]; then
     echo ""
 fi
 
-if [ $INSTALL_CLIENT == 1 ] && [ $SERVER == "jacs-staging" ]; then
-    echo "Installing deployment packages"
-    
-    rm -rf $FLYSUITE_INSTALL_DIR || true
-    mkdir -p $FLYSUITE_INSTALL_DIR
-    cp -R $PACKAGE_MAC_DIR/FlySuite.app $FLYSUITE_INSTALL_DIR
-
-    rm -rf $FLYSUITE_LINUX_INSTALL_DIR || true
-    cp -R $PACKAGE_LINUX_DIR $FLYSUITE_LINUX_INSTALL_DIR
-
-    cd $FLYSUITE_CLIENTS_DIR
-    echo "Sync filesystem"
-    sync
-    sleep 2
-
-    echo "Create tarballls"
-    tar cvfz $FLYSUITE_TARBALL $FLYSUITE_NAME
-    tar cvfz $FLYSUITE_LINUX_TARBALL $FLYSUITE_LINUX_NAME
-    
-    echo "FlySuite Version ${FWVER} (client) was successfully installed into the following locations:"
-    echo "  Mac: $FLYSUITE_INSTALL_DIR"
-    echo "  Linux: $FLYSUITE_LINUX_INSTALL_DIR"
-    echo ""
-    echo "Tarballs are also available (these are used by the auto-updater):"
-    echo "  Mac: $FLYSUITE_CLIENTS_DIR/$FLYSUITE_TARBALL"
-    echo "  Linux: $FLYSUITE_CLIENTS_DIR/$FLYSUITE_LINUX_TARBALL"
-    echo ""
-fi
-
 ################################################################
 # Install Jacs to the jacs-data (data refresh) server
 ################################################################
@@ -196,13 +164,13 @@ fi
 # Install Jacs to the jacs (production) server
 ################################################################
 if [ $INSTALL_PROD_SERVER == 1 ]; then
-    echo "  Deploying to server 'jacs'..."
+    echo "  Deploying to server 'jacsstaging'..."
     cd $JACS_COMPILE_DIR/compute
-    ant -Duser.server.machine=jacs -Duser.server.login=jacs "deploy-[your-server]-dev"
-    echo "FlySuite Version ${FWVER} (JBoss server) was successfully deployed to the JACS production server."
-    cd $JACS_COMPILE_DIR/jacs
-    ant -Duser.server.machine=jacs -Duser.server.login=jacs "deploy-[your-server]-dev"
-    echo "FlySuite Version ${FWVER} (Tomcat web front-end) was successfully deployed to the JACS production server."
+    ant -Duser.server.machine=jacsstaging -Duser.server.login=jacs "deploy-[your-server]-dev"
+    echo "FlySuite Version ${FWVER} (JBoss server) was successfully deployed to the JACSSTAGING production server."
+    cd $JACS_COMPILE_DIR/jacsstaging
+    ant -Duser.server.machine=jacsstaging -Duser.server.login=jacs "deploy-[your-server]-dev"
+    echo "FlySuite Version ${FWVER} (Tomcat web front-end) was successfully deployed to the JACSSTAGING production server."
 fi
 
 
