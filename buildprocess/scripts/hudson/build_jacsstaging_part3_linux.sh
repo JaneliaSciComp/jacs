@@ -110,7 +110,7 @@ if [ $INSTALL_SCRIPTS == 1 ]; then
     rm $ALIGN_TEMPLATES_SYMLINK || true
     echo "Creating symbolic links at $ALIGN_TEMPLATES_SYMLINK"
     if [ $SERVER == "jacs-staging" ]; then
-       $ln -s $ALIGN_TEMPLATES_DIR $ALIGN_TEMPLATES_SYMLINK
+       ln -s $ALIGN_TEMPLATES_DIR $ALIGN_TEMPLATES_SYMLINK
     fi
 fi
 
