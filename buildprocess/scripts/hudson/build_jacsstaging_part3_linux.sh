@@ -44,7 +44,7 @@ ALIGN_TEMPLATES_SYMLINK="$INSTALL_DIR/scripts/single_neuron/BrainAligner/AlignTe
 FLYSUITE_NAME="FlySuite_${FWVER}"
 FLYSUITE_LINUX_NAME="FlySuite_linux_${FWVER}"
 
-STAGING_DIR="$JACSDATA_DIR/servers/$SERVER/FlySuite"
+STAGING_DIR="$JACSDATA_DIR/servers/$SERVER/executables/FlySuiteStaging"
 PACKAGE_MAC_DIR="$STAGING_DIR/$FLYSUITE_NAME"
 PACKAGE_LINUX_DIR="$STAGING_DIR/$FLYSUITE_LINUX_NAME"
 
@@ -53,8 +53,6 @@ FLYSUITE_INSTALL_DIR="$FLYSUITE_CLIENTS_DIR/$FLYSUITE_NAME"
 FLYSUITE_LINUX_INSTALL_DIR="$FLYSUITE_CLIENTS_DIR/$FLYSUITE_LINUX_NAME"
 FLYSUITE_TARBALL="$FLYSUITE_INSTALL_DIR.tgz"
 FLYSUITE_LINUX_TARBALL="$FLYSUITE_LINUX_INSTALL_DIR.tgz"
-
-#STAGING_FLYSUITE_LINUX_INSTALL_DIR="$STAGING_FLYSUITE_CLIENTS_DIR/$FLYSUITE_LINUX_NAME"
 
 echo "Installing FlySuite version $FWVER (Part 3)"
 
@@ -109,15 +107,13 @@ if [ $INSTALL_SCRIPTS == 1 ]; then
 
     rm $ALIGN_TEMPLATES_SYMLINK || true
     echo "Creating symbolic links at $ALIGN_TEMPLATES_SYMLINK"
-    if [ $SERVER == "jacs-staging" ]; then
-       ln -s $ALIGN_TEMPLATES_DIR $ALIGN_TEMPLATES_SYMLINK
-    fi
+    ln -s $ALIGN_TEMPLATES_DIR $ALIGN_TEMPLATES_SYMLINK
 fi
 
 ################################################################
 # Install FlySuite Deployment Packages
 ################################################################
-if [ $INSTALL_CLIENT == 1 ] && [ $SERVER == "jacs-staging" ]; then
+if [ $INSTALL_CLIENT == 1 ]; then
     echo "Installing deployment packages"
     
     rm -rf $FLYSUITE_INSTALL_DIR || true

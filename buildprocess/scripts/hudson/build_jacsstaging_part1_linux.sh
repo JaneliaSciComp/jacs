@@ -27,7 +27,7 @@
 set -o errexit
 
 # Configure SGE for doing grid builds
-. /sge/6.2u5/default/common/settings.sh
+. /sge/8.0.1p4/default/common/settings.sh
 
 FWVER=$1
 SERVER=$2
@@ -56,17 +56,11 @@ VAA3D_COMPILE_FEDORA_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-fedora"
 NEUSEP_COMPILE_REDHAT_DIR="$COMPILE_DIR/neusep_FlySuite_${FWVER}-redhat"
 JACS_COMPILE_DIR="$COMPILE_DIR/jacs_FlySuite_${FWVER}"
 
-#STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
-#TEMPLATE_DIR="$STAGING_DIR/templates"
+STAGING_DIR="$EXE_DIR/FlySuiteStaging"
+TEMPLATE_DIR="$EXE_DIR/templates"
 
-#PACKAGE_MAC_DIR="$STAGING_DIR/FlySuite_${FWVER}"
-#PACKAGE_LINUX_DIR="$STAGING_DIR/FlySuite_linux_${FWVER}"
-
-STAGING_STAGING_DIR="$EXE_DIR/FlySuiteStaging"
-STAGING_TEMPLATE_DIR="$EXE_DIR/templates"
-
-STAGING_PACKAGE_MAC_DIR="$EXE_DIR/FlySuite_${FWVER}"
-STAGING_PACKAGE_LINUX_DIR="$EXE_DIR/FlySuite_linux_${FWVER}"
+PACKAGE_MAC_DIR="$EXE_DIR/FlySuite_${FWVER}"
+PACKAGE_LINUX_DIR="$EXE_DIR/FlySuite_linux_${FWVER}"
 
 echo "Building FlySuite version $FWVER (Part 1)"
 
@@ -166,42 +160,23 @@ fi
 ################################################################
 # Build FlySuite Deployment Packages
 ################################################################
-#if [[ $SERVER == jacs ]] && [[ $BUILD_FLYSUITE == 1 ]]; then
-#    echo "Creating deployment packages"
-#    
-#    echo "  Removing $PACKAGE_MAC_DIR"
-#    rm -rf $PACKAGE_MAC_DIR
-    
-#    echo "  Removing $PACKAGE_LINUX_DIR"
-#    rm -rf $PACKAGE_LINUX_DIR
-    
-#    echo "  Creating new Mac package in $PACKAGE_MAC_DIR"
-#    cp -R $TEMPLATE_DIR/mac_template $PACKAGE_MAC_DIR
-#    cp -R $JACS_COMPILE_DIR/console/build/jars/* $PACKAGE_MAC_DIR
-    
-#    echo "  Creating new Linux package in $PACKAGE_LINUX_DIR"
-#    cp -R $TEMPLATE_DIR/linux_template $PACKAGE_LINUX_DIR
-#    cp -R $JACS_COMPILE_DIR/console/build/jars/* $PACKAGE_LINUX_DIR 
-#    cp $VAA3D_COMPILE_FEDORA_DIR/bin/vaa3d $PACKAGE_LINUX_DIR
-#fi
-
 if [[ $SERVER == "jacs-staging" ]] && [[ $BUILD_FLYSUITE == 1 ]]; then
     echo "Creating deployment packages"
     
-    echo "  Removing $STAGING_PACKAGE_MAC_DIR"
-    rm -rf $STAGING_PACKAGE_MAC_DIR
+    echo "  Removing $PACKAGE_MAC_DIR"
+    rm -rf $PACKAGE_MAC_DIR
     
-    echo "  Removing $STAGING_PACKAGE_LINUX_DIR"
-    rm -rf $STAGING_PACKAGE_LINUX_DIR
+    echo "  Removing $PACKAGE_LINUX_DIR"
+    rm -rf $PACKAGE_LINUX_DIR
     
-    echo "  Creating new Mac package in $STAGING_PACKAGE_MAC_DIR"
-    cp -R $STAGING_TEMPLATE_DIR/mac_template $STAGING_PACKAGE_MAC_DIR
-    cp -R $JACS_COMPILE_DIR/console/build/jars/* $STAGING_PACKAGE_MAC_DIR
+    echo "  Creating new Mac package in $PACKAGE_MAC_DIR"
+    cp -R $TEMPLATE_DIR/mac_template $PACKAGE_MAC_DIR
+    cp -R $JACS_COMPILE_DIR/console/build/jars/* $PACKAGE_MAC_DIR
     
-    echo "  Creating new Linux package in $STAGING_PACKAGE_LINUX_DIR"
-    cp -R $STAGING_TEMPLATE_DIR/linux_template $STAGING_PACKAGE_LINUX_DIR
-    cp -R $JACS_COMPILE_DIR/console/build/jars/* $STAGING_PACKAGE_LINUX_DIR 
-    cp $VAA3D_COMPILE_FEDORA_DIR/bin/vaa3d $STAGING_PACKAGE_LINUX_DIR
+    echo "  Creating new Linux package in $PACKAGE_LINUX_DIR"
+    cp -R $TEMPLATE_DIR/linux_template $PACKAGE_LINUX_DIR
+    cp -R $JACS_COMPILE_DIR/console/build/jars/* $PACKAGE_LINUX_DIR 
+    cp $VAA3D_COMPILE_FEDORA_DIR/bin/vaa3d $PACKAGE_LINUX_DIR
 fi
 
 echo "Waiting for Vaa3d qsub ($VAA3D_QSUB_PID)..." 
@@ -215,8 +190,8 @@ echo "  Vaa3d (Fedora): $VAA3D_COMPILE_FEDORA_DIR"
 echo "  Vaa3d (Redhat): $VAA3D_COMPILE_REDHAT_DIR"
 echo "  Neusep (Redhat): $NEUSEP_COMPILE_REDHAT_DIR"
 echo "  Jacs: $JACS_COMPILE_DIR"
-echo "  Linux Package: $STAGING_PACKAGE_LINUX_DIR"
-echo "  Mac Package (to be completed in part 2): $STAGING_PACKAGE_MAC_DIR"
+echo "  Linux Package: $PACKAGE_LINUX_DIR"
+echo "  Mac Package (to be completed in part 2): $PACKAGE_MAC_DIR"
 echo ""
 
 if [ $RUN_PART2 == 1 ]; then
