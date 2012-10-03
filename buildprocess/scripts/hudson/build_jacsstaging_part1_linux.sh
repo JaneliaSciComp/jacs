@@ -44,6 +44,7 @@ JACSHOME_DIR="/home/jacs"
 JACSDATA_DIR="/groups/scicomp/jacsData"
 EXE_DIR="$JACSDATA_DIR/servers/$SERVER/executables"
 SCRIPT_DIR="$JACSDATA_DIR/servers/$SERVER/scripts"
+TEMPLATE_DIR="$JACSDATA_DIR/servers/$SERVER/templates"
 
 SVN_OPTIONS="--trust-server-cert --non-interactive"
 
@@ -57,10 +58,10 @@ NEUSEP_COMPILE_REDHAT_DIR="$COMPILE_DIR/neusep_FlySuite_${FWVER}-redhat"
 JACS_COMPILE_DIR="$COMPILE_DIR/jacs_FlySuite_${FWVER}"
 
 STAGING_DIR="$EXE_DIR/FlySuiteStaging"
-TEMPLATE_DIR="$EXE_DIR/templates"
+#TEMPLATE_DIR="$EXE_DIR/templates"
 
-PACKAGE_MAC_DIR="$EXE_DIR/FlySuite_${FWVER}"
-PACKAGE_LINUX_DIR="$EXE_DIR/FlySuite_linux_${FWVER}"
+PACKAGE_MAC_DIR="$STAGING_DIR/FlySuite_${FWVER}"
+PACKAGE_LINUX_DIR="$STAGING_DIR/FlySuite_linux_${FWVER}"
 
 echo "Building FlySuite version $FWVER (Part 1)"
 
@@ -71,6 +72,14 @@ echo "Building FlySuite version $FWVER (Part 1)"
 ################################################################
 rm -rf $SCRIPT_DIR || true
 svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tags/FlySuite_${FWVER}/buildprocess/scripts/hudson $SCRIPT_DIR
+
+################################################################
+# Check out the versioned templates for making
+# client packages 
+################################################################
+rm -rf $TEMPLATE_DIR || true
+svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tags/FlySuite_${FWVER}/buildprocess/deployment/templates $TEMPLATE_DIR
+
 
 ################################################################
 # Build Vaa3d for Redhat (Grid) and Fedora (Client) 
@@ -101,7 +110,7 @@ if [ $BUILD_VAA3D == 1 ]; then
 
     echo "  Building Vaa3D for the grid (in the background)"
     echo "sh \"$VAA3D_COMPILE_REDHAT_DIR/qsub_vaa3d_build.sh\" $FWVER $SERVER" > "$VAA3D_COMPILE_REDHAT_DIR/build.sh"
-    qsub -sync y "$VAA3D_COMPILE_REDHAT_DIR/build.sh" &
+    qsub -l short=true -sync y "$VAA3D_COMPILE_REDHAT_DIR/build.sh" &
     VAA3D_QSUB_PID=$!
 
     echo "  Building Vaa3D for the linux client"
