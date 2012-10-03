@@ -747,4 +747,14 @@
         </parameter>
     </operation>
 
+    <operation>
+        <description>Run the ArnimPatternAnnotationFinisher</description>
+        <name>runArnimPatternAnnotationFinisher</name>
+        <parameter>
+            <description>User to run as (e.g. "system")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+
 </mbean>
