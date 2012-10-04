@@ -167,7 +167,7 @@ if [ "$EXT" == "v3dpbd" ]
 then
     ALIGNED_COMPRESSED="$WORKING_DIR/Aligned.v3dpbd"
     echo "~ Compressing output file to 8-bit PBD: $ALIGNED_COMPRESSED"
-    $Vaa3D -cmd image-loader -convert8 $OUTPUT $ALIGNED_COMPRESSED
+    $Vaa3D -cmd image-loader -convert8 $LA_OUTPUT $ALIGNED_COMPRESSED
     LA_OUTPUT=$ALIGNED_COMPRESSED
 fi
 
