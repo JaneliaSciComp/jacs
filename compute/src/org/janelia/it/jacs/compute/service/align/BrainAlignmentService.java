@@ -23,6 +23,9 @@ import java.io.IOException;
  */
 public class BrainAlignmentService extends SubmitDrmaaJobService {
 
+	protected static final long LARGE_FILE_SIZE_THRESHOLD_UNCOMPRESSED = (long)(4.0*1024*1024*1024);
+	protected static final long LARGE_FILE_SIZE_THRESHOLD_COMPRESSED = (long)(2.0*1024*1024*1024);
+	
 	protected static final String CONFIG_PREFIX = "alignConfiguration.";
 	protected static final int TIMEOUT_SECONDS = 3600;  // 60 minutes
 
@@ -102,8 +105,20 @@ public class BrainAlignmentService extends SubmitDrmaaJobService {
     @Override
     protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
     	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
-    	// Reserve all 8 slots on a node. This gives us 24 GB of memory. 
-    	jt.setNativeSpecification("-pe batch 8");
+
+    	// Reserve all 8 slots on a node. 
+    	String spec = "-pe batch 8";
+    	File inputFile = new File(inputFilename);
+    	long fileSize = inputFile.length();
+    	
+    	// For large input files, go ahead and reserve a 96GB node
+    	if ((inputFilename.endsWith("raw") && fileSize>LARGE_FILE_SIZE_THRESHOLD_UNCOMPRESSED) || 
+    			(inputFilename.endsWith("pbd") && fileSize>LARGE_FILE_SIZE_THRESHOLD_COMPRESSED)) {
+    		logger.info("Input file size "+fileSize+" exceeds threshold. Will use a large memory node for processing.");
+    		spec += " -l mem96=true -now n";	
+    	}
+    	
+    	jt.setNativeSpecification(spec);
     	return jt;
     }
 

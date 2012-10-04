@@ -1,15 +1,13 @@
 package org.janelia.it.jacs.compute.service.align;
 
-import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
-import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
+import java.io.FileWriter;
+import java.io.IOException;
+
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.vo.ParameterException;
-
-import java.io.FileWriter;
-import java.io.IOException;
 
 /**
  * Align an optic lobe globally and locally.
@@ -40,12 +38,4 @@ public class WholeBrain63xAlignmentService extends BrainAlignmentService {
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix() + "\n");
         writer.write(script.toString());
 	}
-
-    @Override
-    protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
-    	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
-    	// Reserve all 8 slots on 96 GB node (superclass already requests 8 nodes) 
-    	jt.setNativeSpecification("-l mem96=true -now n");
-    	return jt;
-    }
 }
