@@ -17,6 +17,8 @@ import org.janelia.it.jacs.shared.utils.SystemCall;
  */
 public class SyncToArchiveService implements IService {
 	
+	private static final int TIME_OUT_SECS = 300; // 5 minutes
+	
 	protected static final String JACS_DATA_DIR =
         SystemConfigurationProperties.getString("JacsData.Dir.Linux");
 	
@@ -51,7 +53,7 @@ public class SyncToArchiveService implements IService {
         	}
         	        	
             SystemCall call = new SystemCall(logger);
-            int exitCode = call.emulateCommandLine(script.toString(), true, 60);
+            int exitCode = call.emulateCommandLine(script.toString(), true, TIME_OUT_SECS);
 
             if (0!=exitCode) {
             	throw new ServiceException("SyncToArchiveService failed with exitCode "+exitCode);
