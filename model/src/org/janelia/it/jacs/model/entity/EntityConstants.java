@@ -26,13 +26,12 @@ public class EntityConstants {
     public static final String TYPE_ONTOLOGY_ROOT                    = "Ontology Root";
     public static final String TYPE_ONTOLOGY_ELEMENT                 = "Ontology Element";
     public static final String TYPE_FOLDER                           = "Folder";
-    public static final String TYPE_DATA_SET                         = "Data Set";
     public static final String TYPE_SUPPORTING_DATA                  = "Supporting Data";
     public static final String TYPE_SAMPLE                           = "Sample";
     public static final String TYPE_SCREEN_SAMPLE                    = "Screen Sample";
     public static final String TYPE_SCREEN_SAMPLE_CROSS              = "Screen Sample Cross";
     public static final String TYPE_FLY_LINE                         = "Fly Line";
-    public static final String TYPE_LSM_STACK_PAIR                   = "LSM Stack Pair";
+    public static final String TYPE_IMAGE_TILE                       = "Image Tile";
     public static final String TYPE_NEURON_SEPARATOR_PIPELINE_RESULT = "Neuron Separator Pipeline Result";
     public static final String TYPE_MYERS_NEURON_SEPARATION_FILE     = "Myers Neuron Separation File";
     public static final String TYPE_SAMPLE_PROCESSING_RESULT         = "Sample Processing Result";
@@ -49,7 +48,10 @@ public class EntityConstants {
     public static final String TYPE_FILE                             = "File";
     public static final String TYPE_CURATED_NEURON                   = "Curated Neuron";
     public static final String TYPE_CURATED_NEURON_COLLECTION        = "Curated Neuron Collection";
-
+    public static final String TYPE_PIPELINE_RUN                     = "Pipeline Run";
+    public static final String TYPE_ERROR                            = "Error";
+    public static final String TYPE_DATA_SET                         = "Data Set";
+    
     // Entity Data Attributes
     
     public static final String ATTRIBUTE_DEFAULT_2D_IMAGE                    = "Default 2D Image";
@@ -77,8 +79,6 @@ public class EntityConstants {
     public static final String ATTRIBUTE_NUMBER                              = "Number";
     public static final String ATTRIBUTE_RESULT                              = "Result";
     public static final String ATTRIBUTE_IS_ZIPPED                           = "Is Zipped";
-    public static final String ATTRIBUTE_LSM_STACK_1                         = "LSM Stack 1";
-    public static final String ATTRIBUTE_LSM_STACK_2                         = "LSM Stack 2";
     public static final String ATTRIBUTE_MERGED_STACK                        = "Merged Stack";
     public static final String ATTRIBUTE_TILING_PATTERN                      = "Tiling Pattern";
     public static final String ATTRIBUTE_SUPPORTING_FILES                    = "Supporting Files";
@@ -89,33 +89,40 @@ public class EntityConstants {
     public static final String ATTRIBUTE_RESULT_NODE_ID                      = "Result Node Id";
     public static final String ATTRIBUTE_PERFORMANCE_PROXY_IMAGE             = "Performance Proxy Image";
     public static final String ATTRIBUTE_ARTIFACT_SOURCE_ID                  = "Artifact Source Entity Id";
+    public static final String ATTRIBUTE_NUM_CHANNELS                        = "Num Channels";
+    public static final String ATTRIBUTE_OPTICAL_RESOLUTION                  = "Optical Resolution";
+    
+    // Fly Line Attributes
     public static final String ATTRIBUTE_SPLIT_PART                          = "Split Part";
     public static final String ATTRIBUTE_REPRESENTATIVE_SAMPLE               = "Representative Sample";
     public static final String ATTRIBUTE_ORIGINAL_FLYLINE                    = "Original Fly Line";
     public static final String ATTRIBUTE_BALANCED_FLYLINE                    = "Balanced Fly Line";
+    
+    // Sample/Data Set Attributes
     public static final String ATTRIBUTE_ROBOT_ID                            = "Robot Id";
-    public static final String ATTRIBUTE_ALIGNMENT_TYPES                     = "Alignment Types";
     public static final String ATTRIBUTE_CHANNEL_SPECIFICATION               = "Channel Specification";
     public static final String ATTRIBUTE_CROSS_LABEL                         = "Cross Label";
-    
-    // Data Set Attributes
-    public static final String ATTRIBUTE_MAGNIFICATION                       = "Magnification";
-    public static final String ATTRIBUTE_OPTICAL_RESOLUTION                  = "Optical Resolution";
+    public static final String ATTRIBUTE_DATA_SET_IDENTIFIER                 = "Data Set Identifier";
     public static final String ATTRIBUTE_PIPELINE_PROCESS                    = "Pipeline Process";
-    public static final String ATTRIBUTE_MERGE_ALGORITHMS                    = "Merge Algorithms";
-    public static final String ATTRIBUTE_STITCH_ALGORITHMS                   = "Stitch Algorithms";
-    public static final String ATTRIBUTE_ALIGNMENT_ALGORITHMS                = "Alignment Algorithms";
-    public static final String ATTRIBUTE_ANALYSIS_ALGORITHMS                 = "Analysis Algorithms";
+    public static final String ATTRIBUTE_SAGE_SYNC                           = "SAGE Sync";
+    
+    // Error Attributes
+    public static final String ATTRIBUTE_MESSAGE                             = "Message";
+
+    /**
+     * @deprecated Use ATTRIBUTE_ENTITY instead. This will be removed someday.
+     */
+    public static final String ATTRIBUTE_LSM_STACK_1                         = "LSM Stack 1";
+
+    /**
+     * @deprecated Use ATTRIBUTE_ENTITY instead. This will be removed someday.
+     */
+    public static final String ATTRIBUTE_LSM_STACK_2                         = "LSM Stack 2";
     
     /**
-     * @deprecated Use ATTRIBUTE_SIGNAL_SPECIFICATION instead. This will be removed someday.
+     * @deprecated Use TYPE_IMAGE_TILE instead. This will be removed someday.
      */
-    public static final String ATTRIBUTE_REFERENCE_CHANNEL                   = "Reference Channel";
-    
-    /**
-     * @deprecated Use ATTRIBUTE_SIGNAL_SPECIFICATION instead. This will be removed someday.
-     */
-    public static final String ATTRIBUTE_SIGNAL_CHANNELS                     = "Signal Channels";
+    public static final String TYPE_LSM_STACK_PAIR                   = "LSM Stack Pair";
     
     /**
      * @deprecated Use TYPE_IMAGE_2D instead. This will be removed someday.
