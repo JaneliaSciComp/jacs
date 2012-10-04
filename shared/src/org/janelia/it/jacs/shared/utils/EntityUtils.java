@@ -115,11 +115,15 @@ public class EntityUtils {
 		return findChildEntityDataWithNameAndType(entity, childName, null);
     }
 
+    public static EntityData findChildEntityDataWithType(Entity entity, String type) {
+		return findChildEntityDataWithNameAndType(entity, null, type);
+    }
+
     public static EntityData findChildEntityDataWithNameAndType(Entity entity, String childName, String type) {
 		for (EntityData ed : entity.getEntityData()) {
 			Entity child = ed.getChildEntity();
 			if (child!=null) {
-				if (child.getName().equals(childName) && (type==null||type.equals(child.getEntityType().getName()))) {
+				if ((childName==null||child.getName().equals(childName)) && (type==null||type.equals(child.getEntityType().getName()))) {
 					return ed;
 				}
 			}
@@ -128,13 +132,9 @@ public class EntityUtils {
     }
     
     public static Entity getSupportingData(Entity entity) {
-    	for(EntityData ed : entity.getEntityData()) {
-    		Entity child = ed.getChildEntity();
-    		if (child != null && child.getEntityType().getName().equals(EntityConstants.TYPE_SUPPORTING_DATA)) {
-    			return child;
-    		}	
-    	}
-    	return null;
+    	EntityData ed = findChildEntityDataWithType(entity, EntityConstants.TYPE_SUPPORTING_DATA);
+    	if (ed==null) return null;
+    	return ed.getChildEntity();
     }
     
     public static EntityData removeChild(Entity entity, Entity child) {
