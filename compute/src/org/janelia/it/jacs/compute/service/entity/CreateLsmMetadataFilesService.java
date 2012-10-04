@@ -140,7 +140,7 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
     	// May need to access /archive, so we need limit 50.
     	// Reserve 1 slot on a node. This gives us 3 GB of memory. 
-    	jt.setNativeSpecification("-pe batch 1 -l limit50=1 ");
+    	jt.setNativeSpecification("-pe batch 1 ");
     	return jt;
     }
 

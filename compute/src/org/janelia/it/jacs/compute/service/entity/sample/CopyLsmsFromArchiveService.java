@@ -1,41 +1,44 @@
-package org.janelia.it.jacs.compute.service.vaa3d;
+package org.janelia.it.jacs.compute.service.entity.sample;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 import org.janelia.it.jacs.model.user_data.FileNode;
 
 /**
- * Merge paired LSMs into v3draw files. Parameters:
- *   RESULT_FILE_NODE - the directory to use for SGE config and output
- *   BULK_MERGE_PARAMETERS - a list of MergedLsmPair
- * 
+ * Copy archived LSMs over to a temporary directory in high performance storage.
+ *   
+ * Input variables:
+ *   BULK_MERGE_PARAMETERS - LSM paths
+ *   
+ * Output variables:
+ *   BULK_MERGE_PARAMETERS - updated LSM paths
+ *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class Vaa3DBulkMergeService extends SubmitDrmaaJobService {
+public class CopyLsmsFromArchiveService extends SubmitDrmaaJobService {
 
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
-	private static final int START_DISPLAY_PORT = 890;
-    private static final String CONFIG_PREFIX = "mergeConfiguration.";
-    private static int randomPort;
+    private static final String CONFIG_PREFIX = "copyConfiguration.";
+    protected static final String COPY_COMMAND = "cp "; 
     
-    protected void init(IProcessData processData) throws Exception {
-    	super.init(processData);
-    }
-
+    private Map<String,String> fileMap = new HashMap<String,String>();
+    
     @Override
     protected String getGridServicePrefixName() {
-        return "merge";
+        return "copy";
     }
 
     @Override
@@ -50,9 +53,11 @@ public class Vaa3DBulkMergeService extends SubmitDrmaaJobService {
         	List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
 
             int configIndex = 1;
-            randomPort = Vaa3DHelper.getRandomPort(START_DISPLAY_PORT);
             for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
-            	writeInstanceFiles(mergedLsmPair, configIndex++);
+            	writeInstanceFiles(mergedLsmPair.getLsmFilepath1(), configIndex++);
+            	if (mergedLsmPair.getLsmFilepath2()!=null) {
+            		writeInstanceFiles(mergedLsmPair.getLsmFilepath2(), configIndex++);
+            	}
             }
             
         	createShellScript(writer);
@@ -63,14 +68,18 @@ public class Vaa3DBulkMergeService extends SubmitDrmaaJobService {
         }
     }
 
-    private void writeInstanceFiles(MergedLsmPair mergedLsmPair, int configIndex) throws Exception {
+    private void writeInstanceFiles(String filepath, int configIndex) throws Exception {
+    	
+    	FileNode parentNode = ProcessDataHelper.getResultFileNode(processData);
+    	File file = new File(filepath);
+    	String tempFile = parentNode.getFilePath(file.getName());
+    	fileMap.put(filepath, tempFile);
+    	
         File configFile = new File(getSGEConfigurationDirectory(), CONFIG_PREFIX+configIndex);
         FileWriter fw = new FileWriter(configFile);
         try {
-            fw.write(mergedLsmPair.getLsmFilepath1() + "\n");
-            fw.write(mergedLsmPair.getLsmFilepath2() + "\n");
-            fw.write(mergedLsmPair.getMergedFilepath() + "\n");
-            fw.write((randomPort+configIndex) + "\n");
+            fw.write(filepath + "\n");
+            fw.write(tempFile + "\n");
         }
         catch (IOException e) {
         	throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath(),e); 
@@ -82,16 +91,9 @@ public class Vaa3DBulkMergeService extends SubmitDrmaaJobService {
 
     private void createShellScript(FileWriter writer) throws Exception {
         StringBuffer script = new StringBuffer();
-        script.append("read LSM_FILENAME_1\n");
-        script.append("read LSM_FILENAME_2\n");
-        script.append("read MERGED_FILENAME\n");
-        script.append("read DISPLAY_PORT\n");
-        script.append(Vaa3DHelper.getVaa3DGridCommandPrefix("$DISPLAY_PORT"));
-        script.append("\n");
-        script.append(Vaa3DHelper.getFormattedMergePipelineCommand("$LSM_FILENAME_1", "$LSM_FILENAME_2", "$MERGED_FILENAME"));
-        script.append("\n");
-        script.append(Vaa3DHelper.getVaa3DGridCommandSuffix());
-        script.append("\n");
+        script.append("read INPUT_FILENAME\n");
+        script.append("read OUTPUT_FILENAME\n");
+        script.append(COPY_COMMAND+" $INPUT_FILENAME $OUTPUT_FILENAME\n");
         writer.write(script.toString());
     }
 
@@ -99,8 +101,8 @@ public class Vaa3DBulkMergeService extends SubmitDrmaaJobService {
     protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {    	
     	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
     	// May need to access /archive, so we need limit 50.
-    	// Reserve all 8 slots on a node. This gives us 24 GB of memory.  
-    	jt.setNativeSpecification("-pe batch 8 ");
+    	// Reserve 1 slot on a node, we're not worried about memory.
+    	jt.setNativeSpecification("-pe batch 1 -l limit50=1 ");
     	return jt;
     }
 
@@ -112,28 +114,28 @@ public class Vaa3DBulkMergeService extends SubmitDrmaaJobService {
     @Override
 	public void postProcess() throws MissingDataException {
 
-    	FileNode parentNode = ProcessDataHelper.getResultFileNode(processData);
-    	File file = new File(parentNode.getDirectoryPath());
+    	List<MergedLsmPair> tmpLsmPairs = new ArrayList<MergedLsmPair>();
     	
-    	File[] coreFiles = file.listFiles(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-	            return name.startsWith("core");
-			}
-		});
-    	
-    	if (coreFiles.length > 0) {
-    		throw new MissingDataException("Bulk merge core dumped");
-    	}
-
         Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
     	List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
         for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
-        	File outputFile = new File(mergedLsmPair.getMergedFilepath());
-        	if (!outputFile.exists()) {
-        		throw new MissingDataException("Missing merge output "+outputFile.getAbsolutePath());
+        	String tempLsm1 = fileMap.get(mergedLsmPair.getLsmFilepath1());
+        	String tempLsm2 = fileMap.get(mergedLsmPair.getLsmFilepath2());
+        	
+        	File outputFile1 = new File(tempLsm1);
+        	if (!outputFile1.exists()) {
+        		throw new MissingDataException("Missing output "+outputFile1.getAbsolutePath());
         	}
+        	if (tempLsm2!=null) {
+	        	File outputFile2 = new File(tempLsm2);
+	        	if (!outputFile2.exists()) {
+	        		throw new MissingDataException("Missing output "+outputFile2.getAbsolutePath());
+	        	}
+        	}
+        	
+        	tmpLsmPairs.add(new MergedLsmPair(tempLsm1, tempLsm2, mergedLsmPair.getMergedFilepath()));
         }
+        
+        processData.putItem("BULK_MERGE_PARAMETERS", tmpLsmPairs);
 	}
-    
 }
