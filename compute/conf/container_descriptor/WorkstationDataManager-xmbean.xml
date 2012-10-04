@@ -323,6 +323,47 @@
     </operation>
     
     <operation>
+        <description>Run all pipelines for all Data Sets for all users</description>
+        <name>runAllDataSetPipelines</name>
+    </operation>
+    
+    <operation>
+        <description>Run all pipelines for all Data Sets for a particular user</description>
+        <name>runUserDataSetPipelines</name>
+        <parameter>
+            <description>User to run as (e.g. "system")</description>
+            <name>username</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
+        <description>Run all the pipelines configured for a particular Sample</description>
+        <name>runSamplePipeline</name>
+        <parameter>
+           <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
+           <name>sampleEntityId</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    
+    <operation>
+        <description>Run a specific pipeline for a single Sample</description>
+        <name>runConfiguredSamplePipeline</name>
+        <parameter>
+           <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
+           <name>sampleEntityId</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Name of configuration (e.g. "FlyLightOpticLobe" will select the process file named "PipelineConfig_FlyLightOpticLobe.process")</description>
+           <name>configurationName</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
         <description>Run Leet SAGE-based Data Pipeline</description>
         <name>runLeetDataPipeline</name>
         <parameter>

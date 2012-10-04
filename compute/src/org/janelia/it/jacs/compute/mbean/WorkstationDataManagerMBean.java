@@ -53,16 +53,18 @@ public interface WorkstationDataManagerMBean {
     
     public void runTwoChanDataPipeline(String user);
     public void runTwoChanSamplePipeline(String sampleEntityId);
-
-    public void runMCFODataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
-    public void runMCFOSamplePipeline(String sampleEntityId, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
-	public void runMCFOSeparationPipeline(String sampleEntityId, String inputFilename, String resultEntityName);
 	
     public void runMCFOSampleViewCreation(String sourceEntityId, String targetEntityName);
 
     public void runSingleFastLoadArtifactPipeline(String user, String separationEntityId);
     public void runCompleteFastLoadArtifactPipeline(String user);
     
+    // Generic confocal image processing pipelines, driven by pipeline configurations on a data-set basis
+    
+    public void runAllDataSetPipelines();
+    public void runUserDataSetPipelines(String username);
+    public void runSamplePipeline(String sampleEntityId);
+    public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName);
     
     // Pipelines for FlyLight Screen Data
     

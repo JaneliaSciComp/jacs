@@ -1,0 +1,70 @@
+ <!-- 
+      Run a brain alignment algorithm on a given input file for a given sample. 
+ -->
+ <process name="FlyLight Alignment Pipeline" processor="queue/alignmentPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+	<sequence>
+
+		<input name="PIPELINE_RUN_ENTITY_ID"/>
+		<input name="SAMPLE_ENTITY_ID"/>
+		<input name="ALIGNMENT_ALGORITHM"/>
+		<input name="INPUT_FILENAME"/>
+		<input name="SIGNAL_CHANNELS"/>
+		<input name="REFERENCE_CHANNEL"/>
+
+	    <!-- Create a alignment result node, with nested result nodes for all the pipeline steps -->
+	    <operation name="Create Alignment Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateAlignmentResultFileNodeService">
+	        <output name="RESULT_FILE_NODE"/>
+	        <output name="RESULT_FILE_NODE_ID"/>
+	        <output name="ALIGN_RESULT_FILE_NODE"/>
+	    </operation>
+                
+	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
+	    <operation name="Init Alignment Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitAlignmentParametersService">
+			<input name="SAMPLE_ENTITY_ID"/>
+			<input name="ALIGNMENT_ALGORITHM"/>
+			<output name="ALIGNMENT_SERVICE_CLASS"/>
+			<output name="ALIGNMENT_RESULT_NAME"/>
+			<output name="ALIGNMENT_TILE_NAME"/>
+		</operation>
+	    
+   	    <!-- Align the sample -->
+        <sequence name="Align" waitForAsync="true">
+	        <operation name="Align" processor="queue/gridSubmitAndWait">
+	            <input name="iservice" value="$V{ALIGNMENT_SERVICE_CLASS}"/>
+	    		<input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
+				<input name="INPUT_FILENAME" value="$V{STITCHED_FILENAME}"/>
+				<input name="ALIGNMENT_TILE_NAME"/>
+				<output name="ALIGNED_FILENAME"/>
+	        </operation>
+        </sequence>
+        
+	    <!-- Generate MIP for the stitched file -->
+        <sequence name="Generate sample MIPs" waitForAsync="true">
+	        <operation name="Generate MIPs" processor="queue/gridSubmitAndWait">
+	            <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.MIPGenerationService"/>
+				<input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
+				<input name="INPUT_FILENAME" value="$V{ALIGNED_FILENAME}"/>
+				<input name="SIGNAL_CHANNELS"/>
+				<input name="REFERENCE_CHANNEL"/>
+	        </operation>
+        </sequence>
+        
+	    <!-- Load the alignment results into the database -->
+		<operation name="Discover Alignment Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SupportingFilesDiscoveryService">
+			<input name="ROOT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
+			<input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
+			<input name="RESULT_ENTITY_TYPE" value="Alignment Result"/>
+			<input name="RESULT_ENTITY_NAME" value="$V{ALIGNMENT_RESULT_NAME}"/>
+			<output name="RESULT_ENTITY_ID"/>
+	    </operation>
+	    
+	    <!-- Register images -->
+		<operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
+			<input name="SAMPLE_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
+			<input name="ROOT_ENTITY_ID" value="$V{RESULT_ENTITY_ID}"/>
+			<input name="DEFAULT_IMAGE_FILENAME" value="$V{ALIGNED_FILENAME}"/>
+	    </operation>
+			
+    </sequence>
+    
+</process>

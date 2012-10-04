@@ -358,12 +358,20 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         }
         return null;
     }
-
+    
+    public List<Entity> getUserEntitiesByNameAndTypeName(String userLogin, String entityName, String entityTypeName) {
+        try {
+            return _annotationDAO.getUserEntitiesByNameAndTypeName(userLogin, entityName, entityTypeName);
+        }
+        catch (DaoException e) {
+            _logger.error("Error trying to get the entities of type "+entityTypeName+" with name "+entityName+" for user "+userLogin, e);
+        }
+        return null;
+    }
+    
     public List<Entity> getUserEntitiesByTypeName(String userLogin, String entityTypeName) {
         try {
-            List<Entity> returnList = _annotationDAO.getUserEntitiesByTypeName(userLogin, entityTypeName);
-//            _logger.debug("Entities returned:"+returnList.size());
-            return returnList;
+            return _annotationDAO.getUserEntitiesByTypeName(userLogin, entityTypeName);
         }
         catch (DaoException e) {
             _logger.error("Error trying to get the entities of type "+entityTypeName, e);
@@ -373,12 +381,20 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     
     public List<Entity> getEntitiesByTypeName(String entityTypeName) {
         try {
-            List<Entity> returnList = _annotationDAO.getUserEntitiesByTypeName(null, entityTypeName);
-//            _logger.debug("Entities returned:"+returnList.size());
-            return returnList;
+            return _annotationDAO.getUserEntitiesByTypeName(null, entityTypeName);
         }
         catch (DaoException e) {
             _logger.error("Error trying to get the entities of type "+entityTypeName, e);
+        }
+        return null;
+    }
+    
+    public List<Entity> getEntitiesByNameAndTypeName(String entityName, String entityTypeName) {
+        try {
+            return _annotationDAO.getUserEntitiesByNameAndTypeName(null, entityName, entityTypeName);
+        }
+        catch (DaoException e) {
+            _logger.error("Error trying to get the entities of type "+entityTypeName+" with name "+entityName, e);
         }
         return null;
     }
@@ -515,18 +531,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     public void loadLazyEntity(Entity entity, boolean recurse) throws DaoException {
 		
         if (!EntityUtils.areLoaded(entity.getEntityData())) {
-            Set<Entity> childEntitySet = _annotationDAO.getChildEntities(entity.getId());
-            Map<Long, Entity> childEntityMap = new HashMap<Long, Entity>();
-            for (Entity childEntity : childEntitySet) {
-                childEntityMap.put(childEntity.getId(), childEntity);
-            }
-
-            // Replace the entity data with real objects
-            for (EntityData ed : entity.getEntityData()) {
-                if (ed.getChildEntity() != null) {
-                    ed.setChildEntity(childEntityMap.get(ed.getChildEntity().getId()));
-                }
-            }
+            EntityUtils.replaceChildNodes(entity, _annotationDAO.getChildEntities(entity.getId()));
         }
 
         if (recurse) {

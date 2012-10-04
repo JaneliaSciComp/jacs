@@ -53,11 +53,14 @@ public class MigrateLsmMetadataFilesService implements IService {
         		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
         	}
         	
-        	File metadataDir = new File(getLatestDir(sampleEntity, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT), "metadata");
+        	File metadataDir = new File(getLatestResultDir(sampleEntity, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT), "metadata");
         	
         	if (metadataDir==null || !metadataDir.exists()) {
         		logger.warn("Could not find metadata directory at "+metadataDir+" and will fallback on last neuron separation result");
-        		metadataDir = new File(getLatestDir(sampleEntity, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT).getParentFile(), "metadata");
+        		File latestDir = getLatestResultDir(sampleEntity, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
+        		if (latestDir!=null) {
+        			metadataDir = new File(latestDir.getParentFile(), "metadata");
+        		}
         	}
         	
         	if (metadataDir==null || !metadataDir.exists()) {
@@ -71,8 +74,10 @@ public class MigrateLsmMetadataFilesService implements IService {
         }
     }
     
-    private File getLatestDir(Entity sampleEntity, String entityTypeName) {
-    	Entity sampleProcessingResult = sampleEntity.getLatestChildOfType(entityTypeName);
+    private File getLatestResultDir(Entity sampleEntity, String entityTypeName) {
+    	Entity pipelineRun = sampleEntity.getLatestChildOfType(EntityConstants.TYPE_PIPELINE_RUN);
+    	if (pipelineRun == null) return null;
+    	Entity sampleProcessingResult = pipelineRun.getLatestChildOfType(entityTypeName);
     	if (sampleProcessingResult == null) return null;
     	String filepath = sampleProcessingResult.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
     	return new File(filepath);

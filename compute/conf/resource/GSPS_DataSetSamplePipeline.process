@@ -1,0 +1,37 @@
+<!-- 
+	Generalized Sample Processing System
+	
+	Run all of the pipelines associated with a given Sample and Data Set.
+-->
+<process name="GSPS Data Set Sample Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+	<sequence>
+	
+	    <!-- Import variables from the task -->
+	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="TASK_PARAMETER_1" value="sample entity id"/>
+            <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
+            <input name="TASK_PARAMETER_2" value="data set name"/>
+            <input name="PROCESS_VARIABLE_2" value="DATA_SET_NAME"/>
+	        <output name="SAMPLE_ENTITY_ID"/>
+	        <output name="DATA_SET_NAME"/>
+	    </operation>
+    
+	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
+	    <operation name="Get Data Set Attributes" processor="org.janelia.it.jacs.compute.service.entity.sample.GetPipelinesForDataSetService">
+			<input name="DATA_SET_NAME"/>
+			<output name="PIPELINE_PROCESS_NAME"/>
+		</operation>
+		
+        <sequence forEach="PIPELINE_PROCESS_NAME">
+				
+			<!-- Spawn a new task to process the Sample	-->
+	        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
+	            <input name="PROCESS_DEF_NAME" value="$V{PIPELINE_PROCESS_NAME}"/>
+	            <input name="PARAMETER_1_KEY" value="sample entity id"/>
+	            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
+	        </operation>
+		        
+    	</sequence>
+		
+    </sequence>
+</process>

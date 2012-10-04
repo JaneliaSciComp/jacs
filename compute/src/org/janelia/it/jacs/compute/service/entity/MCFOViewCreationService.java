@@ -56,7 +56,7 @@ public class MCFOViewCreationService extends EntityViewCreationService {
     	Entity supportingFiles = EntityUtils.getSupportingData(sample);
     	if (supportingFiles == null) return tags;
     	for(Entity lsmPair : supportingFiles.getOrderedChildren()) {
-    		if (lsmPair.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK_PAIR)) {
+    		if (lsmPair.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_TILE)) {
     			tags.add(lsmPair.getName());
     		}
     	}

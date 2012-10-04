@@ -179,7 +179,7 @@ public class SampleDiscoveryService extends FileDiscoveryService {
 		if (lsmStackPair == null) {
 			lsmStackPair = new Entity();
             lsmStackPair.setUser(user);
-            lsmStackPair.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK_PAIR));
+            lsmStackPair.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_TILE));
             lsmStackPair.setCreationDate(createDate);
             lsmStackPair.setUpdatedDate(createDate);
             lsmStackPair.setName(filePair.getPairTag());

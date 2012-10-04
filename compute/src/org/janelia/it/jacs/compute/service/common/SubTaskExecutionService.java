@@ -9,6 +9,7 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
+import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 
@@ -46,23 +47,26 @@ public class SubTaskExecutionService implements IService {
         		throw new IllegalArgumentException("PROCESS_DEF_NAME may not be null");
         	}
         	
-        	String taskClassName = (String)processData.getItem("TASK_CLASS");
-        	if (taskClassName == null) {
-        		throw new IllegalArgumentException("TASK_CLASS may not be null");
-        	}
-            
         	Task subtask = null;
+        	String taskClassName = (String)processData.getItem("TASK_CLASS");
+        	
         	try {
-            	subtask = (Task)Class.forName(taskClassName).newInstance();
-            	if (subtask == null) throw new Exception("Null task");
-            	subtask.setInputNodes(new HashSet<Node>());
-            	subtask.setOwner(user.getUserLogin());
-            	subtask.setEvents(new ArrayList<Event>());
-            	subtask.setTaskParameterSet(new HashSet<TaskParameter>());
+	        	if (taskClassName == null) {
+	        		subtask = new GenericTask();
+	        	}
+	        	else {
+	            	subtask = (Task)Class.forName(taskClassName).newInstance();
+	            	if (subtask == null) throw new Exception("Null task");
+	        	}
         	}
         	catch (Exception e) {
         		throw new ServiceException("Could not instantiate task class "+taskClassName,e);
         	}
+        	
+        	subtask.setInputNodes(new HashSet<Node>());
+        	subtask.setOwner(user.getUserLogin());
+        	subtask.setEvents(new ArrayList<Event>());
+        	subtask.setTaskParameterSet(new HashSet<TaskParameter>());
         	
         	int num = 1;
         	while (true) {

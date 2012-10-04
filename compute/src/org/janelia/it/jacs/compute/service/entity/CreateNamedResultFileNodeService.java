@@ -38,8 +38,17 @@ public class CreateNamedResultFileNodeService implements IService {
             String name = (String)processData.getItem("NAME");
             
             createResultFileNode(name);
-            processData.putItem(ProcessDataConstants.RESULT_FILE_NODE, resultFileNode);
-            processData.putItem(ProcessDataConstants.RESULT_FILE_NODE_ID, resultFileNode.getObjectId());
+            
+            String outputVar = (String)processData.getItem("OUTPUT_VAR_NAME");
+            
+            if (outputVar!=null) {
+            	processData.putItem(outputVar, resultFileNode);
+            	processData.putItem(outputVar+"_ID", resultFileNode.getObjectId());
+            }
+            else {
+            	processData.putItem(ProcessDataConstants.RESULT_FILE_NODE, resultFileNode);
+            	processData.putItem(ProcessDataConstants.RESULT_FILE_NODE_ID, resultFileNode.getObjectId());
+            }
             
             logger.info("Created named result node: "+resultFileNode.getDirectoryPath());
         }

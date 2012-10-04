@@ -20,7 +20,8 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
 public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDiscoveryService {
 
 	protected Entity sampleEntity;
-
+	protected Entity pipelineRunEntity;
+	
 	@Override
     public void execute(IProcessData processData) throws ServiceException {
     	processData.putItem("RESULT_ENTITY_TYPE", EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
@@ -30,11 +31,17 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     @Override
     protected Entity verifyOrCreateChildFolderFromDir(Entity parentFolder, File dir, Integer index) throws Exception {
 
-    	if (!parentFolder.getEntityType().getName().equals(EntityConstants.TYPE_SAMPLE)) {
-    		throw new IllegalStateException("Expected Sample as top-level folder");
-    	}
+    	sampleEntity = entityBean.getAncestorWithType(parentFolder, EntityConstants.TYPE_SAMPLE);
+    	pipelineRunEntity = entityBean.getAncestorWithType(parentFolder, EntityConstants.TYPE_PIPELINE_RUN);
+
+		if (sampleEntity==null) {
+			throw new IllegalStateException("Root entity must have Sample ancestor: "+parentFolder.getId());		
+		}
     	
-    	sampleEntity = parentFolder;
+		if (pipelineRunEntity==null) {
+			throw new IllegalStateException("Root entity must have Pipeline Run ancestor: "+parentFolder.getId());		
+		}
+    	
     	return super.verifyOrCreateChildFolderFromDir(parentFolder, dir, index);
     }
     
@@ -61,6 +68,12 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
 		helper.setImage(sampleEntity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, referenceMIP);
 		helper.setDefault2dImage(resultEntity, signalMIP);
 		helper.setDefault2dImage(sampleEntity, signalMIP);
+		
+		if (pipelineRunEntity!=null) {
+			helper.setImage(pipelineRunEntity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMIP);
+			helper.setImage(pipelineRunEntity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, referenceMIP);	
+			helper.setDefault2dImage(pipelineRunEntity, signalMIP);
+		}
     }
     
     protected void processSeparationFolder(Entity resultEntity) throws Exception {

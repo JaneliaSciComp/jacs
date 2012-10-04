@@ -827,7 +827,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
     
     public EntityType createNewEntityType(String name) throws DaoException {
     	if (getEntityTypeByName(name) != null) {
-    		throw new DaoException("Entity type "+name+" already exists");
+    		throw new DaoException("Entity type '"+name+"' already exists");
     	}
         Session session = getCurrentSession();
     	
@@ -835,7 +835,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 	    	EntityType entityType = new EntityType();
 	    	entityType.setName(name);
 	        session.saveOrUpdate(entityType);
-            _logger.info("Created new EntityType " + name);
+            _logger.info("Created new EntityType '" + name + "'");
 
     		entityByName.put(name, entityType);
 	        return entityType;
@@ -855,7 +855,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 	    	entityAttr.setName(attrName);
 	        session.saveOrUpdate(entityAttr);
     		attrByName.put(attrName, entityAttr);
-            _logger.info("Created new EntityAttribute " + attrName);
+            _logger.info("Created new EntityAttribute '" + attrName + "'");
 	        
     	}
     	catch (Exception e) {
@@ -869,7 +869,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
     public EntityAttribute createNewEntityAttr(String entityTypeName, String attrName) throws ComputeException {
     	EntityType entityType = getEntityTypeByName(entityTypeName);
     	if (entityType == null) {
-    		throw new ComputeException("Entity type "+entityTypeName+" does not exist");
+    		throw new ComputeException("Entity type '"+entityTypeName+"' does not exist");
     	}
     	EntityAttribute entityAttr = getEntityAttributeByName(attrName);
     	if (entityAttr != null) {
@@ -880,7 +880,6 @@ public class AnnotationDAO extends ComputeBaseDAO {
     		entityAttr = addAttributeToEntityType(entityType, attrName);	
     		return entityAttr;
     	}
-
     }
     
     public EntityAttribute addAttributeToEntityType(EntityType entityType, EntityAttribute entityAttr) throws DaoException  {
@@ -896,7 +895,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
     		
     		attrs.add(entityAttr);
 	        session.saveOrUpdate(entityType);
-            _logger.info("Added EntityAttribute " + entityAttr.getName() + " to EntityType "+entityType.getName());
+            _logger.info("Added EntityAttribute '" + entityAttr.getName() + "' to EntityType '"+entityType.getName()+"'");
 	        
 	        return entityAttr;
     	}
@@ -993,6 +992,30 @@ public class AnnotationDAO extends ComputeBaseDAO {
         catch (Exception e) {
             // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
             throw handleException(e, "getAllEntityAttributes");
+        }
+    }
+    
+    public List<Entity> getUserEntitiesByNameAndTypeName(String userLogin, String entityName, String entityTypeName) throws DaoException {
+        try {
+            StringBuffer hql = new StringBuffer("select e from Entity e ");
+            hql.append("join fetch e.user ");
+            hql.append("join fetch e.entityType ");
+            hql.append("where e.name=:entityName ");
+            hql.append("and e.entityType.name=:entityTypeName ");
+            if (null != userLogin) {
+                hql.append("and e.user.userLogin=:userLogin ");
+            }
+            Query query = getCurrentSession().createQuery(hql.toString());
+            query.setString("entityName", entityName);
+            query.setString("entityTypeName", entityTypeName);
+            if (null != userLogin) {
+                query.setString("userLogin", userLogin);
+            }
+            return query.list();
+        }
+        catch (Exception e) {
+            // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
+            throw handleException(e, "getUserEntitiesByNameAndTypeName");
         }
     }
 

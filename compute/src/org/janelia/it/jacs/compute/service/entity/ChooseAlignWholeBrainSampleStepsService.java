@@ -88,7 +88,7 @@ public class ChooseAlignWholeBrainSampleStepsService implements IService {
 		int numTiles = 0;
 		Entity sampleSupportingFiles = sampleEntity.getLatestChildOfType(EntityConstants.TYPE_SUPPORTING_DATA);
     	if (sampleSupportingFiles!=null) {
-    		numTiles = sampleSupportingFiles.getDescendantsOfType(EntityConstants.TYPE_LSM_STACK_PAIR, true).size();
+    		numTiles = sampleSupportingFiles.getDescendantsOfType(EntityConstants.TYPE_IMAGE_TILE, true).size();
     	}
     	
 		Entity stitchedFile = null;

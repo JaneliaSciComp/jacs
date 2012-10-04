@@ -9,9 +9,7 @@ import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
@@ -22,9 +20,10 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  */
 public class MCFODataUpgradeService implements IService {
 
+	private static final Logger logger = Logger.getLogger(MCFODataUpgradeService.class);
+	
     public transient static final String PARAM_testRun = "is test run";
 	
-    protected Logger logger;
     protected Task task;
     protected String username;
     protected AnnotationBeanLocal annotationBean;
@@ -41,7 +40,6 @@ public class MCFODataUpgradeService implements IService {
     public void execute(IProcessData processData) throws ServiceException {
 
     	try {
-            logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             task = ProcessDataHelper.getTask(processData);
             annotationBean = EJBFactory.getLocalAnnotationBean();
             entityBean = EJBFactory.getLocalEntityBean();
@@ -93,177 +91,206 @@ public class MCFODataUpgradeService implements IService {
 		
 		entityBean.loadLazyEntity(sample, false);
 		
-		migrateSampleLevelLsmPairs(sample);
-//        	migrateDefault2dImages(entity);
-    	migrateSignalSpecs(sample);
+		migrateTilelessLsms(sample);
+		migratePairsToTiles(sample);
+		migrateSampleStructure(sample);
     }
     
     /**
-     * Check for old-style signal specs, and convert them to the new single-attribute format.
-     * @param sample
-     * @throws ComputeException
+     * Check for Samples with LSMs that are not inside Tile entities.
      */
-    private void migrateSignalSpecs(Entity sample) throws ComputeException {
+    private void migrateTilelessLsms(Entity sample) throws ComputeException {
     	
-    	EntityData refEd = sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_CHANNEL);
-    	EntityData sigEd = sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_CHANNELS);
-    	EntityData specEd = sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+    	Entity supportingFiles = EntityUtils.getSupportingData(sample);
+    	if (supportingFiles==null) return; 
     	
-    	if (refEd!=null) {
-        	logger.info("  Found old-style ref spec "+refEd.getValue()+" (id="+refEd.getId()+")");
-        	sample.getEntityData().remove(refEd);
-        	
-        	if (sigEd!=null) {
-	        	logger.info("  Found old-style signal spec "+sigEd.getValue()+" (id="+sigEd.getId()+")");
-	        	sample.getEntityData().remove(sigEd);
-        	}
-        	
-        	if (specEd!=null) {
-        		logger.info("  Found new-style spec "+specEd.getValue()+" (id="+specEd.getId()+")");
-	        	sample.getEntityData().remove(specEd);
-        	}
-        	
-        	String spec = null;
-        	if ("2".equals(refEd.getValue())) {
-        		spec = "ssr";
-        	}
-        	else if ("3".equals(refEd.getValue())) {
-        		spec = "sssr";
-        	}
-        	else {
-        		logger.warn("  Unknown reference channel "+refEd.getValue()+" for sample "+sample.getId());
-        	}
-        	
-        	if (spec!=null) {
-            	logger.info("  Adding new signal spec '"+spec+"' and removing old-style specs.");
-            	sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, spec);
-                if (!isDebug) {
-                	entityBean.saveOrUpdateEntity(sample);
-                }
-                numChanges++;
-        	}
-    	}
-    }
-    
-    /**
-     * Check for Samples with LSM pairs as direct children, and move the LSMs into Supporting Data.
-     */
-    private void migrateSampleLevelLsmPairs(Entity sample) throws ComputeException {
-    	
+        populateChildren(supportingFiles);
+        
     	List<EntityData> toMove = new ArrayList<EntityData>();
-		for(EntityData ed : sample.getEntityData()) {
+		for(EntityData ed : supportingFiles.getEntityData()) {
 			Entity child = ed.getChildEntity();
-			if (child!=null && child.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK_PAIR)) {
+			if (child!=null && child.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK)) {
 				toMove.add(ed);
 			}
 		}
 		
 		if (!toMove.isEmpty()) {
-			logger.info("Found old-style sample, id="+sample.getId()+" name="+sample.getName());
-            Entity supportingFiles = helper.getOrCreateSupportingFilesFolder(sample);
-
-        	if (!EntityUtils.areLoaded(supportingFiles.getEntityData())) {
-        		entityBean.loadLazyEntity(supportingFiles, false);
-        	}
+			logger.info("Found old-style LSMs, id="+sample.getId()+" name="+sample.getName());
+        	int i = 1;
+        	List<Long> toAdd = new ArrayList<Long>();
         	
     		for(EntityData ed : toMove) {
-                logger.info("    Moving ed="+ed.getId()+" to new parent "+supportingFiles.getId());
                 if (!isDebug) {
                 	// Update database
-                	ed.setParentEntity(supportingFiles);
+                	Entity tile = entityBean.createEntity(username, EntityConstants.TYPE_IMAGE_TILE, "Tile "+i);
+                	ed.setParentEntity(tile);
                 	entityBean.saveOrUpdateEntityData(ed);
                 	// Update in-memory model
-                	supportingFiles.getEntityData().add(ed);
-                	sample.getEntityData().remove(ed);
+                	tile.getEntityData().add(ed);
+                	supportingFiles.getEntityData().remove(ed);
+                	toAdd.add(tile.getId());
                 }
+                i++;
                 numChanges++;
+    		}
+    		
+    		if (!isDebug) {
+    			entityBean.addChildren(username, supportingFiles.getId(), toAdd, EntityConstants.ATTRIBUTE_ENTITY);
     		}
 		}
     }
-    
+
     /**
-     * Check for Default 2d Image Filepaths and instead link directly to the correct image entity.
+     * Check for Samples with LSM Pairs and convert them to Image Tiles.
      */
-    protected void migrateDefault2dImages(Entity sample) throws ComputeException {
-
-    	logger.info("migrateDefault2dImages for sample "+sample.getName());
+    private void migratePairsToTiles(Entity sample) throws ComputeException {
     	
-        Entity latestSignalMIP = null;
-        Entity latestReferenceMIP = null;
+    	Entity supportingFiles = EntityUtils.getSupportingData(sample);
+    	if (supportingFiles==null) return; 
     	
-    	for(Entity result : sample.getOrderedChildren()) {
-        	String resultTypeName = result.getEntityType().getName();	
-    		if (EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT.equals(resultTypeName)) {
-    			logger.info("Processing result "+result.getName());
-    			
-    			Map<String,Entity> fragImages = new HashMap<String,Entity>();
-    			
-    	        Entity signalMIP = null;
-    	        Entity referenceMIP = null; 	    		
-	            Entity supportingFiles = EntityUtils.getSupportingData(result);
-	            
-	        	if (!EntityUtils.areLoaded(supportingFiles.getEntityData())) {
-	        		entityBean.loadLazyEntity(supportingFiles, false);
-	        	}
-	            
-	            for(Entity fileEntity : supportingFiles.getOrderedChildren()) {
-	            	if ("ConsolidatedSignalMIP.png".equals(fileEntity.getName())) {
-	            		signalMIP = fileEntity;
-	            	}
-	            	else if ("ReferenceMIP.png".equals(fileEntity.getName())) {
-	            		referenceMIP = fileEntity;
-	            	}
+        populateChildren(supportingFiles);
 
-	            	String fragNum = getIndex(fileEntity.getName());
-	            	if (fragNum!=null) {
-	            		if (fragImages.containsKey(fragNum)) {
-	            			logger.warn("We already saw a fragment MIP for "+fragNum);
-	            		}
-	            		fragImages.put(fragNum, fileEntity);
-	            	}
-	            }
+        EntityAttribute attr = entityBean.getEntityAttributeByName(EntityConstants.ATTRIBUTE_ENTITY);
+        
+		for(Entity entity : supportingFiles.getChildren()) {
+			if (entity.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_TILE)) {
+                populateChildren(entity);
+                EntityData stack1ed = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_LSM_STACK_1);
 
-	            Entity fragments = EntityUtils.findChildWithName(result, "Neuron Fragments");
-	            for(Entity fragmentEntity : fragments.getOrderedChildren()) {
-	            	helper.removeDefaultImageFilePath(fragmentEntity);
-	            	String fragNumStr = fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER); 
-	            	Entity fragMip = fragImages.get(fragNumStr);
-	            	if (fragMip==null) {
-	            		logger.warn("Could not find MIP image for "+fragmentEntity.getName());
-	            	}
-	            	else {
-	            		helper.setDefault2dImage(fragmentEntity, fragMip);
-	            	}	
-	            }
-	            
-    			if (signalMIP!=null) logger.info("Found signalMIP, id="+signalMIP.getId());
-    			if (referenceMIP!=null) logger.info("Found referenceMIP, id="+referenceMIP.getId());
-    			
-    			helper.removeDefaultImageFilePath(result);    			
-    			helper.setImage(result, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMIP);
-    			helper.setImage(result, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, referenceMIP);
-    			helper.setDefault2dImage(result, signalMIP);
-        		
-	        	latestSignalMIP = signalMIP;
-	        	latestReferenceMIP = referenceMIP;
+                if (stack1ed!=null) {
+                	logger.info("Found old-style LSM Pair, id="+entity.getId()+" name="+entity.getName());
+	                stack1ed.setEntityAttribute(attr);
+	                stack1ed.setOrderIndex(0);
+	                logger.info("    Updating stack 1, id="+stack1ed.getId());
+	                if (!isDebug) {
+	                	entityBean.saveOrUpdateEntityData(stack1ed);
+	                }
+                }
+                
+                EntityData stack2ed = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_LSM_STACK_2);
+                if (stack2ed!=null) {
+	                stack2ed.setEntityAttribute(attr);
+	                stack2ed.setOrderIndex(1);
+	                logger.info("    Updating stack 2, id="+stack2ed.getId());
+	                if (!isDebug) {
+	                	entityBean.saveOrUpdateEntityData(stack2ed);
+	                }
+                }
+			}
+		}
+    }
+
+    /**
+     * Check for Samples with the old result structure.
+     */
+    private void migrateSampleStructure(Entity sample) throws ComputeException {
+    	
+    	if (EntityUtils.findChildEntityDataWithType(sample, EntityConstants.TYPE_PIPELINE_RUN) != null) {
+    		// this is a new-style sample, no need to migrate it
+    		return;
+    	}
+    	
+    	logger.info("Found old-style sample results, id="+sample.getId()+" name="+sample.getName());
+    	
+    	Entity defaultImage = null;
+    	Entity signalMIP = null;
+    	Entity referenceMIP = null;
+    	
+    	List<EntityData> results = new ArrayList<EntityData>();
+    	List<EntityData> sepResults = new ArrayList<EntityData>();
+    	
+    	Date lastDate = null;
+    	
+    	for (EntityData ed : sample.getOrderedEntityData()) {
+    		
+    		Entity entity = ed.getChildEntity();
+    		if (entity==null) continue;
+    		
+    		populateChildren(entity);
+    		
+    		if (EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE.equals(ed.getEntityAttribute().getName())) {
+    			defaultImage = entity;
+    		}
+    		else if (EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE.equals(ed.getEntityAttribute().getName())) {
+    			signalMIP = entity;
+    		}
+    		else if (EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE.equals(ed.getEntityAttribute().getName())) {
+    			referenceMIP = entity;
+    		}
+    		else {
+    			if (EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT.equals(entity.getEntityType().getName())) {
+    				lastDate = ed.getCreationDate();
+    				sepResults.add(ed);
+    			}
+    			else if (EntityConstants.TYPE_SUPPORTING_DATA.equals(entity.getEntityType().getName())) {
+    				// Don't move the Supporting Data, it stays at Sample level
+    			}
+    			else {
+    				results.add(ed);
+    			}
     		}
     	}
     	
-    	if (latestSignalMIP!=null) logger.info("Latest signalMIP, id="+latestSignalMIP.getId());
-		if (latestReferenceMIP!=null) logger.info("Latest referenceMIP, id="+latestReferenceMIP.getId());
+    	if (isDebug) return;
+    	
+    	Entity pipelineRun = entityBean.createEntity(username, EntityConstants.TYPE_PIPELINE_RUN, "FlyLight Pipeline Results");
+
+    	// Pretend like this run was created back when it should have been
+    	pipelineRun.setCreationDate(lastDate);
+    	pipelineRun.setUpdatedDate(lastDate);
+    	entityBean.saveOrUpdateEntity(pipelineRun);
+    	
+		helper.setImage(pipelineRun, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMIP);
+		helper.setImage(pipelineRun, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, referenceMIP);	
+		helper.setDefault2dImage(pipelineRun, defaultImage);
+    	
+		Collections.reverse(results);
+		Collections.reverse(sepResults);
 		
-		helper.removeDefaultImageFilePath(sample);
-		helper.setImage(sample, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, latestSignalMIP);
-		helper.setImage(sample, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, latestReferenceMIP);
-		helper.setDefault2dImage(sample, latestSignalMIP);
+		boolean moved = false;
+		for(EntityData sepEd : sepResults) {
+			Entity sep = sepEd.getChildEntity();
+			
+			for(EntityData resultEd : results) {	
+				Entity result = resultEd.getChildEntity();
+				String type = result.getEntityType().getName();
+				
+				if ((sep.getName().startsWith("Prealigned") && type.equals(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)) || 
+						(sep.getName().startsWith("Aligned") && type.equals(EntityConstants.TYPE_ALIGNMENT_RESULT) 
+								&& ((sep.getName().contains("63x") && result.getName().contains("63x")) ||
+										(!sep.getName().contains("63x") && !result.getName().contains("63x"))))) {
+					sepEd.setParentEntity(result);
+					entityBean.saveOrUpdateEntityData(sepEd);
+					sample.getEntityData().remove(sepEd);
+					moved = true;
+				}
+			}
+			
+			if (!moved) {
+				logger.warn("Could not find a place for neuron separation id="+sep.getId()+", moving to pipeline run.");
+				sepEd.setParentEntity(pipelineRun);
+				entityBean.saveOrUpdateEntityData(sepEd);
+				sample.getEntityData().remove(sepEd);
+			}
+		}
+
+		Collections.reverse(results);
+		
+		for(EntityData resEd : results) {
+			resEd.setParentEntity(pipelineRun);
+			entityBean.saveOrUpdateEntityData(resEd);
+			sample.getEntityData().remove(resEd);
+		}
+		
+		entityBean.addEntityToParent(username, sample, pipelineRun, sample.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+		
+		logger.info("    Moved results to pipeline run, id="+pipelineRun.getId()+" name="+pipelineRun.getName());
     }
 
-    protected String getIndex(String filename) {
-    	if (!filename.contains("neuronSeparatorPipeline.PR.neuron")) return null;
-    	String mipNum = filename.substring("neuronSeparatorPipeline.PR.neuron".length(), filename.lastIndexOf('.'));
-    	if (mipNum.startsWith(".")) mipNum = mipNum.substring(1); 
-		return mipNum;
+    private Entity populateChildren(Entity entity) {
+    	if (entity==null || EntityUtils.areLoaded(entity.getEntityData())) return entity;
+		EntityUtils.replaceChildNodes(entity, entityBean.getChildEntities(entity.getId()));
+		return entity;
     }
-    
     
 }

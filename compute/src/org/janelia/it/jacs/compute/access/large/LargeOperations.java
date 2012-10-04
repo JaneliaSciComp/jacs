@@ -20,6 +20,8 @@ import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.solr.AncestorSet;
 import org.janelia.it.jacs.compute.access.solr.SimpleAnnotation;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
+import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityType;
@@ -292,13 +294,42 @@ public class LargeOperations {
      * Builds a map of image paths to Sage properties.
      * @throws DaoException
      */
-    public void buildSageImagePropMap(String imageFamily) throws DaoException {
+    public void buildSageImagePropMap() throws DaoException {
     	
-    	logger.info("Building property map for all Sage images in image family '"+imageFamily+"'");
+    	logger.info("Building property map for all Sage images");
     	SageDAO sage = new SageDAO(logger);
-    	ResultSetIterator iterator = sage.getImages(imageFamily);
+
+    	for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
+    		
+    		String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+    		logger.info("  Building property map for all Sage images in Data Set '"+dataSetIdentifier+"'");
+    		
+        	ResultSetIterator iterator = null;
+        	
+        	try {
+        		iterator = sage.getImagesByDataSet(dataSetIdentifier);
+        		while (iterator.hasNext()) {
+            		Map<String,Object> row = iterator.next();
+    				associateImageProperties(row);
+            	}
+        	}
+        	catch (RuntimeException e) {
+        		if (e.getCause() instanceof SQLException) {
+        			throw new DaoException(e);
+        		}
+        		throw e;
+        	}
+            finally {
+            	if (iterator!=null) iterator.close();
+            }
+    	}
+    	
+		logger.info("  Building property map for all Sage images in the flylight_flip image family");
+		
+    	ResultSetIterator iterator = null;
     	
     	try {
+    		iterator = sage.getImagesByFamily("flylight_flip");
     		while (iterator.hasNext()) {
         		Map<String,Object> row = iterator.next();
 				associateImageProperties(row);

@@ -1,7 +1,16 @@
 package org.janelia.it.jacs.compute.engine.service;
 
+import java.lang.reflect.Constructor;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.ejb.ActivationConfigProperty;
+import javax.ejb.MessageDriven;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.ObjectMessage;
+
 import org.apache.log4j.Logger;
-import org.jboss.annotation.ejb.PoolClass;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.drmaa.JobStatusLogger;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
@@ -15,15 +24,7 @@ import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SimpleJobStatu
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
-
-import javax.ejb.ActivationConfigProperty;
-import javax.ejb.MessageDriven;
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.ObjectMessage;
-import java.lang.reflect.Constructor;
-import java.util.HashMap;
-import java.util.Map;
+import org.jboss.annotation.ejb.PoolClass;
 
 /**
  * Created by IntelliJ IDEA.
@@ -84,6 +85,10 @@ public class GridSubmitAndWaitMDB extends BaseServiceMDB {
         
         // Retriev the original Message and the service objects from the GridSubmitHelperMap
         Map dataMap = GridSubmitHelperMap.getInstance().getFromDataMap(uniqueKey);
+        
+        if (dataMap == null) {
+        	throw new IllegalStateException("Unique key not found in data map: "+uniqueKey+" GridProcessResult("+gpr+")");
+        }
 
         QueueMessage queueMessage = ((QueueMessage) dataMap.get(GridSubmitHelperMap.ORIGINAL_QUEUE_MESSAGE_KEY));
         OperationDef operationToProcess = null;

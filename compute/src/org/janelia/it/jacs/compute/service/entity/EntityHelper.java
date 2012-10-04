@@ -120,6 +120,7 @@ public class EntityHelper {
 	 * @throws ComputeException
 	 */
 	public void setImage(Entity entity, String attributeName, Entity image) throws ComputeException {
+		if (image==null) return;
 		removeEntityDataForAttributeName(entity, attributeName);
 		addImage(entity, attributeName, image);
 	}
@@ -132,17 +133,16 @@ public class EntityHelper {
 	 * @throws ComputeException
 	 */
 	public void addImage(Entity entity, String attributeName, Entity image) throws ComputeException {
+		if (image==null) return;
         logger.info("Adding "+attributeName+" ("+image.getName()+") to id="+entity.getId()+" name="+entity.getName());
     	if (DEBUG) return;
-        if (image != null) {
-	    	// Update in-memory model
-	    	String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-	    	EntityData ed = entity.addChildEntity(image, attributeName);
-	    	ed.setValue(filepath);
-	    	// Update database
-    		EntityData savedEd=entityBean.saveOrUpdateEntityData(ed);
-    		EntityUtils.replaceEntityData(entity, ed, savedEd);
-        }
+    	// Update in-memory model
+    	String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+    	EntityData ed = entity.addChildEntity(image, attributeName);
+    	ed.setValue(filepath);
+    	// Update database
+		EntityData savedEd=entityBean.saveOrUpdateEntityData(ed);
+		EntityUtils.replaceEntityData(entity, ed, savedEd);
     }
 
 	/**

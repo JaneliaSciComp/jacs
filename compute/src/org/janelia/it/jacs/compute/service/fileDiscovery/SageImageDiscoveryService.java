@@ -22,23 +22,27 @@ import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
- * Discovers images in SAGE which are part of a particular image family, and creates Samples within the entity model.
+ * Discovers images in SAGE which are part of data sets defined in the workstation, and creates or updates Samples 
+ * within the entity model.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class SageImageDiscoveryService implements IService {
    
-    protected Map<TilingPattern,Integer> patterns = new EnumMap<TilingPattern,Integer>(TilingPattern.class);
-    
+	protected static final String PRIVATE_DATA_SET_FOLDER_NAME = "My Data Sets";
+	protected static final String PUBLIC_DATA_SET_FOLDER_NAME = "Public Data Sets";
+	
     protected Logger logger;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
     protected User user;
     protected Date createDate;
-    protected String sageImageFamily;
     protected IProcessData processData;
     protected String defaultChannelSpec;
-    protected String alignmentTypes;
+    protected Entity topLevelFolder;
+    
+    protected int numSamplesCreated = 0;
+    protected int numSamplesAdded = 0;
     
     public void execute(IProcessData processData) throws ServiceException {
         try {
@@ -49,107 +53,51 @@ public class SageImageDiscoveryService implements IService {
             user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
             createDate = new Date();
             
-            sageImageFamily = (String)processData.getItem("SAGE_IMAGE_FAMILY");
-            if (sageImageFamily==null) {
-        		throw new IllegalArgumentException("SAGE_IMAGE_FAMILY may not be null");
-            }
-
-			defaultChannelSpec = (String) processData.getItem("DEFAULT CHANNEL SPECIFICATION");
+			defaultChannelSpec = (String) processData.getItem("DEFAULT_CHANNEL_SPECIFICATION");
 			if (defaultChannelSpec == null) {
-				throw new IllegalArgumentException("DEFAULT CHANNEL SPECIFICATION may not be null");
+				throw new IllegalArgumentException("DEFAULT_CHANNEL_SPECIFICATION may not be null");
 			}
             
-            alignmentTypes = (String)processData.getItem("ALIGNMENT_TYPES");
-            if (alignmentTypes==null) {
-            	alignmentTypes = "AUTO";
-            }
+			if ("system".equals(user.getUserLogin())) {
+	        	topLevelFolder = createOrVerifyRootEntityButDontLoadTree(PUBLIC_DATA_SET_FOLDER_NAME);
+			}
+			else {
+	        	topLevelFolder = createOrVerifyRootEntityButDontLoadTree(PRIVATE_DATA_SET_FOLDER_NAME);
+			}
             
-            String topLevelFolderName;
-            Entity topLevelFolder;
-            if (processData.getItem("ROOT_ENTITY_NAME") != null) {
-            	topLevelFolderName = (String)processData.getItem("ROOT_ENTITY_NAME");
-            	topLevelFolder = createOrVerifyRootEntityButDontLoadTree(topLevelFolderName);
-            }
-            else {
-            	String rootEntityId = (String)processData.getItem("ROOT_ENTITY_ID");
-            	if (rootEntityId==null) {
-            		throw new IllegalArgumentException("Both ROOT_ENTITY_NAME and ROOT_ENTITY_ID may not be null");
-            	}
-            	topLevelFolder = entityBean.getEntityById(rootEntityId);
-            }
-            
-        	if (topLevelFolder==null) {
-        		throw new IllegalArgumentException("Both ROOT_ENTITY_NAME and ROOT_ENTITY_ID may not be null");
-        	}
-        	
             logger.info("Will put discovered entities into top level entity "+topLevelFolder.getName()+", id="+topLevelFolder.getId());
             
-            processSageData(topLevelFolder);
-            
-        	String outvar = (String)processData.getItem("OUTVAR_ENTITY_ID");
-        	if (outvar != null) {
-        		logger.info("Putting "+topLevelFolder.getId()+" in "+outvar);
-        		processData.putItem(outvar, topLevelFolder.getId());
+        	for(Entity dataSet : entityBean.getUserEntitiesByTypeName(user.getUserLogin(), EntityConstants.TYPE_DATA_SET)) {
+        		logger.info("Processing data set: "+dataSet.getName());
+            	processSageDataSet(null, dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER));	
         	}
-
-        	logger.info("Tiling pattern statistics:");
-            for(TilingPattern pattern : TilingPattern.values()) {
-            	Integer count = patterns.get(pattern);
-            	if (count==null) count = 0;
-            	logger.info(pattern.getName()+": "+count);
-            }
+        
+            fixOrderIndices();
             
+            logger.info("Created "+numSamplesCreated+" samples, Added "+numSamplesAdded+" samples to their corresponding data set folders.");
         } 
         catch (Exception e) {
             throw new ServiceException(e);
         }
     }
     
-    protected void processSageData(Entity topLevelFolder) throws Exception {
-
-    	// Load all the tiling pattern folders
-    	if (!EntityUtils.areLoaded(topLevelFolder.getEntityData())) {
-    		entityBean.loadLazyEntity(topLevelFolder, false);
-    	}
+    protected void processSageDataSet(String imageFamily, String dataSetIdentifier) throws Exception {
     	
-    	// Load all the children (Samples) for each tiling pattern 
-    	for(Entity tilingPatternFolder : topLevelFolder.getChildren()) {
-    		if (tilingPatternFolder.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
-    			entityBean.loadLazyEntity(tilingPatternFolder, false);
-    		}
-    	}
-    	
-    	fixOrderIndices(topLevelFolder);
-    	
-    	SageDAO sageDAO = new SageDAO(logger);
-    		
     	ResultSetIterator iterator = null;
     	try {
     		List<SlideImage> slideGroup = null;
     		String currSlideCode = null;
-
-            iterator = sageDAO.getImages(sageImageFamily);
-
+			iterator = getImageIterator(dataSetIdentifier==null?imageFamily:dataSetIdentifier);	
+    		
         	while (iterator.hasNext()) {
         		Map<String,Object> row = iterator.next();
-                SlideImage slideImage = new SlideImage();
-				slideImage.slideCode = (String)row.get("slide_code");
-				slideImage.imagePath = (String)row.get("path");
-				slideImage.tileType = (String)row.get("tile");
-				slideImage.age = (String)row.get("age");
-				slideImage.gender = (String)row.get("gender");
-				slideImage.effector = (String)row.get("effector");
-				slideImage.line = (String)row.get("line");
-				slideImage.channelSpec = (String)row.get("channel_spec");
-				slideImage.channels = (String)row.get("channels");
-				
+        		SlideImage slideImage = getSlideImage(row);
+        		
 				if (!slideImage.slideCode.equals(currSlideCode)) {
-
 					// Process the current group
 					if (slideGroup != null) {
-		                processSlideGroup(topLevelFolder, currSlideCode, slideGroup);
+		                processSlideGroup(dataSetIdentifier, currSlideCode, slideGroup);
 					}
-					
 					// Start a new group
 					currSlideCode = slideImage.slideCode;
 					slideGroup = new ArrayList<SlideImage>();
@@ -160,7 +108,7 @@ public class SageImageDiscoveryService implements IService {
 
 			// Process the last group
 			if (slideGroup != null) {
-                processSlideGroup(topLevelFolder, currSlideCode, slideGroup);
+                processSlideGroup(dataSetIdentifier, currSlideCode, slideGroup);
 			}
             
     	}
@@ -175,9 +123,30 @@ public class SageImageDiscoveryService implements IService {
         }
     }
     
-    protected void processSlideGroup(Entity topLevelFolder, String slideCode, List<SlideImage> slideGroup) throws Exception {
+    protected ResultSetIterator getImageIterator(String criteria) throws Exception {
+    	SageDAO sageDAO = new SageDAO(logger);
+    	return sageDAO.getImagesByDataSet(criteria);
+    }
+    
+    protected SlideImage getSlideImage(Map<String,Object> row) {
+        SlideImage slideImage = new SlideImage();
+		slideImage.slideCode = (String)row.get("slide_code");
+		slideImage.imagePath = (String)row.get("path");
+		slideImage.tileType = (String)row.get("tile");
+		slideImage.line = (String)row.get("line");
+		slideImage.channelSpec = (String)row.get("channel_spec");
+		slideImage.channels = (String)row.get("channels");
+		String voxelSizeX = (String)row.get("voxel_size_x");
+		String voxelSizeY = (String)row.get("voxel_size_y");
+		String voxelSizeZ = (String)row.get("voxel_size_z");
+		slideImage.opticalRes = voxelSizeX+"x"+voxelSizeY+"x"+voxelSizeZ;
+		slideImage.file = slideImage.imagePath!=null?new File(slideImage.imagePath):null;
+		return slideImage;
+    }
+    
+    protected void processSlideGroup(String dataSetIdentifier, String slideCode, List<SlideImage> slideGroup) throws Exception {
     	
-        HashMap<String, FilePair> filePairings = new HashMap<String, FilePair>();
+        HashMap<String, ImageTileGroup> tileGroups = new HashMap<String, ImageTileGroup>();
         String sampleIdentifier = null;
         String sampleChannelSpec = null;
 
@@ -185,37 +154,24 @@ public class SageImageDiscoveryService implements IService {
         
         int i = 0;
         for(SlideImage slideImage : slideGroup) {
-    	
-            if (slideImage.tileType==null || !filePairings.containsKey(slideImage.tileType)) {
+        	ImageTileGroup tileGroup = tileGroups.get(slideImage.tileType);
+            if (tileGroup==null) {
             	
-            	String pairTag = slideImage.tileType;
-            	if (pairTag==null) {
-            		pairTag = "Tile "+(i+1);
+            	String tag = slideImage.tileType;
+            	if (tag==null) {
+            		tag = "Tile "+(i+1);
             	}
             	
-            	FilePair filePair = new FilePair(pairTag);
-            	File lsmFile1 = new File(slideImage.imagePath);
-            	filePair.setFilename1(lsmFile1.getAbsolutePath());
-        		if (!lsmFile1.exists()) {
-        			logger.warn("File referenced by SAGE does not exist: "+filePair.getFilename1());
-        			return;
-        		}
-        		
-        		filePair.setFile1(lsmFile1);
-        		filePairings.put(filePair.getPairTag(), filePair);
-            }
-            else {
-            	FilePair filePair = filePairings.get(slideImage.tileType);
-            	File lsmFile2 = new File(slideImage.imagePath);
-            	filePair.setFilename2(lsmFile2.getAbsolutePath());
-        		if (!lsmFile2.exists()) {
-        			logger.warn("File referenced by SAGE does not exist: "+filePair.getFilename2());
-        			return;
-        		}
-
-        		filePair.setFile2(lsmFile2);
+            	tileGroup = new ImageTileGroup(tag);
+        		tileGroups.put(tileGroup.getTag(), tileGroup);
             }
             
+        	tileGroup.addFile(slideImage);
+    		if (!slideImage.file.exists()) {
+    			logger.warn("File referenced by SAGE does not exist: "+slideImage.imagePath);
+    			return;
+    		}
+    		
             if (sampleIdentifier==null) {
                 sampleIdentifier = slideImage.line + "-" + slideCode;
             }
@@ -235,89 +191,71 @@ public class SageImageDiscoveryService implements IService {
         	sampleChannelSpec = defaultChannelSpec;
         }
         
-        // Get a list of complete pairs
-    	List<FilePair> filePairs = new ArrayList<FilePair>();
-        for (FilePair filePair : filePairings.values()) {
-        	if (filePair.isPairingComplete()) {
-        		filePairs.add(filePair);
-        	}
-        }
-
-        if (filePairs.isEmpty()) {
-        	if (!filePairings.isEmpty()) {
-        		// No complete pairs, but some singles. That probably means these images are not meant to be paired.
-        		filePairs.addAll(filePairings.values());
-        	}
-        	else {
-        		return;
-        	}
-        }
+    	List<ImageTileGroup> tileGroupList = new ArrayList<ImageTileGroup>(tileGroups.values());
     	
         // Sort the pairs by their tag name
-        Collections.sort(filePairs, new Comparator<FilePair>() {
+        Collections.sort(tileGroupList, new Comparator<ImageTileGroup>() {
 			@Override
-			public int compare(FilePair o1, FilePair o2) {
-				return o1.getPairTag().compareTo(o2.getPairTag());
+			public int compare(ImageTileGroup o1, ImageTileGroup o2) {
+				return o1.getTag().compareTo(o2.getTag());
 			}
 		});
         
         List<String> tags = new ArrayList<String>();
-        for(FilePair filePair : filePairs) {
-        	tags.add(filePair.getPairTag());
-        	logger.info("    "+filePair.getPairTag()+" = "+filePair.getFile1().getName());
+        for(ImageTileGroup filePair : tileGroupList) {
+        	tags.add(filePair.getTag());
         }
         
         TilingPattern tiling = TilingPattern.getTilingPattern(tags);
         logger.info("Sample "+sampleIdentifier+" has tiling pattern: "+tiling.getName());
-        
-        if (tiling != null) {
-        	Integer count = patterns.get(tiling);
-        	if (count == null) {
-        		count = 1;
-        	}
-        	else {
-        		count++;
-        	}
-        	patterns.put(tiling, count);
+     
+        if (dataSetIdentifier==null) {
+        	dataSetIdentifier = getDataSetIdentifier(tiling);
         }
         
-        if (tiling != null && tiling.isStitchable()) {
-        	// This is a stitchable case
-        	logger.info("Sample "+sampleIdentifier+" is stitchable");
-            Entity sample = createOrVerifySample(topLevelFolder, sampleIdentifier, tiling, sampleChannelSpec);
-        	// Add the LSM pairs to the Sample's Supporting Files folder
-            for (FilePair filePair : filePairs) {
-            	addLsmPairToSample(sample, filePair);
-            }
-        }
-        else {
-        	// In non-stitchable cases we just create a Sample for each LSM pair
-        	logger.info("Sample "+sampleIdentifier+" is not stitchable");
-            for (FilePair filePair : filePairs) {
-            	String sampleName = sampleIdentifier+"-"+filePair.getPairTag().replaceAll(" ", "_");
-                Entity sample = createOrVerifySample(topLevelFolder, sampleName, tiling, sampleChannelSpec);
-            	addLsmPairToSample(sample, filePair);
-            }
-        }
+        createOrUpdateSample(sampleIdentifier, dataSetIdentifier, tiling, sampleChannelSpec, tileGroupList);
+    }
+
+    protected String getDataSetIdentifier(TilingPattern tiling) {
+    	return null;
     }
     
-    private Entity createOrVerifySample(Entity topLevelFolder, String name, TilingPattern tiling, String channelSpec) throws Exception {
-    	
-    	Entity tilingPatternFolder = verifyOrCreateChildFolder(topLevelFolder, tiling.getName());
-        Entity sample = findExistingSample(tilingPatternFolder, name);
+    protected void createOrUpdateSample(String sampleIdentifier, String dataSetIdentifier, TilingPattern tiling, 
+    		String sampleChannelSpec, List<ImageTileGroup> tileGroupList) throws Exception {
+
+        Entity dataSetFolder = verifyOrCreateChildFolder(topLevelFolder, dataSetIdentifier);
+        Entity sample = findExistingSample(sampleIdentifier);
         if (sample == null) {
-	        sample = createSample(name, tiling, channelSpec);
-	        addToParent(tilingPatternFolder, sample, tilingPatternFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+	        sample = createSample(sampleIdentifier, tiling, sampleChannelSpec, dataSetIdentifier);
+	        numSamplesCreated++;
         }
         else {
+        	populateSampleAttributes(sample, tiling, sampleChannelSpec, dataSetIdentifier);
+        	
         	if (!EntityUtils.areLoaded(sample.getEntityData())) {
         		entityBean.loadLazyEntity(sample, false);
         	}
         }
-        return sample;
+        
+        boolean found = false;
+        for(Entity entity : dataSetFolder.getChildren()) {
+        	if (entity.getId().equals(sample.getId())) {
+        		found = true;
+        	}
+        }
+        
+        if (!found) {
+	        addToParent(dataSetFolder, sample, dataSetFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+	        numSamplesAdded++;
+        }
+        
+    	// Add the tile groups to the Sample's Supporting Files folder
+        for (ImageTileGroup tileGroup : tileGroupList) {
+        	addTileToSample(sample, tileGroup);
+        }
     }
-
-    private void addLsmPairToSample(Entity sample, FilePair filePair) throws Exception {
+    
+    protected void addTileToSample(Entity sample, ImageTileGroup tileGroup) throws Exception {
     	
         // Get the existing Supporting Files, or create a new one
         Entity supportingFiles = EntityUtils.getSupportingData(sample);
@@ -332,73 +270,99 @@ public class SageImageDiscoveryService implements IService {
         	}
     	}
     	
-		EntityData lsmStackPairEd = EntityUtils.findChildEntityDataWithNameAndType(supportingFiles, filePair.getPairTag(), EntityConstants.TYPE_LSM_STACK_PAIR);
-		Entity lsmStackPair = null;
+		EntityData imageTileEd = EntityUtils.findChildEntityDataWithNameAndType(supportingFiles, tileGroup.getTag(), EntityConstants.TYPE_IMAGE_TILE);
+		Entity imageTile = null;
 		
-		if (lsmStackPairEd != null) {
-			lsmStackPair = lsmStackPairEd.getChildEntity();
-			// The LSM pair already exists, check if the LSMs have changed
-			Entity stack1 = lsmStackPair.getChildByAttributeName(EntityConstants.ATTRIBUTE_LSM_STACK_1);
-			Entity stack2 = lsmStackPair.getChildByAttributeName(EntityConstants.ATTRIBUTE_LSM_STACK_2);
-			if (stack1==null && stack2==null) {
-				// Both pairs are missing, this stack pair is vestigial and can be trashed
-				logger.warn("Stack pair exists, but has no stacks. Deleting it (id="+lsmStackPair.getId()+")");
-				entityBean.deleteEntityById(lsmStackPair.getId());
-				lsmStackPair = null;
+		if (imageTileEd != null) {
+			imageTile = imageTileEd.getChildEntity();
+			if (!existingTileMatches(imageTile, tileGroup)) {
+				logger.warn("Tile '"+imageTile.getName()+"' has changed, will delete and recreate it.");
+				entityBean.deleteEntityById(imageTile.getId());
+				imageTile = null;
 			}
-			else if ((stack1==null&&filePair.getFile1()!=null) || (stack1!=null && filePair.getFile1()!=null && !stack1.getName().equals(filePair.getFile1().getName())) || 
-					(stack2==null&&filePair.getFile2()!=null) || (stack2!=null && filePair.getFile2()!=null && !stack2.getName().equals(filePair.getFile2().getName()))) {
-				// One or more of the LSMs have changed, so move the old pair out of the way and then recreate it
-				logger.warn("One or more of the LSMs have changed. Renaming the stack pair and recreating it.");
-				lsmStackPair.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
-				lsmStackPair.setName(lsmStackPair.getName()+" (old)");
-				entityBean.saveOrUpdateEntity(lsmStackPair);
-	            logger.info("Renamed old LSM stack pair to '"+lsmStackPair.getName()+"' (id="+lsmStackPair.getId()+")");
-				lsmStackPair = null;
+			else {
+				logger.warn("Tile '"+imageTile.getName()+"' exists, updating...");
+				for(Entity lsmStack : imageTile.getChildrenOfType(EntityConstants.TYPE_LSM_STACK)) {
+					for(SlideImage image : tileGroup.images) {
+						if (image.file.getName().equals(lsmStack.getName())) {
+							populateLsmStackAttributes(lsmStack, image);
+						}
+					}
+				}
 			}
 		}
 		
-		if (lsmStackPair == null) {
-			lsmStackPair = new Entity();
-            lsmStackPair.setUser(user);
-            lsmStackPair.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK_PAIR));
-            lsmStackPair.setCreationDate(createDate);
-            lsmStackPair.setUpdatedDate(createDate);
-            lsmStackPair.setName(filePair.getPairTag());
-            lsmStackPair = entityBean.saveOrUpdateEntity(lsmStackPair);
-            logger.info("Saved LSM stack pair for '"+filePair.getPairTag()+"' as "+lsmStackPair.getId());
-        	addToParent(supportingFiles, lsmStackPair, null, EntityConstants.ATTRIBUTE_ENTITY);
+		if (imageTile == null) {
+			imageTile = new Entity();
+            imageTile.setUser(user);
+            imageTile.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_TILE));
+            imageTile.setCreationDate(createDate);
+            imageTile.setUpdatedDate(createDate);
+            imageTile.setName(tileGroup.getTag());
+            imageTile = entityBean.saveOrUpdateEntity(imageTile);
+            logger.info("Saved image tile '"+imageTile.getName()+"' as "+imageTile.getId());
+        	addToParent(supportingFiles, imageTile, null, EntityConstants.ATTRIBUTE_ENTITY);
         	
-			logger.info("Adding LSM file to sample: "+filePair.getFile1().getAbsolutePath());
-			Entity lsmEntity1 = createLsmStackFromFile(filePair.getFile1());
-            addToParent(lsmStackPair, lsmEntity1, 0, EntityConstants.ATTRIBUTE_LSM_STACK_1);
-
-            if (filePair.getFile2()!=null) {
-				logger.info("Adding LSM file to sample: "+filePair.getFile2().getAbsolutePath());
-				Entity lsmEntity2 = createLsmStackFromFile(filePair.getFile2());
-	            addToParent(lsmStackPair, lsmEntity2, 1, EntityConstants.ATTRIBUTE_LSM_STACK_2);
-            }
+        	for(SlideImage image : tileGroup.getImages()) {
+    			logger.info("Adding LSM file to sample: "+image.imagePath);
+    			Entity lsmEntity = createLsmStackFromFile(image);
+                addToParent(imageTile, lsmEntity, imageTile.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+        	}
 		}
+    }
+    
+    protected boolean existingTileMatches(Entity imageTile, ImageTileGroup tileGroup) {
+
+		List<SlideImage> images = tileGroup.getImages();
+		List<Entity> currTiles = imageTile.getChildrenOfType(EntityConstants.TYPE_IMAGE_TILE);
+		
+		Set<String> newFilenames = new HashSet<String>();
+		for(SlideImage image : images) {
+			newFilenames.add(image.file.getName());
+		}
+		
+		if (images.size() != currTiles.size()) {
+			return false;
+		}
+		
+		Set<String> currFilenames = new HashSet<String>();		
+		for(Entity child : imageTile.getChildren()) {
+			currFilenames.add(child.getName());
+			if (!newFilenames.contains(child.getName())) {
+				return false;
+			}
+		}
+		
+		for(SlideImage image : tileGroup.getImages()) {
+			if (!currFilenames.contains(image.file.getName())) {
+				return false;
+			}
+		}
+		
+		return true;
     }
     
     /**
      * Find and return the child Sample entity
      */
-    private Entity findExistingSample(Entity folder, String sampleIdentifier) {
+    protected Entity findExistingSample(String sampleIdentifier) {
 
-    	for(EntityData ed : folder.getEntityData()) {
-			Entity sample = ed.getChildEntity();
-    		if (sample == null) continue;
-    		if (!EntityConstants.TYPE_SAMPLE.equals(sample.getEntityType().getName())) continue;
-    		if (!sample.getName().equals(sampleIdentifier)) continue;
-    	    return sample;
+    	List<Entity> matchingSamples = entityBean.getUserEntitiesByNameAndTypeName(user.getUserLogin(), 
+    			sampleIdentifier, EntityConstants.TYPE_SAMPLE);
+    	
+    	if (matchingSamples.isEmpty()) {
+            // Could not find sample child entity
+    		return null;
     	}
-
-        // Could not find sample child entity
-    	return null;
+    	
+    	if (matchingSamples.size()>1) {
+    		logger.warn("Multiple samples (count="+matchingSamples.size()+") found with sample identifier: "+sampleIdentifier);
+    	}
+    	
+    	return matchingSamples.get(0);
     }
 
-    protected Entity createSample(String name, TilingPattern tiling, String channelSpec) throws Exception {
+    protected Entity createSample(String name, TilingPattern tiling, String channelSpec, String dataSetIdentifier) throws Exception {
         Entity sample = new Entity();
         sample.setUser(user);
         sample.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SAMPLE));
@@ -406,10 +370,36 @@ public class SageImageDiscoveryService implements IService {
         sample.setUpdatedDate(createDate);
         sample.setName(name);
         sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN, tiling.toString());
+        sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier);
         sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec);
-        sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_TYPES, alignmentTypes);
         sample = entityBean.saveOrUpdateEntity(sample);
         logger.info("Saved sample as "+sample.getId());
+        return sample;
+    }
+
+    protected Entity populateSampleAttributes(Entity sample, TilingPattern tiling, String channelSpec, String dataSetIdentifier) throws Exception {
+
+    	boolean save = false;
+    	if (sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN)==null) {
+    		logger.info("Setting '"+EntityConstants.ATTRIBUTE_TILING_PATTERN+"'="+tiling+" for id="+sample.getId());
+    		sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN, tiling.toString());	
+    		save = true;
+    	}
+    	if (sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER)==null) {
+    		logger.info("Setting '"+EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER+"'="+dataSetIdentifier+" for id="+sample.getId());
+    		sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier);	
+    		save = true;
+    	}
+    	if (sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION)==null) {
+    		logger.info("Setting '"+EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION+"'="+channelSpec+" for id="+sample.getId());
+    		sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec);	
+    		save = true;
+    	}
+        
+    	if (save) {
+    		sample = entityBean.saveOrUpdateEntity(sample);
+        	logger.info("Updated sample attributes for "+sample.getId());
+    	}
         return sample;
     }
     
@@ -425,55 +415,81 @@ public class SageImageDiscoveryService implements IService {
         return filesFolder;
     }
 
-    private Entity createLsmStackFromFile(File file) throws Exception {
+    protected Entity createLsmStackFromFile(SlideImage image) throws Exception {
         Entity lsmStack = new Entity();
         lsmStack.setUser(user);
         lsmStack.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK));
         lsmStack.setCreationDate(createDate);
         lsmStack.setUpdatedDate(createDate);
-        lsmStack.setName(file.getName());
-        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
+        lsmStack.setName(image.file.getName());
+        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, image.imagePath);
+        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS, image.channels);
+        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, image.opticalRes);
         lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
         logger.info("Saved LSM stack as "+lsmStack.getId());
         return lsmStack;
     }
+    
+    protected Entity populateLsmStackAttributes(Entity lsmStack, SlideImage image) throws Exception {
 
-    protected void fixOrderIndices(Entity topLevelFolder) throws Exception {
+    	boolean save = false;
+    	if (lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)==null) {
+    		logger.info("Setting '"+EntityConstants.ATTRIBUTE_FILE_PATH+"'="+image.imagePath+" for id="+lsmStack.getId());
+    		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, image.imagePath);	
+    		save = true;
+    	}
+    	if (lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS)==null) {
+    		logger.info("Setting '"+EntityConstants.ATTRIBUTE_NUM_CHANNELS+"'="+image.channels+" for id="+lsmStack.getId());
+    		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS, image.channels);	
+    		save = true;
+    	}
+    	if (lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)==null) {
+    		logger.info("Setting '"+EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION+"'="+image.opticalRes+" for id="+lsmStack.getId());
+    		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, image.opticalRes);	
+    		save = true;
+    	}
+        
+    	if (save) {
+    		lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
+        	logger.info("Updated LSM attributes for "+lsmStack.getId());
+    	}
+        return lsmStack;
+    }
+    
+    protected void fixOrderIndices() throws Exception {
 		logger.info("Fixing sample order indicies");
 		
-    	for(Entity tilingPatternFolder : topLevelFolder.getChildren()) {
-    		if (tilingPatternFolder.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+    	for(Entity childFolder : topLevelFolder.getChildrenOfType(EntityConstants.TYPE_FOLDER)) {
     			
-    			logger.info("Fixing order indicies in "+tilingPatternFolder.getName());
+			logger.info("Fixing order indicies in "+childFolder.getName());
 
-    	    	List<EntityData> orderedData = new ArrayList<EntityData>();
-    			for(EntityData ed : tilingPatternFolder.getEntityData()) {
-    				if (ed.getChildEntity()!=null) {
-    					orderedData.add(ed);
-    				}
-    			}
-    	    	Collections.sort(orderedData, new Comparator<EntityData>() {
-    				@Override
-    				public int compare(EntityData o1, EntityData o2) {
-    					int c = o1.getChildEntity().getCreationDate().compareTo(o2.getChildEntity().getCreationDate());
-    					if (c==0) {
-    						return o1.getChildEntity().getId().compareTo(o2.getChildEntity().getId());
-    					}
-    					return c;
-    				}
-    			});
-    			
-    	    	int orderIndex = 0;
-    			for(EntityData ed : orderedData) {
-    				if (ed.getOrderIndex()==null || orderIndex!=ed.getOrderIndex()) {
-    					logger.info("  Updating link (id="+ed.getId()+") to "+ed.getChildEntity().getName()+" with order index "+orderIndex+" (was "+ed.getOrderIndex()+")");
-    					ed.setOrderIndex(orderIndex);
-    					entityBean.saveOrUpdateEntityData(ed);
-    				}
-    				orderIndex++;
-    			}
-    		}
-    	}
+	    	List<EntityData> orderedData = new ArrayList<EntityData>();
+			for(EntityData ed : childFolder.getEntityData()) {
+				if (ed.getChildEntity()!=null) {
+					orderedData.add(ed);
+				}
+			}
+	    	Collections.sort(orderedData, new Comparator<EntityData>() {
+				@Override
+				public int compare(EntityData o1, EntityData o2) {
+					int c = o1.getChildEntity().getCreationDate().compareTo(o2.getChildEntity().getCreationDate());
+					if (c==0) {
+						return o1.getChildEntity().getId().compareTo(o2.getChildEntity().getId());
+					}
+					return c;
+				}
+			});
+			
+	    	int orderIndex = 0;
+			for(EntityData ed : orderedData) {
+				if (ed.getOrderIndex()==null || orderIndex!=ed.getOrderIndex()) {
+					logger.info("  Updating link (id="+ed.getId()+") to "+ed.getChildEntity().getName()+" with order index "+orderIndex+" (was "+ed.getOrderIndex()+")");
+					ed.setOrderIndex(orderIndex);
+					entityBean.saveOrUpdateEntityData(ed);
+				}
+				orderIndex++;
+			}
+		}
     }
     
     protected Entity createOrVerifyRootEntityButDontLoadTree(String topLevelFolderName) throws Exception {
@@ -563,74 +579,40 @@ public class SageImageDiscoveryService implements IService {
     protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
         EntityData ed = parent.addChildEntity(entity, attrName);
         ed.setOrderIndex(index);
-        EJBFactory.getLocalEntityBean().saveOrUpdateEntityData(ed);
+        entityBean.saveOrUpdateEntityData(ed);
         logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
         		" as child of "+parent.getEntityType().getName()+"#"+parent.getId());
     }
 
-    
-    private class SlideImage {
+    protected class SlideImage {
     	String slideCode;
     	String imagePath;
     	String tileType;
-    	String age;
-    	String gender;
-    	String effector;
     	String line;
     	String channelSpec;
     	String channels;
+    	String opticalRes;
+    	File file;
     }
     
-    private class FilePair {
-        private String pairTag;
-        private String filename1;
-        private String filename2;
-        private File file1;
-        private File file2;
+    protected class ImageTileGroup {
+        private String tag;
+        private List<SlideImage> images;
 
-        public FilePair(String pairTag) {
-            this.pairTag = pairTag;
+        public ImageTileGroup(String tag) {
+            this.tag = tag;
         }
 
-        public String getPairTag() {
-			return pairTag;
+        public String getTag() {
+			return tag;
 		}
 
-		public String getFilename1() {
-			return filename1;
+		public List<SlideImage> getImages() {
+			return images;
 		}
 
-		public void setFilename1(String filename1) {
-			this.filename1 = filename1;
+		public void addFile(SlideImage image) {
+			images.add(image);
 		}
-
-		public String getFilename2() {
-			return filename2;
-		}
-
-		public void setFilename2(String filename2) {
-			this.filename2 = filename2;
-		}
-
-		public File getFile1() {
-			return file1;
-		}
-
-		public void setFile1(File file1) {
-			this.file1 = file1;
-		}
-
-		public File getFile2() {
-			return file2;
-		}
-
-		public void setFile2(File file2) {
-			this.file2 = file2;
-		}
-
-		public boolean isPairingComplete() {
-            return (null!=filename1&&!"".equals(filename1)) &&
-                   (null!=filename2&&!"".equals(filename2));
-        }
     }
 }

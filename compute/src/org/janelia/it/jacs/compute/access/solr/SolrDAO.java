@@ -104,10 +104,7 @@ public class SolrDAO extends AnnotationDAO {
     	this.largeOp = new LargeOperations(this);
     	largeOp.buildAncestorMap();
     	largeOp.buildAnnotationMap();
-    	// TODO: the image families should be configured elsewhere
-    	largeOp.buildSageImagePropMap("flylight_flip");
-    	largeOp.buildSageImagePropMap("leet_pan_lineage");
-    	largeOp.buildSageImagePropMap("leet_central_brain_lineage");
+    	largeOp.buildSageImagePropMap();
     	
     	_logger.info("Getting entities");
     	

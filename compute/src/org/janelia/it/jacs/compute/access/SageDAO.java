@@ -47,18 +47,19 @@ public class SageDAO {
     public SageDAO(Logger logger) {
         _logger = logger;
     }
-
+    
     /**
-     * Returns all the images in a given image family, with their properties as columns. You can get the column names
-     * by calling getColumnNames() on the returned ResultSetIterator object.
+     * Returns all the images in a given image family with a null data set, with their properties as columns. 
+     * You can get the column names by calling getColumnNames() on the returned ResultSetIterator object.
      * The client must call close() on the returned iterator when finished with it. 
      * @return Iterator over the JDBC result set. 
      * @throws DaoException
      */
-    public ResultSetIterator getImages(String sageImageFamily) throws DaoException {
+    public ResultSetIterator getImagesByFamily(String sageImageFamily) throws DaoException {
 
     	try {
-	    	String sql = "select * from image_data_mv where family = '"+sageImageFamily+"' order by slide_code,name ";
+	    	String sql = "select * from image_data_mv where family = '"+sageImageFamily+
+	    		"' and data_set_identifier is null order by slide_code,name ";
         	Connection conn = getJdbcConnection();
         	PreparedStatement stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 	        stmt.setFetchSize(Integer.MIN_VALUE);
@@ -66,9 +67,30 @@ public class SageDAO {
     		return new ResultSetIterator(conn, stmt, rs);    		
     	}
     	catch (SQLException e) {
-    		throw new DaoException("Error querying Sage", e);
+    		throw new DaoException("Error querying SAGE", e);
     	}
-    	
+    }
+    
+    /**
+     * Returns all the images in a given data set, with their properties as columns. You can get the column names
+     * by calling getColumnNames() on the returned ResultSetIterator object.
+     * The client must call close() on the returned iterator when finished with it. 
+     * @return Iterator over the JDBC result set. 
+     * @throws DaoException
+     */
+    public ResultSetIterator getImagesByDataSet(String dataSetName) throws DaoException {
+
+    	try {
+	    	String sql = "select * from image_data_mv where data_set_identifier = '"+dataSetName+"' order by slide_code,name ";
+        	Connection conn = getJdbcConnection();
+        	PreparedStatement stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+	        stmt.setFetchSize(Integer.MIN_VALUE);
+    		ResultSet rs = stmt.executeQuery();
+    		return new ResultSetIterator(conn, stmt, rs);    		
+    	}
+    	catch (SQLException e) {
+    		throw new DaoException("Error querying SAGE", e);
+    	}
     }
 
     /**
@@ -165,6 +187,13 @@ public class SageDAO {
 		line.setDisplayName("Fly line");
 		line.setDefinition("Name of the fly line");
 		map.put(line.getName(),line);
+
+		SageTerm dataset = new SageTerm();
+		dataset.setName("dataset_name");
+		dataset.setDataType("text");
+		dataset.setDisplayName("Data Set");
+		dataset.setDefinition("Name of the data set this image is part of");
+		map.put(dataset.getName(),dataset);
 		
 		return map;
     }

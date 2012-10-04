@@ -353,7 +353,72 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
+    public void runAllDataSetPipelines() {
+        try {
+        	Set<String> usernames = new HashSet<String>();
+        	for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
+        		usernames.add(dataSet.getUser().getUserLogin());
+        	}
+        	
+        	for(String username : usernames) {
+            	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            	Task task = new GenericTask(new HashSet<Node>(), username, new ArrayList<Event>(), 
+            			taskParameters, "userDatSetPipelines", "User Data Set Pipelines");
+                task.setJobName("User Data Set Pipelines Task");
+                task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+                EJBFactory.getLocalComputeBean().submitJob("UserDataSetPipelines", task.getObjectId());
+        	}
+        	
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
     
+    public void runUserDataSetPipelines(String username) {
+        try {
+        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        	Task task = new GenericTask(new HashSet<Node>(), username, new ArrayList<Event>(), 
+        			taskParameters, "userDatSetPipelines", "User Data Set Pipelines");
+            task.setJobName("User Data Set Pipelines Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("FlyLightUserDataSetPipelines", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void runSamplePipeline(String sampleEntityId) {
+        try {
+        	Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
+        	if (sampleEntity==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
+        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        	taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null)); 
+        	Task task = new GenericTask(new HashSet<Node>(), sampleEntity.getUser().getUserLogin(), new ArrayList<Event>(), 
+        			taskParameters, "flylightSampleAllPipelines", "Flylight Sample All Pipelines");
+            task.setJobName("Flylight Sample All Pipelines Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("FlylightSampleAllPipelines", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
+    public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName) {
+        try {
+        	Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
+        	if (sampleEntity==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
+        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        	taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null)); 
+        	Task task = new GenericTask(new HashSet<Node>(), sampleEntity.getUser().getUserLogin(), new ArrayList<Event>(), 
+        			taskParameters, "configuredSamplePipeline", "Configured Sample Pipeline");
+            task.setJobName("Configured Sample Pipeline Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("PipelineConfig_"+configurationName, task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
     public void runLeetDataPipeline(String user, String topLevelFolderName, String imageFamily, Boolean refreshProcessing, Boolean refreshAlignment) {
         try {
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
@@ -446,48 +511,6 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             task.setJobName("Two Channel Sample Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("TwoChanSamplePipeline", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-    
-    public void runMCFODataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation) {
-        try {
-        	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
-            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), null,
-            		topLevelFolderName, refreshProcessing, refreshAlignment, refreshSeparation, "flylight_flip");
-            task.setJobName("MultiColor FlipOut Data Pipeline Task");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("MCFODataPipeline", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-    
-    public void runMCFOSamplePipeline(String sampleEntityId, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation) {
-        try {
-        	Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
-        	if (sampleEntity==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
-        	Task task = new MCFOSamplePipelineTask(new HashSet<Node>(), 
-        			sampleEntity.getUser().getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>(), 
-        			sampleEntityId, refreshProcessing, refreshAlignment, refreshSeparation);
-            task.setJobName("MultiColor FlipOut Sample Pipeline Task");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("MCFOSamplePipeline", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    public void runMCFOSeparationPipeline(String sampleEntityId, String inputFilename, String resultEntityName) {
-        try {
-        	Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
-        	if (sampleEntity==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
-        	Task task = new MCFOSeparationPipelineTask(new HashSet<Node>(), 
-        			sampleEntity.getUser().getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>(), sampleEntityId, inputFilename, resultEntityName);
-            task.setJobName("MultiColor FlipOut Separation Pipeline Task");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("MCFOSeparationPipeline", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }

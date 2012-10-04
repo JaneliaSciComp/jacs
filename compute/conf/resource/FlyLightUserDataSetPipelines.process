@@ -1,0 +1,51 @@
+<!-- 
+	Discover samples in SAGE, add them into the database and run the configured pipeline for each one 
+-->
+<process name="User Data Set Pipelines" processor="queue/userDataSetPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+	<sequence>
+	
+	    <!-- Import variables from the task -->
+	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+	        <input name="TASK_PARAMETER_1" value="run mode"/>
+            <input name="PROCESS_VARIABLE_1" value="RUN_MODE"/>
+	        <output name="RUN_MODE"/>
+	        <output name="USERNAME"/>
+	    </operation>
+	    
+	    <!-- Discover samples in Sage and load them into the database as Entities -->
+		<operation name="Initial Image Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SageImageDiscoveryService">
+	        <input name="DEFAULT_CHANNEL_SPECIFICATION" value="sssr"/>
+		</operation>
+		
+    	<sequence if="TASK_OWNER=system">
+    	
+		    <!-- Discover samples in Sage which are not assigned to data sets -->
+			<operation name="Initial Image Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SageImageFamilyDiscoveryService">
+		        <input name="DEFAULT_CHANNEL_SPECIFICATION" value="sssr"/>
+		        <input name="SAGE_IMAGE_FAMILY" value="flylight_flip"/>
+			</operation>
+			
+		</sequence>
+		
+	    <!-- Find all the Sample Entities in the database -->
+		<operation name="Sample Traversal" processor="org.janelia.it.jacs.compute.service.entity.SampleTraversalService">
+			<input name="RUN_MODE"/>
+			<input name="OUTVAR_ENTITY_ID" value="SAMPLE_ENTITY_ID"/>
+		</operation>
+		
+	    <!-- Process each Sample Entity -->
+        <sequence forEach="SAMPLE_ENTITY_ID">
+            <sequence>
+				
+				<!-- Spawn a new task to process the Sample	-->
+		        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
+		            <input name="PROCESS_DEF_NAME" value="FlyLightSampleAllPipelines"/>
+		            <input name="PARAMETER_1_KEY" value="sample entity id"/>
+		            <input name="SAMPLE_ENTITY_ID"/>
+		        </operation>
+		        
+			</sequence>
+	    </sequence>
+	    
+    </sequence>
+</process>

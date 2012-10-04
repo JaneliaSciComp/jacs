@@ -1,0 +1,44 @@
+<!-- 
+	Generalized Sample Processing System
+	
+	Run all of the pipelines associated with all of the Data Sets that the given Sample is a part of.
+-->
+<process name="GSPS Complete Sample Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+	<sequence>
+	
+	    <!-- Import variables from the task -->
+	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="TASK_PARAMETER_1" value="sample entity id"/>
+            <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
+	        <output name="SAMPLE_ENTITY_ID"/>
+	    </operation>
+	    
+	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
+	    <operation name="Get Sample Attributes" processor="org.janelia.it.jacs.compute.service.entity.sample.InitSampleAttributesService">
+			<input name="SAMPLE_ENTITY_ID"/>
+			<output name="DATA_SET_IDENTIFIER"/>
+		</operation>
+	
+        <sequence forEach="DATA_SET_IDENTIFIER">
+		
+		    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
+		    <operation name="Get Data Set Attributes" processor="org.janelia.it.jacs.compute.service.entity.sample.GetPipelinesForDataSetService">
+				<input name="DATA_SET_IDENTIFIER"/>
+				<output name="PIPELINE_PROCESS_NAME"/>
+			</operation>
+			
+	        <sequence forEach="PIPELINE_PROCESS_NAME">
+					
+				<!-- Spawn a new task to process the Sample	-->
+		        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
+		            <input name="PROCESS_DEF_NAME" value="$V{PIPELINE_PROCESS_NAME}"/>
+		            <input name="PARAMETER_1_KEY" value="sample entity id"/>
+		            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
+		        </operation>
+			        
+	    	</sequence>
+		
+    	</sequence>
+		
+    </sequence>
+</process>

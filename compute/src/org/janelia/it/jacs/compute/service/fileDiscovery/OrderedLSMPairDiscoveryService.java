@@ -112,7 +112,7 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
 	    	for(EntityData sed : supportingFiles.getEntityData()) {
     			Entity lsmStackPair = sed.getChildEntity();
 	    		if (lsmStackPair == null) continue;
-	    		if (!EntityConstants.TYPE_LSM_STACK_PAIR.equals(lsmStackPair.getEntityType().getName())) continue;
+	    		if (!EntityConstants.TYPE_IMAGE_TILE.equals(lsmStackPair.getEntityType().getName())) continue;
 
 				boolean found1 = false;
 				boolean found2 = false;
@@ -257,7 +257,7 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
     	
     	Entity lsmStackPair = new Entity();
         lsmStackPair.setUser(user);
-        lsmStackPair.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK_PAIR));
+        lsmStackPair.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_TILE));
         lsmStackPair.setCreationDate(createDate);
         lsmStackPair.setUpdatedDate(createDate);
         lsmStackPair.setName("Scans");

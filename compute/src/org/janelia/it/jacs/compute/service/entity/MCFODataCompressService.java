@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.service.entity;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.*;
 
 import org.apache.log4j.Logger;
@@ -84,7 +85,6 @@ public class MCFODataCompressService implements IService {
             }
     	}
         catch (Exception e) {
-			logger.info("Encountered an exception. Before dying, we...");
         	if (e instanceof ServiceException) {
             	throw (ServiceException)e;
             }
@@ -134,6 +134,9 @@ public class MCFODataCompressService implements IService {
     private void doCreateOutputList() throws ComputeException {
 
     	List<String> inputPaths = (List<String>)processData.getItem("INPUT_PATH_LIST");
+    	if (inputPaths == null) {
+    		throw new IllegalArgumentException("INPUT_PATH_LIST may not be null");
+    	}
     	
     	List<String> outputPaths = new ArrayList<String>();
     	for(String s : inputPaths) {
@@ -212,7 +215,14 @@ public class MCFODataCompressService implements IService {
 
     	this.entities = (Map<String,Set<Entity>>)processData.getItem("ENTITY_MAP");
     	List<String> inputPaths = (List<String>)processData.getItem("INPUT_PATH_LIST");
+    	if (inputPaths == null) {
+    		throw new IllegalArgumentException("INPUT_PATH_LIST may not be null");
+    	}
+    	
     	List<String> outputPaths = (List<String>)processData.getItem("OUTPUT_PATH_LIST");
+    	if (outputPaths == null) {
+    		throw new IllegalArgumentException("OUTPUT_PATH_LIST may not be null");
+    	}
     	
     	for(int i=0; i<inputPaths.size(); i++) {
     		String inputPath = inputPaths.get(i);
@@ -271,18 +281,21 @@ public class MCFODataCompressService implements IService {
 				}
     		}
     		
-    		if (file.getName().startsWith("merged-")) {
+    		if (file.getName().startsWith("merged-")||file.getName().startsWith("tile-")) {
     			// Delete the symlink as well, if there is one
     			String filenodeDir = file.getParentFile().getParent();
-    			logger.info("Looking for symlink under "+filenodeDir+"/group");
     			File symlink = new File(filenodeDir+"/group", file.getName());
+    			logger.info("Looking for symlink: "+symlink);
 				if (!isDebug) {
 					try {
 						FileUtils.forceDelete(symlink);
-						logger.info("Deleted symlink: "+symlink);
+						logger.info("Deleted symlink");
+					}
+					catch (FileNotFoundException e) {
+						logger.info("Symlink not found");
 					}
 					catch (Exception e) {
-						logger.info("Error deleting symlink "+symlink+": "+e.getMessage());
+						logger.info("Error deleting symlink: "+e.getMessage());
 					}
 				}
     		}

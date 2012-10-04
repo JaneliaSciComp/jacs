@@ -142,7 +142,7 @@ public class WholeToCentralBrainConversionService implements IService {
     }
 
     private Entity cloneLsmStackPair(Entity lsmStackPair) throws Exception {
-    	Entity newLsmStackPair = newEntity(lsmStackPair.getName(), EntityConstants.TYPE_LSM_STACK_PAIR);
+    	Entity newLsmStackPair = newEntity(lsmStackPair.getName(), EntityConstants.TYPE_IMAGE_TILE);
 		newLsmStackPair = entityBean.saveOrUpdateEntity(newLsmStackPair);
         logger.info("Saved LSM stack pair for '"+newLsmStackPair.getName()+"' as "+newLsmStackPair.getId());
     	
