@@ -1,6 +1,14 @@
 
 package org.janelia.it.jacs.compute.engine.def;
 
+import java.io.File;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.dom4j.Attribute;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -9,13 +17,6 @@ import org.dom4j.io.SAXReader;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.shared.utils.FileUtil;
-
-import java.io.File;
-import java.io.InputStream;
-import java.io.Serializable;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * This class is responsible for loading and initilaizing the process definition based on the .process xml
@@ -30,6 +31,7 @@ public class DefLoader implements Serializable {
     private static final String INCLUDE_ELE = "include";
     private static final String SEQUENCE_ELE = "sequence";
     private static final String OPERATION_ELE = "operation";
+    private static final String EXCEPTION_HANDLER_ELE = "exceptionHandler";
     private static final String NAME_ATTR = "name";
     private static final String PROCESSOR_ATTR = "processor";
     private static final String PROCESSOR_TYPE_ATTR = "processorType";
@@ -117,6 +119,20 @@ public class DefLoader implements Serializable {
     private SequenceDef createSequenceDef(Element sequenceElement, SeriesDef parentSeriesDef) {
         SequenceDef sequenceDef = new SequenceDef(parentSeriesDef);
         initSeriesDef(sequenceDef, sequenceElement);
+
+        if (sequenceDef.getProcessIfCondition()!=null) {
+        	String name = sequenceDef.getProcessIfCondition().getName();
+            sequenceDef.getLocalInputParameters().add(new Parameter(name, null, null, false));
+        }
+
+        if (sequenceDef.getForEachParam()!=null) {
+        	String name = sequenceDef.getForEachParam();
+            sequenceDef.getLocalInputParameters().add(new Parameter(name, null, null, false));
+        }
+        
+        List<Element> inputs = new ArrayList<Element>();
+        List<Element> outputs = new ArrayList<Element>();
+        
         List children = sequenceElement.elements();
         if (children != null) {
             for (Object o : children) {
@@ -130,11 +146,24 @@ public class DefLoader implements Serializable {
                 else if (INCLUDE_ELE.equals(child.getName())) {
                 	sequenceDef.addChildDef(createSequenceDefViaInclude(child, sequenceDef));
                 }
+                else if (EXCEPTION_HANDLER_ELE.equals(child.getName())) {
+                	sequenceDef.setExceptionHandlerDef(createSequenceDef(child, sequenceDef));
+                }
+                else if (INPUT_ELE.equals(child.getName())) {
+            		inputs.add(child);
+                }
+                else if (INPUT_ELE.equals(child.getName()) ){
+                	outputs.add(child);
+                }
                 else {
                     throw new UnexpectedElementException(child.getName());
                 }
             }
         }
+        
+        addParameters(sequenceDef.getLocalInputParameters(), inputs, ParameterType.INPUT);
+        addParameters(sequenceDef.getLocalOutputParameters(), outputs, ParameterType.OUTPUT);
+        
         return sequenceDef;
     }
 
@@ -152,6 +181,7 @@ public class DefLoader implements Serializable {
     	
         SequenceDef sequenceDef = new SequenceDef(parentSeriesDef);
         initSeriesDef(sequenceDef, includeElement);
+        sequenceDef.setIncluded(true);
         
     	for(ActionDef actionDef : processDef.getChildActionDefs()) {
             sequenceDef.addChildDef(actionDef);
@@ -204,14 +234,42 @@ public class DefLoader implements Serializable {
         if (elements != null) {
             for (Object o : elements) {
                 Element element = (Element) o;
-                Parameter parameter = new Parameter(element.attributeValue(NAME_ATTR),
-                        createParameterValue(element.attributeValue(DATA_TYPE_ATTR),
-                                element.attributeValue(VALUE_ATTR)),
-                        parameterType,
-                        Boolean.valueOf(element.attributeValue(MANDATORY_ATTR)));
-                targetSet.add(parameter);
+                String name = element.attributeValue(NAME_ATTR);
+                String value = element.attributeValue(VALUE_ATTR);
+                String datatype = element.attributeValue(DATA_TYPE_ATTR);
+                Boolean mandatory = Boolean.valueOf(element.attributeValue(MANDATORY_ATTR));
+                Parameter parameter = new Parameter(name, createParameterValue(datatype, value), 
+                		parameterType, mandatory);
+                setParameter(targetSet, parameter);
+                if (value!=null && value.startsWith("$V{")) {
+                	// Also add the referenced variable
+                	name = value.substring(value.indexOf("$V{") + 3, value.length() - 1);
+                	parameter = new Parameter(name, null, parameterType, mandatory);
+                	setParameter(targetSet, parameter);
+                }                
             }
         }
+    }
+    
+    /**
+     * Set a parameter in the given set, overriding any current parameters with that name.
+     * @param parameterSet
+     * @param parameter
+     */
+    private void setParameter(Set<Parameter> parameterSet, Parameter parameter) {
+
+    	Set<Parameter> existingSet = new HashSet<Parameter>();
+    	for(Parameter p : parameterSet) {
+    		if (p.getName().equals(parameter.getName())) {
+    			existingSet.add(p);
+    		}
+    	}             
+    	
+    	for(Parameter existing : existingSet) {
+    		parameterSet.remove(existing);
+    	}
+    	
+    	parameterSet.add(parameter);
     }
 
     private Object createParameterValue(String dataType, String value) {

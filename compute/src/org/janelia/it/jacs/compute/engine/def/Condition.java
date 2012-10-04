@@ -243,5 +243,15 @@ public class Condition implements Serializable {
         }
     }
 
+	public String getName() {
+		return name;
+	}
 
+	public Object getExpectedValue() {
+		return expectedValue;
+	}
+
+	public Operator getOperator() {
+		return operator;
+	}
 }

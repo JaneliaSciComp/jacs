@@ -101,7 +101,7 @@ public class ProcessLauncher extends SeriesLauncher {
     }
 
     /**
-     * Launches the immediate children of the suppied process definition
+     * Launches the immediate children of the supplied process definition
      *
      * @param seriesDef   the process definition
      * @param processData the running state of the process

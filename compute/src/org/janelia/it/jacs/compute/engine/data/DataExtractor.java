@@ -35,25 +35,22 @@ public class DataExtractor {
         }
         for (Parameter parameter : parameters) {
             if (parameter.getValue() != null) {
-                to.putItem(parameter.getName(), parameter.getValue());
+            	// Parameters with hard coded values are added to the ProcessData later on, when they are really needed.
             }
             else {
-                Object obj = from.getItem(parameter.getName());
+                Object obj = from.getLiteralItem(parameter.getName());
                 if (obj == null && parameter.isMandatory()) {
                     throw new MissingDataException(parameter.toString());
                 }
-                else {
+                else if (obj != null || to.getLiteralItem(parameter.getName())==null) { 
+                	// Don't override existing non-null items with nulls. 
+                	// Not sure if I like this policy, but it's necessary for certain things to work. 
                     to.putItem(parameter.getName(), obj);
                 }
             }
-            //saveParameter(from, to, parameter);
         }
 
     }
-
-//    private static void saveParameter(IProcessData from, IProcessData to, Parameter parameter) {
-//        //We would need some changes to DB to implement this
-//    }
 
     /**
      * Copies state of all data in <code>from</code> to the destination

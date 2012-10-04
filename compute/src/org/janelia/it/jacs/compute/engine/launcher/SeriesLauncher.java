@@ -6,14 +6,8 @@ import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.UserDAO;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.engine.data.DataExtractor;
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.engine.data.MissingDataException;
-import org.janelia.it.jacs.compute.engine.data.QueueMessage;
-import org.janelia.it.jacs.compute.engine.def.ActionDef;
-import org.janelia.it.jacs.compute.engine.def.ProcessorType;
-import org.janelia.it.jacs.compute.engine.def.SequenceDef;
-import org.janelia.it.jacs.compute.engine.def.SeriesDef;
+import org.janelia.it.jacs.compute.engine.data.*;
+import org.janelia.it.jacs.compute.engine.def.*;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.engine.util.JmsUtil;
 import org.janelia.it.jacs.compute.jtc.AsyncMessageInterface;
@@ -120,28 +114,46 @@ public abstract class SeriesLauncher implements ILauncher {
      */
     protected void launchSeries(SeriesDef seriesDef, IProcessData processData) throws ComputeException {
         try {
-            DataExtractor.copyData(processData, processData, seriesDef.getLocalInputParameters());
+        	copyHardCodedLocalValuesToPd(seriesDef, processData);
+            
             setupAsyncActionsLaunch(seriesDef);
             if (seriesDef.getForEachParam() != null) {
                 List<IProcessData> pds = DataExtractor.createForEachPDs(processData, seriesDef.getForEachParam());
                 if (pds != null) {
                     for (IProcessData pd : pds) {
-                        launchSeriesChildren(seriesDef, pd);
-                        // If it's asynchronous, then pd would not have the series output parameters at this point
-                        // The series mdb should send its output parameters in its reply message
-                        if (seriesDef.getProcessorType() != ProcessorType.LOCAL_MDB) {
-                            // Copy the series' output parameters into the parent process data
-                            DataExtractor.copyData(pd, processData, seriesDef.getOutputParameters());
-                        }
+                    	try {
+                    		launchSeriesChildren(seriesDef, pd);
+                    	}
+                    	finally {
+	                        // If it's asynchronous, then pd would not have the series output parameters at this point
+	                        // The series mdb should send its output parameters in its reply message
+	                        if (seriesDef.getProcessorType() != ProcessorType.LOCAL_MDB) {
+	                            // Copy the series' output parameters into the parent process data
+	                            DataExtractor.copyData(pd, processData, seriesDef.getOutputParameters());
+	                        }
+                    	}
                     }
                 }
             }
             else {
-                launchSeriesChildren(seriesDef, processData);
+            	IProcessData pd = new ProcessData();
+            	DataExtractor.copyData(processData, pd, seriesDef.getInputParameters());
+            	try {
+            		launchSeriesChildren(seriesDef, pd);	
+            	}
+                finally {
+	                if (seriesDef.getProcessorType() != ProcessorType.LOCAL_MDB) {
+	                    DataExtractor.copyData(pd, processData, seriesDef.getOutputParameters());
+	                }
+                }
             }
             waitForAsyncActions(processData, seriesDef);
             recordProcessSuccess(processData, seriesDef);
         }
+    	catch (ComputeException e) {
+    		handleException(e, seriesDef, processData);
+    		throw e;
+    	}
         finally {
             cleanupAsyncActionsLaunch();
         }
@@ -365,5 +377,39 @@ public abstract class SeriesLauncher implements ILauncher {
         MailHelper helper = new MailHelper();
         helper.sendEmail("saffordt@janelia.hhmi.org", emailAddress, "Job '" + task.getJobName() + "' finished.", "Job '" + task.getJobName() +
                 "' with id " + task.getObjectId() + " finished with state '" + task.getLastEvent().getEventType() + "'");
+    }
+    
+    private void handleException(Exception e, SeriesDef seriesDef, IProcessData processData) {
+
+    	SequenceDef exceptionHandlerDef = seriesDef.getExceptionHandlerDef();
+    	if (exceptionHandlerDef==null) return;
+    	
+		processData.putItem(IProcessData.PROCESSING_EXCEPTION, e);
+		try {
+			launchSequence(exceptionHandlerDef, processData);
+		}
+		catch (Exception x) {
+            logger.error("Failed to run exception handler for SeriesDef, name="+seriesDef.getName(), x);
+		}
+    }
+    
+    /**
+     * This method copies values hardcoded in include definition over to process data before
+     * sequence is launched
+     *
+     * @param operationDef the operation whose values are to be copied from the descriptior
+     * @param processData  the running state of the process
+     */
+    private void copyHardCodedLocalValuesToPd(SeriesDef seriesDef, IProcessData processData) {
+        for (Parameter parameter : seriesDef.getLocalInputParameters()) {
+            if (parameter.getValue() != null) {
+            	String value = (String)parameter.getValue();
+            	processData.putItem(parameter.getName(), value);
+            	if (value.startsWith("$V{")) {
+            		// dereference any variables across include boundaries
+                    processData.putItem(parameter.getName(), processData.getItem(parameter.getName()));
+            	}
+            }
+        }
     }
 }

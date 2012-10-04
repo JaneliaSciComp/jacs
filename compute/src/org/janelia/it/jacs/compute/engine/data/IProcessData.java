@@ -25,6 +25,8 @@ public interface IProcessData {
 
     public Object getMandatoryItem(String key) throws MissingDataException;
 
+    public Object getLiteralItem(String key);
+    
     public Object getItem(String key);
 
     public void putItem(String key, Object value);

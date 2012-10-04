@@ -4,10 +4,7 @@ package org.janelia.it.jacs.compute.engine.launcher;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.engine.data.DataExtractor;
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.engine.data.MissingDataException;
-import org.janelia.it.jacs.compute.engine.data.QueueMessage;
+import org.janelia.it.jacs.compute.engine.data.*;
 import org.janelia.it.jacs.compute.engine.def.*;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -41,20 +38,32 @@ public class SequenceLauncher extends SeriesLauncher {
                 List<IProcessData> pds = DataExtractor.createForEachPDs(processData, actionDef.getForEachParam());
                 if (pds != null) {
                     for (IProcessData pd : pds) {
-                        launchOperation((OperationDef) actionDef, pd);
-                        // If it's asynchronous, then pd would not have the operations output parameters at this point
-                        // The operation mdb should send its output parameters in its reply message
-                        if (actionDef.getProcessorType() != ProcessorType.LOCAL_MDB) {
-                            // Copy the operation's output parameters into the parent process data
-                            DataExtractor.copyData(pd, processData, actionDef.getOutputParameters());
+                    	try {
+                    		launchOperation((OperationDef) actionDef, pd);	
+                    	}
+                        finally {
+	                        // If it's asynchronous, then pd would not have the operations output parameters at this point
+	                        // The operation mdb should send its output parameters in its reply message
+	                        if (actionDef.getProcessorType() != ProcessorType.LOCAL_MDB) {
+	                            // Copy the operation's output parameters into the parent process data
+	                            DataExtractor.copyData(pd, processData, actionDef.getOutputParameters());
+	                        }
                         }
                     }
                 }
             }
             else {
-                launchOperation((OperationDef) actionDef, processData);
+            	IProcessData pd = new ProcessData();
+            	DataExtractor.copyData(processData, pd, actionDef.getInputParameters());
+            	try {
+            		launchOperation((OperationDef) actionDef, pd);	
+            	}
+                finally {
+	                if (actionDef.getProcessorType() != ProcessorType.LOCAL_MDB) {
+	                    DataExtractor.copyData(pd, processData, actionDef.getOutputParameters());
+	                }
+                }
             }
-
         }
     }
 
@@ -95,12 +104,12 @@ public class SequenceLauncher extends SeriesLauncher {
      * @throws ServiceException
      */
     private void launchOperation(OperationDef operationDef, IProcessData processData) throws LauncherException, ServiceException {
+    	copyHardCodedValuesToPd(operationDef, processData);
         switch (operationDef.getProcessorType()) {
             case POJO:
             case LOCAL_SLSB:
                 try {
                     IService service = ProcessorFactory.createServiceForOperation(operationDef);
-                    copyHardCodedValuesToPd(operationDef, processData);
                     service.execute(processData);
                     recordProcessSuccess(processData, operationDef);
                 }
@@ -141,7 +150,7 @@ public class SequenceLauncher extends SeriesLauncher {
     }
 
     /**
-     * Captures the processing status of the asyncrhonous sequence or operation launched by this SequenceLauncher
+     * Captures the processing status of the asynchronous sequence or operation launched by this SequenceLauncher
      * Copies over output parameters to process data if operation or series was successful.  It throws an exception
      * if the operation was in error
      *

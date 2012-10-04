@@ -15,6 +15,8 @@ public class SequenceDef extends SeriesDef {
     private static final String DEFAULT_POJO_PROCESSOR = SequenceLauncher.class.getName();
     private static final String DEFAULT_LOCAL_SLSB_PROCESSOR = "compute/SequenceLauncherSLSB/local";
 
+    private boolean included = false;
+    
     /**
      * Logic for initializing Process defintiion should be contained within a DefLoader
      *
@@ -27,7 +29,15 @@ public class SequenceDef extends SeriesDef {
         setParentDef(seriesDef);
     }
 
-    /**
+    public boolean isIncluded() {
+		return included;
+	}
+
+	public void setIncluded(boolean included) {
+		this.included = included;
+	}
+
+	/**
      * Used by DefLoader
      */
     protected void validateChildActionDef(ActionDef actionDef) {

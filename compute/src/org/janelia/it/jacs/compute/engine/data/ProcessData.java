@@ -1,32 +1,44 @@
 
 package org.janelia.it.jacs.compute.engine.data;
 
-import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.engine.def.ActionDef;
-import org.janelia.it.jacs.compute.engine.def.ProcessDef;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.engine.def.ActionDef;
+import org.janelia.it.jacs.compute.engine.def.ProcessDef;
+
 /**
  * The class encapsulates the running state of process
  */
 public class ProcessData implements IProcessData {
+	
+	private static Logger logger = Logger.getLogger(ProcessData.class);
+	
     private Map<String, Object> processObjects = new TreeMap<String, Object>();
 
     public void putItem(String key, Object value) {
         processObjects.put(key, value);
     }
-
+    
+    public Object getLiteralItem(String key) {
+        return processObjects.get(key);
+    }
+    
     public Object getItem(String key) {
-        Object value = processObjects.get(key);
+        Object value = getLiteralItem(key);
         if (value instanceof String) {
             String valueStr = (String) value;
             // If the value is wrapped in $V{} then we're interested in the value's value in processData
             if (valueStr.startsWith("$V{")) {
-                return getItem(valueStr.substring(valueStr.indexOf("$V{") + 3, valueStr.length() - 1));
+            	String key2 = valueStr.substring(valueStr.indexOf("$V{") + 3, valueStr.length() - 1);
+            	if (key.equals(key2)) {
+            		logger.error("ProcessData variable refers to itself: "+key);
+            		return null;
+            	}
+                return getItem(key2);
             }
             else {
                 return valueStr;

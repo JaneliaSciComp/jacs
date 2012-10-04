@@ -173,7 +173,7 @@ public class JmsUtil {
                 jmsMessage.setJMSReplyTo(replyToQueue);
             }
             QueueMessage queueMessage = new QueueMessage(jmsMessage, true);
-            DataExtractor.copyData(processData, queueMessage, actionToProcess.getInputParameters());
+            DataExtractor.copyAllData(processData, queueMessage);
             copyLinkedChainInputParameters(processData, queueMessage, actionToProcess, actionToProcess.getQueueToLinkTo(), false);
             queueMessage.setObjectMessage();
             messageInterface.sendMessageWithinTransaction(queueMessage.getMessage());

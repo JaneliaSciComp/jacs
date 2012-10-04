@@ -23,6 +23,11 @@ public abstract class SeriesDef extends ActionDef implements Serializable {
     private List<ActionDef> childDefs = new ArrayList<ActionDef>();
 
     /**
+     * Exception handler sequence to use in case of an exception within this series
+     */
+    private SequenceDef exceptionHandlerDef = null;
+    
+    /**
      * The input parameters specified in the operation definition
      */
     private Set<Parameter> localInputParameters = new HashSet<Parameter>();
@@ -101,6 +106,20 @@ public abstract class SeriesDef extends ActionDef implements Serializable {
     }
 
     /**
+     * Sets the exception handler for this series.
+     */
+    public void setExceptionHandlerDef(SequenceDef exceptionHandlerDef) {
+		this.exceptionHandlerDef = exceptionHandlerDef;
+	}
+
+    /**
+     * Returns the exception handler for this series.
+     */
+    public SequenceDef getExceptionHandlerDef() {
+		return exceptionHandlerDef;
+	}
+    
+	/**
      * Returns true if this process or sequence definition contains an immediate child
      * that is asynchronous
      *
@@ -159,33 +178,24 @@ public abstract class SeriesDef extends ActionDef implements Serializable {
 
     public Set<Parameter> getInputParameters() {
         Set<Parameter> parameters = new HashSet<Parameter>(localInputParameters);
-        getAllParameters(getChildActionDefs(), parameters, true);
+        for (ActionDef actionDef : getChildActionDefs()) {
+            parameters.addAll(actionDef.getInputParameters());
+        }
         return parameters;
     }
 
     public Set<Parameter> getOutputParameters() {
         Set<Parameter> parameters = new HashSet<Parameter>(localOutputParameters);
-        getAllParameters(getChildActionDefs(), parameters, false);
-        return parameters;
-    }
-
-    private Set<Parameter> getAllParameters(List<ActionDef> actionDefs, Set<Parameter> parameters, boolean input) {
-        for (ActionDef actionDef : actionDefs) {
-            if (actionDef.isSeriesDef()) {
-                SeriesDef seriesDef = (SeriesDef) actionDef;
-                getAllParameters(seriesDef.getChildActionDefs(), parameters, input);
-            }
-            else if (actionDef.isOperation()) {
-                parameters.addAll(input ? actionDef.getInputParameters() : actionDef.getOutputParameters());
-            }
+        for (ActionDef actionDef : getChildActionDefs()) {
+            parameters.addAll(actionDef.getOutputParameters());
         }
-        return null;
+        return parameters;
     }
 
     /**
      * For this process or sequence to be executable, it must be executable based on it's
      * own attributes and it must contain at least one action that is executable.  This is to avoid
-     * unncessary creation of a SeriesLauncher
+     * unnecessary creation of a SeriesLauncher
      *
      * @return true if this series is executable, false otherwise
      */
@@ -211,7 +221,7 @@ public abstract class SeriesDef extends ActionDef implements Serializable {
         return childDefs;
     }
 
-    public String toString() {
+	public String toString() {
         return super.toString() +
                 ",waitOnAsyncActions=" + waitOnAsyncActions + ",containsUpdateStatusOnSuccessAction=" + containsUpdateStatusOnSuccessAction;
     }

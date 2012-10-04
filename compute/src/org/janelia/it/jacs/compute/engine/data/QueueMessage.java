@@ -172,13 +172,22 @@ public class QueueMessage implements IProcessData {
         setObjectProperty(key, obj);
     }
 
+    public Object getLiteralItem(String key) {
+        return getObjectProperty(key);
+    }
+    
     public Object getItem(String key) {
-        Object value = getObjectProperty(key);
+        Object value = getLiteralItem(key);
         if (value instanceof String) {
             String valueStr = (String) value;
             // If the value is wrapped in $V{} then we're interested in the value's value in processData
             if (valueStr.startsWith("$V{")) {
-                return getItem(valueStr.substring(valueStr.indexOf("$V{") + 3, valueStr.length() - 1));
+            	String key2 = valueStr.substring(valueStr.indexOf("$V{") + 3, valueStr.length() - 1);
+            	if (key.equals(key2)) {
+            		logger.error("QueueMessage variable refers to itself: "+key);
+            		return null;
+            	}
+                return getItem(key2);
             }
             else {
                 return valueStr;
