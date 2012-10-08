@@ -3,7 +3,7 @@
 # Hudson build script for the Fly Workstation (part 3)
 #
 # The final part of the build script actually deploys the newly compiled
-# executables and the Jacs servers.
+# executables and the Jacsstaging servers.
 #
 
 # Exit after any error
@@ -48,7 +48,7 @@ STAGING_DIR="$JACSDATA_DIR/servers/$SERVER/executables/FlySuiteStaging"
 PACKAGE_MAC_DIR="$STAGING_DIR/$FLYSUITE_NAME"
 PACKAGE_LINUX_DIR="$STAGING_DIR/$FLYSUITE_LINUX_NAME"
 
-FLYSUITE_CLIENTS_DIR="$JACSDATA_DIR/servers/$SERVER/FlySuite"
+FLYSUITE_CLIENTS_DIR="$JACSDATA_DIR/servers/$SERVER/executables/FlySuite"
 FLYSUITE_INSTALL_DIR="$FLYSUITE_CLIENTS_DIR/$FLYSUITE_NAME"
 FLYSUITE_LINUX_INSTALL_DIR="$FLYSUITE_CLIENTS_DIR/$FLYSUITE_LINUX_NAME"
 FLYSUITE_TARBALL="$FLYSUITE_INSTALL_DIR.tgz"
@@ -118,7 +118,7 @@ if [ $INSTALL_CLIENT == 1 ]; then
     
     rm -rf $FLYSUITE_INSTALL_DIR || true
     mkdir -p $FLYSUITE_INSTALL_DIR
-    #cp -R $PACKAGE_MAC_DIR/FlySuite.app $FLYSUITE_INSTALL_DIR
+    cp -R $PACKAGE_MAC_DIR/FlySuite.app $FLYSUITE_INSTALL_DIR
 
     rm -rf $FLYSUITE_LINUX_INSTALL_DIR || true
     cp -R $PACKAGE_LINUX_DIR $FLYSUITE_LINUX_INSTALL_DIR
@@ -149,11 +149,11 @@ fi
 if [ $INSTALL_DATA_SERVER == 1 ]; then
     echo "  Deploying to server 'jacs-data'..."
     cd $JACS_COMPILE_DIR/compute
-    ant -Duser.server.machine=jacs-data -Duser.server.login=jacs "deploy-[your-server]-dev"
-    echo "FlySuite Version ${FWVER} (JBoss server) was successfully deployed to the JACS production data-loading server."
+    ant -Duser.server.machine=jacs-staging -Duser.server.login=jacstest "deploy-[your-server]-dev"
+    echo "FlySuite Version ${FWVER} (JBoss server) was successfully deployed to the JACS STAGING production data-loading server."
     cd $JACS_COMPILE_DIR/jacs
-    ant -Duser.server.machine=jacs-data -Duser.server.login=jacs "deploy-[your-server]-dev"
-    echo "FlySuite Version ${FWVER} (Tomcat web front-end) was successfully deployed to the JACS production data-loading server."
+    ant -Duser.server.machine=jacs-staging -Duser.server.login=jacstest "deploy-[your-server]-dev"
+    echo "FlySuite Version ${FWVER} (Tomcat web front-end) was successfully deployed to the JACS STAGING production data-loading server."
 fi 
     
 ################################################################
@@ -162,11 +162,11 @@ fi
 if [ $INSTALL_PROD_SERVER == 1 ]; then
     echo "  Deploying to server 'jacsstaging'..."
     cd $JACS_COMPILE_DIR/compute
-    ant -Duser.server.machine=jacsstaging -Duser.server.login=jacs "deploy-[your-server]-dev"
-    echo "FlySuite Version ${FWVER} (JBoss server) was successfully deployed to the JACSSTAGING production server."
+    ant -Duser.server.machine=jacs-hudson -Duser.server.login=jacstest "deploy-[your-server]-dev"
+    echo "FlySuite Version ${FWVER} (JBoss server) was successfully deployed to the JACS STAGING production server."
     cd $JACS_COMPILE_DIR/jacsstaging
-    ant -Duser.server.machine=jacsstaging -Duser.server.login=jacs "deploy-[your-server]-dev"
-    echo "FlySuite Version ${FWVER} (Tomcat web front-end) was successfully deployed to the JACSSTAGING production server."
+    ant -Duser.server.machine=jacs-hudson -Duser.server.login=jacstest "deploy-[your-server]-dev"
+    echo "FlySuite Version ${FWVER} (Tomcat web front-end) was successfully deployed to the JACS STAGING production server."
 fi
 
 
