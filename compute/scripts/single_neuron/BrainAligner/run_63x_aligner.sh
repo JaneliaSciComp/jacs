@@ -27,7 +27,7 @@ if [ $NUMPARAMS -lt 3 ]
 then
 echo " "
 echo " USAGE ::  "
-echo " sh brainalign.sh <template_dir> <input_file> <output_dir>"
+echo " sh brainalign.sh <template_dir> <input_file> <output_dir> <optical_res>"
 echo " "
 exit
 fi
@@ -35,6 +35,7 @@ fi
 TEMPLATE_DIR=$1
 INPUT_FILE=$2
 FINAL_OUTPUT=$3
+OPTICAL_RESOLUTION=$4
 FINAL_DIR=${FINAL_OUTPUT%/*}
 FINAL_STUB=${FINAL_OUTPUT%.*}
 OUTPUT_FILENAME=`basename $FINAL_OUTPUT`

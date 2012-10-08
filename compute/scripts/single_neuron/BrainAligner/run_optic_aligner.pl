@@ -3,9 +3,9 @@
 use Getopt::Std;
 use strict;
 
-our ($opt_v, $opt_b, $opt_l, $opt_t, $opt_w, $opt_i, $opt_n);
+our ($opt_v, $opt_b, $opt_l, $opt_t, $opt_w, $opt_i, $opt_n, $opt_r);
 
-getopts("v:b:l:t:w:i:n:") || &usage("");
+getopts("v:b:l:t:w:i:n:r:") || &usage("");
 
 my $v3d         = $opt_v;
 my $ba          = $opt_b;
@@ -13,6 +13,7 @@ my $templateDir = $opt_t;
 my $workingDir  = $opt_w;
 my $inputStack  = $opt_i;
 my $tileName    = $opt_n;
+my $opticalRes  = $opt_r;
 
 if (($tileName ne "") and ($tileName ne "Right Optic Lobe") and ($tileName ne "Left Optic Lobe")) {
     &usage("Invalid tile name: $tileName");

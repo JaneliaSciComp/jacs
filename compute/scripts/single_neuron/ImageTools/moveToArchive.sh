@@ -12,15 +12,15 @@ mkdir -p $NEW_PATH
 for f in $@
 do
     if [ -h $f ]; then
-        echo "$f is already a symolic link"
+        echo "$f is a symbolic link"
     else
         FILENAME=`basename $f`
         
         echo "mv $FILENAME $NEW_PATH"
         mv $FILENAME $NEW_PATH
 
-        echo "ln -s $NEW_PATH/$FILENAME $FILENAME"
-        ln -s $NEW_PATH/$FILENAME $FILENAME
+        #echo "ln -s $NEW_PATH/$FILENAME $FILENAME"
+        #ln -s $NEW_PATH/$FILENAME $FILENAME
     fi
 done
 
