@@ -20,6 +20,7 @@ BUILD_VAA3D=$3
 BUILD_FLYSUITE=$4
 
 JACSDATA_DIR="/groups/scicomp/jacsData"
+HOME_DIR="/Users/jacs"
 SVN_OPTIONS="--trust-server-cert --non-interactive"
 
 EXE_DIR="$JACSDATA_DIR/servers/$SERVER/executables"
@@ -27,6 +28,7 @@ SCRIPT_DIR="$JACSDATA_DIR/servers/$SERVER/scripts"
 
 COMPILE_DIR="$EXE_DIR/compile"
 VAA3D_COMPILE_MAC_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-mac"
+VAA3D_COMPILE_LOCAL_DIR="$HOME_DIR/vaa3d_FlySuite_${FWVER}-mac"
 JACS_COMPILE_DIR="$COMPILE_DIR/jacs_FlySuite_${FWVER}"
 
 STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
@@ -51,10 +53,17 @@ if [ $BUILD_VAA3D == 1 ]; then
         echo "SVN tag not found for Vaa3d: FlySuite_${FWVER}"
         exit 1
     fi
-    cd $VAA3D_COMPILE_MAC_DIR
 
+    echo "  Moving Vaa3D compile directory to local storage"
+    mv $VAA3D_COMPILE_MAC_DIR $VAA3D_COMPILE_LOCAL_DIR
+    
     echo "  Building Vaa3D for the Mac client"
+    cd $VAA3D_COMPILE_LOCAL_DIR
     sh $SCRIPT_DIR/build_vaa3d_mac.sh
+
+    echo "  Moving Vaa3d compile directory back to shared storage"
+    mv $VAA3D_COMPILE_LOCAL_DIR $VAA3D_COMPILE_MAC_DIR
+
 fi
 
 ################################################################
