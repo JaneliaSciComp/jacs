@@ -27,4 +27,5 @@ mv $MACOSDIR/vaa3d $MACOSDIR/vaa3dbin
 sed "s/vaa3d/vaa3dbin \$\*/" $MACOSDIR/vaa3d_script > $MACOSDIR/vaa3d64
 cp $MACOSDIR/vaa3d64 $MACOSDIR/vaa3d
 cp $MACOSDIR/vaa3d64 $MACOSDIR/vaa3d_script
+chmod +x $MACOSDIR/*
 
