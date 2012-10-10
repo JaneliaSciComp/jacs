@@ -325,6 +325,11 @@
     <operation>
         <description>Run all pipelines for all Data Sets for all users</description>
         <name>runAllDataSetPipelines</name>
+        <parameter>
+            <description>Mode for processing (NEW, INCOMPLETE, or ALL)</description>
+            <name>runMode</name>
+            <type>java.lang.String</type>
+        </parameter>
     </operation>
     
     <operation>
@@ -333,6 +338,11 @@
         <parameter>
             <description>User to run as (e.g. "system")</description>
             <name>username</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Mode for processing (NEW, INCOMPLETE, or ALL)</description>
+            <name>runMode</name>
             <type>java.lang.String</type>
         </parameter>
     </operation>

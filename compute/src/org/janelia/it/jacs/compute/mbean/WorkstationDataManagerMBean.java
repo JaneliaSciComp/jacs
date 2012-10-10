@@ -61,8 +61,8 @@ public interface WorkstationDataManagerMBean {
     
     // Generic confocal image processing pipelines, driven by pipeline configurations on a data-set basis
     
-    public void runAllDataSetPipelines();
-    public void runUserDataSetPipelines(String username);
+    public void runAllDataSetPipelines(String runMode);
+    public void runUserDataSetPipelines(String username, String runMode);
     public void runSamplePipeline(String sampleEntityId);
     public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName);
     

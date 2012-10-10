@@ -353,30 +353,25 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
-    public void runAllDataSetPipelines() {
+    public void runAllDataSetPipelines(String runMode) {
         try {
         	Set<String> usernames = new HashSet<String>();
+        	usernames.add("system"); // Always run system user, even if no data sets are configured yet
         	for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
         		usernames.add(dataSet.getUser().getUserLogin());
         	}
-        	
         	for(String username : usernames) {
-            	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-            	Task task = new GenericTask(new HashSet<Node>(), username, new ArrayList<Event>(), 
-            			taskParameters, "userDatSetPipelines", "User Data Set Pipelines");
-                task.setJobName("User Data Set Pipelines Task");
-                task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-                EJBFactory.getLocalComputeBean().submitJob("UserDataSetPipelines", task.getObjectId());
+        		runUserDataSetPipelines(username, runMode);
         	}
-        	
         } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
     
-    public void runUserDataSetPipelines(String username) {
+    public void runUserDataSetPipelines(String username, String runMode) {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        	taskParameters.add(new TaskParameter("run mode", runMode, null)); 
         	Task task = new GenericTask(new HashSet<Node>(), username, new ArrayList<Event>(), 
         			taskParameters, "userDatSetPipelines", "User Data Set Pipelines");
             task.setJobName("User Data Set Pipelines Task");
