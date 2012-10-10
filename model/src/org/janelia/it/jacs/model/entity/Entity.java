@@ -16,9 +16,6 @@ public class Entity  implements java.io.Serializable, IsSerializable {
 	
 	@XmlAttribute(name="guid")
     private Long id;
-
-    @XmlElement(name="idCopy")
-    private Long idCopy;
 	
 	@XmlElement
     private String name;
@@ -51,7 +48,6 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     public Entity(Long id, String name, User user, EntityStatus entityStatus, EntityType entityType, Date creationDate,
                   Date updatedDate, Set<EntityData> entityData) {
        this.id = id;
-       this.idCopy = id;
        this.name = name;
        this.user = user;
        this.entityStatus = entityStatus;
@@ -67,17 +63,7 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     
     public void setId(Long id) {
         this.id = id;
-        this.idCopy = id;
     }
-
-    public Long getIdCopy() {
-        return this.idCopy;
-    }
-
-    public void setIdCopy(Long idCopy) {
-        // do nothing
-    }
-
     public User getUser() {
         return this.user;
     }
