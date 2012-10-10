@@ -22,8 +22,9 @@ public class ResultSetIterator implements Iterator<Map<String,Object>> {
     	this.stmt = stmt;
         this.rs = rs;
         try {
-        	rs.next();
-        	nextRow = toMap(rs);
+        	if (rs.next()) {
+        		nextRow = toMap(rs);
+        	}
         }
         catch (SQLException e) {
             rethrow(e);
