@@ -80,63 +80,6 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
-
-    public void runScreenScoresLoading2(String user, String acceptsPath) {
-        try {
-        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	taskParameters.add(new TaskParameter("accepts file path", acceptsPath, null));
-        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-        			taskParameters, "screenScoresLoading2", "Screen Scores Loading 2");
-            task.setJobName("Screen Scores Loading 2 Task");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("ScreenScoresLoadingPipeline2", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-    
-    public void runScreenScoresLoading3(String user, String rejectsPath, String acceptsPath) {
-        try {
-        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	taskParameters.add(new TaskParameter("rejects file path", rejectsPath, null));
-        	taskParameters.add(new TaskParameter("accepts file path", acceptsPath, null));
-        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-        			taskParameters, "screenScoresLoading3", "Screen Scores Loading 3");
-            task.setJobName("Screen Scores Loading 3 Task");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("ScreenScoresLoadingPipeline3", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    public void runScreenScoresLoading4(String user, String addsPath) {
-        try {
-        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	taskParameters.add(new TaskParameter("adds file path", addsPath, null));
-        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-        			taskParameters, "screenScoresLoading4", "Screen Scores Loading 4");
-            task.setJobName("Screen Scores Loading 4 Task");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("ScreenScoresLoadingPipeline4", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-    
-    public void runScreenScoresLoading5(String user, String compartments) {
-        try {
-        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	taskParameters.add(new TaskParameter("compartments", compartments, null));
-        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-        			taskParameters, "screenScoresLoading5", "Screen Scores Loading 5");
-            task.setJobName("Screen Scores Loading 5 Task");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("ScreenScoresLoadingPipeline5", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
     
     public void runScreenScoresExport(String user, String outputFilepath) {
         try {

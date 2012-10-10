@@ -11,10 +11,6 @@ public interface WorkstationDataManagerMBean {
 	// Pipelines for Arnim
 	public void runAnnotationImport(String user, String annotationsPath, String ontologyName);
 	public void runScreenScoresLoading(String user, String acceptsPath, String loadedPath);
-	public void runScreenScoresLoading2(String user, String acceptsPath);
-	public void runScreenScoresLoading3(String user, String rejectsPath, String acceptsPath);
-	public void runScreenScoresLoading4(String user, String addsPath);
-	public void runScreenScoresLoading5(String user, String compartments);
 	public void runScreenScoresExport(String user, String outputFilepath);
 	public void runSplitLinesLoading(String user, String topLevelFolderName, String representativesPath, String splitConstructsPath);
 	
