@@ -71,14 +71,16 @@ echo "Building FlySuite version $FWVER (Part 1)"
 # access that.)
 ################################################################
 rm -rf $SCRIPT_DIR || true
-svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tags/FlySuite_${FWVER}/buildprocess/scripts/hudson $SCRIPT_DIR
+#svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tags/FlySuite_${FWVER}/buildprocess/scripts/hudson $SCRIPT_DIR
+svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk/buildprocess/scripts/hudson $SCRIPT_DIR
 
 ################################################################
 # Check out the versioned templates for making
 # client packages 
 ################################################################
 rm -rf $TEMPLATE_DIR || true
-svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tags/FlySuite_${FWVER}/buildprocess/deployment/templates $TEMPLATE_DIR
+#svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tags/FlySuite_${FWVER}/buildprocess/deployment/templates $TEMPLATE_DIR
+svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk/buildprocess/deployment/templates $TEMPLATE_DIR
 
 
 ################################################################
@@ -95,7 +97,8 @@ if [ $BUILD_VAA3D == 1 ]; then
     rm -rf $VAA3D_COMPILE_FEDORA_DIR || true
 
     echo "  Checking out from SVN"
-    svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/tags/FlySuite_${FWVER} $VAA3D_COMPILE_REDHAT_DIR
+    #svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/tags/FlySuite_${FWVER} $VAA3D_COMPILE_REDHAT_DIR
+    svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/trunk $VAA3D_COMPILE_REDHAT_DIR
     if [ ! -e $VAA3D_COMPILE_REDHAT_DIR ]; then
         echo "SVN tag not found for Vaa3d: FlySuite_${FWVER}"
         exit 1
@@ -129,7 +132,8 @@ if [ $BUILD_NEUSEP == 1 ]; then
     rm -rf $NEUSEP_COMPILE_REDHAT_DIR || true
     
     echo "  Checking out from SVN"
-    svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/tags/FlySuite_${FWVER} $NEUSEP_COMPILE_REDHAT_DIR
+    #svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/tags/FlySuite_${FWVER} $NEUSEP_COMPILE_REDHAT_DIR
+    svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/trunk $NEUSEP_COMPILE_REDHAT_DIR
     if [ ! -e $NEUSEP_COMPILE_REDHAT_DIR ]; then
         echo "SVN tag not found for NeuronSeparator: FlySuite_${FWVER}"
         exit 1
@@ -152,7 +156,8 @@ if [ $BUILD_JACS == 1 ]; then
     rm -rf $JACS_COMPILE_DIR || true
     
     echo "  Checking out from SVN"
-    svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tags/FlySuite_${FWVER} $JACS_COMPILE_DIR
+    #svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tags/FlySuite_${FWVER} $JACS_COMPILE_DIR
+    svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk $JACS_COMPILE_DIR
     if [ ! -e $JACS_COMPILE_DIR ]; then
         echo "SVN tag not found for jacs: FlySuite_${FWVER}"
         exit 1
