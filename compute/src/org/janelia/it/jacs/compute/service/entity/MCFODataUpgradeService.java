@@ -70,15 +70,14 @@ public class MCFODataUpgradeService implements IService {
             
             logger.info("Processing samples...");
             processSamples();
+			logger.info("Processed "+numSamples+" samples.");
     	}
         catch (Exception e) {
+			logger.info("Processed "+numSamples+" samples before dying.");
         	if (e instanceof ServiceException) {
             	throw (ServiceException)e;
             }
             throw new ServiceException("Error running MCFODataUpgradeService", e);
-        }
-        finally {
-			logger.info("Processed "+numSamples+" samples.");
         }
     }
 
@@ -132,11 +131,13 @@ public class MCFODataUpgradeService implements IService {
     			for(Entity child : fastLoad.getChildren()) {
     				// See if there's a duplicate under the separation itself
     				EntityData ed = EntityUtils.findChildEntityDataWithName(separation, child.getName());
-    				logger.info("Deleting duplicate fast load image: "+child.getName());
-                    if (!isDebug) {
-	    				entityBean.deleteEntityData(ed);
-	    				entityBean.deleteEntityById(ed.getChildEntity().getId());
-                    }
+    				if (ed!=null) {
+	    				logger.info("Deleting duplicate fast load image: "+child.getName());
+	                    if (!isDebug) {
+		    				entityBean.deleteEntityData(ed);
+		    				entityBean.deleteEntityById(ed.getChildEntity().getId());
+	                    }
+    				}
     			}
     			
     			logger.info("Deleting broken fast load folder for separation: "+separation.getId());

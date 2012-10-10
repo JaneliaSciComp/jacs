@@ -18,7 +18,7 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  * within the entity model.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
- */
+ */ 
 public class SageDataSetDiscoveryService extends AbstractEntityService {
    
 	protected static final String PRIVATE_DATA_SET_FOLDER_NAME = "My Data Sets";
@@ -302,12 +302,12 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		if (imageTileEd != null) {
 			imageTile = imageTileEd.getChildEntity();
 			if (!existingTileMatches(imageTile, tileGroup)) {
-				logger.warn("  Tile '"+imageTile.getName()+"' has changed, will delete and recreate it.");
+				logger.info("  Tile '"+imageTile.getName()+"' has changed, will delete and recreate it.");
 				entityBean.deleteSmallEntityTree(imageTile.getUser().getUserLogin(), imageTile.getId());
 				imageTile = null;
 			}
 			else {
-				logger.warn("  Tile '"+imageTile.getName()+"' exists");
+				logger.info("  Tile '"+imageTile.getName()+"' exists");
 				for(Entity lsmStack : imageTile.getChildrenOfType(EntityConstants.TYPE_LSM_STACK)) {
 					for(SlideImage image : tileGroup.images) {
 						if (image.file.getName().equals(lsmStack.getName())) {

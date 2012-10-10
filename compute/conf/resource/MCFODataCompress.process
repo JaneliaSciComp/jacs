@@ -1,7 +1,7 @@
 <!-- 
 	Compress existing v3draw files to v3dpbd to save space.
 -->
-<process name="Sample Data Compression" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
+<process name="Sample Data Compression" processor="queue/largePipelineLauncher" startEvent="pending">
 	<sequence>
 	
 		<input name="ROOT_ENTITY_ID"/>

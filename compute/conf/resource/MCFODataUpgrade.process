@@ -1,7 +1,7 @@
 <!-- 
 	Upgrade the model to use the most current entity structure.
 -->
-<process name="MCFO Data Upgrade" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
+<process name="MCFO Data Upgrade" processor="queue/largePipelineLauncher" startEvent="pending">
 	<sequence>
 		<operation name="MCFO Data Upgrade" processor="org.janelia.it.jacs.compute.service.entity.MCFODataUpgradeService">
 		</operation>

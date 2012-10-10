@@ -2,7 +2,7 @@
       Fully process a Sample in the database. Potentially this can include merging LSMs, stitching and blending them, 
       aligning, and running analysis algorithms such as neuron separation. 
  -->
- <process name="FlyLight Sample Pipeline" processor="queue/mcfoSamplePipelineLauncher" startEvent="pending">
+ <process name="FlyLight Sample Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending">
 	<sequence>
 	    
 	    <!-- Import variables from the MCFOSamplePipelineTask -->
