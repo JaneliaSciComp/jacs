@@ -10,7 +10,7 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.vo.ParameterException;
 
 /**
- * Align an optic lobe globally and locally.
+ * Run the 63x whole brain alignment.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -30,11 +30,12 @@ public class WholeBrain63xAlignmentService extends BrainAlignmentService {
         StringBuffer script = new StringBuffer();
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix() + "\n");
         script.append(Vaa3DHelper.getVaa3dLibrarySetupCmd()+"\n");
-        script.append("cd " + alignFileNode.getDirectoryPath() + "\n " +
-        	"sh " + EXECUTABLE_DIR + WB63X_ALIGNER_SCRIPT_CMD +
+        script.append("cd " + alignFileNode.getDirectoryPath() + "\n ");
+		script.append("sh " + EXECUTABLE_DIR + WB63X_ALIGNER_SCRIPT_CMD +
             " " +  EXECUTABLE_DIR + WB63X_TEMPLATE_DIR +
             " " + inputFilename + 
-            " " + alignFileNode.getDirectoryPath()+"/Aligned.v3dpbd\n");
+            " " + alignFileNode.getDirectoryPath()+"/Aligned.v3dpbd" +
+            " \"" + opticalResolution.replaceAll("x", " ") + "\"\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix() + "\n");
         writer.write(script.toString());
 	}

@@ -17,7 +17,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 
 /**
- * Align an central brain globally and locally.
+ * Run the original central brain aligner from Hanchuan. Also serves as the base class for future alignment algorithms.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -39,7 +39,8 @@ public class BrainAlignmentService extends SubmitDrmaaJobService {
     protected FileNode outputFileNode;
     protected FileNode alignFileNode;
     protected String inputFilename;
-
+    protected String opticalResolution;
+    
     @Override
     protected String getGridServicePrefixName() {
         return "align";
@@ -61,6 +62,11 @@ public class BrainAlignmentService extends SubmitDrmaaJobService {
         inputFilename = (String)processData.getItem("INPUT_FILENAME");
         if (inputFilename==null) {
         	throw new ServiceException("Input parameter INPUT_FILENAME may not be null");
+        }
+
+        opticalResolution = (String)processData.getItem("OPTICAL_RESOLUTION");
+        if (opticalResolution==null) {
+        	throw new ServiceException("Input parameter OPTICAL_RESOLUTION may not be null");
         }
         
         File outputFile = new File(outputFileNode.getDirectoryPath(),"Aligned.v3dpbd");
