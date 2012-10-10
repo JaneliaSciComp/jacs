@@ -45,7 +45,8 @@ if [ $BUILD_VAA3D == 1 ]; then
     rm -rf "$VAA3D_COMPILE_MAC_DIR" || true
 
     echo "  Checking out from SVN"
-    svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/tags/FlySuite_${FWVER} $VAA3D_COMPILE_MAC_DIR
+    #svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/tags/FlySuite_${FWVER} $VAA3D_COMPILE_MAC_DIR
+    svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/trunk $VAA3D_COMPILE_MAC_DIR
     if [ ! -e $VAA3D_COMPILE_MAC_DIR ]; then
         echo "SVN tag not found for Vaa3d: FlySuite_${FWVER}"
         exit 1
