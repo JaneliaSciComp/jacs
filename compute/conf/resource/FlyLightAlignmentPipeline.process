@@ -25,6 +25,7 @@
 			<output name="ALIGNMENT_SERVICE_CLASS"/>
 			<output name="ALIGNMENT_RESULT_NAME"/>
 			<output name="ALIGNMENT_TILE_NAME"/>
+			<output name="OPTICAL_RESOLUTION"/>
 		</operation>
 	    
    	    <!-- Align the sample -->
@@ -34,6 +35,7 @@
 	    		<input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
 				<input name="INPUT_FILENAME" value="$V{STITCHED_FILENAME}"/>
 				<input name="ALIGNMENT_TILE_NAME"/>
+				<input name="OPTICAL_RESOLUTION"/>
 				<output name="ALIGNED_FILENAME"/>
 	        </operation>
         </sequence>
