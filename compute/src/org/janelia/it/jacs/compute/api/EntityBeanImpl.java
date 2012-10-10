@@ -124,7 +124,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             return _annotationDAO.deleteEntityById(entityId);
         } 
          catch (Exception e) {
-            _logger.error("Error trying to get delete entity "+entityId, e);
+            _logger.error("Error deleting entity "+entityId, e);
             throw new ComputeException("Error deleting entity "+entityId,e);
         }
     }
@@ -134,8 +134,8 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             _annotationDAO.genericDelete(ed);
         }
         catch (Exception e) {
-            _logger.error("Unexpected error while trying to delete entity data "+ed.getId());
-            throw new ComputeException("Unexpected error while trying to delete entity data "+ed.getId(),e);
+            _logger.error("Error deleting entity data "+ed.getId());
+            throw new ComputeException("Error deleting entity data "+ed.getId(),e);
         }
     }
 
@@ -144,8 +144,8 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             return _annotationDAO.addEntityToParent(parent, entity, index, attrName);
         } 
         catch (DaoException e) {
-            _logger.error("Error trying to add entity (id="+entity.getId()+") to parent "+parent.getId(), e);
-            throw new ComputeException("Error trying to add entity (id="+entity.getId()+") to parent "+parent.getId(),e);
+            _logger.error("Error adding entity (id="+entity.getId()+") to parent "+parent.getId(), e);
+            throw new ComputeException("Error adding entity (id="+entity.getId()+") to parent "+parent.getId(),e);
         }
     }
    
@@ -163,8 +163,8 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             return entity;
         } 
         catch (DaoException e) {
-            _logger.error("Error trying to save or update Entity",e);
-            throw new ComputeException("Error trying to save or update Entity",e);
+            _logger.error("Error saving entity with name: "+entity.getName(),e);
+            throw new ComputeException("Error saving entity with name: "+entity.getName(),e);
         }
     }
 
@@ -183,8 +183,8 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             return ed;
         } 
         catch (DaoException e) {
-            _logger.error("Error trying to save or update EntityData",e);
-            throw new ComputeException("Error trying to save or update EntityData",e);
+            _logger.error("Error saving entity data",e);
+            throw new ComputeException("Error saving entity data",e);
         }
     }
 

@@ -1,7 +1,9 @@
 package org.janelia.it.jacs.compute.service.entity;
 
 import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.cv.AlignmentAlgorithm;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Decides what analysis pipeline to run, based on the enumerated value.
@@ -21,6 +23,8 @@ public class InitAlignmentParametersService extends AbstractEntityService {
     	if (sampleEntity == null) {
     		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
     	}
+    	
+    	processData.putItem("OPTICAL_RESOLUTION", getConsensusOpticalResolution(sampleEntity));
     	
 		String alignmentType = (String)processData.getItem("ALIGNMENT_ALGORITHM");
 		AlignmentAlgorithm aa = AlignmentAlgorithm.valueOf(alignmentType);
@@ -45,5 +49,35 @@ public class InitAlignmentParametersService extends AbstractEntityService {
         	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.BrainAlignmentService");
         	processData.putItem("ALIGNMENT_RESULT_NAME", "Central Brain Alignment");
 		}
+    }
+    
+    private String getConsensusOpticalResolution(Entity sampleEntity) {
+    	
+    	String consensus = null;
+    	populateChildren(sampleEntity);
+
+    	Entity supportingFiles = EntityUtils.getSupportingData(sampleEntity);
+    	if (supportingFiles==null) return consensus; 
+        populateChildren(supportingFiles);
+
+		for(Entity imageTile : supportingFiles.getChildrenOfType(EntityConstants.TYPE_IMAGE_TILE)) {		
+            populateChildren(imageTile);
+
+    		for(Entity lsmStack : supportingFiles.getChildrenOfType(EntityConstants.TYPE_LSM_STACK)) {
+    			String opticalRes = lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
+    			if (consensus==null) {
+    				consensus = opticalRes;
+    			}
+    			else {
+    				if (!consensus.equals(opticalRes)) {
+    					logger.warn("At least two different optical resolutions in sample with id="+
+    							sampleEntity.getId()+": (1) "+consensus+" and (2) "+opticalRes+". Using (1)");
+    					return consensus;
+    				}
+    			}
+    		}
+		}
+		
+		return consensus;
     }
 }

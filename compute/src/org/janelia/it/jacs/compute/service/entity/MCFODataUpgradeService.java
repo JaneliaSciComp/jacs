@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.service.entity;
 
+import java.io.File;
 import java.util.*;
 
 import org.apache.log4j.Logger;
@@ -31,7 +32,7 @@ public class MCFODataUpgradeService implements IService {
     protected ComputeBeanLocal computeBean;
     protected FileDiscoveryHelper helper;
     
-    protected int numEntities;
+    protected int numSamples;
     protected int numChanges;
     
     private Set<Long> visited = new HashSet<Long>();
@@ -58,6 +59,16 @@ public class MCFODataUpgradeService implements IService {
             	logger.info("This is the real thing. Entities will be moved and/or deleted!");
             }
             
+            EntityType lsmStackPairType = entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK_PAIR);
+            if (lsmStackPairType!=null) {
+            	logger.info("Renaming '"+EntityConstants.TYPE_LSM_STACK_PAIR+"' to '"+EntityConstants.TYPE_IMAGE_TILE+"'");
+	            lsmStackPairType.setName(EntityConstants.TYPE_IMAGE_TILE);
+	            if (!isDebug) {
+	            	computeBean.genericSave(lsmStackPairType);
+	            }
+            }
+            
+            logger.info("Processing samples...");
             processSamples();
     	}
         catch (Exception e) {
@@ -67,7 +78,7 @@ public class MCFODataUpgradeService implements IService {
             throw new ServiceException("Error running MCFODataUpgradeService", e);
         }
         finally {
-			logger.info("Processed "+numEntities+" entities.");
+			logger.info("Processed "+numSamples+" samples.");
         }
     }
 
@@ -87,13 +98,53 @@ public class MCFODataUpgradeService implements IService {
     	visited.add(sample.getId());
     	
 		logger.info("Processing "+sample.getName()+" (id="+sample.getId()+")");
-		numEntities++;
+		numSamples++;
 		
 		entityBean.loadLazyEntity(sample, false);
 		
+		cleanupBrokenFastLoads(sample);
 		migrateTilelessLsms(sample);
 		migratePairsToTiles(sample);
 		migrateSampleStructure(sample);
+    }
+    
+    /**
+     * Clean up Fast Load entities that were created with a broken fastLoad.sh
+     */
+    private void cleanupBrokenFastLoads(Entity sample) throws ComputeException {
+    
+    	for(Entity separation : sample.getChildrenOfType(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
+    		populateChildren(separation);
+
+        	Entity supportingFiles = EntityUtils.getSupportingData(separation);
+        	if (supportingFiles==null) return; 
+        	populateChildren(supportingFiles);
+        	
+    		Entity fastLoad = EntityUtils.findChildWithName(supportingFiles, "Fast Load");
+    		if (fastLoad==null) continue;
+    		
+    		String filepath = fastLoad.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+    		
+    		if (filepath==null || !(new File(filepath).exists())) {
+    			// Delete it
+    			
+    			populateChildren(fastLoad);
+    			for(Entity child : fastLoad.getChildren()) {
+    				// See if there's a duplicate under the separation itself
+    				EntityData ed = EntityUtils.findChildEntityDataWithName(separation, child.getName());
+    				logger.info("Deleting duplicate fast load image: "+child.getName());
+                    if (!isDebug) {
+	    				entityBean.deleteEntityData(ed);
+	    				entityBean.deleteEntityById(ed.getChildEntity().getId());
+                    }
+    			}
+    			
+    			logger.info("Deleting broken fast load folder for separation: "+separation.getId());
+                if (!isDebug) {
+                	entityBean.deleteSmallEntityTree(username, fastLoad.getId());
+                }
+    		}
+    	}
     }
     
     /**
@@ -152,34 +203,97 @@ public class MCFODataUpgradeService implements IService {
 
         EntityAttribute attr = entityBean.getEntityAttributeByName(EntityConstants.ATTRIBUTE_ENTITY);
         
-		for(Entity entity : supportingFiles.getChildren()) {
-			if (entity.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_TILE)) {
-                populateChildren(entity);
+		for(Entity entity : supportingFiles.getChildrenOfType(EntityConstants.TYPE_IMAGE_TILE)) {
+			
+			boolean fileWasDiscoveredNotSaged = false;
+			if (entity.getName().equals("Scans")) {
+				fileWasDiscoveredNotSaged = true;
+				entity.setName("Tile 1");
+				logger.info("Renaming tile (id="+entity.getId()+") from 'Scans' to 'Tile 1'");
+                if (!isDebug) {
+                	entityBean.saveOrUpdateEntity(entity);
+                }
+			}
+			
+            populateChildren(entity);
+            
+            List<EntityData> children = EntityUtils.getOrderedEntityDataForAttribute(entity, EntityConstants.ATTRIBUTE_ENTITY);
+            
+            if (children.isEmpty()) {
                 EntityData stack1ed = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_LSM_STACK_1);
 
                 if (stack1ed!=null) {
                 	logger.info("Found old-style LSM Pair, id="+entity.getId()+" name="+entity.getName());
-	                stack1ed.setEntityAttribute(attr);
-	                stack1ed.setOrderIndex(0);
-	                logger.info("    Updating stack 1, id="+stack1ed.getId());
-	                if (!isDebug) {
-	                	entityBean.saveOrUpdateEntityData(stack1ed);
-	                }
+                    stack1ed.setEntityAttribute(attr);
+                    stack1ed.setOrderIndex(0);
+                    logger.info("    Updating stack 1, id="+stack1ed.getId());
+                    if (!isDebug) {
+                    	entityBean.saveOrUpdateEntityData(stack1ed);
+                    }
+                    
+                    if (fileWasDiscoveredNotSaged) {
+    	                Entity lsmStack = stack1ed.getChildEntity();
+    	                if (lsmStack!=null) {
+    	                	populateLsmStackAttributes(lsmStack, "ssr");
+    	                }
+                    }
                 }
                 
                 EntityData stack2ed = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_LSM_STACK_2);
                 if (stack2ed!=null) {
-	                stack2ed.setEntityAttribute(attr);
-	                stack2ed.setOrderIndex(1);
-	                logger.info("    Updating stack 2, id="+stack2ed.getId());
-	                if (!isDebug) {
-	                	entityBean.saveOrUpdateEntityData(stack2ed);
-	                }
+                    stack2ed.setEntityAttribute(attr);
+                    stack2ed.setOrderIndex(1);
+                    logger.info("    Updating stack 2, id="+stack2ed.getId());
+                    if (!isDebug) {
+                    	entityBean.saveOrUpdateEntityData(stack2ed);
+                    }
+
+                    if (fileWasDiscoveredNotSaged) {
+    	                Entity lsmStack = stack1ed.getChildEntity();
+    	                if (lsmStack!=null) {
+    	                	populateLsmStackAttributes(lsmStack, "sr");
+    	                }
+                    }
                 }
-			}
+            }
+            else {
+            	int i = 0;
+            	for(EntityData childEd : children) {
+                    logger.info("    Updating stack, id="+childEd.getId());
+                    if (fileWasDiscoveredNotSaged) {
+    	                Entity lsmStack = childEd.getChildEntity();
+    	                if (lsmStack!=null) {
+    	                	populateLsmStackAttributes(lsmStack, i<1?"ssr":"sr");
+    	                	i++;
+    	                }
+                    }
+            	}
+            }
+            
 		}
     }
 
+
+    protected Entity populateLsmStackAttributes(Entity lsmStack, String channelSpec) throws ComputeException {
+
+    	boolean save = false;
+    	if (lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS)==null) {
+    		logger.info("  Setting '"+EntityConstants.ATTRIBUTE_NUM_CHANNELS+"'="+channelSpec.length()+" for id="+lsmStack.getId());
+    		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS, ""+channelSpec.length());	
+    		save = true;
+    	}
+    	if (lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION)==null) {
+    		logger.info("  Setting '"+EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION+"'="+channelSpec+" for id="+lsmStack.getId());
+    		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec);	
+    		save = true;
+    	}
+        
+    	if (save && !isDebug) {
+    		lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
+    	}
+        return lsmStack;
+    }
+    
     /**
      * Check for Samples with the old result structure.
      */
@@ -231,7 +345,7 @@ public class MCFODataUpgradeService implements IService {
     		}
     	}
     	
-    	if (isDebug) return;
+    	if (isDebug || results.isEmpty()) return;
     	
     	Entity pipelineRun = entityBean.createEntity(username, EntityConstants.TYPE_PIPELINE_RUN, "FlyLight Pipeline Results");
 

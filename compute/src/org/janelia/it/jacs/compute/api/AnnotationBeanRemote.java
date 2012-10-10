@@ -14,7 +14,6 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.annotation.DataDescriptor;
 import org.janelia.it.jacs.shared.annotation.DataFilter;
 import org.janelia.it.jacs.shared.annotation.FilterResult;
-import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
 
 /**
  * A remote interface to queries having to do with specific types in the entity model, mainly
@@ -64,4 +63,7 @@ public interface AnnotationBeanRemote {
     public List<String> patternSearchGetCompartmentList(String type) throws ComputeException;
     public FilterResult patternSearchGetFilteredResults(String type, Map<String, Set<DataFilter>> filterMap) throws ComputeException;
 
+    public Entity createDataSet(String userLogin, String dataSetName) throws ComputeException;
+    public Entity getUserDataSetByName(String userLogin, String dataSetName) throws ComputeException;
+    public Entity getUserDataSetByIdentifier(String dataSetIdentifier) throws ComputeException;
 }

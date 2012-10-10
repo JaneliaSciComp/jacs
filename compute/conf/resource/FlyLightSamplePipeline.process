@@ -3,7 +3,7 @@
       aligning, and running analysis algorithms such as neuron separation. 
  -->
  <process name="FlyLight Sample Pipeline" processor="queue/mcfoSamplePipelineLauncher" startEvent="pending">
-	<sequence name="Main Sequence">
+	<sequence>
 	    
 	    <!-- Import variables from the MCFOSamplePipelineTask -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
@@ -20,6 +20,7 @@
             <input name="TASK_PARAMETER_6" value="analysis algorithms"/>
             <input name="PROCESS_VARIABLE_6" value="ANALYSIS_ALGORITHMS"/>
 	        <output name="SAMPLE_ENTITY_ID"/>
+	        <output name="PIPELINE_NAME"/>
 	        <output name="MERGE_ALGORITHMS"/>
 	        <output name="STITCH_ALGORITHMS"/>
 	        <output name="ALIGNMENT_ALGORITHMS"/>
@@ -261,15 +262,13 @@
         </include>
         
 	    <exceptionHandler>
-		    <sequence>
-		    
-			    <!-- Log the exception into the Pipeline Run -->
-				<operation name="Handle exceptions" processor="org.janelia.it.jacs.compute.service.entity.sample.CreateErrorEntityService">
-					<input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
-					<input name="PROCESSING_EXCEPTION"/>
-			    </operation>
-			    
-	        </sequence>
+	    
+		    <!-- Log the exception into the Pipeline Run -->
+			<operation name="Handle exceptions" processor="org.janelia.it.jacs.compute.service.entity.sample.CreateErrorEntityService">
+				<input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
+				<input name="PROCESSING_EXCEPTION"/>
+		    </operation>
+		
 	    </exceptionHandler>
 	    
     </sequence>

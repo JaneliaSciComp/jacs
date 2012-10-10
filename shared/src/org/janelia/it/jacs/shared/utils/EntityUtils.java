@@ -305,4 +305,8 @@ public class EntityUtils {
 		}
 		return sb.toString();
 	}
+	
+	public static String createDataSetIdentifierFromName(String username,String dataSetName) {
+    	return username+"_"+dataSetName.toLowerCase().replaceAll("\\W+", "_");
+	}
 }

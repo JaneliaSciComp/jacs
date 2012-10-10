@@ -1,5 +1,14 @@
 package org.janelia.it.jacs.compute.api;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
@@ -14,17 +23,9 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.annotation.DataDescriptor;
 import org.janelia.it.jacs.shared.annotation.DataFilter;
 import org.janelia.it.jacs.shared.annotation.FilterResult;
-import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
-
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @Stateless(name = "AnnotationEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
@@ -388,4 +389,43 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         return PatternSearchDAO.getFilteredResults(type, filterMap);
     }
 
+    public Entity createDataSet(String userLogin, String dataSetName) throws ComputeException {
+        try {
+            Entity dataSet = _annotationDAO.createDataSet(userLogin, dataSetName);
+        	_logger.info("Created data set "+dataSetName+" (id="+dataSet.getId()+") for user "+userLogin);
+        	return dataSet;
+        }
+        catch (Exception e) {
+            _logger.error("Error creating new data set ("+dataSetName+") for user "+userLogin,e);
+            throw new ComputeException("Error creating new data set ("+dataSetName+") for user "+userLogin,e);
+        }
+    }
+    
+    public Entity getUserDataSetByName(String userLogin, String dataSetName) throws ComputeException {
+        try {
+        	List<Entity> dataSets = _annotationDAO.getUserEntitiesByNameAndTypeName(userLogin, dataSetName, EntityConstants.TYPE_DATA_SET);
+        	if (dataSets.size()>1) {
+        		_logger.warn("Found more than one data set for name: "+dataSetName);
+        	}
+            return dataSets.isEmpty() ? null : dataSets.get(0);
+        }
+        catch (DaoException e) {
+            _logger.error("Error getting data set: "+dataSetName, e);
+            throw new ComputeException("Error getting data set: "+dataSetName+" for user "+userLogin,e);
+        }
+    }
+    
+    public Entity getUserDataSetByIdentifier(String dataSetIdentifier) throws ComputeException {
+        try {
+        	List<Entity> dataSets = _annotationDAO.getUserEntitiesWithAttributeValue(null, EntityConstants.TYPE_DATA_SET, EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier);
+        	if (dataSets.size()>1) {
+        		_logger.warn("Found more than one data set for identifier: "+dataSetIdentifier);
+        	}
+            return dataSets.isEmpty() ? null : dataSets.get(0);
+        }
+        catch (DaoException e) {
+        	_logger.error("Error getting data set: "+dataSetIdentifier, e);
+        	throw new ComputeException("Error getting data set: "+dataSetIdentifier,e);
+        }
+    }
 }

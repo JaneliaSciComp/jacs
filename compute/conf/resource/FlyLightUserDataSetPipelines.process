@@ -9,11 +9,11 @@
 	        <input name="TASK_PARAMETER_1" value="run mode"/>
             <input name="PROCESS_VARIABLE_1" value="RUN_MODE"/>
 	        <output name="RUN_MODE"/>
-	        <output name="USERNAME"/>
+	        <output name="TASK_OWNER"/>
 	    </operation>
 	    
 	    <!-- Discover samples in Sage and load them into the database as Entities -->
-		<operation name="Initial Image Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SageImageDiscoveryService">
+		<operation name="Initial Image Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SageDataSetDiscoveryService">
 	        <input name="DEFAULT_CHANNEL_SPECIFICATION" value="sssr"/>
 		</operation>
 		
@@ -28,23 +28,22 @@
 		</sequence>
 		
 	    <!-- Find all the Sample Entities in the database -->
-		<operation name="Sample Traversal" processor="org.janelia.it.jacs.compute.service.entity.SampleTraversalService">
+		<operation name="Sample Traversal" processor="org.janelia.it.jacs.compute.service.entity.sample.SampleTraversalService">
 			<input name="RUN_MODE"/>
 			<input name="OUTVAR_ENTITY_ID" value="SAMPLE_ENTITY_ID"/>
+			<output name="SAMPLE_ENTITY_ID"/>
 		</operation>
 		
 	    <!-- Process each Sample Entity -->
         <sequence forEach="SAMPLE_ENTITY_ID">
-            <sequence>
 				
-				<!-- Spawn a new task to process the Sample	-->
-		        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
-		            <input name="PROCESS_DEF_NAME" value="FlyLightSampleAllPipelines"/>
-		            <input name="PARAMETER_1_KEY" value="sample entity id"/>
-		            <input name="SAMPLE_ENTITY_ID"/>
-		        </operation>
-		        
-			</sequence>
+			<!-- Spawn a new task to process the Sample	-->
+	        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
+	            <input name="PROCESS_DEF_NAME" value="GSPS_CompleteSamplePipeline"/>
+	            <input name="PARAMETER_1_KEY" value="sample entity id"/>
+	            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
+	        </operation>
+	        
 	    </sequence>
 	    
     </sequence>

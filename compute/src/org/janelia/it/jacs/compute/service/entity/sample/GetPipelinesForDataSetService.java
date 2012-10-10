@@ -33,7 +33,7 @@ public class GetPipelinesForDataSetService extends AbstractEntityService {
     	}
     	
     	Entity dataSet = dataSets.get(0);
-    	String pipelineProcess = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);
+    	String pipelineProcess = "PipelineConfig_"+dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);
     	logger.info("Putting '"+pipelineProcess+"' in PIPELINE_PROCESS_NAME");
     	processData.putItem("PIPELINE_PROCESS_NAME", Task.listOfStringsFromCsvString(pipelineProcess));
     }

@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.service.entity;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
@@ -23,6 +24,7 @@ public abstract class AbstractEntityService implements IService {
     protected IProcessData processData;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
+    protected AnnotationBeanLocal annotationBean;
     protected User user;
 	protected EntityHelper entityHelper;
 	
@@ -33,6 +35,7 @@ public abstract class AbstractEntityService implements IService {
 	        this.processData = processData;
 	        this.entityBean = EJBFactory.getLocalEntityBean();
 	        this.computeBean = EJBFactory.getLocalComputeBean();
+	        this.annotationBean = EJBFactory.getLocalAnnotationBean();
 	        this.user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
 	        this.entityHelper = new EntityHelper(entityBean, computeBean, user);
 	        

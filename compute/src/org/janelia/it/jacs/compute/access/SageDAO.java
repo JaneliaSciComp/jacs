@@ -59,7 +59,7 @@ public class SageDAO {
 
     	try {
 	    	String sql = "select * from image_data_mv where family = '"+sageImageFamily+
-	    		"' and data_set_identifier is null order by slide_code,name ";
+	    		"' and alignment_algorithm is null order by slide_code,name ";
         	Connection conn = getJdbcConnection();
         	PreparedStatement stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 	        stmt.setFetchSize(Integer.MIN_VALUE);
@@ -81,7 +81,7 @@ public class SageDAO {
     public ResultSetIterator getImagesByDataSet(String dataSetName) throws DaoException {
 
     	try {
-	    	String sql = "select * from image_data_mv where data_set_identifier = '"+dataSetName+"' order by slide_code,name ";
+	    	String sql = "select * from image_data_mv where alignment_algorithm = '"+dataSetName+"' order by slide_code,name ";
         	Connection conn = getJdbcConnection();
         	PreparedStatement stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 	        stmt.setFetchSize(Integer.MIN_VALUE);

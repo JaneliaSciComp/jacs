@@ -4,21 +4,13 @@ import java.io.File;
 import java.sql.SQLException;
 import java.util.*;
 
-import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
-import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
-import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.api.EntityBeanLocal;
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.engine.service.IService;
-import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
@@ -27,67 +19,71 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SageImageDiscoveryService implements IService {
+public class SageDataSetDiscoveryService extends AbstractEntityService {
    
 	protected static final String PRIVATE_DATA_SET_FOLDER_NAME = "My Data Sets";
 	protected static final String PUBLIC_DATA_SET_FOLDER_NAME = "Public Data Sets";
 	
-    protected Logger logger;
-    protected EntityBeanLocal entityBean;
-    protected ComputeBeanLocal computeBean;
-    protected User user;
-    protected Date createDate;
-    protected IProcessData processData;
-    protected String defaultChannelSpec;
     protected Entity topLevelFolder;
     
+    protected int sageRowsProcessed = 0;
     protected int numSamplesCreated = 0;
+    protected int numSamplesUpdated = 0;
     protected int numSamplesAdded = 0;
     
-    public void execute(IProcessData processData) throws ServiceException {
-        try {
-        	this.processData=processData;
-            logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-            entityBean = EJBFactory.getLocalEntityBean();
-            computeBean = EJBFactory.getLocalComputeBean();
-            user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
-            createDate = new Date();
-            
-			defaultChannelSpec = (String) processData.getItem("DEFAULT_CHANNEL_SPECIFICATION");
-			if (defaultChannelSpec == null) {
-				throw new IllegalArgumentException("DEFAULT_CHANNEL_SPECIFICATION may not be null");
-			}
-            
-			if ("system".equals(user.getUserLogin())) {
-	        	topLevelFolder = createOrVerifyRootEntityButDontLoadTree(PUBLIC_DATA_SET_FOLDER_NAME);
-			}
-			else {
-	        	topLevelFolder = createOrVerifyRootEntityButDontLoadTree(PRIVATE_DATA_SET_FOLDER_NAME);
-			}
-            
-            logger.info("Will put discovered entities into top level entity "+topLevelFolder.getName()+", id="+topLevelFolder.getId());
-            
-        	for(Entity dataSet : entityBean.getUserEntitiesByTypeName(user.getUserLogin(), EntityConstants.TYPE_DATA_SET)) {
-        		logger.info("Processing data set: "+dataSet.getName());
-            	processSageDataSet(null, dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER));	
-        	}
+    public void execute() throws Exception {
         
-            fixOrderIndices();
-            
-            logger.info("Created "+numSamplesCreated+" samples, Added "+numSamplesAdded+" samples to their corresponding data set folders.");
-        } 
-        catch (Exception e) {
-            throw new ServiceException(e);
-        }
+		if ("system".equals(user.getUserLogin())) {
+        	topLevelFolder = createOrVerifyRootEntity(PUBLIC_DATA_SET_FOLDER_NAME, true, false);
+		}
+		else {
+        	topLevelFolder = createOrVerifyRootEntity(PRIVATE_DATA_SET_FOLDER_NAME, true, false);
+		}
+		
+		logger.info("Will put discovered entities into top level entity "+topLevelFolder.getName()+", id="+topLevelFolder.getId());
+		
+        List<Entity> dataSets = entityBean.getUserEntitiesByTypeName(user.getUserLogin(), EntityConstants.TYPE_DATA_SET);
+        if (dataSets.isEmpty()) {
+        	logger.info("No data sets found for user: "+user.getUserLogin());
+        	return;
+        }        
+        
+    	for(Entity dataSet : dataSets) {
+    		if (dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_SYNC)==null) {
+    			logger.info("Skipping non-SAGE data set: "+dataSet.getName());
+    		}
+    		else {
+        		logger.info("Processing data set: "+dataSet.getName());
+            	processSageDataSet(null, dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER));
+    		}	
+    	}
+    
+        fixOrderIndices();
+        
+        logger.info("Processed "+sageRowsProcessed+" rows, created "+numSamplesCreated+
+        		" samples, updated "+numSamplesUpdated+" samples, added "+numSamplesAdded+
+        		" samples to their corresponding data set folders.");
     }
     
+    /**
+     * Provide either imageFamily or dataSetIdentifier. 
+     */
     protected void processSageDataSet(String imageFamily, String dataSetIdentifier) throws Exception {
     	
+    	SageDAO sageDAO = new SageDAO(logger);
     	ResultSetIterator iterator = null;
     	try {
     		List<SlideImage> slideGroup = null;
     		String currSlideCode = null;
-			iterator = getImageIterator(dataSetIdentifier==null?imageFamily:dataSetIdentifier);	
+    		
+    		if (dataSetIdentifier==null) {
+    			logger.info("Querying SAGE for image family: "+imageFamily);
+    			iterator = sageDAO.getImagesByFamily(imageFamily);
+    		}
+    		else {
+    			logger.info("Querying SAGE for data set: "+dataSetIdentifier);
+    			iterator = sageDAO.getImagesByDataSet(dataSetIdentifier);
+    		}
     		
         	while (iterator.hasNext()) {
         		Map<String,Object> row = iterator.next();
@@ -104,13 +100,13 @@ public class SageImageDiscoveryService implements IService {
 				}
 				
 				slideGroup.add(slideImage);
+				sageRowsProcessed++;
 			}
 
 			// Process the last group
 			if (slideGroup != null) {
                 processSlideGroup(dataSetIdentifier, currSlideCode, slideGroup);
 			}
-            
     	}
     	catch (RuntimeException e) {
     		if (e.getCause() instanceof SQLException) {
@@ -122,12 +118,7 @@ public class SageImageDiscoveryService implements IService {
         	if (iterator!=null) iterator.close();
         }
     }
-    
-    protected ResultSetIterator getImageIterator(String criteria) throws Exception {
-    	SageDAO sageDAO = new SageDAO(logger);
-    	return sageDAO.getImagesByDataSet(criteria);
-    }
-    
+
     protected SlideImage getSlideImage(Map<String,Object> row) {
         SlideImage slideImage = new SlideImage();
 		slideImage.slideCode = (String)row.get("slide_code");
@@ -141,6 +132,18 @@ public class SageImageDiscoveryService implements IService {
 		String voxelSizeZ = (String)row.get("voxel_size_z");
 		slideImage.opticalRes = voxelSizeX+"x"+voxelSizeY+"x"+voxelSizeZ;
 		slideImage.file = slideImage.imagePath!=null?new File(slideImage.imagePath):null;
+		
+		// Infer the channel spec from the number of channels, by assuming that the reference channel comes last
+		if (slideImage.channelSpec==null) {
+			if (slideImage.channels!=null) {
+				Integer numChannels = new Integer(slideImage.channels);
+				slideImage.channelSpec = getChanSpec(numChannels-1);
+			}
+			else {
+				logger.warn("Both channel_spec and channels is null for "+slideImage.imagePath);
+			}
+		}
+		
 		return slideImage;
     }
     
@@ -148,18 +151,17 @@ public class SageImageDiscoveryService implements IService {
     	
         HashMap<String, ImageTileGroup> tileGroups = new HashMap<String, ImageTileGroup>();
         String sampleIdentifier = null;
-        String sampleChannelSpec = null;
-
+        
         logger.info("Processing "+slideCode+", "+slideGroup.size()+" tiles");
         
-        int i = 0;
+        int tileNum = 0;
         for(SlideImage slideImage : slideGroup) {
         	ImageTileGroup tileGroup = tileGroups.get(slideImage.tileType);
             if (tileGroup==null) {
             	
             	String tag = slideImage.tileType;
             	if (tag==null) {
-            		tag = "Tile "+(i+1);
+            		tag = "Tile "+(tileNum+1);
             	}
             	
             	tileGroup = new ImageTileGroup(tag);
@@ -175,20 +177,42 @@ public class SageImageDiscoveryService implements IService {
             if (sampleIdentifier==null) {
                 sampleIdentifier = slideImage.line + "-" + slideCode;
             }
-            if (sampleChannelSpec==null) {
+        	
+            tileNum++;
+        }
+
+        // Figure out the number of channels that should be in the final merged/stitched sample
+        int sampleNumSignals = -1;
+        for(ImageTileGroup tileGroup : tileGroups.values()) {
+
+        	int tileNumSignals = 0;
+        	for(SlideImage slideImage : tileGroup.getImages()) {
             	if (slideImage.channelSpec!=null) {
-            		sampleChannelSpec = slideImage.channelSpec;
+            		for(int j=0; j<slideImage.channelSpec.length(); j++) {
+            			if (slideImage.channelSpec.charAt(j)=='s') {
+            				tileNumSignals++;
+            			}
+            		}
             	}
-            }
-            else if (slideImage.channelSpec!=null && !sampleChannelSpec.equals(slideImage.channelSpec)) {
-            	logger.warn("Inconsistent channel specification for "+sampleIdentifier+" ("+sampleChannelSpec+" vs "+slideImage.channelSpec+")");
-            }
+        	}
             
-            i++;
+        	if (sampleNumSignals<0) {
+        		sampleNumSignals = tileNumSignals;
+        	}
+        	else if (sampleNumSignals != tileNumSignals) {
+        		logger.warn("No consensus for number of signal channels per tile ("+sampleNumSignals+" != "+tileNumSignals+")");
+        	}
         }
         
-        if (sampleChannelSpec==null) {
-        	sampleChannelSpec = defaultChannelSpec;
+        // The sample channel spec is either the same as the single image that's part of this slide group, 
+        // or its the result of a LSM Merge operation, which we assume will add the signal channels and 
+        // add a single reference channel at the end. 
+        String sampleChannelSpec = null;
+        if (slideGroup.size()==1) {
+        	sampleChannelSpec = slideGroup.get(0).channelSpec;
+        }
+        else if (sampleNumSignals>=0) {
+    		sampleChannelSpec = getChanSpec(sampleNumSignals);
         }
         
     	List<ImageTileGroup> tileGroupList = new ArrayList<ImageTileGroup>(tileGroups.values());
@@ -201,58 +225,60 @@ public class SageImageDiscoveryService implements IService {
 			}
 		});
         
-        List<String> tags = new ArrayList<String>();
-        for(ImageTileGroup filePair : tileGroupList) {
-        	tags.add(filePair.getTag());
-        }
-        
-        TilingPattern tiling = TilingPattern.getTilingPattern(tags);
-        logger.info("Sample "+sampleIdentifier+" has tiling pattern: "+tiling.getName());
-     
-        if (dataSetIdentifier==null) {
-        	dataSetIdentifier = getDataSetIdentifier(tiling);
-        }
-        
-        createOrUpdateSample(sampleIdentifier, dataSetIdentifier, tiling, sampleChannelSpec, tileGroupList);
-    }
-
-    protected String getDataSetIdentifier(TilingPattern tiling) {
-    	return null;
+        createOrUpdateSamples(sampleIdentifier, dataSetIdentifier, sampleChannelSpec, tileGroupList);
     }
     
-    protected void createOrUpdateSample(String sampleIdentifier, String dataSetIdentifier, TilingPattern tiling, 
+    protected void createOrUpdateSamples(String sampleIdentifier, String dataSetIdentifier, 
+    		String sampleChannelSpec, List<ImageTileGroup> tileGroupList) throws Exception {
+    	createOrUpdateSample(sampleIdentifier, dataSetIdentifier, sampleChannelSpec, tileGroupList);
+    }
+    
+    protected Entity createOrUpdateSample(String sampleIdentifier, String dataSetIdentifier, 
     		String sampleChannelSpec, List<ImageTileGroup> tileGroupList) throws Exception {
 
-        Entity dataSetFolder = verifyOrCreateChildFolder(topLevelFolder, dataSetIdentifier);
+    	if (dataSetIdentifier==null) {
+    		throw new IllegalStateException("Cannot create or update sample without a data set identifier");
+    	}
+    	
         Entity sample = findExistingSample(sampleIdentifier);
+        
         if (sample == null) {
-	        sample = createSample(sampleIdentifier, tiling, sampleChannelSpec, dataSetIdentifier);
+        	logger.info("Did not find sample "+sampleIdentifier);
+	        sample = createSample(sampleIdentifier, sampleChannelSpec, dataSetIdentifier);
 	        numSamplesCreated++;
         }
         else {
-        	populateSampleAttributes(sample, tiling, sampleChannelSpec, dataSetIdentifier);
-        	
-        	if (!EntityUtils.areLoaded(sample.getEntityData())) {
-        		entityBean.loadLazyEntity(sample, false);
-        	}
+        	logger.info("Found existing sample "+sampleIdentifier);
+        	populateSampleAttributes(sample, sampleChannelSpec, dataSetIdentifier);
+        	populateChildren(sample);
         }
-        
-        boolean found = false;
-        for(Entity entity : dataSetFolder.getChildren()) {
-        	if (entity.getId().equals(sample.getId())) {
-        		found = true;
-        	}
-        }
-        
-        if (!found) {
-	        addToParent(dataSetFolder, sample, dataSetFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
-	        numSamplesAdded++;
-        }
-        
+
     	// Add the tile groups to the Sample's Supporting Files folder
         for (ImageTileGroup tileGroup : tileGroupList) {
         	addTileToSample(sample, tileGroup);
         }
+        
+    	Entity dataSet = annotationBean.getUserDataSetByIdentifier(dataSetIdentifier);
+    	if (dataSet!=null) {
+    		Entity dataSetFolder = verifyOrCreateChildFolder(topLevelFolder, dataSet.getName());
+            
+            boolean found = false;
+            for(Entity entity : dataSetFolder.getChildren()) {
+            	if (entity.getId().equals(sample.getId())) {
+            		found = true;
+            	}
+            }
+            
+            if (!found) {
+    	        addToParent(dataSetFolder, sample, dataSetFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+    	        numSamplesAdded++;
+            }	
+    	}
+    	else {
+    		logger.warn("Data set for sample (id="+sample.getId()+") does not exist: "+dataSetIdentifier);
+    	}
+    	
+    	return sample;
     }
     
     protected void addTileToSample(Entity sample, ImageTileGroup tileGroup) throws Exception {
@@ -276,12 +302,12 @@ public class SageImageDiscoveryService implements IService {
 		if (imageTileEd != null) {
 			imageTile = imageTileEd.getChildEntity();
 			if (!existingTileMatches(imageTile, tileGroup)) {
-				logger.warn("Tile '"+imageTile.getName()+"' has changed, will delete and recreate it.");
-				entityBean.deleteEntityById(imageTile.getId());
+				logger.warn("  Tile '"+imageTile.getName()+"' has changed, will delete and recreate it.");
+				entityBean.deleteSmallEntityTree(imageTile.getUser().getUserLogin(), imageTile.getId());
 				imageTile = null;
 			}
 			else {
-				logger.warn("Tile '"+imageTile.getName()+"' exists, updating...");
+				logger.warn("  Tile '"+imageTile.getName()+"' exists");
 				for(Entity lsmStack : imageTile.getChildrenOfType(EntityConstants.TYPE_LSM_STACK)) {
 					for(SlideImage image : tileGroup.images) {
 						if (image.file.getName().equals(lsmStack.getName())) {
@@ -293,6 +319,7 @@ public class SageImageDiscoveryService implements IService {
 		}
 		
 		if (imageTile == null) {
+			Date createDate = new Date();
 			imageTile = new Entity();
             imageTile.setUser(user);
             imageTile.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_TILE));
@@ -314,7 +341,7 @@ public class SageImageDiscoveryService implements IService {
     protected boolean existingTileMatches(Entity imageTile, ImageTileGroup tileGroup) {
 
 		List<SlideImage> images = tileGroup.getImages();
-		List<Entity> currTiles = imageTile.getChildrenOfType(EntityConstants.TYPE_IMAGE_TILE);
+		List<Entity> currTiles = imageTile.getChildrenOfType(EntityConstants.TYPE_LSM_STACK);
 		
 		Set<String> newFilenames = new HashSet<String>();
 		for(SlideImage image : images) {
@@ -362,14 +389,14 @@ public class SageImageDiscoveryService implements IService {
     	return matchingSamples.get(0);
     }
 
-    protected Entity createSample(String name, TilingPattern tiling, String channelSpec, String dataSetIdentifier) throws Exception {
+    protected Entity createSample(String name, String channelSpec, String dataSetIdentifier) throws Exception {
+    	Date createDate = new Date();
         Entity sample = new Entity();
         sample.setUser(user);
         sample.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SAMPLE));
         sample.setCreationDate(createDate);
         sample.setUpdatedDate(createDate);
         sample.setName(name);
-        sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN, tiling.toString());
         sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier);
         sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec);
         sample = entityBean.saveOrUpdateEntity(sample);
@@ -377,33 +404,22 @@ public class SageImageDiscoveryService implements IService {
         return sample;
     }
 
-    protected Entity populateSampleAttributes(Entity sample, TilingPattern tiling, String channelSpec, String dataSetIdentifier) throws Exception {
+    protected Entity populateSampleAttributes(Entity sample, String channelSpec, String dataSetIdentifier) throws Exception {
 
-    	boolean save = false;
-    	if (sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN)==null) {
-    		logger.info("Setting '"+EntityConstants.ATTRIBUTE_TILING_PATTERN+"'="+tiling+" for id="+sample.getId());
-    		sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN, tiling.toString());	
-    		save = true;
-    	}
-    	if (sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER)==null) {
-    		logger.info("Setting '"+EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER+"'="+dataSetIdentifier+" for id="+sample.getId());
-    		sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier);	
-    		save = true;
-    	}
-    	if (sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION)==null) {
-    		logger.info("Setting '"+EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION+"'="+channelSpec+" for id="+sample.getId());
-    		sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec);	
-    		save = true;
-    	}
-        
-    	if (save) {
-    		sample = entityBean.saveOrUpdateEntity(sample);
-        	logger.info("Updated sample attributes for "+sample.getId());
-    	}
+		logger.info("  Setting '"+EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER+"'="+dataSetIdentifier+" for id="+sample.getId());
+		sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier);	
+	
+		logger.info("  Setting '"+EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION+"'="+channelSpec+" for id="+sample.getId());
+		sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec);	
+
+		numSamplesUpdated++;
+		sample = entityBean.saveOrUpdateEntity(sample);
+	
         return sample;
     }
     
     protected Entity createSupportingFilesFolder() throws Exception {
+    	Date createDate = new Date();
         Entity filesFolder = new Entity();
         filesFolder.setUser(user);
         filesFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
@@ -416,6 +432,7 @@ public class SageImageDiscoveryService implements IService {
     }
 
     protected Entity createLsmStackFromFile(SlideImage image) throws Exception {
+    	Date createDate = new Date();
         Entity lsmStack = new Entity();
         lsmStack.setUser(user);
         lsmStack.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK));
@@ -425,6 +442,7 @@ public class SageImageDiscoveryService implements IService {
         lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, image.imagePath);
         lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS, image.channels);
         lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, image.opticalRes);
+        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, image.channelSpec);
         lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
         logger.info("Saved LSM stack as "+lsmStack.getId());
         return lsmStack;
@@ -432,36 +450,31 @@ public class SageImageDiscoveryService implements IService {
     
     protected Entity populateLsmStackAttributes(Entity lsmStack, SlideImage image) throws Exception {
 
-    	boolean save = false;
-    	if (lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)==null) {
-    		logger.info("Setting '"+EntityConstants.ATTRIBUTE_FILE_PATH+"'="+image.imagePath+" for id="+lsmStack.getId());
-    		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, image.imagePath);	
-    		save = true;
-    	}
-    	if (lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS)==null) {
-    		logger.info("Setting '"+EntityConstants.ATTRIBUTE_NUM_CHANNELS+"'="+image.channels+" for id="+lsmStack.getId());
-    		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS, image.channels);	
-    		save = true;
-    	}
-    	if (lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)==null) {
-    		logger.info("Setting '"+EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION+"'="+image.opticalRes+" for id="+lsmStack.getId());
-    		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, image.opticalRes);	
-    		save = true;
-    	}
-        
-    	if (save) {
-    		lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
-        	logger.info("Updated LSM attributes for "+lsmStack.getId());
-    	}
+		logger.info("  Setting '"+EntityConstants.ATTRIBUTE_FILE_PATH+"'="+image.imagePath+" for id="+lsmStack.getId());
+		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, image.imagePath);	
+
+		logger.info("  Setting '"+EntityConstants.ATTRIBUTE_NUM_CHANNELS+"'="+image.channels+" for id="+lsmStack.getId());
+		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS, image.channels);	
+
+		logger.info("  Setting '"+EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION+"'="+image.opticalRes+" for id="+lsmStack.getId());
+		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, image.opticalRes);	
+		
+		logger.info("  Setting '"+EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION+"'="+image.channelSpec+" for id="+lsmStack.getId());
+		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, image.channelSpec);	
+		
+		lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
+	
         return lsmStack;
     }
     
     protected void fixOrderIndices() throws Exception {
-		logger.info("Fixing sample order indicies");
+		logger.info("Fixing order indicies in children of "+topLevelFolder.getName());
+		populateChildren(topLevelFolder);
 		
     	for(Entity childFolder : topLevelFolder.getChildrenOfType(EntityConstants.TYPE_FOLDER)) {
-    			
-			logger.info("Fixing order indicies in "+childFolder.getName());
+    		populateChildren(childFolder);
+    		
+			logger.info("Fixing sample order indicies in "+childFolder.getName()+" (id="+childFolder.getId()+")");
 
 	    	List<EntityData> orderedData = new ArrayList<EntityData>();
 			for(EntityData ed : childFolder.getEntityData()) {
@@ -492,15 +505,7 @@ public class SageImageDiscoveryService implements IService {
 		}
     }
     
-    protected Entity createOrVerifyRootEntityButDontLoadTree(String topLevelFolderName) throws Exception {
-        return createOrVerifyRootEntity(topLevelFolderName, user, createDate, logger, true /* create if necessary */, false /* load tree */);
-    }
-
-    protected Entity createOrVerifyRootEntity(String topLevelFolderName) throws Exception {
-        return createOrVerifyRootEntity(topLevelFolderName, user, createDate, logger, true /* create if necessary */, true);
-    }
-
-    protected Entity createOrVerifyRootEntity(String topLevelFolderName, User user, Date createDate, org.apache.log4j.Logger logger, boolean createIfNecessary, boolean loadTree) throws Exception {
+    protected Entity createOrVerifyRootEntity(String topLevelFolderName, boolean createIfNecessary, boolean loadTree) throws Exception {
         Set<Entity> topLevelFolders = entityBean.getEntitiesByName(topLevelFolderName);
         Entity topLevelFolder = null;
         if (topLevelFolders != null) {
@@ -524,6 +529,7 @@ public class SageImageDiscoveryService implements IService {
         if (topLevelFolder == null) {
             if (createIfNecessary) {
                 logger.info("Creating new topLevelFolder with name=" + topLevelFolderName);
+                Date createDate = new Date();
                 topLevelFolder = new Entity();
                 topLevelFolder.setCreationDate(createDate);
                 topLevelFolder.setUpdatedDate(createDate);
@@ -544,25 +550,23 @@ public class SageImageDiscoveryService implements IService {
 
     protected Entity verifyOrCreateChildFolder(Entity parentFolder, String childName) throws Exception {
 
+    	populateChildren(parentFolder);
+    	
         Entity folder = null;
-        
-        for (EntityData ed : parentFolder.getEntityData()) {
-            Entity child = ed.getChildEntity();
-            
-            if (child != null && child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
-                if (child.getName().equals(childName)) {
-                    if (folder != null) {
-                    	logger.warn("Unexpectedly found multiple child folders with name=" + childName+" for parent folder id="+parentFolder.getId());
-                    }
-                    else {
-                    	folder = ed.getChildEntity();	
-                    }
+        for (Entity child : parentFolder.getChildrenOfType(EntityConstants.TYPE_FOLDER)) {
+            if (child.getName().equals(childName)) {
+                if (folder != null) {
+                	logger.warn("Unexpectedly found multiple child folders with name=" + childName+" for parent folder id="+parentFolder.getId());
+                }
+                else {
+                	folder = child;
                 }
             }
         }
         
         if (folder == null) {
             // We need to create a new folder
+        	Date createDate = new Date();
             folder = new Entity();
             folder.setCreationDate(createDate);
             folder.setUpdatedDate(createDate);
@@ -575,7 +579,16 @@ public class SageImageDiscoveryService implements IService {
         
         return folder;
     }
-    
+
+	protected String getChanSpec(int numSignals) {
+		StringBuffer buf = new StringBuffer();
+		for(int j=0; j<numSignals; j++) {
+			buf.append("s");
+		}
+		buf.append("r");
+		return buf.toString();
+	}
+	
     protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
         EntityData ed = parent.addChildEntity(entity, attrName);
         ed.setOrderIndex(index);
@@ -583,7 +596,7 @@ public class SageImageDiscoveryService implements IService {
         logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
         		" as child of "+parent.getEntityType().getName()+"#"+parent.getId());
     }
-
+    
     protected class SlideImage {
     	String slideCode;
     	String imagePath;
@@ -597,7 +610,7 @@ public class SageImageDiscoveryService implements IService {
     
     protected class ImageTileGroup {
         private String tag;
-        private List<SlideImage> images;
+        private List<SlideImage> images = new ArrayList<SlideImage>();
 
         public ImageTileGroup(String tag) {
             this.tag = tag;

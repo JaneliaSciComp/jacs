@@ -21,13 +21,18 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  */
 public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
 
-    protected String defaultChannelSpec;
-
+    protected String channelSpec;
+    protected String dataSetIdentifier;
+    
     public void execute(IProcessData processData) throws ServiceException {
         try {
-			defaultChannelSpec = (String) processData.getItem("DEFAULT CHANNEL SPECIFICATION");
-			if (defaultChannelSpec == null) {
-				throw new IllegalArgumentException("DEFAULT CHANNEL SPECIFICATION may not be null");
+			channelSpec = (String) processData.getItem("CHANNEL_SPECIFICATION");
+			if (channelSpec == null) {
+				throw new IllegalArgumentException("CHANNEL_SPECIFICATION may not be null");
+			}
+			dataSetIdentifier = (String) processData.getItem("DATA_SET_IDENTIFIER");
+			if (dataSetIdentifier == null) {
+				throw new IllegalArgumentException("DATA_SET_IDENTIFIER may not be null");
 			}
         } 
         catch (Exception e) {
@@ -245,7 +250,8 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
         sample.setCreationDate(createDate);
         sample.setUpdatedDate(createDate);
         sample.setName(lsmPair.name);
-        sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, defaultChannelSpec);
+        sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier);
+        sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec);
         sample = entityBean.saveOrUpdateEntity(sample);
         logger.info("Saved sample as "+sample.getId());
 
@@ -255,17 +261,17 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
     		helper.addToParent(sample, supportingFiles, 0, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
     	}
     	
-    	Entity lsmStackPair = new Entity();
-        lsmStackPair.setUser(user);
-        lsmStackPair.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_TILE));
-        lsmStackPair.setCreationDate(createDate);
-        lsmStackPair.setUpdatedDate(createDate);
-        lsmStackPair.setName("Scans");
-        lsmStackPair = entityBean.saveOrUpdateEntity(lsmStackPair);
-        logger.info("Saved LSM stack pair as "+lsmStackPair.getId());
-        helper.addToParent(supportingFiles, lsmStackPair, 0, EntityConstants.ATTRIBUTE_ENTITY);
-        helper.addToParent(lsmStackPair, lsmPair.lsmEntity1, 0, EntityConstants.ATTRIBUTE_ENTITY);
-        helper.addToParent(lsmStackPair, lsmPair.lsmEntity2, 1, EntityConstants.ATTRIBUTE_ENTITY);
+    	Entity imageTile = new Entity();
+        imageTile.setUser(user);
+        imageTile.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_TILE));
+        imageTile.setCreationDate(createDate);
+        imageTile.setUpdatedDate(createDate);
+        imageTile.setName("Tile 1");
+        imageTile = entityBean.saveOrUpdateEntity(imageTile);
+        logger.info("Saved LSM stack pair as "+imageTile.getId());
+        helper.addToParent(supportingFiles, imageTile, 0, EntityConstants.ATTRIBUTE_ENTITY);
+        helper.addToParent(imageTile, lsmPair.lsmEntity1, 0, EntityConstants.ATTRIBUTE_ENTITY);
+        helper.addToParent(imageTile, lsmPair.lsmEntity2, 1, EntityConstants.ATTRIBUTE_ENTITY);
         
         return sample;
     }
@@ -290,6 +296,10 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
         lsmStack.setUpdatedDate(createDate);
         lsmStack.setName(file.getName());
         lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
+        if (channelSpec!=null) {
+	        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS, ""+channelSpec.length());
+	        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec);
+        }
         lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
         logger.info("Saved LSM stack as "+lsmStack.getId());
         return lsmStack;

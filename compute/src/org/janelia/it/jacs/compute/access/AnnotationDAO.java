@@ -32,6 +32,7 @@ import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
 import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
 import org.janelia.it.jacs.shared.annotation.RelativePatternAnnotationDataManager;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 public class AnnotationDAO extends ComputeBaseDAO {
@@ -1559,6 +1560,26 @@ public class AnnotationDAO extends ComputeBaseDAO {
         saveOrUpdate(ed);
         return ed;
     }
+
+    public Entity createDataSet(String userLogin, String dataSetName) throws ComputeException {
+
+        String dataSetIdentifier = EntityUtils.createDataSetIdentifierFromName(userLogin, dataSetName);
+        
+        if (!getUserEntitiesWithAttributeValue(null, EntityConstants.TYPE_DATA_SET, EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier).isEmpty()) {
+        	throw new ComputeException("Data Set with identifier '"+dataSetIdentifier+"' already exists.");
+        }
+        
+        User tmpUser = getUserByName(userLogin);
+        Entity newDataSet = newEntity(EntityConstants.TYPE_DATA_SET, dataSetName, tmpUser);
+        saveOrUpdate(newDataSet);
+
+        EntityData dataSetIdEd = newData(newDataSet, EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, tmpUser);
+        newDataSet.getEntityData().add(dataSetIdEd);
+        dataSetIdEd.setValue(dataSetIdentifier);
+        saveOrUpdate(dataSetIdEd);
+
+        return newDataSet;
+    }
     
     public Entity createOntologyRoot(String userLogin, String rootName) throws ComputeException {
         
@@ -2253,27 +2274,37 @@ public class AnnotationDAO extends ComputeBaseDAO {
         
     	return sampleIds;
     }
-    
-    public List<Entity> getUserEntitiesWithAttributeValue(String userLogin, String attrName, String attrValue) throws DaoException {
+
+    public List<Entity> getUserEntitiesWithAttributeValue(String userLogin, String typeName, String attrName, String attrValue) throws DaoException {
         try {
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
             hql.append("join fetch ed.parentEntity.user ");
             hql.append("join fetch ed.parentEntity.entityType ");
-            hql.append("where ed.entityAttribute.name=? and ed.value like ? ");
+            hql.append("where ed.entityAttribute.name=:attrName and ed.value like :value ");
+            if (typeName != null) {
+            	hql.append("and ed.parentEntity.entityType.name=:typeName ");
+            }
             if (null != userLogin) {
-                hql.append("and ed.parentEntity.user.userLogin=? ");
+                hql.append("and ed.parentEntity.user.userLogin=:userLogin ");
             }
             Query query = session.createQuery(hql.toString());
-            query.setString(0, attrName);
-            query.setString(1, attrValue);
+            query.setString("attrName", attrName);
+            query.setString("value", attrValue);
+            if (typeName != null) {
+                query.setString("typeName", typeName);
+            }
             if (null != userLogin) {
-                query.setString(2, userLogin);
+                query.setString("userLogin", userLogin);
             }
             return query.list();
         } catch (Exception e) {
             throw new DaoException(e);
         }
+    }
+    
+    public List<Entity> getUserEntitiesWithAttributeValue(String userLogin, String attrName, String attrValue) throws DaoException {
+        return getUserEntitiesWithAttributeValue(userLogin, null, attrName, attrValue);
     }
     
     public EntityType getEntityTypeByName(String entityTypeName) {
