@@ -26,13 +26,18 @@ EXE_DIR="$JACSDATA_DIR/servers/$SERVER/executables"
 SCRIPT_DIR="$JACSDATA_DIR/servers/$SERVER/scripts"
 
 COMPILE_DIR="$EXE_DIR/compile"
-VAA3D_COMPILE_MAC_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-mac"
-JACS_COMPILE_DIR="$COMPILE_DIR/jacs_FlySuite_${FWVER}"
+#VAA3D_COMPILE_MAC_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-mac"
+#JACS_COMPILE_DIR="$COMPILE_DIR/jacs_FlySuite_${FWVER}"
+
+VAA3D_COMPILE_MAC_DIR="$COMPILE_DIR/vaa3d_FlySuite_Staging-mac"
+JACS_COMPILE_DIR="$COMPILE_DIR/jacs_FlySuite_Staging"
 
 STAGING_DIR="$EXE_DIR/FlySuiteStaging"
-PACKAGE_MAC_DIR="$STAGING_DIR/FlySuite_${FWVER}"
+#PACKAGE_MAC_DIR="$STAGING_DIR/FlySuite_${FWVER}"
+PACKAGE_MAC_DIR="$STAGING_DIR/FlySuite_Staging"
 
-echo "Building FlySuite version $FWVER (Part 2)"
+#echo "Building FlySuite version $FWVER (Part 2)"
+echo "Building FlySuite version Staging (Part 2)"
 
 ################################################################
 # Build Vaa3d for the Mac client
@@ -48,7 +53,8 @@ if [ $BUILD_VAA3D == 1 ]; then
     #svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/tags/FlySuite_${FWVER} $VAA3D_COMPILE_MAC_DIR
     svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/trunk $VAA3D_COMPILE_MAC_DIR
     if [ ! -e $VAA3D_COMPILE_MAC_DIR ]; then
-        echo "SVN tag not found for Vaa3d: FlySuite_${FWVER}"
+        #echo "SVN tag not found for Vaa3d: FlySuite_${FWVER}"
+        echo "SVN tag not found for Vaa3d: FlySuite_Staging"
         exit 1
     fi
     cd $VAA3D_COMPILE_MAC_DIR

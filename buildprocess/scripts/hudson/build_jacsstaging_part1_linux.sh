@@ -52,18 +52,27 @@ MAC_EXECUTOR_HOST="saffordt-wm1"
 SSH_OPTIONS=""
 
 COMPILE_DIR="$EXE_DIR/compile"
-VAA3D_COMPILE_REDHAT_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-redhat"
-VAA3D_COMPILE_FEDORA_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-fedora"
-NEUSEP_COMPILE_REDHAT_DIR="$COMPILE_DIR/neusep_FlySuite_${FWVER}-redhat"
-JACS_COMPILE_DIR="$COMPILE_DIR/jacs_FlySuite_${FWVER}"
+#VAA3D_COMPILE_REDHAT_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-redhat"
+#VAA3D_COMPILE_FEDORA_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-fedora"
+#NEUSEP_COMPILE_REDHAT_DIR="$COMPILE_DIR/neusep_FlySuite_${FWVER}-redhat"
+#JACS_COMPILE_DIR="$COMPILE_DIR/jacs_FlySuite_${FWVER}"
+
+
+VAA3D_COMPILE_REDHAT_DIR="$COMPILE_DIR/vaa3d_FlySuite_Staging-redhat"
+VAA3D_COMPILE_FEDORA_DIR="$COMPILE_DIR/vaa3d_FlySuite_Staging-fedora"
+NEUSEP_COMPILE_REDHAT_DIR="$COMPILE_DIR/neusep_FlySuite_Staging-redhat"
+JACS_COMPILE_DIR="$COMPILE_DIR/jacs_FlySuite_Staging"
+
 
 STAGING_DIR="$EXE_DIR/FlySuiteStaging"
 #TEMPLATE_DIR="$EXE_DIR/templates"
 
-PACKAGE_MAC_DIR="$STAGING_DIR/FlySuite_${FWVER}"
-PACKAGE_LINUX_DIR="$STAGING_DIR/FlySuite_linux_${FWVER}"
+#PACKAGE_MAC_DIR="$STAGING_DIR/FlySuite_${FWVER}"
+#PACKAGE_LINUX_DIR="$STAGING_DIR/FlySuite_linux_${FWVER}"
 
-echo "Building FlySuite version $FWVER (Part 1)"
+PACKAGE_MAC_DIR="$STAGING_DIR/FlySuite_Staging"
+PACKAGE_LINUX_DIR="$STAGING_DIR/FlySuite_linux_Staging"
+echo "Building FlySuite version Staging (Part 1)"
 
 ################################################################
 # Make sure the latest scripts are in an accessible place.
@@ -100,7 +109,8 @@ if [ $BUILD_VAA3D == 1 ]; then
     #svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/tags/FlySuite_${FWVER} $VAA3D_COMPILE_REDHAT_DIR
     svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/trunk $VAA3D_COMPILE_REDHAT_DIR
     if [ ! -e $VAA3D_COMPILE_REDHAT_DIR ]; then
-        echo "SVN tag not found for Vaa3d: FlySuite_${FWVER}"
+        #echo "SVN tag not found for Vaa3d: FlySuite_${FWVER}"
+        echo "SVN tag not found for Vaa3d: FlySuite_Staging"
         exit 1
     fi
     svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/BrainAligner/trunk/jba $VAA3D_COMPILE_REDHAT_DIR/jba
@@ -112,7 +122,8 @@ if [ $BUILD_VAA3D == 1 ]; then
     cp -R $VAA3D_COMPILE_REDHAT_DIR $VAA3D_COMPILE_FEDORA_DIR
 
     echo "  Building Vaa3D for the grid (in the background)"
-    echo "sh \"$VAA3D_COMPILE_REDHAT_DIR/qsub_vaa3d_build.sh\" $FWVER $SERVER" > "$VAA3D_COMPILE_REDHAT_DIR/build.sh"
+    #echo "sh \"$VAA3D_COMPILE_REDHAT_DIR/qsub_vaa3d_build.sh\" $FWVER $SERVER" > "$VAA3D_COMPILE_REDHAT_DIR/build.sh"
+    echo "sh \"$VAA3D_COMPILE_REDHAT_DIR/qsub_vaa3d_build.sh\" $Staging $SERVER" > "$VAA3D_COMPILE_REDHAT_DIR/build.sh"
     qsub -l short=true -sync y "$VAA3D_COMPILE_REDHAT_DIR/build.sh" &
     VAA3D_QSUB_PID=$!
 
@@ -135,7 +146,8 @@ if [ $BUILD_NEUSEP == 1 ]; then
     #svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/tags/FlySuite_${FWVER} $NEUSEP_COMPILE_REDHAT_DIR
     svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/trunk $NEUSEP_COMPILE_REDHAT_DIR
     if [ ! -e $NEUSEP_COMPILE_REDHAT_DIR ]; then
-        echo "SVN tag not found for NeuronSeparator: FlySuite_${FWVER}"
+        #echo "SVN tag not found for NeuronSeparator: FlySuite_${FWVER}"
+        echo "SVN tag not found for NeuronSeparator: FlySuite_Staging"
         exit 1
     fi
     #cp "$SCRIPT_DIR/qsub_neusep_build.sh" $NEUSEP_COMPILE_REDHAT_DIR
@@ -159,7 +171,8 @@ if [ $BUILD_JACS == 1 ]; then
     #svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tags/FlySuite_${FWVER} $JACS_COMPILE_DIR
     svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk $JACS_COMPILE_DIR
     if [ ! -e $JACS_COMPILE_DIR ]; then
-        echo "SVN tag not found for jacs: FlySuite_${FWVER}"
+        #echo "SVN tag not found for jacs: FlySuite_${FWVER}"
+        echo "SVN tag not found for jacs: FlySuite_Staging"
         exit 1
     fi
 

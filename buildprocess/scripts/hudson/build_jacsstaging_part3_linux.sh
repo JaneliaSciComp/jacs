@@ -25,24 +25,38 @@ JACSDATA_DIR="/groups/scicomp/jacsData"
 EXE_DIR="$JACSDATA_DIR/servers/$SERVER/executables"
 
 COMPILE_DIR="$EXE_DIR/compile"
-VAA3D_COMPILE_REDHAT_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-redhat"
-VAA3D_COMPILE_FEDORA_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-fedora"
-NEUSEP_COMPILE_REDHAT_DIR="$COMPILE_DIR/neusep_FlySuite_${FWVER}-redhat"
-JACS_COMPILE_DIR="$COMPILE_DIR/jacs_FlySuite_${FWVER}"
+#VAA3D_COMPILE_REDHAT_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-redhat"
+#VAA3D_COMPILE_FEDORA_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-fedora"
+#NEUSEP_COMPILE_REDHAT_DIR="$COMPILE_DIR/neusep_FlySuite_${FWVER}-redhat"
+#JACS_COMPILE_DIR="$COMPILE_DIR/jacs_FlySuite_${FWVER}"
+
+VAA3D_COMPILE_REDHAT_DIR="$COMPILE_DIR/vaa3d_FlySuite_Staging-redhat"
+VAA3D_COMPILE_FEDORA_DIR="$COMPILE_DIR/vaa3d_FlySuite_Staging-fedora"
+NEUSEP_COMPILE_REDHAT_DIR="$COMPILE_DIR/neusep_FlySuite_Staging-redhat"
+JACS_COMPILE_DIR="$COMPILE_DIR/jacs_FlySuite_Staging"
 
 INSTALL_DIR="$EXE_DIR/install"
-VAA3D_INSTALL_REDHAT_DIR="$INSTALL_DIR/vaa3d_FlySuite_${FWVER}-redhat"
-VAA3D_INSTALL_FEDORA_DIR="$INSTALL_DIR/vaa3d_FlySuite_${FWVER}-fedora"
-NEUSEP_INSTALL_REDHAT_DIR="$INSTALL_DIR/neusep_FlySuite_${FWVER}-redhat"
+#VAA3D_INSTALL_REDHAT_DIR="$INSTALL_DIR/vaa3d_FlySuite_${FWVER}-redhat"
+#VAA3D_INSTALL_FEDORA_DIR="$INSTALL_DIR/vaa3d_FlySuite_${FWVER}-fedora"
+#NEUSEP_INSTALL_REDHAT_DIR="$INSTALL_DIR/neusep_FlySuite_${FWVER}-redhat"
+
+VAA3D_INSTALL_REDHAT_DIR="$INSTALL_DIR/vaa3d_FlySuite_Staging-redhat"
+VAA3D_INSTALL_FEDORA_DIR="$INSTALL_DIR/vaa3d_FlySuite_Staging-fedora"
+NEUSEP_INSTALL_REDHAT_DIR="$INSTALL_DIR/neusep_FlySuite_Staging-redhat"
+
 VAA3D_INSTALL_SYMLINK="$INSTALL_DIR/vaa3d-redhat"
 NEUSEP_INSTALL_SYMLINK="$INSTALL_DIR/neusep-redhat"
-SCRIPTS_INSTALL_DIR="$INSTALL_DIR/scripts_${FWVER}"
+#SCRIPTS_INSTALL_DIR="$INSTALL_DIR/scripts_${FWVER}"
+SCRIPTS_INSTALL_DIR="$INSTALL_DIR/scripts_Staging"
 SCRIPTS_INSTALL_SYMLINK="$INSTALL_DIR/scripts"
 ALIGN_TEMPLATES_DIR="$JACSDATA_DIR/servers/$SERVER/AlignTemplates"
 ALIGN_TEMPLATES_SYMLINK="$INSTALL_DIR/scripts/single_neuron/BrainAligner/AlignTemplates"
 
-FLYSUITE_NAME="FlySuite_${FWVER}"
-FLYSUITE_LINUX_NAME="FlySuite_linux_${FWVER}"
+#FLYSUITE_NAME="FlySuite_${FWVER}"
+#FLYSUITE_LINUX_NAME="FlySuite_linux_${FWVER}"
+
+FLYSUITE_NAME="FlySuite_Staging"
+FLYSUITE_LINUX_NAME="FlySuite_linux_Staging"
 
 STAGING_DIR="$JACSDATA_DIR/servers/$SERVER/executables/FlySuiteStaging"
 PACKAGE_MAC_DIR="$STAGING_DIR/$FLYSUITE_NAME"
@@ -54,7 +68,8 @@ FLYSUITE_LINUX_INSTALL_DIR="$FLYSUITE_CLIENTS_DIR/$FLYSUITE_LINUX_NAME"
 FLYSUITE_TARBALL="$FLYSUITE_INSTALL_DIR.tgz"
 FLYSUITE_LINUX_TARBALL="$FLYSUITE_LINUX_INSTALL_DIR.tgz"
 
-echo "Installing FlySuite version $FWVER (Part 3)"
+#echo "Installing FlySuite version $FWVER (Part 3)"
+echo "Installing FlySuite version Staging (Part 3)"
 
 ################################################################
 # Install Vaa3d for Redhat (Grid) and Fedora (Client) 
@@ -133,7 +148,8 @@ if [ $INSTALL_CLIENT == 1 ]; then
     tar cvfz "$FLYSUITE_TARBALL" $FLYSUITE_NAME
     tar cvfz "$FLYSUITE_LINUX_TARBALL" $FLYSUITE_LINUX_NAME
     
-    echo "FlySuite Version ${FWVER} (client) was successfully installed into the following locations:"
+    #echo "FlySuite Version ${FWVER} (client) was successfully installed into the following locations:"
+    echo "FlySuite Version Staging (client) was successfully installed into the following locations:"
     echo "  Mac: $FLYSUITE_INSTALL_DIR"
     echo "  Linux: $FLYSUITE_LINUX_INSTALL_DIR"
     echo ""
@@ -150,10 +166,12 @@ if [ $INSTALL_DATA_SERVER == 1 ]; then
     echo "  Deploying to server 'jacs-data'..."
     cd $JACS_COMPILE_DIR/compute
     ant -Duser.server.machine=jacs-staging -Duser.server.login=jacstest "deploy-[your-server]-dev"
-    echo "FlySuite Version ${FWVER} (JBoss server) was successfully deployed to the JACS STAGING production data-loading server."
+    #echo "FlySuite Version ${FWVER} (JBoss server) was successfully deployed to the JACS STAGING production data-loading server."
+    echo "FlySuite Version Staging (JBoss server) was successfully deployed to the JACS STAGING production data-loading server."
     cd $JACS_COMPILE_DIR/jacs
     ant -Duser.server.machine=jacs-staging -Duser.server.login=jacstest "deploy-[your-server]-dev"
-    echo "FlySuite Version ${FWVER} (Tomcat web front-end) was successfully deployed to the JACS STAGING production data-loading server."
+    #echo "FlySuite Version ${FWVER} (Tomcat web front-end) was successfully deployed to the JACS STAGING production data-loading server."
+    echo "FlySuite Version Staging (Tomcat web front-end) was successfully deployed to the JACS STAGING production data-loading server."
 fi 
     
 ################################################################
@@ -163,10 +181,12 @@ if [ $INSTALL_PROD_SERVER == 1 ]; then
     echo "  Deploying to server 'jacsstaging'..."
     cd $JACS_COMPILE_DIR/compute
     ant -Duser.server.machine=jacs-hudson -Duser.server.login=jacstest "deploy-[your-server]-dev"
-    echo "FlySuite Version ${FWVER} (JBoss server) was successfully deployed to the JACS STAGING production server."
+    #echo "FlySuite Version ${FWVER} (JBoss server) was successfully deployed to the JACS STAGING production server."
+    echo "FlySuite Version Staging (JBoss server) was successfully deployed to the JACS STAGING production server."
     cd $JACS_COMPILE_DIR/jacsstaging
     ant -Duser.server.machine=jacs-hudson -Duser.server.login=jacstest "deploy-[your-server]-dev"
-    echo "FlySuite Version ${FWVER} (Tomcat web front-end) was successfully deployed to the JACS STAGING production server."
+    #echo "FlySuite Version ${FWVER} (Tomcat web front-end) was successfully deployed to the JACS STAGING production server."
+    echo "FlySuite Version Staging (Tomcat web front-end) was successfully deployed to the JACS STAGING production server."
 fi
 
 
