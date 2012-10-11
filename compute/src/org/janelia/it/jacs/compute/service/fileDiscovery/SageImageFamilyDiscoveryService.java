@@ -59,6 +59,7 @@ public class SageImageFamilyDiscoveryService extends SageDataSetDiscoveryService
 		for(TilingPattern pattern : TilingPattern.values()) {
 			String dataSetName = "FlyLight "+pattern.getName();
 			EntityData ed = folders.get(dataSetName);
+			if (ed==null) continue;
 			if (ed.getOrderIndex()==null || orderIndex!=ed.getOrderIndex()) {
 				logger.info("  Updating link (id="+ed.getId()+") to "+ed.getChildEntity().getName()+" with order index "+orderIndex+" (was "+ed.getOrderIndex()+")");
 				ed.setOrderIndex(orderIndex);
@@ -87,7 +88,8 @@ public class SageImageFamilyDiscoveryService extends SageDataSetDiscoveryService
         	
         	if (dataSet == null) {
         		dataSet = annotationBean.createDataSet(user.getUserLogin(), dataSetName);
-        		dataSet.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS, PipelineProcess.FlyLightUnaligned.toString());
+        		PipelineProcess process = getPipelineProcess(tiling);
+        		dataSet.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS, process.toString());
     			entityBean.saveOrUpdateEntity(dataSet);
     			logger.warn("Created new data set: "+dataSet.getName());
         	}
@@ -112,9 +114,32 @@ public class SageImageFamilyDiscoveryService extends SageDataSetDiscoveryService
         }
     }
     
+    private PipelineProcess getPipelineProcess(TilingPattern tiling) {
+    	switch (tiling) {
+    	case WHOLE_BRAIN:
+    		return PipelineProcess.FlyLightWholeBrain;
+    	case OPTIC_SPAN:
+    		return PipelineProcess.FlyLightWholeBrain;
+    	case CENTRAL_BRAIN:
+    		return PipelineProcess.FlyLightCentralBrain;
+    	case OPTIC_CENTRAL_BORDER:
+    		return PipelineProcess.FlyLightUnaligned;
+    	case OPTIC_TILE:
+    		return PipelineProcess.FlyLightOpticLobe;
+    	case CENTRAL_TILE:
+    		return PipelineProcess.FlyLightUnaligned;
+    	case OTHER:
+    		return PipelineProcess.FlyLightUnaligned;
+    	case UNKNOWN:
+    		return PipelineProcess.FlyLightUnaligned;
+    	default:
+    		throw new IllegalStateException("Unrecognized tiling pattern: "+tiling);
+    	}
+    }
+    
     private void updateSampleTilingPattern(Entity sample, TilingPattern tiling) throws Exception {
     	if (sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN)==null && tiling!=null) {
-    		logger.info("Setting '"+EntityConstants.ATTRIBUTE_TILING_PATTERN+"'="+tiling+" for id="+sample.getId());
+    		logger.info("    Setting properties: pattern="+tiling);
     		sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN, tiling.toString());
     		entityBean.saveOrUpdateEntity(sample);
     	}

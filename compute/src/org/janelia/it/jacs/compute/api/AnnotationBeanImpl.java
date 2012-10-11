@@ -23,7 +23,6 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.annotation.DataDescriptor;
 import org.janelia.it.jacs.shared.annotation.DataFilter;
 import org.janelia.it.jacs.shared.annotation.FilterResult;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 
@@ -398,6 +397,26 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         catch (Exception e) {
             _logger.error("Error creating new data set ("+dataSetName+") for user "+userLogin,e);
             throw new ComputeException("Error creating new data set ("+dataSetName+") for user "+userLogin,e);
+        }
+    }
+    
+    public List<Entity> getAllDataSets() throws ComputeException {
+    	try {
+    		return _annotationDAO.getUserEntitiesByTypeName(null, EntityConstants.TYPE_DATA_SET);
+	    }
+	    catch (DaoException e) {
+	        _logger.error("Error getting data sets", e);
+	        throw new ComputeException("Error getting data sets",e);
+	    }
+    }
+    
+    public List<Entity> getUserDataSets(String userLogin) throws ComputeException {
+        try {
+        	return _annotationDAO.getUserEntitiesByTypeName(userLogin, EntityConstants.TYPE_DATA_SET);
+        }
+        catch (DaoException e) {
+            _logger.error("Error getting data sets for user "+userLogin, e);
+            throw new ComputeException("Error getting data sets for user "+userLogin,e);
         }
     }
     

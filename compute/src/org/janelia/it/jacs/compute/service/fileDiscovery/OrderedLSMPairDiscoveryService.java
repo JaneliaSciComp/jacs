@@ -82,22 +82,19 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
         
         int i = 0;
         for (LsmPair lsmPair : lsmPairs) {
-
         	logger.info("Processing LSM Pair: "+lsmPair.name);
         	
         	Entity sample = findExistingSample(folder, lsmPair);
             
-        	try {
-        		if (sample == null) {
-    	        	// Create the sample
-    	            sample = createSample(lsmPair);
-    	            helper.addToParent(folder, sample, i++, EntityConstants.ATTRIBUTE_ENTITY);
-        		}
-        	}
-        	catch (ComputeException e) {
-        		logger.warn("Could not delete existing sample for regeneration, id="+sample.getId(),e);
-        	}
-        	
+    		if (sample == null) {
+	        	// Create the sample
+	            sample = createSample(lsmPair);
+	            helper.addToParent(folder, sample, i++, EntityConstants.ATTRIBUTE_ENTITY);
+    		}
+    		else {
+            	logger.info("Found existing sample "+sample.getName());
+            	populateSampleAttributes(sample);
+    		}
         }
     }
     
@@ -238,6 +235,14 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
         
         return pairs;
     }
+    
+    protected Entity populateSampleAttributes(Entity sample) throws Exception {
+		logger.info("    Setting properties: dataSet="+dataSetIdentifier+", spec="+channelSpec);
+		sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier);	
+		sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec);	
+		sample = entityBean.saveOrUpdateEntity(sample);
+        return sample;
+    }
 
     protected Entity createSample(LsmPair lsmPair) throws Exception {
 
@@ -296,10 +301,6 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
         lsmStack.setUpdatedDate(createDate);
         lsmStack.setName(file.getName());
         lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
-        if (channelSpec!=null) {
-	        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS, ""+channelSpec.length());
-	        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec);
-        }
         lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
         logger.info("Saved LSM stack as "+lsmStack.getId());
         return lsmStack;

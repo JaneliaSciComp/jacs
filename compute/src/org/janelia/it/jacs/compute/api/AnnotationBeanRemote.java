@@ -64,6 +64,8 @@ public interface AnnotationBeanRemote {
     public FilterResult patternSearchGetFilteredResults(String type, Map<String, Set<DataFilter>> filterMap) throws ComputeException;
 
     public Entity createDataSet(String userLogin, String dataSetName) throws ComputeException;
+    public List<Entity> getAllDataSets() throws ComputeException;
+    public List<Entity> getUserDataSets(String userLogin) throws ComputeException;
     public Entity getUserDataSetByName(String userLogin, String dataSetName) throws ComputeException;
     public Entity getUserDataSetByIdentifier(String dataSetIdentifier) throws ComputeException;
 }

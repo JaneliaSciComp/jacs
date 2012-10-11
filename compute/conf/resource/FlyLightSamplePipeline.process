@@ -197,6 +197,11 @@
 			<output name="RESULT_ENTITY_ID"/>
 	    </operation>
     	
+	    <!-- Clean up merged files -->
+		<operation name="Remove merged files" processor="org.janelia.it.jacs.compute.service.entity.sample.CleanUpMergedFilesService">
+			<input name="BULK_MERGE_PARAMETERS"/>
+	    </operation>
+	    
 	    <!-- Register MIP images -->
 		<operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
 			<input name="SAMPLE_ENTITY_ID"/>

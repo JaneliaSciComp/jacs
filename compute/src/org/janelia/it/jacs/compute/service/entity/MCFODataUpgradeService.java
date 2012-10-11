@@ -11,6 +11,7 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.model.entity.*;
+import org.janelia.it.jacs.model.entity.cv.PipelineProcess;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
@@ -68,6 +69,19 @@ public class MCFODataUpgradeService implements IService {
 	            }
             }
             
+            logger.info("Adding data sets...");
+            if ("asoy".equals(username)) {
+            	createDataSet("MB Flp-out 63X", PipelineProcess.YoshiMB63x, true);
+            	createDataSet("MB LexA-GAL4 63x", PipelineProcess.YoshiMB63x, true);
+            }
+            if ("leetlab".equals(username)) {
+            	createDataSet("Pan Lineage 40x", PipelineProcess.LeetWholeBrain40x, true);
+            	createDataSet("Central Brain 63x", PipelineProcess.LeetCentralBrain63x, true);
+            }
+            else if ("wolfft".equals(username)) {
+            	createDataSet("Central Complex Tanya", PipelineProcess.FlyLightUnaligned, false);
+            }
+            
             logger.info("Processing samples...");
             processSamples();
 			logger.info("Processed "+numSamples+" samples.");
@@ -80,8 +94,26 @@ public class MCFODataUpgradeService implements IService {
             throw new ServiceException("Error running MCFODataUpgradeService", e);
         }
     }
+    
+    private void createDataSet(String dataSetName, PipelineProcess process, boolean sageSync) throws ComputeException {
 
-    public void processSamples() throws ComputeException {
+    	if (annotationBean.getUserDataSetByName(username, dataSetName)!=null) {
+    		logger.info("Data set already exists: "+dataSetName);
+    		return;
+    	}
+    	
+		logger.info("Creating new data set: "+dataSetName);
+		if (!isDebug) {
+			Entity dataSet = annotationBean.createDataSet(username, dataSetName);
+			dataSet.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS, process.toString());
+			if (sageSync) {
+				dataSet.setValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_SYNC, EntityConstants.ATTRIBUTE_SAGE_SYNC);
+			}
+			dataSet = entityBean.saveOrUpdateEntity(dataSet);
+		}
+    }
+
+	public void processSamples() throws ComputeException {
     	List<Entity> samples = entityBean.getUserEntitiesByTypeName(username, EntityConstants.TYPE_SAMPLE);
         for(Entity sample : samples) {
             processSample(sample);
@@ -276,20 +308,14 @@ public class MCFODataUpgradeService implements IService {
 
 
     protected Entity populateLsmStackAttributes(Entity lsmStack, String channelSpec) throws ComputeException {
-
-    	boolean save = false;
+    	logger.info("      Setting properties: channels="+channelSpec.length()+", spec="+channelSpec);
     	if (lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS)==null) {
-    		logger.info("  Setting '"+EntityConstants.ATTRIBUTE_NUM_CHANNELS+"'="+channelSpec.length()+" for id="+lsmStack.getId());
     		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS, ""+channelSpec.length());	
-    		save = true;
     	}
     	if (lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION)==null) {
-    		logger.info("  Setting '"+EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION+"'="+channelSpec+" for id="+lsmStack.getId());
     		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec);	
-    		save = true;
     	}
-        
-    	if (save && !isDebug) {
+    	if (!isDebug) {
     		lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
     	}
         return lsmStack;
@@ -306,6 +332,13 @@ public class MCFODataUpgradeService implements IService {
     	}
     	
     	logger.info("Found old-style sample results, id="+sample.getId()+" name="+sample.getName());
+    	
+    	EntityData atEd = sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_TYPES);
+    	if (atEd!=null) {
+    		logger.info("    Removing defunct attribute: ALIGNMENT_TYPES (value="+atEd.getValue()+")");
+    		entityBean.deleteEntityData(atEd);
+    		sample.getEntityData().remove(atEd);
+    	}
     	
     	Entity defaultImage = null;
     	Entity signalMIP = null;

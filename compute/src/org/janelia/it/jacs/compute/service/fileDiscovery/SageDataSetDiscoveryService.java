@@ -121,6 +121,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 
     protected SlideImage getSlideImage(Map<String,Object> row) {
         SlideImage slideImage = new SlideImage();
+        slideImage.sageId = (Long)row.get("id");
 		slideImage.slideCode = (String)row.get("slide_code");
 		slideImage.imagePath = (String)row.get("path");
 		slideImage.tileType = (String)row.get("tile");
@@ -140,7 +141,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 				slideImage.channelSpec = getChanSpec(numChannels-1);
 			}
 			else {
-				logger.warn("Both channel_spec and channels is null for "+slideImage.imagePath);
+				logger.warn("Both channel_spec and channels are null for sageId="+slideImage.sageId);
 			}
 		}
 		
@@ -156,6 +157,12 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         
         int tileNum = 0;
         for(SlideImage slideImage : slideGroup) {
+        	
+        	if (slideImage.file==null) {
+        		logger.warn("File referenced by SAGE is null: "+slideImage.slideCode);
+        		continue;
+        	}
+        	
         	ImageTileGroup tileGroup = tileGroups.get(slideImage.tileType);
             if (tileGroup==null) {
             	
@@ -302,12 +309,12 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		if (imageTileEd != null) {
 			imageTile = imageTileEd.getChildEntity();
 			if (!existingTileMatches(imageTile, tileGroup)) {
-				logger.info("  Tile '"+imageTile.getName()+"' has changed, will delete and recreate it.");
+				logger.info("  Tile '"+imageTile.getName()+"' (id="+imageTileEd.getId()+") has changed, will delete and recreate it.");
 				entityBean.deleteSmallEntityTree(imageTile.getUser().getUserLogin(), imageTile.getId());
 				imageTile = null;
 			}
 			else {
-				logger.info("  Tile '"+imageTile.getName()+"' exists");
+				logger.info("  Tile '"+imageTile.getName()+"' exists (id="+imageTileEd.getId()+")");
 				for(Entity lsmStack : imageTile.getChildrenOfType(EntityConstants.TYPE_LSM_STACK)) {
 					for(SlideImage image : tileGroup.images) {
 						if (image.file.getName().equals(lsmStack.getName())) {
@@ -405,16 +412,11 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     }
 
     protected Entity populateSampleAttributes(Entity sample, String channelSpec, String dataSetIdentifier) throws Exception {
-
-		logger.info("  Setting '"+EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER+"'="+dataSetIdentifier+" for id="+sample.getId());
+		logger.info("    Setting properties: dataSet="+dataSetIdentifier+", spec="+channelSpec);
 		sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier);	
-	
-		logger.info("  Setting '"+EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION+"'="+channelSpec+" for id="+sample.getId());
 		sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec);	
-
-		numSamplesUpdated++;
 		sample = entityBean.saveOrUpdateEntity(sample);
-	
+		numSamplesUpdated++;
         return sample;
     }
     
@@ -449,21 +451,12 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     }
     
     protected Entity populateLsmStackAttributes(Entity lsmStack, SlideImage image) throws Exception {
-
-		logger.info("  Setting '"+EntityConstants.ATTRIBUTE_FILE_PATH+"'="+image.imagePath+" for id="+lsmStack.getId());
-		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, image.imagePath);	
-
-		logger.info("  Setting '"+EntityConstants.ATTRIBUTE_NUM_CHANNELS+"'="+image.channels+" for id="+lsmStack.getId());
-		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS, image.channels);	
-
-		logger.info("  Setting '"+EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION+"'="+image.opticalRes+" for id="+lsmStack.getId());
+		logger.info("    Setting properties: channels="+image.channels+", res="+image.opticalRes+", spec="+image.channelSpec);
+		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, image.imagePath);
+		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS, image.channels);
 		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, image.opticalRes);	
-		
-		logger.info("  Setting '"+EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION+"'="+image.channelSpec+" for id="+lsmStack.getId());
 		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, image.channelSpec);	
-		
 		lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
-	
         return lsmStack;
     }
     
@@ -598,6 +591,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     }
     
     protected class SlideImage {
+    	Long sageId;
     	String slideCode;
     	String imagePath;
     	String tileType;

@@ -5,7 +5,8 @@ public enum AlignmentAlgorithm implements NamedEnum {
 	CENTRAL("Peng Central Brain 40x Alignment"),
 	OPTIC("FlyLight Optic Lobe 40x Alignment"),
 	WHOLE_40X("FlyLight Whole Brain 40x Alignment"),
-	WHOLE_63X("FlyLight Whole Brain 63x Alignment");
+	WHOLE_63X("FlyLight Whole Brain 63x Alignment"),
+	YOSHI_63X("Yoshi MB 63x Alignment");
 	
 	private String name;
 	

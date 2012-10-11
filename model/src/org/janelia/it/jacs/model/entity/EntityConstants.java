@@ -108,7 +108,12 @@ public class EntityConstants {
     
     // Error Attributes
     public static final String ATTRIBUTE_MESSAGE                             = "Message";
-
+    
+    /**
+     * @deprecated Use ATTRIBUTE_DATA_SET_IDENTIFIER to specify processing indirectly. This will be removed someday.
+     */
+    public static final String ATTRIBUTE_ALIGNMENT_TYPES                     = "Alignment Types";
+    
     /**
      * @deprecated Use ATTRIBUTE_ENTITY instead. This will be removed someday.
      */

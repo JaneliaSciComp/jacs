@@ -8,8 +8,7 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 
 /**
- * Traverses the entity tree starting from a given root entity and builds a flattened list of ancestor
- * entities. Parameters must be provided in the ProcessData:
+ * Returns all the samples for the task owner which match the parameters. Parameters must be provided in the ProcessData:
  *   OUTVAR_ENTITY_ID (The output variable to populate with a List of Entities)
  *   RUN_MODE (Mode to use for including entities)
  *     NEW - Include Samples which have no Pipeline Runs. 
