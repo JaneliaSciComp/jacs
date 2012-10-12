@@ -10,6 +10,7 @@ import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
@@ -21,6 +22,7 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
 public abstract class AbstractEntityService implements IService {
 
     protected Logger logger;
+    protected Task task;
     protected IProcessData processData;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
@@ -32,6 +34,7 @@ public abstract class AbstractEntityService implements IService {
         try {
 
 	        this.logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
+	        this.task = ProcessDataHelper.getTask(processData);
 	        this.processData = processData;
 	        this.entityBean = EJBFactory.getLocalEntityBean();
 	        this.computeBean = EJBFactory.getLocalComputeBean();

@@ -15,10 +15,12 @@ import org.janelia.it.jacs.model.vo.ParameterException;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class OpticLobeAlignmentService extends BrainAlignmentService {
-
-	protected static final String OPTIC_ALIGNER_SCRIPT_CMD = SystemConfigurationProperties.getString("OpticLobeAligner.ScriptPath");
-	protected static final String OPTIC_TEMPLATE_DIR = SystemConfigurationProperties.getString("OpticLobeAligner.TemplateDir");
+public class OpticLobeAlignmentService extends AbstractAlignmentService {
+	
+	protected static final String PERL_EXE = SystemConfigurationProperties.getString("Perl.Path");
+	protected static final String ALIGNER_SCRIPT_CMD = SystemConfigurationProperties.getString("OpticLobeAligner.ScriptPath");
+	protected static final String ALIGNER_EXE_PATH = SystemConfigurationProperties.getString("BrainAligner.ExePath");
+	protected static final String TEMPLATE_DIR = SystemConfigurationProperties.getString("OpticLobeAligner.TemplateDir");
 
 	private String tileName;
 	
@@ -35,7 +37,7 @@ public class OpticLobeAlignmentService extends BrainAlignmentService {
 	protected void createShellScript(FileWriter writer) throws IOException, ParameterException, MissingDataException,
 			InterruptedException, ServiceException {
 
-		logger.info("Starting OpticLobeAlignmentService with taskId=" + task.getObjectId() + " resultNodeId="
+		logger.info("Starting "+getClass().getName()+" with taskId=" + task.getObjectId() + " resultNodeId="
 				+ resultFileNode.getObjectId() + " resultDir=" + resultFileNode.getDirectoryPath() + " workingDir="
 				+ alignFileNode.getDirectoryPath() + " inputFilename=" + inputFilename);
 
@@ -43,10 +45,10 @@ public class OpticLobeAlignmentService extends BrainAlignmentService {
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix() + "\n");
         script.append(Vaa3DHelper.getVaa3dLibrarySetupCmd()+"\n");
         script.append("cd " + alignFileNode.getDirectoryPath() + "\n ");
-        script.append(PERL_EXE + " " + EXECUTABLE_DIR + OPTIC_ALIGNER_SCRIPT_CMD +
+        script.append(PERL_EXE + " " + EXECUTABLE_DIR + ALIGNER_SCRIPT_CMD +
             " -v " +  Vaa3DHelper.getVaa3dExecutableCmd() +
             " -b " +  EXECUTABLE_DIR + ALIGNER_EXE_PATH +
-            " -t " +  EXECUTABLE_DIR + OPTIC_TEMPLATE_DIR +
+            " -t " +  EXECUTABLE_DIR + TEMPLATE_DIR +
             " -w " +  alignFileNode.getDirectoryPath() +
             " -n \"" +  tileName + "\"" + 
             " -i \"" +  inputFilename + "\"" +

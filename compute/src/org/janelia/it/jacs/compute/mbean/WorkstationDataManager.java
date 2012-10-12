@@ -356,34 +356,6 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
-
-    public void runLeetDataPipeline(String user, String topLevelFolderName, String imageFamily, Boolean refreshProcessing, Boolean refreshAlignment) {
-        try {
-        	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 
-            		user, new ArrayList<Event>(), new HashSet<TaskParameter>(), null,
-            		topLevelFolderName, refreshProcessing, refreshAlignment, null, imageFamily);
-            task.setJobName("Leet Data Pipeline Task");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("LeetDataPipeline", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    public void runLeetSamplePipeline(String sampleEntityId, Boolean refreshProcessing, Boolean refreshAlignment) {
-        try {
-        	Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
-        	if (sampleEntity==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
-        	Task task = new MCFOSamplePipelineTask(new HashSet<Node>(), 
-        			sampleEntity.getUser().getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>(), 
-        			sampleEntityId, refreshProcessing, refreshAlignment, null);
-            task.setJobName("Leet Sample Pipeline Task");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("LeetSamplePipeline", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
     
     public void runCentralBrainDataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation) {
         try {
@@ -449,20 +421,6 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             task.setJobName("Two Channel Sample Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("TwoChanSamplePipeline", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-    
-    public void runMCFOSampleViewCreation(String sourceEntityId, String targetEntityName) {
-        try {
-        	Entity sourceEntity = EJBFactory.getLocalEntityBean().getEntityById(sourceEntityId);
-        	if (sourceEntity==null) throw new IllegalArgumentException("Entity with id "+sourceEntityId+" does not exist");
-        	Task task = new EntityViewCreationTask(new HashSet<Node>(), 
-        			sourceEntity.getUser().getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>(), sourceEntityId, targetEntityName);
-            task.setJobName("Sample View Creation Task");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("MCFOSampleViewCreation", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }

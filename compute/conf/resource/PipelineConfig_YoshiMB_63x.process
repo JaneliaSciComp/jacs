@@ -1,4 +1,4 @@
-<process name="FlyLight Whole Brain 63x Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending">
+<process name="Yoshi Mushroom Body 63x Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending">
 	<sequence>
 	    
 	    <!-- Set task variables -->

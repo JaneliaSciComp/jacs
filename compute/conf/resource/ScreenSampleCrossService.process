@@ -1,7 +1,7 @@
 <!-- 
 	Compute the cross of two images.
 -->
-<process name="Compute Image Crosses" processor="queue/screenSampleCrossPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Compute Image Crosses" processor="queue/consolePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	    
 	    <!-- Import variables from the task -->

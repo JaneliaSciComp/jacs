@@ -1,27 +1,26 @@
 package org.janelia.it.jacs.compute.service.align;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.FilenameFilter;
+import java.io.IOException;
+
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
-import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.vo.ParameterException;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
-import java.io.IOException;
 
 /**
  * Run the original central brain aligner from Hanchuan. Also serves as the base class for future alignment algorithms.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class BrainAlignmentService extends SubmitDrmaaJobService {
+public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
 
 	protected static final long LARGE_FILE_SIZE_THRESHOLD_UNCOMPRESSED = (long)(4.0*1024*1024*1024);
 	protected static final long LARGE_FILE_SIZE_THRESHOLD_COMPRESSED = (long)(2.0*1024*1024*1024);
@@ -30,11 +29,6 @@ public class BrainAlignmentService extends SubmitDrmaaJobService {
 	protected static final int TIMEOUT_SECONDS = 3600;  // 60 minutes
 
     protected static final String EXECUTABLE_DIR = SystemConfigurationProperties.getString("Executables.ModuleBase");
-    protected static final String ALIGNER_SCRIPT_CMD = SystemConfigurationProperties.getString("BrainAligner.ScriptPath");
-    protected static final String ALIGNER_EXE_PATH = SystemConfigurationProperties.getString("BrainAligner.ExePath");
-    protected static final String LOBESEG_EXE_PATH = SystemConfigurationProperties.getString("BrainAligner.LobesegPath");
-    protected static final String TEMPLATE_DIR = SystemConfigurationProperties.getString("BrainAligner.TemplateDir");
-    protected static final String PERL_EXE = SystemConfigurationProperties.getString("Perl.Path");
 
     protected FileNode outputFileNode;
     protected FileNode alignFileNode;
@@ -69,7 +63,7 @@ public class BrainAlignmentService extends SubmitDrmaaJobService {
         	throw new ServiceException("Input parameter OPTICAL_RESOLUTION may not be null");
         }
         
-        File outputFile = new File(outputFileNode.getDirectoryPath(),"Aligned.v3dpbd");
+        File outputFile = new File(outputFileNode.getDirectoryPath(),"Aligned.v3draw");
         processData.putItem("ALIGNED_FILENAME", outputFile.getAbsolutePath());
     }
 
@@ -84,24 +78,8 @@ public class BrainAlignmentService extends SubmitDrmaaJobService {
         setJobIncrementStop(1);
     }
 
-    protected void createShellScript(FileWriter writer)
-            throws IOException, ParameterException, MissingDataException, InterruptedException, ServiceException {
-
-        logger.info("Starting BrainAlignmentService with taskId=" + task.getObjectId() + " resultNodeId=" + resultFileNode.getObjectId() + " resultDir=" + resultFileNode.getDirectoryPath() +
-            " workingDir="+alignFileNode.getDirectoryPath() + " inputFilename="+inputFilename);
-
-        StringBuffer script = new StringBuffer();
-        script.append(Vaa3DHelper.getVaa3dLibrarySetupCmd()+"\n");
-        script.append("cd " + alignFileNode.getDirectoryPath() + "\n " + 
-        	PERL_EXE + " " + EXECUTABLE_DIR + ALIGNER_SCRIPT_CMD +
-            " -v " +  Vaa3DHelper.getVaa3dExecutableCmd() +
-            " -b " +  EXECUTABLE_DIR + ALIGNER_EXE_PATH +
-            " -l " +  EXECUTABLE_DIR + LOBESEG_EXE_PATH +
-            " -t " +  EXECUTABLE_DIR + TEMPLATE_DIR +
-            " -w " +  alignFileNode.getDirectoryPath() +
-            " -i " +  inputFilename + "\n");
-        writer.write(script.toString());
-    }
+    protected abstract void createShellScript(FileWriter writer)
+            throws IOException, ParameterException, MissingDataException, InterruptedException, ServiceException;
 
 	@Override
     public int getJobTimeoutSeconds() {

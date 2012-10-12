@@ -35,11 +35,6 @@ public interface WorkstationDataManagerMBean {
     public void runSampleMaintenancePipeline(String user);
     
     
-    // Pipeline for the T. Lee lab
-    public void runLeetDataPipeline(String user, String topLevelFolderName, String imageFamily, Boolean refreshProcessing, Boolean refreshAlignment);
-    public void runLeetSamplePipeline(String sampleEntityId, Boolean refreshProcessing, Boolean refreshAlignment);
-
-    
     // Pipelines for FlyLight Single Neuron Data
     
     public void runCentralBrainDataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation);
@@ -49,8 +44,6 @@ public interface WorkstationDataManagerMBean {
     
     public void runTwoChanDataPipeline(String user);
     public void runTwoChanSamplePipeline(String sampleEntityId);
-	
-    public void runMCFOSampleViewCreation(String sourceEntityId, String targetEntityName);
 
     public void runSingleFastLoadArtifactPipeline(String user, String separationEntityId);
     public void runCompleteFastLoadArtifactPipeline(String user);

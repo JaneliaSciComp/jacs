@@ -1,7 +1,7 @@
 <!-- 
 	Process all neuron separation results and ensure they have all the necessary "fastLoad" artifacts.
 -->
-<process name="FastLoad Artifact Pipeline" processor="queue/mcfoDataPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="FastLoad Artifact Pipeline" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	    
 	    <!-- Create the input file list -->

@@ -46,7 +46,7 @@ public class InitAlignmentParametersService extends AbstractEntityService {
         	processData.putItem("ALIGNMENT_TILE_NAME", tileName);
 		}
 		else if (alignmentType!=null && AlignmentAlgorithm.CENTRAL == aa) {
-        	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.BrainAlignmentService");
+        	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.CentralBrainAlignmentService");
         	processData.putItem("ALIGNMENT_RESULT_NAME", "Central Brain Alignment");
 		}
     }

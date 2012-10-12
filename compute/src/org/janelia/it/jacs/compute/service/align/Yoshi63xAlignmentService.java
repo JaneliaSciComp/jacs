@@ -10,19 +10,19 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.vo.ParameterException;
 
 /**
- * Run the 40x whole brain alignment.
+ * Run the 63x whole brain alignment.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class WholeBrain40xAlignmentService extends AbstractAlignmentService {
+public class Yoshi63xAlignmentService extends AbstractAlignmentService {
 
-	protected static final String ALIGNER_SCRIPT_CMD = SystemConfigurationProperties.getString("WholeBrain40xAligner.ScriptPath");
-	protected static final String TEMPLATE_DIR = SystemConfigurationProperties.getString("WholeBrain40xAligner.TemplateDir");
+	protected static final String ALIGNER_SCRIPT_CMD = SystemConfigurationProperties.getString("Yoshi63xAligner.ScriptPath");
+	protected static final String TEMPLATE_DIR = SystemConfigurationProperties.getString("Yoshi63xAligner.TemplateDir");
 
     @Override
 	protected void createShellScript(FileWriter writer) throws IOException, ParameterException, MissingDataException,
 			InterruptedException, ServiceException {
-    	
+
 		logger.info("Starting "+getClass().getName()+" with taskId=" + task.getObjectId() + " resultNodeId="
 				+ resultFileNode.getObjectId() + " resultDir=" + resultFileNode.getDirectoryPath() + " workingDir="
 				+ alignFileNode.getDirectoryPath() + " inputFilename=" + inputFilename);
@@ -34,7 +34,7 @@ public class WholeBrain40xAlignmentService extends AbstractAlignmentService {
 		script.append("sh " + EXECUTABLE_DIR + ALIGNER_SCRIPT_CMD +
             " " +  EXECUTABLE_DIR + TEMPLATE_DIR +
             " " + inputFilename + 
-            " " + alignFileNode.getDirectoryPath()+"/Aligned.v3draw" +
+            " " + alignFileNode.getDirectoryPath()+"/Aligned.v3dpbd" +
             " \"" + opticalResolution.replaceAll("x", " ") + "\"\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix() + "\n");
         writer.write(script.toString());

@@ -308,56 +308,6 @@
     </operation>
     
     <operation>
-        <description>Run Leet SAGE-based Data Pipeline</description>
-        <name>runLeetDataPipeline</name>
-        <parameter>
-           <description>User to run as (e.g. "leetlab")</description>
-           <name>user</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Name of the folder entity where results will be placed (e.g. "Pan Lineage Samples")</description>
-           <name>topLevelFolderName</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Name of the image family to load (e.g. "leet_pan_lineage")</description>
-           <name>imageFamily</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Re-run merging and stitching?</description>
-           <name>refreshProcessing</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-        <parameter>
-           <description>Re-run brain alignments?</description>
-           <name>refreshAlignment</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Run the Leet Sample Pipeline for a single Sample</description>
-        <name>runLeetSamplePipeline</name>
-        <parameter>
-           <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
-           <name>sampleEntityId</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Re-run merging and stitching?</description>
-           <name>refreshProcessing</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-        <parameter>
-           <description>Re-run brain alignments?</description>
-           <name>refreshAlignment</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
-    
-    <operation>
         <description>Run Central Brain Pipeline</description>
         <name>runCentralBrainDataPipeline</name>
         <parameter>
@@ -518,21 +468,6 @@
         <parameter>
            <description>The name of the result entity to create under the Sample (e.g. "Prealigned Neuron Separation")</description>
            <name>resultEntityName</name>
-           <type>java.lang.String</type>
-        </parameter>
-    </operation>
-
-    <operation>
-        <description>Create or update an MCFO sample view</description>
-        <name>runMCFOSampleViewCreation</name>
-        <parameter>
-           <description>Id of the entity to search for completed Samples (e.g. "1679282451010027618")</description>
-           <name>sourceEntityId</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Name of the result view entity to create or update (e.g. "FlyLight Single Neuron Samples")</description>
-           <name>targetEntityName</name>
            <type>java.lang.String</type>
         </parameter>
     </operation>

@@ -1,7 +1,7 @@
 <!-- 
 	Process a neuron separation result and ensure it has all the necessary "fastLoad" artifacts.
 -->
-<process name="FastLoad Artifact Pipeline" processor="queue/mcfoSeparationPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="FastLoad Artifact Pipeline" processor="queue/separationPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	    
     	<operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">

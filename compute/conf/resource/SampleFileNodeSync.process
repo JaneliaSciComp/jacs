@@ -1,7 +1,7 @@
 <!-- 
 	Synchronize file nodes with the entities in the database. 
 -->
-<process name="Sample File Node Synchronization" processor="queue/mcfoDataPipelineLauncher" startEvent="pending">
+<process name="Sample File Node Synchronization" processor="queue/largePipelineLauncher" startEvent="pending">
 	<sequence>
 		<operation name="Sample File Node Sync" processor="org.janelia.it.jacs.compute.service.entity.SampleFileNodeSyncService">
 		</operation>

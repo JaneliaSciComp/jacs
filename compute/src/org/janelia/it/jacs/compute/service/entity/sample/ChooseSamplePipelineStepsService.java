@@ -60,7 +60,7 @@ public class ChooseSamplePipelineStepsService extends AbstractEntityService {
 
     	logger.info("Pipeline steps to execute for Sample "+sampleEntity.getName()+":");
     	logger.info("    Merge = "+runMerge);
-    	logger.info("    Stitch = "+runStitch +((!runStitch&&hasStitch)?" (configured but not necessary for a single title)":""));
+    	logger.info("    Stitch = "+runStitch +((!runStitch&&hasStitch)?" (configured but not necessary for a single tile)":""));
     	logger.info("    Alignment = "+runAlignment);
     	logger.info("    Analysis = "+runAnalysis);
     }
