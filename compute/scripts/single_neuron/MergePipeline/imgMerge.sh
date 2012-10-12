@@ -116,17 +116,19 @@ else
 
                 FIXEDDS=$FILEPATH"/target_ref_ds.nii"
                 MOVINGDS=$FILEPATH"/subject_ref_ds.nii"
+                SAMPLERATIO=4
                 echo "~ Running $SAMPLE on $FIXED"
-                $SAMPLE 3 $FIXED $FIXEDDS 4 4 4
+                $SAMPLE 3 $FIXED $FIXEDDS $SAMPLERATIO $SAMPLERATIO $SAMPLERATIO
                 echo "~ Running $SAMPLE on $MOVING"
-                $SAMPLE 3 $MOVING $MOVINGDS 4 4 4 
+                $SAMPLE 3 $MOVING $MOVINGDS $SAMPLERATIO $SAMPLERATIO $SAMPLERATIO
 
                 SIMMETRIC=$FILEPATH"/cc"
                 AFFINEMATRIX=$FILEPATH"/ccAffine.txt"
                 FWDDISPFIELD=$FILEPATH"/ccWarp.nii.gz"
                 BWDDISPFIELD=$FILEPATH"/ccInverseWarp.nii.gz"
+                MAXITERS=30x90x20
                 echo "~ Running $ANTS on $MOVING"
-                $ANTS 3 -m  CC[ $FIXEDDS, $MOVINGDS, 1, 8]  -t SyN[0.25]  -r Gauss[3,0] -o $SIMMETRIC --use-Histogram-Matching  -i 50x0 --number-of-affine-iterations  100x100x100
+                $ANTS 3 -m  CC[ $FIXEDDS, $MOVINGDS, 1, 4]  -t SyN[0.25]  -r Gauss[3,0] -o $SIMMETRIC --use-Histogram-Matching  -i $MAXITERS --number-of-affine-iterations  10000x10000x10000x10000x10000 --MI-option 32x16000
 
                 DEFORMED=$FILEPATH"/subject_signal_warped.nii"
                 echo "~ Running $WARP on $SUBJECT"
