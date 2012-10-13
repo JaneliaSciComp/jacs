@@ -6,6 +6,7 @@ import javax.ejb.Local;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.user_data.User;
 
 /**
  * A local interface for invoking queries against the entity model. Affords access to everything in EntityBeanRemote
@@ -27,4 +28,6 @@ public interface EntityBeanLocal extends EntityBeanRemote {
     
     public void loadLazyEntity(Entity entity, boolean recurse) throws DaoException;
 	public void setupEntityTypes();
+	
+	public Entity annexEntityTree(Entity entity, User newOwner) throws ComputeException;
 }

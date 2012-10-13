@@ -59,7 +59,7 @@ public class SageDAO {
 
     	try {
 	    	String sql = "select * from image_data_mv where family = '"+sageImageFamily+
-	    		"' and alignment_algorithm is null order by slide_code,name ";
+	    		"' and data_set is null order by slide_code,name ";
         	Connection conn = getJdbcConnection();
         	PreparedStatement stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 	        stmt.setFetchSize(Integer.MIN_VALUE);
@@ -81,7 +81,7 @@ public class SageDAO {
     public ResultSetIterator getImagesByDataSet(String dataSetName) throws DaoException {
 
     	try {
-	    	String sql = "select * from image_data_mv where alignment_algorithm = '"+dataSetName+"' order by slide_code,name ";
+	    	String sql = "select * from image_data_mv where data_set = '"+dataSetName+"' order by slide_code,name ";
         	Connection conn = getJdbcConnection();
         	PreparedStatement stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 	        stmt.setFetchSize(Integer.MIN_VALUE);
@@ -189,10 +189,10 @@ public class SageDAO {
 		map.put(line.getName(),line);
 
 		SageTerm dataset = new SageTerm();
-		dataset.setName("dataset_name");
+		dataset.setName("data_set");
 		dataset.setDataType("text");
 		dataset.setDisplayName("Data Set");
-		dataset.setDefinition("Name of the data set this image is part of");
+		dataset.setDefinition("Identifier of the data set");
 		map.put(dataset.getName(),dataset);
 		
 		return map;

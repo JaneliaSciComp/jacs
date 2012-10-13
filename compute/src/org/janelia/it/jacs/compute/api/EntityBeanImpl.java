@@ -1,7 +1,10 @@
 
 package org.janelia.it.jacs.compute.api;
 
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -16,6 +19,7 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
@@ -543,6 +547,26 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         }
     }
 
+    public Entity annexEntityTree(Entity entity, User newOwner) throws ComputeException {
+    	if (!entity.getUser().getUserId().equals(newOwner.getUserId())) {
+        	_logger.info(newOwner.getUserLogin()+" is taking over entity "+entity.getName()+
+        			" (id="+entity.getId()+") from "+entity.getUser().getUserLogin());
+        	entity.setUser(newOwner);
+        	saveOrUpdateEntity(entity);
+    	}
+    	loadLazyEntity(entity, false);
+    	for(EntityData ed : entity.getEntityData()) {
+    		if (!ed.getUser().getUserId().equals(ed.getUser().getUserId())) {
+	    		ed.setUser(newOwner);
+	    		saveOrUpdateEntityData(ed);
+    		}
+    		if (ed.getChildEntity()!=null) {
+    			annexEntityTree(ed.getChildEntity(), newOwner);
+    		}
+    	}
+    	return entity;
+    }
+    
     public void setupEntityTypes() {
         try {
             _annotationDAO.setupEntityTypes();

@@ -29,6 +29,12 @@ public class InitSampleAttributesService extends AbstractEntityService {
     		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
     	}
     	
+    	if (!EntityConstants.TYPE_SAMPLE.equals(sampleEntity.getEntityType().getName())) {
+    		throw new IllegalArgumentException("Entity is not a sample: "+sampleEntityId);
+    	}
+    	
+    	logger.info("Retrieved sample: "+sampleEntity.getName()+" (id="+sampleEntityId+")");
+    	
     	String chanSpec = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
     	if (chanSpec==null) {
     		chanSpec = DEFAULT_CHANNEL_SPEC;

@@ -7,6 +7,7 @@ import java.util.*;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
+import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -379,14 +380,37 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     /**
      * Find and return the child Sample entity
      */
-    protected Entity findExistingSample(String sampleIdentifier) {
+    protected Entity findExistingSample(String sampleIdentifier) throws ComputeException {
 
     	List<Entity> matchingSamples = entityBean.getUserEntitiesByNameAndTypeName(user.getUserLogin(), 
     			sampleIdentifier, EntityConstants.TYPE_SAMPLE);
     	
     	if (matchingSamples.isEmpty()) {
-            // Could not find sample child entity
-    		return null;
+
+    		if ("system".equals(user.getUserLogin())) {
+    			// System cannot steal samples from others
+    			return null;
+    		}
+    		
+        	matchingSamples = entityBean.getUserEntitiesByNameAndTypeName(null, 
+        			sampleIdentifier, EntityConstants.TYPE_SAMPLE);
+        	
+        	if (matchingSamples.isEmpty()) {
+	            // Could not find sample child entity
+	    		return null;
+        	}
+
+        	Entity matchingSample = null;
+        	for(Entity sample : matchingSamples) {
+        		if ("system".equals(sample.getUser().getUserLogin())) {
+        			// Can only steal samples from system user
+        			matchingSample = sample;
+        		}
+        	}
+        	
+        	if (matchingSample != null) {
+        		return entityBean.annexEntityTree(matchingSample, user);	
+        	}
     	}
     	
     	if (matchingSamples.size()>1) {

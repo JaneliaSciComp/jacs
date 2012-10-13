@@ -3,9 +3,9 @@ package org.janelia.it.jacs.compute.service.entity.sample;
 import java.io.File;
 import java.util.List;
 
-import org.apache.tools.ant.util.FileUtils;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
+import org.janelia.it.jacs.compute.util.FileUtils;
 
 /**
  * Cleans up the merged tiles to save on disk space.
@@ -28,7 +28,7 @@ public class CleanUpMergedTilesService extends AbstractEntityService {
     	List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
     	for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
     		File file = new File(mergedLsmPair.getMergedFilepath());
-    		FileUtils.delete(file);
+    		FileUtils.forceDelete(file);
     	}
     }
 }

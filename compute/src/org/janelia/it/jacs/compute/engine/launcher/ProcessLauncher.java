@@ -38,12 +38,12 @@ public class ProcessLauncher extends SeriesLauncher {
     protected void launchAction(ActionDef actionDef, IProcessData processData) throws LauncherException, ServiceException {
         try {
             Long processId = (Long) processData.getMandatoryItem(IProcessData.PROCESS_ID);
-            _logger.info("Process " + processId + " started");
             ProcessDef processDef = (ProcessDef) actionDef;
+            _logger.info("Process " + processDef.getName() + " (id="+processId+") started");
             enactActionPreProcessing(processData);
             launchSeries(processDef, processData);
             enactActionPostProcessing(processData/*, processDef*/);
-            _logger.info("Process " + processId + " finished");
+            _logger.info("Process " + processDef.getName() + " (id="+processId+") finished");
         }
         catch (ServiceException e) {
             recordProcessError(processData, e);

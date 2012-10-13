@@ -22,19 +22,15 @@ public class GetPipelinesForDataSetService extends AbstractEntityService {
     		throw new IllegalArgumentException("DATA_SET_IDENTIFIER may not be null");
     	}
     	
-    	List<Entity> dataSets = entityBean.getEntitiesWithAttributeValue(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier);
+    	Entity dataSet = annotationBean.getUserDataSetByIdentifier(dataSetIdentifier);
     	
-    	if (dataSets.isEmpty()) {
-    		throw new IllegalArgumentException("Could not find a data set with identifier="+dataSetIdentifier);
+    	if (dataSet==null) {
+    		throw new IllegalArgumentException("Data does not exist with identifier: "+dataSetIdentifier);
     	}
-    	
-    	if (dataSets.size()>1) {
-    		logger.warn("Found more than one data set with identifier="+dataSetIdentifier);
+    	else {
+        	String pipelineProcess = "PipelineConfig_"+dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);
+        	logger.info("Putting '"+pipelineProcess+"' in PIPELINE_PROCESS_NAME");
+        	processData.putItem("PIPELINE_PROCESS_NAME", Task.listOfStringsFromCsvString(pipelineProcess));	
     	}
-    	
-    	Entity dataSet = dataSets.get(0);
-    	String pipelineProcess = "PipelineConfig_"+dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);
-    	logger.info("Putting '"+pipelineProcess+"' in PIPELINE_PROCESS_NAME");
-    	processData.putItem("PIPELINE_PROCESS_NAME", Task.listOfStringsFromCsvString(pipelineProcess));
     }
 }

@@ -325,17 +325,37 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
-    public void runSamplePipeline(String sampleEntityId) {
+    public void runSampleFolder(String folderId) {
         try {
-        	Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
-        	if (sampleEntity==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
+        	Entity entity = EJBFactory.getLocalEntityBean().getEntityById(folderId);
+        	if (entity==null) throw new IllegalArgumentException("Entity with id "+folderId+" does not exist");
+    		EJBFactory.getLocalEntityBean().loadLazyEntity(entity, false);
+    		for(Entity child : entity.getChildren()) {
+    			if (EntityConstants.TYPE_FOLDER.equals(child.getEntityType().getName())) {
+    				runSampleFolder(child.getId().toString());
+    			}
+    			else if (EntityConstants.TYPE_SAMPLE.equals(child.getEntityType().getName())) {
+    				logger.info("Running sample: "+child.getName()+" (id="+child.getId()+")");
+    				runSamplePipelines(child.getId().toString());	
+    				Thread.sleep(1000); // Sleep so that the logs are a little cleaner
+    			}
+    		}
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void runSamplePipelines(String sampleId) {
+        try {
+        	Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleId);
+        	if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleId+" does not exist");
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null)); 
-        	Task task = new GenericTask(new HashSet<Node>(), sampleEntity.getUser().getUserLogin(), new ArrayList<Event>(), 
+        	taskParameters.add(new TaskParameter("sample entity id", sampleId, null)); 
+        	Task task = new GenericTask(new HashSet<Node>(), sample.getUser().getUserLogin(), new ArrayList<Event>(), 
         			taskParameters, "flylightSampleAllPipelines", "Flylight Sample All Pipelines");
             task.setJobName("Flylight Sample All Pipelines Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("FlylightSampleAllPipelines", task.getObjectId());
+            EJBFactory.getLocalComputeBean().submitJob("GSPS_CompleteSamplePipeline", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }

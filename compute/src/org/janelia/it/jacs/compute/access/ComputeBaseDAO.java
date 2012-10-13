@@ -83,7 +83,7 @@ public class ComputeBaseDAO {
     public void recordProcessSuccess(ProcessDef processDef, Long processId) {
         try {
             if (_logger.isInfoEnabled()) {
-                _logger.info("********************************\nProcess: " + processDef.getName() + " Id:" + processId + " completed successfully\n");
+                _logger.info("Process: " + processDef.getName() + " Id:" + processId + " completed successfully");
             }
             updateTaskStatus(processId, Event.COMPLETED_EVENT, "Process " + processId + " completed successfully");
         }

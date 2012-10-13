@@ -11,6 +11,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
  * Returns all the samples for the task owner which match the parameters. Parameters must be provided in the ProcessData:
  *   OUTVAR_ENTITY_ID (The output variable to populate with a List of Entities)
  *   RUN_MODE (Mode to use for including entities)
+ *     NONE - Don't run any samples.
  *     NEW - Include Samples which have no Pipeline Runs. 
  *     INCOMPLETE - Include Samples which have no Pipeline Runs, and Samples which have errors in their latest Pipeline Runs.
  *     ALL - Include every Sample.
@@ -19,6 +20,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
  */
 public class SampleTraversalService extends AbstractEntityService {
 
+	public static final String RUN_MODE_NONE = "NONE";
 	public static final String RUN_MODE_NEW = "NEW";
 	public static final String RUN_MODE_INCOMPLETE = "INCOMPLETE";
 	public static final String RUN_MODE_ALL = "ALL";
@@ -38,17 +40,21 @@ public class SampleTraversalService extends AbstractEntityService {
     	}
     	
         this.runMode = (String)processData.getItem("RUN_MODE");
-
-    	logger.info("Searching for Samples owned by "+user.getUserLogin()+"...");
-        List<Entity> entities = entityBean.getUserEntitiesByTypeName(user.getUserLogin(), EntityConstants.TYPE_SAMPLE);
-
-		logger.info("Found "+entities.size()+" Samples. Filtering...");
-		List outObjects = new ArrayList();
-    	for(Entity entity : entities) {
-    		if (includeSample(entity)) {
-    			outObjects.add(outputObjects ? entity : entity.getId());	
-    		}
-    	}
+        List outObjects = new ArrayList();
+        
+        if (!RUN_MODE_NONE.equals(runMode)) {
+        	
+	    	logger.info("Searching for Samples owned by "+user.getUserLogin()+"...");
+	        List<Entity> entities = entityBean.getUserEntitiesByTypeName(user.getUserLogin(), EntityConstants.TYPE_SAMPLE);
+	
+			logger.info("Found "+entities.size()+" Samples. Filtering...");
+			
+	    	for(Entity entity : entities) {
+	    		if (includeSample(entity)) {
+	    			outObjects.add(outputObjects ? entity : entity.getId());	
+	    		}
+	    	}
+        }
 
 		logger.info("Putting "+outObjects.size()+" ids in "+outvar);
     	processData.putItem(outvar, outObjects);

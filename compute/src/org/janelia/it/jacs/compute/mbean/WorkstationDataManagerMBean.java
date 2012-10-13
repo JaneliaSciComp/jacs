@@ -52,7 +52,8 @@ public interface WorkstationDataManagerMBean {
     
     public void runAllDataSetPipelines(String runMode);
     public void runUserDataSetPipelines(String username, String runMode);
-    public void runSamplePipeline(String sampleEntityId);
+    public void runSampleFolder(String folderId);
+    public void runSamplePipelines(String sampleId);
     public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName);
     
     // Pipelines for FlyLight Screen Data

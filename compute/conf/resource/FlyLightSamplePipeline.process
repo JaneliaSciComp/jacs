@@ -93,9 +93,8 @@
 		    </operation>
 		    
 		    <!-- Copy the files, and update the paths in the merge parameters -->
-	        <sequence name="Copy Lsms" waitForAsync="true">
-		        <operation name="Copy Lsms" processor="queue/gridSubmitAndWait">
-		            <input name="iservice" value="org.janelia.it.jacs.compute.service.entity.sample.CopyLsmsFromArchiveService"/>
+	        <sequence name="Copy Lsms" waitForAsync="true" processor="queue/archiveAccess">
+		        <operation name="Copy Lsms" processor="org.janelia.it.jacs.compute.service.entity.sample.CopyLsmsFromArchiveService">
 		    		<input name="RESULT_FILE_NODE" value="$V{LSM_FILE_NODE}"/>
 					<input name="BULK_MERGE_PARAMETERS"/>
 					<output name="BULK_MERGE_PARAMETERS"/>
@@ -198,7 +197,7 @@
 	    </operation>
     	
 	    <!-- Clean up merged files -->
-		<operation name="Remove merged files" processor="org.janelia.it.jacs.compute.service.entity.sample.CleanUpMergedFilesService">
+		<operation name="Remove merged files" processor="org.janelia.it.jacs.compute.service.entity.sample.CleanUpMergedTilesService">
 			<input name="BULK_MERGE_PARAMETERS"/>
 	    </operation>
 	    

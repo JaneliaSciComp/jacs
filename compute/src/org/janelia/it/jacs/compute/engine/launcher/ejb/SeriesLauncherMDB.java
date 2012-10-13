@@ -31,8 +31,8 @@ public abstract class SeriesLauncherMDB implements MessageListener {
     private static Logger logger = Logger.getLogger(SeriesLauncherMDB.class);
 
     public void onMessage(Message message) {
-        if (logger.isInfoEnabled()) {
-            logger.info(getClass().getName() + " onMessage...");
+        if (logger.isDebugEnabled()) {
+            logger.debug(getClass().getName() + " onMessage...");
         }
         processMessage(message);
     }
