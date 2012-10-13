@@ -25,9 +25,13 @@ public class CleanUpMergedTilesService extends AbstractEntityService {
         	throw new IllegalArgumentException("Input parameter BULK_MERGE_PARAMETERS must be a List");
         }
     	
+        String stitchedFile = (String)processData.getItem("STITCHED_FILENAME");
+    	
     	List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
     	for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
     		File file = new File(mergedLsmPair.getMergedFilepath());
+    		if (file.getAbsolutePath().equals(stitchedFile)) continue; // never delete the stitched file
+    		logger.info("Cleaning up merged tile: "+file.getAbsolutePath());
     		FileUtils.forceDelete(file);
     	}
     }
