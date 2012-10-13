@@ -3,9 +3,9 @@
 use Getopt::Std;
 use strict;
 
-our ($opt_v, $opt_b, $opt_l, $opt_t, $opt_w, $opt_i);
+our ($opt_v, $opt_b, $opt_l, $opt_t, $opt_w, $opt_i, $opt_r);
 
-getopts("v:b:l:t:w:i:") || &usage("");
+getopts("v:b:l:t:w:i:r:") || &usage("");
 
 my $v3d         = $opt_v;
 my $ba          = $opt_b;
@@ -13,6 +13,7 @@ my $lobeseg     = $opt_l;
 my $templateDir = $opt_t;
 my $workingDir  = $opt_w;
 my $inputStack  = $opt_i;
+my $opticalRes  = $opt_r;
 
 if (! -e $v3d) {
     &usage("Could not locate v3d progam at location $v3d");;
@@ -58,7 +59,7 @@ exit;
 
 sub usage {
     print STDERR $_[0] . "\n";
-    die "Usage: -v <v3d exe path> -b <brain_aligner path> -l <lobeseg path> -t <template dir> -w <working dir> -i <input stack> \n";
+    die "Usage: -v <v3d exe path> -b <brain_aligner path> -l <lobeseg path> -t <template dir> -w <working dir> -i <input stack> -r <opticalRes>\n";
 }
 
 sub getBaseNameFromFile {

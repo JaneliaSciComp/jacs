@@ -69,7 +69,7 @@ exit;
 
 sub usage {
     print STDERR $_[0] . "\n";
-    die "Usage: -v <v3d exe path> -b <brain_aligner path> -t <template dir> -w <working dir> -i <input stack> \n";
+    die "Usage: -v <v3d exe path> -b <brain_aligner path> -t <template dir> -w <working dir> -i <input stack> -r <opticalRes>\n";
 }
 
 sub sanitize {
@@ -210,7 +210,7 @@ sub generateOutputFiles {
     die "Could not find result file $resultFile\n" unless (-e $resultFile);
 
     #my $cmd = "$v3d -cmd image-loader -convert $resultFile $workingDir\/Aligned\.v3dpbd";
-    $cmd = "mv $resultFile $workingDir\/Aligned\.v3draw";
+    my $cmd = "mv $resultFile $workingDir\/Aligned\.v3draw";
     #$cmd = "$v3d -cmd image-loader -mapchannels $resultFile $workingDir\/Aligned\.v3draw \"3,0,0,1,1,2,2,3\"";
     print "cmd=$cmd\n";
     system( "$cmd 1>$logFile 2>&1" );
