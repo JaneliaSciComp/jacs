@@ -57,13 +57,13 @@ public class InitAlignmentParametersService extends AbstractEntityService {
     	populateChildren(sampleEntity);
 
     	Entity supportingFiles = EntityUtils.getSupportingData(sampleEntity);
-    	if (supportingFiles==null) return consensus; 
+    	if (supportingFiles==null) return null; 
         populateChildren(supportingFiles);
 
 		for(Entity imageTile : supportingFiles.getChildrenOfType(EntityConstants.TYPE_IMAGE_TILE)) {		
             populateChildren(imageTile);
 
-    		for(Entity lsmStack : supportingFiles.getChildrenOfType(EntityConstants.TYPE_LSM_STACK)) {
+    		for(Entity lsmStack : imageTile.getChildrenOfType(EntityConstants.TYPE_LSM_STACK)) {
     			String opticalRes = lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
     			if (consensus==null) {
     				consensus = opticalRes;
