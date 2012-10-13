@@ -60,7 +60,8 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
 
         opticalResolution = (String)processData.getItem("OPTICAL_RESOLUTION");
         if (opticalResolution==null) {
-        	throw new ServiceException("Input parameter OPTICAL_RESOLUTION may not be null");
+        	logger.warn("Input parameter OPTICAL_RESOLUTION is not null");
+        	opticalResolution = "";
         }
         
         File outputFile = new File(outputFileNode.getDirectoryPath(),"Aligned.v3draw");
