@@ -59,9 +59,7 @@ public class SequenceLauncher extends SeriesLauncher {
             		launchOperation((OperationDef) actionDef, pd);	
             	}
                 finally {
-	                if (actionDef.getProcessorType() != ProcessorType.LOCAL_MDB) {
-	                    DataExtractor.copyData(pd, processData, actionDef.getOutputParameters());
-	                }
+                    DataExtractor.copyData(pd, processData, actionDef.getOutputParameters());
                 }
             }
         }

@@ -142,9 +142,7 @@ public abstract class SeriesLauncher implements ILauncher {
             		launchSeriesChildren(seriesDef, pd);	
             	}
                 finally {
-	                if (seriesDef.getProcessorType() != ProcessorType.LOCAL_MDB) {
-	                    DataExtractor.copyData(pd, processData, seriesDef.getOutputParameters());
-	                }
+                    DataExtractor.copyData(pd, processData, seriesDef.getOutputParameters());
                 }
             }
             waitForAsyncActions(processData, seriesDef);
