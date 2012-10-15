@@ -3,7 +3,7 @@
       aligning, and running analysis algorithms such as neuron separation. 
  -->
  <process name="FlyLight Sample Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending">
-	<sequence>
+	<sequence name="Main">
 	    
 	    <!-- Import variables from the MCFOSamplePipelineTask -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
@@ -19,12 +19,15 @@
             <input name="PROCESS_VARIABLE_5" value="ALIGNMENT_ALGORITHMS"/>
             <input name="TASK_PARAMETER_6" value="analysis algorithms"/>
             <input name="PROCESS_VARIABLE_6" value="ANALYSIS_ALGORITHMS"/>
+            <input name="TASK_PARAMETER_7" value="pipeline process"/>
+            <input name="PROCESS_VARIABLE_7" value="PIPELINE_PROCESS"/>
 	        <output name="SAMPLE_ENTITY_ID"/>
 	        <output name="PIPELINE_NAME"/>
 	        <output name="MERGE_ALGORITHMS"/>
 	        <output name="STITCH_ALGORITHMS"/>
 	        <output name="ALIGNMENT_ALGORITHMS"/>
 	        <output name="ANALYSIS_ALGORITHMS"/>
+	        <output name="PIPELINE_PROCESS"/>
 	    </operation>
 	    
 	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
@@ -56,6 +59,7 @@
 	    <operation name="Create Pipeline Run Entity" processor="org.janelia.it.jacs.compute.service.entity.sample.CreatePipelineRunEntityService">
 			<input name="SAMPLE_ENTITY_ID"/>
 			<input name="PIPELINE_NAME"/>
+			<input name="PIPELINE_PROCESS"/>
 			<output name="PIPELINE_RUN_ENTITY_ID"/>
 		</operation>
 		
@@ -71,16 +75,20 @@
 	    </operation>
 	    
 	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
-	    <operation name="Init Processing Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitSampleProcessingParametersService">
-			<input name="SAMPLE_RESULT_FILE_NODE"/>
-	        <input name="MERGE_RESULT_FILE_NODE"/>
-	        <input name="STITCH_RESULT_FILE_NODE"/>
-			<input name="SAMPLE_ENTITY_ID"/>
-			<output name="BULK_MERGE_PARAMETERS"/>
-			<output name="STITCHED_FILENAME"/>
-			<output name="STACK_FILENAMES"/>
-			<output name="COPY_FROM_ARCHIVE"/>
-		</operation>
+	    <sequence name="Wait Async" waitForAsync="true">
+	        <sequence name="Limit Archive Access" processor="queue/archiveAccess">
+			    <operation name="Init Processing Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitSampleProcessingParametersService">
+					<input name="SAMPLE_RESULT_FILE_NODE"/>
+			        <input name="MERGE_RESULT_FILE_NODE"/>
+			        <input name="STITCH_RESULT_FILE_NODE"/>
+					<input name="SAMPLE_ENTITY_ID"/>
+					<output name="BULK_MERGE_PARAMETERS"/>
+					<output name="STITCHED_FILENAME"/>
+					<output name="STACK_FILENAMES"/>
+					<output name="COPY_FROM_ARCHIVE"/>
+				</operation>
+			</sequence>
+	    </sequence>
 	    
     	<sequence if="COPY_FROM_ARCHIVE=true">
 		    
@@ -93,12 +101,14 @@
 		    </operation>
 		    
 		    <!-- Copy the files, and update the paths in the merge parameters -->
-	        <sequence name="Copy Lsms" waitForAsync="true" processor="queue/archiveAccess">
-		        <operation name="Copy Lsms" processor="org.janelia.it.jacs.compute.service.entity.sample.CopyLsmsFromArchiveService">
-		    		<input name="RESULT_FILE_NODE" value="$V{LSM_FILE_NODE}"/>
-					<input name="BULK_MERGE_PARAMETERS"/>
-					<output name="BULK_MERGE_PARAMETERS"/>
-		        </operation>
+		    <sequence name="Wait Async" waitForAsync="true">
+	        	<sequence name="Limit Archive Access" processor="queue/archiveAccess">
+			        <operation name="Copy Lsms" processor="org.janelia.it.jacs.compute.service.entity.sample.CopyLsmsFromArchiveService">
+			    		<input name="RESULT_FILE_NODE" value="$V{LSM_FILE_NODE}"/>
+						<input name="BULK_MERGE_PARAMETERS"/>
+						<output name="BULK_MERGE_PARAMETERS"/>
+			        </operation>
+		        </sequence>
 	        </sequence>
 		
         </sequence>
@@ -187,6 +197,13 @@
 	        </operation>
         </sequence>
         
+    	
+	    <!-- Clean up merged files, unless there is one tile that is being used as the stitched image -->
+		<operation name="Remove merged files" processor="org.janelia.it.jacs.compute.service.entity.sample.CleanUpMergedTilesService">
+			<input name="BULK_MERGE_PARAMETERS"/>
+			<input name="STITCHED_FILENAME"/>
+	    </operation>
+	    
 	    <!-- Load the sample analysis results into the database -->
 		<operation name="Discover Sample Processing Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SupportingFilesDiscoveryService">
 			<input name="ROOT_FILE_NODE" value="$V{SAMPLE_RESULT_FILE_NODE}"/>
@@ -194,11 +211,6 @@
 			<input name="RESULT_ENTITY_TYPE" value="Sample Processing Result"/>
 			<input name="RESULT_ENTITY_NAME" value="Sample Processing"/>
 			<output name="RESULT_ENTITY_ID"/>
-	    </operation>
-    	
-	    <!-- Clean up merged files -->
-		<operation name="Remove merged files" processor="org.janelia.it.jacs.compute.service.entity.sample.CleanUpMergedTilesService">
-			<input name="BULK_MERGE_PARAMETERS"/>
 	    </operation>
 	    
 	    <!-- Register MIP images -->

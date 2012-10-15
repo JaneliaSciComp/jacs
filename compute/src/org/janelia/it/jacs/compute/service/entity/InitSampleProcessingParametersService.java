@@ -20,7 +20,7 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
 public class InitSampleProcessingParametersService extends AbstractEntityService {
 
     public void execute() throws Exception {
-        	
+        
     	FileNode sampleResultNode = (FileNode)processData.getItem("SAMPLE_RESULT_FILE_NODE");
     	if (sampleResultNode == null) {
     		throw new IllegalArgumentException("SAMPLE_RESULT_FILE_NODE may not be null");
@@ -45,6 +45,8 @@ public class InitSampleProcessingParametersService extends AbstractEntityService
     	if (sampleEntity == null) {
     		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
     	}
+    	
+    	logger.info("Running InitSampleProcessingParametersService for sampleId="+sampleEntityId);
     	
     	List<MergedLsmPair> mergedLsmPairs = new ArrayList<MergedLsmPair>();
     	
@@ -120,6 +122,11 @@ public class InitSampleProcessingParametersService extends AbstractEntityService
     	for (MergedLsmPair mergedLsmPair : mergedLsmPairs) {
     		stackFilenames.add(mergedLsmPair.getMergedFilepath());
     	}
+    	
+    	logger.info("Putting "+stitchedFile.getAbsolutePath()+" in STITCHED_FILENAME");
+    	logger.info("Putting "+mergedLsmPairs.size()+" items in BULK_MERGE_PARAMETERS");
+    	logger.info("Putting "+stackFilenames.size()+" items in STACK_FILENAMES");
+    	logger.info("Putting "+archived+" in COPY_FROM_ARCHIVE");
     	
     	processData.putItem("STITCHED_FILENAME", stitchedFile.getAbsolutePath());
     	processData.putItem("BULK_MERGE_PARAMETERS", mergedLsmPairs);

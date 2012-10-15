@@ -4,95 +4,70 @@ import java.io.File;
 import java.util.*;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.*;
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.engine.service.IService;
-import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
-import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
+import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.entity.cv.PipelineProcess;
-import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
+import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
 
 /**
  * Upgrade the model to use the most current entity structure.
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class MCFODataUpgradeService implements IService {
+public class MCFODataUpgradeService extends AbstractEntityService {
 
 	private static final Logger logger = Logger.getLogger(MCFODataUpgradeService.class);
 	
     public transient static final String PARAM_testRun = "is test run";
 	
-    protected Task task;
-    protected String username;
-    protected AnnotationBeanLocal annotationBean;
-    protected EntityBeanLocal entityBean;
-    protected ComputeBeanLocal computeBean;
-    protected FileDiscoveryHelper helper;
-    
     protected int numSamples;
     protected int numChanges;
     
     private Set<Long> visited = new HashSet<Long>();
     private boolean isDebug = false;
+    private String username;
     
-    public void execute(IProcessData processData) throws ServiceException {
-
-    	try {
-            task = ProcessDataHelper.getTask(processData);
-            annotationBean = EJBFactory.getLocalAnnotationBean();
-            entityBean = EJBFactory.getLocalEntityBean();
-            computeBean = EJBFactory.getLocalComputeBean();
-            username = task.getOwner();
-            isDebug = Boolean.parseBoolean(task.getParameter(PARAM_testRun));
-            helper = new FileDiscoveryHelper(entityBean, computeBean, username);
+    public void execute() throws Exception {
             
-            final String serverVersion = computeBean.getAppVersion();
-            logger.info("Updating data model to latest version: "+serverVersion);
-            
-            if (isDebug) {
-            	logger.info("This is a test run. No entities will be moved or deleted.");
-            }
-            else {
-            	logger.info("This is the real thing. Entities will be moved and/or deleted!");
-            }
-            
-            EntityType lsmStackPairType = entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK_PAIR);
-            if (lsmStackPairType!=null) {
-            	logger.info("Renaming '"+EntityConstants.TYPE_LSM_STACK_PAIR+"' to '"+EntityConstants.TYPE_IMAGE_TILE+"'");
-	            lsmStackPairType.setName(EntityConstants.TYPE_IMAGE_TILE);
-	            if (!isDebug) {
-	            	computeBean.genericSave(lsmStackPairType);
-	            }
-            }
-            
-            logger.info("Adding data sets...");
-            if ("asoy".equals(username)) {
-            	createDataSet("MB Flp-out 63X", PipelineProcess.YoshiMB63x, true);
-            	createDataSet("MB LexA-GAL4 63x", PipelineProcess.YoshiMB63x, true);
-            }
-            if ("leetlab".equals(username)) {
-            	createDataSet("Pan Lineage 40x", PipelineProcess.LeetWholeBrain40x, true);
-            	createDataSet("Central Brain 63x", PipelineProcess.LeetCentralBrain63x, true);
-            }
-            else if ("wolfft".equals(username)) {
-            	createDataSet("Central Complex Tanya", PipelineProcess.FlyLightUnaligned, false);
-            }
-            
-            logger.info("Processing samples...");
-            processSamples();
-			logger.info("Processed "+numSamples+" samples.");
-    	}
-        catch (Exception e) {
-			logger.info("Processed "+numSamples+" samples before dying.");
-        	if (e instanceof ServiceException) {
-            	throw (ServiceException)e;
-            }
-            throw new ServiceException("Error running MCFODataUpgradeService", e);
+    	this.username = user.getUserLogin();
+    	
+        final String serverVersion = computeBean.getAppVersion();
+        logger.info("Updating data model to latest version: "+serverVersion);
+        
+        if (isDebug) {
+        	logger.info("This is a test run. No entities will be moved or deleted.");
         }
+        else {
+        	logger.info("This is the real thing. Entities will be moved and/or deleted!");
+        }
+        
+        EntityType lsmStackPairType = entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK_PAIR);
+        if (lsmStackPairType!=null) {
+        	logger.info("Renaming '"+EntityConstants.TYPE_LSM_STACK_PAIR+"' to '"+EntityConstants.TYPE_IMAGE_TILE+"'");
+            lsmStackPairType.setName(EntityConstants.TYPE_IMAGE_TILE);
+            if (!isDebug) {
+            	computeBean.genericSave(lsmStackPairType);
+            }
+        }
+        
+        logger.info("Adding data sets...");
+        if ("asoy".equals(username)) {
+        	createDataSet("MB Flp-out 63X", PipelineProcess.YoshiMB63x, true);
+        	createDataSet("MB LexA-GAL4 63x", PipelineProcess.YoshiMB63x, true);
+        }
+        if ("leetlab".equals(username)) {
+        	createDataSet("Pan Lineage 40x", PipelineProcess.LeetWholeBrain40x, true);
+        	createDataSet("Central Brain 63x", PipelineProcess.LeetCentralBrain63x, true);
+        }
+        else if ("wolfft".equals(username)) {
+        	createDataSet("Central Complex Tanya", PipelineProcess.FlyLightUnaligned, false);
+        }
+        
+        logger.info("Processing samples...");
+        processSamples();
+		logger.info("Processed "+numSamples+" samples.");
     }
     
     private void createDataSet(String dataSetName, PipelineProcess process, boolean sageSync) throws ComputeException {
@@ -137,6 +112,7 @@ public class MCFODataUpgradeService implements IService {
 		migrateTilelessLsms(sample);
 		migratePairsToTiles(sample);
 		migrateSampleStructure(sample);
+		cleanMergedFiles(sample);
     }
     
     /**
@@ -388,9 +364,9 @@ public class MCFODataUpgradeService implements IService {
     	pipelineRun.setUpdatedDate(lastDate);
     	entityBean.saveOrUpdateEntity(pipelineRun);
     	
-		helper.setImage(pipelineRun, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMIP);
-		helper.setImage(pipelineRun, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, referenceMIP);	
-		helper.setDefault2dImage(pipelineRun, defaultImage);
+    	entityHelper.setImage(pipelineRun, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMIP);
+		entityHelper.setImage(pipelineRun, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, referenceMIP);	
+		entityHelper.setDefault2dImage(pipelineRun, defaultImage);
     	
 		Collections.reverse(results);
 		Collections.reverse(sepResults);
@@ -435,10 +411,44 @@ public class MCFODataUpgradeService implements IService {
 		logger.info("    Moved results to pipeline run, id="+pipelineRun.getId()+" name="+pipelineRun.getName());
     }
 
-    private Entity populateChildren(Entity entity) {
-    	if (entity==null || EntityUtils.areLoaded(entity.getEntityData())) return entity;
-		EntityUtils.replaceChildNodes(entity, entityBean.getChildEntities(entity.getId()));
-		return entity;
+    private void cleanMergedFiles(Entity sample) throws ComputeException {
+    	
+    	EntityVistationBuilder iterator = new EntityVistationBuilder(entityLoader);
+    	iterator.startAt(sample)
+			.childrenOfType(EntityConstants.TYPE_PIPELINE_RUN)
+			.childrenOfType(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)
+			.childOfType(EntityConstants.TYPE_SUPPORTING_DATA)
+			.childrenOfAttr(EntityConstants.ATTRIBUTE_ENTITY).visit(new EntityVisitor() {
+				@Override
+				public void visit(EntityData entityData) {
+						
+					Entity entity = entityData.getChildEntity();
+					if (entity.getName().startsWith("stitched") && (entity.getName().endsWith("v3dpbd")||entity.getName().endsWith("v3draw"))) {
+						
+					}
+					
+
+				}
+			});
+    	
+		
+//    	populateChildren(sample);
+//    	
+//    	for (Entity pipelineRun : sample.getChildrenOfType(EntityConstants.TYPE_PIPELINE_RUN)) {
+//    		populateChildren(pipelineRun);
+//    		
+//        	for (Entity spResult : sample.getChildrenOfType(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)) {
+//        		populateChildren(spResult);
+//        		Entity supportingData = EntityUtils.getSupportingData(spResult);
+//        		if (supportingData!=null) {
+//        		
+//        			for(EntityData ed : supportingData.getEntityData()) {
+//        			
+//        			}
+//        		}
+//        	}
+//    	}
+    	
     }
     
 }

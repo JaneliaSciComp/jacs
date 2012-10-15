@@ -13,6 +13,8 @@
             <input name="TASK_PARAMETER_VALUE_4" value="WHOLE_40X"/>
             <input name="TASK_PARAMETER_5" value="analysis algorithms"/>
             <input name="TASK_PARAMETER_VALUE_5" value=""/>
+            <input name="TASK_PARAMETER_6" value="pipeline process"/>
+            <input name="TASK_PARAMETER_VALUE_6" value="LeetWholeBrain40x"/>
 	    </operation>
 	
         <include name="Pipeline" process="FlyLightSamplePipeline"/>

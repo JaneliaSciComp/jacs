@@ -12,7 +12,7 @@
 	    </operation>
 	    
 	    <!-- Move the files over if necessary -->
-	    <sequence name="Synchronize files from archive" startEvent="running">
+        <sequence name="Limit Archive Access" waitForAsync="true" processor="queue/archiveAccess" startEvent="running">
 			<operation name="Copy files from archive and move them into place" processor="org.janelia.it.jacs.compute.service.utility.SyncFromArchiveService">
 				<input name="FILE_PATH"/>
 			</operation>

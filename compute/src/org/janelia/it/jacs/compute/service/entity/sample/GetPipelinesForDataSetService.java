@@ -1,7 +1,5 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import java.util.List;
-
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;

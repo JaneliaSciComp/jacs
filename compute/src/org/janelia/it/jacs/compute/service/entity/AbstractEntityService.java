@@ -9,10 +9,10 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.User;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Base class for services dealing with entities.
@@ -29,6 +29,7 @@ public abstract class AbstractEntityService implements IService {
     protected AnnotationBeanLocal annotationBean;
     protected User user;
 	protected EntityHelper entityHelper;
+	protected EntityBeanEntityLoader entityLoader;
 	
 	public void execute(IProcessData processData) throws ServiceException {
         try {
@@ -41,6 +42,7 @@ public abstract class AbstractEntityService implements IService {
 	        this.annotationBean = EJBFactory.getLocalAnnotationBean();
 	        this.user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
 	        this.entityHelper = new EntityHelper(entityBean, computeBean, user);
+	        this.entityLoader = new EntityBeanEntityLoader(entityBean);
 	        
 	        execute();
         } 
@@ -52,8 +54,6 @@ public abstract class AbstractEntityService implements IService {
 	protected abstract void execute() throws Exception;
 
     protected Entity populateChildren(Entity entity) {
-    	if (entity==null || EntityUtils.areLoaded(entity.getEntityData())) return entity;
-		EntityUtils.replaceChildNodes(entity, entityBean.getChildEntities(entity.getId()));
-		return entity;
+    	return entityLoader.populateChildren(entity);
     }
 }

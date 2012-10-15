@@ -188,10 +188,35 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         	
             tileNum++;
         }
+        
+    	List<ImageTileGroup> tileGroupList = new ArrayList<ImageTileGroup>(tileGroups.values());
+    	
+        // Sort the pairs by their tag name
+        Collections.sort(tileGroupList, new Comparator<ImageTileGroup>() {
+			@Override
+			public int compare(ImageTileGroup o1, ImageTileGroup o2) {
+				return o1.getTag().compareTo(o2.getTag());
+			}
+		});
+        
+        createOrUpdateSamples(sampleIdentifier, dataSetIdentifier, tileGroupList);
+    }
+    
+    protected void createOrUpdateSamples(String sampleIdentifier, String dataSetIdentifier, 
+    		 List<ImageTileGroup> tileGroupList) throws Exception {
+    	createOrUpdateSample(sampleIdentifier, dataSetIdentifier, tileGroupList);
+    }
+    
+    protected Entity createOrUpdateSample(String sampleIdentifier, String dataSetIdentifier, 
+    		List<ImageTileGroup> tileGroupList) throws Exception {
 
+    	if (dataSetIdentifier==null) {
+    		throw new IllegalStateException("Cannot create or update sample without a data set identifier");
+    	}
+    	
         // Figure out the number of channels that should be in the final merged/stitched sample
         int sampleNumSignals = -1;
-        for(ImageTileGroup tileGroup : tileGroups.values()) {
+        for(ImageTileGroup tileGroup : tileGroupList) {
 
         	int tileNumSignals = 0;
         	for(SlideImage slideImage : tileGroup.getImages()) {
@@ -216,40 +241,15 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         // or its the result of a LSM Merge operation, which we assume will add the signal channels and 
         // add a single reference channel at the end. 
         String sampleChannelSpec = null;
-        if (slideGroup.size()==1) {
-        	sampleChannelSpec = slideGroup.get(0).channelSpec;
+        if (tileGroupList.size()==1) {
+        	sampleChannelSpec = tileGroupList.get(0).images.get(0).channelSpec;
         }
         else if (sampleNumSignals>=0) {
     		sampleChannelSpec = getChanSpec(sampleNumSignals);
         }
         
-    	List<ImageTileGroup> tileGroupList = new ArrayList<ImageTileGroup>(tileGroups.values());
-    	
-        // Sort the pairs by their tag name
-        Collections.sort(tileGroupList, new Comparator<ImageTileGroup>() {
-			@Override
-			public int compare(ImageTileGroup o1, ImageTileGroup o2) {
-				return o1.getTag().compareTo(o2.getTag());
-			}
-		});
-        
-        createOrUpdateSamples(sampleIdentifier, dataSetIdentifier, sampleChannelSpec, tileGroupList);
-    }
-    
-    protected void createOrUpdateSamples(String sampleIdentifier, String dataSetIdentifier, 
-    		String sampleChannelSpec, List<ImageTileGroup> tileGroupList) throws Exception {
-    	createOrUpdateSample(sampleIdentifier, dataSetIdentifier, sampleChannelSpec, tileGroupList);
-    }
-    
-    protected Entity createOrUpdateSample(String sampleIdentifier, String dataSetIdentifier, 
-    		String sampleChannelSpec, List<ImageTileGroup> tileGroupList) throws Exception {
-
-    	if (dataSetIdentifier==null) {
-    		throw new IllegalStateException("Cannot create or update sample without a data set identifier");
-    	}
-    	
+    	// Find the sample, if it exists
         Entity sample = findExistingSample(sampleIdentifier);
-        
         if (sample == null) {
         	logger.info("Did not find sample "+sampleIdentifier);
 	        sample = createSample(sampleIdentifier, sampleChannelSpec, dataSetIdentifier);

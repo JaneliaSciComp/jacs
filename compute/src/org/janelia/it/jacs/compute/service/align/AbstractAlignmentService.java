@@ -32,8 +32,10 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
 
     protected FileNode outputFileNode;
     protected FileNode alignFileNode;
+    protected File outputFile;
     protected String inputFilename;
     protected String opticalResolution;
+    protected String refChannel;
     
     @Override
     protected String getGridServicePrefixName() {
@@ -60,11 +62,20 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
 
         opticalResolution = (String)processData.getItem("OPTICAL_RESOLUTION");
         if (opticalResolution==null) {
-        	logger.warn("Input parameter OPTICAL_RESOLUTION is not null");
+        	logger.warn("Input parameter OPTICAL_RESOLUTION is null, assuming none.");
         	opticalResolution = "";
         }
+        else {
+        	opticalResolution = opticalResolution.replaceAll("x", " ");
+        }
         
-        File outputFile = new File(outputFileNode.getDirectoryPath(),"Aligned.v3draw");
+        refChannel = (String)processData.getItem("REFERENCE_CHANNEL");
+        if (refChannel==null) {
+        	logger.warn("Input parameter REFERENCE_CHANNEL is null, assuming channel 3.");
+        	refChannel = "3";
+        }
+        
+        outputFile = new File(outputFileNode.getDirectoryPath(),"Aligned.v3draw");
         processData.putItem("ALIGNED_FILENAME", outputFile.getAbsolutePath());
     }
 
@@ -122,15 +133,8 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
     		throw new MissingDataException("Brain alignment core dumped for "+alignFileNode.getDirectoryPath());
     	}
 
-    	File[] alignedFiles = alignDir.listFiles(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-	            return name.equals("Aligned.v3dpbd");
-			}
-		});
-
-    	if (alignedFiles.length < 1) {
-    		throw new MissingDataException("Expected Aligned.v3dpbd - not found for "+alignFileNode.getDirectoryPath());
+    	if (!outputFile.exists()) {
+    		throw new MissingDataException("Output file not found: "+outputFile.getAbsolutePath());
     	}
 	}
 }

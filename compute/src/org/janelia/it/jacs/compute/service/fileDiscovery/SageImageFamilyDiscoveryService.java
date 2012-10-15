@@ -71,7 +71,7 @@ public class SageImageFamilyDiscoveryService extends SageDataSetDiscoveryService
     
     @Override
     protected void createOrUpdateSamples(String sampleIdentifier, String dataSetIdentifier,  
-    		String sampleChannelSpec, List<ImageTileGroup> tileGroupList) throws Exception {
+    		List<ImageTileGroup> tileGroupList) throws Exception {
 
         List<String> tags = new ArrayList<String>();
         for(ImageTileGroup filePair : tileGroupList) {
@@ -99,7 +99,7 @@ public class SageImageFamilyDiscoveryService extends SageDataSetDiscoveryService
         
         if (tiling != null && tiling.isStitchable()) {
         	// This is a stitchable case
-        	Entity sample = createOrUpdateSample(sampleIdentifier, dataSetIdentifier, sampleChannelSpec, tileGroupList);
+        	Entity sample = createOrUpdateSample(sampleIdentifier, dataSetIdentifier, tileGroupList);
         	updateSampleTilingPattern(sample, tiling);
         }
         else {
@@ -108,7 +108,7 @@ public class SageImageFamilyDiscoveryService extends SageDataSetDiscoveryService
         		String sampleName = sampleIdentifier+"-"+tileGroup.getTag().replaceAll(" ", "_");
         		List<ImageTileGroup> singleTileGroupList = new ArrayList<ImageTileGroup>();
         		singleTileGroupList.add(tileGroup);
-            	Entity sample = createOrUpdateSample(sampleName, dataSetIdentifier, sampleChannelSpec, singleTileGroupList);
+            	Entity sample = createOrUpdateSample(sampleName, dataSetIdentifier, singleTileGroupList);
             	updateSampleTilingPattern(sample, tiling);
         	}
         }

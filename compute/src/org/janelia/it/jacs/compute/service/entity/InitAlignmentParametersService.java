@@ -12,6 +12,7 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  */
 public class InitAlignmentParametersService extends AbstractEntityService {
 
+	@Override 
     public void execute() throws Exception {
         	
     	String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
@@ -29,15 +30,15 @@ public class InitAlignmentParametersService extends AbstractEntityService {
 		String alignmentType = (String)processData.getItem("ALIGNMENT_ALGORITHM");
 		AlignmentAlgorithm aa = AlignmentAlgorithm.valueOf(alignmentType);
 		
-		if (alignmentType!=null && AlignmentAlgorithm.WHOLE_40X == aa) {
+		if (AlignmentAlgorithm.WHOLE_40X == aa) {
         	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.WholeBrain40xAlignmentService");
         	processData.putItem("ALIGNMENT_RESULT_NAME", "Whole Brain 40x Alignment");
 		}
-		else if (alignmentType!=null && AlignmentAlgorithm.WHOLE_63X == aa) {
+		else if (AlignmentAlgorithm.WHOLE_63X == aa) {
         	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.WholeBrain63xAlignmentService");
         	processData.putItem("ALIGNMENT_RESULT_NAME", "Whole Brain 63x Alignment");
 		}
-		else if (alignmentType!=null && AlignmentAlgorithm.OPTIC == aa) {
+		else if (AlignmentAlgorithm.OPTIC == aa) {
         	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.OpticLobeAlignmentService");
         	processData.putItem("ALIGNMENT_RESULT_NAME", "Optic Lobe Alignment");
         	// TODO: there should be a better way to get this...
@@ -45,10 +46,22 @@ public class InitAlignmentParametersService extends AbstractEntityService {
         	String tileName = parts[parts.length-1].replaceAll("_", " ");
         	processData.putItem("ALIGNMENT_TILE_NAME", tileName);
 		}
-		else if (alignmentType!=null && AlignmentAlgorithm.CENTRAL == aa) {
+		else if (AlignmentAlgorithm.CENTRAL == aa) {
         	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.CentralBrainAlignmentService");
         	processData.putItem("ALIGNMENT_RESULT_NAME", "Central Brain Alignment");
 		}
+		else if (AlignmentAlgorithm.YOSHI_63X == aa) {
+        	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.Yoshi63xAlignmentService");
+        	processData.putItem("ALIGNMENT_RESULT_NAME", "Central Brain 63x Alignment");
+		}
+		else {
+			throw new IllegalArgumentException("No such alignment algorithm: "+alignmentType);
+		}
+		
+		logger.info("Set OPTICAL_RESOLUTION = "+processData.getItem("OPTICAL_RESOLUTION"));
+		logger.info("Set ALIGNMENT_SERVICE_CLASS = "+processData.getItem("ALIGNMENT_SERVICE_CLASS"));
+		logger.info("Set ALIGNMENT_RESULT_NAME = "+processData.getItem("ALIGNMENT_RESULT_NAME"));
+		logger.info("Set ALIGNMENT_TILE_NAME = "+processData.getItem("ALIGNMENT_TILE_NAME"));
     }
     
     private String getConsensusOpticalResolution(Entity sampleEntity) {

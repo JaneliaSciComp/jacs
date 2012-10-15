@@ -40,7 +40,8 @@ public class CentralBrainAlignmentService extends AbstractAlignmentService {
             " -t " +  EXECUTABLE_DIR + TEMPLATE_DIR +
             " -w " +  alignFileNode.getDirectoryPath() +
             " -i " +  inputFilename + 
-        	" -r \"" + opticalResolution.replaceAll("x", " ") + "\"\n");
+        	" -r \"" + opticalResolution + "\"" +
+        	" -c " +  refChannel + "\n");
         writer.write(script.toString());
     }
 }

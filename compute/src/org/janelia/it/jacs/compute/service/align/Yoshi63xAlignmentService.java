@@ -35,7 +35,7 @@ public class Yoshi63xAlignmentService extends AbstractAlignmentService {
             " " +  EXECUTABLE_DIR + TEMPLATE_DIR +
             " " + inputFilename + 
             " " + alignFileNode.getDirectoryPath()+"/Aligned.v3dpbd" +
-            " \"" + opticalResolution.replaceAll("x", " ") + "\"\n");
+            " \"" + opticalResolution + "\"\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix() + "\n");
         writer.write(script.toString());
 	}
