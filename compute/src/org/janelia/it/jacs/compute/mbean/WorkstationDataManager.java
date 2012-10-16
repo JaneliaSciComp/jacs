@@ -633,7 +633,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
 
     public void runArnimPatternAnnotationFinisher(String user) {
         try {
-            ArnimPatternAnnotationFinisherMService arnimPatternAnnotationFinisherMService=new ArnimPatternAnnotationFinisherMService();
+            ArnimPatternAnnotationFinisherMService arnimPatternAnnotationFinisherMService=new ArnimPatternAnnotationFinisherMService(user);
             arnimPatternAnnotationFinisherMService.run();
         } catch (Exception e) {
             e.printStackTrace();
