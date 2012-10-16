@@ -3,9 +3,9 @@
 use Getopt::Std;
 use strict;
 
-our ($opt_v, $opt_b, $opt_l, $opt_t, $opt_w, $opt_i, $opt_n, $opt_r);
+our ($opt_v, $opt_b, $opt_l, $opt_t, $opt_w, $opt_i, $opt_n, $opt_r, $opt_c);
 
-getopts("v:b:l:t:w:i:n:r:") || &usage("");
+getopts("v:b:l:t:w:i:n:r:c:") || &usage("");
 
 my $v3d         = $opt_v;
 my $ba          = $opt_b;
@@ -14,6 +14,7 @@ my $workingDir  = $opt_w;
 my $inputStack  = $opt_i;
 my $tileName    = $opt_n;
 my $opticalRes  = $opt_r;
+my $refChannel  = $opt_c;
 
 if (($tileName ne "") and ($tileName ne "Right Optic Lobe") and ($tileName ne "Left Optic Lobe")) {
     &usage("Invalid tile name: $tileName");
@@ -109,7 +110,7 @@ sub runInitialGlobalAlignment {
         $v3d
         -x imagereg.so -f rigidreg 
         -o "$outputFileBase\_GlobalAligned.v3draw"
-        -p "#t $templateDir/global/ave_target1_rl.raw #ct 1 #s $inputFile #cs 4"
+        -p "#t $templateDir/global/ave_target1_rl.raw #ct 1 #s $inputFile #cs $refChannel"
     });
 
     print "cmd=$cmd\n";
@@ -120,7 +121,7 @@ sub runInitialGlobalAlignment {
         -x refextract -f refExtract
         -i "$outputFileBase\_GlobalAligned.v3draw"
         -o "$outputFileBase\_GlobalAlignedReference_8bit.v3draw" 
-        -p "#c 4"
+        -p "#c $refChannel"
     });
 
     print "cmd=$cmd\n";

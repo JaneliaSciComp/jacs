@@ -3,9 +3,9 @@
 use Getopt::Std;
 use strict;
 
-our ($opt_v, $opt_b, $opt_l, $opt_t, $opt_w, $opt_i, $opt_r);
+our ($opt_v, $opt_b, $opt_l, $opt_t, $opt_w, $opt_i, $opt_r, $opt_c);
 
-getopts("v:b:l:t:w:i:r:") || &usage("");
+getopts("v:b:l:t:w:i:r:c:") || &usage("");
 
 my $v3d         = $opt_v;
 my $ba          = $opt_b;
@@ -14,6 +14,12 @@ my $templateDir = $opt_t;
 my $workingDir  = $opt_w;
 my $inputStack  = $opt_i;
 my $opticalRes  = $opt_r;
+my $refChannel  = $opt_c;
+
+my ($opticalResX, $opticalResY, $opticalResZ) = ("0.3800","0.3800","0.3800");
+if ($opticalRes) {
+    ($opticalResX, $opticalResY, $opticalResZ) = split / /,$opticalRes;
+}
 
 if (! -e $v3d) {
     &usage("Could not locate v3d progam at location $v3d");;
@@ -83,7 +89,7 @@ sub runInitialGlobalAlignment {
 
     my $cmd = "$ba " .
               " -s \"$inputFile\" " .
-              " -c \"3\" " .
+              " -c \"$refChannel\" " .
               " -t \"$templateDir\/GMR_36G04_AE_01_05-hanchuan_rot180_recentered_3chan.tif\" " .
               " -L \"$templateDir\/GMR_36G04_AE_01_05-hanchuan_rot180_recentered_3chan.marker\" " .
               " -C \"0\" " .
@@ -91,8 +97,8 @@ sub runInitialGlobalAlignment {
               " -w 0 " .
               " -X 1.0000 " .
               " -Z 1.0000 " .
-              " -x 0.3800 " .
-              " -z 0.3800 " .
+              " -x $opticalResX " .
+              " -z $opticalResZ " .
               " -B 1024 " .
               " -e  1.00 " .
               " -R ";
@@ -113,8 +119,8 @@ sub runLobeseg {
 
     my $cmd = "$lobeseg " .
 	" -i \"$outputFileBase\_\_FL-F-NT\_\_GWF\.v3draw\.tmp\_GF\.v3draw\" " .
-	" -c 3 " .
-        " -o \"$outputFileBase\_\_FL-F-NT\_\_GWF\.v3draw\.tmp\.lobeseg\.v3draw\" ";
+	" -c $refChannel " .
+    " -o \"$outputFileBase\_\_FL-F-NT\_\_GWF\.v3draw\.tmp\.lobeseg\.v3draw\" ";
 
     print "cmd=$cmd\n";
     system( "$cmd 1>$logFile 2>&1" );
@@ -132,7 +138,7 @@ sub centralGlobalAlignment {
 
     my $cmd = "$ba " .
               " -s \"$outputFileBase\_\_FL-F-NT\_\_GWF\.v3draw\.tmp\.lobeseg\.v3draw\" " .
-              " -c \"3\" " .
+              " -c \"$refChannel\" " .
               " -t \"$templateDir\/GMR_36G04_AE_01_05-hanchuan_rot180_recentered_3chan_lobeseg.tif\" " .
               " -L \"$templateDir\/GMR_36G04_AE_01_05-hanchuan_rot180_recentered_3chan.marker\" " .
               " -C \"0\" " .
@@ -140,8 +146,8 @@ sub centralGlobalAlignment {
               " -w 0 " .
               " -X 1.0000 " .
               " -Z 1.0000 " .
-              " -x 0.3800 " .
-              " -z 0.3800 " .
+              " -x $opticalResX " .
+              " -z $opticalResZ " .
               " -B 1024 " .
               " -e  1.00 ";
 
@@ -161,7 +167,7 @@ sub centralLocalAlignment {
 
     my $cmd = "$ba " .
               " -s \"$outputFileBase\_\_FL-F-NT\_\_GWF\.v3draw\.tmp\_GF\_local\.v3draw\" " .
-              " -c \"3\" " .
+              " -c \"$refChannel\" " .
               " -t \"$templateDir\/GMR_36G04_AE_01_05-hanchuan_rot180_recentered_3chan_lobeseg.tif\" " .
               " -L \"$templateDir\/GMR_36G04_AE_01_05-hanchuan_rot180_recentered_3chan.marker\" " .
               " -C \"0\" " .
@@ -193,7 +199,7 @@ sub centralLocalAlignment2 {
 
     my $cmd = "$ba " .
               " -s \"$outputFileBase\_\_FL-F-NT\_\_GWF\_loop1\.v3draw\" " .
-              " -c \"3\" " .
+              " -c \"$refChannel\" " .
               " -t \"$templateDir\/GMR_36G04_AE_01_05-hanchuan_rot180_recentered_3chan_lobeseg.tif\" " .
               " -L \"$templateDir\/GMR_36G04_AE_01_05-hanchuan_rot180_recentered_3chan.marker\" " .
               " -C \"0\" " .
@@ -229,7 +235,7 @@ sub addTemplateBoundary {
               " -t \"$templateDir\/GMR_36G04_AE_01_05-hanchuan_rot180_recentered_3chan_mask_edgesinglecolor_center_16bit.raw\" " .
               " -o \"$outputFileBase\_\_FL-F-NT\_\_GWF\_loop2\_edge\.v3draw\" " .
 	      " -A 0 " .
-	      " -a 3 ";
+	      " -a $refChannel ";
 
     print "cmd=$cmd\n";
     system( "$cmd 1>$logFile 2>&1" );
