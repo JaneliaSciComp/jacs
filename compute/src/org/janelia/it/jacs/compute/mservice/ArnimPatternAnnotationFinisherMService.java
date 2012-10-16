@@ -4,7 +4,7 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.service.fly.ScreenSampleLineCoordinationService;
 import org.janelia.it.jacs.model.entity.Entity;
 
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -24,6 +24,7 @@ import java.util.Set;
 public class ArnimPatternAnnotationFinisherMService extends MService {
 
     Logger logger = Logger.getLogger(ArnimPatternAnnotationFinisherMService.class);
+    Set<Entity> sampleUpdateSet = Collections.synchronizedSet(new HashSet<Entity>());
 
     public ArnimPatternAnnotationFinisherMService(String username) throws Exception {
         super(username);
@@ -36,49 +37,40 @@ public class ArnimPatternAnnotationFinisherMService extends MService {
         if (topLevelSampleFolder==null) {
             throw new Exception("Top level folder with name="+ScreenSampleLineCoordinationService.SCREEN_PATTERN_TOP_LEVEL_FOLDER_NAME+" is null");
         } else {
-            topLevelSampleFolder=getEntityBean().getEntityAndChildren(topLevelSampleFolder.getId());
-            Set<Entity> children1=topLevelSampleFolder.getChildren();
-            if (children1==null) {
-                throw new Exception("children1 is null");
-            } else {
-                // GMR Folders
-                for (Entity child1 : children1) {
-                    logger.info("child1 name="+child1.getName()+" type="+child1.getEntityType().getName());
-                    child1=getEntityBean().getEntityAndChildren(child1.getId());
-                    Set<Entity> children2=child1.getChildren();
-                    if (children2==null) {
-                        logger.info("children2 is null");
-                    } else {
-                        // GMR<plate><well> Folders
-                        for (Entity child2 : children2) {
-                            logger.info("...child2 name="+child2.getName()+ "type="+child2.getEntityType().getName());
-                            child2=getEntityBean().getEntityAndChildren(child2.getId());
-                            Set<Entity> children3=child2.getChildren();
-                            if (children3==null) {
-                                logger.info("children3 is null");
-                            } else {
-                                // Fly Line
-                                for (Entity child3 : children3) {
-                                    logger.info("......child3 name="+child3.getName()+" type="+child3.getEntityType().getName());
-                                    child3=getEntityBean().getEntityAndChildren(child3.getId());
-                                    Set<Entity> children4=child3.getChildren();
-                                    if (children4==null) {
-                                        logger.info("children4 is null");
-                                    } else {
-                                        // Screen Sample
-                                        for (Entity child4 : children4) {
-                                            logger.info(".........child4 name="+child4.getName()+" type="+child4.getEntityType().getName());
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            searchEntityContents(topLevelSampleFolder);
+
         }
         logger.info("ArnimPatternAnnotationFinisherMService: run() end");
     }
 
+    protected void searchEntityContents(Entity parent) {
+        searchEntityContents(parent, null, null);
+    }
 
+    private void searchEntityContents(Entity parent, Map<Entity, Integer> levelMap, String[] spaceArray) {
+        if (levelMap==null) {
+            levelMap=new HashMap<Entity, Integer>();
+        }
+        if (spaceArray==null) {
+            spaceArray=new String[1000];
+            StringBuilder builder=new StringBuilder();
+            for (int i=0;i<1000;i++) {
+                spaceArray[i]=builder.toString();
+                builder.append(" ");
+            }
+        }
+        Integer parentLevel=levelMap.get(parent);
+        if (parentLevel==null) {
+            parentLevel=0;
+            logger.info("0: name="+parent.getName()+" type="+parent.getEntityType().getName());
+        }
+        parent=getEntityBean().getEntityAndChildren(parent.getId());
+        Set<Entity> children=parent.getChildren();
+        for (Entity child : children) {
+            Integer childLevel=parentLevel+1;
+            levelMap.put(child, childLevel);
+            logger.info(spaceArray[childLevel]+childLevel+": name="+child.getName()+" type="+child.getEntityType().getName());
+            searchEntityContents(child, levelMap, spaceArray);
+        }
+    }
 }
