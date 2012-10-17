@@ -61,8 +61,8 @@ public class MCFODataUpgradeService extends AbstractEntityService {
         
         logger.info("Adding data sets...");
         if ("asoy".equals(username)) {
-        	createDataSet("MB Flp-out 63X", PipelineProcess.YoshiMB63x, true);
-        	createDataSet("MB LexA-GAL4 63x", PipelineProcess.YoshiMB63x, true);
+        	createDataSet("MB Flp-out 63X", PipelineProcess.YoshiMB63xFlpout, true);
+        	createDataSet("MB LexA-GAL4 63x", PipelineProcess.YoshiMB63xLexAGal4, true);
         }
         else if ("leetlab".equals(username)) {
         	createDataSet("Pan Lineage 40x", PipelineProcess.LeetWholeBrain40x, true);

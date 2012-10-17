@@ -26,6 +26,7 @@
 			<output name="ALIGNMENT_RESULT_NAME"/>
 			<output name="ALIGNMENT_TILE_NAME"/>
 			<output name="OPTICAL_RESOLUTION"/>
+			<output name="ALIGNMENT_SCRIPT_NAME"/>
 		</operation>
 	    
    	    <!-- Align the sample -->

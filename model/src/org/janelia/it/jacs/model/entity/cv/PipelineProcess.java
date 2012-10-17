@@ -11,7 +11,8 @@ public enum PipelineProcess implements NamedEnum {
 	LeetCentralBrain63x("Lee Central Brain 63x Pipeline"),
 	LeetWholeBrain40x("Lee Whole Brain 40x Pipeline"),
 	
-	YoshiMB63x("Yoshi Mushroom Body 63x Pipeline");
+	YoshiMB63xFlpout("Yoshi MB Flp-out 63x Pipeline"),
+	YoshiMB63xLexAGal4("Yoshi MB LexA-GAL4 63x Pipeline");
 	
 	private String name;
 	

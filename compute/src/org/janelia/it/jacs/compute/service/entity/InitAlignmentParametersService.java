@@ -50,9 +50,15 @@ public class InitAlignmentParametersService extends AbstractEntityService {
         	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.CentralBrainAlignmentService");
         	processData.putItem("ALIGNMENT_RESULT_NAME", "Central Brain Alignment");
 		}
-		else if (AlignmentAlgorithm.YOSHI_63X == aa) {
-        	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.Yoshi63xAlignmentService");
-        	processData.putItem("ALIGNMENT_RESULT_NAME", "Central Brain 63x Alignment");
+		else if (AlignmentAlgorithm.YOSHI_63X_FLPOUT == aa) {
+        	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.ConfiguredAlignmentService");
+        	processData.putItem("ALIGNMENT_RESULT_NAME", "Brain Alignment");
+        	processData.putItem("ALIGNMENT_SCRIPT_NAME", "brainalign63xFlpout_V1.08.sh");
+		}
+		else if (AlignmentAlgorithm.YOSHI_63X_LEXAGAL4 == aa) {
+        	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.ConfiguredAlignmentService");
+        	processData.putItem("ALIGNMENT_RESULT_NAME", "Brain Alignment");
+        	processData.putItem("ALIGNMENT_SCRIPT_NAME", "brainalign63xLexAGAL4_V1.08.sh");
 		}
 		else {
 			throw new IllegalArgumentException("No such alignment algorithm: "+alignmentType);
@@ -62,6 +68,7 @@ public class InitAlignmentParametersService extends AbstractEntityService {
 		logger.info("Set ALIGNMENT_SERVICE_CLASS = "+processData.getItem("ALIGNMENT_SERVICE_CLASS"));
 		logger.info("Set ALIGNMENT_RESULT_NAME = "+processData.getItem("ALIGNMENT_RESULT_NAME"));
 		logger.info("Set ALIGNMENT_TILE_NAME = "+processData.getItem("ALIGNMENT_TILE_NAME"));
+		logger.info("Set ALIGNMENT_SCRIPT_NAME = "+processData.getItem("ALIGNMENT_SCRIPT_NAME"));
     }
     
     private String getConsensusOpticalResolution(Entity sampleEntity) {
