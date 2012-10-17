@@ -1,15 +1,18 @@
 package org.janelia.it.jacs.compute.service.entity;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.*;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.util.FileUtils;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.entity.cv.PipelineProcess;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
-import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
+import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 
 /**
  * Upgrade the model to use the most current entity structure.
@@ -19,6 +22,8 @@ import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
 public class MCFODataUpgradeService extends AbstractEntityService {
 
 	private static final Logger logger = Logger.getLogger(MCFODataUpgradeService.class);
+
+	public transient static final String CENTRAL_DIR_PROP = "FileStore.CentralDir";
 	
     public transient static final String PARAM_testRun = "is test run";
 	
@@ -28,11 +33,13 @@ public class MCFODataUpgradeService extends AbstractEntityService {
     private Set<Long> visited = new HashSet<Long>();
     private boolean isDebug = false;
     private String username;
+    private File userFilestore;
     
     public void execute() throws Exception {
             
     	this.username = user.getUserLogin();
-    	
+        this.userFilestore = new File(SystemConfigurationProperties.getString(CENTRAL_DIR_PROP),username);
+        
         final String serverVersion = computeBean.getAppVersion();
         logger.info("Updating data model to latest version: "+serverVersion);
         
@@ -57,7 +64,7 @@ public class MCFODataUpgradeService extends AbstractEntityService {
         	createDataSet("MB Flp-out 63X", PipelineProcess.YoshiMB63x, true);
         	createDataSet("MB LexA-GAL4 63x", PipelineProcess.YoshiMB63x, true);
         }
-        if ("leetlab".equals(username)) {
+        else if ("leetlab".equals(username)) {
         	createDataSet("Pan Lineage 40x", PipelineProcess.LeetWholeBrain40x, true);
         	createDataSet("Central Brain 63x", PipelineProcess.LeetCentralBrain63x, true);
         }
@@ -93,7 +100,6 @@ public class MCFODataUpgradeService extends AbstractEntityService {
         for(Entity sample : samples) {
             processSample(sample);
         }
-		logger.info("The surgery was a success.");
     }
     
     public void processSample(Entity sample) throws ComputeException {
@@ -268,7 +274,6 @@ public class MCFODataUpgradeService extends AbstractEntityService {
             else {
             	int i = 0;
             	for(EntityData childEd : children) {
-                    logger.info("    Updating stack, id="+childEd.getId());
                     if (fileWasDiscoveredNotSaged) {
     	                Entity lsmStack = childEd.getChildEntity();
     	                if (lsmStack!=null) {
@@ -284,7 +289,7 @@ public class MCFODataUpgradeService extends AbstractEntityService {
 
 
     protected Entity populateLsmStackAttributes(Entity lsmStack, String channelSpec) throws ComputeException {
-    	logger.info("      Setting properties: channels="+channelSpec.length()+", spec="+channelSpec);
+    	logger.info("      Setting stack properties: channels="+channelSpec.length()+", spec="+channelSpec);
     	if (lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS)==null) {
     		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS, ""+channelSpec.length());	
     	}
@@ -413,42 +418,65 @@ public class MCFODataUpgradeService extends AbstractEntityService {
 
     private void cleanMergedFiles(Entity sample) throws ComputeException {
     	
+    	final List<EntityData> stitched = new ArrayList<EntityData>();
+    	final List<EntityData> merged = new ArrayList<EntityData>();
+    	
     	EntityVistationBuilder iterator = new EntityVistationBuilder(entityLoader);
     	iterator.startAt(sample)
 			.childrenOfType(EntityConstants.TYPE_PIPELINE_RUN)
 			.childrenOfType(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)
 			.childOfType(EntityConstants.TYPE_SUPPORTING_DATA)
-			.childrenOfAttr(EntityConstants.ATTRIBUTE_ENTITY).visit(new EntityVisitor() {
+			.childrenOfType(EntityConstants.TYPE_IMAGE_3D).visit(new EntityVisitor() {
 				@Override
 				public void visit(EntityData entityData) {
-						
 					Entity entity = entityData.getChildEntity();
-					if (entity.getName().startsWith("stitched") && (entity.getName().endsWith("v3dpbd")||entity.getName().endsWith("v3draw"))) {
-						
+					if (entity.getName().startsWith("stitched-")) {
+						stitched.add(entityData);
 					}
-					
-
+					else if (entity.getName().startsWith("merged-")||entity.getName().startsWith("tile-")) {
+						merged.add(entityData);
+					}
 				}
 			});
     	
-		
-//    	populateChildren(sample);
-//    	
-//    	for (Entity pipelineRun : sample.getChildrenOfType(EntityConstants.TYPE_PIPELINE_RUN)) {
-//    		populateChildren(pipelineRun);
-//    		
-//        	for (Entity spResult : sample.getChildrenOfType(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)) {
-//        		populateChildren(spResult);
-//        		Entity supportingData = EntityUtils.getSupportingData(spResult);
-//        		if (supportingData!=null) {
-//        		
-//        			for(EntityData ed : supportingData.getEntityData()) {
-//        			
-//        			}
-//        		}
-//        	}
-//    	}
-    	
+		if (!stitched.isEmpty()) {
+
+	    	logger.info("    Found "+merged.size()+" candidates for deletion for sample id="+sample.getId());
+	    	
+			for(EntityData mergedFileEd : merged) {
+				
+				Entity mergedFile = mergedFileEd.getChildEntity();
+				File file = new File(mergedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+				
+				if (!file.getAbsolutePath().startsWith(userFilestore.getAbsolutePath())) {
+					logger.info("    Skipping file which is not in the user's filestore: "+file.getAbsolutePath());
+					continue;
+				}
+
+				try {
+		    		File symlink = new File(file.getAbsolutePath().replace("merge", "group"));
+		    		if (symlink.exists()) {
+			    		logger.info("    Cleaning up symlink to merged tile: "+symlink.getAbsolutePath());
+			    		FileUtils.forceDelete(symlink);
+		    		}
+				}
+				catch (Exception e) {
+					logger.error("    Error deleting symlink: "+file.getAbsolutePath(),e);
+				}
+				
+				try {
+		    		if (file.exists()) {
+			    		logger.info("    Cleaning up merged tile: "+file.getAbsolutePath());
+			    		FileUtils.forceDelete(file);
+		    		}
+				}
+				catch (Exception e) {
+					logger.error("    Error deleting file: "+file.getAbsolutePath(),e);
+				}
+
+				entityBean.deleteEntityData(mergedFileEd);
+				entityBean.deleteSmallEntityTree(username, mergedFile.getId());
+			}
+		}
     }
-    
 }

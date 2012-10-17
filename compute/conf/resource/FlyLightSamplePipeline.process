@@ -197,7 +197,6 @@
 	        </operation>
         </sequence>
         
-    	
 	    <!-- Clean up merged files, unless there is one tile that is being used as the stitched image -->
 		<operation name="Remove merged files" processor="org.janelia.it.jacs.compute.service.entity.sample.CleanUpMergedTilesService">
 			<input name="BULK_MERGE_PARAMETERS"/>

@@ -13,7 +13,7 @@ import org.janelia.it.jacs.compute.util.FileUtils;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class CleanUpMergedTilesService extends AbstractEntityService {
-	
+
     public void execute() throws Exception {
 
         Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
@@ -29,8 +29,16 @@ public class CleanUpMergedTilesService extends AbstractEntityService {
     	
     	List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
     	for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
+
     		File file = new File(mergedLsmPair.getMergedFilepath());
     		if (file.getAbsolutePath().equals(stitchedFile)) continue; // never delete the stitched file
+    		
+    		File symlink = new File(mergedLsmPair.getMergedFilepath().replace("merge", "group"));
+    		if (symlink.exists()) {
+	    		logger.info("Cleaning up symlink to merged tile: "+symlink.getAbsolutePath());
+	    		FileUtils.forceDelete(symlink);
+    		}
+    		
     		logger.info("Cleaning up merged tile: "+file.getAbsolutePath());
     		FileUtils.forceDelete(file);
     	}

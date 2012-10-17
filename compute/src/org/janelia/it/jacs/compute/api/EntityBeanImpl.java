@@ -564,6 +564,14 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     			annexEntityTree(ed.getChildEntity(), newOwner);
     		}
     	}
+    	
+    	// Remove other user's links to this tree
+    	for(EntityData parentEd : getParentEntityDatas(entity.getId())) {
+    		if (!parentEd.getUser().getUserLogin().equals(newOwner.getUserLogin())) continue;
+    		_logger.info(newOwner.getUserLogin()+" is deleting link to entity "+entity.getId()+" owned by "+parentEd.getUser().getUserLogin());
+    		deleteEntityData(parentEd);
+    	}
+    	
     	return entity;
     }
     

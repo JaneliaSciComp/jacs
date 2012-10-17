@@ -1,9 +1,7 @@
 package org.janelia.it.jacs.shared.utils.entity;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -19,7 +17,7 @@ public class EntityVistationBuilder {
 	protected Logger logger = Logger.getLogger(EntityVistationBuilder.class);
 	
 	private Entity root;
-	private Queue<EntityFilter> filters = new LinkedList<EntityFilter>();
+	private List<EntityFilter> filters = new ArrayList<EntityFilter>();
 	private AbstractEntityLoader loader;
 	
 	public EntityVistationBuilder(AbstractEntityLoader loader) {
@@ -30,14 +28,10 @@ public class EntityVistationBuilder {
     	this.root = entity;
     	return this;
     }
-    
-    public void visit(EntityVisitor visitor) {
-    	run(root, visitor);
-    }
-    
+
     public List<Entity> getEntities() {
     	final List<Entity> entities = new ArrayList<Entity>();
-    	run(root, new EntityVisitor() {
+    	visit(new EntityVisitor() {
 			@Override
 			public void visit(Entity entity) {
 				entities.add(entity);
@@ -48,7 +42,7 @@ public class EntityVistationBuilder {
 
     public List<EntityData> getEntityDatas() {
     	final List<EntityData> entityDatas = new ArrayList<EntityData>();
-    	run(root, new EntityVisitor() {
+    	visit(new EntityVisitor() {
 			@Override
 			public void visit(EntityData entityData) {
 				entityDatas.add(entityData);
@@ -57,22 +51,28 @@ public class EntityVistationBuilder {
     	return entityDatas;
     }
     
-	public void run(Entity entity, EntityVisitor visitor) {
+    public void visit(EntityVisitor visitor) {
+    	run(root, visitor, 0);
+    }
+    
+	public void run(Entity entity, EntityVisitor visitor, int level) {
 		
-		if (entity==null) return;
+		if (entity==null || filters.isEmpty()) return;
 		loader.populateChildren(entity);
 		
-		EntityFilter filter = filters.remove();
-
+		EntityFilter filter = filters.get(level);
+		
 		for(EntityData ed : filter.getFilteredRelatives(entity)) {
-			if (filters.isEmpty()) {
+			if (level>=filters.size()-1) {
 				visitor.visit(ed);
 			}
 			if (ed.getChildEntity()!=null) {
-				if (filters.isEmpty()) {
+				if (level>=filters.size()-1) {
 					visitor.visit(ed.getChildEntity());
 				}
-				run(ed.getChildEntity(), visitor);	
+				else {
+					run(ed.getChildEntity(), visitor, level+1);		
+				}
 			}
 		}
 	}
@@ -107,52 +107,6 @@ public class EntityVistationBuilder {
 		return this;
 	}
 	
-    private abstract class EntityFilter {
-    	
-    	String parameter;
-    	List<EntityData> filtered = new ArrayList<EntityData>();
-    	
-    	public EntityFilter(String parameter) {
-    		this.parameter = parameter;
-    	}
-    	
-    	public List<EntityData> getFilteredRelatives(Entity entity) {
-    		for(EntityData ed : entity.getOrderedEntityData()) {
-    			if (allow(ed)) {
-    				filtered.add(ed);
-    			}
-    		}
-    		return filtered;
-    	}
-    
-    	public abstract boolean allow(EntityData entityData);
-    }
-
-    private abstract class SingleEntityFilter extends EntityFilter {
-    	
-    	int count;
-    	
-    	public SingleEntityFilter(String parameter) {
-    		super(parameter);
-    	}
-    	
-    	public List<EntityData> getFilteredRelatives(Entity entity) {
-    		for(EntityData ed : entity.getOrderedEntityData()) {
-    			if (allow(ed)) {
-    				count++;
-    				if (count>1) {
-    					logger.warn("Expected only one child of type: "+parameter);
-        				return filtered;
-    				}
-    				else {
-    					filtered.add(ed);	
-    				}        			
-    			}
-    		}
-    		return filtered;
-    	}
-    }
-    
     private class ChildrenOfType extends EntityFilter {
     	public ChildrenOfType(String parameter) {
     		super(parameter);
@@ -204,6 +158,59 @@ public class EntityVistationBuilder {
     	}
     	public boolean allow(EntityData ed) {
     		return (ed.getChildEntity()!=null && ed.getChildEntity().getName().equals(parameter));
+    	}
+    }
+
+    private abstract class EntityFilter {
+    	
+    	String parameter;
+    	
+    	public EntityFilter(String parameter) {
+    		this.parameter = parameter;
+    	}
+    	
+    	public List<EntityData> getFilteredRelatives(Entity entity) {
+    		List<EntityData> filtered = new ArrayList<EntityData>();
+    		for(EntityData ed : entity.getOrderedEntityData()) {
+    			if (allow(ed)) {
+    				filtered.add(ed);
+    			}
+    		}
+    		return filtered;
+    	}
+    
+    	public abstract boolean allow(EntityData entityData);
+    }
+
+    private abstract class SingleEntityFilter extends EntityFilter {
+    	
+    	int count = 0;
+    	
+    	public SingleEntityFilter(String parameter) {
+    		super(parameter);
+    	}
+    	
+    	public List<EntityData> getFilteredRelatives(Entity entity) {
+    		List<EntityData> filtered = new ArrayList<EntityData>();
+    		for(EntityData ed : entity.getOrderedEntityData()) {
+    			if (allow(ed)) {
+    				if (++count>1) {
+    					boolean seen = false;
+    					for(EntityData ed2 : filtered) {
+    						if (ed2.getChildEntity().getId().equals(ed.getChildEntity().getId())) {
+    							seen = true;
+    						}
+    					}
+    					if (!seen) {
+    						logger.warn("Expected only one child of type "+parameter+" for entity with id="+entity.getId());
+    					}
+    				}
+    				else {
+    					filtered.add(ed);	
+    				}        			
+    			}
+    		}
+    		return filtered;
     	}
     }
 }
