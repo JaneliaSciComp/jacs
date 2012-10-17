@@ -52,7 +52,8 @@ public class OpticLobeAlignmentService extends AbstractAlignmentService {
             " -w " +  alignFileNode.getDirectoryPath() +
             " -n \"" +  tileName + "\"" + 
             " -i \"" +  inputFilename + "\"" +
-        	" -r \"" + opticalResolution + "\"\n");
+        	" -r \"" + opticalResolution + "\"" +
+        	" -c " +  refChannel + "\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix() + "\n");
         writer.write(script.toString());
 	}
