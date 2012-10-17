@@ -136,32 +136,6 @@ public class RestfulWebService {
         return list;
     }
 
-    // This prototype method has been included in the initial check-in just
-    // in case we want to restore it later.
-    // Make sure to consider the security access implications if/when
-    // the method gets restored.
-    @GET
-    @Path("entity/id/{entityId}")
-    @Produces("application/xml")
-    @Formatted
-    public Entity getEntity(@PathParam("entityId") String entityId) {
-
-        logger.debug("getEntity: entry, entityId=" + entityId);
-
-        Entity entity = null;
-        try {
-            EntityBeanRemote entityBean = EJBFactory.getRemoteEntityBean();
-            entity = entityBean.getEntityById(entityId);
-        } catch (Exception e) {
-            logger.error("getEntity: failed to retrieve entityId " + entityId,
-                    e);
-        }
-
-        logger.debug("getEntity: exit");
-
-        return entity;
-    }
-
     /**
      * Wraps {@link Entity} objects in the specified list as {@link DataSet}
      * objects so that JAXB can marshall the resulting list more clearly.
