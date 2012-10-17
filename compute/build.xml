@@ -33,7 +33,8 @@
     <property name="webServices.dir" value="${basedir}/conf/webServices"/>
     <property name="deploy.dir" value="${jboss.home}/server/${jboss.server.configuration}/deploy"/>
 
-    
+    <property name="rest-ws-war" value="${localname}-rest-ws.war"/>
+
     <!-- Compiles all src code from other than the src area into ${build.classes.dir} -->
 	<target name="local-compile" depends="setup, make-classes-dir, make-lib-dir" if="src.dir.exists">
 
@@ -84,7 +85,7 @@
     	<manifestclasspath property="manifest.classpath" jarfile="${build.jars.dir}/empty.ear">
        		<classpath refid="dependency.classpath" />
         </manifestclasspath>
-    
+
 		<jar destfile="${build.jars.dir}/${jar.name}">
             <fileset dir="${build.classes.dir}">
                 <include name="**/*.class"/>
@@ -191,15 +192,30 @@
                 <attribute name="Build-Date" value="${DSTAMP} ${TSTAMP}"/>
             </manifest>
         </war>
+        <war warfile="${basedir}/build/jars/${rest-ws-war}" webxml="${basedir}/WEB-INF/web-rest-ws.xml">
+            <classes dir="${build.classes.dir}">
+                <include name="org/**/wsrest/**/*.class"/>
+            </classes>
+
+            <lib dir="${basedir}/lib/resteasy-2.3.4">
+                <include name="**/*.jar"/>
+            </lib>
+
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Build-Date" value="${DSTAMP} ${TSTAMP}"/>
+            </manifest>
+        </war>
     </target>
 
     <target name="build-ear" depends="make-jars-dir, build-war" description="builds the ear file">
-        <delete file="${build.jars.dir}/*" />
+        <delete file="${build.jars.dir}/*" verbose="true"/>
     	
         <ear destfile="${build.jars.dir}/${localname}.ear" appxml="${condesc.dir}/application.xml">
             <fileset file="${basedir}/lib/drmaa.jar"/>
             <fileset file="${basedir}/lib/JGoogleAnalytics_0.4.jar"/>
             <fileset file="${basedir}/build/jars/${localname}.war"/>
+            <fileset file="${basedir}/build/jars/${rest-ws-war}"/>
             <fileset file="${basedir}/build/jars/${localname}.jar"/>
             <fileset file="${basedir}/build/jars/${localname}.sar"/>
             <fileset file="${basedir}/build/jars/${localname}.har"/>

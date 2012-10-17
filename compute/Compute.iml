@@ -63,6 +63,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="MongoDB" level="project" />
+    <orderEntry type="library" name="RESTEasy-2.3.4" level="project" />
     <orderEntry type="library" name="Spring-3" level="project" />
     <orderEntry type="library" name="GoogleAnalytics" level="project" />
   </component>

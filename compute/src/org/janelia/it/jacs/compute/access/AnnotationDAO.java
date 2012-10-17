@@ -45,7 +45,10 @@ public class AnnotationDAO extends ComputeBaseDAO {
 	
     private static final Map<String, EntityType> entityByName = Collections.synchronizedMap(new HashMap<String, EntityType>());
     private static final Map<String, EntityAttribute> attrByName = Collections.synchronizedMap(new HashMap<String, EntityAttribute>());
-	
+
+
+    private static final List<String> SYSTEM_USER = Arrays.asList("system");
+
     private boolean debugDeletions = false;
     
     public AnnotationDAO(Logger logger) {
@@ -1020,20 +1023,31 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
-    public List<Entity> getUserEntitiesByTypeName(String userLogin, String entityTypeName) throws DaoException {
+    public List<Entity> getUserEntitiesByTypeName(List<String> userLoginList,
+                                                  String entityTypeName) throws DaoException {
         try {
-            StringBuffer hql = new StringBuffer("select e from Entity e ");
-            hql.append("join fetch e.user ");
-            hql.append("join fetch e.entityType ");
-            hql.append("where e.entityType.name=? ");
-            if (null != userLogin) {
-                hql.append("and e.user.userLogin=? ");
+            StringBuilder hql = new StringBuilder(256);
+
+            final boolean filterByUsers =
+                    ((userLoginList != null) && (userLoginList.size() > 0));
+
+            hql.append("select e from Entity e join fetch e.entityType");
+            if (filterByUsers) {
+                hql.append(" join fetch e.user");
             }
-            Query query = getCurrentSession().createQuery(hql.toString());
-            query.setString(0, entityTypeName);
-            if (null != userLogin) {
-                query.setString(1, userLogin);
+            hql.append(" where e.entityType.name = :entityTypeName");
+            if (filterByUsers) {
+                hql.append(" and e.user.userLogin in (:userLoginList)");
             }
+
+            final Session currentSession = getCurrentSession();
+            Query query = currentSession.createQuery(hql.toString());
+            query.setParameter("entityTypeName", entityTypeName);
+            if (filterByUsers) {
+                query.setParameterList("userLoginList", userLoginList);
+            }
+
+            //noinspection unchecked
             return query.list();
         }
         catch (Exception e) {
@@ -2369,7 +2383,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
     public Map<Entity, Map<String, Double>> getPatternAnnotationQuantifiers() throws DaoException {
         _logger.info("getPatternQuantifiersForScreenSample: starting search for entities of type="+EntityConstants.TYPE_SCREEN_SAMPLE);
-        List<Entity> flyScreenSampleEntityList = getUserEntitiesByTypeName("system", EntityConstants.TYPE_SCREEN_SAMPLE);
+        List<Entity> flyScreenSampleEntityList = getUserEntitiesByTypeName(SYSTEM_USER, EntityConstants.TYPE_SCREEN_SAMPLE);
         _logger.info("getPatternQuantifiersForScreenSample: found "+flyScreenSampleEntityList.size()+" entities of type="+EntityConstants.TYPE_SCREEN_SAMPLE);
         Map<Entity, Map<String, Double>> entityQuantMap=new HashMap<Entity, Map<String, Double>>();
         long count=0;
@@ -2425,7 +2439,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
     public Map<Entity, Map<String, Double>> getMaskQuantifiers(String maskFolderName) throws DaoException {
         _logger.info("getMaskQuantifiers() folder name=" + maskFolderName + " : starting search for entities of type=" + EntityConstants.TYPE_SCREEN_SAMPLE);
-        List<Entity> flyScreenSampleEntityList = getUserEntitiesByTypeName("system", EntityConstants.TYPE_SCREEN_SAMPLE);
+        List<Entity> flyScreenSampleEntityList = getUserEntitiesByTypeName(SYSTEM_USER, EntityConstants.TYPE_SCREEN_SAMPLE);
         _logger.info("getPatternQuantifiersForScreenSample: found " + flyScreenSampleEntityList.size() + " entities of type=" + EntityConstants.TYPE_SCREEN_SAMPLE);
         Map<Entity, Map<String, Double>> entityQuantMap = new HashMap<Entity, Map<String, Double>>();
         long count = 0;

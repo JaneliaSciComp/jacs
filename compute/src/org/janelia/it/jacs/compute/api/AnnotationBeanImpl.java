@@ -1,14 +1,5 @@
 package org.janelia.it.jacs.compute.api;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
@@ -25,6 +16,14 @@ import org.janelia.it.jacs.shared.annotation.DataFilter;
 import org.janelia.it.jacs.shared.annotation.FilterResult;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
+
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Stateless(name = "AnnotationEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
@@ -410,16 +409,17 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
 	    }
     }
     
-    public List<Entity> getUserDataSets(String userLogin) throws ComputeException {
+    public List<Entity> getUserDataSets(List<String> userLoginList) throws ComputeException {
         try {
-        	return _annotationDAO.getUserEntitiesByTypeName(userLogin, EntityConstants.TYPE_DATA_SET);
+            return _annotationDAO.getUserEntitiesByTypeName(userLoginList, EntityConstants.TYPE_DATA_SET);
         }
         catch (DaoException e) {
-            _logger.error("Error getting data sets for user "+userLogin, e);
-            throw new ComputeException("Error getting data sets for user "+userLogin,e);
+            final String msg = "Error getting data sets for " + userLoginList;
+            _logger.error(msg, e);
+            throw new ComputeException(msg, e);
         }
     }
-    
+
     public Entity getUserDataSetByName(String userLogin, String dataSetName) throws ComputeException {
         try {
         	List<Entity> dataSets = _annotationDAO.getUserEntitiesByNameAndTypeName(userLogin, dataSetName, EntityConstants.TYPE_DATA_SET);

@@ -1,6 +1,7 @@
 
 package org.janelia.it.jacs.compute.api;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -375,7 +376,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     
     public List<Entity> getUserEntitiesByTypeName(String userLogin, String entityTypeName) {
         try {
-            return _annotationDAO.getUserEntitiesByTypeName(userLogin, entityTypeName);
+            return _annotationDAO.getUserEntitiesByTypeName(Arrays.asList(userLogin), entityTypeName);
         }
         catch (DaoException e) {
             _logger.error("Error trying to get the entities of type "+entityTypeName, e);
