@@ -36,6 +36,7 @@
 	    		<input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
 				<input name="INPUT_FILENAME" value="$V{STITCHED_FILENAME}"/>
 				<input name="ALIGNMENT_TILE_NAME"/>
+				<input name="ALIGNMENT_SCRIPT_NAME"/>
 				<input name="OPTICAL_RESOLUTION"/>
 				<input name="SIGNAL_CHANNELS"/>
 				<input name="REFERENCE_CHANNEL"/>

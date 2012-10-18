@@ -20,7 +20,7 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
 	protected static final String BRAIN_ALIGNER_DIR = EXECUTABLE_DIR + SystemConfigurationProperties.getString("ConfiguredAligner.BrainAlignerDir");
 	protected static final String CONFIG_DIR = EXECUTABLE_DIR + SystemConfigurationProperties.getString("ConfiguredAligner.ConfigDir");
 	protected static final String TEMPLATE_DIR = EXECUTABLE_DIR + SystemConfigurationProperties.getString("ConfiguredAligner.TemplateDir");
-	
+	protected static final String TOOLKITS_DIR = EXECUTABLE_DIR + SystemConfigurationProperties.getString("ConfiguredAligner.ToolkitsDir");
 	
     @Override
 	protected void createShellScript(FileWriter writer) throws IOException, ParameterException, MissingDataException,
@@ -45,10 +45,12 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
 		script.append(" " + BRAIN_ALIGNER_DIR + "/" + scriptFile);
 		script.append(" " + CONFIG_DIR + "/systemvars.apconf");
 		script.append(" " + TEMPLATE_DIR);
+		script.append(" " + TOOLKITS_DIR);
 		script.append(" " + inputFilename);
 		script.append(" " + alignFileNode.getDirectoryPath());
 		script.append(" " + refChannel);
 		script.append(" \"" + opticalResolution+"\"");
+		script.append("\n");
 		
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix() + "\n");
         writer.write(script.toString());
