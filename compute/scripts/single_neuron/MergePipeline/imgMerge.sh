@@ -9,10 +9,10 @@ DIR=$(cd "$(dirname "$0")"; pwd)
 # TOOLKITS
 ####
 
-Vaa3D="$DIR/../../../vaa3d-redhat/vaa3d"
-ANTS="$DIR/../Toolkits/ANTS"
-WARP="$DIR/../Toolkits/WarpImageMultiTransform"
-SAMPLE="$DIR/../Toolkits/ResampleImageBySpacing"
+Vaa3D="$DIR/../Toolkits/Vaa3D/vaa3d"
+ANTS="$DIR/../Toolkits/ANTS/ANTS"
+WARP="$DIR/../Toolkits/ANTS/WarpImageMultiTransform"
+SAMPLE="$DIR/../Toolkits/ANTS/ResampleImageBySpacing"
 
 ####
 # Inputs

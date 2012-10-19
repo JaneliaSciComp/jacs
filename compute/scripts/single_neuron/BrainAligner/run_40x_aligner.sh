@@ -9,8 +9,8 @@ DIR=$(cd "$(dirname "$0")"; pwd)
 # TOOLKITS
 ####
 
-Vaa3D="$DIR/../../../vaa3d-redhat/vaa3d"
-BRAINALIGNER="$DIR/../../../vaa3d-redhat/brainaligner"
+Vaa3D="$DIR/../Toolkits/Vaa3D/vaa3d"
+BRAINALIGNER="$DIR/../Toolkits/JBA/brainaligner"
 MAGICK="$DIR/../../../ImageMagick-6.7.3-2/bin"
 
 ##################
