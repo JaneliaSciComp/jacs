@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
+import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -69,10 +70,13 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     	Entity parentSignalMip = null;
     	Entity parentRefMIP = null;
     	
+    	File defaultImage = new File(defaultImageFilename);
+    	String defaultImageCanonicalFilename = defaultImage.getCanonicalPath();
+    	
     	for(Entity image3d : images3d) {
 			String filepath = image3d.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
 			
-			if (filepath.equals(defaultImageFilename)) {
+			if (filepath.equals(defaultImageFilename) || filepath.equals(defaultImageCanonicalFilename)) {
 				default3dImage = image3d;
 			}
 				

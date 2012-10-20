@@ -72,6 +72,7 @@ public class EntityHelper {
 	 * @throws ComputeException
 	 */
 	public void setDefault3dImage(Entity entity, Entity default3dImage) throws ComputeException {
+		if (entity==null || default3dImage==null) return;
         setImage(entity, EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE, default3dImage);
         EntityData ed = default3dImage.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
         if (ed!=null) {
