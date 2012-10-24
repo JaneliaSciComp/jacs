@@ -180,11 +180,11 @@ fi
 if [ $INSTALL_PROD_SERVER == 1 ]; then
     echo "  Deploying to server 'jacsstaging'..."
     cd $JACS_COMPILE_DIR/compute
-    ant -Duser.server.machine=jacs-hudson -Duser.server.login=jacstest "deploy-[your-server]-dev"
+    ant -Duser.server.machine=jacs-staging -Duser.server.login=jacstest "deploy-[your-server]-dev"
     #echo "FlySuite Version ${FWVER} (JBoss server) was successfully deployed to the JACS STAGING production server."
     echo "FlySuite Version Staging (JBoss server) was successfully deployed to the JACS STAGING production server."
     cd $JACS_COMPILE_DIR/jacsstaging
-    ant -Duser.server.machine=jacs-hudson -Duser.server.login=jacstest "deploy-[your-server]-dev"
+    ant -Duser.server.machine=jacs-staging -Duser.server.login=jacstest "deploy-[your-server]-dev"
     #echo "FlySuite Version ${FWVER} (Tomcat web front-end) was successfully deployed to the JACS STAGING production server."
     echo "FlySuite Version Staging (Tomcat web front-end) was successfully deployed to the JACS STAGING production server."
 fi
