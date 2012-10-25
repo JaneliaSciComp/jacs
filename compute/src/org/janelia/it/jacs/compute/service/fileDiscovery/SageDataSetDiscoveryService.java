@@ -135,17 +135,6 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		slideImage.opticalRes = voxelSizeX+"x"+voxelSizeY+"x"+voxelSizeZ;
 		slideImage.file = slideImage.imagePath!=null?new File(slideImage.imagePath):null;
 		
-		// Infer the channel spec from the number of channels, by assuming that the reference channel comes last
-		if (slideImage.channelSpec==null) {
-			if (slideImage.channels!=null) {
-				Integer numChannels = new Integer(slideImage.channels);
-				slideImage.channelSpec = getChanSpec(numChannels-1);
-			}
-			else {
-				logger.warn("Both channel_spec and channels are null for sageId="+slideImage.sageId);
-			}
-		}
-		
 		return slideImage;
     }
     
@@ -199,12 +188,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 			}
 		});
         
-        createOrUpdateSamples(sampleIdentifier, dataSetIdentifier, tileGroupList);
-    }
-    
-    protected void createOrUpdateSamples(String sampleIdentifier, String dataSetIdentifier, 
-    		 List<ImageTileGroup> tileGroupList) throws Exception {
-    	createOrUpdateSample(sampleIdentifier, dataSetIdentifier, tileGroupList);
+        createOrUpdateSample(sampleIdentifier, dataSetIdentifier, tileGroupList);
     }
     
     protected Entity createOrUpdateSample(String sampleIdentifier, String dataSetIdentifier, 
@@ -220,6 +204,20 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 
         	int tileNumSignals = 0;
         	for(SlideImage slideImage : tileGroup.getImages()) {
+
+        		if (tileGroup.getImages().size()==1) {
+	        		// For unpaired images we can infer the channel spec from the number of channels, by assuming that the reference channel comes last
+	        		if (slideImage.channelSpec==null) {
+	        			if (slideImage.channels!=null) {
+	        				Integer numChannels = new Integer(slideImage.channels);
+	        				slideImage.channelSpec = getChanSpec(numChannels-1);
+	        			}
+	        			else {
+	        				logger.warn("Both channel_spec and channels are null for sageId="+slideImage.sageId);
+	        			}
+	        		}
+        		}
+        		
             	if (slideImage.channelSpec!=null) {
             		for(int j=0; j<slideImage.channelSpec.length(); j++) {
             			if (slideImage.channelSpec.charAt(j)=='s') {
@@ -265,7 +263,29 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         for (ImageTileGroup tileGroup : tileGroupList) {
         	addTileToSample(sample, tileGroup);
         }
-        
+
+        // Remove from current data set folder, if we're changing         
+		String currDataSet = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+		if (currDataSet!=null && !currDataSet.equals(dataSetIdentifier)) {
+			logger.info("    Data set is changing from "+currDataSet+" to "+dataSetIdentifier);	
+		
+			Set<EntityData> toDelete = new HashSet<EntityData>();
+			for(EntityData ed : entityBean.getParentEntityDatas(sample.getId())) {
+				Entity parent = ed.getParentEntity();
+				for(Entity grandparent : entityBean.getParentEntities(parent.getId())) {
+					if (grandparent.getId().equals(topLevelFolder.getId())) {
+						logger.info("    Removing from data set folder: "+parent.getName()+" (id="+parent.getId()+")");	
+						toDelete.add(ed);
+					}
+				}
+			}
+			
+			for(EntityData ed : toDelete) {
+				entityBean.deleteEntityData(ed);
+			}
+		}
+	
+		// Add to correct data set folder
     	Entity dataSet = annotationBean.getUserDataSetByIdentifier(dataSetIdentifier);
     	if (dataSet!=null) {
     		Entity dataSetFolder = verifyOrCreateChildFolder(topLevelFolder, dataSet.getName());
@@ -278,6 +298,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             }
             
             if (!found) {
+            	logger.info("    Adding to data set folder: "+dataSetFolder.getName()+" (id="+dataSetFolder.getId()+")");	
     	        addToParent(dataSetFolder, sample, dataSetFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
     	        numSamplesAdded++;
             }	
@@ -409,7 +430,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         	}
         	
         	if (matchingSample != null) {
-        		return entityBean.annexEntityTree(matchingSample, user);	
+        		return entityBean.annexEntityTree(matchingSample.getId(), user.getUserLogin());	
         	}
     	}
     	
