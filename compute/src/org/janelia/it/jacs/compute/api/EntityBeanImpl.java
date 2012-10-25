@@ -1,11 +1,7 @@
 
 package org.janelia.it.jacs.compute.api;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -20,8 +16,6 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
-import org.janelia.it.jacs.model.user_data.User;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 
@@ -276,12 +270,16 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     }
 
     public boolean deleteSmallEntityTree(String userLogin, long entityId) throws ComputeException {
+        return deleteSmallEntityTree(userLogin, entityId, false);
+    }
+
+    public boolean deleteSmallEntityTree(String userLogin, long entityId, boolean unlinkMultipleParents) throws ComputeException {
         try {
             Entity entity = _annotationDAO.getEntityById(""+entityId);
             if (entity==null) {
                 throw new Exception("Entity not found: "+entityId);
             }
-            _annotationDAO.deleteSmallEntityTree(userLogin, entity);
+            _annotationDAO.deleteSmallEntityTree(userLogin, entity, unlinkMultipleParents);
             _logger.info(userLogin+" deleted small entity tree "+entityId);
             return true;
         }
@@ -533,47 +531,22 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         }
     }
 
-    public void loadLazyEntity(Entity entity, boolean recurse) throws DaoException {
-		
-        if (!EntityUtils.areLoaded(entity.getEntityData())) {
-            EntityUtils.replaceChildNodes(entity, _annotationDAO.getChildEntities(entity.getId()));
-        }
-
-        if (recurse) {
-            for (EntityData ed : entity.getEntityData()) {
-                if (ed.getChildEntity() != null) {
-                    loadLazyEntity(ed.getChildEntity(), true);
-                }
-            }
+    public void loadLazyEntity(Entity entity, boolean recurse) throws ComputeException {
+    	try {
+        	_annotationDAO.loadLazyEntity(entity, recurse);
+        } catch (DaoException e) {
+            _logger.error("Error in loadLazyEntity(): "+e.getMessage());
+            throw new ComputeException("Error in loadLazyEntity(): "+e.getMessage(), e);
         }
     }
 
-    public Entity annexEntityTree(Entity entity, User newOwner) throws ComputeException {
-    	if (!entity.getUser().getUserId().equals(newOwner.getUserId())) {
-        	_logger.info(newOwner.getUserLogin()+" is taking over entity "+entity.getName()+
-        			" (id="+entity.getId()+") from "+entity.getUser().getUserLogin());
-        	entity.setUser(newOwner);
-        	saveOrUpdateEntity(entity);
-    	}
-    	loadLazyEntity(entity, false);
-    	for(EntityData ed : entity.getEntityData()) {
-    		if (!ed.getUser().getUserId().equals(ed.getUser().getUserId())) {
-	    		ed.setUser(newOwner);
-	    		saveOrUpdateEntityData(ed);
-    		}
-    		if (ed.getChildEntity()!=null) {
-    			annexEntityTree(ed.getChildEntity(), newOwner);
-    		}
-    	}
-    	
-    	// Remove other user's links to this tree
-    	for(EntityData parentEd : getParentEntityDatas(entity.getId())) {
-    		if (!parentEd.getUser().getUserLogin().equals(newOwner.getUserLogin())) continue;
-    		_logger.info(newOwner.getUserLogin()+" is deleting link to entity "+entity.getId()+" owned by "+parentEd.getUser().getUserLogin());
-    		deleteEntityData(parentEd);
-    	}
-    	
-    	return entity;
+    public Entity annexEntityTree(Long entityId, String newOwner) throws ComputeException {
+    	try {
+        	return _annotationDAO.annexEntityTree(entityId, newOwner);
+        } catch (DaoException e) {
+            _logger.error("Error in annexEntityTree(): "+e.getMessage());
+            throw new ComputeException("Error in annexEntityTree(): "+e.getMessage(), e);
+        }
     }
     
     public void setupEntityTypes() {

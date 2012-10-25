@@ -1,6 +1,5 @@
 package org.janelia.it.jacs.compute.service.align;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 

@@ -3,7 +3,6 @@ package org.janelia.it.jacs.compute.api;
 
 import javax.ejb.Local;
 
-import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.user_data.User;
@@ -26,8 +25,6 @@ public interface EntityBeanLocal extends EntityBeanRemote {
     public boolean deleteEntityById(Long entityId) throws ComputeException;
     public void deleteEntityData(EntityData ed) throws ComputeException;
     
-    public void loadLazyEntity(Entity entity, boolean recurse) throws DaoException;
+    public void loadLazyEntity(Entity entity, boolean recurse) throws ComputeException;
 	public void setupEntityTypes();
-	
-	public Entity annexEntityTree(Entity entity, User newOwner) throws ComputeException;
 }

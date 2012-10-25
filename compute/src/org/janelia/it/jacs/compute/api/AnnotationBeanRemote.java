@@ -48,9 +48,12 @@ public interface AnnotationBeanRemote {
     public List<Entity> getEntitiesForAnnotationSession(String username, long sessionId) throws ComputeException;
     public List<Entity> getCategoriesForAnnotationSession(String username, long sessionId) throws ComputeException;
     public Set<Long> getCompletedEntityIds(long sessionId) throws ComputeException;
+    public long getNumDescendantsAnnotated(Long entityId) throws ComputeException;
 
     public List<Entity> getCommonRootEntitiesByTypeName(String entityTypeName);
     public List<Entity> getCommonRootEntitiesByTypeName(String userLogin, String entityTypeName);
+    public Entity getCommonRootFolderByName(String userLogin, String folderName, boolean createIfNecessary) throws ComputeException;
+    public Entity getChildFolderByName(String userLogin, Long parentId, String folderName, boolean createIfNecessary) throws ComputeException;
     public List<Entity> getEntitiesWithFilePath(String filePath);
     
     public Map<Entity, Map<String, Double>> getPatternAnnotationQuantifiers() throws ComputeException;

@@ -1,9 +1,20 @@
 package org.janelia.it.jacs.compute.api;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+
 import org.apache.log4j.Logger;
+import org.apache.solr.client.solrj.SolrQuery;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.PatternSearchDAO;
+import org.janelia.it.jacs.compute.access.solr.SolrDAO;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -16,14 +27,6 @@ import org.janelia.it.jacs.shared.annotation.DataFilter;
 import org.janelia.it.jacs.shared.annotation.FilterResult;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
-
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @Stateless(name = "AnnotationEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
@@ -294,6 +297,18 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             throw new ComputeException("Coud not get completed entities",e);
         }
     }
+
+    public long getNumDescendantsAnnotated(Long entityId) throws ComputeException {
+        try {
+			SolrDAO solrDAO = new SolrDAO(_logger, true, true);
+			SolrQuery query = new SolrQuery("(id:"+entityId+" OR ancestor_ids:"+entityId+") AND all_annotations:*");
+			return solrDAO.search(query).getResults().getNumFound();
+	    }
+	    catch (DaoException e) {
+	    	_logger.error("Error getting number of annotations: "+entityId, e);
+	    	throw new ComputeException("Error getting number of annotations: "+entityId, e);
+	    }
+    }
     
     public List<Entity> getCommonRootEntitiesByTypeName(String entityTypeName) {
     	return getCommonRootEntitiesByTypeName(null, entityTypeName);
@@ -308,7 +323,27 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
         return null;
     }
-
+    
+    public Entity getCommonRootFolderByName(String userLogin, String folderName, boolean createIfNecessary) throws ComputeException {
+        try {
+            return _annotationDAO.getCommonRootFolderByName(userLogin, folderName, createIfNecessary);
+        }
+        catch (DaoException e) {
+            _logger.error("Error trying to get common root called "+folderName, e);
+        }
+        return null;
+    }
+    
+    public Entity getChildFolderByName(String userLogin, Long parentId, String folderName, boolean createIfNecessary) throws ComputeException {
+        try {
+            return _annotationDAO.getChildFolderByName(userLogin, parentId, folderName, createIfNecessary);
+        }
+        catch (DaoException e) {
+            _logger.error("Error trying to get common root called "+folderName, e);
+        }
+        return null;
+    }
+    
     public List<Entity> getEntitiesWithFilePath(String filePath) {
         try {
             return _annotationDAO.getEntitiesWithFilePath(filePath);
@@ -447,4 +482,5 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         	throw new ComputeException("Error getting data set: "+dataSetIdentifier,e);
         }
     }
+    
 }

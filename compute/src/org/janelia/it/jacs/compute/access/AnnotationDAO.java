@@ -613,12 +613,16 @@ public class AnnotationDAO extends ComputeBaseDAO {
             }
         }
     }
-    
+
     public void deleteSmallEntityTree(String userLogin, Entity entity) throws DaoException {
-    	deleteSmallEntityTree(userLogin, entity, 0);
+    	deleteSmallEntityTree(userLogin, entity, false);
     }
     
-    public void deleteSmallEntityTree(String userLogin, Entity entity, int level) throws DaoException {
+    public void deleteSmallEntityTree(String userLogin, Entity entity, boolean unlinkMultipleParents) throws DaoException {
+    	deleteSmallEntityTree(userLogin, entity, unlinkMultipleParents, 0);
+    }
+    
+    public void deleteSmallEntityTree(String userLogin, Entity entity, boolean unlinkMultipleParents, int level) throws DaoException {
     	
     	StringBuffer indent = new StringBuffer();
 		for (int i = 0; i < level; i++) {
@@ -645,7 +649,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	// Multiple parent check
     	Set<EntityData> eds = getParentEntityDatas(entity.getId());
     	boolean moreThanOneParent = eds.size() > 1;
-        if (level>0 && moreThanOneParent) {
+        if (level>0 && moreThanOneParent && !unlinkMultipleParents) {
         	_logger.info(indent+"Cannot delete "+entity.getName()+" because more than one parent is pointing to it");
         	return;
         }
@@ -656,7 +660,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
         for(EntityData ed : new ArrayList<EntityData>(entity.getEntityData())) {
         	Entity child = ed.getChildEntity();
         	if (child != null) {
-        		deleteSmallEntityTree(userLogin, child, level + 1);
+        		deleteSmallEntityTree(userLogin, child, unlinkMultipleParents, level + 1);
         	}
         	// We have to manually remove the EntityData from its parent, otherwise we get this error: 
         	// "deleted object would be re-saved by cascade (remove deleted object from associations)"
@@ -1170,6 +1174,56 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
     
+    public Entity getCommonRootFolderByName(String userLogin, String folderName, boolean createIfNecessary) throws DaoException {
+
+    	Entity folder = null;
+    	for(Entity entity : getUserEntitiesByNameAndTypeName(userLogin, folderName, EntityConstants.TYPE_FOLDER)) {
+    		if (entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT)!=null) {
+    			if (folder!=null) {
+    				throw new IllegalStateException("Multiple common roots owned by "+userLogin+" with name: "+folderName);
+    			}
+    			folder = entity;
+    		}
+    	}
+    	
+    	if (folder!=null) {
+    		return folder;
+    	}
+    	
+        if (createIfNecessary) {
+            _logger.info("Creating new topLevelFolder with name=" + folderName);
+            folder = createEntity(userLogin, EntityConstants.TYPE_FOLDER, folderName);
+            folder.addAttributeAsTag(EntityConstants.ATTRIBUTE_COMMON_ROOT);
+            saveOrUpdate(folder);
+            _logger.info("Saved top level folder as " + folder.getId());
+        }
+    	
+        return folder;
+    }
+    
+    public Entity getChildFolderByName(String userLogin, Long parentId, String folderName, boolean createIfNecessary) throws DaoException {
+
+    	Entity parent = getUserEntityById(userLogin, parentId);
+    	if (parent==null) {
+    		throw new IllegalArgumentException("Parent folder does not exist: "+parentId);
+    	}
+    	
+    	for(Entity child : parent.getChildren()) {
+    		if (child.getName().equals(folderName)) {
+    			return child;
+    		}
+    	}
+    	
+    	Entity folder = null;
+        if (createIfNecessary) {
+            _logger.info("Creating new child folder with name=" + folderName);
+            folder = createEntity(userLogin, EntityConstants.TYPE_FOLDER, folderName);
+            addEntityToParent(parent, folder, parent.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+        }
+    	
+        return folder;
+    }
+    
     public Set<EntityData> getParentEntityDatas(long childEntityId) throws DaoException {
         try {
             Session session = getCurrentSession();
@@ -1558,17 +1612,17 @@ public class AnnotationDAO extends ComputeBaseDAO {
         return query.list();
     }
     
-    public Entity createEntity(String userLogin, String entityTypeName, String entityName) throws ComputeException {
-    	if (entityTypeName==null) throw new ComputeException("Error creating entity with null type");
+    public Entity createEntity(String userLogin, String entityTypeName, String entityName) throws DaoException {
+    	if (entityTypeName==null) throw new DaoException("Error creating entity with null type");
         User owner = getUserByName(userLogin);
         Entity entity = newEntity(entityTypeName, entityName, owner);
-        if (entity.getEntityType()==null) throw new ComputeException("Error creating entity with unknown entity type: "+entityTypeName);
+        if (entity.getEntityType()==null) throw new DaoException("Error creating entity with unknown entity type: "+entityTypeName);
         saveOrUpdate(entity);
         return entity;
     }
 
-    public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName) throws ComputeException {
-    	if (attrName==null) throw new ComputeException("Error adding entity child with null attribute name");
+    public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName) throws DaoException {
+    	if (attrName==null) throw new DaoException("Error adding entity child with null attribute name");
         EntityData ed = parent.addChildEntity(entity, attrName);
         ed.setOrderIndex(index);
         saveOrUpdate(ed);
@@ -2320,6 +2374,74 @@ public class AnnotationDAO extends ComputeBaseDAO {
     public List<Entity> getUserEntitiesWithAttributeValue(String userLogin, String attrName, String attrValue) throws DaoException {
         return getUserEntitiesWithAttributeValue(userLogin, null, attrName, attrValue);
     }
+
+    public void loadLazyEntity(Entity entity, boolean recurse) throws DaoException {
+		
+        if (!EntityUtils.areLoaded(entity.getEntityData())) {
+            EntityUtils.replaceChildNodes(entity, getChildEntities(entity.getId()));
+        }
+
+        if (recurse) {
+            for (EntityData ed : entity.getEntityData()) {
+                if (ed.getChildEntity() != null) {
+                    loadLazyEntity(ed.getChildEntity(), true);
+                }
+            }
+        }
+    }
+
+    public Entity annexEntityTree(Long entityId, String newOwner) throws ComputeException {
+    	User newUser = getUserByName(newOwner);
+    	Entity entity = getEntityById(entityId);
+    	_logger.info(newOwner+" is annexing entity tree starting at "+entity.getName()+
+    			" (id="+entity.getId()+") from "+entity.getUser().getUserLogin());
+    	annexEntityTree(entity, newUser, "  ");	
+    	disassociateTreeFromNonOwners(getEntityById(entity.getId()), newUser, "  ");
+    	return entity;
+    }
+    
+    private Entity annexEntityTree(Entity entity, User newOwner, String indent) throws ComputeException {
+    	
+    	if (!entity.getUser().getUserId().equals(newOwner.getUserId())) {
+        	_logger.info(indent+"annexing entity "+entity.getName()+" (id="+entity.getId()+")");
+        	entity.setUser(newOwner);
+        	saveOrUpdate(entity);
+    	}
+    	loadLazyEntity(entity, false);
+    	for(EntityData ed : new ArrayList<EntityData>(entity.getEntityData())) {
+    		if (!ed.getUser().getUserId().equals(entity.getUser().getUserId())) {
+	    		ed.setUser(newOwner);
+	    		saveOrUpdate(ed);
+    		}
+    		if (ed.getChildEntity()!=null) {
+    			annexEntityTree(ed.getChildEntity(), newOwner, indent+"  ");
+    		}
+    	}
+    	
+    	// TODO: move files in filestore?
+    	
+    	return entity;
+    }
+    
+    private Entity disassociateTreeFromNonOwners(Entity entity, User newOwner, String indent) throws ComputeException {
+    	
+    	for(EntityData parentEd : getParentEntityDatas(entity.getId())) {
+    		if (parentEd.getUser().getUserLogin().equals(newOwner.getUserLogin())) continue;
+    		_logger.info(indent+"deleting "+parentEd.getUser().getUserLogin()+"'s link ("+parentEd.getEntityAttribute().getName()+") from entity "+parentEd.getParentEntity().getName()+" to entity "+entity.getName());
+    		parentEd.getParentEntity().getEntityData().remove(parentEd);
+    		genericDelete(parentEd);
+    	}
+    	
+    	loadLazyEntity(entity, false);
+    	for(EntityData ed : new ArrayList<EntityData>(entity.getEntityData())) {
+    		if (ed.getChildEntity()!=null) {
+    			disassociateTreeFromNonOwners(ed.getChildEntity(), newOwner, indent+"  ");
+    		}
+    	}
+    	
+    	return entity;
+    }
+    
     
     public EntityType getEntityTypeByName(String entityTypeName) {
     	preloadData();

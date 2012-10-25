@@ -86,9 +86,7 @@ public class SampleCleaningService extends AbstractEntityService {
     	
     	Set<Entity> toReallyDelete = new HashSet<Entity>();
     	for(Entity entity : toDelete) {
-    		SolrQuery query = new SolrQuery("(id:"+entity.getId()+" OR ancestor_ids:"+entity.getId()+") AND all_annotations:*");
-    		SolrResults results = solrBean.search(query, false);
-    		long numFound = results.getResponse().getResults().getNumFound();
+    		long numFound = annotationBean.getNumDescendantsAnnotated(entity.getId());
     		if (numFound>0) {
             	logger.info("Rejecting candidate "+entity.getId()+" because it and its ancestors have "+numFound+" annotations");
             	continue;

@@ -42,6 +42,7 @@ public interface EntityBeanRemote {
     public boolean deleteEntityById(String userLogin, Long entityId) throws ComputeException;
     public boolean deleteEntityTree(String userLogin, long entityId) throws ComputeException;
     public boolean deleteSmallEntityTree(String userLogin, long entityId) throws ComputeException;
+    public boolean deleteSmallEntityTree(String userLogin, long entityId, boolean unlinkMultipleParents) throws ComputeException;
     public void deleteEntityData(String userLogin, EntityData ed) throws ComputeException;
     
     public Entity getEntityById(String targetId);
@@ -75,4 +76,5 @@ public interface EntityBeanRemote {
     public void deleteEntityData(EntityData ed) throws ComputeException;
     public Entity saveOrUpdateEntity(Entity entity) throws ComputeException;
 
+    public Entity annexEntityTree(Long entityId, String newOwner) throws ComputeException;
 }
