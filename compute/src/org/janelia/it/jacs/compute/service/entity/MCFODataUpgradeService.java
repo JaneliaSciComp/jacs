@@ -1,14 +1,16 @@
 package org.janelia.it.jacs.compute.service.entity;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.*;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.entity.*;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityAttribute;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.cv.PipelineProcess;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
@@ -48,15 +50,6 @@ public class MCFODataUpgradeService extends AbstractEntityService {
         }
         else {
         	logger.info("This is the real thing. Entities will be moved and/or deleted!");
-        }
-        
-        EntityType lsmStackPairType = entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK_PAIR);
-        if (lsmStackPairType!=null) {
-        	logger.info("Renaming '"+EntityConstants.TYPE_LSM_STACK_PAIR+"' to '"+EntityConstants.TYPE_IMAGE_TILE+"'");
-            lsmStackPairType.setName(EntityConstants.TYPE_IMAGE_TILE);
-            if (!isDebug) {
-            	computeBean.genericSave(lsmStackPairType);
-            }
         }
         
         logger.info("Adding data sets...");
@@ -112,13 +105,40 @@ public class MCFODataUpgradeService extends AbstractEntityService {
 		logger.info("Processing "+sample.getName()+" (id="+sample.getId()+")");
 		numSamples++;
 		
+		if (deleteSampleIfUnreferencedByOwner(sample)) {
+			return;
+		}
+
 		entityBean.loadLazyEntity(sample, false);
 		
 		cleanupBrokenFastLoads(sample);
 		migrateTilelessLsms(sample);
+		removeOldTiles(sample);
 		migratePairsToTiles(sample);
 		migrateSampleStructure(sample);
 		cleanMergedFiles(sample);
+    }
+    
+    private boolean deleteSampleIfUnreferencedByOwner(Entity sample) throws ComputeException {
+    	
+    	for(EntityData ed : entityBean.getParentEntityDatas(sample.getId())) {
+    		if (ed.getUser().getUserLogin().equals(sample.getUser().getUserLogin())) {
+    			return false;
+    		}
+    	}
+    	
+    	logger.info("Sample is not referenced by owner: "+sample.getName()+" (id="+sample.getId()+")");
+
+    	long numAnnotated = annotationBean.getNumDescendantsAnnotated(sample.getId());
+    	if (numAnnotated>0) {
+    		logger.warn("Cannnot delete sample because "+numAnnotated+" descendants are annotated");
+    		return false;
+    	}
+    	
+    	logger.info("Removing sample entirely: "+sample.getId());
+        entityBean.deleteSmallEntityTree(sample.getUser().getUserLogin(), sample.getId(), true);
+        
+    	return true;
     }
     
     /**
@@ -206,6 +226,27 @@ public class MCFODataUpgradeService extends AbstractEntityService {
 		}
     }
 
+    /**
+     * Check for Samples with LSM Pairs and convert them to Image Tiles.
+     */
+    private void removeOldTiles(Entity sample) throws ComputeException {
+    	
+    	Entity supportingFiles = EntityUtils.getSupportingData(sample);
+    	if (supportingFiles==null) return; 
+    	
+        populateChildren(supportingFiles);
+
+		for(Entity entity : supportingFiles.getChildrenOfType(EntityConstants.TYPE_FOLDER)) {
+			
+			if (entity.getName().endsWith("(old)")) {
+				logger.info("Deleting old tile '"+entity.getName()+"' (id="+entity.getId()+")");
+                if (!isDebug) {
+                	entityBean.deleteSmallEntityTree(user.getUserLogin(), entity.getId());	
+                }
+			}
+		}
+    }
+    
     /**
      * Check for Samples with LSM Pairs and convert them to Image Tiles.
      */
