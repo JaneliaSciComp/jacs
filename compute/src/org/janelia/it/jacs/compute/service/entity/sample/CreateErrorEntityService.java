@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.service.entity.sample;
 import java.util.Date;
 import java.util.HashSet;
 
+import org.hibernate.exception.ExceptionUtils;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -30,12 +31,11 @@ public class CreateErrorEntityService extends AbstractEntityService {
     	}
 
     	Exception exception = (Exception)processData.getItem(IProcessData.PROCESSING_EXCEPTION);
-    	
+
     	Date date = new Date();
     	Entity error = new Entity(null, "Error", rootEntity.getUser(), null, 
     			entityBean.getEntityTypeByName(EntityConstants.TYPE_ERROR), date, date, new HashSet<EntityData>());	
-    	error.setValueByAttributeName(EntityConstants.ATTRIBUTE_MESSAGE, 
-    			exception.getClass().getName()+": "+exception.getMessage());
+    	error.setValueByAttributeName(EntityConstants.ATTRIBUTE_MESSAGE, ExceptionUtils.getStackTrace(exception));
     	entityBean.saveOrUpdateEntity(error);
 
     	logger.info("Saved error entity as id="+error.getId());
