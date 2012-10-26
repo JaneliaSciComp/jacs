@@ -55,6 +55,7 @@ public interface WorkstationDataManagerMBean {
     public void runSampleFolder(String folderId);
     public void runSamplePipelines(String sampleId);
     public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName);
+    public void runNeuronSeparationPipeline(String resultEntityId);
     
     // Pipelines for FlyLight Screen Data
     

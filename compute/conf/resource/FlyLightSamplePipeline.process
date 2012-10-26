@@ -249,7 +249,7 @@
 	        	<sequence forEach="RESULT_ENTITY_ID">
 					
 				    <!-- Decide what pipeline to run -->
-				    <operation name="Get Pipelines" processor="org.janelia.it.jacs.compute.service.entity.sample.InitAnalysisParametersService">
+				    <operation name="Get Parameters" processor="org.janelia.it.jacs.compute.service.entity.sample.InitAnalysisParametersService">
 						<input name="ANALYSIS_ALGORITHM"/>
 						<input name="RESULT_ENTITY_ID"/>
 						<output name="OUTPUT_FILENAME"/>

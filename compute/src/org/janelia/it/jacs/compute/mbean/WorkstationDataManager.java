@@ -377,6 +377,22 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
     
+    public void runNeuronSeparationPipeline(String resultEntityId) {
+        try {
+        	Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(resultEntityId);
+        	if (sampleEntity==null) throw new IllegalArgumentException("Entity with id "+resultEntityId+" does not exist");
+        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        	taskParameters.add(new TaskParameter("result entity id", resultEntityId, null)); 
+        	Task task = new GenericTask(new HashSet<Node>(), sampleEntity.getUser().getUserLogin(), new ArrayList<Event>(), 
+        			taskParameters, "separationPipeline", "Separation Pipeline");
+            task.setJobName("Separation Pipeline Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("PipelineHarness_FlyLightSeparation", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
     public void runCentralBrainDataPipeline(String user, String topLevelFolderName, Boolean refreshProcessing, Boolean refreshAlignment, Boolean refreshSeparation) {
         try {
         	Task task = new MCFODataPipelineTask(new HashSet<Node>(), 

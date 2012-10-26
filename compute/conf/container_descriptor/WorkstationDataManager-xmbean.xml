@@ -317,6 +317,16 @@
     </operation>
     
     <operation>
+        <description>Run a separation for a given result entity</description>
+        <name>runNeuronSeparationPipeline</name>
+        <parameter>
+           <description>Entity id of the result to run (e.g. "1679282451010027618")</description>
+           <name>resultEntityId</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
         <description>Run Central Brain Pipeline</description>
         <name>runCentralBrainDataPipeline</name>
         <parameter>

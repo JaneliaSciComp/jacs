@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -26,9 +29,14 @@ public class GetPipelinesForDataSetService extends AbstractEntityService {
     		throw new IllegalArgumentException("Data does not exist with identifier: "+dataSetIdentifier);
     	}
     	else {
-        	String pipelineProcess = "PipelineConfig_"+dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);
-        	logger.info("Putting '"+pipelineProcess+"' in PIPELINE_PROCESS_NAME");
-        	processData.putItem("PIPELINE_PROCESS_NAME", Task.listOfStringsFromCsvString(pipelineProcess));	
+    		List<String> processNames = new ArrayList<String>();
+        	String pipelineProcess = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);
+    		for(String process : Task.listOfStringsFromCsvString(pipelineProcess)) {
+    			if (StringUtils.isEmpty(process)) continue;
+    			processNames.add("PipelineConfig_"+process);
+    		}
+    		logger.info("Putting "+processNames.size()+" strings in PIPELINE_PROCESS_NAME");
+        	processData.putItem("PIPELINE_PROCESS_NAME", processNames);	
     	}
     }
 }
