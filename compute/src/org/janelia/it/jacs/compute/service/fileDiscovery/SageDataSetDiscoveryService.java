@@ -203,21 +203,8 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         for(ImageTileGroup tileGroup : tileGroupList) {
 
         	int tileNumSignals = 0;
+        	logger.debug("Calculating number of channels in tile "+tileGroup.getTag());
         	for(SlideImage slideImage : tileGroup.getImages()) {
-
-        		if (tileGroup.getImages().size()==1) {
-	        		// For unpaired images we can infer the channel spec from the number of channels, by assuming that the reference channel comes last
-	        		if (slideImage.channelSpec==null) {
-	        			if (slideImage.channels!=null) {
-	        				Integer numChannels = new Integer(slideImage.channels);
-	        				slideImage.channelSpec = getChanSpec(numChannels-1);
-	        			}
-	        			else {
-	        				logger.warn("Both channel_spec and channels are null for sageId="+slideImage.sageId);
-	        			}
-	        		}
-        		}
-        		
             	if (slideImage.channelSpec!=null) {
             		for(int j=0; j<slideImage.channelSpec.length(); j++) {
             			if (slideImage.channelSpec.charAt(j)=='s') {
@@ -226,7 +213,19 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             		}
             	}
         	}
-            
+        	
+        	if (tileNumSignals<1) {
+        		logger.debug("Falling back on channel number");
+        		// We didn't get the information from the channel spec, let's fall back on inference from numChannels
+            	for(SlideImage slideImage : tileGroup.getImages()) {
+                	if (slideImage.channels!=null) {
+                		tileNumSignals += Integer.parseInt(slideImage.channels) - 1;
+                	}
+            	}
+        	}
+        	
+        	logger.debug("Tile "+tileGroup.getTag()+" has "+tileNumSignals+" signal channels");
+        	
         	if (sampleNumSignals<0) {
         		sampleNumSignals = tileNumSignals;
         	}
@@ -235,16 +234,8 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         	}
         }
         
-        // The sample channel spec is either the same as the single image that's part of this slide group, 
-        // or its the result of a LSM Merge operation, which we assume will add the signal channels and 
-        // add a single reference channel at the end. 
-        String sampleChannelSpec = null;
-        if (tileGroupList.size()==1) {
-        	sampleChannelSpec = tileGroupList.get(0).images.get(0).channelSpec;
-        }
-        else if (sampleNumSignals>=0) {
-    		sampleChannelSpec = getChanSpec(sampleNumSignals);
-        }
+        String sampleChannelSpec = getChanSpec(sampleNumSignals);
+        logger.debug("Sample has "+sampleNumSignals+" signal channels, and thus specification '"+sampleChannelSpec+"'");
         
     	// Find the sample, if it exists
         Entity sample = findExistingSample(sampleIdentifier);
@@ -382,9 +373,9 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		}
 		
 		Set<String> currFilenames = new HashSet<String>();		
-		for(Entity child : imageTile.getChildren()) {
-			currFilenames.add(child.getName());
-			if (!newFilenames.contains(child.getName())) {
+		for(Entity lsmStack : currTiles) {
+			currFilenames.add(lsmStack.getName());
+			if (!newFilenames.contains(lsmStack.getName())) {
 				return false;
 			}
 		}

@@ -6,7 +6,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.entity.EntityHelper;
+import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
@@ -25,8 +30,6 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  */
 public class ResultImageRegistrationService extends AbstractEntityService {
 	
-	protected String defaultImageFilename;
-	
 	private List<Entity> images2d = new ArrayList<Entity>();
 	private List<Entity> images3d = new ArrayList<Entity>();
 	private Map<String,Entity> signalMipPrefixMap = new HashMap<String,Entity>();
@@ -34,7 +37,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	
 	public void execute() throws Exception {
 
-        defaultImageFilename = (String)processData.getItem("DEFAULT_IMAGE_FILENAME");
+        String defaultImageFilename = (String)processData.getItem("DEFAULT_IMAGE_FILENAME");
     	if (defaultImageFilename == null || "".equals(defaultImageFilename)) {
     		throw new IllegalArgumentException("DEFAULT_IMAGE_FILENAME may not be null");
     	}
@@ -58,7 +61,26 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     	if (rootEntity == null) {
     		throw new IllegalArgumentException("Entity not found with id="+rootEntityId);
     	}
-    	
+    
+    	registerImages(rootEntity, sampleEntity, defaultImageFilename);
+    }
+
+	public void execute(IProcessData processData, Entity rootEntity, Entity sampleEntity, String defaultImageFilename) throws Exception {
+
+        this.logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
+        this.task = ProcessDataHelper.getTask(processData);
+        this.processData = processData;
+        this.entityBean = EJBFactory.getLocalEntityBean();
+        this.computeBean = EJBFactory.getLocalComputeBean();
+        this.annotationBean = EJBFactory.getLocalAnnotationBean();
+        this.user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
+        this.entityHelper = new EntityHelper(entityBean, computeBean, user);
+        this.entityLoader = new EntityBeanEntityLoader(entityBean);
+    	registerImages(rootEntity, sampleEntity, defaultImageFilename);
+    }
+	
+	private void registerImages(Entity rootEntity, Entity sampleEntity, String defaultImageFilename) throws Exception {
+
     	logger.info("Finding images under "+rootEntity.getName());
     	logger.info("Looking for default image: "+defaultImageFilename);
     	
@@ -160,7 +182,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
             	setMIPs(imageTile, signalMip, refMip);
             }
     	}
-    }
+	}
 	
 	private void findImages(Entity entity) {
 		

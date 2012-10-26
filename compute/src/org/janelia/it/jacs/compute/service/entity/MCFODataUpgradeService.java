@@ -5,6 +5,7 @@ import java.util.*;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService;
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -13,6 +14,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.cv.PipelineProcess;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
 import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 
@@ -36,6 +38,7 @@ public class MCFODataUpgradeService extends AbstractEntityService {
     private boolean isDebug = false;
     private String username;
     private File userFilestore;
+    private ResultImageRegistrationService resultImageRegService;
     
     public void execute() throws Exception {
             
@@ -80,7 +83,7 @@ public class MCFODataUpgradeService extends AbstractEntityService {
 		logger.info("Creating new data set: "+dataSetName);
 		if (!isDebug) {
 			Entity dataSet = annotationBean.createDataSet(username, dataSetName);
-			dataSet.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS, process.toString());
+			dataSet.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS, process==null?"":process.toString());
 			if (sageSync) {
 				dataSet.setValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_SYNC, EntityConstants.ATTRIBUTE_SAGE_SYNC);
 			}
@@ -88,14 +91,14 @@ public class MCFODataUpgradeService extends AbstractEntityService {
 		}
     }
 
-	public void processSamples() throws ComputeException {
+	public void processSamples() throws Exception {
     	List<Entity> samples = entityBean.getUserEntitiesByTypeName(username, EntityConstants.TYPE_SAMPLE);
         for(Entity sample : samples) {
             processSample(sample);
         }
     }
     
-    public void processSample(Entity sample) throws ComputeException {
+    public void processSample(Entity sample) throws Exception {
     	
     	if (!sample.getUser().getUserLogin().equals(username)) return;
     	
@@ -127,15 +130,15 @@ public class MCFODataUpgradeService extends AbstractEntityService {
     		}
     	}
     	
-    	logger.info("Sample is not referenced by owner: "+sample.getName()+" (id="+sample.getId()+")");
+    	logger.info("  Sample is not referenced by owner: "+sample.getName()+" (id="+sample.getId()+")");
 
     	long numAnnotated = annotationBean.getNumDescendantsAnnotated(sample.getId());
     	if (numAnnotated>0) {
-    		logger.warn("Cannnot delete sample because "+numAnnotated+" descendants are annotated");
+    		logger.warn("  Cannnot delete sample because "+numAnnotated+" descendants are annotated");
     		return false;
     	}
     	
-    	logger.info("Removing sample entirely: "+sample.getId());
+    	logger.info("  Removing unreferenced sample entirely: "+sample.getId());
         entityBean.deleteSmallEntityTree(sample.getUser().getUserLogin(), sample.getId(), true);
         
     	return true;
@@ -166,7 +169,7 @@ public class MCFODataUpgradeService extends AbstractEntityService {
     				// See if there's a duplicate under the separation itself
     				EntityData ed = EntityUtils.findChildEntityDataWithName(separation, child.getName());
     				if (ed!=null) {
-	    				logger.info("Deleting duplicate fast load image: "+child.getName());
+	    				logger.info("  Deleting duplicate fast load image: "+child.getName());
 	                    if (!isDebug) {
 		    				entityBean.deleteEntityData(ed);
 		    				entityBean.deleteEntityById(ed.getChildEntity().getId());
@@ -174,7 +177,7 @@ public class MCFODataUpgradeService extends AbstractEntityService {
     				}
     			}
     			
-    			logger.info("Deleting broken fast load folder for separation: "+separation.getId());
+    			logger.info("  Deleting broken fast load folder for separation: "+separation.getId());
                 if (!isDebug) {
                 	entityBean.deleteSmallEntityTree(username, fastLoad.getId());
                 }
@@ -201,7 +204,7 @@ public class MCFODataUpgradeService extends AbstractEntityService {
 		}
 		
 		if (!toMove.isEmpty()) {
-			logger.info("Found old-style LSMs, id="+sample.getId()+" name="+sample.getName());
+			logger.info("  Found old-style LSMs, id="+sample.getId()+" name="+sample.getName());
         	int i = 1;
         	List<Long> toAdd = new ArrayList<Long>();
         	
@@ -239,7 +242,7 @@ public class MCFODataUpgradeService extends AbstractEntityService {
 		for(Entity entity : supportingFiles.getChildrenOfType(EntityConstants.TYPE_FOLDER)) {
 			
 			if (entity.getName().endsWith("(old)")) {
-				logger.info("Deleting old tile '"+entity.getName()+"' (id="+entity.getId()+")");
+				logger.info("  Deleting old tile '"+entity.getName()+"' (id="+entity.getId()+")");
                 if (!isDebug) {
                 	entityBean.deleteSmallEntityTree(user.getUserLogin(), entity.getId());	
                 }
@@ -261,11 +264,9 @@ public class MCFODataUpgradeService extends AbstractEntityService {
         
 		for(Entity entity : supportingFiles.getChildrenOfType(EntityConstants.TYPE_IMAGE_TILE)) {
 			
-			boolean fileWasDiscoveredNotSaged = false;
 			if (entity.getName().equals("Scans")) {
-				fileWasDiscoveredNotSaged = true;
 				entity.setName("Tile 1");
-				logger.info("Renaming tile (id="+entity.getId()+") from 'Scans' to 'Tile 1'");
+				logger.info("  Renaming tile (id="+entity.getId()+") from 'Scans' to 'Tile 1'");
                 if (!isDebug) {
                 	entityBean.saveOrUpdateEntity(entity);
                 }
@@ -279,19 +280,12 @@ public class MCFODataUpgradeService extends AbstractEntityService {
                 EntityData stack1ed = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_LSM_STACK_1);
 
                 if (stack1ed!=null) {
-                	logger.info("Found old-style LSM Pair, id="+entity.getId()+" name="+entity.getName());
+                	logger.info("  Found old-style LSM Pair, id="+entity.getId()+" name="+entity.getName());
                     stack1ed.setEntityAttribute(attr);
                     stack1ed.setOrderIndex(0);
                     logger.info("    Updating stack 1, id="+stack1ed.getId());
                     if (!isDebug) {
                     	entityBean.saveOrUpdateEntityData(stack1ed);
-                    }
-                    
-                    if (fileWasDiscoveredNotSaged) {
-    	                Entity lsmStack = stack1ed.getChildEntity();
-    	                if (lsmStack!=null) {
-    	                	populateLsmStackAttributes(lsmStack, "ssr");
-    	                }
                     }
                 }
                 
@@ -303,57 +297,23 @@ public class MCFODataUpgradeService extends AbstractEntityService {
                     if (!isDebug) {
                     	entityBean.saveOrUpdateEntityData(stack2ed);
                     }
-
-                    if (fileWasDiscoveredNotSaged) {
-    	                Entity lsmStack = stack1ed.getChildEntity();
-    	                if (lsmStack!=null) {
-    	                	populateLsmStackAttributes(lsmStack, "sr");
-    	                }
-                    }
                 }
-            }
-            else {
-            	int i = 0;
-            	for(EntityData childEd : children) {
-                    if (fileWasDiscoveredNotSaged) {
-    	                Entity lsmStack = childEd.getChildEntity();
-    	                if (lsmStack!=null) {
-    	                	populateLsmStackAttributes(lsmStack, i<1?"ssr":"sr");
-    	                	i++;
-    	                }
-                    }
-            	}
             }
             
 		}
-    }
-
-
-    protected Entity populateLsmStackAttributes(Entity lsmStack, String channelSpec) throws ComputeException {
-    	logger.info("      Setting stack properties: channels="+channelSpec.length()+", spec="+channelSpec);
-    	if (lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS)==null) {
-    		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS, ""+channelSpec.length());	
-    	}
-    	if (lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION)==null) {
-    		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec);	
-    	}
-    	if (!isDebug) {
-    		lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
-    	}
-        return lsmStack;
     }
     
     /**
      * Check for Samples with the old result structure.
      */
-    private void migrateSampleStructure(Entity sample) throws ComputeException {
+    private void migrateSampleStructure(Entity sample) throws Exception {
     	
     	if (EntityUtils.findChildEntityDataWithType(sample, EntityConstants.TYPE_PIPELINE_RUN) != null) {
     		// this is a new-style sample, no need to migrate it
     		return;
     	}
     	
-    	logger.info("Found old-style sample results, id="+sample.getId()+" name="+sample.getName());
+    	logger.info("  Found old-style sample, id="+sample.getId()+" name="+sample.getName());
     	
     	EntityData atEd = sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_TYPES);
     	if (atEd!=null) {
@@ -361,10 +321,6 @@ public class MCFODataUpgradeService extends AbstractEntityService {
     		entityBean.deleteEntityData(atEd);
     		sample.getEntityData().remove(atEd);
     	}
-    	
-    	Entity defaultImage = null;
-    	Entity signalMIP = null;
-    	Entity referenceMIP = null;
     	
     	List<EntityData> results = new ArrayList<EntityData>();
     	List<EntityData> sepResults = new ArrayList<EntityData>();
@@ -379,13 +335,13 @@ public class MCFODataUpgradeService extends AbstractEntityService {
     		populateChildren(entity);
     		
     		if (EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE.equals(ed.getEntityAttribute().getName())) {
-    			defaultImage = entity;
+    			// Ignore
     		}
     		else if (EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE.equals(ed.getEntityAttribute().getName())) {
-    			signalMIP = entity;
+    			// Ignore
     		}
     		else if (EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE.equals(ed.getEntityAttribute().getName())) {
-    			referenceMIP = entity;
+    			// Ignore
     		}
     		else {
     			if (EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT.equals(entity.getEntityType().getName())) {
@@ -401,7 +357,12 @@ public class MCFODataUpgradeService extends AbstractEntityService {
     		}
     	}
     	
-    	if (isDebug || results.isEmpty()) return;
+    	if (isDebug) return;
+    	
+    	if (results.isEmpty()) {
+    		logger.info("  No results found");
+    		return;
+    	}
     	
     	Entity pipelineRun = entityBean.createEntity(username, EntityConstants.TYPE_PIPELINE_RUN, "FlyLight Pipeline Results");
 
@@ -409,10 +370,6 @@ public class MCFODataUpgradeService extends AbstractEntityService {
     	pipelineRun.setCreationDate(lastDate);
     	pipelineRun.setUpdatedDate(lastDate);
     	entityBean.saveOrUpdateEntity(pipelineRun);
-    	
-    	entityHelper.setImage(pipelineRun, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMIP);
-		entityHelper.setImage(pipelineRun, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, referenceMIP);	
-		entityHelper.setDefault2dImage(pipelineRun, defaultImage);
     	
 		Collections.reverse(results);
 		Collections.reverse(sepResults);
@@ -446,13 +403,76 @@ public class MCFODataUpgradeService extends AbstractEntityService {
 
 		Collections.reverse(results);
 		
+		
 		for(EntityData resEd : results) {
 			resEd.setParentEntity(pipelineRun);
 			entityBean.saveOrUpdateEntityData(resEd);
 			sample.getEntityData().remove(resEd);
+			pipelineRun.getEntityData().add(resEd);
 		}
 		
 		entityBean.addEntityToParent(username, sample, pipelineRun, sample.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+		
+		for (EntityData resultEd : EntityUtils.getOrderedEntityDataForAttribute(pipelineRun, EntityConstants.ATTRIBUTE_RESULT)) {
+
+			Entity result = resultEd.getChildEntity();
+			
+			logger.info("   Upgrading "+result.getName()+" (id="+result.getId()+")");
+			
+			Entity supportingFiles = EntityUtils.getSupportingData(result);
+	        populateChildren(supportingFiles);
+			
+	        String resultDefault2dImage = result.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+			if (resultDefault2dImage!=null) {
+				logger.debug("    default 2d image: "+resultDefault2dImage);
+			}
+	        
+	        String defaultImageFilename = null;
+	        int priority = 0;
+			for (Entity file : supportingFiles.getChildren()) {
+				String filename = file.getName();
+				String filepath = file.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+				String fileDefault2dImage = file.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+				if (StringUtils.isEmpty(filepath)) continue;
+				
+				logger.debug("    Considering "+filename);
+				logger.debug("      filepath: "+filepath);
+				if (fileDefault2dImage!=null) {
+					logger.debug("      default 2d image: "+fileDefault2dImage);
+				}
+				
+				if (resultDefault2dImage!=null && resultDefault2dImage.equals(fileDefault2dImage) && priority < 20) {
+					defaultImageFilename = filepath;
+					priority = 20;
+				}
+				if (filename.matches("Aligned.v3d(raw|pbd)") && priority < 10) {
+					defaultImageFilename = filepath;
+					priority = 10;
+				}
+				else if (filename.matches("stitched-(\\w+?).v3d(raw|pbd)") && priority < 9) {
+					defaultImageFilename = filepath;
+					priority = 9;
+				}
+				else if (filename.matches("tile-(\\w+?).v3d(raw|pbd)") && priority < 8) {
+					defaultImageFilename = filepath;
+					priority = 8;
+				}
+				else if (filename.matches("merged-(\\w+?).v3d(raw|pbd)") && priority < 7) {
+					defaultImageFilename = filepath;
+					priority = 7;
+				}
+			}
+			
+			if (defaultImageFilename==null) {
+				logger.warn("  Could not find default image for result "+result.getId());
+			}
+			else {
+				logger.debug("  Found default image "+defaultImageFilename+" with priority "+priority);
+				logger.info("  Running result image registration with "+defaultImageFilename);
+		        resultImageRegService = new ResultImageRegistrationService();
+				resultImageRegService.execute(processData, result, sample, defaultImageFilename);
+			}
+		}		
 		
 		logger.info("    Moved results to pipeline run, id="+pipelineRun.getId()+" name="+pipelineRun.getName());
     }

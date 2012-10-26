@@ -77,6 +77,8 @@ public class SageImageFamilyDiscoveryService extends SageDataSetDiscoveryService
         }
         
         TilingPattern tiling = TilingPattern.getTilingPattern(tags);
+
+        logger.info("Sample "+sampleIdentifier+" has tiling pattern "+tiling.getName()+" (stitchable="+tiling.isStitchable()+")");	
         
         if (tiling != null && tiling.isStitchable()) {
         	// This is a stitchable case
@@ -86,7 +88,8 @@ public class SageImageFamilyDiscoveryService extends SageDataSetDiscoveryService
         	// This is a disconnected case
         	if (TilingPattern.OPTIC_CENTRAL_BORDER_AND_OPTIC_TILE.equals(tiling)) {
         		// In this super special case, we have to break up the slide group into left and right pieces.
-
+        		logger.debug("Breaking out the optic tile into a separate sample");	
+        		
             	List<ImageTileGroup> tileGroupListLeft = new ArrayList<ImageTileGroup>();
             	List<ImageTileGroup> tileGroupListRight = new ArrayList<ImageTileGroup>();
 
@@ -123,7 +126,7 @@ public class SageImageFamilyDiscoveryService extends SageDataSetDiscoveryService
             			logger.warn("Tiling pattern for "+sampleIdentifier+" is "+tiling+", but it contains an invalid tile: "+tileGroup.getTag());
             		}
         		}
-
+            	
             	createOrUpdateSample(sampleNameLeft, dataSetIdentifier, tilingLeft, tileGroupListLeft);
             	createOrUpdateSample(sampleNameRight, dataSetIdentifier, tilingRight, tileGroupListRight);	
         	}
