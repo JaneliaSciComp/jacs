@@ -245,10 +245,9 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
     
-    public void runMCFODataUpgrade(String user, Boolean testRun) {
+    public void runMCFODataUpgrade(String user) {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	taskParameters.add(new TaskParameter(SampleFileNodeSyncService.PARAM_testRun, Boolean.toString(testRun), null)); 
         	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
         			taskParameters, "mcfoDataUpgrade", "MCFO Data Upgrade");
             task.setJobName("MultiColor FlipOut Data Upgrade Task");

@@ -28,7 +28,7 @@ public interface WorkstationDataManagerMBean {
 	// Maintenance Pipelines
 	public void runOrphanAnnotationCheckerService(String user, Boolean deleteAnnotationsMissingTargets, Boolean deleteAnnotationsMissingTerms);
     public void runSampleImageSync(String user);
-    public void runMCFODataUpgrade(String user, Boolean testRun);
+    public void runMCFODataUpgrade(String user);
     public void runSampleCleaningService(String user, Boolean testRun);
     public void runSampleSyncService(String user, Boolean testRun); 
     public void runMCFODataCompress(String user, Boolean testRun);

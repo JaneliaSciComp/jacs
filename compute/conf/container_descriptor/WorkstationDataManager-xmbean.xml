@@ -214,11 +214,6 @@
             <name>user</name>
             <type>java.lang.String</type>
         </parameter>
-        <parameter>
-           <description>Should this run as a test without making any real changes?</description>
-           <name>testRun</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
     </operation>
     
     <operation>
@@ -417,81 +412,6 @@
     </operation>
     
     <operation>
-        <description>Run the entire MCFO Data Pipeline</description>
-        <name>runMCFODataPipeline</name>
-        <parameter>
-           <description>User to run as (e.g. "system")</description>
-           <name>user</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Name of the folder entity where results will be placed (e.g. "FlyLight Single Neuron Samples")</description>
-           <name>topLevelFolderName</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Re-run merging and stitching?</description>
-           <name>refreshProcessing</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-        <parameter>
-           <description>Re-run brain alignments?</description>
-           <name>refreshAlignment</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-        <parameter>
-           <description>Re-run neuron separations?</description>
-           <name>refreshSeparation</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
-
-    <operation>
-        <description>Run the MCFO Sample Pipeline for a single Sample</description>
-        <name>runMCFOSamplePipeline</name>
-        <parameter>
-           <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
-           <name>sampleEntityId</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Re-run merging and stitching?</description>
-           <name>refreshProcessing</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-        <parameter>
-           <description>Re-run brain alignments?</description>
-           <name>refreshAlignment</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-        <parameter>
-           <description>Re-run neuron separations?</description>
-           <name>refreshSeparation</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
-
-    <operation>
-        <description>Run the MCFO Separation Pipeline for a single input file</description>
-        <name>runMCFOSeparationPipeline</name>
-        <parameter>
-           <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
-           <name>sampleEntityId</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Input filename to run the separator on (e.g. "/groups/scicomp/jacsData/filestore/system/Sample/1681147037363486818/stitch/stitched-1681061667699425378.v3draw")</description>
-           <name>inputFilename</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>The name of the result entity to create under the Sample (e.g. "Prealigned Neuron Separation")</description>
-           <name>resultEntityName</name>
-           <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
         <description>Run the FlyScreen Pipeline</description>
         <name>runFlyScreenPipeline</name>
         <parameter>
@@ -520,11 +440,6 @@
             <type>java.lang.Boolean</type>
          </parameter>
      </operation>
-
-    <operation>
-        <description>Load entity types from Java class AnnotationDAO</description>
-        <name>setupEntityTypes</name>
-    </operation>
 
     <operation>
         <description>Perform custom surgery on Screen Pipeline results, by user</description>
