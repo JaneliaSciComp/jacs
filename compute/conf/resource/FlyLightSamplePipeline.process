@@ -123,9 +123,11 @@
 	        </operation>
         </sequence>
 	        
-	    <!-- Merging -->
+	    <!-- Merging 
     	<sequence if="RUN_MERGE=true">
-		    
+		(for now we always run merge, because if even if the LSMs are not paired, they still need to be converted)
+		 -->
+		     
 		    <!-- Merge all the LSM pairs in parallel -->
 	        <sequence name="Merge Lsm Pairs" waitForAsync="true">
 		        <operation name="Merge Lsm Pairs" processor="queue/gridSubmitAndWait">
@@ -135,7 +137,9 @@
 		        </operation>
 	        </sequence>
 		
+		<!-- 
         </sequence>
+        -->
     	
     	<sequence if="COPY_FROM_ARCHIVE=true">
     	
