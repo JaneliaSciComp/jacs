@@ -389,6 +389,7 @@ public class MCFODataUpgradeService extends AbstractEntityService {
 					sepEd.setParentEntity(result);
 					entityBean.saveOrUpdateEntityData(sepEd);
 					sample.getEntityData().remove(sepEd);
+					result.getEntityData().add(sepEd);
 					moved = true;
 				}
 			}
@@ -398,6 +399,7 @@ public class MCFODataUpgradeService extends AbstractEntityService {
 				sepEd.setParentEntity(pipelineRun);
 				entityBean.saveOrUpdateEntityData(sepEd);
 				sample.getEntityData().remove(sepEd);
+				pipelineRun.getEntityData().add(sepEd);
 			}
 		}
 
@@ -424,53 +426,76 @@ public class MCFODataUpgradeService extends AbstractEntityService {
 			
 	        String resultDefault2dImage = result.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
 			if (resultDefault2dImage!=null) {
-				logger.debug("    default 2d image: "+resultDefault2dImage);
-			}
-	        
-	        String defaultImageFilename = null;
-	        int priority = 0;
-			for (Entity file : supportingFiles.getChildren()) {
-				String filename = file.getName();
-				String filepath = file.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-				String fileDefault2dImage = file.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-				if (StringUtils.isEmpty(filepath)) continue;
+				logger.info("    Default 2d image: "+resultDefault2dImage);
 				
-				logger.debug("    Considering "+filename);
-				logger.debug("      filepath: "+filepath);
-				if (fileDefault2dImage!=null) {
-					logger.debug("      default 2d image: "+fileDefault2dImage);
+		        String defaultImageFilename = null;
+		        int priority = 0;
+				for (Entity file : supportingFiles.getChildren()) {
+					String filename = file.getName();
+					String filepath = file.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+					String fileDefault2dImage = file.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+					if (StringUtils.isEmpty(filepath)) continue;
+					
+					logger.debug("    Considering "+filename);
+					logger.debug("      filepath: "+filepath);
+					if (fileDefault2dImage!=null) {
+						logger.debug("      default 2d image: "+fileDefault2dImage);
+					}
+					
+					if (resultDefault2dImage!=null && resultDefault2dImage.equals(fileDefault2dImage) && priority < 20) {
+						defaultImageFilename = filepath;
+						priority = 20;
+					}
+					if (filename.matches("Aligned.v3d(raw|pbd)") && priority < 10) {
+						defaultImageFilename = filepath;
+						priority = 10;
+					}
+					else if (filename.matches("stitched-(\\w+?).v3d(raw|pbd)") && priority < 9) {
+						defaultImageFilename = filepath;
+						priority = 9;
+					}
+					else if (filename.matches("tile-(\\w+?).v3d(raw|pbd)") && priority < 8) {
+						defaultImageFilename = filepath;
+						priority = 8;
+					}
+					else if (filename.matches("merged-(\\w+?).v3d(raw|pbd)") && priority < 7) {
+						defaultImageFilename = filepath;
+						priority = 7;
+					}
 				}
 				
-				if (resultDefault2dImage!=null && resultDefault2dImage.equals(fileDefault2dImage) && priority < 20) {
-					defaultImageFilename = filepath;
-					priority = 20;
+				if (defaultImageFilename==null) {
+					logger.warn("  Could not find default image for result "+result.getId());
 				}
-				if (filename.matches("Aligned.v3d(raw|pbd)") && priority < 10) {
-					defaultImageFilename = filepath;
-					priority = 10;
+				else {
+					logger.debug("  Found default image "+defaultImageFilename+" with priority "+priority);
+					logger.info("  Running result image registration with "+defaultImageFilename);
+			        resultImageRegService = new ResultImageRegistrationService();
+					resultImageRegService.execute(processData, result, sample, defaultImageFilename);
 				}
-				else if (filename.matches("stitched-(\\w+?).v3d(raw|pbd)") && priority < 9) {
-					defaultImageFilename = filepath;
-					priority = 9;
-				}
-				else if (filename.matches("tile-(\\w+?).v3d(raw|pbd)") && priority < 8) {
-					defaultImageFilename = filepath;
-					priority = 8;
-				}
-				else if (filename.matches("merged-(\\w+?).v3d(raw|pbd)") && priority < 7) {
-					defaultImageFilename = filepath;
-					priority = 7;
-				}
-			}
-			
-			if (defaultImageFilename==null) {
-				logger.warn("  Could not find default image for result "+result.getId());
 			}
 			else {
-				logger.debug("  Found default image "+defaultImageFilename+" with priority "+priority);
-				logger.info("  Running result image registration with "+defaultImageFilename);
-		        resultImageRegService = new ResultImageRegistrationService();
-				resultImageRegService.execute(processData, result, sample, defaultImageFilename);
+				logger.info("    No default 2d image found, attempting to use neuron separation");
+				
+				// No MIPs for this result, use the neuron separation mips
+				Entity sep = result.getLatestChildOfType(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
+				
+				if (sep!=null) {
+					Entity signalMip = sep.getChildByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE);
+					Entity refMip = sep.getChildByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE);
+	
+					if (signalMip!=null) {
+						entityHelper.setImage(result, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMip);
+						entityHelper.setDefault2dImage(result, signalMip);
+						entityHelper.setImage(pipelineRun, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMip);
+						entityHelper.setDefault2dImage(pipelineRun, signalMip);
+					}
+					
+					if (refMip!=null) {
+						entityHelper.setImage(result, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);
+						entityHelper.setImage(pipelineRun, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);
+					}
+				}
 			}
 		}		
 		

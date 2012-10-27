@@ -210,6 +210,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 			images3d.add(entity);
 		}
 		else {
+			populateChildren(entity);
 			for(Entity child : entity.getChildren()) {
 				findImages(child);
 			}
