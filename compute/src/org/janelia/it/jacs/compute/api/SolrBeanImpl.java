@@ -1,6 +1,12 @@
 
 package org.janelia.it.jacs.compute.api;
 
+import java.util.*;
+
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+
 import org.apache.log4j.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.ORDER;
@@ -14,18 +20,13 @@ import org.janelia.it.jacs.compute.access.mongodb.MongoDbDAO;
 import org.janelia.it.jacs.compute.access.neo4j.Neo4jDAO;
 import org.janelia.it.jacs.compute.access.solr.SolrDAO;
 import org.janelia.it.jacs.compute.api.support.SageTerm;
+import org.janelia.it.jacs.compute.api.support.SolrDocTypeEnum;
 import org.janelia.it.jacs.compute.api.support.SolrResults;
-import org.janelia.it.jacs.compute.api.support.SolrUtils;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
-
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import java.util.*;
 
 /**
  * Implementation of SOLR indexing and searching operations. 
@@ -157,7 +158,7 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     	SolrDAO solrDAO = new SolrDAO(_logger, false, false);
 		Map<String, SageTerm> vocab = new HashMap<String, SageTerm>();
 		
-		SolrQuery query = new SolrQuery("doc_type:"+SolrUtils.DocType.SAGE_TERM);
+		SolrQuery query = new SolrQuery("doc_type:"+SolrDocTypeEnum.SAGE_TERM);
 		query.setSortField("name", ORDER.asc);
 		query.setRows(Integer.MAX_VALUE);
 		QueryResponse response = solrDAO.search(query);

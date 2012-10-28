@@ -11,10 +11,6 @@ import java.util.Date;
  */
 public class SolrUtils {
 
-	public enum DocType {
-		ENTITY,
-		SAGE_TERM
-	}
 	
 	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 

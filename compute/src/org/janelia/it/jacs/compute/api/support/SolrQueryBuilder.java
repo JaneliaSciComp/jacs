@@ -115,7 +115,7 @@ public class SolrQueryBuilder {
 	public SolrQuery getQuery() throws ComputeException {
     	
     	StringBuffer qs = new StringBuffer();
-    	qs.append("(username:system");
+    	qs.append("+(username:system");
     	if (username!=null) {
     		qs.append(" OR username:"+username);
     	}
@@ -125,7 +125,7 @@ public class SolrQueryBuilder {
     		qs.append(" AND (ancestor_ids:"+rootId+")");
     	}
     	
-    	qs.append(" +doc_type:"+SolrUtils.DocType.ENTITY.toString());
+    	qs.append(" +doc_type:"+SolrDocTypeEnum.ENTITY.toString());
     	
     	qs.append(" -entity_type:Ontology*");
 

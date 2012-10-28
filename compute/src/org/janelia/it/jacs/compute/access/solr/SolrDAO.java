@@ -25,6 +25,7 @@ import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.large.LargeOperations;
 import org.janelia.it.jacs.compute.api.support.SageTerm;
+import org.janelia.it.jacs.compute.api.support.SolrDocTypeEnum;
 import org.janelia.it.jacs.compute.api.support.SolrUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -300,7 +301,7 @@ public class SolrDAO extends AnnotationDAO {
     
     private List<SolrInputDocument> createSageDocs(Collection<SageTerm> terms) {
     	
-    	String dt = SolrUtils.DocType.SAGE_TERM.toString();
+    	String dt = SolrDocTypeEnum.SAGE_TERM.toString();
     	
     	int id = 0;
         List<SolrInputDocument> docs = new ArrayList<SolrInputDocument>();
@@ -345,7 +346,7 @@ public class SolrDAO extends AnnotationDAO {
     	SolrInputDocument doc = existingDoc==null ? new SolrInputDocument() : ClientUtils.toSolrInputDocument(existingDoc);
     	
     	doc.setField("id", entity.getId(), 1.0f);
-    	doc.setField("doc_type", SolrUtils.DocType.ENTITY.toString(), 1.0f);
+    	doc.setField("doc_type", SolrDocTypeEnum.ENTITY.toString(), 1.0f);
     	doc.setField("name", entity.getName(), 1.0f);
     	doc.setField("creation_date", entity.getCreationDate(), 0.8f);
     	doc.setField("updated_date", entity.getUpdatedDate(), 0.9f);
