@@ -101,6 +101,15 @@ if [ $INSTALL_SCRIPTS == 1 ]; then
     mkdir -p $SCRIPTS_INSTALL_DIR
     svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk/compute/scripts/single_neuron $SCRIPTS_INSTALL_DIR/single_neuron
 
+    svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/BrainAligner/trunk/pipelines/brainaligner $SCRIPTS_INSTALL_DIR/brainaligner
+
+    echo "Creating Toolkit symbolic links"
+    cd $SCRIPTS_INSTALL_DIR/single_neuron/Toolkits
+    mkdir -p Vaa3D ; cd Vaa3D ; rm * || true 
+    ln -s ../../../../vaa3d-redhat/vaa3d .
+    mkdir -p JBA ; cd JBA ; rm * || true
+    ln -s ../../../../vaa3d-redhat/brainaligner .
+
     rm $SCRIPTS_INSTALL_SYMLINK || true
     echo "Creating symbolic link at $SCRIPTS_INSTALL_SYMLINK"
     ln -s $SCRIPTS_INSTALL_DIR $SCRIPTS_INSTALL_SYMLINK 
