@@ -104,9 +104,12 @@ if [ $INSTALL_SCRIPTS == 1 ]; then
     svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/BrainAligner/trunk/pipelines/brainaligner $SCRIPTS_INSTALL_DIR/brainaligner
 
     echo "Creating Toolkit symbolic links"
+    
     cd $SCRIPTS_INSTALL_DIR/single_neuron/Toolkits
     mkdir -p Vaa3D ; cd Vaa3D ; rm * || true 
     ln -s ../../../../vaa3d-redhat/vaa3d .
+
+    cd $SCRIPTS_INSTALL_DIR/single_neuron/Toolkits
     mkdir -p JBA ; cd JBA ; rm * || true
     ln -s ../../../../vaa3d-redhat/brainaligner .
 
