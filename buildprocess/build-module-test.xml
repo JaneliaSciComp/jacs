@@ -67,6 +67,9 @@
 			<pathelement location="${build.test.classes.dir}"/>
 			<!-- local test classes -->
 		</path>
+
+        <!-- default log4j config location if not already set -->
+        <property name="test.log4j.config" value="${basedir}/../buildprocess/config/log4j-test.properties"/>
 		<!-- run -->
 		<junit printsummary="yes" showoutput="yes" haltonfailure="no"
 			   errorproperty="test.error" failureproperty="test.failure">
