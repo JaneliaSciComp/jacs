@@ -549,6 +549,15 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         }
     }
     
+    public Entity saveBulkEntityTree(Entity root) throws ComputeException {
+    	try {
+        	return _annotationDAO.saveBulkEntityTree(root);
+        } catch (DaoException e) {
+            _logger.error("Error in saveBulkEntityTree(): "+e.getMessage());
+            throw new ComputeException("Error in saveBulkEntityTree(): "+e.getMessage(), e);
+        }
+    }
+    
     public void setupEntityTypes() {
         try {
             _annotationDAO.setupEntityTypes();

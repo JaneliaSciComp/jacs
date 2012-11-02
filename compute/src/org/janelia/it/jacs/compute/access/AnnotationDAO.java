@@ -19,6 +19,7 @@ import org.hibernate.criterion.Expression;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.service.fly.MaskSampleAnnotationService;
+import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
@@ -485,6 +486,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
         	}
         }
     }
+    
     protected void getNonOwnedParents(Long userId, Map<Long, Set<Long>> nonOwnedParentEdMap) throws Exception {
     	
     	Connection conn = null;
@@ -2683,4 +2685,185 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
+    public Entity saveBulkEntityTree(Entity root) throws DaoException {
+    	if (root.getUser()==null || (root.getUser().getUserLogin()==null && root.getUser().getUserId()==null)) {
+    		throw new IllegalArgumentException("Root entity must specify the username or user GUID");
+    	}
+    	return saveBulkEntityTree(root, root.getUser().getUserLogin());
+    }
+    
+    public Entity saveBulkEntityTree(Entity root, String owner) throws DaoException {
+
+    	final int batchSize = 800;	
+    	
+    	_logger.info("Saving bulk entity tree rooted at "+root.getName());
+    	
+    	Long userId = null;
+        if (root.getUser()!=null && root.getUser().getUserId()!=null) {
+        	userId =  root.getUser().getUserId();
+        }
+        else {
+        	User user = getUserByName(owner);
+        	userId = user.getUserId();
+        }
+        
+        _logger.debug("Using user id: "+userId);
+        
+        java.sql.Date defaultDate = new java.sql.Date(new Date().getTime());
+        
+    	Connection conn = null;
+    	PreparedStatement stmtEntity = null;
+    	PreparedStatement stmtEd = null;
+    	try {
+    		List<Entity> entities = new ArrayList<Entity>();
+    		int count = getEntitiesInTree(root, entities);
+    		_logger.info("Found "+entities.size()+" entities in tree, and "+count+" objects to be persisted.");
+    		
+    		List<Long> ids = TimebasedIdentifierGenerator.generateIdList(count);
+    		
+    		conn = getJdbcConnection();
+	        conn.setAutoCommit(false);
+	        
+	        String entitySql = "insert into entity (id,name,user_id,entity_type_id,creation_date,updated_date) values (?,?,?,?,?,?)";
+	        stmtEntity = conn.prepareStatement(entitySql);
+	        
+	        String edSql = "insert into entityData (id,parent_entity_id,entity_att_id,value,user_id,creation_date,updated_date,orderIndex,child_entity_id) values (?,?,?,?,?,?,?,?,?)";
+	        stmtEd = conn.prepareStatement(edSql);
+	        
+	        int idIndex = ids.size()-1;
+	        int entityCount = 0;
+	        int edCount = 0;
+	        Long newEntityId = null;
+	        
+	        for(Entity entity : entities) {
+		    
+	        	newEntityId = ids.get(idIndex--);
+	        	entity.setId(newEntityId);
+	        	
+	        	stmtEntity.setLong(1, newEntityId);
+	        	stmtEntity.setString(2, entity.getName());
+	        	stmtEntity.setLong(3, userId);
+		        
+		    	if (entity.getEntityType().getId()==null) {
+		    		stmtEntity.setLong(4, getEntityTypeByName(entity.getEntityType().getName()).getId());
+		    	}
+		    	else {
+		    		stmtEntity.setLong(4, entity.getEntityType().getId());	
+		    	}
+		    	
+		        if (entity.getCreationDate()!=null) {
+		        	stmtEntity.setDate(5, new java.sql.Date(entity.getCreationDate().getTime()));	
+		        }
+		        else {
+		        	stmtEntity.setDate(5, defaultDate);
+		        }
+
+		        if (entity.getUpdatedDate()!=null) {
+		        	stmtEntity.setDate(6, new java.sql.Date(entity.getUpdatedDate().getTime()));
+		        }
+		        else {
+		        	stmtEntity.setDate(6, defaultDate);
+		        }
+		        
+		        stmtEntity.addBatch();
+		        
+		        for(EntityData ed : entity.getEntityData()) {
+
+		        	Long newEdId = ids.get(idIndex--);
+		        	ed.setId(newEdId);
+		        	
+		        	stmtEd.setLong(1, newEdId);
+		        	stmtEd.setLong(2, newEntityId);
+
+			    	if (entity.getEntityType().getId()==null) {
+			    		stmtEd.setLong(3, getEntityAttributeByName(ed.getEntityAttribute().getName()).getId());
+			    	}
+			    	else {
+			    		stmtEd.setLong(3, ed.getEntityAttribute().getId());	
+			    	}
+			    	
+		        	stmtEd.setString(4, ed.getValue());
+			        stmtEd.setLong(5, userId);
+
+			        if (ed.getCreationDate()!=null) {
+			        	stmtEd.setDate(6, new java.sql.Date(ed.getCreationDate().getTime()));	
+			        }
+			        else {
+			        	stmtEd.setDate(6, defaultDate);
+			        }
+			        
+			        if (ed.getUpdatedDate()!=null) {
+			        	stmtEd.setDate(7, new java.sql.Date(ed.getUpdatedDate().getTime()));
+			        }
+			        else {
+			        	stmtEd.setDate(7, defaultDate);
+			        }
+			        
+			        if (ed.getOrderIndex()==null) {
+			        	stmtEd.setNull(8, java.sql.Types.INTEGER); 	
+			        }
+			        else {
+			        	stmtEd.setObject(8, ed.getOrderIndex());	
+			        }
+
+			        if (ed.getChildEntity()==null) {
+			        	stmtEd.setNull(9, java.sql.Types.BIGINT); 	
+			        }
+			        else {
+			        	stmtEd.setObject(9, ed.getChildEntity().getId());	
+			        }
+			        
+			        stmtEd.addBatch();
+		        }
+		        
+		        if (++entityCount % batchSize == 0) {
+		        	stmtEntity.executeBatch();
+		        }
+		        if (++edCount % batchSize == 0) {
+		        	stmtEd.executeBatch();
+		        }
+	        }
+	        
+	    	stmtEntity.executeBatch();
+	    	stmtEd.executeBatch();
+	    	
+	    	conn.commit();
+	    	
+	        _logger.info("Saved bulk entity tree with root id="+newEntityId);
+	        Entity saved = getEntityById(newEntityId);
+	        if (saved==null) {
+	        	throw new DaoException("Unknown error saving bulk entity tree");
+	        }
+	        return saved;
+    	}
+    	catch (Exception e) {
+    		throw new DaoException(e);
+    	}
+        finally {
+        	try {
+                if (stmtEntity!=null) stmtEntity.close();
+                if (stmtEd!=null) stmtEd.close();
+                if (conn!=null) conn.close();	
+        	}
+        	catch (SQLException e) {
+        		_logger.warn("Ignoring error encountered while closing JDBC connection",e);
+        	}
+        }
+    }
+    
+    protected int getEntitiesInTree(Entity entity, List<Entity> allEntities) throws Exception {
+
+    	int count = 1;
+    	
+    	for(EntityData ed : entity.getEntityData()) {
+    		count++;   
+    		Entity child = ed.getChildEntity();
+    		if (child!=null) {
+    			count += getEntitiesInTree(child, allEntities);
+    		}
+    	}
+    	
+    	allEntities.add(entity);
+    	return count;
+    }
 }

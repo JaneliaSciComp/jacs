@@ -36,7 +36,7 @@
     <mbean code="org.janelia.it.jacs.compute.mbean.SearchDataManager" name="ComputeServer:service=SearchDataManager"/>
     <mbean code="org.janelia.it.jacs.compute.mbean.GenomeProjectNodeManager" name="ComputeServer:service=GenomeProjectNodeManager"/>
     <mbean code="org.janelia.it.jacs.compute.mbean.GridJobsManager" name="ComputeServer:service=GridJobsManager"/>
-
+    <mbean code="org.janelia.it.jacs.compute.mbean.LocalTestManager" name="ComputeServer:service=LocalTestManager"/>
     <mbean code="org.janelia.it.jacs.compute.mbean.WorkstationDataManager" name="ComputeServer:service=WorkstationDataManager"
     	xmbean-dd="resource:META-INF/WorkstationDataManager-xmbean.xml"/> 
      

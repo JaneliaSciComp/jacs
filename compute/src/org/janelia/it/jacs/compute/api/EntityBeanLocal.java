@@ -5,7 +5,6 @@ import javax.ejb.Local;
 
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.user_data.User;
 
 /**
  * A local interface for invoking queries against the entity model. Affords access to everything in EntityBeanRemote
@@ -26,5 +25,6 @@ public interface EntityBeanLocal extends EntityBeanRemote {
     public void deleteEntityData(EntityData ed) throws ComputeException;
     
     public void loadLazyEntity(Entity entity, boolean recurse) throws ComputeException;
+    public Entity saveBulkEntityTree(Entity root) throws ComputeException;
 	public void setupEntityTypes();
 }
