@@ -74,7 +74,7 @@
             <classpath refid="test.run.classpath.final"/>
             <sysproperty key="java.endorsed.dirs" value="${common.dir}/JAXB-2.1.5"/>
             <sysproperty key="shared.testfiles.root" value="${shared.testfiles.root}"/>          
-            <sysproperty key="log4j.configuration" value="file:${basedir}/../buildprocess/config/log4j-test.properties"/>
+            <sysproperty key="log4j.configuration" value="file:${test.log4j.config}" />
             <formatter type="xml"/>
 			<batchtest fork="no" todir="${test.reports.dir}">
 				<fileset dir="${test.src.dir}">

@@ -88,7 +88,7 @@
                 <!-- Works -->
                 <file name="shared/build.xml"/>
                 <file name="model/build.xml"/>
-                <!--<file name="compute/build.xml"/>-->
+                <file name="compute/build.xml"/>
 
                 <!-- Needs work -->
                 <!--<file name="jacs/build.xml"/>-->
