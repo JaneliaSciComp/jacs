@@ -1,10 +1,18 @@
 package org.janelia.it.jacs.compute.mservice;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.service.fly.ScreenSampleLineCoordinationService;
 import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.shared.utils.FileUtil;
 
+import javax.ejb.EntityBean;
+import java.io.File;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created with IntelliJ IDEA.
@@ -23,54 +31,160 @@ import java.util.*;
 
 public class ArnimPatternAnnotationFinisherMService extends MService {
 
+    public static final String workspaceTopLevelDirPath="/groups/scicomp/jacsData/arnimPatternAnnotationFinisherWorkspace";
+
     Logger logger = Logger.getLogger(ArnimPatternAnnotationFinisherMService.class);
     Set<Entity> sampleUpdateSet = Collections.synchronizedSet(new HashSet<Entity>());
+
+    public static final int THREAD_POOL_SIZE=5;
+
+    ExecutorService executorService= Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+
+    Long globalStartTime=0L;
+    Long sampleCount=0L;
+
+    static Long activeThreadCount=0L;
+    static Long finishedThreads=0L;
+    static Long accumulatedTime=0L;
+
+    public class SampleRetrievalThread extends Thread {
+
+        Long sampleId;
+
+        public SampleRetrievalThread(Long sampleId) {
+            this.sampleId=sampleId;
+        }
+
+        public void run() {
+            EntityBeanLocal entityBean= EJBFactory.getLocalEntityBean();
+            logger.info("Getting   sample tree id="+sampleId);
+            Long startTime=new Date().getTime();
+            Entity sampleTree=entityBean.getEntityTree(sampleId);
+            Long endTime=new Date().getTime();
+            Long elapsed=endTime-startTime;
+            logger.info("Retrieved sample tree id="+sampleId+" in "+elapsed+" ms");
+            ArnimPatternAnnotationFinisherMService.decrementActiveThreadCount(elapsed);
+        }
+
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public ArnimPatternAnnotationFinisherMService(String username) throws Exception {
         super(username);
     }
 
+    public static synchronized void incrementActiveThreadCount() {
+        activeThreadCount++;
+    }
+
+    public static synchronized void decrementActiveThreadCount(Long time) {
+        activeThreadCount--;
+        finishedThreads++;
+        accumulatedTime+=time;
+    }
+
+    public static Long getActiveThreadCount() {
+        return activeThreadCount;
+    }
+
     public void run() throws Exception {
         logger.info("ArnimPatternAnnotationFinisherMService: run() start");
+
+        globalStartTime=new Date().getTime();
+
+        // Get top-level folder
         Entity topLevelSampleFolder = getTopLevelFolder(ScreenSampleLineCoordinationService.SCREEN_PATTERN_TOP_LEVEL_FOLDER_NAME,
                 false /* create if doesn't exist */);
-        if (topLevelSampleFolder==null) {
-            throw new Exception("Top level folder with name="+ScreenSampleLineCoordinationService.SCREEN_PATTERN_TOP_LEVEL_FOLDER_NAME+" is null");
-        } else {
-            searchEntityContents(topLevelSampleFolder);
-
+        if (topLevelSampleFolder == null) {
+            throw new Exception("Top level folder with name=" + ScreenSampleLineCoordinationService.SCREEN_PATTERN_TOP_LEVEL_FOLDER_NAME + " is null");
         }
+
+        // Collect Sample ID => Set<String>, where the Set<String> contains paths to the annotation directories
+        final Map<Long, Set<String>> samplePatternAnnotationDirPaths=new HashMap<Long, Set<String>>();
+
+        searchEntityContents(topLevelSampleFolder, new EntitySearchTrigger() {
+            public boolean evaluate(Entity parent, Entity entity, int level) {
+                logger.info("level=" + level + " : name=" + entity.getName() + " type=" + entity.getEntityType().getName());
+
+//                if (parent.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
+//
+//                    if (entity.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+//
+//                        Set<String> dirPathSet=samplePatternAnnotationDirPaths.get(parent.getId());
+//                        if (dirPathSet==null) {
+//                            dirPathSet=new HashSet<String>();
+//                            samplePatternAnnotationDirPaths.put(parent.getId(), dirPathSet);
+//                        }
+//                        String dirPath=entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+//                        if (dirPath!=null) {
+//                            dirPathSet.add(dirPath);
+//                        }
+//                    }
+//                    return false;
+//                }
+
+                if (entity.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
+
+                    while(ArnimPatternAnnotationFinisherMService.getActiveThreadCount()>THREAD_POOL_SIZE) {
+                        try { Thread.sleep(1000); } catch (Exception ex) {}
+                    }
+
+                    ArnimPatternAnnotationFinisherMService.incrementActiveThreadCount();
+
+                    executorService.submit(new SampleRetrievalThread(entity.getId()));
+
+                    sampleCount++;
+
+                    if (sampleCount%100==0) {
+                        Long currentTime=new Date().getTime();
+                        Long elapsedTime=currentTime-globalStartTime;
+                        Long totalThreads=finishedThreads;
+                        Long msPerSample=elapsedTime/totalThreads;
+                        Long avgTimePerCall=accumulatedTime/totalThreads;
+                        logger.info("Finished threads="+totalThreads+" msPerSample="+msPerSample+" msPerCall="+avgTimePerCall);
+                    }
+
+                    return false;
+                }
+
+                else {
+                    return true;
+                }
+            }
+        });
+
+        long dirCount=0L;
+        for (Long sampleId : samplePatternAnnotationDirPaths.keySet()) {
+            dirCount+=samplePatternAnnotationDirPaths.get(sampleId).size();
+        }
+        logger.info("Found "+samplePatternAnnotationDirPaths.size()+" sample entries containing "+dirCount+" directory paths");
+
+        // Write sample dirs to file
+
+
         logger.info("ArnimPatternAnnotationFinisherMService: run() end");
     }
 
-    protected void searchEntityContents(Entity parent) {
-        searchEntityContents(parent, null, null);
+    File getWorkspaceDir() {
+        return new File(workspaceTopLevelDirPath);
     }
 
-    private void searchEntityContents(Entity parent, Map<Entity, Integer> levelMap, String[] spaceArray) {
-        if (levelMap==null) {
-            levelMap=new HashMap<Entity, Integer>();
-        }
-        if (spaceArray==null) {
-            spaceArray=new String[1000];
-            StringBuilder builder=new StringBuilder();
-            for (int i=0;i<1000;i++) {
-                spaceArray[i]=builder.toString();
-                builder.append(" ");
-            }
-        }
-        Integer parentLevel=levelMap.get(parent);
-        if (parentLevel==null) {
-            parentLevel=0;
-            logger.info("0: name="+parent.getName()+" type="+parent.getEntityType().getName());
-        }
-        parent=getEntityBean().getEntityAndChildren(parent.getId());
-        Set<Entity> children=parent.getChildren();
-        for (Entity child : children) {
-            Integer childLevel=parentLevel+1;
-            levelMap.put(child, childLevel);
-            logger.info(spaceArray[childLevel]+childLevel+": name="+child.getName()+" type="+child.getEntityType().getName());
-            searchEntityContents(child, levelMap, spaceArray);
-        }
+    File getBinDir() {
+        return new File(workspaceTopLevelDirPath, "bin");
     }
+
+    File getJobsDir() {
+        return new File(workspaceTopLevelDirPath, "jobs");
+    }
+
+    File getDataDir() {
+        return new File(workspaceTopLevelDirPath, "data");
+    }
+
+    boolean ValidateSample(Long sampleId) throws Exception {
+        return false;
+    }
+
+
 }
