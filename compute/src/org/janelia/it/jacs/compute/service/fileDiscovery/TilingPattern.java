@@ -101,7 +101,7 @@ public enum TilingPattern {
 	        if (hasLeftOptic && hasCentralBrain && hasRightOptic) return OPTIC_SPAN;
 	        if (hasLeftDorsalBrain && hasVentralBrain && hasRightDorsalBrain) return CENTRAL_BRAIN;
             if (hasLeftCentralBrain && hasRightCentralBrain && (hasLeftOptic || hasRightOptic)) return OPTIC_CENTRAL_BORDER;
-            if (hasVentralBrain && (hasLeftDorsalBrain && hasLeftOptic) || (hasRightDorsalBrain || hasRightOptic)) return OPTIC_CENTRAL_BORDER;
+            if (hasVentralBrain && ((hasLeftDorsalBrain && hasLeftOptic) || (hasRightDorsalBrain && hasRightOptic))) return OPTIC_CENTRAL_BORDER;
             if (hasLeftDorsalBrain && hasRightDorsalBrain && (hasLeftOptic || hasRightOptic)) return OPTIC_CENTRAL_BORDER;
             if ((hasLeftCentralBrain || hasRightCentralBrain) && hasLeftOptic && hasRightOptic) return OPTIC_CENTRAL_BORDER_AND_OPTIC_TILE;
         }
