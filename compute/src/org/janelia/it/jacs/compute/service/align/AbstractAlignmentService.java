@@ -5,8 +5,6 @@ import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 
-import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
-import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -93,14 +91,6 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
 	@Override
     public int getJobTimeoutSeconds() {
         return TIMEOUT_SECONDS;
-    }
-
-    @Override
-    protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
-    	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
-    	// Reserve all 8 slots on a 96 gig node. 
-    	jt.setNativeSpecification("-pe batch 8 -l mem96=true -now n");
-    	return jt;
     }
     
     @Override
