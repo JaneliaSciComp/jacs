@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mbean PUBLIC
+        "-//JBoss//DTD JBOSS XMBEAN 1.0//EN"
+        "http://www.jboss.org/j2ee/dtd/jboss_xmbean_1_0.dtd">
+<mbean>
+
+    <description>Pattern Search Management Bean</description>
+    <class>org.janelia.it.jacs.compute.mbean.PatternSearch</class>
+    <constructor>
+        <description>The default constructor</description>
+        <name>PatternSearch</name>
+    </constructor>
+
+    <operation>
+        <description>Change the name of the Pattern Annotation Folder</description>
+        <name>changePatternAnnotationFolderName</name>
+    </operation>
+
+</mbean>

@@ -38,7 +38,9 @@
     <mbean code="org.janelia.it.jacs.compute.mbean.GridJobsManager" name="ComputeServer:service=GridJobsManager"/>
     <mbean code="org.janelia.it.jacs.compute.mbean.LocalTestManager" name="ComputeServer:service=LocalTestManager"/>
     <mbean code="org.janelia.it.jacs.compute.mbean.WorkstationDataManager" name="ComputeServer:service=WorkstationDataManager"
-    	xmbean-dd="resource:META-INF/WorkstationDataManager-xmbean.xml"/> 
+    	xmbean-dd="resource:META-INF/WorkstationDataManager-xmbean.xml"/>
+    <mbean code="org.janelia.it.jacs.compute.mbean.PatternSearch" name="ComputeServer:service=PatternSearch"
+        xmbean-dd="resource:META-INF/PatternSearch-xmbean.xml"/>
      
     <mbean code="org.jboss.mq.server.jmx.Queue" name="jboss.mq.destination:service=Queue,name=ComputeServer">
         <depends optional-attribute-name="DestinationManager">jboss.mq:service=DestinationManager</depends>

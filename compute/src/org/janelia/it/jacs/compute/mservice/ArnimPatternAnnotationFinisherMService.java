@@ -36,7 +36,7 @@ public class ArnimPatternAnnotationFinisherMService extends MService {
     Logger logger = Logger.getLogger(ArnimPatternAnnotationFinisherMService.class);
     Set<Entity> sampleUpdateSet = Collections.synchronizedSet(new HashSet<Entity>());
 
-    public static final int THREAD_POOL_SIZE=5;
+    public static final int THREAD_POOL_SIZE=400;
 
     ExecutorService executorService= Executors.newFixedThreadPool(THREAD_POOL_SIZE);
 
