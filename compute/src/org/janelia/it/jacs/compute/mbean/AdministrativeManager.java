@@ -6,16 +6,13 @@ import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.QueueMessage;
 import org.janelia.it.jacs.compute.engine.service.GridSubmitHelperMap;
-import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Node;
-import org.janelia.it.jacs.model.user_data.User;
-import org.janelia.it.jacs.shared.utils.SystemCall;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
-import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.*;
 
@@ -110,73 +107,38 @@ public class AdministrativeManager implements AdministrativeManagerMBean {
     }
 
 
-    public void cleanSystemDirs(String nodeName, boolean debug) {
-        try {
-            List<Node> systemNodes = EJBFactory.getLocalComputeBean().getNodesByClassAndUser(nodeName, User.SYSTEM_USER_LOGIN);
-            System.out.println("There are " + systemNodes.size() + " " + nodeName + " nodes owned by system.");
-            for (Node systemNode : systemNodes) {
-                if (!debug) {
-                    EJBFactory.getRemoteComputeBean().deleteNode(User.SYSTEM_USER_LOGIN, systemNode.getObjectId(), true);
-                }
-                else {
-                    System.out.println("Would have deleted node " + systemNode.getObjectId());
-                }
-            }
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void cleanUpUsersAgainstLDAP() {
-        final ArrayList<String> protectedDirs = new ArrayList<String>();
-        protectedDirs.add("dma");
-        protectedDirs.add("system");
-        protectedDirs.add("load");
-        protectedDirs.add("luceneIdx");
-        protectedDirs.add("luceneIdxprotein");
-        protectedDirs.add("nobody");
-        protectedDirs.add("usersPendingDelete");
-        File filestoreDir = new File(SystemConfigurationProperties.getString("FileStore.CentralDir"));
-        String[] userDirectories = filestoreDir.list(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                File testFile = new File(dir.getAbsolutePath() + File.separator + name);
-                File homeTest = new File("/home/" + name);
-                return testFile.isDirectory() && (!homeTest.exists() && !protectedDirs.contains(name));
-            }
-        });
-        try {
-            SystemCall call = new SystemCall(LOGGER);
-            for (String userDirectory : userDirectories) {
-                call.emulateCommandLine("mv " + filestoreDir.getAbsolutePath() + File.separator + userDirectory + " " +
-                        filestoreDir.getAbsolutePath() + File.separator + "usersPendingDelete" + File.separator + ".", true);
-            }
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void nodeCheck(String username) {
-        String rootDirectory = SystemConfigurationProperties.getString("FileStore.CentralDir");
-        File filestoreDir = new File(rootDirectory);
-        String[] userDirectories = filestoreDir.list(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return name.startsWith("1");
-            }
-        });
-        for (String userDirectory : userDirectories) {
-            if (userDirectory.equals(username)) {
-//                File userDir = new File(rootDirectory+File.separator+username) {
+//    public void cleanUpUsersAgainstLDAP() {
+//        final ArrayList<String> protectedDirs = new ArrayList<String>();
+//        protectedDirs.add("dma");
+//        protectedDirs.add("system");
+//        protectedDirs.add("load");
+//        protectedDirs.add("luceneIdx");
+//        protectedDirs.add("luceneIdxprotein");
+//        protectedDirs.add("nobody");
+//        protectedDirs.add("usersPendingDelete");
+//        File filestoreDir = new File(SystemConfigurationProperties.getString("FileStore.CentralDir"));
+//        String[] userDirectories = filestoreDir.list(new FilenameFilter() {
+//            public boolean accept(File dir, String name) {
+//                File testFile = new File(dir.getAbsolutePath() + File.separator + name);
+//                File homeTest = new File("/home/" + name);
+//                return testFile.isDirectory() && (!homeTest.exists() && !protectedDirs.contains(name));
+//            }
+//        });
+//        try {
+//            SystemCall call = new SystemCall(LOGGER);
+//            for (String userDirectory : userDirectories) {
+//                call.emulateCommandLine("mv " + filestoreDir.getAbsolutePath() + File.separator + userDirectory + " " +
+//                        filestoreDir.getAbsolutePath() + File.separator + "usersPendingDelete" + File.separator + ".", true);
+//            }
+//        }
+//        catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+//    }
 //
-//                }
-            }
-        }
-    }
-
     public void resubmitJobs(String processDefinition, String taskIds) {
         try {
             List<String> jobs = Task.listOfStringsFromCsvString(taskIds);
@@ -223,6 +185,34 @@ public class AdministrativeManager implements AdministrativeManagerMBean {
         }
     }
 
+
+    public void trashUnknownNodesForUser() {
+        try {
+            Scanner scanner = new Scanner(new File("/groups/scicomp/jacsData/saffordTest/tanyaTest/nodes.txt"));
+            int good=0, bad=0;
+            while (scanner.hasNextLine()) {
+                String[] nodeIds = scanner.nextLine().split(",");
+                for (String nodeId : nodeIds) {
+                    Node tmpNode = EJBFactory.getLocalComputeBean().getNodeById(Long.valueOf(nodeId));
+                    if (null==tmpNode) {
+                        System.out.println("Cannot find - "+nodeId+". Moving...");
+                        bad++;
+                    }
+                    else {
+                        good++;
+                    }
+                }
+            }
+            System.out.println("There were (good/bad) = ("+good+"/"+bad+")");
+        }
+        catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        catch (RemoteException e) {
+            e.printStackTrace();
+        }
+
+    }
 
 //    @Override
 //    public void login(String userLogin, String password) {

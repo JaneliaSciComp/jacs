@@ -611,4 +611,9 @@
         </parameter>
     </operation>
 
+    <operation>
+        <description>DeDuper</description>
+        <name>runDataDeDuplication</name>
+    </operation>
+
 </mbean>

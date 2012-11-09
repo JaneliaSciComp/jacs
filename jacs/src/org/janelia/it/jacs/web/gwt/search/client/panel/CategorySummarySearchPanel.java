@@ -145,7 +145,7 @@ abstract public class CategorySummarySearchPanel extends Composite {
         panel.add(categoryIcon, DockPanel.NORTH);
 
         if (detailLinkFlag) {
-            ActionLink detailLink = new ActionLink("View details");
+            ActionLink detailLink = new ActionLink("View Details");
             detailLink.setShowBrackets(false);
             detailLink.addStyleName("SearchResultsDetailLink");
 

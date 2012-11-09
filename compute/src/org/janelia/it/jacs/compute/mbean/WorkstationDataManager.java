@@ -1,13 +1,7 @@
 package org.janelia.it.jacs.compute.mbean;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.mservice.ArnimPatternAnnotationFinisherMService;
@@ -15,6 +9,7 @@ import org.janelia.it.jacs.compute.service.entity.FastLoadArtifactService;
 import org.janelia.it.jacs.compute.service.entity.OrphanAnnotationCheckerService;
 import org.janelia.it.jacs.compute.service.entity.SampleFileNodeSyncService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FlyScreenDiscoveryService;
+import org.janelia.it.jacs.compute.service.fileDiscovery.SampleRun;
 import org.janelia.it.jacs.compute.service.fly.MaskGuideService;
 import org.janelia.it.jacs.compute.service.fly.ScreenSampleLineCoordinationService;
 import org.janelia.it.jacs.compute.service.mongodb.MongoDbLoadService;
@@ -27,7 +22,10 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
-import org.janelia.it.jacs.model.tasks.fileDiscovery.*;
+import org.janelia.it.jacs.model.tasks.fileDiscovery.FileDiscoveryTask;
+import org.janelia.it.jacs.model.tasks.fileDiscovery.FileTreeLoaderPipelineTask;
+import org.janelia.it.jacs.model.tasks.fileDiscovery.MCFODataPipelineTask;
+import org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOSamplePipelineTask;
 import org.janelia.it.jacs.model.tasks.fly.FlyScreenPatternAnnotationTask;
 import org.janelia.it.jacs.model.tasks.fly.MaskSampleAnnotationTask;
 import org.janelia.it.jacs.model.tasks.neuron.NeuronMergeTask;
@@ -36,6 +34,9 @@ import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+
+import java.io.*;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -654,4 +655,77 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             e.printStackTrace();
         }
     }
+
+    public void runDataDeDuplication() {
+        FileWriter writer;
+        try {
+            writer = new FileWriter(new File("/groups/scicomp/jacsData/saffordTest/OutputTanyaDuplicates.txt"));
+            Scanner scanner = new Scanner(new File("/groups/scicomp/jacsData/saffordTest/TanyaDuplicates.csv"));
+            TreeMap<Integer,ArrayList<SampleRun>> systemMap = new TreeMap<Integer, ArrayList<SampleRun>>();
+            TreeMap<Integer,ArrayList<SampleRun>> wolfftMap = new TreeMap<Integer, ArrayList<SampleRun>>();
+            while (scanner.hasNextLine()) {
+                final String[] pieces = scanner.nextLine().split("\t");
+                Integer tmpKey = Integer.valueOf(pieces[2]);
+                ArrayList<SampleRun> tmpList;
+                SampleRun newSample = new SampleRun(Long.valueOf(pieces[1]),pieces[0]);
+                TreeMap<Integer, ArrayList<SampleRun>> targetMap;
+                if (pieces[0].equals("wolfft")) {
+                    targetMap = wolfftMap;
+                }
+                else if (pieces[0].equals("system")) {
+                    targetMap = systemMap;
+                }
+                else {
+                    System.out.printf("Unknown owner found for sample!!!!!!!!!!! - "+pieces[0]);
+                    writer.write("Unknown owner found for sample!!!!!!!!!!! - "+pieces[0]+"\n");
+                    continue;
+                }
+                if (targetMap.containsKey(tmpKey)) {
+                    tmpList = targetMap.get(tmpKey);
+                    tmpList.add(newSample);
+                }
+                else {
+                    tmpList = new ArrayList<SampleRun>();
+                    tmpList.add(newSample);
+                    targetMap.put(tmpKey, tmpList);
+                }
+            }
+            for (Integer index : wolfftMap.keySet()) {
+                System.out.println(index);
+                for (SampleRun sampleRun : wolfftMap.get(index)) {
+                    System.out.println("\t- "+sampleRun.getOwner()+" - "+sampleRun.getFragmentCollection());
+                    writer.write("\t- "+sampleRun.getOwner()+" - "+sampleRun.getFragmentCollection()+"\n");
+                    printAnnotations(writer, sampleRun.getOwner(), sampleRun.getFragmentCollection());
+                    Set<Entity> tmpChildren = EJBFactory.getRemoteEntityBean().getChildEntities(sampleRun.getFragmentCollection());
+                    for (Entity child: tmpChildren) {
+                        printAnnotations(writer, sampleRun.getOwner(), child.getId());
+                    }
+                }
+                if (null!=systemMap.get(index)) {
+                    for (SampleRun sampleRun : systemMap.get(index)) {
+                        System.out.println("\t- "+sampleRun.getOwner()+" - "+sampleRun.getFragmentCollection());
+                        writer.write("\t- "+sampleRun.getOwner()+" - "+sampleRun.getFragmentCollection()+"\n");
+                    }
+                }
+            }
+        }
+        catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        catch (ComputeException e) {
+            e.printStackTrace();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void printAnnotations(FileWriter tmpWriter, String tmpOwner, long entityId) throws ComputeException, IOException {
+        List<Entity> tmpAnnotationList = EJBFactory.getRemoteAnnotationBean().getAnnotationsForChildren(tmpOwner, entityId);
+        for (Entity entity : tmpAnnotationList) {
+            System.out.println("\t\t- "+entity.getName()+"\t"+entity.getEntityType().getName());
+            tmpWriter.write("\t\t- "+entity.getName()+"\t"+entity.getEntityType().getName()+"\n");
+        }
+    }
+
 }

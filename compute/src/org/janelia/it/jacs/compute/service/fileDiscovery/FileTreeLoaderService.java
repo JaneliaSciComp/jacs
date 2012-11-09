@@ -1,10 +1,11 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
-import java.io.File;
-import java.util.*;
-
+import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
@@ -19,13 +20,16 @@ import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.FileTreeLoaderResultNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
+import java.io.File;
+import java.util.*;
+
 /**
  * Created by IntelliJ IDEA.
  * User: murphys
  * Date: 2/17/12
  * Time: 9:41 AM
  */
-public class FileTreeLoaderService extends FileDiscoveryService {
+public class FileTreeLoaderService implements IService {
 
     // This service will operate as a general loader for user data.
     //
@@ -100,6 +104,14 @@ public class FileTreeLoaderService extends FileDiscoveryService {
 
     final public String SUPPORTING_FILES_FOLDER_NAME="supportingFiles";
 
+    protected Logger logger;
+    protected EntityBeanLocal entityBean;
+    protected ComputeBeanLocal computeBean;
+    protected User user;
+    protected Date createDate;
+    protected IProcessData processData;
+    protected FileDiscoveryHelper helper;
+
     protected Task task;
     protected String sessionName;
     protected String visibility;
@@ -145,6 +157,13 @@ public class FileTreeLoaderService extends FileDiscoveryService {
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
             visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
 
+            helper = new FileDiscoveryHelper(entityBean, computeBean, user);
+            helper.addFileExclusion("DrmaaSubmitter.log");
+            helper.addFileExclusion("*.oos");
+            helper.addFileExclusion("sge_*");
+            helper.addFileExclusion("temp");
+            helper.addFileExclusion("core.*");
+
             logger.info("Creating top-level folder");
             topLevelFolderName=processData.getString("TOP_LEVEL_FOLDER_NAME");
             topLevelFolder=createOrVerifyRootEntity(topLevelFolderName);
@@ -189,7 +208,11 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         }
     }
 
-   protected Entity verifyOrCreateVirtualSubFolder(Entity parentFolder, String subFolderName) throws Exception {
+    protected Entity createOrVerifyRootEntity(String topLevelFolderName) throws Exception {
+        return helper.createOrVerifyRootEntity(topLevelFolderName,true /* create if necessary */, true);
+    }
+
+    protected Entity verifyOrCreateVirtualSubFolder(Entity parentFolder, String subFolderName) throws Exception {
        for (Entity child : parentFolder.getChildren()) {
            if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) &&
                    child.getName().equals(subFolderName)) {
@@ -197,8 +220,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
            }
        }
        // Need to create
-       Entity subFolder=helper.addChildFolderToEntity(parentFolder, subFolderName, null);
-       return subFolder;
+        return helper.addChildFolderToEntity(parentFolder, subFolderName, null);
    }
    
     protected static synchronized Map<Long, List<ArtifactInfo>> getPbdGroupMap(Task task, boolean remove) {
@@ -270,7 +292,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         // of the source entities to match these results.
 
         addDirectoryAndContentsToFolder(topLevelFolder, rootDirectory, 0 /*index*/);
-        processData.putItem("GROUP_SIZE", new Long(groupSize).toString());
+        processData.putItem("GROUP_SIZE", Long.toString(groupSize));
         List<Long> pbdKeyList=new ArrayList<Long>(pbdGroupMap.keySet());
         Collections.sort(pbdKeyList);
         logger.info("pbdKeyList has "+pbdKeyList.size()+" entries");
@@ -298,12 +320,52 @@ public class FileTreeLoaderService extends FileDiscoveryService {
         }
     }
 
-    protected boolean passesExclusionFilter(File f) {
-        if (f.getName().startsWith(".")) {
-            return false;
-        } else {
-            return true;
+    protected Entity verifyOrCreateChildFolderFromDir(Entity parentFolder, File dir, Integer index) throws Exception {
+
+        logger.info("Looking for folder entity with path "+dir.getAbsolutePath()+" in parent folder "+parentFolder.getId());
+        Entity folder = null;
+
+        for (EntityData ed : parentFolder.getEntityData()) {
+            Entity child = ed.getChildEntity();
+
+            if (child != null && child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+                String folderPath = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                if (folderPath == null) {
+                    logger.warn("Unexpectedly could not find attribute '"+EntityConstants.ATTRIBUTE_FILE_PATH+"' for entity id="+child.getId());
+                }
+                else if (folderPath.equals(dir.getAbsolutePath())) {
+                    if (folder != null) {
+                        logger.warn("Unexpectedly found multiple child folders with path=" + dir.getAbsolutePath()+" for parent folder id="+parentFolder.getId());
+                    }
+                    else {
+                        folder = ed.getChildEntity();
+                    }
+                }
+            }
         }
+
+        if (folder == null) {
+            // We need to create a new folder
+            folder = new Entity();
+            folder.setCreationDate(createDate);
+            folder.setUpdatedDate(createDate);
+            folder.setUser(user);
+            folder.setName(dir.getName());
+            folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+            folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, dir.getAbsolutePath());
+            folder = entityBean.saveOrUpdateEntity(folder);
+            logger.info("Saved folder as "+folder.getId());
+            helper.addToParent(parentFolder, folder, index, EntityConstants.ATTRIBUTE_ENTITY);
+        }
+        else {
+            logger.info("Found folder with id="+folder.getId());
+        }
+
+        return folder;
+    }
+
+    protected boolean passesExclusionFilter(File f) {
+        return !f.getName().startsWith(".");
     }
 
     protected void verifyOrCreateFileEntityForFolder(Entity folder, File f, Integer index) throws Exception {
@@ -348,15 +410,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
     }
 
     protected boolean shouldTifHavePbdArtifact(File f) {
-        if (f.getName().toLowerCase().endsWith(".tif")) {
-            if (f.length()>=pbdThreshold) {
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            return true; // we dn't want to block other types
-        }
+        return !f.getName().toLowerCase().endsWith(".tif") || f.length() >= pbdThreshold;
     }
 
     protected Entity createEntityForFile(File f, EntityType entityType) throws Exception {
@@ -374,7 +428,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
 
     protected void addToArtifactList(Entity pbdSourceEntity, String altSourcePath, Map<Long, List<ArtifactInfo>> groupMap) {
         long currentIndex=groupMap.size()-1;
-        List<ArtifactInfo> artifactList=null;
+        List<ArtifactInfo> artifactList;
         if (currentIndex<0) {
             currentIndex=0L;
             artifactList=new ArrayList<ArtifactInfo>();
@@ -405,11 +459,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
             return false;
         }
         String extension=exComponents[exComponents.length-1];
-        if (collection.contains(extension.toUpperCase())) {
-            return true;
-        } else {
-            return false;
-        }
+        return collection.contains(extension.toUpperCase());
     }
 
     protected void doPbdList() throws Exception {
@@ -501,7 +551,7 @@ public class FileTreeLoaderService extends FileDiscoveryService {
 
         // Handle PBDs
         EntityType pbdResultEntityType=entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
-        List<Long> pbdGroupKeyList=new ArrayList(pbdGroupMap.keySet());
+        List<Long> pbdGroupKeyList=new ArrayList<Long>(pbdGroupMap.keySet());
         Collections.sort(pbdGroupKeyList);
         logger.info("doComplete() pbdGroupKeyList has "+pbdGroupKeyList.size()+" entries");
         for (Long pbdGroupKey : pbdGroupKeyList) {

@@ -14,9 +14,7 @@ public interface AdministrativeManagerMBean {
 
     public void cleanupOOSFiles(String systemBlastRootDir);
 
-    public void cleanSystemDirs(String nodeName, boolean debug);
-
-    public void cleanUpUsersAgainstLDAP();
+//    public void cleanUpUsersAgainstLDAP();
 
     public void resubmitJobs(String processDefinition, String taskIds);
 
@@ -24,4 +22,6 @@ public interface AdministrativeManagerMBean {
     
 //    public void login(String userLogin, String password);
 
-}
+    public void trashUnknownNodesForUser();
+
+    }
