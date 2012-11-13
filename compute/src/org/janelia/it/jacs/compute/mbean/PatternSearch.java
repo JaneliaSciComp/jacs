@@ -64,12 +64,19 @@ public class PatternSearch implements PatternSearchMBean {
 
     }
 
-    public class FoundSampleEntityAction extends EntityAction {
+    public class FoundSampleThenFindPatternAnnotationFolderEntityAction extends EntityAction {
 
         public Runnable getRunnable(final Entity parentEntity, final Entity entity) throws Exception {
             return new Thread() {
                 public void run() {
-                logger.info("Found sample name="+entity.getName());}
+                    logger.info("Found sample name=" + entity.getName());
+                    try {
+                        MService patternFolderMService=new MService("system", 0);
+                        patternFolderMService.run(entity, new PatternFolderTrigger(), new FoundPatternAnnotationFolderEntityAction());
+                    } catch (Exception ex) {
+                        logger.error(ex.getMessage());
+                    }
+                }
             };
         }
 
@@ -99,7 +106,7 @@ public class PatternSearch implements PatternSearchMBean {
 
             // Create MService for Samples
             MService sampleMService=new MService("system", 10);
-            sampleMService.run(topLevelSampleFolder, new SampleSearchTrigger(), new FoundSampleEntityAction());
+            sampleMService.run(topLevelSampleFolder, new SampleSearchTrigger(), new FoundSampleThenFindPatternAnnotationFolderEntityAction());
 
         }
         catch (Exception ex) {
