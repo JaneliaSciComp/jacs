@@ -65,7 +65,6 @@ public interface WorkstationDataManagerMBean {
     public void createPatternAnnotationQuantifierSummaryFile();
     public void createMaskSummaryFile(String maskFolderName);
     public void runMaskAnnotationPipeline(String user, String maskFolderName, Boolean refresh);
-    public void runArnimPatternAnnotationFinisher(String user);
 
     
     // Other data pipelines

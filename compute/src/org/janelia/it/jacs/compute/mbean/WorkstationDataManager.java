@@ -4,7 +4,6 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
-import org.janelia.it.jacs.compute.mservice.ArnimPatternAnnotationFinisherMService;
 import org.janelia.it.jacs.compute.service.entity.FastLoadArtifactService;
 import org.janelia.it.jacs.compute.service.entity.OrphanAnnotationCheckerService;
 import org.janelia.it.jacs.compute.service.entity.SampleFileNodeSyncService;
@@ -647,14 +646,6 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
 
     }
 
-    public void runArnimPatternAnnotationFinisher(String user) {
-        try {
-            ArnimPatternAnnotationFinisherMService arnimPatternAnnotationFinisherMService=new ArnimPatternAnnotationFinisherMService(user);
-            arnimPatternAnnotationFinisherMService.run();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
     public void runDataDeDuplication() {
         FileWriter writer;
