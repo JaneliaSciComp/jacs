@@ -109,6 +109,12 @@ public class EntityConstants {
     // Error Attributes
     public static final String ATTRIBUTE_MESSAGE                             = "Message";
     
+    // Ontology Type Values
+    public static final String VALUE_ONTOLOGY_TERM_TYPE_INTERVAL            = "Interval";
+    public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM                = "Enum";
+    public static final String VALUE_ONTOLOGY_TERM_TYPE_TEXT                = "Text";
+    public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM_TEXT           = "EnumText";
+
     /**
      * @deprecated Use ATTRIBUTE_DATA_SET_IDENTIFIER to specify processing indirectly. This will be removed someday.
      */
@@ -153,5 +159,5 @@ public class EntityConstants {
      * @deprecated Use ATTRIBUTE_DEFAULT_2D_IMAGE instead. This will be removed someday.
      */
     public static final String ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH          = "Default 2D Image File Path";
-    
+
 }
