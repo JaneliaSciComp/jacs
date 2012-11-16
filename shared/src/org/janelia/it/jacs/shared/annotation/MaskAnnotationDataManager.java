@@ -191,12 +191,12 @@ public class MaskAnnotationDataManager {
 
     // This method returns: Map<Long, Map<String, String>> sampleInfoMap, Map<Long, List<Double>> quantifierInfoMap
     public Object[] loadMaskSummaryFile(File patternAnnotationSummaryFile) throws Exception {
-        System.out.println("loadMaskSummaryFile start()");
+//        System.out.println("loadMaskSummaryFile start()");
         if (QS_COMPARTMENT_LIST.size()==0) {
             throw new Exception("Compartment list must be loaded");
         }
-        Long startTime=new Date().getTime();
-        System.out.println("Reading mask annotation summary file="+patternAnnotationSummaryFile.getAbsolutePath());
+//        Long startTime=new Date().getTime();
+//        System.out.println("Reading mask annotation summary file="+patternAnnotationSummaryFile.getAbsolutePath());
         BufferedReader bw=new BufferedReader(new FileReader(patternAnnotationSummaryFile));
         String firstLine=bw.readLine();
         if (firstLine==null) {
@@ -235,8 +235,8 @@ public class MaskAnnotationDataManager {
         Object[] returnArr=new Object[2];
         returnArr[0]=sampleInfoMap;
         returnArr[1]=quantifierInfoMap;
-        Long elapsedTime=new Date().getTime()-startTime;
-        System.out.println("loadMaskSummaryFile end() elapsedTime="+elapsedTime+" lineCount="+lineCount+" sampleInfoMap="+sampleInfoMap.size()+" quantifierInfoMap="+quantifierInfoMap.size());
+//        Long elapsedTime=new Date().getTime()-startTime;
+//        System.out.println("loadMaskSummaryFile end() elapsedTime="+elapsedTime+" lineCount="+lineCount+" sampleInfoMap="+sampleInfoMap.size()+" quantifierInfoMap="+quantifierInfoMap.size());
         return returnArr;
     }
 

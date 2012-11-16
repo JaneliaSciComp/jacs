@@ -9,6 +9,9 @@ import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 
+import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.Ordering;
+
 /**
  * Utilities for dealing with Entities.
  * 
@@ -17,7 +20,6 @@ import org.janelia.it.jacs.model.entity.EntityData;
 public class EntityUtils {
 
     private static final Logger logger = Logger.getLogger(EntityUtils.class);
-
 
     public interface SaveUnit {
         public void saveUnit(Object o) throws Exception;
@@ -34,6 +36,151 @@ public class EntityUtils {
             }
         }
         return true;
+    }
+
+    /**
+     * Returns true if the given entities are identical in terms of their own properties and their EntityData properties.
+     * @param entity1
+     * @param entity2
+     * @return
+     */
+    public static boolean areEqual(Entity entity1, Entity entity2) {
+
+    	ComparisonChain chain = ComparisonChain.start()
+	        	.compare(entity1.getId(), entity2.getId(), Ordering.natural().nullsFirst())
+	            // date comparison is disabled because sometimes the milliseconds are truncated for unknown reasons
+//		        .compare(entity1.getCreationDate(), entity2.getCreationDate(), Ordering.natural().nullsFirst())
+//		        .compare(entity1.getUpdatedDate(), entity2.getUpdatedDate(), Ordering.natural().nullsFirst())
+	        	.compare(entity1.getName(), entity2.getName(), Ordering.natural().nullsFirst());
+        
+    	if (entity1.getEntityType()!=null || entity2.getEntityType()!=null) {
+        	if (entity1.getEntityType()==null||entity2.getEntityType()==null) {
+//        		System.out.println("areEqual? entity types differ");
+        		return false;
+        	}
+    		chain = chain.compare(entity1.getEntityType().getName(), entity2.getEntityType().getName(), Ordering.natural().nullsFirst());
+    	}
+    	
+    	if (entity1.getUser()!=null || entity2.getUser()!=null) {
+        	if (entity1.getUser()==null||entity2.getUser()==null) {
+//        		System.out.println("areEqual? users differ");
+        		return false;
+        	}
+    		chain = chain.compare(entity1.getUser().getUserLogin(), entity2.getUser().getUserLogin(), Ordering.natural().nullsFirst());
+    	}        
+    
+    	if (chain.result()!=0) {
+//    		System.out.println("areEqual? chain failed");
+    		return false;
+    	}
+
+		Map<Long,EntityData> ed1Map = new HashMap<Long,EntityData>();
+		Map<Long,EntityData> ed2Map = new HashMap<Long,EntityData>();
+		
+		for(EntityData ed1 : entity1.getEntityData()) {
+			ed1Map.put(ed1.getId(), ed1);
+		}
+
+		for(EntityData ed2 : entity2.getEntityData()) {
+			ed2Map.put(ed2.getId(), ed2);
+			EntityData ed1 = ed1Map.get(ed2.getId());
+			if (ed1==null) {
+//				System.out.println("areEqual? entity1 does not have "+ed2.getId());
+				return false;
+			}
+			if (!areEqual(ed1,ed2)) {
+//				System.out.println("areEqual? entity1's ed is not equal "+ed1.getId());
+				return false;
+			}
+		}
+
+		for(EntityData ed1 : entity1.getEntityData()) {
+			EntityData ed2 = ed2Map.get(ed1.getId());
+			if (ed2==null) {
+//				System.out.println("areEqual? entity2 does not have "+ed1.getId());
+				return false;
+			}
+		}
+
+    	return true;
+    }
+
+    /**
+     * Returns true if the given EntityDatas are identical in terms of their properties.
+     * @param ed1
+     * @param ed2
+     * @return
+     */
+    public static boolean areEqual(EntityData ed1, EntityData ed2) {
+    	
+    	ComparisonChain chain = ComparisonChain.start()
+	        	.compare(ed1.getId(), ed2.getId(), Ordering.natural().nullsFirst())
+	            .compare(ed1.getOrderIndex(), ed2.getOrderIndex(), Ordering.natural().nullsFirst())
+	            .compare(ed1.getValue(), ed2.getValue(), Ordering.natural().nullsFirst());
+    	
+        if (ed1.getParentEntity()!=null||ed2.getParentEntity()!=null) {
+        	if (ed1.getParentEntity()==null||ed2.getParentEntity()==null) {
+//        		System.out.println("areEqual? ed parent entities differ");
+        		return false;
+        	}
+        	chain = chain.compare(ed1.getParentEntity().getId(), ed2.getParentEntity().getId(), Ordering.natural().nullsFirst());
+        }
+        
+        if (ed1.getChildEntity()!=null||ed2.getChildEntity()!=null) {
+        	if (ed1.getChildEntity()==null||ed2.getChildEntity()==null) {
+//        		System.out.println("areEqual? ed child entities differ");
+        		return false;
+        	}
+        	chain = chain.compare(ed1.getChildEntity().getId(), ed2.getChildEntity().getId(), Ordering.natural().nullsFirst());
+        }
+        
+	    int c = chain.compare(ed1.getParentEntity().getId(), ed2.getParentEntity().getId(), Ordering.natural().nullsFirst())
+	            .compare(ed1.getEntityAttribute().getName(), ed2.getEntityAttribute().getName(), Ordering.natural().nullsFirst())
+	            // date comparison is disabled because sometimes the milliseconds are truncated for unknown reasons
+//	            .compare(ed1.getCreationDate(), ed2.getCreationDate(), Ordering.natural().nullsFirst())
+//	            .compare(ed1.getUpdatedDate(), ed2.getUpdatedDate(), Ordering.natural().nullsFirst())
+	            .compare(ed1.getUser().getUserLogin(), ed2.getUser().getUserLogin(), Ordering.natural().nullsFirst())
+	            .result();
+	    
+	    if (c!=0) {
+//    		System.out.println("areEqual? ed  comparison="+c);
+	    	return false;
+	    }
+	    return true;
+    }
+
+    /**
+     * Update the entity and its attributes.
+     * @param entity
+     * @param newEntity
+     */
+    public static void updateEntity(Entity entity, Entity newEntity) {
+    	synchronized(entity) {
+			// Map old children onto new EDs, since the old children are initialized and the ones may not be
+			Map<Long,Entity> childMap = new HashMap<Long,Entity>();
+			for(EntityData ed : entity.getEntityData()) {
+				if (ed.getChildEntity()!=null) {
+					childMap.put(ed.getChildEntity().getId(), ed.getChildEntity());
+				}
+			}
+			entity.setEntityData(newEntity.getEntityData());
+			for(EntityData ed : entity.getEntityData()) {
+				if (ed.getChildEntity()!=null && !EntityUtils.isInitialized(ed.getChildEntity()) && ed.getChildEntity().getId()!=null) {
+					Entity child = childMap.get(ed.getChildEntity().getId());
+					if (child!=null) {
+						ed.setChildEntity(child);
+					}
+				}
+			}
+			
+			entity.setName(newEntity.getName());
+	    	entity.setUpdatedDate(newEntity.getUpdatedDate());
+			entity.setCreationDate(newEntity.getCreationDate());
+			entity.setEntityStatus(newEntity.getEntityStatus());
+			entity.setEntityType(newEntity.getEntityType());
+			entity.setUser(newEntity.getUser());
+			entity.setEntityData(newEntity.getEntityData());
+    	}
     }
     
     public static String getFilePath(Entity entity) {
@@ -228,7 +375,7 @@ public class EntityUtils {
 				attrName.equals(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE));
 	}
 	
-	public static void replaceChildNodes(Entity entity, Set<Entity> childEntitySet) {
+	public static void replaceChildNodes(Entity entity, Collection<Entity> childEntitySet) {
 
         Map<Long, Entity> childEntityMap = new HashMap<Long, Entity>();
         for (Entity childEntity : childEntitySet) {
