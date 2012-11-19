@@ -56,6 +56,7 @@ public class EntityConstants {
     
     public static final String ATTRIBUTE_DEFAULT_2D_IMAGE                    = "Default 2D Image";
     public static final String ATTRIBUTE_DEFAULT_3D_IMAGE                    = "Default 3D Image";
+    public static final String ATTRIBUTE_DEFAULT_FAST_3D_IMAGE               = "Default Fast 3D Image";
     public static final String ATTRIBUTE_REFERENCE_MIP_IMAGE                 = "Reference MIP Image";
     public static final String ATTRIBUTE_SIGNAL_MIP_IMAGE                    = "Signal MIP Image";
     public static final String ATTRIBUTE_FILE_PATH                           = "File Path";
