@@ -198,39 +198,58 @@ public class EntityUtils {
     
     public static String getImageFilePath(Entity entity, String imageRole) {
 
-    	String type = entity.getEntityType().getName();
+     	String type = entity.getEntityType().getName();
     	String path = null;
 
 		if (path == null) {
 			// Always attempt to get the shortcut image path for the role requested
 	    	path = entity.getValueByAttributeName(imageRole);
+            logger.debug("at 'shortcut' attempt, found " + path);
 		}
-    		
-		if (imageRole.equals(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE)) {
-			// If the entity is a 3D image, just return its path
-	        if (type.equals(EntityConstants.TYPE_IMAGE_3D) ||
-	        		type.equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK) ||
-	        		type.equals(EntityConstants.TYPE_LSM_STACK) ||
-	        		type.equals(EntityConstants.TYPE_SWC_FILE) ||
-	        		type.equals(EntityConstants.TYPE_V3D_ANO_FILE) ||
-	        		type.equals(EntityConstants.TYPE_STITCHED_V3D_RAW) ||
-	        		type.equals(EntityConstants.TYPE_TIF_3D)) {
-	        	path = getFilePath(entity);
-	        }
-		}
-		else if (imageRole.equals(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)) {
-			// If the entity is a 2D image, just return its path
-			if (type.equals(EntityConstants.TYPE_IMAGE_2D) || 
-	        		type.equals(EntityConstants.TYPE_TIF_2D)) {
-				path = getFilePath(entity);
-			}
-		}
+
+        if (path == null) {
+            if (imageRole.equals(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE)) {
+                // If the entity is a 3D image, just return its path
+                if (type.equals(EntityConstants.TYPE_IMAGE_3D) ||
+                        type.equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK) ||
+                        type.equals(EntityConstants.TYPE_LSM_STACK) ||
+                        type.equals(EntityConstants.TYPE_SWC_FILE) ||
+                        type.equals(EntityConstants.TYPE_V3D_ANO_FILE) ||
+                        type.equals(EntityConstants.TYPE_STITCHED_V3D_RAW) ||
+                        type.equals(EntityConstants.TYPE_TIF_3D)) {
+                    path = getFilePath(entity);
+                    logger.debug("at 'type-test' attempt, found " + path);
+                }
+            }
+            else if (imageRole.equals(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)) {
+                // If the entity is a 2D image, just return its path
+                if (type.equals(EntityConstants.TYPE_IMAGE_2D) ||
+                        type.equals(EntityConstants.TYPE_TIF_2D)) {
+                    path = getFilePath(entity);
+                }
+            }
+            else if (imageRole.equals(EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE)) {
+                Set<EntityData> data = entity.getEntityData();
+
+                for ( EntityData datum: data ) {
+                    Entity childEntity = datum.getChildEntity();
+                    if ( childEntity != null ) {
+                        path = childEntity.getValueByAttributeName( EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE );
+                        if ( path != null ) {
+                            logger.debug("Found path " + path + " for entity " + entity.getName() + " via drill-and-attrib");
+                            break;
+                        }
+                    }
+                }
+            }
+        }
 
     	if (path == null) {
     		EntityData ed = entity.getEntityDataByAttributeName(imageRole);
     		if (ed!=null && isInitialized(ed.getChildEntity())) {
     			path = getFilePath(ed.getChildEntity());
-    		}
+                logger.debug("at 'entitydata-for-att-name' attempt, found " + path);
+            }
     	}
     	
 		if (path == null && EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE.equals(imageRole)) {
@@ -238,7 +257,7 @@ public class EntityUtils {
 	    	path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);	    	
 		}
 		
-		return path;
+ 		return path;
     }
     
     public static String getAnyFilePath(Entity entity) {
