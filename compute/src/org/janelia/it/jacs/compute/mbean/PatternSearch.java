@@ -13,10 +13,7 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.user_data.User;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 /**
@@ -29,6 +26,24 @@ import java.util.concurrent.Callable;
 public class PatternSearch implements PatternSearchMBean {
 
     private static final Logger logger = Logger.getLogger(PatternSearch.class);
+
+    //////// Utilities ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    protected EntityBeanLocal getEntityBean() {
+        return EJBFactory.getLocalEntityBean();
+    }
+
+    protected ComputeBeanLocal getComputeBean() {
+        return EJBFactory.getLocalComputeBean();
+    }
+
+    protected FileDiscoveryHelper getFileDiscoveryHelper() {
+        ComputeBeanLocal computeBean=getComputeBean();
+        EntityBeanLocal entityBean=getEntityBean();
+        return new FileDiscoveryHelper(entityBean, computeBean, "system");
+    }
+
+    //////// Triggers /////////////////////////////////////////////////////////////////////////////////////////////////
 
     public class SampleSearchTrigger extends EntitySearchTrigger {
 
@@ -65,18 +80,14 @@ public class PatternSearch implements PatternSearchMBean {
 
     }
 
-    public class FoundSampleThenFindPatternAnnotationFolderEntityAction extends EntityAction {
+    ///////////// Actions /////////////////////////////////////////////////////////////////////////////////////////////
+
+    public class LogFolderNameEntityAction extends EntityAction {
 
         public Callable getCallable(final Entity parentEntity, final Entity entity) throws Exception {
             return new Callable<Object>() {
                 public Object call() {
-                    logger.info("Found sample name=" + entity.getName());
-                    try {
-                        MService patternFolderMService=new MService("system", 0);
-                        patternFolderMService.run(entity, new PatternFolderTrigger(), new FoundPatternAnnotationFolderEntityAction());
-                    } catch (Exception ex) {
-                        logger.error(ex.getMessage());
-                    }
+                    logger.info("Found folder with name="+entity.getName() + " id="+entity.getId());
                     return null;
                 }
             };
@@ -84,18 +95,7 @@ public class PatternSearch implements PatternSearchMBean {
 
     }
 
-    public class FoundPatternAnnotationFolderEntityAction extends EntityAction {
-
-        public Callable getCallable(final Entity parentEntity, final Entity entity) throws Exception {
-            return new Callable<Object>() {
-                public Object call() {
-                    logger.info("Found pattern annotation folder name="+entity.getName() + " id="+entity.getId());
-                    return null;
-                }
-            };
-        }
-
-    }
+    /////////////// Management Methods ////////////////////////////////////////////////////////////////////////////////
 
     public void changePatternAnnotationFolderName() {
         logger.info("changePatternAnnotationFolderName() start");
@@ -110,7 +110,10 @@ public class PatternSearch implements PatternSearchMBean {
 
             // Create MService for Samples
             MService sampleMService=new MService("system", 10);
-            sampleMService.run(topLevelSampleFolder, new SampleSearchTrigger(), new FoundSampleThenFindPatternAnnotationFolderEntityAction());
+            List<EntitySearchTrigger> triggerList=new ArrayList<EntitySearchTrigger>();
+            triggerList.add(new SampleSearchTrigger());
+            triggerList.add(new PatternFolderTrigger());
+            sampleMService.run(topLevelSampleFolder, triggerList, new LogFolderNameEntityAction());
 
         }
         catch (Exception ex) {
@@ -118,19 +121,7 @@ public class PatternSearch implements PatternSearchMBean {
         }
     }
 
-    protected EntityBeanLocal getEntityBean() {
-        return EJBFactory.getLocalEntityBean();
-    }
 
-    protected ComputeBeanLocal getComputeBean() {
-        return EJBFactory.getLocalComputeBean();
-    }
-
-    protected FileDiscoveryHelper getFileDiscoveryHelper() {
-        ComputeBeanLocal computeBean=getComputeBean();
-        EntityBeanLocal entityBean=getEntityBean();
-        return new FileDiscoveryHelper(entityBean, computeBean, "system");
-    }
 
 
 

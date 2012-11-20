@@ -1,19 +1,15 @@
 package org.janelia.it.jacs.compute.mservice;
 
 import com.google.common.util.concurrent.*;
-import org.apache.http.impl.entity.EntitySerializer;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.user_data.User;
 
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
@@ -40,6 +36,10 @@ public class MService {
     protected int maxThreads;
     ListeningExecutorService listeningExecutorService;
     List<ListenableFuture<Object>> futureList=new ArrayList<ListenableFuture<Object>>();
+    List<EntitySearchTrigger> triggerList=new ArrayList<EntitySearchTrigger>();
+    List<EntityAction> actionList=new ArrayList<EntityAction>();
+    Map<Entity, Integer> levelMap=new HashMap<Entity, Integer>();
+    int triggerLevel=0;
 
     // If maxThreads==0, this means don't use threads - run single-threaded
     public MService(String username, int maxThreads) throws Exception {
@@ -52,6 +52,8 @@ public class MService {
         }
     }
 
+    /////////// Utilities ////////////////////////////////////////////////////////////////////////////////////////////
+
     protected EntityBeanLocal getEntityBean() {
         return EJBFactory.getLocalEntityBean();
     }
@@ -60,67 +62,111 @@ public class MService {
         return EJBFactory.getLocalComputeBean();
     }
 
+    protected Entity getTopLevelFolder(String topLevelFolderName, boolean createIfNecessary) throws Exception {
+        FileDiscoveryHelper helper=getFileDiscoveryHelper();
+        return helper.createOrVerifyRootEntity(topLevelFolderName, createIfNecessary, false /* load tree */);
+    }
+
     protected FileDiscoveryHelper getFileDiscoveryHelper() {
         ComputeBeanLocal computeBean=getComputeBean();
         EntityBeanLocal entityBean=getEntityBean();
         return new FileDiscoveryHelper(entityBean, computeBean, user);
     }
 
+    /////////// run method variations ///////////////////////////////////////////////////////////////////////////////
+
     public void run(Entity startingEntity, EntitySearchTrigger trigger, EntityAction action) throws Exception {
-        searchEntityContents(startingEntity, null, trigger, action);
+        triggerList.add(trigger);
+        actionList.add(action);
+        searchEntityContents(startingEntity);
     }
 
-    protected Entity getTopLevelFolder(String topLevelFolderName, boolean createIfNecessary) throws Exception {
-        FileDiscoveryHelper helper=getFileDiscoveryHelper();
-        return helper.createOrVerifyRootEntity(topLevelFolderName, createIfNecessary, false /* load tree */);
+    public void run(Entity startingEntity, List<EntitySearchTrigger> triggerList, EntityAction action) throws Exception {
+        this.triggerList.addAll(triggerList);
+        actionList.add(action);
+        searchEntityContents(startingEntity);
     }
 
-    private void searchEntityContents(Entity parent, Map<Entity, Integer> levelMap,
-                                      EntitySearchTrigger trigger, final EntityAction action) throws Exception {
-        if (levelMap==null) {
-            levelMap=new HashMap<Entity, Integer>();
-        }
-        Integer parentLevel=levelMap.get(parent);
-        if (parentLevel==null) {
-            parentLevel=0;
+    public void run(Entity startingEntity, EntitySearchTrigger trigger, List<EntityAction> actionList) throws Exception {
+        triggerList.add(trigger);
+        this.actionList.addAll(actionList);
+        searchEntityContents(startingEntity);
+    }
+
+    public void run(Entity startingEntity, List<EntitySearchTrigger> triggerList, List<EntityAction> actionList) throws Exception {
+        this.triggerList.addAll(triggerList);
+        this.actionList.addAll(actionList);
+        searchEntityContents(startingEntity);
+    }
+
+    //////////////// searchEntityContents - the main search method ///////////////////////////////////////////////////
+
+          /*
+
+HANDLING OF TRIGGERLEVEL must be recursive, or at least reset, because it is never reset during Entity walk, it
+          is only incremented which is obviously wrong. Also - take a look at how continuance is handled within
+          trigger contexts.
+
+
+
+           */
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    private void searchEntityContents(Entity parent) throws Exception {
+        Integer parentLevel = levelMap.get(parent);
+        if (parentLevel == null) {
+            parentLevel = 0;
             levelMap.put(parent, parentLevel);
         }
-        logger.info("level="+parentLevel+" : name="+parent.getName()+" type="+parent.getEntityType().getName());
-        parent=getEntityBean().getEntityAndChildren(parent.getId());
-        Set<Entity> children=parent.getChildren();
+        logger.info("level=" + parentLevel + " : name=" + parent.getName() + " type=" + parent.getEntityType().getName());
+        EntitySearchTrigger trigger = triggerList.get(triggerLevel);
+        parent = getEntityBean().getEntityAndChildren(parent.getId());
+        Set<Entity> children = parent.getChildren();
         for (Entity child : children) {
-            Integer childLevel=parentLevel+1;
+            Integer childLevel = parentLevel + 1;
             levelMap.put(child, childLevel);
-            EntitySearchTrigger.TriggerResponse response=trigger.evaluate(parent, child, childLevel);
+            EntitySearchTrigger.TriggerResponse response = trigger.evaluate(parent, child, childLevel);
             if (response.performAction) {
-                if (listeningExecutorService!=null) {
-                    logger.info("Submitting action thread to executorService");
-                    ListenableFuture<Object> callback=listeningExecutorService.submit(action.getCallable(parent, child));
-                    Futures.addCallback(callback, new FutureCallback<Object>() {
-                        @Override
-                        public void onSuccess(Object o) {
-                            action.processResult(o);
-                        }
+                if (triggerLevel == triggerList.size() - 1) {
+                    // if this is the last trigger
+                    if (listeningExecutorService != null) {
+                        for (final EntityAction action : actionList) {
+                            logger.info("Submitting action thread to executorService");
+                            ListenableFuture<Object> callback = listeningExecutorService.submit(action.getCallable(parent, child));
+                            Futures.addCallback(callback, new FutureCallback<Object>() {
+                                @Override
+                                public void onSuccess(Object o) {
+                                    action.processResult(o);
+                                }
 
-                        @Override
-                        public void onFailure(Throwable throwable) {
-                            action.handleFailure();
+                                @Override
+                                public void onFailure(Throwable throwable) {
+                                    action.handleFailure();
+                                }
+                            });
+                            futureList.add(callback);
                         }
-                    });
-                    futureList.add(callback);
-                } else {
-                    logger.info("Running action within current thread");
-                    Object result;
-                    try {
-                        result=action.getCallable(parent, child).call();
-                        action.processResult(result);
-                    } catch (Exception ex) {
-                        action.handleFailure();
+                    } else {
+                        logger.info("Running action within current thread");
+                        for (final EntityAction action : actionList) {
+                            Object result;
+                            try {
+                                result = action.getCallable(parent, child).call();
+                                action.processResult(result);
+                            }
+                            catch (Exception ex) {
+                                action.handleFailure();
+                            }
+                        }
                     }
+                } else {
+                    // this is not the last trigger
+                    triggerLevel++;
                 }
             }
             if (response.continueSearch) {
-                searchEntityContents(child, levelMap, trigger, action);
+                searchEntityContents(child);
             }
         }
     }
