@@ -73,6 +73,7 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
             }
         });
 
+        // Make the configuration files
         for (int i = 0; i < relatedFiles.length; i++) {
             FileWriter fw = new FileWriter(getSGEConfigurationDirectory() + File.separator + CONFIG_PREFIX + (i+1));
             File tmpFile= relatedFiles[i];
@@ -97,11 +98,10 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
         String reconstructionCmd = basePath + SystemConfigurationProperties.getString("TIC.Reconstruction.Cmd");
         String correctionCmd = basePath + SystemConfigurationProperties.getString("TIC.Correction.Cmd");
         String fishQuantCmd = basePath + SystemConfigurationProperties.getString("TIC.FishQuant.Cmd");
-        String specificBasePath             = "$OUTPUT_DIR"+File.separator;
-        String specificReconstructionPath   = "$OUTPUT_DIR"+File.separator+"Reconstructed"+File.separator;
-        String specificCorrectionPath       = "$OUTPUT_DIR"+File.separator+"Reconstructed"+File.separator+"corrected"+File.separator;
-        File reconDir   = new File(resultFileNode.getDirectoryPath() + File.separator + "Reconstructed");
-        File correctDir = new File(resultFileNode.getDirectoryPath() + File.separator + "Reconstructed" + File.separator + "corrected");
+        boolean runningCalibration = (null!=task.getParameter(TicTask.PARAM_runApplyCalibrationToFrame) && Boolean.valueOf(task.getParameter(TicTask.PARAM_runApplyCalibrationToFrame)));
+        boolean runningCorrection  = (null!=task.getParameter(TicTask.PARAM_runIlluminationCorrection) && Boolean.valueOf(task.getParameter(TicTask.PARAM_runIlluminationCorrection)));
+        boolean runningFQBatch     = (null!=task.getParameter(TicTask.PARAM_runFQBatch) && Boolean.valueOf(task.getParameter(TicTask.PARAM_runFQBatch)));
+
         String scratchLocation = "/scratch/jacs/";
 
         // Takes a list of files, smart enough to figure out the file type based on extension
@@ -131,17 +131,27 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
         writer.write("echo \"MCR Cache Dir: $MCR_CACHE_ROOT\"\n");
         
         writer.write("if [ -s $MCR_CACHE_ROOT ]; then\n");
-        
-        if (null!=task.getParameter(TicTask.PARAM_runApplyCalibrationToFrame) && Boolean.valueOf(task.getParameter(TicTask.PARAM_runApplyCalibrationToFrame))) {
+
+        if (runningCalibration) {
             String fullReconstructionCmd = reconstructionCmd + " $OUTPUT_DIR"+File.separator+" $INPUT_FILE_NAME "+transformationFilePath+" "+borderValue+"\n";
             writer.write(fullReconstructionCmd);
         }
-        if (null!=task.getParameter(TicTask.PARAM_runIlluminationCorrection) && Boolean.valueOf(task.getParameter(TicTask.PARAM_runIlluminationCorrection))) {
+        if (runningCorrection) {
             String fullCorrectionCmd = correctionCmd + " $OUTPUT_DIR"+File.separator+"Reconstructed"+File.separator+" "+correctionFactorFilePath+" "+noiseFile+"\n";
             writer.write(fullCorrectionCmd);
         }
-        if (null!=task.getParameter(TicTask.PARAM_runFQBatch) && Boolean.valueOf(task.getParameter(TicTask.PARAM_runFQBatch))) {
-            writer.write("ls -1 "+specificCorrectionPath+"*.tif > "+specificCorrectionPath+"batchList.txt\n");
+        String specificBasePath             = "$OUTPUT_DIR"+File.separator;
+        String specificReconstructionPath   = specificBasePath+"Reconstructed"+File.separator;
+        String specificCorrectionPath       = specificReconstructionPath+"corrected"+File.separator;
+        if (runningFQBatch) {
+            //  If the calibration and correction steps are NOT run then assume the input is to a location that has been
+            //  calibrated and corrected.  //todo Need a better way to manage the permutations of execution!
+            String sourceLocation=specificBasePath;
+            if (!runningCalibration && !runningCorrection) {
+                sourceLocation = "$INPUT_FILE"+File.separator;
+                specificCorrectionPath = resultFileNode.getDirectoryPath()+File.separator;
+            }
+            writer.write("ls -1 "+sourceLocation+"*.tif > "+specificCorrectionPath+"batchList.txt\n");
             String fullFQCmd = fishQuantCmd + " "+microscopeSettingsFilePath+" "+specificCorrectionPath+"batchList.txt\n";
             writer.write(fullFQCmd);
             writer.write("mv "+specificCorrectionPath+"FISH-QUANT__all_spots_* $OUTPUT_DIR/$INPUT_FILE_NAME.all_spots.txt\n");
@@ -150,15 +160,16 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
         // If the user ONLY wants spot data, do nothing, else move things around and clean up
         if (null==task.getParameter(SingleTicTask.PARAM_spotDataOnly)||!Boolean.valueOf(task.getParameter(SingleTicTask.PARAM_spotDataOnly))) {
             // Add some cleanups after processing is done
-            if (null!=task.getParameter(TicTask.PARAM_runIlluminationCorrection) && Boolean.valueOf(task.getParameter(TicTask.PARAM_runIlluminationCorrection))) {
-                writer.write("mv "+specificCorrectionPath+"*.tif "      +correctDir.getAbsolutePath()+File.separator+".\n");
-                writer.write("mv "+specificCorrectionPath+"*_batch.txt "+correctDir.getAbsolutePath()+File.separator+".\n");
+            if (runningCorrection) {
+                String correctDir = resultFileNode.getDirectoryPath() + File.separator + "Reconstructed" + File.separator + "corrected";
+                writer.write("mv "+specificCorrectionPath+"*.tif "      +correctDir+File.separator+".\n");
+                writer.write("mv "+specificCorrectionPath+"*_batch.txt "+correctDir+File.separator+".\n");
             }
-            if (null!=task.getParameter(TicTask.PARAM_runApplyCalibrationToFrame) && Boolean.valueOf(task.getParameter(TicTask.PARAM_runApplyCalibrationToFrame))) {
-                writer.write("mv "+specificReconstructionPath+"*.tif "  +reconDir.getAbsolutePath()+File.separator+".\n");
+            if (runningCalibration) {
+                writer.write("mv "+specificReconstructionPath+"*.tif "+resultFileNode.getDirectoryPath() + File.separator + "Reconstructed" + File.separator+".\n");
             }
-            writer.write("mv "+specificBasePath+"*tif* "+resultFileNode.getDirectoryPath()+File.separator+".\n");
-            writer.write("rm -rf "+specificBasePath+"\n");
+            writer.write("mv $OUTPUT_DIR"+File.separator+"*tif* "+resultFileNode.getDirectoryPath()+File.separator+".\n");
+            writer.write("rm -rf $OUTPUT_DIR"+File.separator+"\n");
         }
         
         writer.write("fi\n");
