@@ -40,6 +40,9 @@
         <java>gwt-servlet.jar</java>
     </module>
     <module>
+        <java>guava-13.0.1.jar</java>
+    </module>
+    <module>
         <web>
             <web-uri>compute.war</web-uri>
             <context-root>/compute</context-root>

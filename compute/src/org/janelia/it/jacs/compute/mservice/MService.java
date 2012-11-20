@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.mservice;
 
+import com.google.common.util.concurrent.*;
 import org.apache.http.impl.entity.EntitySerializer;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
@@ -11,9 +12,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.user_data.User;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -39,16 +38,17 @@ public class MService {
     protected FileDiscoveryHelper helper;
     protected User user;
     protected int maxThreads;
-    ExecutorService executorService;
+    ListeningExecutorService listeningExecutorService;
+    List<ListenableFuture<Object>> futureList=new ArrayList<ListenableFuture<Object>>();
 
     // If maxThreads==0, this means don't use threads - run single-threaded
     public MService(String username, int maxThreads) throws Exception {
         user=getComputeBean().getUserByName(username);
         this.maxThreads=maxThreads;
         if (maxThreads>0) {
-            executorService=Executors.newFixedThreadPool(maxThreads);
+            listeningExecutorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(maxThreads));
         } else {
-            executorService=null;
+            listeningExecutorService=null;
         }
     }
 
@@ -76,7 +76,7 @@ public class MService {
     }
 
     private void searchEntityContents(Entity parent, Map<Entity, Integer> levelMap,
-                                      EntitySearchTrigger trigger, EntityAction action) throws Exception {
+                                      EntitySearchTrigger trigger, final EntityAction action) throws Exception {
         if (levelMap==null) {
             levelMap=new HashMap<Entity, Integer>();
         }
@@ -93,12 +93,30 @@ public class MService {
             levelMap.put(child, childLevel);
             EntitySearchTrigger.TriggerResponse response=trigger.evaluate(parent, child, childLevel);
             if (response.performAction) {
-                if (executorService!=null) {
+                if (listeningExecutorService!=null) {
                     logger.info("Submitting action thread to executorService");
-                    executorService.submit(action.getRunnable(parent, child));
+                    ListenableFuture<Object> callback=listeningExecutorService.submit(action.getCallable(parent, child));
+                    Futures.addCallback(callback, new FutureCallback<Object>() {
+                        @Override
+                        public void onSuccess(Object o) {
+                            action.processResult(o);
+                        }
+
+                        @Override
+                        public void onFailure(Throwable throwable) {
+                            action.handleFailure();
+                        }
+                    });
+                    futureList.add(callback);
                 } else {
                     logger.info("Running action within current thread");
-                    action.getRunnable(parent, child).run();
+                    Object result;
+                    try {
+                        result=action.getCallable(parent, child).call();
+                        action.processResult(result);
+                    } catch (Exception ex) {
+                        action.handleFailure();
+                    }
                 }
             }
             if (response.continueSearch) {

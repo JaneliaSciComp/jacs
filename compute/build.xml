@@ -223,6 +223,9 @@
         	<fileset file="${common.module}/ehcache/ehcache-core-2.5.1.jar"/>
             <fileset file="${common.module}/commons-vfs/commons-vfs-1.0.jar"/>
             <fileset file="${common.module}/commons-net/commons-net-2.0.jar"/>
+            <fileset dir="${common.module}/Guava">
+                <include name="**/*.jar"/>
+            </fileset>
         	<fileset dir="${common.module}/Solrj">
         		<include name="**/*.jar"/>
         	</fileset>

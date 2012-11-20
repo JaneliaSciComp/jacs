@@ -17,6 +17,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * Created with IntelliJ IDEA.
@@ -66,9 +67,9 @@ public class PatternSearch implements PatternSearchMBean {
 
     public class FoundSampleThenFindPatternAnnotationFolderEntityAction extends EntityAction {
 
-        public Runnable getRunnable(final Entity parentEntity, final Entity entity) throws Exception {
-            return new Thread() {
-                public void run() {
+        public Callable getCallable(final Entity parentEntity, final Entity entity) throws Exception {
+            return new Callable<Object>() {
+                public Object call() {
                     logger.info("Found sample name=" + entity.getName());
                     try {
                         MService patternFolderMService=new MService("system", 0);
@@ -76,6 +77,7 @@ public class PatternSearch implements PatternSearchMBean {
                     } catch (Exception ex) {
                         logger.error(ex.getMessage());
                     }
+                    return null;
                 }
             };
         }
@@ -84,10 +86,12 @@ public class PatternSearch implements PatternSearchMBean {
 
     public class FoundPatternAnnotationFolderEntityAction extends EntityAction {
 
-        public Runnable getRunnable(final Entity parentEntity, final Entity entity) throws Exception {
-            return new Thread() {
-                public void run() {
-                    logger.info("Found pattern annotation folder name="+entity.getName() + " id="+entity.getId());}
+        public Callable getCallable(final Entity parentEntity, final Entity entity) throws Exception {
+            return new Callable<Object>() {
+                public Object call() {
+                    logger.info("Found pattern annotation folder name="+entity.getName() + " id="+entity.getId());
+                    return null;
+                }
             };
         }
 

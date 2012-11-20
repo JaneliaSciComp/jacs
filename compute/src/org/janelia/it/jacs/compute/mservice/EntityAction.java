@@ -2,6 +2,8 @@ package org.janelia.it.jacs.compute.mservice;
 
 import org.janelia.it.jacs.model.entity.Entity;
 
+import java.util.concurrent.Callable;
+
 /**
  * Created with IntelliJ IDEA.
  * User: murphys
@@ -11,6 +13,10 @@ import org.janelia.it.jacs.model.entity.Entity;
  */
 public abstract class EntityAction {
 
-    public abstract Runnable getRunnable(final Entity parentEntity, final Entity entity) throws Exception;
+    public abstract Callable<Object> getCallable(final Entity parentEntity, final Entity entity) throws Exception;
+
+    public void processResult(Object result) {}
+
+    public void handleFailure() {}
 
 }
