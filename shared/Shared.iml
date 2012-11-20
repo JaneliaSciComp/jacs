@@ -48,7 +48,15 @@
     <orderEntry type="library" name="Lucene" level="project" />
     <orderEntry type="library" name="Hibernate" level="project" />
     <orderEntry type="library" name="Apache Commons" level="project" />
-    <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../common/Guava/guava-13.0.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">
