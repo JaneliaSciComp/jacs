@@ -4,9 +4,7 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
-import org.janelia.it.jacs.compute.mservice.EntityAction;
-import org.janelia.it.jacs.compute.mservice.EntitySearchTrigger;
-import org.janelia.it.jacs.compute.mservice.MService;
+import org.janelia.it.jacs.compute.mservice.*;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.compute.service.fly.ScreenSampleLineCoordinationService;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -43,58 +41,6 @@ public class PatternSearch implements PatternSearchMBean {
         return new FileDiscoveryHelper(entityBean, computeBean, "system");
     }
 
-    //////// Triggers /////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public class SampleSearchTrigger extends EntitySearchTrigger {
-
-        public TriggerResponse evaluate(Entity parent, Entity entity, int level) {
-            TriggerResponse response=new TriggerResponse();
-            if (entity.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
-                response.continueSearch=false;
-                response.performAction=true;
-            }
-            else {
-                response.continueSearch=true;
-                response.performAction=false;
-            }
-            return response;
-        }
-
-    }
-
-    public class PatternFolderTrigger extends EntitySearchTrigger {
-
-        public TriggerResponse evaluate(Entity parent, Entity entity, int level) {
-            TriggerResponse response=new TriggerResponse();
-            if (entity.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) &&
-            entity.getName().equals("Pattern Annotation")) {
-                response.continueSearch=false;
-                response.performAction=true;
-            }
-            else {
-                response.continueSearch=true;
-                response.performAction=false;
-            }
-            return response;
-        }
-
-    }
-
-    ///////////// Actions /////////////////////////////////////////////////////////////////////////////////////////////
-
-    public class LogFolderNameEntityAction extends EntityAction {
-
-        public Callable getCallable(final Entity parentEntity, final Entity entity) throws Exception {
-            return new Callable<Object>() {
-                public Object call() {
-                    logger.info("Found folder with name="+entity.getName() + " id="+entity.getId());
-                    return null;
-                }
-            };
-        }
-
-    }
-
     /////////////// Management Methods ////////////////////////////////////////////////////////////////////////////////
 
     public void changePatternAnnotationFolderName() {
@@ -110,10 +56,16 @@ public class PatternSearch implements PatternSearchMBean {
 
             // Create MService for Samples
             MService sampleMService=new MService("system", 10);
+
             List<EntitySearchTrigger> triggerList=new ArrayList<EntitySearchTrigger>();
-            triggerList.add(new SampleSearchTrigger());
-            triggerList.add(new PatternFolderTrigger());
-            sampleMService.run(topLevelSampleFolder, triggerList, new LogFolderNameEntityAction());
+            triggerList.add(new EntityTypeTrigger(EntityConstants.TYPE_SCREEN_SAMPLE));
+            triggerList.add(new EntityTypeNameTrigger(EntityConstants.TYPE_FOLDER, "Pattern Annotation"));
+
+
+            List<EntityAction> actionList=new ArrayList<EntityAction>();
+            actionList.add(new LogEntityNameAction("PatternFolderSearch"));
+
+            sampleMService.run(topLevelSampleFolder, triggerList, actionList);
 
         }
         catch (Exception ex) {

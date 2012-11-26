@@ -110,7 +110,7 @@ public class MService {
             parentLevel = 0;
             levelMap.put(parent, parentLevel);
         }
-        logger.info("level=" + parentLevel + " : name=" + parent.getName() + " type=" + parent.getEntityType().getName() + " triggerLevel="+triggerLevel);
+        //logger.info("level=" + parentLevel + " : name=" + parent.getName() + " type=" + parent.getEntityType().getName() + " triggerLevel="+triggerLevel);
         EntitySearchTrigger trigger = triggerList.get(triggerLevel);
         parent = getEntityBean().getEntityAndChildren(parent.getId());
         Set<Entity> children = parent.getChildren();
@@ -123,7 +123,7 @@ public class MService {
                     // if this is the last trigger
                     if (listeningExecutorService != null) {
                         for (final EntityAction action : actionList) {
-                            logger.info("Submitting action thread to executorService");
+                            //logger.info("Submitting action thread to executorService");
                             ListenableFuture<Object> callback = listeningExecutorService.submit(action.getCallable(parent, child));
                             Futures.addCallback(callback, new FutureCallback<Object>() {
                                 @Override
@@ -139,7 +139,7 @@ public class MService {
                             futureList.add(callback);
                         }
                     } else {
-                        logger.info("Running action within current thread");
+                        //logger.info("Running action within current thread");
                         for (final EntityAction action : actionList) {
                             Object result;
                             try {
