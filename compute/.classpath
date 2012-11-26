@@ -33,5 +33,6 @@
 	<classpathentry kind="lib" path="lib/resteasy-2.3.4/resteasy-jaxrs-2.3.4.Final.jar"/>
 	<classpathentry kind="lib" path="lib/resteasy-2.3.4/scannotation-1.0.3.jar"/>
 	<classpathentry kind="lib" path="lib/resteasy-2.3.4/stax-api-1.0-2.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Guava"/>
 	<classpathentry kind="output" path="build/eclipse"/>
 </classpath>
