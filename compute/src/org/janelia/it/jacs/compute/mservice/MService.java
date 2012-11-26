@@ -39,7 +39,6 @@ public class MService {
     List<EntitySearchTrigger> triggerList=new ArrayList<EntitySearchTrigger>();
     List<EntityAction> actionList=new ArrayList<EntityAction>();
     Map<Entity, Integer> levelMap=new HashMap<Entity, Integer>();
-    int triggerLevel=0;
 
     // If maxThreads==0, this means don't use threads - run single-threaded
     public MService(String username, int maxThreads) throws Exception {
@@ -101,25 +100,17 @@ public class MService {
 
     //////////////// searchEntityContents - the main search method ///////////////////////////////////////////////////
 
-          /*
-
-HANDLING OF TRIGGERLEVEL must be recursive, or at least reset, because it is never reset during Entity walk, it
-          is only incremented which is obviously wrong. Also - take a look at how continuance is handled within
-          trigger contexts.
-
-
-
-           */
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     private void searchEntityContents(Entity parent) throws Exception {
+        searchEntityContents(parent, 0 /* trigger level */);
+    }
+
+    private void searchEntityContents(Entity parent, int triggerLevel) throws Exception {
         Integer parentLevel = levelMap.get(parent);
         if (parentLevel == null) {
             parentLevel = 0;
             levelMap.put(parent, parentLevel);
         }
-        logger.info("level=" + parentLevel + " : name=" + parent.getName() + " type=" + parent.getEntityType().getName());
+        logger.info("level=" + parentLevel + " : name=" + parent.getName() + " type=" + parent.getEntityType().getName() + " triggerLevel="+triggerLevel);
         EntitySearchTrigger trigger = triggerList.get(triggerLevel);
         parent = getEntityBean().getEntityAndChildren(parent.getId());
         Set<Entity> children = parent.getChildren();
@@ -166,7 +157,7 @@ HANDLING OF TRIGGERLEVEL must be recursive, or at least reset, because it is nev
                 }
             }
             if (response.continueSearch) {
-                searchEntityContents(child);
+                searchEntityContents(child, triggerLevel);
             }
         }
     }
