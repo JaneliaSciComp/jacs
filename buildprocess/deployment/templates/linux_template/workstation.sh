@@ -12,8 +12,8 @@ if echo "$INSTALL" |grep -q "/Contents/Resources"; then
     EXTRA="/Contents/Resources"
 fi
 
-java -cp workstation.jar -Xms512m -Xmx1024m org.janelia.it.FlyWorkstation.gui.application.AutoUpdater > autoupdate.log 2>&1
-DOWNLOAD=`cat autoupdate.log | sed '/^$/d' | tail -1`
+java -cp workstation.jar -Xms512m -Xmx1024m -Dlogback.configurationFile=logback_autoupdater.xml org.janelia.it.FlyWorkstation.gui.application.AutoUpdater > autoupdater.out 2>&1
+DOWNLOAD=`cat autoupdater.out | sed '/^$/d' | tail -1`
 if [ "$DOWNLOAD" != "" ] && [ -e "$DOWNLOAD" ] ; then
   echo "Updater downloaded a new version to $DOWNLOAD."
 
