@@ -20,6 +20,7 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.common.SolrInputField;
 import org.apache.solr.common.params.CoreAdminParams;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
@@ -595,10 +596,19 @@ public class SolrDAO extends AnnotationDAO {
     	for(SolrDocument existingDoc : solrDocMap.values()) {
     		SolrInputDocument inputDoc = ClientUtils.toSolrInputDocument(existingDoc);
     		
-    		Collection<Long> ancestorIds = (Collection<Long>)inputDoc.getField("ancestor_ids").getValue();
-    		if (ancestorIds==null) {
+    		Collection<Long> ancestorIds = null;
+    		
+    		SolrInputField field = inputDoc.getField("ancestor_ids");
+    		if (field==null) {
     			ancestorIds = new ArrayList<Long>();
     		}
+    		else {
+    			ancestorIds = (Collection<Long>)field.getValue();
+    			if (ancestorIds==null) {
+        			ancestorIds = new ArrayList<Long>();
+        		} 
+    		}
+    		
     		ancestorIds.add(newAncestorId);
 
 			inputDoc.removeField("ancestor_ids");
