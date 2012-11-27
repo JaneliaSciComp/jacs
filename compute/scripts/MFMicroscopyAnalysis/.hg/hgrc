@@ -1,7 +1,0 @@
-[paths]
-default = Z:\MF microscopy analysis
-
-
-[tortoisehg]
-postpull = update
-autoresolve = False
