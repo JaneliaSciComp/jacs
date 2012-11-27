@@ -20,5 +20,7 @@ public interface IndexingManagerManagement {
 
 	public void scheduleIndexing(Long entityId);
 
+	public void scheduleAddNewAncestor(Long entityId, Long newAncestorId);
+	
 	public int runNextBatch();
 }

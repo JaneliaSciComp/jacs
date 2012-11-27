@@ -506,6 +506,7 @@ public class SolrDAO extends AnnotationDAO {
     public QueryResponse search(SolrQuery query) throws DaoException {
     	init();
     	try {
+    		_logger.debug("Running SOLR query: "+query);
             return solr.query(query);
     	}
 		catch (Exception e) {
@@ -529,6 +530,7 @@ public class SolrDAO extends AnnotationDAO {
     			
     			if (currSize>=MAX_ID_LIST_SIZE) {
         	    	SolrQuery query = new SolrQuery(sqBuf.toString());
+        	    	query.setRows(currSize);
         	    	QueryResponse qr = search(query);
         			Iterator<SolrDocument> i = qr.getResults().iterator();
         			while (i.hasNext()) {
@@ -546,6 +548,7 @@ public class SolrDAO extends AnnotationDAO {
 
     		if (currSize>0) {
 		    	SolrQuery query = new SolrQuery(sqBuf.toString());
+		    	query.setRows(currSize);
 		    	QueryResponse qr = search(query);
 				Iterator<SolrDocument> i = qr.getResults().iterator();
 				while (i.hasNext()) {
@@ -553,14 +556,61 @@ public class SolrDAO extends AnnotationDAO {
 					docMap.put(new Long(doc.get("id").toString()), doc);
 				}
     		}
-    		
+
             return docMap;
     	}
 		catch (Exception e) {
 			throw new DaoException("Error searching with SOLR",e);
 		}
     }
+
+    /**
+     * Update the document for the given entity to add a new ancestor (usually a new parent).
+     * @param entityIds
+     * @param newAncestorId
+     * @throws DaoException
+     */
+	public void addNewAncestor(Long entityId, Long newAncestorId) throws DaoException {
+		List<Long> entityIds = new ArrayList<Long>();
+		entityIds.add(entityId);
+		addNewAncestor(entityIds, newAncestorId);
+	}
+	
+    /**
+     * Update the documents for all of the given entities and add the same new ancestor (usually a new parent) to 
+     * each one. 
+     * @param entityIds
+     * @param newAncestorId
+     * @throws DaoException
+     */
+	public void addNewAncestor(List<Long> entityIds, Long newAncestorId) throws DaoException {
+    	
+		// Get all Solr documents
+    	Map<Long,SolrDocument> solrDocMap = search(entityIds);
+
+    	_logger.info("Adding new ancestor to "+entityIds.size()+" entities. Found "+solrDocMap.size()+" documents.");
+    	
+    	// Create updated Solr documents
+    	List<SolrInputDocument> inputDocs = new ArrayList<SolrInputDocument>();
+    	for(SolrDocument existingDoc : solrDocMap.values()) {
+    		SolrInputDocument inputDoc = ClientUtils.toSolrInputDocument(existingDoc);
+    		
+    		Collection<Long> ancestorIds = (Collection<Long>)inputDoc.getField("ancestor_ids").getValue();
+    		if (ancestorIds==null) {
+    			ancestorIds = new ArrayList<Long>();
+    		}
+    		ancestorIds.add(newAncestorId);
+
+			inputDoc.removeField("ancestor_ids");
+    		inputDoc.addField("ancestor_ids", ancestorIds, 0.2f);
+    		
+    		inputDocs.add(inputDoc);
+        	_logger.info("Updating index for "+inputDoc.getFieldValue("name")+" (id="+inputDoc.getFieldValue("id")+"), adding ancestor "+newAncestorId);
+    	}
     
-    
-    
+    	// Index the entire batch
+
+    	index(inputDocs);
+    	commit();
+	}
 }

@@ -34,7 +34,13 @@ public class IndexingMDB implements MessageListener {
 	public void onMessage(Message message) {
         try {
     		Long entityId = message.getLongProperty("ENTITY_ID");
-    		indexingManager.scheduleIndexing(entityId);
+    		Object newAncestorId = message.getObjectProperty("NEW_ANCESTOR_ID");
+    		if (newAncestorId!=null) {
+    			indexingManager.scheduleAddNewAncestor(entityId, (Long)newAncestorId);	
+    		}
+    		else {
+    			indexingManager.scheduleIndexing(entityId);	
+    		}
         }
         catch (Exception e) {
         	throw new EJBException(e);

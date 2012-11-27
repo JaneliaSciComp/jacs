@@ -147,7 +147,6 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             throw new ComputeException("Error adding entity (id="+entity.getId()+") to parent "+parent.getId(),e);
         }
     }
-   
     
     public Entity saveOrUpdateEntity(String userLogin, Entity entity) throws ComputeException {
         try {
@@ -206,6 +205,9 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         	}
             EntityData ed = _annotationDAO.addEntityToParent(parent, entity, index, attrName);
         	_logger.info(userLogin+" added entity data "+ed.getId());
+        	
+        	IndexingHelper.updateIndexAddAncestor(entity.getId(), parent.getId());
+        	
         	return ed;
         } 
         catch (DaoException e) {
@@ -225,6 +227,10 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         	}
         	_annotationDAO.addChildren(userLogin, parentId, childrenIds, attributeName);
         	_logger.info(userLogin+" added "+childrenIds.size()+" children to parent "+parentId);
+        	
+        	for(Long childId : childrenIds) {
+        		IndexingHelper.updateIndexAddAncestor(childId, parentId);
+        	}
         } 
         catch (Exception e) {
             _logger.error("Error trying to add children to parent "+parentId, e);

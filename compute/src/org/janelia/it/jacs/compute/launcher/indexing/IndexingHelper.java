@@ -30,6 +30,17 @@ public class IndexingHelper {
         messageInterface.commit();
         messageInterface.endMessageSession();
 	}
+
+	public static void sendAddAncestorMessage(Long entityId, Long newAncestorId) throws Exception {
+		AsyncMessageInterface messageInterface = JmsUtil.createAsyncMessageInterface();
+		messageInterface.startMessageSession(queueName, messageInterface.localConnectionType);
+		ObjectMessage message = messageInterface.createObjectMessage();
+		message.setObjectProperty("ENTITY_ID", entityId);
+		message.setLongProperty("NEW_ANCESTOR_ID", newAncestorId);
+		messageInterface.sendMessageWithinTransaction(message);
+        messageInterface.commit();
+        messageInterface.endMessageSession();
+	}
 	
 	public static void updateIndex(Long entityId) {
 		if (!ENABLE_INDEXING) return;
@@ -38,6 +49,16 @@ public class IndexingHelper {
 		}
 		catch (Exception e) {
 			logger.error("Error sending reindexing message for "+entityId,e);
+		}
+	}
+
+	public static void updateIndexAddAncestor(Long entityId, Long newAncestorId) {
+		if (!ENABLE_INDEXING) return;
+		try {
+			sendAddAncestorMessage(entityId, newAncestorId);
+		}
+		catch (Exception e) {
+			logger.error("Error sending add ancestor message for "+entityId+" (new ancestor is: "+newAncestorId+")",e);
 		}
 	}
 	

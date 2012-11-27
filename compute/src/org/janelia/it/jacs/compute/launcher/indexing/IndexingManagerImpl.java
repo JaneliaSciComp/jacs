@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.launcher.indexing;
 
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -29,6 +30,8 @@ public class IndexingManagerImpl implements IndexingManagerManagement {
 
 	private DedupingDelayQueue<Long> queue;
 	
+	private ConcurrentSkipListMap<Long, DedupingDelayQueue<Long>> ancestorQueues;
+	
 	private SolrDAO solrDAO;
 	private boolean processing = false;
 	
@@ -51,6 +54,8 @@ public class IndexingManagerImpl implements IndexingManagerManagement {
 			}
 		};
 		queue.setWorkItemDelay(3000); // Wait 3 seconds before indexing anything, to limit duplicates
+		
+		this.ancestorQueues = new ConcurrentSkipListMap<Long, DedupingDelayQueue<Long>>();
 	}
 
 	public void start() throws Exception {
@@ -64,6 +69,32 @@ public class IndexingManagerImpl implements IndexingManagerManagement {
 
 	public void scheduleIndexing(Long entityId) {
 		queue.addWorkItem(entityId);
+	}
+	
+	public void scheduleAddNewAncestor(final Long entityId, final Long newAncestorId) {
+		logger.debug("Scheduling addition of new ancestor "+newAncestorId+" for "+entityId);
+		synchronized (ancestorQueues) {
+			DedupingDelayQueue<Long> ancestorQueue = ancestorQueues.get(newAncestorId);
+			if (ancestorQueue==null) {
+				logger.info("Creating new deduping queue for "+newAncestorId);
+				ancestorQueue = new DedupingDelayQueue<Long>() {
+					@Override
+					public void process(List<Long> entityIds) {
+						try {
+							logger.info("Processing "+entityIds.size()+" ancestor adds");
+							if (entityIds.isEmpty()) return;
+							solrDAO.addNewAncestor(entityIds, newAncestorId);
+						} 
+						catch (Throwable e) {
+							logger.error("Error adding new ancestor", e);
+						}
+					}
+				};
+				ancestorQueue.setWorkItemDelay(3000); // Wait 3 seconds before indexing anything, to limit duplicates
+				ancestorQueues.put(newAncestorId, ancestorQueue);
+			}
+			ancestorQueue.addWorkItem(entityId);
+		}
 	}
 	
 	@TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
@@ -81,6 +112,23 @@ public class IndexingManagerImpl implements IndexingManagerManagement {
 		if (numIndexed>0) {
 			logger.info("Indexing batch complete. Num distinct ids queued: "+numQueued+", Num processed in this batch: "+numIndexed);
 		}
+		
+		synchronized (ancestorQueues) {
+			if (!ancestorQueues.isEmpty()) {
+				Long ancestorId = ancestorQueues.firstKey();
+				DedupingDelayQueue<Long> ancestorQueue = ancestorQueues.get(ancestorId);
+				int numAncestorAddsQueued = ancestorQueue.getQueueSize();
+				int numAncestorsAdded = ancestorQueue.process(MAX_BATCH_SIZE);
+				if (numAncestorsAdded>0) {
+					logger.info("Add ancestor batch complete for "+ancestorId+". Num distinct ids queued: "+numAncestorAddsQueued+", Num processed in this batch: "+numAncestorsAdded);
+				}
+				if (ancestorQueue.getQueueSize()==0) {
+					logger.info("All work items complete for ancestor "+ancestorId+". Removing its queue from the work list.");
+					ancestorQueues.remove(ancestorId);
+				}
+			}
+		}
+		
 		synchronized (this) {
 			this.processing = false;
 		}
