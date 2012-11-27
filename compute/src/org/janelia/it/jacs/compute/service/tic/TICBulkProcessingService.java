@@ -70,10 +70,17 @@ public class TICBulkProcessingService implements IService {
                     for (TaskParameter taskParameter : task.getTaskParameterSet()) {
                         _currentTask.setParameter(taskParameter.getName(),taskParameter.getValue());
                     }
+
                     // Override the input for the specific instance - only need an example of the file
+                    boolean runningCalibration = (null!=task.getParameter(BatchTicTask.PARAM_runApplyCalibrationToFrame) && Boolean.valueOf(task.getParameter(BatchTicTask.PARAM_runApplyCalibrationToFrame)));
+                    boolean runningCorrection  = (null!=task.getParameter(BatchTicTask.PARAM_runIlluminationCorrection) && Boolean.valueOf(task.getParameter(BatchTicTask.PARAM_runIlluminationCorrection)));
+
                     String testPath = relatedFileMap.get(key).get(0);
                     File tmpParent = new File(testPath).getParentFile();
                     _currentTask.setParameter(SingleTicTask.PARAM_inputFilePrefix,relatedFileMap.get(key).get(0));
+                    if (!runningCalibration && !runningCorrection) {
+                        _currentTask.setParameter(SingleTicTask.PARAM_inputFilePrefix,inputFilePath);
+                    }
                     File tmpInputFile = new File(testPath);
                     final String targetPrefix = TICHelper.getTargetPrefix(tmpInputFile.getName());
                     if (null==targetPrefix) {

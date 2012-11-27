@@ -45,6 +45,7 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
         String borderValue = (task.getParameter(TicTask.PARAM_borderValue)==null || "".equals(task.getParameter(TicTask.PARAM_borderValue)))?
                 "\"\"":task.getParameter(TicTask.PARAM_borderValue);
         String microscopeSettingsFilePath = task.getParameter(TicTask.PARAM_microscopeSettingsFile);
+
         // Write out the avgReadNoise and avgDark settings file
         FileWriter noiseWriter=null;
         String noiseFile = resultFileNode.getDirectoryPath()+File.separator+"noiseAndDarkSettings.txt";
@@ -62,23 +63,15 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
             }
         }
 
-        File tmpInputFile = new File(inputFilePath);
-        final String targetPrefix = TICHelper.getTargetPrefix(tmpInputFile.getName());
-
-        File tmpDir = tmpInputFile.getParentFile();
-        File[] relatedFiles = tmpDir.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File file) {
-                return file.isFile() && file.getName().startsWith(targetPrefix);
-            }
-        });
-
-        // Make the configuration files
-        for (int i = 0; i < relatedFiles.length; i++) {
-            FileWriter fw = new FileWriter(getSGEConfigurationDirectory() + File.separator + CONFIG_PREFIX + (i+1));
-            File tmpFile= relatedFiles[i];
+        boolean runningCalibration = (null!=task.getParameter(TicTask.PARAM_runApplyCalibrationToFrame) && Boolean.valueOf(task.getParameter(TicTask.PARAM_runApplyCalibrationToFrame)));
+        boolean runningCorrection  = (null!=task.getParameter(TicTask.PARAM_runIlluminationCorrection) && Boolean.valueOf(task.getParameter(TicTask.PARAM_runIlluminationCorrection)));
+        boolean runningFQBatch     = (null!=task.getParameter(TicTask.PARAM_runFQBatch) && Boolean.valueOf(task.getParameter(TicTask.PARAM_runFQBatch)));
+        // If doing any major processing then line up the files as usual
+        if (!runningCalibration && !runningCorrection) {
+            FileWriter fw = new FileWriter(getSGEConfigurationDirectory() + File.separator + CONFIG_PREFIX + "1");
+            File tmpFile= new File(inputFilePath);
             String tmpName=tmpFile.getName();
-            String outputPath = resultFileNode.getDirectoryPath()+File.separator+tmpName.substring(0,tmpName.lastIndexOf(".")).replaceAll(" ","_");
+            String outputPath = resultFileNode.getDirectoryPath()+File.separator+tmpName.replaceAll(" ", "_");
             try {
                 // Path to the input file
                 fw.write(tmpFile.getAbsolutePath()+"\n");
@@ -87,20 +80,52 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
                 // Result Node path to the specific results
                 fw.write(outputPath+"\n");
                 // Pass the index for this file
-                fw.write((i+1)+"\n");
+                fw.write("1\n");
+                setJobIncrementStop(1);
             }
             finally {
                 fw.close();
             }
+        }
+        else {
+            File tmpInputFile = new File(inputFilePath);
+            final String targetPrefix = TICHelper.getTargetPrefix(tmpInputFile.getName());
+
+            File tmpDir = tmpInputFile.getParentFile();
+            File[] relatedFiles = tmpDir.listFiles(new FileFilter() {
+                @Override
+                public boolean accept(File file) {
+                    return file.isFile() && file.getName().startsWith(targetPrefix);
+                }
+            });
+
+            // Make the configuration files
+            for (int i = 0; i < relatedFiles.length; i++) {
+                FileWriter fw = new FileWriter(getSGEConfigurationDirectory() + File.separator + CONFIG_PREFIX + (i+1));
+                File tmpFile= relatedFiles[i];
+                String tmpName=tmpFile.getName();
+                String outputPath = resultFileNode.getDirectoryPath()+File.separator;
+                try {
+                    // Path to the input file
+                    fw.write(tmpFile.getAbsolutePath()+"\n");
+                    // Input file name
+                    fw.write(tmpName+"\n");
+                    // Result Node path to the specific results
+                    fw.write(outputPath+"\n");
+                    // Pass the index for this file
+                    fw.write((i+1)+"\n");
+                }
+                finally {
+                    fw.close();
+                }
+            }
+            setJobIncrementStop(relatedFiles.length);
         }
 
         String basePath = SystemConfigurationProperties.getString("Executables.ModuleBase");
         String reconstructionCmd = basePath + SystemConfigurationProperties.getString("TIC.Reconstruction.Cmd");
         String correctionCmd = basePath + SystemConfigurationProperties.getString("TIC.Correction.Cmd");
         String fishQuantCmd = basePath + SystemConfigurationProperties.getString("TIC.FishQuant.Cmd");
-        boolean runningCalibration = (null!=task.getParameter(TicTask.PARAM_runApplyCalibrationToFrame) && Boolean.valueOf(task.getParameter(TicTask.PARAM_runApplyCalibrationToFrame)));
-        boolean runningCorrection  = (null!=task.getParameter(TicTask.PARAM_runIlluminationCorrection) && Boolean.valueOf(task.getParameter(TicTask.PARAM_runIlluminationCorrection)));
-        boolean runningFQBatch     = (null!=task.getParameter(TicTask.PARAM_runFQBatch) && Boolean.valueOf(task.getParameter(TicTask.PARAM_runFQBatch)));
 
         String scratchLocation = "/scratch/jacs/";
 
@@ -109,27 +134,29 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
         writer.write("read INPUT_FILE_NAME\n");
         writer.write("read OUTPUT_DIR\n");
         writer.write("read TMP_INDEX\n");
-        
+
         // Prepare output dir
         writer.write("rm -rf $OUTPUT_DIR\n");
         writer.write("mkdir $OUTPUT_DIR\n");
-        writer.write("cp $INPUT_FILE $OUTPUT_DIR"+File.separator+"$INPUT_FILE_NAME\n");
-        
+        if (runningCalibration || runningCorrection) {
+            writer.write("cp $INPUT_FILE $OUTPUT_DIR"+File.separator+"$INPUT_FILE_NAME\n");
+        }
+
         writer.write("trap '\n");
         writer.write("echo \"SIGTERM detected. Removing temp directory $SCRATCH_DIR\"\n");
-		writer.write("rm -rf $SCRATCH_DIR\n");
-		writer.write("' TERM\n");
-        
+        writer.write("rm -rf $SCRATCH_DIR\n");
+        writer.write("' TERM\n");
+
         // Prepare scratch directory for cache        
-		writer.write("export TMPDIR="+scratchLocation+"\n");
-		writer.write("mkdir -p $TMPDIR\n");	
-		writer.write("SCRATCH_DIR=`mktemp -d`\n"); // mktemp uses the TMPDIR defined above
-        
-		// Export variables
+        writer.write("export TMPDIR="+scratchLocation+"\n");
+        writer.write("mkdir -p $TMPDIR\n");
+        writer.write("SCRATCH_DIR=`mktemp -d`\n"); // mktemp uses the TMPDIR defined above
+
+        // Export variables
         writer.write(MatlabHelper.MATLAB_EXPORT + MatlabHelper.getCacheRootExportCommand("$SCRATCH_DIR")+"\n");
-        
+
         writer.write("echo \"MCR Cache Dir: $MCR_CACHE_ROOT\"\n");
-        
+
         writer.write("if [ -s $MCR_CACHE_ROOT ]; then\n");
 
         if (runningCalibration) {
@@ -171,12 +198,11 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
             writer.write("mv $OUTPUT_DIR"+File.separator+"*tif* "+resultFileNode.getDirectoryPath()+File.separator+".\n");
             writer.write("rm -rf $OUTPUT_DIR"+File.separator+"\n");
         }
-        
+
         writer.write("fi\n");
         // Post clean the scratch area
         writer.write("echo \"Finished. Removing temp directory $SCRATCH_DIR\"\n");
         writer.write("rm -rf $SCRATCH_DIR\n");
-        setJobIncrementStop(relatedFiles.length);
     }
 
     protected void setQueue(SerializableJobTemplate jt) throws DrmaaException {
