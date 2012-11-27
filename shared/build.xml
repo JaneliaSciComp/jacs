@@ -55,6 +55,7 @@
             <!--<fileset dir="${common.module}/JAXB/" includes="*.jar"/>-->
             <fileset dir="${common.module}/JAXB-2.1.5/" includes="*.jar"/>
         	<fileset dir="${common.module}/Guava/" includes="*.jar"/>
+        	<fileset dir="${common.module}/Logging/" includes="*.jar"/>
             <pathelement location="${common.module}/Spring/dom4j-1.6.1.jar"/>
             <fileset dir="${common.dir}/Hibernate-3.2" includes="hibernate3.jar"/>
         </path>

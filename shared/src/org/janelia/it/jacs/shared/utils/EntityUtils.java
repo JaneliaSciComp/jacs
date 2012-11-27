@@ -2,12 +2,13 @@ package org.janelia.it.jacs.shared.utils;
 
 import java.util.*;
 
-import org.apache.log4j.Logger;
 import org.hibernate.Hibernate;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Ordering;
@@ -18,9 +19,9 @@ import com.google.common.collect.Ordering;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class EntityUtils {
-
-    private static final Logger logger = Logger.getLogger(EntityUtils.class);
-
+	
+	private static final Logger log = LoggerFactory.getLogger(EntityUtils.class);
+	
     public interface SaveUnit {
         public void saveUnit(Object o) throws Exception;
     }
@@ -204,7 +205,6 @@ public class EntityUtils {
 		if (path == null) {
 			// Always attempt to get the shortcut image path for the role requested
 	    	path = entity.getValueByAttributeName(imageRole);
-            logger.debug("at 'shortcut' attempt, found " + path);
 		}
 
         if (path == null) {
@@ -218,7 +218,7 @@ public class EntityUtils {
                         type.equals(EntityConstants.TYPE_STITCHED_V3D_RAW) ||
                         type.equals(EntityConstants.TYPE_TIF_3D)) {
                     path = getFilePath(entity);
-                    logger.debug("at 'type-test' attempt, found " + path);
+                    log.debug("at 'type-test' attempt, found " + path);
                 }
             }
             else if (imageRole.equals(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)) {
@@ -236,7 +236,7 @@ public class EntityUtils {
                     if ( childEntity != null ) {
                         path = childEntity.getValueByAttributeName( EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE );
                         if ( path != null ) {
-                            logger.debug("Found path " + path + " for entity " + entity.getName() + " via drill-and-attrib");
+                            log.debug("Found path " + path + " for entity " + entity.getName() + " via drill-and-attrib");
                             break;
                         }
                     }
@@ -248,7 +248,7 @@ public class EntityUtils {
     		EntityData ed = entity.getEntityDataByAttributeName(imageRole);
     		if (ed!=null && isInitialized(ed.getChildEntity())) {
     			path = getFilePath(ed.getChildEntity());
-                logger.debug("at 'entitydata-for-att-name' attempt, found " + path);
+                log.debug("at 'entitydata-for-att-name' attempt, found " + path);
             }
     	}
     	
@@ -341,16 +341,16 @@ public class EntityUtils {
     }
 
     public static void replaceAllAttributeTypesInEntityTree(Entity topEntity, EntityAttribute previousEa, EntityAttribute newEa, SaveUnit su) throws Exception {
-        logger.info("replaceAllAttributeTypesInEntityTree id="+topEntity.getId());
+        log.debug("replaceAllAttributeTypesInEntityTree id="+topEntity.getId());
         Set<EntityData> edSet=topEntity.getEntityData();
-        logger.info("Found "+edSet.size()+" entity-data");
+        log.debug("Found "+edSet.size()+" entity-data");
         for (EntityData ed : edSet) {
             if (ed.getEntityAttribute().getName().equals(previousEa.getName())) {
-                logger.info("Changing value to "+newEa.getName());
+                log.debug("Changing value to "+newEa.getName());
                 ed.setEntityAttribute(newEa);
                 su.saveUnit(ed);
             } else {
-                logger.info("Skipping attribute="+ed.getEntityAttribute().getName());
+                log.debug("Skipping attribute="+ed.getEntityAttribute().getName());
             }
             Entity child=ed.getChildEntity();
             if (child!=null) {

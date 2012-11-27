@@ -106,7 +106,7 @@ public class FuhuiPatternAnnotationDataManager extends PatternAnnotationDataMana
 
     public Map<Long, List<Float>> loadCategorySummaryFile() throws Exception {
         Long startTime=new Date().getTime();
-        System.out.println("loadCategorySummaryFile start()");
+        logger.info("loadCategorySummaryFile start()");
         BufferedReader bw=new BufferedReader(new FileReader(categorySummaryFile));
         String firstLine=bw.readLine();
         if (firstLine==null) {
@@ -199,13 +199,13 @@ public class FuhuiPatternAnnotationDataManager extends PatternAnnotationDataMana
         }
         bw.close();
         Long elapsedTime=new Date().getTime()-startTime;
-        System.out.println("loadCategorySummaryFile end() elapsedTime="+elapsedTime);
+        logger.info("loadCategorySummaryFile end() elapsedTime="+elapsedTime);
         return categoryMap;
     }
 
     public Map<Long, List<Float>> loadProbabilitySummaryFile() throws Exception {
         Long startTime=new Date().getTime();
-        System.out.println("loadProbabilitySummaryFile start()");
+        logger.info("loadProbabilitySummaryFile start()");
         BufferedReader bw=new BufferedReader(new FileReader(probabilitySummaryFile));
         String firstLine=bw.readLine();
         if (firstLine==null) {
@@ -298,7 +298,7 @@ public class FuhuiPatternAnnotationDataManager extends PatternAnnotationDataMana
         }
         bw.close();
         Long elapsedTime=new Date().getTime()-startTime;
-        System.out.println("loadProbabilitySummaryFile end() elapsedTime="+elapsedTime);
+        logger.info("loadProbabilitySummaryFile end() elapsedTime="+elapsedTime);
         return probabilityMap;
     }
 
