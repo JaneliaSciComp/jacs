@@ -10,6 +10,7 @@ import org.janelia.it.jacs.model.entity.Entity;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class EntitySearchTrigger {
+    private boolean alwaysContinue=false;
 
     public class TriggerResponse {
         public boolean performAction=false;
@@ -17,5 +18,17 @@ public abstract class EntitySearchTrigger {
     }
 
     public abstract TriggerResponse evaluate(Entity parent, Entity entity, int level);
+
+    public void setAlwaysContinue(boolean alwaysContinue) {
+        this.alwaysContinue=alwaysContinue;
+    }
+
+    protected boolean checkContinue(boolean continueSuggestion) {
+        if (alwaysContinue) {
+            return true;
+        } else {
+            return continueSuggestion;
+        }
+    }
 
 }

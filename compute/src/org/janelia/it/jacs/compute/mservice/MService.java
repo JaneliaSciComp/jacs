@@ -118,7 +118,9 @@ public class MService {
             Integer childLevel = parentLevel + 1;
             levelMap.put(child, childLevel);
             EntitySearchTrigger.TriggerResponse response = trigger.evaluate(parent, child, childLevel);
+            boolean actionPerformed=false;
             if (response.performAction) {
+                actionPerformed=true;
                 if (triggerLevel == triggerList.size() - 1) {
                     // if this is the last trigger
                     if (listeningExecutorService != null) {
@@ -151,13 +153,18 @@ public class MService {
                             }
                         }
                     }
-                } else {
-                    // this is not the last trigger
-                    triggerLevel++;
                 }
             }
             if (response.continueSearch) {
-                searchEntityContents(child, triggerLevel);
+                if (actionPerformed) {
+                    int nextTriggerLevel=triggerLevel+1;
+                    if (nextTriggerLevel>=triggerList.size()) {
+                        nextTriggerLevel=triggerLevel;
+                    }
+                    searchEntityContents(child, nextTriggerLevel);
+                } else {
+                    searchEntityContents(child, triggerLevel);
+                }
             }
         }
     }

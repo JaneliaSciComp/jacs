@@ -58,7 +58,11 @@ public class PatternSearch implements PatternSearchMBean {
             MService sampleMService=new MService("system", 10);
 
             List<EntitySearchTrigger> triggerList=new ArrayList<EntitySearchTrigger>();
-            triggerList.add(new EntityTypeTrigger(EntityConstants.TYPE_SCREEN_SAMPLE));
+
+            EntityTypeTrigger sampleTrigger=new EntityTypeTrigger(EntityConstants.TYPE_SCREEN_SAMPLE);
+            sampleTrigger.setAlwaysContinue(true);
+
+            triggerList.add(sampleTrigger);
             triggerList.add(new EntityTypeNameTrigger(EntityConstants.TYPE_FOLDER, "Pattern Annotation"));
 
 
