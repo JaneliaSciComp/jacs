@@ -181,7 +181,9 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
             writer.write("ls -1 "+sourceLocation+"*.tif > "+specificCorrectionPath+"batchList.txt\n");
             String fullFQCmd = fishQuantCmd + " "+microscopeSettingsFilePath+" "+specificCorrectionPath+"batchList.txt\n";
             writer.write(fullFQCmd);
-            writer.write("mv "+specificCorrectionPath+"FISH-QUANT__all_spots_* $OUTPUT_DIR/$INPUT_FILE_NAME.all_spots.txt\n");
+            if (runningCalibration || runningCorrection) {
+                writer.write("mv "+specificCorrectionPath+"FISH-QUANT__all_spots_* $OUTPUT_DIR/$INPUT_FILE_NAME.all_spots.txt\n");
+            }
         }
 
         // If the user ONLY wants spot data, do nothing, else move things around and clean up
