@@ -195,7 +195,9 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
             if (runningCalibration) {
                 writer.write("mv "+specificReconstructionPath+"*.tif "+resultFileNode.getDirectoryPath() + File.separator + "Reconstructed" + File.separator+".\n");
             }
-            writer.write("mv $OUTPUT_DIR"+File.separator+"*tif* "+resultFileNode.getDirectoryPath()+File.separator+".\n");
+            if (runningCorrection || runningCalibration) {
+                writer.write("mv $OUTPUT_DIR"+File.separator+"*tif* "+resultFileNode.getDirectoryPath()+File.separator+".\n");
+            }
             writer.write("rm -rf $OUTPUT_DIR"+File.separator+"\n");
         }
 
