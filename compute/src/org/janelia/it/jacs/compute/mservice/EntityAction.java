@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.compute.mservice;
 
+import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
+import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.model.entity.Entity;
 
 import java.util.concurrent.Callable;
@@ -18,5 +21,13 @@ public abstract class EntityAction {
     public void processResult(Object result) {}
 
     public void handleFailure() {}
+
+    protected EntityBeanLocal getEntityBean() {
+        return EJBFactory.getLocalEntityBean();
+    }
+
+    protected ComputeBeanLocal getComputeBean() {
+        return EJBFactory.getLocalComputeBean();
+    }
 
 }
