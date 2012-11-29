@@ -298,59 +298,72 @@ public class LargeOperations {
     	
     	logger.info("Building property map for all Sage images");
     	SageDAO sage = new SageDAO(logger);
-
-    	for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
-    		
-    		String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-    		logger.info("  Building property map for all Sage images in Data Set '"+dataSetIdentifier+"'");
-    		
-        	ResultSetIterator iterator = null;
-        	
-        	try {
-        		iterator = sage.getImagesByDataSet(dataSetIdentifier);
-        		while (iterator.hasNext()) {
-            		Map<String,Object> row = iterator.next();
-    				associateImageProperties(row);
-            	}
-        	}
-        	catch (RuntimeException e) {
-        		if (e.getCause() instanceof SQLException) {
-        			throw new DaoException(e);
-        		}
-        		throw e;
-        	}
-            finally {
-            	if (iterator!=null) iterator.close();
-            }
-    	}
-    	
-		logger.info("  Building property map for all Sage images in the flylight_flip image family");
-		
-    	ResultSetIterator iterator = null;
+    	Connection conn = null;
     	
     	try {
-    		iterator = sage.getImagesByFamily("flylight_flip");
-    		while (iterator.hasNext()) {
-        		Map<String,Object> row = iterator.next();
-				associateImageProperties(row);
-        	}
+    		conn = annotationDAO.getJdbcConnection();
+
+	    	for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
+	    		
+	    		String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+	    		logger.info("  Building property map for all Sage images in Data Set '"+dataSetIdentifier+"'");
+	    		
+	        	ResultSetIterator iterator = null;
+	        	
+	        	try {
+	        		iterator = sage.getImagesByDataSet(dataSetIdentifier);
+	        		while (iterator.hasNext()) {
+	            		Map<String,Object> row = iterator.next();
+	    				associateImageProperties(conn, row);
+	            	}
+	        	}
+	        	catch (RuntimeException e) {
+	        		if (e.getCause() instanceof SQLException) {
+	        			throw new DaoException(e);
+	        		}
+	        		throw e;
+	        	}
+	            finally {
+	            	if (iterator!=null) iterator.close();
+	            }
+	    	}
+	    	
+			logger.info("  Building property map for all Sage images in the flylight_flip image family");
+			
+	    	ResultSetIterator iterator = null;
+	    	
+	    	try {
+	    		iterator = sage.getImagesByFamily("flylight_flip");
+	    		while (iterator.hasNext()) {
+	        		Map<String,Object> row = iterator.next();
+					associateImageProperties(conn, row);
+	        	}
+	    	}
+	    	catch (RuntimeException e) {
+	    		if (e.getCause() instanceof SQLException) {
+	    			throw new DaoException(e);
+	    		}
+	    		throw e;
+	    	}
+	        finally {
+	        	if (iterator!=null) iterator.close();
+	        }
     	}
-    	catch (RuntimeException e) {
-    		if (e.getCause() instanceof SQLException) {
-    			throw new DaoException(e);
-    		}
-    		throw e;
+    	finally {
+	    	try {
+	            if (conn!=null) conn.close(); 
+	    	}
+	    	catch (SQLException e) {
+	    		logger.warn("Ignoring error encountered while closing JDBC connection",e);
+	    	}
     	}
-        finally {
-        	if (iterator!=null) iterator.close();
-        }
     }
     
-    private void associateImageProperties(Map<String,Object> imageProps) throws DaoException {
+    private void associateImageProperties(Connection conn, Map<String,Object> imageProps) throws DaoException {
     	String imagePath = (String)imageProps.get("name");
     	String[] path = imagePath.split("/"); // take just the filename
     	String filename = path[path.length-1];
-		for(Long imageId : annotationDAO.getImageIdsWithName(null, filename)) {
+		for(Long imageId : annotationDAO.getImageIdsWithName(conn, null, filename)) {
 			putValue(SAGE_IMAGEPROP_MAP, imageId, imageProps);
 		}
     }

@@ -47,8 +47,7 @@ public class ComputeBaseDAO {
                     jdbcUser,
                     jdbcPw);
             connection.setAutoCommit(false);
-//            _logger.debug("getJdbcConnection() using these parameters: driverClassName="+jdbcDriver+" url="+jdbcUrl+" user="+jdbcUser);
-            _logger.info("getJdbcConnection() using these parameters: driverClassName="+jdbcDriver+" url="+jdbcUrl+" user="+jdbcUser);
+            _logger.debug("getJdbcConnection() using these parameters: driverClassName="+jdbcDriver+" url="+jdbcUrl+" user="+jdbcUser);
             return connection;
     	}
     	catch (Exception e) {

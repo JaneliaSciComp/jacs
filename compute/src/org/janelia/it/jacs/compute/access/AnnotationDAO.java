@@ -2323,20 +2323,22 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	return list;
     }
     
-    public List<Long> getImageIdsWithName(Long userId, String imagePath) throws DaoException {
+    public List<Long> getImageIdsWithName(Connection connection, Long userId, String imagePath) throws DaoException {
     	
     	List<Long> sampleIds = new ArrayList<Long>();
-        Connection conn = null;
+        Connection conn = connection;
     	PreparedStatement stmt = null;
+    	
     	try {
-
             StringBuffer sql = new StringBuffer("select distinct i.id from entity i ");
             sql.append("where i.name = ? ");
             if (userId!=null) {
             	sql.append("and i.user_id = ? ");
             }
             
-	        conn = getJdbcConnection();
+            if (conn==null) {
+            	conn = getJdbcConnection();
+            }
 	        stmt = conn.prepareStatement(sql.toString());
 	        stmt.setString(1, imagePath);
             if (userId!=null) {
@@ -2354,7 +2356,8 @@ public class AnnotationDAO extends ComputeBaseDAO {
 	    finally {
 	    	try {
 	            if (stmt!=null) stmt.close();
-	            if (conn!=null) conn.close();	
+	            // only close the connection if it didn't come from outside
+	            if (connection==null && conn!=null) conn.close(); 
 	    	}
 	    	catch (SQLException e) {
 	    		_logger.warn("Ignoring error encountered while closing JDBC connection",e);
