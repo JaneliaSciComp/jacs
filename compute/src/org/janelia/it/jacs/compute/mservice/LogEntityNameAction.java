@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.mservice;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.entity.Entity;
 
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
@@ -21,7 +22,7 @@ public class LogEntityNameAction extends EntityAction {
         this.logMessage=logMessage;
     }
 
-    public Callable getCallable(final Entity parentEntity, final Entity entity) throws Exception {
+    public Callable getCallable(final Entity parentEntity, final Entity entity, final Map context) throws Exception {
         return new Callable<Object>() {
             public Object call() {
                 logger.info(logMessage+" : entityName="+entity.getName() + " entityId="+entity.getId() + " parentEntityName="+parentEntity.getName());

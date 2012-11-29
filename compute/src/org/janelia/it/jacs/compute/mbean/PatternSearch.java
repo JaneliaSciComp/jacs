@@ -65,7 +65,7 @@ public class PatternSearch implements PatternSearchMBean {
             triggerList.add(paTrigger);
 
             List<EntityAction> actionList=new ArrayList<EntityAction>();
-            actionList.add(new LogEntityNameAction("PatternFolderSearch"));
+            actionList.add(new EntityChangeNameAction("Pattern Annotation", "Compartments"));
 
             sampleMService.run(topLevelSampleFolder, triggerList, actionList);
 
@@ -73,6 +73,40 @@ public class PatternSearch implements PatternSearchMBean {
         catch (Exception ex) {
             ex.printStackTrace();
         }
+        logger.info("changePatternAnnotationFolderName() end");
+    }
+
+    public void moveCompartmentsFolderUnderMaskFolder() {
+        logger.info("moveCompartmentsFolderUnderMaskFolder() start");
+        try {
+
+            // Get top-level folder
+            FileDiscoveryHelper helper=getFileDiscoveryHelper();
+            Entity topLevelSampleFolder = helper.createOrVerifyRootEntity(ScreenSampleLineCoordinationService.SCREEN_PATTERN_TOP_LEVEL_FOLDER_NAME,
+                    false /* create if necessary */, false /* load tree */);
+            if (topLevelSampleFolder == null) {
+                throw new Exception("Top level folder with name=" + ScreenSampleLineCoordinationService.SCREEN_PATTERN_TOP_LEVEL_FOLDER_NAME + " is null");
+            }
+
+            // Create MService for Samples
+            MService sampleMService=new MService("system", 10);
+
+            List<EntitySearchTrigger> triggerList=new ArrayList<EntitySearchTrigger>();
+            triggerList.add(new EntityTypeTrigger(EntityConstants.TYPE_SCREEN_SAMPLE));
+
+            EntityTypeNameTrigger paTrigger=new EntityTypeNameTrigger(EntityConstants.TYPE_FOLDER, "Pattern Annotation");
+            paTrigger.setRecursive(false);
+            triggerList.add(paTrigger);
+
+            List<EntityAction> actionList=new ArrayList<EntityAction>();
+            actionList.add(new EntityChangeNameAction("Pattern Annotation", "Compartments"));
+
+            sampleMService.run(topLevelSampleFolder, triggerList, actionList);
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        logger.info("moveCompartmentsFolderUnderMaskFolder() end");
     }
 
 

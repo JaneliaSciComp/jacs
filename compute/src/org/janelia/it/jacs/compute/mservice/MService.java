@@ -40,6 +40,7 @@ public class MService {
     List<EntitySearchTrigger> triggerList=new ArrayList<EntitySearchTrigger>();
     List<EntityAction> actionList=new ArrayList<EntityAction>();
     Map<Entity, Integer> levelMap=new HashMap<Entity, Integer>();
+    Map<Object, Object> actionContext=new HashMap<Object, Object>();
 
     // If maxThreads==0, this means don't use threads - run single-threaded
     public MService(String username, int maxThreads) throws Exception {
@@ -126,7 +127,7 @@ public class MService {
                     if (listeningExecutorService != null) {
                         for (final EntityAction action : actionList) {
                             logger.info("Submitting action thread to executorService for id=" + child.getId());
-                            ListenableFuture<Object> callback = listeningExecutorService.submit(action.getCallable(parent, child));
+                            ListenableFuture<Object> callback = listeningExecutorService.submit(action.getCallable(parent, child, actionContext));
                             Futures.addCallback(callback, new FutureCallback<Object>() {
                                 @Override
                                 public void onSuccess(Object o) {
@@ -140,18 +141,20 @@ public class MService {
                             });
                             futureList.add(callback);
                         }
+                        clearActionContext();
                     } else {
                         logger.info("Running action within current thread for id=" + child.getId());
                         for (final EntityAction action : actionList) {
                             Object result;
                             try {
-                                result = action.getCallable(parent, child).call();
+                                result = action.getCallable(parent, child, actionContext).call();
                                 action.processResult(result);
                             }
                             catch (Exception ex) {
                                 action.handleFailure();
                             }
                         }
+                        clearActionContext();
                     }
                 } else {
                     // Keep going but use the next trigger
@@ -164,6 +167,10 @@ public class MService {
                 }
             }
         }
+    }
+
+    private void clearActionContext() {
+        actionContext.clear();
     }
 
 }

@@ -6,6 +6,7 @@ import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.model.entity.Entity;
 
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
@@ -20,7 +21,7 @@ public abstract class EntityAction {
     private static Logger logger= Logger.getLogger(EntityAction.class);
     private static boolean DEBUG=false;
 
-    public abstract Callable<Object> getCallable(final Entity parentEntity, final Entity entity) throws Exception;
+    public abstract Callable<Object> getCallable(final Entity parentEntity, final Entity entity, Map<Object, Object> context) throws Exception;
 
     public void processResult(Object result) {
         if (DEBUG) {
