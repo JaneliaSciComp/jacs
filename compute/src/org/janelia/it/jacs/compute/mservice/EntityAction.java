@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.mservice;
 
+import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
@@ -16,9 +17,18 @@ import java.util.concurrent.Callable;
  */
 public abstract class EntityAction {
 
+    private static Logger logger= Logger.getLogger(EntityAction.class);
+    private static boolean DEBUG=false;
+
     public abstract Callable<Object> getCallable(final Entity parentEntity, final Entity entity) throws Exception;
 
-    public void processResult(Object result) {}
+    public void processResult(Object result) {
+        if (DEBUG) {
+            if (result!=null && result instanceof Entity) {
+                logger.info("Received result for entity id="+((Entity) result).getId());
+            }
+        }
+    }
 
     public void handleFailure() {}
 

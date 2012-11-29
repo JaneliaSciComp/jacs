@@ -25,7 +25,7 @@ public class LogEntityNameAction extends EntityAction {
         return new Callable<Object>() {
             public Object call() {
                 logger.info(logMessage+" : entityName="+entity.getName() + " entityId="+entity.getId() + " parentEntityName="+parentEntity.getName());
-                return null;
+                return entity;
             }
         };
     }

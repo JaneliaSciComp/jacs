@@ -27,6 +27,7 @@ import java.util.concurrent.Executors;
     (2) optionally, use a concurrent thread pool to asynchronously handle the trigger actions.
 
  */
+
 public class MService {
 
     Logger logger = Logger.getLogger(MService.class);
@@ -110,7 +111,7 @@ public class MService {
             parentLevel = 0;
             levelMap.put(parent, parentLevel);
         }
-        //logger.info("level=" + parentLevel + " : name=" + parent.getName() + " type=" + parent.getEntityType().getName() + " triggerLevel="+triggerLevel);
+        //logger.info("level=" + parentLevel + " : name=" + parent.getName() + " type=" + parent.getEntityType().getName() + " triggerLevel=" + triggerLevel);
         EntitySearchTrigger trigger = triggerList.get(triggerLevel);
         parent = getEntityBean().getEntityAndChildren(parent.getId());
         Set<Entity> children = parent.getChildren();
@@ -118,14 +119,13 @@ public class MService {
             Integer childLevel = parentLevel + 1;
             levelMap.put(child, childLevel);
             EntitySearchTrigger.TriggerResponse response = trigger.evaluate(parent, child, childLevel);
-            boolean actionPerformed=false;
             if (response.performAction) {
-                actionPerformed=true;
+                // if this is the last trigger, then submit the action. Otherwise, assume the proper action is to
+                // activate the next trigger.
                 if (triggerLevel == triggerList.size() - 1) {
-                    // if this is the last trigger
                     if (listeningExecutorService != null) {
                         for (final EntityAction action : actionList) {
-                            //logger.info("Submitting action thread to executorService");
+                            logger.info("Submitting action thread to executorService for id=" + child.getId());
                             ListenableFuture<Object> callback = listeningExecutorService.submit(action.getCallable(parent, child));
                             Futures.addCallback(callback, new FutureCallback<Object>() {
                                 @Override
@@ -141,7 +141,7 @@ public class MService {
                             futureList.add(callback);
                         }
                     } else {
-                        //logger.info("Running action within current thread");
+                        logger.info("Running action within current thread for id=" + child.getId());
                         for (final EntityAction action : actionList) {
                             Object result;
                             try {
@@ -153,16 +153,13 @@ public class MService {
                             }
                         }
                     }
-                }
-            }
-            if (response.continueSearch) {
-                if (actionPerformed) {
-                    int nextTriggerLevel=triggerLevel+1;
-                    if (nextTriggerLevel>=triggerList.size()) {
-                        nextTriggerLevel=triggerLevel;
-                    }
-                    searchEntityContents(child, nextTriggerLevel);
                 } else {
+                    // Keep going but use the next trigger
+                    searchEntityContents(child, triggerLevel + 1);
+                }
+            } else {
+                if (response.continueSearch && trigger.isRecursive()) {
+                    // continue with current trigger level
                     searchEntityContents(child, triggerLevel);
                 }
             }
