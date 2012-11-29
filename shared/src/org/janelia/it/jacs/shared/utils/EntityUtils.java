@@ -56,7 +56,7 @@ public class EntityUtils {
         
     	if (entity1.getEntityType()!=null || entity2.getEntityType()!=null) {
         	if (entity1.getEntityType()==null||entity2.getEntityType()==null) {
-//        		System.out.println("areEqual? entity types differ");
+        		log.debug("Entity areEqual? entity types differ");
         		return false;
         	}
     		chain = chain.compare(entity1.getEntityType().getName(), entity2.getEntityType().getName(), Ordering.natural().nullsFirst());
@@ -64,14 +64,16 @@ public class EntityUtils {
     	
     	if (entity1.getUser()!=null || entity2.getUser()!=null) {
         	if (entity1.getUser()==null||entity2.getUser()==null) {
-//        		System.out.println("areEqual? users differ");
+        		log.debug("Entity areEqual? users differ");
         		return false;
         	}
     		chain = chain.compare(entity1.getUser().getUserLogin(), entity2.getUser().getUserLogin(), Ordering.natural().nullsFirst());
     	}        
     
     	if (chain.result()!=0) {
-//    		System.out.println("areEqual? chain failed");
+    		log.debug("Entity areEqual? false");
+	    	debug(entity1);
+	    	debug(entity2);
     		return false;
     	}
 
@@ -86,11 +88,11 @@ public class EntityUtils {
 			ed2Map.put(ed2.getId(), ed2);
 			EntityData ed1 = ed1Map.get(ed2.getId());
 			if (ed1==null) {
-//				System.out.println("areEqual? entity1 does not have "+ed2.getId());
+				log.debug("Entity areEqual? entity1 does not have {}",ed2.getId());
 				return false;
 			}
 			if (!areEqual(ed1,ed2)) {
-//				System.out.println("areEqual? entity1's ed is not equal "+ed1.getId());
+				log.debug("Entity areEqual? {} != {}",ed1.getId(),ed2.getId());
 				return false;
 			}
 		}
@@ -98,7 +100,7 @@ public class EntityUtils {
 		for(EntityData ed1 : entity1.getEntityData()) {
 			EntityData ed2 = ed2Map.get(ed1.getId());
 			if (ed2==null) {
-//				System.out.println("areEqual? entity2 does not have "+ed1.getId());
+				log.debug("Entity areEqual? entity2 does not have {}",ed1.getId());
 				return false;
 			}
 		}
@@ -121,7 +123,7 @@ public class EntityUtils {
     	
         if (ed1.getParentEntity()!=null||ed2.getParentEntity()!=null) {
         	if (ed1.getParentEntity()==null||ed2.getParentEntity()==null) {
-//        		System.out.println("areEqual? ed parent entities differ");
+        		log.debug("EntityData areEqual? ed parent entities differ");
         		return false;
         	}
         	chain = chain.compare(ed1.getParentEntity().getId(), ed2.getParentEntity().getId(), Ordering.natural().nullsFirst());
@@ -129,7 +131,7 @@ public class EntityUtils {
         
         if (ed1.getChildEntity()!=null||ed2.getChildEntity()!=null) {
         	if (ed1.getChildEntity()==null||ed2.getChildEntity()==null) {
-//        		System.out.println("areEqual? ed child entities differ");
+        		log.debug("EntityData areEqual? ed child entities differ");
         		return false;
         	}
         	chain = chain.compare(ed1.getChildEntity().getId(), ed2.getChildEntity().getId(), Ordering.natural().nullsFirst());
@@ -144,12 +146,35 @@ public class EntityUtils {
 	            .result();
 	    
 	    if (c!=0) {
-//    		System.out.println("areEqual? ed  comparison="+c);
+	    	log.debug("EntityData areEqual? false:");
+	    	debug(ed1);
+	    	debug(ed2);
 	    	return false;
 	    }
 	    return true;
     }
 
+    public static void debug(EntityData ed) {
+    	if (!log.isDebugEnabled()) return;
+    	log.debug("EntityData(id={})",ed.getId());
+    	log.debug("    entityAttribute: {}",ed.getEntityAttribute()==null?null:ed.getEntityAttribute().getName());
+    	log.debug("    value: {}",ed.getValue());
+    	log.debug("    orderIndex: {}",ed.getOrderIndex());
+    	log.debug("    creationDate: {}",ed.getCreationDate());
+    	log.debug("    updatedDate: {}",ed.getUpdatedDate());
+    	log.debug("    childEntity: {}",ed.getChildEntity());
+    }
+    
+    public static void debug(Entity entity) {    		
+    	if (!log.isDebugEnabled()) return;
+    	log.debug("Entity(id={})",entity.getId());
+    	log.debug("    entityType: {}",entity.getEntityType()==null?null:entity.getEntityType().getName());
+    	log.debug("    name: {}",entity.getName());
+    	log.debug("    userLogin: {}",entity.getUser().getUserLogin()==null?null:entity.getUser().getUserLogin());
+    	log.debug("    creationDate: {}",entity.getCreationDate());
+    	log.debug("    updatedDate: {}",entity.getUpdatedDate());
+    }
+    
     /**
      * Update the entity and its attributes.
      * @param entity

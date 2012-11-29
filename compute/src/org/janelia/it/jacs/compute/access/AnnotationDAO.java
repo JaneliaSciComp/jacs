@@ -187,20 +187,25 @@ public class AnnotationDAO extends ComputeBaseDAO {
      */
     public void deleteEntityTree(String owner, Entity entity) throws DaoException {
         try {
-        	if ("system".equals(owner)) {
-        		deleteSmallEntityTree(owner, entity);
-        	}
-        	else {
-    	    	Long count = countDescendants(owner, entity, MAX_SMALL_TREE_SIZE);
-    	    	if (count <= MAX_SMALL_TREE_SIZE) {
-    	    		_logger.info("Running small tree algorithm (count="+count+")");
-    	        	deleteSmallEntityTree(owner, entity);
-    	    	}
-    	    	else {
-    	    		_logger.info("Running large tree algorithm (count="+count+")");
-    	            deleteLargeEntityTree(owner, entity);
-    	    	}
-        	}
+        	deleteSmallEntityTree(owner, entity);
+        	
+        	// The large tree deletion algorithm is generally too slow these days, due to the growth of users'
+        	// entity graphs.
+        	
+//        	if ("system".equals(owner)) {
+//        		deleteSmallEntityTree(owner, entity);
+//        	}
+//        	else {
+//    	    	Long count = countDescendants(owner, entity, MAX_SMALL_TREE_SIZE);
+//    	    	if (count <= MAX_SMALL_TREE_SIZE) {
+//    	    		_logger.info("Running small tree algorithm (count="+count+")");
+//    	        	deleteSmallEntityTree(owner, entity);
+//    	    	}
+//    	    	else {
+//    	    		_logger.info("Running large tree algorithm (count="+count+")");
+//    	            deleteLargeEntityTree(owner, entity);
+//    	    	}
+//        	}
         } catch (Exception ex) {
             throw new DaoException(ex.getMessage(), ex);
         }
