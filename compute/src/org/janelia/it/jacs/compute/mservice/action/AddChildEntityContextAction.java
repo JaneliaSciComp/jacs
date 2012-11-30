@@ -1,7 +1,6 @@
-package org.janelia.it.jacs.compute.mservice;
+package org.janelia.it.jacs.compute.mservice.action;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.mservice.action.EntityAction;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
 
@@ -20,12 +19,11 @@ import java.util.concurrent.Callable;
 public class AddChildEntityContextAction extends EntityAction {
     private static Logger logger= Logger.getLogger(AddChildEntityContextAction.class);
 
-    Entity contextEntity;
     String contextKeyString;
-    String childEntityNameForContext;
+    String childEntityName;
 
-    public AddChildEntityContextAction(String childEntityNameForContext, String contextKeyString) {
-        this.childEntityNameForContext=childEntityNameForContext;
+    public AddChildEntityContextAction(String childEntityName, String contextKeyString) {
+        this.childEntityName=childEntityName;
         this.contextKeyString=contextKeyString;
     }
 
@@ -40,9 +38,9 @@ public class AddChildEntityContextAction extends EntityAction {
                 for (EntityData childEd : entityDataSet) {
                     Entity child=childEd.getChildEntity();
                     if (child!=null) {
-                        if (child.getName().equals(childEntityNameForContext)) {
+                        if (child.getName().equals(childEntityName)) {
                             context.put(contextKeyString, child);
-                            logger.info("Added context entity child with name="+childEntityNameForContext);
+                            logger.info("Added context entity child with name="+childEntityName);
                         }
                         return child;
                     }

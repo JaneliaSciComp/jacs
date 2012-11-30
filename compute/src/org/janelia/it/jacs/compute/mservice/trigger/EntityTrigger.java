@@ -1,6 +1,10 @@
 package org.janelia.it.jacs.compute.mservice.trigger;
 
 import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.compute.mservice.action.EntityAction;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -9,8 +13,9 @@ import org.janelia.it.jacs.model.entity.Entity;
  * Time: 11:33 AM
  * To change this template use File | Settings | File Templates.
  */
-public abstract class EntitySearchTrigger {
+public abstract class EntityTrigger {
     boolean recursive=true;
+    List<EntityAction> actionList=new ArrayList<EntityAction>();
 
     public class TriggerResponse {
         public boolean performAction=false;
@@ -25,6 +30,14 @@ public abstract class EntitySearchTrigger {
 
     public boolean isRecursive() {
         return recursive;
+    }
+
+    public List<EntityAction> getActionList() {
+        return actionList;
+    }
+
+    public void addAction(EntityAction action) {
+        actionList.add(action);
     }
 
 }

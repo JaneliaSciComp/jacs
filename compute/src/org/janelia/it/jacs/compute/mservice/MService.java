@@ -6,7 +6,7 @@ import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.mservice.action.EntityAction;
-import org.janelia.it.jacs.compute.mservice.trigger.EntitySearchTrigger;
+import org.janelia.it.jacs.compute.mservice.trigger.EntityTrigger;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.user_data.User;
@@ -39,8 +39,7 @@ public class MService {
     protected int maxThreads;
     ListeningExecutorService listeningExecutorService;
     List<ListenableFuture<Object>> futureList=new ArrayList<ListenableFuture<Object>>();
-    List<EntitySearchTrigger> triggerList=new ArrayList<EntitySearchTrigger>();
-    List<EntityAction> actionList=new ArrayList<EntityAction>();
+    List<EntityTrigger> triggerList=new ArrayList<EntityTrigger>();
     Map<Entity, Integer> levelMap=new HashMap<Entity, Integer>();
     Map<Object, Object> actionContext=new HashMap<Object, Object>();
 
@@ -78,27 +77,13 @@ public class MService {
 
     /////////// run method variations ///////////////////////////////////////////////////////////////////////////////
 
-    public void run(Entity startingEntity, EntitySearchTrigger trigger, EntityAction action) throws Exception {
+    public void run(Entity startingEntity, EntityTrigger trigger) throws Exception {
         triggerList.add(trigger);
-        actionList.add(action);
         searchEntityContents(startingEntity);
     }
 
-    public void run(Entity startingEntity, List<EntitySearchTrigger> triggerList, EntityAction action) throws Exception {
+    public void run(Entity startingEntity, List<EntityTrigger> triggerList) throws Exception {
         this.triggerList.addAll(triggerList);
-        actionList.add(action);
-        searchEntityContents(startingEntity);
-    }
-
-    public void run(Entity startingEntity, EntitySearchTrigger trigger, List<EntityAction> actionList) throws Exception {
-        triggerList.add(trigger);
-        this.actionList.addAll(actionList);
-        searchEntityContents(startingEntity);
-    }
-
-    public void run(Entity startingEntity, List<EntitySearchTrigger> triggerList, List<EntityAction> actionList) throws Exception {
-        this.triggerList.addAll(triggerList);
-        this.actionList.addAll(actionList);
         searchEntityContents(startingEntity);
     }
 
@@ -115,19 +100,19 @@ public class MService {
             levelMap.put(parent, parentLevel);
         }
         //logger.info("level=" + parentLevel + " : name=" + parent.getName() + " type=" + parent.getEntityType().getName() + " triggerLevel=" + triggerLevel);
-        EntitySearchTrigger trigger = triggerList.get(triggerLevel);
+        EntityTrigger trigger = triggerList.get(triggerLevel);
         parent = getEntityBean().getEntityAndChildren(parent.getId());
         Set<Entity> children = parent.getChildren();
         for (Entity child : children) {
             Integer childLevel = parentLevel + 1;
             levelMap.put(child, childLevel);
-            EntitySearchTrigger.TriggerResponse response = trigger.evaluate(parent, child, childLevel);
+            EntityTrigger.TriggerResponse response = trigger.evaluate(parent, child, childLevel);
             if (response.performAction) {
                 // if this is the last trigger, then submit the action. Otherwise, assume the proper action is to
                 // activate the next trigger.
                 if (triggerLevel == triggerList.size() - 1) {
                     if (listeningExecutorService != null) {
-                        for (final EntityAction action : actionList) {
+                        for (final EntityAction action : trigger.getActionList()) {
                             logger.info("Submitting action thread to executorService for id=" + child.getId());
                             ListenableFuture<Object> callback = listeningExecutorService.submit(action.getCallable(parent, child, actionContext));
                             Futures.addCallback(callback, new FutureCallback<Object>() {
@@ -146,7 +131,7 @@ public class MService {
                         clearActionContext();
                     } else {
                         logger.info("Running action within current thread for id=" + child.getId());
-                        for (final EntityAction action : actionList) {
+                        for (final EntityAction action : trigger.getActionList()) {
                             Object result;
                             try {
                                 result = action.getCallable(parent, child, actionContext).call();

@@ -5,9 +5,10 @@ import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.mservice.*;
-import org.janelia.it.jacs.compute.mservice.action.EntityAction;
+import org.janelia.it.jacs.compute.mservice.action.AddChildEntityContextAction;
 import org.janelia.it.jacs.compute.mservice.action.EntityChangeNameAction;
-import org.janelia.it.jacs.compute.mservice.trigger.EntitySearchTrigger;
+import org.janelia.it.jacs.compute.mservice.action.MoveToContextEntityAction;
+import org.janelia.it.jacs.compute.mservice.trigger.EntityTrigger;
 import org.janelia.it.jacs.compute.mservice.trigger.EntityTypeNameTrigger;
 import org.janelia.it.jacs.compute.mservice.trigger.EntityTypeTrigger;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
@@ -60,17 +61,16 @@ public class PatternSearch implements PatternSearchMBean {
             // Create MService for Samples
             MService sampleMService=new MService("system", 10);
 
-            List<EntitySearchTrigger> triggerList=new ArrayList<EntitySearchTrigger>();
+            List<EntityTrigger> triggerList=new ArrayList<EntityTrigger>();
             triggerList.add(new EntityTypeTrigger(EntityConstants.TYPE_SCREEN_SAMPLE));
 
             EntityTypeNameTrigger paTrigger=new EntityTypeNameTrigger(EntityConstants.TYPE_FOLDER, "Pattern Annotation");
             paTrigger.setRecursive(false);
+            EntityChangeNameAction changeNameAction=new EntityChangeNameAction("Pattern Annotation", "Compartments");
+            paTrigger.addAction(changeNameAction);
             triggerList.add(paTrigger);
 
-            List<EntityAction> actionList=new ArrayList<EntityAction>();
-            actionList.add(new EntityChangeNameAction("Pattern Annotation", "Compartments"));
-
-            sampleMService.run(topLevelSampleFolder, triggerList, actionList);
+            sampleMService.run(topLevelSampleFolder, triggerList);
 
         }
         catch (Exception ex) {
@@ -94,17 +94,19 @@ public class PatternSearch implements PatternSearchMBean {
             // Create MService for Samples
             MService sampleMService=new MService("system", 10);
 
-            List<EntitySearchTrigger> triggerList=new ArrayList<EntitySearchTrigger>();
-            triggerList.add(new EntityTypeTrigger(EntityConstants.TYPE_SCREEN_SAMPLE));
+            List<EntityTrigger> triggerList=new ArrayList<EntityTrigger>();
+            EntityTypeTrigger screenTrigger=new EntityTypeTrigger(EntityConstants.TYPE_SCREEN_SAMPLE);
+            AddChildEntityContextAction addMaskFolderToContextAction=new AddChildEntityContextAction("Mask Annotation", "MaskFolder");
+            screenTrigger.addAction(addMaskFolderToContextAction);
+            triggerList.add(screenTrigger);
 
             EntityTypeNameTrigger paTrigger=new EntityTypeNameTrigger(EntityConstants.TYPE_FOLDER, "Pattern Annotation");
             paTrigger.setRecursive(false);
+            MoveToContextEntityAction moveEntityAction=new MoveToContextEntityAction("MaskFolder");
+            paTrigger.addAction(moveEntityAction);
             triggerList.add(paTrigger);
 
-            List<EntityAction> actionList=new ArrayList<EntityAction>();
-            actionList.add(new EntityChangeNameAction("Pattern Annotation", "Compartments"));
-
-            sampleMService.run(topLevelSampleFolder, triggerList, actionList);
+            sampleMService.run(topLevelSampleFolder, triggerList);
 
         } catch (Exception ex) {
             ex.printStackTrace();
