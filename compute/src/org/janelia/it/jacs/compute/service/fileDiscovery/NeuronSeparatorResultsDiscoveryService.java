@@ -18,9 +18,6 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDiscoveryService {
-
-	protected Entity sampleEntity;
-	protected Entity pipelineRunEntity;
 	
 	@Override
     public void execute(IProcessData processData) throws ServiceException {
@@ -30,56 +27,35 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     
     @Override
     protected Entity verifyOrCreateChildFolderFromDir(Entity parentFolder, File dir, Integer index) throws Exception {
-
-    	sampleEntity = entityBean.getAncestorWithType(parentFolder, EntityConstants.TYPE_SAMPLE);
-    	pipelineRunEntity = entityBean.getAncestorWithType(parentFolder, EntityConstants.TYPE_PIPELINE_RUN);
-
-		if (sampleEntity==null) {
-			throw new IllegalStateException("Root entity must have Sample ancestor: "+parentFolder.getId());		
-		}
-    	
-		if (pipelineRunEntity==null) {
-			throw new IllegalStateException("Root entity must have Pipeline Run ancestor: "+parentFolder.getId());		
-		}
-    	
     	return super.verifyOrCreateChildFolderFromDir(parentFolder, dir, index);
     }
     
     @Override
-    protected void processFolderForData(Entity resultEntity) throws Exception {
+    protected void processFolderForData(Entity separationEntity) throws Exception {
 
-    	if (!resultEntity.getEntityType().getName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
+    	if (!separationEntity.getEntityType().getName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
     		throw new IllegalStateException("Expected Separator Result as input");
     	}
     	
     	helper.addFileExclusion("*.sh");
     	helper.addFileExclusion("fastLoad");
     	
-    	super.processFolderForData(resultEntity); // This creates the Supporting Files folder if it doesn't exist
-        processSeparationFolder(resultEntity);
+    	super.processFolderForData(separationEntity); // This creates the Supporting Files folder if it doesn't exist
+        processSeparationFolder(separationEntity);
 
-        Entity filesFolder = EntityUtils.getSupportingData(resultEntity);
+        Entity filesFolder = EntityUtils.getSupportingData(separationEntity);
         Entity signalMIP = EntityUtils.findChildWithName(filesFolder, "ConsolidatedSignalMIP.png");
         Entity referenceMIP = EntityUtils.findChildWithName(filesFolder, "ReferenceMIP.png");
 
-		helper.setImage(resultEntity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMIP);
-		helper.setImage(resultEntity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, referenceMIP);
-		helper.setImage(sampleEntity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMIP);
-		helper.setImage(sampleEntity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, referenceMIP);
-		helper.setDefault2dImage(resultEntity, signalMIP);
-		helper.setDefault2dImage(sampleEntity, signalMIP);
-		
-		if (pipelineRunEntity!=null) {
-			helper.setImage(pipelineRunEntity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMIP);
-			helper.setImage(pipelineRunEntity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, referenceMIP);	
-			helper.setDefault2dImage(pipelineRunEntity, signalMIP);
-		}
+		helper.setImage(separationEntity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMIP);
+		helper.setImage(separationEntity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, referenceMIP);
+		helper.setDefault2dImage(separationEntity, signalMIP);
     }
     
-    protected void processSeparationFolder(Entity resultEntity) throws Exception {
+    protected void processSeparationFolder(Entity separationEntity) throws Exception {
     	
         Entity fragmentsFolder = createFragmentCollection();
-        helper.addToParent(resultEntity, fragmentsFolder, 1, EntityConstants.ATTRIBUTE_NEURON_FRAGMENTS);
+        helper.addToParent(separationEntity, fragmentsFolder, 1, EntityConstants.ATTRIBUTE_NEURON_FRAGMENTS);
         
         EntityType fragmentType = entityBean.getEntityTypeByName(EntityConstants.TYPE_NEURON_FRAGMENT);
         
@@ -110,22 +86,22 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
 			}
         });
 
-        Entity filesFolder = EntityUtils.getSupportingData(resultEntity);
+        Entity filesFolder = EntityUtils.getSupportingData(separationEntity);
 
-        String filepath = resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        String filepath = separationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
     	File fastloadDir = new File(filepath, "fastLoad");
     	if (fastloadDir.exists()) {
     		Entity fastLoadFolder = helper.createOrVerifyFolderEntity(filesFolder, "Fast Load", fastloadDir, 0);
     		processFastLoadFolder(fastLoadFolder);
     	}
     	else {
-    		logger.warn("No fastLoad dir found for separationId="+resultEntity.getId());
+    		logger.warn("No fastLoad dir found for separationId="+separationEntity.getId());
     	}
     	
         for(File resultFile : fragmentFiles) {
             Entity fragmentMIP = EntityUtils.findChildWithName(filesFolder, resultFile.getName());
             if (fragmentMIP == null) {
-            	logger.warn("Could not find "+resultFile.getName()+" in supporting files for result entity id="+resultEntity.getId());
+            	logger.warn("Could not find "+resultFile.getName()+" in supporting files for result entity id="+separationEntity.getId());
             }
     		Integer index = getIndex(resultFile.getName());
         	Entity fragmentEntity = createFragmentEntity(fragmentType, index);

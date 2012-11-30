@@ -245,14 +245,30 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
     
-    public void runMCFODataUpgrade(String user) {
+    public void runUpgradeUserData(String user) {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
         	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
         			taskParameters, "mcfoDataUpgrade", "MCFO Data Upgrade");
             task.setJobName("MultiColor FlipOut Data Upgrade Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("MCFODataUpgrade", task.getObjectId());
+            EJBFactory.getLocalComputeBean().submitJob("UpgradeUserData", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
+    public void runUpgradeSingleSample(String sampleEntityId) {
+        try {
+        	Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
+        	if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
+        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        	taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null)); 
+        	Task task = new GenericTask(new HashSet<Node>(), sample.getUser().getUserLogin(), new ArrayList<Event>(), 
+        			taskParameters, "upgradeSingleSample", "Upgrade Single Sample");
+            task.setJobName("Upgrade Single Sample Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("UpgradeSingleSample", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }

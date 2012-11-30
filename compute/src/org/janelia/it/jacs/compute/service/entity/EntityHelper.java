@@ -6,10 +6,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
+import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.api.EntityBeanRemote;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -27,8 +27,8 @@ public class EntityHelper {
 	
     protected Logger logger = Logger.getLogger(EntityHelper.class);
     
-    protected EntityBeanRemote entityBean;
-    protected ComputeBeanRemote computeBean;
+    protected EntityBeanLocal entityBean;
+    protected ComputeBeanLocal computeBean;
     protected User user;
    
 	public EntityHelper(String username) {
@@ -39,7 +39,7 @@ public class EntityHelper {
 		this(EJBFactory.getLocalEntityBean(), EJBFactory.getLocalComputeBean(), user);
 	}
 	
-    public EntityHelper(EntityBeanRemote entityBean, ComputeBeanRemote computeBean, String username) {
+    public EntityHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, String username) {
         this.entityBean = entityBean;
         this.computeBean  = computeBean;
         try {
@@ -50,12 +50,12 @@ public class EntityHelper {
         }
     }
 	
-    public EntityHelper(EntityBeanRemote entityBean, ComputeBeanRemote computeBean, User user) {
+    public EntityHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, User user) {
         this.entityBean = entityBean;
         this.computeBean  = computeBean;
     	this.user = user;
     }
-    
+	
 	/**
 	 * Remove the old-style default 2d image file path. 
 	 * @param entity
@@ -66,7 +66,7 @@ public class EntityHelper {
     }
 
 	/**
-	 * Add the default 3d image, and the default 3d image's default 2d image as the default 2d image. Hah!
+	 * Add the default 3d image, and the default 3d image's shortcut images as the entity's shortcut images.
 	 * @param entity
 	 * @param default3dImage
 	 * @throws ComputeException
@@ -74,20 +74,34 @@ public class EntityHelper {
 	public void setDefault3dImage(Entity entity, Entity default3dImage) throws ComputeException {
 		if (entity==null || default3dImage==null) return;
         setImage(entity, EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE, default3dImage);
-        EntityData ed = default3dImage.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-        if (ed!=null) {
-        	if (!EntityUtils.isInitialized(ed.getChildEntity())) {
-                ed.setChildEntity(entityBean.getEntityById(""+ed.getChildEntity().getId()));
-        	}
-        	setImage(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, ed.getChildEntity());	
+        
+        if (!EntityUtils.areLoaded(default3dImage.getEntityData())) {
+        	entityBean.loadLazyEntity(default3dImage, false);
         }
-        else {
+        
+        Entity default2dImage = default3dImage.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+    	if (default2dImage!=null) {
+    		setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, default2dImage);
+    	}
+    	else {
         	// TODO: this shouldn't be necessary in the future
         	EntityData oldEd = default3dImage.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
         	if (oldEd!=null) {
-        		setDefault2dImage(entity, oldEd.getValue());		
+        		setDefault2dImage(entity, oldEd.getValue());	
+        		removeDefaultImageFilePath(default3dImage);
         	}
-        }
+    	}
+
+    	Entity signalMip = default3dImage.getChildByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE);
+    	if (signalMip!=null) {
+    		setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMip);
+    	}
+
+    	Entity refMip = default3dImage.getChildByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE);
+    	if (refMip!=null) {
+    		setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);	
+    	}
+		
     }
 
 	/**
@@ -107,12 +121,27 @@ public class EntityHelper {
 	 * @throws ComputeException
 	 */
 	public Entity setDefault2dImage(Entity entity, String defaultImageFilepath) throws ComputeException {
-        logger.info("Adding Default 2D Image to id="+entity.getId()+" name="+entity.getName());
+        logger.debug("Adding Default 2D Image to "+entity.getName()+" (id="+entity.getId()+")");
         Entity default2dImage = create2dImage(defaultImageFilepath);
         setDefault2dImage(entity, default2dImage);
         return default2dImage;
     }
 
+	/**
+	 * Sets the given image as an image property to the given entity. Removes any existing images for that property.
+	 * @param entity
+	 * @param image
+	 * @param attributeName
+	 * @throws ComputeException
+	 */
+	public void setImageIfNecessary(Entity entity, String attributeName, Entity image) throws ComputeException {
+		if (image==null) return;
+    	EntityData currImage = entity.getEntityDataByAttributeName(attributeName);
+    	if (currImage==null || currImage.getChildEntity()==null || !currImage.getId().equals(image.getId())) {
+    		setImage(entity, attributeName, image);	
+    	}
+	}
+	
 	/**
 	 * Sets the given image as an image property to the given entity. Removes any existing images for that property.
 	 * @param entity
@@ -135,7 +164,7 @@ public class EntityHelper {
 	 */
 	public void addImage(Entity entity, String attributeName, Entity image) throws ComputeException {
 		if (image==null) return;
-        logger.info("Adding "+attributeName+" ("+image.getName()+") to id="+entity.getId()+" name="+entity.getName());
+        logger.debug("Adding "+attributeName+" ("+image.getName()+") to "+entity.getName()+" (id="+entity.getId()+")");
     	if (DEBUG) return;
     	// Update in-memory model
     	String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
@@ -152,7 +181,7 @@ public class EntityHelper {
 	 * @throws ComputeException
 	 */
 	public void removeEntityDataForAttributeName(Entity entity, String attributeName) throws ComputeException {
-    	logger.info("Removing "+attributeName+" for id="+entity.getId()+" name="+entity.getName());
+    	logger.debug("Removing "+attributeName+" for "+entity.getName()+" (id="+entity.getId()+")");
         if (DEBUG) return;
         
         Set<EntityData> toDelete = new HashSet<EntityData>();
@@ -234,7 +263,7 @@ public class EntityHelper {
         
     	// Update database
         if (!DEBUG) entity = entityBean.saveOrUpdateEntity(entity);
-        logger.info("Saved new "+entityTypeName+" as "+entity.getId());
+        logger.debug("Saved new "+entityTypeName+" as "+entity.getId());
     	// Return the new object so that we can update in-memory model
         return entity;
     }

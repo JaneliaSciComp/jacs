@@ -207,12 +207,22 @@
     </operation>
     
     <operation>
-        <description>Upgrade the given user's MCFO results to use the most current entity structure</description>
-        <name>runMCFODataUpgrade</name>
+        <description>Upgrade the given user's data model to use the most current entity structure. What this means is specific to each version.</description>
+        <name>runUpgradeUserData</name>
         <parameter>
             <description>User to run as (e.g. "system")</description>
             <name>user</name>
             <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
+        <description>Upgrade the given sample to the current entity structure. What this means is specific to each version.</description>
+        <name>runUpgradeSingleSample</name>
+        <parameter>
+           <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
+           <name>sampleEntityId</name>
+           <type>java.lang.String</type>
         </parameter>
     </operation>
     

@@ -68,8 +68,8 @@ public class MaskSampleAnnotationService  implements IService {
     //protected EntityBeanLocal entityBean;
     //protected ComputeBeanLocal computeBean;
 
-    protected EntityBeanRemote entityBean;
-    protected ComputeBeanRemote computeBean;
+    protected EntityBeanLocal entityBean;
+    protected ComputeBeanLocal computeBean;
 
 
     protected User user;
@@ -139,8 +139,8 @@ public class MaskSampleAnnotationService  implements IService {
     }
 
     protected void refreshEntityBeans() throws Exception {
-        entityBean = EJBFactory.getRemoteEntityBean();
-        computeBean = EJBFactory.getRemoteComputeBean();
+        entityBean = EJBFactory.getLocalEntityBean();
+        computeBean = EJBFactory.getLocalComputeBean();
         entityHelper = new EntityHelper(entityBean, computeBean, user); // can't be in constructor or will timeout
     }
 

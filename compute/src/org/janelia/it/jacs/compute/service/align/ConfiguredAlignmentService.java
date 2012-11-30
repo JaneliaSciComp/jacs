@@ -65,4 +65,15 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
     	jt.setNativeSpecification("-pe batch 8 -l mem96=true -now n");
     	return jt;
     }
+
+    @Override
+	public void postProcess() throws MissingDataException {
+    	super.postProcess();    
+    	try {
+    		processData.putItem("ALIGNED_FILENAME", outputFile.getCanonicalPath());
+    	}
+    	catch (IOException e) {
+    		throw new MissingDataException("Cannot find canonical path of aligned output file",e);
+    	}
+    }
 }

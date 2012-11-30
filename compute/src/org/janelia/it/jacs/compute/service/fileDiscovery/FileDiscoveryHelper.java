@@ -6,9 +6,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
+import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeException;
-import org.janelia.it.jacs.compute.api.EntityBeanRemote;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.service.entity.EntityHelper;
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -40,11 +40,11 @@ public class FileDiscoveryHelper extends EntityHelper {
 		super(user);
 	}
 	
-    public FileDiscoveryHelper(EntityBeanRemote entityBean, ComputeBeanRemote computeBean, String username) {
+    public FileDiscoveryHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, String username) {
     	super(entityBean, computeBean, username);
     }
 	
-    public FileDiscoveryHelper(EntityBeanRemote entityBean, ComputeBeanRemote computeBean, User user) {
+    public FileDiscoveryHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, User user) {
         super(entityBean, computeBean, user);
     }
     

@@ -14,6 +14,7 @@ import org.janelia.it.jacs.compute.service.entity.EntityHelper;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
@@ -23,7 +24,8 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  * 
  * Parameters:
  *   SAMPLE_ENTITY_ID - the id of the sample for which will update the 2d images, and 2d images for the Image Tiles
- *   ROOT_ENTITY_ID - the id of the root entity to look for 2d images within
+ *   PIPELINE_RUN_ENTITY_ID - the id of the pipeline run containing the result entity id
+ *   RESULT_ENTITY_ID - the id of the root entity to look for 2d images within
  *   DEFAULT_IMAGE_FILENAME - the file to use as the "Default 2D Image" for the root entity
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
@@ -47,25 +49,35 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
     	}
     	
-    	String rootEntityId = (String)processData.getItem("ROOT_ENTITY_ID");
-    	if (StringUtils.isEmpty(rootEntityId)) {
-    		throw new IllegalArgumentException("ROOT_ENTITY_ID may not be null");
+    	String pipelineRunEntityId = (String)processData.getItem("PIPELINE_RUN_ENTITY_ID");
+    	if (StringUtils.isEmpty(pipelineRunEntityId)) {
+    		throw new IllegalArgumentException("PIPELINE_RUN_ENTITY_ID may not be null");
+    	}
+    	
+    	String resultEntityId = (String)processData.getItem("RESULT_ENTITY_ID");
+    	if (StringUtils.isEmpty(resultEntityId)) {
+    		throw new IllegalArgumentException("RESULT_ENTITY_ID may not be null");
     	}
 
-    	Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
+    	Entity sampleEntity = entityBean.getEntityAndChildren(new Long(sampleEntityId));
     	if (sampleEntity == null) {
     		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
     	}
-    	
-    	Entity rootEntity = entityBean.getEntityTree(new Long(rootEntityId));
-    	if (rootEntity == null) {
-    		throw new IllegalArgumentException("Entity not found with id="+rootEntityId);
+
+    	Entity pipelineRunEntity = entityBean.getEntityAndChildren(new Long(pipelineRunEntityId));
+    	if (pipelineRunEntity == null) {
+    		throw new IllegalArgumentException("Pipeline run entity not found with id="+pipelineRunEntity);
     	}
-    
-    	registerImages(rootEntity, sampleEntity, defaultImageFilename);
+    	
+    	Entity resultEntity = entityBean.getEntityTree(new Long(resultEntityId));
+    	if (resultEntity == null) {
+    		throw new IllegalArgumentException("Entity not found with id="+resultEntityId);
+    	}
+    	
+    	registerImages(resultEntity, pipelineRunEntity, sampleEntity, defaultImageFilename);
     }
 
-	public void execute(IProcessData processData, Entity rootEntity, Entity sampleEntity, String defaultImageFilename) throws Exception {
+	public void execute(IProcessData processData, Entity resultEntity, Entity pipelineRunEntity, Entity sampleEntity, String defaultImageFilename) throws Exception {
 
         this.logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         this.task = ProcessDataHelper.getTask(processData);
@@ -76,27 +88,31 @@ public class ResultImageRegistrationService extends AbstractEntityService {
         this.user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
         this.entityHelper = new EntityHelper(entityBean, computeBean, user);
         this.entityLoader = new EntityBeanEntityLoader(entityBean);
-    	registerImages(rootEntity, sampleEntity, defaultImageFilename);
+    	registerImages(resultEntity, pipelineRunEntity, sampleEntity, defaultImageFilename);
     }
 	
-	private void registerImages(Entity rootEntity, Entity sampleEntity, String defaultImageFilename) throws Exception {
+	private void registerImages(Entity resultEntity, Entity pipelineRunEntity, Entity sampleEntity, String defaultImageFilename) throws Exception {
 
-    	logger.info("Finding images under "+rootEntity.getName());
-    	logger.info("Looking for default image: "+defaultImageFilename);
+    	logger.info("Finding images under "+resultEntity.getName());
     	
-    	findImages(rootEntity);
+    	// Find all the 2d and 3d images in this result tree, and populate all of the lookup maps and lists
     	
+    	findImages(resultEntity);
     	logger.info("Found "+images3d.size()+" 3d images and "+images2d.size()+" 2d images");
     	
+    	// Ensure all 3d images have their shortcut images correctly set. At the same time, find which of these
+    	// 3d images is the default image for this result.
+
+    	String defaultImageCanonicalFilename = new File(defaultImageFilename).getCanonicalPath();
     	Entity default3dImage = null;
-    	Entity parentSignalMip = null;
-    	Entity parentRefMIP = null;
     	
-    	File defaultImage = new File(defaultImageFilename);
-    	String defaultImageCanonicalFilename = defaultImage.getCanonicalPath();
+    	logger.debug("Looking for default image: "+defaultImageFilename);
+    	logger.debug("         (canonical path): "+defaultImageCanonicalFilename);
     	
     	for(Entity image3d : images3d) {
 			String filepath = image3d.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+			
+			logger.debug("  Considering "+filepath);
 			
 			if (filepath.equals(defaultImageFilename) || filepath.equals(defaultImageCanonicalFilename)) {
 				default3dImage = image3d;
@@ -112,56 +128,40 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 				Entity refMip = refMipPrefixMap.get(prefix);
 
 				if (signalMip!=null) {
-					entityHelper.setImage(image3d, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMip);
-					entityHelper.setImage(image3d, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, signalMip);
-					if (filepath.equals(defaultImageFilename)) {
-						parentSignalMip = signalMip;
-					}
+			    	EntityData currDefault2dImage = image3d.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+			    	if (currDefault2dImage==null || currDefault2dImage.getChildEntity()==null || !currDefault2dImage.getId().equals(signalMip.getId())) {
+			    		entityHelper.setDefault2dImage(image3d, signalMip);
+			    	}
+			    	EntityData currSignalMip = image3d.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE);
+			    	if (currSignalMip==null || currSignalMip.getChildEntity()==null || !currSignalMip.getId().equals(signalMip.getId())) {
+			    		entityHelper.setImage(image3d, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMip);
+			    	}
 				}
 				
 				if (refMip!=null) {
-					entityHelper.setImage(image3d, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);
-					if (filepath.equals(defaultImageFilename)) {
-						parentRefMIP = refMip;
-					}
+			    	EntityData currRefMip = image3d.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE);
+			    	if (currRefMip==null || currRefMip.getChildEntity()==null || !currRefMip.getId().equals(refMip.getId())) {
+			    		entityHelper.setImage(image3d, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);
+			    	}
 				}
 			}	
     	}
-
-    	// Set images on the result
     	
-    	entityHelper.setDefault3dImage(rootEntity, default3dImage);
-    	setMIPs(rootEntity, parentSignalMip, parentRefMIP);
-    	
-    	// Set images on the sample
-    	
-    	setMIPs(sampleEntity, parentSignalMip, parentRefMIP);
-    	
-    	// Set images on the pipeline run parent
-    	
-    	Entity pipelineRun = null;
-    	Set<Entity> parents = entityBean.getParentEntities(rootEntity.getId());
-    	if (parents != null) {
-    		for(Entity parent : parents) {
-    			if (parent.getEntityType().getName().equals(EntityConstants.TYPE_PIPELINE_RUN)) {
-    				if (pipelineRun!=null) {
-    					logger.error("Detected multiple parent runs for result "+rootEntity.getName()+" (id="+rootEntity.getId()+")");
-    				}
-    				pipelineRun = parent;
-    			}
-    		}
-    		
-    		if (pipelineRun != null) {
-            	setMIPs(pipelineRun, parentSignalMip, parentRefMIP);
-    		}
+    	if (default3dImage!=null) {
+        	logger.info("Found default image, applying to the Result, Pipeline Run, and Sample");
+        	entityHelper.setDefault3dImage(resultEntity, default3dImage);
+        	entityHelper.setDefault3dImage(pipelineRunEntity, default3dImage);
+        	entityHelper.setDefault3dImage(sampleEntity, default3dImage);
     	}
-		
+    			
     	// Finally, set the images on the sample tiles 
-
-        populateChildren(sampleEntity);
+    	
+    	logger.info("Applying MIPs to sample tiles");
+    	
+    	populateChildren(sampleEntity);
     	Entity supportingFiles = EntityUtils.getSupportingData(sampleEntity);
     	if (supportingFiles!=null) {
-            populateChildren(supportingFiles);
+    		populateChildren(supportingFiles);
     	
             for(Entity imageTile : supportingFiles.getChildrenOfType(EntityConstants.TYPE_IMAGE_TILE)) {
             	
@@ -216,10 +216,10 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 			}
 		}
 	}
-
+	
 	private void setMIPs(Entity entity, Entity signalMip, Entity refMip) throws ComputeException {
-		entityHelper.setImage(entity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMip);
-		entityHelper.setDefault2dImage(entity, signalMip);
-		entityHelper.setImage(entity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);
+		entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, signalMip);
+		entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMip);
+		entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);
 	}
 }
