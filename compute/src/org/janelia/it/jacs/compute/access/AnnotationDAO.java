@@ -1883,7 +1883,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
             		throw new ComputeException("Value cannot be empty for custom annotation");
             	}
 
-            	if (!"Text".equals(termType) && !"Custom".equals(termType)) {
+            	if (!"Text".equals(termType) && !"Custom".equals(termType) && !"Tag".equals(termType)) {
             		// Non-text annotations are exclusive, so delete existing annotations first
 		            List<Entity> existingAnnotations = getAnnotationsByEntityId(userLogin, annotation.getTargetEntityId());
 		        	for(Entity existingAnnotation : existingAnnotations) {
