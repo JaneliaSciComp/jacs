@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.mservice;
+package org.janelia.it.jacs.compute.mservice.action;
 
 import org.apache.log4j.Logger;
 

@@ -1,5 +1,6 @@
-package org.janelia.it.jacs.compute.mservice;
+package org.janelia.it.jacs.compute.mservice.trigger;
 
+import org.janelia.it.jacs.compute.mservice.trigger.EntitySearchTrigger;
 import org.janelia.it.jacs.model.entity.Entity;
 
 /**

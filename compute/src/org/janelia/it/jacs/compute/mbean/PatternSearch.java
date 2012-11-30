@@ -5,14 +5,17 @@ import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.mservice.*;
+import org.janelia.it.jacs.compute.mservice.action.EntityAction;
+import org.janelia.it.jacs.compute.mservice.action.EntityChangeNameAction;
+import org.janelia.it.jacs.compute.mservice.trigger.EntitySearchTrigger;
+import org.janelia.it.jacs.compute.mservice.trigger.EntityTypeNameTrigger;
+import org.janelia.it.jacs.compute.mservice.trigger.EntityTypeTrigger;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.compute.service.fly.ScreenSampleLineCoordinationService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.user_data.User;
 
 import java.util.*;
-import java.util.concurrent.Callable;
 
 /**
  * Created with IntelliJ IDEA.
