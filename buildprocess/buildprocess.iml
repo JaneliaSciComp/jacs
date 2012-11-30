@@ -27,6 +27,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="GoogleAnalytics" level="project" />
+    <orderEntry type="library" name="Logging" level="project" />
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">

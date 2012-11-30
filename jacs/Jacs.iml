@@ -133,6 +133,7 @@
     <orderEntry type="library" name="Spring" level="project" />
     <orderEntry type="library" name="JAXB" level="project" />
     <orderEntry type="library" name="JUnit" level="project" />
+    <orderEntry type="library" name="Logging" level="project" />
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">
