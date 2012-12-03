@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
@@ -72,6 +74,10 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
         
         outputFile = new File(outputFileNode.getDirectoryPath(),"Aligned.v3draw");
         processData.putItem("ALIGNED_FILENAME", outputFile.getAbsolutePath());
+        
+        List<String> filenames = new ArrayList<String>();
+        filenames.add(outputFile.getAbsolutePath());
+        processData.putItem("ALIGNED_FILENAMES", filenames);
     }
 
     @Override

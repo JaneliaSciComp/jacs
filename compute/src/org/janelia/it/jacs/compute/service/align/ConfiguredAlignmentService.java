@@ -1,13 +1,18 @@
 package org.janelia.it.jacs.compute.service.align;
 
+import java.io.File;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
+import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.vo.ParameterException;
 
@@ -71,6 +76,29 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
     	super.postProcess();    
     	try {
     		processData.putItem("ALIGNED_FILENAME", outputFile.getCanonicalPath());
+
+            File outputDir = new File(outputFileNode.getDirectoryPath());
+        	File[] rawFiles = outputDir.listFiles(new FilenameFilter() {
+    			@Override
+    			public boolean accept(File dir, String name) {
+    				File file = new File(dir, name);
+    				try {
+    					return name.endsWith("v3draw") && !FileUtils.isSymlink(file);
+    				}
+    				catch (IOException e) {
+    					logger.error("Error determining if file is symlink: "+file,e);
+    				}
+    				return false;
+    			}
+    		});
+    		
+        	List<String> filenames = new ArrayList<String>();
+        	for(File rawFile : rawFiles) {
+        		filenames.add(rawFile.getAbsolutePath());
+        	}
+        	
+            filenames.add(outputFile.getCanonicalPath());
+            processData.putItem("ALIGNED_FILENAMES", filenames);
     	}
     	catch (IOException e) {
     		throw new MissingDataException("Cannot find canonical path of aligned output file",e);

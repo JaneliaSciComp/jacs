@@ -41,6 +41,7 @@
 				<input name="SIGNAL_CHANNELS"/>
 				<input name="REFERENCE_CHANNEL"/>
 				<output name="ALIGNED_FILENAME"/>
+				<output name="ALIGNED_FILENAMES"/>
 	        </operation>
         </sequence>
         
@@ -49,7 +50,7 @@
 	        <operation name="Generate MIPs" processor="queue/gridSubmitAndWait">
 	            <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.MIPGenerationService"/>
 				<input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
-				<input name="INPUT_FILENAME" value="$V{ALIGNED_FILENAME}"/>
+				<input name="INPUT_FILENAMES" value="$V{ALIGNED_FILENAMES}"/>
 				<input name="SIGNAL_CHANNELS"/>
 				<input name="REFERENCE_CHANNEL"/>
 	        </operation>
