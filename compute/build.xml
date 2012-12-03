@@ -76,7 +76,6 @@
 			<fileset dir="${common.dir}/Guava" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/commons-vfs" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/commons-net" includes="**/*.jar"/>
-            <fileset dir="${basedir}/../shared/lib" includes="**/*.jar"/>
         	<fileset file="${common.dir}/GWT/gwt-servlet.jar"/>
 			<fileset file="${common.dir}/Spring/jxl.jar"/>
         </path>
@@ -217,6 +216,9 @@
             <fileset file="${basedir}/build/jars/${localname}.jar"/>
             <fileset file="${basedir}/build/jars/${localname}.sar"/>
             <fileset file="${basedir}/build/jars/${localname}.har"/>
+            <fileset dir="${basedir}/../shared/lib">
+                <include name="**/*.jar"/>
+            </fileset>
             <zipfileset dir="${dep.dir}" prefix="lib"/>
             <fileset dir="${jacs.properties.dir}">
                 <include name="jacs.properties"/>
