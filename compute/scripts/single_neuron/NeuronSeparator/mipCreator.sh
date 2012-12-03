@@ -35,7 +35,9 @@ FORMAT=$2
 INPUT_FILE=$3
 SIGNAL_CHAN=$4
 REF_CHAN=$5
-WORKING_DIR=$OUTDIR/temp
+
+export TMPDIR="$OUTDIR"
+WORKING_DIR=`mktemp -d`
 
 if [ ! -s $INPUT_FILE ]; then
     echo "Input file does not exist: $INPUT_FILE"

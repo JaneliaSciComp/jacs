@@ -99,6 +99,11 @@ fi
 REF_CHAN_ONE_INDEXED=4
 echo "Reference chan (1-indexed): $REF_CHAN_ONE_INDEXED"
 
+echo "~ Converting input file to 16 bit"
+SEP16_INPUT_FILE="Input16.v3draw"
+cat $SEP_INPUT_FILE | $NSDIR/v3draw_to_16bit > $SEP16_INPUT_FILE
+SEP_INPUT_FILE=$SEP16_INPUT_FILE
+
 echo "~ Generating separation"
 $NSDIR/setup10 -c6.0 -e4.5 -s800 -r$REF_CHAN_ONE_INDEXED SeparationResultUnmapped $SEP_INPUT_FILE
 
@@ -167,6 +172,6 @@ echo "~ Finished with separation pipeline"
 
 if [ -s "$OUTDIR/ConsolidatedLabel.v3dpbd" ]; then
     echo "~ Launching fastLoad pipeline..."
-    $DIR/fastLoadPipeline.sh $OUTDIR
+    $DIR/fastLoadPipeline.sh $OUTDIR $INPUT_FILE
 fi
 

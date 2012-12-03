@@ -28,7 +28,7 @@ echo "~ Computations complete"
 echo "~ Space usage: " `du -h $WORKING_DIR`
 
 echo "~ Moving final output to $FINAL_OUTPUT"
-mv $WORKING_DIR/* $OUTPUT_DIR
+mv $WORKING_DIR/FinalOutputs/* $OUTPUT_DIR
 
 echo "~ Removing temp directory"
 rm -rf $WORKING_DIR

@@ -61,7 +61,7 @@ cd $WORKING_DIR
 
 
 EXT=${INPUT_FILE#*.}
-if [ $EXT == "v3dpbd" ]; then
+if [ "$EXT" = "v3dpbd" ]; then
     PBD_INPUT_FILE=$INPUT_FILE
     INPUT_FILE_STUB=`basename $PBD_INPUT_FILE`
     INPUT_FILE="$WORKING_DIR/${INPUT_FILE_STUB%.*}.v3draw"
@@ -70,7 +70,7 @@ if [ $EXT == "v3dpbd" ]; then
 fi
 
 EXT=${LABEL_FILE#*.}
-if [ $EXT == "v3dpbd" ]; then
+if [ "$EXT" = "v3dpbd" ]; then
     PBD_LABEL_FILE=$LABEL_FILE
     LABEL_FILE_STUB=`basename $PBD_LABEL_FILE`
     LABEL_FILE="$WORKING_DIR/${LABEL_FILE_STUB%.*}.v3draw"
@@ -79,7 +79,7 @@ if [ $EXT == "v3dpbd" ]; then
 fi
 
 EXT=${REF_FILE#*.}
-if [ $EXT == "v3dpbd" ]; then
+if [ "$EXT" = "v3dpbd" ]; then
     PBD_REF_FILE=$REF_FILE
     REF_FILE_STUB=`basename $PBD_REF_FILE`
     REF_FILE="$WORKING_DIR/${REF_FILE_STUB%.*}.v3draw"
