@@ -104,7 +104,10 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
                 FileWriter fw = new FileWriter(getSGEConfigurationDirectory() + File.separator + CONFIG_PREFIX + (i+1));
                 File tmpFile= relatedFiles[i];
                 String tmpName=tmpFile.getName();
-                String outputPath = resultFileNode.getDirectoryPath()+File.separator;
+                String outputPath = resultFileNode.getDirectoryPath()+File.separator+tmpName.substring(0,tmpName.lastIndexOf(".")).replaceAll(" ","_");
+                if (!runningCalibration && !runningCorrection) {
+                    outputPath = resultFileNode.getDirectoryPath()+File.separator;
+                }
                 try {
                     // Path to the input file
                     fw.write(tmpFile.getAbsolutePath()+"\n");
