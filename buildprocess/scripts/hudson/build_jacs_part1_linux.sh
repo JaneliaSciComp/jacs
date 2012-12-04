@@ -61,9 +61,11 @@ STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
 
 PACKAGE_MAC_DIR="$STAGING_DIR/FlySuite_${FWVER}"
 PACKAGE_LINUX_DIR="$STAGING_DIR/FlySuite_linux_${FWVER}"
+PACKAGE_WINDOWS_DIR="$STAGING_DIR/FlySuite_windows_${FWVER}"
 
 STAGING_PACKAGE_MAC_DIR="$EXE_DIR/FlySuite_${FWVER}"
 STAGING_PACKAGE_LINUX_DIR="$EXE_DIR/FlySuite_linux_${FWVER}"
+STAGING_PACKAGE_WINDOWS_DIR="$EXE_DIR/FlySuite_windows_${FWVER}"
 
 echo "Building FlySuite version $FWVER (Part 1)"
 
@@ -182,6 +184,9 @@ if [[ $SERVER == jacs ]] && [[ $BUILD_FLYSUITE == 1 ]]; then
     echo "  Removing $PACKAGE_LINUX_DIR"
     rm -rf $PACKAGE_LINUX_DIR
     
+    echo "  Removing $PACKAGE_WINDOWS_DIR"
+    rm -rf $PACKAGE_WINDOWS_DIR
+
     echo "  Creating new Mac package in $PACKAGE_MAC_DIR"
     cp -R $TEMPLATE_DIR/mac_template $PACKAGE_MAC_DIR
     cp -R $JACS_COMPILE_DIR/console/build/jars/* $PACKAGE_MAC_DIR
@@ -190,6 +195,11 @@ if [[ $SERVER == jacs ]] && [[ $BUILD_FLYSUITE == 1 ]]; then
     cp -R $TEMPLATE_DIR/linux_template $PACKAGE_LINUX_DIR
     cp -R $JACS_COMPILE_DIR/console/build/jars/* $PACKAGE_LINUX_DIR 
     cp $VAA3D_COMPILE_FEDORA_DIR/bin/vaa3d $PACKAGE_LINUX_DIR
+
+    echo "  Creating new Windows package in $PACKAGE_WINDOWS_DIR"
+    cp -R $TEMPLATE_DIR/windows_template $PACKAGE_WINDOWS_DIR
+    cp -R $JACS_COMPILE_DIR/console/build/jars/* $PACKAGE_WINDOWS_DIR
+    #  Windows has a special build process for its executables.
 fi
 
 if [[ $SERVER == "jacs-staging" ]] && [[ $BUILD_FLYSUITE == 1 ]]; then
@@ -200,15 +210,22 @@ if [[ $SERVER == "jacs-staging" ]] && [[ $BUILD_FLYSUITE == 1 ]]; then
     
     echo "  Removing $STAGING_PACKAGE_LINUX_DIR"
     rm -rf $STAGING_PACKAGE_LINUX_DIR
-    
+
+    echo "  Removing $STAGING_PACKAGE_WINDOWS_DIR"
+    rm -rf $STAGING_PACKAGE_WINDOWS_DIR
+
     echo "  Creating new Mac package in $STAGING_PACKAGE_MAC_DIR"
     cp -R $TEMPLATE_DIR/mac_template $STAGING_PACKAGE_MAC_DIR
     cp -R $JACS_COMPILE_DIR/console/build/jars/* $STAGING_PACKAGE_MAC_DIR
-    
+
     echo "  Creating new Linux package in $STAGING_PACKAGE_LINUX_DIR"
     cp -R $TEMPLATE_DIR/linux_template $STAGING_PACKAGE_LINUX_DIR
-    cp -R $JACS_COMPILE_DIR/console/build/jars/* $STAGING_PACKAGE_LINUX_DIR 
+    cp -R $JACS_COMPILE_DIR/console/build/jars/* $STAGING_PACKAGE_LINUX_DIR
     cp $VAA3D_COMPILE_FEDORA_DIR/bin/vaa3d $STAGING_PACKAGE_LINUX_DIR
+
+    echo "  Creating new Windows package in $STAGING_PACKAGE_WINDOWS_DIR"
+    cp -R $TEMPLATE_DIR/windows_template $STAGING_PACKAGE_WINDOWS_DIR
+    cp -R $JACS_COMPILE_DIR/console/build/jars/* $STAGING_PACKAGE_WINDOWS_DIR
 fi
 
 echo "Waiting for Vaa3d qsub ($VAA3D_QSUB_PID)..." 
@@ -224,6 +241,7 @@ echo "  Neusep (Redhat): $NEUSEP_COMPILE_REDHAT_DIR"
 echo "  Jacs: $JACS_COMPILE_DIR"
 echo "  Linux Package: $PACKAGE_LINUX_DIR"
 echo "  Mac Package (to be completed in part 2): $PACKAGE_MAC_DIR"
+echo "  Windows Package (to be completed on a different build server): $PACKAGE_WINDOWS_DIR"
 echo ""
 
 if [ $RUN_PART2 == 1 ]; then
