@@ -6,6 +6,8 @@ import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.model.entity.Entity;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -20,6 +22,9 @@ public abstract class EntityAction {
 
     private static Logger logger= Logger.getLogger(EntityAction.class);
     private static boolean DEBUG=false;
+    private List<Object> contextKeysToClearOnDone=new ArrayList<Object>();
+
+    boolean blocking=true;
 
     public abstract Callable<Object> getCallable(final Entity parentEntity, final Entity entity, Map<Object, Object> context) throws Exception;
 
@@ -39,6 +44,22 @@ public abstract class EntityAction {
 
     protected ComputeBeanLocal getComputeBean() {
         return EJBFactory.getLocalComputeBean();
+    }
+
+    public boolean isBlocking() {
+        return blocking;
+    }
+
+    public void setBlocking(boolean blocking) {
+        this.blocking=blocking;
+    }
+
+    public void clearContextOnDone(Object key) {
+        contextKeysToClearOnDone.add(key);
+    }
+
+    public List<Object> getContextKeysToClearOnDone() {
+        return contextKeysToClearOnDone;
     }
 
 }

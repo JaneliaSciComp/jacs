@@ -95,6 +95,7 @@ public class PatternSearch implements PatternSearchMBean {
             MService sampleMService=new MService("system", 10);
 
             List<EntityTrigger> triggerList=new ArrayList<EntityTrigger>();
+
             EntityTypeTrigger screenTrigger=new EntityTypeTrigger(EntityConstants.TYPE_SCREEN_SAMPLE);
             AddChildEntityContextAction addMaskFolderToContextAction=new AddChildEntityContextAction("Mask Annotation", "MaskFolder");
             screenTrigger.addAction(addMaskFolderToContextAction);
@@ -102,8 +103,11 @@ public class PatternSearch implements PatternSearchMBean {
 
             EntityTypeNameTrigger paTrigger=new EntityTypeNameTrigger(EntityConstants.TYPE_FOLDER, "Pattern Annotation");
             paTrigger.setRecursive(false);
+
             MoveToContextEntityAction moveEntityAction=new MoveToContextEntityAction("MaskFolder");
+            moveEntityAction.clearContextOnDone("MaskFolder");
             paTrigger.addAction(moveEntityAction);
+
             triggerList.add(paTrigger);
 
             sampleMService.run(topLevelSampleFolder, triggerList);

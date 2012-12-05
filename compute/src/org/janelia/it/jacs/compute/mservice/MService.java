@@ -41,7 +41,7 @@ public class MService {
     List<ListenableFuture<Object>> futureList=new ArrayList<ListenableFuture<Object>>();
     List<EntityTrigger> triggerList=new ArrayList<EntityTrigger>();
     Map<Entity, Integer> levelMap=new HashMap<Entity, Integer>();
-    Map<Object, Object> actionContext=new HashMap<Object, Object>();
+    Map<Object, Object> actionContext=Collections.synchronizedMap(new HashMap<Object, Object>());
 
     // If maxThreads==0, this means don't use threads - run single-threaded
     public MService(String username, int maxThreads) throws Exception {
@@ -99,6 +99,7 @@ public class MService {
             parentLevel = 0;
             levelMap.put(parent, parentLevel);
         }
+
         //logger.info("level=" + parentLevel + " : name=" + parent.getName() + " type=" + parent.getEntityType().getName() + " triggerLevel=" + triggerLevel);
         EntityTrigger trigger = triggerList.get(triggerLevel);
         parent = getEntityBean().getEntityAndChildren(parent.getId());
@@ -108,42 +109,39 @@ public class MService {
             levelMap.put(child, childLevel);
             EntityTrigger.TriggerResponse response = trigger.evaluate(parent, child, childLevel);
             if (response.performAction) {
-                // if this is the last trigger, then submit the action. Otherwise, assume the proper action is to
-                // activate the next trigger.
-                if (triggerLevel == triggerList.size() - 1) {
-                    if (listeningExecutorService != null) {
-                        for (final EntityAction action : trigger.getActionList()) {
-                            logger.info("Submitting action thread to executorService for id=" + child.getId());
-                            ListenableFuture<Object> callback = listeningExecutorService.submit(action.getCallable(parent, child, actionContext));
-                            Futures.addCallback(callback, new FutureCallback<Object>() {
-                                @Override
-                                public void onSuccess(Object o) {
-                                    action.processResult(o);
-                                }
-
-                                @Override
-                                public void onFailure(Throwable throwable) {
-                                    action.handleFailure();
-                                }
-                            });
-                            futureList.add(callback);
-                        }
-                        clearActionContext();
-                    } else {
+                for (final EntityAction action : trigger.getActionList()) {
+                    if (listeningExecutorService == null || action.isBlocking()) {
                         logger.info("Running action within current thread for id=" + child.getId());
-                        for (final EntityAction action : trigger.getActionList()) {
-                            Object result;
-                            try {
-                                result = action.getCallable(parent, child, actionContext).call();
-                                action.processResult(result);
-                            }
-                            catch (Exception ex) {
-                                action.handleFailure();
-                            }
+                        Object result;
+                        try {
+                            result = action.getCallable(parent, child, actionContext).call();
+                            action.processResult(result);
+                            clearActionKeys(action);
                         }
-                        clearActionContext();
+                        catch (Exception ex) {
+                            action.handleFailure();
+                            clearActionKeys(action);
+                        }
+                    } else {
+                        logger.info("Submitting action thread to executorService for id=" + child.getId());
+                        ListenableFuture<Object> callback = listeningExecutorService.submit(action.getCallable(parent, child, actionContext));
+                        Futures.addCallback(callback, new FutureCallback<Object>() {
+                            @Override
+                            public void onSuccess(Object o) {
+                                action.processResult(o);
+                                clearActionKeys(action);
+                            }
+
+                            @Override
+                            public void onFailure(Throwable throwable) {
+                                action.handleFailure();
+                                clearActionKeys(action);
+                            }
+                        });
+                        futureList.add(callback);
                     }
-                } else {
+                }
+                if (triggerLevel < triggerList.size() - 1) {
                     // Keep going but use the next trigger
                     searchEntityContents(child, triggerLevel + 1);
                 }
@@ -156,8 +154,12 @@ public class MService {
         }
     }
 
-    private void clearActionContext() {
-        actionContext.clear();
+    private void clearActionKeys(EntityAction action) {
+        if (action!=null) {
+            for (Object key : action.getContextKeysToClearOnDone()) {
+                actionContext.remove(key);
+            }
+        }
     }
 
 }
