@@ -8,15 +8,12 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
-import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
-import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
-import org.janelia.it.jacs.compute.service.entity.EntityHelper;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
@@ -235,12 +232,10 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
     }
 
     @Override
-    protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
-        SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
-        jt.setNativeSpecification("-pe batch 4");
-        return jt;
+    protected int getRequiredMemoryInGB() {
+    	return 12;
     }
-
+    
     @Override
     public int getJobTimeoutSeconds() {
         return TIMEOUT_SECONDS;

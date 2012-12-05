@@ -1,9 +1,11 @@
 package org.janelia.it.jacs.compute.service.vaa3d;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.util.ArrayList;
+
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
-import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
-import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
@@ -12,10 +14,6 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.neuron.NeuronMergeTask;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.util.ArrayList;
 
 /**
  * Merge neuron fragments.
@@ -96,11 +94,13 @@ public class Vaa3DNeuronMergeService extends SubmitDrmaaJobService {
     }
 
     @Override
-    protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
-        SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
-        // Reserve 4 slots on a node. This gives us 12 GB of memory.
-        jt.setNativeSpecification("-pe batch 4 -l short=true -now n");
-        return jt;
+    protected int getRequiredMemoryInGB() {
+    	return 12;
+    }
+
+    @Override
+    protected boolean isShortJob() {
+    	return true;
     }
 
     @Override

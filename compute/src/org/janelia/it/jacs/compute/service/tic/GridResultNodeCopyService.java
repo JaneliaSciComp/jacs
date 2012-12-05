@@ -1,17 +1,16 @@
 package org.janelia.it.jacs.compute.service.tic;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.FilenameFilter;
+
 import org.ggf.drmaa.DrmaaException;
-import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.model.tasks.tic.SingleTicTask;
 import org.janelia.it.jacs.model.tasks.tic.TicTask;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
 
 public class GridResultNodeCopyService extends SubmitDrmaaJobService {
     private static final String CONFIG_PREFIX = "nodeCopyConfiguration.";
@@ -77,10 +76,13 @@ public class GridResultNodeCopyService extends SubmitDrmaaJobService {
     }
 
     @Override
-    protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
-        SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
-        jt.setNativeSpecification("-pe batch 1 -l short=true");
-        return jt;
+    protected int getRequiredMemoryInGB() {
+    	return 3;
+    }
+    
+    @Override
+    protected boolean isShortJob() {
+    	return true;
     }
 
 }

@@ -1,19 +1,17 @@
 package org.janelia.it.jacs.compute.service.vaa3d;
 
-import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
-import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.List;
+
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.model.user_data.FileNode;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -104,16 +102,13 @@ public class Vaa3DPatternAnnotationService extends SubmitDrmaaJobService {
         script.append("\n");
         writer.write(script.toString());
     }
-
+    
     @Override
-    protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
-    	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
-    	// Reserve 4 out of the 8 slots on a node. This gives us 12 GB of memory.
-    	jt.setNativeSpecification("-pe batch 4");
-    	return jt;
+    protected int getRequiredMemoryInGB() {
+    	return 12;
     }
 
-     @Override
+    @Override
 	public void postProcess() throws MissingDataException {
 
     	FileNode parentNode = ProcessDataHelper.getResultFileNode(processData);

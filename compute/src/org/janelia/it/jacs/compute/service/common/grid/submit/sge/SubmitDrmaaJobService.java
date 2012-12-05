@@ -45,6 +45,8 @@ import java.util.regex.Pattern;
  */
 public abstract class SubmitDrmaaJobService implements SubmitJobService {
 
+	protected static final Boolean USE_R620_NODES = SystemConfigurationProperties.getBoolean("Grid.UseR620Nodes");
+	
     protected Logger logger;
 
     protected Task task;
@@ -155,11 +157,72 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         FileUtil.ensureDirExists(getSGEErrorDirectory());
     }
 
+    /**
+     * Override this method to specify the minimum number of slots needed for this grid job. At least this many slots
+     * will be allocated, but more slots may be allocated to fulfill the memory requirement provided by 
+     * getRequiredMemoryInGB.
+     * 
+     * Defaults to 1 slot.
+     * 
+     * @return
+     */
+    protected int getRequiredSlots() {
+    	return 1;
+    }
+    
+    /**
+     * Override this method to specify the minimum amount of memory needed for this grid job. Enough slots will be 
+     * allocated to achieve this memory requirement.
+     * 
+     * Defaults to 1 GB.
+     * 
+     * @return
+     */
+    protected int getRequiredMemoryInGB() {
+    	return 1;
+    }
+
+    /**
+     * Override this to return true if the job is going to finish quickly. This isn't guaranteed to do anything, but on
+     * some grid it may queue to a specific "short job" queue or resource.
+     * @return
+     */
+    protected boolean isShortJob() {
+    	return false;
+    }
+    
+    /**
+     * Override this method to specify a complete override to the native specification. This method returns null
+     * by default. If it is overridden to return a non-null value, then isShortJob, getRequiredSlots, and 
+     * getRequiredMemoryInGB will be ignored.
+     * 
+     * @return
+     */
+    protected String getNativeSpecificationOverride() {
+    	return null;
+    }
+    
 
     protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
 
         SerializableJobTemplate jt = drmaa.createJobTemplate(new SerializableJobTemplate());
 
+        String nsOverride = getNativeSpecificationOverride();
+        if (nsOverride != null) {
+        	logger.info("Setting native specification override: "+nsOverride);
+        	jt.setNativeSpecification(nsOverride);
+        }
+        else {
+        	int mem = getRequiredMemoryInGB();
+        	int slots = getRequiredSlots();
+        	String ns = GridResourceUtils.getSpec(USE_R620_NODES, mem, slots);
+        	if (!USE_R620_NODES && isShortJob()) {
+        		ns += " -l short=true -now n";
+        	}
+        	logger.info("Setting native specification to accomodate "+mem+" memory and "+slots+" slots: "+ns);
+        	jt.setNativeSpecification(ns);	
+        }
+        
         File configDir = new File(getSGEConfigurationDirectory());
         if (!configDir.exists()) {
             throw new MissingDataException("Could not find work directory for order " + configDir.getAbsolutePath());
@@ -205,7 +268,6 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         }
         return jt;
     }
-
 
     protected Set<String> submitJob() throws Exception {
         if (logger.isInfoEnabled()) {

@@ -1,7 +1,11 @@
 package org.janelia.it.jacs.compute.service.tic;
 
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileWriter;
+import java.util.List;
+
 import org.ggf.drmaa.DrmaaException;
-import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
@@ -9,11 +13,6 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.tic.SingleTicTask;
 import org.janelia.it.jacs.model.tasks.tic.TicTask;
-
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileWriter;
-import java.util.List;
 
 public class TICSubmitJobService extends SubmitDrmaaJobService {
     private static final String CONFIG_PREFIX = "ticConfiguration.";
@@ -218,11 +217,8 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
     }
 
     @Override
-    protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
-        SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
-        // Reserve all 3 slots.
-        jt.setNativeSpecification("-pe batch 4");
-        return jt;
+    protected int getRequiredMemoryInGB() {
+    	return 12;
     }
 
     @Override

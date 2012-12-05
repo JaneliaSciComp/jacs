@@ -1,15 +1,13 @@
 package org.janelia.it.jacs.compute.service.vaa3d;
 
-import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
-import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.service.utility.ParallelFileProcessingService;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.compute.service.utility.ParallelFileProcessingService;
 
 /**
  * Compress any number of 3d volumes in parallel. 
@@ -71,10 +69,7 @@ public class Vaa3DConversionService extends ParallelFileProcessingService {
     }
     
     @Override
-    protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
-    	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
-    	// Reserve all 8 slots on a node. This gives us 24 GB of memory. 
-    	jt.setNativeSpecification("-pe batch 8");
-    	return jt;
+    protected int getRequiredMemoryInGB() {
+    	return 12;
     }
 }

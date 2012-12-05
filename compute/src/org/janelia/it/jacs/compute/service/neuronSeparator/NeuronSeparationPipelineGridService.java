@@ -5,8 +5,6 @@ import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 
-import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
-import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -114,13 +112,10 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
     public int getJobTimeoutSeconds() {
         return TIMEOUT_SECONDS;
     }
-	
+
     @Override
-    protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
-    	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
-    	// Reserve all 8 slots on a node. This gives us 24 GB of memory. 
-    	jt.setNativeSpecification("-pe batch 8");
-    	return jt;
+    protected int getRequiredMemoryInGB() {
+    	return 24;
     }
     
     @Override

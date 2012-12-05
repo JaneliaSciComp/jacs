@@ -5,8 +5,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 
-import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
-import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -93,13 +91,10 @@ public class ArchivingGridService extends SubmitDrmaaJobService {
     public int getJobTimeoutSeconds() {
         return TIMEOUT_SECONDS;
     }
-	
+
     @Override
-    protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
-    	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
-    	// Reserve all 1 slots on a node. This gives us 3 GB of memory, which we don't need at all, but it's the least we can reserve. 
-    	jt.setNativeSpecification("-pe batch 1 ");
-    	return jt;
+    protected int getRequiredMemoryInGB() {
+    	return 3;
     }
     
     @Override

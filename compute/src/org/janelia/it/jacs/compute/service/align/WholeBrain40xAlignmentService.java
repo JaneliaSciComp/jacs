@@ -3,8 +3,6 @@ package org.janelia.it.jacs.compute.service.align;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
-import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
@@ -16,7 +14,7 @@ import org.janelia.it.jacs.model.vo.ParameterException;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class WholeBrain40xAlignmentService extends AbstractAlignmentService {
+public class WholeBrain40xAlignmentService extends LegacyAlignmentService {
 
 	protected static final String ALIGNER_SCRIPT_CMD = SystemConfigurationProperties.getString("WholeBrain40xAligner.ScriptPath");
 	protected static final String TEMPLATE_DIR = SystemConfigurationProperties.getString("WholeBrain40xAligner.TemplateDir");
@@ -41,12 +39,4 @@ public class WholeBrain40xAlignmentService extends AbstractAlignmentService {
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix() + "\n");
         writer.write(script.toString());
 	}
-
-    @Override
-    protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
-    	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
-    	// Reserve all 8 slots on a 96 gig node. 
-    	jt.setNativeSpecification("-pe batch 8 -l mem96=true -now n");
-    	return jt;
-    }
 }

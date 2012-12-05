@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
-import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
@@ -127,10 +125,7 @@ public class MIPGenerationService extends SubmitDrmaaJobService {
     }
 
     @Override
-    protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
-    	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
-    	// Reserve 1 out of the 8 slots on a node. This gives us 3 GB of memory. 
-    	jt.setNativeSpecification("-pe batch 1");
-    	return jt;
+    protected int getRequiredMemoryInGB() {
+    	return 3;
     }
 }

@@ -1,11 +1,9 @@
 package org.janelia.it.jacs.compute.service.vaa3d;
 
-import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
-import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
+import java.io.FileWriter;
+
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.service.utility.ParallelFileProcessingService;
-
-import java.io.FileWriter;
 
 /**
  * Execute a channel mapping on an arbitrary number of files in parallel. 
@@ -39,12 +37,9 @@ public class MapChannelService extends ParallelFileProcessingService {
         script.append("\n");
         writer.write(script.toString());
     }
-    
+
     @Override
-    protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
-    	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
-    	// Reserve 4 out of the 8 slots on a node. This gives us 12 GB of memory. 
-    	jt.setNativeSpecification("-pe batch 4");
-    	return jt;
+    protected int getRequiredMemoryInGB() {
+    	return 12;
     }
 }

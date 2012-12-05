@@ -1,7 +1,9 @@
 package org.janelia.it.jacs.compute.service.vaa3d;
 
-import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
-import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -9,10 +11,6 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.SystemCall;
-
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Group a bunch of merged files into stitchable groups. Put the largest group back into play. 
@@ -86,11 +84,8 @@ public class Vaa3DStitchGroupingService extends SubmitDrmaaJobService {
     }
 
     @Override
-    protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
-    	SerializableJobTemplate jt = super.prepareJobTemplate(drmaa);
-    	// Reserve all 8 slots on a node. This gives us 24 GB of memory. 
-    	jt.setNativeSpecification("-pe batch 8");
-    	return jt;
+    protected int getRequiredMemoryInGB() {
+    	return 24;
     }
 
 	@Override
