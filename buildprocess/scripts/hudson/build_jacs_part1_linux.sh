@@ -224,6 +224,8 @@ if [[ $SERVER == "jacs-staging" ]] && [[ $BUILD_FLYSUITE == 1 ]]; then
     cp $VAA3D_COMPILE_FEDORA_DIR/bin/vaa3d $STAGING_PACKAGE_LINUX_DIR
 
     echo "  Creating new Windows package in $STAGING_PACKAGE_WINDOWS_DIR"
+    # This is needed to allow the windows build box to add files.
+    chmod ugo+rwx $STAGING_PACKAGE_WINDOWS_DIR
     cp -R $TEMPLATE_DIR/windows_template $STAGING_PACKAGE_WINDOWS_DIR
     cp -R $JACS_COMPILE_DIR/console/build/jars/* $STAGING_PACKAGE_WINDOWS_DIR
 fi
