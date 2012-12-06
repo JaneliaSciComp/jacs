@@ -43,8 +43,8 @@ public class AddChildEntityContextAction extends EntityAction {
                             if (child.getName().equals(childEntityName)) {
                                 context.put(contextualKey(contextKeyString, context), child);
                                 logger.info("Added context entity child with key=" + contextKeyString + " name=" + childEntityName);
+                                break;
                             }
-                            return this;
                         }
                     }
                 }
