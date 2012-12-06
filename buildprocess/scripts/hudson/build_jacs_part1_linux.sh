@@ -65,7 +65,8 @@ PACKAGE_WINDOWS_DIR="$STAGING_DIR/FlySuite_windows_${FWVER}"
 
 STAGING_PACKAGE_MAC_DIR="$EXE_DIR/FlySuite_${FWVER}"
 STAGING_PACKAGE_LINUX_DIR="$EXE_DIR/FlySuite_linux_${FWVER}"
-STAGING_PACKAGE_WINDOWS_DIR="$EXE_DIR/FlySuite_windows_${FWVER}"
+#  The windows staging directory built here, is only temporary, to work around access problems from windows mount points. LLF
+STAGING_PACKAGE_WINDOWS_DIR="$EXE_DIR/FlySuite_windows_${FWVER}"_temp
 
 echo "Building FlySuite version $FWVER (Part 1)"
 
