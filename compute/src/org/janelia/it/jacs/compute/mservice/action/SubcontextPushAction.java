@@ -23,9 +23,9 @@ public class SubcontextPushAction extends EntityAction {
         this.resetContext=resetContext;
     }
 
-    public Callable getCallable(final Entity parentEntity, final Entity entity, final Map<String, Object> context) throws Exception {
-        return new Callable<Object>() {
-            public Object call() {
+    public CalledAction getCallableImpl(final Entity parentEntity, final Entity entity, final Map<String, Object> context) throws Exception {
+        return new CalledAction() {
+            public CalledAction call() {
                 String contextKey=(String)context.get(CONTEXT);
                 if (resetContext || contextKey==null || contextKey.length()==0) {
                     contextKey=entity.getId().toString();
@@ -34,7 +34,7 @@ public class SubcontextPushAction extends EntityAction {
                 }
                 logger.info("Creating context key="+contextKey);
                 context.put(CONTEXT, contextKey);
-                return entity;
+                return this;
             }
         };
     }

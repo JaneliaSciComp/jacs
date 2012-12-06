@@ -27,15 +27,13 @@ public abstract class EntityAction {
 
     private boolean blocking=true;
 
-    public abstract Callable<Object> getCallable(final Entity parentEntity, final Entity entity, Map<String, Object> context) throws Exception;
-
-    public void processResult(Object result) {
-        if (DEBUG) {
-            if (result!=null && result instanceof Entity) {
-                logger.info("Received result for entity id="+((Entity) result).getId());
-            }
-        }
+    public CalledAction getCallable(final Entity parentEntity, final Entity entity, Map<String, Object> context) throws Exception {
+        CalledAction calledAction=getCallableImpl(parentEntity, entity, context);
+        calledAction.setContextKey(context.get(CONTEXT));
+        return calledAction;
     }
+
+    public abstract CalledAction getCallableImpl(final Entity parentEntity, final Entity entity, Map<String, Object> context) throws Exception;
 
     public void handleFailure(Throwable t) throws Exception {
         throw new Exception(t);

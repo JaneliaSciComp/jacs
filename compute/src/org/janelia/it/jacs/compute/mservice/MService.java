@@ -5,6 +5,7 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
+import org.janelia.it.jacs.compute.mservice.action.CalledAction;
 import org.janelia.it.jacs.compute.mservice.action.EntityAction;
 import org.janelia.it.jacs.compute.mservice.trigger.EntityTrigger;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
@@ -112,15 +113,12 @@ public class MService {
                 for (final EntityAction action : trigger.getActionList()) {
                     if (listeningExecutorService == null || action.isBlocking()) {
                         logger.info("Running action within current thread for id=" + child.getId());
-                        Object result;
                         try {
-                            result = action.getCallable(parent, child, actionContext).call();
-                            action.processResult(result);
-                            clearActionKeys(action);
+                            CalledAction result = action.getCallable(parent, child, actionContext).call();
+                            clearActionKeys(result.getContextKey(), action);
                         }
                         catch (Exception ex) {
                             action.handleFailure(ex);
-                            clearActionKeys(action);
                         }
                     } else {
                         logger.info("Submitting action thread to executorService for id=" + child.getId());
@@ -128,8 +126,8 @@ public class MService {
                         Futures.addCallback(callback, new FutureCallback<Object>() {
                             @Override
                             public void onSuccess(Object o) {
-                                action.processResult(o);
-                                clearActionKeys(action);
+                                CalledAction result=(CalledAction)o;
+                                clearActionKeys(result.getContextKey(), action);
                             }
 
                             @Override
@@ -140,7 +138,6 @@ public class MService {
                                     logger.error(ex);
                                     ex.printStackTrace();
                                 }
-                                clearActionKeys(action);
                             }
                         });
                         futureList.add(callback);
@@ -159,10 +156,17 @@ public class MService {
         }
     }
 
-    private void clearActionKeys(EntityAction action) {
-        if (action!=null) {
-            for (String key : action.getContextKeysToClearOnDone()) {
+    private void clearActionKeys(String contextKey, EntityAction action) {
+        boolean ignoreContext = false;
+        if (contextKey == null) {
+            ignoreContext = true;
+        }
+        for (String key : action.getContextKeysToClearOnDone()) {
+            if (ignoreContext) {
                 actionContext.remove(key);
+            } else {
+                String actualKey = contextKey + ":" + key;
+                actionContext.remove(actualKey);
             }
         }
     }

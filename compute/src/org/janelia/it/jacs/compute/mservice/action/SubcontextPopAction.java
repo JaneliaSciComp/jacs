@@ -17,9 +17,9 @@ import java.util.concurrent.Callable;
 public class SubcontextPopAction extends EntityAction {
     private static final Logger logger = Logger.getLogger(SubcontextPopAction.class);
 
-    public Callable getCallable(final Entity parentEntity, final Entity entity, final Map<String, Object> context) throws Exception {
-        return new Callable<Object>() {
-            public Object call() {
+    public CalledAction getCallableImpl(final Entity parentEntity, final Entity entity, final Map<String, Object> context) throws Exception {
+        return new CalledAction() {
+            public CalledAction call() {
                 String contextKey=(String)context.get(CONTEXT);
                 if (contextKey!=null) {
                     int lastPosition=contextKey.lastIndexOf(":");
@@ -30,7 +30,7 @@ public class SubcontextPopAction extends EntityAction {
                     }
                 }
                 context.put(CONTEXT, contextKey);
-                return entity;
+                return this;
             }
         };
     }

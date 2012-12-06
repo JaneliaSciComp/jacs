@@ -6,7 +6,6 @@ import org.janelia.it.jacs.model.entity.EntityData;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 
 /**
  * Created with IntelliJ IDEA.
@@ -27,9 +26,9 @@ public class AddChildEntityContextAction extends EntityAction {
         this.contextKeyString=contextKeyString;
     }
 
-    public Callable getCallable(final Entity parentEntity, final Entity entity, final Map<String, Object> context) throws Exception {
-        return new Callable<Object>() {
-            public Object call() throws Exception {
+    public CalledAction getCallableImpl(final Entity parentEntity, final Entity entity, final Map<String, Object> context) throws Exception {
+        CalledAction calledAction = new CalledAction() {
+            public CalledAction call() throws Exception {
                 logger.info("call() for AddChildEntityContextAction start");
                 // We assume the entity is populated, but not its children
                 Entity proxyEntity = getEntityBean().getEntityAndChildren(entity.getId());
@@ -45,13 +44,14 @@ public class AddChildEntityContextAction extends EntityAction {
                                 context.put(contextualKey(contextKeyString, context), child);
                                 logger.info("Added context entity child with key=" + contextKeyString + " name=" + childEntityName);
                             }
-                            return child;
+                            return this;
                         }
                     }
                 }
-                return null;
+                return this;
             }
         };
+        return calledAction;
     }
 
 }

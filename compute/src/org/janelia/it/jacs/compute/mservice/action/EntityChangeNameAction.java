@@ -25,18 +25,17 @@ public class EntityChangeNameAction extends EntityAction {
         this.newEntityName = newEntityName;
     }
 
-    public Callable getCallable(final Entity parentEntity, final Entity entity, final Map<String, Object> context) throws Exception {
-        return new Callable<Object>() {
-            public Object call() throws Exception {
-                Entity entityCopy = null;
+    public CalledAction getCallableImpl(final Entity parentEntity, final Entity entity, final Map<String, Object> context) throws Exception {
+        return new CalledAction() {
+            public CalledAction call() throws Exception {
                 if (entity.getName().equals(priorExpectedName)) {
                     entity.setName(newEntityName);
                     logger.info("Changing name of entity id="+entity.getId());
-                    entityCopy = getEntityBean().saveOrUpdateEntity(entity);
+                    getEntityBean().saveOrUpdateEntity(entity);
                 } else {
                     logger.info("Skipping entity with non-matching name id="+entity.getId()+" name="+entity.getName());
                 }
-                return entityCopy;
+                return this;
             }
         };
     }

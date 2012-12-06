@@ -26,14 +26,14 @@ public class MoveToContextEntityAction extends EntityAction {
         this.destinationEntityContextKey=destinationEntityContextKey;
     }
 
-    public Callable getCallable(final Entity parentEntity, final Entity entity, final Map<String, Object> context) throws Exception {
-        return new Callable<Object>() {
-            public Object call() throws Exception {
+    public CalledAction getCallableImpl(final Entity parentEntity, final Entity entity, final Map<String, Object> context) throws Exception {
+        return new CalledAction() {
+            public CalledAction call() throws Exception {
                 logger.info("Starting call() for MoveToContextEntityAction for entity=" + entity.getName());
                 Entity destinationParentEntity = (Entity) context.get(contextualKey(destinationEntityContextKey, context));
                 if (destinationParentEntity == null) {
                     logger.error("Could not find expected destinationParentEntity with context key=" + destinationEntityContextKey + ", skipping");
-                    return entity;
+                    return this;
                 }
                 // First, find the existing entity data
                 Set<EntityData> edsToRemove = new HashSet<EntityData>();
@@ -58,7 +58,7 @@ public class MoveToContextEntityAction extends EntityAction {
                     logger.info("Deleting ed id=" + ed.getId());
                     getEntityBean().deleteEntityData(ed);
                 }
-                return entity;
+                return this;
             }
         };
     }
