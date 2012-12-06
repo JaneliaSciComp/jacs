@@ -26,32 +26,40 @@ public class MoveToContextEntityAction extends EntityAction {
         this.destinationEntityContextKey=destinationEntityContextKey;
     }
 
-    public Callable getCallable(final Entity parentEntity, final Entity entity, final Map context) throws Exception {
+    public Callable getCallable(final Entity parentEntity, final Entity entity, final Map<String, Object> context) throws Exception {
         return new Callable<Object>() {
             public Object call() throws Exception {
-                Entity destinationParentEntity=(Entity)context.get(destinationEntityContextKey);
-                if (destinationParentEntity==null) {
-                    throw new Exception("Could not find expected destinationParentEntity with context key="+destinationEntityContextKey);
+                logger.info("Starting call() for MoveToContextEntityAction for entity=" + entity.getName());
+                Entity destinationParentEntity = (Entity) context.get(contextualKey(destinationEntityContextKey, context));
+                if (destinationParentEntity == null) {
+                    logger.error("Could not find expected destinationParentEntity with context key=" + destinationEntityContextKey + ", skipping");
+                    return entity;
                 }
                 // First, find the existing entity data
-                Set<EntityData> edsToRemove=new HashSet<EntityData>();
-                Set<EntityData> parentEdSet=parentEntity.getEntityData();
+                Set<EntityData> edsToRemove = new HashSet<EntityData>();
+                Set<EntityData> parentEdSet = parentEntity.getEntityData();
                 for (EntityData ed : parentEdSet) {
-                    if (ed.getChildEntity().getId().equals(entity.getId())) {
-                        edsToRemove.add(ed);
+                    Entity child = ed.getChildEntity();
+                    if (child != null) {
+                        if (child.getId().equals(entity.getId())) {
+                            logger.info("Removing ed connecting child " + child.getName() + " to parent " + parentEntity.getName());
+                            edsToRemove.add(ed);
+                        }
                     }
                 }
-                if (edsToRemove.size()==0) {
-                    throw new Exception("Could not find any expected matching child-entity id="+entity.getId()+" for parent id="+parentEntity.getId());
+                if (edsToRemove.size() == 0) {
+                    throw new Exception("Could not find any expected matching child-entity id=" + entity.getId() + " for parent id=" + parentEntity.getId());
                 }
                 // First add new parent
+                logger.info("Adding entity " + entity.getName() + " to new parent " + destinationParentEntity.getName());
                 getEntityBean().addEntityToParent(destinationParentEntity, entity, 0, EntityConstants.ATTRIBUTE_ENTITY);
                 // Then, remove the original entity data(s)
                 for (EntityData ed : edsToRemove) {
+                    logger.info("Deleting ed id=" + ed.getId());
                     getEntityBean().deleteEntityData(ed);
                 }
                 return entity;
-          }
+            }
         };
     }
 

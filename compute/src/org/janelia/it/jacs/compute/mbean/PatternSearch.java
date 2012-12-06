@@ -5,9 +5,7 @@ import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.mservice.*;
-import org.janelia.it.jacs.compute.mservice.action.AddChildEntityContextAction;
-import org.janelia.it.jacs.compute.mservice.action.EntityChangeNameAction;
-import org.janelia.it.jacs.compute.mservice.action.MoveToContextEntityAction;
+import org.janelia.it.jacs.compute.mservice.action.*;
 import org.janelia.it.jacs.compute.mservice.trigger.EntityTrigger;
 import org.janelia.it.jacs.compute.mservice.trigger.EntityTypeNameTrigger;
 import org.janelia.it.jacs.compute.mservice.trigger.EntityTypeTrigger;
@@ -92,21 +90,28 @@ public class PatternSearch implements PatternSearchMBean {
             }
 
             // Create MService for Samples
-            MService sampleMService=new MService("system", 10);
+            MService sampleMService=new MService("system", 0);
 
             List<EntityTrigger> triggerList=new ArrayList<EntityTrigger>();
 
             EntityTypeTrigger screenTrigger=new EntityTypeTrigger(EntityConstants.TYPE_SCREEN_SAMPLE);
+
+            SubcontextPushAction subcontextPushAction=new SubcontextPushAction(true /* reset */);
+            screenTrigger.addAction(subcontextPushAction);
+
             AddChildEntityContextAction addMaskFolderToContextAction=new AddChildEntityContextAction("Mask Annotation", "MaskFolder");
             screenTrigger.addAction(addMaskFolderToContextAction);
+
             triggerList.add(screenTrigger);
 
-            EntityTypeNameTrigger paTrigger=new EntityTypeNameTrigger(EntityConstants.TYPE_FOLDER, "Pattern Annotation");
+            EntityTypeNameTrigger paTrigger=new EntityTypeNameTrigger(EntityConstants.TYPE_FOLDER, "Compartments");
             paTrigger.setRecursive(false);
 
             MoveToContextEntityAction moveEntityAction=new MoveToContextEntityAction("MaskFolder");
-            moveEntityAction.clearContextOnDone("MaskFolder");
+            moveEntityAction.addContextKeyToClearOnDone("MaskFolder");
             paTrigger.addAction(moveEntityAction);
+            SubcontextPopAction subcontextPopAction=new SubcontextPopAction();
+            paTrigger.addAction(subcontextPopAction);
 
             triggerList.add(paTrigger);
 

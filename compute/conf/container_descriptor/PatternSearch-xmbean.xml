@@ -16,4 +16,9 @@
         <name>changePatternAnnotationFolderName</name>
     </operation>
 
+    <operation>
+        <description>Move the Compartments folder under the Mask Folder</description>
+        <name>moveCompartmentsFolderUnderMaskFolder</name>
+    </operation>
+
 </mbean>

@@ -41,7 +41,7 @@ public class MService {
     List<ListenableFuture<Object>> futureList=new ArrayList<ListenableFuture<Object>>();
     List<EntityTrigger> triggerList=new ArrayList<EntityTrigger>();
     Map<Entity, Integer> levelMap=new HashMap<Entity, Integer>();
-    Map<Object, Object> actionContext=Collections.synchronizedMap(new HashMap<Object, Object>());
+    Map<String, Object> actionContext=Collections.synchronizedMap(new HashMap<String, Object>());
 
     // If maxThreads==0, this means don't use threads - run single-threaded
     public MService(String username, int maxThreads) throws Exception {
@@ -100,7 +100,7 @@ public class MService {
             levelMap.put(parent, parentLevel);
         }
 
-        //logger.info("level=" + parentLevel + " : name=" + parent.getName() + " type=" + parent.getEntityType().getName() + " triggerLevel=" + triggerLevel);
+        logger.info("level=" + parentLevel + " : name=" + parent.getName() + " type=" + parent.getEntityType().getName() + " triggerLevel=" + triggerLevel);
         EntityTrigger trigger = triggerList.get(triggerLevel);
         parent = getEntityBean().getEntityAndChildren(parent.getId());
         Set<Entity> children = parent.getChildren();
@@ -119,7 +119,7 @@ public class MService {
                             clearActionKeys(action);
                         }
                         catch (Exception ex) {
-                            action.handleFailure();
+                            action.handleFailure(ex);
                             clearActionKeys(action);
                         }
                     } else {
@@ -134,7 +134,12 @@ public class MService {
 
                             @Override
                             public void onFailure(Throwable throwable) {
-                                action.handleFailure();
+                                try {
+                                    action.handleFailure(throwable);
+                                } catch (Exception ex) {
+                                    logger.error(ex);
+                                    ex.printStackTrace();
+                                }
                                 clearActionKeys(action);
                             }
                         });
@@ -156,7 +161,7 @@ public class MService {
 
     private void clearActionKeys(EntityAction action) {
         if (action!=null) {
-            for (Object key : action.getContextKeysToClearOnDone()) {
+            for (String key : action.getContextKeysToClearOnDone()) {
                 actionContext.remove(key);
             }
         }

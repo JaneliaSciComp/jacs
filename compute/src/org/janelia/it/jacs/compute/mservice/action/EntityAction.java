@@ -20,13 +20,14 @@ import java.util.concurrent.Callable;
  */
 public abstract class EntityAction {
 
+    public static final String CONTEXT="context";
     private static Logger logger= Logger.getLogger(EntityAction.class);
     private static boolean DEBUG=false;
-    private List<Object> contextKeysToClearOnDone=new ArrayList<Object>();
+    private List<String> contextKeysToClearOnDone=new ArrayList<String>();
 
-    boolean blocking=true;
+    private boolean blocking=true;
 
-    public abstract Callable<Object> getCallable(final Entity parentEntity, final Entity entity, Map<Object, Object> context) throws Exception;
+    public abstract Callable<Object> getCallable(final Entity parentEntity, final Entity entity, Map<String, Object> context) throws Exception;
 
     public void processResult(Object result) {
         if (DEBUG) {
@@ -36,7 +37,9 @@ public abstract class EntityAction {
         }
     }
 
-    public void handleFailure() {}
+    public void handleFailure(Throwable t) throws Exception {
+        throw new Exception(t);
+    }
 
     protected EntityBeanLocal getEntityBean() {
         return EJBFactory.getLocalEntityBean();
@@ -54,12 +57,21 @@ public abstract class EntityAction {
         this.blocking=blocking;
     }
 
-    public void clearContextOnDone(Object key) {
+    public void addContextKeyToClearOnDone(String key) {
         contextKeysToClearOnDone.add(key);
     }
 
-    public List<Object> getContextKeysToClearOnDone() {
+    public List<String> getContextKeysToClearOnDone() {
         return contextKeysToClearOnDone;
+    }
+
+    public static String contextualKey(String key, Map<String, Object> context) {
+        String contextKey=(String)context.get(CONTEXT);
+        if (contextKey!=null) {
+            return contextKey+":"+key;
+        } else {
+            return key;
+        }
     }
 
 }

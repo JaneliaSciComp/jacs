@@ -22,7 +22,7 @@ public class LogEntityNameAction extends EntityAction {
         this.logMessage=logMessage;
     }
 
-    public Callable getCallable(final Entity parentEntity, final Entity entity, final Map context) throws Exception {
+    public Callable getCallable(final Entity parentEntity, final Entity entity, final Map<String, Object> context) throws Exception {
         return new Callable<Object>() {
             public Object call() {
                 logger.info(logMessage+" : entityName="+entity.getName() + " entityId="+entity.getId() + " parentEntityName="+parentEntity.getName());

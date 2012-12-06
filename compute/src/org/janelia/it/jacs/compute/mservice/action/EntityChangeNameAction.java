@@ -25,7 +25,7 @@ public class EntityChangeNameAction extends EntityAction {
         this.newEntityName = newEntityName;
     }
 
-    public Callable getCallable(final Entity parentEntity, final Entity entity, final Map context) throws Exception {
+    public Callable getCallable(final Entity parentEntity, final Entity entity, final Map<String, Object> context) throws Exception {
         return new Callable<Object>() {
             public Object call() throws Exception {
                 Entity entityCopy = null;
