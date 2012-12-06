@@ -1,10 +1,5 @@
 package org.janelia.it.jacs.compute.service.tic;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileWriter;
-import java.util.List;
-
 import org.ggf.drmaa.DrmaaException;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -13,6 +8,11 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.tic.SingleTicTask;
 import org.janelia.it.jacs.model.tasks.tic.TicTask;
+
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileWriter;
+import java.util.List;
 
 public class TICSubmitJobService extends SubmitDrmaaJobService {
     private static final String CONFIG_PREFIX = "ticConfiguration.";
@@ -175,10 +175,13 @@ public class TICSubmitJobService extends SubmitDrmaaJobService {
         if (runningFQBatch) {
             //  If the calibration and correction steps are NOT run then assume the input is to a location that has been
             //  calibrated and corrected.  //todo Need a better way to manage the permutations of execution!
-            String sourceLocation=specificBasePath;
+            String sourceLocation;
             if (!runningCalibration && !runningCorrection) {
                 sourceLocation = "$INPUT_FILE"+File.separator;
                 specificCorrectionPath = resultFileNode.getDirectoryPath()+File.separator;
+            }
+            else {
+                sourceLocation = specificCorrectionPath;
             }
             writer.write("ls -1 "+sourceLocation+"*.tif > "+specificCorrectionPath+"batchList.txt\n");
             String fullFQCmd = fishQuantCmd + " "+microscopeSettingsFilePath+" "+specificCorrectionPath+"batchList.txt\n";
