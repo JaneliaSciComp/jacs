@@ -21,4 +21,9 @@
         <name>moveCompartmentsFolderUnderMaskFolder</name>
     </operation>
 
+    <operation>
+        <description>Change the name of Mask Folder to Pattern Annotation</description>
+        <name>changeMaskFolderName</name>
+    </operation>
+
 </mbean>

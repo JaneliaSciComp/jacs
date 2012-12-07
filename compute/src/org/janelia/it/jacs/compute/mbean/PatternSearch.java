@@ -123,7 +123,37 @@ public class PatternSearch implements PatternSearchMBean {
         logger.info("moveCompartmentsFolderUnderMaskFolder() end");
     }
 
+    public void changeMaskFolderName() {
+        logger.info("changeMaskFolderName() start");
+        try {
+            // Get top-level folder
+            FileDiscoveryHelper helper=getFileDiscoveryHelper();
+            Entity topLevelSampleFolder = helper.createOrVerifyRootEntity(ScreenSampleLineCoordinationService.SCREEN_PATTERN_TOP_LEVEL_FOLDER_NAME,
+                    false /* create if necessary */, false /* load tree */);
+            if (topLevelSampleFolder == null) {
+                throw new Exception("Top level folder with name=" + ScreenSampleLineCoordinationService.SCREEN_PATTERN_TOP_LEVEL_FOLDER_NAME + " is null");
+            }
 
+            // Create MService for Samples
+            MService sampleMService=new MService("system", 10);
+
+            List<EntityTrigger> triggerList=new ArrayList<EntityTrigger>();
+            triggerList.add(new EntityTypeTrigger(EntityConstants.TYPE_SCREEN_SAMPLE));
+
+            EntityTypeNameTrigger paTrigger=new EntityTypeNameTrigger(EntityConstants.TYPE_FOLDER, "Mask Annotation");
+            paTrigger.setRecursive(false);
+            EntityChangeNameAction changeNameAction=new EntityChangeNameAction("Mask Annotation", "Pattern Annotation");
+            paTrigger.addAction(changeNameAction);
+            triggerList.add(paTrigger);
+
+            sampleMService.run(topLevelSampleFolder, triggerList);
+
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        logger.info("changeMaskFolderName() end");
+    }
 
 
 
