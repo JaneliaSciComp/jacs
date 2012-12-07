@@ -134,26 +134,36 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 			    	}
 			    	EntityData currSignalMip = image3d.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE);
 			    	if (currSignalMip==null || currSignalMip.getChildEntity()==null || !currSignalMip.getId().equals(signalMip.getId())) {
-			    		entityHelper.setImage(image3d, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMip);
+			    		entityHelper.setImageIfNecessary(image3d, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMip);
 			    	}
 				}
 				
 				if (refMip!=null) {
 			    	EntityData currRefMip = image3d.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE);
 			    	if (currRefMip==null || currRefMip.getChildEntity()==null || !currRefMip.getId().equals(refMip.getId())) {
-			    		entityHelper.setImage(image3d, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);
+			    		entityHelper.setImageIfNecessary(image3d, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);
 			    	}
 				}
 			}	
     	}
     	
     	if (default3dImage!=null) {
-        	logger.info("Found default image, applying to the Result, Pipeline Run, and Sample");
+        	logger.info("Found default 3d image, applying to the Result, Pipeline Run, and Sample");
         	entityHelper.setDefault3dImage(resultEntity, default3dImage);
         	entityHelper.setDefault3dImage(pipelineRunEntity, default3dImage);
         	entityHelper.setDefault3dImage(sampleEntity, default3dImage);
-    	}
-    			
+        	
+        	// Find and apply fast 3d image, if available
+    		Entity separation = resultEntity.getLatestChildOfType(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
+    		if (separation!=null) {
+            	Entity fast3dImage = findFast3dImage(separation);
+            	if (fast3dImage!=null) {
+            		logger.info("Found default fast 3d image, applying to "+default3dImage.getName());
+            		entityHelper.setImageIfNecessary(default3dImage, EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE, fast3dImage);
+        		}
+    		}
+    	}		
+		
     	// Finally, set the images on the sample tiles 
     	
     	logger.info("Applying MIPs to sample tiles");
@@ -215,6 +225,14 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 				findImages(child);
 			}
 		}
+	}
+	
+	private Entity findFast3dImage(Entity separation) {
+		Entity supportingFiles = EntityUtils.getSupportingData(separation);
+		if (supportingFiles==null) return null;
+    	Entity fastLoad = EntityUtils.findChildWithName(supportingFiles, "Fast Load");
+		if (fastLoad==null) return null;
+		return EntityUtils.findChildWithName(fastLoad, "ConsolidatedSignal2_25.mp4");
 	}
 	
 	private void setMIPs(Entity entity, Entity signalMip, Entity refMip) throws ComputeException {

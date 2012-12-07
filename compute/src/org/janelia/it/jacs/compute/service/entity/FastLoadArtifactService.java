@@ -58,14 +58,14 @@ public class FastLoadArtifactService implements IService {
             if (mode.equals(MODE_CREATE_INPUT_LIST)) {
                 doCreateInputList();
             }
-            if (mode.equals(MODE_CREATE_SINGLE_INPUT_LIST)) {
+            else if (mode.equals(MODE_CREATE_SINGLE_INPUT_LIST)) {
                 doCreateSingleInputList();
             }
             else if (mode.equals(MODE_COMPLETE)) {
                 doComplete();
             } 
             else {
-                logger.error("Do not recognize mode type="+mode);
+                logger.error("Unrecognized mode: "+mode);
             }
     	}
         catch (Exception e) {
@@ -82,20 +82,17 @@ public class FastLoadArtifactService implements IService {
         logger.info("Finding neuron separations...");
         
         List<Entity> entities = new ArrayList<Entity>();
-        for(Entity sample : entityBean.getUserEntitiesByTypeName(username, EntityConstants.TYPE_SAMPLE)) {
-        	logger.info("Processing "+sample.getName());
-        	entityBean.loadLazyEntity(sample, false);
-        	for(Entity result : sample.getChildrenOfType(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
-        		String dir = result.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        		if (!fastLoadDirExists(dir)) {
-        			if (!dir.contains(centralDir)) {
-        				logger.info("Ignoring entity with path which does not contain the FileStore.CentralDir: "+result.getId());
-        			}
-        			else {
-        				entities.add(result);		
-        			}
-        		}
-        	}
+        for(Entity result : entityBean.getUserEntitiesByTypeName(username, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
+        	logger.info("Processing neuron separation, id="+result.getId());
+    		String dir = result.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+    		if (!fastLoadDirExists(dir)) {
+    			if (!dir.contains(centralDir)) {
+    				logger.info("Ignoring entity with path which does not contain the FileStore.CentralDir: "+result.getId());
+    			}
+    			else {
+    				entities.add(result);		
+    			}
+    		}
         }
         
         List<List> inputGroups = createGroups(entities, GROUP_SIZE);

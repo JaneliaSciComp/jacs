@@ -1,7 +1,7 @@
 <!-- 
 	Process a neuron separation result and ensure it has all the necessary "fastLoad" artifacts.
 -->
-<process name="FastLoad Artifact Pipeline" processor="queue/separationPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="FastLoad Artifact Pipeline" processor="queue/analysisPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	    
     	<operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
@@ -35,11 +35,14 @@
 		    </operation>
         </sequence>
 	    
-	    <!-- Move the larger files to archive -->
-		<operation name="Move large files to archive" processor="org.janelia.it.jacs.compute.service.utility.SyncToArchiveService">
-			<input name="ARCHIVE_FILE_PATH"/>
-			<input name="FILE_PATH" value="$V{ARCHIVE_FILE_PATH}"/>
-		</operation>
+	    <!-- Move the files over if necessary -->
+	    <sequence name="Wait For Archive Sync" waitForAsync="true">
+	        <sequence name="Limit Archive Access" processor="queue/archiveAccess">
+				<operation name="Copy files to archive" processor="org.janelia.it.jacs.compute.service.utility.SyncToArchiveService">
+					<input name="FILE_PATH" value="$V{ARCHIVE_FILE_PATH}"/>
+				</operation>
+			</sequence>
+        </sequence>
 		        
 	    <!-- Load the separation results into the database -->
 		<operation name="Discover Bulk Fast Load Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FastLoadResultsDiscoveryService">

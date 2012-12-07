@@ -47,9 +47,9 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
         Entity signalMIP = EntityUtils.findChildWithName(filesFolder, "ConsolidatedSignalMIP.png");
         Entity referenceMIP = EntityUtils.findChildWithName(filesFolder, "ReferenceMIP.png");
 
-		helper.setImage(separationEntity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMIP);
-		helper.setImage(separationEntity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, referenceMIP);
-		helper.setDefault2dImage(separationEntity, signalMIP);
+		helper.setImageIfNecessary(separationEntity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMIP);
+		helper.setImageIfNecessary(separationEntity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, referenceMIP);
+		helper.setImageIfNecessary(separationEntity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE,  signalMIP);
     }
     
     protected void processSeparationFolder(Entity separationEntity) throws Exception {

@@ -199,7 +199,7 @@ public class MCFODataCompressService implements IService {
     		return;
     	}
     	
-    	logger.info("Will compress file: "+imageEntity.getName());
+    	logger.info("Will compress file: "+imageEntity.getName()+" (id="+imageEntity.getId()+")");
     	
     	inputFiles.add(filepath);
     	

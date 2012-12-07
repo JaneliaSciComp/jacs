@@ -21,7 +21,7 @@
 				</operation>
             
 			    <!-- Create a result node for this grid run -->
-			    <operation name="Create Group Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+			    <operation name="Create Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
 				    <input name="NAME" value="Temp"/>
 			        <output name="RESULT_FILE_NODE"/>
 			        <output name="RESULT_FILE_NODE_ID"/>
@@ -34,26 +34,31 @@
 						<input name="RESULT_FILE_NODE"/>
 						<input name="FILE_PATHS"/>
 						<output name="FASTLOAD_PATHS"/>
+						<output name="ARCHIVE_FILE_PATHS"/>
 				    </operation>
 		        </sequence>
 			    
-			    <!-- Move large files to archive -->
-		        <sequence name="Archive Artifacts" waitForAsync="true">
-				    <operation name="Archive Artifacts" processor="queue/gridSubmitAndWait">
-				        <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ArchivingGridService"/>
-				        <input name="RESULT_FILE_NODE"/>
-						<input name="FASTLOAD_PATHS"/>
-						<input name="INPUT_PATHS" value="$V{FASTLOAD_PATHS}"/>
-						<input name="FILE_PATTERN" value="*.v3dpbd"/>
-				    </operation>
-		        </sequence>
-				        
+			    <!-- Move the files over if necessary -->
+			    <sequence name="Wait For Archive Sync" waitForAsync="true">
+			        <sequence name="Limit Archive Access" processor="queue/archiveAccess">
+						<operation name="Copy files to archive" processor="org.janelia.it.jacs.compute.service.utility.SyncToArchiveService">
+							<input name="FILE_PATHS" value="$V{ARCHIVE_FILE_PATHS}"/>
+						</operation>
+					</sequence>
+				</sequence>
+				
 			    <!-- Load the separation results into the database -->
 				<operation name="Discover Bulk Fast Load Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FastLoadResultsDiscoveryService">
 					<input name="ENTITY_LIST"/>
 					<input name="SEPARATION_LIST" value="$V{ENTITY_LIST}"/>
 			    </operation>
 				        
+			    <!-- Trash temporary file node -->
+			    <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
+			        <input name="RESULT_FILE_NODE_ID"/>
+			        <input name="FILE_NODE_ID" value="$V{RESULT_FILE_NODE_ID}"/>
+			    </operation>
+	    
     		</sequence>	
 		
 		</sequence>      

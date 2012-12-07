@@ -287,11 +287,13 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
-    public void runSingleFastLoadArtifactPipeline(String user, String separationEntityId) {
+    public void runSingleFastLoadArtifactPipeline(String separationEntityId) {
         try {
+        	Entity entity = EJBFactory.getLocalEntityBean().getEntityById(separationEntityId);
+        	if (entity==null) throw new IllegalArgumentException("Entity with id "+separationEntityId+" does not exist");
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
         	taskParameters.add(new TaskParameter(FastLoadArtifactService.PARAM_separationId, separationEntityId, null)); 
-        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
+        	Task task = new GenericTask(new HashSet<Node>(), entity.getUser().getUserLogin(), new ArrayList<Event>(), 
         			taskParameters, "fastLoadArtifactPipeline", "Fast Load Artifact Pipeline");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("FastLoadArtifactSinglePipeline", task.getObjectId());

@@ -147,6 +147,7 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
     	File archiveDir = new File(outputDir, "archive");
     	if (archiveDir.exists()) {
     		processData.putItem("ARCHIVE_FILE_PATH", archiveDir.getAbsolutePath());
+    		processData.putItem("FILES_WERE_ARCHIVED", new Boolean(true));
     	}
     	else {
     		logger.warn("No archive directory was generated at "+archiveDir.getAbsolutePath());

@@ -48,7 +48,7 @@ public interface WorkstationDataManagerMBean {
     public void runTwoChanDataPipeline(String user);
     public void runTwoChanSamplePipeline(String sampleEntityId);
 
-    public void runSingleFastLoadArtifactPipeline(String user, String separationEntityId);
+    public void runSingleFastLoadArtifactPipeline(String separationEntityId);
     public void runCompleteFastLoadArtifactPipeline(String user);
     
     // Generic confocal image processing pipelines, driven by pipeline configurations on a data-set basis

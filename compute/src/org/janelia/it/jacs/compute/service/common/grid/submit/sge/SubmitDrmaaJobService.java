@@ -219,7 +219,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         	if (!USE_R620_NODES && isShortJob()) {
         		ns += " -l short=true -now n";
         	}
-        	logger.info("Setting native specification to accomodate "+mem+" memory and "+slots+" slots: "+ns);
+        	logger.info("Setting native specification to accomodate "+mem+" GB of memory and "+slots+" slot(s): "+ns);
         	jt.setNativeSpecification(ns);	
         }
         

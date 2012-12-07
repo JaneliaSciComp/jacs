@@ -240,11 +240,6 @@
         <description>Create the fastLoad artifacts for a single neuron separation</description>
         <name>runSingleFastLoadArtifactPipeline</name>
         <parameter>
-            <description>User to run as (e.g. "system")</description>
-            <name>user</name>
-            <type>java.lang.String</type>
-        </parameter>
-        <parameter>
            <description>Entity id of the neuron separation result entity</description>
            <name>separationEntityId</name>
            <type>java.lang.String</type>

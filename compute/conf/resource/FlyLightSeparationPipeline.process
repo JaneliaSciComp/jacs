@@ -38,14 +38,19 @@
 				<input name="REFERENCE_CHANNEL"/>
 				<input name="PREVIOUS_RESULT_FILENAME"/>
 				<output name="ARCHIVE_FILE_PATH"/>
+				<output name="FILES_WERE_ARCHIVED"/>
 		    </operation>
         </sequence>
 
-	    <!-- Move the larger files to archive -->
-		<operation name="Move large files to archive" processor="org.janelia.it.jacs.compute.service.utility.SyncToArchiveService">
-			<input name="ARCHIVE_FILE_PATH"/>
-			<input name="FILE_PATH" value="$V{ARCHIVE_FILE_PATH}"/>
-		</operation>
+    	<sequence if="FILES_WERE_ARCHIVED=true">
+    	
+		    <!-- Move the larger files to archive -->
+			<operation name="Move large files to archive" processor="org.janelia.it.jacs.compute.service.utility.SyncToArchiveService">
+				<input name="ARCHIVE_FILE_PATH"/>
+				<input name="FILE_PATH" value="$V{ARCHIVE_FILE_PATH}"/>
+			</operation>
+			
+		</sequence>
 		
 	    <!-- Load the separation results into the database -->
 		<operation name="Discover Neuron Separation Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.NeuronSeparatorResultsDiscoveryService">

@@ -210,12 +210,17 @@ public class MCFODataUpgradeService extends AbstractEntityService {
     }
 
     private void printImages(String indent, Entity entity) {
-    
+
     	EntityData default3dImage = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
     	if (default3dImage!=null) {
     		logger.info(indent+"Default3d: "+new File(default3dImage.getValue()).getName());
+    		
+        	EntityData fast3dImage = default3dImage.getChildEntity().getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE);
+        	if (fast3dImage!=null) {
+        		logger.info(indent+"Fast3d: "+new File(fast3dImage.getValue()).getName());
+        	}
     	}
-
+    	
     	EntityData default2dImage = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
     	if (default2dImage!=null) {
     		logger.info(indent+"Default2d: "+new File(default2dImage.getValue()).getName());

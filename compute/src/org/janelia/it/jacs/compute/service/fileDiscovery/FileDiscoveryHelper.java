@@ -229,7 +229,7 @@ public class FileDiscoveryHelper extends EntityHelper {
     }
 
     public Entity createFolderForFile(String name, boolean isCommonRoot, String dir) throws Exception {
-        logger.info("Creating new topLevelFolder with name=" + name);
+        logger.info("Creating new folder with name=" + name+" (isCommonRoot="+isCommonRoot+")");
         Entity folder = new Entity();
         Date createDate = new Date();
         folder.setCreationDate(createDate);
