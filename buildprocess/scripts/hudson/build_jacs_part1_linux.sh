@@ -65,8 +65,7 @@ PACKAGE_WINDOWS_DIR="$STAGING_DIR/FlySuite_windows_${FWVER}"
 
 STAGING_PACKAGE_MAC_DIR="$EXE_DIR/FlySuite_${FWVER}"
 STAGING_PACKAGE_LINUX_DIR="$EXE_DIR/FlySuite_linux_${FWVER}"
-#  The windows staging directory built here, is only temporary, to work around access problems from windows mount points. LLF
-STAGING_PACKAGE_WINDOWS_DIR="$EXE_DIR/FlySuite_windows_${FWVER}"_temp
+STAGING_PACKAGE_WINDOWS_DIR="$EXE_DIR/FlySuite_windows_${FWVER}"
 
 echo "Building FlySuite version $FWVER (Part 1)"
 
@@ -200,7 +199,8 @@ if [[ $SERVER == jacs ]] && [[ $BUILD_FLYSUITE == 1 ]]; then
     echo "  Creating new Windows package in $PACKAGE_WINDOWS_DIR"
     cp -R $TEMPLATE_DIR/windows_template $PACKAGE_WINDOWS_DIR
     cp -R $JACS_COMPILE_DIR/console/build/jars/* $PACKAGE_WINDOWS_DIR
-    #  Windows has a special build process for its executables.
+    #  Windows has a special build process for its executables. It needs write access through Win mount points.
+    chmod ugo+rwx $PACKAGE_WINDOWS_DIR
 fi
 
 if [[ $SERVER == "jacs-staging" ]] && [[ $BUILD_FLYSUITE == 1 ]]; then
