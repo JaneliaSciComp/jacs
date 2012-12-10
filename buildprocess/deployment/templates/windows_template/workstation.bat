@@ -5,6 +5,7 @@
 ::
 
 set INSTALL=%~dp0
+cd %INSTALL%
 
 :: Reading the last line of the file produced by running the workstation AutoUpdater application.
 ::  The last line should be the full path to a downloaded update.
