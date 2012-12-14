@@ -17,15 +17,18 @@
             <input name="PROCESS_VARIABLE_4" value="STITCH_ALGORITHMS"/>
             <input name="TASK_PARAMETER_5" value="alignment algorithms"/>
             <input name="PROCESS_VARIABLE_5" value="ALIGNMENT_ALGORITHMS"/>
-            <input name="TASK_PARAMETER_6" value="analysis algorithms"/>
-            <input name="PROCESS_VARIABLE_6" value="ANALYSIS_ALGORITHMS"/>
-            <input name="TASK_PARAMETER_7" value="pipeline process"/>
-            <input name="PROCESS_VARIABLE_7" value="PIPELINE_PROCESS"/>
+            <input name="TASK_PARAMETER_6" value="alignment algorithm parameters"/>
+            <input name="PROCESS_VARIABLE_6" value="ALIGNMENT_ALGORITHM_PARAMS"/>
+            <input name="TASK_PARAMETER_7" value="analysis algorithms"/>
+            <input name="PROCESS_VARIABLE_7" value="ANALYSIS_ALGORITHMS"/>
+            <input name="TASK_PARAMETER_8" value="pipeline process"/>
+            <input name="PROCESS_VARIABLE_8" value="PIPELINE_PROCESS"/>
 	        <output name="SAMPLE_ENTITY_ID"/>
 	        <output name="PIPELINE_NAME"/>
 	        <output name="MERGE_ALGORITHMS"/>
 	        <output name="STITCH_ALGORITHMS"/>
 	        <output name="ALIGNMENT_ALGORITHMS"/>
+            <output name="ALIGNMENT_ALGORITHM_PARAMS"/>
 	        <output name="ANALYSIS_ALGORITHMS"/>
 	        <output name="PIPELINE_PROCESS"/>
 	    </operation>
@@ -43,6 +46,7 @@
 			<input name="MERGE_ALGORITHMS"/>
 			<input name="STITCH_ALGORITHMS"/>
 			<input name="ALIGNMENT_ALGORITHMS"/>
+            <input name="ALIGNMENT_ALGORITHM_PARAMS"/>
 			<input name="ANALYSIS_ALGORITHMS"/>
 			<output name="CREATE_PIPELINE_RUN"/>
 			<output name="RUN_MERGE"/>
@@ -51,7 +55,7 @@
 			<output name="RUN_ANALYSIS"/>
 			<output name="MERGE_ALGORITHM"/>
 			<output name="STITCH_ALGORITHM"/>
-			<output name="ALIGNMENT_ALGORITHM"/>
+            <output name="PARAMETERIZED_ALIGNMENT_ALGORITHM"/>
 			<output name="ANALYSIS_ALGORITHM"/>
 		</operation>
 		
@@ -225,14 +229,14 @@
 	    </operation>
 		
         <sequence if="RUN_ALIGNMENT=true">
-	        <sequence forEach="ALIGNMENT_ALGORITHM">
+	        <sequence forEach="PARAMETERIZED_ALIGNMENT_ALGORITHM">
 	            <sequence>
 	    	
 					<!-- Run brain alignment on prealigned data -->
 			        <include name="Brain Alignment" process="FlyLightAlignmentPipeline">
 						<input name="PIPELINE_RUN_ENTITY_ID"/>
 						<input name="SAMPLE_ENTITY_ID"/>
-						<input name="ALIGNMENT_ALGORITHM"/>
+						<input name="PARAMETERIZED_ALIGNMENT_ALGORITHM"/>
 						<input name="INPUT_FILENAME" value="$V{STITCHED_FILENAME}"/>
 						<input name="SIGNAL_CHANNELS"/>
 						<input name="REFERENCE_CHANNEL"/>

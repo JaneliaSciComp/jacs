@@ -1,0 +1,25 @@
+<process name="Yoshi Mushroom Body 63x Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending">
+	<sequence>
+	    
+	    <!-- Set task variables -->
+	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitTaskVariablesService">
+	        <input name="TASK_PARAMETER_1" value="pipeline name"/>
+            <input name="TASK_PARAMETER_VALUE_1" value="FlyLight Pipeline"/>
+            <input name="TASK_PARAMETER_2" value="merge algorithms"/>
+            <input name="TASK_PARAMETER_VALUE_2" value="FLYLIGHT"/>
+            <input name="TASK_PARAMETER_3" value="stitch algorithms"/>
+            <input name="TASK_PARAMETER_VALUE_3" value="FLYLIGHT"/>
+            <input name="TASK_PARAMETER_4" value="alignment algorithms"/>
+            <input name="TASK_PARAMETER_VALUE_4" value="CONFIGURED"/>
+            <input name="TASK_PARAMETER_5" value="alignment algorithm parameters"/>
+            <input name="TASK_PARAMETER_VALUE_5" value="brainalign63xFlpout_512px_INT.sh"/>
+            <input name="TASK_PARAMETER_6" value="analysis algorithms"/>
+            <input name="TASK_PARAMETER_VALUE_6" value="NEURON_SEPARATOR"/>
+            <input name="TASK_PARAMETER_7" value="pipeline process"/>
+            <input name="TASK_PARAMETER_VALUE_7" value="YoshiMB63xFlpout512pxINT"/>
+	    </operation>
+	
+        <include name="Pipeline" process="FlyLightSamplePipeline"/>
+		
+    </sequence>
+</process>

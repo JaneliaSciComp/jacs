@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.service.entity;
 
+import org.janelia.it.jacs.compute.service.align.ParameterizedAlignmentAlgorithm;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.cv.AlignmentAlgorithm;
@@ -27,8 +28,8 @@ public class InitAlignmentParametersService extends AbstractEntityService {
     	
     	processData.putItem("OPTICAL_RESOLUTION", getConsensusOpticalResolution(sampleEntity));
     	
-		String alignmentType = (String)processData.getItem("ALIGNMENT_ALGORITHM");
-		AlignmentAlgorithm aa = AlignmentAlgorithm.valueOf(alignmentType);
+		ParameterizedAlignmentAlgorithm paa = (ParameterizedAlignmentAlgorithm)processData.getItem("PARAMETERIZED_ALIGNMENT_ALGORITHM");
+		AlignmentAlgorithm aa = paa.getAlgorithm();
 		
 		if (AlignmentAlgorithm.WHOLE_40X == aa) {
         	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.WholeBrain40xAlignmentService");
@@ -50,18 +51,17 @@ public class InitAlignmentParametersService extends AbstractEntityService {
         	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.CentralBrainAlignmentService");
         	processData.putItem("ALIGNMENT_RESULT_NAME", "Central Brain Alignment");
 		}
-		else if (AlignmentAlgorithm.YOSHI_63X_FLPOUT == aa) {
+		else if (AlignmentAlgorithm.CONFIGURED == aa) {
+			String scriptName = paa.getParameter();
+			if (scriptName==null) {
+				throw new IllegalArgumentException("Tried to use Configured alignment algorithm without a parameter");
+			}
         	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.ConfiguredAlignmentService");
         	processData.putItem("ALIGNMENT_RESULT_NAME", "Brain Alignment");
-        	processData.putItem("ALIGNMENT_SCRIPT_NAME", "brainalign63xFlpout_V1.08.sh");
-		}
-		else if (AlignmentAlgorithm.YOSHI_63X_LEXAGAL4 == aa) {
-        	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.ConfiguredAlignmentService");
-        	processData.putItem("ALIGNMENT_RESULT_NAME", "Brain Alignment");
-        	processData.putItem("ALIGNMENT_SCRIPT_NAME", "brainalign63xLexAGAL4_V1.08.sh");
+        	processData.putItem("ALIGNMENT_SCRIPT_NAME", scriptName);
 		}
 		else {
-			throw new IllegalArgumentException("No such alignment algorithm: "+alignmentType);
+			throw new IllegalArgumentException("No such alignment algorithm: "+aa);
 		}
 		
 		logger.info("Set OPTICAL_RESOLUTION = "+processData.getItem("OPTICAL_RESOLUTION"));

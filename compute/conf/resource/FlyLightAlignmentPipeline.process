@@ -6,7 +6,7 @@
 
 		<input name="PIPELINE_RUN_ENTITY_ID"/>
 		<input name="SAMPLE_ENTITY_ID"/>
-		<input name="ALIGNMENT_ALGORITHM"/>
+        <input name="PARAMETERIZED_ALIGNMENT_ALGORITHM"/>
 		<input name="INPUT_FILENAME"/>
 		<input name="SIGNAL_CHANNELS"/>
 		<input name="REFERENCE_CHANNEL"/>
@@ -21,7 +21,7 @@
 	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
 	    <operation name="Init Alignment Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitAlignmentParametersService">
 			<input name="SAMPLE_ENTITY_ID"/>
-			<input name="ALIGNMENT_ALGORITHM"/>
+			<input name="PARAMETERIZED_ALIGNMENT_ALGORITHM"/>
 			<output name="ALIGNMENT_SERVICE_CLASS"/>
 			<output name="ALIGNMENT_RESULT_NAME"/>
 			<output name="ALIGNMENT_TILE_NAME"/>
