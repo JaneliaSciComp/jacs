@@ -29,22 +29,20 @@ IF "%ErrorLevel%"=="0" goto Latest
     set UPDATEBAT="%TEMP%"\update__workstation.bat
 	del "%UPDATEBAT%"
     echo @echo off                            > %UPDATEBAT%
-    echo echo Updating...                    >> %UPDATEBAT%
+    echo echo Deleting old version...        >> %UPDATEBAT%
     echo rmdir /S /Q "%INSTALL%"             >> %UPDATEBAT%
+	echo echo Copying new version...         >> %UPDATEBAT%
     echo xcopy /S "%DOWNLOAD%" "%INSTALL%"   >> %UPDATEBAT%
-	::  Parens echoed here are confused with ending of IF statement enclosing this block of code.
-    echo IF NOT EXIST "%INSTALL%"\workstation.bat echo failed! >> %UPDATEBAT%
-    echo IF NOT EXIST "%INSTALL%"\workstation.bat exit 0 >> %UPDATEBAT%
     echo echo done.  Update complete.        >> %UPDATEBAT%
-    echo call "%INSTALL%"\start.bat          >> %UPDATEBAT%
+	echo start.bat                           >> %UPDATEBAT%
 
     :: Now run the file created above.  Exit afterwards.
     ::
     echo Executing update...
     call %UPDATEBAT%
+    :: Do not expect ever to arrive here, but in case we do, exit.
+	exit 0
 
-	goto Finish
-	
 :Latest
     echo Already at latest version.
 	cd %INSTALL%
