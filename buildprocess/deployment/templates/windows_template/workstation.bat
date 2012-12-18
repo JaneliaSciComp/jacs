@@ -21,7 +21,7 @@ echo The putative download line is %DOWNLOAD%
 ::  Search the auto updater log for the string indicating no update needed.
 ::
 FINDSTR /m /c:"Already at latest version" autoupdate.log >NUL
-IF ErrorLevel 0 goto Latest
+IF "%ErrorLevel%"=="0" goto Latest
     echo Updater downloaded a new version to %DOWNLOAD%.
 
     ::  Now need to create a temporary batch file to run the update, which replaces the running batch script as well.
