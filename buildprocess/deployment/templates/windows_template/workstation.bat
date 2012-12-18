@@ -30,13 +30,13 @@ IF "%ErrorLevel%"=="0" goto Latest
 	del "%UPDATEBAT%"
     echo @echo off                            > %UPDATEBAT%
     echo echo Updating...                    >> %UPDATEBAT%
-    echo echo rmdir /S %INSTALL%             >> %UPDATEBAT%
-    echo xcopy /S %DOWNLOAD% %INSTALL%\      >> %UPDATEBAT%
+    echo rmdir /S /Q "%INSTALL%"             >> %UPDATEBAT%
+    echo xcopy /S "%DOWNLOAD%" "%INSTALL%"   >> %UPDATEBAT%
 	::  Parens echoed here are confused with ending of IF statement enclosing this block of code.
-    echo IF NOT EXIST %INSTALL%\workstation.bat echo failed! >> %UPDATEBAT%
-    echo IF NOT EXIST %INSTALL%\workstation.bat exit 0 >> %UPDATEBAT%
+    echo IF NOT EXIST "%INSTALL%"\workstation.bat echo failed! >> %UPDATEBAT%
+    echo IF NOT EXIST "%INSTALL%"\workstation.bat exit 0 >> %UPDATEBAT%
     echo echo done.  Update complete.        >> %UPDATEBAT%
-    echo CMD /S %INSTALL%\start.bat      >> %UPDATEBAT%
+    echo call "%INSTALL%"\start.bat          >> %UPDATEBAT%
 
     :: Now run the file created above.  Exit afterwards.
     ::
