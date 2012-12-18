@@ -20,7 +20,7 @@ FOR /F "delims=" %%i IN (autoupdate.log) DO set DOWNLOAD=%%i
 echo The putative download line is %DOWNLOAD%
 ::  Search the auto updater log for the string indicating no update needed.
 ::
-FINDSTR /m "Already at latest version" autoupdate.log >NUL
+FINDSTR /m /c:"Already at latest version" autoupdate.log >NUL
 IF ErrorLevel 0 goto Latest
     echo Updater downloaded a new version to %DOWNLOAD%.
 
