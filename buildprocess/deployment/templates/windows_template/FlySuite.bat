@@ -6,6 +6,6 @@ REM Run this script from jacsData windows area
 REM start FlyWorkstation in background
 start /b java -XX:+UseParallelGC -jar workstation.jar -Xms512m -Xmx1024m &
 REM wait 3 seconds
-timeout /T 3
+CHOICE /N /C y /D y /T 3 > NUL
 REM Start Vaa3D in NeuronAnnotator mode
 vaa3d /na
