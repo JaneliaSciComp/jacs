@@ -75,7 +75,7 @@ public class UserDAOImpl extends DaoBaseImpl implements UserDAO {
             if (null == userLogin || "".equals(userLogin.trim())) {
                 throw new DaoException(new Exception(), "Cannot create a user with an empty or missing login.");
             }
-            user = new User(userLogin.trim(), name, null, null);
+            user = new User(userLogin.trim(), name);
             user.setUserId(id);
             getHibernateTemplate().save(user);
             logger.info("User Login is :" + user.getUserLogin());
@@ -92,7 +92,7 @@ public class UserDAOImpl extends DaoBaseImpl implements UserDAO {
             if (null == userLogin || "".equals(userLogin.trim())) {
                 throw new DaoException(new Exception(), "Cannot create a user with an empty or missing login.");
             }
-            user = new User(userLogin.trim(), name, null, null);
+            user = new User(userLogin.trim(), name);
             getHibernateTemplate().save(user);
             logger.info("User Login is :" + user.getUserLogin());
         }
@@ -118,7 +118,7 @@ public class UserDAOImpl extends DaoBaseImpl implements UserDAO {
             if (null == userLogin || "".equals(userLogin.trim())) {
                 throw new DaoException(new Exception(), "Cannot create a user with an empty or missing login.");
             }
-            user = new User(userLogin.trim(), name, null, null);
+            user = new User(userLogin.trim(), name);
             user.setUserId(id);
             if (email != null)
                 user.setEmail(email);
@@ -138,7 +138,7 @@ public class UserDAOImpl extends DaoBaseImpl implements UserDAO {
             if (null == userLogin || "".equals(userLogin.trim())) {
                 throw new DaoException(new Exception(), "Cannot create a user with an empty or missing login.");
             }
-            user = new User(userLogin.trim(), name, null, null);
+            user = new User(userLogin.trim(), name);
             if (email != null)
                 user.setEmail(email);
 

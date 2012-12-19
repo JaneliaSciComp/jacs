@@ -23,6 +23,7 @@ public class User extends Subject implements java.io.Serializable, IsSerializabl
     public static final String SYSTEM_USER_LOGIN = "system";
     public static final String SYSTEM_USER_KEY = "user:system";
 
+    transient private boolean administrator = false;
     private String email = "";
 
     private Set<SubjectRelationship> groupRelationships = new HashSet<SubjectRelationship>(0);
@@ -174,4 +175,13 @@ public class User extends Subject implements java.io.Serializable, IsSerializabl
         preferenceMap.put(getPrefKey(pref.getCategory(), pref.getName()), pref);  // Hibernate will update database
         addPreferenceToCategoryMap(pref); // Add/update the preference in the appropriate category
     }
+
+    public boolean isAdministrator() {
+        return administrator;
+    }
+
+    public void setAdministrator(boolean administrator) {
+        this.administrator = administrator;
+    }
+
 }
