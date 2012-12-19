@@ -22,7 +22,13 @@ echo The putative download line is %DOWNLOAD%
 ::
 FINDSTR /m /c:"Already at latest version" autoupdate.log >NUL
 set UPDATEBAT="%TEMP%"\__workstation.bat
-IF "%ErrorLevel%"=="0" goto Latest
+IF NOT "%ErrorLevel%"=="0" goto Update
+    echo Already at latest version.
+	cd %INSTALL%
+    call FlySuite.bat
+	exit 0
+
+:Update
     echo Updater downloaded a new version to %DOWNLOAD%.
 
     ::  Now need to create a temporary batch file to run the update, which replaces the running batch script as well.
@@ -40,15 +46,7 @@ IF "%ErrorLevel%"=="0" goto Latest
 
     :: Now run the file created above.  Exit afterwards.
     ::
-	goto FinishUpdate
 
-:Latest
-    echo Already at latest version.
-	cd %INSTALL%
-    call FlySuite.bat
-	exit 0
-
-:FinishUpdate
     ::   Best to keep this last, because this script is replacing itself with another one.
 	::   Also, the update bat file is meant to exit at the end, so that this batch file
 	::   is abandoned.  It is important that the CMD processor not try to continue
