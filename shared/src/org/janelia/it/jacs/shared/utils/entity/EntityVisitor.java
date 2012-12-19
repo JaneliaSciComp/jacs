@@ -10,9 +10,9 @@ import org.janelia.it.jacs.model.entity.EntityData;
  */
 public class EntityVisitor {
 
-	public void visit(EntityData entityData) {
+	public void visit(EntityData entityData) throws Exception {
 	}
 
-	public void visit(Entity entity) {
+	public void visit(Entity entity) throws Exception {
 	}
 }

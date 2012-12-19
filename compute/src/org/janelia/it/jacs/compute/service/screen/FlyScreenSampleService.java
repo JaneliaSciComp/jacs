@@ -23,6 +23,7 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.ScreenSampleResultNode;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.SystemCall;
 
@@ -43,7 +44,7 @@ public class FlyScreenSampleService implements EntityFilter, IService {
 
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
-    protected User user;
+    protected String ownerKey;
     protected Date createDate;
     protected String mode=MODE_UNDEFINED;
     protected Task task;
@@ -64,10 +65,10 @@ public class FlyScreenSampleService implements EntityFilter, IService {
             this.processData=processData;
             task = ProcessDataHelper.getTask(processData);
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
-            visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
+            visibility = User.SYSTEM_USER_KEY.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
-            user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
+            ownerKey = ProcessDataHelper.getTask(processData).getOwner();
             createDate = new Date();
             mode = processData.getString("MODE");
             sampleEntityIdList=(List<String>)processData.getItem("GROUP_LIST");
@@ -236,7 +237,7 @@ public class FlyScreenSampleService implements EntityFilter, IService {
 
      protected Entity getStackEntityFromScreenSample(Entity screenSampleEntity) {
         if (screenSampleEntity.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
-            List<Entity> stackEntities = screenSampleEntity.getChildrenOfType(EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
+            List<Entity> stackEntities = EntityUtils.getChildrenOfType(screenSampleEntity, EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
             if (stackEntities.size()>0) {
                 return stackEntities.get(0);
             }
@@ -246,7 +247,7 @@ public class FlyScreenSampleService implements EntityFilter, IService {
 
     protected Entity getMipEntityFromScreenSample(Entity screenSampleEntity) {
         if (screenSampleEntity.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
-            List<Entity> mipEntities = screenSampleEntity.getChildrenOfType(EntityConstants.TYPE_IMAGE_2D);
+            List<Entity> mipEntities = EntityUtils.getChildrenOfType(screenSampleEntity, EntityConstants.TYPE_IMAGE_2D);
             for (Entity mip : mipEntities) {
                 if (mip.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH).endsWith(".png")) {
                     return mip;
@@ -259,7 +260,7 @@ public class FlyScreenSampleService implements EntityFilter, IService {
 
     protected Entity createMipEntity(File pngFile, String name) throws Exception {
         Entity mipEntity = new Entity();
-        mipEntity.setUser(user);
+        mipEntity.setOwnerKey(ownerKey);
         mipEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D));
         mipEntity.setCreationDate(createDate);
         mipEntity.setUpdatedDate(createDate);
@@ -290,7 +291,7 @@ public class FlyScreenSampleService implements EntityFilter, IService {
         Entity folder = new Entity();
         folder.setCreationDate(createDate);
         folder.setUpdatedDate(createDate);
-        folder.setUser(user);
+        folder.setOwnerKey(ownerKey);
         folder.setName(name);
         folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
         if (directoryPath!=null) {

@@ -21,23 +21,21 @@ public class DataSetTest extends TestCase {
     public void testModel() throws Exception {
 
         final String name = "Pan Lineage 40x";
-        final String userLogin = "leetlab";
+        final String ownerKey = "group:leetlab";
         final String dataSetIdentifier = "leetlab_pan_lineage_40x";
         final String sageSync = "SAGE Sync";
-
-        final User user = new User(userLogin, null, null, null);
 
         Set<EntityData> entityDataSet = new HashSet<EntityData>();
         entityDataSet.add(
                 getEntityData(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER,
-                              user,
+                		      ownerKey,
                               dataSetIdentifier));
         entityDataSet.add(
                 getEntityData(EntityConstants.ATTRIBUTE_SAGE_SYNC,
-                              user,
+                			  ownerKey,
                               sageSync));
 
-        Entity entity = new Entity(null, name, user, null, null, null, null,
+        Entity entity = new Entity(null, name, ownerKey, null, null, null, null,
                                    entityDataSet);
 
         DataSet dataSet = new DataSet(entity);
@@ -45,7 +43,7 @@ public class DataSetTest extends TestCase {
         Assert.assertEquals("entity name not preserved",
                             name, dataSet.getName());
         Assert.assertEquals("entity userLogin not preserved",
-                            userLogin, dataSet.getUser().getUserLogin());
+        					ownerKey, dataSet.getUser());
         Assert.assertEquals("entity dataSetIdentifier not preserved",
                             dataSetIdentifier, dataSet.getDataSetIdentifier());
         Assert.assertEquals("entity sageSync not preserved",
@@ -78,13 +76,13 @@ public class DataSetTest extends TestCase {
     }
 
     private EntityData getEntityData(String name,
-                                     User user,
+                                     String ownerKey,
                                      String value) {
         return new EntityData(null,
                 getEntityAttribute(name),
                 null,
                 null,
-                user,
+                ownerKey,
                 value,
                 null,
                 null,

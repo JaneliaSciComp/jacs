@@ -64,7 +64,7 @@ public class FlyWorkstationWSBean extends BaseWSBean {
         Entity entity = null;
         try {
             EntityBeanRemote entityBean = EJBFactory.getRemoteEntityBean();
-            entity = entityBean.getEntityById(entityId);
+            entity = entityBean.getEntityById(null, new Long(entityId));
             logger.debug("Web Services - getEntity() complete");
         }
         catch (Exception e) {

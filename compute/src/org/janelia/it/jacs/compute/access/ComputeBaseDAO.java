@@ -1,25 +1,26 @@
-
 package org.janelia.it.jacs.compute.access;
+
+import java.math.BigInteger;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.util.*;
+
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 
 import org.apache.log4j.Logger;
 import org.hibernate.*;
-import org.hibernate.criterion.Expression;
 import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskMessage;
 import org.janelia.it.jacs.model.tasks.search.SearchTask;
+import org.janelia.it.jacs.model.user_data.Group;
 import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.search.SearchResultNode;
-
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-import java.math.BigInteger;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -284,21 +285,68 @@ public class ComputeBaseDAO {
         }
     }
 
-    public User getUserByName(String name) {
+    public User getUserByNameOrKey(String nameOrKey) {
         Session session = getCurrentSession();
-        Criteria c = session.createCriteria(User.class);
-        c.add(Expression.eq("userLogin", name));
-        List l = c.list();
-        if (l.size() == 0) return null;
-        return (User) l.get(0);
+        StringBuffer hql = new StringBuffer("select u from User u ");
+        hql.append("left outer join fetch u.groupRelationships gr ");
+        hql.append("left outer join fetch gr.group ");
+        hql.append("where u.name = :name or u.key = :name ");
+        Query query = session.createQuery(hql.toString());
+        query.setString("name", nameOrKey);
+        return (User)query.uniqueResult();
+    }
+    
+    public Group getGroupByNameOrKey(String nameOrKey) {
+        Session session = getCurrentSession();
+        StringBuffer hql = new StringBuffer("select g from Group g ");
+        hql.append("left outer join fetch g.userRelationships ur ");
+        hql.append("left outer join fetch ur.user ");
+        hql.append("where g.name = :name or g.key = :name ");
+        Query query = session.createQuery(hql.toString());
+        query.setString("name", nameOrKey);
+        return (Group)query.uniqueResult();
     }
 
-    public List getUsers(){
+    public Subject getSubjectByNameOrKey(String nameOrKey) {
+        Session session = getCurrentSession();
+        StringBuffer hql = new StringBuffer("select s from Subject s ");
+        hql.append("where s.name = :name or s.key = :name ");
+        Query query = session.createQuery(hql.toString());
+        query.setString("name", nameOrKey);
+        return (Subject)query.uniqueResult();
+    }
+    
+    public List<Subject> getSubjects() {
+        Session session = getCurrentSession();
+        Criteria c = session.createCriteria(Subject.class);
+        return c.list();
+    }
+
+    public List<User> getUsers() {
         Session session = getCurrentSession();
         Criteria c = session.createCriteria(User.class);
         return c.list();
     }
 
+    public List<Group> getGroups() {
+        Session session = getCurrentSession();
+        Criteria c = session.createCriteria(Group.class);
+        return c.list();
+    }
+    
+    public List<String> getGroupKeysForUsernameOrSubjectKey(String userKey) {
+        StringBuffer hql = new StringBuffer();
+        hql.append("select g.key from Group g ");
+        hql.append("join g.userRelationships ur ");
+        hql.append("join ur.user u ");
+        hql.append("where u.name = :userKey or u.key = :userKey ");
+        Query query = getCurrentSession().createQuery(hql.toString());
+        query.setString("userKey", userKey);
+        List<String> list = query.list();
+        _logger.debug("Got group keys for user: "+list);
+        return list;
+    }
+    
     public Object genericGet(Class c, Long id) {
         return getCurrentSession().get(c, id);
     }

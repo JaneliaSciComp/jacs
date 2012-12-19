@@ -1,7 +1,5 @@
 package org.janelia.it.jacs.model.entity;
 
-import org.janelia.it.jacs.model.user_data.User;
-
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -47,8 +45,8 @@ public class DataSet {
     }
 
     @XmlElement
-    public User getUser() {
-        return entity.getUser();
+    public String getUser() {
+        return entity.getOwnerKey();
     }
 
 }

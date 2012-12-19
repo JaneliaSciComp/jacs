@@ -16,6 +16,7 @@ import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.SystemCall;
 
 /**
@@ -75,9 +76,9 @@ public class MigrateLsmMetadataFilesService implements IService {
     }
     
     private File getLatestResultDir(Entity sampleEntity, String entityTypeName) {
-    	Entity pipelineRun = sampleEntity.getLatestChildOfType(EntityConstants.TYPE_PIPELINE_RUN);
+    	Entity pipelineRun = EntityUtils.getLatestChildOfType(sampleEntity, EntityConstants.TYPE_PIPELINE_RUN);
     	if (pipelineRun == null) return null;
-    	Entity sampleProcessingResult = pipelineRun.getLatestChildOfType(entityTypeName);
+    	Entity sampleProcessingResult = EntityUtils.getLatestChildOfType(pipelineRun, entityTypeName);
     	if (sampleProcessingResult == null) return null;
     	String filepath = sampleProcessingResult.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
     	return new File(filepath);

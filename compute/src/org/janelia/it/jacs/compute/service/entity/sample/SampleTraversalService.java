@@ -6,6 +6,7 @@ import java.util.List;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Returns all the samples for the task owner which match the parameters. Parameters must be provided in the ProcessData:
@@ -44,8 +45,8 @@ public class SampleTraversalService extends AbstractEntityService {
         
         if (!RUN_MODE_NONE.equals(runMode)) {
         	
-	    	logger.info("Searching for Samples owned by "+user.getUserLogin()+"...");
-	        List<Entity> entities = entityBean.getUserEntitiesByTypeName(user.getUserLogin(), EntityConstants.TYPE_SAMPLE);
+	    	logger.info("Searching for Samples owned by "+ownerKey+"...");
+	        List<Entity> entities = entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_SAMPLE);
 	
 			logger.info("Found "+entities.size()+" Samples. Filtering...");
 			
@@ -60,21 +61,21 @@ public class SampleTraversalService extends AbstractEntityService {
     	processData.putItem(outvar, outObjects);
     }
     
-    private boolean includeSample(Entity sample) {
+    private boolean includeSample(Entity sample) throws Exception {
 
 		if (RUN_MODE_NEW.equals(runMode)) {
 	    	populateChildren(sample);
-	    	Entity pipelineRun = sample.getLatestChildOfType(EntityConstants.TYPE_PIPELINE_RUN);
+	    	Entity pipelineRun = EntityUtils.getLatestChildOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
 	    	return (pipelineRun==null);
 		} 
 		else if (RUN_MODE_INCOMPLETE.equals(runMode)) {
 	    	populateChildren(sample);
-	    	Entity pipelineRun = sample.getLatestChildOfType(EntityConstants.TYPE_PIPELINE_RUN);
+	    	Entity pipelineRun = EntityUtils.getLatestChildOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
 	    	if (pipelineRun==null) {
 	    		return true;
 	    	}
 	    	populateChildren(pipelineRun);
-	    	Entity error = pipelineRun.getLatestChildOfType(EntityConstants.TYPE_ERROR);
+	    	Entity error = EntityUtils.getLatestChildOfType(pipelineRun, EntityConstants.TYPE_ERROR);
 	    	return (error!=null); 
 		}
 		else if (RUN_MODE_ALL.equals(runMode)) {

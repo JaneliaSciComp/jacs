@@ -15,7 +15,6 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
-import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
@@ -32,20 +31,12 @@ public class FileDiscoveryHelper extends EntityHelper {
     private Set<Pattern> exclusions = new HashSet<Pattern>();
     private boolean excludeSymLinks = true;
     
-	public FileDiscoveryHelper(String username) {
-		super(username);
+	public FileDiscoveryHelper(String ownerKey) {
+		super(ownerKey);
 	}
 	
-	public FileDiscoveryHelper(User user) {
-		super(user);
-	}
-	
-    public FileDiscoveryHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, String username) {
-    	super(entityBean, computeBean, username);
-    }
-	
-    public FileDiscoveryHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, User user) {
-        super(entityBean, computeBean, user);
+    public FileDiscoveryHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, String ownerKey) {
+    	super(entityBean, computeBean, ownerKey);
     }
     
     public void addFileExclusion(String filePattern) {
@@ -130,7 +121,7 @@ public class FileDiscoveryHelper extends EntityHelper {
     public Entity addResultItem(Entity resultEntity, EntityType type, File file) throws Exception {
     	
         Entity entity = new Entity();
-        entity.setUser(user);
+        entity.setOwnerKey(ownerKey);
         Date createDate = new Date();
         entity.setCreationDate(createDate);
         entity.setUpdatedDate(createDate);
@@ -189,13 +180,13 @@ public class FileDiscoveryHelper extends EntityHelper {
 	
 	/**
 	 * Create and save a new supporting files folder with the given owner. 
-	 * @param username
+	 * @param ownerKey
 	 * @return
 	 * @throws ComputeException
 	 */
 	public Entity createSupportingFilesFolder() throws ComputeException {
         Entity filesFolder = new Entity();
-        filesFolder.setUser(user);
+        filesFolder.setOwnerKey(ownerKey);
         filesFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
         Date createDate = new Date();
         filesFolder.setCreationDate(createDate);
@@ -214,7 +205,7 @@ public class FileDiscoveryHelper extends EntityHelper {
     
     protected Entity createFileEntity(String path, String name, EntityType resultEntityType) throws Exception {
         Entity resultEntity = new Entity();
-        resultEntity.setUser(user);
+        resultEntity.setOwnerKey(ownerKey);
         resultEntity.setEntityType(resultEntityType);
         Date createDate = new Date();
         resultEntity.setCreationDate(createDate);
@@ -234,11 +225,11 @@ public class FileDiscoveryHelper extends EntityHelper {
         Date createDate = new Date();
         folder.setCreationDate(createDate);
         folder.setUpdatedDate(createDate);
-        folder.setUser(user);
+        folder.setOwnerKey(ownerKey);
         folder.setName(name);
         folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
         if (isCommonRoot) {
-        	folder.addAttributeAsTag(EntityConstants.ATTRIBUTE_COMMON_ROOT);
+        	EntityUtils.addAttributeAsTag(folder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
         }
         if (dir!=null) {
         	folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, dir);
@@ -248,13 +239,13 @@ public class FileDiscoveryHelper extends EntityHelper {
         return folder;
     }
     
-    public Entity getRootEntity(String topLevelFolderName, boolean loadTree) {
+    public Entity getRootEntity(String topLevelFolderName, boolean loadTree) throws ComputeException {
         Set<Entity> topLevelFolders = entityBean.getEntitiesByName(topLevelFolderName);
         Entity topLevelFolder = null;
         if (topLevelFolders != null) {
             // Only accept the current user's top level folder
             for (Entity entity : topLevelFolders) {
-                if (entity.getUser().getUserLogin().equals(user.getUserLogin())
+                if (entity.getOwnerKey().equals(ownerKey)
                         && entity.getEntityType().getName().equals(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER).getName())
                         && entity.getAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
                     // This is the folder we want, now load the entire folder hierarchy

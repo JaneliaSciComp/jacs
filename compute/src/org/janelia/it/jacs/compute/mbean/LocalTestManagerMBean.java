@@ -7,6 +7,6 @@ package org.janelia.it.jacs.compute.mbean;
  */
 public interface LocalTestManagerMBean {
     	
-	public void testBulkLoadEntityTree(String username) throws Exception;
+	public void testBulkLoadEntityTree(String ownerKey) throws Exception;
 
 }

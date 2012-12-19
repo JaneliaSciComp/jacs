@@ -71,7 +71,7 @@ public class InitAlignmentParametersService extends AbstractEntityService {
 		logger.info("Set ALIGNMENT_SCRIPT_NAME = "+processData.getItem("ALIGNMENT_SCRIPT_NAME"));
     }
     
-    private String getConsensusOpticalResolution(Entity sampleEntity) {
+    private String getConsensusOpticalResolution(Entity sampleEntity) throws Exception {
     	
     	String consensus = null;
     	populateChildren(sampleEntity);
@@ -80,10 +80,10 @@ public class InitAlignmentParametersService extends AbstractEntityService {
     	if (supportingFiles==null) return null; 
         populateChildren(supportingFiles);
 
-		for(Entity imageTile : supportingFiles.getChildrenOfType(EntityConstants.TYPE_IMAGE_TILE)) {		
+		for(Entity imageTile : EntityUtils.getChildrenOfType(supportingFiles, EntityConstants.TYPE_IMAGE_TILE)) {		
             populateChildren(imageTile);
 
-    		for(Entity lsmStack : imageTile.getChildrenOfType(EntityConstants.TYPE_LSM_STACK)) {
+    		for(Entity lsmStack : EntityUtils.getChildrenOfType(imageTile, EntityConstants.TYPE_LSM_STACK)) {
     			String opticalRes = lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
     			if (consensus==null) {
     				consensus = opticalRes;

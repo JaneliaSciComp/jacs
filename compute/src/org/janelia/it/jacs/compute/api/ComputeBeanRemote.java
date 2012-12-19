@@ -1,12 +1,23 @@
 
 package org.janelia.it.jacs.compute.api;
 
+import java.io.IOException;
+import java.rmi.RemoteException;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+
+import javax.ejb.Remote;
+
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.blast.BlastTask;
+import org.janelia.it.jacs.model.user_data.Group;
 import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.blast.BlastDatabaseFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultFileNode;
@@ -16,14 +27,6 @@ import org.janelia.it.jacs.model.user_data.recruitment.RecruitmentResultFileNode
 import org.janelia.it.jacs.model.user_data.reversePsiBlast.ReversePsiBlastDatabaseNode;
 import org.janelia.it.jacs.model.user_data.tools.GenericServiceDefinitionNode;
 import org.janelia.it.jacs.shared.utils.ControlledVocabElement;
-
-import javax.ejb.Remote;
-import java.io.IOException;
-import java.rmi.RemoteException;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Remote interface to ComputeBeanImpl
@@ -39,6 +42,7 @@ public interface ComputeBeanRemote {
     public Node saveOrUpdateNode(Node node) throws DaoException, RemoteException;
     public Task saveOrUpdateTask(Task task) throws DaoException;
     public User saveOrUpdateUser(User user) throws DaoException;
+    public Group saveOrUpdateGroup(Group group) throws DaoException;
     public Node getResultNodeByTaskId(long taskId) throws DaoException, RemoteException;
     public List<Node> getResultNodesByTaskId(long taskId) throws DaoException, RemoteException;
     public Node getBlastDatabaseFileNodeByName(String name) throws RemoteException;
@@ -49,9 +53,13 @@ public interface ComputeBeanRemote {
     public Task getTaskWithMessages(long taskId) throws RemoteException;
     public void setTaskNote(long taskId, String note) throws DaoException;
     public void addTaskNote(long taskId, String note) throws DaoException;
-    public User getUserByName(String name) throws ComputeException;
-    public List getUsers() throws RemoteException;
-    public void removePreferenceCategory(String categoryName) throws DaoException;
+    public User getUserByNameOrKey(String name) throws ComputeException;
+    public Group getGroupByNameOrKey(String name) throws ComputeException;
+    public List<Subject> getSubjects() throws ComputeException;
+    public List<User> getUsers() throws ComputeException;
+	public List<Group> getGroups() throws ComputeException;
+	
+	public void removePreferenceCategory(String categoryName) throws DaoException;
     public Event saveEvent(Long taskId, String eventType, String description, Date timestamp) throws DaoException;
     public void submitJob(String processDefName,long taskId) throws RemoteException; //Note: Used by Blast API
     public Long submitJob(String processDefName,Map<String, Object> processConfiguration) throws RemoteException; // Note: Used by test
@@ -116,5 +124,9 @@ public interface ComputeBeanRemote {
     public List<Task> getUserTasksByType(String simpleName, String userName) throws RemoteException;
     public List<Event> getEventsForTask(long taskId) throws DaoException;
     public ControlledVocabElement[] getControlledVocab(Long objectId, int vocabIndex) throws ServiceException;
-
+	
+	public Group createGroup(String groupOwner, String groupName) throws DaoException;
+	public Group addUserToGroup(String groupUser, String groupName) throws DaoException;
+    public void removeGroup(String groupName) throws DaoException;
+    public void removeUserFromGroup(String groupUser, String groupName) throws DaoException;
 }

@@ -25,6 +25,7 @@ import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.MaskAnnotationResultNode;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 
 /**
@@ -80,7 +81,7 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
 
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
-    protected User user;
+    protected String ownerKey;
     protected Date createDate;
     protected Task task;
     protected String sessionName;
@@ -122,12 +123,12 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
         task = ProcessDataHelper.getTask(processData);
         logger.info("MaskGuideService running under TaskId=" + task.getObjectId());
         sessionName = ProcessDataHelper.getSessionRelativePath(processData);
-        visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
+        visibility = User.SYSTEM_USER_KEY.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
         entityBean = EJBFactory.getLocalEntityBean();
         computeBean = EJBFactory.getLocalComputeBean();
-        helper = new FileDiscoveryHelper(entityBean, computeBean, user);
+        ownerKey = ProcessDataHelper.getTask(processData).getOwner();
+        helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
 
-        user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
         createDate = new Date();
         refresh = task.getParameter(PARAM_refresh).trim().toLowerCase().equals("true");
         maskFolderName = task.getParameter(PARAM_maskFolderName);
@@ -374,7 +375,7 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
         Entity folder = new Entity();
         folder.setCreationDate(createDate);
         folder.setUpdatedDate(createDate);
-        folder.setUser(user);
+        folder.setOwnerKey(ownerKey);
         folder.setName(name);
         folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
         if (directoryPath!=null) {
@@ -396,7 +397,7 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
 
     protected Entity createMipEntity(File pngFile, String name) throws Exception {
         Entity mipEntity = new Entity();
-        mipEntity.setUser(user);
+        mipEntity.setOwnerKey(ownerKey);
         mipEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D));
         mipEntity.setCreationDate(createDate);
         mipEntity.setUpdatedDate(createDate);
@@ -409,7 +410,7 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
     protected Entity createStackEntity(File file, String entityName, Entity mipEntity) throws Exception {
         Entity stack = new Entity();
         String mipFilePath=mipEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        stack.setUser(user);
+        stack.setOwnerKey(ownerKey);
         stack.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D));
         stack.setCreationDate(createDate);
         stack.setUpdatedDate(createDate);

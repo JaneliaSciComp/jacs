@@ -13,6 +13,7 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.lsm.MergedTile;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Gets all the merged tiles for a given sample.
@@ -40,7 +41,7 @@ public class GetMergedTilesService implements IService {
         	
         	List<MergedTile> tiles = new ArrayList<MergedTile>();
         	
-        	for(Entity lsmPairEntity : sampleEntity.getDescendantsOfType(EntityConstants.TYPE_IMAGE_TILE, true)) {
+        	for(Entity lsmPairEntity : EntityUtils.getDescendantsOfType(sampleEntity, EntityConstants.TYPE_IMAGE_TILE, true)) {
         		Entity mergedStack = lsmPairEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_MERGED_STACK);
         		if (mergedStack != null) {
         			File mergedFile = new File(mergedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));

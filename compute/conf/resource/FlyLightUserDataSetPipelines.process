@@ -17,7 +17,7 @@
 	        <input name="DEFAULT_CHANNEL_SPECIFICATION" value="sssr"/>
 		</operation>
 		
-    	<sequence if="TASK_OWNER=system">
+    	<sequence if="TASK_OWNER=user:flylight">
     	
 		    <!-- Discover samples in Sage which are not assigned to data sets -->
 			<operation name="Initial Image Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SageImageFamilyDiscoveryService">

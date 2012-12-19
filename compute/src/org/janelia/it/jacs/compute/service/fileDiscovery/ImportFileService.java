@@ -107,11 +107,11 @@ public class ImportFileService extends FileDiscoveryService{
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
-            user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
+            ownerKey = ProcessDataHelper.getTask(processData).getOwner();
             createDate = new Date();
             task= ProcessDataHelper.getTask(processData);
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
-            visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
+            visibility = User.SYSTEM_USER_KEY.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
 
             logger.info("Creating top-level folder");
             topLevelFolderName=processData.getString("ROOT_ENTITY_NAME");

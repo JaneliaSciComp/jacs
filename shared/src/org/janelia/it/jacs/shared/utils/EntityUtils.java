@@ -3,10 +3,7 @@ package org.janelia.it.jacs.shared.utils;
 import java.util.*;
 
 import org.hibernate.Hibernate;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityAttribute;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.entity.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +49,7 @@ public class EntityUtils {
 	            // date comparison is disabled because sometimes the milliseconds are truncated for unknown reasons
 //		        .compare(entity1.getCreationDate(), entity2.getCreationDate(), Ordering.natural().nullsFirst())
 //		        .compare(entity1.getUpdatedDate(), entity2.getUpdatedDate(), Ordering.natural().nullsFirst())
+	        	.compare(entity1.getOwnerKey(), entity2.getOwnerKey(), Ordering.natural().nullsFirst())
 	        	.compare(entity1.getName(), entity2.getName(), Ordering.natural().nullsFirst());
         
     	if (entity1.getEntityType()!=null || entity2.getEntityType()!=null) {
@@ -61,14 +59,6 @@ public class EntityUtils {
         	}
     		chain = chain.compare(entity1.getEntityType().getName(), entity2.getEntityType().getName(), Ordering.natural().nullsFirst());
     	}
-    	
-    	if (entity1.getUser()!=null || entity2.getUser()!=null) {
-        	if (entity1.getUser()==null||entity2.getUser()==null) {
-        		log.debug("Entity areEqual? users differ");
-        		return false;
-        	}
-    		chain = chain.compare(entity1.getUser().getUserLogin(), entity2.getUser().getUserLogin(), Ordering.natural().nullsFirst());
-    	}        
     
     	if (chain.result()!=0) {
     		log.debug("Entity areEqual? false");
@@ -77,34 +67,36 @@ public class EntityUtils {
     		return false;
     	}
 
-		Map<Long,EntityData> ed1Map = new HashMap<Long,EntityData>();
-		Map<Long,EntityData> ed2Map = new HashMap<Long,EntityData>();
+		Set<Long> edIds1 = new HashSet<Long>();
+		for(EntityData ed : entity1.getEntityData()) {
+			edIds1.add(ed.getId());
+		}
+
+		Set<Long> edIds2 = new HashSet<Long>();
+		for(EntityData ed : entity2.getEntityData()) {
+			edIds2.add(ed.getId());
+		}
 		
-		for(EntityData ed1 : entity1.getEntityData()) {
-			ed1Map.put(ed1.getId(), ed1);
+		if (!edIds1.equals(edIds2)) {
+			log.debug("Entity areEqual? attributes differ");
+			return false;
 		}
 
-		for(EntityData ed2 : entity2.getEntityData()) {
-			ed2Map.put(ed2.getId(), ed2);
-			EntityData ed1 = ed1Map.get(ed2.getId());
-			if (ed1==null) {
-				log.debug("Entity areEqual? entity1 does not have {}",ed2.getId());
-				return false;
-			}
-			if (!areEqual(ed1,ed2)) {
-				log.debug("Entity areEqual? {} != {}",ed1.getId(),ed2.getId());
-				return false;
-			}
+		Set<Long> eapIds1 = new HashSet<Long>();
+		for(EntityActorPermission eap : entity1.getEntityActorPermissions()) {
+			eapIds1.add(eap.getId());
 		}
 
-		for(EntityData ed1 : entity1.getEntityData()) {
-			EntityData ed2 = ed2Map.get(ed1.getId());
-			if (ed2==null) {
-				log.debug("Entity areEqual? entity2 does not have {}",ed1.getId());
-				return false;
-			}
+		Set<Long> eapIds2 = new HashSet<Long>();
+		for(EntityActorPermission eap : entity2.getEntityActorPermissions()) {
+			eapIds2.add(eap.getId());
 		}
-
+		
+		if (!eapIds1.equals(eapIds2)) {
+			log.debug("Entity areEqual? permissions differ");
+			return false;
+		}
+		
     	return true;
     }
 
@@ -142,7 +134,7 @@ public class EntityUtils {
 	            // date comparison is disabled because sometimes the milliseconds are truncated for unknown reasons
 //	            .compare(ed1.getCreationDate(), ed2.getCreationDate(), Ordering.natural().nullsFirst())
 //	            .compare(ed1.getUpdatedDate(), ed2.getUpdatedDate(), Ordering.natural().nullsFirst())
-	            .compare(ed1.getUser().getUserLogin(), ed2.getUser().getUserLogin(), Ordering.natural().nullsFirst())
+	            .compare(ed1.getOwnerKey(), ed2.getOwnerKey(), Ordering.natural().nullsFirst())
 	            .result();
 	    
 	    if (c!=0) {
@@ -159,6 +151,7 @@ public class EntityUtils {
     	log.debug("EntityData(id={})",ed.getId());
     	log.debug("    entityAttribute: {}",ed.getEntityAttribute()==null?null:ed.getEntityAttribute().getName());
     	log.debug("    value: {}",ed.getValue());
+    	log.debug("    ownerKey: {}",ed.getOwnerKey());
     	log.debug("    orderIndex: {}",ed.getOrderIndex());
     	log.debug("    creationDate: {}",ed.getCreationDate());
     	log.debug("    updatedDate: {}",ed.getUpdatedDate());
@@ -170,7 +163,7 @@ public class EntityUtils {
     	log.debug("Entity(id={})",entity.getId());
     	log.debug("    entityType: {}",entity.getEntityType()==null?null:entity.getEntityType().getName());
     	log.debug("    name: {}",entity.getName());
-    	log.debug("    userLogin: {}",entity.getUser().getUserLogin()==null?null:entity.getUser().getUserLogin());
+    	log.debug("    ownerKey: {}",entity.getOwnerKey()==null?null:entity.getOwnerKey());
     	log.debug("    creationDate: {}",entity.getCreationDate());
     	log.debug("    updatedDate: {}",entity.getUpdatedDate());
     }
@@ -199,12 +192,34 @@ public class EntityUtils {
 				}
 			}
 			
+			// Update permissions
+			Map<Long,EntityActorPermission> newEapMap = new HashMap<Long,EntityActorPermission>();
+			for(EntityActorPermission eap : newEntity.getEntityActorPermissions()) {
+				newEapMap.put(eap.getId(), eap);
+			}
+			
+			// Remove any permissions that are no longer present
+			for(Iterator<EntityActorPermission> i = entity.getEntityActorPermissions().iterator(); i.hasNext();) {
+				EntityActorPermission eap = i.next();
+				if (!newEapMap.containsKey(eap.getId())) {
+					i.remove();
+				}
+				else {
+					newEapMap.remove(eap.getId());
+				}
+			}
+			
+			// Add any remaining permissions
+			entity.getEntityActorPermissions().addAll(newEapMap.values());
+			
+			
+			// Update entity properties
 			entity.setName(newEntity.getName());
 	    	entity.setUpdatedDate(newEntity.getUpdatedDate());
 			entity.setCreationDate(newEntity.getCreationDate());
 			entity.setEntityStatus(newEntity.getEntityStatus());
 			entity.setEntityType(newEntity.getEntityType());
-			entity.setUser(newEntity.getUser());
+			entity.setOwnerKey(newEntity.getOwnerKey());
 			entity.setEntityData(newEntity.getEntityData());
     	}
     }
@@ -259,7 +274,7 @@ public class EntityUtils {
                 for ( EntityData datum: data ) {
                     Entity childEntity = datum.getChildEntity();
                     if ( childEntity != null ) {
-                        path = childEntity.getValueByAttributeName( EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE );
+                        path = childEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE );
                         if ( path != null ) {
                             log.debug("Found path " + path + " for entity " + entity.getName() + " via drill-and-attrib");
                             break;
@@ -364,7 +379,91 @@ public class EntityUtils {
         }
         return items;
     }
+    
 
+    public static List<Entity> getDescendantsOfType(Entity entity, String typeName) {
+    	return getDescendantsOfType(entity, typeName, false);
+    }
+    
+    /**
+     * Get all the descendants (including self) which are of a certain type. Depends on the subtree of entities 
+     * "below" this one being loaded.
+     *
+     * @param typeName
+     * @param ignoreNested short circuit on searching a subtree once an entity of the given type is found
+     * @return
+     */
+    public static List<Entity> getDescendantsOfType(Entity entity, String typeName, boolean ignoreNested) {
+
+    	boolean found = false;
+        List<Entity> items = new ArrayList<Entity>();
+        if (typeName==null || typeName.equals(entity.getEntityType().getName())) {
+            items.add(entity);
+            found = true;
+        }
+        
+        if (!found || !ignoreNested) {
+            for (EntityData entityData : entity.getOrderedEntityData()) {
+                Entity child = entityData.getChildEntity();
+                if (child != null) {
+                    items.addAll(getDescendantsOfType(child, typeName));
+                }
+            }	
+        }
+
+        return items;
+    }
+
+    public static List<Entity> getChildrenOfType(Entity entity, String typeName) {
+
+        List<Entity> items = new ArrayList<Entity>();
+        for (EntityData entityData : entity.getOrderedEntityData()) {
+            Entity child = entityData.getChildEntity();
+            if (child != null) {
+                if (typeName==null || typeName.equals(child.getEntityType().getName())) {
+                    items.add(child);
+                }
+            }
+        }
+
+        return items;
+    }
+
+    /**
+     * Order the children and return the last child with the given type.
+     * @param entityTypeName
+     * @return
+     */
+    public static Entity getLatestChildOfType(Entity entity, String entityTypeName) {
+    	List<Entity> children = entity.getOrderedChildren();
+    	Collections.reverse(children);
+    	for(Entity child : children) {
+    		if (!child.getEntityType().getName().equals(entityTypeName)) continue;
+	    	return child;
+    	}
+    	return null;
+    }
+    
+    public static boolean addAttributeAsTag(Entity entity, String attributeName) {
+        Set<EntityData> data=entity.getEntityData();
+        EntityAttribute attribute = entity.getAttributeByName(attributeName);
+        if (attribute==null) {
+            return false;
+        } else {
+            EntityData tag = new EntityData();
+            tag.setParentEntity(entity);
+            tag.setEntityAttribute(attribute);
+            tag.setOwnerKey(entity.getOwnerKey());
+            Date createDate = new Date();
+            tag.setCreationDate(createDate);
+            tag.setUpdatedDate(createDate);
+            tag.setValue(attribute.getName());
+            data.add(tag);
+        }
+        return true;
+    }
+
+    
     public static void replaceAllAttributeTypesInEntityTree(Entity topEntity, EntityAttribute previousEa, EntityAttribute newEa, SaveUnit su) throws Exception {
         log.debug("replaceAllAttributeTypesInEntityTree id="+topEntity.getId());
         Set<EntityData> edSet=topEntity.getEntityData();
@@ -397,6 +496,7 @@ public class EntityUtils {
 	 * @return
 	 */
 	public static boolean isHidden(EntityData entityData) {
+		if (entityData==null || entityData.getEntityAttribute()==null) return true;
 		String attrName = entityData.getEntityAttribute().getName();
 		if (EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE.equals(attrName) 
 				|| EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE.equals(attrName) 

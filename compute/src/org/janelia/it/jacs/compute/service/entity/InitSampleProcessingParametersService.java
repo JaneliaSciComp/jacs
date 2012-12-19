@@ -58,7 +58,7 @@ public class InitSampleProcessingParametersService extends AbstractEntityService
     	}
     	
     	supportingFiles = entityBean.getEntityTree(supportingFiles.getId());
-    	List<Entity> tileEntities = supportingFiles.getDescendantsOfType(EntityConstants.TYPE_IMAGE_TILE, true);
+    	List<Entity> tileEntities = EntityUtils.getDescendantsOfType(supportingFiles, EntityConstants.TYPE_IMAGE_TILE, true);
     	
     	boolean archived = false;
     	

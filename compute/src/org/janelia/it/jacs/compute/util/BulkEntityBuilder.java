@@ -4,7 +4,6 @@ import java.util.Stack;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.entity.*;
-import org.janelia.it.jacs.model.user_data.User;
 
 /**
  * A concise-syntax builder for entity trees for loading with the bulk loader. See LocalTestManager for an example of usage.
@@ -16,11 +15,11 @@ public class BulkEntityBuilder {
 
 	private static final Logger logger = Logger.getLogger(BulkEntityBuilder.class);
 	
-	private String username;
+	private String ownerKey;
 	private Stack<Entity> ancestry = new Stack<Entity>();
 	
-	public BulkEntityBuilder(String username) {
-		this.username = username;
+	public BulkEntityBuilder(String ownerKey) {
+		this.ownerKey = ownerKey;
 	}
 	
     public BulkEntityBuilder entity(String entityTypeName, String name) {
@@ -36,9 +35,7 @@ public class BulkEntityBuilder {
     	
     	if (ancestry.isEmpty()) {
     		// Only root gets an owner, to save on object creation
-        	User owner = new User();
-        	owner.setUserLogin(username);
-    		entity.setUser(owner);
+    		entity.setOwnerKey(ownerKey);
     	}
     	else {
     		Entity current = ancestry.peek();

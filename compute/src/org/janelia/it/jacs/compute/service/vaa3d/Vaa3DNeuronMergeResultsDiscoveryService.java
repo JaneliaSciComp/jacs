@@ -1,5 +1,9 @@
 package org.janelia.it.jacs.compute.service.vaa3d;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -14,12 +18,8 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.neuron.NeuronMergeTask;
-import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.neuron.NeuronMergeResultNode;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * File discovery service for neuron merge results.
@@ -33,7 +33,7 @@ public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
     protected Logger logger;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
-    protected User user;
+    protected String ownerKey;
     protected Date createDate;
     protected IProcessData processData;
     protected Task task;
@@ -43,8 +43,8 @@ public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
             logger = ProcessDataHelper.getLoggerForTask(processData, Vaa3DNeuronMergeResultsDiscoveryService.class);
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
-            user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
-            entityHelper = new EntityHelper(entityBean, computeBean, user);
+            ownerKey = ProcessDataHelper.getTask(processData).getOwner();
+            entityHelper = new EntityHelper(entityBean, computeBean, ownerKey);
             createDate = new Date();
             task = ProcessDataHelper.getTask(processData);
             Entity separationResultEntity = entityBean.getEntityTree(Long.valueOf(task.getParameter(NeuronMergeTask.PARAM_separationEntityId)));
@@ -71,7 +71,7 @@ public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
         if (null==separationResultEntity) {
             throw new ServiceException("Cannot add Curated Neurons to a null Separation Result");
         }
-        List<Entity> tmpCuratedNeuronCollectionItems = separationResultEntity.getChildrenOfType(EntityConstants.TYPE_CURATED_NEURON_COLLECTION);
+        List<Entity> tmpCuratedNeuronCollectionItems = EntityUtils.getChildrenOfType(separationResultEntity, EntityConstants.TYPE_CURATED_NEURON_COLLECTION);
         if (null!=tmpCuratedNeuronCollectionItems && 1==tmpCuratedNeuronCollectionItems.size()) {
             return tmpCuratedNeuronCollectionItems.get(0);
         }
@@ -82,7 +82,7 @@ public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
     }
 
     protected Integer getNextAvailableIndex(Entity parentEntity) {
-        List<Entity> children = parentEntity.getChildrenOfType(EntityConstants.TYPE_CURATED_NEURON);
+        List<Entity> children = EntityUtils.getChildrenOfType(parentEntity, EntityConstants.TYPE_CURATED_NEURON);
         if (null==children) {return 1;}
         return children.size()+1;
     }
@@ -90,7 +90,7 @@ public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
     protected Entity createCuratedNeuronEntity(Entity tmpCuratedNeuronCollection) throws Exception {
         String tmpIndex = getNextAvailableIndex(tmpCuratedNeuronCollection).toString();
         Entity curatedNeuronEntity = new Entity();
-        curatedNeuronEntity.setUser(user);
+        curatedNeuronEntity.setOwnerKey(ownerKey);
         curatedNeuronEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_CURATED_NEURON));
         curatedNeuronEntity.setCreationDate(createDate);
         curatedNeuronEntity.setUpdatedDate(createDate);
@@ -102,13 +102,13 @@ public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
         for (String tmpFragmentOid : Task.listOfStringsFromCsvString(task.getParameter(NeuronMergeTask.PARAM_commaSeparatedNeuronFragmentList))) {
             tmpFragmentOidList.add(Long.valueOf(tmpFragmentOid));
         }
-        entityBean.addChildren(user.getUserLogin(), curatedNeuronEntity.getId(), tmpFragmentOidList,EntityConstants.ATTRIBUTE_ENTITY);
+        entityBean.addChildren(ownerKey, curatedNeuronEntity.getId(), tmpFragmentOidList,EntityConstants.ATTRIBUTE_ENTITY);
         return curatedNeuronEntity;
     }
 	
     protected Entity createCuratedNeuronCollection(Entity separationResultEntity) throws Exception {
         Entity curatedNeuronCollectionEntity = new Entity();
-        curatedNeuronCollectionEntity.setUser(separationResultEntity.getUser());
+        curatedNeuronCollectionEntity.setOwnerKey(separationResultEntity.getOwnerKey());
         curatedNeuronCollectionEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_CURATED_NEURON_COLLECTION));
         curatedNeuronCollectionEntity.setCreationDate(createDate);
         curatedNeuronCollectionEntity.setUpdatedDate(createDate);

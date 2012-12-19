@@ -1,0 +1,11 @@
+<!-- 
+	Upgrade the user's samples to use the most current entity structure.
+-->
+<process name="Upgrade User Samples" processor="queue/largePipelineLauncher" startEvent="pending">
+	<sequence>
+	    
+		<operation name="MCFO Data Upgrade" processor="org.janelia.it.jacs.compute.service.entity.sample.BulkSampleImageRegistrationService">
+		</operation>
+		
+    </sequence>
+</process>

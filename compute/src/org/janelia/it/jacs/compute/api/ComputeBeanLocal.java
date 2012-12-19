@@ -11,8 +11,8 @@ import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskMessage;
+import org.janelia.it.jacs.model.user_data.Group;
 import org.janelia.it.jacs.model.user_data.Node;
-import org.janelia.it.jacs.model.user_data.User;
 
 /**
  * Local interface to ComputeBeanImpl
@@ -48,7 +48,7 @@ public interface ComputeBeanLocal extends ComputeBeanRemote {
 
 	public void setParentTaskId(Long parentTaskId, Long childTaskId) throws DaoException;
 
-	public List<User> getAllUsers();
-
 	public HashMap<String, String> getChildTaskStatusMap(Long objectId) throws Exception;
+	
+	public boolean createUser(String newUserName) throws DaoException;
 }

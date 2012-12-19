@@ -119,9 +119,8 @@ public class SolrDAO extends AnnotationDAO {
 	        conn = getJdbcConnection();
 	        
 	        StringBuffer sql = new StringBuffer();
-	        sql.append("select e.id, e.name, e.creation_date, e.updated_date, et.name, u.user_login, ea.name, ed.value, ed.child_entity_id ");
+	        sql.append("select e.id, e.name, e.creation_date, e.updated_date, et.name, e.owner_dkey, ea.name, ed.value, ed.child_entity_id ");
 	        sql.append("from entity e ");
-	        sql.append("join user_accounts u on e.user_id = u.user_id ");
 	        sql.append("join entityType et on e.entity_type_id = et.id ");
 	        sql.append("left outer join entityData ed on e.id=ed.parent_entity_id ");
 	        sql.append("left outer join entityAttribute ea on ed.entity_att_id = ea.id ");
@@ -160,7 +159,7 @@ public class SolrDAO extends AnnotationDAO {
 					entity.setCreationDate(rs.getDate(3));
 					entity.setUpdatedDate(rs.getDate(4));
 					entity.setEntityTypeName(rs.getString(5));
-					entity.setUserLogin(rs.getString(6));
+					entity.setOwnerKey(rs.getString(6));
 				}
 
 				String key = rs.getString(7);
@@ -232,7 +231,7 @@ public class SolrDAO extends AnnotationDAO {
 		for(Entity annotationEntity : getAnnotationsByEntityId(null, entityIds)) {
 			String key = annotationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_TERM);
 			String value = annotationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM);
-			String owner = annotationEntity.getUser().getUserLogin();
+			String ownerKey = annotationEntity.getOwnerKey();
 			String entityIdStr = annotationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
 			
 			Long entityId = null;
@@ -249,7 +248,7 @@ public class SolrDAO extends AnnotationDAO {
 				annotationMap.put(entityId, annotations);
 			}
 			
-			annotations.add(new SimpleAnnotation(annotationEntity.getName(), key, value, owner));
+			annotations.add(new SimpleAnnotation(annotationEntity.getName(), key, value, ownerKey));
 		}
 		
 		// Get all Solr documents
@@ -351,7 +350,7 @@ public class SolrDAO extends AnnotationDAO {
     	doc.setField("name", entity.getName(), 1.0f);
     	doc.setField("creation_date", entity.getCreationDate(), 0.8f);
     	doc.setField("updated_date", entity.getUpdatedDate(), 0.9f);
-    	doc.setField("username", entity.getUserLogin(), 1.0f);
+    	doc.setField("username", entity.getOwnerKey(), 1.0f);
     	doc.setField("entity_type", entity.getEntityTypeName(), 1.0f);
     	
     	if (sageVocab!=null && sageProps!=null) {
@@ -436,7 +435,7 @@ public class SolrDAO extends AnnotationDAO {
     	simpleEntity.setCreationDate(entity.getCreationDate());
     	simpleEntity.setUpdatedDate(entity.getUpdatedDate());
     	simpleEntity.setEntityTypeName(entity.getEntityType().getName());
-    	simpleEntity.setUserLogin(entity.getUser().getUserLogin());
+    	simpleEntity.setOwnerKey(entity.getOwnerKey());
     	
     	Set<Long> childrenIds = new HashSet<Long>();
     	for(EntityData ed : entity.getEntityData()) {

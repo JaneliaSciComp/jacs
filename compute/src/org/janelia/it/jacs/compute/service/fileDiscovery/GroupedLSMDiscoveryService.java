@@ -106,7 +106,7 @@ public class GroupedLSMDiscoveryService extends FileDiscoveryService {
     protected Entity createSample(String name, List<File> lsmFileList) throws Exception {
 
         Entity sample = new Entity();
-        sample.setUser(user);
+        sample.setOwnerKey(ownerKey);
         sample.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SAMPLE));
         sample.setCreationDate(createDate);
         sample.setUpdatedDate(createDate);
@@ -132,7 +132,7 @@ public class GroupedLSMDiscoveryService extends FileDiscoveryService {
 
     protected Entity createSupportingFilesFolder() throws Exception {
         Entity filesFolder = new Entity();
-        filesFolder.setUser(user);
+        filesFolder.setOwnerKey(ownerKey);
         filesFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
         filesFolder.setCreationDate(createDate);
         filesFolder.setUpdatedDate(createDate);
@@ -144,7 +144,7 @@ public class GroupedLSMDiscoveryService extends FileDiscoveryService {
     
     private Entity createLsmStackFromFile(File file) throws Exception {
         Entity lsmStack = new Entity();
-        lsmStack.setUser(user);
+        lsmStack.setOwnerKey(ownerKey);
         lsmStack.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK));
         lsmStack.setCreationDate(createDate);
         lsmStack.setUpdatedDate(createDate);

@@ -106,7 +106,7 @@ public class MongoDbDAO extends AnnotationDAO {
 					entity.setCreationDate(rs.getDate(3));
 					entity.setUpdatedDate(rs.getDate(4));
 					entity.setEntityTypeName(rs.getString(5));
-					entity.setUserLogin(rs.getString(6));
+					entity.setOwnerKey(rs.getString(6));
 				}
 
 				String key = rs.getString(7);
@@ -220,7 +220,7 @@ public class MongoDbDAO extends AnnotationDAO {
     	builder.add("name", entity.getName());
     	builder.add("creation_date", entity.getCreationDate());
     	builder.add("updated_date", entity.getUpdatedDate());
-    	builder.add("username", entity.getUserLogin());
+    	builder.add("username", entity.getOwnerKey());
     	builder.add("entity_type", entity.getEntityTypeName());
     
     	Map<String,List<Map<String,Object>>> attrs = new HashMap<String,List<Map<String,Object>>>();

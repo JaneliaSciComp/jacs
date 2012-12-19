@@ -5,13 +5,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.solr.client.solrj.SolrQuery;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.SolrBeanLocal;
-import org.janelia.it.jacs.compute.api.support.SolrResults;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Removes unneeded (unannotated, not final) results from Samples. 
@@ -37,9 +36,9 @@ public class SampleCleaningService extends AbstractEntityService {
         	isDebug = Boolean.parseBoolean(testRun);	
         }            
         
-        logger.info("Cleaning old results from samples for user: "+user.getUserLogin());
+        logger.info("Cleaning old results from samples for user: "+ownerKey);
         
-        List<Entity> samples = entityBean.getUserEntitiesByTypeName(user.getUserLogin(), EntityConstants.TYPE_SAMPLE);
+        List<Entity> samples = entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_SAMPLE);
 
         logger.info("Will process "+samples.size()+" samples...");
         
@@ -51,13 +50,13 @@ public class SampleCleaningService extends AbstractEntityService {
         logger.info("Considered "+numSamples+" samples. Deleted "+numRunsDeleted+" results.");
     }
     
-    private void processSample(Entity sample) throws ComputeException {
+    private void processSample(Entity sample) throws Exception {
     	
     	logger.info("  Cleaning up sample "+sample.getName());
     	
     	List<Entity> toDelete = new ArrayList<Entity>();
     	
-    	List<Entity> children = sample.getChildrenOfType(EntityConstants.TYPE_PIPELINE_RUN);
+    	List<Entity> children = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
     	if (children.isEmpty()) return;
     	
     	// Remove latest run, we don't want to touch it
@@ -67,9 +66,9 @@ public class SampleCleaningService extends AbstractEntityService {
     	// Clean up everything except the last good run and the last error run
     	for(Entity pipelineRun : children) {
     		populateChildren(pipelineRun);
-    		if (lastRun.getLatestChildOfType(EntityConstants.TYPE_ERROR)!=null) {
+    		if (EntityUtils.getLatestChildOfType(lastRun, EntityConstants.TYPE_ERROR)!=null) {
     			// Last run had error, so only delete other error runs
-    			if (pipelineRun.getLatestChildOfType(EntityConstants.TYPE_ERROR)!=null) {
+    			if (EntityUtils.getLatestChildOfType(pipelineRun, EntityConstants.TYPE_ERROR)!=null) {
     				toDelete.add(pipelineRun);
     			}
     		}
@@ -100,7 +99,7 @@ public class SampleCleaningService extends AbstractEntityService {
     	if (!isDebug) {
     		int c = 0;
     		for(Entity child : toReallyDelete) {
-    			entityBean.deleteSmallEntityTree(user.getUserLogin(), child.getId());
+    			entityBean.deleteSmallEntityTree(ownerKey, child.getId());
     			c++;
     			numRunsDeleted++;
     		}

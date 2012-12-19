@@ -1,6 +1,10 @@
 
 package org.janelia.it.jacs.compute.api;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import javax.ejb.Local;
 
 import org.janelia.it.jacs.model.entity.Entity;
@@ -16,15 +20,33 @@ import org.janelia.it.jacs.model.entity.EntityData;
  */
 @Local
 public interface EntityBeanLocal extends EntityBeanRemote {
-	
+
+    public Entity getEntityById(String entityId) throws ComputeException;
+    public Entity getEntityById(Long entityId) throws ComputeException;
+    public Entity getEntityTree(Long entityId) throws ComputeException;
+    public Entity getEntityAndChildren(Long entityId) throws ComputeException;
+    public Set<Entity> getParentEntities(Long entityId) throws ComputeException;
+    public Set<Entity> getChildEntities(Long entityId) throws ComputeException;
+    public List<Entity> getEntitiesById(List<Long> ids) throws ComputeException;
+
+    public Set<Entity> getEntitiesByName(String name) throws ComputeException;
+    public List<Entity> getEntitiesByTypeName(String entityTypeName) throws ComputeException;
+    public List<Entity> getEntitiesByNameAndTypeName(String entityName, String entityTypeName) throws ComputeException;
+    public List<Entity> getEntitiesWithAttributeValue(String attrName, String attrValue) throws ComputeException;
+
+    public Set<EntityData> getParentEntityDatas(Long childEntityId) throws ComputeException;
+    public Set<Long> getParentIdsForAttribute(Long childEntityId, String attributeName) throws ComputeException;
+    public Entity getAncestorWithType(Entity entity, String type) throws ComputeException;
+    public List<Long> getPathToRoot(Long entityId, Long rootId) throws ComputeException;
+    public Map<Long,String> getChildEntityNames(Long entityId) throws ComputeException;
+    
 	public Entity saveOrUpdateEntity(Entity entity) throws ComputeException;
     public EntityData saveOrUpdateEntityData(EntityData newData) throws ComputeException;
     public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName) throws ComputeException;
-    
+
     public boolean deleteEntityById(Long entityId) throws ComputeException;
     public void deleteEntityData(EntityData ed) throws ComputeException;
     
     public void loadLazyEntity(Entity entity, boolean recurse) throws ComputeException;
     public Entity saveBulkEntityTree(Entity root) throws ComputeException;
-	public void setupEntityTypes();
 }

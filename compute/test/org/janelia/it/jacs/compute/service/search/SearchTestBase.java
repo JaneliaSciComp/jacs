@@ -151,7 +151,7 @@ public abstract class SearchTestBase extends TestCase {
     }
 
     private User getTestUser() throws Exception {
-        return computeBean.getUserByName(TEST_USER_NAME);
+        return computeBean.getUserByNameOrKey(TEST_USER_NAME);
     }
 
 }

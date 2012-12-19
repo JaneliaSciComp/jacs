@@ -88,7 +88,7 @@ public class CreateTaskService implements IService {
     }
 
     private void validateUserLogin(String userLogin) throws MissingDataException {
-        User user = computeDAO.getUserByName(userLogin);
+        User user = computeDAO.getUserByNameOrKey(userLogin);
         if (user == null) {
             throw new MissingDataException("User " + userLogin + " does not exist");
         }

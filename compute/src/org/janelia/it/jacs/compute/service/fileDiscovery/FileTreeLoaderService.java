@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
+import java.io.File;
+import java.util.*;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -18,10 +21,8 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.FileTreeLoaderResultNode;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.FileUtil;
-
-import java.io.File;
-import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -107,7 +108,7 @@ public class FileTreeLoaderService implements IService {
     protected Logger logger;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
-    protected User user;
+    protected String ownerKey;
     protected Date createDate;
     protected IProcessData processData;
     protected FileDiscoveryHelper helper;
@@ -151,13 +152,13 @@ public class FileTreeLoaderService implements IService {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
-            user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
+            ownerKey = ProcessDataHelper.getTask(processData).getOwner();
             createDate = new Date();
             task= ProcessDataHelper.getTask(processData);
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
-            visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
+            visibility = User.SYSTEM_USER_KEY.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
 
-            helper = new FileDiscoveryHelper(entityBean, computeBean, user);
+            helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
             helper.addFileExclusion("DrmaaSubmitter.log");
             helper.addFileExclusion("*.oos");
             helper.addFileExclusion("sge_*");
@@ -349,7 +350,7 @@ public class FileTreeLoaderService implements IService {
             folder = new Entity();
             folder.setCreationDate(createDate);
             folder.setUpdatedDate(createDate);
-            folder.setUser(user);
+            folder.setOwnerKey(ownerKey);
             folder.setName(dir.getName());
             folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
             folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, dir.getAbsolutePath());
@@ -417,7 +418,7 @@ public class FileTreeLoaderService implements IService {
         Entity fileEntity=new Entity();
         fileEntity.setCreationDate(createDate);
         fileEntity.setUpdatedDate(createDate);
-        fileEntity.setUser(user);
+        fileEntity.setOwnerKey(ownerKey);
         fileEntity.setName(f.getName());
         fileEntity.setEntityType(entityType);
         fileEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, f.getAbsolutePath());
@@ -468,7 +469,7 @@ public class FileTreeLoaderService implements IService {
         Long groupIndex=processData.getLong("PBD_INDEX");
         logger.info("PBD_INDEX="+groupIndex);
         List<ArtifactInfo> artifactList=pbdGroupMap.get(groupIndex);
-        FileTreeLoaderResultNode resultNode=new FileTreeLoaderResultNode(user.getUserLogin(), task, "FileTreeLoaderResultNode",
+        FileTreeLoaderResultNode resultNode=new FileTreeLoaderResultNode(ownerKey, task, "FileTreeLoaderResultNode",
                 "FileTreeLoaderResultNode for "+rootDirectoryPath+" pbd group index="+groupIndex, visibility, sessionName);
         resultNode=(FileTreeLoaderResultNode)computeBean.saveOrUpdateNode(resultNode);
         logger.info("Created resultNode id="+resultNode.getObjectId()+" PBD groupIndex="+groupIndex+" listSize="+artifactList.size());
@@ -507,7 +508,7 @@ public class FileTreeLoaderService implements IService {
         Long groupIndex=processData.getLong("MIP_INDEX");
         logger.info("MIP_INDEX="+groupIndex);
         List<ArtifactInfo> artifactList=mipGroupMap.get(groupIndex);
-        FileTreeLoaderResultNode resultNode=new FileTreeLoaderResultNode(user.getUserLogin(), task, "FileTreeLoaderResultNode",
+        FileTreeLoaderResultNode resultNode=new FileTreeLoaderResultNode(ownerKey, task, "FileTreeLoaderResultNode",
                 "FileTreeLoaderResultNode for "+rootDirectoryPath+" mip group index="+groupIndex, visibility, sessionName);
         resultNode=(FileTreeLoaderResultNode)computeBean.saveOrUpdateNode(resultNode);
         logger.info("Created resultNode id="+resultNode.getObjectId()+" MIP groupIndex="+groupIndex+" listSize="+artifactList.size());
@@ -605,7 +606,7 @@ public class FileTreeLoaderService implements IService {
                         logger.error("Could not find expected mip result file="+mipResultFile.getAbsolutePath()+" for sourceEntityId="+ai.sourceEntityId);
                     } else {
                         // Create the mip entity
-                        Entity mipResultEntity=createEntityForFile(mipResultFile, mipResultEntityType);
+                    	Entity mipResultEntity=createEntityForFile(mipResultFile, mipResultEntityType);
                         mipResultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_ARTIFACT_SOURCE_ID, ai.sourceEntityId.toString());
                         entityBean.saveOrUpdateEntity(mipResultEntity);
                         helper.addToParent(supportingFilesFolder, mipResultEntity, null, EntityConstants.ATTRIBUTE_ENTITY);

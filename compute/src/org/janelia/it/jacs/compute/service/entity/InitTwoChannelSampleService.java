@@ -37,7 +37,7 @@ public class InitTwoChannelSampleService implements IService {
         		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
         	}
         	
-        	Entity latestProcessing = sampleEntity.getLatestChildOfType(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT);
+        	Entity latestProcessing = EntityUtils.getLatestChildOfType(sampleEntity, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT);
         	Entity supportingFiles = EntityUtils.getSupportingData(latestProcessing);
         	
         	Entity merged = null;

@@ -24,7 +24,7 @@ public class SageImageFamilyDiscoveryService extends SageDataSetDiscoveryService
     		throw new IllegalArgumentException("SAGE_IMAGE_FAMILY may not be null");
         }
         
-		if ("system".equals(user.getUserLogin())) {
+		if ("group:flylight".equals(ownerKey)) {
         	topLevelFolder = createOrVerifyRootEntity(PUBLIC_DATA_SET_FOLDER_NAME, true, false);
 		}
 		else {
@@ -168,10 +168,10 @@ public class SageImageFamilyDiscoveryService extends SageDataSetDiscoveryService
     private String getDataSetIdentifierForTilingPattern(TilingPattern tiling) throws ComputeException {
 
     	String dataSetName = "FlyLight "+tiling.getName();
-    	Entity dataSet = annotationBean.getUserDataSetByName(user.getUserLogin(), dataSetName);
+    	Entity dataSet = annotationBean.getUserDataSetByName(ownerKey, dataSetName);
     	
     	if (dataSet == null) {
-    		dataSet = annotationBean.createDataSet(user.getUserLogin(), dataSetName);
+    		dataSet = annotationBean.createDataSet(ownerKey, dataSetName);
     		PipelineProcess process = getPipelineProcess(tiling);
     		dataSet.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS, process.toString());
 			entityBean.saveOrUpdateEntity(dataSet);

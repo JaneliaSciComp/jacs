@@ -75,7 +75,7 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
 
     public void indexAllEntitiesInTree(Long entityId) throws ComputeException {
     	AnnotationDAO _annotationDAO = new AnnotationDAO(_logger);
-    	Entity root = _annotationDAO.getEntityById(entityId.toString());
+    	Entity root = _annotationDAO.getEntityById(entityId);
     	indexAllEntitiesInTree(root, new HashSet<Long>());
     }
 
@@ -125,7 +125,7 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     	}
     }
     
-	public SolrResults search(SolrQuery query, boolean mapToEntities) throws ComputeException {
+	public SolrResults search(String subjectKey, SolrQuery query, boolean mapToEntities) throws ComputeException {
 		SolrDAO solrDAO = new SolrDAO(_logger, false, false);
 		
 		QueryResponse response = solrDAO.search(query);
@@ -148,7 +148,7 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
 	    			continue;
 	    		}
 	    	}
-			resultList = solrDAO.getEntitiesInList(ids);
+			resultList = solrDAO.getEntitiesInList(subjectKey, ids);
 		}
 		
 		return new SolrResults(response, resultList);

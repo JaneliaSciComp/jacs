@@ -34,7 +34,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     
     public void execute() throws Exception {
         
-		if ("system".equals(user.getUserLogin())) {
+		if ("group:flylight".equals(ownerKey)) {
         	topLevelFolder = createOrVerifyRootEntity(PUBLIC_DATA_SET_FOLDER_NAME, true, false);
 		}
 		else {
@@ -43,12 +43,12 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		
 		logger.info("Will put discovered entities into top level entity "+topLevelFolder.getName()+", id="+topLevelFolder.getId());
 		
-        List<Entity> dataSets = entityBean.getUserEntitiesByTypeName(user.getUserLogin(), EntityConstants.TYPE_DATA_SET);
+        List<Entity> dataSets = entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_DATA_SET);
         if (dataSets.isEmpty()) {
-        	logger.info("No data sets found for user: "+user.getUserLogin());
+        	logger.info("No data sets found for user: "+ownerKey);
         	return;
         }        
-        
+
     	for(Entity dataSet : dataSets) {
     		if (dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_SYNC)==null) {
     			logger.info("Skipping non-SAGE data set: "+dataSet.getName());
@@ -143,7 +143,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         HashMap<String, ImageTileGroup> tileGroups = new HashMap<String, ImageTileGroup>();
         String sampleIdentifier = null;
         
-        logger.info("Processing "+slideCode+", "+slideGroup.size()+" tiles");
+        logger.info("Processing "+slideCode+", "+slideGroup.size()+" slide images");
         
         int tileNum = 0;
         for(SlideImage slideImage : slideGroup) {
@@ -323,12 +323,12 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 			imageTile = imageTileEd.getChildEntity();
 			if (!existingTileMatches(imageTile, tileGroup)) {
 				logger.info("  Tile '"+imageTile.getName()+"' (id="+imageTileEd.getId()+") has changed, will delete and recreate it.");
-				entityBean.deleteSmallEntityTree(imageTile.getUser().getUserLogin(), imageTile.getId());
+				entityBean.deleteSmallEntityTree(imageTile.getOwnerKey(), imageTile.getId());
 				imageTile = null;
 			}
 			else {
 				logger.info("  Tile '"+imageTile.getName()+"' exists (id="+imageTileEd.getId()+")");
-				for(Entity lsmStack : imageTile.getChildrenOfType(EntityConstants.TYPE_LSM_STACK)) {
+				for(Entity lsmStack : EntityUtils.getChildrenOfType(imageTile, EntityConstants.TYPE_LSM_STACK)) {
 					for(SlideImage image : tileGroup.images) {
 						if (image.file.getName().equals(lsmStack.getName())) {
 							populateLsmStackAttributes(lsmStack, image);
@@ -341,7 +341,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		if (imageTile == null) {
 			Date createDate = new Date();
 			imageTile = new Entity();
-            imageTile.setUser(user);
+            imageTile.setOwnerKey(ownerKey);
             imageTile.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_TILE));
             imageTile.setCreationDate(createDate);
             imageTile.setUpdatedDate(createDate);
@@ -361,7 +361,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     protected boolean existingTileMatches(Entity imageTile, ImageTileGroup tileGroup) {
 
 		List<SlideImage> images = tileGroup.getImages();
-		List<Entity> currTiles = imageTile.getChildrenOfType(EntityConstants.TYPE_LSM_STACK);
+		List<Entity> currTiles = EntityUtils.getChildrenOfType(imageTile, EntityConstants.TYPE_LSM_STACK);
 		
 		Set<String> newFilenames = new HashSet<String>();
 		for(SlideImage image : images) {
@@ -394,13 +394,13 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
      */
     protected Entity findExistingSample(String sampleIdentifier) throws ComputeException {
 
-    	List<Entity> matchingSamples = entityBean.getUserEntitiesByNameAndTypeName(user.getUserLogin(), 
+    	List<Entity> matchingSamples = entityBean.getUserEntitiesByNameAndTypeName(ownerKey, 
     			sampleIdentifier, EntityConstants.TYPE_SAMPLE);
     	
     	if (matchingSamples.isEmpty()) {
 
-    		if ("system".equals(user.getUserLogin())) {
-    			// System cannot steal samples from others
+    		if ("group:flylight".equals(ownerKey)) {
+    			// FlyLight cannot steal samples from others
     			return null;
     		}
     		
@@ -414,14 +414,14 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 
         	Entity matchingSample = null;
         	for(Entity sample : matchingSamples) {
-        		if ("system".equals(sample.getUser().getUserLogin())) {
-        			// Can only steal samples from system user
+        		if ("group:flylight".equals(sample.getOwnerKey())) {
+        			// Can only steal samples from the FlyLight user
         			matchingSample = sample;
         		}
         	}
         	
         	if (matchingSample != null) {
-        		return entityBean.annexEntityTree(matchingSample.getId(), user.getUserLogin());	
+        		return entityBean.annexEntityTree(ownerKey, matchingSample.getId());	
         	}
     	}
     	
@@ -435,7 +435,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     protected Entity createSample(String name, String channelSpec, String dataSetIdentifier) throws Exception {
     	Date createDate = new Date();
         Entity sample = new Entity();
-        sample.setUser(user);
+        sample.setOwnerKey(ownerKey);
         sample.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SAMPLE));
         sample.setCreationDate(createDate);
         sample.setUpdatedDate(createDate);
@@ -459,7 +459,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     protected Entity createSupportingFilesFolder() throws Exception {
     	Date createDate = new Date();
         Entity filesFolder = new Entity();
-        filesFolder.setUser(user);
+        filesFolder.setOwnerKey(ownerKey);
         filesFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
         filesFolder.setCreationDate(createDate);
         filesFolder.setUpdatedDate(createDate);
@@ -472,7 +472,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     protected Entity createLsmStackFromFile(SlideImage image) throws Exception {
     	Date createDate = new Date();
         Entity lsmStack = new Entity();
-        lsmStack.setUser(user);
+        lsmStack.setOwnerKey(ownerKey);
         lsmStack.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK));
         lsmStack.setCreationDate(createDate);
         lsmStack.setUpdatedDate(createDate);
@@ -500,7 +500,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		logger.info("Fixing order indicies in children of "+topLevelFolder.getName());
 		populateChildren(topLevelFolder);
 		
-    	for(Entity childFolder : topLevelFolder.getChildrenOfType(EntityConstants.TYPE_FOLDER)) {
+    	for(Entity childFolder : EntityUtils.getChildrenOfType(topLevelFolder, EntityConstants.TYPE_FOLDER)) {
     		populateChildren(childFolder);
     		
 			logger.info("Fixing sample order indicies in "+childFolder.getName()+" (id="+childFolder.getId()+")");
@@ -540,7 +540,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         if (topLevelFolders != null) {
             // Only accept the current user's top level folder
             for (Entity entity : topLevelFolders) {
-                if (entity.getUser().getUserLogin().equals(user.getUserLogin())
+                if (entity.getOwnerKey().equals(ownerKey)
                         && entity.getEntityType().getName().equals(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER).getName())
                         && entity.getAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
                     // This is the folder we want, now load the entire folder hierarchy
@@ -562,10 +562,10 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
                 topLevelFolder = new Entity();
                 topLevelFolder.setCreationDate(createDate);
                 topLevelFolder.setUpdatedDate(createDate);
-                topLevelFolder.setUser(user);
+                topLevelFolder.setOwnerKey(ownerKey);
                 topLevelFolder.setName(topLevelFolderName);
                 topLevelFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
-                topLevelFolder.addAttributeAsTag(EntityConstants.ATTRIBUTE_COMMON_ROOT);
+                EntityUtils.addAttributeAsTag(topLevelFolder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
                 topLevelFolder = entityBean.saveOrUpdateEntity(topLevelFolder);
                 logger.info("Saved top level folder as " + topLevelFolder.getId());
             } else {
@@ -582,7 +582,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     	populateChildren(parentFolder);
     	
         Entity folder = null;
-        for (Entity child : parentFolder.getChildrenOfType(EntityConstants.TYPE_FOLDER)) {
+        for (Entity child : EntityUtils.getChildrenOfType(parentFolder, EntityConstants.TYPE_FOLDER)) {
             if (child.getName().equals(childName)) {
                 if (folder != null) {
                 	logger.warn("Unexpectedly found multiple child folders with name=" + childName+" for parent folder id="+parentFolder.getId());
@@ -599,7 +599,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             folder = new Entity();
             folder.setCreationDate(createDate);
             folder.setUpdatedDate(createDate);
-            folder.setUser(user);
+            folder.setOwnerKey(ownerKey);
             folder.setName(childName);
             folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
             folder = entityBean.saveOrUpdateEntity(folder);

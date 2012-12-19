@@ -29,9 +29,9 @@ public class SolrUtils {
 	 * @return
 	 */
     public static String getFormattedName(String name) {
-    	return name.toLowerCase().replaceAll("\\s+", "_");
+    	return name.toLowerCase().replaceAll("\\W+", "_");
     }
-    
+
 	/**
 	 * Get the SOLR field name from an attribute name. For example, "Tiling Pattern" -> "tiling_pattern_txt"
 	 * @param name

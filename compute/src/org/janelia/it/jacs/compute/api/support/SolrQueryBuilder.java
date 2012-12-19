@@ -17,7 +17,7 @@ public class SolrQueryBuilder {
 	private String searchString;
 	private String auxString;
 	private Long rootId;
-	private String username;
+	private List<String> ownerKeys = new ArrayList<String>();
 	private Map<String,Set<String>> filters = new HashMap<String,Set<String>>();
 	private List<String> facets = new ArrayList<String>();
 	private String sortField;
@@ -52,12 +52,12 @@ public class SolrQueryBuilder {
 		this.rootId = rootId;
 	}
 
-	public String getUsername() {
-		return username;
+	public List<String> getOwnerKeys() {
+		return ownerKeys;
 	}
 
-	public void setUsername(String username) {
-		this.username = username;
+	public void addOwnerKey(String ownerKey) {
+		this.ownerKeys.add(ownerKey);
 	}
 
 	public Map<String, Set<String>> getFilters() {
@@ -115,9 +115,11 @@ public class SolrQueryBuilder {
 	public SolrQuery getQuery() throws ComputeException {
     	
     	StringBuffer qs = new StringBuffer();
-    	qs.append("+(username:system");
-    	if (username!=null) {
-    		qs.append(" OR username:"+username);
+    	qs.append("+(");
+    	int i = 0;
+    	for(String ownerKey : ownerKeys) {
+    		if (i++>0) qs.append(" OR ");
+    		qs.append("username:\""+ownerKey+"\"");
     	}
     	qs.append(")");
     	
@@ -143,7 +145,10 @@ public class SolrQueryBuilder {
 		if (!StringUtils.isEmpty(searchString)) {
 	    	qs.append(" AND (("+searchString+")");
 	    	if (!searchString.contains(":")) {
-	    		qs.append(" OR "+username+"_annotations:("+searchString+") OR "+username+"_annotations_exact:("+searchString+"))");
+	        	for(String ownerKey : ownerKeys) {
+	        		String fieldNamePrefix = SolrUtils.getFormattedName(ownerKey);
+	        		qs.append(" OR "+fieldNamePrefix+"_annotations:("+searchString+") OR "+fieldNamePrefix+"_annotations_exact:("+searchString+"))");	
+	        	}
 	    	}
 	    	else {
 	    		qs.append(")");

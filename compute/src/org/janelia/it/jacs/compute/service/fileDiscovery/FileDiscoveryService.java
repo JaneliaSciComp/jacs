@@ -18,7 +18,6 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.user_data.FileNode;
-import org.janelia.it.jacs.model.user_data.User;
 
 /**
  * Discover files in a set of input directories and create corresponding entities in the database. This class
@@ -34,7 +33,7 @@ public class FileDiscoveryService implements IService {
     protected Logger logger;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
-    protected User user;
+    protected String ownerKey;
     protected Date createDate;
     protected IProcessData processData;
     protected FileDiscoveryHelper helper;
@@ -45,9 +44,9 @@ public class FileDiscoveryService implements IService {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
-            user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
+            ownerKey = ProcessDataHelper.getTask(processData).getOwner();
             createDate = new Date();
-            helper = new FileDiscoveryHelper(entityBean, computeBean, user);
+            helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
             helper.addFileExclusion("DrmaaSubmitter.log");
             helper.addFileExclusion("*.oos");
             helper.addFileExclusion("sge_*");
@@ -175,7 +174,7 @@ public class FileDiscoveryService implements IService {
             folder = new Entity();
             folder.setCreationDate(createDate);
             folder.setUpdatedDate(createDate);
-            folder.setUser(user);
+            folder.setOwnerKey(ownerKey);
             folder.setName(dir.getName());
             folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
             folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, dir.getAbsolutePath());

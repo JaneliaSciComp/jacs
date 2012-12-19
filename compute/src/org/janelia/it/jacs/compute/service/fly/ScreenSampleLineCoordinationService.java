@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
+import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
@@ -33,7 +34,7 @@ public class ScreenSampleLineCoordinationService implements IService {
     final boolean DEBUG=true;
 
     protected Logger logger;
-    protected User user;
+    protected String ownerKey;
     protected Date createDate;
     protected IProcessData processData;
 
@@ -56,9 +57,9 @@ public class ScreenSampleLineCoordinationService implements IService {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             computeBean = EJBFactory.getLocalComputeBean();
             entityBean = EJBFactory.getLocalEntityBean();
-            user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
+            ownerKey = ProcessDataHelper.getTask(processData).getOwner();
             createDate = new Date();
-            helper = new FileDiscoveryHelper(entityBean, computeBean, user);
+            helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
             
             screenPatternTopLevelFolder = getTopLevelFolder(ScreenSampleLineCoordinationService.SCREEN_PATTERN_TOP_LEVEL_FOLDER_NAME, true /* create */);
             screenSampleTopLevelFolder = getTopLevelFolder(FlyScreenDiscoveryService.SCREEN_SAMPLE_TOP_LEVEL_FOLDER_NAME, false /* create */);
@@ -250,7 +251,7 @@ public class ScreenSampleLineCoordinationService implements IService {
         }
     }
 
-    protected void populateFlyLineFolderMaps() {
+    protected void populateFlyLineFolderMaps() throws ComputeException {
         logger.info("Populating Folder Maps");
         Set<Entity> topChildren = entityBean.getChildEntities(screenPatternTopLevelFolder.getId());
         for (Entity child : topChildren) {
@@ -278,7 +279,7 @@ public class ScreenSampleLineCoordinationService implements IService {
         Entity folder = new Entity();
         folder.setCreationDate(createDate);
         folder.setUpdatedDate(createDate);
-        folder.setUser(user);
+        folder.setOwnerKey(ownerKey);
         folder.setName(childFolderName);
         folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
         folder = entityBean.saveOrUpdateEntity(folder);
@@ -293,7 +294,7 @@ public class ScreenSampleLineCoordinationService implements IService {
         Entity flyLine = new Entity();
         flyLine.setCreationDate(createDate);
         flyLine.setUpdatedDate(createDate);
-        flyLine.setUser(user);
+        flyLine.setOwnerKey(ownerKey);
         flyLine.setName(lineName);
         EntityType flyLineType=entityBean.getEntityTypeByName(EntityConstants.TYPE_FLY_LINE);
         if (flyLineType==null) {

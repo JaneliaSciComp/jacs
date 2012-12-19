@@ -2,16 +2,12 @@
 package org.janelia.it.jacs.compute.api;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.Remote;
 
 import org.janelia.it.jacs.compute.api.support.MappedId;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityAttribute;
-import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.model.entity.*;
 
 /**
  * A remote interface to generic queries against the Entity model. This interface does not concern itself with any
@@ -28,53 +24,45 @@ public interface EntityBeanRemote {
     
 	public EntityType createNewEntityType(String entityTypeName) throws ComputeException;
     public EntityAttribute createNewEntityAttr(String entityTypeName, String attrName) throws ComputeException;
-    public List<EntityType> getEntityTypes();
-    public List<EntityAttribute> getEntityAttributes();
-    public EntityType getEntityTypeByName(String name);
-    public EntityAttribute getEntityAttributeByName(String name);
+    public List<EntityType> getEntityTypes() throws ComputeException;
+    public List<EntityAttribute> getEntityAttributes() throws ComputeException;
+    public EntityType getEntityTypeByName(String name) throws ComputeException;
+    public EntityAttribute getEntityAttributeByName(String name) throws ComputeException;
     
-	public Entity saveOrUpdateEntity(String userLogin, Entity entity) throws ComputeException;
-    public EntityData saveOrUpdateEntityData(String userLogin, EntityData newData) throws ComputeException;
-    public Entity createEntity(String userLogin, String entityTypeName, String entityName) throws ComputeException;
-    public EntityData addEntityToParent(String userLogin, Entity parent, Entity entity, Integer index, String attrName) throws ComputeException;
-    public void addChildren(String userLogin, Long parentId, List<Long> childrenIds, String attributeName) throws ComputeException;
+	public Entity saveOrUpdateEntity(String subjectKey, Entity entity) throws ComputeException;
+    public EntityData saveOrUpdateEntityData(String subjectKey, EntityData newData) throws ComputeException;
+    public Entity createEntity(String subjectKey, String entityTypeName, String entityName) throws ComputeException;
+    public EntityData addEntityToParent(String subjectKey, Entity parent, Entity entity, Integer index, String attrName) throws ComputeException;
+    public void addChildren(String subjectKey, Long parentId, List<Long> childrenIds, String attributeName) throws ComputeException;
 
-    public boolean deleteEntityById(String userLogin, Long entityId) throws ComputeException;
-    public boolean deleteEntityTree(String userLogin, long entityId) throws ComputeException;
-    public boolean deleteSmallEntityTree(String userLogin, long entityId) throws ComputeException;
-    public boolean deleteSmallEntityTree(String userLogin, long entityId, boolean unlinkMultipleParents) throws ComputeException;
-    public void deleteEntityData(String userLogin, EntityData ed) throws ComputeException;
+    public boolean deleteEntityById(String subjectKey, Long entityId) throws ComputeException;
+    public boolean deleteEntityTree(String subjectKey, Long entityId) throws ComputeException;
+    public boolean deleteSmallEntityTree(String subjectKey, Long entityId) throws ComputeException;
+    public boolean deleteSmallEntityTree(String subjectKey, Long entityId, boolean unlinkMultipleParents) throws ComputeException;
+    public void deleteEntityData(String subjectKey, EntityData ed) throws ComputeException;
     
-    public Entity getEntityById(String targetId);
-    public List<Entity> getEntitiesById(List<Long> ids) throws ComputeException;
-    public Entity getUserEntityById(String userLogin, long entityId);
-    public Set<Entity> getUserEntitiesByName(String userLogin, String name);
-    public List<Entity> getUserEntitiesByTypeName(String userLogin, String entityTypeName);
-    public List<Entity> getUserEntitiesByNameAndTypeName(String userLogin, String entityName, String entityTypeName);
-    public List<Entity> getUserEntitiesWithAttributeValue(String userLogin, String attrName, String attrValue) throws ComputeException;
+    public Entity getEntityById(String subjectKey, Long entityId) throws ComputeException;
+    public List<Entity> getEntitiesById(String subjectKey, List<Long> ids) throws ComputeException;
     
-    public Set<Entity> getEntitiesByName(String name);
-    public List<Entity> getEntitiesByTypeName(String entityTypeName);
-    public List<Entity> getEntitiesByNameAndTypeName(String entityName, String entityTypeName);
+    public Set<Entity> getUserEntitiesByName(String subjectKey, String name) throws ComputeException;
+    public List<Entity> getUserEntitiesByTypeName(String subjectKey, String entityTypeName) throws ComputeException;
+    public List<Entity> getUserEntitiesByNameAndTypeName(String subjectKey, String entityName, String entityTypeName) throws ComputeException;
+    public List<Entity> getUserEntitiesWithAttributeValue(String subjectKey, String attrName, String attrValue) throws ComputeException;
     
-    public List<Entity> getEntitiesWithAttributeValue(String attrName, String attrValue) throws ComputeException;
+    public Entity getEntityTree(String subjectKey, Long entityId) throws ComputeException;
+    public Entity getEntityAndChildren(String subjectKey, Long entityId) throws ComputeException;
+    public Set<Entity> getParentEntities(String subjectKey, Long entityId) throws ComputeException;
+    public Set<Entity> getChildEntities(String subjectKey, Long entityId) throws ComputeException;
+    public Set<EntityData> getParentEntityDatas(String subjectKey, Long childEntityId) throws ComputeException;
+    public Set<Long> getParentIdsForAttribute(String subjectKey, Long childEntityId, String attributeName) throws ComputeException;
+    public Entity getAncestorWithType(String subjectKey, Entity entity, String type) throws ComputeException;
+    public List<List<EntityData>> getPathsToRoots(String subjectKey, Entity entity) throws ComputeException;
     
-    public Entity getEntityTree(Long id);
-    public Entity getEntityAndChildren(Long id);
-    public Set<Entity> getParentEntities(long entityId);
-    public Set<Entity> getChildEntities(long entityId);
-    public Map<Long,String> getChildEntityNames(long entityId);
-    public Set<EntityData> getParentEntityDatas(long childEntityId);
-    public Set<Long> getParentIdsForAttribute(long childEntityId, String attributeName);
-    public Entity getAncestorWithType(Entity entity, String type) throws ComputeException;
-    public List<List<Long>> searchTreeForNameStartingWith(Long rootId, String searchString) throws ComputeException;
-    public List<List<EntityData>> getPathsToRoots(String userLogin, Entity entity) throws ComputeException;
-    public List<Long> getPathToRoot(Long entityId, Long rootId) throws ComputeException;
-    
-    public List<MappedId> getProjectedResults(List<Long> entityIds, List<String> upMapping, List<String> downMapping) throws ComputeException;
-    public EntityData saveOrUpdateEntityData(EntityData newData) throws ComputeException;
-    public void deleteEntityData(EntityData ed) throws ComputeException;
-    public Entity saveOrUpdateEntity(Entity entity) throws ComputeException;
+    public List<MappedId> getProjectedResults(String subjectKey, List<Long> entityIds, List<String> upMapping, List<String> downMapping) throws ComputeException;
 
-    public Entity annexEntityTree(Long entityId, String newOwner) throws ComputeException;
+    public Entity annexEntityTree(String subjectKey, Long entityId) throws ComputeException;
+    
+    public EntityActorPermission grantPermissions(String subjectKey, Long entityId, String granteeKey, String permissions, boolean recursive) throws ComputeException;
+    public void revokePermissions(String subjectKey, Long entityId, String granteeKey,  boolean recursive) throws ComputeException;
+    public EntityActorPermission saveOrUpdatePermission(String subjectKey, EntityActorPermission eap) throws ComputeException;
 }

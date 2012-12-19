@@ -17,7 +17,6 @@ import org.janelia.it.jacs.compute.service.vaa3d.CombinedFile;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityType;
-import org.janelia.it.jacs.model.user_data.User;
 
 /**
  * File discovery service for sample crossing results.
@@ -29,7 +28,7 @@ public class ScreenSampleCrossResultsDiscoveryService implements IService {
     protected Logger logger;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
-    protected User user;
+    protected String ownerKey;
     protected Date createDate;
     protected IProcessData processData;
 	protected Long parentEntityId;
@@ -42,7 +41,7 @@ public class ScreenSampleCrossResultsDiscoveryService implements IService {
 	        logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
 	        entityBean = EJBFactory.getLocalEntityBean();
 	        computeBean = EJBFactory.getLocalComputeBean();
-	        user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
+	        ownerKey = ProcessDataHelper.getTask(processData).getOwner();
 	        createDate = new Date();
 	        
 	        String outputParentIdListStr = (String)processData.getItem("OUTPUT_ENTITY_ID_LIST");
@@ -61,7 +60,7 @@ public class ScreenSampleCrossResultsDiscoveryService implements IService {
 	        	throw new ServiceException("OUTPUT_ENTITY_ID_LIST must contain the same number of ids as the input lists");
 	        }
 
-	        entityHelper = new EntityHelper(entityBean, computeBean, user);
+	        entityHelper = new EntityHelper(entityBean, computeBean, ownerKey);
 
 	        int i = 0;
 	        for(CombinedFile combinedFile : filePairs) {
@@ -102,7 +101,7 @@ public class ScreenSampleCrossResultsDiscoveryService implements IService {
 
     protected Entity createFileEntity(EntityType type, File file, String entityName) throws Exception {
         Entity entity = new Entity();
-        entity.setUser(user);
+        entity.setOwnerKey(ownerKey);
         entity.setCreationDate(createDate);
         entity.setUpdatedDate(createDate);
         entity.setEntityType(type);

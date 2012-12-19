@@ -30,7 +30,7 @@ public class AnnotationImportService implements IService {
 	
     protected Logger logger;
     protected Task task;
-    protected User user;
+    protected String ownerKey;
     protected Date createDate;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
@@ -48,7 +48,7 @@ public class AnnotationImportService implements IService {
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
             annotationBean = EJBFactory.getLocalAnnotationBean();
-            user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
+            ownerKey = ProcessDataHelper.getTask(processData).getOwner();
             createDate = new Date();
         	
         	String annotationsFilepath = (String)processData.getItem("ANNOTATIONS_FILEPATH");
@@ -66,7 +66,7 @@ public class AnnotationImportService implements IService {
         	logger.info("Creating ontology");
         	Entity ontologyTree = null;
         		
-        	Set<Entity> matchingOntologies = entityBean.getUserEntitiesByName(user.getUserLogin(), ontologyName);
+        	Set<Entity> matchingOntologies = entityBean.getUserEntitiesByName(ownerKey, ontologyName);
         	
         	if (matchingOntologies!=null && !matchingOntologies.isEmpty()) {
         		//ontologyTree = matchingOntologies.iterator().next();
@@ -74,9 +74,9 @@ public class AnnotationImportService implements IService {
         		throw new Exception("Reusing an existing ontology is not yet supported. Delete the ontology first.");
         	}
         	
-        	ontologyTree = annotationBean.createOntologyRoot(user.getUserLogin(), ontologyName);
+        	ontologyTree = annotationBean.createOntologyRoot(ownerKey, ontologyName);
         	
-        	EntityData textAnnotEd = annotationBean.createOntologyTerm(user.getUserLogin(), ontologyTree.getId(), "Annotation", OntologyElementType.createTypeByName("Custom"), 0);
+        	EntityData textAnnotEd = annotationBean.createOntologyTerm(ownerKey, ontologyTree.getId(), "Annotation", OntologyElementType.createTypeByName("Custom"), 0);
         	textAnnot = textAnnotEd.getChildEntity();
         	
 //        	EntityData enums = annotationBean.createOntologyTerm(user.getUserLogin(), ontologyTree.getId(), "Enumerations", OntologyElementType.createTypeByName("Category"), 0);
@@ -122,7 +122,7 @@ public class AnnotationImportService implements IService {
     private void annotate(Entity entity, List<String> annots) throws ComputeException {
 		for(String annot : annots) {
     		OntologyAnnotation annotation = new OntologyAnnotation(null, entity.getId(), textAnnot.getId(), textAnnot.getName(), null, annot);
-    		annotationBean.createOntologyAnnotation(user.getUserLogin(), annotation);
+    		annotationBean.createOntologyAnnotation(ownerKey, annotation);
     		count++;
 		}
 		logger.info("Annotated entity: "+entity.getName()+" (id="+entity.getId()+")");

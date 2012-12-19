@@ -36,7 +36,7 @@ public class MService {
     Logger logger = Logger.getLogger(MService.class);
 
     protected FileDiscoveryHelper helper;
-    protected User user;
+    protected String ownerKey;
     protected int maxThreads;
     ListeningExecutorService listeningExecutorService;
     List<ListenableFuture<Object>> futureList=new ArrayList<ListenableFuture<Object>>();
@@ -46,7 +46,7 @@ public class MService {
 
     // If maxThreads==0, this means don't use threads - run single-threaded
     public MService(String username, int maxThreads) throws Exception {
-        user=getComputeBean().getUserByName(username);
+    	ownerKey = "user:"+username;
         this.maxThreads=maxThreads;
         if (maxThreads>0) {
             listeningExecutorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(maxThreads));
@@ -73,7 +73,7 @@ public class MService {
     protected FileDiscoveryHelper getFileDiscoveryHelper() {
         ComputeBeanLocal computeBean=getComputeBean();
         EntityBeanLocal entityBean=getEntityBean();
-        return new FileDiscoveryHelper(entityBean, computeBean, user);
+        return new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
     }
 
     /////////// run method variations ///////////////////////////////////////////////////////////////////////////////

@@ -34,7 +34,7 @@ public class SubTaskExecutionService implements IService {
         	Logger logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             Task task = ProcessDataHelper.getTask(processData);
             ComputeBeanLocal computeBean = EJBFactory.getLocalComputeBean();
-            User user = computeBean.getUserByName(task.getOwner());
+            User user = computeBean.getUserByNameOrKey(task.getOwner());
 
             boolean waitForCompletion = false;
             String waitForCompletionStr = (String)processData.getItem("WAIT_FOR_COMPLETION");

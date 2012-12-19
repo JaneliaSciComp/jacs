@@ -20,7 +20,6 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
@@ -35,7 +34,7 @@ public class SplitLinesVerificationService implements IService {
 	
     protected Logger logger;
     protected Task task;
-    protected User user;
+    protected String ownerKey;
     protected Date createDate;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
@@ -54,9 +53,9 @@ public class SplitLinesVerificationService implements IService {
             task = ProcessDataHelper.getTask(processData);
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
-            user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
+            ownerKey = ProcessDataHelper.getTask(processData).getOwner();
             createDate = new Date();
-            helper = new EntityHelper(entityBean, computeBean, user);
+            helper = new EntityHelper(entityBean, computeBean, ownerKey);
             
         	// Preload entity types
         	
@@ -124,7 +123,7 @@ public class SplitLinesVerificationService implements IService {
             // Delete unwanted lines
             if (!DEBUG) {
 	            for (Long entityId : toDelete) {
-	            	entityBean.deleteEntityTree("system", entityId);
+	            	entityBean.deleteEntityTree(ownerKey, entityId);
 	            }
             }
 

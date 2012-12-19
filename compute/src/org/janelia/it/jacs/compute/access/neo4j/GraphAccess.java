@@ -1,15 +1,21 @@
 package org.janelia.it.jacs.compute.access.neo4j;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
+import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.index.Index;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.neo4j.support.Neo4jTemplate;
 
 /**
- * 
+ * Access to the Neo4j graph database service defined in the neo4j-beans.xml configuration file.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -17,17 +23,19 @@ public class GraphAccess {
 	
 	@Autowired Neo4jTemplate template;
 	
-	private Node userReferenceNode;
-	private Node entityReferenceNode;
+	private Node subjectReferenceNode;
+	private Node rootReferenceNode;
 	
-//	private static Index<Node> nodeIndex;
+	private static Index<Node> entityIndex;
+	private static Index<Node> subjectIndex;
+	
+	private static Map<String,Node> subjectMap = new HashMap<String,Node>();
 	
 	private static enum RelTypes implements RelationshipType
     {
-        USER_REFERENCE,
-        ENTITY_REFERENCE,
-        ENTITY,
-        OWNER,
+        SUBJECT_REFERENCE,
+		ROOT_REFERENCE,
+		OWNER,
         CHILD
     }
 	
@@ -43,23 +51,23 @@ public class GraphAccess {
 	public void initRefNodes() {
 		
 		GraphDatabaseService gds = template.getGraphDatabaseService();
-//		Transaction tx = gds.beginTx();
+		Transaction tx = gds.beginTx();
 		
-//		try {
-//			Node userReferenceNode = gds.createNode();
-//			gds.getReferenceNode().createRelationshipTo(userReferenceNode, RelTypes.USER_REFERENCE);
+		try {
+			subjectReferenceNode = gds.createNode();
+			gds.getReferenceNode().createRelationshipTo(subjectReferenceNode, RelTypes.SUBJECT_REFERENCE);
 
-//			entityReferenceNode = gds.createNode();
-//			gds.getReferenceNode().createRelationshipTo(entityReferenceNode, RelTypes.ENTITY_REFERENCE);
+			rootReferenceNode = gds.createNode();
+			gds.getReferenceNode().createRelationshipTo(rootReferenceNode, RelTypes.ROOT_REFERENCE);
 			
-//			tx.success();
-//		}
-//		catch (Exception e) {
-//			tx.failure();
-//		}
-//		finally {
-//			tx.finish();
-//		}
+			tx.success();
+		}
+		catch (Exception e) {
+			tx.failure();
+		}
+		finally {
+			tx.finish();
+		}
 	}
 	
 	/**
@@ -72,7 +80,6 @@ public class GraphAccess {
 		Node node = gds.createNode();
 		node.setProperty("entityId", entity.getId());
 		node.setProperty("name", entity.getName());
-        node.setProperty("username", entity.getUser().getUserLogin());
         node.setProperty("entityType", entity.getEntityType().getName());
         
         for(EntityData ed : entity.getEntityData()) {
@@ -81,20 +88,34 @@ public class GraphAccess {
         	}
         }
         
-//        entityReferenceNode.createRelationshipTo(node, RelTypes.ENTITY);
+        if (entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT)!=null) {
+        	rootReferenceNode.createRelationshipTo(node, RelTypes.ROOT_REFERENCE);	
+        }
+        
+        Node subjectNode = getOrCreateSubjectNode(entity.getOwnerKey());
+        node.createRelationshipTo(subjectNode, RelTypes.OWNER);
+        
+        entityIndex.add(node, "entityId", entity.getId());
         return node;
+        
 	}
 	
-	public void addChild(Node node, Node child) {
+	public void createChildRelationship(Node node, Node child) {
 		node.createRelationshipTo(child, RelTypes.CHILD);
 	}
 	
-//	public Node createUser(String username) {
-//		Node node = template.createNode();
-//        node.setProperty("username", username);
-//        nodeIndex.add(node, "username", username);
-//        return node;
-//	}
+	public Node getOrCreateSubjectNode(String subjectKey) {
+		if (subjectMap.containsKey(subjectKey)) {
+			return subjectMap.get(subjectKey);
+		}
+		GraphDatabaseService gds = template.getGraphDatabaseService();
+		Node node = gds.createNode();
+        node.setProperty("subjectKey", subjectKey);
+        subjectIndex.add(node, "subjectKey", subjectKey);
+        subjectMap.put(subjectKey, node);
+        node.createRelationshipTo(subjectReferenceNode, RelTypes.SUBJECT_REFERENCE);
+        return node;
+	}
 	
 //	public void insert(List<GraphEntity> graphEntities) {
 //		Transaction tx = template.beginTx();

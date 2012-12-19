@@ -100,7 +100,7 @@ public class OntologyAnnotation implements java.io.Serializable {
 	}
 	
 	public String getOwner() {
-		return entity.getUser() == null ? null : entity.getUser().getUserLogin();
+		return entity.getOwnerKey();
 	}
 	
 	public Long getId() {

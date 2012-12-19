@@ -97,7 +97,7 @@ public class RecruitmentNodeManager implements RecruitmentNodeManagerMBean {
         try {
             org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
             List<GenbankFileInfo> genbankFiles = RecruitmentDataHelper.getGenbankFileList();
-            User tmpUser = computeBean.getUserByName(User.SYSTEM_USER_LOGIN);
+            User tmpUser = computeBean.getUserByNameOrKey(User.SYSTEM_USER_LOGIN);
             // For each Genbank file, run blast, import recruitment file node, and recruitment result file node
             for (GenbankFileInfo genbankFileInfo : genbankFiles) {
                 try {
@@ -416,7 +416,7 @@ public class RecruitmentNodeManager implements RecruitmentNodeManagerMBean {
             // Now run the pipeline
             org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
             List<GenbankFileInfo> genbankFiles = RecruitmentDataHelper.getGenbankFileList();
-            User tmpUser = computeBean.getUserByName(User.SYSTEM_USER_LOGIN);
+            User tmpUser = computeBean.getUserByNameOrKey(User.SYSTEM_USER_LOGIN);
             // For each Genbank file, run blast, import recruitment file node, and recruitment result file node
             for (GenbankFileInfo genbankFileInfo : genbankFiles) {
                 try {

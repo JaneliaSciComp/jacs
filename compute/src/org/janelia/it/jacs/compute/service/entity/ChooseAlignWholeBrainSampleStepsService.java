@@ -13,6 +13,7 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.fileDiscovery.TilingPattern;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Decides which types of MCFO processing will be run for a Sample based on user preferences and 
@@ -78,7 +79,7 @@ public class ChooseAlignWholeBrainSampleStepsService implements IService {
 
 	public boolean canSkipProcessing(IProcessData processData, Entity sampleEntity) {
 
-		Entity sampleProcessing = sampleEntity.getLatestChildOfType(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT);
+		Entity sampleProcessing = EntityUtils.getLatestChildOfType(sampleEntity, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT);
 		if (sampleProcessing == null) {
 			logger.warn("Cannot find existing sample processing result for Sample with id="+sampleEntity.getId());
 			return false;
@@ -86,15 +87,15 @@ public class ChooseAlignWholeBrainSampleStepsService implements IService {
 
 
 		int numTiles = 0;
-		Entity sampleSupportingFiles = sampleEntity.getLatestChildOfType(EntityConstants.TYPE_SUPPORTING_DATA);
+		Entity sampleSupportingFiles = EntityUtils.getLatestChildOfType(sampleEntity, EntityConstants.TYPE_SUPPORTING_DATA);
     	if (sampleSupportingFiles!=null) {
-    		numTiles = sampleSupportingFiles.getDescendantsOfType(EntityConstants.TYPE_IMAGE_TILE, true).size();
+    		numTiles = EntityUtils.getDescendantsOfType(sampleSupportingFiles, EntityConstants.TYPE_IMAGE_TILE, true).size();
     	}
     	
 		Entity stitchedFile = null;
 		Entity mergedFile = null;
 		int numMergedFiles = 0;
-		Entity supportingFiles = sampleProcessing.getLatestChildOfType(EntityConstants.TYPE_SUPPORTING_DATA);
+		Entity supportingFiles = EntityUtils.getLatestChildOfType(sampleProcessing, EntityConstants.TYPE_SUPPORTING_DATA);
 		if (supportingFiles != null) {
     		for(Entity child : supportingFiles.getChildren()) {
     			if (child.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_3D)) {
@@ -135,7 +136,7 @@ public class ChooseAlignWholeBrainSampleStepsService implements IService {
 	
     public boolean canSkipWholeBrainAlignment(IProcessData processData, Entity sampleEntity) {
 
-		List<Entity> sampleAlignments = sampleEntity.getChildrenOfType(EntityConstants.TYPE_ALIGNMENT_RESULT);
+		List<Entity> sampleAlignments = EntityUtils.getChildrenOfType(sampleEntity, EntityConstants.TYPE_ALIGNMENT_RESULT);
 		if (sampleAlignments == null || sampleAlignments.isEmpty()) {
 			logger.warn("Cannot find existing alignment result for Sample with id="+sampleEntity.getId());
 			return false;
@@ -155,7 +156,7 @@ public class ChooseAlignWholeBrainSampleStepsService implements IService {
     	}
     	
 		Entity alignedFile = null;
-		Entity supportingFiles = sampleAlignment.getLatestChildOfType(EntityConstants.TYPE_SUPPORTING_DATA);
+		Entity supportingFiles = EntityUtils.getLatestChildOfType(sampleAlignment, EntityConstants.TYPE_SUPPORTING_DATA);
 		if (supportingFiles != null) {
     		for(Entity child : supportingFiles.getChildren()) {
     			if (child.getName().startsWith("Aligned") && child.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_3D)) {
@@ -177,7 +178,7 @@ public class ChooseAlignWholeBrainSampleStepsService implements IService {
     
     public boolean canSkipWholeBrainAlignedSeparation(IProcessData processData, Entity sampleEntity) {
 
-		List<Entity> separations = sampleEntity.getChildrenOfType(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
+		List<Entity> separations = EntityUtils.getChildrenOfType(sampleEntity, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
     	for(Entity separation : separations) {
     		if (separation.getName().startsWith("Aligned 63x ")) return true;
     	}

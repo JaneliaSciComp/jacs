@@ -11,10 +11,7 @@ import java.sql.SQLException;
 import java.util.*;
 
 import org.apache.log4j.Logger;
-import org.hibernate.Criteria;
-import org.hibernate.HibernateException;
-import org.hibernate.Query;
-import org.hibernate.Session;
+import org.hibernate.*;
 import org.hibernate.criterion.Expression;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.support.MappedId;
@@ -29,26 +26,26 @@ import org.janelia.it.jacs.model.ontology.types.Interval;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
 import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
 import org.janelia.it.jacs.shared.annotation.RelativePatternAnnotationDataManager;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
+import org.janelia.it.jacs.shared.utils.entity.AbstractEntityLoader;
+import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
+import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 
-public class AnnotationDAO extends ComputeBaseDAO {
+import com.google.common.collect.ImmutableSet;
 
-	/** Most amount of nodes a tree can have before it's considered a "large" tree */
-	private static final Long MAX_SMALL_TREE_SIZE = 5000L;
+public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoader {
 	
 	/** Batch fetch size for JDBC result sets */
 	protected final static int JDBC_FETCH_SIZE = 200;
 	
     private static final Map<String, EntityType> entityByName = Collections.synchronizedMap(new HashMap<String, EntityType>());
     private static final Map<String, EntityAttribute> attrByName = Collections.synchronizedMap(new HashMap<String, EntityAttribute>());
-
-
-    private static final List<String> SYSTEM_USER = Arrays.asList("system");
 
     private boolean debugDeletions = false;
     
@@ -110,11 +107,13 @@ public class AnnotationDAO extends ComputeBaseDAO {
     }
 
     public List<Entity> getEntitiesWithFilePath(String filePath) {
+    	if (_logger.isDebugEnabled()) {
+    		_logger.debug("getEntitiesWithFilePath(filePath="+filePath+")");	
+    	}
         Session session = getCurrentSession();
         StringBuffer hql = new StringBuffer("select clazz.parentEntity from EntityData clazz where value=?");
         Query query = session.createQuery(hql.toString()).setString(0, filePath);
-        List<Entity> entityList = (List<Entity>) query.list();
-        return entityList;
+        return filterDuplicates(query.list());
     }
 
     public EntityType getEntityType(Long entityTypeConstant) {
@@ -128,21 +127,156 @@ public class AnnotationDAO extends ComputeBaseDAO {
         return null;
     }
     
-    public Entity getEntityById(Long targetId) {
-        Session session = getCurrentSession();
-        Criteria c = session.createCriteria(Entity.class);
-        c.add(Expression.eq("id",targetId));
-        Entity entity = (Entity) c.uniqueResult();
-        if (null != entity) {
-            return entity;
+    public Entity getEntityById(String subjectKey, Long entityId) {
+    	if (_logger.isDebugEnabled()) {
+    		_logger.debug("getEntityById(subjectKey="+subjectKey+", entityId="+entityId+")");
+    	}
+
+        StringBuilder hql = new StringBuilder();
+        hql.append("select e from Entity e ");
+        hql.append("left outer join fetch e.entityActorPermissions p ");
+        hql.append("where e.id = :entityId ");
+        if (null != subjectKey) {
+        	hql.append("and (e.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
         }
-        return null;
-    }
-    
-    public Entity getEntityById(String targetId) {
-        return getEntityById(Long.valueOf(targetId));
+        
+        final Session currentSession = getCurrentSession();
+        Query query = currentSession.createQuery(hql.toString());
+        query.setParameter("entityId", entityId);
+        if (null != subjectKey) {
+            List<String> subjectKeyList = getSubjectKeys(subjectKey);
+            query.setParameterList("subjectKeyList", subjectKeyList);
+        }
+
+        return (Entity)query.uniqueResult();
     }
 
+    public Entity getEntityById(Long targetId) {
+    	return getEntityById(null, targetId);
+    }
+    
+    public EntityActorPermission grantPermissions(String subjectKey, Long entityId, String granteeKey, String permissions, 
+    		boolean recursive) throws DaoException {
+    	
+    	Entity entity = getEntityById(entityId);
+    	if (entity==null) {
+    		throw new IllegalArgumentException("Unknown entity: "+entityId);
+    	}
+
+    	if (subjectKey!=null) {
+    		if (!subjectKey.equals(entity.getOwnerKey())) {
+    			throw new DaoException("User "+subjectKey+" does not have the right to grant access to "+entity.getId());
+    		}	
+    	}
+    	
+    	return grantPermissions(entity, entity.getOwnerKey(), granteeKey, permissions, recursive);
+    }
+    
+    public EntityActorPermission grantPermissions(final Entity rootEntity, final String rootOwner, 
+    		final String granteeKey, final String permissions, boolean recursive) throws DaoException {
+
+    	Subject subject = getSubjectByNameOrKey(granteeKey);
+    	if (subject==null) {
+    		throw new IllegalArgumentException("Unknown subject: "+granteeKey);
+    	}
+    	
+    	if (rootEntity.getOwnerKey().equals(granteeKey)) {
+    		throw new IllegalArgumentException("Subject already has owner permission");
+    	}
+    	
+    	try {
+        	EntityVistationBuilder visitationBuilder = new EntityVistationBuilder(this).startAt(rootEntity);
+    		visitationBuilder = recursive ? visitationBuilder.ancestors() : visitationBuilder.root();
+        	visitationBuilder.run(new EntityVisitor() {
+    			@Override
+    			public void visit(Entity entity) throws Exception {
+    				EntityActorPermission existingPerm = null;
+    		    	for(EntityActorPermission eap : entity.getEntityActorPermissions()) {
+    		    		if (eap.getSubjectKey().equals(granteeKey)) {
+    		    			existingPerm = eap;
+    		    			break;
+    		    		}
+    		    	}
+
+    		    	if (existingPerm != null) {
+		    			if (!existingPerm.getPermissions().equals(permissions)) {
+		    				existingPerm.setPermissions(permissions);
+		    				saveOrUpdate(existingPerm);
+		    				_logger.info("Updated "+permissions+" permission to "+granteeKey+" for "+entity.getId());
+		    			}
+    		    	}
+    		    	else {
+	    		    	EntityActorPermission eap = new EntityActorPermission(entity, granteeKey, permissions);
+	    		    	entity.getEntityActorPermissions().add(eap);
+	    				saveOrUpdate(eap);
+	    				_logger.info("Granted "+permissions+" permission to "+granteeKey+" for "+entity.getId());
+    		    	}
+    			}
+        	});
+        	
+    	}
+    	catch (Exception e) {
+    		throw new DaoException(e);
+    	}
+    	
+    	for(EntityActorPermission eap : rootEntity.getEntityActorPermissions()) {
+    		if (eap.getSubjectKey().equals(granteeKey)) {
+    			return eap;
+    		}
+    	}
+    	return null;
+    }
+
+    public void revokePermissions(String subjectKey, Long entityId, String revokeeKey, boolean recursive) throws DaoException {
+    	
+    	Entity entity = getEntityById(entityId);
+    	if (entity==null) {
+    		throw new IllegalArgumentException("Unknown entity: "+entityId);
+    	}
+    	
+    	if (subjectKey!=null) {
+    		if (!subjectKey.equals(entity.getOwnerKey())) {
+    			throw new DaoException("User "+subjectKey+" does not have the right to grant access to "+entity.getId());
+    		}	
+    	}
+    	
+    	revokePermissions(entity, entity.getOwnerKey(), revokeeKey, recursive);
+    }
+    
+    public void revokePermissions(final Entity rootEntity, final String rootOwner, final String revokeeKey, boolean recursive) throws DaoException {
+    	
+    	Subject subject = getSubjectByNameOrKey(revokeeKey);
+    	if (subject==null) {
+    		throw new IllegalArgumentException("Unknown subject: "+revokeeKey);
+    	}
+    	
+    	if (rootEntity.getOwnerKey().equals(revokeeKey)) {
+    		throw new IllegalArgumentException("Cannot revoke permission from entity owner");
+    	}
+
+    	try {
+        	EntityVistationBuilder visitationBuilder = new EntityVistationBuilder(this).startAt(rootEntity);
+    		visitationBuilder = recursive ? visitationBuilder.ancestors() : visitationBuilder.root();
+        	visitationBuilder.run(new EntityVisitor() {
+    			@Override
+    			public void visit(Entity entity) throws Exception {
+    		    	for(Iterator<EntityActorPermission> i = entity.getEntityActorPermissions().iterator(); i.hasNext(); ) {
+    		    		EntityActorPermission eap = i.next();
+    		    		if (eap.getSubjectKey().equals(revokeeKey)) {
+    		    			i.remove();
+    		    			genericDelete(eap);
+    		    			_logger.info("Revoked permission to "+revokeeKey+" for "+entity.getId());
+    		    		}
+    		    	}
+    			}
+        	});
+        	
+    	}
+    	catch (Exception e) {
+    		throw new DaoException(e);
+    	}
+    }
+    
     public EntityAttribute getEntityAttribute(long entityAttributeConstant) {
         Session session = getCurrentSession();
         Criteria c = session.createCriteria(EntityAttribute.class);
@@ -154,7 +288,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
         return null;
     }
 
-    public boolean deleteOntologyTerm(String userLogin, String ontologyTermId) throws DaoException {
+    public boolean deleteOntologyTerm(String subjectKey, String ontologyTermId) throws DaoException {
         Session session = getCurrentSession();
         try {
             Criteria c = session.createCriteria(Entity.class);
@@ -164,12 +298,12 @@ public class AnnotationDAO extends ComputeBaseDAO {
                 // This should never happen
                 throw new DaoException("Cannot complete deletion when there are no entities with that identifier.");
             }
-            if (!entity.getUser().getUserLogin().equals(userLogin)) {
+            if (!entity.getOwnerKey().equals(subjectKey)) {
                 throw new DaoException("Cannot delete the entity as the requestor doesn't own the item.");
             }
 
             _logger.info("Will delete tree rooted at Entity "+entity.getName());
-            deleteEntityTree(userLogin, entity);
+            deleteEntityTree(subjectKey, entity);
             return true;
         }
         catch (Exception e) {
@@ -186,51 +320,20 @@ public class AnnotationDAO extends ComputeBaseDAO {
      * @throws DaoException
      */
     public void deleteEntityTree(String owner, Entity entity) throws DaoException {
-        try {
-        	deleteSmallEntityTree(owner, entity);
-        	
-        	// The large tree deletion algorithm is generally too slow these days, due to the growth of users'
-        	// entity graphs.
-        	
-//        	if ("system".equals(owner)) {
-//        		deleteSmallEntityTree(owner, entity);
-//        	}
-//        	else {
-//    	    	Long count = countDescendants(owner, entity, MAX_SMALL_TREE_SIZE);
-//    	    	if (count <= MAX_SMALL_TREE_SIZE) {
-//    	    		_logger.info("Running small tree algorithm (count="+count+")");
-//    	        	deleteSmallEntityTree(owner, entity);
-//    	    	}
-//    	    	else {
-//    	    		_logger.info("Running large tree algorithm (count="+count+")");
-//    	            deleteLargeEntityTree(owner, entity);
-//    	    	}
-//        	}
-        } catch (Exception ex) {
-            throw new DaoException(ex.getMessage(), ex);
-        }
+    	deleteSmallEntityTree(owner, entity);
     }
 
-    private void deleteLargeEntityTree(String owner, Entity entity) throws Exception {
+    private void deleteLargeEntityTree(String subjectKey, Entity entity) throws Exception {
         Session session = getCurrentSession();
-
-        // First, get the user id
-        StringBuffer hqlUser = new StringBuffer("select clazz from User clazz where clazz.userLogin=?");
-        Query userQuery = session.createQuery(hqlUser.toString()).setString(0, owner);
-        List<User> userList=userQuery.list();
-        if (userList==null || userList.size()!=1) {
-            throw new Exception("Could not find user for userLogin="+owner);
-        }
-        User user=userList.get(0);
 
         Map<Long,Set<Long[]>> entityMap=new HashMap<Long, Set<Long[]>>();
         Map<Long,Set<Long>> parentMap=new HashMap<Long, Set<Long>>();
         Map<Long,Set<Long>> nonOwnedParentEdMap=new HashMap<Long, Set<Long>>();
         Set<Long> commonRootSet =  new HashSet<Long>();
-        _logger.info("Building entity graph for user "+owner);
-        getEntityTreeForUserByJdbc(user.getUserId(), entityMap, parentMap, commonRootSet);
-        _logger.info("Built entity graph for user "+owner+". entityMap.size="+entityMap.size()+" parentMap.size="+parentMap.size());
-        getNonOwnedParents(user.getUserId(), nonOwnedParentEdMap);
+        _logger.info("Building entity graph for user "+subjectKey);
+        getEntityTreeForUserByJdbc(subjectKey, entityMap, parentMap, commonRootSet);
+        _logger.info("Built entity graph for user "+subjectKey+". entityMap.size="+entityMap.size()+" parentMap.size="+parentMap.size());
+        getNonOwnedParents(subjectKey, nonOwnedParentEdMap);
         
         // Next, get the sub-entity-graph we care about
         Set<Long> entitySetCandidatesToDelete=walkEntityMap(entity.getId(), entityMap, new HashSet<Long>());
@@ -368,7 +471,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
     
-    /**
+    /** 
      * Iteratively exclude entities based on if any of their ancestors were excluded.
      */
     protected Set<Long> getAdditionalExclusions(Map<Long, Set<Long>> parentMap, Set<Long> entitySetCandidatesToDelete, Set<Long> exclusionList) {
@@ -407,7 +510,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 		return false;
     }
 
-    protected void getEntityTreeForUserByJdbc(Long userId, Map<Long, Set<Long[]>> entityMap, Map<Long, Set<Long>> parentMap, Set<Long> commonRootSet) throws Exception {
+    protected void getEntityTreeForUserByJdbc(String subjectKey, Map<Long, Set<Long[]>> entityMap, Map<Long, Set<Long>> parentMap, Set<Long> commonRootSet) throws Exception {
     	
     	Connection conn = null;
     	PreparedStatement stmt = null;
@@ -415,14 +518,14 @@ public class AnnotationDAO extends ComputeBaseDAO {
 	        conn = getJdbcConnection();
 	        
 	        StringBuffer sql = new StringBuffer();
-	        sql.append("select e.id, ed.id, ce.id, ce.user_id, ea.name ");
+	        sql.append("select e.id, ed.id, ce.id, ce.owner_dkey, ea.name ");
 	        sql.append("from entity e ");
 	        sql.append("left outer join entityData ed on e.id=ed.parent_entity_id ");
 	        sql.append("left outer join entityAttribute ea on ed.entity_att_id = ea.id ");
-	        sql.append("left outer join entity ce on ed.child_entity_id=ce.id and ce.user_id="+userId+" ");
-	        sql.append("where e.user_id="+userId+" ");
+	        sql.append("left outer join entity ce on ed.child_entity_id=ce.id and ce.owner_dkey='"+subjectKey+"' ");
+	        sql.append("where e.owner_dkey='"+subjectKey+"' ");
 
-	        if (debugDeletions) _logger.info("getEntityTreeForUserByJdbc userId="+userId);
+	        if (debugDeletions) _logger.info("getEntityTreeForUserByJdbc subjectKey="+subjectKey);
 	        if (debugDeletions) _logger.info("getEntityTreeForUserByJdbc sql="+sql);
 	        stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 	        
@@ -441,13 +544,13 @@ public class AnnotationDAO extends ComputeBaseDAO {
 					childId = childIdBD.longValue();
 				}
 				BigDecimal childUserIdBD = rs.getBigDecimal(4);
-				Long childUserId = null;
+				Long childOwnerKey = null;
 				if (childUserIdBD != null) {
-					childUserId = childUserIdBD.longValue();
-					if (!childUserId.equals(userId)) {
+					childOwnerKey = childUserIdBD.longValue();
+					if (!childOwnerKey.equals(subjectKey)) {
 						// We don't own the child, so let's forget about it. This case should be prevented by the join condition on the last outer join above.
 						childId = null;
-						childUserId = null;
+						childOwnerKey = null;
 					}
 				}
 				
@@ -492,7 +595,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
     
-    protected void getNonOwnedParents(Long userId, Map<Long, Set<Long>> nonOwnedParentEdMap) throws Exception {
+    protected void getNonOwnedParents(String subjectKey, Map<Long, Set<Long>> nonOwnedParentEdMap) throws Exception {
     	
     	Connection conn = null;
     	PreparedStatement stmt = null;
@@ -500,14 +603,14 @@ public class AnnotationDAO extends ComputeBaseDAO {
 	        conn = getJdbcConnection();
 	        
 	        StringBuffer sql = new StringBuffer();
-	        sql.append("select e.id, ed.id, ce.id, ce.user_id, ea.name ");
+	        sql.append("select e.id, ed.id, ce.id, ce.owner_dkey, ea.name ");
 	        sql.append("from entity e ");
 	        sql.append("left outer join entityData ed on e.id=ed.parent_entity_id ");
 	        sql.append("left outer join entityAttribute ea on ed.entity_att_id = ea.id ");
-	        sql.append("join entity ce on ed.child_entity_id=ce.id and ce.user_id="+userId+" ");
-	        sql.append("where e.user_id!="+userId+" ");
+	        sql.append("join entity ce on ed.child_entity_id=ce.id and ce.owner_dkey='"+subjectKey+"' ");
+	        sql.append("where e.owner_dkey!='"+subjectKey+"' ");
 
-	        if (debugDeletions) _logger.info("getNonOwnedParents userId="+userId);
+	        if (debugDeletions) _logger.info("getNonOwnedParents subjectKey="+subjectKey);
 	        if (debugDeletions) _logger.info("getNonOwnedParents sql="+sql);
 	        stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 	        
@@ -621,15 +724,15 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
-    public void deleteSmallEntityTree(String userLogin, Entity entity) throws DaoException {
-    	deleteSmallEntityTree(userLogin, entity, false);
+    public void deleteSmallEntityTree(String subjectKey, Entity entity) throws DaoException {
+    	deleteSmallEntityTree(subjectKey, entity, false);
     }
     
-    public void deleteSmallEntityTree(String userLogin, Entity entity, boolean unlinkMultipleParents) throws DaoException {
-    	deleteSmallEntityTree(userLogin, entity, unlinkMultipleParents, 0, new HashSet<Long>());
+    public void deleteSmallEntityTree(String subjectKey, Entity entity, boolean unlinkMultipleParents) throws DaoException {
+    	deleteSmallEntityTree(subjectKey, entity, unlinkMultipleParents, 0, new HashSet<Long>());
     }
     
-    public void deleteSmallEntityTree(String userLogin, Entity entity, boolean unlinkMultipleParents, int level, Set<Long> deleted) throws DaoException {
+    public void deleteSmallEntityTree(String subjectKey, Entity entity, boolean unlinkMultipleParents, int level, Set<Long> deleted) throws DaoException {
 
     	StringBuffer indent = new StringBuffer();
 		for (int i = 0; i < level; i++) {
@@ -650,8 +753,8 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	}
     	
 		// Ownership check
-    	if (!entity.getUser().getUserLogin().equals(userLogin)) {
-    		_logger.info(indent+"Cannot delete entity because owner ("+entity.getUser().getUserLogin()+") does not match invoker ("+userLogin+")");
+    	if (!entity.getOwnerKey().equals(subjectKey)) {
+    		_logger.info(indent+"Cannot delete entity because owner ("+entity.getOwnerKey()+") does not match invoker ("+subjectKey+")");
     		return;
     	}
 
@@ -662,7 +765,8 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	}
     	
     	// Multiple parent check
-    	Set<EntityData> eds = getParentEntityDatas(entity.getId());
+    	// TODO: allow owner to override parent links
+    	Set<EntityData> eds = getParentEntityDatas(null, entity.getId());
     	boolean moreThanOneParent = eds.size() > 1;
         if (level>0 && moreThanOneParent && !unlinkMultipleParents) {
         	_logger.info(indent+"Cannot delete "+entity.getName()+" because more than one parent is pointing to it");
@@ -673,7 +777,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
         for(EntityData ed : new ArrayList<EntityData>(entity.getEntityData())) {
         	Entity child = ed.getChildEntity();
         	if (child != null) {
-        		deleteSmallEntityTree(userLogin, child, unlinkMultipleParents, level + 1, deleted);
+        		deleteSmallEntityTree(subjectKey, child, unlinkMultipleParents, level + 1, deleted);
         	}
         	// We have to manually remove the EntityData from its parent, otherwise we get this error: 
         	// "deleted object would be re-saved by cascade (remove deleted object from associations)"
@@ -726,112 +830,6 @@ public class AnnotationDAO extends ComputeBaseDAO {
             return (EntityType) c.uniqueResult();
         }
         catch (Exception e) {
-            throw new DaoException(e);
-        }
-    }
-
-    // This method should be cross-synchronized with the EntityConstants class until we write the code-generation
-    // service to do this automatically.
-
-    public void setupEntityTypes() throws DaoException {
-        try {
-            
-//            //========== Status ============
-//            createEntityStatus(EntityConstants.STATUS_DEPRECATED);
-//
-//            //========== Attribute ============
-//            createEntityAttribute(EntityConstants.ATTRIBUTE_FILE_PATH);
-//            createEntityAttribute(EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT);
-//            createEntityAttribute(EntityConstants.ATTRIBUTE_COMMON_ROOT);
-//            createEntityAttribute(EntityConstants.ATTRIBUTE_ENTITY);
-//            createEntityAttribute(EntityConstants.ATTRIBUTE_IS_PUBLIC);
-//            createEntityAttribute(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER);
-//            createEntityAttribute(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER);
-//            createEntityAttribute(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
-//            createEntityAttribute(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_TERM);
-//            createEntityAttribute(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_ROOT_ID);
-//            createEntityAttribute(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_ENTITY_ID);
-//            createEntityAttribute(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM);
-//            createEntityAttribute(EntityConstants.ATTRIBUTE_ANNOTATION_SESSION_ID);
-//            createEntityAttribute(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
-
-//              createEntityAttribute(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
-//              createEntityAttribute(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE);
-
-//
-//            //========== Type ============
-//            Set<String> lsmAttributeNameSet = new HashSet<String>();
-//            lsmAttributeNameSet.add(EntityConstants.ATTRIBUTE_FILE_PATH);
-//            createEntityType(EntityConstants.TYPE_LSM_STACK, lsmAttributeNameSet);
-//
-//            Set<String> ontologyElementAttributeNameSet = new HashSet<String>();
-//            ontologyElementAttributeNameSet.add(EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT);
-//            ontologyElementAttributeNameSet.add(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE);
-//            ontologyElementAttributeNameSet.add(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER);
-//            ontologyElementAttributeNameSet.add(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER);
-//            createEntityType(EntityConstants.TYPE_ONTOLOGY_ELEMENT, ontologyElementAttributeNameSet);
-//
-//            Set<String> ontologyRootAttributeNameSet = new HashSet<String>();
-//            ontologyRootAttributeNameSet.add(EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT);
-//            ontologyRootAttributeNameSet.add(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE);
-//            ontologyRootAttributeNameSet.add(EntityConstants.ATTRIBUTE_IS_PUBLIC);
-//            createEntityType(EntityConstants.TYPE_ONTOLOGY_ROOT, ontologyRootAttributeNameSet);
-//
-//            Set<String> folderAttributeNameSet = new HashSet<String>();
-//            folderAttributeNameSet.add(EntityConstants.ATTRIBUTE_FILE_PATH);
-//            folderAttributeNameSet.add(EntityConstants.ATTRIBUTE_COMMON_ROOT);
-//            folderAttributeNameSet.add(EntityConstants.ATTRIBUTE_ENTITY);
-//            createEntityType(EntityConstants.TYPE_FOLDER, folderAttributeNameSet);
-//
-//            Set<String> neuronSeparationAttributeNameSet = new HashSet<String>();
-//            neuronSeparationAttributeNameSet.add(EntityConstants.ATTRIBUTE_FILE_PATH);
-//            neuronSeparationAttributeNameSet.add(EntityConstants.ATTRIBUTE_INPUT);
-//            neuronSeparationAttributeNameSet.add(EntityConstants.ATTRIBUTE_ENTITY);
-//            createEntityType(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, neuronSeparationAttributeNameSet);
-//
-//            Set<String> tif2DImageAttributeSet = new HashSet<String>();
-//            tif2DImageAttributeSet.add(EntityConstants.ATTRIBUTE_FILE_PATH);
-//            createEntityType(EntityConstants.TYPE_TIF_2D, tif2DImageAttributeSet);
-//
-//            Set<String> tif3DImageAttributeSet = new HashSet<String>();
-//            tif3DImageAttributeSet.add(EntityConstants.ATTRIBUTE_FILE_PATH);
-//            createEntityType(EntityConstants.TYPE_TIF_3D, tif3DImageAttributeSet);
-//
-//            Set<String> tif3DLabelMaskAttributeSet = new HashSet<String>();
-//            tif3DLabelMaskAttributeSet.add(EntityConstants.ATTRIBUTE_FILE_PATH);
-//            createEntityType(EntityConstants.TYPE_TIF_3D_LABEL_MASK, tif3DLabelMaskAttributeSet);
-//
-//            Set<String> sampleAttributeSet = new HashSet<String>();
-//            sampleAttributeSet.add(EntityConstants.ATTRIBUTE_ENTITY);
-//            createEntityType(EntityConstants.TYPE_SAMPLE, sampleAttributeSet);
-
-//            Set<String> screenSampleAttributeSet = new HashSet<String>();
-//            screenSampleAttributeSet.add(EntityConstants.ATTRIBUTE_ENTITY);
-//            screenSampleAttributeSet.add(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
-//            createEntityType(EntityConstants.TYPE_SCREEN_SAMPLE, screenSampleAttributeSet);
-//
-//            Set<String> alignedStackAttributeSet = new HashSet<String>();
-//            alignedStackAttributeSet.add(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
-//            alignedStackAttributeSet.add(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE);
-//            alignedStackAttributeSet.add(EntityConstants.ATTRIBUTE_FILE_PATH);
-//            alignedStackAttributeSet.add(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
-//            createEntityType(EntityConstants.TYPE_ALIGNED_BRAIN_STACK, alignedStackAttributeSet);
-
-            Set<String> flyLineAttributeSet = new HashSet<String>();
-            flyLineAttributeSet.add(EntityConstants.ATTRIBUTE_ENTITY);
-            createEntityType(EntityConstants.TYPE_FLY_LINE, flyLineAttributeSet);
-//
-//            Set<String> lsmStackPairAttributeSet = new HashSet<String>();
-//            lsmStackPairAttributeSet.add(EntityConstants.ATTRIBUTE_ENTITY);
-//            createEntityType(EntityConstants.TYPE_LSM_STACK_PAIR, lsmStackPairAttributeSet);
-
-//            Set<String> stitchedStackAttributeSet = new HashSet<String>();
-//            stitchedStackAttributeSet.add(EntityConstants.ATTRIBUTE_FILE_PATH);
-//            createEntityType(EntityConstants.TYPE_STITCHED_V3D_RAW, stitchedStackAttributeSet);
-            
-        }
-        catch (Exception e) {
-            e.printStackTrace();
             throw new DaoException(e);
         }
     }
@@ -1029,56 +1027,63 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
     
-    public List<Entity> getUserEntitiesByNameAndTypeName(String userLogin, String entityName, String entityTypeName) throws DaoException {
+    public List<Entity> getUserEntitiesByNameAndTypeName(String subjectKey, String entityName, String entityTypeName) throws DaoException {
         try {
-            StringBuffer hql = new StringBuffer("select e from Entity e ");
-            hql.append("join fetch e.user ");
-            hql.append("join fetch e.entityType ");
-            hql.append("where e.name=:entityName ");
+        	if (_logger.isDebugEnabled()) {
+        		_logger.debug("getUserEntitiesByNameAndTypeName(subjectKey="+subjectKey+",entityName="+entityName+",entityTypeName=entityTypeName)");
+        	}
+        	
+            StringBuilder hql = new StringBuilder();
+            hql.append("select e from Entity e ");
+            hql.append("left outer join fetch e.entityActorPermissions p ");
+            hql.append("where e.name = :entityName ");
             hql.append("and e.entityType.name=:entityTypeName ");
-            if (null != userLogin) {
-                hql.append("and e.user.userLogin=:userLogin ");
+            if (null != subjectKey) {
+            	hql.append("and (e.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
             }
-            Query query = getCurrentSession().createQuery(hql.toString());
-            query.setString("entityName", entityName);
-            query.setString("entityTypeName", entityTypeName);
-            if (null != userLogin) {
-                query.setString("userLogin", userLogin);
+            
+            final Session currentSession = getCurrentSession();
+            Query query = currentSession.createQuery(hql.toString());
+            query.setParameter("entityName", entityName);
+            query.setParameter("entityTypeName", entityTypeName);
+            if (null != subjectKey) {
+                List<String> subjectKeyList = getSubjectKeys(subjectKey);
+	            query.setParameterList("subjectKeyList", subjectKeyList);
             }
-            return query.list();
+            
+            return filterDuplicates(query.list());
         }
         catch (Exception e) {
-            // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
             throw handleException(e, "getUserEntitiesByNameAndTypeName");
         }
     }
 
-    public List<Entity> getUserEntitiesByTypeName(List<String> userLoginList,
-                                                  String entityTypeName) throws DaoException {
+    public List<Entity> getUserEntitiesByTypeName(List<String> subjectKeyList, String entityTypeName) throws DaoException {
         try {
+        	if (_logger.isDebugEnabled()) {
+        		_logger.debug("getUserEntitiesByTypeName(subjectKeyList="+subjectKeyList+",entityTypeName="+entityTypeName+")");
+        	}
+        	
             StringBuilder hql = new StringBuilder(256);
 
             final boolean filterByUsers =
-                    ((userLoginList != null) && (userLoginList.size() > 0));
+                    ((subjectKeyList != null) && (subjectKeyList.size() > 0));
 
-            hql.append("select e from Entity e join fetch e.entityType");
+            hql.append("select e from Entity e ");
+            hql.append("left outer join fetch e.entityActorPermissions p ");
+            hql.append("where e.entityType.name = :entityTypeName ");
             if (filterByUsers) {
-                hql.append(" join fetch e.user");
-            }
-            hql.append(" where e.entityType.name = :entityTypeName");
-            if (filterByUsers) {
-                hql.append(" and e.user.userLogin in (:userLoginList)");
+            	hql.append("and (e.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
             }
 
             final Session currentSession = getCurrentSession();
             Query query = currentSession.createQuery(hql.toString());
             query.setParameter("entityTypeName", entityTypeName);
             if (filterByUsers) {
-                query.setParameterList("userLoginList", userLoginList);
+	            query.setParameterList("subjectKeyList", subjectKeyList);
             }
 
-            //noinspection unchecked
-            return query.list();
+            return filterDuplicates(query.list());
         }
         catch (Exception e) {
             // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
@@ -1086,8 +1091,13 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
+    // TODO: add subjectKey parameter
     public Set<Entity> getEntitiesByName(String name) throws DaoException {
         try {
+        	if (_logger.isDebugEnabled()) {
+        		_logger.debug("getEntitiesByName(name="+name+")");
+        	}
+        	
             Session session = getCurrentSession();
             Criteria c = session.createCriteria(Entity.class);
             c.add(Expression.eq("name", name));
@@ -1104,109 +1114,104 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
-    public Entity getUserEntityById(String userLogin, long entityId) throws DaoException {
+    public Collection<Entity> getUserEntitiesByName(String subjectKey, String entityName) throws DaoException {
         try {
-            Session session = getCurrentSession();
-            Criteria c = session.createCriteria(Entity.class);
-            c.add(Expression.eq("id", entityId));
-            Entity tmpEntity = (Entity) c.uniqueResult();
-            if (tmpEntity.getUser().getUserLogin().equals(userLogin)) {
-                return tmpEntity;
-            }
-            else {
-                throw new Exception("User " + userLogin + " does not own item " + entityId);
-            }
-        }
-        catch (Exception e) {
-            throw new DaoException(e);
-        }
-    }
-
-
-    public Set<Entity> getUserEntitiesByName(String userLogin, String name) throws DaoException {
-        try {
-            Session session = getCurrentSession();
-            StringBuffer hql = new StringBuffer("select e from Entity e ");
-            hql.append("join fetch e.user ");
-            hql.append("join fetch e.entityType ");
-            hql.append("where e.name=? ");
-            if (null != userLogin) {
-                hql.append("and e.user.userLogin=? ");
-            }
-            hql.append("order by e.id ");
+        	if (_logger.isDebugEnabled()) {
+        		_logger.debug("getUserEntitiesByName(subjectKey="+subjectKey+",entityId="+entityName+")");	
+        	}
             
-            Query query = session.createQuery(hql.toString());
-            query.setString(0, name);
-            if (null != userLogin) {
-                query.setString(1, userLogin);
+            StringBuilder hql = new StringBuilder();
+            hql.append("select e from Entity e ");
+            hql.append("left outer join fetch e.entityActorPermissions p ");
+            hql.append("where e.name = :entityName ");
+            if (subjectKey!=null) {
+            	hql.append("and (e.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
             }
-            List l = query.list();
-            Set<Entity> resultSet = new HashSet<Entity>();
-            for (Object o : l) {
-                Entity e = (Entity) o;
-                resultSet.add(e);
+            
+            final Session currentSession = getCurrentSession();
+            Query query = currentSession.createQuery(hql.toString());
+            query.setParameter("entityName", entityName);
+            if (subjectKey!=null) {
+                List<String> subjectKeyList = getSubjectKeys(subjectKey);
+            	query.setParameterList("subjectKeyList", subjectKeyList);
             }
-            return resultSet;
+            
+            return filterDuplicates(query.list());
         }
         catch (Exception e) {
             throw new DaoException(e);
         }
     }
 
-
-    public boolean deleteEntityById(Long entityId) throws DaoException {
+    public boolean deleteEntityById(String subjectKey, Long entityId) throws DaoException {
+        Session session = null;
+        Transaction transaction = null;
         try {
-            Session session = getCurrentSession();
-            Set<EntityData> parentEds = getParentEntityDatas(entityId);
+            session = getCurrentSession();
+            transaction = session.beginTransaction();
+            Set<EntityData> parentEds = getParentEntityDatas(subjectKey, entityId);
             for(EntityData parentEd : parentEds) {
                 session.delete(parentEd);
             	_logger.debug("The parent entity data with id=" + parentEd.getId() + " has been deleted.");
             }
-            Criteria c = session.createCriteria(Entity.class);
-            c.add(Expression.eq("id", Long.valueOf(entityId)));
-            Entity entity = (Entity) c.uniqueResult();
-            session.delete(entity);
-            _logger.debug("The entity with id=" + entityId + " has been deleted.");
+            Entity entity = getEntityById(subjectKey, entityId);
+            if (entity!=null && entity.getOwnerKey().equals(subjectKey)) {
+	            session.delete(entity);
+	            _logger.debug("The entity with id=" + entityId + " has been deleted.");
+            }
+            else {
+            	throw new DaoException("Could not find entity with id="+entityId+" owned by "+subjectKey);
+            }
+            transaction.commit();
             return true;
         }
         catch (Exception e) {
+        	transaction.rollback();
             throw new DaoException(e);
         }
     }
 
-    public List<Entity> getUserCommonRoots(String userLogin, String entityTypeName) throws DaoException {
+    public List<Entity> getCommonRoots(String subjectKey) throws DaoException {
         try {
+        	if (_logger.isDebugEnabled()) {
+        		_logger.debug("getCommonRoots(subjectKey="+subjectKey+")");
+        	}
+            
         	EntityAttribute attr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT);
             Session session = getCurrentSession();
-            StringBuffer hql = new StringBuffer("select e from Entity e ");
-            hql.append("join fetch e.user ");
+            StringBuilder hql = new StringBuilder();
+            hql.append("select e from Entity e ");
+            hql.append("left outer join fetch e.entityActorPermissions p ");
             hql.append("join fetch e.entityType ");
             hql.append("join e.entityData as ed ");
-            hql.append("where e.entityType.name=? ");
-            hql.append("and ed.entityAttribute.id=? ");
-            if (null != userLogin) {
-                hql.append("and e.user.userLogin=? ");
+            hql.append("where ed.entityAttribute.id=:attrName ");
+            if (null != subjectKey) {
+                hql.append("and (e.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
             }
             hql.append("order by e.id ");
             Query query = session.createQuery(hql.toString());
-            query.setString(0, entityTypeName);
-            query.setLong(1, attr.getId());
-            if (null != userLogin) {
-                query.setString(2, userLogin);
+            query.setLong("attrName", attr.getId());
+            if (null != subjectKey) {
+                List<String> subjectKeyList = getSubjectKeys(subjectKey);
+                query.setParameterList("subjectKeyList", subjectKeyList);
             }
-            return query.list();
+            return filterDuplicates(query.list());
         } catch (Exception e) {
             throw new DaoException(e);
         }
     }
-    
-    public Entity getCommonRootFolderByName(String userLogin, String folderName, boolean createIfNecessary) throws DaoException {
 
+	public Entity getCommonRootFolderByName(String subjectKey, String folderName, boolean createIfNecessary) throws DaoException {
+
+    	if (_logger.isDebugEnabled()) {
+    		_logger.debug("getCommonRootFolderByName(subjectKey="+subjectKey+",folderName="+folderName+",createIfNecessary="+createIfNecessary+")");
+    	}
+    	
     	Entity folder = null;
-    	for(Entity entity : getUserEntitiesByNameAndTypeName(userLogin, folderName, EntityConstants.TYPE_FOLDER)) {
+    	for(Entity entity : getUserEntitiesByNameAndTypeName(subjectKey, folderName, EntityConstants.TYPE_FOLDER)) {
     		if (entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT)!=null) {
     			if (folder!=null) {
-    				throw new IllegalStateException("Multiple common roots owned by "+userLogin+" with name: "+folderName);
+    				throw new IllegalStateException("Multiple common roots owned by "+subjectKey+" with name: "+folderName);
     			}
     			folder = entity;
     		}
@@ -1218,8 +1223,8 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	
         if (createIfNecessary) {
             _logger.info("Creating new topLevelFolder with name=" + folderName);
-            folder = createEntity(userLogin, EntityConstants.TYPE_FOLDER, folderName);
-            folder.addAttributeAsTag(EntityConstants.ATTRIBUTE_COMMON_ROOT);
+            folder = createEntity(subjectKey, EntityConstants.TYPE_FOLDER, folderName);
+            EntityUtils.addAttributeAsTag(folder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
             saveOrUpdate(folder);
             _logger.info("Saved top level folder as " + folder.getId());
         }
@@ -1227,9 +1232,13 @@ public class AnnotationDAO extends ComputeBaseDAO {
         return folder;
     }
     
-    public Entity getChildFolderByName(String userLogin, Long parentId, String folderName, boolean createIfNecessary) throws DaoException {
+    public Entity getChildFolderByName(String subjectKey, Long parentId, String folderName, boolean createIfNecessary) throws DaoException {
 
-    	Entity parent = getUserEntityById(userLogin, parentId);
+    	if (_logger.isDebugEnabled()) {
+    		_logger.debug("getChildFolderByName(subjectKey="+subjectKey+",parentId="+parentId+",folderName="+folderName+",createIfNecessary="+createIfNecessary+")");
+    	}
+    	
+    	Entity parent = getEntityById(subjectKey, parentId);
     	if (parent==null) {
     		throw new IllegalArgumentException("Parent folder does not exist: "+parentId);
     	}
@@ -1243,79 +1252,125 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	Entity folder = null;
         if (createIfNecessary) {
             _logger.info("Creating new child folder with name=" + folderName);
-            folder = createEntity(userLogin, EntityConstants.TYPE_FOLDER, folderName);
+            folder = createEntity(subjectKey, EntityConstants.TYPE_FOLDER, folderName);
             addEntityToParent(parent, folder, parent.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
         }
     	
         return folder;
     }
     
-    public Set<EntityData> getParentEntityDatas(long childEntityId) throws DaoException {
+    public Set<EntityData> getParentEntityDatas(String subjectKey, Long childEntityId) throws DaoException {
         try {
+        	if (_logger.isDebugEnabled()) {
+        		_logger.debug("getParentEntityDatas(subjectKey="+childEntityId+", childEntityId="+childEntityId+")");
+        	}
+        	
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed from EntityData ed ");
-            hql.append("join fetch ed.user ");
             hql.append("join fetch ed.entityAttribute ");
             hql.append("join fetch ed.childEntity ");
-            hql.append("join fetch ed.childEntity.user ");
             hql.append("join fetch ed.childEntity.entityType ");
             hql.append("join fetch ed.parentEntity ");
-            hql.append("join fetch ed.parentEntity.user ");
             hql.append("join fetch ed.parentEntity.entityType ");
+            hql.append("left outer join ed.parentEntity.entityActorPermissions p ");
             hql.append("where ed.childEntity.id=?");
+            if (null != subjectKey) {
+                hql.append("and (ed.parentEntity.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
+            }
             Query query = session.createQuery(hql.toString()).setLong(0, childEntityId);
+            if (null != subjectKey) {
+                List<String> subjectKeyList = getSubjectKeys(subjectKey);
+                query.setParameterList("subjectKeyList", subjectKeyList);
+            }
             return new HashSet(query.list());
         } catch (Exception e) {
             throw new DaoException(e);
         }
     }
 
-    public Set<Long> getParentIdsForAttribute(long childEntityId, String attributeName) throws DaoException {
+    public Set<Long> getParentIdsForAttribute(String subjectKey, Long childEntityId, String attributeName) throws DaoException {
         try {
+        	if (_logger.isDebugEnabled()) {
+        		_logger.debug("getParentIdsForAttribute(childEntityId="+childEntityId+",attributeName="+attributeName+")");
+        	}
+        	
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.parentEntity.id from EntityData ed ");
-            hql.append("where ed.childEntity.id=? ");
-            hql.append("and ed.entityAttribute.name=? ");
+            hql.append("left outer join fetch ed.parentEntity.entityActorPermissions p ");
+            hql.append("where ed.childEntity.id=:childEntityId ");
+            hql.append("and ed.entityAttribute.name=:attrName ");
+            if (null != subjectKey) {
+                hql.append("and (ed.parentEntity.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
+            }
             Query query = session.createQuery(hql.toString());
-            query.setLong(0, childEntityId);
-            query.setString(1, attributeName);
+            query.setLong("childEntityId", childEntityId);
+            query.setString("attrName", attributeName);
+            if (null != subjectKey) {
+                List<String> subjectKeyList = getSubjectKeys(subjectKey);
+                query.setParameterList("subjectKeyList", subjectKeyList);
+            }
             return new HashSet(query.list());
         } catch (Exception e) {
             throw new DaoException(e);
         }
     }
     
-    public Set<Entity> getParentEntities(long entityId) throws DaoException {
+    public Set<Entity> getParentEntities(String subjectKey, Long entityId) throws DaoException {
         try {
+        	if (_logger.isDebugEnabled()) {
+        		_logger.debug("getParentEntities(subjectKey="+subjectKey+", entityId="+entityId+")");
+        	}
+        	
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
-            hql.append("join fetch ed.parentEntity.user ");
+            hql.append("left outer join fetch ed.parentEntity.entityActorPermissions p ");
             hql.append("join fetch ed.parentEntity.entityType ");
             hql.append("where ed.childEntity.id=? ");
+            if (null != subjectKey) {
+                hql.append("and (ed.parentEntity.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
+            }
             Query query = session.createQuery(hql.toString()).setLong(0, entityId);
+            if (null != subjectKey) {
+                List<String> subjectKeyList = getSubjectKeys(subjectKey);
+                query.setParameterList("subjectKeyList", subjectKeyList);
+            }
             return new HashSet(query.list());
         } catch (Exception e) {
             throw new DaoException(e);
         }
     }
     
-    public Set<Entity> getChildEntities(long entityId) throws DaoException {
+    public Set<Entity> getChildEntities(String subjectKey, Long entityId) throws DaoException {
         try {
+        	if (_logger.isDebugEnabled()) {
+        		_logger.debug("getChildEntities(subjectKey="+subjectKey+", entityId="+entityId+")");
+        	}
+        	
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.childEntity from EntityData ed ");
-            hql.append("join fetch ed.childEntity.user ");
+            hql.append("left outer join fetch ed.childEntity.entityActorPermissions p ");
             hql.append("join fetch ed.childEntity.entityType ");
             hql.append("where ed.parentEntity.id=? ");
+            if (null != subjectKey) {
+                hql.append("and (ed.childEntity.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
+            }
             Query query = session.createQuery(hql.toString()).setLong(0, entityId);
+            if (null != subjectKey) {
+                List<String> subjectKeyList = getSubjectKeys(subjectKey);
+                query.setParameterList("subjectKeyList", subjectKeyList);
+            }
             return new HashSet(query.list());
         } catch (Exception e) {
             throw new DaoException(e);
         }
     }
 
-	public Map<Long, String> getChildEntityNames(long entityId) throws DaoException {
-		Map<Long,String> nameMap = new LinkedHashMap<Long,String>();
+	public Map<Long, String> getChildEntityNames(Long entityId) throws DaoException {
         try {
+        	if (_logger.isDebugEnabled()) {
+        		_logger.debug("getChildEntityNames(entityId="+entityId+")");
+        	}
+        	Map<Long,String> nameMap = new LinkedHashMap<Long,String>();
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.childEntity.id, ed.childEntity.name from EntityData ed ");
             hql.append("where ed.parentEntity.id=? ");
@@ -1331,9 +1386,9 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
 	}
 	
-    public List<Task> getAnnotationSessions(String userLogin) throws DaoException {
+    public List<Task> getAnnotationSessions(String subjectKey) throws DaoException {
 		try {
-	        String hql = "select clazz from Task clazz where subclass='" + AnnotationSessionTask.TASK_NAME + "' and clazz.owner='" + userLogin + "' order by clazz.objectId";
+	        String hql = "select clazz from Task clazz where subclass='" + AnnotationSessionTask.TASK_NAME + "' and clazz.owner='" + subjectKey + "' order by clazz.objectId";
 	        Query query = sessionFactory.getCurrentSession().createQuery(hql);
 	        return query.list();
 	    } catch (Exception e) {
@@ -1341,42 +1396,55 @@ public class AnnotationDAO extends ComputeBaseDAO {
 	    }
     }
 
-    public List<Entity> getAnnotationsForChildren(String userLogin, Long entityId) throws DaoException {
+    public List<Entity> getAnnotationsForChildren(String subjectKey, Long entityId) throws DaoException {
         try {
+        	if (_logger.isDebugEnabled()) {
+        		_logger.debug("getAnnotationsForChildren(subjectKey="+subjectKey+",entityId="+entityId+")");
+        	}
+            
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select distinct targetEd.parentEntity from EntityData targetEd, EntityData childEd ");
-            hql.append("join fetch targetEd.parentEntity.user ");
             hql.append("join fetch targetEd.parentEntity.entityType ");
+            hql.append("left outer join fetch targetEd.parentEntity.entityActorPermissions p ");
             hql.append("where targetEd.entityAttribute.name = :attrName ");	
             hql.append("and childEd.childEntity.id is not null ");
             hql.append("and cast(childEd.childEntity.id as string) = targetEd.value ");
             hql.append("and childEd.parentEntity.id = :entityId ");
-            if (userLogin!=null) {
-            	hql.append("and (targetEd.parentEntity.user.userLogin=:userLogin or targetEd.parentEntity.user.userLogin='system') ");
+            if (null != subjectKey) {
+            	hql.append("and (targetEd.parentEntity.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
             }
             
             Query query = session.createQuery(hql.toString());
             query.setString("attrName", EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
         	query.setLong("entityId", entityId);
-            if (userLogin!=null) {
-            	query.setString("userLogin", userLogin);
+            if (null != subjectKey) {
+                List<String> subjectKeyList = getSubjectKeys(subjectKey);
+	            query.setParameterList("subjectKeyList", subjectKeyList);
             }
             
-            return query.list();
+            return filterDuplicates(query.list());
         } 
         catch (Exception e) {
             throw new DaoException(e);
         }
     }
-
-    public List<Entity> getAnnotationsByEntityId(String userLogin, Long entityId) throws DaoException {
+    
+    public List<Entity> getAnnotationsByEntityId(String subjectKey, Long entityId) throws DaoException {
+    	if (_logger.isDebugEnabled()) {
+    		_logger.debug("getAnnotationsByEntityId(subjectKey="+subjectKey+",entityId="+entityId+")");
+    	}
+    	
     	List<Long> entityIds = new ArrayList<Long>();
     	entityIds.add(entityId);
-    	return getAnnotationsByEntityId(userLogin, entityIds);
+    	return filterDuplicates(getAnnotationsByEntityId(subjectKey, entityIds));
     }
     
-    public List<Entity> getAnnotationsByEntityId(String userLogin, List<Long> entityIds) throws DaoException {
+    public List<Entity> getAnnotationsByEntityId(String subjectKey, List<Long> entityIds) throws DaoException {
         try {
+        	if (_logger.isDebugEnabled()) {
+        		_logger.debug("getAnnotationsByEntityId(subjectKey="+subjectKey+",entityIds="+entityIds+")");
+        	}
+        	
         	if (entityIds.isEmpty()) {
         		return new ArrayList<Entity>();
         	}
@@ -1388,30 +1456,31 @@ public class AnnotationDAO extends ComputeBaseDAO {
             
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
-            hql.append("join fetch ed.parentEntity.user ");
             hql.append("join fetch ed.parentEntity.entityType ");
+            hql.append("left outer join fetch ed.parentEntity.entityActorPermissions p ");
             hql.append("where ed.entityAttribute.name = :attrName ");
             hql.append("and ed.value in (:entityIds) ");
-            if (userLogin!=null) {
-            	hql.append("and (ed.parentEntity.user.userLogin=:userLogin or ed.parentEntity.user.userLogin='system') ");
+            if (subjectKey!=null) {
+            	hql.append("and (ed.parentEntity.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
             }
             hql.append("order by ed.parentEntity.id ");
             
             Query query = session.createQuery(hql.toString());
             query.setString("attrName", EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
         	query.setParameterList("entityIds", entityIdStrs);
-            if (userLogin!=null) {
-            	query.setString("userLogin", userLogin);
+            if (subjectKey!=null) {
+                List<String> subjectKeyList = getSubjectKeys(subjectKey);
+	            query.setParameterList("subjectKeyList", subjectKeyList);
             }
             
-            return query.list();
+            return filterDuplicates(query.list());
         } 
         catch (Exception e) {
             throw new DaoException(e);
         }
     }
 
-	public List<Entity> getAnnotationsForSession(String userLogin, long sessionId) throws DaoException {
+	public List<Entity> getAnnotationsForSession(String subjectKey, long sessionId) throws DaoException {
 
         Task task = getTaskById(sessionId);
         if (task == null) 
@@ -1423,23 +1492,30 @@ public class AnnotationDAO extends ComputeBaseDAO {
         try {
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
-            hql.append("join fetch ed.parentEntity.user ");
+            hql.append("left outer join fetch ed.parentEntity.entityActorPermissions p ");
             hql.append("join fetch ed.parentEntity.entityType ");
-            hql.append("where ed.entityAttribute.name = ? ");
-    		hql.append("and ed.value = ? ");
+            hql.append("where ed.entityAttribute.name = :attrName ");
+    		hql.append("and ed.value = :sessionId ");
+            if (subjectKey!=null) {
+            	hql.append("and (ed.parentEntity.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
+            }
     		hql.append("order by ed.parentEntity.id ");
             Query query = session.createQuery(hql.toString());
-            query.setString(0, EntityConstants.ATTRIBUTE_ANNOTATION_SESSION_ID);
-            query.setString(1, ""+sessionId);
+            query.setString("attrName", EntityConstants.ATTRIBUTE_ANNOTATION_SESSION_ID);
+            query.setString("sessionId", ""+sessionId);
+            if (subjectKey!=null) {
+                List<String> subjectKeyList = getSubjectKeys(subjectKey);
+	            query.setParameterList("subjectKeyList", subjectKeyList);
+            }
             // TODO: check userLogin if the session is private
-            return query.list();
+            return filterDuplicates(query.list());
         }
         catch (Exception e) {
             throw new DaoException(e);
         }
 	}
 
-    public List<Entity> getEntitiesForAnnotationSession(String username, long sessionId) throws ComputeException {
+    public List<Entity> getEntitiesForAnnotationSession(String subjectKey, long sessionId) throws ComputeException {
         
         Task task = getTaskById(sessionId);
         if (task == null) 
@@ -1453,15 +1529,15 @@ public class AnnotationDAO extends ComputeBaseDAO {
         	return new ArrayList<Entity>();
         }
         else {
-        	List<Entity> entities = getEntitiesInList(entityIds);	
+        	List<Entity> entities = getEntitiesInList(subjectKey, entityIds);	
         	for(Entity entity : entities) {
-        		populateDescendants(entity);
+        		populateDescendants(entity.getOwnerKey(), entity);
         	}
-        	return entities;
+        	return filterDuplicates(entities);
         }
     }
 	
-    public List<Entity> getCategoriesForAnnotationSession(String username, long sessionId) throws ComputeException {
+    public List<Entity> getCategoriesForAnnotationSession(String subjectKey, long sessionId) throws ComputeException {
         
         Task task = getTaskById(sessionId);
         if (task == null) 
@@ -1475,7 +1551,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
         	return new ArrayList<Entity>();
         }
         else {
-        	return getEntitiesInList(entityIds);	
+        	return filterDuplicates(getEntitiesInList(subjectKey, entityIds));	
         }
     }
 
@@ -1551,7 +1627,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 				
 				if ("Tag".equals(termType)) {
 					Entity parent = null;
-					for(Entity p : getParentEntities(termId)) {
+					for(Entity p : getParentEntities(null, termId)) {
 						String parentTypeName = p.getEntityType().getName();
 						if (parentTypeName.equals(EntityConstants.TYPE_ONTOLOGY_ELEMENT) 
 								|| parentTypeName.equals(EntityConstants.TYPE_ONTOLOGY_ROOT)) {
@@ -1593,18 +1669,21 @@ public class AnnotationDAO extends ComputeBaseDAO {
 	
     public List<Entity> getPublicOntologies() throws ComputeException {
 
+    	if (_logger.isDebugEnabled()) {
+    		_logger.debug("getPublicOntologies()");
+    	}
+    	
         EntityType tmpType = getEntityTypeByName(EntityConstants.TYPE_ONTOLOGY_ROOT);
         EntityAttribute tmpAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_IS_PUBLIC);
         
         StringBuffer hql = new StringBuffer("select e from Entity e ");
-        hql.append("join fetch e.user ");
         hql.append("join fetch e.entityType ");
         hql.append("where e.entityType.id=? ");
         hql.append("and exists (from EntityData as attr where attr.parentEntity = e and attr.entityAttribute.id = ?)");
         Query query = getCurrentSession().createQuery(hql.toString());
         query.setLong(0, tmpType.getId());
         query.setLong(1, tmpAttr.getId());
-        return query.list();
+        return filterDuplicates(query.list());
     }
 
     public Entity getErrorOntology() throws ComputeException {
@@ -1618,30 +1697,39 @@ public class AnnotationDAO extends ComputeBaseDAO {
         return null;
     }
     
-    public List<Entity> getPrivateOntologies(String userLogin) throws ComputeException {
-    	
+    public List<Entity> getPrivateOntologies(String subjectKey) throws ComputeException {
+
+    	if (_logger.isDebugEnabled()) {
+    		_logger.debug("getAnnotationsByEntityId(subjectKey="+subjectKey+")");
+    	}
+        
         EntityType tmpType = getEntityTypeByName(EntityConstants.TYPE_ONTOLOGY_ROOT);
         EntityAttribute tmpAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_IS_PUBLIC);
-        
-        StringBuffer hql = new StringBuffer("select e from Entity e ");
-        hql.append("join fetch e.user ");
+
+        StringBuilder hql = new StringBuilder();
+        hql.append("select e from Entity e ");
+        hql.append("left outer join fetch e.entityActorPermissions p ");
         hql.append("join fetch e.entityType ");
-        hql.append("where e.entityType.id=? ");
-        if (null != userLogin) {
-            hql.append("and e.user.userLogin=? ");
+        hql.append("where e.entityType.id=:entityTypeId ");
+        if (null != subjectKey) {
+            hql.append("and (e.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
         }
-        hql.append("and not exists (from EntityData as attr where attr.parentEntity = e and attr.entityAttribute.id = ?)");
+        hql.append("and not exists (from EntityData as attr where attr.parentEntity = e and attr.entityAttribute.id = :attrName)");
         Query query = getCurrentSession().createQuery(hql.toString());
-        query.setLong(0, tmpType.getId());
-        query.setString(1, userLogin);
-        query.setLong(2, tmpAttr.getId());
-        return query.list();
+        query.setLong("entityTypeId", tmpType.getId());
+
+        if (null != subjectKey) {
+            List<String> subjectKeyList = getSubjectKeys(subjectKey);
+	        query.setParameterList("subjectKeyList", subjectKeyList);
+        }
+        
+        query.setLong("attrName", tmpAttr.getId());
+        return filterDuplicates(query.list());
     }
     
-    public Entity createEntity(String userLogin, String entityTypeName, String entityName) throws DaoException {
+    public Entity createEntity(String subjectKey, String entityTypeName, String entityName) throws DaoException {
     	if (entityTypeName==null) throw new DaoException("Error creating entity with null type");
-        User owner = getUserByName(userLogin);
-        Entity entity = newEntity(entityTypeName, entityName, owner);
+        Entity entity = newEntity(entityTypeName, entityName, subjectKey);
         if (entity.getEntityType()==null) throw new DaoException("Error creating entity with unknown entity type: "+entityTypeName);
         saveOrUpdate(entity);
         return entity;
@@ -1655,19 +1743,18 @@ public class AnnotationDAO extends ComputeBaseDAO {
         return ed;
     }
 
-    public Entity createDataSet(String userLogin, String dataSetName) throws ComputeException {
+    public Entity createDataSet(String subjectKey, String dataSetName) throws ComputeException {
 
-        String dataSetIdentifier = EntityUtils.createDataSetIdentifierFromName(userLogin, dataSetName);
+        String dataSetIdentifier = EntityUtils.createDataSetIdentifierFromName(subjectKey, dataSetName);
         
         if (!getUserEntitiesWithAttributeValue(null, EntityConstants.TYPE_DATA_SET, EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier).isEmpty()) {
         	throw new ComputeException("Data Set with identifier '"+dataSetIdentifier+"' already exists.");
         }
         
-        User tmpUser = getUserByName(userLogin);
-        Entity newDataSet = newEntity(EntityConstants.TYPE_DATA_SET, dataSetName, tmpUser);
+        Entity newDataSet = newEntity(EntityConstants.TYPE_DATA_SET, dataSetName, subjectKey);
         saveOrUpdate(newDataSet);
 
-        EntityData dataSetIdEd = newData(newDataSet, EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, tmpUser);
+        EntityData dataSetIdEd = newData(newDataSet, EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, subjectKey);
         newDataSet.getEntityData().add(dataSetIdEd);
         dataSetIdEd.setValue(dataSetIdentifier);
         saveOrUpdate(dataSetIdEd);
@@ -1675,27 +1762,25 @@ public class AnnotationDAO extends ComputeBaseDAO {
         return newDataSet;
     }
     
-    public Entity createOntologyRoot(String userLogin, String rootName) throws ComputeException {
+    public Entity createOntologyRoot(String subjectKey, String rootName) throws ComputeException {
         
-        User tmpUser = getUserByName(userLogin);
-        Entity newOntologyRoot = newEntity(EntityConstants.TYPE_ONTOLOGY_ROOT, rootName, tmpUser);
+        Entity newOntologyRoot = newEntity(EntityConstants.TYPE_ONTOLOGY_ROOT, rootName, subjectKey);
         saveOrUpdate(newOntologyRoot);
 
         // Add the type
-        EntityData termData = newData(newOntologyRoot, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE, tmpUser);
+        EntityData termData = newData(newOntologyRoot, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE, subjectKey);
         termData.setValue(Category.class.getSimpleName());
         saveOrUpdate(termData);
 
         return newOntologyRoot;
     }
 
-    public EntityData createOntologyTerm(String userLogin, Long ontologyTermParentId, String termName, OntologyElementType type, Integer orderIndex) throws ComputeException {
+    public EntityData createOntologyTerm(String subjectKey, Long ontologyTermParentId, String termName, OntologyElementType type, Integer orderIndex) throws ComputeException {
 
-        User tmpUser = getUserByName(userLogin);
-        Entity parentOntologyElement = getEntityById(ontologyTermParentId.toString());
+        Entity parentOntologyElement = getEntityById(ontologyTermParentId);
         
         // Create and save the new entity
-        Entity newOntologyElement = newEntity(EntityConstants.TYPE_ONTOLOGY_ELEMENT, termName, tmpUser);
+        Entity newOntologyElement = newEntity(EntityConstants.TYPE_ONTOLOGY_ELEMENT, termName, subjectKey);
 
         // If no order index is given then we add in last place
         if (orderIndex == null) {
@@ -1710,7 +1795,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
         newOntologyElement.setEntityData(eds);
         
         // Add the type
-        EntityData termData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE, tmpUser);
+        EntityData termData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE, subjectKey);
         termData.setValue(type.getClass().getSimpleName());
         eds.add(termData);
 
@@ -1719,11 +1804,11 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
             Interval interval = (Interval)type;
 
-            EntityData lowerData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER, tmpUser);
+            EntityData lowerData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER, subjectKey);
             lowerData.setValue(interval.getLowerBound().toString());
             eds.add(lowerData);
 
-            EntityData upperData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER, tmpUser);
+            EntityData upperData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER, subjectKey);
             upperData.setValue(interval.getUpperBound().toString());
             eds.add(upperData);
         }
@@ -1733,7 +1818,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
             EnumText enumText = (EnumText)type;
 
-            EntityData lowerData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_ENUMTEXT_ENUMID, tmpUser);
+            EntityData lowerData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_ENUMTEXT_ENUMID, subjectKey);
             lowerData.setValue(enumText.getValueEnumId().toString());
             eds.add(lowerData);
         }
@@ -1742,7 +1827,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
         saveOrUpdate(newOntologyElement);
         
         // Associate the entity to the parent
-        EntityData childData = newData(parentOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT, tmpUser);
+        EntityData childData = newData(parentOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT, subjectKey);
         childData.setChildEntity(newOntologyElement);
         childData.setOrderIndex(orderIndex);
         saveOrUpdate(childData);
@@ -1750,30 +1835,24 @@ public class AnnotationDAO extends ComputeBaseDAO {
         return childData;
     }
     
-    public Entity cloneEntityTree(Long sourceRootId, String targetUserLogin, String targetRootName) throws ComputeException {
+    public Entity cloneEntityTree(Long sourceRootId, String targetSubjectKey, String targetRootName) throws ComputeException {
 
-    	Entity sourceRoot = getEntityById(sourceRootId.toString());    	
+    	Entity sourceRoot = getEntityById(sourceRootId);    	
     	if (sourceRoot == null) {
     		throw new DaoException("Cannot find the source root.");
     	}
     	
-        User targetUser = getUserByName(targetUserLogin);
-        if (targetUser == null) {
-            throw new DaoException("Cannot find the target user.");
-        }
-
-    
-        Entity cloned = cloneEntityTree(sourceRoot, targetUser, targetRootName, true);
+        Entity cloned = cloneEntityTree(sourceRoot, targetSubjectKey, targetRootName, true);
         return cloned;
     }
 
 	// TODO: detect cycles
-    private Entity cloneEntityTree(Entity source, User targetUser, String targetName, boolean isRoot) throws DaoException {
+    private Entity cloneEntityTree(Entity source, String targetSubjectKey, String targetName, boolean isRoot) throws DaoException {
 
         EntityAttribute tmpAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_IS_PUBLIC);
         
         // Create new ontology element
-        Entity newOntologyElement = newEntity(source.getEntityType(), targetName, targetUser);
+        Entity newOntologyElement = newEntity(source.getEntityType(), targetName, targetSubjectKey);
         saveOrUpdate(newOntologyElement);
 
         _logger.info("newOntologyElement.id="+newOntologyElement.getId());
@@ -1787,7 +1866,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
     		Entity newChildEntity = null;
     		Entity childEntity = ed.getChildEntity();
     		if (childEntity != null) {
-    			newChildEntity = cloneEntityTree(childEntity, targetUser, childEntity.getName(), false);	
+    			newChildEntity = cloneEntityTree(childEntity, targetSubjectKey, childEntity.getName(), false);	
     		}
     		
             EntityData newEd = newOntologyElement.addChildEntity(newChildEntity, ed.getEntityAttribute().getName());
@@ -1801,15 +1880,15 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
     public Entity publishOntology(Long sourceRootId, String targetRootName) throws ComputeException {
 
-    	Entity sourceRoot = getEntityById(sourceRootId.toString());    	
+    	Entity sourceRoot = getEntityById(sourceRootId);    	
     	if (sourceRoot == null) {
     		throw new DaoException("Cannot find the source root.");
     	}
 	
-        Entity clonedEntity = cloneEntityTree(sourceRoot, sourceRoot.getUser(), targetRootName, true);
+        Entity clonedEntity = cloneEntityTree(sourceRoot, sourceRoot.getOwnerKey(), targetRootName, true);
 
         // Add the public tag
-        EntityData publicEd = newData(clonedEntity, EntityConstants.ATTRIBUTE_IS_PUBLIC, sourceRoot.getUser());
+        EntityData publicEd = newData(clonedEntity, EntityConstants.ATTRIBUTE_IS_PUBLIC, sourceRoot.getOwnerKey());
         publicEd.setValue("true");
         saveOrUpdate(publicEd);
         
@@ -1817,7 +1896,8 @@ public class AnnotationDAO extends ComputeBaseDAO {
     }
     
     public void fixInternalOntologyConsistency(Long sourceRootId) throws DaoException {
-    	Entity ontologyRoot = populateDescendants(getEntityById(sourceRootId));
+    	Entity ontologyRoot = getEntityById(sourceRootId);
+    	ontologyRoot = populateDescendants(ontologyRoot.getOwnerKey(), ontologyRoot);
     	if (ontologyRoot==null) return;
     	_logger.warn("Fixing internal consistency for ontology "+ontologyRoot.getName()+" (id="+ontologyRoot.getId()+")");
     	Map<String,Long> enumMap = new HashMap<String,Long>();
@@ -1838,7 +1918,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 		if ("EnumText".equals(entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE))) {
 			EntityData oldEnumIdEd = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_ENUMTEXT_ENUMID);
 			if (oldEnumIdEd != null && oldEnumIdEd.getValue()!=null) {
-				Entity oldEnum = getEntityById(oldEnumIdEd.getValue());
+				Entity oldEnum = getEntityById(new Long(oldEnumIdEd.getValue()));
 				if (oldEnum!=null) {
 					Long newEnumId = enumMap.get(oldEnum.getName());
 					if (newEnumId!=null) {
@@ -1863,14 +1943,9 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	}
     }
     
-	public Entity createOntologyAnnotation(String userLogin, OntologyAnnotation annotation) throws ComputeException {
+	public Entity createOntologyAnnotation(String subjectKey, OntologyAnnotation annotation) throws ComputeException {
 
-        try {
-            User tmpUser = getUserByName(userLogin);
-        	if (tmpUser == null) {
-        		throw new IllegalArgumentException("User "+userLogin+" not found");
-        	}
-        	
+        try {        	
         	Entity keyEntity = null;
         	boolean isCustom = false;
         	
@@ -1885,12 +1960,12 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
             	if (!"Text".equals(termType) && !"Custom".equals(termType) && !"Tag".equals(termType)) {
             		// Non-text annotations are exclusive, so delete existing annotations first
-		            List<Entity> existingAnnotations = getAnnotationsByEntityId(userLogin, annotation.getTargetEntityId());
+		            List<Entity> existingAnnotations = getAnnotationsByEntityId(subjectKey, annotation.getTargetEntityId());
 		        	for(Entity existingAnnotation : existingAnnotations) {
 		        		EntityData eaKeyEd = existingAnnotation.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
 		        		if (eaKeyEd==null) continue;
     	        		if (eaKeyEd.getChildEntity().getId().equals(annotation.getKeyEntityId())) {
-    	        			deleteEntityById(existingAnnotation.getId());
+    	        			deleteEntityById(subjectKey, existingAnnotation.getId());
     	        		}
 	            	}
             	}
@@ -1900,33 +1975,33 @@ public class AnnotationDAO extends ComputeBaseDAO {
         				(annotation.getValueString()==null ? annotation.getKeyString() : 
         				 annotation.getKeyString() + " = " + annotation.getValueString());
             
-            Entity newAnnotation = newEntity(EntityConstants.TYPE_ANNOTATION, tag, tmpUser);
+            Entity newAnnotation = newEntity(EntityConstants.TYPE_ANNOTATION, tag, subjectKey);
             
             Set<EntityData> eds = new HashSet<EntityData>();
             newAnnotation.setEntityData(eds);
             
 			// Add the target id
 			EntityData targetIdData = newData(newAnnotation, 
-					EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID, tmpUser);
+					EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID, subjectKey);
 			targetIdData.setValue(""+annotation.getTargetEntityId());
 			eds.add(targetIdData);
 				
 			// Add the key string
 			EntityData keyData = newData(newAnnotation,
-					EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_TERM, tmpUser);
+					EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_TERM, subjectKey);
 			keyData.setValue(annotation.getKeyString());
 			eds.add(keyData);
 
 			// Add the value string
 			EntityData valueData = newData(newAnnotation,
-					EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM, tmpUser);
+					EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM, subjectKey);
 			valueData.setValue(annotation.getValueString());
 			eds.add(valueData);
 			
 			// Add the key entity
             if (annotation.getKeyEntityId() != null) {
 				EntityData keyEntityData = newData(newAnnotation,
-						EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID, tmpUser);
+						EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID, subjectKey);
 				keyEntityData.setChildEntity(keyEntity);
 				keyEntityData.setValue(""+keyEntity.getId());
 				eds.add(keyEntityData);
@@ -1936,7 +2011,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
             if (annotation.getValueEntityId() != null) {
             	Entity valueEntity = getEntityById(annotation.getValueEntityId());
 				EntityData valueEntityData = newData(newAnnotation,
-						EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_ENTITY_ID, tmpUser);
+						EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_ENTITY_ID, subjectKey);
 				valueEntityData.setChildEntity(valueEntity);
 				valueEntityData.setValue(""+valueEntity.getId());
 				eds.add(valueEntityData);
@@ -1945,7 +2020,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 			// Add the session id
             if (annotation.getSessionId() != null) {
 				EntityData sessionIdData = newData(newAnnotation,
-						EntityConstants.ATTRIBUTE_ANNOTATION_SESSION_ID, tmpUser);
+						EntityConstants.ATTRIBUTE_ANNOTATION_SESSION_ID, subjectKey);
 				sessionIdData.setValue(""+annotation.getSessionId());
 				eds.add(sessionIdData);
             }
@@ -1960,13 +2035,13 @@ public class AnnotationDAO extends ComputeBaseDAO {
             return newAnnotation;
         }
         catch (Exception e) {
-            _logger.error("Error creating ontology annotation for user "+userLogin,e);
-            throw new ComputeException("Error creating ontology annotation for user "+userLogin,e);
+            _logger.error("Error creating ontology annotation for subject "+subjectKey,e);
+            throw new ComputeException("Error creating ontology annotation for subject "+subjectKey,e);
         }
 	}
 
-	public Long removeOntologyAnnotation(String userLogin, long annotationId) throws ComputeException {
-        Entity entity = getUserEntityById(userLogin, annotationId);
+	public Long removeOntologyAnnotation(String subjectKey, long annotationId) throws ComputeException {
+        Entity entity = getEntityById(subjectKey, annotationId);
         getCurrentSession().delete(entity);	
         
         // Notify the session 
@@ -1983,14 +2058,14 @@ public class AnnotationDAO extends ComputeBaseDAO {
 	 * @return
 	 * @throws DaoException
 	 */
-    public List<Entity> removeAllOntologyAnnotationsForSession(String userLogin, long sessionId) throws DaoException {
+    public List<Entity> removeAllOntologyAnnotationsForSession(String subjectKey, long sessionId) throws DaoException {
 
         try {
-        	List<Entity> annotations = getAnnotationsForSession(userLogin, sessionId);
+        	List<Entity> annotations = getAnnotationsForSession(subjectKey, sessionId);
             for(Object o : annotations) {
                 Entity entity = (Entity)o;
-                if (!entity.getUser().getUserLogin().equals(userLogin)) {
-                	_logger.info("Cannot remove annotation "+entity.getId()+" not owned by "+userLogin);
+                if (!entity.getOwnerKey().equals(subjectKey)) {
+                	_logger.info("Cannot remove annotation "+entity.getId()+" not owned by "+subjectKey);
                 }
                 else {
                 	_logger.info("Removing annotation "+entity.getId());
@@ -2006,23 +2081,26 @@ public class AnnotationDAO extends ComputeBaseDAO {
         }
     }
 
-	public List<Entity> getEntitiesInList(String entityIds) throws DaoException {
+	public List<Entity> getEntitiesInList(String subjectKey, String entityIds) throws DaoException {
 		String[] idStrs = entityIds.split("\\s*,\\s*");
 		List<Long> ids = new ArrayList<Long>();
 		for(String idStr : idStrs) {
 			ids.add(new Long(idStr));
 		}
-		return getEntitiesInList(ids);
+		return getEntitiesInList(subjectKey, ids);
 	}
 
-	public List<Entity> getEntitiesInList(List<Long> entityIds) throws DaoException {
+	public List<Entity> getEntitiesInList(String subjectKey, List<Long> entityIds) throws DaoException {
         try {
+        	if (_logger.isDebugEnabled()) {
+        		_logger.debug("getEntitiesInList(entityIds="+entityIds+")");
+        	}
+        	
         	if (entityIds == null || entityIds.isEmpty()) {
         		return new ArrayList<Entity>();
         	}
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select e from Entity e ");
-            hql.append("join fetch e.user ");
             hql.append("join fetch e.entityType ");
             hql.append("where e.id in (:ids) ");
             
@@ -2057,65 +2135,46 @@ public class AnnotationDAO extends ComputeBaseDAO {
      * @param entity
      * @return
      */
-    public Entity populateDescendants(Entity entity) {
-    	if (entity.getId()==null) {
-    		_logger.warn("Cannot populate descendants for entity with null id");
-    		return entity;
-    	}
-    	return populateDescendants(entity, new HashSet<Long>());
+    public Entity populateDescendants(String subjectKey, Entity entity) {
+    	Set<String> subjectKeys = getSubjectKeySet(subjectKey);
+    	return populateDescendants(subjectKeys, entity, new HashSet<Long>());
     }
     
-    private Entity populateDescendants(Entity entity, Set<Long> visited) {
-    	if (entity == null) return null;
-    	if (visited.contains(entity.getId())) {
-    		return entity;
+    private Entity populateDescendants(Set<String> subjectKeys, Entity entity, Set<Long> visited) {
+    	if (_logger.isDebugEnabled()) {
+    		_logger.debug("populateDescendants(subjectKeys="+subjectKeys+",entity.id="+entity.getId()+")");
     	}
+    	
+    	if (entity == null) return entity;
+    	
+    	if (subjectKeys!=null && !subjectKeys.contains(entity.getOwnerKey())) return entity;
+    	
+    	if (visited.contains(entity.getId())) return entity;
     	visited.add(entity.getId());
+    	
     	for(EntityData ed : entity.getEntityData()) {
     		Entity child = ed.getChildEntity();
     		if (child != null) {
-    			populateDescendants(child, visited);
+    			populateDescendants(subjectKeys, child, visited);
     		}
     	}
     	return entity;
     }
 
-    public Entity getEntityAndChildren(Long id) {
-        Session session = getCurrentSession();
-        Criteria c = session.createCriteria(Entity.class);
-        c.add(Expression.eq("id",id));
-        Entity parent = (Entity) c.uniqueResult();
+    public Entity getEntityAndChildren(String subjectKey, Long entityId) {
+    	if (_logger.isDebugEnabled()) {
+    		_logger.debug("getEntityAndChildren(entityId="+entityId+")");
+    	}
+    	Entity parent = getEntityById(subjectKey, entityId);
         if (parent == null)
             return null;
         for (EntityData ed : parent.getEntityData()) {
             Entity child=ed.getChildEntity();
             if (child!=null) {
-                String childName=child.getName(); // forces load of attributes but not subchild entities
+                String childName = child.getName(); // forces load of attributes but not subchild entities
             }
         }
         return parent;
-    }
-
-    public Long countDescendants(String owner, Entity entity, Long stopAfterReaching) {
-    	return countDescendants(owner, entity, new HashSet<Long>(), stopAfterReaching);
-    }
-
-    private Long countDescendants(String owner, Entity entity, Set<Long> visited, Long stopAfterReaching) {
-    	long count = 1;
-    	if (entity == null) return null;
-    	if (!entity.getUser().getUserLogin().equals(owner)) return new Long(0);
-    	if (visited.contains(entity.getId())) {
-    		return count;
-    	}
-    	visited.add(entity.getId());
-    	for(EntityData ed : entity.getEntityData()) {
-    		Entity child = ed.getChildEntity();
-    		if (child != null) {
-    			count += countDescendants(owner, child, visited, stopAfterReaching);
-    			if (count > stopAfterReaching) return count;
-    		}
-    	}
-    	return count;
     }
 
     /**
@@ -2125,43 +2184,30 @@ public class AnnotationDAO extends ComputeBaseDAO {
      * @param type
      * @return
      */
-    public Entity getAncestorWithType(Entity entity, String type) throws DaoException {
+    public Entity getAncestorWithType(String subjectKey, Entity entity, String type) throws DaoException {
 
+    	if (_logger.isDebugEnabled()) {
+    		_logger.debug("getAncestorWithType(entity.getId()="+entity.getId()+",type="+type+")");
+    	}
+    	
     	if (entity.getEntityType().getName().equals(type)) return entity;
     	
-    	for(Entity parent : getParentEntities(entity.getId())) {
-    		Entity ancestor = getAncestorWithType(parent, type);
+    	for(Entity parent : getParentEntities(subjectKey, entity.getId())) {
+    		Entity ancestor = getAncestorWithType(subjectKey, parent, type);
     		if (ancestor != null) return ancestor;
     	}
     	
     	return null;
     }
 
-    private static final int MAX_SEARCH_PATHS = 10;
-    public List<List<Long>> searchTree(Long rootId, String searchString) throws DaoException {
+    public List<List<Entity>> getEntityPathsToRoots(String subjectKey, Entity entity) throws DaoException {
 
-        Session session = getCurrentSession();
-        StringBuffer hql = new StringBuffer("select e from Entity e where e.name like ?");
-        Query query = session.createQuery(hql.toString()).setString(0, searchString);
-        List<Entity> results = query.list();
-
-        _logger.info("searchTree got "+results.size());
-        
-        List<List<Long>> matches = new ArrayList<List<Long>>();
-        for(Entity entity : results) {
-        	List<Long> path = getPathToRoot(entity.getId(), rootId);
-        	if (path != null) matches.add(path);
-        	if (matches.size()>=MAX_SEARCH_PATHS) break;
-        }
-        
-        _logger.info("searchTree limited to "+matches.size());
-        
-        return matches;
-    }
-
-    public List<List<Entity>> getEntityPathsToRoots(Entity entity) throws DaoException {
+    	if (_logger.isDebugEnabled()) {
+    		_logger.debug("getEntityPathsToRoots(entity.getId()="+entity.getId()+")");
+    	}
+    	
     	List<List<Entity>> paths = new ArrayList<List<Entity>>();
-    	Set<Entity> parents = getParentEntities(entity.getId());
+    	Set<Entity> parents = getParentEntities(subjectKey, entity.getId());
     	StringBuffer sb = new StringBuffer();
     	for(Entity parent : parents) {
     		if (sb.length()>0) sb.append(", ");
@@ -2174,7 +2220,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	}
     	else {
         	for(Entity parent : parents) {
-        		List<List<Entity>> ancestorPaths = getEntityPathsToRoots(parent);
+        		List<List<Entity>> ancestorPaths = getEntityPathsToRoots(subjectKey, parent);
         		for(List<Entity> ancestorPath : ancestorPaths) {
         			ancestorPath.add(entity);
         			paths.add(ancestorPath);
@@ -2184,31 +2230,41 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	return paths;
     }
 
-    public List<List<EntityData>> getEntityDataPathsToRoots(String userLogin, EntityData entityData) throws DaoException {
+    public List<List<EntityData>> getEntityDataPathsToRoots(String subjectKey, EntityData entityData) throws DaoException {
+    	
+    	if (_logger.isDebugEnabled()) {
+    		_logger.debug("getEntityPathsToRoots(subjectKey="+subjectKey+", entityData.getId()="+entityData.getId()+")");
+    	}
+    	
     	Entity entity = entityData.getParentEntity();
     	List<List<EntityData>> paths = new ArrayList<List<EntityData>>();
-    	Set<EntityData> parents = getParentEntityDatas(entity.getId());
+    	Set<EntityData> parents = getParentEntityDatas(subjectKey, entity.getId());
     	if (parents.isEmpty()) {
     		List<EntityData> path = new ArrayList<EntityData>();
 			path.add(entityData);
 			paths.add(path);
     	}
     	else {
+    		Set<String> subjectKeys = getSubjectKeySet(subjectKey);
         	for(EntityData parent : parents) {
-        		String owner = parent.getUser().getUserLogin();
-        		if (!owner.equals("system") && !owner.equals(userLogin)) continue;
-        		List<List<EntityData>> ancestorPaths = getEntityDataPathsToRoots(userLogin, parent);
-        		for(List<EntityData> ancestorPath : ancestorPaths) {
-        			if (entityData.getId()!=null) ancestorPath.add(entityData);
-        			paths.add(ancestorPath);
+        		if (subjectKeys==null || subjectKeys.contains(parent.getOwnerKey())) {
+	        		List<List<EntityData>> ancestorPaths = getEntityDataPathsToRoots(subjectKey, parent);
+	        		for(List<EntityData> ancestorPath : ancestorPaths) {
+	        			if (entityData.getId()!=null) ancestorPath.add(entityData);
+	        			paths.add(ancestorPath);
+	        		}
         		}
         	}
     	}
     	return paths;
     }
     
-    public List<Long> getPathToRoot(Long entityId, Long rootId) throws DaoException {
+    public List<Long> getPathToRoot(String subjectKey, Long entityId, Long rootId) throws DaoException {
 
+    	if (_logger.isDebugEnabled()) {
+    		_logger.debug("getPathToRoot(entityId="+entityId+", rootId="+rootId+")");
+    	}
+    	
 		List<Long> ids = new ArrayList<Long>();
 		
     	if (entityId.equals(rootId)) {
@@ -2216,8 +2272,8 @@ public class AnnotationDAO extends ComputeBaseDAO {
     		return ids;
     	}
     	
-    	for(Entity parent : getParentEntities(entityId)) {
-    		List<Long> path = getPathToRoot(parent.getId(), rootId);
+    	for(Entity parent : getParentEntities(subjectKey, entityId)) {
+    		List<Long> path = getPathToRoot(subjectKey, parent.getId(), rootId);
     		if (path != null) {
     			path.add(entityId);
     			return path;
@@ -2228,7 +2284,9 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	return null;
     }
 
-    public List<MappedId> getProjectedResults(List<Long> entityIds, List<String> upProjection, List<String> downProjection) throws DaoException {
+    public List<MappedId> getProjectedResults(String subjectKey, List<Long> entityIds, List<String> upProjection, List<String> downProjection) throws DaoException {
+    	
+    	// TODO: filter results by subjectKey?
     	
     	if (entityIds.isEmpty()) {
     		throw new DaoException("getProjectedResults: entity ids cannot be empty");
@@ -2328,7 +2386,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	return list;
     }
     
-    public List<Long> getImageIdsWithName(Connection connection, Long userId, String imagePath) throws DaoException {
+    public List<Long> getImageIdsWithName(Connection connection, String subjectKey, String imagePath) throws DaoException {
     	
     	List<Long> sampleIds = new ArrayList<Long>();
         Connection conn = connection;
@@ -2337,8 +2395,8 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	try {
             StringBuffer sql = new StringBuffer("select distinct i.id from entity i ");
             sql.append("where i.name = ? ");
-            if (userId!=null) {
-            	sql.append("and i.user_id = ? ");
+            if (subjectKey!=null) {
+            	sql.append("and i.ownerKey = ? ");
             }
             
             if (conn==null) {
@@ -2346,8 +2404,8 @@ public class AnnotationDAO extends ComputeBaseDAO {
             }
 	        stmt = conn.prepareStatement(sql.toString());
 	        stmt.setString(1, imagePath);
-            if (userId!=null) {
-            	stmt.setLong(2, userId);
+            if (subjectKey!=null) {
+            	stmt.setString(2, subjectKey);
             }
 	        
 			ResultSet rs = stmt.executeQuery();
@@ -2372,18 +2430,21 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	return sampleIds;
     }
 
-    public List<Entity> getUserEntitiesWithAttributeValue(String userLogin, String typeName, String attrName, String attrValue) throws DaoException {
+    public List<Entity> getUserEntitiesWithAttributeValue(String subjectKey, String typeName, String attrName, String attrValue) throws DaoException {
         try {
+        	if (_logger.isDebugEnabled()) {
+        		_logger.debug("getUserEntitiesWithAttributeValue(subjectKey="+subjectKey+", typeName="+typeName+", attrName="+attrName+", attrValue="+attrValue+")");
+        	}
+        	
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
-            hql.append("join fetch ed.parentEntity.user ");
             hql.append("join fetch ed.parentEntity.entityType ");
             hql.append("where ed.entityAttribute.name=:attrName and ed.value like :value ");
             if (typeName != null) {
             	hql.append("and ed.parentEntity.entityType.name=:typeName ");
             }
-            if (null != userLogin) {
-                hql.append("and ed.parentEntity.user.userLogin=:userLogin ");
+            if (null != subjectKey) {
+                hql.append("and ed.parentEntity.ownerKey=:subjectKey ");
             }
             Query query = session.createQuery(hql.toString());
             query.setString("attrName", attrName);
@@ -2391,59 +2452,58 @@ public class AnnotationDAO extends ComputeBaseDAO {
             if (typeName != null) {
                 query.setString("typeName", typeName);
             }
-            if (null != userLogin) {
-                query.setString("userLogin", userLogin);
+            if (null != subjectKey) {
+                query.setString("subjectKey", subjectKey);
             }
-            return query.list();
+            return filterDuplicates(query.list());
         } catch (Exception e) {
             throw new DaoException(e);
         }
     }
     
-    public List<Entity> getUserEntitiesWithAttributeValue(String userLogin, String attrName, String attrValue) throws DaoException {
-        return getUserEntitiesWithAttributeValue(userLogin, null, attrName, attrValue);
+    public List<Entity> getUserEntitiesWithAttributeValue(String subjectKey, String attrName, String attrValue) throws DaoException {
+        return getUserEntitiesWithAttributeValue(subjectKey, null, attrName, attrValue);
     }
 
-    public void loadLazyEntity(Entity entity, boolean recurse) throws DaoException {
-		
+    public void loadLazyEntity(String subjectKey, Entity entity, boolean recurse) throws DaoException {
+
         if (!EntityUtils.areLoaded(entity.getEntityData())) {
-            EntityUtils.replaceChildNodes(entity, getChildEntities(entity.getId()));
+            EntityUtils.replaceChildNodes(entity, getChildEntities(subjectKey, entity.getId()));
         }
 
         if (recurse) {
             for (EntityData ed : entity.getEntityData()) {
                 if (ed.getChildEntity() != null) {
-                    loadLazyEntity(ed.getChildEntity(), true);
+                    loadLazyEntity(subjectKey, ed.getChildEntity(), true);
                 }
             }
         }
     }
 
-    public Entity annexEntityTree(Long entityId, String newOwner) throws ComputeException {
-    	User newUser = getUserByName(newOwner);
+    public Entity annexEntityTree(String subjectKey, Long entityId) throws ComputeException {
     	Entity entity = getEntityById(entityId);
-    	_logger.info(newOwner+" is annexing entity tree starting at "+entity.getName()+
-    			" (id="+entity.getId()+") from "+entity.getUser().getUserLogin());
-    	annexEntityTree(entity, newUser, "  ");	
-    	disassociateTreeFromNonOwners(getEntityById(entity.getId()), newUser, "  ");
+    	_logger.info(subjectKey+" is annexing entity tree starting at "+entity.getName()+
+    			" (id="+entity.getId()+") from "+entity.getOwnerKey());
+    	annexEntityTree(subjectKey, entity, "  ");	
+    	disassociateTreeFromNonOwners(subjectKey, getEntityById(entity.getId()), "  ");
     	return entity;
     }
     
-    private Entity annexEntityTree(Entity entity, User newOwner, String indent) throws ComputeException {
+    private Entity annexEntityTree(String subjectKey, Entity entity, String indent) throws ComputeException {
     	
-    	if (!entity.getUser().getUserId().equals(newOwner.getUserId())) {
+    	if (!entity.getOwnerKey().equals(subjectKey)) {
         	_logger.info(indent+"annexing entity "+entity.getName()+" (id="+entity.getId()+")");
-        	entity.setUser(newOwner);
+        	entity.setOwnerKey(subjectKey);
         	saveOrUpdate(entity);
     	}
-    	loadLazyEntity(entity, false);
+    	loadLazyEntity(subjectKey, entity, false);
     	for(EntityData ed : new ArrayList<EntityData>(entity.getEntityData())) {
-    		if (!ed.getUser().getUserId().equals(entity.getUser().getUserId())) {
-	    		ed.setUser(newOwner);
+    		if (!ed.getOwnerKey().equals(entity.getOwnerKey())) {
+	    		ed.setOwnerKey(subjectKey);
 	    		saveOrUpdate(ed);
     		}
     		if (ed.getChildEntity()!=null) {
-    			annexEntityTree(ed.getChildEntity(), newOwner, indent+"  ");
+    			annexEntityTree(subjectKey, ed.getChildEntity(), indent+"  ");
     		}
     	}
     	
@@ -2452,19 +2512,19 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	return entity;
     }
     
-    private Entity disassociateTreeFromNonOwners(Entity entity, User newOwner, String indent) throws ComputeException {
+    private Entity disassociateTreeFromNonOwners(String subjectKey, Entity entity, String indent) throws ComputeException {
     	
-    	for(EntityData parentEd : getParentEntityDatas(entity.getId())) {
-    		if (parentEd.getUser().getUserLogin().equals(newOwner.getUserLogin())) continue;
-    		_logger.info(indent+"deleting "+parentEd.getUser().getUserLogin()+"'s link ("+parentEd.getEntityAttribute().getName()+") from entity "+parentEd.getParentEntity().getName()+" to entity "+entity.getName());
+    	for(EntityData parentEd : getParentEntityDatas(subjectKey, entity.getId())) {
+    		if (parentEd.getOwnerKey().equals(subjectKey)) continue;
+    		_logger.info(indent+"deleting "+parentEd.getOwnerKey()+"'s link ("+parentEd.getEntityAttribute().getName()+") from entity "+parentEd.getParentEntity().getName()+" to entity "+entity.getName());
     		parentEd.getParentEntity().getEntityData().remove(parentEd);
     		genericDelete(parentEd);
     	}
     	
-    	loadLazyEntity(entity, false);
+    	loadLazyEntity(subjectKey, entity, false);
     	for(EntityData ed : new ArrayList<EntityData>(entity.getEntityData())) {
     		if (ed.getChildEntity()!=null) {
-    			disassociateTreeFromNonOwners(ed.getChildEntity(), newOwner, indent+"  ");
+    			disassociateTreeFromNonOwners(subjectKey, ed.getChildEntity(), indent+"  ");
     		}
     	}
     	
@@ -2482,30 +2542,29 @@ public class AnnotationDAO extends ComputeBaseDAO {
         return attrByName.get(attrName);	
     }
 
-    private Entity newEntity(String entityTypeName, String name, User owner) {
+    private Entity newEntity(String entityTypeName, String name, String owner) {
         EntityType tmpType = getEntityTypeByName(entityTypeName);
         return newEntity(tmpType, name, owner);
     }
 
-    private Entity newEntity(EntityType entityType, String name, User owner) {
+    private Entity newEntity(EntityType entityType, String name, String subjectKey) {
     	Date date = new Date();
-        return new Entity(null, name, owner, null, entityType, date, date, new HashSet<EntityData>());	
+        return new Entity(null, name, subjectKey, null, entityType, date, date, new HashSet<EntityData>());	
     }
     
-    private EntityData newData(Entity parent, String attrName, User owner) {
+    private EntityData newData(Entity parent, String attrName, String subjectKey) {
         EntityAttribute attribute = getEntityAttributeByName(attrName);
-        return newData(parent, attribute, owner);
+        return newData(parent, attribute, subjectKey);
     }
     
-    private EntityData newData(Entity parent, EntityAttribute attribute, User owner) {
+    private EntityData newData(Entity parent, EntityAttribute attribute, String subjectKey) {
     	Date date = new Date();
-        return new EntityData(null, attribute, parent, null, owner, null, date, date, null);
+        return new EntityData(null, attribute, parent, null, subjectKey, null, date, date, null);
     }
     
     
-    public void addChildren(String userLogin, Long parentId, List<Long> childrenIds, String attributeName) throws DaoException {
+    public void addChildren(String subjectKey, Long parentId, List<Long> childrenIds, String attributeName) throws DaoException {
     	
-    	User user = getUserByName(userLogin);
     	EntityAttribute attribute = getEntityAttributeByName(attributeName);
     	Date createDate = new Date();
     	
@@ -2520,7 +2579,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
         	EntityData ed = new EntityData();
         	ed.setParentEntity(parent);
         	ed.setChildEntity(child);
-        	ed.setUser(user);
+        	ed.setOwnerKey(subjectKey);
             ed.setCreationDate(createDate);
             ed.setUpdatedDate(createDate);
             
@@ -2534,7 +2593,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
     public Map<Entity, Map<String, Double>> getPatternAnnotationQuantifiers() throws DaoException {
         _logger.info("getPatternQuantifiersForScreenSample: starting search for entities of type="+EntityConstants.TYPE_SCREEN_SAMPLE);
-        List<Entity> flyScreenSampleEntityList = getUserEntitiesByTypeName(SYSTEM_USER, EntityConstants.TYPE_SCREEN_SAMPLE);
+        List<Entity> flyScreenSampleEntityList = getUserEntitiesByTypeName(null, EntityConstants.TYPE_SCREEN_SAMPLE);
         _logger.info("getPatternQuantifiersForScreenSample: found "+flyScreenSampleEntityList.size()+" entities of type="+EntityConstants.TYPE_SCREEN_SAMPLE);
         Map<Entity, Map<String, Double>> entityQuantMap=new HashMap<Entity, Map<String, Double>>();
         long count=0;
@@ -2590,7 +2649,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 
     public Map<Entity, Map<String, Double>> getMaskQuantifiers(String maskFolderName) throws DaoException {
         _logger.info("getMaskQuantifiers() folder name=" + maskFolderName + " : starting search for entities of type=" + EntityConstants.TYPE_SCREEN_SAMPLE);
-        List<Entity> flyScreenSampleEntityList = getUserEntitiesByTypeName(SYSTEM_USER, EntityConstants.TYPE_SCREEN_SAMPLE);
+        List<Entity> flyScreenSampleEntityList = getUserEntitiesByTypeName(null, EntityConstants.TYPE_SCREEN_SAMPLE);
         _logger.info("getPatternQuantifiersForScreenSample: found " + flyScreenSampleEntityList.size() + " entities of type=" + EntityConstants.TYPE_SCREEN_SAMPLE);
         Map<Entity, Map<String, Double>> entityQuantMap = new HashMap<Entity, Map<String, Double>>();
         long count = 0;
@@ -2694,28 +2753,19 @@ public class AnnotationDAO extends ComputeBaseDAO {
     }
 
     public Entity saveBulkEntityTree(Entity root) throws DaoException {
-    	if (root.getUser()==null || (root.getUser().getUserLogin()==null && root.getUser().getUserId()==null)) {
-    		throw new IllegalArgumentException("Root entity must specify the username or user GUID");
+    	if (root.getOwnerKey()==null) {
+    		throw new IllegalArgumentException("Root entity must specify the owner key");
     	}
-    	return saveBulkEntityTree(root, root.getUser().getUserLogin());
+    	return saveBulkEntityTree(root, root.getOwnerKey());
     }
     
-    public Entity saveBulkEntityTree(Entity root, String owner) throws DaoException {
+    public Entity saveBulkEntityTree(Entity root, String subjectKey) throws DaoException {
 
     	final int batchSize = 800;	
     	
     	_logger.info("Saving bulk entity tree rooted at "+root.getName());
     	
-    	Long userId = null;
-        if (root.getUser()!=null && root.getUser().getUserId()!=null) {
-        	userId =  root.getUser().getUserId();
-        }
-        else {
-        	User user = getUserByName(owner);
-        	userId = user.getUserId();
-        }
-        
-        _logger.debug("Using user id: "+userId);
+        _logger.debug("Using owner key: "+subjectKey);
         
         java.sql.Date defaultDate = new java.sql.Date(new Date().getTime());
         
@@ -2732,10 +2782,10 @@ public class AnnotationDAO extends ComputeBaseDAO {
     		conn = getJdbcConnection();
 	        conn.setAutoCommit(false);
 	        
-	        String entitySql = "insert into entity (id,name,user_id,entity_type_id,creation_date,updated_date) values (?,?,?,?,?,?)";
+	        String entitySql = "insert into entity (id,name,owner_dkey,entity_type_id,creation_date,updated_date) values (?,?,?,?,?,?)";
 	        stmtEntity = conn.prepareStatement(entitySql);
 	        
-	        String edSql = "insert into entityData (id,parent_entity_id,entity_att_id,value,user_id,creation_date,updated_date,orderIndex,child_entity_id) values (?,?,?,?,?,?,?,?,?)";
+	        String edSql = "insert into entityData (id,parent_entity_id,entity_att_id,value,owner_dkey,creation_date,updated_date,orderIndex,child_entity_id) values (?,?,?,?,?,?,?,?,?)";
 	        stmtEd = conn.prepareStatement(edSql);
 	        
 	        int idIndex = ids.size()-1;
@@ -2750,7 +2800,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 	        	
 	        	stmtEntity.setLong(1, newEntityId);
 	        	stmtEntity.setString(2, entity.getName());
-	        	stmtEntity.setLong(3, userId);
+	        	stmtEntity.setString(3, subjectKey);
 		        
 		    	if (entity.getEntityType().getId()==null) {
 		    		stmtEntity.setLong(4, getEntityTypeByName(entity.getEntityType().getName()).getId());
@@ -2791,7 +2841,7 @@ public class AnnotationDAO extends ComputeBaseDAO {
 			    	}
 			    	
 		        	stmtEd.setString(4, ed.getValue());
-			        stmtEd.setLong(5, userId);
+			        stmtEd.setString(5, subjectKey);
 
 			        if (ed.getCreationDate()!=null) {
 			        	stmtEd.setDate(6, new java.sql.Date(ed.getCreationDate().getTime()));	
@@ -2874,4 +2924,37 @@ public class AnnotationDAO extends ComputeBaseDAO {
     	allEntities.add(entity);
     	return count;
     }
+
+    public List<String> getSubjectKeys(String subjectKey) {
+    	 List<String> subjectKeyList = new ArrayList<String>();
+    	 if (subjectKey==null || "".equals(subjectKey.trim())) return subjectKeyList;
+    	 subjectKeyList.add(subjectKey);
+    	 subjectKeyList.addAll(getGroupKeysForUsernameOrSubjectKey(subjectKey));
+    	 return subjectKeyList;
+    }
+    
+    public Set<String> getSubjectKeySet(String subjectKey) {
+    	Set<String> subjectKeys = null;
+    	if (subjectKey!=null) {
+    		subjectKeys = new HashSet<String>(getSubjectKeys(subjectKey));
+    	}
+    	return subjectKeys;
+    }
+    
+    private List filterDuplicates(List list) {
+        return ImmutableSet.copyOf(list).asList();
+	}
+
+	@Override
+	public Set<EntityData> getParents(Entity entity) throws Exception {
+		return getParentEntityDatas(null, entity.getId());
+	}
+
+	@Override
+	public Entity populateChildren(Entity entity) throws Exception {
+    	for(EntityData ed : entity.getEntityData()) {
+    		Entity child = ed.getChildEntity();
+    	}
+    	return entity;
+	}
 }

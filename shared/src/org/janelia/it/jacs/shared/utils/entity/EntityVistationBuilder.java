@@ -1,7 +1,9 @@
 package org.janelia.it.jacs.shared.utils.entity;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -19,19 +21,15 @@ public class EntityVistationBuilder {
 	private Entity root;
 	private List<EntityFilter> filters = new ArrayList<EntityFilter>();
 	private AbstractEntityLoader loader;
+	private boolean visitRootOwnerOwnedEntitiesOnly = true;
 	
 	public EntityVistationBuilder(AbstractEntityLoader loader) {
 		this.loader = loader;
 	}
-	
-    public EntityVistationBuilder startAt(Entity entity) {
-    	this.root = entity;
-    	return this;
-    }
 
-    public List<Entity> getEntities() {
+    public List<Entity> getEntities() throws Exception {
     	final List<Entity> entities = new ArrayList<Entity>();
-    	visit(new EntityVisitor() {
+    	run(new EntityVisitor() {
 			@Override
 			public void visit(Entity entity) {
 				entities.add(entity);
@@ -40,9 +38,9 @@ public class EntityVistationBuilder {
     	return entities;
     }
 
-    public List<EntityData> getEntityDatas() {
+    public List<EntityData> getEntityDatas() throws Exception {
     	final List<EntityData> entityDatas = new ArrayList<EntityData>();
-    	visit(new EntityVisitor() {
+    	run(new EntityVisitor() {
 			@Override
 			public void visit(EntityData entityData) {
 				entityDatas.add(entityData);
@@ -51,32 +49,85 @@ public class EntityVistationBuilder {
     	return entityDatas;
     }
     
-    public void visit(EntityVisitor visitor) {
+    public void run(EntityVisitor visitor) throws Exception {
     	run(root, visitor, 0);
     }
     
-	public void run(Entity entity, EntityVisitor visitor, int level) {
+	private void run(Entity entity, EntityVisitor visitor, int level) throws Exception {
 		
 		if (entity==null || filters.isEmpty()) return;
 		loader.populateChildren(entity);
 		
 		EntityFilter filter = filters.get(level);
 		
-		for(EntityData ed : filter.getFilteredRelatives(entity)) {
-			if (level>=filters.size()-1) {
+		if (filter instanceof Ancestors) {
+			runRecursively(entity, visitor, new HashSet<Long>());
+		}
+		else if (filter instanceof Root) {
+	    	visitor.visit(entity);
+			for(EntityData ed : entity.getEntityData()) {
 				visitor.visit(ed);
 			}
-			if (ed.getChildEntity()!=null) {
+		}
+		else if (filter instanceof ChildEntityFilter) {
+			ChildEntityFilter childFilter = (ChildEntityFilter)filter;
+			for(EntityData ed : childFilter.getFilteredRelatives(entity)) {
 				if (level>=filters.size()-1) {
-					visitor.visit(ed.getChildEntity());
+					visitor.visit(ed);
 				}
-				else {
-					run(ed.getChildEntity(), visitor, level+1);		
+				if (ed.getChildEntity()!=null) {
+					if (level>=filters.size()-1) {
+						visitor.visit(ed.getChildEntity());
+					}
+					else {
+						run(ed.getChildEntity(), visitor, level+1);		
+					}
 				}
 			}
 		}
+		else {
+			throw new IllegalStateException("Unknown filter type: "+filter.getClass().getName());
+		}
 	}
-	
+
+	public void runRecursively(Entity entity, EntityVisitor visitor, Set<Long> visited) throws Exception {
+
+    	if (entity == null) return;
+    	if (visited.contains(entity.getId())) {
+    		return;
+    	}
+    	
+    	if (visitRootOwnerOwnedEntitiesOnly && !entity.getOwnerKey().equals(root.getOwnerKey())) {
+    		return;
+    	}
+    	
+    	visited.add(entity.getId());
+    	visitor.visit(entity);
+    	
+		for(EntityData ed : entity.getEntityData()) {
+			visitor.visit(ed);
+			if (ed.getChildEntity()!=null) {
+				runRecursively(ed.getChildEntity(), visitor, visited);		
+			}
+		}
+    	
+	}
+
+    public EntityVistationBuilder startAt(Entity entity) {
+    	this.root = entity;
+    	return this;
+    }
+
+	public EntityVistationBuilder ancestors() {
+		filters.add(new Ancestors());
+		return this;
+	}
+
+	public EntityVistationBuilder root() {
+		filters.add(new Root());
+		return this;
+	}
+
 	public EntityVistationBuilder childrenOfType(String entityTypeName) {
 		filters.add(new ChildrenOfType(entityTypeName));
 		return this;
@@ -106,8 +157,14 @@ public class EntityVistationBuilder {
 		filters.add(new ChildOfName(entityName));
 		return this;
 	}
-	
-    private class ChildrenOfType extends EntityFilter {
+
+    private class Ancestors implements EntityFilter {
+    }
+
+    private class Root implements EntityFilter {
+    }
+    
+    private class ChildrenOfType extends ChildEntityFilter {
     	public ChildrenOfType(String parameter) {
     		super(parameter);
     	}
@@ -116,7 +173,7 @@ public class EntityVistationBuilder {
     	}
     }
     
-    private class ChildrenOfAttr extends EntityFilter {
+    private class ChildrenOfAttr extends ChildEntityFilter {
     	public ChildrenOfAttr(String parameter) {
     		super(parameter);
     	}
@@ -125,7 +182,7 @@ public class EntityVistationBuilder {
     	}
     }
 
-    private class ChildrenOfName extends EntityFilter {
+    private class ChildrenOfName extends ChildEntityFilter {
     	public ChildrenOfName(String parameter) {
     		super(parameter);
     	}
@@ -161,11 +218,14 @@ public class EntityVistationBuilder {
     	}
     }
 
-    private abstract class EntityFilter {
+    private interface EntityFilter {
+    }
+    
+    private abstract class ChildEntityFilter implements EntityFilter {
     	
     	String parameter;
     	
-    	public EntityFilter(String parameter) {
+    	public ChildEntityFilter(String parameter) {
     		this.parameter = parameter;
     	}
     	
@@ -182,7 +242,7 @@ public class EntityVistationBuilder {
     	public abstract boolean allow(EntityData entityData);
     }
 
-    private abstract class SingleEntityFilter extends EntityFilter {
+    private abstract class SingleEntityFilter extends ChildEntityFilter {
     	
     	int count = 0;
     	

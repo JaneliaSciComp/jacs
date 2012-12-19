@@ -36,7 +36,7 @@ public class CreateAlignmentResultFileNodeService implements IService {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             this.task = ProcessDataHelper.getTask(processData);
 
-            visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
+            visibility = User.SYSTEM_USER_KEY.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
             
             createResultFileNode();
             processData.putItem(ProcessDataConstants.RESULT_FILE_NODE, resultFileNode);

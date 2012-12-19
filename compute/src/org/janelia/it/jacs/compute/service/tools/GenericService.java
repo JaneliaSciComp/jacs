@@ -61,7 +61,7 @@ public class GenericService extends SubmitDrmaaJobService {
 
             jobName = "\"".concat(task.getJobName()).concat("\"");
             userId = task.getOwner();
-            userEmail = computeDAO.getUserByName(userId).getEmail();
+            userEmail = computeDAO.getUserByNameOrKey(userId).getEmail();
             if (null == userEmail) {
                 userEmail = userId.concat("@janelia.hhmi.org");
             }

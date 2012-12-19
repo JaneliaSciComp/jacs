@@ -355,11 +355,11 @@ public abstract class SeriesLauncher implements ILauncher {
 
         // Get the username of the owner of the task and send an email
         Task task = ProcessDataHelper.getTask(processData);
-        String user = task.getOwner();
+        String ownerKey = task.getOwner();
         // Check to see if the user wants email
-        User tmpUser = new UserDAO(logger).getUserByName(user);
+        User tmpUser = new UserDAO(logger).getUserByNameOrKey(ownerKey);
         if (null == tmpUser) {
-            logger.error("Cannot notify user: " + user + ". Person does not exist in the db.");
+            logger.error("Cannot notify user: " + ownerKey + ". Person does not exist in the db.");
             return;
         }
         UserPreference emailPref = tmpUser.getPreference(UserPreference.CAT_NOTIFICATION, UserPreference.PREF_EMAIL_ON_JOB_COMPLETION);

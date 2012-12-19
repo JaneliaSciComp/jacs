@@ -57,7 +57,7 @@ public class PatternAnnotationSampleService  implements IService {
 
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
-    protected User user;
+    protected String ownerKey;
     protected Date createDate;
     protected String mode=MODE_UNDEFINED;
     protected Task task;
@@ -79,10 +79,10 @@ public class PatternAnnotationSampleService  implements IService {
             task = ProcessDataHelper.getTask(processData);
             logger.info("PatternAnnotationSampleService running under TaskId="+task.getObjectId());
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
-            visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
+            visibility = User.SYSTEM_USER_KEY.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
-            user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
+            ownerKey = ProcessDataHelper.getTask(processData).getOwner();
             createDate = new Date();
             mode = processData.getString("MODE");
             refresh=processData.getString("REFRESH").trim().toLowerCase().equals("true");
@@ -194,7 +194,7 @@ public class PatternAnnotationSampleService  implements IService {
             logger.info("Refreshing EJB instances");
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
-            user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
+            ownerKey = ProcessDataHelper.getTask(processData).getOwner();
 
             logger.info("Processing sample name="+sample.getName());
 
@@ -581,7 +581,7 @@ public class PatternAnnotationSampleService  implements IService {
 
 
     protected void cleanFullOrIncompletePatternAnnotationFolderAndFiles(Entity patternAnnotationFolder) throws Exception {
-        if (!patternAnnotationFolder.getUser().getUserLogin().equals(task.getOwner())) {
+        if (!patternAnnotationFolder.getOwnerKey().equals(task.getOwner())) {
             throw new Exception("Users do not match for cleanFullOrIncompletePatternAnnotationFolderAndFiles()");
         }
         String patternDirPath=patternAnnotationFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
@@ -650,7 +650,7 @@ public class PatternAnnotationSampleService  implements IService {
         Entity folder = new Entity();
         folder.setCreationDate(createDate);
         folder.setUpdatedDate(createDate);
-        folder.setUser(user);
+        folder.setOwnerKey(ownerKey);
         folder.setName(name);
         folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
         if (directoryPath!=null) {
@@ -922,7 +922,7 @@ public class PatternAnnotationSampleService  implements IService {
 
     protected Entity createSupportingEntity(File supportingFile, String name) throws Exception {
         Entity supportingEntity = new Entity();
-        supportingEntity.setUser(user);
+        supportingEntity.setOwnerKey(ownerKey);
         supportingEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_TEXT_FILE));
         supportingEntity.setCreationDate(createDate);
         supportingEntity.setUpdatedDate(createDate);
@@ -934,7 +934,7 @@ public class PatternAnnotationSampleService  implements IService {
 
     protected Entity createMipEntity(File pngFile, String name) throws Exception {
         Entity mipEntity = new Entity();
-        mipEntity.setUser(user);
+        mipEntity.setOwnerKey(ownerKey);
         mipEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D));
         mipEntity.setCreationDate(createDate);
         mipEntity.setUpdatedDate(createDate);
@@ -948,7 +948,7 @@ public class PatternAnnotationSampleService  implements IService {
     protected Entity createStackEntity(File file, String entityName, Entity mipEntity) throws Exception {
         Entity stack = new Entity();
         String mipFilePath=mipEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        stack.setUser(user);
+        stack.setOwnerKey(ownerKey);
         stack.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK));
         stack.setCreationDate(createDate);
         stack.setUpdatedDate(createDate);

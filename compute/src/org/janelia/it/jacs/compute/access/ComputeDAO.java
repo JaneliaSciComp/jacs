@@ -1,6 +1,12 @@
 
 package org.janelia.it.jacs.compute.access;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.*;
+
 import org.apache.log4j.Logger;
 import org.hibernate.HibernateException;
 import org.hibernate.Query;
@@ -26,12 +32,6 @@ import org.janelia.it.jacs.model.user_data.blast.BlastResultNode;
 import org.janelia.it.jacs.model.user_data.recruitment.RecruitmentResultFileNode;
 import org.janelia.it.jacs.model.user_data.tools.GenericServiceDefinitionNode;
 import org.janelia.it.jacs.model.vo.ParameterException;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.util.*;
 
 /**
  * This class encapsulates all DB access operations.  It wraps RuntimeExceptions with checked DaoException
@@ -364,8 +364,8 @@ public class ComputeDAO extends ComputeBaseDAO {
         }
     }
 
-    public String getRecruitmentFilterDataTaskForUserByGenbankId(String genbankFileName, String userLogin) {
-        StringBuffer sql = new StringBuffer("select task_id from task_parameter where task_id in (select task_id from task where task_owner='" + userLogin + "' and subclass='recruitmentViewerFilterDataTask') and parameter_name='genbankFileName' and parameter_value='" + genbankFileName + "'");
+    public String getRecruitmentFilterDataTaskForUserByGenbankId(String genbankFileName, String ownerKey) {
+        StringBuffer sql = new StringBuffer("select task_id from task_parameter where task_id in (select task_id from task where task_owner='" + ownerKey + "' and subclass='recruitmentViewerFilterDataTask') and parameter_name='genbankFileName' and parameter_value='" + genbankFileName + "'");
 //        if (_logger.isDebugEnabled()) _logger.debug("Looking for ("+userLogin+","+genbankFileName+")\nsql=" + sql);
         Query query = getCurrentSession().createSQLQuery(sql.toString());
         List returnList = query.list();
@@ -595,7 +595,7 @@ public class ComputeDAO extends ComputeBaseDAO {
     public void setSystemDataRelatedToGiNumberObsolete(String giNumber) throws DaoException {
         try {
             StringBuffer sql = new StringBuffer("update task t set expiration_date=current_timestamp from task_parameter p where p.parameter_value='" +
-                    giNumber + "' and p.parameter_name='giNumber' and t.task_id=p.task_id and t.task_owner='system'");
+                    giNumber + "' and p.parameter_name='giNumber' and t.task_id=p.task_id and t.task_owner='user:system'");
             if (_logger.isDebugEnabled()) _logger.debug("sql=" + sql);
             SQLQuery query = getCurrentSession().createSQLQuery(sql.toString());
             query.executeUpdate();
@@ -628,16 +628,16 @@ public class ComputeDAO extends ComputeBaseDAO {
         return query.list();
     }
 
-    public List<? extends FileNode> getBlastDatabasesOfAUser(String nodeClassName, String username) {
+    public List<? extends FileNode> getBlastDatabasesOfAUser(String nodeClassName, String ownerKey) {
         String hql = "select clazz from Node clazz where subclass ='" + nodeClassName + "' and " +
-                " clazz.owner='" + username + "' and (visibility = 'public' or visibility = 'private')" +
+                " clazz.owner='" + ownerKey + "' and (visibility = 'public' or visibility = 'private')" +
                 " order by clazz.description";
         Query query = sessionFactory.getCurrentSession().createQuery(hql);
         return query.list();
     }
 
-    public List<Task> getUserTasksByType(String simpleName, String userName) {
-        String hql = "select clazz from Task clazz where subclass='" + simpleName + "' and clazz.owner='" + userName + "' order by clazz.objectId";
+    public List<Task> getUserTasksByType(String simpleName, String ownerKey) {
+        String hql = "select clazz from Task clazz where subclass='" + simpleName + "' and clazz.owner='" + ownerKey + "' order by clazz.objectId";
         Query query = sessionFactory.getCurrentSession().createQuery(hql);
         return query.list();
     }
@@ -661,7 +661,7 @@ public class ComputeDAO extends ComputeBaseDAO {
     }
 
 
-    public List<Task> getRecentUserParentTasksByOwner(String userLogin) {
+    public List<Task> getRecentUserParentTasksByOwner(String ownerKey) {
     	Calendar minDate = Calendar.getInstance();
     	minDate.add(Calendar.DATE, -1);
         StringBuffer hql = new StringBuffer();
@@ -673,19 +673,19 @@ public class ComputeDAO extends ComputeBaseDAO {
         hql.append("and event.timestamp >=  :minDate ");
         hql.append("order by task.objectId ");
         Query query = sessionFactory.getCurrentSession().createQuery(hql.toString());
-        query.setString("owner", userLogin);
+        query.setString("owner", ownerKey);
         query.setTimestamp("minDate", minDate.getTime());
         return query.list();
     }
 
-    public List<Task> getUserParentTasksByOwner(String userLogin) {
-        String hql = "select clazz from Task clazz where clazz.owner='" + userLogin + "' and clazz.taskDeleted=false and clazz.parentTaskId is null order by clazz.objectId";
+    public List<Task> getUserParentTasksByOwner(String ownerKey) {
+        String hql = "select clazz from Task clazz where clazz.owner='" + ownerKey + "' and clazz.taskDeleted=false and clazz.parentTaskId is null order by clazz.objectId";
         Query query = sessionFactory.getCurrentSession().createQuery(hql);
         return query.list();
     }
 
-    public List<Task> getUserTasks(String userLogin) {
-        String hql = "select clazz from Task clazz where clazz.owner='" + userLogin + "' and clazz.taskDeleted=false order by clazz.objectId";
+    public List<Task> getUserTasks(String ownerKey) {
+        String hql = "select clazz from Task clazz where clazz.owner='" + ownerKey + "' and clazz.taskDeleted=false order by clazz.objectId";
         Query query = sessionFactory.getCurrentSession().createQuery(hql);
         return query.list();
     }
@@ -706,7 +706,7 @@ public class ComputeDAO extends ComputeBaseDAO {
     }
 
     public Long getSystemDatabaseIdByName(String databaseName) {
-        Query query = sessionFactory.getCurrentSession().createQuery("select clazz from Node clazz where clazz.name='" + databaseName + "' and clazz.owner='system'");
+        Query query = sessionFactory.getCurrentSession().createQuery("select clazz from Node clazz where clazz.name='" + databaseName + "' and clazz.owner='user:system'");
         List tmpList = query.list();
         List<Node> nodeList = new ArrayList<Node>();
         for (Object o : tmpList) {
@@ -767,7 +767,7 @@ public class ComputeDAO extends ComputeBaseDAO {
         //_logger.info("cpu time for task id " + taskId + " is " + cpuTime);
         return cpuTime;
     }
-
+    
     public String getFastaEntry(String targetAcc) {
         String sql = "select e.defline, s.sequence from sequence_entity e, bio_sequence s where e.accession='" + targetAcc + "' and s.sequence_id=e.sequence_id;";
         StringBuffer returnEntry = new StringBuffer();
@@ -812,32 +812,6 @@ public class ComputeDAO extends ComputeBaseDAO {
         }
     }
 
-
-    /**
-     * Method used to add new users to the system
-     * @param userLogin - login of the user in the system
-     * @return a formatted user object, or null if there was a problem
-     * @throws DaoException thrown if there was a problem adding the user to the database
-     */
-    public User createUser(String userLogin) throws DaoException {
-        User tmpUser;
-        try {
-            tmpUser = getUserByName(userLogin);
-            if (null!=tmpUser) {
-                _logger.warn("Cannot create user "+userLogin+" as they already exist!");
-                return tmpUser;
-            }
-            else {
-                tmpUser = new User();
-                tmpUser.setUserLogin(userLogin);
-                saveOrUpdate(tmpUser);
-                return tmpUser;
-            }
-        }
-        catch (DaoException e) {
-            throw handleException(e, "createUser");
-        }
-    }
     
     public String createTempFile(String prefix, String content) throws DaoException {
     	

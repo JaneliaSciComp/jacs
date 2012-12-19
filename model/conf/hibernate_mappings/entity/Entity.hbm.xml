@@ -9,9 +9,11 @@
         <id name="id" column="id" type="java.lang.Long">
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
         </id>
-        <many-to-one name="user" class="org.janelia.it.jacs.model.user_data.User" column="user_id" not-null="true" fetch="join" lazy="false"/>
-        <property name="name" type="string" lazy="false">
+        <property name="name" type="string">
             <column name="name" length="4000" />
+        </property>
+        <property name="ownerKey" type="string">
+            <column name="owner_key" length="64" />
         </property>
         <many-to-one name="entityStatus" class="EntityStatus" lazy="false">
             <column name="status" length="60" />
@@ -28,6 +30,10 @@
         <set name="entityData" cascade="all,delete-orphan" inverse="true" lazy="false" table="entityData">
             <key column="parent_entity_id" not-null="true"/>
             <one-to-many class="EntityData" />
+        </set>
+        <set name="entityActorPermissions" cascade="all,delete-orphan" inverse="true" lazy="true" table="entity_actor_permission">
+            <key column="entity_id" not-null="true"/>
+            <one-to-many class="EntityActorPermission" />
         </set>
     </class>
 </hibernate-mapping>

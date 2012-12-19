@@ -31,6 +31,7 @@ public interface WorkstationDataManagerMBean {
     
     public void runUpgradeUserData(String user);
     public void runUpgradeSingleSample(String sampleEntityId);
+    public void runUpgradeUserSamples(String user);
     
     public void runSampleCleaningService(String user, Boolean testRun);
     public void runSampleSyncService(String user, Boolean testRun); 
@@ -82,4 +83,12 @@ public interface WorkstationDataManagerMBean {
     public void runSlowImportTask(String parentDirPath, String topLevelFolderName, String owner);
     public void runDataDeDuplication();
 
-    }
+    // Security management (should be made into a separate bean at some point)
+    
+    public void createGroup(String groupOwner, String groupName);
+    public void removeGroup(String groupName);
+    public void addUserToGroup(String groupUser, String groupName);
+    public void removeUserFromGroup(String groupUser, String groupName);
+    
+    
+}

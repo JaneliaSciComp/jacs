@@ -67,7 +67,7 @@ public class OrphanAnnotationCheckerService implements IService {
             	
             	if (targetEntityId!=null) {
             		if (entityBean.getEntityById(targetEntityId.toString()) == null) {
-                		logger.info("Annotation "+entity.getId()+" (by "+entity.getUser().getUserLogin()+") is missing its target, "+targetEntityId);
+                		logger.info("Annotation "+entity.getId()+" (by "+entity.getOwnerKey()+") is missing its target, "+targetEntityId);
                 		if (deleteAnnotationsMissingTargets) {
                 			numAnnotationsMissingTargets++;
                 			toDelete.add(entity.getId());
@@ -76,7 +76,7 @@ public class OrphanAnnotationCheckerService implements IService {
             	}
             	else if (termEntityId!=null) {
             		if (entityBean.getEntityById(termEntityId.toString()) == null) {
-                		logger.info("Annotation "+entity.getId()+" (by "+entity.getUser().getUserLogin()+") is missing its key term, "+termEntityId);
+                		logger.info("Annotation "+entity.getId()+" (by "+entity.getOwnerKey()+") is missing its key term, "+termEntityId);
                 		if (deleteAnnotationsMissingTerms) {
                 			numAnnotationsMissingTerms++;
                 			toDelete.add(entity.getId());
@@ -85,7 +85,7 @@ public class OrphanAnnotationCheckerService implements IService {
             	}
             	else if (valueEntityId!=null) {
             		if (entityBean.getEntityById(valueEntityId.toString()) == null) {
-                		logger.info("Annotation "+entity.getId()+" (by "+entity.getUser().getUserLogin()+") is missing its value term, "+valueEntityId);
+                		logger.info("Annotation "+entity.getId()+" (by "+entity.getOwnerKey()+") is missing its value term, "+valueEntityId);
                 		if (deleteAnnotationsMissingTerms) {
                 			numAnnotationsMissingTerms++;
                 			toDelete.add(entity.getId());

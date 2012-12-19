@@ -17,6 +17,7 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Takes a Sample Entity and finds all the LSM stacks which are part of it, then creates lsmFileNames.txt with all the
@@ -58,7 +59,7 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
     	}
     	
-    	for(Entity lsmStack : sampleEntity.getDescendantsOfType(EntityConstants.TYPE_LSM_STACK, true)) {
+    	for(Entity lsmStack : EntityUtils.getDescendantsOfType(sampleEntity, EntityConstants.TYPE_LSM_STACK, true)) {
 			String filepath = lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
 			inputFiles.add(new File(filepath));
     	}

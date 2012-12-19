@@ -40,7 +40,7 @@ public class CreateNeuronMergeResultFileNodeService implements IService {
             this.task = ProcessDataHelper.getTask(processData);
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
 
-            visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
+            visibility = User.SYSTEM_USER_KEY.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
 
             // Find the parent location
             Entity separationEntity = EJBFactory.getLocalEntityBean().getEntityById(task.getParameter(NeuronMergeTask.PARAM_separationEntityId));

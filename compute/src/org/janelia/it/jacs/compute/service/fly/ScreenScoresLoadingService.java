@@ -20,7 +20,6 @@ import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
 import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
@@ -47,7 +46,7 @@ public class ScreenScoresLoadingService implements IService {
 	
     protected Logger logger;
     protected Task task;
-    protected User user;
+    protected String ownerKey;
     protected Date createDate;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
@@ -81,9 +80,9 @@ public class ScreenScoresLoadingService implements IService {
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
             annotationBean = EJBFactory.getLocalAnnotationBean();
-            user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
+            ownerKey = ProcessDataHelper.getTask(processData).getOwner();
             createDate = new Date();
-            helper = new FileDiscoveryHelper(entityBean, computeBean, user);
+            helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
             folderType = entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER);
             
             String acceptsFilepath = (String)processData.getItem("ACCEPTS_FILE_PATH");
@@ -105,7 +104,7 @@ public class ScreenScoresLoadingService implements IService {
         	Set<String> accepted = readNameFile(new File(acceptsFilepath));
         	
         	// Create top level folder
-        	Entity topLevelFolder = populateChildren(createOrVerifyRootEntity(TOP_LEVEL_EVALUATION_FOLDER, user, createDate, true, false));
+        	Entity topLevelFolder = populateChildren(createOrVerifyRootEntity(TOP_LEVEL_EVALUATION_FOLDER, ownerKey, createDate, true, false));
         	
         	if (!topLevelFolder.getChildren().isEmpty()) {
         		throw new IllegalStateException("Cannot reuse existing top level folder, id="+topLevelFolder);
@@ -259,7 +258,7 @@ public class ScreenScoresLoadingService implements IService {
 	            		if (maskIds!=null) {
 		            		logger.info("    Sample count: "+maskIds.size());
 		            		
-		            		entityBean.addChildren(user.getUserLogin(), distValueFolder.getId(), maskIds, EntityConstants.ATTRIBUTE_ENTITY);
+		            		entityBean.addChildren(ownerKey, distValueFolder.getId(), maskIds, EntityConstants.ATTRIBUTE_ENTITY);
 		            		
 		            		for(Long maskId : maskIds) {
 			            		if (maskIdsNeedingAnnotations.contains(maskId)) {
@@ -296,7 +295,7 @@ public class ScreenScoresLoadingService implements IService {
     	Map<String,Score> sampleScores = new HashMap<String,Score>();
     	
 		populateChildren(sample);
-		List<Entity> stacks = sample.getChildrenOfType(EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
+		List<Entity> stacks = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
 		if (stacks.isEmpty()) return sampleScores;
 		if (stacks.size()>1) {
 			logger.warn("More than one aligned brain stack for "+sample.getName()+"");
@@ -365,7 +364,7 @@ public class ScreenScoresLoadingService implements IService {
     
     protected void getOrCreateOntology() throws Exception {
 
-		Set<Entity> matching = entityBean.getUserEntitiesByName(user.getUserLogin(), SCORE_ONTOLOGY_NAME);
+		Set<Entity> matching = entityBean.getUserEntitiesByName(ownerKey, SCORE_ONTOLOGY_NAME);
 		if (matching.size()>1) {
 			throw new Exception("More than one ontology named "+SCORE_ONTOLOGY_NAME);
 		}
@@ -373,7 +372,7 @@ public class ScreenScoresLoadingService implements IService {
 		if (matching.isEmpty()) {
     		logger.info("Creating ontology called '"+SCORE_ONTOLOGY_NAME+"'");
     		
-    		Entity ontologyTree = annotationBean.createOntologyRoot(user.getUserLogin(), SCORE_ONTOLOGY_NAME);
+    		Entity ontologyTree = annotationBean.createOntologyRoot(ownerKey, SCORE_ONTOLOGY_NAME);
 
         	maaIntensityEnum = newTerm(ontologyTree, MAA_INTENSITY_NAME, "Enum");
         	maaDistributionEnum = newTerm(ontologyTree, MAA_DISTRIBUTION_NAME, "Enum");
@@ -393,7 +392,7 @@ public class ScreenScoresLoadingService implements IService {
 			long ontologyId = matching.iterator().next().getId();
 			logger.info("Reusing existing ontology called '"+SCORE_ONTOLOGY_NAME+"' (id="+ontologyId+")");
 			
-			Entity ontologyTree = annotationBean.getOntologyTree(user.getUserLogin(), ontologyId);
+			Entity ontologyTree = annotationBean.getOntologyTree(ownerKey, ontologyId);
 
 			maaIntensityEnum = EntityUtils.findChildWithName(ontologyTree, ScreenScoresLoadingService.MAA_INTENSITY_NAME);
 			maaDistributionEnum = EntityUtils.findChildWithName(ontologyTree, ScreenScoresLoadingService.MAA_DISTRIBUTION_NAME);
@@ -412,7 +411,7 @@ public class ScreenScoresLoadingService implements IService {
     }
     
     protected Entity newTerm(Entity parent, String name, OntologyElementType type) throws ComputeException {
-    	EntityData ed = annotationBean.createOntologyTerm(user.getUserLogin(), parent.getId(), name, type, parent.getMaxOrderIndex()+1);
+    	EntityData ed = annotationBean.createOntologyTerm(ownerKey, parent.getId(), name, type, parent.getMaxOrderIndex()+1);
     	parent.getEntityData().add(ed);
     	return ed.getChildEntity();
     }
@@ -478,7 +477,7 @@ public class ScreenScoresLoadingService implements IService {
     	return cols[index];
     }
     
-    protected Map<Long,String> getSampleMaskImages(Entity sample) {
+    protected Map<Long,String> getSampleMaskImages(Entity sample) throws ComputeException {
 
     	Map<Long,String> childNames = new HashMap<Long,String>();
 
@@ -504,7 +503,7 @@ public class ScreenScoresLoadingService implements IService {
     protected Map<Long,List<OntologyAnnotation>> getAnnotationMap(Collection<Long> entityIds) throws Exception {
 		List<Long> maskIds = new ArrayList<Long>(entityIds);
 		Map<Long,List<OntologyAnnotation>> annotMap = new HashMap<Long,List<OntologyAnnotation>>();
-		for(Entity annotEntity : annotationBean.getAnnotationsForEntities(user.getUserLogin(), maskIds)) {
+		for(Entity annotEntity : annotationBean.getAnnotationsForEntities(ownerKey, maskIds)) {
 			OntologyAnnotation annototation = new OntologyAnnotation();
 			annototation.init(annotEntity);
 			List<OntologyAnnotation> entityAnnots = annotMap.get(annototation.getTargetEntityId());
@@ -549,19 +548,19 @@ public class ScreenScoresLoadingService implements IService {
 		return -1;
 	}
     
-    protected Entity populateChildren(Entity entity) {
+    protected Entity populateChildren(Entity entity) throws ComputeException {
     	if (entity==null || EntityUtils.areLoaded(entity.getEntityData())) return entity;
 		EntityUtils.replaceChildNodes(entity, entityBean.getChildEntities(entity.getId()));
 		return entity;
     }
     
-    protected Entity createOrVerifyRootEntity(String topLevelFolderName, User user, Date createDate, boolean createIfNecessary, boolean loadTree) throws Exception {
+    protected Entity createOrVerifyRootEntity(String topLevelFolderName, String ownerKey, Date createDate, boolean createIfNecessary, boolean loadTree) throws Exception {
         Set<Entity> topLevelFolders = entityBean.getEntitiesByName(topLevelFolderName);
         Entity topLevelFolder = null;
         if (topLevelFolders != null) {
             // Only accept the current user's top level folder
             for (Entity entity : topLevelFolders) {
-                if (entity.getUser().getUserLogin().equals(user.getUserLogin())
+                if (entity.getOwnerKey().equals(ownerKey)
                         && entity.getEntityType().getName().equals(folderType.getName())
                         && entity.getAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
                     // This is the folder we want, now load the entire folder hierarchy
@@ -581,10 +580,10 @@ public class ScreenScoresLoadingService implements IService {
             topLevelFolder = new Entity();
             topLevelFolder.setCreationDate(createDate);
             topLevelFolder.setUpdatedDate(createDate);
-            topLevelFolder.setUser(user);
+            topLevelFolder.setOwnerKey(ownerKey);
             topLevelFolder.setName(topLevelFolderName);
             topLevelFolder.setEntityType(folderType);
-            topLevelFolder.addAttributeAsTag(EntityConstants.ATTRIBUTE_COMMON_ROOT);
+            EntityUtils.addAttributeAsTag(topLevelFolder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
             topLevelFolder = entityBean.saveOrUpdateEntity(topLevelFolder);
             logger.info("Saved top level folder as " + topLevelFolder.getId());
         }
@@ -608,7 +607,7 @@ public class ScreenScoresLoadingService implements IService {
         Entity child = new Entity();
         child.setCreationDate(createDate);
         child.setUpdatedDate(createDate);
-        child.setUser(user);
+        child.setOwnerKey(ownerKey);
         child.setName(childName);
         child.setEntityType(folderType);
         child = entityBean.saveOrUpdateEntity(child);

@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
+import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
@@ -17,7 +18,6 @@ import org.janelia.it.jacs.compute.service.fileDiscovery.TilingPattern;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
@@ -33,7 +33,7 @@ public class WholeToCentralBrainConversionService implements IService {
     protected Logger logger;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
-    protected User user;
+    protected String ownerKey;
     protected Date createDate;
     protected IProcessData processData;
 
@@ -43,7 +43,7 @@ public class WholeToCentralBrainConversionService implements IService {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
-            user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
+            ownerKey = ProcessDataHelper.getTask(processData).getOwner();
             createDate = new Date();
 
             String topLevelFolderName;
@@ -87,7 +87,7 @@ public class WholeToCentralBrainConversionService implements IService {
     		
     		List outObjects = new ArrayList();
         	for(Entity entity : wholeBrains) {
-        		if (entity.getUser().getUserLogin().equals(user.getUserLogin())) {
+        		if (entity.getOwnerKey().equals(ownerKey)) {
         			Entity sample = ensureCorrespondingCentralBrainSampleExists(entity, centralBrainFolder);
         			if (sample!=null) {
         				outObjects.add(outputObjects ? sample : sample.getId());	
@@ -176,20 +176,20 @@ public class WholeToCentralBrainConversionService implements IService {
     }
 
     protected Entity createOrVerifyRootEntityButDontLoadTree(String topLevelFolderName) throws Exception {
-        return createOrVerifyRootEntity(topLevelFolderName, user, createDate, logger, true /* create if necessary */, false /* load tree */);
+        return createOrVerifyRootEntity(topLevelFolderName, ownerKey, createDate, logger, true /* create if necessary */, false /* load tree */);
     }
 
     protected Entity createOrVerifyRootEntity(String topLevelFolderName) throws Exception {
-        return createOrVerifyRootEntity(topLevelFolderName, user, createDate, logger, true /* create if necessary */, true);
+        return createOrVerifyRootEntity(topLevelFolderName, ownerKey, createDate, logger, true /* create if necessary */, true);
     }
 
-    protected Entity createOrVerifyRootEntity(String topLevelFolderName, User user, Date createDate, org.apache.log4j.Logger logger, boolean createIfNecessary, boolean loadTree) throws Exception {
+    protected Entity createOrVerifyRootEntity(String topLevelFolderName, String ownerKey, Date createDate, org.apache.log4j.Logger logger, boolean createIfNecessary, boolean loadTree) throws Exception {
         Set<Entity> topLevelFolders = entityBean.getEntitiesByName(topLevelFolderName);
         Entity topLevelFolder = null;
         if (topLevelFolders != null) {
             // Only accept the current user's top level folder
             for (Entity entity : topLevelFolders) {
-                if (entity.getUser().getUserLogin().equals(user.getUserLogin())
+                if (entity.getOwnerKey().equals(ownerKey)
                         && entity.getEntityType().getName().equals(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER).getName())
                         && entity.getAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
                     // This is the folder we want, now load the entire folder hierarchy
@@ -208,7 +208,7 @@ public class WholeToCentralBrainConversionService implements IService {
             if (createIfNecessary) {
                 logger.info("Creating new topLevelFolder with name=" + topLevelFolderName);
                 topLevelFolder = newEntity(topLevelFolderName, EntityConstants.TYPE_FOLDER);
-                topLevelFolder.addAttributeAsTag(EntityConstants.ATTRIBUTE_COMMON_ROOT);
+                EntityUtils.addAttributeAsTag(topLevelFolder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
                 topLevelFolder = entityBean.saveOrUpdateEntity(topLevelFolder);
                 logger.info("Saved top level folder as " + topLevelFolder.getId());
             } else {
@@ -247,7 +247,7 @@ public class WholeToCentralBrainConversionService implements IService {
         return folder;
     }
 
-    protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
+    protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws ComputeException {
         EntityData ed = parent.addChildEntity(entity, attrName);
         ed.setOrderIndex(index);
         entityBean.saveOrUpdateEntityData(ed);
@@ -255,11 +255,11 @@ public class WholeToCentralBrainConversionService implements IService {
         		" as child of "+parent.getEntityType().getName()+"#"+parent.getId());
     }
     
-    protected Entity newEntity(String name, String type) {
+    protected Entity newEntity(String name, String type) throws ComputeException {
         Entity e = new Entity();
         e.setCreationDate(createDate);
         e.setUpdatedDate(createDate);
-        e.setUser(user);
+        e.setOwnerKey(ownerKey);
         e.setName(name);
         e.setEntityType(entityBean.getEntityTypeByName(type));
         return e;

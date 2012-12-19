@@ -16,6 +16,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.User;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Creates or updates a view of the given entities.
@@ -29,7 +30,7 @@ public class EntityViewCreationService implements IService {
     protected EntityBeanLocal entityBean;
     protected AnnotationBeanLocal annotationBean;
     protected ComputeBeanLocal computeBean;
-    protected User user;
+    protected String ownerKey;
     protected Date createDate;
 
     public void execute(IProcessData processData) throws ServiceException {
@@ -40,7 +41,7 @@ public class EntityViewCreationService implements IService {
             entityBean = EJBFactory.getLocalEntityBean();
             annotationBean = EJBFactory.getLocalAnnotationBean();
             computeBean = EJBFactory.getLocalComputeBean();
-            user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
+            ownerKey = ProcessDataHelper.getTask(processData).getOwner();
             createDate = new Date();
             
         	String viewEntityName = (String)processData.getItem("VIEW_ENTITY_NAME");
@@ -107,7 +108,7 @@ public class EntityViewCreationService implements IService {
     
     protected Entity createOrVerifyRootEntity(String topLevelFolderName) throws Exception {
     	
-        List<Entity> topLevelFolders = annotationBean.getCommonRootEntitiesByTypeName(user.getUserLogin(), EntityConstants.TYPE_FOLDER);
+        List<Entity> topLevelFolders = annotationBean.getCommonRootEntities(ownerKey);
     	Entity topLevelFolder = null;
     	
         if (topLevelFolders!=null) {
@@ -115,7 +116,7 @@ public class EntityViewCreationService implements IService {
 	        	if (entity.getName().equals(topLevelFolderName)) {
 	        		if (topLevelFolder!=null) {
 	        			logger.warn("More than one top level folder with name "+topLevelFolderName+
-	        					" found for user "+user.getUserLogin()+". Proceeding by picking the first.");
+	        					" found for user "+ownerKey+". Proceeding by picking the first.");
 	        			break;
 	        		}
 	                // This is the folder we want, now load the entire folder hierarchy
@@ -130,10 +131,10 @@ public class EntityViewCreationService implements IService {
             topLevelFolder = new Entity();
             topLevelFolder.setCreationDate(createDate);
             topLevelFolder.setUpdatedDate(createDate);
-            topLevelFolder.setUser(user);
+            topLevelFolder.setOwnerKey(ownerKey);
             topLevelFolder.setName(topLevelFolderName);
             topLevelFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
-            topLevelFolder.addAttributeAsTag(EntityConstants.ATTRIBUTE_COMMON_ROOT);
+            EntityUtils.addAttributeAsTag(topLevelFolder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
             topLevelFolder = entityBean.saveOrUpdateEntity(topLevelFolder);
             logger.info("Saved top level view as "+topLevelFolder.getId());
         }

@@ -59,7 +59,7 @@ public class TilingPatternTraversalService implements IService {
     		
     		List outObjects = new ArrayList();
         	for(Entity entity : samples) {
-        		if (entity.getUser().getUserLogin().equals(task.getOwner())) {
+        		if (entity.getOwnerKey().equals(task.getOwner())) {
         			outObjects.add(outputObjects ? entity : entity.getId());	
         		}
         	}

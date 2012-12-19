@@ -1,7 +1,10 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -85,8 +88,8 @@ public class ResultImageRegistrationService extends AbstractEntityService {
         this.entityBean = EJBFactory.getLocalEntityBean();
         this.computeBean = EJBFactory.getLocalComputeBean();
         this.annotationBean = EJBFactory.getLocalAnnotationBean();
-        this.user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
-        this.entityHelper = new EntityHelper(entityBean, computeBean, user);
+        this.ownerKey = ProcessDataHelper.getTask(processData).getOwner();
+        this.entityHelper = new EntityHelper(entityBean, computeBean, ownerKey);
         this.entityLoader = new EntityBeanEntityLoader(entityBean);
     	registerImages(resultEntity, pipelineRunEntity, sampleEntity, defaultImageFilename);
     }
@@ -154,7 +157,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
         	entityHelper.setDefault3dImage(sampleEntity, default3dImage);
         	
         	// Find and apply fast 3d image, if available
-    		Entity separation = resultEntity.getLatestChildOfType(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
+    		Entity separation = EntityUtils.getLatestChildOfType(resultEntity, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
     		if (separation!=null) {
             	Entity fast3dImage = findFast3dImage(separation);
             	if (fast3dImage!=null) {
@@ -173,7 +176,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     	if (supportingFiles!=null) {
     		populateChildren(supportingFiles);
     	
-            for(Entity imageTile : supportingFiles.getChildrenOfType(EntityConstants.TYPE_IMAGE_TILE)) {
+            for(Entity imageTile : EntityUtils.getChildrenOfType(supportingFiles, EntityConstants.TYPE_IMAGE_TILE)) {
             	
             	Entity signalMip = null;
             	for(String key : signalMipPrefixMap.keySet()) {
@@ -194,7 +197,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     	}
 	}
 	
-	private void findImages(Entity entity) {
+	private void findImages(Entity entity) throws Exception {
 		
 		String entityType = entity.getEntityType().getName();
 		if (entityType.equals(EntityConstants.TYPE_IMAGE_2D)) {

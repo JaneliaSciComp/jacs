@@ -41,7 +41,7 @@ public class IndexingManagerImpl implements IndexingManagerManagement {
 			public void process(List<Long> entityIds) {
 				try {
 					if (entityIds.isEmpty()) return;
-					List<Entity> entities = solrDAO.getEntitiesInList(entityIds);
+					List<Entity> entities = solrDAO.getEntitiesInList(null, entityIds);
 					if (entities.size()!=entityIds.size()) {
 						logger.warn("Query list contained "+entityIds.size()+" ids, but "+entities.size()+" were returned.");
 					}

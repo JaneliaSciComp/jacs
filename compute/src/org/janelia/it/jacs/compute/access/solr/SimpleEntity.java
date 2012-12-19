@@ -11,7 +11,7 @@ public class SimpleEntity {
 
     private Long id;
     private String name;
-	private String userLogin;
+	private String ownerKey;
     private String entityTypeName;
     private Date creationDate;
     private Date updatedDate;
@@ -30,11 +30,11 @@ public class SimpleEntity {
 	public void setName(String name) {
 		this.name = name;
 	}
-	public String getUserLogin() {
-		return userLogin;
+	public String getOwnerKey() {
+		return ownerKey;
 	}
-	public void setUserLogin(String userLogin) {
-		this.userLogin = userLogin;
+	public void setOwnerKey(String ownerKey) {
+		this.ownerKey = ownerKey;
 	}
 	public String getEntityTypeName() {
 		return entityTypeName;

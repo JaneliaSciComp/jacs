@@ -180,10 +180,9 @@ public class FileNodeManager implements FileNodeManagerMBean {
     }
 
     protected User getDefaultUser() throws Exception {
-        User fileNodeManagerUser = EJBFactory.getRemoteComputeBean().getUserByName(User.SYSTEM_USER_LOGIN);
+        User fileNodeManagerUser = EJBFactory.getRemoteComputeBean().getUserByNameOrKey(User.SYSTEM_USER_LOGIN);
         if (fileNodeManagerUser == null) {
-            fileNodeManagerUser = new User(User.SYSTEM_USER_LOGIN, User.SYSTEM_USER_LOGIN + "Fullname",
-                    new HashSet<Node>(), new HashSet<Task>());
+            fileNodeManagerUser = new User(User.SYSTEM_USER_LOGIN, User.SYSTEM_USER_LOGIN + "Fullname");
             EJBFactory.getRemoteComputeBean().saveOrUpdateUser(fileNodeManagerUser);
         }
         return fileNodeManagerUser;

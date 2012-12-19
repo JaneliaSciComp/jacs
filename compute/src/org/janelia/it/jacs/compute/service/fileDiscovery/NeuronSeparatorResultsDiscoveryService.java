@@ -138,7 +138,7 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     
     protected Entity createFragmentEntity(EntityType fragmentType, Integer index) throws Exception {
         Entity fragmentEntity = new Entity();
-        fragmentEntity.setUser(user);
+        fragmentEntity.setOwnerKey(ownerKey);
         fragmentEntity.setEntityType(fragmentType);
         fragmentEntity.setCreationDate(createDate);
         fragmentEntity.setUpdatedDate(createDate);
@@ -151,7 +151,7 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
 	
     protected Entity createFragmentCollection() throws Exception {
         Entity fragmentsEntity = new Entity();
-        fragmentsEntity.setUser(user);
+        fragmentsEntity.setOwnerKey(ownerKey);
         fragmentsEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION));
         fragmentsEntity.setCreationDate(createDate);
         fragmentsEntity.setUpdatedDate(createDate);

@@ -66,7 +66,7 @@ public class FrvRecruitFromStatisticsService implements IService {
             org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
             HashMap<String, GenbankFileInfo> genbankFiles = RecruitmentDataHelper.getGenbankFileMap();
             HashMap<String, String> recruitingSetofGbksAndTaskMap = new HashMap<String, String>();
-            User tmpUser = computeBean.getUserByName(task.getOwner());
+            User tmpUser = computeBean.getUserByNameOrKey(task.getOwner());
             Scanner scanner = new Scanner(statsFile);
             ArrayList<String> rowList = new ArrayList<String>();
             int moleculeNameIndex=0,expectedCoverageIndex=6,totalHitsIndex=7,sampleNameIndex=8;

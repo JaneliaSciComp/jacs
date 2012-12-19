@@ -68,7 +68,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         try {
             Task task= ProcessDataHelper.getTask(processData);
             String sessionName = ProcessDataHelper.getSessionRelativePath(processData);
-            String visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
+            String visibility = User.SYSTEM_USER_KEY.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
             resultNode = new ScreenPipelineResultNode(task.getOwner(), task, "ScreenSampleResultNode",
                     "ScreenPipelineResultNode for task " + task.getObjectId(), visibility, sessionName);
             EJBFactory.getLocalComputeBean().saveOrUpdateNode(resultNode);
@@ -147,7 +147,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
                 screenSampleEntity = new Entity();
                 screenSampleEntity.setCreationDate(createDate);
                 screenSampleEntity.setUpdatedDate(createDate);
-                screenSampleEntity.setUser(user);
+                screenSampleEntity.setOwnerKey(ownerKey);
                 screenSampleEntity.setName(key);
                 screenSampleEntity.setEntityType(screenSampleType);
                 screenSampleEntity = EJBFactory.getLocalEntityBean().saveOrUpdateEntity(screenSampleEntity);
@@ -307,7 +307,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         }
         if (alignedStack==null) {
             alignedStack = new Entity();
-            alignedStack.setUser(user);
+            alignedStack.setOwnerKey(ownerKey);
             alignedStack.setEntityType(EJBFactory.getLocalEntityBean().getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK));
             alignedStack.setCreationDate(createDate);
             alignedStack.setUpdatedDate(createDate);
@@ -349,7 +349,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         // Assume we don't have a folder for this date yet
         Entity dateFolder = new Entity();
         EntityType dateFolderType=EJBFactory.getLocalEntityBean().getEntityTypeByName(EntityConstants.TYPE_FOLDER);
-        dateFolder.setUser(user);
+        dateFolder.setOwnerKey(ownerKey);
         dateFolder.setEntityType(dateFolderType);
         dateFolder.setCreationDate(createDate);
         dateFolder.setUpdatedDate(createDate);

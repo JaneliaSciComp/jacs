@@ -25,7 +25,7 @@ public interface SolrBeanRemote {
 	 * @return An object containing the SOLR response and possibly a set of matched Entity objects.
 	 * @throws ComputeException
 	 */
-	public SolrResults search(SolrQuery query, boolean mapToEntities) throws ComputeException;
+	public SolrResults search(String subjectKey, SolrQuery query, boolean mapToEntities) throws ComputeException;
 	
 	/**
 	 * Returns the FlyLight imagery vocabulary from Sage.

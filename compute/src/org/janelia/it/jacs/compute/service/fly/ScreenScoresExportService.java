@@ -31,9 +31,9 @@ public class ScreenScoresExportService extends ScreenScoresLoadingService {
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
             annotationBean = EJBFactory.getLocalAnnotationBean();
-            user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
+            ownerKey = ProcessDataHelper.getTask(processData).getOwner();
             createDate = new Date();
-            helper = new FileDiscoveryHelper(entityBean, computeBean, user);
+            helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
             
             // Process arguments
             
@@ -52,7 +52,7 @@ public class ScreenScoresExportService extends ScreenScoresLoadingService {
         	LargeOperations largeOp = new LargeOperations();
         	Map<Long,String> sampleNameMap = new HashMap<Long,String>();
         	
-        	for(Entity sample : entityBean.getUserEntitiesByTypeName("system", EntityConstants.TYPE_SCREEN_SAMPLE)) {
+        	for(Entity sample : entityBean.getUserEntitiesByTypeName(null, EntityConstants.TYPE_SCREEN_SAMPLE)) {
         		sampleNameMap.put(sample.getId(), sample.getName());
         		Map<Long,String> masks = getSampleMaskImages(sample);      
         		for(Long maskId : masks.keySet()) {
@@ -101,7 +101,7 @@ public class ScreenScoresExportService extends ScreenScoresLoadingService {
             		Map<String,List<OntologyAnnotation>> annotMap = new HashMap<String,List<OntologyAnnotation>>();
             		List<Long> entityIds = new ArrayList<Long>();
             		
-            		for(Entity annotEntity : annotationBean.getAnnotationsForChildren(user.getUserLogin(), distFolder.getId())) {
+            		for(Entity annotEntity : annotationBean.getAnnotationsForChildren(ownerKey, distFolder.getId())) {
             			String targetId = annotEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
             			List<OntologyAnnotation> entityAnnots = annotMap.get(targetId);
             			if (entityAnnots==null) {
@@ -260,7 +260,7 @@ public class ScreenScoresExportService extends ScreenScoresLoadingService {
 				// Add to new folder
 				List<Long> childrenIds = new ArrayList<Long>();
 				childrenIds.add(entityId);
-				entityBean.addChildren(user.getUserLogin(), targetFolder.getId(), childrenIds, EntityConstants.ATTRIBUTE_ENTITY);
+				entityBean.addChildren(ownerKey, targetFolder.getId(), childrenIds, EntityConstants.ATTRIBUTE_ENTITY);
 				
 			}
 			else {
@@ -291,7 +291,7 @@ public class ScreenScoresExportService extends ScreenScoresLoadingService {
         if (topLevelFolders != null) {
             // Only accept the current user's top level folder
             for (Entity entity : topLevelFolders) {
-                if (entity.getUser().getUserLogin().equals(user.getUserLogin())
+                if (entity.getOwnerKey().equals(ownerKey)
                         && entity.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)
                         && entity.getAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
                     topLevelFolder = entity;

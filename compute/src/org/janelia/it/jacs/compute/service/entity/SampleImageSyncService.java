@@ -14,6 +14,7 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Synchronizes the Samples with their latest results.
@@ -24,7 +25,7 @@ public class SampleImageSyncService implements IService {
 	
     protected Logger logger;
     protected Task task;
-    protected String username;
+    protected String ownerKey;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
     
@@ -35,17 +36,17 @@ public class SampleImageSyncService implements IService {
             task = ProcessDataHelper.getTask(processData);
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
-            username = task.getOwner();
+            ownerKey = task.getOwner();
 
             List<Entity> samples = entityBean.getEntitiesByTypeName(EntityConstants.TYPE_SAMPLE);
             
             for(Entity s : samples) {
                 Entity sample = entityBean.getEntityTree(s.getId());
-                if (!username.equals(sample.getUser().getUserLogin())) continue;
+                if (!ownerKey.equals(sample.getOwnerKey())) continue;
                 
                 String sampleFilepath = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
                 
-                Entity result = sample.getLatestChildOfType(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
+                Entity result = EntityUtils.getLatestChildOfType(sample, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
                 String resultFilepath = result==null ? null : result.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
                 
                 if (resultFilepath==null || "".equals(resultFilepath)) {

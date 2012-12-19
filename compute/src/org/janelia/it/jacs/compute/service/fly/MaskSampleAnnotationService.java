@@ -8,7 +8,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.*;
+import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
+import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -72,7 +75,7 @@ public class MaskSampleAnnotationService  implements IService {
     protected ComputeBeanLocal computeBean;
 
 
-    protected User user;
+    protected String ownerKey;
     protected Date createDate;
     protected String mode=MODE_UNDEFINED;
     protected Task task;
@@ -102,9 +105,9 @@ public class MaskSampleAnnotationService  implements IService {
             task = ProcessDataHelper.getTask(processData);
             logger.info("MaskSampleAnnotationService running under TaskId="+task.getObjectId());
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
-            visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
+            visibility = User.SYSTEM_USER_KEY.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
 
-            user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
+            ownerKey = ProcessDataHelper.getTask(processData).getOwner();
             createDate = new Date();
             mode = processData.getString("MODE");
             refresh=processData.getString("REFRESH").trim().toLowerCase().equals("true");
@@ -141,7 +144,7 @@ public class MaskSampleAnnotationService  implements IService {
     protected void refreshEntityBeans() throws Exception {
         entityBean = EJBFactory.getLocalEntityBean();
         computeBean = EJBFactory.getLocalComputeBean();
-        entityHelper = new EntityHelper(entityBean, computeBean, user); // can't be in constructor or will timeout
+        entityHelper = new EntityHelper(entityBean, computeBean, ownerKey); // can't be in constructor or will timeout
     }
 
 
@@ -494,7 +497,7 @@ public class MaskSampleAnnotationService  implements IService {
     }
 
     protected void cleanFullOrIncompleteMaskAnnotationFolderAndFiles(Entity maskAnnotationFolder) throws Exception {
-        if (!maskAnnotationFolder.getUser().getUserLogin().equals(task.getOwner())) {
+        if (!maskAnnotationFolder.getOwnerKey().equals(task.getOwner())) {
             throw new Exception("Users do not match for cleanFullOrIncompleteMaskAnnotationFolderAndFiles()");
         }
         String maskDirPath=maskAnnotationFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
@@ -572,7 +575,7 @@ public class MaskSampleAnnotationService  implements IService {
         Entity folder = new Entity();
         folder.setCreationDate(createDate);
         folder.setUpdatedDate(createDate);
-        folder.setUser(user);
+        folder.setOwnerKey(ownerKey);
         folder.setName(name);
         folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
         if (directoryPath!=null) {
@@ -666,7 +669,7 @@ public class MaskSampleAnnotationService  implements IService {
         }
     }
 
-    protected Entity getSubFolderByNameWithoutSession(Entity parentEntity, String folderName) {
+    protected Entity getSubFolderByNameWithoutSession(Entity parentEntity, String folderName) throws ComputeException {
         Set<Entity> children = entityBean.getChildEntities(parentEntity.getId());
         for (Entity child : children) {
             if (child != null && child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) & child.getName().equals(folderName)) {
@@ -825,7 +828,7 @@ public class MaskSampleAnnotationService  implements IService {
 
     protected Entity createSupportingEntity(File supportingFile, String name) throws Exception {
         Entity supportingEntity = new Entity();
-        supportingEntity.setUser(user);
+        supportingEntity.setOwnerKey(ownerKey);
         supportingEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_TEXT_FILE));
         supportingEntity.setCreationDate(createDate);
         supportingEntity.setUpdatedDate(createDate);
@@ -837,7 +840,7 @@ public class MaskSampleAnnotationService  implements IService {
 
     protected Entity createMipEntity(File pngFile, String name) throws Exception {
         Entity mipEntity = new Entity();
-        mipEntity.setUser(user);
+        mipEntity.setOwnerKey(ownerKey);
         mipEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D));
         mipEntity.setCreationDate(createDate);
         mipEntity.setUpdatedDate(createDate);
@@ -850,7 +853,7 @@ public class MaskSampleAnnotationService  implements IService {
     protected Entity createStackEntity(File file, String entityName, Entity mipEntity) throws Exception {
         Entity stack = new Entity();
         String mipFilePath=mipEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        stack.setUser(user);
+        stack.setOwnerKey(ownerKey);
         stack.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK));
         stack.setCreationDate(createDate);
         stack.setUpdatedDate(createDate);

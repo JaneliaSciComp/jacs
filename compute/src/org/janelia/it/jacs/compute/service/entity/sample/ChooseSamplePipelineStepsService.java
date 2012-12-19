@@ -35,7 +35,7 @@ public class ChooseSamplePipelineStepsService extends AbstractEntityService {
     	Entity supportingFiles = EntityUtils.getSupportingData(sampleEntity);
     	if (supportingFiles!=null) {
             populateChildren(supportingFiles);
-            numTiles = supportingFiles.getChildrenOfType(EntityConstants.TYPE_IMAGE_TILE).size();
+            numTiles = EntityUtils.getChildrenOfType(supportingFiles, EntityConstants.TYPE_IMAGE_TILE).size();
     	}
     	
     	String mergeAlgorithms = (String)processData.getItem("MERGE_ALGORITHMS");

@@ -5,7 +5,6 @@ import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.util.BulkEntityBuilder;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.user_data.User;
 
 /**
  * Short, synchronous, interactive tests of local bean interfaces. This is an area for prototyping and testing new 
@@ -17,12 +16,9 @@ public class LocalTestManager implements LocalTestManagerMBean {
 
 	private static final Logger logger = Logger.getLogger(LocalTestManager.class);
 	
-    public void testBulkLoadEntityTree(String username) throws Exception {
+    public void testBulkLoadEntityTree(String ownerKey) throws Exception {
     	
-    	User owner = new User();
-    	owner.setUserLogin(username);
-    	
-    	BulkEntityBuilder builder = new BulkEntityBuilder(username);
+    	BulkEntityBuilder builder = new BulkEntityBuilder(ownerKey);
     	
     	builder
     		.entity(EntityConstants.TYPE_FOLDER, "Bulk Load Entity Test")

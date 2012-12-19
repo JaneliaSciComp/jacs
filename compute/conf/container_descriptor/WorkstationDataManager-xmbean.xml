@@ -227,6 +227,16 @@
     </operation>
     
     <operation>
+        <description>Upgrade the given user's data model to use the most current sample structure. What this means is specific to each version.</description>
+        <name>runUpgradeUserSamples</name>
+        <parameter>
+            <description>User to run as (e.g. "system")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
         <description>Run routine maintenance tasks on all the user's Samples</description>
         <name>runSampleMaintenancePipeline</name>
         <parameter>
@@ -621,4 +631,58 @@
         <name>runDataDeDuplication</name>
     </operation>
 
+    <operation>
+        <description>Create the group with the given name, if it does not already exist.</description>
+        <name>createGroup</name>
+        <parameter>
+           <description>User who should own the group (e.g. "saffordt")</description>
+           <name>groupOwner</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Group name (e.g. "leetlab")</description>
+           <name>groupName</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
+        <description>Remove the group with the given name.</description>
+        <name>removeGroup</name>
+        <parameter>
+           <description>Group name (e.g. "leetlab")</description>
+           <name>groupName</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
+        <description>Add the given user to the given group, if they are not already part of it.</description>
+        <name>addUserToGroup</name>
+        <parameter>
+           <description>User to add (e.g. "saffordt")</description>
+           <name>groupUser</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Group name (e.g. "leetlab")</description>
+           <name>groupName</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
+        <description>Remove the given user from the given group.</description>
+        <name>removeUserFromGroup</name>
+        <parameter>
+           <description>User to remove (e.g. "saffordt")</description>
+           <name>groupUser</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Group name (e.g. "leetlab")</description>
+           <name>groupName</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
 </mbean>

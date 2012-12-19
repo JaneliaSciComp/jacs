@@ -68,7 +68,7 @@ public class GenomeProjectBlastFrvUpdateService implements IService {
             GenomeProjectFileNode gpFileNode = (GenomeProjectFileNode) EJBFactory.getRemoteComputeBean().getNodeById(Long.valueOf(gpNodeId));
             GenomeProjectImportTask gpImportTask = (GenomeProjectImportTask) EJBFactory.getRemoteComputeBean().getTaskForNodeId(gpFileNode.getObjectId());
 
-            User tmpOwner = EJBFactory.getRemoteComputeBean().getUserByName(task.getOwner());
+            User tmpOwner = EJBFactory.getRemoteComputeBean().getUserByNameOrKey(task.getOwner());
             File genbankFile = new File(gpFileNode.getDirectoryPath() + File.separator + genbankFileName);
 
             // STEP 0: Check the NEW_BLASTABLE_DATABASE_NODES against ones already recruited for this organism

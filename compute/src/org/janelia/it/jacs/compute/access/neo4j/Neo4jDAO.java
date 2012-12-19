@@ -90,7 +90,7 @@ public class Neo4jDAO extends AnnotationDAO {
     		largeOp.putValue(LargeOperations.NEO4J_MAP, entity.getId(), node.getId());
         	for(Entity child : entity.getChildren()) {
         		Node childNode = loadEntity(child);
-        		ga.addChild(node, childNode);
+        		ga.createChildRelationship(node, childNode);
         	}
         	numAdded++;
     	}

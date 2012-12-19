@@ -15,6 +15,7 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Compress existing v3draw files to v3dpbd to save space.
@@ -36,7 +37,7 @@ public class MCFODataCompressService implements IService {
 	
     protected Logger logger;
     protected Task task;
-    protected String username;
+    protected String ownerKey;
     protected AnnotationBeanLocal annotationBean;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
@@ -59,7 +60,7 @@ public class MCFODataCompressService implements IService {
             annotationBean = EJBFactory.getLocalAnnotationBean();
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
-            username = task.getOwner();
+            ownerKey = task.getOwner();
             
             String testRun = task.getParameter(PARAM_testRun);
             if (testRun!=null) {
@@ -155,7 +156,7 @@ public class MCFODataCompressService implements IService {
         		throw new IllegalArgumentException("Entity not found with id="+rootEntityId);
         	}
         	
-        	for(Entity image : entity.getDescendantsOfType(EntityConstants.TYPE_IMAGE_3D)) {
+        	for(Entity image : EntityUtils.getDescendantsOfType(entity,EntityConstants.TYPE_IMAGE_3D)) {
         		String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         		if (filepath!=null && filepath.endsWith("v3draw")) {
         			addV3dRawFile(image);
@@ -163,9 +164,9 @@ public class MCFODataCompressService implements IService {
         	}
         }
         else {
-        	logger.info("Finding V3DRAW files belonging to "+username);
+        	logger.info("Finding V3DRAW files belonging to "+ownerKey);
         	
-    		for(Entity entity : entityBean.getUserEntitiesWithAttributeValue(username, EntityConstants.ATTRIBUTE_FILE_PATH, "%v3draw")) {
+    		for(Entity entity : entityBean.getUserEntitiesWithAttributeValue(ownerKey, EntityConstants.ATTRIBUTE_FILE_PATH, "%v3draw")) {
     			if (!entity.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_3D)) {
     				logger.warn("Ignoring entity with v3draw filepath that is not an Image 3D: "+entity.getId());
     				continue;
@@ -183,7 +184,7 @@ public class MCFODataCompressService implements IService {
     
     private void addV3dRawFile(Entity imageEntity) throws ComputeException {
 
-    	if (!imageEntity.getUser().getUserLogin().equals(username)) return;
+    	if (!imageEntity.getOwnerKey().equals(ownerKey)) return;
     	
     	String filepath = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
     	

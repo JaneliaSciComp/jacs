@@ -126,9 +126,9 @@ public class ComputeDAOTest extends AbstractTransactionalDataSourceSpringContext
         BlastDatabaseFileNode retrievedDataFileNode=null;
         BlastDatasetNode retrievedDatasetNode=null;
         try {
-            User user=computeDAO.getUserByName("unitTest");
+            User user=computeDAO.getUserByNameOrKey("unitTest");
             if(user == null) {
-                user=new User("unitTest","unitTest",null,null);
+                user=new User("unitTest","unitTest");
                 computeDAO.saveOrUpdate(user);
             }
             // create a dataFile Node
@@ -184,7 +184,7 @@ public class ComputeDAOTest extends AbstractTransactionalDataSourceSpringContext
     public void testGetUserByName() {
         User user=null;
         try {
-            user=computeDAO.getUserByName("smurphy");
+            user=computeDAO.getUserByNameOrKey("smurphy");
             assertNotNull(user);
             assertEquals(user.getUserLogin(), "smurphy");
         } catch (Exception ex) {

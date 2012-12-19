@@ -34,10 +34,10 @@ public class CreatePipelineRunEntityService extends AbstractEntityService {
     		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
     	}
     	
-    	Entity pipelineRun = entityBean.createEntity(user.getUserLogin(), EntityConstants.TYPE_PIPELINE_RUN, pipelineName+" Results");
+    	Entity pipelineRun = entityBean.createEntity(ownerKey, EntityConstants.TYPE_PIPELINE_RUN, pipelineName+" Results");
     	pipelineRun.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS, pipelineProcess);
     	entityBean.saveOrUpdateEntity(pipelineRun);
-    	entityBean.addEntityToParent(user.getUserLogin(), sampleEntity, pipelineRun, sampleEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+    	entityBean.addEntityToParent(ownerKey, sampleEntity, pipelineRun, sampleEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
 
     	processData.putItem("PIPELINE_RUN_ENTITY_ID", pipelineRun.getId().toString());
     }

@@ -60,7 +60,7 @@ public class GenomeProjectRecruitmentSamplingService implements IService {
             // FASTA file node for ALL NCBI complete genomes
             FastaFileNode fastaFileNode = (FastaFileNode) EJBFactory.getRemoteComputeBean().
                     getNodeById(SystemConfigurationProperties.getLong("Recruitment.GenomeProjectFastaFileNode"));
-            User tmpOwner = EJBFactory.getRemoteComputeBean().getUserByName(task.getOwner());
+            User tmpOwner = EJBFactory.getRemoteComputeBean().getUserByNameOrKey(task.getOwner());
 
             // STEP 1: Work on the blast side of things
             // Run BlastN using the old query node and new subject db's

@@ -168,7 +168,7 @@ public class MergedFileDiscoveryService extends FileDiscoveryService {
 
     protected Entity createSample(String name) throws Exception {
         Entity sample = new Entity();
-        sample.setUser(user);
+        sample.setOwnerKey(ownerKey);
         sample.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SAMPLE));
         sample.setCreationDate(createDate);
         sample.setUpdatedDate(createDate);
@@ -180,7 +180,7 @@ public class MergedFileDiscoveryService extends FileDiscoveryService {
     
     protected Entity createSupportingFilesFolder() throws Exception {
         Entity filesFolder = new Entity();
-        filesFolder.setUser(user);
+        filesFolder.setOwnerKey(ownerKey);
         filesFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
         filesFolder.setCreationDate(createDate);
         filesFolder.setUpdatedDate(createDate);
@@ -192,7 +192,7 @@ public class MergedFileDiscoveryService extends FileDiscoveryService {
 
     private Entity createImageFromFile(File file) throws Exception {
         Entity imageEntity = new Entity();
-        imageEntity.setUser(user);
+        imageEntity.setOwnerKey(ownerKey);
         imageEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D));
         imageEntity.setCreationDate(createDate);
         imageEntity.setUpdatedDate(createDate);

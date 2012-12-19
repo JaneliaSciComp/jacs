@@ -1,14 +1,13 @@
 package org.janelia.it.jacs.shared.annotation;
 
-import org.apache.tools.ant.util.facade.FacadeTaskHelper;
-import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Created by IntelliJ IDEA.

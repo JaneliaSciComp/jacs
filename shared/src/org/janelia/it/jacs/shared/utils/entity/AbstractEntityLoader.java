@@ -10,10 +10,10 @@ import org.janelia.it.jacs.model.entity.EntityData;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public abstract class AbstractEntityLoader {
+public interface AbstractEntityLoader {
 
-	public abstract Set<EntityData> getParents(Entity entity);
+	public Set<EntityData> getParents(Entity entity) throws Exception;
 	
-	public abstract Entity populateChildren(Entity entity);
+	public Entity populateChildren(Entity entity) throws Exception;
 
 }

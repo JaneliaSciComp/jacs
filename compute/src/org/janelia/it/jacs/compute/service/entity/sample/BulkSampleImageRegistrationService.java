@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.service.entity;
+package org.janelia.it.jacs.compute.service.entity.sample;
 
 import java.io.File;
 import java.util.HashSet;
@@ -7,7 +7,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
-import org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService;
+import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -19,9 +19,9 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class MCFODataUpgradeService extends AbstractEntityService {
+public class BulkSampleImageRegistrationService extends AbstractEntityService {
 
-	private static final Logger logger = Logger.getLogger(MCFODataUpgradeService.class);
+	private static final Logger logger = Logger.getLogger(BulkSampleImageRegistrationService.class);
 
     public transient static final String PARAM_testRun = "is test run";
 	
@@ -29,12 +29,9 @@ public class MCFODataUpgradeService extends AbstractEntityService {
     
     private Set<Long> visited = new HashSet<Long>();
     private boolean isDebug = false;
-    private String username;
     private ResultImageRegistrationService resultImageRegService;
     
     public void execute() throws Exception {
-            
-    	this.username = user.getUserLogin();
         
         final String serverVersion = computeBean.getAppVersion();
         logger.info("Updating data model to latest version: "+serverVersion);
@@ -48,7 +45,7 @@ public class MCFODataUpgradeService extends AbstractEntityService {
         
     	String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
     	if (StringUtils.isEmpty(sampleEntityId)) {
-        	List<Entity> samples = entityBean.getUserEntitiesByTypeName(username, EntityConstants.TYPE_SAMPLE);
+        	List<Entity> samples = entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_SAMPLE);
         	logger.info("Processing "+samples.size()+" samples");
             for(Entity sample : samples) {
                 processSample(sample);
@@ -68,7 +65,7 @@ public class MCFODataUpgradeService extends AbstractEntityService {
     
     public void processSample(Entity sample) throws Exception {
     	
-    	if (!sample.getUser().getUserLogin().equals(username)) return;
+    	if (!sample.getOwnerKey().equals(ownerKey)) return;
     	
     	if (visited.contains(sample.getId())) return;
     	visited.add(sample.getId());
@@ -86,7 +83,7 @@ public class MCFODataUpgradeService extends AbstractEntityService {
     private boolean deleteSampleIfUnreferencedByOwner(Entity sample) throws ComputeException {
     	
     	for(EntityData ed : entityBean.getParentEntityDatas(sample.getId())) {
-    		if (ed.getUser().getUserLogin().equals(sample.getUser().getUserLogin())) {
+    		if (ed.getOwnerKey().equals(sample.getOwnerKey())) {
     			return false;
     		}
     	}
@@ -102,7 +99,7 @@ public class MCFODataUpgradeService extends AbstractEntityService {
     	logger.info("  Removing unreferenced sample entirely: "+sample.getId());
     	
     	if (!isDebug) {
-    		entityBean.deleteSmallEntityTree(sample.getUser().getUserLogin(), sample.getId(), true);
+    		entityBean.deleteSmallEntityTree(sample.getOwnerKey(), sample.getId(), true);
     	}
         
     	return true;
@@ -113,7 +110,7 @@ public class MCFODataUpgradeService extends AbstractEntityService {
      */
     private void upgradeSample(Entity sample) throws Exception {
     	
-    	for(Entity pipelineRun : sample.getChildrenOfType(EntityConstants.TYPE_PIPELINE_RUN)) {
+    	for(Entity pipelineRun : EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_PIPELINE_RUN)) {
     		for(EntityData pred : pipelineRun.getOrderedEntityData()) {
     			if (!pred.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_RESULT)) {
     				continue;
@@ -193,7 +190,7 @@ public class MCFODataUpgradeService extends AbstractEntityService {
     	logger.info(""+sample);
     	printImages("  ",sample);
     	
-    	for(Entity pipelineRun : sample.getChildrenOfType(EntityConstants.TYPE_PIPELINE_RUN)) {
+    	for(Entity pipelineRun : EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_PIPELINE_RUN)) {
     		
     		logger.info("    "+pipelineRun.getName());
     		printImages("      ",pipelineRun);

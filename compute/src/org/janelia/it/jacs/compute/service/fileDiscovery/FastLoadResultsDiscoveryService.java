@@ -14,7 +14,6 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
@@ -38,8 +37,8 @@ public class FastLoadResultsDiscoveryService implements IService {
 	        logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
 	        entityBean = EJBFactory.getLocalEntityBean();
 	        computeBean = EJBFactory.getLocalComputeBean();
-	        User user = computeBean.getUserByName(ProcessDataHelper.getTask(processData).getOwner());
-	        helper = new FileDiscoveryHelper(entityBean, computeBean, user);
+	        String ownerKey = ProcessDataHelper.getTask(processData).getOwner();
+	        helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
 	        
 	        List<Entity> entityList = (List<Entity>)processData.getItem("SEPARATION_LIST");
 	        if (entityList==null) {

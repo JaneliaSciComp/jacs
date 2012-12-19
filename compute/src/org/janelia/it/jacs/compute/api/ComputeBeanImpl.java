@@ -1,6 +1,18 @@
 
 package org.janelia.it.jacs.compute.api;
 
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.*;
+
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import javax.naming.Context;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+
 import org.apache.log4j.Logger;
 import org.hibernate.Query;
 import org.hibernate.SQLQuery;
@@ -8,6 +20,7 @@ import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.compute.access.UserDAO;
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 import org.janelia.it.jacs.compute.engine.launcher.ProcessManager;
@@ -18,10 +31,7 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskMessage;
 import org.janelia.it.jacs.model.tasks.blast.*;
 import org.janelia.it.jacs.model.tasks.utility.ContinuousExecutionTask;
-import org.janelia.it.jacs.model.user_data.FastaFileNode;
-import org.janelia.it.jacs.model.user_data.FileNode;
-import org.janelia.it.jacs.model.user_data.Node;
-import org.janelia.it.jacs.model.user_data.User;
+import org.janelia.it.jacs.model.user_data.*;
 import org.janelia.it.jacs.model.user_data.blast.BlastDatabaseFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultNode;
@@ -34,17 +44,6 @@ import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.MailHelper;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
-
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import javax.naming.Context;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.*;
 
 /**
  * This class implements service calls used by remote clients of Compute server.  It also contains service
@@ -65,7 +64,8 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     public static final String MDB_PROVIDER_URL_PROP = "AsyncMessageInterface.ProviderURL";
     public static final String FILE_STORE_CENTRAL_DIR_PROP = "FileStore.CentralDir";
     private ComputeDAO computeDAO = new ComputeDAO(logger);
-
+    private UserDAO userDAO = new UserDAO(logger);
+    
     public ComputeBeanImpl() {
     }
 
@@ -95,6 +95,10 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     		return true;
     	}
     	
+    	if (userLogin.startsWith("user:")) {
+    		userLogin = userLogin.substring(5);
+    	}
+    	
         try {
             // Connect to LDAP server.
             String ldapBase = SystemConfigurationProperties.getString("LDAP.Base");
@@ -118,7 +122,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
 //                System.out.println(tmpAtt.getID()+" "+tmpAtt.get().toString());
 //            }
 //
-            User user = computeDAO.getUserByName(userLogin);
+            User user = computeDAO.getUserByNameOrKey(userLogin);
             // If we don't know them, and they authenticated, add to the database and create a location in the filestore
             if (null == user) {
                 boolean successful = createUser(userLogin);
@@ -136,22 +140,91 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         }
     }
 
-    private boolean createUser(String userLogin) {
+    public User getUserByNameOrKey(String name) throws ComputeException {
+        return computeDAO.getUserByNameOrKey(name);
+    }
+    
+    public Group getGroupByNameOrKey(String name) throws ComputeException {
+        return computeDAO.getGroupByNameOrKey(name);
+    }
+    
+	public List<Subject> getSubjects() throws ComputeException {
+        return computeDAO.getSubjects();
+	}
+	
+    public List<User> getUsers() throws ComputeException {
+        return computeDAO.getUsers();
+    }
+	
+	public List<Group> getGroups() throws ComputeException {
+        return computeDAO.getGroups();
+	}
+    
+    public boolean createUser(String newUserName) throws DaoException {
         try {
-            logger.info("Creating user " + userLogin);
-            User user = computeDAO.createUser(userLogin);
+            logger.info("Creating user " + newUserName);
+            User user = userDAO.createUser(newUserName);
             String fileNodeStorePath = SystemConfigurationProperties.getString(FILE_STORE_CENTRAL_DIR_PROP);
-            File tmpUserDir = FileUtil.ensureDirExists(fileNodeStorePath + File.separator + userLogin);
+            File tmpUserDir = FileUtil.ensureDirExists(fileNodeStorePath + File.separator + newUserName);
             if (null!=user && null!=tmpUserDir && tmpUserDir.exists()) {
                 return true;
             }
         }
-        catch (Throwable t) {
-            logger.error("Error in createUser: " + t, t);
+        catch (IOException e) {
+            logger.error("Error creating user's filestore",e);
+            throw new DaoException("Error creating user's filestore", e);
+        }
+        catch (DaoException e) {
+            logger.error("Error creating user",e);
+            throw e;
         }
         return false;
     }
+    
+    public Group createGroup(String userLogin, String groupName) throws DaoException {
+        try {
+            logger.info("Creating group " + groupName);
+            return userDAO.createGroup(userLogin, groupName);
+        }
+        catch (DaoException e) {
+            logger.error("Error creating group", e);
+            throw e;
+        }
+    }
 
+    public void removeGroup(String groupName) throws DaoException {
+        try {
+            logger.info("Removing group " + groupName);
+            userDAO.removeGroup(groupName);
+        }
+        catch (DaoException e) {
+            logger.error("Error removing group", e);
+            throw e;
+        }
+    }
+    
+    public Group addUserToGroup(String userName, String groupName) throws DaoException {
+        try {
+            logger.info("Adding user "+userName+" to group " + groupName);
+            return userDAO.addUserToGroup(userName, groupName);
+        }
+        catch (DaoException e) {
+            logger.error("Error adding user to group", e);
+            throw e;
+        }
+    }
+
+    public void removeUserFromGroup(String groupUser, String groupName) throws DaoException {
+        try {
+            logger.info("Removing user "+groupUser+" from group " + groupName);
+            userDAO.removeUserFromGroup(groupUser, groupName);
+        }
+        catch (DaoException e) {
+            logger.error("Error removing user from group", e);
+            throw e;
+        }
+    }
+    
     public void setTaskNote(long taskId, String note) throws DaoException {
         Task task = computeDAO.getTaskById(taskId);
         task.setTaskNote(note);
@@ -209,18 +282,15 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     public Task getTaskWithMessages(long taskId) {
         return computeDAO.getTaskWithMessages(taskId);
     }
-
-    public User getUserByName(String name) {
-        return computeDAO.getUserByName(name);
-    }
-
-    public List getUsers(){
-        return computeDAO.getUsers();
-    }
     
     public User saveOrUpdateUser(User user) throws DaoException{
         computeDAO.saveOrUpdate(user);
         return user;
+    }
+
+    public Group saveOrUpdateGroup(Group group) throws DaoException{
+        computeDAO.saveOrUpdate(group);
+        return group;
     }
 
     public void removePreferenceCategory(String categoryName) throws DaoException {
@@ -688,16 +758,16 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return childTaskStatusMap;
     }
 
-    public List<Task> getUserTasksByType(String simpleName, String userName) {
-        return computeDAO.getUserTasksByType(simpleName, userName);
+    public List<Task> getUserTasksByType(String simpleName, String ownerKey) {
+        return computeDAO.getUserTasksByType(simpleName, ownerKey);
     }
 
     public Task getRecruitmentFilterTaskByUserPipelineId(Long objectId) throws DaoException {
         return computeDAO.getRecruitmentFilterTaskByUserPipelineId(objectId);
     }
 
-    public List<Task> getRecentUserParentTasks(String userLogin) {
-    	List<Task> tasks = computeDAO.getRecentUserParentTasksByOwner(userLogin);
+    public List<Task> getRecentUserParentTasks(String ownerKey) {
+    	List<Task> tasks = computeDAO.getRecentUserParentTasksByOwner(ownerKey);
         for(Task task : tasks) {
         	// Init lazy-loading events
         	task.getEvents().size();
@@ -705,8 +775,8 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return tasks;
     }
     
-    public List<Task> getUserParentTasks(String userLogin) {
-    	List<Task> tasks = computeDAO.getUserParentTasksByOwner(userLogin);
+    public List<Task> getUserParentTasks(String ownerKey) {
+    	List<Task> tasks = computeDAO.getUserParentTasksByOwner(ownerKey);
         for(Task task : tasks) {
         	// Init lazy-loading events
         	task.getEvents().size();
@@ -714,8 +784,8 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return tasks;
     }
     
-    public List<Task> getUserTasks(String userLogin) {
-    	List<Task> tasks = computeDAO.getUserTasks(userLogin);
+    public List<Task> getUserTasks(String ownerKey) {
+    	List<Task> tasks = computeDAO.getUserTasks(ownerKey);
         for(Task task : tasks) {
         	// Init lazy-loading events
         	task.getEvents().size();

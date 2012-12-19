@@ -58,7 +58,7 @@ public class CreateChildFileNodeService implements IService {
         // if we get this far then we assume that no result persist exists and create one
         String visibility = Node.VISIBILITY_PRIVATE;
 
-        if (User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner())) {
+        if (User.SYSTEM_USER_KEY.equalsIgnoreCase(task.getOwner())) {
             visibility = Node.VISIBILITY_PUBLIC;
         }
         resultFileNode = new NamedFileNode(task.getOwner(), task, name,

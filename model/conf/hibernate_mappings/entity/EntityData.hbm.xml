@@ -18,9 +18,9 @@
         <many-to-one name="childEntity" class="Entity" cascade="none" fetch="select" lazy="proxy">
             <column name="child_entity_id" length="60" />
         </many-to-one>
-        <many-to-one name="user" class="org.janelia.it.jacs.model.user_data.User" cascade="none" fetch="join" lazy="false">
-            <column name="user_id" length="60"/>
-        </many-to-one>
+        <property name="ownerKey" type="string">
+            <column name="owner_key" length="64" />
+        </property>
         <property name="value" type="string">
             <column name="value" />
         </property>

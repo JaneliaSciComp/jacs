@@ -29,31 +29,16 @@ public class EntityHelper {
     
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
-    protected User user;
+    protected String ownerKey;
    
-	public EntityHelper(String username) {
-		this(EJBFactory.getLocalEntityBean(), EJBFactory.getLocalComputeBean(), username);
-	}
-	
-	public EntityHelper(User user) {
-		this(EJBFactory.getLocalEntityBean(), EJBFactory.getLocalComputeBean(), user);
+	public EntityHelper(String ownerKey) {
+		this(EJBFactory.getLocalEntityBean(), EJBFactory.getLocalComputeBean(), ownerKey);
 	}
 	
     public EntityHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, String username) {
         this.entityBean = entityBean;
         this.computeBean  = computeBean;
-        try {
-        	this.user = computeBean.getUserByName(username);	
-        }
-        catch (ComputeException e) {
-        	logger.warn("Error fetching user "+username,e);
-        }
-    }
-	
-    public EntityHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, User user) {
-        this.entityBean = entityBean;
-        this.computeBean  = computeBean;
-    	this.user = user;
+        this.ownerKey = ownerKey;
     }
 	
 	/**
@@ -201,7 +186,7 @@ public class EntityHelper {
 	
 	/**
 	 * Create and save a new 2d image entity with the given owner and filepath. 
-	 * @param username
+	 * @param ownerKey
 	 * @param filepath
 	 * @return
 	 * @throws ComputeException
@@ -213,7 +198,7 @@ public class EntityHelper {
 	
 	/**
 	 * Create and save a new 2d image entity with the given owner and filepath. 
-	 * @param username
+	 * @param ownerKey
 	 * @param filepath
 	 * @return
 	 * @throws ComputeException
@@ -224,7 +209,7 @@ public class EntityHelper {
 
 	/**
 	 * Create and save a new 3d image entity with the given owner and filepath. 
-	 * @param username
+	 * @param ownerKey
 	 * @param filepath
 	 * @return
 	 * @throws ComputeException
@@ -236,7 +221,7 @@ public class EntityHelper {
 	
 	/**
 	 * Create and save a new 3d image entity with the given owner and filepath. 
-	 * @param username
+	 * @param ownerKey
 	 * @param filepath
 	 * @return
 	 * @throws ComputeException
@@ -248,7 +233,7 @@ public class EntityHelper {
 	public Entity createImage(String entityTypeName, String filepath, String name) throws ComputeException {
 		
         Entity entity = new Entity();
-        entity.setUser(user);
+        entity.setOwnerKey(ownerKey);
         entity.setEntityType(entityBean.getEntityTypeByName(entityTypeName));
         Date createDate = new Date();
         entity.setCreationDate(createDate);

@@ -1,12 +1,13 @@
 package org.janelia.it.jacs.shared.annotation;
 
+import java.io.*;
+import java.util.*;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-
-import java.io.*;
-import java.util.*;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Created with IntelliJ IDEA.
