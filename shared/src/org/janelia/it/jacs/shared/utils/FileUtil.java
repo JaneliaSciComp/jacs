@@ -962,19 +962,29 @@ public class FileUtil {
 
             // Grab all the entries one by one
             while ((entry = zis.getNextEntry()) != null) {
-                System.out.println("Unzipping: " + entry.getName());
-
-                int size;
-                byte[] buffer = new byte[2048];
-
-                fos = new FileOutputStream(destinationDirectory+File.separator+entry.getName());
-                bos = new BufferedOutputStream(fos, buffer.length);
-
-                while ((size = zis.read(buffer, 0, buffer.length)) != -1) {
-                    bos.write(buffer, 0, size);
+                if (entry.isDirectory()) {
+                    String explicitDirName = destinationDirectory + File.separator + entry.getName();
+                    System.out.println("Making directory " + entry.getName() + " as " + explicitDirName);
+                    File f = new File( explicitDirName );
+                    if ( ! f.mkdirs()  &&  (! f.exists() ) ) {
+                        throw new Exception("Failed to create directory " + entry.getName());
+                    }
                 }
-                bos.flush();
-                bos.close();
+                else {
+                    System.out.println("Unzipping: " + entry.getName());
+
+                    int size;
+                    byte[] buffer = new byte[2048];
+
+                    fos = new FileOutputStream(destinationDirectory+File.separator+entry.getName());
+                    bos = new BufferedOutputStream(fos, buffer.length);
+
+                    while ((size = zis.read(buffer, 0, buffer.length)) != -1) {
+                        bos.write(buffer, 0, size);
+                    }
+                    bos.flush();
+                    bos.close();
+                }
             }
         }
         catch (IOException e) {
