@@ -21,12 +21,12 @@ echo The putative download line is %DOWNLOAD%
 ::  Search the auto updater log for the string indicating no update needed.
 ::
 FINDSTR /m /c:"Already at latest version" autoupdate.log >NUL
+set UPDATEBAT="%TEMP%"\__workstation.bat
 IF "%ErrorLevel%"=="0" goto Latest
     echo Updater downloaded a new version to %DOWNLOAD%.
 
     ::  Now need to create a temporary batch file to run the update, which replaces the running batch script as well.
     ::
-    set UPDATEBAT="%TEMP%"\update__workstation.bat
 	del "%UPDATEBAT%"
     echo @echo off                            > %UPDATEBAT%
     echo echo Deleting old version...        >> %UPDATEBAT%
@@ -34,20 +34,23 @@ IF "%ErrorLevel%"=="0" goto Latest
 	echo echo Copying new version...         >> %UPDATEBAT%
     echo xcopy /S "%DOWNLOAD%" "%INSTALL%"   >> %UPDATEBAT%
     echo echo done.  Update complete.        >> %UPDATEBAT%
-	echo start.bat                           >> %UPDATEBAT%
+	echo cd "%INSTALL%"                      >> %UPDATEBAT%
+	echo FlySuite.bat                        >> %UPDATEBAT%
+	echo exit 0                              >> %UPDATEBAT%
 
     :: Now run the file created above.  Exit afterwards.
     ::
-    echo Executing update...
-    call %UPDATEBAT%
-    :: Do not expect ever to arrive here, but in case we do, exit.
-	exit 0
+	goto FinishUpdate
 
 :Latest
     echo Already at latest version.
 	cd %INSTALL%
-    call start.bat
-	goto Finish
+    call FlySuite.bat
+	exit 0
 
-:Finish
-	::exit 1
+:FinishUpdate
+    ::   Best to keep this last, because this script is replacing itself with another one.
+	::   Also, the update bat file is meant to exit at the end, so that this batch file
+	::   is abandoned.  It is important that the CMD processor not try to continue
+	::   where it left off, because it could otherwise run undetermined script lines.
+    "%UPDATEBAT%"
