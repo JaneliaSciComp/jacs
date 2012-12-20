@@ -50,15 +50,40 @@ if [ "$INPUT_FILE" = "" ]; then
 fi 
 
 if [ "$INPUT_FILE" = "" ]; then
-    echo "Getting input file from neuSepCmd.sh..."
+    echo "Getting input file from neuSepCmd.sh (second to last line)..."
     INPUT_FILE= `cat $SEPDIR/sge_config/neuSepCmd.sh | tail -2 | head -1 | awk '{print $(NF)}'`
     echo "    Got $INPUT_FILE"
+    if [ "$INPUT_FILE" = "" ]; then
+        echo "Getting input file from neuSepCmd.sh (line matching 'Sample')..."
+        INPUT_FILE=`cat $SEPDIR/sge_config/neuSepCmd.sh | grep Sample | awk '{print $(NF)}'`
+        echo "    Got $INPUT_FILE"
+    fi
 fi
 
 mkdir -p $OUTDIR
 mkdir -p $WORKING_DIR
 cd $WORKING_DIR
 
+EXT=${INPUT_FILE#*.}
+
+if [ "$EXT" = "v3dpbd" ]; then
+    if [ ! -f "$INPUT_FILE" ]; then
+        INPUT_FILE=`echo $INPUT_FILE | sed -e 's/v3dpbd/v3draw/g'`
+        echo "Input file missing, trying: $INPUT_FILE"
+    fi
+else
+    if [ ! -f "$INPUT_FILE" ]; then
+        INPUT_FILE=`echo $INPUT_FILE | sed -e 's/v3draw/v3dpbd/g'`
+        echo "Input file missing, trying: $INPUT_FILE"
+    fi
+fi
+
+if [ ! -f "$INPUT_FILE" ]; then
+    echo "Cannot locate original input file. Exiting."
+    exit 1
+fi
+
+echo "Input file: $INPUT_FILE"
 
 EXT=${INPUT_FILE#*.}
 if [ "$EXT" = "v3dpbd" ]; then
