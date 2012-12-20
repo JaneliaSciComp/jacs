@@ -9,8 +9,10 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 
+import com.google.gwt.user.client.rpc.IsSerializable;
+
 @XmlAccessorType(XmlAccessType.NONE)
-public class Group extends Subject implements java.io.Serializable
+public class Group extends Subject implements java.io.Serializable, IsSerializable
 {
 	public static final String ADMIN_GROUP_NAME = "admin";
     public static final String ADMIN_GROUP_KEY = "group:admin";

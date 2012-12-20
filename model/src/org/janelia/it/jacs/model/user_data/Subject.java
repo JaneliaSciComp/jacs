@@ -4,8 +4,10 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlValue;
 
+import com.google.gwt.user.client.rpc.IsSerializable;
+
 @XmlAccessorType(XmlAccessType.NONE)
-public class Subject implements java.io.Serializable {
+public class Subject implements java.io.Serializable, IsSerializable {
 	
     private Long id;
     private String name = "";

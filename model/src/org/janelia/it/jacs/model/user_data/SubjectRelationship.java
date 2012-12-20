@@ -3,8 +3,10 @@ package org.janelia.it.jacs.model.user_data;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
+import com.google.gwt.user.client.rpc.IsSerializable;
+
 @XmlAccessorType(XmlAccessType.NONE)
-public class SubjectRelationship implements java.io.Serializable {
+public class SubjectRelationship implements java.io.Serializable, IsSerializable {
 	
 	public static final String TYPE_GROUP_OWNER = "owner";
 	public static final String TYPE_GROUP_MEMBER = "member";

@@ -42,6 +42,9 @@
         <exclude name="DownloadableFileNode.java"/>
         <include name="Node.java"/>
         <include name="User.java"/>
+        <include name="Subject.java"/>
+        <include name="SubjectRelationship.java"/>
+        <include name="Group.java"/>
         <include name="DataSource.java"/>
     </source>
     <source path="model/user_data/prefs"/>
