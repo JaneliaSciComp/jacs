@@ -119,7 +119,7 @@ public class SolrDAO extends AnnotationDAO {
 	        conn = getJdbcConnection();
 	        
 	        StringBuffer sql = new StringBuffer();
-	        sql.append("select e.id, e.name, e.creation_date, e.updated_date, et.name, e.owner_dkey, ea.name, ed.value, ed.child_entity_id ");
+	        sql.append("select e.id, e.name, e.creation_date, e.updated_date, et.name, e.owner_key, ea.name, ed.value, ed.child_entity_id ");
 	        sql.append("from entity e ");
 	        sql.append("join entityType et on e.entity_type_id = et.id ");
 	        sql.append("left outer join entityData ed on e.id=ed.parent_entity_id ");

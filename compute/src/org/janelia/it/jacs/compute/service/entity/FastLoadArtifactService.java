@@ -158,7 +158,5 @@ public class FastLoadArtifactService implements IService {
     }
     
     private void doComplete() throws ComputeException {
-
-    	// TODO: import some of the fast load artifacts as entities, if required
     }
 }

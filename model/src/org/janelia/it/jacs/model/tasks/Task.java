@@ -87,7 +87,7 @@ public abstract class Task implements java.io.Serializable, IsSerializable {
         if (inputNodes != null) {
             this.inputNodes = inputNodes;
         }
-        this.owner = owner;
+        setOwner(owner);
         if (taskParameterSet != null) {
             for (TaskParameter aTaskParameter : taskParameterSet) {
                 addParameter(aTaskParameter);
@@ -119,6 +119,9 @@ public abstract class Task implements java.io.Serializable, IsSerializable {
 
     public void setOwner(String owner) {
         this.owner = owner;
+        if (owner.contains(":")) {
+        	this.owner = owner.split(":")[1];
+        }
     }
 
     public List<Event> getEvents() {

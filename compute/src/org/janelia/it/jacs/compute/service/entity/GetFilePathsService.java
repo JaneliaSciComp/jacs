@@ -43,12 +43,18 @@ public class GetFilePathsService implements IService {
         	
         	List<String> filePaths = new ArrayList<String>();
         	for(Entity entity : entityList) {
-        		filePaths.add(entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+        		String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        		if (filepath==null) {
+        			logger.warn("File path is null for entity with id="+entity.getId());
+        		}
+        		filePaths.add(filepath);
         	}
         	
+        	logger.info("Putting "+filePaths.size()+" items in FILE_PATHS");
         	processData.putItem("FILE_PATHS", filePaths);
         	
         	if (filePaths.size()==1) {
+            	logger.info("Putting "+filePaths.get(0)+" in FILE_PATH");
         		processData.putItem("FILE_PATH", filePaths.get(0));
         	}
         } 

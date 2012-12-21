@@ -49,7 +49,12 @@ public class SyncToArchiveService implements IService {
             }
             
             for(String truePath : truePaths) {
-            	syncDir(truePath);
+            	try {
+            		syncDir(truePath);
+            	}
+            	catch (Exception e) {
+            		logger.error("Sync failed for dir "+truePath, e);
+            	}
             }
             
     	}

@@ -1272,7 +1272,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             hql.append("join fetch ed.childEntity.entityType ");
             hql.append("join fetch ed.parentEntity ");
             hql.append("join fetch ed.parentEntity.entityType ");
-            hql.append("left outer join ed.parentEntity.entityActorPermissions p ");
+            hql.append("left outer join fetch ed.parentEntity.entityActorPermissions p ");
             hql.append("where ed.childEntity.id=?");
             if (null != subjectKey) {
                 hql.append("and (ed.parentEntity.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");

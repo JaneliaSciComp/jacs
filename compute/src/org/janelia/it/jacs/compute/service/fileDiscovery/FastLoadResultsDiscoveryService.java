@@ -27,6 +27,7 @@ public class FastLoadResultsDiscoveryService implements IService {
     protected IProcessData processData;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
+    protected String ownerKey;
     protected FileDiscoveryHelper helper;
     
 	@Override
@@ -37,7 +38,7 @@ public class FastLoadResultsDiscoveryService implements IService {
 	        logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
 	        entityBean = EJBFactory.getLocalEntityBean();
 	        computeBean = EJBFactory.getLocalComputeBean();
-	        String ownerKey = ProcessDataHelper.getTask(processData).getOwner();
+	        ownerKey = ProcessDataHelper.getTask(processData).getOwner();
 	        helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
 	        
 	        List<Entity> entityList = (List<Entity>)processData.getItem("SEPARATION_LIST");
@@ -55,24 +56,16 @@ public class FastLoadResultsDiscoveryService implements IService {
 	        }
 	        
 	        for(Entity entity : entityList) {
-	        	
-	        	if (!entity.getEntityType().getName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
-	        		logger.info("Not a neuron separation result: "+entity.getId());
-	        		continue;
+	        	try {
+	        		processSeparation(entity);
 	        	}
-	    	
-	    		entityBean.loadLazyEntity(entity, true);
-	    		
-	        	String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-	        	logger.info("Processing "+entity.getId()+" with path "+filepath);
-	        	
-	        	File resultDir = new File(filepath);
-	        	File fastloadDir = new File(filepath, "fastLoad");
-	        	
-	        	if (resultDir.exists() && fastloadDir.exists()) {
-	        		Entity filesFolder = EntityUtils.getSupportingData(entity);
-	        		Entity fastLoadFolder = helper.createOrVerifyFolderEntity(filesFolder, "Fast Load", fastloadDir, 0);
-	        		processFastLoadFolder(fastLoadFolder);
+	        	catch (Exception e) {
+	        		if (entityList.size()==1) {
+	        			throw e;
+	        		}
+	        		else {
+	        			logger.error("Results discovery failed for separation id="+entity.getId());	
+	        		}
 	        	}
 	        }
 	    } 
@@ -80,8 +73,38 @@ public class FastLoadResultsDiscoveryService implements IService {
 	        throw new ServiceException(e);
 	    }
     }
+	
+	protected void processSeparation(Entity entity) throws Exception {
+
+    	if (!entity.getEntityType().getName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
+    		logger.info("Not a neuron separation result: "+entity.getId());
+    		return;
+    	}
+	
+		entityBean.loadLazyEntity(entity, true);
+		
+    	String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+    	logger.info("Processing "+entity.getId()+" with path "+filepath);
+    	
+    	File resultDir = new File(filepath);
+    	File fastloadDir = new File(filepath, "fastLoad");
+    	
+    	if (resultDir.exists() && fastloadDir.exists()) {
+    		Entity filesFolder = EntityUtils.getSupportingData(entity);
+    		
+    		// Delete existing fast load results, if any 
+    		Entity fastLoadFolder = EntityUtils.findChildWithName(filesFolder, "Fast Load");
+    		if (fastLoadFolder!=null) {
+    			entityBean.deleteEntityTree(ownerKey, fastLoadFolder.getId());
+    		}
+    		
+    		fastLoadFolder = helper.createOrVerifyFolderEntity(filesFolder, "Fast Load", fastloadDir, 0);
+    		processFastLoadFolder(fastLoadFolder);
+    	}
+	}
 
     protected void processFastLoadFolder(Entity folder) throws Exception {
+    	
         File dir = new File(folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
 
         logger.info("Processing "+folder.getName()+" results in "+dir.getAbsolutePath());

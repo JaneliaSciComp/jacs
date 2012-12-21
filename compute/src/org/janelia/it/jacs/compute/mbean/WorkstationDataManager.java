@@ -117,7 +117,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
         	taskParameters.add(new TaskParameter(MongoDbLoadService.PARAM_clearDb, Boolean.toString(clearDb), null)); 
-        	Task task = new GenericTask(new HashSet<Node>(), "user:system", new ArrayList<Event>(), 
+        	Task task = new GenericTask(new HashSet<Node>(), "system", new ArrayList<Event>(), 
         			taskParameters, "neo4jSync", "Neo4j Sync");
             task.setJobName("Neo4j Sync Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
@@ -131,7 +131,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
         	taskParameters.add(new TaskParameter(MongoDbLoadService.PARAM_clearDb, Boolean.toString(clearDb), null)); 
-        	Task task = new GenericTask(new HashSet<Node>(), "user:system", new ArrayList<Event>(), 
+        	Task task = new GenericTask(new HashSet<Node>(), "system", new ArrayList<Event>(), 
         			taskParameters, "mongoDbSync", "MongoDb Sync");
             task.setJobName("MongoDB Sync Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
@@ -145,7 +145,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
         	taskParameters.add(new TaskParameter(SolrIndexingService.PARAM_clearIndex, Boolean.toString(clearIndex), null)); 
-        	Task task = new GenericTask(new HashSet<Node>(), "user:system", new ArrayList<Event>(), 
+        	Task task = new GenericTask(new HashSet<Node>(), "system", new ArrayList<Event>(), 
         			taskParameters, "solrIndexSync", "Solr Index Sync");
             task.setJobName("Solr Index Sync Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);

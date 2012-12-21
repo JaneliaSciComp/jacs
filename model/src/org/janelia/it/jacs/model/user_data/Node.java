@@ -64,7 +64,7 @@ public class Node implements java.io.Serializable, IsSerializable {
         this.description = description;
         this.visibility = visibility;
         this.dataType = dataType;
-        this.owner = owner;
+        setOwner(owner);
         this.relativeSessionPath = relativeSessionPath;
     }
 
@@ -124,6 +124,9 @@ public class Node implements java.io.Serializable, IsSerializable {
 
     public void setOwner(String owner) {
         this.owner = owner;
+        if (owner.contains(":")) {
+        	this.owner = owner.split(":")[1];
+        }
     }
 
     public Long getLength() {

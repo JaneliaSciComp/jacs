@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -29,6 +30,8 @@ public class FastLoadArtifactPipelineGridService extends SubmitDrmaaJobService {
 	
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
 
+    private static final int NUM_ARTIFACTS = 28; // number of fast load artifacts expected
+    
     private List<String> inputPaths;
     private List<String> fastLoadPaths;
     
@@ -112,17 +115,28 @@ public class FastLoadArtifactPipelineGridService extends SubmitDrmaaJobService {
     	
     	for(String fastLoadDir : fastLoadPaths) {
     		
-    		File file = new File(fastLoadDir);
-    		if (!file.exists()) {
-    			throw new MissingDataException("Missing fast load directory: "+fastLoadDir);
+    		File dir = new File(fastLoadDir);
+    		if (!dir.exists()) {
+    			logger.error("Missing fast load directory: "+fastLoadDir);
     		}
     		
-    		File archiveDir = new File(file.getParentFile(), "archive");
+    		int numFiles = dir.list().length;
+    		if (numFiles != NUM_ARTIFACTS) {
+    			logger.error("Fast load directory has "+numFiles+" files. Expected "+NUM_ARTIFACTS+". Deleting directory.");
+    			try {
+    				FileUtils.deleteDirectory(dir);
+    			}
+    			catch (IOException e) {
+    				logger.error("Error deleting fast load dir: "+e.getMessage());
+    			}
+    		}
+    		
+    		File archiveDir = new File(dir.getParentFile(), "archive");
     		if (archiveDir.exists()) {
     			archivePaths.add(archiveDir.getAbsolutePath());
     		}
         	else {
-        		logger.warn("No archive directory was generated at "+archiveDir.getAbsolutePath());
+        		logger.error("No archive directory was generated at "+archiveDir.getAbsolutePath());
         	}
     	}
 
