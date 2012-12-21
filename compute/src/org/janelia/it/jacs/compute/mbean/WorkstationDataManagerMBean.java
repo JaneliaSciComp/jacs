@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.mbean;
 
+
 /**
  * Created by IntelliJ IDEA.
  * User: murphys
@@ -89,6 +90,6 @@ public interface WorkstationDataManagerMBean {
     public void removeGroup(String groupName);
     public void addUserToGroup(String groupUser, String groupName);
     public void removeUserFromGroup(String groupUser, String groupName);
-    
+    public void annexEntityTree(String subjectKey, String entityId);
     
 }

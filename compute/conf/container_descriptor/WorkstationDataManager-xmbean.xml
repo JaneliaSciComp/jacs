@@ -685,4 +685,20 @@
            <type>java.lang.String</type>
         </parameter>
     </operation>
+    
+    <operation>
+        <description>Change the owner of the entity tree rooted at the given entity.</description>
+        <name>annexEntityTree</name>
+        <parameter>
+           <description>Subject key of the new owner (e.g. "user:saffordt")</description>
+           <name>subjectKey</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Identifier of the root entity (e.g. "1679282451010027618")</description>
+           <name>entityId</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
 </mbean>

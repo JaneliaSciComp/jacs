@@ -791,4 +791,14 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     	}
     }
     
+    public void annexEntityTree(String subjectKey, String entityId) {
+    	EntityBeanLocal entityBean = EJBFactory.getLocalEntityBean();
+        try {
+        	 entityBean.annexEntityTree(subjectKey, new Long(entityId));
+        }
+        catch (ComputeException e) {
+    		// Already printed by the ComputeBean
+        }
+    }
+    
 }
