@@ -11,6 +11,7 @@ public class SimpleEntity {
 
     private Long id;
     private String name;
+    private String owner;
     private String entityTypeName;
     private Date creationDate;
     private Date updatedDate;
@@ -29,6 +30,14 @@ public class SimpleEntity {
 	}
 	public void setName(String name) {
 		this.name = name;
+	}
+	public String getOwnerName() {
+		if (owner==null) return owner;
+		if (owner.contains(":")) return owner.split(":")[1];
+		return owner;
+	}
+	public void setOwnerKey(String owner) {
+		this.owner = owner;
 	}
 	public String getEntityTypeName() {
 		return entityTypeName;
@@ -57,5 +66,11 @@ public class SimpleEntity {
 	public Set<String> getSubjectKeys() {
 		return subjectKeys;
 	}
-	
+	public Set<String> getSubjectNames() {
+		Set<String> names = new HashSet<String>();
+		for(String key : subjectKeys) {
+			names.add(key.contains(":") ? key.split(":")[1] : key);
+		}
+		return names;
+	}
 }

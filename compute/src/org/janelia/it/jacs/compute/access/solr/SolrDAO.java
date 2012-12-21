@@ -157,7 +157,9 @@ public class SolrDAO extends AnnotationDAO {
 					entity.setCreationDate(rs.getDate(3));
 					entity.setUpdatedDate(rs.getDate(4));
 					entity.setEntityTypeName(rs.getString(5));
-					entity.getSubjectKeys().add(rs.getString(6));
+					String ownerKey = rs.getString(6);
+					entity.setOwnerKey(ownerKey);
+					entity.getSubjectKeys().add(ownerKey);
 				}
 
 				String key = rs.getString(7);
@@ -353,6 +355,7 @@ public class SolrDAO extends AnnotationDAO {
     	doc.setField("name", entity.getName(), 1.0f);
     	doc.setField("creation_date", entity.getCreationDate(), 0.8f);
     	doc.setField("updated_date", entity.getUpdatedDate(), 0.9f);
+    	doc.setField("username", entity.getOwnerName(), 1.0f);
     	doc.setField("entity_type", entity.getEntityTypeName(), 1.0f);
     	
     	if (sageVocab!=null && sageProps!=null) {
@@ -396,9 +399,9 @@ public class SolrDAO extends AnnotationDAO {
     		}
     	}
     	
-    	doc.removeField("subject_keys");
-		for(String subjectKey : entity.getSubjectKeys()) {
-			doc.addField("subject_keys", subjectKey);
+    	doc.removeField("subjects");
+		for(String subjectKey : entity.getSubjectNames()) {
+			doc.addField("subjects", subjectKey);
     	}
 		
 //    	if (!entity.getChildIds().isEmpty()) {
@@ -442,6 +445,7 @@ public class SolrDAO extends AnnotationDAO {
     	simpleEntity.setCreationDate(entity.getCreationDate());
     	simpleEntity.setUpdatedDate(entity.getUpdatedDate());
     	simpleEntity.setEntityTypeName(entity.getEntityType().getName());
+    	simpleEntity.setOwnerKey(entity.getOwnerKey());
     	
     	Set<Long> childrenIds = new HashSet<Long>();
     	for(EntityData ed : entity.getEntityData()) {

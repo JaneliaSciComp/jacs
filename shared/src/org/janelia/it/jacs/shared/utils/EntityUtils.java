@@ -82,19 +82,25 @@ public class EntityUtils {
 			return false;
 		}
 
-		Set<Long> eapIds1 = new HashSet<Long>();
-		for(EntityActorPermission eap : entity1.getEntityActorPermissions()) {
-			eapIds1.add(eap.getId());
-		}
+		if (EntityUtils.isInitialized(entity1.getEntityActorPermissions()) && EntityUtils.isInitialized(entity2.getEntityActorPermissions())) {
+			
+			Set<Long> eapIds1 = new HashSet<Long>();
+			for(EntityActorPermission eap : entity1.getEntityActorPermissions()) {
+				eapIds1.add(eap.getId());
+			}
 
-		Set<Long> eapIds2 = new HashSet<Long>();
-		for(EntityActorPermission eap : entity2.getEntityActorPermissions()) {
-			eapIds2.add(eap.getId());
+			Set<Long> eapIds2 = new HashSet<Long>();
+			for(EntityActorPermission eap : entity2.getEntityActorPermissions()) {
+				eapIds2.add(eap.getId());
+			}
+			
+			if (!eapIds1.equals(eapIds2)) {
+				log.debug("Entity areEqual? permissions differ");
+				return false;
+			}
 		}
-		
-		if (!eapIds1.equals(eapIds2)) {
-			log.debug("Entity areEqual? permissions differ");
-			return false;
+		else {
+			log.error("Uninitialized EntityActorPermission collection detected!");
 		}
 		
     	return true;

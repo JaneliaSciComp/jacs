@@ -119,7 +119,7 @@ public class SolrQueryBuilder {
     	int i = 0;
     	for(String ownerKey : ownerKeys) {
     		if (i++>0) qs.append(" OR ");
-    		qs.append("username:\""+ownerKey+"\"");
+    		qs.append("subjects:\""+ownerKey+"\"");
     	}
     	qs.append(")");
     	

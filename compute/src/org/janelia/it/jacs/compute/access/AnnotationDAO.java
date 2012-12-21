@@ -1273,7 +1273,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         	
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.parentEntity.id from EntityData ed ");
-            hql.append("left outer join fetch ed.parentEntity.entityActorPermissions p ");
+            hql.append("left outer join ed.parentEntity.entityActorPermissions p ");
             hql.append("where ed.childEntity.id=:childEntityId ");
             hql.append("and ed.entityAttribute.name=:attrName ");
             if (null != subjectKey) {
@@ -2079,11 +2079,19 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select e from Entity e ");
             hql.append("join fetch e.entityType ");
+            hql.append("left outer join fetch e.entityActorPermissions p ");
             hql.append("where e.id in (:ids) ");
+            if (null != subjectKey) {
+            	hql.append("and (e.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
+            }
             
             Query query = session.createQuery(hql.toString());
             query.setParameterList("ids", entityIds);
-
+            if (null != subjectKey) {
+                List<String> subjectKeyList = getSubjectKeys(subjectKey);
+                query.setParameterList("subjectKeyList", subjectKeyList);
+            }
+            
             List<Entity> results = query.list();
             
             // Resort the results in the order that the ids were given
@@ -2336,6 +2344,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             }
             
             sql.append("and "+targetIdAlias+" is not null");
+            
+            _logger.debug(sql);
             
 	        conn = getJdbcConnection();
 	        stmt = conn.prepareStatement(sql.toString());
