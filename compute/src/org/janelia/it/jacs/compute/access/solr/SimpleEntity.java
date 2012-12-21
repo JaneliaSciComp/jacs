@@ -11,10 +11,10 @@ public class SimpleEntity {
 
     private Long id;
     private String name;
-	private String ownerKey;
     private String entityTypeName;
     private Date creationDate;
     private Date updatedDate;
+    private Set<String> subjectKeys = new HashSet<String>();
     private Set<Long> childIds = new HashSet<Long>();
     private final Set<KeyValuePair> attributes = new HashSet<KeyValuePair>();
     
@@ -29,12 +29,6 @@ public class SimpleEntity {
 	}
 	public void setName(String name) {
 		this.name = name;
-	}
-	public String getOwnerKey() {
-		return ownerKey;
-	}
-	public void setOwnerKey(String ownerKey) {
-		this.ownerKey = ownerKey;
 	}
 	public String getEntityTypeName() {
 		return entityTypeName;
@@ -60,4 +54,8 @@ public class SimpleEntity {
 	public Set<KeyValuePair> getAttributes() {
 		return attributes;
 	}
+	public Set<String> getSubjectKeys() {
+		return subjectKeys;
+	}
+	
 }

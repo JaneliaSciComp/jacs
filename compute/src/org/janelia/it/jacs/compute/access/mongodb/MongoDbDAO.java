@@ -73,12 +73,13 @@ public class MongoDbDAO extends AnnotationDAO {
 	        conn = getJdbcConnection();
 	        
 	        StringBuffer sql = new StringBuffer();
-	        sql.append("select e.id, e.name, e.creation_date, e.updated_date, et.name, u.user_login, ea.name, ed.value, ed.child_entity_id ");
+	        sql.append("select e.id, e.name, e.creation_date, e.updated_date, et.name, u.user_login, ea.name, ed.value, ed.child_entity_id, p.subject_key ");
 	        sql.append("from entity e ");
 	        sql.append("join user_accounts u on e.user_id = u.user_id ");
 	        sql.append("join entityType et on e.entity_type_id = et.id ");
 	        sql.append("left outer join entityData ed on e.id=ed.parent_entity_id ");
 	        sql.append("left outer join entityAttribute ea on ed.entity_att_id = ea.id ");
+	        sql.append("left outer join entity_actor_permission p on p.entity_id = e.id ");
 	        
 	        stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 	        stmt.setFetchSize(Integer.MIN_VALUE);
@@ -106,12 +107,13 @@ public class MongoDbDAO extends AnnotationDAO {
 					entity.setCreationDate(rs.getDate(3));
 					entity.setUpdatedDate(rs.getDate(4));
 					entity.setEntityTypeName(rs.getString(5));
-					entity.setOwnerKey(rs.getString(6));
+					entity.getSubjectKeys().add(rs.getString(6));
 				}
 
 				String key = rs.getString(7);
 				String value = rs.getString(8);
 				BigDecimal childIdBD = rs.getBigDecimal(9);
+				String subjectKey = rs.getString(10);
 
 				if (childIdBD != null) {
 					Long childId = childIdBD.longValue();
@@ -120,6 +122,10 @@ public class MongoDbDAO extends AnnotationDAO {
 				}
 				else if (key!=null && value!=null) {
 					entity.getAttributes().add(new KeyValuePair(key, value));
+				}
+				
+				if (subjectKey!=null) {
+					entity.getSubjectKeys().add(subjectKey);
 				}
 				
 			}
@@ -220,7 +226,6 @@ public class MongoDbDAO extends AnnotationDAO {
     	builder.add("name", entity.getName());
     	builder.add("creation_date", entity.getCreationDate());
     	builder.add("updated_date", entity.getUpdatedDate());
-    	builder.add("username", entity.getOwnerKey());
     	builder.add("entity_type", entity.getEntityTypeName());
     
     	Map<String,List<Map<String,Object>>> attrs = new HashMap<String,List<Map<String,Object>>>();
@@ -240,7 +245,8 @@ public class MongoDbDAO extends AnnotationDAO {
     	
     	builder.add("attributes", attrs);
     	builder.add("child_ids", entity.getChildIds());
-    	
+    	builder.add("subject_keys", entity.getSubjectKeys());
+    			
     	if (ancestorSet!=null) {
     		builder.add("ancestor_ids", ancestorSet.getAncestors());
     	}

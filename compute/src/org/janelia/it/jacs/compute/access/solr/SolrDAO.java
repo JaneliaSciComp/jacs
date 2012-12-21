@@ -29,10 +29,7 @@ import org.janelia.it.jacs.compute.api.support.SageTerm;
 import org.janelia.it.jacs.compute.api.support.SolrDocTypeEnum;
 import org.janelia.it.jacs.compute.api.support.SolrUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.model.entity.*;
 
 /**
  * Data access to the SOLR indexes.
@@ -119,11 +116,12 @@ public class SolrDAO extends AnnotationDAO {
 	        conn = getJdbcConnection();
 	        
 	        StringBuffer sql = new StringBuffer();
-	        sql.append("select e.id, e.name, e.creation_date, e.updated_date, et.name, e.owner_key, ea.name, ed.value, ed.child_entity_id ");
+	        sql.append("select e.id, e.name, e.creation_date, e.updated_date, et.name, e.owner_key, ea.name, ed.value, ed.child_entity_id, p.subject_key ");
 	        sql.append("from entity e ");
 	        sql.append("join entityType et on e.entity_type_id = et.id ");
 	        sql.append("left outer join entityData ed on e.id=ed.parent_entity_id ");
 	        sql.append("left outer join entityAttribute ea on ed.entity_att_id = ea.id ");
+	        sql.append("left outer join entity_actor_permission p on p.entity_id = e.id ");
 	        sql.append("where e.entity_type_id != ? ");
 	        
 	        EntityType annotationType = getEntityTypeByName(EntityConstants.TYPE_ANNOTATION);
@@ -159,12 +157,13 @@ public class SolrDAO extends AnnotationDAO {
 					entity.setCreationDate(rs.getDate(3));
 					entity.setUpdatedDate(rs.getDate(4));
 					entity.setEntityTypeName(rs.getString(5));
-					entity.setOwnerKey(rs.getString(6));
+					entity.getSubjectKeys().add(rs.getString(6));
 				}
 
 				String key = rs.getString(7);
 				String value = rs.getString(8);
 				BigDecimal childIdBD = rs.getBigDecimal(9);
+				String subjectKey = rs.getString(10);
 				
 				if (key!=null && value!=null) {
 					entity.getAttributes().add(new KeyValuePair(key, value));
@@ -172,6 +171,10 @@ public class SolrDAO extends AnnotationDAO {
 				
 				if (childIdBD != null) {
 					entity.getChildIds().add(childIdBD.longValue());
+				}
+				
+				if (subjectKey!=null) {
+					entity.getSubjectKeys().add(subjectKey);
 				}
 			}
 
@@ -350,7 +353,6 @@ public class SolrDAO extends AnnotationDAO {
     	doc.setField("name", entity.getName(), 1.0f);
     	doc.setField("creation_date", entity.getCreationDate(), 0.8f);
     	doc.setField("updated_date", entity.getUpdatedDate(), 0.9f);
-    	doc.setField("username", entity.getOwnerKey(), 1.0f);
     	doc.setField("entity_type", entity.getEntityTypeName(), 1.0f);
     	
     	if (sageVocab!=null && sageProps!=null) {
@@ -394,6 +396,11 @@ public class SolrDAO extends AnnotationDAO {
     		}
     	}
     	
+    	doc.removeField("subject_keys");
+		for(String subjectKey : entity.getSubjectKeys()) {
+			doc.addField("subject_keys", subjectKey);
+    	}
+		
 //    	if (!entity.getChildIds().isEmpty()) {
 //    		if (existingDoc!=null) {
 //    			doc.removeField("child_ids");
@@ -435,7 +442,6 @@ public class SolrDAO extends AnnotationDAO {
     	simpleEntity.setCreationDate(entity.getCreationDate());
     	simpleEntity.setUpdatedDate(entity.getUpdatedDate());
     	simpleEntity.setEntityTypeName(entity.getEntityType().getName());
-    	simpleEntity.setOwnerKey(entity.getOwnerKey());
     	
     	Set<Long> childrenIds = new HashSet<Long>();
     	for(EntityData ed : entity.getEntityData()) {
@@ -449,6 +455,12 @@ public class SolrDAO extends AnnotationDAO {
     		}
     	}
     	
+    	Set<String> subjectKeys = simpleEntity.getSubjectKeys();
+    	subjectKeys.add(entity.getOwnerKey());
+    	for(EntityActorPermission perm : entity.getEntityActorPermissions()) {
+    		subjectKeys.add(perm.getSubjectKey());	
+    	}
+		
     	return simpleEntity;
     }
     
