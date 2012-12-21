@@ -1091,29 +1091,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
     }
 
-    // TODO: add subjectKey parameter
-    public Set<Entity> getEntitiesByName(String name) throws DaoException {
-        try {
-        	if (_logger.isDebugEnabled()) {
-        		_logger.debug("getEntitiesByName(name="+name+")");
-        	}
-        	
-            Session session = getCurrentSession();
-            Criteria c = session.createCriteria(Entity.class);
-            c.add(Expression.eq("name", name));
-            List l = c.list();
-            Set<Entity> resultSet = new HashSet<Entity>();
-            for (Object o : l) {
-                Entity e = (Entity) o;
-                resultSet.add(e);
-            }
-            return resultSet;
-        }
-        catch (Exception e) {
-            throw new DaoException(e);
-        }
-    }
-
     public Collection<Entity> getUserEntitiesByName(String subjectKey, String entityName) throws DaoException {
         try {
         	if (_logger.isDebugEnabled()) {

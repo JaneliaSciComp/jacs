@@ -92,6 +92,7 @@ public class FastLoadArtifactPipelineGridService extends SubmitDrmaaJobService {
     protected void writeShellScript(FileWriter writer) throws Exception {
         StringBuffer script = new StringBuffer();
         script.append("read INPUT_DIR\n");
+        script.append(Vaa3DHelper.getErrorExitPrefix() + "\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix() + "\n");
         script.append(NeuronSeparatorHelper.getFastLoadCommands() + "\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix() + "\n");
@@ -114,21 +115,15 @@ public class FastLoadArtifactPipelineGridService extends SubmitDrmaaJobService {
     	List<String> archivePaths = new ArrayList<String>();
     	
     	for(String fastLoadDir : fastLoadPaths) {
-    		
+
     		File dir = new File(fastLoadDir);
     		if (!dir.exists()) {
-    			logger.error("Missing fast load directory: "+fastLoadDir);
-    		}
-    		
-    		int numFiles = dir.list().length;
-    		if (numFiles != NUM_ARTIFACTS) {
-    			logger.error("Fast load directory has "+numFiles+" files. Expected "+NUM_ARTIFACTS+". Deleting directory.");
-    			try {
-    				FileUtils.deleteDirectory(dir);
-    			}
-    			catch (IOException e) {
-    				logger.error("Error deleting fast load dir: "+e.getMessage());
-    			}
+				if (fastLoadPaths.size()==1) {
+					throw new MissingDataException("Missing fast load directory: "+fastLoadDir);
+				}
+				else {
+	    			logger.error("Missing fast load directory: "+fastLoadDir);
+				}
     		}
     		
     		File archiveDir = new File(dir.getParentFile(), "archive");
@@ -136,8 +131,39 @@ public class FastLoadArtifactPipelineGridService extends SubmitDrmaaJobService {
     			archivePaths.add(archiveDir.getAbsolutePath());
     		}
         	else {
-        		logger.error("No archive directory was generated at "+archiveDir.getAbsolutePath());
+				if (fastLoadPaths.size()==1) {
+					throw new MissingDataException("No archive directory was generated at "+archiveDir.getAbsolutePath());
+				}
+				else {
+	    			logger.error("No archive directory was generated at "+archiveDir.getAbsolutePath());
+				}
         	}
+
+    		if (!dir.exists()) {
+				if (fastLoadPaths.size()==1) {
+					throw new MissingDataException("Missing fast load directory: "+fastLoadDir);
+				}
+				else {
+	    			logger.error("Missing fast load directory: "+fastLoadDir);
+				}
+    		}
+    		
+    		int numFiles = dir.list().length;
+    		if (numFiles != NUM_ARTIFACTS) {
+    			try {
+    				FileUtils.deleteDirectory(dir);
+    				FileUtils.deleteDirectory(archiveDir);
+    				if (fastLoadPaths.size()==1) {
+    					throw new MissingDataException("Fast load directory has "+numFiles+" files. Expected "+NUM_ARTIFACTS+".");
+    				}
+    				else {
+    	    			logger.error("Fast load directory has "+numFiles+" files. Expected "+NUM_ARTIFACTS+".");
+    				}
+    			}
+    			catch (IOException e) {
+    				logger.error("Error deleting fast load dir: "+e.getMessage());
+    			}
+    		}
     	}
 
     	processData.putItem("ARCHIVE_FILE_PATHS", archivePaths);

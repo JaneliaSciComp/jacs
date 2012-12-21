@@ -61,6 +61,10 @@ public class Vaa3DHelper {
     	return buf.toString();
     }
 
+    public static String getErrorExitPrefix() {
+        return "set -o errexit\n";
+    }
+
     /**
      * For V3D plugins that are truly headless.
      * @return

@@ -34,6 +34,7 @@ public class SyncToArchiveService implements IService {
 
     protected static final String MOVE_COMMAND = "mv"; 
     protected static final String SYNC_COMMAND = "rsync -aW"; 
+    protected static final String REMOVE_COMMAND = "rm -rf"; 
 
     public void execute(IProcessData processData) throws ServiceException {
 
@@ -84,18 +85,18 @@ public class SyncToArchiveService implements IService {
     		throw new ServiceException("Unrecognized path: "+filePath);
     	}
 
-    	File file = new File(truePath);
     	File archiveFile = new File(archivePath);
     	StringBuffer script = new StringBuffer();
     	
     	if (archiveFile.exists()) {
-    		// Destination already exists, just update it
-    		script.append(SYNC_COMMAND+" "+file.getParent()+" "+archivePath);
+    		// Destination already exists, just update it and delete the source
+    		script.append(SYNC_COMMAND+" "+truePath+" "+archiveFile.getParent()+"; ");
+    		script.append(REMOVE_COMMAND+" "+truePath+"; ");
     	}
     	else {
     		// Destination does not exist, move it over
     		archiveFile.getParentFile().mkdirs();
-    		script.append(MOVE_COMMAND+" "+truePath+" "+archiveFile.getAbsolutePath()+"; ");
+    		script.append(MOVE_COMMAND+" "+truePath+" "+archivePath+"; ");
     	}
     	        	
     	logger.info("Running: "+script);

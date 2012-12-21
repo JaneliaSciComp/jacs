@@ -100,6 +100,7 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
         script.append("read SIGNAL_CHAN\n");
         script.append("read REF_CHAN\n");
         script.append("read PREVIOUS_OUTPUT\n");
+        script.append(Vaa3DHelper.getErrorExitPrefix() + "\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix() + "\n");
         script.append(Vaa3DHelper.getVaa3dLibrarySetupCmd()+"\n");
         script.append(NeuronSeparatorHelper.getNeuronSeparationCommands() + "\n");

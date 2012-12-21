@@ -339,12 +339,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     }
     
     public Set<Entity> getEntitiesByName(String name) throws ComputeException {
-        try {
-            return _annotationDAO.getEntitiesByName(name);
-        } catch (DaoException e) {
-            _logger.error("Error trying to get entities by name " + name, e);
-            throw new ComputeException("Error trying to get entities",e);
-        }
+        return getUserEntitiesByName(null, name);
     }
     
     public List<Entity> getUserEntitiesByNameAndTypeName(String subjectKey, String entityName, String entityTypeName) throws ComputeException {
