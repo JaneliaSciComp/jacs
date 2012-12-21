@@ -35,8 +35,7 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     @XmlElementWrapper(name="entityDataSet")
     private Set<EntityData> entityData = new HashSet<EntityData>(0);
 
-    @XmlElement(name="entityActorPermission")
-    @XmlElementWrapper(name="entityActorPermissions")
+    @XmlTransient
     private Set<EntityActorPermission> entityActorPermissions = new HashSet<EntityActorPermission>(0);
     
     public Entity() {
