@@ -35,7 +35,7 @@ public class EntityHelper {
 		this(EJBFactory.getLocalEntityBean(), EJBFactory.getLocalComputeBean(), ownerKey);
 	}
 	
-    public EntityHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, String username) {
+    public EntityHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, String ownerKey) {
         this.entityBean = entityBean;
         this.computeBean  = computeBean;
         this.ownerKey = ownerKey;

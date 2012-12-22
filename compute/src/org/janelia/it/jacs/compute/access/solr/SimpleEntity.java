@@ -69,6 +69,7 @@ public class SimpleEntity {
 	public Set<String> getSubjectNames() {
 		Set<String> names = new HashSet<String>();
 		for(String key : subjectKeys) {
+			if (key==null) continue;
 			names.add(key.contains(":") ? key.split(":")[1] : key);
 		}
 		return names;
