@@ -24,4 +24,6 @@ public interface AdministrativeManagerMBean {
 
     public void trashUnknownNodesForUser();
 
-    }
+    public void createUser(String username);
+}
+

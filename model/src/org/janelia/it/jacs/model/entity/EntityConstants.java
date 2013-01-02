@@ -51,7 +51,8 @@ public class EntityConstants {
     public static final String TYPE_PIPELINE_RUN                     = "Pipeline Run";
     public static final String TYPE_ERROR                            = "Error";
     public static final String TYPE_DATA_SET                         = "Data Set";
-    
+    public static final String TYPE_ALIGNMENT_BOARD                  = "Alignment Board";
+
     // Entity Data Attributes
     
     public static final String ATTRIBUTE_DEFAULT_2D_IMAGE                    = "Default 2D Image";
