@@ -119,7 +119,8 @@ public class SolrQueryBuilder {
     	int i = 0;
     	for(String ownerKey : ownerKeys) {
     		if (i++>0) qs.append(" OR ");
-    		qs.append("subjects:\""+ownerKey+"\"");
+            String ownerName = ownerKey.split(":")[1];
+    		qs.append("subjects:\""+ownerName+"\"");
     	}
     	qs.append(")");
     	
@@ -146,7 +147,8 @@ public class SolrQueryBuilder {
 	    	qs.append(" AND (("+searchString+")");
 	    	if (!searchString.contains(":")) {
 	        	for(String ownerKey : ownerKeys) {
-	        		String fieldNamePrefix = SolrUtils.getFormattedName(ownerKey);
+	                String ownerName = ownerKey.split(":")[1];
+	        		String fieldNamePrefix = SolrUtils.getFormattedName(ownerName);
 	        		qs.append(" OR "+fieldNamePrefix+"_annotations:("+searchString+") OR "+fieldNamePrefix+"_annotations_exact:("+searchString+"))");	
 	        	}
 	    	}

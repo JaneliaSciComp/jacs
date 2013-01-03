@@ -249,8 +249,12 @@ public class MCFODataCompressService implements IService {
     	}
 
     	try {
+    	    // Update all entities which referred to the old path
+    	    entityBean.bulkUpdateEntityDataValue(inputPath, outputPath);
+            logger.info("Updated all entities to use new compressed file: "+outputPath);
+    	    
+    	    // Update the input stacks
         	for(Entity entity : inputEntites) {
-        		entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, outputPath);
         		String format = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT);
         		if (format != null && !"".equals(format)) {
         			entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, "v3dpbd");
@@ -266,10 +270,7 @@ public class MCFODataCompressService implements IService {
         			logger.info("Updated entity: "+entity.getName()+" (id="+entity.getId()+")");
         		}
             	numChanges++;
-        	}
-		
-        	
-        	logger.info("Updated all entities to use new compressed file: "+outputPath);
+        	}	
     	
     		File file = new File(inputPath);
     		if (!isDebug) {

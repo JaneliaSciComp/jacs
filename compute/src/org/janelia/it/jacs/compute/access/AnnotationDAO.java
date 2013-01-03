@@ -858,6 +858,27 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
     }
 
+    public void bulkUpdateEntityDataValue(String oldValue, String newValue) throws DaoException {
+        try {
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("bulkUpdateEntityDataValue(oldValue="+oldValue+",newValue="+newValue+")");  
+            }
+            
+            StringBuilder hql = new StringBuilder();
+            hql.append("update EntityData set value = :newValue where value = :oldValue ");
+            
+            final Session currentSession = getCurrentSession();
+            Query query = currentSession.createQuery(hql.toString());
+            query.setParameter("newValue", newValue);
+            query.setParameter("oldValue", oldValue);
+            
+            query.executeUpdate();
+        }
+        catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+    
     protected void createEntityStatus(String name) {
         try {
             Session session = getCurrentSession();

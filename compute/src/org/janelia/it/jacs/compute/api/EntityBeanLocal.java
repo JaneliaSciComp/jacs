@@ -46,6 +46,7 @@ public interface EntityBeanLocal extends EntityBeanRemote {
 
     public boolean deleteEntityById(Long entityId) throws ComputeException;
     public void deleteEntityData(EntityData ed) throws ComputeException;
+    public void bulkUpdateEntityDataValue(String oldValue, String newValue) throws ComputeException;
     
     public void loadLazyEntity(Entity entity, boolean recurse) throws ComputeException;
     public Entity saveBulkEntityTree(Entity root) throws ComputeException;
