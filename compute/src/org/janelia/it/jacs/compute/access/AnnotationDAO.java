@@ -214,6 +214,21 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     			}
         	});
         	
+        	Entity sharedDataFolder = null;
+        	List<Entity> entities = getUserEntitiesByNameAndTypeName(granteeKey, EntityConstants.NAME_SHARED_DATA, EntityConstants.TYPE_FOLDER);
+        	if (entities != null && !entities.isEmpty()) {
+        		sharedDataFolder = entities.get(0);
+        	}
+        	
+        	if (sharedDataFolder==null) {
+        		sharedDataFolder = createEntity(granteeKey, EntityConstants.NAME_SHARED_DATA, EntityConstants.TYPE_FOLDER);
+        		EntityUtils.addAttributeAsTag(sharedDataFolder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
+        		EntityUtils.addAttributeAsTag(sharedDataFolder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
+        		saveOrUpdate(sharedDataFolder);
+        	}
+        	
+        	addEntityToParent(sharedDataFolder, rootEntity, sharedDataFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+        	
     	}
     	catch (Exception e) {
     		throw new DaoException(e);
@@ -270,22 +285,31 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     		    	}
     			}
         	});
+
+        	Entity sharedDataFolder = null;
+        	List<Entity> entities = getUserEntitiesByNameAndTypeName(revokeeKey, EntityConstants.NAME_SHARED_DATA, EntityConstants.TYPE_FOLDER);
+        	if (entities != null && !entities.isEmpty()) {
+        		sharedDataFolder = entities.get(0);
+        	}
+        	
+        	if (sharedDataFolder!=null) {
+        		Set<EntityData> toDelete = new HashSet<EntityData>();
+        		for(EntityData ed : sharedDataFolder.getEntityData()) {
+        			Entity child = ed.getChildEntity();
+        			if (child!=null && child.getId().equals(rootEntity)) {
+        				toDelete.add(ed);
+        			}
+        		}
+        		for(EntityData ed : toDelete) {
+        			sharedDataFolder.getEntityData().remove(ed);
+        			genericDelete(ed);
+        		}	
+        	}
         	
     	}
     	catch (Exception e) {
     		throw new DaoException(e);
     	}
-    }
-    
-    public EntityAttribute getEntityAttribute(long entityAttributeConstant) {
-        Session session = getCurrentSession();
-        Criteria c = session.createCriteria(EntityAttribute.class);
-        c.add(Expression.eq("id", entityAttributeConstant));
-        EntityAttribute attribute = (EntityAttribute) c.uniqueResult();
-        if (null != attribute) {
-            return attribute;
-        }
-        return null;
     }
 
     public boolean deleteOntologyTerm(String subjectKey, String ontologyTermId) throws DaoException {
@@ -1153,7 +1177,9 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         	if (_logger.isDebugEnabled()) {
         		_logger.debug("getCommonRoots(subjectKey="+subjectKey+")");
         	}
-            
+        	
+        	List<String> subjectKeyList = null;
+        	
         	EntityAttribute attr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT);
             Session session = getCurrentSession();
             StringBuilder hql = new StringBuilder();
@@ -1169,10 +1195,30 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             Query query = session.createQuery(hql.toString());
             query.setLong("attrName", attr.getId());
             if (null != subjectKey) {
-                List<String> subjectKeyList = getSubjectKeys(subjectKey);
+                subjectKeyList = getSubjectKeys(subjectKey);
                 query.setParameterList("subjectKeyList", subjectKeyList);
             }
-            return filterDuplicates(query.list());
+            
+            List<Entity> entities = filterDuplicates(query.list());
+            
+        	// We only consider common roots that the user owns, or one of their groups owns. Other common roots
+        	// which the user has access to through an ACL are already referenced in the Shared Data folder.
+            // The reason this is a post-processing step, is because we want an accurate ACL on the object from the 
+            // outer fetch join. 
+            List<Entity> commonRoots = new ArrayList<Entity>();
+            if (null != subjectKey) {
+                for (Entity commonRoot : entities) {
+                	if (subjectKeyList.contains(commonRoot.getOwnerKey())) {
+                		commonRoots.add(commonRoot);
+                	}
+                }
+            }
+            else {
+            	commonRoots.addAll(entities);
+            }
+            
+            return commonRoots;
+            
         } catch (Exception e) {
             throw new DaoException(e);
         }

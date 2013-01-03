@@ -137,6 +137,9 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         	if (!entity.getOwnerKey().equals(subjectKey)) {
         		throw new ComputeException("Subject "+subjectKey+" cannot change "+entity.getId());
         	}
+        	if (entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PROTECTED)!=null) {
+        		throw new ComputeException("Cannot modify protected entity");
+        	}
         	entity.setUpdatedDate(new Date());
             _annotationDAO.saveOrUpdate(entity);
             _logger.info(subjectKey+" "+(isNew?"created":"saved")+" entity "+entity.getId());
@@ -233,6 +236,9 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             }
         	if (subjectKey!=null && !entity.getOwnerKey().equals(subjectKey)) {
         		throw new ComputeException("Subject "+subjectKey+" cannot delete "+entity.getId());
+        	}
+        	if (entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PROTECTED)!=null) {
+        		throw new ComputeException("Cannot delete protected entity");
         	}
             if (_annotationDAO.deleteEntityById(subjectKey, entityId)) {
             	_logger.info(subjectKey+" deleted entity "+entityId);

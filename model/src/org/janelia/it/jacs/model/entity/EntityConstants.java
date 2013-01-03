@@ -8,18 +8,16 @@ package org.janelia.it.jacs.model.entity;
  */
 public class EntityConstants {
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // During development, this file needs to by synced with the MBean WorkstationDataManager setupEntityTypes() method.
-    //
-    // Eventually, a code-generation Ant task will sync this file with the database, by both adding to this file
-    // from the database, and also adding to the database from this file.
-    //
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     // Entity Status
-    public static final String STATUS_DEPRECATED = "Deprecated";
-    public static final String STATUS_VALID      = "Valid";
+    public static final String STATUS_DEPRECATED                     = "Deprecated";
+    public static final String STATUS_VALID                          = "Valid";
 
+    // Entity Names
+    public static final String NAME_SHARED_DATA                      = "Shared Data";
+    public static final String NAME_MY_DATA_SETS                     = "My Data Sets";
+    public static final String NAME_PUBLIC_DATA_SETS                 = "Public Data Sets";
+    public static final String NAME_SPLIT_PICKING                    = "Split Picking";
+    
     // Entity Types
     public static final String TYPE_ANNOTATION                       = "Annotation";
     public static final String TYPE_LSM_STACK                        = "LSM Stack";
@@ -64,6 +62,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_IMAGE_FORMAT                        = "Image Format";
     public static final String ATTRIBUTE_ONTOLOGY_ELEMENT                    = "Ontology Element";
     public static final String ATTRIBUTE_COMMON_ROOT                         = "Common Root"; // Will cause folder to appear at top of Common tree pane
+    public static final String ATTRIBUTE_IS_PROTECTED                        = "Is Protected"; // Protected from deletion/modification by owner
     public static final String ATTRIBUTE_ENTITY                              = "Entity"; // A generic attribute so that a folder can contain any entity
     public static final String ATTRIBUTE_ONTOLOGY_TERM_TYPE                  = "Ontology Term Type";
     public static final String ATTRIBUTE_IS_PUBLIC                           = "Is Public";
