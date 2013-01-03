@@ -453,19 +453,22 @@ public class EntityUtils {
     public static boolean addAttributeAsTag(Entity entity, String attributeName) {
         Set<EntityData> data=entity.getEntityData();
         EntityAttribute attribute = entity.getAttributeByName(attributeName);
-        if (attribute==null) {
-            return false;
-        } else {
-            EntityData tag = new EntityData();
-            tag.setParentEntity(entity);
-            tag.setEntityAttribute(attribute);
-            tag.setOwnerKey(entity.getOwnerKey());
-            Date createDate = new Date();
-            tag.setCreationDate(createDate);
-            tag.setUpdatedDate(createDate);
-            tag.setValue(attribute.getName());
-            data.add(tag);
-        }
+        if (attribute==null) return false;
+        
+        if (attributeName.equals(entity.getValueByAttributeName(attributeName))) {
+            return true;
+        } 
+
+        EntityData tag = new EntityData();
+        tag.setParentEntity(entity);
+        tag.setEntityAttribute(attribute);
+        tag.setOwnerKey(entity.getOwnerKey());
+        Date createDate = new Date();
+        tag.setCreationDate(createDate);
+        tag.setUpdatedDate(createDate);
+        tag.setValue(attribute.getName());
+        data.add(tag);
+
         return true;
     }
 

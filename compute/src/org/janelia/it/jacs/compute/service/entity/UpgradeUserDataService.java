@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.service.entity;
 import java.util.List;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.service.fly.ScreenScoresLoadingService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.user_data.Group;
@@ -19,7 +20,7 @@ public class UpgradeUserDataService extends AbstractEntityService {
 
 	private static final Logger logger = Logger.getLogger(UpgradeUserDataService.class);
 
-	private static final String[] admins = { User.SYSTEM_USER_LOGIN, "saffordt", "rokickik", "brunsc", "fosterl", "murphys", "trautmane", "yuy" };
+	private static final String[] admins = { "saffordt", "rokickik", "brunsc", "fosterl", "murphys", "trautmane", "yuy" };
 	
     public void execute() throws Exception {
         
@@ -88,7 +89,10 @@ public class UpgradeUserDataService extends AbstractEntityService {
         	for(Entity commonRoot : annotationBean.getCommonRootEntities(user.getKey())) {
         		if (EntityConstants.NAME_MY_DATA_SETS.endsWith(commonRoot.getName()) 
         				|| EntityConstants.NAME_PUBLIC_DATA_SETS.endsWith(commonRoot.getName()) 
-        				|| EntityConstants.NAME_SPLIT_PICKING.endsWith(commonRoot.getName())) {
+        				|| EntityConstants.NAME_SPLIT_PICKING.endsWith(commonRoot.getName())
+        				|| ScreenScoresLoadingService.TOP_LEVEL_EVALUATION_FOLDER.endsWith(commonRoot.getName())
+        				|| "FlyLight Screen Split Lines".endsWith(commonRoot.getName())
+        				|| "Arnim Data Combinations".endsWith(commonRoot.getName())) {
         			EntityUtils.addAttributeAsTag(commonRoot, EntityConstants.ATTRIBUTE_IS_PROTECTED);
             		entityBean.saveOrUpdateEntity(commonRoot);
         		}
