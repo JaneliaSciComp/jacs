@@ -144,17 +144,16 @@ public class SolrQueryBuilder {
 		}
 		
 		if (!StringUtils.isEmpty(searchString)) {
-	    	qs.append(" AND (("+searchString+")");
-	    	if (!searchString.contains(":")) {
-	        	for(String ownerKey : ownerKeys) {
-	                String ownerName = ownerKey.split(":")[1];
-	        		String fieldNamePrefix = SolrUtils.getFormattedName(ownerName);
-	        		qs.append(" OR "+fieldNamePrefix+"_annotations:("+searchString+") OR "+fieldNamePrefix+"_annotations_exact:("+searchString+"))");	
-	        	}
-	    	}
-	    	else {
-	    		qs.append(")");
-	    	}
+	        String escapedSearchString = searchString.replaceAll(":", "\\:");
+	    	qs.append(" AND (("+escapedSearchString+")");
+    	
+        	for(String ownerKey : ownerKeys) {
+                String ownerName = ownerKey.split(":")[1];
+        		String fieldNamePrefix = SolrUtils.getFormattedName(ownerName);
+        		qs.append(" OR "+fieldNamePrefix+"_annotations:("+escapedSearchString+") OR "+fieldNamePrefix+"_annotations_exact:("+escapedSearchString+")");	
+        	}
+        	
+            qs.append(")");
 		}
     	
     	SolrQuery query = new SolrQuery();
