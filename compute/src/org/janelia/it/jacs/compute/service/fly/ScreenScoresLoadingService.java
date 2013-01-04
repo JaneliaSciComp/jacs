@@ -5,13 +5,9 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.util.*;
 
-import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.large.LargeOperations;
-import org.janelia.it.jacs.compute.api.*;
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.engine.service.IService;
-import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -19,7 +15,6 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
-import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
@@ -29,7 +24,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class ScreenScoresLoadingService implements IService {
+public class ScreenScoresLoadingService extends AbstractEntityService {
 	
 	private static final boolean DEBUG = false;
 	
@@ -44,13 +39,7 @@ public class ScreenScoresLoadingService implements IService {
 	
 	public static final int MAX_SCORE = 5;
 	
-    protected Logger logger;
-    protected Task task;
-    protected String ownerKey;
     protected Date createDate;
-    protected EntityBeanLocal entityBean;
-    protected ComputeBeanLocal computeBean;
-    protected AnnotationBeanLocal annotationBean;
 	protected FileDiscoveryHelper helper;
     
     protected EntityType folderType;
@@ -72,222 +61,210 @@ public class ScreenScoresLoadingService implements IService {
 	protected int numAnnotationsCreated;
 	protected int numAnnotatedMasks;
 	
-    public void execute(IProcessData processData) throws ServiceException {
+    public void execute() throws Exception {
     	
-        try {
-            logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-            task = ProcessDataHelper.getTask(processData);
-            entityBean = EJBFactory.getLocalEntityBean();
-            computeBean = EJBFactory.getLocalComputeBean();
-            annotationBean = EJBFactory.getLocalAnnotationBean();
-            ownerKey = ProcessDataHelper.getTask(processData).getOwner();
-            createDate = new Date();
-            helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
-            folderType = entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER);
-            
-            String acceptsFilepath = (String)processData.getItem("ACCEPTS_FILE_PATH");
-        	if (acceptsFilepath == null) {
-        		throw new IllegalArgumentException("ACCEPTS_FILE_PATH may not be null");
-        	}
+        createDate = new Date();
+        helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
+        folderType = entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER);
+        
+        String acceptsFilepath = (String)processData.getItem("ACCEPTS_FILE_PATH");
+    	if (acceptsFilepath == null) {
+    		throw new IllegalArgumentException("ACCEPTS_FILE_PATH may not be null");
+    	}
 
-            String outputFilepath = (String)processData.getItem("LOADED_FILE_PATH");
-        	if (outputFilepath == null) {
-        		throw new IllegalArgumentException("LOADED_FILE_PATH may not be null");
-        	}
-        	
-        	File outputFile = new File(outputFilepath);
-        	if (!outputFile.getParentFile().canWrite()) {
-        		throw new IllegalArgumentException("Cannot write to output file: "+outputFilepath);
-        	}
-        	
-        	// Read input file
-        	Set<String> accepted = readNameFile(new File(acceptsFilepath));
-        	
-        	// Create top level folder
-        	Entity topLevelFolder = populateChildren(createOrVerifyRootEntity(TOP_LEVEL_EVALUATION_FOLDER, ownerKey, createDate, true, false));
-        	
-        	if (!topLevelFolder.getChildren().isEmpty()) {
-        		throw new IllegalStateException("Cannot reuse existing top level folder, id="+topLevelFolder);
-        	}
-        	
-        	// Process each screen sample and save off its expression scores for later use
-        	
-        	LargeOperations largeOp = new LargeOperations();
-        	
-        	for(Entity sample : entityBean.getEntitiesByTypeName(EntityConstants.TYPE_SCREEN_SAMPLE)) {
+        String outputFilepath = (String)processData.getItem("LOADED_FILE_PATH");
+    	if (outputFilepath == null) {
+    		throw new IllegalArgumentException("LOADED_FILE_PATH may not be null");
+    	}
+    	
+    	File outputFile = new File(outputFilepath);
+    	if (!outputFile.getParentFile().canWrite()) {
+    		throw new IllegalArgumentException("Cannot write to output file: "+outputFilepath);
+    	}
+    	
+    	// Read input file
+    	Set<String> accepted = readNameFile(new File(acceptsFilepath));
+    	
+    	// Create top level folder
+    	Entity topLevelFolder = populateChildren(createOrVerifyRootEntity(TOP_LEVEL_EVALUATION_FOLDER, ownerKey, createDate, true, false));
+    	
+    	if (!topLevelFolder.getChildren().isEmpty()) {
+    		throw new IllegalStateException("Cannot reuse existing top level folder, id="+topLevelFolder);
+    	}
+    	
+    	// Process each screen sample and save off its expression scores for later use
+    	
+    	LargeOperations largeOp = new LargeOperations();
+    	
+    	for(Entity sample : entityBean.getEntitiesByTypeName(EntityConstants.TYPE_SCREEN_SAMPLE)) {
 
-        		Specimen specimen = Specimen.createSpecimenFromFullName(sample.getName());
-        		if (!accepted.contains(specimen.getSpecimenName())) continue;
-        		
-        		logger.info("Processing "+sample);
-        		
-        		// Don't read the score files until we need them
-        		Map<String,Score> sampleScores = new HashMap<String,Score>();
-        		boolean sampleScoresLoaded = false;
-        		
-        		// Have to read at least one score file set to get all the compartment names
-        		if (compartments.isEmpty()) {
-					sampleScoresLoaded = true;
-					sampleScores.putAll(getSampleScores(sample));
-        		}
-        		
-        		numSamples++;        		
-        		
-        		// We need to get all the individual mask images for the sample. This child set might contain extra 
-        		// stuff we don't care about, but it will get filtered by the score map in the loop below
-        		Map<Long,String> masks = getSampleMaskImages(sample);        		
-
-        		// Get annotations for all mask images
-        		Map<Long,List<OntologyAnnotation>> annotMap = getAnnotationMap(masks.keySet());
-        		
-        		for(Long maskId : masks.keySet()) {
-        			String maskName = masks.get(maskId);
-        			
-        			if (DEBUG) logger.info("  Processing "+maskName);
-        			
-        			List<OntologyAnnotation> annots = annotMap.get(maskId);
-        			
-					String maaIntensity = null;
-					String maaDistribution = null;
-					String caIntensity = null;
-					String caDistribution = null;
-					
-					if (annots!=null) {
-						for(OntologyAnnotation annotation : annots) {
-							if (ScreenScoresLoadingService.MAA_INTENSITY_NAME.equals(annotation.getKeyString())) {
-								maaIntensity = annotation.getValueString();
-							}
-							else if (ScreenScoresLoadingService.MAA_DISTRIBUTION_NAME.equals(annotation.getKeyString())) {
-								maaDistribution = annotation.getValueString();
-							}
-							else if (ScreenScoresLoadingService.CA_INTENSITY_NAME.equals(annotation.getKeyString())) {
-								caIntensity = annotation.getValueString();
-							}
-							else if (ScreenScoresLoadingService.CA_DISTRIBUTION_NAME.equals(annotation.getKeyString())) {
-								caDistribution = annotation.getValueString();
-							}
-						}	
-					}
-        			
-					if (!StringUtils.isEmpty(maaIntensity) && !StringUtils.isEmpty(maaDistribution)) {
-						// The current evaluation
-						int mi = getValueFromAnnotation(maaIntensity);
-						int md = getValueFromAnnotation(maaDistribution);
-						int fi = mi;
-						int fd = md;
-						
-						if (!StringUtils.isEmpty(caIntensity)) {
-							fi = getValueFromAnnotation(caIntensity);
-						}
-						
-						if (!StringUtils.isEmpty(caDistribution)) {
-							fd = getValueFromAnnotation(caDistribution);
-						}
-						
-						Score score = new Score();
-						score.maskId = maskId;
-						score.intensity = fi;
-	        			score.distribution = fd;
-	        			sampleScores.put(maskName,score);
-	        			
-	        			if (DEBUG) logger.info("    Already annotated: i"+score.intensity+"/d"+score.distribution);
-					}
-					else {
-						// No annotations yet
-	        			maskIdsNeedingAnnotations.add(maskId);
-	        			
-	        			// Lazy load the scores
-						if (!sampleScoresLoaded) {
-							sampleScoresLoaded = true;
-							Map<String,Score> savedScores = new HashMap<String,Score>(sampleScores);
-							sampleScores.putAll(getSampleScores(sample));
-							sampleScores.putAll(savedScores); // in case we already had some in there
-						}
-						
-						// Update our mask id
-	        			Score score = sampleScores.get(maskName);
-	        			if (score==null) continue;
-	        			score.maskId = maskId;
-						
-	        			if (DEBUG) logger.info("    Needs annotation: i"+score.intensity+"/d"+score.distribution);
-					}
-        		}
-        		
-        		// Now go through the scores for this sample, and hash them into the disk-based map for later use
-        		for(String maskName : sampleScores.keySet()) {
-        			Score score = sampleScores.get(maskName);
-        			if (score==null || score.maskId==null) continue;
-        			String key = maskName+"/"+score.intensity+"/"+score.distribution;
-        			List<Long> sampleCompIds = (List<Long>)largeOp.getValue(LargeOperations.SCREEN_SCORE_MAP, key);
-        			if (sampleCompIds==null) {
-        				sampleCompIds = new ArrayList<Long>();
-        			}
-        			sampleCompIds.add(score.maskId);
-        			largeOp.putValue(LargeOperations.SCREEN_SCORE_MAP,key,sampleCompIds);
-        		}
-        		
-        		if (!sampleScores.isEmpty()) {
-        			loaded.add(specimen.getSpecimenName());
-        		}
-        		logger.info("  Processed "+sampleScores.size()+" compartments");
-        	}
-        	
-        	// Get or create score ontology
-        	getOrCreateOntology();
+    		Specimen specimen = Specimen.createSpecimenFromFullName(sample.getName());
+    		if (!accepted.contains(specimen.getSpecimenName())) continue;
     		
-        	// Create the folder structure and annotate each sample
-        	
-        	logger.info("Creating folder structure under "+TOP_LEVEL_EVALUATION_FOLDER);
+    		logger.info("Processing "+sample);
+    		
+    		// Don't read the score files until we need them
+    		Map<String,Score> sampleScores = new HashMap<String,Score>();
+    		boolean sampleScoresLoaded = false;
+    		
+    		// Have to read at least one score file set to get all the compartment names
+    		if (compartments.isEmpty()) {
+				sampleScoresLoaded = true;
+				sampleScores.putAll(getSampleScores(sample));
+    		}
+    		
+    		numSamples++;        		
+    		
+    		// We need to get all the individual mask images for the sample. This child set might contain extra 
+    		// stuff we don't care about, but it will get filtered by the score map in the loop below
+    		Map<Long,String> masks = getSampleMaskImages(sample);        		
 
-        	for(final String compartment : compartments) {
-        		logger.info("Processing compartment "+compartment);
-        		Entity compartmentFolder = verifyOrCreateChildFolder(topLevelFolder, compartment);
+    		// Get annotations for all mask images
+    		Map<Long,List<OntologyAnnotation>> annotMap = getAnnotationMap(masks.keySet());
+    		
+    		for(Long maskId : masks.keySet()) {
+    			String maskName = masks.get(maskId);
+    			
+    			if (DEBUG) logger.info("  Processing "+maskName);
+    			
+    			List<OntologyAnnotation> annots = annotMap.get(maskId);
+    			
+				String maaIntensity = null;
+				String maaDistribution = null;
+				String caIntensity = null;
+				String caDistribution = null;
+				
+				if (annots!=null) {
+					for(OntologyAnnotation annotation : annots) {
+						if (ScreenScoresLoadingService.MAA_INTENSITY_NAME.equals(annotation.getKeyString())) {
+							maaIntensity = annotation.getValueString();
+						}
+						else if (ScreenScoresLoadingService.MAA_DISTRIBUTION_NAME.equals(annotation.getKeyString())) {
+							maaDistribution = annotation.getValueString();
+						}
+						else if (ScreenScoresLoadingService.CA_INTENSITY_NAME.equals(annotation.getKeyString())) {
+							caIntensity = annotation.getValueString();
+						}
+						else if (ScreenScoresLoadingService.CA_DISTRIBUTION_NAME.equals(annotation.getKeyString())) {
+							caDistribution = annotation.getValueString();
+						}
+					}	
+				}
+    			
+				if (!StringUtils.isEmpty(maaIntensity) && !StringUtils.isEmpty(maaDistribution)) {
+					// The current evaluation
+					int mi = getValueFromAnnotation(maaIntensity);
+					int md = getValueFromAnnotation(maaDistribution);
+					int fi = mi;
+					int fd = md;
+					
+					if (!StringUtils.isEmpty(caIntensity)) {
+						fi = getValueFromAnnotation(caIntensity);
+					}
+					
+					if (!StringUtils.isEmpty(caDistribution)) {
+						fd = getValueFromAnnotation(caDistribution);
+					}
+					
+					Score score = new Score();
+					score.maskId = maskId;
+					score.intensity = fi;
+        			score.distribution = fd;
+        			sampleScores.put(maskName,score);
+        			
+        			if (DEBUG) logger.info("    Already annotated: i"+score.intensity+"/d"+score.distribution);
+				}
+				else {
+					// No annotations yet
+        			maskIdsNeedingAnnotations.add(maskId);
+        			
+        			// Lazy load the scores
+					if (!sampleScoresLoaded) {
+						sampleScoresLoaded = true;
+						Map<String,Score> savedScores = new HashMap<String,Score>(sampleScores);
+						sampleScores.putAll(getSampleScores(sample));
+						sampleScores.putAll(savedScores); // in case we already had some in there
+					}
+					
+					// Update our mask id
+        			Score score = sampleScores.get(maskName);
+        			if (score==null) continue;
+        			score.maskId = maskId;
+					
+        			if (DEBUG) logger.info("    Needs annotation: i"+score.intensity+"/d"+score.distribution);
+				}
+    		}
+    		
+    		// Now go through the scores for this sample, and hash them into the disk-based map for later use
+    		for(String maskName : sampleScores.keySet()) {
+    			Score score = sampleScores.get(maskName);
+    			if (score==null || score.maskId==null) continue;
+    			String key = maskName+"/"+score.intensity+"/"+score.distribution;
+    			List<Long> sampleCompIds = (List<Long>)largeOp.getValue(LargeOperations.SCREEN_SCORE_MAP, key);
+    			if (sampleCompIds==null) {
+    				sampleCompIds = new ArrayList<Long>();
+    			}
+    			sampleCompIds.add(score.maskId);
+    			largeOp.putValue(LargeOperations.SCREEN_SCORE_MAP,key,sampleCompIds);
+    		}
+    		
+    		if (!sampleScores.isEmpty()) {
+    			loaded.add(specimen.getSpecimenName());
+    		}
+    		logger.info("  Processed "+sampleScores.size()+" compartments");
+    	}
+    	
+    	// Get or create score ontology
+    	getOrCreateOntology();
+		
+    	// Create the folder structure and annotate each sample
+    	
+    	logger.info("Creating folder structure under "+TOP_LEVEL_EVALUATION_FOLDER);
 
-            	for(int i=MAX_SCORE; i>=0; i--) {
-            		logger.info("  Processing intensity "+i);
-            		Entity intValueTerm = intValueItems.get(i);
-            		Entity intValueFolder = verifyOrCreateChildFolder(compartmentFolder, "Intensity "+i);
+    	for(final String compartment : compartments) {
+    		logger.info("Processing compartment "+compartment);
+    		Entity compartmentFolder = verifyOrCreateChildFolder(topLevelFolder, compartment);
+
+        	for(int i=MAX_SCORE; i>=0; i--) {
+        		logger.info("  Processing intensity "+i);
+        		Entity intValueTerm = intValueItems.get(i);
+        		Entity intValueFolder = verifyOrCreateChildFolder(compartmentFolder, "Intensity "+i);
+        		
+            	for(int d=MAX_SCORE; d>=0; d--) {
+            		logger.info("  Processing distribution "+d);	
+            		Entity distValueTerm = distValueItems.get(d);
+            		Entity distValueFolder = verifyOrCreateChildFolder(intValueFolder, "Distribution "+d);
             		
-                	for(int d=MAX_SCORE; d>=0; d--) {
-                		logger.info("  Processing distribution "+d);	
-                		Entity distValueTerm = distValueItems.get(d);
-	            		Entity distValueFolder = verifyOrCreateChildFolder(intValueFolder, "Distribution "+d);
+            		String key = compartment+"/"+i+"/"+d;
+            		List<Long> maskIds = (List<Long>)largeOp.getValue(LargeOperations.SCREEN_SCORE_MAP, key);
+            		if (maskIds!=null) {
+	            		logger.info("    Sample count: "+maskIds.size());
 	            		
-	            		String key = compartment+"/"+i+"/"+d;
-	            		List<Long> maskIds = (List<Long>)largeOp.getValue(LargeOperations.SCREEN_SCORE_MAP, key);
-	            		if (maskIds!=null) {
-		            		logger.info("    Sample count: "+maskIds.size());
-		            		
-		            		entityBean.addChildren(ownerKey, distValueFolder.getId(), maskIds, EntityConstants.ATTRIBUTE_ENTITY);
-		            		
-		            		for(Long maskId : maskIds) {
-			            		if (maskIdsNeedingAnnotations.contains(maskId)) {
-			            			annotate(maskId, maaIntensityEnum, intValueTerm);
-			            			annotate(maskId, maaDistributionEnum, distValueTerm);
-			            			numAnnotatedMasks++;
-			            		}
+	            		entityBean.addChildren(ownerKey, distValueFolder.getId(), maskIds, EntityConstants.ATTRIBUTE_ENTITY);
+	            		
+	            		for(Long maskId : maskIds) {
+		            		if (maskIdsNeedingAnnotations.contains(maskId)) {
+		            			annotate(maskId, maaIntensityEnum, intValueTerm);
+		            			annotate(maskId, maaDistributionEnum, distValueTerm);
+		            			numAnnotatedMasks++;
 		            		}
 	            		}
-                	}
+            		}
             	}
         	}
-        	
-        	logger.info("Processed "+numSamples+" samples, loaded "+loaded.size()+". "+
-        			numAnnotationsCreated+" annotations were created. "+numAnnotatedMasks+" mask images were annotated.");
+    	}
+    	
+    	logger.info("Processed "+numSamples+" samples, loaded "+loaded.size()+". "+
+    			numAnnotationsCreated+" annotations were created. "+numAnnotatedMasks+" mask images were annotated.");
 
-        	logger.info("Writing output to "+outputFile.getAbsolutePath());
-        	
-        	FileWriter writer = new FileWriter(outputFile);
-        	
-        	for(String name : loaded) {
-        		writer.write(name+"\n");
-        	}
-        	writer.close();
-        	
-        } 
-        catch (Exception e) {
-            throw new ServiceException(e);
-        }
+    	logger.info("Writing output to "+outputFile.getAbsolutePath());
+    	
+    	FileWriter writer = new FileWriter(outputFile);
+    	
+    	for(String name : loaded) {
+    		writer.write(name+"\n");
+    	}
+    	writer.close();
     }
     
     protected Map<String,Score> getSampleScores(Entity sample) throws Exception {

@@ -20,7 +20,6 @@ public class SolrIndexingService implements IService {
 	
     protected Logger logger;
     protected Task task;
-    protected String username;
     protected SolrBeanLocal solrBean;
     private boolean clearIndex = false;
     
@@ -30,7 +29,6 @@ public class SolrIndexingService implements IService {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             task = ProcessDataHelper.getTask(processData);
             solrBean = EJBFactory.getLocalSolrBean();
-            username = task.getOwner();
             clearIndex = Boolean.parseBoolean(task.getParameter(PARAM_clearIndex));
             solrBean.indexAllEntities(clearIndex);
     	}

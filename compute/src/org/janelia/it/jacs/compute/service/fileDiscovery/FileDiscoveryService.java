@@ -18,6 +18,7 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.model.user_data.Subject;
 
 /**
  * Discover files in a set of input directories and create corresponding entities in the database. This class
@@ -44,7 +45,9 @@ public class FileDiscoveryService implements IService {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
-            ownerKey = ProcessDataHelper.getTask(processData).getOwner();
+            String ownerName = ProcessDataHelper.getTask(processData).getOwner();
+            Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
+            this.ownerKey = subject.getKey();
             createDate = new Date();
             helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
             helper.addFileExclusion("DrmaaSubmitter.log");

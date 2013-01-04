@@ -27,63 +27,45 @@ import org.janelia.it.jacs.shared.utils.FileUtil;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SampleFileNodeSyncService implements IService {
+public class SampleFileNodeSyncService extends AbstractEntityService {
 
     public transient static final String PARAM_testRun = "is test run";
     
 	public transient static final String CENTRAL_DIR_PROP = "FileStore.CentralDir";
 	
-    protected Logger logger;
-    protected Task task;
-    protected String username;
-    protected EntityBeanLocal entityBean;
-    protected ComputeBeanLocal computeBean;
-    
+	private String username;
     private boolean isDebug = false;
     private int numDirs = 0;
     private int numResultNodes = 0;
     private int numDeletedResultNodes = 0;
     
-    public void execute(IProcessData processData) throws ServiceException {
+    public void execute() throws Exception {
 
-    	try {
-            logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-            task = ProcessDataHelper.getTask(processData);
-            entityBean = EJBFactory.getLocalEntityBean();
-            computeBean = EJBFactory.getLocalComputeBean();
-            username = task.getOwner();
-            
-            String testRun = task.getParameter(PARAM_testRun);
-            if (testRun!=null) {
-            	isDebug = Boolean.parseBoolean(testRun);	
-            }
-            
-            File userFilestore = new File(SystemConfigurationProperties.getString(CENTRAL_DIR_PROP) + File.separator + username + File.separator);
-            
-            logger.info("Synchronizing file share directory to DB: "+userFilestore.getAbsolutePath());
-            
-            if (isDebug) {
-            	logger.info("This is a test run. No files will be moved or deleted.");
-            }
-            else {
-            	logger.info("This is the real thing. Files will be moved and/or deleted!");
-            }
-            
-            processChildren(new File(userFilestore, "Sample"));
-            processChildren(new File(userFilestore, "Alignment"));
-            processChildren(new File(userFilestore, "Separation"));
-            processChildren(new File(userFilestore, "Intersection"));
-            processChildren(new File(userFilestore, "Temp"));
-            
-			logger.info("Processed "+numDirs+" directories. Found "+numResultNodes+" result nodes. Trashed "+
-					numDeletedResultNodes+" nodes. Left "+(numResultNodes-numDeletedResultNodes)+" nodes alone.");
-    	}
-        catch (Exception e) {
-        	if (e instanceof ServiceException) {
-            	throw (ServiceException)e;
-            }
-            throw new ServiceException("Error running SampleFileNodeSyncService:" + e.getMessage(), e);
+        String testRun = task.getParameter(PARAM_testRun);
+        if (testRun!=null) {
+        	isDebug = Boolean.parseBoolean(testRun);	
         }
+        
+        this.username = ownerKey.split(":")[1];
+        File userFilestore = new File(SystemConfigurationProperties.getString(CENTRAL_DIR_PROP) + File.separator + username + File.separator);
+        
+        logger.info("Synchronizing file share directory to DB: "+userFilestore.getAbsolutePath());
+        
+        if (isDebug) {
+        	logger.info("This is a test run. No files will be moved or deleted.");
+        }
+        else {
+        	logger.info("This is the real thing. Files will be moved and/or deleted!");
+        }
+        
+        processChildren(new File(userFilestore, "Sample"));
+        processChildren(new File(userFilestore, "Alignment"));
+        processChildren(new File(userFilestore, "Separation"));
+        processChildren(new File(userFilestore, "Intersection"));
+        processChildren(new File(userFilestore, "Temp"));
+        
+		logger.info("Processed "+numDirs+" directories. Found "+numResultNodes+" result nodes. Trashed "+
+				numDeletedResultNodes+" nodes. Left "+(numResultNodes-numDeletedResultNodes)+" nodes alone.");
     }
     
     private void processChildren(File dir) throws Exception {

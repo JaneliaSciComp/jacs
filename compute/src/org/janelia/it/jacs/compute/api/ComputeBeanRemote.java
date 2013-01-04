@@ -53,6 +53,7 @@ public interface ComputeBeanRemote {
     public Task getTaskWithMessages(long taskId) throws RemoteException;
     public void setTaskNote(long taskId, String note) throws DaoException;
     public void addTaskNote(long taskId, String note) throws DaoException;
+    public Subject getSubjectByNameOrKey(String name) throws ComputeException;
     public User getUserByNameOrKey(String name) throws ComputeException;
     public Group getGroupByNameOrKey(String name) throws ComputeException;
     public List<Subject> getSubjects() throws ComputeException;

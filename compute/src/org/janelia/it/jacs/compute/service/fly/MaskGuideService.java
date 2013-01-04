@@ -23,6 +23,7 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.MaskAnnotationResultNode;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
@@ -123,10 +124,12 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
         task = ProcessDataHelper.getTask(processData);
         logger.info("MaskGuideService running under TaskId=" + task.getObjectId());
         sessionName = ProcessDataHelper.getSessionRelativePath(processData);
-        visibility = User.SYSTEM_USER_KEY.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
+        visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
         entityBean = EJBFactory.getLocalEntityBean();
         computeBean = EJBFactory.getLocalComputeBean();
-        ownerKey = ProcessDataHelper.getTask(processData).getOwner();
+        String ownerName = ProcessDataHelper.getTask(processData).getOwner();
+        Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
+        this.ownerKey = subject.getKey();
         helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
 
         createDate = new Date();

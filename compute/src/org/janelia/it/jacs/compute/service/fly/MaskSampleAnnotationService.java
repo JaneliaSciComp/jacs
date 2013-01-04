@@ -25,6 +25,7 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.MaskAnnotationResultNode;
 import org.janelia.it.jacs.model.user_data.entity.NamedFileNode;
@@ -105,9 +106,11 @@ public class MaskSampleAnnotationService  implements IService {
             task = ProcessDataHelper.getTask(processData);
             logger.info("MaskSampleAnnotationService running under TaskId="+task.getObjectId());
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
-            visibility = User.SYSTEM_USER_KEY.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
+            visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
 
-            ownerKey = ProcessDataHelper.getTask(processData).getOwner();
+            String ownerName = ProcessDataHelper.getTask(processData).getOwner();
+            Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
+            this.ownerKey = subject.getKey();
             createDate = new Date();
             mode = processData.getString("MODE");
             refresh=processData.getString("REFRESH").trim().toLowerCase().equals("true");
@@ -497,7 +500,7 @@ public class MaskSampleAnnotationService  implements IService {
     }
 
     protected void cleanFullOrIncompleteMaskAnnotationFolderAndFiles(Entity maskAnnotationFolder) throws Exception {
-        if (!maskAnnotationFolder.getOwnerKey().equals(task.getOwner())) {
+        if (!maskAnnotationFolder.getOwnerKey().equals(ownerKey)) {
             throw new Exception("Users do not match for cleanFullOrIncompleteMaskAnnotationFolderAndFiles()");
         }
         String maskDirPath=maskAnnotationFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
@@ -530,7 +533,7 @@ public class MaskSampleAnnotationService  implements IService {
 
         // Now we know the files to delete, so we can delete the folder entity tree
         if (DEBUG) logger.info("Deleting entity tree for prior mask annotation folderId="+maskAnnotationFolder.getId());
-        entityBean.deleteSmallEntityTree(task.getOwner(), maskAnnotationFolder.getId());
+        entityBean.deleteSmallEntityTree(ownerKey, maskAnnotationFolder.getId());
         if (DEBUG) logger.info("Finished deleting entity tree");
         // Now we can delete the files and then directories
         for (File fileToDelete : filesToDelete) {

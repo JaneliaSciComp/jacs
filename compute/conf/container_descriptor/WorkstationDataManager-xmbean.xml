@@ -182,16 +182,6 @@
     </operation>
 
     <operation>
-        <description>Synchronize the given user's Samples with their most recent results</description>
-        <name>runSampleImageSync</name>
-        <parameter>
-           <description>User to run as (e.g. "flylight")</description>
-           <name>user</name>
-           <type>java.lang.String</type>
-        </parameter>
-    </operation>
-
-    <operation>
         <description>Compress all of the user's v3draw files to v3dpbd</description>
         <name>runMCFODataCompress</name>
         <parameter>
@@ -207,7 +197,7 @@
     </operation>
     
     <operation>
-        <description>Upgrade the given user's data model to use the most current entity structure. What this means is specific to each version.</description>
+        <description>Upgrade the given user's data model to use the most current entity structure. In this release, this just creates system-level groups and populated Is Protected flags on certain folders.</description>
         <name>runUpgradeUserData</name>
         <parameter>
             <description>User to run as (e.g. "flylight")</description>
@@ -217,7 +207,7 @@
     </operation>
     
     <operation>
-        <description>Upgrade the given sample to the current entity structure. What this means is specific to each version.</description>
+        <description>Upgrade the given sample to the current entity structure. In this release, the sample id is ignored, and the method is equivalent to runUpgradeUserData.</description>
         <name>runUpgradeSingleSample</name>
         <parameter>
            <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
@@ -227,8 +217,8 @@
     </operation>
     
     <operation>
-        <description>Upgrade the given user's data model to use the most current sample structure. What this means is specific to each version.</description>
-        <name>runUpgradeUserSamples</name>
+        <description>Register all images for a user's samples</description>
+        <name>runUserSampleImageRegistration</name>
         <parameter>
             <description>User to run as (e.g. "flylight")</description>
             <name>user</name>
@@ -274,6 +264,11 @@
             <name>runMode</name>
             <type>java.lang.String</type>
         </parameter>
+        <parameter>
+            <description>Reuse previous sample processing result</description>
+            <name>reuseProcessing</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
     </operation>
     
     <operation>
@@ -289,6 +284,11 @@
             <name>runMode</name>
             <type>java.lang.String</type>
         </parameter>
+        <parameter>
+            <description>Reuse previous sample processing result</description>
+            <name>reuseProcessing</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
     </operation>
     
     <operation>
@@ -299,6 +299,11 @@
            <name>folderId</name>
            <type>java.lang.String</type>
         </parameter>
+        <parameter>
+            <description>Reuse previous sample processing result</description>
+            <name>reuseProcessing</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
     </operation>
     
     <operation>
@@ -308,6 +313,11 @@
            <description>Entity id of the Sample to run (e.g. "1679282451010027618")</description>
            <name>sampleId</name>
            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Reuse previous sample processing result</description>
+            <name>reuseProcessing</name>
+            <type>java.lang.Boolean</type>
         </parameter>
     </operation>
     
@@ -324,6 +334,11 @@
            <name>configurationName</name>
            <type>java.lang.String</type>
         </parameter>
+        <parameter>
+            <description>Reuse previous sample processing result</description>
+            <name>reuseProcessing</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
     </operation>
     
     <operation>
@@ -332,96 +347,6 @@
         <parameter>
            <description>Entity id of the result to run (e.g. "1679282451010027618")</description>
            <name>resultEntityId</name>
-           <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Run Central Brain Pipeline</description>
-        <name>runCentralBrainDataPipeline</name>
-        <parameter>
-           <description>User to run as (e.g. "flylight")</description>
-           <name>user</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Name of the folder entity where results will be placed (e.g. "FlyLight Single Neuron Samples")</description>
-           <name>topLevelFolderName</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Re-run merging and stitching?</description>
-           <name>refreshProcessing</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-        <parameter>
-           <description>Re-run brain alignments?</description>
-           <name>refreshAlignment</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-        <parameter>
-           <description>Re-run neuron separations?</description>
-           <name>refreshSeparation</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Run the entire Whole Brain 63x Alignment Pipeline</description>
-        <name>runAlignWholeBrainDataPipeline</name>
-        <parameter>
-           <description>User to run as (e.g. "flylight")</description>
-           <name>user</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Re-run brain alignments?</description>
-           <name>refreshAlignment</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-        <parameter>
-           <description>Re-run neuron separations?</description>
-           <name>refreshSeparation</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Run the Whole Brain 63x Alignment Pipeline for a single Sample</description>
-        <name>runAlignWholeBrainSamplePipeline</name>
-        <parameter>
-           <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
-           <name>sampleEntityId</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Re-run brain alignments?</description>
-           <name>refreshAlignment</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-        <parameter>
-           <description>Re-run neuron separations?</description>
-           <name>refreshSeparation</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Run the entire Two Channel Pipeline</description>
-        <name>runTwoChanDataPipeline</name>
-        <parameter>
-           <description>User to run as (e.g. "flylight")</description>
-           <name>user</name>
-           <type>java.lang.String</type>
-        </parameter>
-    </operation>
-
-    <operation>
-        <description>Run the Two Channel Pipeline for a single Sample</description>
-        <name>runTwoChanSamplePipeline</name>
-        <parameter>
-           <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
-           <name>sampleEntityId</name>
            <type>java.lang.String</type>
         </parameter>
     </operation>

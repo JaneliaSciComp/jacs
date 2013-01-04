@@ -30,8 +30,15 @@ public class InitVariablesFromTaskService implements IService {
         			// We specifically avoid overriding existing values in ProcessData, because if the process file
         			// is being <include>'d, then the task may not contain the parameter which is already in 
         			// ProcessData.
-	            	logger.info("Putting value '"+value+"' in "+processVarName);
-            		processData.putItem(processVarName, value);
+        		    if ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
+        		        Object booleanValue = Boolean.valueOf(value);    
+                        logger.info("Putting boolean value '"+booleanValue+"' in "+processVarName);
+        		        processData.putItem(processVarName, booleanValue);
+        		    }
+        		    else {
+                        logger.info("Putting value '"+value+"' in "+processVarName);
+                        processData.putItem(processVarName, value);
+        		    }
             	}
                 num++;
         	}

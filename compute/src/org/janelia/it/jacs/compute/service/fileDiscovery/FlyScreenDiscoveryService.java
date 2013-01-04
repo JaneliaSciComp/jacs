@@ -68,7 +68,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         try {
             Task task= ProcessDataHelper.getTask(processData);
             String sessionName = ProcessDataHelper.getSessionRelativePath(processData);
-            String visibility = User.SYSTEM_USER_KEY.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
+            String visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
             resultNode = new ScreenPipelineResultNode(task.getOwner(), task, "ScreenSampleResultNode",
                     "ScreenPipelineResultNode for task " + task.getObjectId(), visibility, sessionName);
             EJBFactory.getLocalComputeBean().saveOrUpdateNode(resultNode);

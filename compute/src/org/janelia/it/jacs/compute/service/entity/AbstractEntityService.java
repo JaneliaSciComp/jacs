@@ -12,6 +12,7 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.user_data.Subject;
 
 /**
  * Base class for services dealing with entities.
@@ -39,7 +40,11 @@ public abstract class AbstractEntityService implements IService {
 	        this.entityBean = EJBFactory.getLocalEntityBean();
 	        this.computeBean = EJBFactory.getLocalComputeBean();
 	        this.annotationBean = EJBFactory.getLocalAnnotationBean();
-	        this.ownerKey = ProcessDataHelper.getTask(processData).getOwner();
+	        
+	        String ownerName = ProcessDataHelper.getTask(processData).getOwner();
+	        Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
+	        this.ownerKey = subject.getKey();
+	        
 	        this.entityHelper = new EntityHelper(entityBean, computeBean, ownerKey);
 	        this.entityLoader = new EntityBeanEntityLoader(entityBean);
 	        

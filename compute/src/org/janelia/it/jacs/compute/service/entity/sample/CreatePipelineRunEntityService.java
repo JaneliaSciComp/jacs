@@ -23,7 +23,7 @@ public class CreatePipelineRunEntityService extends AbstractEntityService {
     	if (StringUtils.isEmpty(pipelineName)) {
     		pipelineName = "Pipeline";
     	}
-    	
+
     	String pipelineProcess = (String)processData.getItem("PIPELINE_PROCESS");
     	if (StringUtils.isEmpty(pipelineProcess)) {
     		throw new IllegalArgumentException("PIPELINE_PROCESS may not be null");
@@ -39,6 +39,9 @@ public class CreatePipelineRunEntityService extends AbstractEntityService {
     	entityBean.saveOrUpdateEntity(pipelineRun);
     	entityBean.addEntityToParent(ownerKey, sampleEntity, pipelineRun, sampleEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
 
+    	logger.info("Added new pipeline run to sample "+sampleEntity);
+    	
     	processData.putItem("PIPELINE_RUN_ENTITY_ID", pipelineRun.getId().toString());
+        logger.info("Putting '"+pipelineRun.getId()+"' in PIPELINE_RUN_ENTITY_ID");
     }
 }

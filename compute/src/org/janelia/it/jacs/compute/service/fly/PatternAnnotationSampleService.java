@@ -79,7 +79,7 @@ public class PatternAnnotationSampleService  implements IService {
             task = ProcessDataHelper.getTask(processData);
             logger.info("PatternAnnotationSampleService running under TaskId="+task.getObjectId());
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
-            visibility = User.SYSTEM_USER_KEY.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
+            visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
             ownerKey = ProcessDataHelper.getTask(processData).getOwner();
@@ -581,7 +581,7 @@ public class PatternAnnotationSampleService  implements IService {
 
 
     protected void cleanFullOrIncompletePatternAnnotationFolderAndFiles(Entity patternAnnotationFolder) throws Exception {
-        if (!patternAnnotationFolder.getOwnerKey().equals(task.getOwner())) {
+        if (!patternAnnotationFolder.getOwnerKey().equals(ownerKey)) {
             throw new Exception("Users do not match for cleanFullOrIncompletePatternAnnotationFolderAndFiles()");
         }
         String patternDirPath=patternAnnotationFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);

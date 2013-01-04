@@ -3,19 +3,13 @@ package org.janelia.it.jacs.compute.service.fly;
 import java.io.File;
 import java.util.*;
 
-import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.*;
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.engine.service.IService;
-import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
-import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
@@ -26,97 +20,79 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class AnnotationImportService implements IService {
+public class AnnotationImportService extends AbstractEntityService {
 	
-    protected Logger logger;
-    protected Task task;
-    protected String ownerKey;
     protected Date createDate;
-    protected EntityBeanLocal entityBean;
-    protected ComputeBeanLocal computeBean;
-    protected AnnotationBeanLocal annotationBean;
-    
     protected Map<String, HashSet<String>> annotationMap = new HashMap<String,HashSet<String>>();
     protected Entity textAnnot;
 	protected int count = 0;
 	
-    public void execute(IProcessData processData) throws ServiceException {
+    public void execute() throws Exception {
     	
-        try {
-            logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-            task = ProcessDataHelper.getTask(processData);
-            entityBean = EJBFactory.getLocalEntityBean();
-            computeBean = EJBFactory.getLocalComputeBean();
-            annotationBean = EJBFactory.getLocalAnnotationBean();
-            ownerKey = ProcessDataHelper.getTask(processData).getOwner();
-            createDate = new Date();
-        	
-        	String annotationsFilepath = (String)processData.getItem("ANNOTATIONS_FILEPATH");
-        	if (annotationsFilepath == null) {
-        		throw new IllegalArgumentException("ANNOTATIONS_FILEPATH may not be null");
-        	}
+        createDate = new Date();
+    	
+    	String annotationsFilepath = (String)processData.getItem("ANNOTATIONS_FILEPATH");
+    	if (annotationsFilepath == null) {
+    		throw new IllegalArgumentException("ANNOTATIONS_FILEPATH may not be null");
+    	}
 
-        	String ontologyName = (String)processData.getItem("ONTOLOGY_NAME");
-        	if (ontologyName == null) {
-        		throw new IllegalArgumentException("ONTOLOGY_NAME may not be null");
-        	}
-        	
-        	readAnnotations(new File(annotationsFilepath));
-        	
-        	logger.info("Creating ontology");
-        	Entity ontologyTree = null;
-        		
-        	Set<Entity> matchingOntologies = entityBean.getUserEntitiesByName(ownerKey, ontologyName);
-        	
-        	if (matchingOntologies!=null && !matchingOntologies.isEmpty()) {
-        		//ontologyTree = matchingOntologies.iterator().next();
-        		//ontologyTree = annotationBean.getOntologyTree(user.getUserLogin(), ontologyTree.getId());
-        		throw new Exception("Reusing an existing ontology is not yet supported. Delete the ontology first.");
-        	}
-        	
-        	ontologyTree = annotationBean.createOntologyRoot(ownerKey, ontologyName);
-        	
-        	EntityData textAnnotEd = annotationBean.createOntologyTerm(ownerKey, ontologyTree.getId(), "Annotation", OntologyElementType.createTypeByName("Custom"), 0);
-        	textAnnot = textAnnotEd.getChildEntity();
-        	
+    	String ontologyName = (String)processData.getItem("ONTOLOGY_NAME");
+    	if (ontologyName == null) {
+    		throw new IllegalArgumentException("ONTOLOGY_NAME may not be null");
+    	}
+    	
+    	readAnnotations(new File(annotationsFilepath));
+    	
+    	logger.info("Creating ontology");
+    	Entity ontologyTree = null;
+    		
+    	Set<Entity> matchingOntologies = entityBean.getUserEntitiesByName(ownerKey, ontologyName);
+    	
+    	if (matchingOntologies!=null && !matchingOntologies.isEmpty()) {
+    		//ontologyTree = matchingOntologies.iterator().next();
+    		//ontologyTree = annotationBean.getOntologyTree(user.getUserLogin(), ontologyTree.getId());
+    		throw new Exception("Reusing an existing ontology is not yet supported. Delete the ontology first.");
+    	}
+    	
+    	ontologyTree = annotationBean.createOntologyRoot(ownerKey, ontologyName);
+    	
+    	EntityData textAnnotEd = annotationBean.createOntologyTerm(ownerKey, ontologyTree.getId(), "Annotation", OntologyElementType.createTypeByName("Custom"), 0);
+    	textAnnot = textAnnotEd.getChildEntity();
+    	
 //        	EntityData enums = annotationBean.createOntologyTerm(user.getUserLogin(), ontologyTree.getId(), "Enumerations", OntologyElementType.createTypeByName("Category"), 0);
 //        	EntityData yesNoEnum = annotationBean.createOntologyTerm(user.getUserLogin(), enums.getId(), "Boolean", OntologyElementType.createTypeByName("Enum"), 0);
 //        	EntityData yesEnumItem = annotationBean.createOntologyTerm(user.getUserLogin(), yesNoEnum.getId(), "Yes", OntologyElementType.createTypeByName("EnumItem"), 0);
 //        	EntityData noEnumItem = annotationBean.createOntologyTerm(user.getUserLogin(), yesNoEnum.getId(), "No", OntologyElementType.createTypeByName("EnumItem"), 0);
 
-        	logger.info("Creating annotations");
+    	logger.info("Creating annotations");
 
-        	for(String entityName : annotationMap.keySet()) {
-        		Set<Entity> entities = entityBean.getEntitiesByName(entityName);
-        		if (entities==null || entities.isEmpty()) {
-        			logger.warn("Could not find entity with the name: "+entityName);
-        			continue;
-        		}
-        		if (entities.size()>1) {
-        			logger.warn("Found more than 1 entity with the name: "+entityName);
-        			continue;
-        		}
-        		Entity entity = entities.iterator().next();
-        		List<String> annots = new ArrayList<String>(annotationMap.get(entityName));
-        		Collections.sort(annots);
-        		annotate(entity, annots);
+    	for(String entityName : annotationMap.keySet()) {
+    		Set<Entity> entities = entityBean.getEntitiesByName(entityName);
+    		if (entities==null || entities.isEmpty()) {
+    			logger.warn("Could not find entity with the name: "+entityName);
+    			continue;
+    		}
+    		if (entities.size()>1) {
+    			logger.warn("Found more than 1 entity with the name: "+entityName);
+    			continue;
+    		}
+    		Entity entity = entities.iterator().next();
+    		List<String> annots = new ArrayList<String>(annotationMap.get(entityName));
+    		Collections.sort(annots);
+    		annotate(entity, annots);
 
-        		if (EntityConstants.TYPE_SCREEN_SAMPLE.equals(entity.getEntityType().getName())) {
-    	    		Set<Long> parentIds = entityBean.getParentIdsForAttribute(entity.getId(), EntityConstants.ATTRIBUTE_REPRESENTATIVE_SAMPLE);
-    	    		if (parentIds != null) {
-    	    			List<Entity> represented = entityBean.getEntitiesById(new ArrayList<Long>(parentIds));	
-    	    			for(Entity rep : represented) {
-    	    				annotate(rep, annots);
-    	    			}
-    	    		}
-        		}
-        	}
+    		if (EntityConstants.TYPE_SCREEN_SAMPLE.equals(entity.getEntityType().getName())) {
+	    		Set<Long> parentIds = entityBean.getParentIdsForAttribute(entity.getId(), EntityConstants.ATTRIBUTE_REPRESENTATIVE_SAMPLE);
+	    		if (parentIds != null) {
+	    			List<Entity> represented = entityBean.getEntitiesById(new ArrayList<Long>(parentIds));	
+	    			for(Entity rep : represented) {
+	    				annotate(rep, annots);
+	    			}
+	    		}
+    		}
+    	}
 
-        	logger.info("Created "+count+" annotations");
-        } 
-        catch (Exception e) {
-            throw new ServiceException(e);
-        }
+    	logger.info("Created "+count+" annotations");
     }
 
     private void annotate(Entity entity, List<String> annots) throws ComputeException {

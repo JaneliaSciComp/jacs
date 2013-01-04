@@ -71,17 +71,20 @@ public class ChooseSamplePipelineStepsService extends AbstractEntityService {
         boolean hasAlignment = !StringUtils.isEmpty(alignAlgorithms);
         boolean hasAnalysis = !StringUtils.isEmpty(analysisAlgorithms);
         
+        boolean runProcessing = true;
         boolean runMerge = hasMerge;
         boolean runStitch = hasStitch && numTiles>1;
 		boolean runAlignment = hasAlignment;
 		boolean runAnalysis = hasAnalysis;
-		
+
+        processData.putItem("RUN_PROCESSING", new Boolean(runProcessing));
 		processData.putItem("RUN_MERGE", new Boolean(runMerge));
 		processData.putItem("RUN_STITCH", new Boolean(runStitch));
 		processData.putItem("RUN_ALIGNMENT", new Boolean(runAlignment));
 		processData.putItem("RUN_ANALYSIS", new Boolean(runAnalysis));
 
     	logger.info("Pipeline steps to execute for Sample "+sampleEntity.getName()+":");
+    	logger.info("    Processing = "+runProcessing);
     	logger.info("    Merge = "+runMerge);
     	logger.info("    Stitch = "+runStitch +((!runStitch&&hasStitch)?" (configured but not necessary for a single tile)":""));
     	logger.info("    Alignment = "+runAlignment);

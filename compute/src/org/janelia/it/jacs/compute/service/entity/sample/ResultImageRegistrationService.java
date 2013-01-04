@@ -18,6 +18,7 @@ import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
@@ -88,7 +89,9 @@ public class ResultImageRegistrationService extends AbstractEntityService {
         this.entityBean = EJBFactory.getLocalEntityBean();
         this.computeBean = EJBFactory.getLocalComputeBean();
         this.annotationBean = EJBFactory.getLocalAnnotationBean();
-        this.ownerKey = ProcessDataHelper.getTask(processData).getOwner();
+        String ownerName = ProcessDataHelper.getTask(processData).getOwner();
+        Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
+        this.ownerKey = subject.getKey();
         this.entityHelper = new EntityHelper(entityBean, computeBean, ownerKey);
         this.entityLoader = new EntityBeanEntityLoader(entityBean);
     	registerImages(resultEntity, pipelineRunEntity, sampleEntity, defaultImageFilename);

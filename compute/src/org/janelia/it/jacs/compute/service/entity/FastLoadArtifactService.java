@@ -15,6 +15,7 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.user_data.Subject;
 
 /**
  * Create fast load artifacts for existing neuron separations.
@@ -35,7 +36,7 @@ public class FastLoadArtifactService implements IService {
 	
     protected Logger logger;
     protected Task task;
-    protected String username;
+    protected String ownerKey;
     protected AnnotationBeanLocal annotationBean;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
@@ -51,7 +52,11 @@ public class FastLoadArtifactService implements IService {
             annotationBean = EJBFactory.getLocalAnnotationBean();
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
-            username = task.getOwner();
+            
+            String ownerName = ProcessDataHelper.getTask(processData).getOwner();
+            Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
+            this.ownerKey = subject.getKey();
+            
             mode = processData.getString("MODE");
             this.processData = processData;
 
@@ -82,7 +87,7 @@ public class FastLoadArtifactService implements IService {
         logger.info("Finding neuron separations...");
         
         List<Entity> entities = new ArrayList<Entity>();
-        for(Entity result : entityBean.getUserEntitiesByTypeName(username, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
+        for(Entity result : entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
         	logger.info("Processing neuron separation, id="+result.getId());
     		String dir = result.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
     		if (!fastLoadDirExists(dir)) {

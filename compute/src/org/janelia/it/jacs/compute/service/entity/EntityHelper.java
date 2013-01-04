@@ -13,7 +13,6 @@ import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
@@ -186,7 +185,6 @@ public class EntityHelper {
 	
 	/**
 	 * Create and save a new 2d image entity with the given owner and filepath. 
-	 * @param ownerKey
 	 * @param filepath
 	 * @return
 	 * @throws ComputeException
@@ -198,7 +196,6 @@ public class EntityHelper {
 	
 	/**
 	 * Create and save a new 2d image entity with the given owner and filepath. 
-	 * @param ownerKey
 	 * @param filepath
 	 * @return
 	 * @throws ComputeException
@@ -209,7 +206,6 @@ public class EntityHelper {
 
 	/**
 	 * Create and save a new 3d image entity with the given owner and filepath. 
-	 * @param ownerKey
 	 * @param filepath
 	 * @return
 	 * @throws ComputeException
@@ -221,7 +217,6 @@ public class EntityHelper {
 	
 	/**
 	 * Create and save a new 3d image entity with the given owner and filepath. 
-	 * @param ownerKey
 	 * @param filepath
 	 * @return
 	 * @throws ComputeException

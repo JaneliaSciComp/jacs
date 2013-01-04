@@ -19,6 +19,7 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.User;
 
 /**
@@ -57,7 +58,9 @@ public class ScreenSampleLineCoordinationService implements IService {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             computeBean = EJBFactory.getLocalComputeBean();
             entityBean = EJBFactory.getLocalEntityBean();
-            ownerKey = ProcessDataHelper.getTask(processData).getOwner();
+            String ownerName = ProcessDataHelper.getTask(processData).getOwner();
+            Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
+            this.ownerKey = subject.getKey();
             createDate = new Date();
             helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
             

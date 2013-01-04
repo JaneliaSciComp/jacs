@@ -18,6 +18,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.neuron.NeuronMergeTask;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.neuron.NeuronMergeResultNode;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
@@ -43,7 +44,9 @@ public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
             logger = ProcessDataHelper.getLoggerForTask(processData, Vaa3DNeuronMergeResultsDiscoveryService.class);
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
-            ownerKey = ProcessDataHelper.getTask(processData).getOwner();
+            String ownerName = ProcessDataHelper.getTask(processData).getOwner();
+            Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
+            this.ownerKey = subject.getKey();
             entityHelper = new EntityHelper(entityBean, computeBean, ownerKey);
             createDate = new Date();
             task = ProcessDataHelper.getTask(processData);

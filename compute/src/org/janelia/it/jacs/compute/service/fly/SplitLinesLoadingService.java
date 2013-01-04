@@ -12,6 +12,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.service.entity.EntityHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -30,17 +31,11 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SplitLinesLoadingService implements IService {
+public class SplitLinesLoadingService extends AbstractEntityService {
 	
 	private static final boolean DEBUG = true;
 	
-    protected Logger logger;
-    protected Task task;
-    protected String ownerKey;
     protected Date createDate;
-    protected EntityBeanLocal entityBean;
-    protected ComputeBeanLocal computeBean;
-	protected EntityHelper helper;
     
     protected EntityType flylineType;
     protected EntityType folderType;
@@ -51,378 +46,367 @@ public class SplitLinesLoadingService implements IService {
     protected Map<String, String> splitRepresentatives = new HashMap<String,String>();
     protected Map<String, String> splitBalancedLines = new HashMap<String,String>();
 	
-    public void execute(IProcessData processData) throws ServiceException {
+    public void execute() throws Exception {
     	
-        try {
-            logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-            task = ProcessDataHelper.getTask(processData);
-            entityBean = EJBFactory.getLocalEntityBean();
-            computeBean = EJBFactory.getLocalComputeBean();
-            ownerKey = ProcessDataHelper.getTask(processData).getOwner();
-            createDate = new Date();
-            helper = new EntityHelper(entityBean, computeBean, ownerKey);
-            
-            // Process arguments
-            
-            String topLevelFolderName = (String)processData.getItem("TOP_LEVEL_FOLDER_NAME");
-        	if (topLevelFolderName == null) {
-        		throw new IllegalArgumentException("TOP_LEVEL_FOLDER_NAME may not be null");
-        	}
-        	
-        	String representativesFilepath = (String)processData.getItem("REPRESENTATIVES_FILEPATH");
-        	if (representativesFilepath == null) {
-        		throw new IllegalArgumentException("REPRESENTATIVES_FILEPATH may not be null");
-        	}
-        	
-        	String splitConstructsFilepath = (String)processData.getItem("SPLIT_CONSTRUCTS_FILEPATH");
-        	if (splitConstructsFilepath == null) {
-        		throw new IllegalArgumentException("SPLIT_CONSTRUCTS_FILEPATH may not be null");
-        	}
-        	
-        	
-        	// Preload entity types
-        	
-        	flylineType = entityBean.getEntityTypeByName(EntityConstants.TYPE_FLY_LINE);
-        	folderType = entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER);
-        	
-        	
-        	// Read the input files
+        createDate = new Date();
+        
+        // Process arguments
+        
+        String topLevelFolderName = (String)processData.getItem("TOP_LEVEL_FOLDER_NAME");
+    	if (topLevelFolderName == null) {
+    		throw new IllegalArgumentException("TOP_LEVEL_FOLDER_NAME may not be null");
+    	}
+    	
+    	String representativesFilepath = (String)processData.getItem("REPRESENTATIVES_FILEPATH");
+    	if (representativesFilepath == null) {
+    		throw new IllegalArgumentException("REPRESENTATIVES_FILEPATH may not be null");
+    	}
+    	
+    	String splitConstructsFilepath = (String)processData.getItem("SPLIT_CONSTRUCTS_FILEPATH");
+    	if (splitConstructsFilepath == null) {
+    		throw new IllegalArgumentException("SPLIT_CONSTRUCTS_FILEPATH may not be null");
+    	}
+    	
+    	
+    	// Preload entity types
+    	
+    	flylineType = entityBean.getEntityTypeByName(EntityConstants.TYPE_FLY_LINE);
+    	folderType = entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER);
+    	
+    	
+    	// Read the input files
 
-        	readRepresentatives(new File(representativesFilepath));
-        	readSplitConstructs(new File(splitConstructsFilepath));
-        	
-        	Entity topLevelFolder = populateChildren(createOrVerifyRootEntity(topLevelFolderName, ownerKey, createDate, true, false));
-            logger.info("Using topLevelFolder with id=" + topLevelFolder.getId());
-            
-            
-        	// Create any necessary folders, and add any normal screen flyline that is not already there
-            
-        	logger.info("Adding screen flylines");
-        	
-        	Map<String,Entity> flylineMap = new HashMap<String,Entity>();
-        	Map<String,Entity> fragmentFolders = new HashMap<String,Entity>();
-        	List<Entity> flylines = entityBean.getEntitiesByTypeName(EntityConstants.TYPE_FLY_LINE);
-        	for(Entity flyline : flylines) {
-        		logger.info("  Processing screen data fly line : "+flyline.getName());
-        		flylineMap.put(flyline.getName(), flyline);
-        		
-        		populateChildren(flyline);
-        		String flylineName = flyline.getName();
-        		Specimen specimen = Specimen.createSpecimenFromFullName(flyline.getName());
-    			if (!specimen.isValidLine()) {
-    				logger.info("    Invalid line name: "+flylineName);
-    				continue;
+    	readRepresentatives(new File(representativesFilepath));
+    	readSplitConstructs(new File(splitConstructsFilepath));
+    	
+    	Entity topLevelFolder = populateChildren(createOrVerifyRootEntity(topLevelFolderName, ownerKey, createDate, true, false));
+        logger.info("Using topLevelFolder with id=" + topLevelFolder.getId());
+        
+        
+    	// Create any necessary folders, and add any normal screen flyline that is not already there
+        
+    	logger.info("Adding screen flylines");
+    	
+    	Map<String,Entity> flylineMap = new HashMap<String,Entity>();
+    	Map<String,Entity> fragmentFolders = new HashMap<String,Entity>();
+    	List<Entity> flylines = entityBean.getEntitiesByTypeName(EntityConstants.TYPE_FLY_LINE);
+    	for(Entity flyline : flylines) {
+    		logger.info("  Processing screen data fly line : "+flyline.getName());
+    		flylineMap.put(flyline.getName(), flyline);
+    		
+    		populateChildren(flyline);
+    		String flylineName = flyline.getName();
+    		Specimen specimen = Specimen.createSpecimenFromFullName(flyline.getName());
+			if (!specimen.isValidLine()) {
+				logger.info("    Invalid line name: "+flylineName);
+				continue;
+			}
+			
+    		Entity prefixFolder = verifyOrCreateChildFolder(topLevelFolder, specimen.getLab()+"_"+specimen.getPlate());
+    		populateChildren(prefixFolder);
+    		
+    		Entity fragmentFolder = fragmentFolders.get(specimen.getFragmentName());
+    		if (fragmentFolder == null) {
+    			fragmentFolder = verifyOrCreateChildFolder(prefixFolder, specimen.getFragmentName());
+        		fragmentFolders.put(specimen.getFragmentName(), fragmentFolder);	
+    		}
+    		populateChildren(fragmentFolder);
+    		
+    		boolean foundFlyline = false;
+    		for (Entity child : fragmentFolder.getChildren()) {
+    			if (child.getName().equals(flyline.getName())) {
+    				foundFlyline = true;
+    				break;
     			}
-    			
-        		Entity prefixFolder = verifyOrCreateChildFolder(topLevelFolder, specimen.getLab()+"_"+specimen.getPlate());
-        		populateChildren(prefixFolder);
-        		
+    		}
+    		    	
+    		if (!foundFlyline) { 
+    			addToParent(fragmentFolder, flyline, flyline.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+    		}
+    		
+    		if (splitConstructs.containsKey(flylineName)) {
+    			logger.info("    "+flyline+" is a split part: " +splitConstructs.get(flylineName));
+    			String newSplitPart = splitConstructs.get(flylineName);
+    			setFlylineSplitPart(flyline, newSplitPart);
+    		}
+    		
+    		// Fix flylines with more than 1 representative sample
+    		List<EntityData> reps = EntityUtils.getOrderedEntityDataForAttribute(flyline, EntityConstants.ATTRIBUTE_REPRESENTATIVE_SAMPLE);
+    		if (reps.size()>1) {
+    			logger.warn("    "+flyline+" has >1 representative samples so we're deleting them all. A single correct representative will be added later.");
+    			for (EntityData ed : new ArrayList<EntityData>(reps)) {
+    				flyline.getEntityData().remove(ed); // Need to remove it from the object as well, since we'll be saving it later
+    				entityBean.deleteEntityData(ed);
+    			}
+    		}
+    		
+    		// Add representatives
+    		for(EntityData ed : new ArrayList<EntityData>(flyline.getEntityData())) {
+    			if (!ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_ENTITY)) continue;
+    			Entity screenSample = ed.getChildEntity();
+    			if (screenSample==null) continue;
+    			if (!screenSample.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) continue;
+    			if (!representatives.contains(Specimen.createSpecimenFromFullName(screenSample.getName()))) continue;
+    			setFlylineRepresentative(flyline, screenSample);
+    			break;
+    		}
+    	}
+    	
+    	
+    	// Add balanced lines
+    	logger.info("Adding balanced lines");
+    	
+		for(String flylineName : new HashSet<String>(splitBalancedLines.values())) {
+			Specimen specimen = Specimen.createSpecimenFromFullName(flylineName);
+			if (!specimen.isValidLine()) {
+				logger.info("  Got invalid balanced line: "+flylineName);
+				continue;
+			}
+			
+			logger.info("  Got balanced line: " +flylineName);
+			String robotId = robotIds.get(flylineName);
+			
+			Entity flyline = flylineMap.get(flylineName);
+			if (flyline == null) {
+				flyline = createFlylineEntity(flylineName, null, robotId);
         		Entity fragmentFolder = fragmentFolders.get(specimen.getFragmentName());
         		if (fragmentFolder == null) {
-        			fragmentFolder = verifyOrCreateChildFolder(prefixFolder, specimen.getFragmentName());
-            		fragmentFolders.put(specimen.getFragmentName(), fragmentFolder);	
+        			logger.warn("    No existing fragment folder: "+specimen.getFragmentName());
         		}
-        		populateChildren(fragmentFolder);
-        		
-        		boolean foundFlyline = false;
-        		for (Entity child : fragmentFolder.getChildren()) {
-        			if (child.getName().equals(flyline.getName())) {
-        				foundFlyline = true;
-        				break;
+        		else {
+        			if (EntityUtils.findChildEntityDataWithNameAndType(fragmentFolder, flyline.getName(), EntityConstants.TYPE_FLY_LINE) == null) {
+            			logger.warn("    Adding to fragment folder: "+specimen.getFragmentName());
+            			addToParent(fragmentFolder, flyline, flyline.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);	
+        			}
+        			else {
+        				logger.warn("    Already part of fragment folder: "+specimen.getFragmentName());
         			}
         		}
-        		    	
-        		if (!foundFlyline) { 
-        			addToParent(fragmentFolder, flyline, flyline.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+			}
+			else {
+				setFlylineRobotId(flyline, robotId);
+			}
+			
+    		flylineMap.put(flyline.getName(), flyline);
+		}        	
+    	
+		
+		// Now add split lines 
+    	logger.info("Adding split constructs");
+    	
+		for(String flylineName : splitConstructs.keySet()) {
+			Specimen specimen = Specimen.createSpecimenFromFullName(flylineName);
+			if (!specimen.isValidLine()) {
+				logger.info("  Got invalid split line: "+flylineName);
+				continue;
+			}
+			
+			logger.info("  Got split line: " +flylineName+" ("+splitConstructs.get(flylineName)+")");
+			String robotId = robotIds.get(flylineName);
+			
+			Entity flyline = flylineMap.get(flylineName);
+			if (flyline == null) {
+				flyline = createFlylineEntity(flylineName, splitConstructs.get(flylineName), robotId);
+        		Entity fragmentFolder = fragmentFolders.get(specimen.getFragmentName());
+        		if (fragmentFolder == null) {
+        			logger.warn("    No existing fragment folder: "+specimen.getFragmentName());
         		}
-        		
-        		if (splitConstructs.containsKey(flylineName)) {
-        			logger.info("    "+flyline+" is a split part: " +splitConstructs.get(flylineName));
-        			String newSplitPart = splitConstructs.get(flylineName);
-        			setFlylineSplitPart(flyline, newSplitPart);
-        		}
-        		
-        		// Fix flylines with more than 1 representative sample
-        		List<EntityData> reps = EntityUtils.getOrderedEntityDataForAttribute(flyline, EntityConstants.ATTRIBUTE_REPRESENTATIVE_SAMPLE);
-        		if (reps.size()>1) {
-        			logger.warn("    "+flyline+" has >1 representative samples so we're deleting them all. A single correct representative will be added later.");
-        			for (EntityData ed : new ArrayList<EntityData>(reps)) {
-        				flyline.getEntityData().remove(ed); // Need to remove it from the object as well, since we'll be saving it later
-        				entityBean.deleteEntityData(ed);
+        		else {
+        			if (EntityUtils.findChildEntityDataWithNameAndType(fragmentFolder, flyline.getName(), EntityConstants.TYPE_FLY_LINE) == null) {
+            			logger.warn("    Adding to fragment folder: "+specimen.getFragmentName());
+            			addToParent(fragmentFolder, flyline, flyline.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);	
+        			}
+        			else {
+        				logger.warn("    Already part of fragment folder: "+specimen.getFragmentName());
         			}
         		}
-        		
-        		// Add representatives
-        		for(EntityData ed : new ArrayList<EntityData>(flyline.getEntityData())) {
-        			if (!ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_ENTITY)) continue;
-        			Entity screenSample = ed.getChildEntity();
-        			if (screenSample==null) continue;
-        			if (!screenSample.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) continue;
-        			if (!representatives.contains(Specimen.createSpecimenFromFullName(screenSample.getName()))) continue;
-        			setFlylineRepresentative(flyline, screenSample);
-        			break;
-        		}
-        	}
-        	
-        	
-        	// Add balanced lines
-        	logger.info("Adding balanced lines");
-        	
-    		for(String flylineName : new HashSet<String>(splitBalancedLines.values())) {
-    			Specimen specimen = Specimen.createSpecimenFromFullName(flylineName);
+			}
+			else {
+    			setFlylineSplitPart(flyline, splitConstructs.get(flylineName));
+    			setFlylineRobotId(flyline, robotId);
+			}
+			
+			Entity balancedFlyline = flylineMap.get(splitBalancedLines.get(flylineName));
+			setFlylineBalance(flyline, balancedFlyline);
+		}
+
+		
+		// Renumber the children, re-add the new ones, and update the tree
+
+		logger.info("Renumbering flylines");
+		
+		for(Entity fragmentFolder : fragmentFolders.values()) {
+			
+	    	List<EntityData> orderedData = new ArrayList<EntityData>(fragmentFolder.getEntityData());
+	    	Collections.sort(orderedData, new Comparator<EntityData>() {
+				@Override
+				public int compare(EntityData o1, EntityData o2) {
+					return o1.getChildEntity().getName().compareTo(o2.getChildEntity().getName());
+				}
+			});
+			
+	    	int i = 1;
+			for(EntityData ed : orderedData) {
+				if (i!=ed.getOrderIndex()) {
+					ed.setOrderIndex(i);
+					entityBean.saveOrUpdateEntityData(ed);
+				}
+				i++;
+			}
+		}
+
+		logger.info("Marking reverse representatives");
+		
+		
+		// All representatives are within the same fragment
+		for(Entity fragment : fragmentFolders.values()) {
+
+			logger.info("---------------------------------");
+			logger.info(fragment.getName());
+			
+    		// First cache all the non-split lines for this fragment
+    		Map<String,Map<String,Entity>> vectors = new HashMap<String,Map<String,Entity>>();
+    		Map<String,Map<String,Map<String,Entity>>> vectorsFull = new HashMap<String,Map<String,Map<String,Entity>>>();
+			for(Entity flyline : EntityUtils.getChildrenOfType(fragment, EntityConstants.TYPE_FLY_LINE)) {
+    			if (flyline.getValueByAttributeName(EntityConstants.ATTRIBUTE_SPLIT_PART)!=null) continue;
+    			populateChildren(flyline);
+    			
+    			Specimen specimen = Specimen.createSpecimenFromFullName(flyline.getName());
     			if (!specimen.isValidLine()) {
-    				logger.info("  Got invalid balanced line: "+flylineName);
     				continue;
     			}
     			
-    			logger.info("  Got balanced line: " +flylineName);
-    			String robotId = robotIds.get(flylineName);
-    			
-    			Entity flyline = flylineMap.get(flylineName);
-    			if (flyline == null) {
-    				flyline = createFlylineEntity(flylineName, null, robotId);
-            		Entity fragmentFolder = fragmentFolders.get(specimen.getFragmentName());
-            		if (fragmentFolder == null) {
-            			logger.warn("    No existing fragment folder: "+specimen.getFragmentName());
-            		}
-            		else {
-            			if (EntityUtils.findChildEntityDataWithNameAndType(fragmentFolder, flyline.getName(), EntityConstants.TYPE_FLY_LINE) == null) {
-                			logger.warn("    Adding to fragment folder: "+specimen.getFragmentName());
-                			addToParent(fragmentFolder, flyline, flyline.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);	
-            			}
-            			else {
-            				logger.warn("    Already part of fragment folder: "+specimen.getFragmentName());
-            			}
-            		}
-    			}
-    			else {
-    				setFlylineRobotId(flyline, robotId);
+    			Map<String,Entity> inserts = vectors.get(specimen.getVector());
+    			if (inserts==null) {
+    				inserts = new HashMap<String,Entity>();
+    				vectors.put(specimen.getVector(), inserts);
     			}
     			
-        		flylineMap.put(flyline.getName(), flyline);
-    		}        	
-        	
-    		
-    		// Now add split lines 
-        	logger.info("Adding split constructs");
-        	
-    		for(String flylineName : splitConstructs.keySet()) {
-    			Specimen specimen = Specimen.createSpecimenFromFullName(flylineName);
-    			if (!specimen.isValidLine()) {
-    				logger.info("  Got invalid split line: "+flylineName);
-    				continue;
-    			}
-    			
-    			logger.info("  Got split line: " +flylineName+" ("+splitConstructs.get(flylineName)+")");
-    			String robotId = robotIds.get(flylineName);
-    			
-    			Entity flyline = flylineMap.get(flylineName);
-    			if (flyline == null) {
-    				flyline = createFlylineEntity(flylineName, splitConstructs.get(flylineName), robotId);
-            		Entity fragmentFolder = fragmentFolders.get(specimen.getFragmentName());
-            		if (fragmentFolder == null) {
-            			logger.warn("    No existing fragment folder: "+specimen.getFragmentName());
-            		}
-            		else {
-            			if (EntityUtils.findChildEntityDataWithNameAndType(fragmentFolder, flyline.getName(), EntityConstants.TYPE_FLY_LINE) == null) {
-                			logger.warn("    Adding to fragment folder: "+specimen.getFragmentName());
-                			addToParent(fragmentFolder, flyline, flyline.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);	
-            			}
-            			else {
-            				logger.warn("    Already part of fragment folder: "+specimen.getFragmentName());
-            			}
-            		}
-    			}
-    			else {
-        			setFlylineSplitPart(flyline, splitConstructs.get(flylineName));
-        			setFlylineRobotId(flyline, robotId);
-    			}
-    			
-    			Entity balancedFlyline = flylineMap.get(splitBalancedLines.get(flylineName));
-    			setFlylineBalance(flyline, balancedFlyline);
-    		}
-
-    		
-    		// Renumber the children, re-add the new ones, and update the tree
-
-    		logger.info("Renumbering flylines");
-    		
-    		for(Entity fragmentFolder : fragmentFolders.values()) {
-    			
-    	    	List<EntityData> orderedData = new ArrayList<EntityData>(fragmentFolder.getEntityData());
-    	    	Collections.sort(orderedData, new Comparator<EntityData>() {
-    				@Override
-    				public int compare(EntityData o1, EntityData o2) {
-    					return o1.getChildEntity().getName().compareTo(o2.getChildEntity().getName());
-    				}
-    			});
-    			
-    	    	int i = 1;
-    			for(EntityData ed : orderedData) {
-    				if (i!=ed.getOrderIndex()) {
-						ed.setOrderIndex(i);
-						entityBean.saveOrUpdateEntityData(ed);
-    				}
-    				i++;
-    			}
-    		}
-
-    		logger.info("Marking reverse representatives");
-    		
-    		
-    		// All representatives are within the same fragment
-    		for(Entity fragment : fragmentFolders.values()) {
-
-    			logger.info("---------------------------------");
-    			logger.info(fragment.getName());
-    			
-        		// First cache all the non-split lines for this fragment
-        		Map<String,Map<String,Entity>> vectors = new HashMap<String,Map<String,Entity>>();
-        		Map<String,Map<String,Map<String,Entity>>> vectorsFull = new HashMap<String,Map<String,Map<String,Entity>>>();
-    			for(Entity flyline : EntityUtils.getChildrenOfType(fragment, EntityConstants.TYPE_FLY_LINE)) {
-        			if (flyline.getValueByAttributeName(EntityConstants.ATTRIBUTE_SPLIT_PART)!=null) continue;
-        			populateChildren(flyline);
-        			
-        			Specimen specimen = Specimen.createSpecimenFromFullName(flyline.getName());
-        			if (!specimen.isValidLine()) {
-        				continue;
-        			}
-        			
-        			Map<String,Entity> inserts = vectors.get(specimen.getVector());
-        			if (inserts==null) {
-        				inserts = new HashMap<String,Entity>();
-        				vectors.put(specimen.getVector(), inserts);
-        			}
-        			
-        			Entity sample = inserts.get(specimen.getInsertionSite());
-        			if (sample==null) {
-            			EntityData repEd = flyline.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_REPRESENTATIVE_SAMPLE);
-            			if (repEd!=null) {
-            				Entity rep = repEd.getChildEntity();
-            				if (rep!=null) {
-            					inserts.put(specimen.getInsertionSite(), rep);	
-            				}
-            			}
-        			}
-        			
-        			Map<String,Map<String,Entity>> fullInserts = vectorsFull.get(specimen.getVector());
-        			if (fullInserts==null) {
-        				fullInserts = new HashMap<String,Map<String,Entity>>();
-        				vectorsFull.put(specimen.getVector(), fullInserts);
-        			}
-        			
-        			Map<String,Entity> samples = fullInserts.get(specimen.getInsertionSite());
-        			if (samples==null) {
-        				samples = new HashMap<String,Entity>();
-        				fullInserts.put(specimen.getInsertionSite(), samples);
-        			}
-        			
-        			for(Entity child : flyline.getChildren()) {
-        				if (child.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
-        					samples.put(child.getName(),child);
+    			Entity sample = inserts.get(specimen.getInsertionSite());
+    			if (sample==null) {
+        			EntityData repEd = flyline.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_REPRESENTATIVE_SAMPLE);
+        			if (repEd!=null) {
+        				Entity rep = repEd.getChildEntity();
+        				if (rep!=null) {
+        					inserts.put(specimen.getInsertionSite(), rep);	
         				}
         			}
     			}
     			
-        		// Now assign representatives to the split lines from the non-split lines
-    			for(Entity flyline : EntityUtils.getChildrenOfType(fragment, EntityConstants.TYPE_FLY_LINE)) {
-        			String splitPart = flyline.getValueByAttributeName(EntityConstants.ATTRIBUTE_SPLIT_PART);
-	    			if (splitPart!=null) {
-	    				// This is a split line which needs a representative
-        				Specimen line = Specimen.createSpecimenFromFullName(flyline.getName());
-            			if (!line.isValidLine()) {
-            				continue;
-            			}
-    					String specimenName = splitRepresentatives.get(flyline.getName());
-    					if (specimenName!=null) {
-    						Specimen repSpecimen = Specimen.createSpecimenFromFullName(specimenName);
-    	        			if (!repSpecimen.isValidLine()) {
-    	        				continue;
-    	        			}
-    						Map<String,Map<String,Entity>> fullInserts = vectorsFull.get(repSpecimen.getVector());
-    						
-    						boolean found = false;
-    						if (fullInserts != null) {
-    							Map<String,Entity> samples = fullInserts.get(repSpecimen.getInsertionSite());
-    							if (samples != null) {
-        							Entity rep = samples.get(specimenName);
-        							if (rep!=null) {
-            	            			setFlylineRepresentative(flyline, rep);
-            	            			found = true;
-            	    				}
-    							}
-    						}    	
-    						
-    						if (!found) {
-    							logger.warn("Representative for "+flyline.getName()+" should be "+specimenName+", but it couldn't be found.");	
-    						}
-    					}
-    					else {
-    						// TODO: this is for testing, and should be removed later
-    						Entity rep = findBestRepresentative(vectors, splitPart, line);
-    						if (rep!=null) {
-    							logger.warn("No representative for "+flyline.getName()+", but we found a decent candidate: "+rep.getName());
-    						}
-    					}
-	    			}
+    			Map<String,Map<String,Entity>> fullInserts = vectorsFull.get(specimen.getVector());
+    			if (fullInserts==null) {
+    				fullInserts = new HashMap<String,Map<String,Entity>>();
+    				vectorsFull.put(specimen.getVector(), fullInserts);
     			}
-    		
-    			if (DEBUG) {
-        			
-	        		Map<String,Map<String,Entity>> vectors2 = new HashMap<String,Map<String,Entity>>();
-	    			for(Entity flyline : EntityUtils.getChildrenOfType(fragment, EntityConstants.TYPE_FLY_LINE)) {
-	    				populateChildren(flyline);
-	    				
-	    				Specimen specimen = Specimen.createSpecimenFromFullName(flyline.getName());
-	        			if (!specimen.isValidLine()) {
+    			
+    			Map<String,Entity> samples = fullInserts.get(specimen.getInsertionSite());
+    			if (samples==null) {
+    				samples = new HashMap<String,Entity>();
+    				fullInserts.put(specimen.getInsertionSite(), samples);
+    			}
+    			
+    			for(Entity child : flyline.getChildren()) {
+    				if (child.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
+    					samples.put(child.getName(),child);
+    				}
+    			}
+			}
+			
+    		// Now assign representatives to the split lines from the non-split lines
+			for(Entity flyline : EntityUtils.getChildrenOfType(fragment, EntityConstants.TYPE_FLY_LINE)) {
+    			String splitPart = flyline.getValueByAttributeName(EntityConstants.ATTRIBUTE_SPLIT_PART);
+    			if (splitPart!=null) {
+    				// This is a split line which needs a representative
+    				Specimen line = Specimen.createSpecimenFromFullName(flyline.getName());
+        			if (!line.isValidLine()) {
+        				continue;
+        			}
+					String specimenName = splitRepresentatives.get(flyline.getName());
+					if (specimenName!=null) {
+						Specimen repSpecimen = Specimen.createSpecimenFromFullName(specimenName);
+	        			if (!repSpecimen.isValidLine()) {
 	        				continue;
 	        			}
-	        			
-	        			Map<String,Entity> inserts = vectors2.get(specimen.getVector());
-	        			if (inserts==null) {
-	        				inserts = new HashMap<String,Entity>();
-	        				vectors2.put(specimen.getVector(), inserts);
-	        			}
-	        		
-						inserts.put(specimen.getInsertionSite(), flyline);	
-	    			}
-	
-	    			for(String vector : vectors2.keySet()) {
-	        			logger.info("  "+vector);
-						for(String insert : keys(vectors2.get(vector))) {
-							logger.info("    "+insert);
-							Entity flyline = vectors2.get(vector).get(insert);
-							
-							String splitPart = flyline.getValueByAttributeName(EntityConstants.ATTRIBUTE_SPLIT_PART);
-	
-							Entity rep = null;
-	            			EntityData repEd = flyline.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_REPRESENTATIVE_SAMPLE);
-	            			if (repEd!=null) {
-	            				rep = repEd.getChildEntity();
-	            			}
-	            			
-							if (splitPart!=null) {
-								logger.info("      "+flyline.getName()+" ("+splitPart+")"+(rep!=null?" -> "+rep.getName():""));
+						Map<String,Map<String,Entity>> fullInserts = vectorsFull.get(repSpecimen.getVector());
+						
+						boolean found = false;
+						if (fullInserts != null) {
+							Map<String,Entity> samples = fullInserts.get(repSpecimen.getInsertionSite());
+							if (samples != null) {
+    							Entity rep = samples.get(specimenName);
+    							if (rep!=null) {
+        	            			setFlylineRepresentative(flyline, rep);
+        	            			found = true;
+        	    				}
 							}
-							else {
-								logger.info("      "+flyline.getName()+(rep!=null?" -> "+rep.getName():""));
-								
-								for(EntityData ed : flyline.getOrderedEntityData()) {
-									if (ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_ENTITY)) {
-										Entity screenSample = ed.getChildEntity();
-										logger.info("        "+screenSample.getName()+(rep!=null&&screenSample.getId().equals(rep.getId())?" (REP)":""));
-									}
+						}    	
+						
+						if (!found) {
+							logger.warn("Representative for "+flyline.getName()+" should be "+specimenName+", but it couldn't be found.");	
+						}
+					}
+					else {
+						// TODO: this is for testing, and should be removed later
+						Entity rep = findBestRepresentative(vectors, splitPart, line);
+						if (rep!=null) {
+							logger.warn("No representative for "+flyline.getName()+", but we found a decent candidate: "+rep.getName());
+						}
+					}
+    			}
+			}
+		
+			if (DEBUG) {
+    			
+        		Map<String,Map<String,Entity>> vectors2 = new HashMap<String,Map<String,Entity>>();
+    			for(Entity flyline : EntityUtils.getChildrenOfType(fragment, EntityConstants.TYPE_FLY_LINE)) {
+    				populateChildren(flyline);
+    				
+    				Specimen specimen = Specimen.createSpecimenFromFullName(flyline.getName());
+        			if (!specimen.isValidLine()) {
+        				continue;
+        			}
+        			
+        			Map<String,Entity> inserts = vectors2.get(specimen.getVector());
+        			if (inserts==null) {
+        				inserts = new HashMap<String,Entity>();
+        				vectors2.put(specimen.getVector(), inserts);
+        			}
+        		
+					inserts.put(specimen.getInsertionSite(), flyline);	
+    			}
+
+    			for(String vector : vectors2.keySet()) {
+        			logger.info("  "+vector);
+					for(String insert : keys(vectors2.get(vector))) {
+						logger.info("    "+insert);
+						Entity flyline = vectors2.get(vector).get(insert);
+						
+						String splitPart = flyline.getValueByAttributeName(EntityConstants.ATTRIBUTE_SPLIT_PART);
+
+						Entity rep = null;
+            			EntityData repEd = flyline.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_REPRESENTATIVE_SAMPLE);
+            			if (repEd!=null) {
+            				rep = repEd.getChildEntity();
+            			}
+            			
+						if (splitPart!=null) {
+							logger.info("      "+flyline.getName()+" ("+splitPart+")"+(rep!=null?" -> "+rep.getName():""));
+						}
+						else {
+							logger.info("      "+flyline.getName()+(rep!=null?" -> "+rep.getName():""));
+							
+							for(EntityData ed : flyline.getOrderedEntityData()) {
+								if (ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_ENTITY)) {
+									Entity screenSample = ed.getChildEntity();
+									logger.info("        "+screenSample.getName()+(rep!=null&&screenSample.getId().equals(rep.getId())?" (REP)":""));
 								}
 							}
 						}
-	    			}
+					}
     			}
-    		}
-    		
-        } 
-        catch (Exception e) {
-            throw new ServiceException(e);
-        }
+			}
+		}
+		
     }
 
     private void readRepresentatives(File representativesFile) throws Exception {
@@ -569,7 +553,7 @@ public class SplitLinesLoadingService implements IService {
 				EntityData heatmapEd = EntityUtils.findChildEntityDataWithNameAndType(paFolderEd.getChildEntity(), "Heatmap", EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
 				if (heatmapEd!=null) {
 					populateChildren(heatmapEd.getChildEntity());
-					helper.setDefault3dImage(flyline, heatmapEd.getChildEntity());
+					entityHelper.setDefault3dImage(flyline, heatmapEd.getChildEntity());
 				}
 			}
 		}
@@ -729,12 +713,6 @@ public class SplitLinesLoadingService implements IService {
      */
     private Set<String> keys(Map<String,? extends Object> map) {
     	return new HashSet<String>(map.keySet());
-    }
-    
-    private Entity populateChildren(Entity entity) throws ComputeException {
-    	if (entity==null || EntityUtils.areLoaded(entity.getEntityData())) return entity;
-		EntityUtils.replaceChildNodes(entity, entityBean.getChildEntities(entity.getId()));
-		return entity;
     }
     
     public Entity createOrVerifyRootEntity(String topLevelFolderName, String ownerKey, Date createDate, boolean createIfNecessary, boolean loadTree) throws Exception {

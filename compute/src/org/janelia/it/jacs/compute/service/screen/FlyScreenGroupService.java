@@ -29,7 +29,6 @@ public class FlyScreenGroupService implements IService {
 
     protected AnnotationBeanLocal annotationBean;
     protected ComputeBeanLocal computeBean;
-    protected String ownerKey;
     protected Date createDate;
     protected ScreenSampleResultNode resultNode;
     protected Task task;
@@ -45,10 +44,9 @@ public class FlyScreenGroupService implements IService {
             this.processData=processData;
             task = ProcessDataHelper.getTask(processData);
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
-            visibility = User.SYSTEM_USER_KEY.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
+            visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
             annotationBean = EJBFactory.getLocalAnnotationBean();
             computeBean = EJBFactory.getLocalComputeBean();
-            ownerKey = ProcessDataHelper.getTask(processData).getOwner();
             createDate = new Date();
 
             List<String> sampleList=(List<String>)processData.getItem("GROUP_LIST");

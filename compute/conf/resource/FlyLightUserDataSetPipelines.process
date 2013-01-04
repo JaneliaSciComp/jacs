@@ -8,7 +8,10 @@
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
 	        <input name="TASK_PARAMETER_1" value="run mode"/>
             <input name="PROCESS_VARIABLE_1" value="RUN_MODE"/>
+            <input name="TASK_PARAMETER_2" value="reuse processing"/>
+            <input name="PROCESS_VARIABLE_2" value="REUSE_PROCESSING"/>
 	        <output name="RUN_MODE"/>
+	        <output name="REUSE_PROCESSING"/>
 	        <output name="TASK_OWNER"/>
 	    </operation>
 	    
@@ -17,7 +20,7 @@
 	        <input name="DEFAULT_CHANNEL_SPECIFICATION" value="sssr"/>
 		</operation>
 		
-    	<sequence if="TASK_OWNER=user:flylight">
+    	<sequence if="TASK_OWNER=flylight">
     	
 		    <!-- Discover samples in Sage which are not assigned to data sets -->
 			<operation name="Initial Image Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SageImageFamilyDiscoveryService">
@@ -42,6 +45,8 @@
 	            <input name="PROCESS_DEF_NAME" value="GSPS_CompleteSamplePipeline"/>
 	            <input name="PARAMETER_1_KEY" value="sample entity id"/>
 	            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
+	            <input name="PARAMETER_2_KEY" value="reuse processing"/>
+                <input name="PARAMETER_2_VALUE" value="$V{REUSE_PROCESSING}"/>
 	        </operation>
 	        
 	    </sequence>

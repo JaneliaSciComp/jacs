@@ -140,6 +140,10 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         }
     }
 
+    public Subject getSubjectByNameOrKey(String name) throws ComputeException {
+        return computeDAO.getSubjectByNameOrKey(name);
+    }
+    
     public User getUserByNameOrKey(String name) throws ComputeException {
         return computeDAO.getUserByNameOrKey(name);
     }

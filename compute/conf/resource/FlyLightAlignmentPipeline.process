@@ -34,7 +34,7 @@
 	        <operation name="Align" processor="queue/gridSubmitAndWait">
 	            <input name="iservice" value="$V{ALIGNMENT_SERVICE_CLASS}"/>
 	    		<input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
-				<input name="INPUT_FILENAME" value="$V{STITCHED_FILENAME}"/>
+				<input name="INPUT_FILENAME"/>
 				<input name="ALIGNMENT_TILE_NAME"/>
 				<input name="ALIGNMENT_SCRIPT_NAME"/>
 				<input name="OPTICAL_RESOLUTION"/>

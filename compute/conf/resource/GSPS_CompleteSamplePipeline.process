@@ -10,7 +10,10 @@
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="TASK_PARAMETER_1" value="sample entity id"/>
             <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
+            <input name="TASK_PARAMETER_2" value="reuse processing"/>
+            <input name="PROCESS_VARIABLE_2" value="REUSE_PROCESSING"/>
 	        <output name="SAMPLE_ENTITY_ID"/>
+            <output name="REUSE_PROCESSING"/>
 	    </operation>
 	    
 	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
@@ -34,6 +37,8 @@
 		            <input name="PROCESS_DEF_NAME" value="$V{PIPELINE_PROCESS_NAME}"/>
 		            <input name="PARAMETER_1_KEY" value="sample entity id"/>
 		            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
+                    <input name="PARAMETER_2_KEY" value="reuse processing"/>
+                    <input name="PARAMETER_2_VALUE" value="$V{REUSE_PROCESSING}"/>
 		        </operation>
 			        
 	    	</sequence>

@@ -156,7 +156,7 @@ public class FileTreeLoaderService implements IService {
             createDate = new Date();
             task= ProcessDataHelper.getTask(processData);
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
-            visibility = User.SYSTEM_USER_KEY.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
+            visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
 
             helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
             helper.addFileExclusion("DrmaaSubmitter.log");

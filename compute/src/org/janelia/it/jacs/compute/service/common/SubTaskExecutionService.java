@@ -64,7 +64,7 @@ public class SubTaskExecutionService implements IService {
         	}
         	
         	subtask.setInputNodes(new HashSet<Node>());
-        	subtask.setOwner(user.getUserLogin());
+        	subtask.setOwner(user.getName());
         	subtask.setEvents(new ArrayList<Event>());
         	subtask.setTaskParameterSet(new HashSet<TaskParameter>());
         	

@@ -4,14 +4,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
-import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.api.EntityBeanLocal;
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
@@ -21,57 +15,42 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class FastLoadResultsDiscoveryService implements IService {
+public class FastLoadResultsDiscoveryService extends AbstractEntityService {
 
-    protected Logger logger;
-    protected IProcessData processData;
-    protected EntityBeanLocal entityBean;
-    protected ComputeBeanLocal computeBean;
-    protected String ownerKey;
     protected FileDiscoveryHelper helper;
     
 	@Override
-    public void execute(IProcessData processData) throws ServiceException {
+    public void execute() throws Exception {
 
-		try {
-	    	this.processData=processData;
-	        logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-	        entityBean = EJBFactory.getLocalEntityBean();
-	        computeBean = EJBFactory.getLocalComputeBean();
-	        ownerKey = ProcessDataHelper.getTask(processData).getOwner();
-	        helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
-	        
-	        List<Entity> entityList = (List<Entity>)processData.getItem("SEPARATION_LIST");
-	        if (entityList==null) {
-	        	Entity entity = (Entity)processData.getItem("SEPARATION");
-	        	if (entity==null) {
-	        		String entityId = (String)processData.getItem("SEPARATION_ID");
-	        		if (entityId==null) {
-	        			throw new ServiceException("Both SEPARATION/SEPARATION_ID and SEPARATION_LIST may not be null");	
-	        		}
-	        		entity = entityBean.getEntityById(entityId);
-	        	}
-	        	entityList = new ArrayList<Entity>();
-	        	entityList.add(entity);
-	        }
-	        
-	        for(Entity entity : entityList) {
-	        	try {
-	        		processSeparation(entity);
-	        	}
-	        	catch (Exception e) {
-	        		if (entityList.size()==1) {
-	        			throw e;
-	        		}
-	        		else {
-	        			logger.error("Results discovery failed for separation id="+entity.getId());	
-	        		}
-	        	}
-	        }
-	    } 
-	    catch (Exception e) {
-	        throw new ServiceException(e);
-	    }
+        helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
+        
+        List<Entity> entityList = (List<Entity>)processData.getItem("SEPARATION_LIST");
+        if (entityList==null) {
+        	Entity entity = (Entity)processData.getItem("SEPARATION");
+        	if (entity==null) {
+        		String entityId = (String)processData.getItem("SEPARATION_ID");
+        		if (entityId==null) {
+        			throw new ServiceException("Both SEPARATION/SEPARATION_ID and SEPARATION_LIST may not be null");	
+        		}
+        		entity = entityBean.getEntityById(entityId);
+        	}
+        	entityList = new ArrayList<Entity>();
+        	entityList.add(entity);
+        }
+        
+        for(Entity entity : entityList) {
+        	try {
+        		processSeparation(entity);
+        	}
+        	catch (Exception e) {
+        		if (entityList.size()==1) {
+        			throw e;
+        		}
+        		else {
+        			logger.error("Results discovery failed for separation id="+entity.getId());	
+        		}
+        	}
+        }
     }
 	
 	protected void processSeparation(Entity entity) throws Exception {

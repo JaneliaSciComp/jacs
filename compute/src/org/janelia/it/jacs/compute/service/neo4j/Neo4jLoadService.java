@@ -20,7 +20,6 @@ public class Neo4jLoadService implements IService {
 	
     protected Logger logger;
     protected Task task;
-    protected String username;
     protected SolrBeanLocal solrBean;
     private boolean cleardb = false;
     
@@ -30,7 +29,6 @@ public class Neo4jLoadService implements IService {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             task = ProcessDataHelper.getTask(processData);
             solrBean = EJBFactory.getLocalSolrBean();
-            username = task.getOwner();
             cleardb = Boolean.parseBoolean(task.getParameter(PARAM_clearDb));
             solrBean.neo4jAllEntities(cleardb);
     	}

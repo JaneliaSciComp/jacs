@@ -15,6 +15,7 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
@@ -60,7 +61,10 @@ public class MCFODataCompressService implements IService {
             annotationBean = EJBFactory.getLocalAnnotationBean();
             entityBean = EJBFactory.getLocalEntityBean();
             computeBean = EJBFactory.getLocalComputeBean();
-            ownerKey = task.getOwner();
+            
+            String ownerName = ProcessDataHelper.getTask(processData).getOwner();
+            Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
+            this.ownerKey = subject.getKey();
             
             String testRun = task.getParameter(PARAM_testRun);
             if (testRun!=null) {

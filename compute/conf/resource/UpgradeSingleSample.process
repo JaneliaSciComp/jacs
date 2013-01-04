@@ -10,7 +10,7 @@
     	    <output name="SAMPLE_ENTITY_ID"/>
     	</operation>
     	
-		<operation name="MCFO Data Upgrade" processor="org.janelia.it.jacs.compute.service.entity.MCFODataUpgradeService">
+		<operation name="MCFO Data Upgrade" processor="org.janelia.it.jacs.compute.service.entity.UpgradeUserDataService">
 			<input name="SAMPLE_ENTITY_ID"/>
 		</operation>
 		
