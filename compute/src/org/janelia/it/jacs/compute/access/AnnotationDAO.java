@@ -221,7 +221,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         	}
         	
         	if (sharedDataFolder==null) {
-        		sharedDataFolder = createEntity(granteeKey, EntityConstants.NAME_SHARED_DATA, EntityConstants.TYPE_FOLDER);
+        		sharedDataFolder = createEntity(granteeKey, EntityConstants.TYPE_FOLDER, EntityConstants.NAME_SHARED_DATA);
         		EntityUtils.addAttributeAsTag(sharedDataFolder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
         		EntityUtils.addAttributeAsTag(sharedDataFolder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
         		saveOrUpdate(sharedDataFolder);
