@@ -60,6 +60,7 @@ public class UpgradeUserDataService extends AbstractEntityService {
         
         if (adminGroup!=null) {
             adminGroup.getUserRelationships().clear();
+            adminGroup.setFullName("Administrators");
             computeBean.saveOrUpdateGroup(adminGroup);
         }
         else {
