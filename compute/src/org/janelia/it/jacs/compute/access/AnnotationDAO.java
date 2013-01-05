@@ -296,11 +296,12 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         		Set<EntityData> toDelete = new HashSet<EntityData>();
         		for(EntityData ed : sharedDataFolder.getEntityData()) {
         			Entity child = ed.getChildEntity();
-        			if (child!=null && child.getId().equals(rootEntity)) {
+        			if (child!=null && child.getId().equals(rootEntity.getId())) {
         				toDelete.add(ed);
         			}
         		}
         		for(EntityData ed : toDelete) {
+        		    _logger.info("Removed "+rootEntity.getId()+" from "+rootOwner+"'s Shared Data");
         			sharedDataFolder.getEntityData().remove(ed);
         			genericDelete(ed);
         		}	
