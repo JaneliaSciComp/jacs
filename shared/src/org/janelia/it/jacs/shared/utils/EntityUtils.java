@@ -37,6 +37,72 @@ public class EntityUtils {
     }
 
     /**
+     * Returns true if the user owns the given entity. 
+     * @param entity entity to test
+     * @param subjectKeys the keys of the user. The user's key must be the first key.
+     * @return
+     */
+    public static boolean isOwner(Entity entity, List<String> subjectKeys) {
+        if (entity==null) throw new IllegalArgumentException("Entity is null");
+        if (entity.getOwnerKey()==null) throw new IllegalArgumentException("Entity's owner is null");
+        return entity.getOwnerKey().equals(subjectKeys.get(0));
+    }
+
+    /**
+     * Returns true if the user with the given keys is authorized to read the given entity, either because they are 
+     * the owner, or because they or one of their groups has read permission.
+     * @param entity entity to test
+     * @param subjectKeys the keys of the user. The user's key must be the first key.
+     * @return
+     */
+    public static boolean hasReadAccess(Entity entity, List<String> subjectKeys) {
+        String ownerKey = entity.getOwnerKey();
+        
+        // Special case for fake entities which do not exist in the database
+        if (ownerKey==null) return true;
+        
+        // User or any of their groups grant read access
+        if  (subjectKeys.contains(ownerKey)) return true;
+        
+        // Check explicit permission grants
+        for(EntityActorPermission eap : entity.getEntityActorPermissions()) {
+            if (subjectKeys.contains(eap.getSubjectKey())) {
+                if (eap.getPermissions().contains("r")) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if the user is authorized to write the given entity, either because they are the owner, or 
+     * because they or one of their groups has write permission.
+     * @param entity entity to test
+     * @param subjectKeys the keys of the user. The user's key must be the first key.
+     * @return
+     */
+    public static boolean hasWriteAccess(Entity entity, List<String> subjectKeys) {
+        String ownerKey = entity.getOwnerKey();
+        
+        // Special case for fake entities which do not exist in the database. 
+        if (ownerKey==null) return false;
+        
+        // Only being the owner grants write access
+        if (isOwner(entity, subjectKeys)) return true;
+
+        // Check explicit permission grants
+        for(EntityActorPermission eap : entity.getEntityActorPermissions()) {
+            if (subjectKeys.contains(eap.getSubjectKey())) {
+                if (eap.getPermissions().contains("w")) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    /**
      * Returns true if the given entities are identical in terms of their own properties and their EntityData properties.
      * @param entity1
      * @param entity2

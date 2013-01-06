@@ -270,6 +270,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     	}
 
     	try {
+    	    final Set<Long> revokedIds = new HashSet<Long>();
         	EntityVistationBuilder visitationBuilder = new EntityVistationBuilder(this).startAt(rootEntity);
     		visitationBuilder = recursive ? visitationBuilder.ancestors() : visitationBuilder.root();
         	visitationBuilder.run(new EntityVisitor() {
@@ -281,6 +282,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     		    			i.remove();
     		    			genericDelete(eap);
     		    			_logger.info("Revoked permission to "+revokeeKey+" for "+entity.getId());
+    		    			revokedIds.add(eap.getEntity().getId());
     		    		}
     		    	}
     			}
@@ -296,12 +298,12 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         		Set<EntityData> toDelete = new HashSet<EntityData>();
         		for(EntityData ed : sharedDataFolder.getEntityData()) {
         			Entity child = ed.getChildEntity();
-        			if (child!=null && child.getId().equals(rootEntity.getId())) {
+        			if (child!=null && revokedIds.contains(child.getId())) {
         				toDelete.add(ed);
         			}
         		}
         		for(EntityData ed : toDelete) {
-        		    _logger.info("Removed "+rootEntity.getId()+" from "+rootOwner+"'s Shared Data");
+        		    _logger.info("Removed "+rootEntity.getId()+" from "+revokeeKey+"'s Shared Data");
         			sharedDataFolder.getEntityData().remove(ed);
         			genericDelete(ed);
         		}	

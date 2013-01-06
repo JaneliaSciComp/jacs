@@ -13,6 +13,7 @@ import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.model.entity.*;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 
@@ -134,12 +135,13 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     public Entity saveOrUpdateEntity(String subjectKey, Entity entity) throws ComputeException {
         try {
         	boolean isNew = entity.getId()==null;
-        	if (!entity.getOwnerKey().equals(subjectKey)) {
-        		throw new ComputeException("Subject "+subjectKey+" cannot change "+entity.getId());
-        	}
-        	if (entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PROTECTED)!=null) {
-        		throw new ComputeException("Cannot modify protected entity");
-        	}
+        	if (!isNew) {
+    	        Entity currEntity = getEntityById(subjectKey, entity.getId());
+    	        if (!EntityUtils.hasWriteAccess(currEntity, _annotationDAO.getSubjectKeys(subjectKey))) {
+                    throw new ComputeException("Subject "+subjectKey+" cannot change "+entity.getId());
+    	        }
+                _annotationDAO.getCurrentSession().evict(currEntity);
+    	    }
         	entity.setUpdatedDate(new Date());
             _annotationDAO.saveOrUpdate(entity);
             _logger.info(subjectKey+" "+(isNew?"created":"saved")+" entity "+entity.getId());
@@ -155,9 +157,13 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     public EntityData saveOrUpdateEntityData(String subjectKey, EntityData ed) throws ComputeException {
         try {
         	boolean isNew = ed.getId()==null;
-        	if (!ed.getOwnerKey().equals(subjectKey)) {
-        		throw new ComputeException("Subject "+subjectKey+" cannot change "+ed.getId());
-        	}
+            if (!isNew) {
+                Entity currEntity = getEntityById(subjectKey, ed.getParentEntity().getId());
+                if (!EntityUtils.hasWriteAccess(currEntity, _annotationDAO.getSubjectKeys(subjectKey))) {
+                    throw new ComputeException("Subject "+subjectKey+" cannot change "+ed.getParentEntity().getId());
+                }
+                _annotationDAO.getCurrentSession().evict(currEntity);
+            }
         	ed.setUpdatedDate(new Date());
             _annotationDAO.saveOrUpdate(ed);
         	_logger.info(subjectKey+" "+(isNew?"created":"saved")+" entity data "+ed.getId());
@@ -186,9 +192,9 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
 
     public EntityData addEntityToParent(String subjectKey, Entity parent, Entity entity, Integer index, String attrName) throws ComputeException {
         try {
-        	if (!parent.getOwnerKey().equals(subjectKey)) {
-        		throw new ComputeException("Subject "+subjectKey+" cannot add children to "+parent.getId());
-        	}
+            if (!EntityUtils.hasWriteAccess(parent, _annotationDAO.getSubjectKeys(subjectKey))) {
+                throw new ComputeException("Subject "+subjectKey+" cannot add children to "+parent.getId());
+            }
             EntityData ed = _annotationDAO.addEntityToParent(parent, entity, index, attrName);
         	_logger.info(subjectKey+" added entity data "+ed.getId());
         	
@@ -208,9 +214,9 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             if (parent==null) {
                 throw new Exception("Entity not found: "+parentId);
             }
-        	if (!parent.getOwnerKey().equals(subjectKey)) {
-        		throw new ComputeException("Subject "+subjectKey+" cannot add children to "+parent.getId());
-        	}
+            if (!EntityUtils.hasWriteAccess(parent, _annotationDAO.getSubjectKeys(subjectKey))) {
+                throw new ComputeException("Subject "+subjectKey+" cannot add children to "+parent.getId());
+            }
         	_annotationDAO.addChildren(subjectKey, parentId, childrenIds, attributeName);
         	_logger.info("Subject "+subjectKey+" added "+childrenIds.size()+" children to parent "+parentId);
         	
@@ -230,16 +236,13 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     
     public boolean deleteEntityById(String subjectKey, Long entityId) throws ComputeException {
          try {
-        	Entity entity = _annotationDAO.getEntityById(entityId);
-            if (entity==null) {
+            Entity currEntity = getEntityById(subjectKey, entityId);
+            if (currEntity==null) {
                 throw new Exception("Entity not found: "+entityId);
             }
-        	if (subjectKey!=null && !entity.getOwnerKey().equals(subjectKey)) {
-        		throw new ComputeException("Subject "+subjectKey+" cannot delete "+entity.getId());
-        	}
-        	if (entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PROTECTED)!=null) {
-        		throw new ComputeException("Cannot delete protected entity");
-        	}
+            if (subjectKey!=null && !EntityUtils.hasWriteAccess(currEntity, _annotationDAO.getSubjectKeys(subjectKey))) {
+                throw new ComputeException("Subject "+subjectKey+" cannot change "+entityId);
+            }
             if (_annotationDAO.deleteEntityById(subjectKey, entityId)) {
             	_logger.info(subjectKey+" deleted entity "+entityId);
             	return true;
@@ -254,11 +257,14 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     
     public boolean deleteEntityTree(String subjectKey, Long entityId) throws ComputeException {
     	try {
-            Entity entity = _annotationDAO.getEntityById(entityId);
-            if (entity==null) {
-            	throw new Exception("Entity not found: "+entityId);
+            Entity currEntity = getEntityById(subjectKey, entityId);
+            if (currEntity==null) {
+                throw new Exception("Entity not found: "+entityId);
             }
-    		_annotationDAO.deleteEntityTree(subjectKey, entity);
+            if (subjectKey!=null && !EntityUtils.hasWriteAccess(currEntity, _annotationDAO.getSubjectKeys(subjectKey))) {
+                throw new ComputeException("Subject "+subjectKey+" cannot change "+entityId);
+            }
+    		_annotationDAO.deleteEntityTree(subjectKey, currEntity);
     		_logger.info(subjectKey+" deleted entity tree "+entityId);
     		return true;
     	}
@@ -274,11 +280,14 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
 
     public boolean deleteSmallEntityTree(String subjectKey, Long entityId, boolean unlinkMultipleParents) throws ComputeException {
         try {
-            Entity entity = _annotationDAO.getEntityById(entityId);
-            if (entity==null) {
+            Entity currEntity = getEntityById(subjectKey, entityId);
+            if (currEntity==null) {
                 throw new Exception("Entity not found: "+entityId);
             }
-            _annotationDAO.deleteSmallEntityTree(subjectKey, entity, unlinkMultipleParents);
+            if (subjectKey!=null && !EntityUtils.hasWriteAccess(currEntity, _annotationDAO.getSubjectKeys(subjectKey))) {
+                throw new ComputeException("Subject "+subjectKey+" cannot change "+entityId);
+            }
+            _annotationDAO.deleteSmallEntityTree(subjectKey, currEntity, unlinkMultipleParents);
             _logger.info(subjectKey+" deleted small entity tree "+entityId);
             return true;
         }
@@ -290,9 +299,14 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     
     public void deleteEntityData(String subjectKey, EntityData ed) throws ComputeException {
         try {
-        	if (!ed.getOwnerKey().equals(subjectKey)) {
-        		throw new ComputeException("Subject "+subjectKey+" cannot delete entity data "+ed.getId());
-        	}
+            Entity currEntity = getEntityById(subjectKey, ed.getParentEntity().getId());
+            if (currEntity==null) {
+                throw new Exception("Parent entity not found: "+ed.getParentEntity().getId());
+            }
+            if (subjectKey!=null && !EntityUtils.hasWriteAccess(currEntity, _annotationDAO.getSubjectKeys(subjectKey))) {
+                throw new ComputeException("Subject "+subjectKey+" cannot delete entity data "+ed.getId());
+            }
+            _annotationDAO.getCurrentSession().evict(currEntity);
             _annotationDAO.genericDelete(ed);
             _logger.info(subjectKey+" deleted entity data "+ed.getId());
         }
