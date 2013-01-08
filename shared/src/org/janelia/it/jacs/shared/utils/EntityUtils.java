@@ -35,7 +35,37 @@ public class EntityUtils {
         }
         return true;
     }
-
+    
+    /**
+     * Returns true if the given entity is a common root.
+     * @param entity
+     * @return
+     */
+    public static boolean isCommonRoot(Entity entity) {
+        return entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null;
+    }
+    
+    /**
+     * Returns true if the given entity is protected.
+     * @param entity
+     * @return
+     */
+    public static boolean isProtected(Entity entity) {
+        return entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PROTECTED) != null;
+    }
+    
+    /**
+     * Returns true if the user owns the given entity. 
+     * @param entity entity to test
+     * @param subjectKey subject key of the user to test
+     * @return
+     */
+    public static boolean isOwner(Entity entity, String subjectKeys) {
+        if (entity==null) throw new IllegalArgumentException("Entity is null");
+        if (entity.getOwnerKey()==null) throw new IllegalArgumentException("Entity's owner is null");
+        return entity.getOwnerKey().equals(subjectKeys);
+    }
+    
     /**
      * Returns true if the user owns the given entity. 
      * @param entity entity to test

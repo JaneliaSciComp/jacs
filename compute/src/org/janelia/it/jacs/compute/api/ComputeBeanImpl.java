@@ -185,6 +185,20 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return false;
     }
     
+    public User createUser(String newUserName, String newFullName) throws ComputeException {
+        try {
+            createUser(newUserName);
+            User user = getUserByNameOrKey(newUserName);
+            user.setFullName(newFullName);
+            saveOrUpdateUser(user);
+            return user;
+        }
+        catch (DaoException e) {
+            logger.error("Error creating user",e);
+            throw e;
+        }
+    }
+    
     public Group createGroup(String userLogin, String groupName) throws DaoException {
         try {
             logger.info("Creating group " + groupName);

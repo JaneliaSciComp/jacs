@@ -32,14 +32,14 @@ public interface EntityBeanRemote {
 	public Entity saveOrUpdateEntity(String subjectKey, Entity entity) throws ComputeException;
     public EntityData saveOrUpdateEntityData(String subjectKey, EntityData newData) throws ComputeException;
     public Entity createEntity(String subjectKey, String entityTypeName, String entityName) throws ComputeException;
-    public EntityData addEntityToParent(String subjectKey, Entity parent, Entity entity, Integer index, String attrName) throws ComputeException;
+    public EntityData addEntityToParent(String subjectKey, Long parentId, Long entityId, Integer index, String attrName) throws ComputeException;
     public void addChildren(String subjectKey, Long parentId, List<Long> childrenIds, String attributeName) throws ComputeException;
 
     public boolean deleteEntityById(String subjectKey, Long entityId) throws ComputeException;
     public boolean deleteEntityTree(String subjectKey, Long entityId) throws ComputeException;
     public boolean deleteSmallEntityTree(String subjectKey, Long entityId) throws ComputeException;
     public boolean deleteSmallEntityTree(String subjectKey, Long entityId, boolean unlinkMultipleParents) throws ComputeException;
-    public void deleteEntityData(String subjectKey, EntityData ed) throws ComputeException;
+    public void deleteEntityData(String subjectKey, Long entityDataId) throws ComputeException;
     
     public Entity getEntityById(String subjectKey, Long entityId) throws ComputeException;
     public List<Entity> getEntitiesById(String subjectKey, List<Long> ids) throws ComputeException;
@@ -55,13 +55,14 @@ public interface EntityBeanRemote {
     public Set<Entity> getChildEntities(String subjectKey, Long entityId) throws ComputeException;
     public Set<EntityData> getParentEntityDatas(String subjectKey, Long childEntityId) throws ComputeException;
     public Set<Long> getParentIdsForAttribute(String subjectKey, Long childEntityId, String attributeName) throws ComputeException;
-    public Entity getAncestorWithType(String subjectKey, Entity entity, String type) throws ComputeException;
-    public List<List<EntityData>> getPathsToRoots(String subjectKey, Entity entity) throws ComputeException;
+    public Entity getAncestorWithType(String subjectKey, Long entityId, String type) throws ComputeException;
+    public List<List<EntityData>> getPathsToRoots(String subjectKey, Long entityId) throws ComputeException;
     
     public List<MappedId> getProjectedResults(String subjectKey, List<Long> entityIds, List<String> upMapping, List<String> downMapping) throws ComputeException;
 
     public Entity annexEntityTree(String subjectKey, Long entityId) throws ComputeException;
     
+    public Set<EntityActorPermission> getFullPermissions(String subjectKey, Long entityId) throws ComputeException;
     public EntityActorPermission grantPermissions(String subjectKey, Long entityId, String granteeKey, String permissions, boolean recursive) throws ComputeException;
     public void revokePermissions(String subjectKey, Long entityId, String granteeKey,  boolean recursive) throws ComputeException;
     public EntityActorPermission saveOrUpdatePermission(String subjectKey, EntityActorPermission eap) throws ComputeException;

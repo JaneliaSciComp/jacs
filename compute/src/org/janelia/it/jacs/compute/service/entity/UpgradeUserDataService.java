@@ -31,7 +31,7 @@ public class UpgradeUserDataService extends AbstractEntityService {
         // Create System user
         // ------------------------------------------------------------------------------------------------------------
         
-        computeBean.createUser(User.SYSTEM_USER_LOGIN);
+        computeBean.createUser(User.SYSTEM_USER_LOGIN, "System");
         
         // ------------------------------------------------------------------------------------------------------------
         // Create FlyLight group

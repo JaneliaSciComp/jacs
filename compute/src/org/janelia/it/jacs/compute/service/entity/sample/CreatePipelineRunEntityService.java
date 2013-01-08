@@ -37,7 +37,7 @@ public class CreatePipelineRunEntityService extends AbstractEntityService {
     	Entity pipelineRun = entityBean.createEntity(ownerKey, EntityConstants.TYPE_PIPELINE_RUN, pipelineName+" Results");
     	pipelineRun.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS, pipelineProcess);
     	entityBean.saveOrUpdateEntity(pipelineRun);
-    	entityBean.addEntityToParent(ownerKey, sampleEntity, pipelineRun, sampleEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+    	entityBean.addEntityToParent(ownerKey, sampleEntity.getId(), pipelineRun.getId(), sampleEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
 
     	logger.info("Added new pipeline run to sample "+sampleEntity);
     	

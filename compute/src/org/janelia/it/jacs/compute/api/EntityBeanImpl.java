@@ -190,21 +190,29 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         }
     }
 
-    public EntityData addEntityToParent(String subjectKey, Entity parent, Entity entity, Integer index, String attrName) throws ComputeException {
+    public EntityData addEntityToParent(String subjectKey, Long parentId, Long entityId, Integer index, String attrName) throws ComputeException {
         try {
+            Entity parent = getEntityById(subjectKey, parentId);
+            if (parent==null) {
+                throw new DaoException("Parent entity does not exist "+parent);
+            }
             if (!EntityUtils.hasWriteAccess(parent, _annotationDAO.getSubjectKeys(subjectKey))) {
-                throw new ComputeException("Subject "+subjectKey+" cannot add children to "+parent.getId());
+                throw new ComputeException("Subject "+subjectKey+" cannot add children to "+parentId);
+            }
+            Entity entity = getEntityById(subjectKey, entityId);
+            if (entity==null) {
+                throw new DaoException("Entity does not exist "+entityId);
             }
             EntityData ed = _annotationDAO.addEntityToParent(parent, entity, index, attrName);
         	_logger.info(subjectKey+" added entity data "+ed.getId());
         	
-        	IndexingHelper.updateIndexAddAncestor(entity.getId(), parent.getId());
+        	IndexingHelper.updateIndexAddAncestor(entityId, parentId);
         	
         	return ed;
         } 
         catch (DaoException e) {
-            _logger.error("Error trying to add entity (id="+entity.getId()+") to parent "+parent.getId(), e);
-            throw new ComputeException("Error trying to add entity (id="+entity.getId()+") to parent "+parent.getId(),e);
+            _logger.error("Error trying to add entity (id="+entityId+") to parent "+parentId, e);
+            throw new ComputeException("Error trying to add entity (id="+entityId+") to parent "+parentId,e);
         }
     }
     
@@ -297,22 +305,29 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         }
     }
     
-    public void deleteEntityData(String subjectKey, EntityData ed) throws ComputeException {
+    public void deleteEntityData(String subjectKey, Long entityDataId) throws ComputeException {
         try {
-            Entity currEntity = getEntityById(subjectKey, ed.getParentEntity().getId());
+            Entity currEntity = _annotationDAO.getEntityByEntityDataId(subjectKey, entityDataId);
             if (currEntity==null) {
-                throw new Exception("Parent entity not found: "+ed.getParentEntity().getId());
+                throw new Exception("Parent entity not found for entity data with id="+entityDataId);
             }
             if (subjectKey!=null && !EntityUtils.hasWriteAccess(currEntity, _annotationDAO.getSubjectKeys(subjectKey))) {
-                throw new ComputeException("Subject "+subjectKey+" cannot delete entity data "+ed.getId());
+                throw new ComputeException("Subject "+subjectKey+" cannot delete entity data "+entityDataId);
+            }
+            EntityData toDelete = null;
+            for(EntityData ed : currEntity.getEntityData()) {
+                if (ed.getId().equals(entityDataId)) {
+                    toDelete = ed;
+                    break;
+                }
             }
             _annotationDAO.getCurrentSession().evict(currEntity);
-            _annotationDAO.genericDelete(ed);
-            _logger.info(subjectKey+" deleted entity data "+ed.getId());
+            _annotationDAO.genericDelete(toDelete);
+            _logger.info(subjectKey+" deleted entity data "+entityDataId);
         }
         catch (Exception e) {
-            _logger.error("Unexpected error while trying to delete entity data "+ed.getId(), e);
-            throw new ComputeException("Unexpected error while trying to delete entity data "+ed.getId(),e);
+            _logger.error("Unexpected error while trying to delete entity data "+entityDataId, e);
+            throw new ComputeException("Unexpected error while trying to delete entity data "+entityDataId,e);
         }
     }
     
@@ -515,28 +530,28 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     }
 
     public Entity getAncestorWithType(Entity entity, String type) throws ComputeException {
-    	return getAncestorWithType(null, entity, type);
+    	return getAncestorWithType(null, entity.getId(), type);
     }
     
-    public Entity getAncestorWithType(String subjectKey, Entity entity, String type) throws ComputeException {
+    public Entity getAncestorWithType(String subjectKey, Long entityId, String type) throws ComputeException {
     	try {
-    		return _annotationDAO.getAncestorWithType(subjectKey, entity, type);
+    		return _annotationDAO.getAncestorWithType(subjectKey, entityId, type);
     	}
     	catch (DaoException e) {
-            _logger.error("Error finding ancestor of type "+type+" for "+entity.getId(),e);
-    		throw new ComputeException("Error finding ancestor of type "+type+" for "+entity.getId(),e);
+            _logger.error("Error finding ancestor of type "+type+" for "+entityId,e);
+    		throw new ComputeException("Error finding ancestor of type "+type+" for "+entityId,e);
     	}
     }
     
-    public List<List<EntityData>> getPathsToRoots(String subjectKey, Entity entity) throws ComputeException {
+    public List<List<EntityData>> getPathsToRoots(String subjectKey, Long entityId) throws ComputeException {
     	try {
     		EntityData fakeEd = new EntityData();
-    		fakeEd.setParentEntity(entity);
+    		fakeEd.setParentEntity(getEntityById(entityId));
     		return _annotationDAO.getEntityDataPathsToRoots(subjectKey, fakeEd);
     	}
     	catch (DaoException e) {
-            _logger.error("Error getting paths to root from "+entity.getId(),e);
-    		throw new ComputeException("Error getting paths to root from "+entity.getId(),e);
+            _logger.error("Error getting paths to root from "+entityId,e);
+    		throw new ComputeException("Error getting paths to root from "+entityId,e);
     	}
     }
     
@@ -590,6 +605,15 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         }
     }
 
+    public Set<EntityActorPermission> getFullPermissions(String subjectKey, Long entityId) throws ComputeException {
+        try {
+            return _annotationDAO.getFullPermissions(subjectKey, entityId);
+        } catch (DaoException e) {
+            _logger.error("Error in getFullPermissions(): "+e.getMessage());
+            throw new ComputeException("Error in getFullPermissions(): "+e.getMessage(), e);
+        }
+    }
+    
     public EntityActorPermission grantPermissions(String subjectKey, Long entityId, String granteeKey, String permissions, boolean recursive) throws ComputeException {
         try {
         	return _annotationDAO.grantPermissions(subjectKey, entityId, granteeKey, permissions, recursive);

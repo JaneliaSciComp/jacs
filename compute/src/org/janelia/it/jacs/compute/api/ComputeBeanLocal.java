@@ -1,16 +1,18 @@
 package org.janelia.it.jacs.compute.api;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
+
+import javax.ejb.Local;
+
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskMessage;
 import org.janelia.it.jacs.model.user_data.Node;
-
-import javax.ejb.Local;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import org.janelia.it.jacs.model.user_data.User;
 
 /**
  * Local interface to ComputeBeanImpl
@@ -48,5 +50,11 @@ public interface ComputeBeanLocal extends ComputeBeanRemote {
 
 	public HashMap<String, String> getChildTaskStatusMap(Long objectId) throws Exception;
 
+	/**
+	 * Use the full form createUser(String,String) instead.
+	 */
+	@Deprecated
     public boolean createUser(String newUserName) throws DaoException;
+    
+    public User createUser(String newUserName, String newFullName) throws ComputeException;
 }

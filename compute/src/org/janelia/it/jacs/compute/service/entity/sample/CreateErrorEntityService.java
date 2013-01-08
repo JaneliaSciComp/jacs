@@ -40,7 +40,7 @@ public class CreateErrorEntityService extends AbstractEntityService {
 
     	logger.info("Saved error entity as id="+error.getId());
     	
-    	entityBean.addEntityToParent(ownerKey, rootEntity, error, rootEntity.getMaxOrderIndex()+1, 
+    	entityBean.addEntityToParent(ownerKey, rootEntity.getId(), error.getId(), rootEntity.getMaxOrderIndex()+1, 
     			EntityConstants.ATTRIBUTE_ENTITY);
     }
 }

@@ -54,6 +54,10 @@ public class EntityActorPermission implements java.io.Serializable {
 	public void setSubjectKey(String subjectKey) {
 		this.subjectKey = subjectKey;
 	}
+	
+	public String getSubjectName() {
+	    return subjectKey.split(":")[1];
+	}
 
 	public String getPermissions() {
 		return permissions;

@@ -151,8 +151,46 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         return (Entity)query.uniqueResult();
     }
 
+    public Entity getEntityByEntityDataId(String subjectKey, Long entityDataId) {
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("getEntityByEntityDataId(subjectKey="+subjectKey+", entityDataId="+entityDataId+")");
+        }
+
+        StringBuilder hql = new StringBuilder();
+        hql.append("select ed.parentEntity from EntityData ed ");
+        hql.append("left outer join fetch ed.parentEntity.entityActorPermissions p ");
+        hql.append("where ed.id = :entityDataId ");
+        if (null != subjectKey) {
+            hql.append("and (ed.parentEntity.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
+        }
+        
+        final Session currentSession = getCurrentSession();
+        Query query = currentSession.createQuery(hql.toString());
+        query.setParameter("entityDataId", entityDataId);
+        if (null != subjectKey) {
+            List<String> subjectKeyList = getSubjectKeys(subjectKey);
+            query.setParameterList("subjectKeyList", subjectKeyList);
+        }
+
+        return (Entity)query.uniqueResult();
+    }
+
     public Entity getEntityById(Long targetId) {
     	return getEntityById(null, targetId);
+    }
+
+    public Set<EntityActorPermission> getFullPermissions(String subjectKey, Long entityId) throws DaoException {
+        
+        Entity entity = getEntityById(entityId);
+        if (entity==null) {
+            throw new IllegalArgumentException("Unknown entity: "+entityId);
+        }
+
+        if (!EntityUtils.isOwner(entity, subjectKey)) {
+            throw new DaoException("User "+subjectKey+" does not have the right to view all permissions for "+entity.getId());
+        }
+        
+        return entity.getEntityActorPermissions();
     }
     
     public EntityActorPermission grantPermissions(String subjectKey, Long entityId, String granteeKey, String permissions, 
@@ -775,32 +813,40 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     	_logger.info(indent+"Deleting entity "+entity.getName()+" (id="+entity.getId()+")");
     	
     	if (deleted.contains(entity.getId())) {
-    		_logger.warn(indent+"Entity (id="+entity.getId()+") was already deleted in this session");
+    		_logger.warn(indent+"Cannot delete entity which was already deleted");
     		return;
     	}
-    	
-		// Ownership check
-    	if (!entity.getOwnerKey().equals(subjectKey)) {
+        
+        List<String> subjectKeys = getSubjectKeys(subjectKey);
+        
+		// Permission check - can't delete entities that we don't have write access to
+    	if (!EntityUtils.hasWriteAccess(entity, subjectKeys)) {
     		_logger.info(indent+"Cannot delete entity because owner ("+entity.getOwnerKey()+") does not match invoker ("+subjectKey+")");
     		return;
     	}
 
-    	// Common root check
+    	// Common root check - can't delete entities that are held in place by virtue of being common roots
     	if (level>0 && entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT)!=null) {
     		_logger.info(indent+"Cannot delete "+entity.getName()+" because it is a common root");
     		return;
     	}
     	
-    	// Multiple parent check
-    	// TODO: allow owner to override parent links
+    	// Multiple parent check - can't delete entities that we have references to elsewhere
     	Set<EntityData> eds = getParentEntityDatas(null, entity.getId());
-    	boolean moreThanOneParent = eds.size() > 1;
+    	Set<EntityData> ownedEds = new HashSet<EntityData>();
+    	for(EntityData ed : eds) {
+    	    if (EntityUtils.isOwner(ed.getParentEntity(), subjectKeys)) {
+    	        ownedEds.add(ed);
+    	    }
+    	}
+    	
+    	boolean moreThanOneParent = ownedEds.size() > 1;
         if (level>0 && moreThanOneParent && !unlinkMultipleParents) {
         	_logger.info(indent+"Cannot delete "+entity.getName()+" because more than one parent is pointing to it");
         	return;
         }
         
-        // Delete all ancestors first
+        // Delete all descendants first
         for(EntityData ed : new ArrayList<EntityData>(entity.getEntityData())) {
         	Entity child = ed.getChildEntity();
         	if (child != null) {
@@ -2239,30 +2285,32 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
      * @param type
      * @return
      */
-    public Entity getAncestorWithType(String subjectKey, Entity entity, String type) throws DaoException {
+    public Entity getAncestorWithType(String subjectKey, Long entityId, String type) throws DaoException {
 
     	if (_logger.isDebugEnabled()) {
-    		_logger.debug("getAncestorWithType(entity.getId()="+entity.getId()+",type="+type+")");
+    		_logger.debug("getAncestorWithType(entity.getId()="+entityId+",type="+type+")");
     	}
-    	
+
+    	Entity entity = getEntityById(entityId);
     	if (entity.getEntityType().getName().equals(type)) return entity;
     	
-    	for(Entity parent : getParentEntities(subjectKey, entity.getId())) {
-    		Entity ancestor = getAncestorWithType(subjectKey, parent, type);
+    	for(Entity parent : getParentEntities(subjectKey, entityId)) {
+    		Entity ancestor = getAncestorWithType(subjectKey, parent.getId(), type);
     		if (ancestor != null) return ancestor;
     	}
     	
     	return null;
     }
 
-    public List<List<Entity>> getEntityPathsToRoots(String subjectKey, Entity entity) throws DaoException {
+    public List<List<Entity>> getEntityPathsToRoots(String subjectKey, Long entityId) throws DaoException {
 
     	if (_logger.isDebugEnabled()) {
-    		_logger.debug("getEntityPathsToRoots(entity.getId()="+entity.getId()+")");
+    		_logger.debug("getEntityPathsToRoots(entity.getId()="+entityId+")");
     	}
     	
+    	Entity entity = getEntityById(entityId);
     	List<List<Entity>> paths = new ArrayList<List<Entity>>();
-    	Set<Entity> parents = getParentEntities(subjectKey, entity.getId());
+    	Set<Entity> parents = getParentEntities(subjectKey, entityId);
     	StringBuffer sb = new StringBuffer();
     	for(Entity parent : parents) {
     		if (sb.length()>0) sb.append(", ");
@@ -2275,7 +2323,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     	}
     	else {
         	for(Entity parent : parents) {
-        		List<List<Entity>> ancestorPaths = getEntityPathsToRoots(subjectKey, parent);
+        		List<List<Entity>> ancestorPaths = getEntityPathsToRoots(subjectKey, parent.getId());
         		for(List<Entity> ancestorPath : ancestorPaths) {
         			ancestorPath.add(entity);
         			paths.add(ancestorPath);
