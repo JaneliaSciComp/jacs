@@ -43,6 +43,11 @@ public interface EntityBeanRemote {
     
     public Entity getEntityById(String subjectKey, Long entityId) throws ComputeException;
     public List<Entity> getEntitiesById(String subjectKey, List<Long> ids) throws ComputeException;
+
+    public Set<Entity> getEntitiesByName(String subjectKey, String name) throws ComputeException;
+    public List<Entity> getEntitiesByTypeName(String subjectKey, String entityTypeName) throws ComputeException;
+    public List<Entity> getEntitiesByNameAndTypeName(String subjectKey, String entityName, String entityTypeName) throws ComputeException;
+    public List<Entity> getEntitiesWithAttributeValue(String subjectKey, String attrName, String attrValue) throws ComputeException;
     
     public Set<Entity> getUserEntitiesByName(String subjectKey, String name) throws ComputeException;
     public List<Entity> getUserEntitiesByTypeName(String subjectKey, String entityTypeName) throws ComputeException;

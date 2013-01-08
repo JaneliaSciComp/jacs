@@ -1,9 +1,6 @@
 package org.janelia.it.jacs.compute.api;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -451,7 +448,11 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     
     public List<Entity> getUserDataSets(List<String> userLoginList) throws ComputeException {
         try {
-            return _annotationDAO.getUserEntitiesByTypeName(userLoginList, EntityConstants.TYPE_DATA_SET);
+            Set<Entity> dataSets = new LinkedHashSet<Entity>();
+            for(String userLogin : userLoginList)  {
+                dataSets.addAll(_annotationDAO.getUserEntitiesByTypeName(userLogin, EntityConstants.TYPE_DATA_SET));
+            }
+            return new ArrayList<Entity>(dataSets);
         }
         catch (DaoException e) {
             final String msg = "Error getting data sets for " + userLoginList;

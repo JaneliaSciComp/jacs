@@ -185,8 +185,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         if (entity==null) {
             throw new IllegalArgumentException("Unknown entity: "+entityId);
         }
-
-        if (!EntityUtils.isOwner(entity, subjectKey)) {
+        List<String> subjectKeyList = getSubjectKeys(subjectKey);
+        if (!EntityUtils.hasWriteAccess(entity, subjectKeyList)) {
             throw new DaoException("User "+subjectKey+" does not have the right to view all permissions for "+entity.getId());
         }
         
@@ -1104,8 +1104,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             return query.list();
         }
         catch (Exception e) {
-            // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
-            throw handleException(e, "getAllEntityTypes");
+            throw new DaoException(e);
         }
     }
 
@@ -1116,46 +1115,45 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             return query.list();
         }
         catch (Exception e) {
-            // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
-            throw handleException(e, "getAllEntityAttributes");
+            throw new DaoException(e);
         }
     }
     
-    public List<Entity> getUserEntitiesByNameAndTypeName(String subjectKey, String entityName, String entityTypeName) throws DaoException {
+
+    public Collection<Entity> getEntitiesByName(String subjectKey, String entityName) throws DaoException {
         try {
-        	if (_logger.isDebugEnabled()) {
-        		_logger.debug("getUserEntitiesByNameAndTypeName(subjectKey="+subjectKey+",entityName="+entityName+",entityTypeName=entityTypeName)");
-        	}
-        	
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("getEntitiesByName(subjectKey="+subjectKey+",entityId="+entityName+")");  
+            }
+            
             StringBuilder hql = new StringBuilder();
             hql.append("select e from Entity e ");
             hql.append("left outer join fetch e.entityActorPermissions p ");
             hql.append("where e.name = :entityName ");
-            hql.append("and e.entityType.name=:entityTypeName ");
-            if (null != subjectKey) {
-            	hql.append("and (e.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
+            if (subjectKey!=null) {
+                hql.append("and (e.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
             }
             
             final Session currentSession = getCurrentSession();
             Query query = currentSession.createQuery(hql.toString());
             query.setParameter("entityName", entityName);
-            query.setParameter("entityTypeName", entityTypeName);
-            if (null != subjectKey) {
+            if (subjectKey!=null) {
                 List<String> subjectKeyList = getSubjectKeys(subjectKey);
-	            query.setParameterList("subjectKeyList", subjectKeyList);
+                query.setParameterList("subjectKeyList", subjectKeyList);
             }
             
             return filterDuplicates(query.list());
         }
         catch (Exception e) {
-            throw handleException(e, "getUserEntitiesByNameAndTypeName");
+            throw new DaoException(e);
         }
     }
+    
 
-    public List<Entity> getUserEntitiesByTypeName(List<String> subjectKeyList, String entityTypeName) throws DaoException {
+    public List<Entity> getEntitiesByTypeName(List<String> subjectKeyList, String entityTypeName) throws DaoException {
         try {
         	if (_logger.isDebugEnabled()) {
-        		_logger.debug("getUserEntitiesByTypeName(subjectKeyList="+subjectKeyList+",entityTypeName="+entityTypeName+")");
+        		_logger.debug("getEntitiesByTypeName(subjectKeyList="+subjectKeyList+",entityTypeName="+entityTypeName+")");
         	}
         	
             StringBuilder hql = new StringBuilder(256);
@@ -1180,31 +1178,161 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             return filterDuplicates(query.list());
         }
         catch (Exception e) {
-            // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
-            throw handleException(e, "getUserEntitiesByTypeName");
+            throw new DaoException(e);
         }
     }
 
+
+    public List<Entity> getEntitiesByNameAndTypeName(String subjectKey, String entityName, String entityTypeName) throws DaoException {
+        try {
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("getEntitiesByNameAndTypeName(subjectKey="+subjectKey+",entityName="+entityName+",entityTypeName=entityTypeName)");
+            }
+            
+            StringBuilder hql = new StringBuilder();
+            hql.append("select e from Entity e ");
+            hql.append("left outer join fetch e.entityActorPermissions p ");
+            hql.append("where e.name = :entityName ");
+            hql.append("and e.entityType.name=:entityTypeName ");
+            if (null != subjectKey) {
+                hql.append("and (e.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
+            }
+            
+            final Session currentSession = getCurrentSession();
+            Query query = currentSession.createQuery(hql.toString());
+            query.setParameter("entityName", entityName);
+            query.setParameter("entityTypeName", entityTypeName);
+            if (null != subjectKey) {
+                List<String> subjectKeyList = getSubjectKeys(subjectKey);
+                query.setParameterList("subjectKeyList", subjectKeyList);
+            }
+            
+            return filterDuplicates(query.list());
+        }
+        catch (Exception e) {
+            throw handleException(e, "getUserEntitiesByNameAndTypeName");
+        }
+    }
+
+    public List<Entity> getEntitiesWithAttributeValue(String subjectKey, String typeName, String attrName, String attrValue) throws DaoException {
+        try {
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("getEntitiesWithAttributeValue(subjectKey="+subjectKey+", typeName="+typeName+", attrName="+attrName+", attrValue="+attrValue+")");
+            }
+            
+            Session session = getCurrentSession();
+            StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
+            hql.append("left outer join fetch ed.parentEntity.entityActorPermissions p ");
+            hql.append("join fetch ed.parentEntity.entityType ");
+            hql.append("where ed.entityAttribute.name=:attrName and ed.value like :value ");
+            if (typeName != null) {
+                hql.append("and ed.parentEntity.entityType.name=:typeName ");
+            }
+            if (null != subjectKey) {
+                hql.append("and (ed.parentEntity.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
+            }
+            Query query = session.createQuery(hql.toString());
+            query.setString("attrName", attrName);
+            query.setString("value", attrValue);
+            if (typeName != null) {
+                query.setString("typeName", typeName);
+            }
+            if (null != subjectKey) {
+                List<String> subjectKeyList = getSubjectKeys(subjectKey);
+                query.setParameterList("subjectKeyList", subjectKeyList);
+            }
+            return filterDuplicates(query.list());
+        } catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+    
+    public List<Entity> getEntitiesWithAttributeValue(String subjectKey, String attrName, String attrValue) throws DaoException {
+        return getUserEntitiesWithAttributeValue(subjectKey, null, attrName, attrValue);
+    }
+    
+    
+
+
     public Collection<Entity> getUserEntitiesByName(String subjectKey, String entityName) throws DaoException {
         try {
-        	if (_logger.isDebugEnabled()) {
-        		_logger.debug("getUserEntitiesByName(subjectKey="+subjectKey+",entityId="+entityName+")");	
-        	}
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("getUserEntitiesByName(subjectKey="+subjectKey+",entityId="+entityName+")");  
+            }
             
             StringBuilder hql = new StringBuilder();
             hql.append("select e from Entity e ");
             hql.append("left outer join fetch e.entityActorPermissions p ");
             hql.append("where e.name = :entityName ");
             if (subjectKey!=null) {
-            	hql.append("and (e.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
+                hql.append("and e.ownerKey = :subjectKey ");
             }
             
             final Session currentSession = getCurrentSession();
             Query query = currentSession.createQuery(hql.toString());
             query.setParameter("entityName", entityName);
             if (subjectKey!=null) {
-                List<String> subjectKeyList = getSubjectKeys(subjectKey);
-            	query.setParameterList("subjectKeyList", subjectKeyList);
+                query.setParameter("subjectKey", subjectKey);
+            }
+            
+            return filterDuplicates(query.list());
+        }
+        catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+    
+    public List<Entity> getUserEntitiesByTypeName(String subjectKey, String entityTypeName) throws DaoException {
+        try {
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("getUserEntitiesByTypeName(subjectKey="+subjectKey+",entityTypeName="+entityTypeName+")");
+            }
+            
+            StringBuilder hql = new StringBuilder(256);
+
+            hql.append("select e from Entity e ");
+            hql.append("left outer join fetch e.entityActorPermissions p ");
+            hql.append("where e.entityType.name = :entityTypeName ");
+            if (subjectKey!=null) {
+                hql.append("and e.ownerKey = :subjectKey ");
+            }
+
+            final Session currentSession = getCurrentSession();
+            Query query = currentSession.createQuery(hql.toString());
+            query.setParameter("entityTypeName", entityTypeName);
+            if (subjectKey!=null) {
+                query.setParameter("subjectKey", subjectKey);
+            }
+
+            return filterDuplicates(query.list());
+        }
+        catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+
+
+    public List<Entity> getUserEntitiesByNameAndTypeName(String subjectKey, String entityName, String entityTypeName) throws DaoException {
+        try {
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("getUserEntitiesByNameAndTypeName(subjectKey="+subjectKey+",entityName="+entityName+",entityTypeName=entityTypeName)");
+            }
+            
+            StringBuilder hql = new StringBuilder();
+            hql.append("select e from Entity e ");
+            hql.append("left outer join fetch e.entityActorPermissions p ");
+            hql.append("where e.name = :entityName ");
+            hql.append("and e.entityType.name=:entityTypeName ");
+            if (null != subjectKey) {
+                hql.append("and e.ownerKey = :subjectKey ");
+            }
+            
+            final Session currentSession = getCurrentSession();
+            Query query = currentSession.createQuery(hql.toString());
+            query.setParameter("entityName", entityName);
+            query.setParameter("entityTypeName", entityTypeName);
+            if (null != subjectKey) {
+                query.setParameter("subjectKey", subjectKey);
             }
             
             return filterDuplicates(query.list());
@@ -1214,6 +1342,44 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
     }
 
+    public List<Entity> getUserEntitiesWithAttributeValue(String subjectKey, String typeName, String attrName, String attrValue) throws DaoException {
+        try {
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("getUserEntitiesWithAttributeValue(subjectKey="+subjectKey+", typeName="+typeName+", attrName="+attrName+", attrValue="+attrValue+")");
+            }
+            
+            Session session = getCurrentSession();
+            StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
+            hql.append("join fetch ed.parentEntity.entityType ");
+            hql.append("where ed.entityAttribute.name=:attrName and ed.value like :value ");
+            if (typeName != null) {
+                hql.append("and ed.parentEntity.entityType.name=:typeName ");
+            }
+            if (null != subjectKey) {
+                hql.append("and ed.parentEntity.ownerKey=:subjectKey ");
+            }
+            Query query = session.createQuery(hql.toString());
+            query.setString("attrName", attrName);
+            query.setString("value", attrValue);
+            if (typeName != null) {
+                query.setString("typeName", typeName);
+            }
+            if (null != subjectKey) {
+                query.setString("subjectKey", subjectKey);
+            }
+            return filterDuplicates(query.list());
+        } catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+    
+    public List<Entity> getUserEntitiesWithAttributeValue(String subjectKey, String attrName, String attrValue) throws DaoException {
+        return getUserEntitiesWithAttributeValue(subjectKey, null, attrName, attrValue);
+    }
+    
+    
+    
+    
     public boolean deleteEntityById(String subjectKey, Long entityId) throws DaoException {
         Session session = null;
         Transaction transaction = null;
@@ -2533,41 +2699,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 	    }
         
     	return sampleIds;
-    }
-
-    public List<Entity> getUserEntitiesWithAttributeValue(String subjectKey, String typeName, String attrName, String attrValue) throws DaoException {
-        try {
-        	if (_logger.isDebugEnabled()) {
-        		_logger.debug("getUserEntitiesWithAttributeValue(subjectKey="+subjectKey+", typeName="+typeName+", attrName="+attrName+", attrValue="+attrValue+")");
-        	}
-        	
-            Session session = getCurrentSession();
-            StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
-            hql.append("join fetch ed.parentEntity.entityType ");
-            hql.append("where ed.entityAttribute.name=:attrName and ed.value like :value ");
-            if (typeName != null) {
-            	hql.append("and ed.parentEntity.entityType.name=:typeName ");
-            }
-            if (null != subjectKey) {
-                hql.append("and ed.parentEntity.ownerKey=:subjectKey ");
-            }
-            Query query = session.createQuery(hql.toString());
-            query.setString("attrName", attrName);
-            query.setString("value", attrValue);
-            if (typeName != null) {
-                query.setString("typeName", typeName);
-            }
-            if (null != subjectKey) {
-                query.setString("subjectKey", subjectKey);
-            }
-            return filterDuplicates(query.list());
-        } catch (Exception e) {
-            throw new DaoException(e);
-        }
-    }
-    
-    public List<Entity> getUserEntitiesWithAttributeValue(String subjectKey, String attrName, String attrValue) throws DaoException {
-        return getUserEntitiesWithAttributeValue(subjectKey, null, attrName, attrValue);
     }
 
     public void loadLazyEntity(String subjectKey, Entity entity, boolean recurse) throws DaoException {

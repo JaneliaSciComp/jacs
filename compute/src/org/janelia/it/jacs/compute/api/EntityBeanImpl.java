@@ -373,9 +373,10 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         }
     }
     
-    public Set<Entity> getUserEntitiesByName(String subjectKey, String name) throws ComputeException {
+
+    public Set<Entity> getEntitiesByName(String subjectKey, String name) throws ComputeException {
         try {
-            return new HashSet<Entity>(_annotationDAO.getUserEntitiesByName(subjectKey, name));
+            return new HashSet<Entity>(_annotationDAO.getEntitiesByName(subjectKey, name));
         }
         catch (DaoException e) {
             _logger.error("Error trying to get the entities with name "+name+" for user "+subjectKey, e);
@@ -383,13 +384,19 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         }
     }
     
-    public Set<Entity> getEntitiesByName(String name) throws ComputeException {
-        return getUserEntitiesByName(null, name);
-    }
-    
-    public List<Entity> getUserEntitiesByNameAndTypeName(String subjectKey, String entityName, String entityTypeName) throws ComputeException {
+    public List<Entity> getEntitiesByTypeName(String subjectKey, String entityTypeName) throws ComputeException {
         try {
-            return _annotationDAO.getUserEntitiesByNameAndTypeName(subjectKey, entityName, entityTypeName);
+            return _annotationDAO.getEntitiesByTypeName(Arrays.asList(subjectKey), entityTypeName);
+        }
+        catch (DaoException e) {
+            _logger.error("Error trying to get the entities of type "+entityTypeName, e);
+            throw new ComputeException("Error trying to get entities",e);
+        }
+    }
+
+    public List<Entity> getEntitiesByNameAndTypeName(String subjectKey, String entityName, String entityTypeName) throws ComputeException {
+        try {
+            return _annotationDAO.getEntitiesByNameAndTypeName(subjectKey, entityName, entityTypeName);
         }
         catch (DaoException e) {
             _logger.error("Error trying to get the entities of type "+entityTypeName+" with name "+entityName+" for user "+subjectKey, e);
@@ -397,44 +404,46 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         }
     }
     
+    public List<Entity> getEntitiesWithAttributeValue(String subjectKey, String attrName, String attrValue) throws ComputeException {
+        try {
+            return _annotationDAO.getEntitiesWithAttributeValue(subjectKey, attrName, attrValue);
+        }
+        catch (DaoException e) {
+            _logger.error("Error searching for entities with "+attrName+" like "+attrValue,e);
+            throw new ComputeException("Error searching for entities with "+attrName+" like "+attrValue,e);
+        }
+    }
+    
+    
+    
+    public Set<Entity> getUserEntitiesByName(String subjectKey, String name) throws ComputeException {
+        try {
+            return new HashSet<Entity>(_annotationDAO.getUserEntitiesByName(subjectKey, name));
+        }
+        catch (DaoException e) {
+            _logger.error("Error trying to get the entities with name "+name+" owned by "+subjectKey, e);
+            throw new ComputeException("Error trying to get entities",e);
+        }
+    }
+    
     public List<Entity> getUserEntitiesByTypeName(String subjectKey, String entityTypeName) throws ComputeException {
         try {
-            return _annotationDAO.getUserEntitiesByTypeName(Arrays.asList(subjectKey), entityTypeName);
+            return _annotationDAO.getUserEntitiesByTypeName(subjectKey, entityTypeName);
         }
         catch (DaoException e) {
-            _logger.error("Error trying to get the entities of type "+entityTypeName, e);
-            throw new ComputeException("Error trying to get entities",e);
-        }
-    }
-    
-    public List<Entity> getEntitiesByTypeName(String entityTypeName) throws ComputeException {
-        try {
-            return _annotationDAO.getUserEntitiesByTypeName(null, entityTypeName);
-        }
-        catch (DaoException e) {
-            _logger.error("Error trying to get the entities of type "+entityTypeName, e);
-            throw new ComputeException("Error trying to get entities",e);
-        }
-    }
-    
-    public List<Entity> getEntitiesByNameAndTypeName(String entityName, String entityTypeName) throws ComputeException {
-        try {
-            return _annotationDAO.getUserEntitiesByNameAndTypeName(null, entityName, entityTypeName);
-        }
-        catch (DaoException e) {
-            _logger.error("Error trying to get the entities of type "+entityTypeName+" with name "+entityName, e);
+            _logger.error("Error trying to get the entities of type "+entityTypeName+" owned by "+subjectKey, e);
             throw new ComputeException("Error trying to get entities",e);
         }
     }
 
-    public List<Entity> getEntitiesWithAttributeValue(String attrName, String attrValue) throws ComputeException {
-    	try {
-    		return _annotationDAO.getUserEntitiesWithAttributeValue(null, attrName, attrValue);
-    	}
-    	catch (DaoException e) {
-            _logger.error("Error searching for entities with "+attrName+" like "+attrValue,e);
-    		throw new ComputeException("Error searching for entities with "+attrName+" like "+attrValue,e);
-    	}
+    public List<Entity> getUserEntitiesByNameAndTypeName(String subjectKey, String entityName, String entityTypeName) throws ComputeException {
+        try {
+            return _annotationDAO.getUserEntitiesByNameAndTypeName(subjectKey, entityName, entityTypeName);
+        }
+        catch (DaoException e) {
+            _logger.error("Error trying to get the entities of type "+entityTypeName+" with name "+entityName+" owned by "+subjectKey, e);
+            throw new ComputeException("Error trying to get entities",e);
+        }
     }
     
     public List<Entity> getUserEntitiesWithAttributeValue(String subjectKey, String attrName, String attrValue) throws ComputeException {
@@ -442,10 +451,31 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     		return _annotationDAO.getUserEntitiesWithAttributeValue(subjectKey, attrName, attrValue);
     	}
     	catch (DaoException e) {
-            _logger.error("Error searching for entities with "+attrName+" like "+attrValue,e);
-    		throw new ComputeException("Error searching for entities with "+attrName+" like "+attrValue,e);
+            _logger.error("Error searching for entities with "+attrName+" like "+attrValue+" owned by "+subjectKey,e);
+    		throw new ComputeException("Error searching for entities with",e);
     	}
     }
+    
+    
+    public Set<Entity> getEntitiesByName(String name) throws ComputeException {
+        return getUserEntitiesByName(null, name);
+    }
+    
+    public List<Entity> getEntitiesByTypeName(String entityTypeName) throws ComputeException {
+        return getUserEntitiesByTypeName(null, entityTypeName);
+    }
+    
+    public List<Entity> getEntitiesByNameAndTypeName(String entityName, String entityTypeName) throws ComputeException {
+        return getUserEntitiesByNameAndTypeName(null, entityName, entityTypeName);
+    }
+
+    public List<Entity> getEntitiesWithAttributeValue(String attrName, String attrValue) throws ComputeException {
+        return getUserEntitiesWithAttributeValue(null, attrName, attrValue);
+    }
+
+    
+    
+    
 
     public Entity getEntityTree(Long entityId) throws ComputeException {
     	return getEntityTree(null, entityId);
