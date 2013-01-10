@@ -88,12 +88,11 @@ public class UserVerificationInterceptor extends HandlerInterceptorAdapter {
         try {
             User user = userDAO.getUserByName(userLogin);
             if (null == user) {
-                boolean successful = computeServerBean.login(userLogin, null);
-                if (!successful) {
+                user = computeServerBean.login(userLogin, null);
+                if (null==user) {
                     // will not be able to execute any computes, so throw an exception
                     throw new IOException("Unable to login user " + userLogin);
                 }
-                user = userDAO.getUserByName(userLogin);
             }
             return user;
         }
