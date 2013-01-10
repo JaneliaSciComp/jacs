@@ -1,16 +1,15 @@
 
 package org.janelia.it.jacs.compute.access;
 
-import java.util.List;
-
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
-import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.criterion.Expression;
 import org.janelia.it.jacs.model.user_data.Group;
 import org.janelia.it.jacs.model.user_data.SubjectRelationship;
 import org.janelia.it.jacs.model.user_data.User;
+
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -24,22 +23,9 @@ public class UserDAO extends ComputeBaseDAO {
         super(logger);
     }
 
-    public String getEmailByUserName(String userName) {
-        String sql = "select email from user_accounts where user_login = '" + userName + "'";
-        Query query = getCurrentSession().createSQLQuery(sql);
-        List<String> returnList = query.list();
-
-        if (null == returnList || returnList.size() <= 0) {
-            _logger.debug("No email found for user " + userName + " - SQL: '" + sql + "'");
-            return null; // empty list
-        }
-
-        return returnList.get(0);
-    }
-
     /**
      * Method used to add new users to the system
-     * @param userLogin - login of the user in the system
+     * @param newUserName - login of the user in the system
      * @return a formatted user object, or null if there was a problem
      * @throws DaoException thrown if there was a problem adding the user to the database
      */

@@ -93,6 +93,7 @@ public class UserVerificationInterceptor extends HandlerInterceptorAdapter {
                     // will not be able to execute any computes, so throw an exception
                     throw new IOException("Unable to login user " + userLogin);
                 }
+                user = userDAO.getUserByName(userLogin);
             }
             return user;
         }

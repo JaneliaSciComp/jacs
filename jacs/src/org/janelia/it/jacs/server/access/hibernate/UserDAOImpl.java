@@ -35,7 +35,7 @@ public class UserDAOImpl extends DaoBaseImpl implements UserDAO {
         List result;
         try {
             DetachedCriteria criteria = DetachedCriteria.forClass(User.class);
-            criteria.add(Expression.eq("userLogin", requestingUser));
+            criteria.add(Expression.eq("name", requestingUser));
             result = getHibernateTemplate().findByCriteria(criteria);
             if (result.size() == 0) {
                 return null;
