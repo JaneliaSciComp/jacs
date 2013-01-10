@@ -1,15 +1,6 @@
 
 package org.janelia.it.jacs.compute.api;
 
-import java.io.IOException;
-import java.rmi.RemoteException;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-
-import javax.ejb.Remote;
-
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.tasks.Event;
@@ -28,6 +19,14 @@ import org.janelia.it.jacs.model.user_data.reversePsiBlast.ReversePsiBlastDataba
 import org.janelia.it.jacs.model.user_data.tools.GenericServiceDefinitionNode;
 import org.janelia.it.jacs.shared.utils.ControlledVocabElement;
 
+import javax.ejb.Remote;
+import java.io.IOException;
+import java.rmi.RemoteException;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Remote interface to ComputeBeanImpl
  * @author Sean Murphy
@@ -36,7 +35,7 @@ import org.janelia.it.jacs.shared.utils.ControlledVocabElement;
 public interface ComputeBeanRemote {
 
     public String getAppVersion() throws RemoteException;
-    public boolean login(String userLogin, String password) throws ComputeException;
+    public User login(String userLogin, String password) throws ComputeException;
     public void beginSession(String userLogin, String clientVersion);
     public void endSession(String userLogin);
     public Node saveOrUpdateNode(Node node) throws DaoException, RemoteException;

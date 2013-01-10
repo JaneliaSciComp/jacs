@@ -1,18 +1,6 @@
 
 package org.janelia.it.jacs.compute.api;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.*;
-
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import javax.naming.Context;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-
 import org.apache.log4j.Logger;
 import org.hibernate.Query;
 import org.hibernate.SQLQuery;
@@ -44,6 +32,17 @@ import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.MailHelper;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
+
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import javax.naming.Context;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * This class implements service calls used by remote clients of Compute server.  It also contains service
@@ -88,12 +87,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     	logger.info("End session for "+userLogin);
     }
     
-    public boolean login(String userLogin, String password) {
-    	
-    	// Extremely temporary hack
-    	if (userLogin.startsWith("admin-") && "makeitso".equals(password)) {
-    		return true;
-    	}
+    public User login(String userLogin, String password) {
     	
     	if (userLogin.startsWith("user:")) {
     		userLogin = userLogin.substring(5);
@@ -129,14 +123,14 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
                 if (!successful) {
                     // will not be able to execute any computes, so throw an exception
                     logger.error("Unable to create directory and/or account for user " + userLogin);
-                    return false;
+                    return null;
                 }
             }
-            return true;
+            return getUserByNameOrKey(userLogin);
         }
         catch (Exception e) {
             logger.error("There was a problem logging in the user "+userLogin+"\n"+e.getMessage());
-            return false;
+            return null;
         }
     }
 
