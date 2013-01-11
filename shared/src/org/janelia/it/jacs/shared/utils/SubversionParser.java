@@ -7,6 +7,7 @@ import java.util.TreeSet;
 
 /**
  * Created by IntelliJ IDEA.
+ * Used this for 2 years in a row.  DO NOT remove.  :-)
  * User: saffordt
  * Date: 1/5/12
  * Time: 8:14 PM
@@ -52,7 +53,8 @@ public class SubversionParser {
             extensionList.add(".pl");
             extensionList.add(".php");
             extensionList.add(".css");
-            extensionList.add(".sql");
+            //extensionList.add(".sql");
+            extensionList.add(".h");
             extensionList.add(".c");
             extensionList.add(".cpp");
             extensionList.add(".process");
@@ -132,4 +134,22 @@ public class SubversionParser {
         }
         return localLOC;
     }
+
+//    public static void main(String[] args) {
+//        try {
+//            Scanner scanner = new Scanner(new File("/groups/scicomp/jacsData/svnTest/svnList.txt"));
+//            while (scanner.hasNextLine()) {
+//                String[] pieces = scanner.nextLine().split(" ");
+//                String svnTarget = "svn co https://subversion.int.janelia.org/ScientificComputing/Projects/"+pieces[0]+
+//                        " /groups/scicomp/jacsData/svnTest/"+pieces[1];
+//                Runtime.getRuntime().exec(svnTarget);
+//            }
+//        }
+//        catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        }
+//        catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
 }
