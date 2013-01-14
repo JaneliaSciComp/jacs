@@ -16,7 +16,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/MongoDB"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Spring3"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Spring"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/GWT"/>
 	<classpathentry kind="lib" path="lib/JGoogleAnalytics_0.4.jar"/>
 	<classpathentry kind="lib" path="lib/resteasy-2.3.4/activation-1.1.jar"/>
 	<classpathentry kind="lib" path="lib/resteasy-2.3.4/commons-codec-1.4.jar"/>
@@ -36,5 +35,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Guava"/>
 	<classpathentry kind="lib" path="lib/slf4j-api-1.6.4.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-log4j12-1.6.4.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/GWT Serializable"/>
 	<classpathentry kind="output" path="build/eclipse"/>
 </classpath>

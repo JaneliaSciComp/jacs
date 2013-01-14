@@ -35,7 +35,6 @@
 	<!-- props in the generic set-common-properties -->
 	<target name="set-common-properties" depends="build-module-init.set-common-properties">
         <property name="model.module" value="${basedir}/../model" />
-        <property name="gwt.home" value="${basedir}/../common/GWT/" />
         <property name="jar.name" value="jacs-shared.jar"/>
         <property name="build.unzipped.dir" value="${build.jars.dir}/unzipped"/>
         <property name="grid.jar.name" value="jacs-grid.jar"/>
@@ -48,7 +47,7 @@
             <!-- Add additional jars (i.e. not found in ${lib.dir}) that we require for compiling src -->
             <fileset dir="${basedir}/lib/" includes="**/*.jar"/>
             <fileset dir="${model.module}/build/jars" includes="jacs-model.jar"/>
-            <fileset dir="${gwt.home}" includes="**/*.jar" />
+            <fileset dir="${basedir}/../common/GWT-Serializable/" includes="**/*.jar" />
             <pathelement location="${common.module}/JBoss-Server-4.2.3.GA/log4j.jar"/>
             <pathelement location="${common.module}/JBoss-Server-4.2.3.GA/mail.jar"/>
             <pathelement location="${common.module}/Lucene-2.3.1/lucene-core-2.3.1.jar"/>
@@ -65,7 +64,6 @@
             <!-- <fileset file="${shared.module}/test/applicationContext-test.xml"/> -->
             <!-- pathelement location="${shared.module}/test/"/ -->
             <!--<fileset dir="${shared.module}/testfiles/" includes="**/*.*"/>-->
-            <fileset file="${common.module}/GWT/gwt-user.jar"/>
             <fileset dir="${common.module}/Hibernate-3.2/" includes="*.jar"/>
             <fileset file="${common.module}/MySQL/mysql-connector-java-5.1.15-bin.jar"/>
             <!--<fileset file="${common.module}/PostgreSQL-8.1/jdbc/postgresql-8.1-404.jdbc3.jar"/>-->
@@ -127,7 +125,6 @@
         <mkdir dir="${build.unzipped.dir}" />
         <unjar src="${common.dir}/Lucene-2.3.1/lucene-core-2.3.1.jar" dest="${build.unzipped.dir}" overwrite="true"/>
         <unjar src="${common.dir}/Spring/log4j-1.2.14.jar" dest="${build.unzipped.dir}" overwrite="true"/>
-        <unjar src="${common.dir}/GWT/gwt-user.jar" dest="${build.unzipped.dir}" overwrite="true"/>
         <unjar src="${common.dir}/JAXB-2.1.5/jaxb-api.jar" dest="${build.unzipped.dir}" overwrite="true"/>
         <unjar src="${common.dir}/JAXB-2.1.5/jaxb1-impl.jar" dest="${build.unzipped.dir}" overwrite="true"/>
         <!-- jaxb-impl.jar must be after jaxb1-impl.jar as it contains more center classes-->
@@ -177,7 +174,6 @@
         <!-- unjar dependencies -->
         <mkdir dir="${build.unzipped.dir}" />
         <unjar src="${common.dir}/Spring/log4j-1.2.14.jar" dest="${build.unzipped.dir}" overwrite="true"/>
-        <!--<unjar src="${common.dir}/GWT/gwt-user.jar" dest="${build.unzipped.dir}" overwrite="true"/>-->
         <unjar src="${common.dir}/Hibernate-3.2/hibernate3.jar" dest="${build.unzipped.dir}" overwrite="true"/>
         <unjar src="${model.module}/build/jars/jacs-model.jar" dest="${build.unzipped.dir}" overwrite="true"/>
         <copy file="/conf/jacs.properties" todir="${build.unzipped.dir}" overwrite="true" />

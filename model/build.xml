@@ -30,11 +30,10 @@
     <!-- props in the generic set-common-properties -->
     <target name="set-common-properties" depends="build-module-init.set-common-properties">
         <property name="jar.name" value="jacs-model.jar"/>
-        <property name="gwt.home" value="${basedir}/../common/GWT/"/>
 
         <!-- Add additional jars (i.e. not found in ${lib.dir}) that we require for compiling src -->
         <path id="compile.classpath.additional">
-            <fileset dir="${gwt.home}" includes="**/*.jar"/>
+            <fileset dir="${basedir}/../common/GWT-Serializable/" includes="**/*.jar"/>
             <fileset dir="${common.dir}/Spring" includes="hibernate3.jar"/>
             <fileset dir="${common.dir}/Spring" includes="log4j-1.2.14.jar"/>
         </path>

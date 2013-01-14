@@ -2,7 +2,6 @@
 package org.janelia.it.jacs.compute.service.common;
 
 import org.apache.log4j.Logger;
-import org.apache.tools.ant.taskdefs.Parallel;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
