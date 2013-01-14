@@ -9,16 +9,6 @@
         <deploymentDescriptor name="hibernate.cfg.xml" url="file://$MODULE_DIR$/scripts/dma/hibernate.cfg.xml" />
       </configuration>
     </facet>
-    <facet type="gwt" name="GWT">
-      <configuration>
-        <setting name="compilerMaxHeapSize" value="128" />
-        <setting name="gwtScriptOutputStyle" value="OBF" />
-        <setting name="gwtSdkUrl" value="file://" />
-        <packaging>
-          <module name="org.jcvi.vics.Shared" path="/org.jcvi.vics.Shared" />
-        </packaging>
-      </configuration>
-    </facet>
     <facet type="Spring" name="Spring">
       <configuration />
     </facet>
@@ -44,7 +34,6 @@
     </orderEntry>
     <orderEntry type="module" module-name="Model" />
     <orderEntry type="library" name="JUnit" level="project" />
-    <orderEntry type="library" name="GWT" level="project" />
     <orderEntry type="library" name="Lucene" level="project" />
     <orderEntry type="library" name="Hibernate" level="project" />
     <orderEntry type="library" name="Apache Commons" level="project" />
