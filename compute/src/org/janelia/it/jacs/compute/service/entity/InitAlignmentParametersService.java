@@ -35,6 +35,10 @@ public class InitAlignmentParametersService extends AbstractEntityService {
         	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.WholeBrain40xAlignmentService");
         	processData.putItem("ALIGNMENT_RESULT_NAME", "Whole Brain 40x Alignment");
 		}
+		else if (AlignmentAlgorithm.WHOLE_40X_IMPROVED == aa) {
+            processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.WholeBrain40xImprovedAlignmentService");
+            processData.putItem("ALIGNMENT_RESULT_NAME", "Whole Brain 40x Alignment");
+        }
 		else if (AlignmentAlgorithm.WHOLE_63X == aa) {
         	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.WholeBrain63xAlignmentService");
         	processData.putItem("ALIGNMENT_RESULT_NAME", "Whole Brain 63x Alignment");

@@ -610,7 +610,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     }
 
 	protected String getChanSpec(int numSignals) {
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		for(int j=0; j<numSignals; j++) {
 			buf.append("s");
 		}
