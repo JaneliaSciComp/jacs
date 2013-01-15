@@ -21,6 +21,6 @@ public class SimpleAnnotation extends KeyValuePair {
 	}
 
 	public String getOwner() {
-		return owner;
+		return owner.contains(":") ? owner.split(":")[1] : owner;
 	}
 }

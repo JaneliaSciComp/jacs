@@ -420,7 +420,7 @@ public class SolrDAO extends AnnotationDAO {
 		}
 		
     	if (annotations != null) {
-    		for(SimpleAnnotation annotation : annotations) {
+    		for(SimpleAnnotation annotation : annotations) {        
     			doc.addField(annotation.getOwner()+"_annotations", annotation.getTag(), 1.0f);
 //    			if (annotation.getValue()!=null) {
 //    				doc.addField(annotation.getOwner()+"_"+SolrUtils.getFormattedName(annotation.getKey())+"_annot", annotation.getValue(), 1.0f);

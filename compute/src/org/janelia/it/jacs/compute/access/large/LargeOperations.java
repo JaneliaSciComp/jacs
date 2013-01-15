@@ -87,17 +87,16 @@ public class LargeOperations {
 	        conn = annotationDAO.getJdbcConnection();
 	        
 	        StringBuffer sql = new StringBuffer();
-	        sql.append("select a.id, a.name, aedt.value, aedk.value, aedv.value, u.user_login ");
+	        sql.append("select a.id, a.name, aedt.value, aedk.value, aedv.value, a.owner_key ");
 	        sql.append("from entity a ");
 	        sql.append("left outer join entityData aedt on a.id=aedt.parent_entity_id ");
 	        sql.append("left outer join entityData aedk on a.id=aedk.parent_entity_id ");
 	        sql.append("left outer join entityData aedv on a.id=aedv.parent_entity_id ");
-	        sql.append("left outer join user_accounts u on a.user_id=u.user_id ");
 	        sql.append("where a.entity_type_id = ? ");
 	        sql.append("and aedt.entity_att_id = ? ");
 	        sql.append("and aedk.entity_att_id = ? ");
 	        sql.append("and aedv.entity_att_id = ? ");
-	        sql.append("order by u.user_login, aedt.value");
+	        sql.append("order by a.owner_key, aedt.value");
 
 	        EntityType annotationType = annotationDAO.getEntityTypeByName(EntityConstants.TYPE_ANNOTATION);
 	        EntityAttribute targetAttr = annotationDAO.getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
