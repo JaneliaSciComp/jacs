@@ -50,7 +50,7 @@ public class CreateSampleResultFileNodeService implements IService {
             processData.putItem("GROUP_RESULT_FILE_NODE", createChildFileNode("group"));
             processData.putItem("STITCH_RESULT_FILE_NODE", createChildFileNode("stitch"));
             
-            logger.info("Created separation result node: "+resultFileNode.getDirectoryPath());
+            logger.info("Created sample result node: "+resultFileNode.getDirectoryPath());
         }
         catch (Exception e) {
             throw new CreateRecruitmentFileNodeException(e);

@@ -7,5 +7,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Apache Commons"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/GWT Serializable"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JBoss"/>
 	<classpathentry kind="output" path="build/eclipse"/>
 </classpath>
