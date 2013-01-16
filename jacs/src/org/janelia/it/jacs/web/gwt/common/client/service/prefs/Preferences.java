@@ -61,7 +61,7 @@ public class Preferences {
      * none is found on the server, a UserPreference with the default value is returned.
      */
     public static void getSubjectPreference(final String prefName, final String category, final String defaultValue, final PreferenceRetrievedCallback callback) {
-        _preferenceService.getUserPreference(prefName, category, new AsyncCallback() {
+        _preferenceService.getSubjectPreference(prefName, category, new AsyncCallback() {
             public void onFailure(Throwable throwable) {
                 _logger.error("---------------Error retrieving preference " + category + "/" + prefName, throwable);
                 callback.onPreferenceRetrieved(new SubjectPreference(prefName, category, defaultValue));
