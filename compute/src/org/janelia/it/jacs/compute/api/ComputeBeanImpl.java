@@ -137,17 +137,18 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         Subject subject = computeDAO.getSubjectByNameOrKey(name);
         if (subject==null) return null;
         // Eager load relationships
-        logger.info("Eager loading relationships for "+subject.getKey());
         if (subject instanceof User) {
             User user = ((User) subject);
             for(SubjectRelationship relation : user.getGroupRelationships()) {
-                logger.info("  "+relation.getUser().getKey()+" is "+relation.getRelationshipType()+" of "+relation.getGroup().getKey());
+                relation.getUser().getKey();
+                relation.getGroup().getKey();
             }
         }
         else if (subject instanceof Group) {
             Group group = ((Group) subject);
             for(SubjectRelationship relation : group.getUserRelationships()) {
-                logger.info("  "+relation.getUser().getKey()+" is "+relation.getRelationshipType()+" of "+relation.getGroup().getKey());
+                relation.getUser().getKey();
+                relation.getGroup().getKey();
             }
         }
         return subject;

@@ -1,13 +1,10 @@
 
 package org.janelia.it.jacs.web.gwt.common.client.panel;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.rpc.ServiceDefTarget;
-import com.google.gwt.user.client.ui.SuggestBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
+import java.util.HashSet;
+
 import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.user_data.prefs.UserPreference;
+import org.janelia.it.jacs.model.user_data.prefs.SubjectPreference;
 import org.janelia.it.jacs.web.gwt.common.client.service.DataService;
 import org.janelia.it.jacs.web.gwt.common.client.service.DataServiceAsync;
 import org.janelia.it.jacs.web.gwt.common.client.service.log.Logger;
@@ -19,7 +16,11 @@ import org.janelia.it.jacs.web.gwt.common.client.util.BlastData;
 import org.janelia.it.jacs.web.gwt.common.client.util.StringUtils;
 import org.janelia.it.jacs.web.gwt.common.client.util.SystemProps;
 
-import java.util.HashSet;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.rpc.ServiceDefTarget;
+import com.google.gwt.user.client.ui.SuggestBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 /**
  * User: aresnick
@@ -47,7 +48,7 @@ public class ProjectCodePanel extends VerticalPanel {
 
     public String getProjectCode() {
         // if someone is asking, then save the value as a preference
-        Preferences.setUserPreference(new UserPreference("grantCode", "tasks", _projectCodeSuggestBox.getText().trim()));
+        Preferences.setSubjectPreference(new SubjectPreference("grantCode", "tasks", _projectCodeSuggestBox.getText().trim()));
         return _projectCodeSuggestBox.getText().trim();
     }
 
@@ -57,14 +58,14 @@ public class ProjectCodePanel extends VerticalPanel {
 
     public ProjectCodePanel() {
         super();
-        UserPreference prefProjectCode = Preferences.getUserPreference("grantCode", "tasks", null);
+        SubjectPreference prefProjectCode = Preferences.getSubjectPreference("grantCode", "tasks", null);
         _userCodePref = prefProjectCode.getValue();
         init(prefProjectCode.getValue());
     }
 
     public ProjectCodePanel(BlastData _blastData) {
         super();
-        UserPreference prefProjectCode = Preferences.getUserPreference("grantCode", "tasks", null);
+        SubjectPreference prefProjectCode = Preferences.getSubjectPreference("grantCode", "tasks", null);
         _userCodePref = prefProjectCode.getValue();
         String tmpCode = getProjectCodeWidgetText(_blastData);
         if (null==tmpCode || "".equals(tmpCode)){

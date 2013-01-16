@@ -3,7 +3,7 @@ package org.janelia.it.jacs.web.gwt.common.server.prefs;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.user_data.User;
-import org.janelia.it.jacs.model.user_data.prefs.UserPreference;
+import org.janelia.it.jacs.model.user_data.prefs.SubjectPreference;
 import org.janelia.it.jacs.server.access.PreferenceDAO;
 import org.janelia.it.jacs.server.access.hibernate.DaoException;
 import org.janelia.it.jacs.web.gwt.common.client.service.prefs.PreferenceService;
@@ -31,11 +31,11 @@ public class PreferenceServiceImpl extends JcviGWTSpringController implements Pr
         _preferenceDAO = preferenceDAO;
     }
 
-    public UserPreference getUserPreference(String name, String category) {
+    public SubjectPreference getSubjectPreference(String name, String category) {
         return JacsSecurityUtils.getSessionUser(getThreadLocalRequest()).getPreference(category, name);
     }
 
-    public void setUserPreference(UserPreference pref) {
+    public void setSubjectPreference(SubjectPreference pref) {
         // Update User cache and push to database
         User user = JacsSecurityUtils.getSessionUser(getThreadLocalRequest());
         try {

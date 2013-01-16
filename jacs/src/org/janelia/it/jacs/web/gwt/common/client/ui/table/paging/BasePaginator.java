@@ -4,7 +4,7 @@ package org.janelia.it.jacs.web.gwt.common.client.ui.table.paging;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.ui.Widget;
-import org.janelia.it.jacs.model.user_data.prefs.UserPreference;
+import org.janelia.it.jacs.model.user_data.prefs.SubjectPreference;
 import org.janelia.it.jacs.web.gwt.common.client.service.log.Logger;
 import org.janelia.it.jacs.web.gwt.common.client.service.prefs.Preferences;
 import org.janelia.it.jacs.web.gwt.common.client.ui.LoadingLabel;
@@ -111,7 +111,7 @@ abstract public class BasePaginator implements Paginator {
         // Paginator. Before we use the value in the method call, we first check to see what the user
         // preference for this paginator is and use that instead, assuming that this first call is
         // triggered by the init code rather than the user.
-        UserPreference rowsPerPagePreference = Preferences.getUserPreference(rowsPerPagePreferenceKey, ROWS_PER_PAGE_CATEGORY);
+        SubjectPreference rowsPerPagePreference = Preferences.getSubjectPreference(rowsPerPagePreferenceKey, ROWS_PER_PAGE_CATEGORY);
         if (rowsPerPagePreference != null) {
             // User has previously set the preference
             logger.debug("Value for key=" + rowsPerPagePreferenceKey + " is=" + rowsPerPagePreference.getValue());
@@ -145,9 +145,9 @@ abstract public class BasePaginator implements Paginator {
             // the UserPreference in addition to setting it.
             if (rowsPerPage != this.rowsPerPage) {
                 logger.debug("New value for rowsPerPage=" + rowsPerPage + " does not match previous=" + this.rowsPerPage + " so setting pref");
-                UserPreference rowsPerPagePreference = new UserPreference(rowsPerPagePreferenceKey, ROWS_PER_PAGE_CATEGORY,
+                SubjectPreference rowsPerPagePreference = new SubjectPreference(rowsPerPagePreferenceKey, ROWS_PER_PAGE_CATEGORY,
                         Integer.toString(rowsPerPage));
-                Preferences.setUserPreference(rowsPerPagePreference);
+                Preferences.setSubjectPreference(rowsPerPagePreference);
             }
             else {
                 logger.debug("current and previous rowsPerPage match=" + rowsPerPage + " therefore doing nothing");

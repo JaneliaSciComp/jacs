@@ -1,12 +1,11 @@
 
 package org.janelia.it.jacs.web.gwt.download.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.rpc.ServiceDefTarget;
-import com.google.gwt.user.client.ui.*;
+import java.util.*;
+
 import org.gwtwidgets.client.util.Location;
 import org.gwtwidgets.client.util.WindowUtils;
-import org.janelia.it.jacs.model.user_data.prefs.UserPreference;
+import org.janelia.it.jacs.model.user_data.prefs.SubjectPreference;
 import org.janelia.it.jacs.web.gwt.common.client.BaseEntryPoint;
 import org.janelia.it.jacs.web.gwt.common.client.Constants;
 import org.janelia.it.jacs.web.gwt.common.client.SystemWebTracker;
@@ -29,7 +28,9 @@ import org.janelia.it.jacs.web.gwt.download.client.project.ProjectSelectedInTabl
 import org.janelia.it.jacs.web.gwt.download.client.project.ProjectSelectionCancelledListener;
 import org.janelia.it.jacs.web.gwt.download.client.project.SelectProjectPanel;
 
-import java.util.*;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.rpc.ServiceDefTarget;
+import com.google.gwt.user.client.ui.*;
 
 /**
  * Entry point for downloading publications and their data from the JaCS website.
@@ -122,7 +123,7 @@ public class DownloadByPubPage extends BaseEntryPoint {
         String projectSymbol = location.getParameter("projectSymbol");
         String publicationAccessionNo = location.getParameter("publicationAccessionNo");
         if (projectSymbol == null && publicationAccessionNo == null && projects.size() > 0) {
-            UserPreference pref = Preferences.getUserPreference(LAST_PUB_PROJECT_PREF, LAST_PUB_PROJECT_PREF_CATEGORY);
+            SubjectPreference pref = Preferences.getSubjectPreference(LAST_PUB_PROJECT_PREF, LAST_PUB_PROJECT_PREF_CATEGORY);
             if (pref != null) {
                 _logger.info("Using publication project " + projectSymbol + " from preference");
                 projectSymbol = pref.getValue();
@@ -172,7 +173,7 @@ public class DownloadByPubPage extends BaseEntryPoint {
     }
 
     private void setCurrentProject(Project project) {
-        Preferences.setUserPreference(new UserPreference(LAST_PUB_PROJECT_PREF, LAST_PUB_PROJECT_PREF_CATEGORY, project.getProjectSymbol()));
+        Preferences.setSubjectPreference(new SubjectPreference(LAST_PUB_PROJECT_PREF, LAST_PUB_PROJECT_PREF_CATEGORY, project.getProjectSymbol()));
         _projectPulldownPopup.setText(project.getProjectName());
         _currentProject = project;
     }

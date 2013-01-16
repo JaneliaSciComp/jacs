@@ -1,13 +1,14 @@
 
 package org.janelia.it.jacs.web.gwt.prokAnnot.client.popup;
 
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.*;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.prokAnnotation.ProkaryoticAnnotationBulkTask;
 import org.janelia.it.jacs.model.tasks.prokAnnotation.ProkaryoticAnnotationLoadGenomeDataTask;
 import org.janelia.it.jacs.model.tasks.prokAnnotation.ProkaryoticAnnotationTask;
-import org.janelia.it.jacs.model.user_data.prefs.UserPreference;
+import org.janelia.it.jacs.model.user_data.prefs.SubjectPreference;
 import org.janelia.it.jacs.web.gwt.common.client.jobs.JobSubmissionListener;
 import org.janelia.it.jacs.web.gwt.common.client.panel.CenteredWidgetHorizontalPanel;
 import org.janelia.it.jacs.web.gwt.common.client.panel.FileChooserPanel;
@@ -27,8 +28,8 @@ import org.janelia.it.jacs.web.gwt.common.client.util.SystemProps;
 import org.janelia.it.jacs.web.gwt.prokAnnot.client.panel.GipConfigurationPanel;
 import org.janelia.it.jacs.web.gwt.prokAnnot.client.panel.SybaseInfoPanel;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -595,7 +596,7 @@ public class ProkAnnotationPopup extends ModalPopupPanel {
         }
         else {
             currentTask.setParameter(ProkaryoticAnnotationLoadGenomeDataTask.PARAM_username, _sybaseInfoPanel.getUsername());
-            Preferences.setUserPreference(new UserPreference("sbLogin", "ProkPipeline", _sybaseInfoPanel.getUsername()));
+            Preferences.setSubjectPreference(new SubjectPreference("sbLogin", "ProkPipeline", _sybaseInfoPanel.getUsername()));
         }
 
         //validate project code
@@ -619,7 +620,7 @@ public class ProkAnnotationPopup extends ModalPopupPanel {
         }
         else {
             currentTask.setParameter(ProkaryoticAnnotationLoadGenomeDataTask.PARAM_sybasePassword, _sybaseInfoPanel.getSybasePassword());
-            Preferences.setUserPreference(new UserPreference("sbPass", "ProkPipeline", _sybaseInfoPanel.getSybasePassword()));
+            Preferences.setSubjectPreference(new SubjectPreference("sbPass", "ProkPipeline", _sybaseInfoPanel.getSybasePassword()));
         }
 
         // If gip configuration was required, mark it in the task

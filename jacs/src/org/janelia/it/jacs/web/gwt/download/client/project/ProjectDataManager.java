@@ -1,23 +1,24 @@
 
 package org.janelia.it.jacs.web.gwt.download.client.project;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.rpc.IsSerializable;
-import com.google.gwt.user.client.rpc.ServiceDefTarget;
-import org.janelia.it.jacs.model.user_data.prefs.UserPreference;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.janelia.it.jacs.model.user_data.prefs.SubjectPreference;
 import org.janelia.it.jacs.web.gwt.common.client.service.prefs.Preferences;
 import org.janelia.it.jacs.web.gwt.common.client.ui.table.paging.DataRetrievedListener;
 import org.janelia.it.jacs.web.gwt.download.client.DownloadMetaDataService;
 import org.janelia.it.jacs.web.gwt.download.client.DownloadMetaDataServiceAsync;
 import org.janelia.it.jacs.web.gwt.download.client.model.Project;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.rpc.IsSerializable;
+import com.google.gwt.user.client.rpc.ServiceDefTarget;
 
 /**
  * @author Michael Press
@@ -48,7 +49,7 @@ public class ProjectDataManager implements IsSerializable, Serializable {
 
     public void setCurrentProject(Project project) {
         _currentProject = project;
-        Preferences.setUserPreference(new UserPreference(LAST_PROJECT_PREF, LAST_PROJECT_PREF_CATEGORY, project.getProjectSymbol()));
+        Preferences.setSubjectPreference(new SubjectPreference(LAST_PROJECT_PREF, LAST_PROJECT_PREF_CATEGORY, project.getProjectSymbol()));
     }
 
     public void setCurrentProject(ProjectInTable projectInTable) {

@@ -1,14 +1,10 @@
 
 package org.janelia.it.jacs.web.gwt.status.client.panel;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.rpc.ServiceDefTarget;
-import com.google.gwt.user.client.ui.ClickListener;
-import com.google.gwt.user.client.ui.FlexTable;
-import com.google.gwt.user.client.ui.HTMLTable;
-import com.google.gwt.user.client.ui.Widget;
+import java.util.Map;
+
 import org.janelia.it.jacs.model.tasks.export.FileNodeExportTask;
-import org.janelia.it.jacs.model.user_data.prefs.UserPreference;
+import org.janelia.it.jacs.model.user_data.prefs.SubjectPreference;
 import org.janelia.it.jacs.shared.export.ExportWriterConstants;
 import org.janelia.it.jacs.shared.tasks.BlastJobInfo;
 import org.janelia.it.jacs.web.gwt.common.client.jobs.AsyncExportTaskController;
@@ -29,7 +25,12 @@ import org.janelia.it.jacs.web.gwt.common.client.ui.table.comparables.FulltextPo
 import org.janelia.it.jacs.web.gwt.common.client.util.TableUtils;
 import org.janelia.it.jacs.web.gwt.status.client.StatusConstants;
 
-import java.util.Map;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.rpc.ServiceDefTarget;
+import com.google.gwt.user.client.ui.ClickListener;
+import com.google.gwt.user.client.ui.FlexTable;
+import com.google.gwt.user.client.ui.HTMLTable;
+import com.google.gwt.user.client.ui.Widget;
 
 /**
  * @author Michael Press
@@ -56,21 +57,21 @@ public class JobSummaryPanel extends TitledBox {
         super.init();
 
         // Get the preference for whether the Job Summary panel should be open or closed (open by default); if pref is to hide, then hide it
-        UserPreference state = Preferences.getUserPreference(StatusConstants.JOB_SUMMARY_STATE_PREF, StatusConstants.STATUS_PREF_CATEGORY, StatusConstants.SHOW);
+        SubjectPreference state = Preferences.getSubjectPreference(StatusConstants.JOB_SUMMARY_STATE_PREF, StatusConstants.STATUS_PREF_CATEGORY, StatusConstants.SHOW);
         if (StatusConstants.HIDE.equals(state.getValue()))
             hideContent();
 
         // When the user hides or shows the panel, update the preference for next time
         getHideShowActionLink().addPrimaryStateChangeListener(new StateChangeListener() {
             public void onStateChange() {
-                Preferences.setUserPreference(
-                        new UserPreference(StatusConstants.JOB_SUMMARY_STATE_PREF, StatusConstants.STATUS_PREF_CATEGORY, StatusConstants.SHOW));
+                Preferences.setSubjectPreference(
+                        new SubjectPreference(StatusConstants.JOB_SUMMARY_STATE_PREF, StatusConstants.STATUS_PREF_CATEGORY, StatusConstants.SHOW));
             }
         });
         getHideShowActionLink().addSecondaryStateChangeListener(new StateChangeListener() {
             public void onStateChange() {
-                Preferences.setUserPreference(
-                        new UserPreference(StatusConstants.JOB_SUMMARY_STATE_PREF, StatusConstants.STATUS_PREF_CATEGORY, StatusConstants.HIDE));
+                Preferences.setSubjectPreference(
+                        new SubjectPreference(StatusConstants.JOB_SUMMARY_STATE_PREF, StatusConstants.STATUS_PREF_CATEGORY, StatusConstants.HIDE));
             }
         });
     }

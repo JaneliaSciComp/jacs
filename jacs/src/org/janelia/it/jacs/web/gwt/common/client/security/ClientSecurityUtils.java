@@ -1,7 +1,7 @@
 
 package org.janelia.it.jacs.web.gwt.common.client.security;
 
-import org.janelia.it.jacs.model.user_data.prefs.UserPreference;
+import org.janelia.it.jacs.model.user_data.prefs.SubjectPreference;
 import org.janelia.it.jacs.web.gwt.common.client.service.prefs.Preferences;
 
 /**
@@ -16,12 +16,12 @@ public class ClientSecurityUtils {
      *         included), true if the user is logged in, false if user is not logged in.
      */
     public static boolean isAuthenticated() {
-        UserPreference userPreference = Preferences.getUserPreference("isAuthenticated", "security", /* default */ "false");
+        SubjectPreference userPreference = Preferences.getSubjectPreference("isAuthenticated", "security", /* default */ "false");
         return userPreference.getValue().equals("true");
     }
 
     public static boolean isAdmin() {
-        UserPreference userPreference = Preferences.getUserPreference("isAdmin", "security", /* default */ "false");
+        SubjectPreference userPreference = Preferences.getSubjectPreference("isAdmin", "security", /* default */ "false");
         return userPreference.getValue().equals("true");
     }
 }

@@ -1,17 +1,19 @@
 
 package org.janelia.it.jacs.web.control;
 
+import java.io.IOException;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.server.access.UserDAO;
 import org.janelia.it.jacs.web.security.JacsSecurityUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -88,8 +90,8 @@ public class UserVerificationInterceptor extends HandlerInterceptorAdapter {
         try {
             User user = userDAO.getUserByName(userLogin);
             if (null == user) {
-                user = computeServerBean.login(userLogin, null);
-                if (null==user) {
+                Subject subject = computeServerBean.login(userLogin, null);
+                if (subject==null) {
                     // will not be able to execute any computes, so throw an exception
                     throw new IOException("Unable to login user " + userLogin);
                 }

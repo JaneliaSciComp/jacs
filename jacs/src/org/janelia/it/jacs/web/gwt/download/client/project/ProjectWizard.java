@@ -1,14 +1,15 @@
 
 package org.janelia.it.jacs.web.gwt.download.client.project;
 
-import com.google.gwt.user.client.ui.ClickListener;
-import com.google.gwt.user.client.ui.Widget;
-import org.janelia.it.jacs.model.user_data.prefs.UserPreference;
+import org.janelia.it.jacs.model.user_data.prefs.SubjectPreference;
 import org.janelia.it.jacs.web.gwt.common.client.Constants;
 import org.janelia.it.jacs.web.gwt.common.client.service.log.Logger;
 import org.janelia.it.jacs.web.gwt.common.client.service.prefs.Preferences;
 import org.janelia.it.jacs.web.gwt.common.client.util.UrlBuilder;
 import org.janelia.it.jacs.web.gwt.download.client.model.Project;
+
+import com.google.gwt.user.client.ui.ClickListener;
+import com.google.gwt.user.client.ui.Widget;
 
 public class ProjectWizard extends ProjectsWizardController {
     private static Logger _logger = Logger.getLogger("");
@@ -104,7 +105,7 @@ public class ProjectWizard extends ProjectsWizardController {
             startPage = VIEW_PROJECT_PAGE;
         else {
             // See if a (synchronous) preference has the last-viewed project
-            UserPreference pref = Preferences.getUserPreference(ProjectDataManager.LAST_PROJECT_PREF, ProjectDataManager.LAST_PROJECT_PREF_CATEGORY);
+            SubjectPreference pref = Preferences.getSubjectPreference(ProjectDataManager.LAST_PROJECT_PREF, ProjectDataManager.LAST_PROJECT_PREF_CATEGORY);
             if (pref != null) {
                 getDataManager().setInitialProjectSymbol(pref.getValue());
                 startPage = VIEW_PROJECT_PAGE;

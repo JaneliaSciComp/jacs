@@ -3,7 +3,7 @@ package org.janelia.it.jacs.server.access.hibernate;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.user_data.User;
-import org.janelia.it.jacs.model.user_data.prefs.UserPreference;
+import org.janelia.it.jacs.model.user_data.prefs.SubjectPreference;
 import org.janelia.it.jacs.server.access.PreferenceDAO;
 import org.janelia.it.jacs.server.access.UserDAO;
 
@@ -18,9 +18,9 @@ public class PreferenceDAOImpl extends DaoBaseImpl implements PreferenceDAO {
     private PreferenceDAOImpl() {
     }
 
-    public void storePreferencesForUser(String userLogin, UserPreference pref) throws DaoException {
+    public void storePreferencesForUser(String userLogin, SubjectPreference pref) throws DaoException {
         User user = userDao.getUserByName(userLogin);
-        UserPreference oldPref = user.getPreference(pref.getCategory(), pref.getName());
+        SubjectPreference oldPref = user.getPreference(pref.getCategory(), pref.getName());
         // If prefs are equal, do nothing
         if (null == oldPref || !pref.equals(oldPref)) {
             logger.debug("Saving pref for " + userLogin + ": " + pref.getName());

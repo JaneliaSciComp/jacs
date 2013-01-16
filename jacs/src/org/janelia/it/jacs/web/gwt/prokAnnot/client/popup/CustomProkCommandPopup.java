@@ -1,14 +1,12 @@
 
 package org.janelia.it.jacs.web.gwt.prokAnnot.client.popup;
 
-import com.google.gwt.user.client.ui.ClickListener;
-import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
+import java.util.ArrayList;
+
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.prokAnnotation.ProkaryoticAnnotationLoadGenomeDataTask;
 import org.janelia.it.jacs.model.tasks.prokAnnotation.ProkaryoticAnnotationTask;
-import org.janelia.it.jacs.model.user_data.prefs.UserPreference;
+import org.janelia.it.jacs.model.user_data.prefs.SubjectPreference;
 import org.janelia.it.jacs.web.gwt.common.client.jobs.JobSubmissionListener;
 import org.janelia.it.jacs.web.gwt.common.client.panel.CenteredWidgetHorizontalPanel;
 import org.janelia.it.jacs.web.gwt.common.client.popup.ErrorPopupPanel;
@@ -22,7 +20,10 @@ import org.janelia.it.jacs.web.gwt.common.client.util.HtmlUtils;
 import org.janelia.it.jacs.web.gwt.common.client.util.SystemProps;
 import org.janelia.it.jacs.web.gwt.prokAnnot.client.panel.SybaseInfoPanel;
 
-import java.util.ArrayList;
+import com.google.gwt.user.client.ui.ClickListener;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Created by IntelliJ IDEA.
@@ -108,7 +109,7 @@ public class CustomProkCommandPopup extends ModalPopupPanel {
         }
         else {
             currentTask.setParameter(ProkaryoticAnnotationLoadGenomeDataTask.PARAM_username, _sybaseInfoPanel.getUsername());
-            Preferences.setUserPreference(new UserPreference("sbLogin", "ProkPipeline", _sybaseInfoPanel.getUsername()));
+            Preferences.setSubjectPreference(new SubjectPreference("sbLogin", "ProkPipeline", _sybaseInfoPanel.getUsername()));
         }
 
         if (null == _sybaseInfoPanel.getSybasePassword() || "".equals(_sybaseInfoPanel.getSybasePassword())) {
@@ -117,7 +118,7 @@ public class CustomProkCommandPopup extends ModalPopupPanel {
         }
         else {
             currentTask.setParameter(ProkaryoticAnnotationLoadGenomeDataTask.PARAM_sybasePassword, _sybaseInfoPanel.getSybasePassword());
-            Preferences.setUserPreference(new UserPreference("sbPass", "ProkPipeline", _sybaseInfoPanel.getSybasePassword()));
+            Preferences.setSubjectPreference(new SubjectPreference("sbPass", "ProkPipeline", _sybaseInfoPanel.getSybasePassword()));
         }
 
         _statusMessage.showSubmittingMessage();

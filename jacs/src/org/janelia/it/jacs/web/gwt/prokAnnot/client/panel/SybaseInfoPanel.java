@@ -1,11 +1,12 @@
 
 package org.janelia.it.jacs.web.gwt.prokAnnot.client.panel;
 
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.TextBox;
-import org.janelia.it.jacs.model.user_data.prefs.UserPreference;
+import org.janelia.it.jacs.model.user_data.prefs.SubjectPreference;
 import org.janelia.it.jacs.web.gwt.common.client.service.prefs.Preferences;
 import org.janelia.it.jacs.web.gwt.common.client.util.HtmlUtils;
+
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.TextBox;
 
 /**
  * Created by IntelliJ IDEA.
@@ -24,11 +25,11 @@ public class SybaseInfoPanel extends HorizontalPanel {
         _sybasePasswordTextBox = new TextBox();
         _sybasePasswordTextBox.setVisibleLength(15);
 
-        UserPreference namePref = Preferences.getUserPreference("sbLogin", "ProkPipeline");
+        SubjectPreference namePref = Preferences.getSubjectPreference("sbLogin", "ProkPipeline");
         if (null != namePref) {
             _usernameTextBox.setText(namePref.getValue());
         }
-        UserPreference passPref = Preferences.getUserPreference("sbPass", "ProkPipeline");
+        SubjectPreference passPref = Preferences.getSubjectPreference("sbPass", "ProkPipeline");
         if (null != passPref) {
             _sybasePasswordTextBox.setText(passPref.getValue());
         }
