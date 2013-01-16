@@ -95,7 +95,7 @@ public class UpgradeUserDataService extends AbstractEntityService {
         }
         group.getUserRelationships().clear();
         group.setFullName(groupFullName);
-        computeBean.saveOrUpdateGroup(group);
+        computeBean.saveOrUpdateSubject(group);
         return group;
     }
     
@@ -105,7 +105,7 @@ public class UpgradeUserDataService extends AbstractEntityService {
             throw new IllegalStateException("Group does not exist: "+groupName);
         }
         group.getUserRelationships().clear();
-        computeBean.saveOrUpdateGroup(group);
+        computeBean.saveOrUpdateSubject(group);
         addGroupMembers(group, members);
     }
     

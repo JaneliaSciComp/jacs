@@ -50,10 +50,6 @@ public interface ComputeBeanLocal extends ComputeBeanRemote {
 
 	public HashMap<String, String> getChildTaskStatusMap(Long objectId) throws Exception;
 
-	/**
-	 * Use the full form createUser(String,String) instead.
-	 */
-	@Deprecated
     public boolean createUser(String newUserName) throws DaoException;
     
     public User createUser(String newUserName, String newFullName) throws ComputeException;

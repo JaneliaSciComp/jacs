@@ -8,7 +8,7 @@ import java.io.Serializable;
 /**
  * @author Michael Press
  */
-public class UserPreference implements Serializable, IsSerializable {
+public class SubjectPreference implements Serializable, IsSerializable {
 
     // Preferences
     public transient static final String PREF_EMAIL_ON_JOB_COMPLETION = "emailUponJobCompletion";
@@ -20,10 +20,10 @@ public class UserPreference implements Serializable, IsSerializable {
     private String _value;
     private String _category;
 
-    public UserPreference() {
+    public SubjectPreference() {
     }
 
-    public UserPreference(String name, String category, String value) {
+    public SubjectPreference(String name, String category, String value) {
         _name = name;
         _category = category;
         _value = value;
@@ -58,7 +58,7 @@ public class UserPreference implements Serializable, IsSerializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        UserPreference that = (UserPreference) o;
+        SubjectPreference that = (SubjectPreference) o;
 
         return _category.equals(that._category) &&
                _name.equals(that._name) &&

@@ -87,13 +87,12 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     	logger.info("End session for "+userLogin);
     }
     
-    public User login(String userLogin, String password) {
-    	
-    	if (userLogin.startsWith("user:")) {
-    		userLogin = userLogin.substring(5);
-    	}
-    	
+    public Subject login(String userLogin, String password) {
         try {
+            if (userLogin.contains(":")) {
+                userLogin = userLogin.split(":")[1];
+            }
+            
             // Connect to LDAP server.
             String ldapBase = SystemConfigurationProperties.getString("LDAP.Base");
             String ldapURL  = SystemConfigurationProperties.getString("LDAP.URL");
@@ -116,9 +115,9 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
 //                System.out.println(tmpAtt.getID()+" "+tmpAtt.get().toString());
 //            }
 //
-            User user = computeDAO.getUserByNameOrKey(userLogin);
+            Subject subject = getSubjectByNameOrKey(userLogin);
             // If we don't know them, and they authenticated, add to the database and create a location in the filestore
-            if (null == user) {
+            if (null == subject) {
                 boolean successful = createUser(userLogin);
                 if (!successful) {
                     // will not be able to execute any computes, so throw an exception
@@ -126,7 +125,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
                     return null;
                 }
             }
-            return getUserByNameOrKey(userLogin);
+            return getSubjectByNameOrKey(userLogin);
         }
         catch (Exception e) {
             logger.error("There was a problem logging in the user "+userLogin+"\n"+e.getMessage());
@@ -135,7 +134,23 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     }
 
     public Subject getSubjectByNameOrKey(String name) throws ComputeException {
-        return computeDAO.getSubjectByNameOrKey(name);
+        Subject subject = computeDAO.getSubjectByNameOrKey(name);
+        if (subject==null) return null;
+        // Eager load relationships
+        logger.info("Eager loading relationships for "+subject.getKey());
+        if (subject instanceof User) {
+            User user = ((User) subject);
+            for(SubjectRelationship relation : user.getGroupRelationships()) {
+                logger.info("  "+relation.getUser().getKey()+" is "+relation.getRelationshipType()+" of "+relation.getGroup().getKey());
+            }
+        }
+        else if (subject instanceof Group) {
+            Group group = ((Group) subject);
+            for(SubjectRelationship relation : group.getUserRelationships()) {
+                logger.info("  "+relation.getUser().getKey()+" is "+relation.getRelationshipType()+" of "+relation.getGroup().getKey());
+            }
+        }
+        return subject;
     }
     
     public User getUserByNameOrKey(String name) throws ComputeException {
@@ -184,7 +199,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
             createUser(newUserName);
             User user = getUserByNameOrKey(newUserName);
             user.setFullName(newFullName);
-            saveOrUpdateUser(user);
+            saveOrUpdateSubject(user);
             return user;
         }
         catch (DaoException e) {
@@ -215,10 +230,10 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         }
     }
     
-    public Group addUserToGroup(String userName, String groupName) throws DaoException {
+    public void addUserToGroup(String userName, String groupName) throws DaoException {
         try {
             logger.info("Adding user "+userName+" to group " + groupName);
-            return userDAO.addUserToGroup(userName, groupName);
+            userDAO.addUserToGroup(userName, groupName);
         }
         catch (DaoException e) {
             logger.error("Error adding user to group", e);
@@ -295,14 +310,9 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return computeDAO.getTaskWithMessages(taskId);
     }
     
-    public User saveOrUpdateUser(User user) throws DaoException{
-        computeDAO.saveOrUpdate(user);
-        return user;
-    }
-
-    public Group saveOrUpdateGroup(Group group) throws DaoException{
-        computeDAO.saveOrUpdate(group);
-        return group;
+    public Subject saveOrUpdateSubject(Subject subject) throws DaoException{
+        computeDAO.saveOrUpdate(subject);
+        return subject;
     }
 
     public void removePreferenceCategory(String categoryName) throws DaoException {

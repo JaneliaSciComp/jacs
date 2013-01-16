@@ -35,13 +35,12 @@ import java.util.Map;
 public interface ComputeBeanRemote {
 
     public String getAppVersion() throws RemoteException;
-    public User login(String userLogin, String password) throws ComputeException;
+    public Subject login(String userLogin, String password) throws ComputeException;
     public void beginSession(String userLogin, String clientVersion);
     public void endSession(String userLogin);
     public Node saveOrUpdateNode(Node node) throws DaoException, RemoteException;
     public Task saveOrUpdateTask(Task task) throws DaoException;
-    public User saveOrUpdateUser(User user) throws DaoException;
-    public Group saveOrUpdateGroup(Group group) throws DaoException;
+    public Subject saveOrUpdateSubject(Subject subject) throws DaoException;
     public Node getResultNodeByTaskId(long taskId) throws DaoException, RemoteException;
     public List<Node> getResultNodesByTaskId(long taskId) throws DaoException, RemoteException;
     public Node getBlastDatabaseFileNodeByName(String name) throws RemoteException;
@@ -126,7 +125,7 @@ public interface ComputeBeanRemote {
     public ControlledVocabElement[] getControlledVocab(Long objectId, int vocabIndex) throws ServiceException;
 	
 	public Group createGroup(String groupOwner, String groupName) throws DaoException;
-	public Group addUserToGroup(String groupUser, String groupName) throws DaoException;
+	public void addUserToGroup(String groupUser, String groupName) throws DaoException;
     public void removeGroup(String groupName) throws DaoException;
     public void removeUserFromGroup(String groupUser, String groupName) throws DaoException;
 }

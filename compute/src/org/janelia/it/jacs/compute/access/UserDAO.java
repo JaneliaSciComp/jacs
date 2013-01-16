@@ -76,7 +76,7 @@ public class UserDAO extends ComputeBaseDAO {
             return tmpGroup;
         }
     }
-    
+        
     public void removeGroup(String groupName) throws DaoException {
     	Group tmpGroup = getGroupByNameOrKey(groupName);
         if (null==tmpGroup) {
@@ -86,24 +86,55 @@ public class UserDAO extends ComputeBaseDAO {
         genericDelete(tmpGroup);
     }
 
-    public Group addUserToGroup(String groupUser, String groupName) throws DaoException {
-        Group tmpGroup = getGroupByNameOrKey(groupName);
-        if (tmpGroup==null) {
-            throw new DaoException("Cannot add user to non-existent group: "+groupName);
+    /**
+     * Defines the relationship between a user and group. If the user has any existing relationship with the group, it is
+     * deleted first. 
+     * @param userNameOrKey
+     * @param groupNameOrKey
+     * @param relationshipType
+     * @return
+     */
+    public SubjectRelationship setRelationship(String userNameOrKey, String groupNameOrKey, String relationshipType) throws DaoException {
+
+        if (!SubjectRelationship.TYPE_GROUP_ADMIN.equals(relationshipType) 
+                && !SubjectRelationship.TYPE_GROUP_OWNER.equals(relationshipType) 
+                && !SubjectRelationship.TYPE_GROUP_MEMBER.equals(relationshipType)) {
+            throw new DaoException("Illegal relationship type: "+relationshipType);
         }
-    	User user = getUserByNameOrKey(groupUser);
-    	if (user==null) {
-            throw new DaoException("Cannot add non-existent user to group: "+groupUser);
-    	}
-    	
-    	SubjectRelationship relation = new SubjectRelationship();
-    	relation.setGroup(tmpGroup);
-    	relation.setUser(user);
-    	relation.setRelationshipType(SubjectRelationship.TYPE_GROUP_MEMBER);
-    	tmpGroup.getUserRelationships().add(relation);
-    	
-        saveOrUpdate(tmpGroup);
-        return tmpGroup;
+                
+        Group tmpGroup = getGroupByNameOrKey(groupNameOrKey);
+        if (tmpGroup==null) {
+            throw new DaoException("Cannot add user to non-existent group: "+groupNameOrKey);
+        }
+        User user = getUserByNameOrKey(userNameOrKey);
+        if (user==null) {
+            throw new DaoException("Cannot add non-existent user to group: "+userNameOrKey);
+        }
+        
+        SubjectRelationship relation = null;
+        for(SubjectRelationship sr : tmpGroup.getUserRelationships()) {
+            if (sr.getUser().getKey().equals(userNameOrKey)) {
+                // Update existing relationship
+                relation = sr;
+                relation.setRelationshipType(relationshipType);
+                saveOrUpdate(relation);
+            }
+        }
+        
+        if (relation==null) {
+            // Create new relationship
+            relation = new SubjectRelationship();
+            relation.setGroup(tmpGroup);
+            relation.setUser(user);
+            relation.setRelationshipType(relationshipType);
+            tmpGroup.getUserRelationships().add(relation);
+            saveOrUpdate(tmpGroup);
+        }
+        return relation;
+    }
+    
+    public void addUserToGroup(String userNameOrKey, String groupNameOrKey) throws DaoException {
+        setRelationship(userNameOrKey, groupNameOrKey, SubjectRelationship.TYPE_GROUP_MEMBER);
     }
     
     public void removeUserFromGroup(String groupUser, String groupName) throws DaoException {

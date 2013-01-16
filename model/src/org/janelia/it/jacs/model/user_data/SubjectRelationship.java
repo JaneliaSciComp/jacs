@@ -9,6 +9,7 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 public class SubjectRelationship implements java.io.Serializable, IsSerializable {
 	
 	public static final String TYPE_GROUP_OWNER = "owner";
+	public static final String TYPE_GROUP_ADMIN = "admin";
 	public static final String TYPE_GROUP_MEMBER = "member";
 	
 	private Long id;

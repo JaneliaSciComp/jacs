@@ -15,7 +15,7 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.User;
-import org.janelia.it.jacs.model.user_data.prefs.UserPreference;
+import org.janelia.it.jacs.model.user_data.prefs.SubjectPreference;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.MailHelper;
 
@@ -362,7 +362,7 @@ public abstract class SeriesLauncher implements ILauncher {
             logger.error("Cannot notify user: " + ownerName + ". Person does not exist in the db.");
             return;
         }
-        UserPreference emailPref = tmpUser.getPreference(UserPreference.CAT_NOTIFICATION, UserPreference.PREF_EMAIL_ON_JOB_COMPLETION);
+        SubjectPreference emailPref = tmpUser.getPreference(SubjectPreference.CAT_NOTIFICATION, SubjectPreference.PREF_EMAIL_ON_JOB_COMPLETION);
         if (null == emailPref || !Boolean.valueOf(emailPref.getValue())) {
             return;
         }

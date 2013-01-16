@@ -1,16 +1,11 @@
 
 package org.janelia.it.jacs.model.user_data;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-
-import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.user_data.prefs.UserPreference;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
@@ -24,13 +19,8 @@ public class User extends Subject implements java.io.Serializable, IsSerializabl
     public static final String SYSTEM_USER_KEY = "user:system";
 
     transient private boolean administrator = false;
-    private String email = "";
 
     private Set<SubjectRelationship> groupRelationships = new HashSet<SubjectRelationship>(0);
-    private Set<Node> nodes = new HashSet<Node>(0);
-    private Set<Task> tasks = new HashSet<Task>(0);
-    private Map<String, UserPreference> preferenceMap = new HashMap<String, UserPreference>(0);
-    private Map<String, Map<String, UserPreference>> categoryMap = new HashMap<String, Map<String, UserPreference>>(0);
 
     public User() {
     }
@@ -63,30 +53,6 @@ public class User extends Subject implements java.io.Serializable, IsSerializabl
         setName(userLogin);
     }
     
-	public Set<Node> getNodes() {
-        return this.nodes;
-    }
-
-    public void setNodes(Set<Node> nodes) {
-        this.nodes = nodes;
-    }
-
-    public Set<Task> getTasks() {
-        return this.tasks;
-    }
-
-    public void setTasks(Set<Task> tasks) {
-        this.tasks = tasks;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
     @Deprecated
     public Long getUserId() {
         return getId();
@@ -105,77 +71,6 @@ public class User extends Subject implements java.io.Serializable, IsSerializabl
 		this.groupRelationships = groupRelationships;
 	}
 
-	public void addNode(Node newNode) {
-        if (null != newNode) {
-            nodes.add(newNode);
-            newNode.setOwner(this.getUserLogin());
-        }
-    }
-
-    private Map getCategoryMap() {
-        return categoryMap;
-    }
-
-    /**
-     * Creates a map of preferences by category name
-     */
-    private synchronized void buildCategoryMap() {
-        for (String s : preferenceMap.keySet()) {
-            addPreferenceToCategoryMap(preferenceMap.get(s));
-        }
-    }
-
-    private synchronized void addPreferenceToCategoryMap(UserPreference pref) {
-        Map<String, UserPreference> catPrefs = getCategoryPreferences(pref.getCategory()); // creates new Map if not found
-        catPrefs.put(pref.getName(), pref);
-        categoryMap.put(pref.getCategory(), catPrefs);
-    }
-
-    public synchronized Map<String, UserPreference> getCategoryPreferences(String category) {
-        if (getCategoryMap().containsKey(category))
-            return categoryMap.get(category);
-        else
-            return new HashMap<String, UserPreference>();
-    }
-
-    public synchronized void setPreferenceMap(Map<String, UserPreference> preferenceMap) {
-        this.preferenceMap = preferenceMap;
-        buildCategoryMap();
-    }
-
-    public Map<String, UserPreference> getPreferenceMap() {
-        return preferenceMap;
-    }
-
-    /**
-     * Returns the preference with the supplied category or name, or null if no such preference exists
-     *
-     * @param category - preference category
-     * @param name     - preference name looked for
-     * @return - the matching UserPreference object
-     */
-    public synchronized UserPreference getPreference(String category, String name) {
-        return preferenceMap.get(getPrefKey(category, name));
-    }
-
-    private String getPrefKey(String category, String name) {
-        return category + ":" + name;
-    }
-
-    public String getPreferenceValue(String category, String name) {
-        return getPreference(category, name).getValue();
-    }
-
-    /**
-     * Updates the preference in the User cache and database.
-     *
-     * @param pref desired user preference to update
-     */
-    public synchronized void setPreference(UserPreference pref) {
-        preferenceMap.put(getPrefKey(pref.getCategory(), pref.getName()), pref);  // Hibernate will update database
-        addPreferenceToCategoryMap(pref); // Add/update the preference in the appropriate category
-    }
-
     public boolean isAdministrator() {
         return administrator;
     }
@@ -183,5 +78,4 @@ public class User extends Subject implements java.io.Serializable, IsSerializabl
     public void setAdministrator(boolean administrator) {
         this.administrator = administrator;
     }
-
 }

@@ -19,9 +19,12 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.user_data.SubjectRelationship;
+import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.annotation.DataDescriptor;
 import org.janelia.it.jacs.shared.annotation.DataFilter;
 import org.janelia.it.jacs.shared.annotation.FilterResult;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 
@@ -444,6 +447,32 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
 	        _logger.error("Error getting data sets", e);
 	        throw new ComputeException("Error getting data sets",e);
 	    }
+    }
+    
+    public List<Entity> getDataSets(String subjectKey) throws ComputeException {
+        try {
+            List<String> subjectKeys = _annotationDAO.getSubjectKeys(subjectKey);
+            if (EntityUtils.isAdmin(subjectKeys)) {
+                return getAllDataSets();
+            }
+
+            Set<Entity> dataSets = new LinkedHashSet<Entity>();
+            dataSets.addAll(_annotationDAO.getUserEntitiesByTypeName(subjectKey, EntityConstants.TYPE_DATA_SET));
+            
+            User user = _annotationDAO.getUserByNameOrKey(subjectKey);
+            for(SubjectRelationship relation : user.getGroupRelationships())  {
+                if (relation.getRelationshipType().equals(SubjectRelationship.TYPE_GROUP_ADMIN) 
+                        || relation.getRelationshipType().equals(SubjectRelationship.TYPE_GROUP_OWNER)) {
+                    dataSets.addAll(_annotationDAO.getUserEntitiesByTypeName(relation.getGroup().getKey(), EntityConstants.TYPE_DATA_SET));        
+                }
+            }
+            
+            return new ArrayList<Entity>(dataSets);
+        }
+        catch (DaoException e) {
+            _logger.error("Error getting data sets", e);
+            throw new ComputeException("Error getting data sets",e);
+        }
     }
     
     public List<Entity> getUserDataSets(List<String> userLoginList) throws ComputeException {

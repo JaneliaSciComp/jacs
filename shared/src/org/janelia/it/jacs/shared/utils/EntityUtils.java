@@ -4,6 +4,7 @@ import java.util.*;
 
 import org.hibernate.Hibernate;
 import org.janelia.it.jacs.model.entity.*;
+import org.janelia.it.jacs.model.user_data.Group;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -130,6 +131,16 @@ public class EntityUtils {
             }
         }
         return false;
+    }
+    
+    /**
+     * Returns true if the user is part of the admin group.
+     * @param subjectKeys the keys of the user. The user's key must be the first key.
+     * @return
+     */
+    public static boolean isAdmin(List<String> subjectKeys) {
+        return subjectKeys.contains(Group.ADMIN_GROUP_KEY);
+        
     }
     
     /**

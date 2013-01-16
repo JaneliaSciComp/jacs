@@ -68,6 +68,7 @@ public interface AnnotationBeanRemote {
 
     public Entity createDataSet(String subjectKey, String dataSetName) throws ComputeException;
     public List<Entity> getAllDataSets() throws ComputeException;
+    public List<Entity> getDataSets(String subjectKey) throws ComputeException;
     public List<Entity> getUserDataSets(List<String> subjectKeyList) throws ComputeException;
     public Entity getUserDataSetByName(String subjectKey, String dataSetName) throws ComputeException;
     public Entity getUserDataSetByIdentifier(String dataSetIdentifier) throws ComputeException;

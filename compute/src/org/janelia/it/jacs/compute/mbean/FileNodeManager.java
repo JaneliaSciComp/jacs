@@ -183,7 +183,7 @@ public class FileNodeManager implements FileNodeManagerMBean {
         User fileNodeManagerUser = EJBFactory.getRemoteComputeBean().getUserByNameOrKey(User.SYSTEM_USER_LOGIN);
         if (fileNodeManagerUser == null) {
             fileNodeManagerUser = new User(User.SYSTEM_USER_LOGIN, User.SYSTEM_USER_LOGIN + "Fullname");
-            EJBFactory.getRemoteComputeBean().saveOrUpdateUser(fileNodeManagerUser);
+            EJBFactory.getRemoteComputeBean().saveOrUpdateSubject(fileNodeManagerUser);
         }
         return fileNodeManagerUser;
     }

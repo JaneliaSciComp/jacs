@@ -20,6 +20,34 @@
 
         <property name="fullName" type="string"/>
 	
+        <property name="email" type="string"/>
+
+        <set name="nodes" cascade="all" inverse="true" lazy="true">
+            <key foreign-key="node_fk_user">
+               <column name="user_id" index="node_fk_user"/>
+            </key>
+            <one-to-many class="Node" />
+        </set>
+
+        <set name="tasks" cascade="all" lazy="true">
+            <key foreign-key="task_fk_user">
+                <column name="user_id" index="task_fk_user"/>
+            </key>                 
+            <one-to-many class="org.janelia.it.jacs.model.tasks.Task" />
+        </set>
+
+        <map
+            name="preferenceMap" table="subject_preference_map" schema="flyportal"
+            lazy="false" inverse="false" cascade="all" sort="unsorted">
+            <key column="user_id"/>
+            <index column="category_and_name" type="string"/>
+            <composite-element class="org.janelia.it.jacs.model.user_data.prefs.SubjectPreference">
+                <property name="name" type="string"/>
+                <property name="category" type="string"/>
+                <property name="value" type="string"/>
+            </composite-element>
+        </map>
+        
 		<subclass name="Group" discriminator-value="group" lazy="true">
 		
 	        <set name="userRelationships" cascade="all,delete-orphan" inverse="true" lazy="true" table="subject_relationship">
@@ -30,40 +58,12 @@
 		</subclass>
 		
 		<subclass name="User" discriminator-value="user" lazy="true">
-
-	        <property name="email" type="string"/>
 	
 	        <set name="groupRelationships" cascade="all,delete-orphan" lazy="true" table="subject_relationship">
 	            <key column="user_subject_id"/>
 	            <one-to-many class="SubjectRelationship"/>
 	        </set>
-	        
-	        <set name="nodes" cascade="all" inverse="true" lazy="true">
-	            <key foreign-key="node_fk_user">
-	               <column name="user_id" index="node_fk_user"/>
-	            </key>
-	            <one-to-many class="Node" />
-	        </set>
-	
-	        <set name="tasks" cascade="all" lazy="true">
-	            <key foreign-key="task_fk_user">
-	                <column name="user_id" index="task_fk_user"/>
-	            </key>                 
-	            <one-to-many class="org.janelia.it.jacs.model.tasks.Task" />
-	        </set>
-	
-	        <map
-	            name="preferenceMap" table="user_preference_map" schema="flyportal"
-	            lazy="false" inverse="false" cascade="all" sort="unsorted">
-	            <key column="user_id"/>
-	            <index column="category_and_name" type="string"/>
-	            <composite-element class="org.janelia.it.jacs.model.user_data.prefs.UserPreference">
-	                <property name="name" type="string"/>
-	                <property name="category" type="string"/>
-	                <property name="value" type="string"/>
-	            </composite-element>
-	        </map>
-        
+	    
 		</subclass>
 
 	</class>
