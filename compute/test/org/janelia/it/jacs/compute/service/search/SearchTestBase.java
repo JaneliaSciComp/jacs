@@ -134,7 +134,7 @@ public abstract class SearchTestBase extends TestCase {
         }
         searchTask.setSearchTopics(searchTopics);
         searchTask.setMatchFlags(matchFlags);
-        searchTask.setOwner(testUser.getUserLogin());
+        searchTask.setOwner(testUser.getName());
         for(String topic: searchTopics) {
             if(!searchTask.isTopicSupported(topic)) {
                 throw new IllegalArgumentException("Invalid topic: " + topic);
@@ -145,7 +145,7 @@ public abstract class SearchTestBase extends TestCase {
         // create the result node
         SearchResultNode searchResultNode = new SearchResultNode();
         searchResultNode.setTask(searchTask);
-        searchResultNode.setOwner(testUser.getUserLogin());
+        searchResultNode.setOwner(testUser.getName());
         searchTask.addOutputNode(searchResultNode);
         return searchBean.saveOrUpdateTask(searchTask);
     }

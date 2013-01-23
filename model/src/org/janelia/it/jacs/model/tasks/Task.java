@@ -337,12 +337,12 @@ public abstract class Task implements java.io.Serializable, IsSerializable {
         return list;
     }
 
-    public static String csvStringFromCollection(Collection<String> collection) {
+    public static String csvStringFromCollection(Collection<?> collection) {
         StringBuilder sb = new StringBuilder("");
         if (collection != null) {
             Iterator iterator = collection.iterator();
             while (iterator.hasNext()) {
-                String next = (String)iterator.next();
+                Object next = iterator.next();
                 sb.append(next);
                 if (iterator.hasNext()) { sb.append(","); }
             }

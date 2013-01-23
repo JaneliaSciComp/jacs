@@ -921,7 +921,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             query.setParameter("newValue", newValue);
             query.setParameter("oldValue", oldValue);
             
-            query.executeUpdate();
+            int rows = query.executeUpdate();
+            _logger.info("Bulk updated "+rows+" rows");
         }
         catch (Exception e) {
             throw new DaoException(e);

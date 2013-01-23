@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.compute.service.common;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -11,10 +14,6 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
-import org.janelia.it.jacs.model.user_data.User;
-
-import java.util.ArrayList;
-import java.util.HashSet;
 
 /**
  * Creates and executes a sub-task with some parameters. Inputs:
@@ -34,7 +33,6 @@ public class SubTaskExecutionService implements IService {
         	Logger logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             Task task = ProcessDataHelper.getTask(processData);
             ComputeBeanLocal computeBean = EJBFactory.getLocalComputeBean();
-            User user = computeBean.getUserByNameOrKey(task.getOwner());
 
             boolean waitForCompletion = false;
             String waitForCompletionStr = (String)processData.getItem("WAIT_FOR_COMPLETION");
@@ -64,7 +62,7 @@ public class SubTaskExecutionService implements IService {
         	}
         	
         	subtask.setInputNodes(new HashSet<Node>());
-        	subtask.setOwner(user.getName());
+        	subtask.setOwner(task.getOwner());
         	subtask.setEvents(new ArrayList<Event>());
         	subtask.setTaskParameterSet(new HashSet<TaskParameter>());
         	

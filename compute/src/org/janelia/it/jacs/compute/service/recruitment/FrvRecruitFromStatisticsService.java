@@ -1,6 +1,12 @@
 
 package org.janelia.it.jacs.compute.service.recruitment;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.rmi.RemoteException;
+import java.util.*;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
@@ -13,16 +19,10 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.recruitment.GenomeProjectBlastFrvTask;
 import org.janelia.it.jacs.model.tasks.recruitment.GenomeProjectRecruitmentSamplingTask;
-import org.janelia.it.jacs.model.user_data.User;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.recruitment.RecruitmentFileNode;
 import org.janelia.it.jacs.shared.processors.recruitment.RecruitmentDataHelper;
 import org.janelia.it.jacs.shared.tasks.GenbankFileInfo;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.rmi.RemoteException;
-import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -66,7 +66,7 @@ public class FrvRecruitFromStatisticsService implements IService {
             org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
             HashMap<String, GenbankFileInfo> genbankFiles = RecruitmentDataHelper.getGenbankFileMap();
             HashMap<String, String> recruitingSetofGbksAndTaskMap = new HashMap<String, String>();
-            User tmpUser = computeBean.getUserByNameOrKey(task.getOwner());
+            Subject tmpUser = computeBean.getSubjectByNameOrKey(task.getOwner());
             Scanner scanner = new Scanner(statsFile);
             ArrayList<String> rowList = new ArrayList<String>();
             int moleculeNameIndex=0,expectedCoverageIndex=6,totalHitsIndex=7,sampleNameIndex=8;
@@ -123,7 +123,7 @@ public class FrvRecruitFromStatisticsService implements IService {
                                         genbankFileInfo.getGenbankFile().getName(),
                                         blastDBCommaList,
                                         null,
-                                        tmpUser.getUserLogin(),
+                                        tmpUser.getName(),
                                         new ArrayList<Event>(),
                                         new HashSet<TaskParameter>());
                                 tmpTask.setParameter(Task.PARAM_project, task.getParameter(Task.PARAM_project));

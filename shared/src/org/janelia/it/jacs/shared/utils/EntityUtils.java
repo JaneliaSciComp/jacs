@@ -150,7 +150,7 @@ public class EntityUtils {
      * @return
      */
     public static boolean areEqual(Entity entity1, Entity entity2) {
-
+        
     	ComparisonChain chain = ComparisonChain.start()
 	        	.compare(entity1.getId(), entity2.getId(), Ordering.natural().nullsFirst())
 	            // date comparison is disabled because sometimes the milliseconds are truncated for unknown reasons
@@ -174,19 +174,26 @@ public class EntityUtils {
     		return false;
     	}
 
-		Set<Long> edIds1 = new HashSet<Long>();
+		Map<Long,EntityData> edMap1 = new HashMap<Long,EntityData>();
 		for(EntityData ed : entity1.getEntityData()) {
-			edIds1.add(ed.getId());
+			edMap1.put(ed.getId(),ed);
 		}
 
-		Set<Long> edIds2 = new HashSet<Long>();
+		Map<Long,EntityData> edMap2 = new HashMap<Long,EntityData>();
 		for(EntityData ed : entity2.getEntityData()) {
-			edIds2.add(ed.getId());
+			edMap2.put(ed.getId(),ed);
 		}
 		
-		if (!edIds1.equals(edIds2)) {
+		if (!edMap1.equals(edMap2)) {
 			log.debug("Entity areEqual? attributes differ");
 			return false;
+		}
+		
+		for(EntityData ed1 : edMap1.values()) {
+		    EntityData ed2 = edMap2.get(ed1.getId());
+		    if (!areEqual(ed1,ed2)) {
+		        return false;
+		    }
 		}
 
 		if (EntityUtils.isInitialized(entity1.getEntityActorPermissions()) && EntityUtils.isInitialized(entity2.getEntityActorPermissions())) {

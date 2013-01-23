@@ -77,27 +77,27 @@ public class ProcessDataHelper {
     public static FileNode getRootFileNode(IProcessData processData) throws MissingDataException, IOException {
         Logger logger = getLoggerForTask(processData, ProcessDataHelper.class);
         if (logger!=null) {
-            logger.info("getRootFileNode() found non-null logger");
+            logger.debug("getRootFileNode() found non-null logger");
         }
         Task tmpTask=getTask(processData);
         if (logger!=null) {
             if (tmpTask!=null) {
-                logger.info("getRootFileNode() found non-null task id="+tmpTask.getObjectId());
+                logger.debug("getRootFileNode() found non-null task id="+tmpTask.getObjectId());
             } else {
-                logger.info("getRootFileNode() found null task");
+                logger.debug("getRootFileNode() found null task");
             }
         }
         Task task = getRootTask(tmpTask, logger);
         // If no session exists, return null
         if (null == task /*|| !(task instanceof SessionTask)*/) {
-            logger.info("getRootFileNode() returning null because getRootTask() returned null");
+            logger.debug("getRootFileNode() returning null because getRootTask() returned null");
             return null;
         }
         // else return the session node
-        logger.info("task from getRootTask has id="+task.getObjectId());
+        logger.debug("task from getRootTask has id="+task.getObjectId());
         Node tmpSessionNode = new ComputeDAO(logger).getResultNodeByTaskId(task.getObjectId());
         if (null == tmpSessionNode/* || !(tmpSessionNode instanceof SessionFileNode)*/) {
-            logger.info("getRootFileNode() returning null because tmpSessionNode is null");
+            logger.debug("getRootFileNode() returning null because tmpSessionNode is null");
             return null;
         }
         return (FileNode) tmpSessionNode;

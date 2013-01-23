@@ -30,12 +30,22 @@ public class ChooseSamplePipelineStepsService extends AbstractEntityService {
     		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
     	}
     	
-    	int numTiles = 0;
+    	Integer numTiles = null;
+    	Integer numImagesPerTile = null;
         populateChildren(sampleEntity);
     	Entity supportingFiles = EntityUtils.getSupportingData(sampleEntity);
     	if (supportingFiles!=null) {
             populateChildren(supportingFiles);
-            numTiles = EntityUtils.getChildrenOfType(supportingFiles, EntityConstants.TYPE_IMAGE_TILE).size();
+            List<Entity> tiles = EntityUtils.getChildrenOfType(supportingFiles, EntityConstants.TYPE_IMAGE_TILE);
+            numTiles = tiles.size();
+            for(Entity tile : tiles) {
+                populateChildren(tile);
+                List<Entity> lsms = EntityUtils.getChildrenOfType(tile, EntityConstants.TYPE_LSM_STACK);
+                if (numImagesPerTile!=null && numImagesPerTile!=lsms.size()) {
+                    throw new IllegalStateException("Sample has differing numbers of images per tile: "+sampleEntityId);
+                }
+                numImagesPerTile = lsms.size();
+            }
     	}
     	
     	String mergeAlgorithms = (String)processData.getItem("MERGE_ALGORITHMS");
@@ -72,7 +82,7 @@ public class ChooseSamplePipelineStepsService extends AbstractEntityService {
         boolean hasAnalysis = !StringUtils.isEmpty(analysisAlgorithms);
         
         boolean runProcessing = true;
-        boolean runMerge = hasMerge;
+        boolean runMerge = hasMerge && numImagesPerTile>1;
         boolean runStitch = hasStitch && numTiles>1;
 		boolean runAlignment = hasAlignment;
 		boolean runAnalysis = hasAnalysis;

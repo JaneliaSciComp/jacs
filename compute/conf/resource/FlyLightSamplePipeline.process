@@ -39,6 +39,8 @@
 	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
 	    <operation name="Get Sample Attributes" processor="org.janelia.it.jacs.compute.service.entity.sample.InitSampleAttributesService">
 			<input name="SAMPLE_ENTITY_ID"/>
+			<output name="SAMPLE_CHANNEL_SPEC"/>
+			<output name="IMAGE_CHANNEL_SPEC"/>
 			<output name="SIGNAL_CHANNELS"/>
 			<output name="REFERENCE_CHANNEL"/>
 		</operation>
@@ -145,10 +147,8 @@
     	        </operation>
             </sequence>
     	        
-    	    <!-- Merging 
+            <!-- Run merging? -->
         	<sequence if="RUN_MERGE=true">
-    		(for now we always run merge, because if even if the LSMs are not paired, they still need to be converted)
-    		 -->
     		     
     		    <!-- Merge all the LSM pairs in parallel -->
     	        <sequence name="Merge Lsm Pairs" waitForAsync="true">
@@ -159,9 +159,23 @@
     		        </operation>
     	        </sequence>
     		
-    		<!-- 
             </sequence>
-            -->
+            
+            <!-- Else -->
+            <sequence if="RUN_MERGE=false">
+                 
+                <!-- Convert the image to the sample image format, with reference channel at the end -->
+                <sequence name="Convert to sample image" waitForAsync="true">
+                    <operation name="Convert to sample image" processor="queue/gridSubmitAndWait">
+                        <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DConvertToSampleImageService"/>
+                        <input name="RESULT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
+                        <input name="BULK_MERGE_PARAMETERS"/>
+                        <input name="SAMPLE_CHANNEL_SPEC"/>
+                        <input name="IMAGE_CHANNEL_SPEC"/>
+                    </operation>
+                </sequence>
+            
+            </sequence>
         	
         	<sequence if="COPY_FROM_ARCHIVE=true">
         	

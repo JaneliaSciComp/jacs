@@ -155,8 +155,8 @@ public class GridSubmitAndWaitMDB extends BaseServiceMDB {
         try {
             queueMessage = new QueueMessage(message, false);
             logger = ProcessDataHelper.getLoggerForTask(queueMessage, this.getClass());
-            if (logger.isInfoEnabled())
-                logger.info("GridSubmitAndWaitMDB: processing submission request");
+            if (logger.isDebugEnabled())
+                logger.debug("GridSubmitAndWaitMDB: processing submission request");
 
             operationToProcess = (OperationDef) queueMessage.getActionToProcess();
 

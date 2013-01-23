@@ -54,6 +54,7 @@ public class FileDiscoveryService implements IService {
             helper.addFileExclusion("*.oos");
             helper.addFileExclusion("sge_*");
             helper.addFileExclusion("temp");
+            helper.addFileExclusion("tmp.*");
             helper.addFileExclusion("core.*");
             
             // What database entity do we load into?

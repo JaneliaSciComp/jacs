@@ -132,11 +132,6 @@ public class EntityConstants {
     public static final String ATTRIBUTE_LSM_STACK_2                         = "LSM Stack 2";
     
     /**
-     * @deprecated Use TYPE_IMAGE_TILE instead. This will be removed someday.
-     */
-    public static final String TYPE_LSM_STACK_PAIR                   = "LSM Stack Pair";
-    
-    /**
      * @deprecated Use TYPE_IMAGE_2D instead. This will be removed someday.
      */
     public static final String TYPE_TIF_2D                           = "Tif 2D Image";

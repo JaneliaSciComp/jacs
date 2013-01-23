@@ -7,6 +7,7 @@ import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Extracts stuff about the Sample from the entity model and loads it into simplified objects for use by other services.
@@ -78,7 +79,37 @@ public class InitSampleAttributesService extends AbstractEntityService {
         	logger.info("Putting ("+Task.csvStringFromCollection(dataSetList)+") in DATA_SET_IDENTIFIER");
     		processData.putItem("DATA_SET_IDENTIFIER", dataSetList);
     	}
+
+    	String consensusChanSpec = null;
     	
+    	populateChildren(sampleEntity);
+    	Entity supportingData = EntityUtils.getSupportingData(sampleEntity);
+    	populateChildren(supportingData);
+    	for(Entity tile : EntityUtils.getChildrenOfType(supportingData, EntityConstants.TYPE_IMAGE_TILE)) {
+    	    populateChildren(tile);
+    	    logger.info("Found tile "+tile.getName());
+    	    for(Entity image : EntityUtils.getChildrenOfType(tile, EntityConstants.TYPE_LSM_STACK)) {    
+	            String imageChanSpec = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+	            logger.info("  imageChanSpec="+imageChanSpec);
+	            if (consensusChanSpec!=null && !consensusChanSpec.equals(imageChanSpec)) {
+	                logger.info("No consensus for image channel spec can be reached for sample "+sampleEntityId);
+	                consensusChanSpec = "";
+	            }
+	            else {
+	                consensusChanSpec = imageChanSpec;
+	            }
+    	    }
+    	}
+    	
+
+        if (chanSpec!=null) {
+            logger.info("Putting '"+chanSpec+"' in SAMPLE_CHANNEL_SPEC");
+            processData.putItem("SAMPLE_CHANNEL_SPEC", chanSpec);
+        }
+        if (consensusChanSpec!=null) {
+            logger.info("Putting '"+consensusChanSpec+"' in IMAGE_CHANNEL_SPEC");
+            processData.putItem("IMAGE_CHANNEL_SPEC", consensusChanSpec);
+        }
     	logger.info("Putting '"+signalChannels+"' in SIGNAL_CHANNELS");
     	processData.putItem("SIGNAL_CHANNELS", signalChannels.toString());
     	logger.info("Putting '"+referenceChannels+"' in REFERENCE_CHANNEL");

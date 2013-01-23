@@ -1,6 +1,13 @@
 
 package org.janelia.it.jacs.compute.service.recruitment;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
@@ -18,19 +25,12 @@ import org.janelia.it.jacs.model.tasks.recruitment.RecruitmentViewerRecruitmentT
 import org.janelia.it.jacs.model.tasks.recruitment.RecruitmentViewerTask;
 import org.janelia.it.jacs.model.user_data.FastaFileNode;
 import org.janelia.it.jacs.model.user_data.Node;
-import org.janelia.it.jacs.model.user_data.User;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultFileNode;
 import org.janelia.it.jacs.model.user_data.genome.GenomeProjectFileNode;
 import org.janelia.it.jacs.model.user_data.recruitment.RecruitmentFileNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.genbank.GenbankFile;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -68,7 +68,7 @@ public class GenomeProjectBlastFrvUpdateService implements IService {
             GenomeProjectFileNode gpFileNode = (GenomeProjectFileNode) EJBFactory.getRemoteComputeBean().getNodeById(Long.valueOf(gpNodeId));
             GenomeProjectImportTask gpImportTask = (GenomeProjectImportTask) EJBFactory.getRemoteComputeBean().getTaskForNodeId(gpFileNode.getObjectId());
 
-            User tmpOwner = EJBFactory.getRemoteComputeBean().getUserByNameOrKey(task.getOwner());
+            Subject tmpOwner = EJBFactory.getRemoteComputeBean().getSubjectByNameOrKey(task.getOwner());
             File genbankFile = new File(gpFileNode.getDirectoryPath() + File.separator + genbankFileName);
 
             // STEP 0: Check the NEW_BLASTABLE_DATABASE_NODES against ones already recruited for this organism
@@ -138,7 +138,7 @@ public class GenomeProjectBlastFrvUpdateService implements IService {
             blastNTask.setParameter(BlastNTask.PARAM_matchReward, "4");
             blastNTask.setParameter(BlastNTask.PARAM_filter, "m L");
 
-            blastNTask.setOwner(tmpOwner.getUserLogin());
+            blastNTask.setOwner(tmpOwner.getName());
             blastNTask.setParentTaskId(task.getObjectId());
             blastNTask.setParameter(Task.PARAM_project, task.getParameter(Task.PARAM_project));
             blastNTask = (BlastNTask) EJBFactory.getRemoteComputeBean().saveOrUpdateTask(blastNTask);
@@ -156,7 +156,7 @@ public class GenomeProjectBlastFrvUpdateService implements IService {
             rvRtInputNodes.add(blastOutputNode);
             RecruitmentViewerRecruitmentTask recruitmentTask = new RecruitmentViewerRecruitmentTask(gpFileNode.getObjectId().toString(),
                     genbankFile.getName(),
-                    rvRtInputNodes, tmpOwner.getUserLogin(), new ArrayList(), gpImportTask.getTaskParameterSet(),
+                    rvRtInputNodes, tmpOwner.getName(), new ArrayList(), gpImportTask.getTaskParameterSet(),
                     oldRecruitmentTask.getParameter(RecruitmentViewerRecruitmentTask.SUBJECT),
                     oldRecruitmentTask.getParameter(RecruitmentViewerRecruitmentTask.QUERY),
                     Long.valueOf(oldRecruitmentTask.getParameter(RecruitmentViewerRecruitmentTask.GENOME_SIZE)),

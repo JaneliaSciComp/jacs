@@ -1,6 +1,12 @@
 
 package org.janelia.it.jacs.compute.mbean;
 
+import java.io.*;
+import java.rmi.RemoteException;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.*;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -13,6 +19,7 @@ import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.blast.BlastTask;
 import org.janelia.it.jacs.model.tasks.recruitment.*;
 import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.blast.BlastDatabaseFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultFileNode;
@@ -24,12 +31,6 @@ import org.janelia.it.jacs.shared.tasks.GenbankFileInfo;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.SystemCall;
 import org.janelia.it.jacs.shared.utils.genbank.GenbankFile;
-
-import java.io.*;
-import java.rmi.RemoteException;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -97,15 +98,15 @@ public class RecruitmentNodeManager implements RecruitmentNodeManagerMBean {
         try {
             org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
             List<GenbankFileInfo> genbankFiles = RecruitmentDataHelper.getGenbankFileList();
-            User tmpUser = computeBean.getUserByNameOrKey(User.SYSTEM_USER_LOGIN);
+            Subject tmpUser = computeBean.getSubjectByNameOrKey(User.SYSTEM_USER_LOGIN);
             // For each Genbank file, run blast, import recruitment file node, and recruitment result file node
             for (GenbankFileInfo genbankFileInfo : genbankFiles) {
                 try {
                     String genbankFileName = genbankFileInfo.getGenbankFile().getName();
-                    if (null == computeBean.getRecruitmentFilterDataTaskForUserByGenbankId(genbankFileName, tmpUser.getUserLogin())) {
-                        System.out.println("Could not find " + genbankFileName + " recruited and filtered for user " + tmpUser.getUserLogin() + ". Blast-Recruiting...");
+                    if (null == computeBean.getRecruitmentFilterDataTaskForUserByGenbankId(genbankFileName, tmpUser.getName())) {
+                        System.out.println("Could not find " + genbankFileName + " recruited and filtered for user " + tmpUser.getName() + ". Blast-Recruiting...");
                         GenomeProjectBlastFrvTask tmpTask = new GenomeProjectBlastFrvTask(genbankFileInfo.getGenomeProjectNodeId().toString(),
-                                genbankFileName, "1054893807616655712", null, tmpUser.getUserLogin(), new ArrayList<Event>(), 
+                                genbankFileName, "1054893807616655712", null, tmpUser.getName(), new ArrayList<Event>(), 
                                 new HashSet<TaskParameter>());
                         tmpTask.setParameter(Task.PARAM_project, RECRUITMENT_PROJECT_CODE);
                         tmpTask = (GenomeProjectBlastFrvTask) computeBean.saveOrUpdateTask(tmpTask);
@@ -416,19 +417,19 @@ public class RecruitmentNodeManager implements RecruitmentNodeManagerMBean {
             // Now run the pipeline
             org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
             List<GenbankFileInfo> genbankFiles = RecruitmentDataHelper.getGenbankFileList();
-            User tmpUser = computeBean.getUserByNameOrKey(User.SYSTEM_USER_LOGIN);
+            Subject tmpUser = computeBean.getSubjectByNameOrKey(User.SYSTEM_USER_LOGIN);
             // For each Genbank file, run blast, import recruitment file node, and recruitment result file node
             for (GenbankFileInfo genbankFileInfo : genbankFiles) {
                 try {
                     String genbankFileName = genbankFileInfo.getGenbankFile().getName();
-                    String frvFilterTaskId = computeBean.getRecruitmentFilterDataTaskForUserByGenbankId(genbankFileName, tmpUser.getUserLogin());
+                    String frvFilterTaskId = computeBean.getRecruitmentFilterDataTaskForUserByGenbankId(genbankFileName, tmpUser.getName());
                     if (null != frvFilterTaskId) {
                         RecruitmentViewerFilterDataTask filterTask = (RecruitmentViewerFilterDataTask) computeBean.getTaskById(Long.valueOf(frvFilterTaskId));
-                        System.out.println("Found " + genbankFileName + " recruited and filtered for user " + tmpUser.getUserLogin() + ". Blast-Recruiting new data...");
+                        System.out.println("Found " + genbankFileName + " recruited and filtered for user " + tmpUser.getName() + ". Blast-Recruiting new data...");
                         GenomeProjectBlastFrvUpdateTask tmpTask = new GenomeProjectBlastFrvUpdateTask(filterTask.getObjectId().toString(),
                                 commaSeparatedListOfBlastDatabaseNodeIds,
                                 genbankFileInfo.getGenomeProjectNodeId().toString(),
-                                genbankFileName, null, tmpUser.getUserLogin(), new ArrayList(), new HashSet());
+                                genbankFileName, null, tmpUser.getName(), new ArrayList(), new HashSet());
                         tmpTask.setParameter(Task.PARAM_project, RECRUITMENT_PROJECT_CODE);
                         tmpTask = (GenomeProjectBlastFrvUpdateTask) computeBean.saveOrUpdateTask(tmpTask);
                         // Submit the job

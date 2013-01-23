@@ -145,8 +145,8 @@ public class FileDiscoveryHelper extends EntityHelper {
         EntityData ed = parent.addChildEntity(entity, attrName);
         ed.setOrderIndex(index);
         entityBean.saveOrUpdateEntityData(ed);
-        logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
-        		" as child of "+parent.getEntityType().getName()+"#"+parent.getId());
+        logger.info("Added "+entity.getName() +" ("+entity.getEntityType().getName()+"#"+entity.getId()+
+        		") as child of "+parent.getName()+" ("+parent.getEntityType().getName()+"#"+parent.getId()+")");
     }
 
     public Entity addChildFolderToEntity(Entity parent, String name, String directoryPath) throws Exception {

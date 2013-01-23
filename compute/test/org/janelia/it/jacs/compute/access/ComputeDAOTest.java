@@ -1,21 +1,22 @@
 
 package org.janelia.it.jacs.compute.access;
 
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+
 import org.janelia.it.jacs.model.genomics.Read;
 import org.janelia.it.jacs.model.genomics.SequenceType;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.blast.BlastTask;
 import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.blast.BlastDatabaseFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastDatasetNode;
 import org.springframework.test.AbstractTransactionalDataSourceSpringContextTests;
-
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -126,14 +127,14 @@ public class ComputeDAOTest extends AbstractTransactionalDataSourceSpringContext
         BlastDatabaseFileNode retrievedDataFileNode=null;
         BlastDatasetNode retrievedDatasetNode=null;
         try {
-            User user=computeDAO.getUserByNameOrKey("unitTest");
+            Subject user=computeDAO.getSubjectByNameOrKey("unitTest");
             if(user == null) {
                 user=new User("unitTest","unitTest");
                 computeDAO.saveOrUpdate(user);
             }
             // create a dataFile Node
             refDataFileNode=new BlastDatabaseFileNode(
-                    user.getUserLogin(),
+                    user.getName(),
                     null,
                     "test data file node",
                     "test data file node description",
@@ -143,7 +144,7 @@ public class ComputeDAOTest extends AbstractTransactionalDataSourceSpringContext
             computeDAO.saveOrUpdate(refDataFileNode);
             // create a dataset node
             refDatasetNode=new BlastDatasetNode(
-                    user.getUserLogin(),
+                    user.getName(),
                     null,
                     "test dataset node",
                     "test dataset node description",
@@ -182,11 +183,11 @@ public class ComputeDAOTest extends AbstractTransactionalDataSourceSpringContext
     }
 
     public void testGetUserByName() {
-        User user=null;
+        Subject user=null;
         try {
-            user=computeDAO.getUserByNameOrKey("smurphy");
+            user=computeDAO.getSubjectByNameOrKey("smurphy");
             assertNotNull(user);
-            assertEquals(user.getUserLogin(), "smurphy");
+            assertEquals(user.getName(), "smurphy");
         } catch (Exception ex) {
             ex.printStackTrace();
             String message="Exception: "+ex.getMessage();

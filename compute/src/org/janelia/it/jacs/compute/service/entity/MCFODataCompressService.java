@@ -259,13 +259,22 @@ public class MCFODataCompressService implements IService {
     	    
     	    // Update the input stacks
         	for(Entity entity : inputEntites) {
+                
+        	    // Update the path. This was already fixed by the bulk update above, but we need to fix it again, 
+        	    // because we're using an entity with the old state.
+                entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, outputPath);
+                
+                // Update the format
         		String format = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT);
         		if (format != null && !"".equals(format)) {
         			entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, "v3dpbd");
         		}
+        		
+        		// Update the name
         		if (entity.getName().endsWith(".v3draw")) {
         			entity.setName(entity.getName().replaceAll("v3draw", "v3dpbd"));
         		}
+        		
         		if (!isDebug) {
 	            	Entity savedEntity = entityBean.saveOrUpdateEntity(entity);
 	            	logger.info("Updated entity: "+savedEntity.getName()+" (id="+savedEntity.getId()+")");

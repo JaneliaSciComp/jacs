@@ -1,6 +1,9 @@
 
 package org.janelia.it.jacs.compute.service.recruitment;
 
+import java.util.Date;
+import java.util.List;
+
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
@@ -14,12 +17,9 @@ import org.janelia.it.jacs.model.tasks.blast.BlastNTask;
 import org.janelia.it.jacs.model.tasks.recruitment.GenomeProjectRecruitmentSamplingTask;
 import org.janelia.it.jacs.model.tasks.recruitment.RecruitmentSamplingBlastDatabaseBuilderTask;
 import org.janelia.it.jacs.model.user_data.FastaFileNode;
-import org.janelia.it.jacs.model.user_data.User;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultFileNode;
 import org.janelia.it.jacs.model.user_data.recruitment.RecruitmentSamplingDatabaseFileNode;
-
-import java.util.Date;
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -60,7 +60,7 @@ public class GenomeProjectRecruitmentSamplingService implements IService {
             // FASTA file node for ALL NCBI complete genomes
             FastaFileNode fastaFileNode = (FastaFileNode) EJBFactory.getRemoteComputeBean().
                     getNodeById(SystemConfigurationProperties.getLong("Recruitment.GenomeProjectFastaFileNode"));
-            User tmpOwner = EJBFactory.getRemoteComputeBean().getUserByNameOrKey(task.getOwner());
+            Subject tmpOwner = EJBFactory.getRemoteComputeBean().getSubjectByNameOrKey(task.getOwner());
 
             // STEP 1: Work on the blast side of things
             // Run BlastN using the old query node and new subject db's
@@ -79,7 +79,7 @@ public class GenomeProjectRecruitmentSamplingService implements IService {
             blastNTask.setParameter(BlastNTask.PARAM_matchReward, "4");
             blastNTask.setParameter(BlastNTask.PARAM_filter, "m L");
 
-            blastNTask.setOwner(tmpOwner.getUserLogin());
+            blastNTask.setOwner(tmpOwner.getName());
             blastNTask.setParentTaskId(task.getObjectId());
             blastNTask.setParameter(Task.PARAM_project, task.getParameter(Task.PARAM_project));
             blastNTask = (BlastNTask) EJBFactory.getRemoteComputeBean().saveOrUpdateTask(blastNTask);

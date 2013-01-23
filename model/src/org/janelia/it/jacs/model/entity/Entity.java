@@ -207,6 +207,9 @@ public class Entity  implements java.io.Serializable, IsSerializable {
             ed.setEntityAttribute(attribute);
             ed.setValue(value);
             ed.setOwnerKey(ownerKey);
+            Date createDate = new Date();
+            ed.setCreationDate(createDate);
+            ed.setUpdatedDate(createDate);
             this.entityData.add(ed);
             return true;
         } else if (matchingData.size()==1) {
