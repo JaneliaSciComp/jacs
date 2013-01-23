@@ -6,6 +6,15 @@
 DIR=$(cd "$(dirname "$0")"; pwd)
 
 ####
+# func
+####
+is_file_exist()
+{
+local f="$1"
+[[ -f "$f" ]] && return 0 || return 1
+}
+
+####
 # TOOLKITS
 ####
 
@@ -121,6 +130,15 @@ SUBJECT_REFNO=`expr $SUBJECT_REFNO - 1`;
 MAXITERATIONS=10000x10000x10000
 SAMPLERATIO=0.5
 
+TEMPTARGET=${OUTPUT}"temptargettx.tif"
+if ( is_file_exist "$TEMPTARGET" )
+then
+echo "Temp TARGET exists"
+else
+echo "~ Creating a symbolic link to 20x target "
+ln -s ${TARGET} ${TEMPTARGET}
+fi
+TARGET=${TEMPTARGET}
 
 STRT=`echo $TARGET | awk -F\. '{print $1}'`
 STRS=`echo $SUBPP | awk -F\. '{print $1}'`
