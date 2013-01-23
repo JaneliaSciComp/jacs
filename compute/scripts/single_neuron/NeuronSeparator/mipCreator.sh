@@ -83,7 +83,16 @@ createMip()
     MIP_FINAL="${FILE_STUB}_${NAME}.${OUTEXT}"
     echo "~ Generating $NAME MIP from channels $CHANNELS with flags $CE_FLAGS"
 
-    cat $INPUT_FILE | $NSDIR/v3draw_select_channels $CHANNELS | $NSDIR/v3draw_to_8bit | $NSDIR/v3draw_to_mip | $NSDIR/v3draw_to_ppm | $NETPBM_BIN/pamtotiff -truecolor > $MIP
+    SIGNAL_MIP_PPM="${FILE_STUB}_${NAME}.ppm"
+    cat $INPUT_FILE | $NSDIR/v3draw_select_channels $CHANNELS | $NSDIR/v3draw_to_8bit | $NSDIR/v3draw_to_mip | $NSDIR/v3draw_to_ppm > $SIGNAL_MIP_PPM
+
+    if [[ ${NAME} = "signal" && ${#CHANNELS} -lt 3 ]] ; then
+        # single signal channel will come out as greyscale, so let's colorize it
+        echo "Converting single channel signal MIP to red"
+        $NETPBM_BIN/ppmtopgm $SIGNAL_MIP_PPM | $NETPBM_BIN/pgmtoppm "#FF0000" > tmp.ppm
+        mv tmp.ppm $SIGNAL_MIP_PPM
+    fi
+    cat $SIGNAL_MIP_PPM | $NETPBM_BIN/pamtotiff -truecolor > $MIP
 
     $Vaa3D -x ireg -f iContrastEnhancer -i $MIP -o $MIP_EN $CE_FLAGS
     if [ -s $MIP_EN ]; then

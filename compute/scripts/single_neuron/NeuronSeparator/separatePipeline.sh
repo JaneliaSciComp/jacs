@@ -78,25 +78,27 @@ fi
 
 SEP_INPUT_FILE=$INPUT_FILE
 
-if [ `echo $SIGNAL_CHAN | wc -m` -lt 5 ] ; then
-    # Less than 5 characters, which means less than 3 signal channels. 
+# We expect 3 signal channels (i.e. SIGNAL_CHAN="0 1 2")
+REF_CHAN_ONE_INDEXED=`expr $REF_CHAN + 1`
+
+if [ ${#SIGNAL_CHAN} -eq 3 ] ; then
+    # 3 characters means 2 signal channels
     MAPPED_INPUT=mapped.v3draw
-    if [ `echo $SIGNAL_CHAN | wc -m` -lt 2 ] ; then
-        # Single channel
-        echo "Detected single channel image, duplicating channel 0 in channels 1 and 2"
-        echo "$Vaa3D -cmd image-loader -mapchannels $INPUT_FILE $MAPPED_INPUT \"0,0,0,1,0,2,${REF_CHAN},3\""
-        $Vaa3D -cmd image-loader -mapchannels $INPUT_FILE $MAPPED_INPUT "0,0,0,1,0,2,${REF_CHAN},3"
-    else
-        # Dual channel
+    #if [ ${#SIGNAL_CHAN} -lt 3 ] ; then
+        # Single channel (i.e. SIGNAL_CHAN="0")
+        #echo "Detected single channel image, duplicating channel 0 in channels 1 and 2"
+        #echo "$Vaa3D -cmd image-loader -mapchannels $INPUT_FILE $MAPPED_INPUT \"0,0,0,1,0,2,${REF_CHAN},3\""
+        #$Vaa3D -cmd image-loader -mapchannels $INPUT_FILE $MAPPED_INPUT "0,0,0,1,0,2,${REF_CHAN},3"
+    #else
+        # Dual channel (i.e. SIGNAL_CHAN="0 1")
         echo "Detected two channel image, duplicating channel 1 in channel 2"
-        echo "$Vaa3D -cmd image-loader -mapchannels $INPUT_FILE $MAPPED_INPUT \"0,0,1,1,1,2,${REF_CHAN},3\""
         $Vaa3D -cmd image-loader -mapchannels $INPUT_FILE $MAPPED_INPUT "0,0,1,1,1,2,${REF_CHAN},3"
-    fi
-    SEP_INPUT_FILE=$MAPPED_INPUT
+        SEP_INPUT_FILE=$MAPPED_INPUT
+        REF_CHAN_ONE_INDEXED=4
+    #fi
 fi
 
 # The above logic forces the reference onto the fourth channel
-REF_CHAN_ONE_INDEXED=4
 echo "Reference chan (1-indexed): $REF_CHAN_ONE_INDEXED"
 
 echo "~ Converting input file to 16 bit"
@@ -139,7 +141,16 @@ if [ -s SeparationResultUnmapped.nsp ]; then
         $Vaa3D -cmd image-loader -convert Reference.v3draw Reference.v3dpbd
 
         echo "~ Generating sample MIPs"
-        cat ConsolidatedSignal.v3draw | $NSDIR/v3draw_to_mip | $NSDIR/v3draw_flip_y | $NSDIR/v3draw_to_ppm | $NETPBM_BIN/pamtotiff -truecolor > ConsolidatedSignalMIP.tif
+        SIGNAL_MIP_PPM=ConsolidatedSignalMIP.ppm
+        cat ConsolidatedSignal.v3draw | $NSDIR/v3draw_to_mip | $NSDIR/v3draw_flip_y | $NSDIR/v3draw_to_ppm > $SIGNAL_MIP_PPM 
+        if [[ ${#SIGNAL_CHAN} -lt 3 ]] ; then
+            # single signal channel will come out as greyscale, so let's colorize it
+            echo "Converting single channel signal MIP to red"
+            $NETPBM_BIN/ppmtopgm $SIGNAL_MIP_PPM | $NETPBM_BIN/pgmtoppm "#FF0000" > tmp.ppm
+            mv tmp.ppm $SIGNAL_MIP_PPM
+        fi
+        cat $SIGNAL_MIP_PPM | $NETPBM_BIN/pamtotiff -truecolor > ConsolidatedSignalMIP.tif
+
         $Vaa3D -x ireg -f iContrastEnhancer -i ConsolidatedSignalMIP.tif -o ConsolidatedSignalMIP2.tif -p "#m 5.0"
         $NETPBM_BIN/tifftopnm ConsolidatedSignalMIP2.tif | $NETPBM_BIN/pnmtopng > ConsolidatedSignalMIP.png
 
