@@ -65,7 +65,7 @@ public class RestfulWebService {
         try {
             final AnnotationBeanRemote annotationBean =
                     EJBFactory.getRemoteAnnotationBean();
-            if (userList == null) {
+            if ((userList == null) || (userList.size() == 0)) {
                 entityList = annotationBean.getAllDataSets();
             } else {
                 entityList = annotationBean.getUserDataSets(userList);
