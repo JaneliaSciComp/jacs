@@ -151,7 +151,7 @@ if [ $INSTALL_CLIENT == 1 ]; then
     cd $STAGING_DIR
     tar cvfz "$FLYSUITE_TARBALL" $FLYSUITE_NAME
     tar cvfz "$FLYSUITE_LINUX_TARBALL" $FLYSUITE_LINUX_NAME
-    7z a "$FLYSUITE_WINDOWS_ZIPFILE" $FLYSUITE_WINDOWS_NAME
+    #7z a "$FLYSUITE_WINDOWS_ZIPFILE" $FLYSUITE_WINDOWS_NAME
 
     echo "FlySuite Version ${FWVER} (client) was successfully installed into the following locations:"
     echo "  Mac: $FLYSUITE_INSTALL_DIR"
