@@ -43,6 +43,8 @@ for(Entity sample : e.getUserEntitiesWithAttributeValue(username, ATTRIBUTE_DATA
     
     dir = "\""+targetDir+"/"+sample.name+"/\""
     
+    if (!sample.name.contains("Right")) continue;
+    
     if (sp != null) {
         f.loadChildren(sp)
         
@@ -58,34 +60,36 @@ for(Entity sample : e.getUserEntitiesWithAttributeValue(username, ATTRIBUTE_DATA
                 file = file.replaceAll("/groups/scicomp","/Volumes")
                 meta.add("\""+file+"\"")
             }
-            else if (sf.name.startsWith("merged") && sf.name.endsWith("v3dpbd")) {
+            else if ((sf.name.startsWith("stitched")||sf.name.startsWith("merged")) && sf.name.endsWith("v3dpbd")) {
                 file = sf.getValueByAttributeName(ATTRIBUTE_FILE_PATH)
                 file = file.replaceAll("/groups/scicomp","/Volumes")
-                stack = "\""+file+"\""
+                stack = file
+                //"\""+file+"\""
             }
         }
         
         if (stack!=null) {
             
-            ns = sp.getLatestChildOfType(TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)
-            if (ns==null) continue
-            f.loadChildren(ns)
-            
-            supportingFiles = EntityUtils.findChildWithName(ns, "Supporting Files")
-            f.loadChildren(supportingFiles)
-            
-            labelFile = EntityUtils.findChildWithName(supportingFiles, "ConsolidatedLabel.v3dpbd")
-            
-            labelFilepath = labelFile.getValueByAttributeName(ATTRIBUTE_FILE_PATH)
-            labelFilepath = labelFilepath.replaceAll("/groups/scicomp","/Volumes")
-            labelFilepath = "\""+labelFilepath+"\""
-            
-            println "mkdir "+dir
-            meta.each {
-                println "cp "+it+" "+dir
-            }
-            println "cp "+stack+" "+dir
-            println "cp "+labelFilepath+" "+dir
+//            ns = sp.getLatestChildOfType(TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)
+//            if (ns==null) continue
+//            f.loadChildren(ns)
+//            
+//            supportingFiles = EntityUtils.findChildWithName(ns, "Supporting Files")
+//            f.loadChildren(supportingFiles)
+//            
+//            labelFile = EntityUtils.findChildWithName(supportingFiles, "ConsolidatedLabel.v3dpbd")
+//            
+//            labelFilepath = labelFile.getValueByAttributeName(ATTRIBUTE_FILE_PATH)
+//            labelFilepath = labelFilepath.replaceAll("/groups/scicomp","/Volumes")
+//            labelFilepath = "\""+labelFilepath+"\""
+//            
+//            println "mkdir "+dir
+//            meta.each {
+//                println "cp "+it+" "+dir
+//            }
+//            println "cp "+stack+" "+dir
+//            println "cp "+labelFilepath+" "+dir
+            println stack
         }
         
         

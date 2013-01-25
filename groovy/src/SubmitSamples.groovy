@@ -17,6 +17,7 @@ import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.fileDiscovery.MCFOSamplePipelineTask;
+import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.shared.utils.EntityUtils
 
@@ -25,74 +26,58 @@ f = new JacsUtils("leetlab", false)
 e = f.e
 c = f.c
 
-id = "1759767174823542882";
+id = "1805889121739079778";
 sampleFolder = e.getEntityById(id);
-
 f.loadChildren(sampleFolder)
 
-numRefreshProcessing = 0
-numRefreshAlignment = 0
-
-GregorianCalendar cutoff = new GregorianCalendar(2012, Calendar.AUGUST, 31, 12, 0, 0, 0)
-
+int numSamples = 0;
+int numSamplesReprocessed = 0;
 
 for (Entity sample : sampleFolder.children) {
 	f.loadChildren(sample)
-	sc = sample.getOrderedChildren()
+	sc = EntityUtils.getOrderedEntityDataForAttribute(sample,ATTRIBUTE_ENTITY)
 	
-	latestResults = []
-	for(Entity child : sc) {
-		if (child.entityType.name == TYPE_IMAGE_2D) continue
-		GregorianCalendar date = new GregorianCalendar()
-		date.setTime(child.creationDate)
-		if (cutoff.before(date)) {
-			
-			latestResults.add(child)
-		}
-	}
-	
-	refreshProcessing = false
-	refreshAlignment = false
-	
-	if (latestResults.size() == 0) {
-		refreshProcessing = true
-		refreshAlignment = true
-	}
-	else if (latestResults.size() == 1) {
-		refreshAlignment = true
-	}
-	else if (latestResults.size() == 2) {
-		// all good
-	}
-	else {
-		throw new IllegalStateException("Unknown situation: "+sample.name)
-	}
-	
-	if (refreshProcessing || refreshAlignment) {
-	
-		println sample.name
-		
-		if (refreshProcessing) {
-			println "    + Refresh processing and alignment"
-			numRefreshProcessing++;
-			numRefreshAlignment++;
-			
-		}
-		else if (refreshAlignment) {
-			println "    + Refresh alignment"
-			numRefreshAlignment++;
-		}
-			
-		Task task = new MCFOSamplePipelineTask(new HashSet<Node>(),
-				sample.getUser().getUserLogin(), new ArrayList<Event>(), new HashSet<TaskParameter>(),
-				sample.id+"", refreshProcessing, refreshAlignment, null);
-		task.setJobName("Leet Sample Pipeline Task");
-		task = c.saveOrUpdateTask(task);
-		c.submitJob("LeetSamplePipeline", task.getObjectId());
-	}
+    int numDefaultImages = 0;
+    for(EntityData pipelineRunEd : sc) {
+        if (pipelineRunEd.childEntity.getValueByAttributeName(ATTRIBUTE_DEFAULT_2D_IMAGE)!=null) {
+            numDefaultImages++;
+        }
+    }
+    
+    boolean reprocess = false;
+    if (sc.size()==2) {
+        // skip
+        if (numDefaultImages<2) {
+            reprocess = true;
+        }
+    }
+    else if (sc.size()==1) {
+        reprocess = true;
+    }
+    else {
+        println "UNKNOWN sample: "+sample.name
+        for(EntityData child : sc) {
+            println "    "+child.childEntity.getName()
+        }
+        reprocess = true;
+    }	
+    
+    if (reprocess) {
+        println "Reprocess sample: "+sample.name
+        HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        taskParameters.add(new TaskParameter("sample entity id", sample.id.toString(), null));
+//        taskParameters.add(new TaskParameter("reuse processing", "false", null));
+        Task task = new GenericTask(new HashSet<Node>(), sample.getUser().getUserLogin(), new ArrayList<Event>(),
+                taskParameters, "flylightSampleAllPipelines", "Flylight Sample All Pipelines");
+        task.setJobName("Flylight Sample All Pipelines Task");
+        task = c.saveOrUpdateTask(task);
+        c.submitJob("GSPS_CompleteSamplePipeline", task.getObjectId());
+        numSamplesReprocessed++;
+    }
+    numSamples++;
 }
 
-println "Total: "+sampleFolder.children.size()
-println "Refresh processing: "+numRefreshProcessing
-println "Refresh alignment: "+numRefreshAlignment
+println "numSamples: "+numSamples
+println "numSamplesReprocessed: "+numSamplesReprocessed
+
 
