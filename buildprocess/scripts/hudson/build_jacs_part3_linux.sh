@@ -171,11 +171,11 @@ fi
 if [ $INSTALL_DATA_SERVER == 1 ]; then
     echo "  Deploying to server 'jacs-data'..."
     cd $JACS_COMPILE_DIR/compute
-    ant -Duser.server.machine=jacs-data -Duser.server.login=jacs "deploy-[your-server]-dev" &
-    INSTALL_PID1=$!
+    ant -Duser.server.machine=jacs-data -Duser.server.login=jacs "deploy-[your-server]-dev"
+    echo "FlySuite Version ${FWVER} (JBoss server) was successfully deployed to the JACS production data-loading server."
     cd $JACS_COMPILE_DIR/jacs
-    ant -Duser.server.machine=jacs-data -Duser.server.login=jacs "deploy-[your-server]-dev" &
-    INSTALL_PID2=$!
+    ant -Duser.server.machine=jacs-data -Duser.server.login=jacs "deploy-[your-server]-dev"
+    echo "FlySuite Version ${FWVER} (Tomcat web front-end) was successfully deployed to the JACS production data-loading server."
 fi 
     
 ################################################################
@@ -183,19 +183,12 @@ fi
 ################################################################
 if [ $INSTALL_PROD_SERVER == 1 ]; then
     echo "  Deploying to server 'jacs'..."
-    cd $JACS_COMPILE_DIR/compute 
-    ant -Duser.server.machine=jacs -Duser.server.login=jacs "deploy-[your-server]-dev" &
-    INSTALL_PID3=$!
+    cd $JACS_COMPILE_DIR/compute
+    ant -Duser.server.machine=jacs -Duser.server.login=jacs "deploy-[your-server]-dev"
+    echo "FlySuite Version ${FWVER} (JBoss server) was successfully deployed to the JACS production server."
     cd $JACS_COMPILE_DIR/jacs
-    ant -Duser.server.machine=jacs -Duser.server.login=jacs "deploy-[your-server]-dev" &
-    INSTALL_PID4=$!
+    ant -Duser.server.machine=jacs -Duser.server.login=jacs "deploy-[your-server]-dev"
+    echo "FlySuite Version ${FWVER} (Tomcat web front-end) was successfully deployed to the JACS production server."
 fi
 
-echo "Waiting for async installations to finish..."
-wait $INSTALL_PID1
-wait $INSTALL_PID2
-wait $INSTALL_PID3
-wait $INSTALL_PID4
-
-echo "FlySuite Version ${FWVER} was successfully deployed to the production environment."
 
