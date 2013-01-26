@@ -322,5 +322,6 @@
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/xmlsec.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/xuggle-xuggler-5.4.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/workstation.jar"/>
+	<classpathentry exported="true" kind="con" path="GROOVY_DSL_SUPPORT"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
