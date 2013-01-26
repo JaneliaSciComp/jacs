@@ -164,8 +164,15 @@ if [ $BUILD_JACS == 1 ]; then
         exit 1
     fi
 
-    echo "  Building Jacs"
     cd $JACS_COMPILE_DIR
+
+    echo "Changing versions to ${FWVER}"
+    sed "s/console.versionNumber=DEV/console.versionNumber=${FWVER}/g" console/src/main/java/console.properties > tmp
+    mv tmp console/src/main/java/console.properties
+    sed "s/jacs.version=DEV/jacs.version=$FWVER/g" shared/conf/jacs.properties > tmp
+    mv tmp hared/conf/jacs.properties
+
+    echo "  Building Jacs"
     cd buildprocess
     ant -buildfile build-all.xml
     cd ../console
