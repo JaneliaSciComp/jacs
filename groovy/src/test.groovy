@@ -1,6 +1,10 @@
+import java.util.ArrayList;
+import java.util.List;
+
 import org.janelia.it.FlyWorkstation.api.facade.concrete_facade.ejb.EJBFactory 
 import org.janelia.it.jacs.compute.api.AnnotationBeanRemote
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote
+import org.janelia.it.jacs.model.entity.DataSet;
 import org.janelia.it.jacs.model.entity.Entity
 import org.janelia.it.jacs.model.entity.EntityData
 import org.janelia.it.jacs.model.user_data.User
@@ -15,22 +19,48 @@ f = new JacsUtils(username, false)
 e = f.e
 a = f.a
 
-Entity entity = e.getEntityById(id+"")
-printEntityTree(entity)
+List<Entity> entityList = a.getAllDataSets()
+println entityList.size()
+includeOnlySageSync = true
 
-entity = e.annexEntityTree(id, username)
-printEntityTree(entity)
+List<DataSet> dataSetList = null;
+if (entityList != null) {
 
+    dataSetList = new ArrayList<DataSet>(entityList.size());
+    DataSet dataSet;
+    for (Entity entity : entityList) {
 
-def printEntityTree(Entity tree) {
-	printEntityTree(tree, "")
+        println entity.name
+        
+        if (entity != null) {
+            dataSet = new DataSet(entity);
+            if ((! includeOnlySageSync) || dataSet.hasSageSync()) {
+                println "Including "+entity.name
+                dataSetList.add(dataSet);
+            }
+
+        }
+    }
+
 }
 
-def printEntityTree(Entity tree, String indent) {
-	println indent+""+tree.name +" ("+tree.user.userLogin+")"
-	f.loadChildren(tree)
-	tree.orderedChildren.each {
-		printEntityTree(it, indent+"  ")
-	}
-}
+
+//Entity entity = e.getEntityById(id+"")
+//printEntityTree(entity)
+//
+//entity = e.annexEntityTree(id, username)
+//printEntityTree(entity)
+//
+//
+//def printEntityTree(Entity tree) {
+//	printEntityTree(tree, "")
+//}
+//
+//def printEntityTree(Entity tree, String indent) {
+//	println indent+""+tree.name +" ("+tree.user.userLogin+")"
+//	f.loadChildren(tree)
+//	tree.orderedChildren.each {
+//		printEntityTree(it, indent+"  ")
+//	}
+//}
 

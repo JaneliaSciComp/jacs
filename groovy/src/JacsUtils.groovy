@@ -9,7 +9,7 @@ import org.janelia.it.jacs.compute.api.SolrBeanRemote;
 import org.janelia.it.jacs.compute.api.support.SolrResults;
 import org.janelia.it.jacs.model.entity.Entity
 import org.janelia.it.jacs.model.entity.EntityData
-import org.janelia.it.jacs.model.user_data.User
+import org.janelia.it.jacs.model.user_data.Subject
 import org.janelia.it.jacs.shared.utils.EntityUtils
 import static org.janelia.it.jacs.model.entity.EntityConstants.*
 
@@ -19,15 +19,15 @@ class JacsUtils {
 	AnnotationBeanRemote a
 	ComputeBeanRemote c
 	SolrBeanRemote s
-	User user
+	Subject subject
 	Date createDate
 	boolean persist
 	
-	JacsUtils(String username) {
-		this(username, true)
+	JacsUtils(String subjectKey) {
+		this(subjectKey, true)
 	}
 		
-	JacsUtils(String username, boolean persist) {
+	JacsUtils(String subjectKey, boolean persist) {
 		this.persist = persist
 		
 		FacadeManager.registerFacade(FacadeManager.getEJBProtocolString(), EJBFacadeManager.class, "JACS EJB Facade Manager");
@@ -39,7 +39,7 @@ class JacsUtils {
 		this.a = EJBFactory.getRemoteAnnotationBean()
 		this.c = EJBFactory.getRemoteComputeBean(true)
 		this.s = EJBFactory.getRemoteSolrBean()
-//		this.user = c.getUserByName(username)
+		this.subject = c.getSubjectByNameOrKey(subjectKey)
 		this.createDate = new Date()
 	}
 	
@@ -59,7 +59,7 @@ class JacsUtils {
 	
 	def Entity loadChildren(Entity entity) {
 		if (entity==null || entity.id==null) return entity
-		EntityUtils.replaceChildNodes(entity, e.getChildEntities(entity.id))
+		EntityUtils.replaceChildNodes(entity, e.getChildEntities(subject.key, entity.id))
 		return entity
 	}
 	
@@ -92,7 +92,7 @@ class JacsUtils {
 	def Entity newEntity(name, entityTypeName) {
 		Entity entity = new Entity()
 		entity.name = name
-		entity.user = user
+		entity.owner = subject.key
 		entity.creationDate = createDate
 		entity.updatedDate = createDate
 		entity.entityType = e.getEntityTypeByName(entityTypeName)

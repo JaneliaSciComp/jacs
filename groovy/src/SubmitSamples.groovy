@@ -22,12 +22,13 @@ import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.shared.utils.EntityUtils
 
 // Globals
-f = new JacsUtils("leetlab", false)
+subject = "group:leetlab"
+f = new JacsUtils(subject, false)
 e = f.e
 c = f.c
 
-id = "1805889121739079778";
-sampleFolder = e.getEntityById(id);
+id = 1805889121739079778L
+sampleFolder = e.getEntityById(subject, id);
 f.loadChildren(sampleFolder)
 
 int numSamples = 0;
@@ -45,7 +46,7 @@ for (Entity sample : sampleFolder.children) {
     }
     
     boolean reprocess = false;
-    if (sc.size()==2) {
+    if (sc.size()>=2) {
         // skip
         if (numDefaultImages<2) {
             reprocess = true;
@@ -57,17 +58,17 @@ for (Entity sample : sampleFolder.children) {
     else {
         println "UNKNOWN sample: "+sample.name
         for(EntityData child : sc) {
-            println "    "+child.childEntity.getName()
+            println "    "+child.childEntity.name
         }
         reprocess = true;
     }	
     
     if (reprocess) {
-        println "Reprocess sample: "+sample.name
+        println "Reprocess "+sample.name+" for "+sample.ownerKey
         HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
         taskParameters.add(new TaskParameter("sample entity id", sample.id.toString(), null));
-//        taskParameters.add(new TaskParameter("reuse processing", "false", null));
-        Task task = new GenericTask(new HashSet<Node>(), sample.getUser().getUserLogin(), new ArrayList<Event>(),
+        taskParameters.add(new TaskParameter("reuse processing", "false", null));
+        Task task = new GenericTask(new HashSet<Node>(), "leetlab", new ArrayList<Event>(),
                 taskParameters, "flylightSampleAllPipelines", "Flylight Sample All Pipelines");
         task.setJobName("Flylight Sample All Pipelines Task");
         task = c.saveOrUpdateTask(task);
