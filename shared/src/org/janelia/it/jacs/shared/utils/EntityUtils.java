@@ -720,7 +720,15 @@ public class EntityUtils {
 		return sb.toString();
 	}
 	
-	public static String createDataSetIdentifierFromName(String username,String dataSetName) {
+	/**
+	 * Create a data set identifier for the given user's data set. This prepends the user's name and then appends 
+	 * the data set name with all non-word characters replaced with underscores.
+	 * @param username
+	 * @param dataSetName
+	 * @return
+	 */
+	public static String createDataSetIdentifierFromName(String username, String dataSetName) {
+	    if (username.contains(":")) username = username.split(":")[1];
     	return username+"_"+dataSetName.toLowerCase().replaceAll("\\W+", "_");
 	}
 }
