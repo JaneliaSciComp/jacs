@@ -11,7 +11,8 @@ import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.service.entity.FastLoadArtifactService;
 import org.janelia.it.jacs.compute.service.entity.OrphanAnnotationCheckerService;
-import org.janelia.it.jacs.compute.service.entity.SampleFileNodeSyncService;
+import org.janelia.it.jacs.compute.service.entity.SampleDataCompressionService;
+import org.janelia.it.jacs.compute.service.entity.SampleTrashCompactorService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FlyScreenDiscoveryService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.SampleRun;
 import org.janelia.it.jacs.compute.service.fly.MaskGuideService;
@@ -190,10 +191,10 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
     
-    public void runSampleCleaningService(String user, Boolean testRun) {
+    public void runSampleCleaning(String user, Boolean testRun) {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	taskParameters.add(new TaskParameter(SampleFileNodeSyncService.PARAM_testRun, Boolean.toString(testRun), null)); 
+        	taskParameters.add(new TaskParameter(SampleTrashCompactorService.PARAM_testRun, Boolean.toString(testRun), null)); 
         	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
         			taskParameters, "sampleCleaning", "Sample Cleaning");
             task.setJobName("Sample Cleaning Task");
@@ -204,29 +205,42 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
     
-    public void runSampleSyncService(String user, Boolean testRun) {
+    public void runSampleTrashCompactor(String user, Boolean testRun) {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	taskParameters.add(new TaskParameter(SampleFileNodeSyncService.PARAM_testRun, Boolean.toString(testRun), null)); 
+        	taskParameters.add(new TaskParameter(SampleTrashCompactorService.PARAM_testRun, Boolean.toString(testRun), null)); 
         	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-        			taskParameters, "sampleSync", "Sample Sync");
-            task.setJobName("MultiColor FlipOut Sample Fileshare Sync Task");
+        			taskParameters, "sampleTrashCompactor", "Sample Trash Compactor");
+            task.setJobName("Sample Trash Compactor Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("SampleFileNodeSync", task.getObjectId());
+            EJBFactory.getLocalComputeBean().submitJob("SampleTrashCompactor", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
     
-    public void runMCFODataCompress(String user, Boolean testRun) {
+    public void runSampleDataCompression(String user, Boolean testRun) {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	taskParameters.add(new TaskParameter(SampleFileNodeSyncService.PARAM_testRun, Boolean.toString(testRun), null)); 
+        	taskParameters.add(new TaskParameter(SampleDataCompressionService.PARAM_testRun, Boolean.toString(testRun), null)); 
         	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-        			taskParameters, "mcfoDataCompress", "MCFO Data Compress");
-            task.setJobName("MultiColor FlipOut Data Compress Task");
+        			taskParameters, "sampleDataCompression", "Sample Data Compression");
+            task.setJobName("Sample Data Compression Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("MCFODataCompress", task.getObjectId());
+            EJBFactory.getLocalComputeBean().submitJob("SampleDataCompression", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void runSampleImageRegistration(String user) {
+        try {
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
+                    taskParameters, "sampleImageRegistration", "Sample Image Registration");
+            task.setJobName("Sample Image Registration Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("SampleImageRegistration", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -261,19 +275,6 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
-    public void runUserSampleImageRegistration(String user) {
-        try {
-        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-        			taskParameters, "userSampleImageRegistration", "User Sample Image Registration");
-            task.setJobName("User Sample Image Registration Task");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("UserSampleImageRegistration", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-    
     public void runSampleMaintenancePipeline(String user) {
         try {
         	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();

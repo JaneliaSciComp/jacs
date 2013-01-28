@@ -163,6 +163,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     		Entity separation = EntityUtils.getLatestChildOfType(resultEntity, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
     		if (separation!=null) {
             	Entity fast3dImage = findFast3dImage(separation);
+            	entityHelper.setDefault3dImage(separation, default3dImage);
             	if (fast3dImage!=null) {
             		logger.info("Found default fast 3d image, applying to "+default3dImage.getName());
             		entityHelper.setImageIfNecessary(default3dImage, EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE, fast3dImage);

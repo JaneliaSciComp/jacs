@@ -78,7 +78,7 @@ public class FastLoadArtifactService implements IService {
         	if (e instanceof ServiceException) {
             	throw (ServiceException)e;
             }
-            throw new ServiceException("Error running MCFODataCompressService", e);
+            throw new ServiceException("Error running FastLoadArtifactService", e);
         }
     }
     

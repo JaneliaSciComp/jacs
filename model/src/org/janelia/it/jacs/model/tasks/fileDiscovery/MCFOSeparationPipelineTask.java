@@ -16,6 +16,7 @@ import java.util.Set;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
+@Deprecated 
 public class MCFOSeparationPipelineTask extends Task {
 
     transient public static final String TASK_NAME = "mcfoSeparationPipeline";

@@ -315,7 +315,7 @@
 		</sequence>
 		
 		<!-- Compress all the v3draw files we created  -->
-        <include name="Compress raw files" process="MCFODataCompress">
+        <include name="Compress raw files" process="SampleDataCompression">
             <input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
         </include>
         

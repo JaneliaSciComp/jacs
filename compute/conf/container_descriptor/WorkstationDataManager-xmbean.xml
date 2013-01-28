@@ -153,7 +153,7 @@
     
     <operation>
         <description>Clean old, non-annotated results from Sample entities. WARNING: this depends heavily on the Solr index, and should be run at an off-peak time, directly after runSolrIndexSync.</description>
-        <name>runSampleCleaningService</name>
+        <name>runSampleCleaning</name>
         <parameter>
            <description>User to run as (e.g. "flylight")</description>
            <name>user</name>
@@ -168,7 +168,7 @@
     
     <operation>
         <description>Synchronize the given user's Sample fileshare with the database</description>
-        <name>runSampleSyncService</name>
+        <name>runSampleTrashCompactor</name>
         <parameter>
            <description>User to run as (e.g. "flylight")</description>
            <name>user</name>
@@ -183,7 +183,7 @@
 
     <operation>
         <description>Compress all of the user's v3draw files to v3dpbd</description>
-        <name>runMCFODataCompress</name>
+        <name>runSampleDataCompression</name>
         <parameter>
             <description>User to run as (e.g. "flylight")</description>
             <name>user</name>
@@ -193,6 +193,16 @@
            <description>Should this run as a test without making any real changes?</description>
            <name>testRun</name>
            <type>java.lang.Boolean</type>
+        </parameter>
+    </operation>
+    
+    <operation>
+        <description>Register all images for a user's samples</description>
+        <name>runSampleImageRegistration</name>
+        <parameter>
+            <description>User to run as (e.g. "flylight")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
         </parameter>
     </operation>
     
@@ -213,16 +223,6 @@
            <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
            <name>sampleEntityId</name>
            <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Register all images for a user's samples</description>
-        <name>runUserSampleImageRegistration</name>
-        <parameter>
-            <description>User to run as (e.g. "flylight")</description>
-            <name>user</name>
-            <type>java.lang.String</type>
         </parameter>
     </operation>
     

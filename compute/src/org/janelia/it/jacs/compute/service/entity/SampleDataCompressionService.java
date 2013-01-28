@@ -23,7 +23,7 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class MCFODataCompressService implements IService {
+public class SampleDataCompressionService implements IService {
 
 	public transient static final String CENTRAL_DIR_PROP = "FileStore.CentralDir";
 	
@@ -93,7 +93,7 @@ public class MCFODataCompressService implements IService {
         	if (e instanceof ServiceException) {
             	throw (ServiceException)e;
             }
-            throw new ServiceException("Error running MCFODataCompressService", e);
+            throw new ServiceException("Error running SampleDataCompressionService", e);
         }
     }
     

@@ -3,18 +3,9 @@ package org.janelia.it.jacs.compute.service.entity;
 import java.io.File;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
-import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.api.EntityBeanLocal;
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.engine.service.IService;
-import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.entity.AlignmentResultNode;
 import org.janelia.it.jacs.model.user_data.entity.NamedFileNode;
@@ -27,7 +18,7 @@ import org.janelia.it.jacs.shared.utils.FileUtil;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SampleFileNodeSyncService extends AbstractEntityService {
+public class SampleTrashCompactorService extends AbstractEntityService {
 
     public transient static final String PARAM_testRun = "is test run";
     

@@ -9,9 +9,15 @@
 	    <include name="Sample Cleaning" process="SampleCleaning">
 	    </include>
 	    
-	    <include name="Compress raw files" process="MCFODataCompress">
+        <include name="Remove Trash" process="SampleTrashCompactor">
+        </include>
+        
+	    <include name="Compress Raw Files" process="SampleDataCompression">
 	    </include>
     
+        <include name="Re-register all images" process="SampleImageRegistration">
+        </include>
+        
     </sequence>
         
 </process>

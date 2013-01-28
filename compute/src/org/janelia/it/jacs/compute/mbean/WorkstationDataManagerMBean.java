@@ -26,16 +26,18 @@ public interface WorkstationDataManagerMBean {
 	public void runSolrTreeIndexing(Long rootId);
 
 	
-	// Maintenance Pipelines
+	// System Administration Pipelines
 	public void runOrphanAnnotationCheckerService(String user, Boolean deleteAnnotationsMissingTargets, Boolean deleteAnnotationsMissingTerms);
-    
     public void runUpgradeUserData(String user);
     public void runUpgradeSingleSample(String sampleEntityId);
     
-    public void runUserSampleImageRegistration(String user);
-    public void runSampleCleaningService(String user, Boolean testRun);
-    public void runSampleSyncService(String user, Boolean testRun); 
-    public void runMCFODataCompress(String user, Boolean testRun);
+    // Maintenance Pipelines    
+    
+    public void runSampleCleaning(String user, Boolean testRun);
+    public void runSampleTrashCompactor(String user, Boolean testRun); 
+    public void runSampleDataCompression(String user, Boolean testRun);
+    public void runSampleImageRegistration(String user);
+    // All of the above
     public void runSampleMaintenancePipeline(String user);
     
     

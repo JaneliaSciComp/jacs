@@ -1,21 +1,21 @@
 package org.janelia.it.jacs.model.tasks.fileDiscovery;
 
+import java.util.List;
+import java.util.Set;
+
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.vo.BooleanParameterVO;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.model.vo.ParameterVO;
-import org.janelia.it.jacs.model.vo.TextParameterVO;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * Discover files in a set of input directories and create corresponding entities in the database.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
+@Deprecated
 public class MCFODataPipelineTask extends FileDiscoveryTask {
 
     transient public static final String TASK_NAME = "mcfoDataPipeline";
