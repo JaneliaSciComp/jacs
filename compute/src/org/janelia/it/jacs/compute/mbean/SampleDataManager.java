@@ -27,11 +27,14 @@ public class SampleDataManager implements SampleDataManagerMBean {
 
     public void runAllSampleMaintenancePipelines() {
         try {
+            logger.info("Building list of users with samples...");
             Set<String> subjectKeys = new HashSet<String>();
-            for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_SAMPLE)) {
-                subjectKeys.add(dataSet.getOwnerKey());
+            for(Entity sample : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_SAMPLE)) {
+                subjectKeys.add(sample.getOwnerKey());
             }
+            logger.info("Found users with samples: "+subjectKeys);
             for(String subjectKey : subjectKeys) {
+                logger.info("Queuing maintenance pipelines for "+subjectKey);
                 runUserSampleMaintenancePipelines(subjectKey);
             }
         } catch (Exception ex) {
@@ -113,11 +116,14 @@ public class SampleDataManager implements SampleDataManagerMBean {
 
     public void runAllDataSetPipelines(String runMode, Boolean reuseProcessing) {
         try {
+            logger.info("Building list of users with data sets...");
             Set<String> subjectKeys = new HashSet<String>();
             for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
                 subjectKeys.add(dataSet.getOwnerKey());
             }
+            logger.info("Found users with data sets: "+subjectKeys);
             for(String subjectKey : subjectKeys) {
+                logger.info("Queuing data set pipelines for "+subjectKey);
                 runUserDataSetPipelines(subjectKey, runMode, reuseProcessing);
             }
         } catch (Exception ex) {

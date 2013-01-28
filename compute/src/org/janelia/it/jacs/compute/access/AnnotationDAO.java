@@ -2398,6 +2398,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             throw new DaoException(e);
         }
 	}
+	
 	/**
      * Iterate recursively through all children in the Entity graph in order to preload them.
      * @param entity
@@ -2429,6 +2430,36 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     	return entity;
     }
 
+    /**
+     * Iterate recursively through all children in the Entity graph in order to preload them.
+     * @param entity
+     * @return
+     */
+    public Set<Long> getDescendantIds(String subjectKey, Entity entity) {
+        Set<String> subjectKeys = getSubjectKeySet(subjectKey);
+        Set<Long> visited = new HashSet<Long>();
+        getDescendantIds(subjectKeys, entity, visited);
+        return visited;
+    }
+    
+    private void getDescendantIds(Set<String> subjectKeys, Entity entity, Set<Long> visited) {
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("getDescendantIds(subjectKeys="+subjectKeys+",entity.id="+entity.getId()+")");
+        }
+        
+        if (entity == null) return;
+        if (subjectKeys!=null && !subjectKeys.contains(entity.getOwnerKey())) return;
+        if (visited.contains(entity.getId())) return;
+        visited.add(entity.getId());
+        
+        for(EntityData ed : entity.getEntityData()) {
+            Entity child = ed.getChildEntity();
+            if (child != null) {
+                getDescendantIds(subjectKeys, child, visited);
+            }
+        }
+    }
+    
     public Entity getEntityAndChildren(String subjectKey, Long entityId) {
     	if (_logger.isDebugEnabled()) {
     		_logger.debug("getEntityAndChildren(entityId="+entityId+")");

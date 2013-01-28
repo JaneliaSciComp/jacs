@@ -4,15 +4,10 @@ import java.io.*;
 import java.util.*;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.access.DaoException;
-import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
-import org.janelia.it.jacs.compute.service.entity.FastLoadArtifactService;
 import org.janelia.it.jacs.compute.service.entity.OrphanAnnotationCheckerService;
-import org.janelia.it.jacs.compute.service.entity.SampleDataCompressionService;
-import org.janelia.it.jacs.compute.service.entity.SampleTrashCompactorService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FlyScreenDiscoveryService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.SampleRun;
 import org.janelia.it.jacs.compute.service.fly.MaskGuideService;

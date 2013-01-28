@@ -13,12 +13,12 @@
 
     <operation>
         <description>Run routine maintenance tasks on all Samples for all users</description>
-        <name>runAllSampleMaintenancePipeline</name>
+        <name>runAllSampleMaintenancePipelines</name>
     </operation>
     
     <operation>
         <description>Run routine maintenance tasks on all the user's Samples</description>
-        <name>runUserSampleMaintenancePipeline</name>
+        <name>runUserSampleMaintenancePipelines</name>
         <parameter>
             <description>User to run as (e.g. "flylight")</description>
             <name>user</name>
