@@ -15,45 +15,19 @@ public interface WorkstationDataManagerMBean {
 	public void runScreenScoresExport(String user, String outputFilepath);
 	public void runSplitLinesLoading(String user, String topLevelFolderName, String representativesPath, String splitConstructsPath);
 	
-	
 	// Alternative databases (not currently used)
 	public void runNeo4jSync(Boolean clearDb);
 	public void runMongoDbSync(Boolean clearDb);
-	
 	
 	// SOLR Indexing
 	public void runSolrIndexSync(Boolean clearIndex); 	
 	public void runSolrTreeIndexing(Long rootId);
 
-	
 	// System Administration Pipelines
 	public void runOrphanAnnotationCheckerService(String user, Boolean deleteAnnotationsMissingTargets, Boolean deleteAnnotationsMissingTerms);
     public void runUpgradeUserData(String user);
     public void runUpgradeSingleSample(String sampleEntityId);
-    
-    // Maintenance Pipelines    
-    
-    public void runSampleCleaning(String user, Boolean testRun);
-    public void runSampleTrashCompactor(String user, Boolean testRun); 
-    public void runSampleDataCompression(String user, Boolean testRun);
-    public void runSampleImageRegistration(String user);
-    // All of the above
-    public void runSampleMaintenancePipeline(String user);
-    
-    
-    // Pipelines for FlyLight Single Neuron Data
-    public void runSingleFastLoadArtifactPipeline(String separationEntityId);
-    public void runCompleteFastLoadArtifactPipeline(String user);
-    
-    
-    // Generic confocal image processing pipelines, driven by pipeline configurations on a data-set basis
-    public void runAllDataSetPipelines(String runMode, Boolean reuseProcessing);
-    public void runUserDataSetPipelines(String username, String runMode, Boolean reuseProcessing);
-    public void runSampleFolder(String folderId, Boolean reuseProcessing);
-    public void runSamplePipelines(String sampleId, Boolean reuseProcessing);
-    public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName, Boolean reuseProcessing);
-    public void runNeuronSeparationPipeline(String resultEntityId);
-    
+    public void annexEntityTree(String subjectKey, String entityId);
     
     // Pipelines for FlyLight Screen Data
     public void runFlyScreenPipeline(String user, Boolean refresh);
@@ -62,7 +36,6 @@ public interface WorkstationDataManagerMBean {
     public void createPatternAnnotationQuantifierSummaryFile();
     public void createMaskSummaryFile(String maskFolderName);
     public void runMaskAnnotationPipeline(String user, String maskFolderName, Boolean refresh);
-    
     
     // Other data pipelines
     public void runFileTreeLoaderPipeline(String user, String rootDirectoryPath, String topLevelFolderName);
@@ -75,12 +48,4 @@ public interface WorkstationDataManagerMBean {
     public void runSlowImportTask(String parentDirPath, String topLevelFolderName, String owner);
     public void runDataDeDuplication();
 
-    
-    // Security management (should be made into a separate bean at some point)
-    public void createGroup(String groupOwner, String groupName);
-    public void removeGroup(String groupName);
-    public void addUserToGroup(String groupUser, String groupName);
-    public void removeUserFromGroup(String groupUser, String groupName);
-    public void annexEntityTree(String subjectKey, String entityId);
-    
 }

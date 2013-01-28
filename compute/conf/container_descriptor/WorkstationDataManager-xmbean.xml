@@ -151,60 +151,6 @@
         </parameter>
     </operation>
     
-    <operation>
-        <description>Clean old, non-annotated results from Sample entities. WARNING: this depends heavily on the Solr index, and should be run at an off-peak time, directly after runSolrIndexSync.</description>
-        <name>runSampleCleaning</name>
-        <parameter>
-           <description>User to run as (e.g. "flylight")</description>
-           <name>user</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Should this run as a test without making any real changes?</description>
-           <name>testRun</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Synchronize the given user's Sample fileshare with the database</description>
-        <name>runSampleTrashCompactor</name>
-        <parameter>
-           <description>User to run as (e.g. "flylight")</description>
-           <name>user</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Should this run as a test without making any real changes?</description>
-           <name>testRun</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
-
-    <operation>
-        <description>Compress all of the user's v3draw files to v3dpbd</description>
-        <name>runSampleDataCompression</name>
-        <parameter>
-            <description>User to run as (e.g. "flylight")</description>
-            <name>user</name>
-            <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Should this run as a test without making any real changes?</description>
-           <name>testRun</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Register all images for a user's samples</description>
-        <name>runSampleImageRegistration</name>
-        <parameter>
-            <description>User to run as (e.g. "flylight")</description>
-            <name>user</name>
-            <type>java.lang.String</type>
-        </parameter>
-    </operation>
     
     <operation>
         <description>Upgrade the given user's data model to use the most current entity structure. In this release, this just creates system-level groups and populated Is Protected flags on certain folders.</description>
@@ -226,127 +172,18 @@
         </parameter>
     </operation>
     
-    <operation>
-        <description>Run routine maintenance tasks on all the user's Samples</description>
-        <name>runSampleMaintenancePipeline</name>
-        <parameter>
-            <description>User to run as (e.g. "flylight")</description>
-            <name>user</name>
-            <type>java.lang.String</type>
-        </parameter>
-    </operation>
     
     <operation>
-        <description>Create the fastLoad artifacts for a single neuron separation</description>
-        <name>runSingleFastLoadArtifactPipeline</name>
+        <description>Change the owner of the entity tree rooted at the given entity.</description>
+        <name>annexEntityTree</name>
         <parameter>
-           <description>Entity id of the neuron separation result entity</description>
-           <name>separationEntityId</name>
-           <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Create the fastLoad artifacts for all single neuron separations</description>
-        <name>runCompleteFastLoadArtifactPipeline</name>
-        <parameter>
-            <description>User to run as (e.g. "flylight")</description>
-            <name>user</name>
-            <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Run all pipelines for all Data Sets for all users</description>
-        <name>runAllDataSetPipelines</name>
-        <parameter>
-            <description>Mode for processing (NEW, INCOMPLETE, ALL, NONE)</description>
-            <name>runMode</name>
-            <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-            <description>Reuse previous sample processing result</description>
-            <name>reuseProcessing</name>
-            <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Run all pipelines for all Data Sets for a particular user</description>
-        <name>runUserDataSetPipelines</name>
-        <parameter>
-            <description>User to run as (e.g. "flylight")</description>
-            <name>username</name>
-            <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-            <description>Mode for processing (NEW, INCOMPLETE, ALL, NONE)</description>
-            <name>runMode</name>
-            <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-            <description>Reuse previous sample processing result</description>
-            <name>reuseProcessing</name>
-            <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Run all the pipelines configured for all the Samples in a given Folder</description>
-        <name>runSampleFolder</name>
-        <parameter>
-           <description>Entity id of the Folder to run (e.g. "1679282451010027618")</description>
-           <name>folderId</name>
+           <description>Subject key of the new owner (e.g. "user:saffordt")</description>
+           <name>subjectKey</name>
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-            <description>Reuse previous sample processing result</description>
-            <name>reuseProcessing</name>
-            <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Run all the pipelines configured for a particular Sample</description>
-        <name>runSamplePipelines</name>
-        <parameter>
-           <description>Entity id of the Sample to run (e.g. "1679282451010027618")</description>
-           <name>sampleId</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-            <description>Reuse previous sample processing result</description>
-            <name>reuseProcessing</name>
-            <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Run a specific pipeline for a single Sample</description>
-        <name>runConfiguredSamplePipeline</name>
-        <parameter>
-           <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
-           <name>sampleEntityId</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Name of configuration (e.g. "FlyLightOpticLobe" will select the process file named "PipelineConfig_FlyLightOpticLobe.process")</description>
-           <name>configurationName</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-            <description>Reuse previous sample processing result</description>
-            <name>reuseProcessing</name>
-            <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Run a separation for a given result entity</description>
-        <name>runNeuronSeparationPipeline</name>
-        <parameter>
-           <description>Entity id of the result to run (e.g. "1679282451010027618")</description>
-           <name>resultEntityId</name>
+           <description>Identifier of the root entity (e.g. "1679282451010027618")</description>
+           <name>entityId</name>
            <type>java.lang.String</type>
         </parameter>
     </operation>
@@ -554,76 +391,6 @@
     <operation>
         <description>DeDuper</description>
         <name>runDataDeDuplication</name>
-    </operation>
-
-    <operation>
-        <description>Create the group with the given name, if it does not already exist.</description>
-        <name>createGroup</name>
-        <parameter>
-           <description>User who should own the group (e.g. "saffordt")</description>
-           <name>groupOwner</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Group name (e.g. "leetlab")</description>
-           <name>groupName</name>
-           <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Remove the group with the given name.</description>
-        <name>removeGroup</name>
-        <parameter>
-           <description>Group name (e.g. "leetlab")</description>
-           <name>groupName</name>
-           <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Add the given user to the given group, if they are not already part of it.</description>
-        <name>addUserToGroup</name>
-        <parameter>
-           <description>User to add (e.g. "saffordt")</description>
-           <name>groupUser</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Group name (e.g. "leetlab")</description>
-           <name>groupName</name>
-           <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Remove the given user from the given group.</description>
-        <name>removeUserFromGroup</name>
-        <parameter>
-           <description>User to remove (e.g. "saffordt")</description>
-           <name>groupUser</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Group name (e.g. "leetlab")</description>
-           <name>groupName</name>
-           <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Change the owner of the entity tree rooted at the given entity.</description>
-        <name>annexEntityTree</name>
-        <parameter>
-           <description>Subject key of the new owner (e.g. "user:saffordt")</description>
-           <name>subjectKey</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Identifier of the root entity (e.g. "1679282451010027618")</description>
-           <name>entityId</name>
-           <type>java.lang.String</type>
-        </parameter>
     </operation>
     
 </mbean>
