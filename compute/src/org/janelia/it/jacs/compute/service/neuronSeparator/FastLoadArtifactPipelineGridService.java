@@ -93,9 +93,7 @@ public class FastLoadArtifactPipelineGridService extends SubmitDrmaaJobService {
         StringBuffer script = new StringBuffer();
         script.append("read INPUT_DIR\n");
         script.append(Vaa3DHelper.getErrorExitPrefix() + "\n");
-        script.append(Vaa3DHelper.getVaa3DGridCommandPrefix() + "\n");
         script.append(NeuronSeparatorHelper.getFastLoadCommands() + "\n");
-        script.append(Vaa3DHelper.getVaa3DGridCommandSuffix() + "\n");
         writer.write(script.toString());
     }
     
@@ -106,7 +104,7 @@ public class FastLoadArtifactPipelineGridService extends SubmitDrmaaJobService {
 
     @Override
     protected int getRequiredMemoryInGB() {
-    	return 6;
+    	return 8;
     }
     
     @Override
