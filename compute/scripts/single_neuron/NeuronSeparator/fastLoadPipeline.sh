@@ -51,9 +51,9 @@ fi
 
 if [ "$INPUT_FILE" = "" ]; then
     echo "Getting input file from neuSepCmd.sh (second to last line)..."
-    INPUT_FILE= `cat $SEPDIR/sge_config/neuSepCmd.sh | tail -2 | head -1 | awk '{print $(NF)}'`
+    INPUT_FILE=`cat $SEPDIR/sge_config/neuSepCmd.sh | tail -2 | head -1 | awk '{print $(NF)}'`
     echo "    Got $INPUT_FILE"
-    if [ "$INPUT_FILE" = "" ]; then
+    if [[ "$INPUT_FILE" = "" || "$INPUT_FILE" = "fi" ]]; then
         echo "Getting input file from neuSepCmd.sh (line matching 'Sample')..."
         INPUT_FILE=`cat $SEPDIR/sge_config/neuSepCmd.sh | grep Sample | awk '{print $(NF)}'`
         echo "    Got $INPUT_FILE"
