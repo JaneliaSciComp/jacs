@@ -115,14 +115,17 @@ public class SolrQueryBuilder {
 	public SolrQuery getQuery() throws ComputeException {
     	
     	StringBuffer qs = new StringBuffer();
-    	qs.append("+(");
-    	int i = 0;
-    	for(String ownerKey : ownerKeys) {
-    		if (i++>0) qs.append(" OR ");
-            String ownerName = ownerKey.split(":")[1];
-    		qs.append("subjects:\""+ownerName+"\"");
+    	
+    	if (!ownerKeys.isEmpty()) {
+        	qs.append("+(");
+        	int i = 0;
+        	for(String ownerKey : ownerKeys) {
+        		if (i++>0) qs.append(" OR ");
+                String ownerName = ownerKey.split(":")[1];
+        		qs.append("subjects:\""+ownerName+"\"");
+        	}
+        	qs.append(")");
     	}
-    	qs.append(")");
     	
     	if (rootId != null) {
     		qs.append(" AND (ancestor_ids:"+rootId+")");
