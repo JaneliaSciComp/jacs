@@ -115,21 +115,6 @@ public class EntityConstants {
     public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM                = "Enum";
     public static final String VALUE_ONTOLOGY_TERM_TYPE_TEXT                = "Text";
     public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM_TEXT           = "EnumText";
-
-    /**
-     * @deprecated Use ATTRIBUTE_DATA_SET_IDENTIFIER to specify processing indirectly. This will be removed someday.
-     */
-    public static final String ATTRIBUTE_ALIGNMENT_TYPES                     = "Alignment Types";
-    
-    /**
-     * @deprecated Use ATTRIBUTE_ENTITY instead. This will be removed someday.
-     */
-    public static final String ATTRIBUTE_LSM_STACK_1                         = "LSM Stack 1";
-
-    /**
-     * @deprecated Use ATTRIBUTE_ENTITY instead. This will be removed someday.
-     */
-    public static final String ATTRIBUTE_LSM_STACK_2                         = "LSM Stack 2";
     
     /**
      * @deprecated Use TYPE_IMAGE_2D instead. This will be removed someday.
