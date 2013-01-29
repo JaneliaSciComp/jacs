@@ -1,5 +1,5 @@
 <%@ page import="org.janelia.it.jacs.model.user_data.User" %>
-<%@ page import="org.janelia.it.jacs.model.user_data.prefs.UserPreference" %>
+<%@ page import="org.janelia.it.jacs.model.user_data.prefs.SubjectPreference" %>
 <%@ page import="org.janelia.it.jacs.web.security.JacsSecurityUtils" %>
 <%@ page import="java.util.Map" %>
 
@@ -42,13 +42,13 @@
     </script>
 <%
     for (int i=0;i<categories.length;i++) {
-        Map<String, UserPreference> prefs = user.getCategoryPreferences(categories[i]);
+        Map<String, SubjectPreference> prefs = user.getCategoryPreferences(categories[i]);
         if (prefs != null) {%>
     <script type="text/javascript">
             jprefs["<%=categories[i]%>"]=new Array();
     </script>
 <%
-            for (UserPreference pref: prefs.values()) {
+            for (SubjectPreference pref: prefs.values()) {
 %>
     <script type="text/javascript">
                 jprefs["<%=categories[i]%>"]["<%=pref.getName()%>"] = "<%=pref.getValue()%>";

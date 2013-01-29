@@ -16,12 +16,12 @@ public class ClientSecurityUtils {
      *         included), true if the user is logged in, false if user is not logged in.
      */
     public static boolean isAuthenticated() {
-        SubjectPreference userPreference = Preferences.getSubjectPreference("isAuthenticated", "security", /* default */ "false");
-        return userPreference.getValue().equals("true");
+        SubjectPreference subjectPreference = Preferences.getSubjectPreference("isAuthenticated", "security", /* default */ "false");
+        return subjectPreference.getValue().equals("true");
     }
 
     public static boolean isAdmin() {
-        SubjectPreference userPreference = Preferences.getSubjectPreference("isAdmin", "security", /* default */ "false");
-        return userPreference.getValue().equals("true");
+        SubjectPreference subjectPreference = Preferences.getSubjectPreference("isAdmin", "security", /* default */ "false");
+        return subjectPreference.getValue().equals("true");
     }
 }

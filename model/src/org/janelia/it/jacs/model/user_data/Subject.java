@@ -1,18 +1,16 @@
 package org.janelia.it.jacs.model.user_data;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import com.google.gwt.user.client.rpc.IsSerializable;
+import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.user_data.prefs.SubjectPreference;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlValue;
-
-import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.user_data.prefs.SubjectPreference;
-
-import com.google.gwt.user.client.rpc.IsSerializable;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 @XmlAccessorType(XmlAccessType.NONE)
 public class Subject implements java.io.Serializable, IsSerializable {
@@ -140,7 +138,7 @@ public class Subject implements java.io.Serializable, IsSerializable {
      *
      * @param category - preference category
      * @param name     - preference name looked for
-     * @return - the matching UserPreference object
+     * @return - the matching SubjectPreference object
      */
     public synchronized SubjectPreference getPreference(String category, String name) {
         return preferenceMap.get(getPrefKey(category, name));

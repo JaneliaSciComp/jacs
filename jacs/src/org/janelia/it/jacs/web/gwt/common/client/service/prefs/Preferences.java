@@ -24,7 +24,7 @@ public class Preferences {
     /**
      * Synchronous retrieval of a preference - requires that this EntryPoint's jsp has properly included
      * Preferences.jsp (which retrieves the preferences before GWT is invoked).  This method DOES NOT GUARANTEE
-     * THAT A VALID UserPreference object is returned - if no preference is found, null is returned.
+     * THAT A VALID SubjectPreference object is returned - if no preference is found, null is returned.
      */
     public static SubjectPreference getSubjectPreference(String name, String category) {
         // Find the JavaScript array that contains the preferences (put there by the underlying JSP) and extract the
@@ -49,7 +49,7 @@ public class Preferences {
     /**
      * Synchronous retrieval of a preference - requires that this EntryPoint's jsp has properly included
      * Preferences.jsp (which retrieves the preferences before GWT is invoked).  This method guarantees that a valid
-     * UserPreference object is returned - if no preference is found, a new one is created using the default value.
+     * SubjectPreference object is returned - if no preference is found, a new one is created using the default value.
      */
     public static SubjectPreference getSubjectPreference(String name, String category, String defaultValue) {
         SubjectPreference pref = getSubjectPreference(name, category);
@@ -57,8 +57,8 @@ public class Preferences {
     }
 
     /**
-     * Asynchronous retrieval of a UserPreference.  This method guarantees that a valid UserPreference is returned - if
-     * none is found on the server, a UserPreference with the default value is returned.
+     * Asynchronous retrieval of a SubjectPreference.  This method guarantees that a valid SubjectPreference is returned - if
+     * none is found on the server, a SubjectPreference with the default value is returned.
      */
     public static void getSubjectPreference(final String prefName, final String category, final String defaultValue, final PreferenceRetrievedCallback callback) {
         _preferenceService.getSubjectPreference(prefName, category, new AsyncCallback() {
@@ -83,7 +83,7 @@ public class Preferences {
     }
 
     /*
-     * Asynchronously sets a UserPreference in the database.
+     * Asynchronously sets a SubjectPreference in the database.
      */
     public static void setSubjectPreference(final SubjectPreference pref) {
         _preferenceService.setSubjectPreference(pref, new AsyncCallback() {

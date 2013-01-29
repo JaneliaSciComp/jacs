@@ -142,7 +142,7 @@ abstract public class BasePaginator implements Paginator {
         }
         else {
             // rowsPerPage was previously set, and the user is changing it to a new value. We will update
-            // the UserPreference in addition to setting it.
+            // the SubjectPreference in addition to setting it.
             if (rowsPerPage != this.rowsPerPage) {
                 logger.debug("New value for rowsPerPage=" + rowsPerPage + " does not match previous=" + this.rowsPerPage + " so setting pref");
                 SubjectPreference rowsPerPagePreference = new SubjectPreference(rowsPerPagePreferenceKey, ROWS_PER_PAGE_CATEGORY,
