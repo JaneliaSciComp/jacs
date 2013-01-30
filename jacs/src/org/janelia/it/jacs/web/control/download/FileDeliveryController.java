@@ -177,7 +177,7 @@ public class FileDeliveryController implements Controller {
      * <p/>
      * Format: expect input to have partial URL:
      * ftp.camera.org
-     * optional :port, as in ftp.camera.org:23/loc
+     * optional :port, as in ftp.janelia.hhmi.org:23/loc
      *
      * @param ftpHostLocation host:port/location format
      */
