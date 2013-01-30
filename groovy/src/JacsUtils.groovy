@@ -23,23 +23,22 @@ class JacsUtils {
 	Date createDate
 	boolean persist
 	
-	JacsUtils(String subjectKey) {
-		this(subjectKey, true)
+	JacsUtils(String subjectNameOrKey) {
+		this(subjectNameOrKey, true)
 	}
 		
-	JacsUtils(String subjectKey, boolean persist) {
+	JacsUtils(String subjectNameOrKey, boolean persist) {
 		this.persist = persist
 		
 		FacadeManager.registerFacade(FacadeManager.getEJBProtocolString(), EJBFacadeManager.class, "JACS EJB Facade Manager");
 		// This initializes the EJBFactory
 		SessionMgr.getSessionMgr();
 		
-//		EJBFactory.initFromModelProperties(SessionMgr.getSessionMgr().getSessionModel())
 		this.e = EJBFactory.getRemoteEntityBean()
 		this.a = EJBFactory.getRemoteAnnotationBean()
 		this.c = EJBFactory.getRemoteComputeBean(true)
 		this.s = EJBFactory.getRemoteSolrBean()
-		this.subject = c.getSubjectByNameOrKey(subjectKey)
+		this.subject = c.getSubjectByNameOrKey(subjectNameOrKey)
 		this.createDate = new Date()
 	}
 	
