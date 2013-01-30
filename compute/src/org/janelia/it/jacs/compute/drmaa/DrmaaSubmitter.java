@@ -187,7 +187,7 @@ public class DrmaaSubmitter {
         log4jProps.setProperty("log4j.appender.A1.layout", "org.apache.log4j.PatternLayout");
         log4jProps.setProperty("log4j.appender.A1.layout.ConversionPattern", "%d [%t] %-5p %c - %m%n");
         log4jProps.setProperty("log4j.logger.org.janelia.it.jacs", "WARN");
-        log4jProps.setProperty("log4j.logger.org.janelia.it.jacs.compute.drmaa", "DEBUG");
+        log4jProps.setProperty("log4j.logger.org.janelia.it.jacs.compute.drmaa", "INFO");
         log4jProps.setProperty("log4j.logger.org.jboss", "ERROR");
         log4jProps.setProperty("log4j.logger.org.hibernate", "ERROR");
         PropertyConfigurator.configure(log4jProps);
