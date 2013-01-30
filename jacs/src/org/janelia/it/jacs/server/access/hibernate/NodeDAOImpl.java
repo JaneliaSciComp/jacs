@@ -148,8 +148,8 @@ public class NodeDAOImpl extends DaoBaseImpl implements NodeDAO {
                                                     int numRows,
                                                     boolean includeHSPRanking,
                                                     SortArgument[] sortArgs)
-        //SortArgument[] sortArgs,
-        //Long userId)
+    //SortArgument[] sortArgs,
+    //Long userId)
             throws DataAccessException, DaoException {
         try {
             _logger.debug("NodeDAOImpl.getPagedBlastHitsByTaskId: " + taskId);
@@ -322,10 +322,10 @@ public class NodeDAOImpl extends DaoBaseImpl implements NodeDAO {
                             "  ss.location as sample_location,\n" +
                             "  count(distinct bh.subject_acc) as number_of_sequences\n" +
                             "from \n" +
-                            "   camera.node n\n" +
-                            "   inner join camera.blast_hit bh on bh.result_node_id=n.node_id\n" +
-                            "   inner join camera.sequence_entity subj on subj.accession=bh.subject_acc\n" +
-                            "   inner join camera.sample_site ss on ss.sample_acc=subj.sample_acc\n" +
+                            "   flyportal.node n\n" +
+                            "   inner join flyportal.blast_hit bh on bh.result_node_id=n.node_id\n" +
+                            "   inner join flyportal.sequence_entity subj on subj.accession=bh.subject_acc\n" +
+                            "   inner join flyportal.sample_site ss on ss.sample_acc=subj.sample_acc\n" +
                             "where n.task_id=" + taskId.toString() + "\n" +
                             "group by ss.material_acc, ss.longitude, ss.latitude, ss.location";
             Query query = getSession().createSQLQuery(sql);
@@ -877,7 +877,7 @@ public class NodeDAOImpl extends DaoBaseImpl implements NodeDAO {
         Long result = null;
         if (node instanceof BlastResultNode) {
             String sql = "select count(h.blast_hit_id)\n" +
-                    "  from camera.blast_hit h where h.result_node_id=" + node.getObjectId();
+                    "  from flyportal.blast_hit h where h.result_node_id=" + node.getObjectId();
             Query query = getSession().createSQLQuery(sql);
             List list = query.list();
             if (list.get(0) != null) {

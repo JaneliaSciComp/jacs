@@ -96,7 +96,7 @@ public abstract class LuceneSearcherBase implements LuceneSearcher {
     }
 
     public String getCopyCommand(String path) {
-        return "copy camera." + getResultTableName() + "(node_id,hit_id,rank) from '" + path + "'";
+        return "copy flyportal." + getResultTableName() + "(node_id,hit_id,rank) from '" + path + "'";
     }
 
 }

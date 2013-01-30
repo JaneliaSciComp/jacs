@@ -36,7 +36,7 @@ public class BlastDAOImpl extends DaoBaseImpl implements BlastDAO {
         try {
             // Query to find all site _accessions_   vs node ids.
             StringBuffer sqlQuery = new StringBuffer();
-            sqlQuery.append("select distinct material_id, node_id from camera.bio_material_blast_node");
+            sqlQuery.append("select distinct material_id, node_id from flyportal.bio_material_blast_node");
             SQLQuery query = getSession().createSQLQuery(sqlQuery.toString());
             _log.info(query.toString());
             List<Object[]> materialIdVsNodeArr = (List<Object[]>) query.list();
@@ -60,7 +60,7 @@ public class BlastDAOImpl extends DaoBaseImpl implements BlastDAO {
             // Next relate all the site _accessions_  to their site locations.
             sqlQuery = new StringBuffer();
             sqlQuery.append("select distinct bm.material_id as site_id, cs.region as geographic_location");
-            sqlQuery.append(" from camera.bio_material bm inner join camera.collection_site cs on cs.site_id=bm.collection_site_id");
+            sqlQuery.append(" from flyportal.bio_material bm inner join flyportal.collection_site cs on cs.site_id=bm.collection_site_id");
             sqlQuery.append(" where bm.project_symbol='").append(project).append("'");
             query = getSession().createSQLQuery(sqlQuery.toString());
             _log.info(query.toString());
@@ -104,7 +104,7 @@ public class BlastDAOImpl extends DaoBaseImpl implements BlastDAO {
         try {
             StringBuffer sqlQuery = new StringBuffer();
             sqlQuery.append("select distinct cs.region as geographic_location");
-            sqlQuery.append(" from camera.bio_material bm inner join camera.collection_site cs on cs.site_id=bm.collection_site_id");
+            sqlQuery.append(" from flyportal.bio_material bm inner join flyportal.collection_site cs on cs.site_id=bm.collection_site_id");
             sqlQuery.append(" where bm.project_symbol='").append(project).append("'");
             sqlQuery.append(" order by cs.region");
             SQLQuery query = getSession().createSQLQuery(sqlQuery.toString());

@@ -218,17 +218,17 @@ public class DownloadXmlToDbConvertor {
 
             // Knockout contents of all link tables.
             SQLQuery sqlQuery;
-            sqlQuery = session.createSQLQuery("delete from camera.project_publication_link");
+            sqlQuery = session.createSQLQuery("delete from flyportal.project_publication_link");
             sqlQuery.executeUpdate();
-            sqlQuery = session.createSQLQuery("delete from camera.publication_author_link");
+            sqlQuery = session.createSQLQuery("delete from flyportal.publication_author_link");
             sqlQuery.executeUpdate();
-            sqlQuery = session.createSQLQuery("delete from camera.publication_hierarchy_node_link");
+            sqlQuery = session.createSQLQuery("delete from flyportal.publication_hierarchy_node_link");
             sqlQuery.executeUpdate();
-            sqlQuery = session.createSQLQuery("delete from camera.hierarchy_node_data_file_link");
+            sqlQuery = session.createSQLQuery("delete from flyportal.hierarchy_node_data_file_link");
             sqlQuery.executeUpdate();
-            sqlQuery = session.createSQLQuery("delete from camera.hierarchy_node_to_children_link");
+            sqlQuery = session.createSQLQuery("delete from flyportal.hierarchy_node_to_children_link");
             sqlQuery.executeUpdate();
-            sqlQuery = session.createSQLQuery("delete from camera.data_file_sample_link");
+            sqlQuery = session.createSQLQuery("delete from flyportal.data_file_sample_link");
             sqlQuery.executeUpdate();
 
             // Knockout contents of vulnerable data tables.
