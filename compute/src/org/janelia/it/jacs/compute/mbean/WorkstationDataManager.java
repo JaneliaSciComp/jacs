@@ -43,17 +43,17 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
 
     private static final Logger logger = Logger.getLogger(WorkstationDataManager.class);
 
-	
+
     public WorkstationDataManager() {
     }
-    
+
     public void runAnnotationImport(String user, String annotationsPath, String ontologyName) {
         try {
-        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	taskParameters.add(new TaskParameter("annotations filepath", annotationsPath, null)); 
-        	taskParameters.add(new TaskParameter("ontology name", ontologyName, null)); 
-        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-        			taskParameters, "annotationImport", "annotationImport");
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter("annotations filepath", annotationsPath, null));
+            taskParameters.add(new TaskParameter("ontology name", ontologyName, null));
+            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(),
+                    taskParameters, "annotationImport", "annotationImport");
             task.setJobName("Annotation Import Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("AnnotationImportPipeline", task.getObjectId());
@@ -64,11 +64,11 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
 
     public void runScreenScoresLoading(String user, String acceptsPath, String loadedPath) {
         try {
-        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	taskParameters.add(new TaskParameter("accepts file path", acceptsPath, null));
-        	taskParameters.add(new TaskParameter("loaded file path", loadedPath, null));
-        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-        			taskParameters, "screenScoresLoading", "Screen Scores Loading");
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter("accepts file path", acceptsPath, null));
+            taskParameters.add(new TaskParameter("loaded file path", loadedPath, null));
+            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(),
+                    taskParameters, "screenScoresLoading", "Screen Scores Loading");
             task.setJobName("Screen Scores Loading Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("ScreenScoresLoadingPipeline", task.getObjectId());
@@ -76,13 +76,13 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
-    
+
     public void runScreenScoresExport(String user, String outputFilepath) {
         try {
-        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	taskParameters.add(new TaskParameter("output filepath", outputFilepath, null));
-        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-        			taskParameters, "screenScoresExport", "Screen Scores Export");
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter("output filepath", outputFilepath, null));
+            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(),
+                    taskParameters, "screenScoresExport", "Screen Scores Export");
             task.setJobName("Screen Scores Export Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("ScreenScoresExportPipeline", task.getObjectId());
@@ -93,12 +93,12 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
 
     public void runSplitLinesLoading(String user, String topLevelFolderName, String representativesPath, String splitConstructsPath) {
         try {
-        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	taskParameters.add(new TaskParameter("top level folder name", topLevelFolderName, null));
-        	taskParameters.add(new TaskParameter("representatives filepath", representativesPath, null));
-        	taskParameters.add(new TaskParameter("split constructs filepath", splitConstructsPath, null)); 
-        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-        			taskParameters, "splitLinesLoading", "Split Lines Loading");
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter("top level folder name", topLevelFolderName, null));
+            taskParameters.add(new TaskParameter("representatives filepath", representativesPath, null));
+            taskParameters.add(new TaskParameter("split constructs filepath", splitConstructsPath, null));
+            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(),
+                    taskParameters, "splitLinesLoading", "Split Lines Loading");
             task.setJobName("Split Lines Loading Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("SplitLinesLoadingPipeline", task.getObjectId());
@@ -106,13 +106,13 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
-    
+
     public void runNeo4jSync(Boolean clearDb) {
         try {
-        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	taskParameters.add(new TaskParameter(MongoDbLoadService.PARAM_clearDb, Boolean.toString(clearDb), null)); 
-        	Task task = new GenericTask(new HashSet<Node>(), "system", new ArrayList<Event>(), 
-        			taskParameters, "neo4jSync", "Neo4j Sync");
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter(MongoDbLoadService.PARAM_clearDb, Boolean.toString(clearDb), null));
+            Task task = new GenericTask(new HashSet<Node>(), "system", new ArrayList<Event>(),
+                    taskParameters, "neo4jSync", "Neo4j Sync");
             task.setJobName("Neo4j Sync Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("Neo4jSync", task.getObjectId());
@@ -120,13 +120,13 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
-    
+
     public void runMongoDbSync(Boolean clearDb) {
         try {
-        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	taskParameters.add(new TaskParameter(MongoDbLoadService.PARAM_clearDb, Boolean.toString(clearDb), null)); 
-        	Task task = new GenericTask(new HashSet<Node>(), "system", new ArrayList<Event>(), 
-        			taskParameters, "mongoDbSync", "MongoDb Sync");
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter(MongoDbLoadService.PARAM_clearDb, Boolean.toString(clearDb), null));
+            Task task = new GenericTask(new HashSet<Node>(), "system", new ArrayList<Event>(),
+                    taskParameters, "mongoDbSync", "MongoDb Sync");
             task.setJobName("MongoDB Sync Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("MongoDbSync", task.getObjectId());
@@ -134,13 +134,13 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
-    
+
     public void runSolrIndexSync(Boolean clearIndex) {
         try {
-        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	taskParameters.add(new TaskParameter(SolrIndexingService.PARAM_clearIndex, Boolean.toString(clearIndex), null)); 
-        	Task task = new GenericTask(new HashSet<Node>(), "system", new ArrayList<Event>(), 
-        			taskParameters, "solrIndexSync", "Solr Index Sync");
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter(SolrIndexingService.PARAM_clearIndex, Boolean.toString(clearIndex), null));
+            Task task = new GenericTask(new HashSet<Node>(), "system", new ArrayList<Event>(),
+                    taskParameters, "solrIndexSync", "Solr Index Sync");
             task.setJobName("Solr Index Sync Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("SolrIndexSync", task.getObjectId());
@@ -164,20 +164,20 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     }
 
     public void runSolrTreeIndexing(Long rootId) {
-    	try {
+        try {
             EJBFactory.getLocalSolrBean().indexAllEntitiesInTree(rootId);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
-    
+
     public void runOrphanAnnotationCheckerService(String user, Boolean deleteAnnotationsMissingTargets, Boolean deleteAnnotationsMissingTerms) {
         try {
-        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	taskParameters.add(new TaskParameter(OrphanAnnotationCheckerService.PARAM_removeAnnotationsMissingTargets, Boolean.toString(deleteAnnotationsMissingTargets), null)); 
-        	taskParameters.add(new TaskParameter(OrphanAnnotationCheckerService.PARAM_removeAnnotationsMissingTerms, Boolean.toString(deleteAnnotationsMissingTerms), null)); 
-        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-        			taskParameters, "orphanAnnotationChecker", "Orphan Annotation Checker");
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter(OrphanAnnotationCheckerService.PARAM_removeAnnotationsMissingTargets, Boolean.toString(deleteAnnotationsMissingTargets), null));
+            taskParameters.add(new TaskParameter(OrphanAnnotationCheckerService.PARAM_removeAnnotationsMissingTerms, Boolean.toString(deleteAnnotationsMissingTerms), null));
+            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(),
+                    taskParameters, "orphanAnnotationChecker", "Orphan Annotation Checker");
             task.setJobName("Orphan Annotation Checker Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("OrphanAnnotationChecker", task.getObjectId());
@@ -185,12 +185,12 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
-    
+
     public void runUpgradeUserData(String user) {
         try {
-        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-        			taskParameters, "upgradeUserData", "Upgrade User Data");
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(),
+                    taskParameters, "upgradeUserData", "Upgrade User Data");
             task.setJobName("Update User Data Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("UpgradeUserData", task.getObjectId());
@@ -198,15 +198,15 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
-    
+
     public void runUpgradeSingleSample(String sampleEntityId) {
         try {
-        	Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
-        	if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
-        	HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        	taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null)); 
-        	Task task = new GenericTask(new HashSet<Node>(), sample.getOwnerKey(), new ArrayList<Event>(), 
-        			taskParameters, "upgradeSingleSample", "Upgrade Single Sample");
+            Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
+            if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null));
+            Task task = new GenericTask(new HashSet<Node>(), sample.getOwnerKey(), new ArrayList<Event>(),
+                    taskParameters, "upgradeSingleSample", "Upgrade Single Sample");
             task.setJobName("Upgrade Single Sample Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("UpgradeSingleSample", task.getObjectId());
@@ -218,7 +218,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     public void annexEntityTree(String subjectKey, String entityId) {
         EntityBeanLocal entityBean = EJBFactory.getLocalEntityBean();
         try {
-             entityBean.annexEntityTree(subjectKey, new Long(entityId));
+            entityBean.annexEntityTree(subjectKey, new Long(entityId));
         }
         catch (ComputeException e) {
             // Already printed by the ComputeBean
@@ -294,7 +294,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     public void runFileTreeLoaderPipeline(String user, String rootDirectoryPath, String topLevelFolderName) {
         try {
             Task task = new FileTreeLoaderPipelineTask(new HashSet<Node>(), user, new ArrayList<Event>(),
-                    new HashSet<TaskParameter>(), rootDirectoryPath, topLevelFolderName, "Not Applicable", "Not Applicable");
+                    new HashSet<TaskParameter>(), rootDirectoryPath, topLevelFolderName);
             task.setJobName("File Tree Loader Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("FileTreeLoader", task.getObjectId());
@@ -387,8 +387,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
                 });
                 for (File file : childDirs) {
                     FileTreeLoaderPipelineTask task = new FileTreeLoaderPipelineTask(new HashSet<Node>(),
-                            owner, new ArrayList<Event>(), new HashSet<TaskParameter>(), file.getAbsolutePath(), topLevelFolderName,
-                            "Not Applicable", "Not Applicable");
+                            owner, new ArrayList<Event>(), new HashSet<TaskParameter>(), file.getAbsolutePath(), topLevelFolderName);
                     task.setJobName("Import Files Task");
                     task = (FileTreeLoaderPipelineTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
                     EJBFactory.getLocalComputeBean().submitJob(process, task.getObjectId());
@@ -474,5 +473,5 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             tmpWriter.write("\t\t- "+entity.getName()+"\t"+entity.getEntityType().getName()+"\n");
         }
     }
-    
+
 }
