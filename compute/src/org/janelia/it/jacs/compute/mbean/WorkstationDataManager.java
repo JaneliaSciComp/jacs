@@ -1,8 +1,5 @@
 package org.janelia.it.jacs.compute.mbean;
 
-import java.io.*;
-import java.util.*;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -32,6 +29,9 @@ import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+
+import java.io.*;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -294,7 +294,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     public void runFileTreeLoaderPipeline(String user, String rootDirectoryPath, String topLevelFolderName) {
         try {
             Task task = new FileTreeLoaderPipelineTask(new HashSet<Node>(), user, new ArrayList<Event>(),
-                    new HashSet<TaskParameter>(), rootDirectoryPath, topLevelFolderName);
+                    new HashSet<TaskParameter>(), rootDirectoryPath, topLevelFolderName, "Not Applicable", "Not Applicable");
             task.setJobName("File Tree Loader Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("FileTreeLoader", task.getObjectId());
@@ -387,7 +387,8 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
                 });
                 for (File file : childDirs) {
                     FileTreeLoaderPipelineTask task = new FileTreeLoaderPipelineTask(new HashSet<Node>(),
-                            owner, new ArrayList<Event>(), new HashSet<TaskParameter>(), file.getAbsolutePath(), topLevelFolderName);
+                            owner, new ArrayList<Event>(), new HashSet<TaskParameter>(), file.getAbsolutePath(), topLevelFolderName,
+                            "Not Applicable", "Not Applicable");
                     task.setJobName("Import Files Task");
                     task = (FileTreeLoaderPipelineTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
                     EJBFactory.getLocalComputeBean().submitJob(process, task.getObjectId());

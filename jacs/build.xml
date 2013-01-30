@@ -60,7 +60,7 @@
         <property name="gwt.compiler.default" value="@browser-compiler-setting@"/>
         <property name="gwt.test.ui.default" value="@selenium-test-setting@"/>
 
-        <condition property="compilation.threadcount" value="${compilation.threads}" else="4">
+        <condition property="compilation.threadcount" value="${compilation.threads}" else="3">
             <isset property="compilation.threads"/>
         </condition>
 

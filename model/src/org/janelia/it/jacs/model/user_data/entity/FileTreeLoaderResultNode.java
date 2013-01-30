@@ -14,7 +14,6 @@ import java.io.Serializable;
  * User: murphys
  * Date: 2/16/12
  * Time: 9:34 AM
- * To change this template use File | Settings | File Templates.
  */
 public class FileTreeLoaderResultNode extends FileNode implements IsSerializable, Serializable {
 
