@@ -127,6 +127,7 @@
         <unjar src="${common.dir}/Spring/log4j-1.2.14.jar" dest="${build.unzipped.dir}" overwrite="true"/>
         <unjar src="${common.dir}/JAXB-2.1.5/jaxb-api.jar" dest="${build.unzipped.dir}" overwrite="true"/>
         <unjar src="${common.dir}/JAXB-2.1.5/jaxb1-impl.jar" dest="${build.unzipped.dir}" overwrite="true"/>
+        <unjar src="${common.module}/GWT-Serializable/gwt-serializable.jar" dest="${build.unzipped.dir}" overwrite="true"/>
         <!-- jaxb-impl.jar must be after jaxb1-impl.jar as it contains more center classes-->
         <unjar src="${common.dir}/JAXB-2.1.5/jaxb-impl.jar" dest="${build.unzipped.dir}" overwrite="true"/>
         <unjar src="${model.module}/build/jars/jacs-model.jar" dest="${build.unzipped.dir}" overwrite="true"/>

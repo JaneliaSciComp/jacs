@@ -124,7 +124,7 @@ public class Node implements java.io.Serializable, IsSerializable {
 
     public void setOwner(String owner) {
         this.owner = owner;
-        if (owner.contains(":")) {
+        if (null!=owner && owner.contains(":")) {
         	this.owner = owner.split(":")[1];
         }
     }

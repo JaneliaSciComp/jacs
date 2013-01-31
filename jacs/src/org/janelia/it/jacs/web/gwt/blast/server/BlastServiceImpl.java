@@ -123,14 +123,14 @@ public class BlastServiceImpl extends JcviGWTSpringController implements BlastSe
     }
 
     public String runBlastJob(Task targetTask) {
+        _log.info("org.janelia.it.jacs.web.gwt.common.server.DataServiceImpl.runBlastJob()");
         if (null == targetTask) {
             _log.error("The BlastTask sent to the DataService is null");
         }
         else {
             _log.debug("Got a non-null BlastTask");
+            _log.info("TargetTask = " + targetTask.getTaskName());
         }
-        _log.info("org.janelia.it.jacs.web.gwt.common.server.DataServiceImpl.runBlastJob()");
-        _log.info("TargetTask = " + targetTask.getTaskName());
         _log.info("User id = " + targetTask.getOwner());
 
         String jobId = "";
