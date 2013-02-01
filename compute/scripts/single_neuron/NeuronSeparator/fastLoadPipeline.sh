@@ -54,8 +54,8 @@ if [ "$INPUT_FILE" = "" ]; then
     INPUT_FILE=`cat $SEPDIR/sge_config/neuSepCmd.sh | tail -2 | head -1 | awk '{print $(NF)}'`
     echo "    Got $INPUT_FILE"
     if [[ "$INPUT_FILE" = "" || "$INPUT_FILE" = "fi" ]]; then
-        echo "Getting input file from neuSepCmd.sh (line matching 'Sample')..."
-        INPUT_FILE=`cat $SEPDIR/sge_config/neuSepCmd.sh | grep Sample | awk '{print $(NF)}'`
+        echo "Getting input file from neuSepCmd.sh (line matching 'Sample' or 'Align')..."
+        INPUT_FILE=`cat $SEPDIR/sge_config/neuSepCmd.sh | grep 'Sample\|Align' | awk '{print $(NF)}'`
         echo "    Got $INPUT_FILE"
     fi
 fi
