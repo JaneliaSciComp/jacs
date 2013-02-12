@@ -427,16 +427,27 @@ public class EntityUtils {
     	}
     	return getDefaultImageFilePath(entity);
     }
-
+    
     public static Entity findChildWithName(Entity entity, String childName) {
-		for (Entity child : entity.getChildren()) {
-			if (child.getName().equals(childName)) {
-				return child;
-			}
-		}
-		return null;
+        return findChildWithNameAndType(entity, childName, null);
     }
 
+    public static Entity findChildWithType(Entity entity, String type) {
+        return findChildWithNameAndType(entity, null, type);
+    }
+
+    public static Entity findChildWithNameAndType(Entity entity, String childName, String type) {
+        for (EntityData ed : entity.getEntityData()) {
+            Entity child = ed.getChildEntity();
+            if (child!=null) {
+                if ((childName==null||child.getName().equals(childName)) && (type==null||type.equals(child.getEntityType().getName()))) {
+                    return child;
+                }
+            }
+        }
+        return null;
+    }
+    
     public static EntityData findChildEntityDataWithName(Entity entity, String childName) {
 		return findChildEntityDataWithNameAndType(entity, childName, null);
     }
@@ -535,7 +546,6 @@ public class EntityUtils {
     }
 
     public static List<Entity> getChildrenOfType(Entity entity, String typeName) {
-
         List<Entity> items = new ArrayList<Entity>();
         for (EntityData entityData : entity.getOrderedEntityData()) {
             Entity child = entityData.getChildEntity();
@@ -545,10 +555,22 @@ public class EntityUtils {
                 }
             }
         }
-
         return items;
     }
 
+    public static List<Entity> getChildrenForAttribute(Entity entity, String attrName) {
+        List<Entity> items = new ArrayList<Entity>();
+        for (EntityData entityData : entity.getOrderedEntityData()) {
+            if (attrName==null || attrName.equals(entityData.getEntityAttribute().getName())) {
+                Entity child = entityData.getChildEntity();
+                if (child != null) {
+                    items.add(child);
+                }
+            }
+        }
+        return items;
+    }
+    
     /**
      * Order the children and return the last child with the given type.
      * @param entityTypeName
@@ -623,6 +645,7 @@ public class EntityUtils {
 		String attrName = entityData.getEntityAttribute().getName();
 		if (EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE.equals(attrName) 
 				|| EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE.equals(attrName) 
+				|| EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE.equals(attrName) 
 				|| EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE.equals(attrName) 
 				|| EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE.equals(attrName)) {
 			return true;
@@ -687,7 +710,6 @@ public class EntityUtils {
 				path.add(part);
 			}
 		}
-		
 		return path;
 	}
 	
@@ -721,14 +743,14 @@ public class EntityUtils {
 	}
 	
 	/**
-	 * Create a data set identifier for the given user's data set. This prepends the user's name and then appends 
-	 * the data set name with all non-word characters replaced with underscores.
+	 * Create a standardized, denormalized identifier for the given name which is unique to a user. 
+	 * This prepends the user's name and then appends the name with all non-word characters replaced with underscores.
 	 * @param username
 	 * @param dataSetName
 	 * @return
 	 */
-	public static String createDataSetIdentifierFromName(String username, String dataSetName) {
+	public static String createDenormIdentifierFromName(String username, String name) {
 	    if (username.contains(":")) username = username.split(":")[1];
-    	return username+"_"+dataSetName.toLowerCase().replaceAll("\\W+", "_");
+    	return username+"_"+name.toLowerCase().replaceAll("\\W+", "_");
 	}
 }

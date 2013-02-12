@@ -4,13 +4,14 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityType;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * File discovery service for neuron separation results.
@@ -38,43 +39,90 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     	}
     	
     	helper.addFileExclusion("*.sh");
-    	helper.addFileExclusion("fastLoad");
-    	
-    	super.processFolderForData(separationEntity); // This creates the Supporting Files folder if it doesn't exist
-        processSeparationFolder(separationEntity);
 
-        Entity filesFolder = EntityUtils.getSupportingData(separationEntity);
-        Entity signalMIP = EntityUtils.findChildWithName(filesFolder, "ConsolidatedSignalMIP.png");
-        Entity referenceMIP = EntityUtils.findChildWithName(filesFolder, "ReferenceMIP.png");
-
-		helper.setImageIfNecessary(separationEntity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMIP);
-		helper.setImageIfNecessary(separationEntity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, referenceMIP);
-		helper.setImageIfNecessary(separationEntity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE,  signalMIP);
+        File dir = new File(separationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+        logger.info("Processing "+separationEntity.getName()+" results in "+dir.getAbsolutePath());
+        
+        if (!dir.canRead()) {
+            logger.info("Cannot read from folder "+dir.getAbsolutePath());
+            return;
+        }
+        
+        processSeparationFolder(separationEntity, dir);
     }
     
-    protected void processSeparationFolder(Entity separationEntity) throws Exception {
-    	
+    protected void processSeparationFolder(Entity separationEntity, File dir) throws Exception {
+
+        Entity supportingFiles = helper.getOrCreateSupportingFilesFolder(separationEntity);
+        
         Entity fragmentsFolder = createFragmentCollection();
-        helper.addToParent(separationEntity, fragmentsFolder, 1, EntityConstants.ATTRIBUTE_NEURON_FRAGMENTS);
+        helper.addToParent(separationEntity, fragmentsFolder, 1, EntityConstants.ATTRIBUTE_MASK_ENTITY_COLLECTION);
         
         EntityType fragmentType = entityBean.getEntityTypeByName(EntityConstants.TYPE_NEURON_FRAGMENT);
-        
-        ArrayList<File> fragmentFiles = new ArrayList<File>();
-        
-        for (File resultFile : allFiles) {
-        	String filename = resultFile.getName();
 
-        	if (resultFile.isDirectory()) continue;
-        	
-            if (filename.startsWith("neuronSeparatorPipeline.PR.neuron") && filename.endsWith(".png")) {            	
-            	fragmentFiles.add(resultFile);
+        Entity referenceVolume = null;
+        Entity signalVolume = null;
+        Entity labelVolume = null;
+        Entity referenceMIP = null;
+        Entity signalMIP = null;
+        Entity fastSignal = null;
+        Entity fastReference = null;
+        List<File> fragmentMipFiles = new ArrayList<File>();
+
+        List<File> files = helper.collectFiles(dir, true);
+        logger.info("Collected "+files.size()+" files in "+dir);
+        FileUtils.sortFilesByName(files);
+        
+        for(File file : files) {
+            String filename = file.getName();
+
+            if (filename.startsWith("neuronSeparatorPipeline.PR.neuron") && filename.endsWith(".png")) {       
+                fragmentMipFiles.add(file); // will be added to an entity later
+            }
+            else if ("Reference.v3dpbd".equals(filename)) {
+                referenceVolume = helper.createResultItemForFile(file);
+                helper.addToParent(supportingFiles, referenceVolume, supportingFiles.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+            }
+            else if ("ConsolidatedSignal.v3dpbd".equals(filename)) {
+                signalVolume = helper.createResultItemForFile(file);
+                helper.addToParent(supportingFiles, signalVolume, supportingFiles.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+            }
+            else if ("ConsolidatedLabel.v3dpbd".equals(filename)) {
+                labelVolume = helper.createResultItemForFile(file);
+                helper.addToParent(supportingFiles, labelVolume, supportingFiles.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+            }
+            else if ("ReferenceMIP.png".equals(filename)) {
+                referenceMIP = helper.createResultItemForFile(file);
+            }
+            else if ("ConsolidatedSignalMIP.png".equals(filename)) {
+                signalMIP = helper.createResultItemForFile(file);
+            }
+            else if ("ConsolidatedSignal2_25.mp4".equals(filename)) {
+                fastSignal = helper.createResultItemForFile(file);
+            }
+            else if ("Reference2_100.mp4".equals(filename)) {
+                fastReference = helper.createResultItemForFile(file);
+            }
+            else if (filename.endsWith(".pbd") || filename.endsWith(".nsp")) {
+                Entity resultItem = helper.createResultItemForFile(file);
+                helper.addToParent(supportingFiles, resultItem, supportingFiles.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
             }
             else {
-                // ignore other files
+                // Ignore other files
             }
         }
         
-        Collections.sort(fragmentFiles, new Comparator<File>() {
+        // Set default images
+        helper.setImageIfNecessary(referenceVolume, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, referenceMIP);
+        helper.setImageIfNecessary(signalVolume, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, signalMIP);
+        helper.setImageIfNecessary(separationEntity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, referenceMIP);
+        helper.setImageIfNecessary(separationEntity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMIP);
+        helper.setImageIfNecessary(separationEntity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE,  signalMIP);
+        helper.setImageIfNecessary(referenceVolume, EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE, fastReference);
+        helper.setImageIfNecessary(signalVolume, EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE, fastSignal);
+        helper.setImageIfNecessary(separationEntity, EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE,  signalVolume);
+        
+        Collections.sort(fragmentMipFiles, new Comparator<File>() {
 			@Override
 			public int compare(File o1, File o2) {
 				Integer i1 = getIndex(o1.getName());
@@ -86,41 +134,13 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
 			}
         });
 
-        Entity filesFolder = EntityUtils.getSupportingData(separationEntity);
-
-        String filepath = separationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-    	File fastloadDir = new File(filepath, "fastLoad");
-    	if (fastloadDir.exists()) {
-    		Entity fastLoadFolder = helper.createOrVerifyFolderEntity(filesFolder, "Fast Load", fastloadDir, 0);
-    		processFastLoadFolder(fastLoadFolder);
-    	}
-    	else {
-    		logger.warn("No fastLoad dir found for separationId="+separationEntity.getId());
-    	}
-    	
-        for(File resultFile : fragmentFiles) {
-            Entity fragmentMIP = EntityUtils.findChildWithName(filesFolder, resultFile.getName());
-            if (fragmentMIP == null) {
-            	logger.warn("Could not find "+resultFile.getName()+" in supporting files for result entity id="+separationEntity.getId());
-            }
-    		Integer index = getIndex(resultFile.getName());
-        	Entity fragmentEntity = createFragmentEntity(fragmentType, index);
-        	helper.setDefault2dImage(fragmentEntity, fragmentMIP);
-    		helper.addToParent(fragmentsFolder, fragmentEntity, index, EntityConstants.ATTRIBUTE_ENTITY);	
+        for(File file : fragmentMipFiles) {
+            Entity fragmentMIP = helper.createResultItemForFile(file);         
+            Integer index = getIndex(fragmentMIP.getName());
+            Entity fragmentEntity = createFragmentEntity(fragmentType, index);
+            helper.setDefault2dImage(fragmentEntity, fragmentMIP);
+            helper.addToParent(fragmentsFolder, fragmentEntity, index, EntityConstants.ATTRIBUTE_ENTITY);   
         }
-    }
-
-    protected void processFastLoadFolder(Entity folder) throws Exception {
-        File dir = new File(folder.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-
-        logger.info("Processing "+folder.getName()+" results in "+dir.getAbsolutePath());
-        
-        if (!dir.canRead()) {
-        	logger.info("Cannot read from folder "+dir.getAbsolutePath());
-        	return;
-        }
-
-		helper.addFilesInDirToFolder(folder, dir);
     }
     
     protected Integer getIndex(String filename) {

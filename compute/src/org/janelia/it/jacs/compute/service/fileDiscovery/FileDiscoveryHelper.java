@@ -93,15 +93,35 @@ public class FileDiscoveryHelper extends EntityHelper {
         return allFiles;
     }
 
-    public void addFilesToFolder(Entity filesFolder, List<File> files) throws Exception {
-        for (File resultFile : files) {
-        	EntityType type = getEntityTypeForFile(resultFile);
-        	if (type==null) {
-        		logger.warn("Could not determine type of file: "+resultFile.getAbsolutePath());
-        		return;
-        	}
-        	addResultItem(filesFolder, type, resultFile);
+    public Entity createResultItemForFile(File resultFile) throws Exception {
+        EntityType type = getEntityTypeForFile(resultFile);
+        if (type==null) {
+            logger.warn("Could not determine type of file: "+resultFile.getAbsolutePath());
+            return null;
         }
+        return createResultItem(type, resultFile);
+    }
+    
+    public Entity createResultItem(EntityType type, File file) throws Exception {
+        
+        Entity entity = new Entity();
+        entity.setOwnerKey(ownerKey);
+        Date createDate = new Date();
+        entity.setCreationDate(createDate);
+        entity.setUpdatedDate(createDate);
+        entity.setEntityType(type);
+        entity.setName(file.getName());
+        entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
+        
+        if (type.getName().equals(EntityConstants.TYPE_IMAGE_2D)) {
+            String filename = file.getName();
+            String fileFormat = filename.substring(filename.lastIndexOf('.')+1);
+            entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, fileFormat);
+        }
+        
+        entity = entityBean.saveOrUpdateEntity(entity);
+        logger.info("Saved '"+entity.getName()+"' as "+entity.getId());
+        return entity;
     }
     
     public void addFilesInDirToFolder(Entity folder, File dir) throws Exception {
@@ -117,26 +137,20 @@ public class FileDiscoveryHelper extends EntityHelper {
         }
         return files;
     }
+
+    public void addFilesToFolder(Entity filesFolder, List<File> files) throws Exception {
+        for (File resultFile : files) {
+            EntityType type = getEntityTypeForFile(resultFile);
+            if (type==null) {
+                logger.warn("Could not determine type of file: "+resultFile.getAbsolutePath());
+                return;
+            }
+            addResultItem(filesFolder, type, resultFile);
+        }
+    }
     
     public Entity addResultItem(Entity resultEntity, EntityType type, File file) throws Exception {
-    	
-        Entity entity = new Entity();
-        entity.setOwnerKey(ownerKey);
-        Date createDate = new Date();
-        entity.setCreationDate(createDate);
-        entity.setUpdatedDate(createDate);
-        entity.setEntityType(type);
-        entity.setName(file.getName());
-        entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
-        
-        if (type.getName().equals(EntityConstants.TYPE_IMAGE_2D)) {
-        	String filename = file.getName();
-        	String fileFormat = filename.substring(filename.lastIndexOf('.')+1);
-        	entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, fileFormat);
-        }
-        
-        entity = entityBean.saveOrUpdateEntity(entity);
-        logger.info("Saved "+type.getName()+" as "+entity.getId());
+        Entity entity = createResultItem(type, file);
         addToParent(resultEntity, entity, resultEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
         return entity;
     }

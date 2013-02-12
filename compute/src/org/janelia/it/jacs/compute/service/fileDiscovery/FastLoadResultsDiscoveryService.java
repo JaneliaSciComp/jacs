@@ -93,6 +93,7 @@ public class FastLoadResultsDiscoveryService extends AbstractEntityService {
         	return;
         }
 
+        helper.addFileExclusion("*.metadata");
 		helper.addFilesInDirToFolder(folder, dir);
     }
 }

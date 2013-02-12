@@ -1,14 +1,12 @@
 package org.janelia.it.jacs.compute.service.entity;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.service.fly.ScreenScoresLoadingService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.user_data.Group;
-import org.janelia.it.jacs.model.user_data.User;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
@@ -18,100 +16,234 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  */
 public class UpgradeUserDataService extends AbstractEntityService {
 
+    private static final String OPTICAL_RES_UNIFIED = "0.62x0.62x0.62";
+    private static final String PIXEL_RES_UNIFIED = "1024x512x218";
+    private static final String OPTICAL_RES_UNIFIED_63x = "0.38x0.38x0.38";
+    private static final String PIXEL_RES_UNIFIED_63x = "1672x1024x256";
+    private static final String OPTICAL_RES_OPTIC = "0.38x0.38x0.38";
+    private static final String PIXEL_RES_OPTIC = "512x512x445";
+    
 	private static final Logger logger = Logger.getLogger(UpgradeUserDataService.class);
 
-	private static final String[] adminMembers = { "saffordt", "rokickik", "brunsc", "fosterl", "murphys", "trautmane", "yuy" };
+	private enum AlignmentSpace {
+	    UNIFIED_20X,
+        RIGHT_OPTIC_LOBE,
+        LEFT_OPTIC_LOBE
+	}
 	
-	private static final String[] leetlabMembers = { "saffordt", "rokickik", "yuy", "fosterl", "chenh12", "huangy11", "jingx", "leetz", "leey10", "liuz10", "luanh", "renq", "schroederm", "wangy14" };
-	
-    private static final String[] cardlabMembers = { "saffordt", "wum10" };
-    
-    private static final String[] simpsonlabMembers = { "saffordt", "midgleyf", "weaverc10" };
-    
+	private Map<AlignmentSpace,Entity> alignmentSpaces = new HashMap<AlignmentSpace,Entity>();
+		
     public void execute() throws Exception {
         
         final String serverVersion = computeBean.getAppVersion();
         logger.info("Updating data model to latest version: "+serverVersion);
 
-        List<String> allUsers = new ArrayList<String>();
-        for(User user : computeBean.getUsers()) {   
-            if (!user.getName().equals(User.SYSTEM_USER_LOGIN)) {
-                allUsers.add(user.getName());
+        createAlignmentSpaces();
+        processAlignmentResults();
+        processNeuronSeparationResults();
+    }
+
+    private void createAlignmentSpaces() throws Exception {
+        
+        entityBean.createNewEntityType(EntityConstants.TYPE_ALIGNMENT_SPACE);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_SPACE, EntityConstants.ATTRIBUTE_DENORM_IDENTIFIER);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_SPACE, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_SPACE, EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_SPACE, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_SPACE, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
+
+        entityBean.createNewEntityType(EntityConstants.TYPE_MASK_SET);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_MASK_SET, EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE);
+
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_RESULT, EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE);
+        
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, EntityConstants.ATTRIBUTE_INPUT);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, EntityConstants.ATTRIBUTE_SOURCE);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, EntityConstants.ATTRIBUTE_MASK_ENTITY_COLLECTION);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
+
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_IMAGE_3D, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_IMAGE_3D, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
+        
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_BOARD, EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_BOARD, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_BOARD, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_BOARD, EntityConstants.ATTRIBUTE_ITEM);
+
+        entityBean.createNewEntityType(EntityConstants.TYPE_ALIGNED_ITEM);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNED_ITEM, EntityConstants.ATTRIBUTE_ENTITY);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNED_ITEM, EntityConstants.ATTRIBUTE_VISIBILITY);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNED_ITEM, EntityConstants.ATTRIBUTE_COLOR);
+        
+        entityBean.createNewEntityType(EntityConstants.TYPE_DEFORMATION_MATRIX);
+        
+        Entity unified20x = entityBean.createEntity("group:flylight", EntityConstants.TYPE_ALIGNMENT_SPACE, "Unified 20x Alignment Space");
+        entityHelper.setDefault2dImage(unified20x, "/groups/scicomp/jacsData/AlignTemplates/configured_templates/wfb_atx_template_rec.tif");
+        unified20x.setValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, OPTICAL_RES_UNIFIED);
+        unified20x.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, PIXEL_RES_UNIFIED);
+        entityBean.saveOrUpdateEntity(unified20x);
+        alignmentSpaces.put(AlignmentSpace.UNIFIED_20X, unified20x);
+        
+        Entity rightOptic = entityBean.createEntity("group:flylight", EntityConstants.TYPE_ALIGNMENT_SPACE, "Right Optic Lobe 63x Alignment Space");
+        entityHelper.setDefault2dImage(rightOptic, "/groups/scicomp/jacsData/AlignTemplates/optic_templates/target_C1-110506_Slide1_110411_57C10_pos15_ROL__L5_Sum.tif.8bit.tif");
+        rightOptic.setValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, OPTICAL_RES_OPTIC);
+        rightOptic.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, PIXEL_RES_OPTIC);
+        entityBean.saveOrUpdateEntity(rightOptic);
+        alignmentSpaces.put(AlignmentSpace.RIGHT_OPTIC_LOBE, rightOptic);
+
+        Entity leftOptic = entityBean.createEntity("group:flylight", EntityConstants.TYPE_ALIGNMENT_SPACE, "Left Optic Lobe 63x Alignment Space");
+        entityHelper.setDefault2dImage(leftOptic, "/groups/scicomp/jacsData/AlignTemplates/optic_templates/flipped_target_C1-110506_Slide1_110411_57C10_pos15_ROL__L5_Sum.tif.8bit.v3draw");
+        leftOptic.setValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, OPTICAL_RES_OPTIC);
+        leftOptic.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, PIXEL_RES_OPTIC);
+        entityBean.saveOrUpdateEntity(leftOptic);
+        alignmentSpaces.put(AlignmentSpace.LEFT_OPTIC_LOBE, leftOptic);
+    }
+    
+    
+    /**
+     * For each Sample:
+     *    1) Set alignment space 
+     *    2) Set optical format for each alignment result
+     *    3) Set optical format for each aligned neuron separation
+     *     
+     */
+    private void processAlignmentResults() throws Exception {
+        
+        for(Entity entity : entityBean.getEntitiesByTypeName(EntityConstants.TYPE_SAMPLE)) {
+            // This is intentionally not loaded into the looped entity because we would run out of memory
+            Entity sample = entityBean.getEntityTree(entity.getId());
+            
+            logger.info("Processing sample "+sample.getName()+" ("+sample.getOwnerKey()+")");
+            
+            for(Entity pipelineRun : EntityUtils.getDescendantsOfType(sample, EntityConstants.TYPE_PIPELINE_RUN, true)) {
+                
+                for(Entity alignmentResult : EntityUtils.getDescendantsOfType(pipelineRun, EntityConstants.TYPE_ALIGNMENT_RESULT, true)) {
+                    
+                    addAlignmentSpace(sample, alignmentResult);
+                    
+                    Entity supportingFiles = EntityUtils.getSupportingData(alignmentResult);
+                    Entity separation = EntityUtils.findChildWithType(alignmentResult, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
+                    
+                    Entity aligned20x = EntityUtils.findChildWithName(supportingFiles, "Aligned20xScale.v3dpbd");
+                    
+                    if (aligned20x != null) {
+                        setOpticalResolution(aligned20x, OPTICAL_RES_UNIFIED);
+                        setPixelResolution(aligned20x, PIXEL_RES_UNIFIED);
+                        Entity aligned63x = EntityUtils.findChildWithName(supportingFiles, "Aligned63xScale.v3dpbd");
+                        if (aligned63x!=null) {
+                            setOpticalResolution(aligned63x, OPTICAL_RES_UNIFIED_63x);
+                            setPixelResolution(aligned63x, PIXEL_RES_UNIFIED_63x);
+                            setOpticalResolution(separation, OPTICAL_RES_UNIFIED_63x);
+                            setPixelResolution(separation, PIXEL_RES_UNIFIED_63x);
+                        }
+                    }
+                    else {
+                        Entity aligned = EntityUtils.findChildWithName(supportingFiles, "Aligned.v3dpbd");
+                        if (aligned!=null) {
+                            if ("Optic Lobe Alignment".equals(alignmentResult.getName())) {
+                                setOpticalResolution(aligned, OPTICAL_RES_OPTIC);
+                                setPixelResolution(aligned, PIXEL_RES_OPTIC);
+                                setOpticalResolution(separation, OPTICAL_RES_OPTIC);
+                                setPixelResolution(separation, PIXEL_RES_OPTIC);
+                            }
+                            else if ("Whole Brain 63x Alignment".equals(alignmentResult.getName())) {
+                                // Ignore. These need to be redone anyway. 
+                            }
+                            else {
+                                setOpticalResolution(aligned, OPTICAL_RES_UNIFIED);
+                                setPixelResolution(aligned, PIXEL_RES_UNIFIED);
+                                setOpticalResolution(separation, OPTICAL_RES_UNIFIED);
+                                setPixelResolution(separation, PIXEL_RES_UNIFIED);
+                            }
+                        }
+                    }
+                }
             }
         }
- 
-        // ------------------------------------------------------------------------------------------------------------
-        // Create users and groups
-        // ------------------------------------------------------------------------------------------------------------
+    }
+    
+    /**
+     * For each Neuron Separation:
+     *     1) Change "Neuron Fragments" to "Mask Entity Collection"
+     */
+    private void processNeuronSeparationResults() throws Exception {
 
-        computeBean.createUser(User.SYSTEM_USER_LOGIN, "System");
-        computeBean.createUser("chenh12", "Hui-Min Chen");
-        computeBean.createUser("huangy11", "Yu-Fen Huang");
-        computeBean.createUser("jingx", "Xiaotang Jing");
-        computeBean.createUser("liuz10", "Zhiyong Liu");
-        computeBean.createUser("luanh", "Haojiang Luan");
-        
-        Group flylightGroup = getOrCreateGroup("flylight", "FlyLight", User.SYSTEM_USER_KEY);
-        Group adminGroup = getOrCreateGroup(Group.ADMIN_GROUP_NAME, "Administrators", User.SYSTEM_USER_KEY);
-        
-        
-        // ------------------------------------------------------------------------------------------------------------
-        //  Add Group Members
-        // ------------------------------------------------------------------------------------------------------------
-        
-        addGroupMembers(flylightGroup, allUsers.toArray(new String[0]));
-        addGroupMembers(adminGroup, adminMembers);
-        addGroupMembers("leetlab", leetlabMembers);
-        addGroupMembers("cardlab", cardlabMembers);
-        addGroupMembers("simpsonlab", simpsonlabMembers);
-        
-        // ------------------------------------------------------------------------------------------------------------
-        // Add Protected tags
-        // ------------------------------------------------------------------------------------------------------------
-        
-        for(String username : allUsers) {	
-            String subjectKey = "user:"+username;
-            logger.info("Processing common roots for "+username); 
-        	for(Entity commonRoot : annotationBean.getCommonRootEntities(subjectKey)) {
-        	    if (!EntityUtils.isOwner(commonRoot, subjectKey)) continue;
-        		if (EntityConstants.NAME_MY_DATA_SETS.endsWith(commonRoot.getName()) 
-        				|| EntityConstants.NAME_PUBLIC_DATA_SETS.endsWith(commonRoot.getName()) 
-        				|| EntityConstants.NAME_SPLIT_PICKING.endsWith(commonRoot.getName())
-        				|| ScreenScoresLoadingService.TOP_LEVEL_EVALUATION_FOLDER.endsWith(commonRoot.getName())
-        				|| "FlyLight Screen Split Lines".endsWith(commonRoot.getName())
-        				|| "Arnim Data Combinations".endsWith(commonRoot.getName())) {
-        		    logger.info("  Ensuring protection for "+commonRoot.getName()+" (id="+commonRoot.getId()+")"); 
-        		    EntityUtils.addAttributeAsTag(commonRoot, EntityConstants.ATTRIBUTE_IS_PROTECTED);
-            		entityBean.saveOrUpdateEntity(commonRoot);
-        		}
-        	}
+        for(Entity entity : entityBean.getEntitiesByTypeName(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
+            // This is intentionally not loaded into the looped entity because we would run out of memory
+            Entity separation = entityBean.getEntityTree(entity.getId());
+            logger.info("Processing separation "+separation.getName()+" ("+separation.getOwnerKey()+")");
+            
+            Entity supportingFiles = EntityUtils.getSupportingData(separation);
+            if (supportingFiles==null) {
+                // Skip invalid separations
+                continue;
+            }
+            
+            if (separation.getChildByAttributeName(EntityConstants.ATTRIBUTE_MASK_ENTITY_COLLECTION)==null) {
+                EntityData nfcEd = EntityUtils.findChildEntityDataWithType(separation, EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION);
+                if (nfcEd!=null) {
+                    nfcEd.setEntityAttribute(entityBean.getEntityAttributeByName(EntityConstants.ATTRIBUTE_MASK_ENTITY_COLLECTION));
+                    entityBean.saveOrUpdateEntityData(nfcEd);    
+                }
+            }
+            
+            Entity signalVolume = EntityUtils.findChildWithName(separation, "ConsolidatedSignal.v3dpbd");
+            if (signalVolume!=null) {
+                entityHelper.setImageIfNecessary(separation, EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE,  signalVolume);
+                Entity fastLoadFolder = EntityUtils.findChildWithName(separation, "Fast Load");    
+                if (fastLoadFolder!=null) {
+                    Entity fastSignal = EntityUtils.findChildWithName(separation, "ConsolidatedSignal2_25.mp4");        
+                    entityHelper.setImageIfNecessary(signalVolume, EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE, fastSignal);
+                }
+            }
         }
     }
     
-    private Group getOrCreateGroup(String groupName, String groupFullName, String ownerKey) throws Exception {
-        Group group = computeBean.getGroupByNameOrKey(groupName);
-        if (group==null) {
-            group = computeBean.createGroup(ownerKey, groupName);
+    private void addAlignmentSpace(Entity sampleEntity, Entity alignmentResult) throws Exception {
+
+        if ("Optic Lobe Alignment".equals(alignmentResult.getName())) {
+            if (sampleEntity.getName().contains("Left")) {
+                setAlignmentSpace(alignmentResult, AlignmentSpace.LEFT_OPTIC_LOBE);
+            }
+            else if (sampleEntity.getName().contains("Right")) {
+                setAlignmentSpace(alignmentResult, AlignmentSpace.RIGHT_OPTIC_LOBE);    
+            }
+            else {
+                logger.warn("Optic lobe sample with no 'Left' or 'Right' in name: "+sampleEntity.getName());
+            }
         }
-        group.getUserRelationships().clear();
-        group.setFullName(groupFullName);
-        computeBean.saveOrUpdateSubject(group);
-        return group;
+        else if ("Whole Brain 63x Alignment".equals(alignmentResult.getName())) {
+            // We're not supporting these padded alignments
+        }
+        else {
+            setAlignmentSpace(alignmentResult, AlignmentSpace.UNIFIED_20X);
+        }
+    }
+
+    private void setAlignmentSpace(Entity entity, AlignmentSpace alignmentSpace) throws Exception {
+        if (entity==null || alignmentSpace==null) return;
+        if (EntityUtils.findChildWithType(entity, EntityConstants.TYPE_ALIGNMENT_SPACE)!=null) return;
+        Entity alignmentSpaceEntity = alignmentSpaces.get(alignmentSpace);
+        EntityData ed = entity.addChildEntity(alignmentSpaceEntity, EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE);
+        ed.setValue(EntityUtils.createDenormIdentifierFromName(ownerKey, alignmentSpaceEntity.getName()));
+        entityBean.saveOrUpdateEntityData(ed);
+        logger.info("  Set alignment space to "+ed.getValue()+" on "+entity.getName());
     }
     
-    private void addGroupMembers(String groupName, String[] members) throws Exception {
-        Group group = computeBean.getGroupByNameOrKey(groupName);
-        if (group==null) {
-            throw new IllegalStateException("Group does not exist: "+groupName);
-        }
-        group.getUserRelationships().clear();
-        computeBean.saveOrUpdateSubject(group);
-        addGroupMembers(group, members);
+    private void setOpticalResolution(Entity entity, String opticalRes) throws Exception {
+        if (entity==null || opticalRes==null) return;
+        if (EntityUtils.findChildWithType(entity, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)!=null) return;
+        entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, opticalRes);
+        entityBean.saveOrUpdateEntity(entity);
+        logger.info("  Set optical resolution to "+opticalRes+" on "+entity.getName());
     }
-    
-    private void addGroupMembers(Group group, String[] members) throws Exception {
-        for(String username : members) {
-            computeBean.addUserToGroup(username, group.getName());
-        }
+
+    private void setPixelResolution(Entity entity, String pixelRes) throws Exception {
+        if (entity==null || pixelRes==null) return;
+        if (EntityUtils.findChildWithType(entity, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)!=null) return;
+        entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, pixelRes);
+        entityBean.saveOrUpdateEntity(entity);
+        logger.info("  Set pixel resolution to "+pixelRes+" on "+entity.getName());
     }
 }

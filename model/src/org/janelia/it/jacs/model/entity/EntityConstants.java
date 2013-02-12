@@ -50,9 +50,15 @@ public class EntityConstants {
     public static final String TYPE_ERROR                            = "Error";
     public static final String TYPE_DATA_SET                         = "Data Set";
     public static final String TYPE_ALIGNMENT_BOARD                  = "Alignment Board";
-
-    // Entity Data Attributes
+    public static final String TYPE_ALIGNMENT_SPACE                  = "Alignment Space";
+    public static final String TYPE_MASK_SET                         = "Mask Set";
+    public static final String TYPE_MASK                             = "Mask";
+    public static final String TYPE_ALIGNED_ITEM                     = "Aligned Item";
+    public static final String TYPE_DEFORMATION_MATRIX               = "Deformation Matrix";
     
+    // Entity Data Attributes
+
+    public static final String ATTRIBUTE_DENORM_IDENTIFIER                   = "Denorm Identifier";
     public static final String ATTRIBUTE_DEFAULT_2D_IMAGE                    = "Default 2D Image";
     public static final String ATTRIBUTE_DEFAULT_3D_IMAGE                    = "Default 3D Image";
     public static final String ATTRIBUTE_DEFAULT_FAST_3D_IMAGE               = "Default Fast 3D Image";
@@ -79,19 +85,27 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ANNOTATION_SESSION_ID               = "Annotation Session Id";
     public static final String ATTRIBUTE_NUMBER                              = "Number";
     public static final String ATTRIBUTE_RESULT                              = "Result";
+    public static final String ATTRIBUTE_INPUT                               = "Input";
+    public static final String ATTRIBUTE_SOURCE                              = "Source";
     public static final String ATTRIBUTE_IS_ZIPPED                           = "Is Zipped";
     public static final String ATTRIBUTE_MERGED_STACK                        = "Merged Stack";
     public static final String ATTRIBUTE_TILING_PATTERN                      = "Tiling Pattern";
     public static final String ATTRIBUTE_SUPPORTING_FILES                    = "Supporting Files";
-    public static final String ATTRIBUTE_NEURON_FRAGMENTS                    = "Neuron Fragments";
-    public static final String ATTRIBUTE_INPUT                               = "ATTRIBUTE_INPUT";
     public static final String ATTRIBUTE_ALIGNMENT_QI_SCORE                  = "Alignment Inconsistency Score";
     public static final String ATTRIBUTE_ALIGNMENT_QM_SCORE                  = "Alignment Model Violation Score";
     public static final String ATTRIBUTE_RESULT_NODE_ID                      = "Result Node Id";
     public static final String ATTRIBUTE_PERFORMANCE_PROXY_IMAGE             = "Performance Proxy Image";
     public static final String ATTRIBUTE_ARTIFACT_SOURCE_ID                  = "Artifact Source Entity Id";
-    public static final String ATTRIBUTE_NUM_CHANNELS                        = "Num Channels";
-    public static final String ATTRIBUTE_OPTICAL_RESOLUTION                  = "Optical Resolution";
+    public static final String ATTRIBUTE_NUM_CHANNELS                        = "Num Channels"; // e.g. "3"
+    public static final String ATTRIBUTE_OPTICAL_RESOLUTION                  = "Optical Resolution"; // e.g. "0.38x0.38x0.37"
+    public static final String ATTRIBUTE_PIXEL_RESOLUTION                    = "Pixel Resolution"; // e.g. "0.38x0.38x0.37"
+    public static final String ATTRIBUTE_MASK_ENTITY_COLLECTION              = "Mask Entity Collection";
+    
+    // Alignment Spaces
+    public static final String ATTRIBUTE_ALIGNMENT_SPACE                     = "Alignment Space"; // e.g. "Unified 20x Alignment Space"
+    public static final String ATTRIBUTE_ITEM                                = "Item";            // The actual entity item wrapped by an Aligned Item
+    public static final String ATTRIBUTE_VISIBILITY                          = "Visibility";      // e.g. "true"
+    public static final String ATTRIBUTE_COLOR                               = "Color";           // RGBA hex format, e.g. "ff0000ff"
     
     // Fly Line Attributes
     public static final String ATTRIBUTE_SPLIT_PART                          = "Split Part";
@@ -115,6 +129,11 @@ public class EntityConstants {
     public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM                = "Enum";
     public static final String VALUE_ONTOLOGY_TERM_TYPE_TEXT                = "Text";
     public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM_TEXT           = "EnumText";
+
+    /**
+     * @deprecated Use ATTRIBUTE_MASK_ENTITY_COLLECTION instead. This will be removed someday.
+     */
+    public static final String ATTRIBUTE_NEURON_FRAGMENTS                    = "Neuron Fragments";
     
     /**
      * @deprecated Use TYPE_IMAGE_2D instead. This will be removed someday.

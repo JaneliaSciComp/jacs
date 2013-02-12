@@ -953,17 +953,15 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public EntityType createNewEntityType(String name) throws DaoException {
-    	if (getEntityTypeByName(name) != null) {
-    		throw new DaoException("Entity type '"+name+"' already exists");
+        EntityType entityType = getEntityTypeByName(name);
+    	if (entityType != null) {
+    		return entityType;
     	}
-        Session session = getCurrentSession();
-    	
     	try {
-	    	EntityType entityType = new EntityType();
+	    	entityType = new EntityType();
 	    	entityType.setName(name);
-	        session.saveOrUpdate(entityType);
+	        saveOrUpdate(entityType);
             _logger.info("Created new EntityType '" + name + "'");
-
     		entityByName.put(name, entityType);
 	        return entityType;
     	}
@@ -983,14 +981,12 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 	        session.saveOrUpdate(entityAttr);
     		attrByName.put(attrName, entityAttr);
             _logger.info("Created new EntityAttribute '" + attrName + "'");
-	        
     	}
     	catch (Exception e) {
     		throw new DaoException(e);
     	}
     	
-        addAttributeToEntityType(entityType, entityAttr);
-        return entityAttr;
+        return addAttributeToEntityType(entityType, entityAttr);
     }
     
     public EntityAttribute createNewEntityAttr(String entityTypeName, String attrName) throws ComputeException {
@@ -1000,103 +996,38 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     	}
     	EntityAttribute entityAttr = getEntityAttributeByName(attrName);
     	if (entityAttr != null) {
-    		entityAttr = addAttributeToEntityType(entityType, entityAttr);	
-    		return entityAttr;
+    		return addAttributeToEntityType(entityType, entityAttr);
     	}
     	else {
-    		entityAttr = addAttributeToEntityType(entityType, attrName);	
-    		return entityAttr;
+    	    return addAttributeToEntityType(entityType, attrName);	
     	}
     }
     
     public EntityAttribute addAttributeToEntityType(EntityType entityType, EntityAttribute entityAttr) throws DaoException  {
-
-        Session session = getCurrentSession();
-    	
     	try {
+    	    Session session = getCurrentSession();
     		Set<EntityAttribute> attrs = entityType.getAttributes();
     		if (attrs == null) {
     			attrs = new HashSet<EntityAttribute>();
     			entityType.setAttributes(attrs);
     		}
     		
+    		for(EntityAttribute currAttr : attrs) {
+    		    if (currAttr.getName().equals(entityAttr.getName())) {
+    		        _logger.info("EntityAttribute '" + entityAttr.getName() + "' already exists on EntityType '"+entityType.getName()+"'");
+    		        return currAttr;
+    		    }
+    		}
+    		
     		attrs.add(entityAttr);
 	        session.saveOrUpdate(entityType);
             _logger.info("Added EntityAttribute '" + entityAttr.getName() + "' to EntityType '"+entityType.getName()+"'");
-	        
 	        return entityAttr;
     	}
     	catch (Exception e) {
     		throw new DaoException(e);
     	}
     }
-    
-    protected void createEntityType(String name, Set<String> attributeNameSet) {
-        Session session = getCurrentSession();
-
-        Criteria c = session.createCriteria(EntityType.class);
-        List<EntityType> entityTypeList = (List<EntityType>) c.list();
-        EntityType entityType = null;
-
-        boolean containsType = false;
-        for (EntityType et : entityTypeList) {
-            if (et.getName().equals(name)) {
-                _logger.info("Found EntityType name=" + name + " id=" + et.getId());
-                entityType = et;
-                containsType = true;
-            }
-        }
-        if (!containsType) {
-            entityType = new EntityType();
-            entityType.setName(name);
-            session.saveOrUpdate(entityType);
-            _logger.info("Created EntityType name=" + name + " id=" + entityType.getId());
-        }
-        Set<EntityAttribute> currentAttributeSet = entityType.getAttributes();
-        if (attributeNameSet != null) {
-            Set<EntityAttribute> attributeSet = getEntityAttributesByName(attributeNameSet);
-            entityType.setAttributes(attributeSet);
-        }
-        session.saveOrUpdate(entityType);
-    }
-
-    protected void createEntityAttribute(String name) {
-        try {
-            Session session = getCurrentSession();
-            Criteria c = session.createCriteria(EntityAttribute.class);
-            List<EntityAttribute> attributeList = (List<EntityAttribute>) c.list();
-            boolean containsAttribute=false;
-            for (EntityAttribute ea : attributeList) {
-                if (ea.getName().equals(name)) {
-                    containsAttribute=true;
-                }
-            }
-            if (!containsAttribute) {
-                EntityAttribute entityAttribute = new EntityAttribute();
-                entityAttribute.setName(name);
-                session.save(entityAttribute);
-            }
-        }
-        catch (HibernateException e) {
-            e.printStackTrace();
-        }
-    }
-
-    protected Set<EntityAttribute> getEntityAttributesByName(Set<String> names) {
-        Session session = getCurrentSession();
-
-        Criteria c = session.createCriteria(EntityAttribute.class);
-        List<EntityAttribute> attributeList = (List<EntityAttribute>) c.list();
-
-        Set<EntityAttribute> resultSet = new HashSet<EntityAttribute>();
-        for (EntityAttribute ea : attributeList) {
-            if (names.contains(ea.getName())) {
-                resultSet.add(ea);
-            }
-        }
-        return resultSet;
-    }
-
 
     public List<EntityType> getAllEntityTypes() throws DaoException {
         try {
@@ -2005,7 +1936,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 
     public Entity createDataSet(String subjectKey, String dataSetName) throws ComputeException {
 
-        String dataSetIdentifier = EntityUtils.createDataSetIdentifierFromName(subjectKey, dataSetName);
+        String dataSetIdentifier = EntityUtils.createDenormIdentifierFromName(subjectKey, dataSetName);
         
         if (!getUserEntitiesWithAttributeValue(null, EntityConstants.TYPE_DATA_SET, EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier).isEmpty()) {
         	throw new ComputeException("Data Set with identifier '"+dataSetIdentifier+"' already exists.");

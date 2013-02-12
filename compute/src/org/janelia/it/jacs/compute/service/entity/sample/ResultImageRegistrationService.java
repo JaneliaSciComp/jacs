@@ -237,6 +237,17 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	private Entity findFast3dImage(Entity separation) {
 		Entity supportingFiles = EntityUtils.getSupportingData(separation);
 		if (supportingFiles==null) return null;
+		
+        // Should find it here
+		Entity signalVolume = EntityUtils.findChildWithName(supportingFiles, "ConsolidatedSignal.v3dpbd");
+		if (signalVolume!=null) {
+		    Entity fast3dImage = separation.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE);
+            if (fast3dImage!=null) {
+                return fast3dImage;
+            }
+		}
+		
+        // If not, try looking in the old location
     	Entity fastLoad = EntityUtils.findChildWithName(supportingFiles, "Fast Load");
 		if (fastLoad==null) return null;
 		return EntityUtils.findChildWithName(fastLoad, "ConsolidatedSignal2_25.mp4");
