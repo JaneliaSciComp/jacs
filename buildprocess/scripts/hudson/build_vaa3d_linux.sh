@@ -20,10 +20,18 @@ export BASE=`pwd`
 export BUILD_DIR=$BASE/build_cmake
 export BIN_DIR=$BASE/bin
 
+# build vaa3d
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 ${CMAKE_DIR}/bin/cmake -DUSE_FFMPEG=ON -DBoost_INCLUDE_DIR=${BOOST_DIR} ..
 make
+
+# build clonal select
+cd $BUILD_DIR
+touch ../released_plugins/v3d_plugins/clonalselect/clonalselect_gui.h
+make clonalselect VERBOSE=1
+
+# collect binaries
 cp -R $BUILD_DIR/v3d/Linux_64/* $BIN_DIR
 cp $BUILD_DIR/lobe_seger $BIN_DIR
 cp $BUILD_DIR/brainaligner $BIN_DIR
