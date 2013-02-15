@@ -8,6 +8,9 @@ public enum PipelineProcess implements NamedEnum {
 	FlyLightWholeBrain("FlyLight Whole Brain Pipeline"),
 	FlyLightWholeBrain64x("FlyLight Whole Brain 63x Pipeline"),
 	
+	NernaLeftOpticLobe("Aljoscha Left Optic Lobe 63x Pipeline"),
+	NernaRightOpticLobe("Aljoscha Right Optic Lobe 63x Pipeline"),
+	
 	LeetCentralBrain63x("Lee Central Brain 63x Pipeline"),
 	LeetWholeBrain40x("Lee Whole Brain 40x Pipeline"),
 	LeetWholeBrain40xImproved("Lee Whole Brain 40x Improved Pipeline"),
