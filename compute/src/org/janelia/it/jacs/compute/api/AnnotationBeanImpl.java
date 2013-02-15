@@ -321,7 +321,25 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     
     public List<Entity> getCommonRootEntities(String subjectKey) throws ComputeException {
         try {
-            return _annotationDAO.getCommonRoots(subjectKey);
+            List<Entity> entities = _annotationDAO.getEntitiesWithTag(subjectKey, EntityConstants.ATTRIBUTE_COMMON_ROOT);
+            List<String> subjectKeyList = _annotationDAO.getSubjectKeys(subjectKey);
+            // We only consider common roots that the user owns, or one of their groups owns. Other common roots
+            // which the user has access to through an ACL are already referenced in the Shared Data folder.
+            // The reason this is a post-processing step, is because we want an accurate ACL on the object from the 
+            // outer fetch join. 
+            List<Entity> commonRoots = new ArrayList<Entity>();
+            if (null != subjectKey) {
+                for (Entity commonRoot : entities) {
+                    if (subjectKeyList.contains(commonRoot.getOwnerKey())) {
+                        commonRoots.add(commonRoot);
+                    }
+                }
+            }
+            else {
+                commonRoots.addAll(entities);
+            }
+            
+            return commonRoots;
         }
         catch (DaoException e) {
             _logger.error("Error trying to get common root entities for "+subjectKey, e);
@@ -337,6 +355,17 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             _logger.error("Error trying to get common root called "+folderName, e);
         }
         return null;
+    }
+
+    public List<Entity> getAlignmentSpaces(String subjectKey) throws ComputeException {
+        try {
+            List<String> subjectKeyList = _annotationDAO.getSubjectKeys(subjectKey);
+            return _annotationDAO.getEntitiesByTypeName(subjectKeyList, EntityConstants.TYPE_ALIGNMENT_SPACE);
+        }
+        catch (DaoException e) {
+            _logger.error("Error trying to get common root entities for "+subjectKey, e);
+            throw new ComputeException("Error getting common root entities", e);
+        }
     }
     
     public Entity getChildFolderByName(String subjectKey, Long parentId, String folderName, boolean createIfNecessary) throws ComputeException {

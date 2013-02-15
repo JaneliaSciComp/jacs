@@ -128,6 +128,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		slideImage.tileType = (String)row.get("tile");
 		slideImage.line = (String)row.get("line");
 		slideImage.channelSpec = (String)row.get("channel_spec");
+		slideImage.gender = (String)row.get("gender");
 		slideImage.channels = (String)row.get("channels");
 		String voxelSizeX = (String)row.get("voxel_size_x");
 		String voxelSizeY = (String)row.get("voxel_size_y");
@@ -635,6 +636,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     	String channelSpec;
     	String channels;
     	String opticalRes;
+    	String gender;
     	File file;
     }
     

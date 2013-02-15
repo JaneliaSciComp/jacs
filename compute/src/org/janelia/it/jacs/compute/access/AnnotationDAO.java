@@ -1339,8 +1339,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             throw new DaoException(e);
         }
     }
-
-    public List<Entity> getCommonRoots(String subjectKey) throws DaoException {
+    
+    public List<Entity> getEntitiesWithTag(String subjectKey, String attrTag) throws DaoException {
         try {
         	if (_logger.isDebugEnabled()) {
         		_logger.debug("getCommonRoots(subjectKey="+subjectKey+")");
@@ -1348,7 +1348,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         	
         	List<String> subjectKeyList = null;
         	
-        	EntityAttribute attr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT);
+        	EntityAttribute attr = getEntityAttributeByName(attrTag);
             Session session = getCurrentSession();
             StringBuilder hql = new StringBuilder();
             hql.append("select e from Entity e ");
@@ -1367,25 +1367,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 query.setParameterList("subjectKeyList", subjectKeyList);
             }
             
-            List<Entity> entities = filterDuplicates(query.list());
-            
-        	// We only consider common roots that the user owns, or one of their groups owns. Other common roots
-        	// which the user has access to through an ACL are already referenced in the Shared Data folder.
-            // The reason this is a post-processing step, is because we want an accurate ACL on the object from the 
-            // outer fetch join. 
-            List<Entity> commonRoots = new ArrayList<Entity>();
-            if (null != subjectKey) {
-                for (Entity commonRoot : entities) {
-                	if (subjectKeyList.contains(commonRoot.getOwnerKey())) {
-                		commonRoots.add(commonRoot);
-                	}
-                }
-            }
-            else {
-            	commonRoots.addAll(entities);
-            }
-            
-            return commonRoots;
+            return filterDuplicates(query.list());
             
         } catch (Exception e) {
             throw new DaoException(e);

@@ -53,6 +53,7 @@ public interface AnnotationBeanRemote {
 
     public List<Entity> getCommonRootEntities(String subjectKey) throws ComputeException;
     public Entity getCommonRootFolderByName(String subjectKey, String folderName, boolean createIfNecessary) throws ComputeException;
+    public List<Entity> getAlignmentSpaces(String subjectKey) throws ComputeException;
     public Entity getChildFolderByName(String subjectKey, Long parentId, String folderName, boolean createIfNecessary) throws ComputeException;
     public List<Entity> getEntitiesWithFilePath(String filePath);
     

@@ -1,6 +1,9 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -155,7 +158,7 @@ public class SageImageFamilyDiscoveryService extends SageDataSetDiscoveryService
     		List<ImageTileGroup> sampleTileGroupList) throws Exception {
 
         if (dataSetIdentifier==null) {
-        	dataSetIdentifier = getDataSetIdentifierForTilingPattern(tiling);
+        	dataSetIdentifier = getDataSetIdentifierForTilingPattern(tiling, sampleTileGroupList);
         }
         logger.info("Subsetted sample "+sampleName+" has tiling pattern "+tiling.getName()
         		+" and data set "+dataSetIdentifier+" (stitchable="+tiling.isStitchable()+")");	
@@ -165,8 +168,36 @@ public class SageImageFamilyDiscoveryService extends SageDataSetDiscoveryService
     	return sample;
     }
     
-    private String getDataSetIdentifierForTilingPattern(TilingPattern tiling) throws ComputeException {
+    private String getDataSetIdentifierForTilingPattern(TilingPattern tiling, List<ImageTileGroup> sampleTileGroupList) throws ComputeException {
 
+//        if (tiling==TilingPattern.OPTIC_TILE) {
+//            // Further subdivide optic tiles by laterality and gender
+//            String laterality = null;
+//            String gender = null;
+//            for(ImageTileGroup tileGroup : sampleTileGroupList) {
+//                String[] parts = tileGroup.getTag().split(" ");
+//                if (parts.length<1) throw new IllegalStateException("Optic tile sample has invalid tag name: "+tileGroup.getTag());
+//                
+//                // Create consensus laterality for the sample
+//                String tileLaterality = parts[0];
+//                if (laterality!=null && !laterality.equals(tileLaterality)) {
+//                    throw new IllegalStateException("Optic tile sample has inconsistent laterality");
+//                }
+//                laterality = tileLaterality;
+//                
+//                // Create consensus gender for the sample
+//                for(SlideImage slideImage : tileGroup.getImages()) {
+//                    if (gender!=null && !gender.equals(slideImage.gender)) {
+//                        throw new IllegalStateException("Optic tile sample has inconsistent gender");
+//                    }
+//                    gender = slideImage.gender;
+//                }
+//            }   
+//            
+//            String dataSetName = "FlyLight "+laterality+" "+tiling.getName()+" ("+gender+")";
+//            // TODO: this is unfinished
+//        }
+        
     	String dataSetName = "FlyLight "+tiling.getName();
     	Entity dataSet = annotationBean.getUserDataSetByName(ownerKey, dataSetName);
     	
