@@ -176,13 +176,13 @@ if ls core* &> /dev/null; then
     touch $OUTDIR/core
 fi
 
-echo "~ Removing temp files"
-rm -rf $WORKING_DIR
-
 echo "~ Finished with separation pipeline"
 
 if [ -s "$OUTDIR/ConsolidatedLabel.v3dpbd" ]; then
     echo "~ Launching fastLoad pipeline..."
     $DIR/fastLoadPipeline.sh $OUTDIR $INPUT_FILE
 fi
+
+echo "~ Removing temp files"
+rm -rf $WORKING_DIR
 
