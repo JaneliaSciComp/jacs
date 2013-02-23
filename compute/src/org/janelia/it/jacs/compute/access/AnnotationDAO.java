@@ -2318,13 +2318,16 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
      * @return
      */
     public Entity populateDescendants(String subjectKey, Entity entity) {
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("populateDescendants(subjectKey="+subjectKey+",entity.name="+entity.getName()+")");
+        }
     	Set<String> subjectKeys = getSubjectKeySet(subjectKey);
-    	return populateDescendants(subjectKeys, entity, new HashSet<Long>());
+    	return populateDescendants(subjectKeys, entity, new HashSet<Long>(), "");
     }
     
-    private Entity populateDescendants(Set<String> subjectKeys, Entity entity, Set<Long> visited) {
-    	if (_logger.isDebugEnabled()) {
-    		_logger.debug("populateDescendants(subjectKeys="+subjectKeys+",entity.id="+entity.getId()+")");
+    private Entity populateDescendants(Set<String> subjectKeys, Entity entity, Set<Long> visited, String indent) {
+    	if (_logger.isTraceEnabled()) {
+    		_logger.trace(indent+entity.getName());
     	}
     	
     	if (entity == null) return entity;
@@ -2333,11 +2336,12 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     	
     	if (visited.contains(entity.getId())) return entity;
     	visited.add(entity.getId());
-    	
+
+    	// Populate descendants
     	for(EntityData ed : entity.getEntityData()) {
     		Entity child = ed.getChildEntity();
     		if (child != null) {
-    			populateDescendants(subjectKeys, child, visited);
+    			populateDescendants(subjectKeys, child, visited, indent+" ");
     		}
     	}
     	return entity;

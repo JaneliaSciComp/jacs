@@ -473,16 +473,18 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         return getUserEntitiesWithAttributeValue(null, attrName, attrValue);
     }
 
-    
-    
-    
-
     public Entity getEntityTree(Long entityId) throws ComputeException {
-    	return getEntityTree(null, entityId);
+        // We can use the more efficient populateDescendants instead of loadLazyEntity, because we don't care about
+        // the permissions being loaded, since this method is for local use.
+        return _annotationDAO.populateDescendants(null, getEntityById(null, entityId));
     }
 
     public Entity getEntityTree(String subjectKey, Long entityId) throws ComputeException {
-    	return _annotationDAO.populateDescendants(subjectKey, getEntityById(subjectKey, entityId));    	
+        Entity entity = getEntityById(subjectKey, entityId);
+        // We can't use populateDescendants because it doesn't load the permissions. 
+        // TODO: This is a little slow to use for loading an entire tree recursively and should be improved:
+    	_annotationDAO.loadLazyEntity(subjectKey, entity, true);    	
+    	return entity;
     }
 
     public Entity getEntityAndChildren(Long entityId) throws ComputeException {
