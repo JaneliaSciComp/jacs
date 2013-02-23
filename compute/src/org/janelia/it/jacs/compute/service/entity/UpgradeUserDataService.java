@@ -46,7 +46,6 @@ public class UpgradeUserDataService extends AbstractEntityService {
     private void createAlignmentSpaces() throws Exception {
         
         entityBean.createNewEntityType(EntityConstants.TYPE_ALIGNMENT_SPACE);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_SPACE, EntityConstants.ATTRIBUTE_DENORM_IDENTIFIER);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_SPACE, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_SPACE, EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_SPACE, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
@@ -72,6 +71,7 @@ public class UpgradeUserDataService extends AbstractEntityService {
         entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_BOARD, EntityConstants.ATTRIBUTE_ITEM);
 
         entityBean.createNewEntityType(EntityConstants.TYPE_ALIGNED_ITEM);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNED_ITEM, EntityConstants.ATTRIBUTE_ITEM);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNED_ITEM, EntityConstants.ATTRIBUTE_ENTITY);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNED_ITEM, EntityConstants.ATTRIBUTE_VISIBILITY);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNED_ITEM, EntityConstants.ATTRIBUTE_COLOR);
@@ -120,7 +120,7 @@ public class UpgradeUserDataService extends AbstractEntityService {
                 
                 for(Entity alignmentResult : EntityUtils.getDescendantsOfType(pipelineRun, EntityConstants.TYPE_ALIGNMENT_RESULT, true)) {
                     
-                    addAlignmentSpace(sample, alignmentResult);
+                    setAlignmentSpace(sample, alignmentResult);
                     
                     Entity supportingFiles = EntityUtils.getSupportingData(alignmentResult);
                     Entity separation = EntityUtils.findChildWithType(alignmentResult, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
@@ -166,6 +166,7 @@ public class UpgradeUserDataService extends AbstractEntityService {
     /**
      * For each Neuron Separation:
      *     1) Change "Neuron Fragments" to "Mask Entity Collection"
+     *     2) Set a Default 3d Image for each Neuron Separation
      */
     private void processNeuronSeparationResults() throws Exception {
 
@@ -200,7 +201,7 @@ public class UpgradeUserDataService extends AbstractEntityService {
         }
     }
     
-    private void addAlignmentSpace(Entity sampleEntity, Entity alignmentResult) throws Exception {
+    private void setAlignmentSpace(Entity sampleEntity, Entity alignmentResult) throws Exception {
 
         if ("Optic Lobe Alignment".equals(alignmentResult.getName())) {
             if (sampleEntity.getName().contains("Left")) {
@@ -225,10 +226,12 @@ public class UpgradeUserDataService extends AbstractEntityService {
         if (entity==null || alignmentSpace==null) return;
         if (EntityUtils.findChildWithType(entity, EntityConstants.TYPE_ALIGNMENT_SPACE)!=null) return;
         Entity alignmentSpaceEntity = alignmentSpaces.get(alignmentSpace);
-        EntityData ed = entity.addChildEntity(alignmentSpaceEntity, EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE);
-        ed.setValue(EntityUtils.createDenormIdentifierFromName(ownerKey, alignmentSpaceEntity.getName()));
-        entityBean.saveOrUpdateEntityData(ed);
-        logger.info("  Set alignment space to "+ed.getValue()+" on "+entity.getName());
+        
+        String value = alignmentSpaceEntity.getName();
+        entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE, value);
+        entityBean.saveOrUpdateEntity(entity);
+        
+        logger.info("  Set alignment space to "+value+" on "+entity.getName());
     }
     
     private void setOpticalResolution(Entity entity, String opticalRes) throws Exception {
