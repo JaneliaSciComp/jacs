@@ -39,7 +39,7 @@ public class ProcessManager {
      */
     private Long launch(ProcessDef processDef, IProcessData processData) {
         try {
-            logger.info("Launching " + processDef.getName());
+            logger.info("\nLaunching " + processDef.getName() + " ....\n");
             initProcessData(processData, processDef);
             if (processDef.isProcessorAsync()) {
                 processData.setActionToProcess(processDef);
