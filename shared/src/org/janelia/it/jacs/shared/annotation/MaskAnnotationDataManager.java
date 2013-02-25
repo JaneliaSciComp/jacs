@@ -1,13 +1,13 @@
 package org.janelia.it.jacs.shared.annotation;
 
 import java.io.*;
+import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Created by IntelliJ IDEA.
@@ -62,9 +62,10 @@ public class MaskAnnotationDataManager {
         return returnList;
     }
 
-    public void loadMaskCompartmentList(File maskNameIndexFile) {
+    public void loadMaskCompartmentList(URL maskNameIndexURL) {
         try {
-            BufferedReader br = new BufferedReader(new FileReader(maskNameIndexFile));
+            
+            BufferedReader br = new BufferedReader(new InputStreamReader(maskNameIndexURL.openStream()));
             String line = null;
             while ((line = br.readLine()) != null) {
                 if (line.trim().length() > 0) {
@@ -189,17 +190,18 @@ public class MaskAnnotationDataManager {
     }
 
     // This method returns: Map<Long, Map<String, String>> sampleInfoMap, Map<Long, List<Double>> quantifierInfoMap
-    public Object[] loadMaskSummaryFile(File patternAnnotationSummaryFile) throws Exception {
+    public Object[] loadMaskSummaryFile(URL patternAnnotationSummaryURL) throws Exception {
 //        System.out.println("loadMaskSummaryFile start()");
         if (QS_COMPARTMENT_LIST.size()==0) {
             throw new Exception("Compartment list must be loaded");
         }
 //        Long startTime=new Date().getTime();
 //        System.out.println("Reading mask annotation summary file="+patternAnnotationSummaryFile.getAbsolutePath());
-        BufferedReader bw=new BufferedReader(new FileReader(patternAnnotationSummaryFile));
+
+        BufferedReader bw = new BufferedReader(new InputStreamReader(patternAnnotationSummaryURL.openStream()));
         String firstLine=bw.readLine();
         if (firstLine==null) {
-            throw new Exception("Could not read first line of file="+patternAnnotationSummaryFile.getAbsolutePath());
+            throw new Exception("Could not read first line of file="+patternAnnotationSummaryURL);
         }
         String[] firstLineColumnNames=firstLine.split(",");
         int qsoSize=QS_COMPARTMENT_LIST.size();
