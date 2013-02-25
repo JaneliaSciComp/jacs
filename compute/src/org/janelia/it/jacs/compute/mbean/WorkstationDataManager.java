@@ -337,7 +337,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             String quantifierSummaryFilename= SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationQuantifierSummaryFile");
             File summaryFile=new File(resourceDirString + File.separator+maskFolderName, quantifierSummaryFilename);
             File nameIndexFile=new File(resourceDirString + File.separator+maskFolderName, "maskNameIndex.txt");
-            maskManager.loadMaskCompartmentList(nameIndexFile);
+            maskManager.loadMaskCompartmentList(nameIndexFile.toURI().toURL());
             maskManager.createMaskAnnotationQuantifierSummaryFile(summaryFile, entityQuantifierMap);
         } catch (Exception ex) {
             ex.printStackTrace();
