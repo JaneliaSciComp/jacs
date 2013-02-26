@@ -467,6 +467,16 @@ public class EntityUtils {
 		}
 		return null;
     }
+
+    public static EntityData findChildEntityDataWithChildId(Entity entity, long childId) {
+        for (EntityData ed : entity.getEntityData()) {
+            Entity child = ed.getChildEntity();
+            if (child!=null && child.getId().equals(childId)) {
+                return ed;
+            }
+        }
+        return null;
+    }
     
     public static Entity getSupportingData(Entity entity) {
     	EntityData ed = findChildEntityDataWithType(entity, EntityConstants.TYPE_SUPPORTING_DATA);
