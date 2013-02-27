@@ -97,7 +97,7 @@ public class Vaa3DHelper {
         prefix.append("done\n");
 
         // Run Xvfb (virtual framebuffer) on the chosen port
-        prefix.append("/usr/bin/Xvfb :${PORT} -screen 0 1x1x24 -sp /usr/lib64/xserver/SecurityPolicy -fp /usr/share/X11/fonts/misc &\n");
+        prefix.append("/usr/bin/Xvfb :${PORT} -screen 0 1x1x24 -fp /usr/share/X11/fonts/misc > Xvfb.${PORT}.log 2>&1 &\n");
 
         // Save the PID so that we can kill it when we're done
         prefix.append("MYPID=$!\n");
