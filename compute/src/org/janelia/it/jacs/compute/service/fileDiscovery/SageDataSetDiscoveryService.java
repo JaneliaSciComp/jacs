@@ -150,8 +150,8 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         for(SlideImage slideImage : slideGroup) {
         	
         	if (slideImage.file==null) {
-        		logger.warn("File referenced by SAGE is null: "+slideImage.slideCode);
-        		continue;
+        		logger.warn("Slide code "+slideImage.slideCode+" has an image with a null path, so it is not ready for synchronization.");
+        		return;
         	}
         	
         	ImageTileGroup tileGroup = tileGroups.get(slideImage.tileType);
