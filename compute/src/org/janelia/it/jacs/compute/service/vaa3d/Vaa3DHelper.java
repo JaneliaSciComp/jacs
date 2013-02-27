@@ -91,14 +91,17 @@ public class Vaa3DHelper {
         StringBuffer prefix = new StringBuffer();
 
         // Skip ports that are currently in use, or "locked"
+        prefix.append("echo \"Finding a port for Xvfb, starting at "+displayPort+"...\"\n");
         prefix.append("PORT="+displayPort+"\n");
         prefix.append("while (test -f \"/tmp/.X${PORT}-lock\") || (netstat -atwn | grep \"^.*:${PORT}.*:\\*\\s*LISTEN\\s*$\")\n");
         prefix.append("do PORT=$(( ${PORT} + 1 ))\n");
         prefix.append("done\n");
-
+        prefix.append("echo \"Found the first free port: $PORT\"\n");
+        
         // Run Xvfb (virtual framebuffer) on the chosen port
         prefix.append("/usr/bin/Xvfb :${PORT} -screen 0 1x1x24 -fp /usr/share/X11/fonts/misc > Xvfb.${PORT}.log 2>&1 &\n");
-
+        prefix.append("echo \"Started Xvfb on port $PORT\"\n");
+        
         // Save the PID so that we can kill it when we're done
         prefix.append("MYPID=$!\n");
         prefix.append("export DISPLAY=\"localhost:${PORT}.0\"\n");
@@ -107,8 +110,14 @@ public class Vaa3DHelper {
     }
 
     public static String getVaa3DGridCommandSuffix() {
-        // Kill the Xvfb
-        return "kill $MYPID \n";
+        StringBuffer suffix = new StringBuffer();
+        
+        // Kill the Xvfb, and remove the lock file just in case it doesn't get automatically removed
+        suffix.append("kill $MYPID\n");
+        suffix.append("rm -f /tmp/.X$MYPID-lock\n");
+        suffix.append("echo \"Cleaned up Xvfb\"\n");
+        
+        return suffix.toString();
     }
 
     public static String getFormattedMIPCommand(String inputFilepath, String outputFilepath, String extraOptions) throws ServiceException {
