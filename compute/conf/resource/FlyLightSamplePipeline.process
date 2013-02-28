@@ -35,6 +35,14 @@
 	        <output name="PIPELINE_PROCESS"/>
 	        <output name="REUSE_PROCESSING"/>
 	    </operation>
+        
+        <!-- Create the pipeline run entity -->
+        <operation name="Create Pipeline Run Entity" processor="org.janelia.it.jacs.compute.service.entity.sample.CreatePipelineRunEntityService">
+            <input name="SAMPLE_ENTITY_ID"/>
+            <input name="PIPELINE_NAME"/>
+            <input name="PIPELINE_PROCESS"/>
+            <output name="PIPELINE_RUN_ENTITY_ID"/>
+        </operation>
 	    
 	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
 	    <operation name="Get Sample Attributes" processor="org.janelia.it.jacs.compute.service.entity.sample.InitSampleAttributesService">
@@ -53,7 +61,6 @@
 			<input name="ALIGNMENT_ALGORITHMS"/>
             <input name="ALIGNMENT_ALGORITHM_PARAMS"/>
 			<input name="ANALYSIS_ALGORITHMS"/>
-			<output name="CREATE_PIPELINE_RUN"/>
             <output name="RUN_PROCESSING"/>
 			<output name="RUN_MERGE"/>
 			<output name="RUN_STITCH"/>
@@ -63,14 +70,6 @@
 			<output name="STITCH_ALGORITHM"/>
             <output name="PARAMETERIZED_ALIGNMENT_ALGORITHM"/>
 			<output name="ANALYSIS_ALGORITHM"/>
-		</operation>
-		
-	    <!-- Create the pipeline run entity -->
-	    <operation name="Create Pipeline Run Entity" processor="org.janelia.it.jacs.compute.service.entity.sample.CreatePipelineRunEntityService">
-			<input name="SAMPLE_ENTITY_ID"/>
-			<input name="PIPELINE_NAME"/>
-			<input name="PIPELINE_PROCESS"/>
-			<output name="PIPELINE_RUN_ENTITY_ID"/>
 		</operation>
 		
 		<sequence if="REUSE_PROCESSING=true">
@@ -260,6 +259,31 @@
     			<input name="DEFAULT_IMAGE_FILENAME" value="$V{STITCHED_FILENAME}"/>
     	    </operation>
 		
+    		<!-- Run analyses on unaligned results -->
+            <sequence if="RUN_ANALYSIS=true">
+                <sequence forEach="ANALYSIS_ALGORITHM">
+                        
+                    <!-- Decide what pipeline to run -->
+                    <operation name="Get Parameters" processor="org.janelia.it.jacs.compute.service.entity.sample.InitAnalysisParametersService">
+                        <input name="ANALYSIS_ALGORITHM"/>
+                        <input name="RESULT_ENTITY_ID"/>
+                        <output name="OUTPUT_FILENAME"/>
+                        <output name="ANALYSIS_PIPELINE_NAME"/>
+                    </operation>
+                    
+                    <!-- Run neuron separation on prealigned data -->
+                    <include name="Neuron Separation" process="FlyLightSeparationPipeline">
+                        <input name="ROOT_ENTITY_ID" value="$V{RESULT_ENTITY_ID}"/>
+                        <input name="SAMPLE_ENTITY_ID"/>
+                        <input name="INPUT_FILENAME" value="$V{OUTPUT_FILENAME}"/>
+                        <input name="RESULT_ENTITY_NAME" value="Neuron Separation"/>
+                        <input name="SIGNAL_CHANNELS"/>
+                        <input name="REFERENCE_CHANNEL"/>
+                    </include>
+        
+                </sequence>
+            </sequence>
+            
         </sequence>
         
         <sequence if="RUN_ALIGNMENT=true">
@@ -279,40 +303,6 @@
 			    </sequence>
 	    	</sequence>
     	</sequence>
-		
-	    <sequence if="RUN_ANALYSIS=true">
-	        <sequence forEach="ANALYSIS_ALGORITHM">
-	
-			    <!-- Decide what pipeline to run -->
-			    <operation name="Get Results" processor="org.janelia.it.jacs.compute.service.entity.sample.GetPipelineRunResultsService">
-					<input name="PIPELINE_RUN_ENTITY_ID"/>
-					<output name="RESULT_ENTITY_ID"/>
-				</operation>
-					
-	        	<sequence forEach="RESULT_ENTITY_ID">
-					
-				    <!-- Decide what pipeline to run -->
-				    <operation name="Get Parameters" processor="org.janelia.it.jacs.compute.service.entity.sample.InitAnalysisParametersService">
-						<input name="ANALYSIS_ALGORITHM"/>
-						<input name="RESULT_ENTITY_ID"/>
-						<output name="OUTPUT_FILENAME"/>
-						<output name="ANALYSIS_PIPELINE_NAME"/>
-					</operation>
-					
-					<!-- Run neuron separation on prealigned data -->
-			        <include name="Neuron Separation" process="FlyLightSeparationPipeline">
-						<input name="ROOT_ENTITY_ID" value="$V{RESULT_ENTITY_ID}"/>
-			            <input name="SAMPLE_ENTITY_ID"/>
-			            <input name="INPUT_FILENAME" value="$V{OUTPUT_FILENAME}"/>
-			            <input name="RESULT_ENTITY_NAME" value="Neuron Separation"/>
-						<input name="SIGNAL_CHANNELS"/>
-						<input name="REFERENCE_CHANNEL"/>
-			        </include>
-		
-				</sequence>	
-		
-			</sequence>
-		</sequence>
 		
 		<!-- Compress all the v3draw files we created  -->
         <include name="Compress raw files" process="SampleDataCompression">

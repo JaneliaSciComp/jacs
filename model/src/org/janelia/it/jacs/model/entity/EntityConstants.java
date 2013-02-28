@@ -100,6 +100,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_OPTICAL_RESOLUTION                  = "Optical Resolution"; // e.g. "0.38x0.38x0.37"
     public static final String ATTRIBUTE_PIXEL_RESOLUTION                    = "Pixel Resolution"; // e.g. "0.38x0.38x0.37"
     public static final String ATTRIBUTE_MASK_ENTITY_COLLECTION              = "Mask Entity Collection";
+    public static final String ATTRIBUTE_VISITED                             = "Visited"; // A tag that marks an entity as having been visited by some pipeline process 
     
     // Alignment Spaces
     public static final String ATTRIBUTE_ALIGNMENT_SPACE                     = "Alignment Space"; // e.g. "Unified 20x Alignment Space"

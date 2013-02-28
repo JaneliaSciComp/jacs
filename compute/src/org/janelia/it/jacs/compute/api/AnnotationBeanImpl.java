@@ -546,4 +546,14 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         	throw new ComputeException("Error getting data set: "+dataSetIdentifier,e);
         }
     }
+    
+    public void deleteAttribute(String ownerKey, String attributeName) throws ComputeException {
+        try {
+            _annotationDAO.deleteAttribute(ownerKey, attributeName);
+        }
+        catch (DaoException e) {
+            _logger.error("Error deleting attribute: "+attributeName, e);
+            throw new ComputeException("Error deleting attribute: "+attributeName,e);
+        }
+    }
 }

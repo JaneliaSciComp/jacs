@@ -1,9 +1,6 @@
 package org.janelia.it.jacs.compute.service.entity;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -54,8 +51,6 @@ public class SampleCleaningService extends AbstractEntityService {
     	
     	logger.info("  Cleaning up sample "+sample.getName());
     	
-    	List<Entity> toDelete = new ArrayList<Entity>();
-    	
     	List<Entity> children = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
     	if (children.isEmpty()) return;
     	
@@ -63,22 +58,35 @@ public class SampleCleaningService extends AbstractEntityService {
     	Entity lastRun = children.remove(children.size()-1);
     	populateChildren(lastRun);
 
-    	// Clean up everything except the last good run and the last error run
-    	for(Entity pipelineRun : children) {
-    		populateChildren(pipelineRun);
-    		if (EntityUtils.getLatestChildOfType(lastRun, EntityConstants.TYPE_ERROR)!=null) {
-    			// Last run had error, so only delete other error runs
-    			if (EntityUtils.getLatestChildOfType(pipelineRun, EntityConstants.TYPE_ERROR)!=null) {
-    				toDelete.add(pipelineRun);
-    			}
-    		}
-    		else {
-    	    	// Clean up everything except the last run
-    			toDelete.add(pipelineRun);
-    		}
-    	}
+        if (EntityUtils.getLatestChildOfType(lastRun, EntityConstants.TYPE_ERROR)!=null) {
+            logger.info("  Keeping last error run: "+lastRun.getId());
+            // Last run had an error, let's keep that, but still try to find a good run to keep
+            Collections.reverse(children);
+            Integer keeper = null;
+            int curr = 0;
+            for(Entity pipelineRun : children) {
+                populateChildren(pipelineRun);
+                if (EntityUtils.getLatestChildOfType(pipelineRun, EntityConstants.TYPE_ERROR)!=null) {
+                    keeper = curr;
+                    break;
+                }
+                curr++;   
+            }
+            if (keeper!=null) {
+                Entity lastGoodRun = children.remove(keeper.intValue());
+                logger.info("  Keeping last good run: "+lastGoodRun.getId());
+                
+            }
+            else {
+                logger.info("  Could not find a good run to keep.");
+            }
+        }
+        else {
+            logger.info("  Keeping last good run: "+lastRun.getId());
+        }
     	
-		deleteUnannotated(toDelete);
+    	// Clean up everything else
+		deleteUnannotated(children);
     }
     
     private void deleteUnannotated(List<Entity> toDelete) throws ComputeException {

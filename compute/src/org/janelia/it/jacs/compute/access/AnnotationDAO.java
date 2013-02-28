@@ -3142,4 +3142,37 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     	}
     	return entity;
 	}
+
+    public void deleteAttribute(String ownerKey, String attributeName) throws DaoException {
+        try {
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("deleteAttribute(attributeName="+attributeName+")");  
+            }
+            
+            EntityAttribute attr = getEntityAttributeByName(attributeName);
+            if (attr==null) {
+                throw new Exception("No such attribute: "+attributeName);
+            }
+            
+            StringBuilder hql = new StringBuilder();
+            hql.append("delete EntityData ed ");
+            hql.append("where ed.entityAttribute.id=:attrId ");
+            if (ownerKey!=null) {
+                hql.append(" and ed.ownerKey = :ownerKey ");
+            }
+            
+            final Session currentSession = getCurrentSession();
+            Query query = currentSession.createQuery(hql.toString());
+            query.setParameter("attrId", attr.getId());
+            if (ownerKey!=null) {
+                query.setParameter("ownerKey", ownerKey);
+            }
+            
+            int rows = query.executeUpdate();
+            _logger.info("Bulk deleted "+rows+" EntityData rows");
+        }
+        catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
 }

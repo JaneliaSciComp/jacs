@@ -34,6 +34,11 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     
     public void execute() throws Exception {
         
+        // Clear "visited" flags on all our Samples
+        logger.info("Clearing visitation flags...");
+        annotationBean.deleteAttribute(ownerKey, EntityConstants.ATTRIBUTE_VISITED);
+        
+        logger.info("Getting data set folder...");
 		if ("group:flylight".equals(ownerKey)) {
         	topLevelFolder = createOrVerifyRootEntity(PUBLIC_DATA_SET_FOLDER_NAME, true, false);
 		}
@@ -250,6 +255,8 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         	populateSampleAttributes(sample, sampleChannelSpec, dataSetIdentifier);
         	populateChildren(sample);
         }
+        
+        setVisited(sample);
 
     	// Add the tile groups to the Sample's Supporting Files folder
         for (ImageTileGroup tileGroup : tileGroupList) {
@@ -301,7 +308,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     	
     	return sample;
     }
-    
+
     protected void addTileToSample(Entity sample, ImageTileGroup tileGroup) throws Exception {
     	
         // Get the existing Supporting Files, or create a new one
@@ -455,8 +462,15 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		sample = entityBean.saveOrUpdateEntity(sample);
 		numSamplesUpdated++;
         return sample;
-    }
+    }    
     
+    private Entity setVisited(Entity entity) throws Exception {
+        if (!EntityUtils.addAttributeAsTag(entity, EntityConstants.ATTRIBUTE_VISITED)) {
+            throw new IllegalStateException("Could not set visited flag for "+entity.getName());
+        }
+        return entityBean.saveOrUpdateEntity(entity);
+    }
+
     protected Entity createSupportingFilesFolder() throws Exception {
     	Date createDate = new Date();
         Entity filesFolder = new Entity();

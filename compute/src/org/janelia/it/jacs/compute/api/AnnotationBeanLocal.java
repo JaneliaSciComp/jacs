@@ -24,5 +24,12 @@ public interface AnnotationBeanLocal extends AnnotationBeanRemote {
 	 * @throws ComputeException
 	 */
 	public Entity createSilentOntologyAnnotation(String userLogin, OntologyAnnotation annotation) throws ComputeException;
-	
+
+	/**
+	 * Delete an attribute from all entities for a given user. 
+	 * @param ownerKey
+	 * @param attributeName
+	 * @throws ComputeException
+	 */
+	public void deleteAttribute(String ownerKey, String attributeName) throws ComputeException;
 }
