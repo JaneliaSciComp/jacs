@@ -9,7 +9,7 @@ TEMPLATE_DIR=$3
 TOOLKITS_DIR=$4
 INPUT_FILE=$5
 OUTPUT_DIR=$6
-REF_CHANNEL=$7
+REF_CHAN=$7
 OPTICAL_RESOLUTION=$8
 
 WORKING_DIR=$OUTPUT_DIR/temp
@@ -22,6 +22,10 @@ echo "~ Alignment Config: $CONFIG_PATH"
 echo "~ Template Dir: $TEMPLATE_DIR"
 echo "~ Run Dir: $DIR"
 echo "~ Working Dir: $WORKING_DIR"
+echo "~ Reference channel: $REF_CHAN"
+
+REF_CHAN_ONE_INDEXED=`expr $REF_CHAN + 1`
+echo "~ Reference channel (1-indexed): $REF_CHAN_ONE_INDEXED"
 
 EXT=${INPUT_FILE#*.}
 if [ $EXT == "v3dpbd" ]; then
@@ -32,7 +36,7 @@ if [ $EXT == "v3dpbd" ]; then
     $Vaa3D -cmd image-loader -convert "$PBD_INPUT_FILE" "$INPUT_FILE"
 fi
 
-CMD="$SCRIPT_PATH $CONFIG_PATH $TEMPLATE_DIR $TOOLKITS_DIR $WORKING_DIR $INPUT_FILE $REF_CHANNEL $OPTICAL_RESOLUTION"
+CMD="$SCRIPT_PATH $CONFIG_PATH $TEMPLATE_DIR $TOOLKITS_DIR $WORKING_DIR $INPUT_FILE $REF_CHAN_ONE_INDEXED $OPTICAL_RESOLUTION"
 echo $CMD
 $CMD
 

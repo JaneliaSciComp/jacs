@@ -15,6 +15,10 @@ my $inputStack  = $opt_i;
 my $tileName    = $opt_n;
 my $opticalRes  = $opt_r;
 my $refChannel  = $opt_c;
+my $refChannelOneIndexed = int($refChannel)+1;
+
+print "Ref Channel (0-indexed): $refChannel\n";
+print "Ref Channel (1-indexed): $refChannelOneIndexed\n";
 
 if (($tileName ne "") and ($tileName ne "Right Optic Lobe") and ($tileName ne "Left Optic Lobe")) {
     &usage("Invalid tile name: $tileName");
@@ -110,7 +114,7 @@ sub runInitialGlobalAlignment {
         $v3d
         -x imagereg.so -f rigidreg 
         -o "$outputFileBase\_GlobalAligned.v3draw"
-        -p "#t $templateDir/global/ave_target1_rl.raw #ct 1 #s $inputFile #cs $refChannel"
+        -p "^t $templateDir/global/ave_target1_rl.raw ^ct 1 ^s $inputFile ^cs $refChannelOneIndexed"
     });
 
     print "cmd=$cmd\n";
@@ -121,7 +125,7 @@ sub runInitialGlobalAlignment {
         -x refExtract.so -f refExtract
         -i "$outputFileBase\_GlobalAligned.v3draw"
         -o "$outputFileBase\_GlobalAlignedReference_8bit.v3draw" 
-        -p \""#c $refChannel\""
+        -p \""#c $refChannelOneIndexed\""
     });
 
     print "cmd=$cmd\n";
