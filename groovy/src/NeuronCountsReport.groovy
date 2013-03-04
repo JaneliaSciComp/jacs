@@ -4,11 +4,8 @@ import static org.janelia.it.jacs.shared.utils.EntityUtils.*
 
 import java.text.SimpleDateFormat
 
-import org.janelia.it.FlyWorkstation.gui.util.PathTranslator;
-import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.shared.utils.EntityUtils
 
 // Parameters
 tilingPattern = "OPTIC_TILE"
