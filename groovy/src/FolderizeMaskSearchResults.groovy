@@ -9,7 +9,7 @@ c = f.c
 
 //Scanner scanner = new Scanner(new File("/Users/saffordt/Desktop/LC6_mask1_Combined_SearchResults.txt"))
 Scanner scanner = new Scanner(new File("/Users/saffordt/Desktop/LC6_mask2_Combined.218.labels_SearchResults.txt"))
-ArrayList<String> sampleNames = new ArrayList<>();
+ArrayList<String> sampleNames = new ArrayList<String>();
 while(scanner.hasNextLine()){
     String tmpLine = scanner.nextLine();
     tmpLine = tmpLine.substring(tmpLine.lastIndexOf("/")+1);
@@ -18,7 +18,7 @@ while(scanner.hasNextLine()){
 }
 
 //id = 1805889121739079778L
-ArrayList<Long> searchResultSampleIds = new ArrayList<>()
+ArrayList<Long> searchResultSampleIds = new ArrayList<Long>()
 for (String tmpName : sampleNames) {
     Set<Entity> tmpSet = e.getEntitiesByNameAndTypeName(subject, tmpName, "Screen Sample");
     // Assume one hit and take it.
