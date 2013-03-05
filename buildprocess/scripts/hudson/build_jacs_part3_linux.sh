@@ -103,9 +103,9 @@ if [ $INSTALL_SCRIPTS == 1 ]; then
     echo "Installing single neuron scripts in $SCRIPTS_INSTALL_DIR"
     rm -rf $SCRIPTS_INSTALL_DIR || true
     mkdir -p $SCRIPTS_INSTALL_DIR
-    svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk/compute/scripts/single_neuron $SCRIPTS_INSTALL_DIR/single_neuron
+    svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tags/FlySuite_${FWVER}/compute/scripts/single_neuron $SCRIPTS_INSTALL_DIR/single_neuron
 
-    svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/BrainAligner/trunk/pipelines/brainaligner $SCRIPTS_INSTALL_DIR/brainaligner
+    svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/BrainAligner/tags/FlySuite_${FWVER}/pipelines/brainaligner $SCRIPTS_INSTALL_DIR/brainaligner
 
     echo "Creating Toolkit symbolic links"
     

@@ -21,3 +21,4 @@ svn copy https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/br
 
 svn copy https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/branches/FlySuite_${FWVER} https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/tags/FlySuite_${TAGVER} -m "Creating a tag for release ${TAGVER} from branch ${FWVER}"
 
+svn copy https://subversion.int.janelia.org/ScientificComputing/Projects/BrainAligner/branches/FlySuite_${FWVER} https://subversion.int.janelia.org/ScientificComputing/Projects/BrainAligner/tags/FlySuite_${TAGVER} -m "Creating a tag for release ${TAGVER} from branch ${FWVER}"

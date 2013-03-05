@@ -15,3 +15,5 @@ svn copy https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tr
 
 svn copy https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/trunk https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/branches/FlySuite_${FWVER} -m "Creating a branch for Workstation Suite, release ${FWVER}"
 
+svn copy https://subversion.int.janelia.org/ScientificComputing/Projects/BrainAligner/trunk https://subversion.int.janelia.org/ScientificComputing/Projects/BrainAligner/branches/FlySuite_${FWVER} -m "Creating a branch for Workstation Suite, release ${FWVER}"
+
