@@ -26,7 +26,7 @@ public class InitAlignmentParametersService extends AbstractEntityService {
     		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
     	}
     	
-    	processData.putItem("OPTICAL_RESOLUTION", getConsensusOpticalResolution(sampleEntity));
+    	processData.putItem("SAMPLE_OPTICAL_RESOLUTION", getConsensusOpticalResolution(sampleEntity));
     	
 		ParameterizedAlignmentAlgorithm paa = (ParameterizedAlignmentAlgorithm)processData.getItem("PARAMETERIZED_ALIGNMENT_ALGORITHM");
 		AlignmentAlgorithm aa = paa.getAlgorithm();
@@ -68,7 +68,7 @@ public class InitAlignmentParametersService extends AbstractEntityService {
 			throw new IllegalArgumentException("No such alignment algorithm: "+aa);
 		}
 		
-		logger.info("Set OPTICAL_RESOLUTION = "+processData.getItem("OPTICAL_RESOLUTION"));
+		logger.info("Set SAMPLE_OPTICAL_RESOLUTION = "+processData.getItem("SAMPLE_OPTICAL_RESOLUTION"));
 		logger.info("Set ALIGNMENT_SERVICE_CLASS = "+processData.getItem("ALIGNMENT_SERVICE_CLASS"));
 		logger.info("Set ALIGNMENT_RESULT_NAME = "+processData.getItem("ALIGNMENT_RESULT_NAME"));
 		logger.info("Set ALIGNMENT_TILE_NAME = "+processData.getItem("ALIGNMENT_TILE_NAME"));

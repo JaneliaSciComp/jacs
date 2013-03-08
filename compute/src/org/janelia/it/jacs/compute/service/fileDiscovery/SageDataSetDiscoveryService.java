@@ -14,6 +14,9 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+
 /**
  * Discovers images in SAGE which are part of data sets defined in the workstation, and creates or updates Samples 
  * within the entity model.
@@ -24,7 +27,14 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
    
 	protected static final String PRIVATE_DATA_SET_FOLDER_NAME = "My Data Sets";
 	protected static final String PUBLIC_DATA_SET_FOLDER_NAME = "Public Data Sets";
-	
+	protected static final String OBJECTIVE_20X = "20x";
+	protected static final String OBJECTIVE_40X = "40x";
+	protected static final String OBJECTIVE_63X = "63x";
+    
+	protected FileDiscoveryHelper fileHelper;
+	protected Map<String,Entity> dataSetFolderByIdentifier = new HashMap<String,Entity>();
+	protected Map<String,Entity> dataSetEntityByIdentifier = new HashMap<String,Entity>();
+    
     protected Entity topLevelFolder;
     
     protected int sageRowsProcessed = 0;
@@ -33,6 +43,8 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     protected int numSamplesAdded = 0;
     
     public void execute() throws Exception {
+        
+        this.fileHelper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
         
         // Clear "visited" flags on all our Samples
         logger.info("Clearing visitation flags...");
@@ -54,15 +66,33 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         	return;
         }        
 
+        logger.info("Preloading data sets...");
+        populateChildren(topLevelFolder);
     	for(Entity dataSet : dataSets) {
-    		if (dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_SYNC)==null) {
-    			logger.info("Skipping non-SAGE data set: "+dataSet.getName());
+    	    
+    	    // Cache the data set
+    	    String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+    	    dataSetEntityByIdentifier.put(dataSetIdentifier, dataSet);
+    	    
+    	    // Cache the folder
+    	    Entity dataSetFolder = EntityUtils.findChildWithName(topLevelFolder, dataSet.getName());
+    		if (dataSetFolder!=null) {
+                logger.info("Preloading data set: "+dataSet.getName());
+        		populateChildren(dataSetFolder);
+        		dataSetFolderByIdentifier.put(dataSetIdentifier, dataSetFolder);
     		}
-    		else {
-        		logger.info("Processing data set: "+dataSet.getName());
-            	processSageDataSet(null, dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER));
-    		}	
     	}
+
+    	logger.info("Processing data sets...");
+        for(Entity dataSet : dataSets) {
+            if (dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_SYNC)==null) {
+                logger.info("Skipping non-SAGE data set: "+dataSet.getName());
+            }
+            else {
+                logger.info("Processing data set: "+dataSet.getName());
+                processSageDataSet(null, dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER));
+            }
+        }
     
         fixOrderIndices();
         
@@ -82,18 +112,12 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     		List<SlideImage> slideGroup = null;
     		String currSlideCode = null;
     		
-    		if (dataSetIdentifier==null) {
-    			logger.info("Querying SAGE for image family: "+imageFamily);
-    			iterator = sageDAO.getImagesByFamily(imageFamily);
-    		}
-    		else {
-    			logger.info("Querying SAGE for data set: "+dataSetIdentifier);
-    			iterator = sageDAO.getImagesByDataSet(dataSetIdentifier);
-    		}
+			logger.info("Querying SAGE for data set: "+dataSetIdentifier);
+			iterator = sageDAO.getImagesByDataSet(dataSetIdentifier);
     		
         	while (iterator.hasNext()) {
         		Map<String,Object> row = iterator.next();
-        		SlideImage slideImage = getSlideImage(row);
+        		SlideImage slideImage = createSlideImage(row);
         		
 				if (!slideImage.slideCode.equals(currSlideCode)) {
 					// Process the current group
@@ -124,8 +148,8 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         	if (iterator!=null) iterator.close();
         }
     }
-
-    protected SlideImage getSlideImage(Map<String,Object> row) {
+    
+    protected SlideImage createSlideImage(Map<String,Object> row) {
         SlideImage slideImage = new SlideImage();
         slideImage.sageId = (Long)row.get("id");
 		slideImage.slideCode = (String)row.get("slide_code");
@@ -135,12 +159,22 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		slideImage.channelSpec = (String)row.get("channel_spec");
 		slideImage.gender = (String)row.get("gender");
 		slideImage.channels = (String)row.get("channels");
+		slideImage.mountingProtocol = (String)row.get("mounting_protocol");
+		String objectiveStr = (String)row.get("objective");
+		if (objectiveStr.contains(OBJECTIVE_20X)) {
+		    slideImage.objective = OBJECTIVE_20X;
+		}
+		else if (objectiveStr.contains(OBJECTIVE_40X)) {
+            slideImage.objective = OBJECTIVE_40X;
+        }
+		else if (objectiveStr.contains(OBJECTIVE_63X)) {
+            slideImage.objective = OBJECTIVE_63X;
+        }
 		String voxelSizeX = (String)row.get("voxel_size_x");
 		String voxelSizeY = (String)row.get("voxel_size_y");
 		String voxelSizeZ = (String)row.get("voxel_size_z");
 		slideImage.opticalRes = voxelSizeX+"x"+voxelSizeY+"x"+voxelSizeZ;
 		slideImage.file = slideImage.imagePath!=null?new File(slideImage.imagePath):null;
-		
 		return slideImage;
     }
     
@@ -194,121 +228,186 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 			}
 		});
         
-        createOrUpdateSample(sampleIdentifier, dataSetIdentifier, tileGroupList);
+        createOrUpdateSample(null, sampleIdentifier, dataSetIdentifier, tileGroupList);
     }
     
-    protected Entity createOrUpdateSample(String sampleIdentifier, String dataSetIdentifier, 
-    		List<ImageTileGroup> tileGroupList) throws Exception {
+    protected Entity createOrUpdateSample(Entity parentSample, String sampleIdentifier, String dataSetIdentifier, 
+    		Collection<ImageTileGroup> tileGroupList) throws Exception {
 
-    	if (dataSetIdentifier==null) {
-    		throw new IllegalStateException("Cannot create or update sample without a data set identifier");
-    	}
-    	
-        // Figure out the number of channels that should be in the final merged/stitched sample
+        logger.info("Creating or updating sample: "+sampleIdentifier+" ("+(parentSample==null?"":("parentSample="+parentSample.getName()+", "))+"dataSet="+dataSetIdentifier+")");
+        
+        Multimap<String,ImageTileGroup> objectiveGroups = HashMultimap.<String,ImageTileGroup>create();
+        for(ImageTileGroup tileGroup : tileGroupList) {
+            String groupObjective = null;
+            for(SlideImage slideImage : tileGroup.getImages()) {
+                if (groupObjective==null) {
+                    groupObjective = slideImage.objective;
+                }
+                else if (groupObjective != slideImage.objective) {
+                    logger.warn("  No consensus for objective in tile group '"+tileGroup.getTag()+"' ("+groupObjective+" != "+slideImage.objective+")");
+                }
+            }
+            if (groupObjective!=null) {
+                objectiveGroups.put(groupObjective, tileGroup);
+            }
+        }    
+        
+        logger.info("  Sample objectives: "+objectiveGroups.keySet());
+        Entity sample = null;
+        
+        if (objectiveGroups.isEmpty()) {
+            throw new IllegalStateException("Sample "+sampleIdentifier+" has no objective groups");
+        }
+        else if (objectiveGroups.keySet().size()>1) {
+            
+            if (parentSample!=null) {
+                throw new IllegalStateException("Sample "+sampleIdentifier+" has already been subdivided but still contains multiple objectives: "+parentSample.getId());
+            }
+            
+            // There is more than one objective. Create a parent Sample, and then a SubSample for each objective.
+            sample = getOrCreateSample(sampleIdentifier, null, dataSetIdentifier, null);
+            String childObjective = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
+            if (childObjective!=null) {
+                logger.info("  Converting existing "+childObjective+" sample into a child sample: "+sample.getId());
+                
+                Entity childSample = sample;
+                // This is an objective-specific sample which was defined in the past. 
+                // Convert it into a child sample, and create a new parent. 
+                childSample.setName(childSample.getName()+"~"+childObjective);
+                entityBean.saveOrUpdateEntity(sample);
+                
+                // temporarily clear the data set so that the sample is removed from data set folders
+                childSample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, null);
+                putInCorrectDataSetFolder(childSample);
+                
+                // Create a new parent
+                sample = getOrCreateSample(sampleIdentifier, null, dataSetIdentifier, null);
+            }
+            
+            List<String> objectives = new ArrayList<String>(objectiveGroups.keySet());
+            Collections.sort(objectives);
+            for(String objective : objectives) {
+                Collection<ImageTileGroup> subTileGroupList = objectiveGroups.get(objective);
+                createOrUpdateSample(sample, sampleIdentifier+"~"+objective, null, subTileGroupList);
+            }
+
+            putInCorrectDataSetFolder(sample);
+        }
+        else {
+            String objective = objectiveGroups.keySet().iterator().next();
+            
+            logger.info("  Sample has a single objective group: "+objective);
+            
+            // Figure out the number of channels that should be in the final merged/stitched sample
+            int sampleNumSignals = getNumSignalChannels(tileGroupList);
+            String sampleChannelSpec = getChanSpec(sampleNumSignals);
+            logger.debug("  Sample has "+sampleNumSignals+" signal channels, and thus specification '"+sampleChannelSpec+"'");
+            
+            // Find the sample, if it exists, or create a new one.
+            sample = getOrCreateSample(sampleIdentifier, sampleChannelSpec, dataSetIdentifier, objective);
+            synchronizeTiles(sample, tileGroupList);
+            
+            // Ensure the sample is a child of something
+            if (parentSample==null) {
+                putInCorrectDataSetFolder(sample);
+            }
+            else {
+                if (EntityUtils.findChildWithEntityId(parentSample, sample.getId())==null) {
+                    entityHelper.addToParent(parentSample, sample, parentSample.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);    
+                }
+            }
+        }
+
+        setVisited(sample);
+        return sample;
+    }
+
+    protected int getNumSignalChannels(Collection<ImageTileGroup> tileGroupList) {
         int sampleNumSignals = -1;
         for(ImageTileGroup tileGroup : tileGroupList) {
 
-        	int tileNumSignals = 0;
-        	logger.debug("Calculating number of channels in tile "+tileGroup.getTag());
-        	for(SlideImage slideImage : tileGroup.getImages()) {
-            	if (slideImage.channelSpec!=null) {
-            		for(int j=0; j<slideImage.channelSpec.length(); j++) {
-            			if (slideImage.channelSpec.charAt(j)=='s') {
-            				tileNumSignals++;
-            			}
-            		}
-            	}
-        	}
-        	
-        	if (tileNumSignals<1) {
-        		logger.debug("Falling back on channel number");
-        		// We didn't get the information from the channel spec, let's fall back on inference from numChannels
-            	for(SlideImage slideImage : tileGroup.getImages()) {
-                	if (slideImage.channels!=null) {
-                		tileNumSignals += Integer.parseInt(slideImage.channels) - 1;
-                	}
-            	}
-        	}
-        	
-        	logger.debug("Tile "+tileGroup.getTag()+" has "+tileNumSignals+" signal channels");
-        	
-        	if (sampleNumSignals<0) {
-        		sampleNumSignals = tileNumSignals;
-        	}
-        	else if (sampleNumSignals != tileNumSignals) {
-        		logger.warn("No consensus for number of signal channels per tile ("+sampleNumSignals+" != "+tileNumSignals+")");
-        	}
-        }
-        
-        String sampleChannelSpec = getChanSpec(sampleNumSignals);
-        logger.debug("Sample has "+sampleNumSignals+" signal channels, and thus specification '"+sampleChannelSpec+"'");
-        
-    	// Find the sample, if it exists
-        Entity sample = findExistingSample(sampleIdentifier);
-        if (sample == null) {
-        	logger.info("Did not find sample "+sampleIdentifier);
-	        sample = createSample(sampleIdentifier, sampleChannelSpec, dataSetIdentifier);
-	        numSamplesCreated++;
-        }
-        else {
-        	logger.info("Found existing sample "+sampleIdentifier);
-        	populateSampleAttributes(sample, sampleChannelSpec, dataSetIdentifier);
-        	populateChildren(sample);
-        }
-        
-        setVisited(sample);
-
-    	// Add the tile groups to the Sample's Supporting Files folder
-        for (ImageTileGroup tileGroup : tileGroupList) {
-        	addTileToSample(sample, tileGroup);
-        }
-
-        // Remove from current data set folder, if we're changing         
-		String currDataSet = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-		if (currDataSet!=null && !currDataSet.equals(dataSetIdentifier)) {
-			logger.info("    Data set is changing from "+currDataSet+" to "+dataSetIdentifier);	
-		
-			Set<EntityData> toDelete = new HashSet<EntityData>();
-			for(EntityData ed : entityBean.getParentEntityDatas(sample.getId())) {
-				Entity parent = ed.getParentEntity();
-				for(Entity grandparent : entityBean.getParentEntities(parent.getId())) {
-					if (grandparent.getId().equals(topLevelFolder.getId())) {
-						logger.info("    Removing from data set folder: "+parent.getName()+" (id="+parent.getId()+")");	
-						toDelete.add(ed);
-					}
-				}
-			}
-			
-			for(EntityData ed : toDelete) {
-				entityBean.deleteEntityData(ed);
-			}
-		}
-	
-		// Add to correct data set folder
-    	Entity dataSet = annotationBean.getUserDataSetByIdentifier(dataSetIdentifier);
-    	if (dataSet!=null) {
-    		Entity dataSetFolder = verifyOrCreateChildFolder(topLevelFolder, dataSet.getName());
-            
-            boolean found = false;
-            for(Entity entity : dataSetFolder.getChildren()) {
-            	if (entity.getId().equals(sample.getId())) {
-            		found = true;
-            	}
+            int tileNumSignals = 0;
+            logger.debug("  Calculating number of channels in tile "+tileGroup.getTag());
+            for(SlideImage slideImage : tileGroup.getImages()) {
+                if (slideImage.channelSpec!=null) {
+                    for(int j=0; j<slideImage.channelSpec.length(); j++) {
+                        if (slideImage.channelSpec.charAt(j)=='s') {
+                            tileNumSignals++;
+                        }
+                    }
+                }
             }
             
-            if (!found) {
-            	logger.info("    Adding to data set folder: "+dataSetFolder.getName()+" (id="+dataSetFolder.getId()+")");	
-    	        addToParent(dataSetFolder, sample, dataSetFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
-    	        numSamplesAdded++;
-            }	
-    	}
-    	else {
-    		logger.warn("Data set for sample (id="+sample.getId()+") does not exist: "+dataSetIdentifier);
-    	}
-    	
-    	return sample;
+            if (tileNumSignals<1) {
+                logger.debug("  Falling back on channel number");
+                // We didn't get the information from the channel spec, let's fall back on inference from numChannels
+                for(SlideImage slideImage : tileGroup.getImages()) {
+                    if (slideImage.channels!=null) {
+                        tileNumSignals += Integer.parseInt(slideImage.channels) - 1;
+                    }
+                }
+            }
+            
+            logger.debug("  Tile "+tileGroup.getTag()+" has "+tileNumSignals+" signal channels");
+            
+            if (sampleNumSignals<0) {
+                sampleNumSignals = tileNumSignals;
+            }
+            else if (sampleNumSignals != tileNumSignals) {
+                logger.warn("  No consensus for number of signal channels per tile ("+sampleNumSignals+" != "+tileNumSignals+")");
+            }
+        }
+        return sampleNumSignals;
     }
 
+    protected void putInCorrectDataSetFolder(Entity sample) throws Exception {
+        String sampleDataSetIdentifier = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+        logger.info("  Putting sample "+sample.getName()+" in data set folder for "+sampleDataSetIdentifier);   
+        for(String dataSetIdentifier : dataSetEntityByIdentifier.keySet()) {
+            Entity dataSetFolder = dataSetFolderByIdentifier.get(dataSetIdentifier);
+            // Either this is the folder we want, or the folder at least exists so that we can remove from it if necessary
+            if (dataSetIdentifier.equals(sampleDataSetIdentifier) || dataSetFolder!=null) {
+                if (dataSetFolder==null) {
+                    Entity dataSet = dataSetEntityByIdentifier.get(dataSetIdentifier);
+                    dataSetFolder = verifyOrCreateChildFolder(topLevelFolder, dataSet.getName());
+                    dataSetFolderByIdentifier.put(dataSetIdentifier, dataSetFolder);
+                }
+                EntityData ed = EntityUtils.findChildEntityDataWithChildId(dataSetFolder, sample.getId());
+                if (dataSetIdentifier.equals(sampleDataSetIdentifier)) {
+                    if (ed==null) {
+                        logger.info("    Adding to data set folder: "+dataSetFolder.getName()+" (id="+dataSetFolder.getId()+")");   
+                        entityHelper.addToParent(dataSetFolder, sample, dataSetFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+                        numSamplesAdded++;
+                    }
+                }
+                else {
+                    if (ed!=null) {
+                        logger.info("    Removing from data set folder: "+dataSetFolder.getName()+" (id="+dataSetFolder.getId()+")");   
+                        dataSetFolder.getEntityData().remove(ed);
+                        entityBean.deleteEntityData(ed);
+                    }
+                }
+            }
+        }
+    }
+    
+    protected void synchronizeTiles(Entity sample, Collection<ImageTileGroup> tileGroupList) throws Exception {
+        
+        Set<String> tileNameSet = new HashSet<String>();
+        for (ImageTileGroup tileGroup : tileGroupList) {
+            addTileToSample(sample, tileGroup);
+            tileNameSet.add(tileGroup.getTag());
+        }
+        
+        Entity supportingFolder = EntityUtils.getSupportingData(sample);
+        for(Entity imageTile : EntityUtils.getChildrenOfType(supportingFolder, EntityConstants.TYPE_IMAGE_TILE)) {
+            if (!tileNameSet.contains(imageTile.getName())) {
+                logger.info("  Removing superfluous image tile: "+imageTile.getName());
+                entityBean.deleteEntityTree(imageTile.getOwnerKey(), imageTile.getId());
+            }
+        }
+    }
+    
     protected void addTileToSample(Entity sample, ImageTileGroup tileGroup) throws Exception {
     	
         // Get the existing Supporting Files, or create a new one
@@ -316,7 +415,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         
     	if (supportingFiles == null) {
     		supportingFiles = createSupportingFilesFolder();
-    		addToParent(sample, supportingFiles, 0, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
+    		entityHelper.addToParent(sample, supportingFiles, 0, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
     	}
     	else {
         	if (!EntityUtils.areLoaded(supportingFiles.getEntityData())) {
@@ -355,13 +454,13 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             imageTile.setUpdatedDate(createDate);
             imageTile.setName(tileGroup.getTag());
             imageTile = entityBean.saveOrUpdateEntity(imageTile);
-            logger.info("Saved image tile '"+imageTile.getName()+"' as "+imageTile.getId());
-        	addToParent(supportingFiles, imageTile, null, EntityConstants.ATTRIBUTE_ENTITY);
+            logger.info("  Saved image tile '"+imageTile.getName()+"' as "+imageTile.getId());
+        	entityHelper.addToParent(supportingFiles, imageTile, null, EntityConstants.ATTRIBUTE_ENTITY);
         	
         	for(SlideImage image : tileGroup.getImages()) {
-    			logger.info("Adding LSM file to sample: "+image.imagePath);
+    			logger.info("  Adding LSM file to sample: "+image.imagePath);
     			Entity lsmEntity = createLsmStackFromFile(image);
-                addToParent(imageTile, lsmEntity, imageTile.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+                entityHelper.addToParent(imageTile, lsmEntity, imageTile.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
         	}
 		}
     }
@@ -397,9 +496,24 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		return true;
     }
     
-    /**
-     * Find and return the child Sample entity
-     */
+    protected Entity getOrCreateSample(String sampleIdentifier, String channelSpec, String dataSetIdentifier, String objective) throws Exception {
+
+        Entity sample = findExistingSample(sampleIdentifier);
+        if (sample == null) {
+            logger.info("  Creating new sample with identifier: "+sampleIdentifier);
+            sample = createSample(sampleIdentifier, channelSpec, dataSetIdentifier, objective);
+            numSamplesCreated++;
+        }
+        else {
+            logger.info("  Found existing sample with identifier: "+sampleIdentifier);
+            populateSampleAttributes(sample, channelSpec, dataSetIdentifier, objective);
+            populateChildren(sample);
+            numSamplesUpdated++;
+        }
+        
+        return sample;
+    }
+    
     protected Entity findExistingSample(String sampleIdentifier) throws ComputeException {
 
     	List<Entity> matchingSamples = entityBean.getUserEntitiesByNameAndTypeName(ownerKey, 
@@ -434,13 +548,14 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     	}
     	
     	if (matchingSamples.size()>1) {
-    		logger.warn("Multiple samples (count="+matchingSamples.size()+") found with sample identifier: "+sampleIdentifier);
+    		logger.warn("  Multiple samples (count="+matchingSamples.size()+") found with sample identifier: "+sampleIdentifier);
     	}
     	
     	return matchingSamples.get(0);
     }
 
-    protected Entity createSample(String name, String channelSpec, String dataSetIdentifier) throws Exception {
+    protected Entity createSample(String name, String channelSpec, String dataSetIdentifier, String objective) throws Exception {
+        logger.info("  Creating sample "+name);
     	Date createDate = new Date();
         Entity sample = new Entity();
         sample.setOwnerKey(ownerKey);
@@ -448,19 +563,22 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         sample.setCreationDate(createDate);
         sample.setUpdatedDate(createDate);
         sample.setName(name);
-        sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier);
-        sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec);
-        sample = entityBean.saveOrUpdateEntity(sample);
-        logger.info("Saved sample as "+sample.getId());
+        populateSampleAttributes(sample, channelSpec, dataSetIdentifier, objective);
         return sample;
     }
 
-    protected Entity populateSampleAttributes(Entity sample, String channelSpec, String dataSetIdentifier) throws Exception {
-		logger.info("    Setting properties: dataSet="+dataSetIdentifier+", spec="+channelSpec);
-		sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier);	
-		sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec);	
+    protected Entity populateSampleAttributes(Entity sample, String channelSpec, String dataSetIdentifier, String objective) throws Exception {
+		logger.info("    Setting properties: dataSet="+dataSetIdentifier+", spec="+channelSpec+", objective="+objective);
+		if (dataSetIdentifier!=null) {
+		    sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier);	
+		}
+		if (channelSpec!=null) {
+		    sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec);	
+		}
+		if (objective!=null) {
+		    sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE, objective); 
+		}
 		sample = entityBean.saveOrUpdateEntity(sample);
-		numSamplesUpdated++;
         return sample;
     }    
     
@@ -480,7 +598,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         filesFolder.setUpdatedDate(createDate);
         filesFolder.setName("Supporting Files");
         filesFolder = entityBean.saveOrUpdateEntity(filesFolder);
-        logger.info("Saved supporting files folder as "+filesFolder.getId());
+        logger.info("  Saved supporting files folder as "+filesFolder.getId());
         return filesFolder;
     }
 
@@ -492,21 +610,20 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         lsmStack.setCreationDate(createDate);
         lsmStack.setUpdatedDate(createDate);
         lsmStack.setName(image.file.getName());
-        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, image.imagePath);
-        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS, image.channels);
-        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, image.opticalRes);
-        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, image.channelSpec);
-        lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
-        logger.info("Saved LSM stack as "+lsmStack.getId());
+        lsmStack = populateLsmStackAttributes(lsmStack, image);
+        logger.info("  Saved LSM stack as "+lsmStack.getId());
         return lsmStack;
     }
     
     protected Entity populateLsmStackAttributes(Entity lsmStack, SlideImage image) throws Exception {
-		logger.info("    Setting properties: channels="+image.channels+", res="+image.opticalRes+", spec="+image.channelSpec);
+		logger.info("    Setting properties: channels="+image.channels+", res="+image.opticalRes+
+		        ", spec="+image.channelSpec+", objective="+image.objective+", mountingProtocol="+image.mountingProtocol);
 		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, image.imagePath);
 		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS, image.channels);
 		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, image.opticalRes);	
-		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, image.channelSpec);	
+		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, image.channelSpec);
+        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE, image.objective);
+        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL, image.mountingProtocol);
 		lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
         return lsmStack;
     }
@@ -618,7 +735,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             folder.setName(childName);
             folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
             folder = entityBean.saveOrUpdateEntity(folder);
-            addToParent(parentFolder, folder, null, EntityConstants.ATTRIBUTE_ENTITY);
+            entityHelper.addToParent(parentFolder, folder, null, EntityConstants.ATTRIBUTE_ENTITY);
         }
         
         return folder;
@@ -632,14 +749,6 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		buf.append("r");
 		return buf.toString();
 	}
-	
-    protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
-        EntityData ed = parent.addChildEntity(entity, attrName);
-        ed.setOrderIndex(index);
-        entityBean.saveOrUpdateEntityData(ed);
-        logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
-        		" as child of "+parent.getEntityType().getName()+"#"+parent.getId());
-    }
     
     protected class SlideImage {
     	Long sageId;
@@ -649,8 +758,10 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     	String line;
     	String channelSpec;
     	String channels;
+    	String objective;
     	String opticalRes;
     	String gender;
+    	String mountingProtocol;
     	File file;
     }
     

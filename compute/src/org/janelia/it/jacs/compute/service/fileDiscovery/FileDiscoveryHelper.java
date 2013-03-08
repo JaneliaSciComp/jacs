@@ -154,14 +154,6 @@ public class FileDiscoveryHelper extends EntityHelper {
         addToParent(resultEntity, entity, resultEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
         return entity;
     }
-    
-    public void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
-        EntityData ed = parent.addChildEntity(entity, attrName);
-        ed.setOrderIndex(index);
-        entityBean.saveOrUpdateEntityData(ed);
-        logger.info("Added "+entity.getName() +" ("+entity.getEntityType().getName()+"#"+entity.getId()+
-        		") as child of "+parent.getName()+" ("+parent.getEntityType().getName()+"#"+parent.getId()+")");
-    }
 
     public Entity addChildFolderToEntity(Entity parent, String name, String directoryPath) throws Exception {
     	Entity folder = createFolderForFile(name, false, directoryPath); 

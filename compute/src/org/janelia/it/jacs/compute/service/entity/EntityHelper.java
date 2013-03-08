@@ -24,8 +24,7 @@ public class EntityHelper {
 
 	private static final boolean DEBUG = false;
 	
-    protected Logger logger = Logger.getLogger(EntityHelper.class);
-    
+    protected Logger logger;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
     protected String ownerKey;
@@ -35,9 +34,14 @@ public class EntityHelper {
 	}
 	
     public EntityHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, String ownerKey) {
+        this(entityBean, computeBean, ownerKey, Logger.getLogger(EntityHelper.class));
+    }
+    
+    public EntityHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, String ownerKey, Logger logger) {
         this.entityBean = entityBean;
         this.computeBean  = computeBean;
         this.ownerKey = ownerKey;
+        this.logger = logger;
     }
 	
 	/**
@@ -247,5 +251,33 @@ public class EntityHelper {
     	// Return the new object so that we can update in-memory model
         return entity;
     }
-	
+
+    public void setAlignmentSpace(Entity entity, String alignmentSpaceName) throws Exception {
+        if (entity==null || alignmentSpaceName==null) return;
+        setAttributeIfNull(entity, EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE, alignmentSpaceName);
+    }
+    
+    public void setOpticalResolution(Entity entity, String opticalRes) throws Exception {
+        if (entity==null || opticalRes==null) return;
+        setAttributeIfNull(entity, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, opticalRes);
+    }
+
+    public void setPixelResolution(Entity entity, String pixelRes) throws Exception {
+        if (entity==null || pixelRes==null) return;
+        setAttributeIfNull(entity, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, pixelRes);
+    }
+    
+    private void setAttributeIfNull(Entity entity, String attributeName, String value) throws Exception {
+        if (EntityUtils.findChildWithType(entity, attributeName)!=null) return;
+        entity.setValueByAttributeName(attributeName, value);
+        entityBean.saveOrUpdateEntity(entity);
+    }
+
+    public void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
+        EntityData ed = parent.addChildEntity(entity, attrName);
+        ed.setOrderIndex(index);
+        entityBean.saveOrUpdateEntityData(ed);
+        logger.trace("Added "+entity.getName() +" ("+entity.getEntityType().getName()+"#"+entity.getId()+
+                ") as child of "+parent.getName()+" ("+parent.getEntityType().getName()+"#"+parent.getId()+")");
+    }
 }

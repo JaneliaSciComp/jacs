@@ -38,7 +38,6 @@ public class EntityConstants {
     public static final String TYPE_IMAGE_3D                         = "Image 3D";
     public static final String TYPE_MOVIE                            = "Movie";
     public static final String TYPE_NEURON_FRAGMENT                  = "Neuron Fragment";
-    public static final String TYPE_NEURON_FRAGMENT_COLLECTION       = "Neuron Fragment Collection";
     public static final String TYPE_ALIGNED_BRAIN_STACK              = "Aligned Brain Stack";
     public static final String TYPE_TEXT_FILE                        = "Text File";
     public static final String TYPE_SWC_FILE                         = "SWC File";
@@ -96,9 +95,11 @@ public class EntityConstants {
     public static final String ATTRIBUTE_RESULT_NODE_ID                      = "Result Node Id";
     public static final String ATTRIBUTE_PERFORMANCE_PROXY_IMAGE             = "Performance Proxy Image";
     public static final String ATTRIBUTE_ARTIFACT_SOURCE_ID                  = "Artifact Source Entity Id";
+    public static final String ATTRIBUTE_MOUNTING_PROTOCOL                   = "Mounting Protocol"; // e.g. "DPX PBS Mounting"
     public static final String ATTRIBUTE_NUM_CHANNELS                        = "Num Channels"; // e.g. "3"
     public static final String ATTRIBUTE_OPTICAL_RESOLUTION                  = "Optical Resolution"; // e.g. "0.38x0.38x0.37"
     public static final String ATTRIBUTE_PIXEL_RESOLUTION                    = "Pixel Resolution"; // e.g. "0.38x0.38x0.37"
+    public static final String ATTRIBUTE_OBJECTIVE                           = "Objective"; // e.g. "63x"
     public static final String ATTRIBUTE_MASK_ENTITY_COLLECTION              = "Mask Entity Collection";
     public static final String ATTRIBUTE_VISITED                             = "Visited"; // A tag that marks an entity as having been visited by some pipeline process 
     
@@ -131,6 +132,11 @@ public class EntityConstants {
     public static final String VALUE_ONTOLOGY_TERM_TYPE_TEXT                = "Text";
     public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM_TEXT           = "EnumText";
 
+    /**
+     * @deprecated Use ATTRIBUTE_MASK_ENTITY_COLLECTION instead. This will be removed someday.
+     */
+    public static final String TYPE_NEURON_FRAGMENT_COLLECTION       = "Neuron Fragment Collection";
+    
     /**
      * @deprecated Use ATTRIBUTE_MASK_ENTITY_COLLECTION instead. This will be removed someday.
      */

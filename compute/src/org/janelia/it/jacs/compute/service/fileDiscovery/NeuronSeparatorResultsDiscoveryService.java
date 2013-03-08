@@ -27,11 +27,6 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     }
     
     @Override
-    protected Entity verifyOrCreateChildFolderFromDir(Entity parentFolder, File dir, Integer index) throws Exception {
-    	return super.verifyOrCreateChildFolderFromDir(parentFolder, dir, index);
-    }
-    
-    @Override
     protected void processFolderForData(Entity separationEntity) throws Exception {
 
     	if (!separationEntity.getEntityType().getName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {

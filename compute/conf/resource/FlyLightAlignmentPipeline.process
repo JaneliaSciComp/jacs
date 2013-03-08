@@ -25,7 +25,7 @@
 			<output name="ALIGNMENT_SERVICE_CLASS"/>
 			<output name="ALIGNMENT_RESULT_NAME"/>
 			<output name="ALIGNMENT_TILE_NAME"/>
-			<output name="OPTICAL_RESOLUTION"/>
+			<output name="SAMPLE_OPTICAL_RESOLUTION"/>
 			<output name="ALIGNMENT_SCRIPT_NAME"/>
 		</operation>
 	    
@@ -37,7 +37,7 @@
 				<input name="INPUT_FILENAME"/>
 				<input name="ALIGNMENT_TILE_NAME"/>
 				<input name="ALIGNMENT_SCRIPT_NAME"/>
-				<input name="OPTICAL_RESOLUTION"/>
+				<input name="SAMPLE_OPTICAL_RESOLUTION"/>
 				<input name="SIGNAL_CHANNELS"/>
 				<input name="REFERENCE_CHANNEL"/>
 				<output name="ALIGNED_FILENAME"/>
@@ -56,15 +56,14 @@
 	        </operation>
         </sequence>
         
-	    <!-- Load the alignment results into the database -->
-		<operation name="Discover Alignment Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SupportingFilesDiscoveryService">
-			<input name="ROOT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
-			<input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
-			<input name="RESULT_ENTITY_TYPE" value="Alignment Result"/>
-			<input name="RESULT_ENTITY_NAME" value="$V{ALIGNMENT_RESULT_NAME}"/>
-			<output name="RESULT_ENTITY_ID"/>
-	    </operation>
-	    
+        <!-- Load the alignment results into the database -->
+        <operation name="Discover Neuron Separation Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.AlignmentResultsDiscoveryService">
+            <input name="ROOT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
+            <input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
+            <input name="RESULT_ENTITY_NAME" value="$V{ALIGNMENT_RESULT_NAME}"/>
+            <output name="RESULT_ENTITY_ID"/>
+        </operation>
+        
 	    <!-- Register images -->
 		<operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
 			<input name="SAMPLE_ENTITY_ID"/>

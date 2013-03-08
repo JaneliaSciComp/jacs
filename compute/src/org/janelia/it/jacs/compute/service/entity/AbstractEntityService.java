@@ -45,7 +45,7 @@ public abstract class AbstractEntityService implements IService {
 	        Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
 	        this.ownerKey = subject.getKey();
 	        
-	        this.entityHelper = new EntityHelper(entityBean, computeBean, ownerKey);
+	        this.entityHelper = new EntityHelper(entityBean, computeBean, ownerKey, logger);
 	        this.entityLoader = new EntityBeanEntityLoader(entityBean);
 	        
 	        execute();

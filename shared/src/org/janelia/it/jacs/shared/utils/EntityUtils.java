@@ -435,6 +435,16 @@ public class EntityUtils {
     public static Entity findChildWithType(Entity entity, String type) {
         return findChildWithNameAndType(entity, null, type);
     }
+    
+    public static Entity findChildWithEntityId(Entity entity, Long entityId) {
+        for (EntityData ed : entity.getEntityData()) {
+            Entity child = ed.getChildEntity();
+            if (child!=null && child.getId().equals(entityId)) {
+                return child;
+            }
+        }
+        return null;
+    }
 
     public static Entity findChildWithNameAndType(Entity entity, String childName, String type) {
         for (EntityData ed : entity.getEntityData()) {
