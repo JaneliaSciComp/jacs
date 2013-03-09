@@ -25,7 +25,7 @@
 			<output name="ALIGNMENT_SERVICE_CLASS"/>
 			<output name="ALIGNMENT_RESULT_NAME"/>
 			<output name="ALIGNMENT_TILE_NAME"/>
-			<output name="SAMPLE_OPTICAL_RESOLUTION"/>
+			<output name="OPTICAL_RESOLUTION"/>
 			<output name="ALIGNMENT_SCRIPT_NAME"/>
 		</operation>
 	    
@@ -37,7 +37,7 @@
 				<input name="INPUT_FILENAME"/>
 				<input name="ALIGNMENT_TILE_NAME"/>
 				<input name="ALIGNMENT_SCRIPT_NAME"/>
-				<input name="SAMPLE_OPTICAL_RESOLUTION"/>
+				<input name="OPTICAL_RESOLUTION"/>
 				<input name="SIGNAL_CHANNELS"/>
 				<input name="REFERENCE_CHANNEL"/>
 				<output name="ALIGNED_FILENAME"/>

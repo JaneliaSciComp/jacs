@@ -42,19 +42,22 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
 				+ " inputFilename=" + inputFilename
 				+")");
 
+		int refChannelInt = Integer.parseInt(refChannel);
+		int refChannelOneIndexed = refChannelInt+1;
+		
         StringBuffer script = new StringBuffer();
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix() + "\n");
         script.append(Vaa3DHelper.getVaa3dLibrarySetupCmd() + "\n");
         script.append("cd " + alignFileNode.getDirectoryPath() + "\n");
-		script.append("sh " + ALIGNER_SCRIPT_CMD);
+		script.append("sh "+ALIGNER_SCRIPT_CMD);
 		script.append(" " + BRAIN_ALIGNER_DIR + "/" + scriptFile);
-		script.append(" " + CONFIG_DIR + "/systemvars.apconf");
-		script.append(" " + TEMPLATE_DIR);
-		script.append(" " + TOOLKITS_DIR);
-		script.append(" " + inputFilename);
-		script.append(" " + alignFileNode.getDirectoryPath());
-		script.append(" " + refChannel);
-		script.append(" \"" + opticalResolution+"\"");
+		script.append(" -o " + alignFileNode.getDirectoryPath());
+		script.append(" -c " + CONFIG_DIR + "/systemvars.apconf");
+		script.append(" -t " + TEMPLATE_DIR);
+		script.append(" -k " + TOOLKITS_DIR);
+		script.append(" -i " + inputFilename);
+		script.append(" -r " + refChannelOneIndexed);
+		script.append(" -s " + opticalResolution.replaceAll(" ", "x"));
 		script.append("\n");
 		
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix() + "\n");

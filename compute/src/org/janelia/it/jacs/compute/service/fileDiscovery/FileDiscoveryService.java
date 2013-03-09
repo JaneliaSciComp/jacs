@@ -50,7 +50,7 @@ public class FileDiscoveryService implements IService {
             this.ownerKey = subject.getKey();
             createDate = new Date();
             helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
-            helper.addFileExclusion("DrmaaSubmitter.log");
+            helper.addFileExclusion("*.log");
             helper.addFileExclusion("*.oos");
             helper.addFileExclusion("sge_*");
             helper.addFileExclusion("temp");
