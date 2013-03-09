@@ -13,6 +13,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -38,17 +39,19 @@ public class FileDiscoveryService implements IService {
     protected Date createDate;
     protected IProcessData processData;
     protected FileDiscoveryHelper helper;
+    protected EntityBeanEntityLoader entityLoader;
     
     public void execute(IProcessData processData) throws ServiceException {
         try {
-        	this.processData=processData;
-            logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-            entityBean = EJBFactory.getLocalEntityBean();
-            computeBean = EJBFactory.getLocalComputeBean();
+        	this.processData = processData;
+        	this.logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
+            this.entityBean = EJBFactory.getLocalEntityBean();
+            this.computeBean = EJBFactory.getLocalComputeBean();
             String ownerName = ProcessDataHelper.getTask(processData).getOwner();
             Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
             this.ownerKey = subject.getKey();
-            createDate = new Date();
+            this.createDate = new Date();
+            this.entityLoader = new EntityBeanEntityLoader(entityBean);
             helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
             helper.addFileExclusion("*.log");
             helper.addFileExclusion("*.oos");

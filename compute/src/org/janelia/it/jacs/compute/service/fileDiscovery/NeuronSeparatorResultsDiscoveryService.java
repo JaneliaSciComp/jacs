@@ -1,10 +1,7 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -116,6 +113,19 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
         helper.setImageIfNecessary(referenceVolume, EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE, fastReference);
         helper.setImageIfNecessary(signalVolume, EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE, fastSignal);
         helper.setImageIfNecessary(separationEntity, EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE,  signalVolume);
+
+        // Set the fast 3d image on the default 3d image for the result
+        // TODO: this is kind of a hack, because this service should really be ignorant of the result entity, but it will do for now.
+        Set<Long> parentIds = entityBean.getParentIdsForAttribute(separationEntity.getId(),  EntityConstants.ATTRIBUTE_RESULT);
+        if (parentIds.isEmpty() || parentIds.size()>1) {
+            logger.warn("Unexpected number of result parents: "+parentIds.size());
+        }
+        else {
+            Entity resultEntity = entityBean.getEntityById(parentIds.iterator().next());
+            entityLoader.populateChildren(resultEntity);
+            Entity default3dImage = resultEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+            helper.setImageIfNecessary(default3dImage, EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE, fastSignal);    
+        }
         
         Collections.sort(fragmentMipFiles, new Comparator<File>() {
 			@Override
