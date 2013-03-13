@@ -1,12 +1,14 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
@@ -20,6 +22,8 @@ public class InitSampleAttributesService extends AbstractEntityService {
 	
     public void execute() throws Exception {
         	
+        SampleHelper sampleHelper = new SampleHelper(entityBean, computeBean, ownerKey, logger);
+        
     	String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
     	if (sampleEntityId == null || "".equals(sampleEntityId)) {
     		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
@@ -35,7 +39,44 @@ public class InitSampleAttributesService extends AbstractEntityService {
     	}
     	
     	logger.info("Retrieved sample: "+sampleEntity.getName()+" (id="+sampleEntityId+")");
-    	
+        
+        populateChildren(sampleEntity);
+        Entity supportingFiles = EntityUtils.getSupportingData(sampleEntity);
+
+        // Parent samples may not have the rest of these attributes
+        if (supportingFiles==null) return;
+        
+        supportingFiles = entityBean.getEntityTree(supportingFiles.getId());
+        List<Entity> tileEntities = EntityUtils.getDescendantsOfType(supportingFiles, EntityConstants.TYPE_IMAGE_TILE, true);
+        
+        
+        Map<String,AnatomicalArea> areaMap = new HashMap<String,AnatomicalArea>();
+        
+        for(Entity tileEntity : tileEntities) {
+            String area = null;
+            for(EntityData ed : tileEntity.getOrderedEntityData()) {
+                Entity lsmStack = ed.getChildEntity();
+                if (lsmStack != null && lsmStack.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK)) {
+                    String lsmArea = lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
+                    if (area == null) {
+                        area = lsmArea;
+                    }
+                    else if (!area.equals(lsmArea)) {
+                        throw new IllegalStateException("No consensus for area in tile '"+tileEntity.getName()+"' on sample "+sampleEntity.getName());
+                    }
+                }
+            }
+            AnatomicalArea anatomicalArea = areaMap.get(area);
+            if (anatomicalArea==null) {
+                anatomicalArea = new AnatomicalArea(area);
+                areaMap.put(area, anatomicalArea);
+            }
+            anatomicalArea.addTile(tileEntity);
+        }
+
+        logger.info("Putting "+areaMap.values().size()+" values in SAMPLE_AREA");
+        processData.putItem("SAMPLE_AREA", new ArrayList<AnatomicalArea>(areaMap.values()));
+        
     	String chanSpec = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
     	if (chanSpec==null) {
     		chanSpec = DEFAULT_CHANNEL_SPEC;
@@ -65,42 +106,8 @@ public class InitSampleAttributesService extends AbstractEntityService {
     		}
     	}
 
-    	String dataSetStr = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-    	
-    	if (dataSetStr==null) {
-    		logger.warn("Sample is not part of a dataset, id="+sampleEntityId);
-    	}
-    	else {
-        	List<String> dataSetList = new ArrayList<String>();
-        	for (String dataSetIdentifier : dataSetStr.split(",")) {
-        		dataSetList.add(dataSetIdentifier);
-        	}
-        	
-        	logger.info("Putting ("+Task.csvStringFromCollection(dataSetList)+") in DATA_SET_IDENTIFIER");
-    		processData.putItem("DATA_SET_IDENTIFIER", dataSetList);
-    	}
 
-    	String consensusChanSpec = null;
-    	
-    	populateChildren(sampleEntity);
-    	Entity supportingData = EntityUtils.getSupportingData(sampleEntity);
-    	populateChildren(supportingData);
-    	for(Entity tile : EntityUtils.getChildrenOfType(supportingData, EntityConstants.TYPE_IMAGE_TILE)) {
-    	    populateChildren(tile);
-    	    logger.info("Found tile "+tile.getName());
-    	    for(Entity image : EntityUtils.getChildrenOfType(tile, EntityConstants.TYPE_LSM_STACK)) {    
-	            String imageChanSpec = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-	            logger.info("  imageChanSpec="+imageChanSpec);
-	            if (consensusChanSpec!=null && !consensusChanSpec.equals(imageChanSpec)) {
-	                logger.info("No consensus for image channel spec can be reached for sample "+sampleEntityId);
-	                consensusChanSpec = "";
-	            }
-	            else {
-	                consensusChanSpec = imageChanSpec;
-	            }
-    	    }
-    	}
-    	
+    	String consensusChanSpec = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
 
         if (chanSpec!=null) {
             logger.info("Putting '"+chanSpec+"' in SAMPLE_CHANNEL_SPEC");

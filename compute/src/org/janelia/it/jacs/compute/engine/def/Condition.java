@@ -61,6 +61,10 @@ public class Condition implements Serializable {
             case GREATER_THAN_OR_EQUALS:
             case LESS_THAN_OR_EQUALS:
                 return compareTo(actualValue, expectedValue, operator);
+            case IS_NOT_NULL:
+                return actualValue!=null;
+            case IS_NULL:
+                return actualValue==null;
             default:
                 throw new RuntimeException("not supported");
         }
@@ -122,9 +126,6 @@ public class Condition implements Serializable {
         Operator operator = getOperator(conditionStr);
         String[] nameValue = getNameValue(operator, conditionStr);
         Object value = createConditionValue(nameValue[1]);
-        if (value == null) {
-            throw new IllegalArgumentException("Condition value cannot be null");
-        }
         return new Condition(nameValue[0], value, operator);
     }
 
@@ -152,6 +153,12 @@ public class Condition implements Serializable {
         }
         else if (condition.contains("<")) {
             return Operator.LESS_THAN;
+        }
+        else if (condition.contains("is not null")) {
+            return Operator.IS_NOT_NULL;
+        }
+        else if (condition.contains("is null")) {
+            return Operator.IS_NULL;
         }
         else {
             throw new IllegalArgumentException("Illegal operator in condition" + condition);
@@ -185,6 +192,14 @@ public class Condition implements Serializable {
                 break;
             case LESS_THAN:
                 nameValue = condition.split("<");
+                break;
+            case IS_NOT_NULL:
+                String[] array = {condition.replaceFirst(" is not null", ""), ""};
+                nameValue = array;
+                break;
+            case IS_NULL:
+                String[] array2 = {condition.replaceFirst(" is null", ""), ""};
+                nameValue = array2;
                 break;
             default:
                 throw new IllegalArgumentException("Illegal operator:" + operator);

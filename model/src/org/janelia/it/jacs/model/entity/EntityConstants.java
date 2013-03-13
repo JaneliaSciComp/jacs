@@ -95,6 +95,8 @@ public class EntityConstants {
     public static final String ATTRIBUTE_RESULT_NODE_ID                      = "Result Node Id";
     public static final String ATTRIBUTE_PERFORMANCE_PROXY_IMAGE             = "Performance Proxy Image";
     public static final String ATTRIBUTE_ARTIFACT_SOURCE_ID                  = "Artifact Source Entity Id";
+    public static final String ATTRIBUTE_ANATOMICAL_AREA                     = "Anatomical Area"; // e.g. "Brain", "VNC"
+    public static final String ATTRIBUTE_GENDER                              = "Gender"; // "m" or "f"
     public static final String ATTRIBUTE_MOUNTING_PROTOCOL                   = "Mounting Protocol"; // e.g. "DPX PBS Mounting"
     public static final String ATTRIBUTE_NUM_CHANNELS                        = "Num Channels"; // e.g. "3"
     public static final String ATTRIBUTE_OPTICAL_RESOLUTION                  = "Optical Resolution"; // e.g. "0.38x0.38x0.37"

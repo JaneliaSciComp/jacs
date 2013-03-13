@@ -10,6 +10,7 @@ import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
+import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -28,6 +29,7 @@ public class EntityHelper {
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
     protected String ownerKey;
+    protected EntityBeanEntityLoader entityLoader;
    
 	public EntityHelper(String ownerKey) {
 		this(EJBFactory.getLocalEntityBean(), EJBFactory.getLocalComputeBean(), ownerKey);
@@ -42,6 +44,7 @@ public class EntityHelper {
         this.computeBean  = computeBean;
         this.ownerKey = ownerKey;
         this.logger = logger;
+        this.entityLoader = new EntityBeanEntityLoader(entityBean);
     }
 	
 	/**

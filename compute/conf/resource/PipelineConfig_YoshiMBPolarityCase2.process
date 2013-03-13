@@ -1,0 +1,13 @@
+<process name="Yoshi Mushroom Body Polarity Case 2 Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending">
+	<sequence>
+	    
+        <!-- Set task variables -->
+        <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
+            <input name="PROCESS_VARIABLE_1" value="channel order"/>
+            <input name="PROCESS_VARIABLE_VALUE_1" value=""/>
+        </operation>
+		
+        <include name="Pipeline" process="FlyLightPolarityPipeline"/>
+        
+    </sequence>
+</process>

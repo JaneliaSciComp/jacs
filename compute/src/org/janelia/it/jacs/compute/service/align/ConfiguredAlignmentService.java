@@ -35,7 +35,9 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
         if (scriptFile==null) {
         	throw new ServiceException("Input parameter ALIGNMENT_SCRIPT_NAME may not be null");
         }
-
+        
+        String mountingProtocol = (String)processData.getItem("MOUNTING_PROTOCOL");
+        
 		logger.info("Running configured aligner "+ALIGNER_SCRIPT_CMD+" ("
 				+ " resultNodeId=" + resultFileNode.getObjectId() 
 				+ " outputDir=" + alignFileNode.getDirectoryPath() 
@@ -57,6 +59,9 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
 		script.append(" -k " + TOOLKITS_DIR);
 		script.append(" -i " + inputFilename);
 		script.append(" -r " + refChannelOneIndexed);
+        if (mountingProtocol!=null) {
+            script.append(" -m '\"" + mountingProtocol+"\"'");
+        }
 		script.append(" -s " + opticalResolution.replaceAll(" ", "x"));
 		script.append("\n");
 		

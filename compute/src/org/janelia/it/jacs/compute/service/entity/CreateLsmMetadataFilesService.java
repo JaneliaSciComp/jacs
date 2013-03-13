@@ -9,6 +9,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
@@ -93,9 +94,12 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
         File configFile = new File(getSGEConfigurationDirectory(), CONFIG_PREFIX+configIndex);
         FileWriter fw = new FileWriter(configFile);
         try {
-            File lsmDataFile = new File(outputDir, createLsmMetadataFilename(inputFile)+".metadata");
+            String metadataStub = createLsmMetadataFilename(inputFile);
+            File lsmDataFile = new File(outputDir, metadataStub+".metadata");
+            File jsonDataFile = new File(outputDir, metadataStub+".json");
             fw.write(inputFile.getAbsolutePath() + "\n");
             fw.write(lsmDataFile.getAbsolutePath() + "\n");
+            fw.write(jsonDataFile.getAbsolutePath() + "\n");
         }
         catch (IOException e) {
         	throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath(),e); 
@@ -111,21 +115,29 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
         StringBuffer script = new StringBuffer();
         script.append("read INPUT_FILENAME\n");
         script.append("read METADATA_FILENAME\n");
+        script.append("read JSON_FILENAME\n");
         script.append("cd "+outputDir.getAbsolutePath()).append("\n");
         script.append("echo " + addQuotes("$INPUT_FILENAME") + " >> " + lsmFilePathsFile.getAbsolutePath()).append("\n");
-        script.append(getScriptToCreateLsmMetadataFile()).append("\n");
-
+        script.append(getScriptToCreateLsmMetadataFile("$INPUT_FILENAME", "$METADATA_FILENAME")).append("\n");
+        script.append(getScriptToCreateLsmJsonFile("$INPUT_FILENAME", "$JSON_FILENAME")).append("\n");
+        
         writer.write(script.toString());
     }
     
-    private String getScriptToCreateLsmMetadataFile() throws ServiceException {
-        String cmdLine = "cd " + outputDir.getAbsolutePath() + ";perl " +
-                SystemConfigurationProperties.getString("Executables.ModuleBase") + SystemConfigurationProperties.getString("LSMMetadataDump.CMD")+ " " +
-                addQuotes("$INPUT_FILENAME") + " " + addQuotes("$METADATA_FILENAME");
-
-        return cmdLine;
+    private String getScriptToCreateLsmMetadataFile(String inputFile, String outputFile) throws ServiceException {
+        return "perl " +
+                SystemConfigurationProperties.getString("Executables.ModuleBase") + 
+                SystemConfigurationProperties.getString("LSMMetadataDump.CMD")+ " " +
+                addQuotes(inputFile) + " " + addQuotes(outputFile);
     }
 
+    private String getScriptToCreateLsmJsonFile(String inputFile, String outputFile) throws ServiceException {
+        return "perl " +
+                SystemConfigurationProperties.getString("Executables.ModuleBase") + 
+                SystemConfigurationProperties.getString("LSMJSONDump.CMD")+ " " +
+                addQuotes(inputFile) + " " + addQuotes(outputFile);
+    }
+    
     private String addQuotes(String s) {
     	return "\""+s+"\"";
     }
@@ -137,5 +149,10 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     @Override
     protected int getRequiredMemoryInGB() {
     	return 3;
+    }
+    
+    @Override
+    public void postProcess() throws MissingDataException {
+
     }
 }

@@ -30,12 +30,17 @@ public class ReuseSampleProcessingResultService extends AbstractEntityService {
         if (sampleEntity == null) {
             throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
         }
+
+        AnatomicalArea sampleArea = (AnatomicalArea)processData.getItem("SAMPLE_AREA");
         
         Entity myPipelineRun = null;
         Entity latestSp = null;
         
         for(Entity pipelineRun : sampleEntity.getOrderedChildren()) {
             if (!pipelineRun.getEntityType().getName().equals(EntityConstants.TYPE_PIPELINE_RUN)) {
+                continue;
+            }
+            if (sampleArea!=null && !sampleArea.getName().equals(pipelineRun.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA))) {
                 continue;
             }
             if (pipelineRun.getId().toString().equals(pipelineRunId)) {

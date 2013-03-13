@@ -26,6 +26,8 @@
 			<output name="ALIGNMENT_RESULT_NAME"/>
 			<output name="ALIGNMENT_TILE_NAME"/>
 			<output name="OPTICAL_RESOLUTION"/>
+			<output name="MOUNTING_PROTOCOL"/>
+			<output name="GENDER"/>
 			<output name="ALIGNMENT_SCRIPT_NAME"/>
 		</operation>
 	    
@@ -40,6 +42,8 @@
 				<input name="OPTICAL_RESOLUTION"/>
 				<input name="SIGNAL_CHANNELS"/>
 				<input name="REFERENCE_CHANNEL"/>
+                <input name="MOUNTING_PROTOCOL"/>
+                <input name="GENDER"/>
 				<output name="ALIGNED_FILENAME"/>
 				<output name="ALIGNED_FILENAMES"/>
 	        </operation>

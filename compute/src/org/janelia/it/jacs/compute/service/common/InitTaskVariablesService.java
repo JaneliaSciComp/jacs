@@ -24,9 +24,10 @@ public class InitTaskVariablesService implements IService {
         	while (true) {
         		String taskParamName = (String)processData.getItem("TASK_PARAMETER_"+num);	
         		if (taskParamName == null || num>100) break;
-        		String value = (String)processData.getItem("TASK_PARAMETER_VALUE_"+num);	
-        		logger.info("Setting task parameter '"+taskParamName+"' = "+value);
-        		task.setParameter(taskParamName, value);
+        		Object value = processData.getItem("TASK_PARAMETER_VALUE_"+num);	
+        		String strValue = value==null?"":value.toString();
+        		logger.info("Setting task parameter '"+taskParamName+"' = "+strValue);
+        		task.setParameter(taskParamName, strValue);
                 num++;
         	}
         } 

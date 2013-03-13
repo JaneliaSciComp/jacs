@@ -23,7 +23,14 @@ public class CreatePipelineRunEntityService extends AbstractEntityService {
     	if (StringUtils.isEmpty(pipelineName)) {
     		pipelineName = "Pipeline";
     	}
+    	
+    	String pipelineRunName = pipelineName+" Results";
 
+    	AnatomicalArea sampleArea = (AnatomicalArea)processData.getItem("SAMPLE_AREA");
+        if (sampleArea!=null) {
+            pipelineRunName += " ("+sampleArea.getName()+")";
+        }
+        
     	String pipelineProcess = (String)processData.getItem("PIPELINE_PROCESS");
     	if (StringUtils.isEmpty(pipelineProcess)) {
     		throw new IllegalArgumentException("PIPELINE_PROCESS may not be null");
@@ -34,8 +41,13 @@ public class CreatePipelineRunEntityService extends AbstractEntityService {
     		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
     	}
     	
-    	Entity pipelineRun = entityBean.createEntity(ownerKey, EntityConstants.TYPE_PIPELINE_RUN, pipelineName+" Results");
+    	Entity pipelineRun = entityBean.createEntity(ownerKey, EntityConstants.TYPE_PIPELINE_RUN, pipelineRunName);
     	pipelineRun.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS, pipelineProcess);
+    	
+    	if (sampleArea!=null) {
+    	    pipelineRun.setValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA, sampleArea.getName());
+    	}
+    	
     	entityBean.saveOrUpdateEntity(pipelineRun);
     	entityBean.addEntityToParent(ownerKey, sampleEntity.getId(), pipelineRun.getId(), sampleEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
 

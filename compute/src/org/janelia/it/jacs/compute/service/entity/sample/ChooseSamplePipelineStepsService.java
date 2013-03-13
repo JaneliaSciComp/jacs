@@ -29,7 +29,7 @@ public class ChooseSamplePipelineStepsService extends AbstractEntityService {
     	if (sampleEntity == null) {
     		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
     	}
-    	
+
     	Integer numTiles = null;
     	Integer numImagesPerTile = null;
         populateChildren(sampleEntity);

@@ -49,44 +49,66 @@ public class SampleCleaningService extends AbstractEntityService {
     
     private void processSample(Entity sample) throws Exception {
     	
-    	logger.info("  Cleaning up sample "+sample.getName());
+    	logger.info("Cleaning up sample "+sample.getName());
     	
-    	List<Entity> children = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
-    	if (children.isEmpty()) return;
+    	List<Entity> runs = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
+    	if (runs.isEmpty()) return;
     	
-    	// Remove latest run, we don't want to touch it
-    	Entity lastRun = children.remove(children.size()-1);
-    	populateChildren(lastRun);
+    	// Group by anatomical area
+    	Map<String,List<Entity>> areaRunMap = new HashMap<String,List<Entity>>();
 
-        if (EntityUtils.getLatestChildOfType(lastRun, EntityConstants.TYPE_ERROR)!=null) {
-            logger.info("  Keeping last error run: "+lastRun.getId());
-            // Last run had an error, let's keep that, but still try to find a good run to keep
-            Collections.reverse(children);
-            Integer keeper = null;
-            int curr = 0;
-            for(Entity pipelineRun : children) {
-                populateChildren(pipelineRun);
-                if (EntityUtils.getLatestChildOfType(pipelineRun, EntityConstants.TYPE_ERROR)!=null) {
-                    keeper = curr;
-                    break;
-                }
-                curr++;   
+        for(Entity pipelineRun : runs) {
+            String area = pipelineRun.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
+            if (area == null) area = "";
+            List<Entity> areaRuns = areaRunMap.get(area);
+            if (areaRuns == null) {
+                areaRuns = new ArrayList<Entity>();
+                areaRunMap.put(area,areaRuns);
             }
-            if (keeper!=null) {
-                Entity lastGoodRun = children.remove(keeper.intValue());
-                logger.info("  Keeping last good run: "+lastGoodRun.getId());
-                
+            areaRuns.add(pipelineRun);
+        }
+    	
+        for(String area : areaRunMap.keySet()) {
+            List<Entity> areaRuns = areaRunMap.get(area);
+            if (areaRuns.isEmpty()) continue;
+            
+            logger.info("  Processing pipeline runs for area: "+area);
+            
+            // Remove latest run, we don't want to touch it
+            Entity lastRun = areaRuns.remove(areaRuns.size()-1);
+            populateChildren(lastRun);
+
+            if (EntityUtils.getLatestChildOfType(lastRun, EntityConstants.TYPE_ERROR)!=null) {
+                logger.info("    Keeping last error run: "+lastRun.getId());
+                // Last run had an error, let's keep that, but still try to find a good run to keep
+                Collections.reverse(areaRuns);
+                Integer keeper = null;
+                int curr = 0;
+                for(Entity pipelineRun : areaRuns) {
+                    populateChildren(pipelineRun);
+                    if (EntityUtils.getLatestChildOfType(pipelineRun, EntityConstants.TYPE_ERROR)!=null) {
+                        keeper = curr;
+                        break;
+                    }
+                    curr++;   
+                }
+                if (keeper!=null) {
+                    Entity lastGoodRun = areaRuns.remove(keeper.intValue());
+                    logger.info("    Keeping last good run: "+lastGoodRun.getId());
+                    
+                }
+                else {
+                    logger.info("    Could not find a good run to keep.");
+                }
             }
             else {
-                logger.info("  Could not find a good run to keep.");
+                logger.info("    Keeping last good run: "+lastRun.getId());
             }
-        }
-        else {
-            logger.info("  Keeping last good run: "+lastRun.getId());
+            
+            // Clean up everything else
+            deleteUnannotated(areaRuns);
         }
     	
-    	// Clean up everything else
-		deleteUnannotated(children);
     }
     
     private void deleteUnannotated(List<Entity> toDelete) throws ComputeException {
@@ -95,13 +117,13 @@ public class SampleCleaningService extends AbstractEntityService {
     	for(Entity entity : toDelete) {
     		long numFound = annotationBean.getNumDescendantsAnnotated(entity.getId());
     		if (numFound>0) {
-            	logger.info("Rejecting candidate "+entity.getId()+" because it and its ancestors have "+numFound+" annotations");
+            	logger.info("    Rejecting candidate "+entity.getId()+" because it and its ancestors have "+numFound+" annotations");
             	continue;
     		}
     		toReallyDelete.add(entity);
     	}
 
-    	logger.info("  Found "+toReallyDelete.size()+" non-annotated results for deletion:");
+    	logger.info("    Found "+toReallyDelete.size()+" non-annotated results for deletion:");
     	if (toReallyDelete.isEmpty()) return;
 	
     	if (!isDebug) {
@@ -111,7 +133,7 @@ public class SampleCleaningService extends AbstractEntityService {
     			c++;
     			numRunsDeleted++;
     		}
-        	logger.info("  Deleted "+c+" result trees");
+        	logger.info("    Deleted "+c+" result trees");
     	}
     }
 }

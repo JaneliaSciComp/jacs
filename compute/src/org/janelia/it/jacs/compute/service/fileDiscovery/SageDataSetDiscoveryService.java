@@ -12,6 +12,7 @@ import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.entity.cv.Objective;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 import com.google.common.collect.HashMultimap;
@@ -27,9 +28,6 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
    
 	protected static final String PRIVATE_DATA_SET_FOLDER_NAME = "My Data Sets";
 	protected static final String PUBLIC_DATA_SET_FOLDER_NAME = "Public Data Sets";
-	protected static final String OBJECTIVE_20X = "20x";
-	protected static final String OBJECTIVE_40X = "40x";
-	protected static final String OBJECTIVE_63X = "63x";
     
 	protected FileDiscoveryHelper fileHelper;
 	protected Map<String,Entity> dataSetFolderByIdentifier = new HashMap<String,Entity>();
@@ -158,17 +156,18 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		slideImage.line = (String)row.get("line");
 		slideImage.channelSpec = (String)row.get("channel_spec");
 		slideImage.gender = (String)row.get("gender");
+		slideImage.area = (String)row.get("area");
 		slideImage.channels = (String)row.get("channels");
 		slideImage.mountingProtocol = (String)row.get("mounting_protocol");
 		String objectiveStr = (String)row.get("objective");
-		if (objectiveStr.contains(OBJECTIVE_20X)) {
-		    slideImage.objective = OBJECTIVE_20X;
+		if (objectiveStr.contains(Objective.OBJECTIVE_20X.getName())) {
+		    slideImage.objective = Objective.OBJECTIVE_20X.getName();
 		}
-		else if (objectiveStr.contains(OBJECTIVE_40X)) {
-            slideImage.objective = OBJECTIVE_40X;
+		else if (objectiveStr.contains(Objective.OBJECTIVE_40X.getName())) {
+            slideImage.objective = Objective.OBJECTIVE_40X.getName();
         }
-		else if (objectiveStr.contains(OBJECTIVE_63X)) {
-            slideImage.objective = OBJECTIVE_63X;
+		else if (objectiveStr.contains(Objective.OBJECTIVE_63X.getName())) {
+            slideImage.objective = Objective.OBJECTIVE_63X.getName();
         }
 		String voxelSizeX = (String)row.get("voxel_size_x");
 		String voxelSizeY = (String)row.get("voxel_size_y");
@@ -624,6 +623,8 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, image.channelSpec);
         lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE, image.objective);
         lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL, image.mountingProtocol);
+        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_GENDER, image.gender);
+        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA, image.area);
 		lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
         return lsmStack;
     }
@@ -761,6 +762,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     	String objective;
     	String opticalRes;
     	String gender;
+    	String area;
     	String mountingProtocol;
     	File file;
     }

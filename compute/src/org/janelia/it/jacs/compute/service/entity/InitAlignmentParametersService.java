@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.service.entity;
 
 import org.janelia.it.jacs.compute.service.align.ParameterizedAlignmentAlgorithm;
+import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.cv.AlignmentAlgorithm;
@@ -15,7 +16,9 @@ public class InitAlignmentParametersService extends AbstractEntityService {
 
 	@Override 
     public void execute() throws Exception {
-        	
+
+        SampleHelper sampleHelper = new SampleHelper(entityBean, computeBean, ownerKey, logger);
+        
     	String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
     	if (sampleEntityId == null || "".equals(sampleEntityId)) {
     		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
@@ -68,6 +71,18 @@ public class InitAlignmentParametersService extends AbstractEntityService {
 			throw new IllegalArgumentException("No such alignment algorithm: "+aa);
 		}
 		
+		String mountingProtocol = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL);
+		String gender = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_GENDER);
+		
+		if (mountingProtocol!=null) {
+		    processData.putItem("MOUNTING_PROTOCOL", mountingProtocol);
+		}
+
+        if (gender!=null) {
+            processData.putItem("GENDER", gender);
+        }
+        
+		logger.info("Set MOUNTING_PROTOCOL = "+processData.getItem("MOUNTING_PROTOCOL"));
 		logger.info("Set OPTICAL_RESOLUTION = "+processData.getItem("OPTICAL_RESOLUTION"));
 		logger.info("Set ALIGNMENT_SERVICE_CLASS = "+processData.getItem("ALIGNMENT_SERVICE_CLASS"));
 		logger.info("Set ALIGNMENT_RESULT_NAME = "+processData.getItem("ALIGNMENT_RESULT_NAME"));

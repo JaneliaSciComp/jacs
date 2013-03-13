@@ -34,10 +34,15 @@ public class FileDiscoveryHelper extends EntityHelper {
 	public FileDiscoveryHelper(String ownerKey) {
 		super(ownerKey);
 	}
-	
+    
     public FileDiscoveryHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, String ownerKey) {
-    	super(entityBean, computeBean, ownerKey);
+        super(entityBean, computeBean, ownerKey, Logger.getLogger(FileDiscoveryHelper.class));
     }
+    
+    public FileDiscoveryHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, String ownerKey, Logger logger) {
+        super(entityBean, computeBean, ownerKey, logger);
+    }
+    
     
     public void addFileExclusion(String filePattern) {
     	Pattern p = Pattern.compile(filePattern.replaceAll("\\*", "(.*?)"));

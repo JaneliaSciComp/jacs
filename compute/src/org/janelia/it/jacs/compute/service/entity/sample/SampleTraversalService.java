@@ -25,6 +25,8 @@ public class SampleTraversalService extends AbstractEntityService {
 	public static final String RUN_MODE_NEW = "NEW";
 	public static final String RUN_MODE_INCOMPLETE = "INCOMPLETE";
 	public static final String RUN_MODE_ALL = "ALL";
+
+	protected boolean excludeChildSamples = true;
 	
     protected String runMode;
 
@@ -63,6 +65,10 @@ public class SampleTraversalService extends AbstractEntityService {
     
     private boolean includeSample(Entity sample) throws Exception {
 
+        if (excludeChildSamples && sample.getName().contains("~")) {
+            return false;
+        }
+        
 		if (RUN_MODE_NEW.equals(runMode)) {
 	    	populateChildren(sample);
 	    	Entity pipelineRun = EntityUtils.getLatestChildOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);

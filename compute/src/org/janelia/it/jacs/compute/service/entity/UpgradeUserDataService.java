@@ -67,8 +67,12 @@ public class UpgradeUserDataService extends AbstractEntityService {
         
         entityBean.createNewEntityAttr(EntityConstants.TYPE_SAMPLE, EntityConstants.ATTRIBUTE_OBJECTIVE);
         
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_PIPELINE_RUN, EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
+        
         entityBean.createNewEntityAttr(EntityConstants.TYPE_LSM_STACK, EntityConstants.ATTRIBUTE_OBJECTIVE);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_LSM_STACK, EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_LSM_STACK, EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_LSM_STACK, EntityConstants.ATTRIBUTE_GENDER);
         
         entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_BOARD, EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_BOARD, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
