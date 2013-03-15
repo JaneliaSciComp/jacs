@@ -197,15 +197,18 @@ if [[ $SERVER == jacs ]] && [[ $BUILD_FLYSUITE == 1 ]]; then
     echo "  Creating new Mac package in $PACKAGE_MAC_DIR"
     cp -R $TEMPLATE_DIR/mac_template $PACKAGE_MAC_DIR
     cp -R $JACS_COMPILE_DIR/console/build/jars/* $PACKAGE_MAC_DIR
-    
+    rm -rf $PACKAGE_MAC_DIR/.svn
+
     echo "  Creating new Linux package in $PACKAGE_LINUX_DIR"
     cp -R $TEMPLATE_DIR/linux_template $PACKAGE_LINUX_DIR
     cp -R $JACS_COMPILE_DIR/console/build/jars/* $PACKAGE_LINUX_DIR 
+    rm -rf $PACKAGE_LINUX_DIR/.svn
     cp $VAA3D_COMPILE_FEDORA_DIR/bin/vaa3d $PACKAGE_LINUX_DIR
 
     echo "  Creating new Windows package in $PACKAGE_WINDOWS_DIR"
     cp -R $TEMPLATE_DIR/windows_template $PACKAGE_WINDOWS_DIR
     cp -R $JACS_COMPILE_DIR/console/build/jars/* $PACKAGE_WINDOWS_DIR
+    rm -rf $PACKAGE_WINDOWS_DIR/.svn
     #  Windows has a special build process for its executables. It needs write access through Win mount points.
     chmod ugo+rwx $PACKAGE_WINDOWS_DIR
 fi
