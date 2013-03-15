@@ -64,15 +64,19 @@ public class UpgradeUserDataService extends AbstractEntityService {
 
         entityBean.createNewEntityAttr(EntityConstants.TYPE_IMAGE_3D, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_IMAGE_3D, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_IMAGE_3D, EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_IMAGE_3D, EntityConstants.ATTRIBUTE_CHANNEL_COLORS);
         
         entityBean.createNewEntityAttr(EntityConstants.TYPE_SAMPLE, EntityConstants.ATTRIBUTE_OBJECTIVE);
         
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_PIPELINE_RUN, EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
         
         entityBean.createNewEntityAttr(EntityConstants.TYPE_LSM_STACK, EntityConstants.ATTRIBUTE_OBJECTIVE);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_LSM_STACK, EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_LSM_STACK, EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_LSM_STACK, EntityConstants.ATTRIBUTE_GENDER);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_LSM_STACK, EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_LSM_STACK, EntityConstants.ATTRIBUTE_CHANNEL_COLORS);
         
         entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_BOARD, EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_BOARD, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);

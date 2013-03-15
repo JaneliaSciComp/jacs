@@ -44,6 +44,5 @@ public class InitAnalysisParametersService extends AbstractEntityService {
 		
     	logger.info("Putting '"+filename+"' in OUTPUT_FILENAME");
     	processData.putItem("OUTPUT_FILENAME", filename);
-
     }
 }

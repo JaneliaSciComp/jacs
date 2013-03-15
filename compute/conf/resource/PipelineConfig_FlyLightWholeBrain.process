@@ -1,23 +1,14 @@
-<process name="FlyLight Whole Brain 63x Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending">
+<process name="FlyLight Whole Brain Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending">
 	<sequence>
 	    
-	    <!-- Set task variables -->
-	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitTaskVariablesService">
-	        <input name="TASK_PARAMETER_1" value="pipeline name"/>
-            <input name="TASK_PARAMETER_VALUE_1" value="FlyLight Pipeline"/>
-            <input name="TASK_PARAMETER_2" value="merge algorithms"/>
-            <input name="TASK_PARAMETER_VALUE_2" value="FLYLIGHT"/>
-            <input name="TASK_PARAMETER_3" value="stitch algorithms"/>
-            <input name="TASK_PARAMETER_VALUE_3" value="FLYLIGHT"/>
-            <input name="TASK_PARAMETER_4" value="alignment algorithms"/>
-            <input name="TASK_PARAMETER_VALUE_4" value="CENTRAL,WHOLE_63X"/>
-            <input name="TASK_PARAMETER_5" value="analysis algorithms"/>
-            <input name="TASK_PARAMETER_VALUE_5" value="NEURON_SEPARATOR"/>
-            <input name="TASK_PARAMETER_6" value="pipeline process"/>
-            <input name="TASK_PARAMETER_VALUE_6" value="FlyLightWholeBrain"/>
-	    </operation>
-	
-        <include name="Pipeline" process="FlyLightSamplePipeline"/>
-		
+        <include name="Pipeline" process="FlyLightSamplePipeline">
+            <input name="PIPELINE_NAME" value="FlyLight Pipeline"/>
+            <input name="MERGE_ALGORITHMS" value="FLYLIGHT"/>
+            <input name="STITCH_ALGORITHMS" value="FLYLIGHT"/>
+            <input name="ALIGNMENT_ALGORITHMS" value="CENTRAL"/>
+            <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
+            <input name="PIPELINE_PROCESS" value="FlyLightWholeBrain"/>
+        </include>
+        
     </sequence>
 </process>

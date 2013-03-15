@@ -7,7 +7,7 @@
 		<input name="PIPELINE_RUN_ENTITY_ID"/>
 		<input name="SAMPLE_ENTITY_ID"/>
         <input name="PARAMETERIZED_ALIGNMENT_ALGORITHM"/>
-		<input name="INPUT_FILENAME"/>
+		<input name="SAMPLE_AREAS"/>
 		<input name="SIGNAL_CHANNELS"/>
 		<input name="REFERENCE_CHANNEL"/>
 
@@ -21,14 +21,16 @@
 	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
 	    <operation name="Init Alignment Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitAlignmentParametersService">
 			<input name="SAMPLE_ENTITY_ID"/>
+			<input name="SAMPLE_AREAS"/>
 			<input name="PARAMETERIZED_ALIGNMENT_ALGORITHM"/>
 			<output name="ALIGNMENT_SERVICE_CLASS"/>
+			<output name="ALIGNMENT_SCRIPT_NAME"/>
 			<output name="ALIGNMENT_RESULT_NAME"/>
 			<output name="ALIGNMENT_TILE_NAME"/>
+			<output name="INPUT_FILENAME"/>
 			<output name="OPTICAL_RESOLUTION"/>
 			<output name="MOUNTING_PROTOCOL"/>
 			<output name="GENDER"/>
-			<output name="ALIGNMENT_SCRIPT_NAME"/>
 		</operation>
 	    
    	    <!-- Align the sample -->
@@ -36,6 +38,7 @@
 	        <operation name="Align" processor="queue/gridSubmitAndWait">
 	            <input name="iservice" value="$V{ALIGNMENT_SERVICE_CLASS}"/>
 	    		<input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
+	    		<input name="SAMPLE_AREAS"/>
 				<input name="INPUT_FILENAME"/>
 				<input name="ALIGNMENT_TILE_NAME"/>
 				<input name="ALIGNMENT_SCRIPT_NAME"/>

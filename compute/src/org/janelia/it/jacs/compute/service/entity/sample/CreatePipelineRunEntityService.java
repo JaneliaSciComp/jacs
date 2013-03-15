@@ -27,7 +27,7 @@ public class CreatePipelineRunEntityService extends AbstractEntityService {
     	String pipelineRunName = pipelineName+" Results";
 
     	AnatomicalArea sampleArea = (AnatomicalArea)processData.getItem("SAMPLE_AREA");
-        if (sampleArea!=null) {
+    	if (sampleArea!=null && !StringUtils.isEmpty(sampleArea.getName())) {
             pipelineRunName += " ("+sampleArea.getName()+")";
         }
         

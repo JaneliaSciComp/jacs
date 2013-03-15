@@ -15,7 +15,9 @@ public class AnatomicalArea implements Serializable {
 
     private String name;
     private List<Entity> tiles = new ArrayList<Entity>();
-	
+	private Long sampleProcessingResultId;
+	private String sampleProcessingResultFilename;
+    
 	public AnatomicalArea(String name) {
 		this.name = name;
 	}
@@ -30,5 +32,21 @@ public class AnatomicalArea implements Serializable {
 
     public List<Entity> getTiles() {
         return tiles;
+    }
+
+    public Long getSampleProcessingResultId() {
+        return sampleProcessingResultId;
+    }
+
+    public void setSampleProcessingResultId(Long sampleProcessingResultId) {
+        this.sampleProcessingResultId = sampleProcessingResultId;
+    }
+
+    public String getSampleProcessingResultFilename() {
+        return sampleProcessingResultFilename;
+    }
+
+    public void setSampleProcessingResultFilename(String sampleProcessingResultFilename) {
+        this.sampleProcessingResultFilename = sampleProcessingResultFilename;
     }
 }

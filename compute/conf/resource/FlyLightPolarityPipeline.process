@@ -1,7 +1,9 @@
 <process name="FlyLight Polarity Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending">
 	<sequence>
 	    
-        <!-- Import variables from the MCFOSamplePipelineTask -->
+	    <input name="PIPELINE_PROCESS"/>
+	    
+        <!-- Import variables from the task -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="TASK_PARAMETER_1" value="sample entity id"/>
             <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
@@ -15,37 +17,39 @@
             <output name="SAMPLE_20X_ID"/>
             <output name="SAMPLE_63X_ID"/>
         </operation>
-	
+	       
         <sequence if="SAMPLE_20X_ID is not null">
             
             <!-- Set task variables -->
             <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitTaskVariablesService">
-                <input name="TASK_PARAMETER_1" value="pipeline name"/>
-                <input name="TASK_PARAMETER_VALUE_1" value="Polarity Pipeline 20x"/>
-                <input name="TASK_PARAMETER_2" value="merge algorithms"/>
-                <input name="TASK_PARAMETER_VALUE_2" value="FLYLIGHT"/>
-                <input name="TASK_PARAMETER_3" value="stitch algorithms"/>
-                <input name="TASK_PARAMETER_VALUE_3" value="FLYLIGHT"/>
-                <input name="TASK_PARAMETER_4" value="alignment algorithms"/>
-                <input name="TASK_PARAMETER_VALUE_4" value="CONFIGURED"/>
-                <input name="TASK_PARAMETER_5" value="alignment algorithm parameters"/>
-                <input name="TASK_PARAMETER_VALUE_5" value="flyalign20x_INT.sh"/>
-                <input name="TASK_PARAMETER_6" value="analysis algorithms"/>
-                <input name="TASK_PARAMETER_VALUE_6" value="NEURON_SEPARATOR"/>
-                <input name="TASK_PARAMETER_7" value="sample entity id"/>
-                <input name="TASK_PARAMETER_VALUE_7" value="$V{SAMPLE_20X_ID}"/>
+                <input name="TASK_PARAMETER_1" value="sample entity id"/>
+                <input name="TASK_PARAMETER_VALUE_1" value="$V{SAMPLE_20X_ID}"/>
             </operation>
         
-            <include name="20x Pipeline" process="FlyLightSamplePipeline"/>
+            <include name="20x Pipeline" process="FlyLightSamplePipeline">
+                <input name="PIPELINE_NAME" value="Polarity Pipeline 20x"/>
+                <input name="MERGE_ALGORITHMS" value="FLYLIGHT"/>
+                <input name="STITCH_ALGORITHMS" value="FLYLIGHT"/>
+                <input name="ALIGNMENT_ALGORITHMS" value="CONFIGURED"/>
+                <input name="ALIGNMENT_ALGORITHM_PARAMS" value="flyalign20x_INT.sh"/>
+                <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
+                <input name="PIPELINE_PROCESS"/>
+            </include>
             
             <sequence if="SAMPLE_63X_ID is not null">
-                    
-                <!-- Set task variables -->
-                <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
-                    <input name="PROCESS_VARIABLE_1" value="something"/>
-                    <input name="PROCESS_VARIABLE_VALUE_1" value=""/>
-                </operation>
-            
+
+                <!--
+                <include name="63x Pipeline" process="FlyLightSamplePipeline">
+                    <input name="PIPELINE_NAME" value="Polarity Pipeline 63x"/>
+                    <input name="MERGE_ALGORITHMS" value="FLYLIGHT"/>
+                    <input name="STITCH_ALGORITHMS" value="FLYLIGHT"/>
+                    <input name="ALIGNMENT_ALGORITHMS" value=""/>
+                    <input name="ALIGNMENT_ALGORITHM_PARAMS" value=""/>
+                    <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
+                    <input name="PIPELINE_PROCESS"/>
+                </include>
+                -->
+                
             </sequence>
         
         </sequence>

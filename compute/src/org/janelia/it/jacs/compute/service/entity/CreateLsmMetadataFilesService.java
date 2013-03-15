@@ -135,7 +135,7 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
         return "perl " +
                 SystemConfigurationProperties.getString("Executables.ModuleBase") + 
                 SystemConfigurationProperties.getString("LSMJSONDump.CMD")+ " " +
-                addQuotes(inputFile) + " " + addQuotes(outputFile);
+                addQuotes(inputFile) + " > " + addQuotes(outputFile);
     }
     
     private String addQuotes(String s) {

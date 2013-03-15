@@ -92,7 +92,8 @@ public class Vaa3DHelper {
 
         // Skip ports that are currently in use, or "locked"
         prefix.append("echo \"Finding a port for Xvfb, starting at "+displayPort+"...\"\n");
-        prefix.append("PORT="+displayPort+"\n");
+        prefix.append("PORT="+displayPort+" COUNTER=0 RETRIES=5\n");
+        prefix.append("while [ \"$COUNTER\" -lt \"$RETRIES\" ]; do\n");
         prefix.append("while (test -f \"/tmp/.X${PORT}-lock\") || (netstat -atwn | grep \"^.*:${PORT}.*:\\*\\s*LISTEN\\s*$\")\n");
         prefix.append("do PORT=$(( ${PORT} + 1 ))\n");
         prefix.append("done\n");
@@ -105,6 +106,20 @@ public class Vaa3DHelper {
         // Save the PID so that we can kill it when we're done
         prefix.append("MYPID=$!\n");
         prefix.append("export DISPLAY=\"localhost:${PORT}.0\"\n");
+
+        // Wait some time and check to make sure Xvfb is actually running, and retry if not. 
+        prefix.append("sleep 3\n");
+        prefix.append("if kill -0 $MYPID >/dev/null 2>&1; then\n");
+        prefix.append("    echo \"Xvfb is running as $MYPID\"\n");
+        prefix.append("    break\n");
+        prefix.append("else\n");
+        prefix.append("    echo \"Xvfb died immediately, trying again...\"\n");
+        prefix.append("    kill $MYPID >/dev/null 2>&1\n");
+        prefix.append("    rm -f /tmp/.X$MYPID-lock\n");
+        
+        prefix.append("fi\n");
+        prefix.append("COUNTER=\"$(( $COUNTER + 1 ))\"\n");
+        prefix.append("done\n");
 
         return prefix.toString();
     }

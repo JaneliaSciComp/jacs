@@ -1,16 +1,13 @@
 package org.janelia.it.jacs.compute.service.align;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
-import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.vo.ParameterException;
 
@@ -58,10 +55,13 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
 		script.append(" -t " + TEMPLATE_DIR);
 		script.append(" -k " + TOOLKITS_DIR);
 		script.append(" -i " + inputFilename);
-		script.append(" -r " + refChannelOneIndexed);
+		if (vncFilename != null) {
+		    script.append(" -v " + vncFilename);
+		}
         if (mountingProtocol!=null) {
             script.append(" -m '\"" + mountingProtocol+"\"'");
         }
+        script.append(" -r " + refChannelOneIndexed);
 		script.append(" -s " + opticalResolution.replaceAll(" ", "x"));
 		script.append("\n");
 		
@@ -76,35 +76,52 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
     
     @Override
 	public void postProcess() throws MissingDataException {
-    	super.postProcess();    
+        File outputDir = new File(outputFileNode.getDirectoryPath());
     	try {
-    		processData.putItem("ALIGNED_FILENAME", outputFile.getCanonicalPath());
-
-            File outputDir = new File(outputFileNode.getDirectoryPath());
-        	File[] rawFiles = outputDir.listFiles(new FilenameFilter() {
+        	File[] propertiesFiles = outputDir.listFiles(new FilenameFilter() {
     			@Override
     			public boolean accept(File dir, String name) {
-    				File file = new File(dir, name);
-    				try {
-    					return name.endsWith("v3draw") && !FileUtils.isSymlink(file);
-    				}
-    				catch (IOException e) {
-    					logger.error("Error determining if file is symlink: "+file,e);
-    				}
-    				return false;
+    				return name.endsWith(".properties");
     			}
     		});
     		
         	List<String> filenames = new ArrayList<String>();
-        	for(File rawFile : rawFiles) {
-        		filenames.add(rawFile.getAbsolutePath());
+        	String defaultFilename = null;
+        	
+        	for(File propertiesFile : propertiesFiles) {
+        	    Properties properties = new Properties();
+        	    properties.load(new FileReader(propertiesFile));
+        		
+        	    String filename = properties.getProperty("alignment.stack.filename");
+        	    File file = new File(outputDir, filename);
+        	    if (!file.exists()) {
+        	        throw new MissingDataException("File does not exist: "+filename);
+        	    }
+        	    
+        	    filenames.add(file.getCanonicalPath());
+        	    if ("true".equals(properties.getProperty("default"))) {
+        	        defaultFilename = file.getCanonicalPath();
+        	    }
         	}
         	
-            filenames.add(outputFile.getCanonicalPath());
+        	if (filenames.isEmpty()) {
+        	    throw new MissingDataException("No outputs defined for alignment: "+outputDir);
+        	}
+        	
+            logger.info("Putting '"+filenames+"' in ALIGNED_FILENAMES");
             processData.putItem("ALIGNED_FILENAMES", filenames);
+            
+            if (defaultFilename==null) {
+                logger.warn("No default output defined for alignment: "+outputDir);
+                defaultFilename = filenames.get(0);
+            }
+            
+            logger.info("Putting '"+outputFile.getCanonicalPath()+"' in ALIGNED_FILENAME");
+            processData.putItem("ALIGNED_FILENAME", defaultFilename);
+
     	}
     	catch (IOException e) {
-    		throw new MissingDataException("Cannot find canonical path of aligned output file",e);
+    		throw new MissingDataException("Error getting alignment outputs: "+outputDir,e);
     	}
     }
 }

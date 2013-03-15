@@ -104,6 +104,8 @@ public class EntityConstants {
     public static final String ATTRIBUTE_OBJECTIVE                           = "Objective"; // e.g. "63x"
     public static final String ATTRIBUTE_MASK_ENTITY_COLLECTION              = "Mask Entity Collection";
     public static final String ATTRIBUTE_VISITED                             = "Visited"; // A tag that marks an entity as having been visited by some pipeline process 
+    public static final String ATTRIBUTE_CHANNEL_DYE_NAMES                   = "Channel Dye Names"; // e.g. "Alexa Fluor 488,Alexa Fluor 633,DY-547"
+    public static final String ATTRIBUTE_CHANNEL_COLORS                      = "Channel Colors"; // e.g. "#7e5200,#ff00ff,#00ff00"
     
     // Alignment Spaces
     public static final String ATTRIBUTE_ALIGNMENT_SPACE                     = "Alignment Space"; // e.g. "Unified 20x Alignment Space"

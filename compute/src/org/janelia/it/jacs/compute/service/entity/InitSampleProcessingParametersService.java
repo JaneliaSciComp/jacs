@@ -12,6 +12,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * Extracts stuff about the Sample from the entity model and loads it into simplified objects for use by other services.
@@ -59,7 +60,7 @@ public class InitSampleProcessingParametersService extends AbstractEntityService
 
         List<Entity> tileEntities = null;
         if (sampleArea!=null) {
-            logger.info("Processing tiles for area= "+sampleArea.getName());
+            logger.info("Processing tiles for area: "+sampleArea.getName());
             tileEntities = sampleArea.getTiles();
         }
         else {
@@ -86,15 +87,22 @@ public class InitSampleProcessingParametersService extends AbstractEntityService
     		stackFilenames.add(mergedLsmPair.getMergedFilepath());
     	}
     	
+    	String sampleProcessingResultsName = "Sample Processing Results";
+        if (sampleArea!=null && !StringUtils.isEmpty(sampleArea.getName())) {
+            sampleProcessingResultsName += " ("+sampleArea.getName()+")";
+        }
+    	
     	logger.info("Putting "+stitchedFile.getAbsolutePath()+" in STITCHED_FILENAME");
     	logger.info("Putting "+mergedLsmPairs.size()+" items in BULK_MERGE_PARAMETERS");
     	logger.info("Putting "+stackFilenames.size()+" items in STACK_FILENAMES");
     	logger.info("Putting "+archived+" in COPY_FROM_ARCHIVE");
+    	logger.info("Putting "+sampleProcessingResultsName+" in SAMPLE_PROCESSING_RESULTS_NAME");
     	
     	processData.putItem("STITCHED_FILENAME", stitchedFile.getAbsolutePath());
     	processData.putItem("BULK_MERGE_PARAMETERS", mergedLsmPairs);
     	processData.putItem("STACK_FILENAMES", stackFilenames);
     	processData.putItem("COPY_FROM_ARCHIVE", archived);
+    	processData.putItem("SAMPLE_PROCESSING_RESULTS_NAME", sampleProcessingResultsName);
     }
     
     private boolean populateMergedLsmPairs(List<Entity> tileEntities, List<MergedLsmPair> mergedLsmPairs) throws Exception {

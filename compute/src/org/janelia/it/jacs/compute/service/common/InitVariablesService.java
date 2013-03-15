@@ -4,12 +4,17 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.shared.utils.ReflectionUtils;
 
 
 /**
  * Initializes any number of process variables with string values. Inputs:
  *   PROCESS_VARIABLE_{X}
  *   PROCESS_VARIABLE_VALUE_{X}
+ *   
+ * The PROCESS_VARIABLE_{X} may contain a variable name, or a variable name followed by a property:
+ * "VARIABLE"
+ * "VARIABLE.propertyToSet"
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -23,9 +28,24 @@ public class InitVariablesService implements IService {
         	while (true) {
         		String processVarName = (String)processData.getItem("PROCESS_VARIABLE_"+num);	
         		if (processVarName == null || num>100) break;
-        		String value = (String)processData.getItem("PROCESS_VARIABLE_VALUE_"+num);        		
-            	logger.info("Putting value '"+value+"' in "+processVarName);
-            	processData.putItem(processVarName, value);
+        		Object value = processData.getItem("PROCESS_VARIABLE_VALUE_"+num);
+        		
+        		if (processVarName.contains(".")) {
+        		    String[] parts = processVarName.split("\\.");
+        		    String beanName = parts[0];
+        		    String beanPropertyName = parts[1];
+        		    Object bean = processData.getItem(beanName);
+        		    if (bean==null) {
+        		        throw new IllegalArgumentException(beanName+" may not be null");
+        		    }
+                    logger.info("Setting "+beanPropertyName+" value on "+beanName+" to '"+value+"'");
+                    ReflectionUtils.set(bean, beanPropertyName, value);
+        		}
+        		else {
+                    logger.info("Putting value '"+value+"' in "+processVarName);
+                    processData.putItem(processVarName, value);    
+        		}
+        		
                 num++;
         	}
         } 

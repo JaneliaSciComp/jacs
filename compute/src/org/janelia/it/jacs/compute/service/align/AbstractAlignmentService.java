@@ -11,7 +11,10 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.vo.ParameterException;
 
@@ -31,6 +34,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
     protected FileNode alignFileNode;
     protected File outputFile;
     protected String inputFilename;
+    protected String vncFilename;
     protected String opticalResolution;
     protected String refChannel;
     
@@ -53,10 +57,28 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
         }
 
         inputFilename = (String)processData.getItem("INPUT_FILENAME");
-        if (inputFilename==null) {
-        	throw new ServiceException("Input parameter INPUT_FILENAME may not be null");
-        }
 
+        List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>)processData.getItem("SAMPLE_AREAS");
+        if (sampleAreas!=null && sampleAreas.size()>1) {
+            for(AnatomicalArea anatomicalArea : sampleAreas) {
+                String areaName = anatomicalArea.getName();
+                String filename = anatomicalArea.getSampleProcessingResultFilename();
+                if ("VNC".equalsIgnoreCase(areaName)) {
+                    vncFilename  = filename;
+                }
+                else if ("Brain".equalsIgnoreCase(areaName)) {
+                    inputFilename = filename;    
+                }
+                else {
+                    logger.warn("Unrecognized sample area: "+areaName);
+                }
+            }
+        }
+        
+        if (inputFilename==null) {
+            throw new ServiceException("Input parameter INPUT_FILENAME may not be null");
+        }
+        
         opticalResolution = (String)processData.getItem("OPTICAL_RESOLUTION");
         if (opticalResolution==null) {
         	logger.warn("Input parameter OPTICAL_RESOLUTION is null, assuming none.");

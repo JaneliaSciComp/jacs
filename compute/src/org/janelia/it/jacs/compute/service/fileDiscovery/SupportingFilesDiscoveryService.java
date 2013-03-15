@@ -32,7 +32,7 @@ public class SupportingFilesDiscoveryService extends FileDiscoveryService {
         if (resultEntityType==null) {
         	throw new ServiceException("Input parameter RESULT_ENTITY_TYPE may not be null");
         }
-	    
+        
         super.execute(processData);
     }
     
@@ -40,10 +40,12 @@ public class SupportingFilesDiscoveryService extends FileDiscoveryService {
     protected Entity verifyOrCreateChildFolderFromDir(Entity parentFolder, File dir, Integer index) throws Exception {
 
         logger.info("Discovering supporting files in "+dir.getAbsolutePath());
-    	
+        logger.info("Creating entity named '"+resultEntityName+"' with type '"+resultEntityType+"'");
+        
         Entity resultEntity = helper.createFileEntity(dir.getAbsolutePath(), resultEntityName, resultEntityType);
         helper.addToParent(parentFolder, resultEntity, parentFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_RESULT);
     	
+        processData.putItem("RESULT_ENTITY", resultEntity);
         processData.putItem("RESULT_ENTITY_ID", resultEntity.getId().toString());
         
     	return resultEntity;

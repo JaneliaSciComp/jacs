@@ -4,9 +4,19 @@
  -->
  <process name="FlyLight Sample Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending">
 	<sequence name="Main">
-	    
-	    <!-- Import variables from the MCFOSamplePipelineTask -->
+	
+    	<input name="SAMPLE_ENTITY_ID"/>
+        <input name="PIPELINE_NAME"/>
+        <input name="MERGE_ALGORITHMS"/>
+        <input name="STITCH_ALGORITHMS"/>
+        <input name="ALIGNMENT_ALGORITHMS"/>
+        <input name="ALIGNMENT_ALGORITHM_PARAMS"/>
+        <input name="ANALYSIS_ALGORITHMS"/>
+        <input name="PIPELINE_PROCESS"/>
+        
+        <!-- Import variables from the task if any were not passed in as input parameters above -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="OVERRIDE" value="false"/>
             <input name="TASK_PARAMETER_1" value="sample entity id"/>
             <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
             <input name="TASK_PARAMETER_2" value="pipeline name"/>
@@ -45,37 +55,33 @@
             <output name="REFERENCE_CHANNEL"/>
             <output name="SAMPLE_AREA"/>
         </operation>
-        
+    
+        <!-- Create the pipeline run entity -->
+        <operation name="Create Pipeline Run Entity" processor="org.janelia.it.jacs.compute.service.entity.sample.CreatePipelineRunEntityService">
+            <input name="SAMPLE_ENTITY_ID"/>
+            <input name="PIPELINE_NAME"/>
+            <input name="PIPELINE_PROCESS"/>
+            <output name="PIPELINE_RUN_ENTITY_ID"/>
+        </operation>
+		
         <sequence forEach="SAMPLE_AREA">
             
-            <!-- Create the pipeline run entity -->
-            <operation name="Create Pipeline Run Entity" processor="org.janelia.it.jacs.compute.service.entity.sample.CreatePipelineRunEntityService">
+            <!-- Decide which types of processing will be run -->
+            <operation name="Choose Sample Area Processing Steps" processor="org.janelia.it.jacs.compute.service.entity.sample.ChooseSampleAreaPipelineStepsService">
                 <input name="SAMPLE_ENTITY_ID"/>
-                <input name="PIPELINE_NAME"/>
                 <input name="SAMPLE_AREA"/>
-                <input name="PIPELINE_PROCESS"/>
-                <output name="PIPELINE_RUN_ENTITY_ID"/>
-            </operation>
-    	    
-    	    <!-- Decide which types of processing will be run -->
-    	    <operation name="Choose Sample Processing Steps" processor="org.janelia.it.jacs.compute.service.entity.sample.ChooseSamplePipelineStepsService">
-    			<input name="SAMPLE_ENTITY_ID"/>
-    			<input name="MERGE_ALGORITHMS"/>
-    			<input name="STITCH_ALGORITHMS"/>
-    			<input name="ALIGNMENT_ALGORITHMS"/>
-                <input name="ALIGNMENT_ALGORITHM_PARAMS"/>
-    			<input name="ANALYSIS_ALGORITHMS"/>
+                <input name="MERGE_ALGORITHMS"/>
+                <input name="STITCH_ALGORITHMS"/>
+                <input name="ANALYSIS_ALGORITHMS"/>
                 <output name="RUN_PROCESSING"/>
-    			<output name="RUN_MERGE"/>
-    			<output name="RUN_STITCH"/>
-    			<output name="RUN_ALIGNMENT"/>
-    			<output name="RUN_ANALYSIS"/>
-    			<output name="MERGE_ALGORITHM"/>
-    			<output name="STITCH_ALGORITHM"/>
-                <output name="PARAMETERIZED_ALIGNMENT_ALGORITHM"/>
-    			<output name="ANALYSIS_ALGORITHM"/>
-    		</operation>
-    		
+                <output name="RUN_MERGE"/>
+                <output name="RUN_STITCH"/>
+                <output name="RUN_ANALYSIS"/>
+                <output name="MERGE_ALGORITHM"/>
+                <output name="STITCH_ALGORITHM"/>
+                <output name="ANALYSIS_ALGORITHM"/>
+            </operation>
+            
     		<sequence if="REUSE_PROCESSING=true">
         		
                 <!-- Reuse sample processing from previous pipeline run -->
@@ -83,10 +89,21 @@
                     <input name="SAMPLE_ENTITY_ID"/>
                     <input name="PIPELINE_RUN_ENTITY_ID"/>
                     <input name="SAMPLE_AREA"/>
+                    <output name="RESULT_ENTITY"/>
                     <output name="STITCHED_FILENAME"/>
                     <output name="RUN_PROCESSING"/>
                 </operation>
-    		
+            
+                <sequence if="RUN_PROCESSING=false">
+                
+                    <!-- Set the result for this sample area -->
+                    <operation name="Set Sample Processing Results" processor="org.janelia.it.jacs.compute.service.entity.sample.SetSampleProcessingAreaService">
+                        <input name="SAMPLE_AREA"/>
+                        <input name="RESULT_ENTITY"/>
+                    </operation>
+                    
+                </sequence>
+                
             </sequence>
             
             <sequence if="RUN_PROCESSING=true">
@@ -115,6 +132,7 @@
         					<output name="STITCHED_FILENAME"/>
         					<output name="STACK_FILENAMES"/>
         					<output name="COPY_FROM_ARCHIVE"/>
+        					<output name="SAMPLE_PROCESSING_RESULTS_NAME"/>
         				</operation>
         			</sequence>
         	    </sequence>
@@ -253,10 +271,11 @@
         			<input name="ROOT_FILE_NODE" value="$V{SAMPLE_RESULT_FILE_NODE}"/>
         			<input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
         			<input name="RESULT_ENTITY_TYPE" value="Sample Processing Result"/>
-        			<input name="RESULT_ENTITY_NAME" value="Sample Processing"/>
+        			<input name="RESULT_ENTITY_NAME" value="$V{SAMPLE_PROCESSING_RESULTS_NAME}"/>
         			<output name="RESULT_ENTITY_ID"/>
+        			<output name="RESULT_ENTITY"/>
         	    </operation>
-        	    
+            	    
         	    <!-- Register MIP images -->
         		<operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
         			<input name="SAMPLE_ENTITY_ID"/>
@@ -265,6 +284,12 @@
         			<input name="DEFAULT_IMAGE_FILENAME" value="$V{STITCHED_FILENAME}"/>
         	    </operation>
     		
+                <!-- Set the result for this sample area -->
+                <operation name="Set Sample Processing Results" processor="org.janelia.it.jacs.compute.service.entity.sample.SetSampleProcessingAreaService">
+                    <input name="SAMPLE_AREA"/>
+                    <input name="RESULT_ENTITY"/>
+                </operation>
+                
         		<!-- Run analyses on unaligned results -->
                 <sequence if="RUN_ANALYSIS=true">
                     <sequence forEach="ANALYSIS_ALGORITHM">
@@ -291,9 +316,21 @@
                 </sequence>
                 
             </sequence>
-            
+                
         </sequence>
-	
+            
+        <!-- Decide which types of processing will be run -->
+        <operation name="Choose Next Steps" processor="org.janelia.it.jacs.compute.service.entity.sample.ChoosePostSampleProcessingStepsService">
+            <input name="SAMPLE_ENTITY_ID"/>
+            <input name="ALIGNMENT_ALGORITHMS"/>
+            <input name="ALIGNMENT_ALGORITHM_PARAMS"/>
+            <input name="ANALYSIS_ALGORITHMS"/>
+            <output name="RUN_ALIGNMENT"/>
+            <output name="RUN_ANALYSIS"/>
+            <output name="PARAMETERIZED_ALIGNMENT_ALGORITHM"/>
+            <output name="ANALYSIS_ALGORITHM"/>
+        </operation>
+        
         <sequence if="RUN_ALIGNMENT=true">
             <sequence forEach="PARAMETERIZED_ALIGNMENT_ALGORITHM">
                 <sequence>
@@ -303,15 +340,15 @@
                         <input name="PIPELINE_RUN_ENTITY_ID"/>
                         <input name="SAMPLE_ENTITY_ID"/>
                         <input name="PARAMETERIZED_ALIGNMENT_ALGORITHM"/>
-                        <input name="INPUT_FILENAME" value="$V{STITCHED_FILENAME}"/>
                         <input name="SIGNAL_CHANNELS"/>
                         <input name="REFERENCE_CHANNEL"/>
+                        <input name="SAMPLE_AREAS" value="$V{SAMPLE_AREA}"/>
                     </include>
                     
                 </sequence>
             </sequence>
         </sequence>
-            
+
 		<!-- Compress all the v3draw files we created  -->
         <include name="Compress raw files" process="SampleDataCompression">
             <input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>

@@ -1,6 +1,9 @@
 package org.janelia.it.jacs.compute.service.entity;
 
+import java.util.List;
+
 import org.janelia.it.jacs.compute.service.align.ParameterizedAlignmentAlgorithm;
+import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -28,9 +31,27 @@ public class InitAlignmentParametersService extends AbstractEntityService {
     	if (sampleEntity == null) {
     		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
     	}
-    	
-    	processData.putItem("OPTICAL_RESOLUTION", getConsensusOpticalResolution(sampleEntity));
-    	
+
+        List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>)processData.getItem("SAMPLE_AREAS");
+        
+        // For legacy alignment use, just take any area and align it
+        String inputFilename = null;
+        for(AnatomicalArea anatomicalArea : sampleAreas) {
+            Entity result = entityBean.getEntityById(anatomicalArea.getSampleProcessingResultId());
+            if (result!=null) {
+                String filename = result.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+                if (filename!=null)  {
+                    anatomicalArea.setSampleProcessingResultFilename(filename);
+                    inputFilename = filename;
+                }
+            }
+        }
+        
+        if (inputFilename!=null) {
+            logger.info("Putting '"+inputFilename+"' in INPUT_FILENAME");
+            processData.putItem("INPUT_FILENAME", inputFilename);
+        }
+        
 		ParameterizedAlignmentAlgorithm paa = (ParameterizedAlignmentAlgorithm)processData.getItem("PARAMETERIZED_ALIGNMENT_ALGORITHM");
 		AlignmentAlgorithm aa = paa.getAlgorithm();
 		
@@ -70,24 +91,27 @@ public class InitAlignmentParametersService extends AbstractEntityService {
 		else {
 			throw new IllegalArgumentException("No such alignment algorithm: "+aa);
 		}
-		
-		String mountingProtocol = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL);
-		String gender = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_GENDER);
-		
+
+        logger.info("Putting '"+processData.getItem("ALIGNMENT_SERVICE_CLASS")+"' in ALIGNMENT_SERVICE_CLASS");
+        logger.info("Putting '"+processData.getItem("ALIGNMENT_RESULT_NAME")+"' in ALIGNMENT_RESULT_NAME");
+        logger.info("Putting '"+processData.getItem("ALIGNMENT_TILE_NAME")+"' in ALIGNMENT_TILE_NAME");
+        logger.info("Putting '"+processData.getItem("ALIGNMENT_SCRIPT_NAME")+"' in ALIGNMENT_SCRIPT_NAME");
+
+        String opticalRes = getConsensusOpticalResolution(sampleEntity);
+        logger.info("Putting '"+opticalRes+"' in OPTICAL_RESOLUTION");
+        processData.putItem("OPTICAL_RESOLUTION", opticalRes);
+        
+        String mountingProtocol = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL);
 		if (mountingProtocol!=null) {
+		    logger.info("Putting '"+mountingProtocol+"' in MOUNTING_PROTOCOL");
 		    processData.putItem("MOUNTING_PROTOCOL", mountingProtocol);
 		}
 
+		String gender = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_GENDER);
         if (gender!=null) {
+            logger.info("Putting '"+gender+"' in GENDER");
             processData.putItem("GENDER", gender);
         }
-        
-		logger.info("Set MOUNTING_PROTOCOL = "+processData.getItem("MOUNTING_PROTOCOL"));
-		logger.info("Set OPTICAL_RESOLUTION = "+processData.getItem("OPTICAL_RESOLUTION"));
-		logger.info("Set ALIGNMENT_SERVICE_CLASS = "+processData.getItem("ALIGNMENT_SERVICE_CLASS"));
-		logger.info("Set ALIGNMENT_RESULT_NAME = "+processData.getItem("ALIGNMENT_RESULT_NAME"));
-		logger.info("Set ALIGNMENT_TILE_NAME = "+processData.getItem("ALIGNMENT_TILE_NAME"));
-		logger.info("Set ALIGNMENT_SCRIPT_NAME = "+processData.getItem("ALIGNMENT_SCRIPT_NAME"));
     }
     
     private String getConsensusOpticalResolution(Entity sampleEntity) throws Exception {

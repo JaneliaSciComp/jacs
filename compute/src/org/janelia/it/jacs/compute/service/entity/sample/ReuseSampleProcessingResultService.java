@@ -3,8 +3,6 @@ package org.janelia.it.jacs.compute.service.entity.sample;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
@@ -37,20 +35,19 @@ public class ReuseSampleProcessingResultService extends AbstractEntityService {
         Entity latestSp = null;
         
         for(Entity pipelineRun : sampleEntity.getOrderedChildren()) {
-            if (!pipelineRun.getEntityType().getName().equals(EntityConstants.TYPE_PIPELINE_RUN)) {
-                continue;
-            }
-            if (sampleArea!=null && !sampleArea.getName().equals(pipelineRun.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA))) {
-                continue;
-            }
-            if (pipelineRun.getId().toString().equals(pipelineRunId)) {
-                myPipelineRun = pipelineRun;
-            }
-            EntityData sped = EntityUtils.findChildEntityDataWithType(pipelineRun, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT);
-            if (sped!=null) {
-                Entity sp = sped.getChildEntity();
-                if (sp!=null) {
-                    latestSp = sp;
+            if (pipelineRun.getEntityType().getName().equals(EntityConstants.TYPE_PIPELINE_RUN)) {
+                if (pipelineRun.getId().toString().equals(pipelineRunId)) {
+                    myPipelineRun = pipelineRun;
+                }
+                for(Entity sp : pipelineRun.getChildren()) {
+                    if (sp.getEntityType().getName().equals(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)) {
+                        String spArea = sp.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
+                        if (sampleArea!=null && !sampleArea.getName().equals(spArea)) {
+                            logger.info("Can't use "+sp.getId()+" because "+sampleArea.getName()+"!="+spArea);
+                            continue;
+                        }
+                        latestSp = sp;
+                    }
                 }
             }
         }
@@ -64,7 +61,9 @@ public class ReuseSampleProcessingResultService extends AbstractEntityService {
             if (stitchedFilename!=null) {
                 entityBean.addEntityToParent(ownerKey, myPipelineRun.getId(), latestSp.getId(), myPipelineRun.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_RESULT);        
                 entityBean.saveOrUpdateEntity(myPipelineRun);
-                logger.info("Reusing sample processing result "+latestSp.getId()+" for new pipeline run "+pipelineRunId);
+                logger.info("Reusing sample processing result "+latestSp.getId()+" for "+sampleArea.getName()+" area in new pipeline run "+pipelineRunId);
+                processData.putItem("RESULT_ENTITY", latestSp);
+                logger.info("Putting '"+latestSp+"' in RESULT_ENTITY");
                 processData.putItem("STITCHED_FILENAME", stitchedFilename);    
                 logger.info("Putting '"+stitchedFilename+"' in STITCHED_FILENAME");
                 processData.putItem("RUN_PROCESSING", Boolean.FALSE);    

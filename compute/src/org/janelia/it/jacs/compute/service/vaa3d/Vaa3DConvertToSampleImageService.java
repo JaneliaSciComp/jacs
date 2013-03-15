@@ -43,7 +43,6 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
             throw new ServiceException("Input parameter SAMPLE_CHANNEL_SPEC may not be null");
         }
 
-        
         Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
         if (bulkMergeParamObj==null) {
         	throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS may not be null");

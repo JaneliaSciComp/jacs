@@ -23,7 +23,6 @@ public class ReflectionUtils {
         }
         catch (IllegalAccessException e) {
             // shouldnt happen since getField sets the field accessible
-            e.printStackTrace();
             throw new RuntimeException("Field cannot be accessed",e);
         }
     }
@@ -39,7 +38,6 @@ public class ReflectionUtils {
         }
         catch (IllegalAccessException e) {
             // shouldnt happen since getField sets the field accessible
-            e.printStackTrace();
             throw new RuntimeException("Field cannot be accessed",e);
         }
     }
