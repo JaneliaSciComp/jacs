@@ -10,6 +10,8 @@
 #
 
 use lib '/usr/local/perl5/lib/perl5/site_perl/5.8.5';
+use lib '/groups/scicomp/jacsData/install/perl/lib/perl5';
+
 use Zeiss::LSM;
 use Data::Dumper;
 use JSYNC;

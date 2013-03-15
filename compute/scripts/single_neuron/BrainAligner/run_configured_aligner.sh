@@ -5,6 +5,9 @@
 
 DIR=$(cd "$(dirname "$0")"; pwd)
 
+# Use all the cpus 
+export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=8
+
 SCRIPT_PATH=$1
 OUTPUT_DIR=""
 shift 1
