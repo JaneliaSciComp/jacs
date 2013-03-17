@@ -18,19 +18,24 @@ SAMPLE="$DIR/../Toolkits/ANTS/ResampleImageBySpacing"
 # Inputs
 ####
 
-NUMPARAMS=$#
-if [ $NUMPARAMS -lt 3  ]
-then
-    echo " "
-    echo " USAGE ::  "
-    echo " sh imgMerge.sh input1.lsm input2.lsm output.v3draw"
-    echo " "
-    exit
-fi
+INPUT1=""
+INPUT2=""
+FINAL_OUTPUT=""
+MULTISCAN_BLEND_VERSION=""
 
-INPUT1=$1
-INPUT2=$2
-FINAL_OUTPUT=$3
+while getopts "o:m:h" opt
+do case "$opt" in
+    o)  FINAL_OUTPUT="$OPTARG";;
+    m)  MULTISCAN_BLEND_VERSION="$OPTARG";;
+    h) echo "Usage: $0 [-o output_file] [-m multiscanblend_version] input1.lsm input2.lsm" >&2
+        exit 1;;
+    esac
+done
+shift $((OPTIND-1))
+
+INPUT1="$1"
+INPUT2="$2"
+
 FINAL_DIR=${FINAL_OUTPUT%/*}
 FINAL_STUB=${FINAL_OUTPUT%.*}
 EXT=${FINAL_OUTPUT##*.}
