@@ -359,7 +359,7 @@ public abstract class SeriesLauncher implements ILauncher {
         // Check to see if the user wants email
         User tmpUser = new UserDAO(logger).getUserByNameOrKey(ownerName);
         if (null == tmpUser) {
-            logger.error("Cannot notify user: " + ownerName + ". Person does not exist in the db.");
+            logger.warn("Cannot notify user: " + ownerName + ". User does not exist in the db.");
             return;
         }
         SubjectPreference emailPref = tmpUser.getPreference(SubjectPreference.CAT_NOTIFICATION, SubjectPreference.PREF_EMAIL_ON_JOB_COMPLETION);
