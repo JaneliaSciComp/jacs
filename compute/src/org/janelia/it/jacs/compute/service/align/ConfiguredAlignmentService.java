@@ -95,7 +95,7 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
         	    String filename = properties.getProperty("alignment.stack.filename");
         	    File file = new File(outputDir, filename);
         	    if (!file.exists()) {
-        	        throw new MissingDataException("File does not exist: "+filename);
+        	        throw new MissingDataException("File does not exist: "+file);
         	    }
         	    
         	    filenames.add(file.getCanonicalPath());

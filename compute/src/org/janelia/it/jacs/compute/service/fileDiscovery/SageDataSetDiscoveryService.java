@@ -264,7 +264,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             }
             
             // There is more than one objective. Create a parent Sample, and then a SubSample for each objective.
-            sample = getOrCreateSample(sampleIdentifier, null, dataSetIdentifier, null);
+            sample = getOrCreateSample(sampleIdentifier, null, dataSetIdentifier, null, tileGroupList);
             String childObjective = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
             if (childObjective!=null) {
                 logger.info("  Converting existing "+childObjective+" sample into a child sample: "+sample.getId());
@@ -280,7 +280,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
                 putInCorrectDataSetFolder(childSample);
                 
                 // Create a new parent
-                sample = getOrCreateSample(sampleIdentifier, null, dataSetIdentifier, null);
+                sample = getOrCreateSample(sampleIdentifier, null, dataSetIdentifier, null, tileGroupList);
             }
             
             List<String> objectives = new ArrayList<String>(objectiveGroups.keySet());
@@ -303,7 +303,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             logger.debug("  Sample has "+sampleNumSignals+" signal channels, and thus specification '"+sampleChannelSpec+"'");
             
             // Find the sample, if it exists, or create a new one.
-            sample = getOrCreateSample(sampleIdentifier, sampleChannelSpec, dataSetIdentifier, objective);
+            sample = getOrCreateSample(sampleIdentifier, sampleChannelSpec, dataSetIdentifier, objective, tileGroupList);
             synchronizeTiles(sample, tileGroupList);
             
             // Ensure the sample is a child of something
@@ -495,13 +495,24 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		return true;
     }
     
-    protected Entity getOrCreateSample(String sampleIdentifier, String channelSpec, String dataSetIdentifier, String objective) throws Exception {
+    protected Entity getOrCreateSample(String sampleIdentifier, String channelSpec, String dataSetIdentifier, String objective, Collection<ImageTileGroup> tileGroupList) throws Exception {
 
         Entity sample = findExistingSample(sampleIdentifier);
         if (sample == null) {
-            logger.info("  Creating new sample with identifier: "+sampleIdentifier);
-            sample = createSample(sampleIdentifier, channelSpec, dataSetIdentifier, objective);
-            numSamplesCreated++;
+            
+            // Check if the same exists already with an old-style tagged name
+            if (tileGroupList.size()==1) {
+                String tag = tileGroupList.iterator().next().getTag();
+                String tagSampleIdentifier = sampleIdentifier+"-"+tag.replace(" ", "_");
+                sample = findExistingSample(tagSampleIdentifier);
+            }
+            
+            // Still null?
+            if (sample == null) {
+                logger.info("  Creating new sample with identifier: "+sampleIdentifier);
+                sample = createSample(sampleIdentifier, channelSpec, dataSetIdentifier, objective);
+                numSamplesCreated++;   
+            }
         }
         else {
             logger.info("  Found existing sample with identifier: "+sampleIdentifier);
@@ -618,13 +629,27 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		logger.info("    Setting properties: channels="+image.channels+", res="+image.opticalRes+
 		        ", spec="+image.channelSpec+", objective="+image.objective+", mountingProtocol="+image.mountingProtocol);
 		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, image.imagePath);
-		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS, image.channels);
-		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, image.opticalRes);	
-		lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, image.channelSpec);
-        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE, image.objective);
-        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL, image.mountingProtocol);
-        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_GENDER, image.gender);
-        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA, image.area);
+		if (image.channels!=null) {
+		    lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS, image.channels);
+		}
+		if (image.opticalRes!=null) {
+		    lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, image.opticalRes);	
+		}
+		if (image.channelSpec!=null) {
+		    lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, image.channelSpec);
+		}
+		if (image.objective!=null) {
+		    lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE, image.objective);
+		}
+        if (image.mountingProtocol!=null) {
+            lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL, image.mountingProtocol);
+        }
+        if (image.gender!=null) {
+            lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_GENDER, image.gender);
+        }
+        if (image.area!=null) {
+            lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA, image.area);
+        }
 		lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
         return lsmStack;
     }

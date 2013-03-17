@@ -26,6 +26,7 @@ public class InitVariablesFromTaskService implements IService {
             String overrideStr = (String)processData.getItem("OVERRIDE");
             if (!StringUtils.isEmpty(overrideStr)) {
                 override = Boolean.parseBoolean(overrideStr);   
+                logger.info("Will "+(override?"":"not ")+"override existing variables");
             }
             
         	int num = 1;
@@ -37,7 +38,7 @@ public class InitVariablesFromTaskService implements IService {
         		if (value != null) {
         			// We specifically avoid overriding existing values in ProcessData, because if the process file
         			// is being <include>'d, then the task may not contain the parameter which is already in 
-        			// ProcessData.
+        			// ProcessData.        		    
         		    if (override || processData.getItem(processVarName)==null) {
                         if ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
                             Object booleanValue = Boolean.valueOf(value);    

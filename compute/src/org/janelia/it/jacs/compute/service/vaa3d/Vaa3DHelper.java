@@ -2,6 +2,7 @@ package org.janelia.it.jacs.compute.service.vaa3d;
 
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,13 +27,16 @@ public class Vaa3DHelper {
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
                     SystemConfigurationProperties.getString("Intersection.ScriptPath");
     
-    public static String getFormattedMergePipelineCommand(String inputFilePath1, String inputFilePath2, String outputFilePath) {
-        return "sh "+MERGE_PIPELINE_CMD+" \""+inputFilePath1+"\" \""+inputFilePath2+"\" \""+outputFilePath+"\"";
-    }
-
-    public static String getFormattedMergeCommand(String inputFilePath1, String inputFilePath2, String outputFilePath) {
-        return VAA3D_BASE_CMD +" -x libblend_multiscanstacks.so -f multiscanblend -p \"#k 1\" -i \"" + inputFilePath1
-                + "\" \"" +inputFilePath2+ "\" -o \"" + outputFilePath+"\"";
+    public static String getFormattedMergePipelineCommand(String inputFilePath1, String inputFilePath2, String outputFilePath, String multiscanBlendVersion) {
+        StringBuffer buf = new StringBuffer();
+        buf.append("sh "+MERGE_PIPELINE_CMD);
+        buf.append(" -o \""+outputFilePath+"\""); 
+        if (!StringUtils.isEmpty(multiscanBlendVersion)) {
+            buf.append(" -m \""+multiscanBlendVersion+"\""); 
+        }
+        buf.append(" \""+inputFilePath1+"\""); 
+        buf.append(" \""+inputFilePath2+"\""); 
+        return buf.toString();
     }
 
     public static String getFormattedGrouperCommand(int referenceChannelIndex, String inputDirectoryPath, String outputFilePath) {

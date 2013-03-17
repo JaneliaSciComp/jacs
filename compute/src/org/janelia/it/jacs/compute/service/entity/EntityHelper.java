@@ -255,25 +255,33 @@ public class EntityHelper {
         return entity;
     }
 
-    public void setAlignmentSpace(Entity entity, String alignmentSpaceName) throws Exception {
-        if (entity==null || alignmentSpaceName==null) return;
-        setAttributeIfNull(entity, EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE, alignmentSpaceName);
+    public void setAlignmentSpace(Entity entity, String value) throws Exception {
+        setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE, value);
     }
     
-    public void setOpticalResolution(Entity entity, String opticalRes) throws Exception {
-        if (entity==null || opticalRes==null) return;
-        setAttributeIfNull(entity, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, opticalRes);
+    public void setOpticalResolution(Entity entity, String value) throws Exception {
+        setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, value);
     }
 
-    public void setPixelResolution(Entity entity, String pixelRes) throws Exception {
-        if (entity==null || pixelRes==null) return;
-        setAttributeIfNull(entity, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, pixelRes);
+    public void setPixelResolution(Entity entity, String value) throws Exception {
+        setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, value);
     }
     
-    private void setAttributeIfNull(Entity entity, String attributeName, String value) throws Exception {
-        if (EntityUtils.findChildWithType(entity, attributeName)!=null) return;
-        entity.setValueByAttributeName(attributeName, value);
-        entityBean.saveOrUpdateEntity(entity);
+    public void setObjective(Entity entity, String value) throws Exception {
+        setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_OBJECTIVE, value);
+    }
+
+    public void setBoundingBox(Entity entity, String value) throws Exception {
+        setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_BOUNDING_BOX, value);
+    }
+    
+    private void setAttributeIfNecessary(Entity entity, String attributeName, String value) throws Exception {
+        if (entity==null || value==null) return;
+        EntityData currEd = entity.getEntityDataByAttributeName(attributeName);
+        if (currEd==null || !currEd.getValue().equals(value)) {
+            entity.setValueByAttributeName(attributeName, value);
+            entityBean.saveOrUpdateEntity(entity);
+        }
     }
 
     public void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {

@@ -13,9 +13,19 @@
         <input name="ALIGNMENT_ALGORITHM_PARAMS"/>
         <input name="ANALYSIS_ALGORITHMS"/>
         <input name="PIPELINE_PROCESS"/>
+        <input name="REUSE_PROCESSING"/>
         
         <!-- Import variables from the task if any were not passed in as input parameters above -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="SAMPLE_ENTITY_ID"/>
+            <input name="PIPELINE_NAME"/>
+            <input name="MERGE_ALGORITHMS"/>
+            <input name="STITCH_ALGORITHMS"/>
+            <input name="ALIGNMENT_ALGORITHMS"/>
+            <input name="ALIGNMENT_ALGORITHM_PARAMS"/>
+            <input name="ANALYSIS_ALGORITHMS"/>
+            <input name="PIPELINE_PROCESS"/>
+            <input name="REUSE_PROCESSING"/>
             <input name="OVERRIDE" value="false"/>
             <input name="TASK_PARAMETER_1" value="sample entity id"/>
             <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
@@ -117,17 +127,18 @@
         	        <output name="MERGE_RESULT_FILE_NODE"/>
         	        <output name="GROUP_RESULT_FILE_NODE"/>
         	        <output name="STITCH_RESULT_FILE_NODE"/>
+        	        <output name="MIPS_RESULT_FILE_NODE"/>
         	    </operation>
         	    
         	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
         	    <sequence name="Wait Async" waitForAsync="true">
         	        <sequence name="Limit Archive Access" processor="queue/archiveAccess">
         			    <operation name="Init Processing Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitSampleProcessingParametersService">
-        					<input name="SAMPLE_RESULT_FILE_NODE"/>
         			        <input name="MERGE_RESULT_FILE_NODE"/>
         			        <input name="STITCH_RESULT_FILE_NODE"/>
         					<input name="SAMPLE_ENTITY_ID"/>
                             <input name="SAMPLE_AREA"/>
+        					<input name="RUN_STITCH"/>
         					<output name="BULK_MERGE_PARAMETERS"/>
         					<output name="STITCHED_FILENAME"/>
         					<output name="STACK_FILENAMES"/>
@@ -173,14 +184,19 @@
                 <!-- Run merging? -->
             	<sequence if="RUN_MERGE=true">
         		     
-        		    <!-- Merge all the LSM pairs in parallel -->
-        	        <sequence name="Merge Lsm Pairs" waitForAsync="true">
-        		        <operation name="Merge Lsm Pairs" processor="queue/gridSubmitAndWait">
-        		            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DBulkMergeService"/>
-        		    		<input name="RESULT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
-        					<input name="BULK_MERGE_PARAMETERS"/>
-        		        </operation>
-        	        </sequence>
+                    <sequence forEach="MERGE_ALGORITHM">
+                    
+            		    <!-- Merge all the LSM pairs in parallel -->
+            	        <sequence name="Merge Lsm Pairs" waitForAsync="true">
+            		        <operation name="Merge Lsm Pairs" processor="queue/gridSubmitAndWait">
+            		            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DBulkMergeService"/>
+            		    		<input name="RESULT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
+            					<input name="BULK_MERGE_PARAMETERS"/>
+            					<input name="MERGE_ALGORITHM"/>
+            		        </operation>
+            	        </sequence>
+            	        
+                    </sequence>
         		
                 </sequence>
                 
@@ -253,7 +269,7 @@
                 <sequence name="Generate sample MIPs" waitForAsync="true">
         	        <operation name="Generate MIPs" processor="queue/gridSubmitAndWait">
         	            <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.MIPGenerationService"/>
-        				<input name="RESULT_FILE_NODE" value="$V{STITCH_RESULT_FILE_NODE}"/>
+        				<input name="RESULT_FILE_NODE" value="$V{MIPS_RESULT_FILE_NODE}"/>
         				<input name="INPUT_FILENAMES" value="$V{STACK_FILENAMES}"/>
         				<input name="SIGNAL_CHANNELS"/>
         				<input name="REFERENCE_CHANNEL"/>
@@ -267,11 +283,12 @@
         	    </operation>
         	    
         	    <!-- Load the sample analysis results into the database -->
-        		<operation name="Discover Sample Processing Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SupportingFilesDiscoveryService">
+        		<operation name="Discover Sample Processing Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SampleProcessingResultsDiscoveryService">
         			<input name="ROOT_FILE_NODE" value="$V{SAMPLE_RESULT_FILE_NODE}"/>
         			<input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
         			<input name="RESULT_ENTITY_TYPE" value="Sample Processing Result"/>
         			<input name="RESULT_ENTITY_NAME" value="$V{SAMPLE_PROCESSING_RESULTS_NAME}"/>
+        			<input name="SAMPLE_ENTITY_ID"/>
         			<output name="RESULT_ENTITY_ID"/>
         			<output name="RESULT_ENTITY"/>
         	    </operation>

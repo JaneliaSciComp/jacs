@@ -49,6 +49,7 @@ public class CreateSampleResultFileNodeService implements IService {
             processData.putItem("MERGE_RESULT_FILE_NODE", createChildFileNode("merge"));
             processData.putItem("GROUP_RESULT_FILE_NODE", createChildFileNode("group"));
             processData.putItem("STITCH_RESULT_FILE_NODE", createChildFileNode("stitch"));
+            processData.putItem("MIPS_RESULT_FILE_NODE", createChildFileNode("mips"));
             
             logger.info("Created sample result node: "+resultFileNode.getDirectoryPath());
         }

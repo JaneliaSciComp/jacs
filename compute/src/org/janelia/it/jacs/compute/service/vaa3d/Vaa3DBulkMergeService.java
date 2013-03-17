@@ -11,6 +11,7 @@ import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.model.entity.cv.MergeAlgorithm;
 import org.janelia.it.jacs.model.user_data.FileNode;
 
 /**
@@ -25,7 +26,9 @@ public class Vaa3DBulkMergeService extends SubmitDrmaaJobService {
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
 	private static final int START_DISPLAY_PORT = 890;
     private static final String CONFIG_PREFIX = "mergeConfiguration.";
-    private static int randomPort;
+    
+    private int randomPort;
+    private String multiscanblendVersion = "";
     
     protected void init(IProcessData processData) throws Exception {
     	super.init(processData);
@@ -39,7 +42,13 @@ public class Vaa3DBulkMergeService extends SubmitDrmaaJobService {
     @Override
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
         
+        String mergeAlgorithm = (String)processData.getItem("MERGE_ALGORITHM");
+        if (MergeAlgorithm.FLYLIGHT_ORDERED.getName().equals(mergeAlgorithm)) {
+            multiscanblendVersion = "2";
+        }
+        
         Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
+        
         if (bulkMergeParamObj==null) {
         	throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS may not be null");
         }
@@ -86,7 +95,7 @@ public class Vaa3DBulkMergeService extends SubmitDrmaaJobService {
         script.append("read DISPLAY_PORT\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix("$DISPLAY_PORT"));
         script.append("\n");
-        script.append(Vaa3DHelper.getFormattedMergePipelineCommand("$LSM_FILENAME_1", "$LSM_FILENAME_2", "$MERGED_FILENAME"));
+        script.append(Vaa3DHelper.getFormattedMergePipelineCommand("$LSM_FILENAME_1", "$LSM_FILENAME_2", "$MERGED_FILENAME", multiscanblendVersion));
         script.append("\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix());
         script.append("\n");

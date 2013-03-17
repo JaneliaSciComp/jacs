@@ -77,6 +77,7 @@ public class UpgradeUserDataService extends AbstractEntityService {
         entityBean.createNewEntityAttr(EntityConstants.TYPE_LSM_STACK, EntityConstants.ATTRIBUTE_GENDER);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_LSM_STACK, EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_LSM_STACK, EntityConstants.ATTRIBUTE_CHANNEL_COLORS);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_LSM_STACK, EntityConstants.ATTRIBUTE_METADATA_FILE);
         
         entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_BOARD, EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_BOARD, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);

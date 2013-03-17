@@ -154,10 +154,16 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     	}
     	
     	if (default3dImage!=null) {
-        	logger.info("Found default 3d image, applying to the Result, Pipeline Run, and Sample");
+        	logger.info("Applying default 3d image to the Result, Pipeline Run, and Sample ("+sampleEntity.getName()+")");
         	entityHelper.setDefault3dImage(resultEntity, default3dImage);
         	entityHelper.setDefault3dImage(pipelineRunEntity, default3dImage);
         	entityHelper.setDefault3dImage(sampleEntity, default3dImage);
+        	
+        	Entity parentSample = entityBean.getAncestorWithType(sampleEntity, EntityConstants.TYPE_SAMPLE);
+        	if (parentSample!=null) {
+        	    logger.info("Applying default 3d image to the Parent Sample ("+parentSample.getName()+")");
+        	    entityHelper.setDefault3dImage(parentSample, default3dImage);
+        	}
         	
         	// Find and apply fast 3d image, if available
     		Entity separation = EntityUtils.getLatestChildOfType(resultEntity, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);

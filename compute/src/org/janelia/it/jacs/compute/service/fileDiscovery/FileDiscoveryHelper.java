@@ -358,7 +358,9 @@ public class FileDiscoveryHelper extends EntityHelper {
             return entityBean.getEntityTypeByName(EntityConstants.TYPE_MOVIE);
         }
         else if (filenameLowerCase.endsWith(".metadata")
+                ||filenameLowerCase.endsWith(".properties")
         		||filenameLowerCase.endsWith(".csv")
+        		||filenameLowerCase.endsWith(".json")
         		||filenameLowerCase.endsWith(".txt")) {
             return entityBean.getEntityTypeByName(EntityConstants.TYPE_TEXT_FILE);
         } 

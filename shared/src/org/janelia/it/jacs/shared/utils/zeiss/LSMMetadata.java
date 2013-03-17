@@ -1,6 +1,8 @@
 package org.janelia.it.jacs.shared.utils.zeiss;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -42,7 +44,17 @@ public class LSMMetadata {
     public List<Track> getTracks() {
         return tracks;
     }
-
+    
+    public List<Track> getNonBleachTracks() {
+        List<Track> nonBleach = new ArrayList<Track>();
+        for(Track track : tracks) {
+            if ("0".equals(track.getIsBleachTrack())) {
+                nonBleach.add(track);
+            }
+        }
+        return nonBleach;
+    }
+    
     public List<Marker> getMarkers() {
         return markers;
     }
@@ -53,7 +65,13 @@ public class LSMMetadata {
 
     public Track getTrack(Channel channel) {
         String parts[] = channel.getName().split("-");
-        if (parts.length<2) throw new IllegalStateException("Cannot parse channel name format: "+channel.getName());
+        if (parts.length<2) {
+            List<Track> nonBleach = getNonBleachTracks();
+            if (nonBleach.size()>1) {
+                throw new IllegalStateException("Channel name ("+channel.getName()+") does not contain track name, and there is more than one non-bleach track ("+tracks.size()+")");
+            }
+            return nonBleach.get(0);
+        }
         String trackId = parts[1];
         for(Track track : tracks) {
             String thisTrackId = track.getName().replaceAll("rack", "");
@@ -369,14 +387,18 @@ public class LSMMetadata {
             return wavelength;
         }
     }
+    
+    public static LSMMetadata fromFile(File file) throws IOException {
+        Gson gson = new Gson();
+        String json = FileUtils.readFileToString(file);
+        LSMMetadata zm = gson.fromJson(json, LSMMetadata.class);  
+        return zm;
+    }
 
     public static void main(String[] args) throws Exception {
 
         File file = new File("testfiles/flpo2.json");
-        String json = FileUtils.readFileToString(file);
-        
-        Gson gson = new Gson();
-        LSMMetadata zm = gson.fromJson(json, LSMMetadata.class);  
+        LSMMetadata zm = fromFile(file);
         
         int c = 0;
         for(Channel channel : zm.getChannels()) {
