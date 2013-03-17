@@ -118,6 +118,7 @@ public class Vaa3DHelper {
         prefix.append("    break\n");
         prefix.append("else\n");
         prefix.append("    echo \"Xvfb died immediately, trying again...\"\n");
+        prefix.append("    PORT=$(( ${PORT} + 1 ))\n");
         prefix.append("    kill $MYPID >/dev/null 2>&1\n");
         prefix.append("    rm -f /tmp/.X$MYPID-lock\n");
         

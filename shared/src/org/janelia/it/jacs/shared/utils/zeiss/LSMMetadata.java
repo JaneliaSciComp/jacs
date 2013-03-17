@@ -74,7 +74,14 @@ public class LSMMetadata {
         }
         String trackId = parts[1];
         for(Track track : tracks) {
-            String thisTrackId = track.getName().replaceAll("rack", "");
+            String thisTrackId = track.getName().replaceAll("rack\\s*", "");
+            if (trackId.equals(thisTrackId)) {
+                return track;
+            }
+        }
+        // Couldn't find the track based on the track names.. let's try multiplex order instead
+        for(Track track : tracks) {
+            String thisTrackId = "T"+track.getMultiplexOrder();
             if (trackId.equals(thisTrackId)) {
                 return track;
             }
@@ -83,9 +90,10 @@ public class LSMMetadata {
     }
     
     public DetectionChannel getDetectionChannel(Channel channel) {
+        Track track = getTrack(channel);
+        if (track==null) return null;
         String parts[] = channel.getName().split("-");
         String chan = parts[0];
-        Track track = getTrack(channel);
         for(DetectionChannel detChannel : track.getDetectionChannels()) {
             if (detChannel.getName().equals(chan)) {
                 return detChannel;
@@ -98,6 +106,7 @@ public class LSMMetadata {
         String parts[] = channel.getName().split("-");
         String chan = parts[0];
         Track track = getTrack(channel);
+        if (track==null) return null;
         for(DataChannel dataChannel : track.getDataChannels()) {
             if (dataChannel.getName().equals(chan)) {
                 return dataChannel;
@@ -397,7 +406,7 @@ public class LSMMetadata {
 
     public static void main(String[] args) throws Exception {
 
-        File file = new File("testfiles/flpo2.json");
+        File file = new File("testfiles/flpo3.json");
         LSMMetadata zm = fromFile(file);
         
         int c = 0;

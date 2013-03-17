@@ -13,6 +13,7 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.Channel;
+import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.DetectionChannel;
 
 /**
  * File discovery service for sample processing results.
@@ -75,24 +76,33 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
                             logger.warn("  No JSON metadata file found for LSM: "+lsmStack.getName());
                             continue;
                         }
-                        
-                        File jsonFile = new File(jsonEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-                        LSMMetadata metadata = LSMMetadata.fromFile(jsonFile);
 
                         StringBuffer colors = new StringBuffer();
                         StringBuffer dyeNames = new StringBuffer();
-                        for(Channel channel : metadata.getChannels()) {
-                            if (colors.length()>0) colors.append(",");
-                            if (dyeNames.length()>0) dyeNames.append(",");
-                            colors.append(channel.getColor());
-                            dyeNames.append(metadata.getDetectionChannel(channel).getDyeName());
+                        File jsonFile = new File(jsonEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+                        
+                        try {
+                            LSMMetadata metadata = LSMMetadata.fromFile(jsonFile);
+                            for(Channel channel : metadata.getChannels()) {
+                                if (colors.length()>0) colors.append(",");
+                                if (dyeNames.length()>0) dyeNames.append(",");
+                                colors.append(channel.getColor());
+                                DetectionChannel detection = metadata.getDetectionChannel(channel);
+                                if (detection!=null) {
+                                    dyeNames.append(detection.getDyeName());
+                                }
+                            }
+                        }
+                        catch (Exception e) {
+                            throw new Exception("Error parsing LSM metadata file: "+jsonFile);
                         }
                         
                         logger.info("  Setting colors: "+colors);
-                        logger.info("  Setting dyes: "+dyeNames);
-                        
                         lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS, colors.toString());
-                        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES, dyeNames.toString());
+                        if (dyeNames.length()>0) {
+                            logger.info("  Setting dyes: "+dyeNames);
+                            lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES, dyeNames.toString());
+                        }
                         entityBean.saveOrUpdateEntity(lsmStack);
                     }
                 }
