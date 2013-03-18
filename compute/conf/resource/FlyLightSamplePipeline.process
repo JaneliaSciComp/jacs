@@ -13,6 +13,8 @@
         <input name="ALIGNMENT_ALGORITHM_PARAMS"/>
         <input name="ANALYSIS_ALGORITHMS"/>
         <input name="PIPELINE_PROCESS"/>
+        <input name="CHANNEL_DYE_SPEC"/>
+        <input name="OUTPUT_CHANNEL_ORDER"/>
         <input name="REUSE_PROCESSING"/>
         
         <!-- Import variables from the task if any were not passed in as input parameters above -->
@@ -55,16 +57,6 @@
 	        <output name="PIPELINE_PROCESS"/>
 	        <output name="REUSE_PROCESSING"/>
 	    </operation>
-        
-        <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
-        <operation name="Get Sample Attributes" processor="org.janelia.it.jacs.compute.service.entity.sample.InitSampleAttributesService">
-            <input name="SAMPLE_ENTITY_ID"/>
-            <output name="SAMPLE_CHANNEL_SPEC"/>
-            <output name="IMAGE_CHANNEL_SPEC"/>
-            <output name="SIGNAL_CHANNELS"/>
-            <output name="REFERENCE_CHANNEL"/>
-            <output name="SAMPLE_AREA"/>
-        </operation>
     
         <!-- Create the pipeline run entity -->
         <operation name="Create Pipeline Run Entity" processor="org.janelia.it.jacs.compute.service.entity.sample.CreatePipelineRunEntityService">
@@ -72,6 +64,12 @@
             <input name="PIPELINE_NAME"/>
             <input name="PIPELINE_PROCESS"/>
             <output name="PIPELINE_RUN_ENTITY_ID"/>
+        </operation>
+        
+        <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
+        <operation name="Get Sample Attributes" processor="org.janelia.it.jacs.compute.service.entity.sample.InitSampleAttributesService">
+            <input name="SAMPLE_ENTITY_ID"/>
+            <output name="SAMPLE_AREA"/>
         </operation>
 		
         <sequence forEach="SAMPLE_AREA">
@@ -170,7 +168,7 @@
         	        </sequence>
         		
                 </sequence>
-            	
+                
         	    <!-- Asynchronously create the metadata describing the input LSM files -->
                 <sequence name="Create Lsm Metadata Files" waitForAsync="true">
         	        <operation name="Create Lsm Metadata Files" processor="queue/gridSubmitAndWait">
@@ -180,10 +178,11 @@
         	    		<input name="OUTPUT_FILE_NODE" value="$V{METADATA_RESULT_FILE_NODE}"/>
         	        </operation>
                 </sequence>
-        	        
+                
                 <!-- Run merging? -->
             	<sequence if="RUN_MERGE=true">
         		     
+        		    <!-- Despite this loop, currently this pipeline supports only a single merge algorithm at time. -->
                     <sequence forEach="MERGE_ALGORITHM">
                     
             		    <!-- Merge all the LSM pairs in parallel -->
@@ -200,20 +199,20 @@
         		
                 </sequence>
                 
-                <!-- Else -->
-                <sequence if="RUN_MERGE=false">
-                     
-                    <!-- Convert the image to the sample image format, with reference channel at the end -->
-                    <sequence name="Convert to sample image" waitForAsync="true">
-                        <operation name="Convert to sample image" processor="queue/gridSubmitAndWait">
-                            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DConvertToSampleImageService"/>
-                            <input name="RESULT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
-                            <input name="BULK_MERGE_PARAMETERS"/>
-                            <input name="SAMPLE_CHANNEL_SPEC"/>
-                            <input name="IMAGE_CHANNEL_SPEC"/>
-                        </operation>
-                    </sequence>
-                
+                <!-- Rearrange the channels on each tile so that they are in the correct output format -->
+                <sequence name="Convert to sample image" waitForAsync="true">
+                    <operation name="Convert to sample image" processor="queue/gridSubmitAndWait">
+                        <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DConvertToSampleImageService"/>
+                        <input name="RESULT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
+                        <input name="BULK_MERGE_PARAMETERS"/>
+                        <input name="METADATA_RESULT_FILE_NODE"/>
+                        <input name="RUN_MERGE"/>
+                        <input name="SAMPLE_ENTITY_ID"/>
+                        <input name="CHANNEL_DYE_SPEC"/>
+                        <input name="OUTPUT_CHANNEL_ORDER"/>
+                        <output name="SIGNAL_CHANNELS"/>
+                        <output name="REFERENCE_CHANNEL"/>
+                    </operation>
                 </sequence>
             	
             	<sequence if="COPY_FROM_ARCHIVE=true">
@@ -264,7 +263,7 @@
         			</operation>
         				
                 </sequence>
-                
+                    
         	    <!-- Generate MIP for the stitched file -->
                 <sequence name="Generate sample MIPs" waitForAsync="true">
         	        <operation name="Generate MIPs" processor="queue/gridSubmitAndWait">

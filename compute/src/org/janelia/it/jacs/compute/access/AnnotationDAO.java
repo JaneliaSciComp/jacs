@@ -2402,19 +2402,25 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
      */
     public Entity getAncestorWithType(String subjectKey, Long entityId, String type) throws DaoException {
 
-    	if (_logger.isDebugEnabled()) {
-    		_logger.debug("getAncestorWithType(entity.getId()="+entityId+",type="+type+")");
-    	}
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("getAncestorWithType(entity.getId()="+entityId+",type="+type+")");
+        }
+        
+    	return getAncestorWithType(subjectKey, entityId, type, true);
+    }
+    
+    private Entity getAncestorWithType(String subjectKey, Long entityId, String type, boolean start) throws DaoException {
 
-    	Entity entity = getEntityById(entityId);
-    	if (entity.getEntityType().getName().equals(type)) return entity;
-    	
-    	for(Entity parent : getParentEntities(subjectKey, entityId)) {
-    		Entity ancestor = getAncestorWithType(subjectKey, parent.getId(), type);
-    		if (ancestor != null) return ancestor;
-    	}
-    	
-    	return null;
+        Entity entity = getEntityById(entityId);
+        // Do not return the starting node as the ancestor, even if type matches
+        if (!start && entity.getEntityType().getName().equals(type)) return entity;
+        
+        for(Entity parent : getParentEntities(subjectKey, entityId)) {
+            Entity ancestor = getAncestorWithType(subjectKey, parent.getId(), type, false);
+            if (ancestor != null) return ancestor;
+        }
+        
+        return null;
     }
 
     public List<List<Entity>> getEntityPathsToRoots(String subjectKey, Long entityId) throws DaoException {

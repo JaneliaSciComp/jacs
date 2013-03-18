@@ -30,8 +30,8 @@ public class Vaa3DBulkIntersectionService extends SubmitDrmaaJobService {
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
 	private static final int START_DISPLAY_PORT = 890;
     private static final String CONFIG_PREFIX = "intersectConfiguration.";
-    private static int randomPort;
     
+    private int randomPort;
     private int intersectionMethod;
     private int kernelSize;
     

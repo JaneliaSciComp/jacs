@@ -2,7 +2,9 @@
 	<sequence>
 	    
 	    <input name="PIPELINE_PROCESS"/>
-	    
+	    <input name="CHANNEL_DYE_SPEC_63X"/>
+        <input name="OUTPUT_CHANNEL_ORDER_63X"/>
+            
         <!-- Import variables from the task -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="TASK_PARAMETER_1" value="sample entity id"/>
@@ -42,6 +44,8 @@
                     <input name="ALIGNMENT_ALGORITHM_PARAMS" value=""/>
                     <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
                     <input name="PIPELINE_PROCESS"/>
+                    <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_63X}"/>
+                    <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_63X}"/>
                 </include>
                 
             </sequence>

@@ -166,7 +166,7 @@ public class InitSampleProcessingParametersService extends AbstractEntityService
                 archived = true;
             }
             
-            mergedLsmPairs.add(new MergedLsmPair(lsmRealPath1, lsmRealPath2, mergedFile.getAbsolutePath()));
+            mergedLsmPairs.add(new MergedLsmPair(lsmRealPath1, lsmRealPath2, mergedFile.getAbsolutePath(), tileEntity.getName()));
         }
 
         return archived;

@@ -94,7 +94,7 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
                             }
                         }
                         catch (Exception e) {
-                            throw new Exception("Error parsing LSM metadata file: "+jsonFile);
+                            throw new Exception("Error parsing LSM metadata file: "+jsonFile,e);
                         }
                         
                         logger.info("  Setting colors: "+colors);

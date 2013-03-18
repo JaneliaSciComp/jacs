@@ -18,12 +18,8 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  */
 public class InitSampleAttributesService extends AbstractEntityService {
 
-	private static final String DEFAULT_CHANNEL_SPEC = "sssr";
-	
     public void execute() throws Exception {
-        	
-        SampleHelper sampleHelper = new SampleHelper(entityBean, computeBean, ownerKey, logger);
-        
+        	        
     	String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
     	if (sampleEntityId == null || "".equals(sampleEntityId)) {
     		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
@@ -77,50 +73,5 @@ public class InitSampleAttributesService extends AbstractEntityService {
 
         logger.info("Putting "+areaMap.values().size()+" values in SAMPLE_AREA");
         processData.putItem("SAMPLE_AREA", new ArrayList<AnatomicalArea>(areaMap.values()));
-        
-    	String chanSpec = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-    	if (chanSpec==null) {
-    		chanSpec = DEFAULT_CHANNEL_SPEC;
-    		logger.warn("Channel specification for sample is not specified. Assuming "+chanSpec);
-    	}
-    	else {
-    		logger.info("Channel specification for sample "+sampleEntityId+" is "+chanSpec);	
-    	}
-    	
-    	StringBuffer signalChannels = new StringBuffer();
-    	StringBuffer referenceChannels = new StringBuffer();
-    	
-    	for(int i=0; i<chanSpec.length(); i++) {
-    		char chanCode = chanSpec.charAt(i);
-    		switch (chanCode) {
-    		case 's':
-    			if (signalChannels.length()>0) signalChannels.append(" ");
-    			signalChannels.append(i+"");
-    			break;
-    		case 'r':
-    			if (referenceChannels.length()>0) referenceChannels.append(" ");
-    			referenceChannels.append(i+"");
-    			break;
-    		default:
-    			logger.warn("Unknown channel code: "+chanCode);
-    			break;
-    		}
-    	}
-
-
-    	String consensusChanSpec = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-
-        if (chanSpec!=null) {
-            logger.info("Putting '"+chanSpec+"' in SAMPLE_CHANNEL_SPEC");
-            processData.putItem("SAMPLE_CHANNEL_SPEC", chanSpec);
-        }
-        if (consensusChanSpec!=null) {
-            logger.info("Putting '"+consensusChanSpec+"' in IMAGE_CHANNEL_SPEC");
-            processData.putItem("IMAGE_CHANNEL_SPEC", consensusChanSpec);
-        }
-    	logger.info("Putting '"+signalChannels+"' in SIGNAL_CHANNELS");
-    	processData.putItem("SIGNAL_CHANNELS", signalChannels.toString());
-    	logger.info("Putting '"+referenceChannels+"' in REFERENCE_CHANNEL");
-    	processData.putItem("REFERENCE_CHANNEL", referenceChannels.toString());
     }
 }

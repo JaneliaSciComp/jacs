@@ -29,7 +29,8 @@ public class Vaa3DBulkMergeService extends SubmitDrmaaJobService {
     
     private int randomPort;
     private String multiscanblendVersion = "";
-    
+
+    @Override
     protected void init(IProcessData processData) throws Exception {
     	super.init(processData);
     }
