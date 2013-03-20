@@ -276,7 +276,15 @@
     <subclass name="org.janelia.it.jacs.model.tasks.fileDiscovery.FileTreeLoaderPipelineTask" extends="org.janelia.it.jacs.model.tasks.Task"
               discriminator-value="fileTreeLoaderPipelineTask">
     </subclass>
-    
+
+    <subclass name="org.janelia.it.jacs.model.tasks.cellCounting.CellCountingTask" extends="org.janelia.it.jacs.model.tasks.Task"
+              discriminator-value="cellCountingTask">
+    </subclass>
+
+    <subclass name="org.janelia.it.jacs.model.tasks.maskSearch.MaskSearchTask" extends="org.janelia.it.jacs.model.tasks.Task"
+              discriminator-value="maskSearchTask">
+    </subclass>
+
     <subclass name="org.janelia.it.jacs.model.tasks.utility.GenericTask" extends="org.janelia.it.jacs.model.tasks.Task"
               discriminator-value="genericTask">
     </subclass>

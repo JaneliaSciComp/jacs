@@ -3,6 +3,7 @@ package org.janelia.it.jacs.model.tasks.search;
 
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.search.SearchResultNode;
 import org.janelia.it.jacs.model.vo.MultiSelectVO;
@@ -44,6 +45,7 @@ public class SearchTask extends Task {
     transient public static final String TOPIC_GENOME   = "genome";
     transient public static final String TOPIC_NCGENE   = "ncgene";
     transient public static final String TOPIC_ENTITIES = "entities";
+    transient public static final String TOPIC_MASK     = "mask";
 
     // Parameter Keys
     transient public static final String PARAM_searchString = "searchString";
@@ -60,8 +62,24 @@ public class SearchTask extends Task {
 //            TOPIC_PROJECT,
 //            TOPIC_SAMPLE,
 //            TOPIC_WEBSITE
-        TOPIC_ENTITIES
+            TOPIC_ENTITIES,
+            TOPIC_MASK
     };
+
+    public SearchTask() {
+        super();
+        setTaskName("String Search");
+    }
+
+    public SearchTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet,
+                      String taskName) {
+        super(inputNodes, owner, events, taskParameterSet);
+        setTaskName(taskName);
+    }
+
+    public String getDisplayName() {
+        return "Search Task";
+    }
 
     public static String matchFlagsToString(int matchFlags) {
         String stringifiedMatchFlags = "any";
@@ -72,15 +90,6 @@ public class SearchTask extends Task {
             stringifiedMatchFlags = "phrase";
         }
         return stringifiedMatchFlags;
-    }
-
-    public SearchTask() {
-        super();
-        setTaskName("String Search");
-    }
-
-    public String getDisplayName() {
-        return "Search Task";
     }
 
     public ParameterVO getParameterVO(String key) throws ParameterException {
