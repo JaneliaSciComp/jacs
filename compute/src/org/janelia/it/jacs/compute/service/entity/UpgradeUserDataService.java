@@ -117,8 +117,10 @@ public class UpgradeUserDataService extends AbstractEntityService {
         for(Entity entity : entityBean.getEntitiesByTypeName(EntityConstants.TYPE_SAMPLE)) {
             // This is intentionally not loaded into the looped entity because we would run out of memory
             Entity sample = entityBean.getEntityTree(entity.getId());
-            logger.info("Processing sample "+sample.getName()+" ("+sample.getOwnerKey()+")");
-            processSample(sample);
+            if (sample!=null) { 
+                logger.info("Processing sample "+sample.getName()+" ("+sample.getOwnerKey()+")");
+                processSample(sample);
+            }
         }
     }
 
