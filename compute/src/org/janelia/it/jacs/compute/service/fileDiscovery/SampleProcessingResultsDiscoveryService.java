@@ -11,6 +11,7 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.Channel;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.DetectionChannel;
@@ -37,8 +38,13 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
 
         super.processFolderForData(sampleProcessingResult);
 
+        String channelSpec = (String)processData.getItem("CHANNEL_SPEC");
+        if (StringUtils.isEmpty(channelSpec)) {
+            throw new IllegalArgumentException("CHANNEL_SPEC may not be null");
+        }
+        
         String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
-        if (sampleEntityId == null || "".equals(sampleEntityId)) {
+        if (StringUtils.isEmpty(sampleEntityId)) {
             throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
         }
         
@@ -55,6 +61,10 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
                 String stub = resultItem.getName().replaceFirst("\\.json", "");
                 jsonEntityMap.put(stub, resultItem);
                 logger.info("Found JSON metadata file: "+resultItem.getName());
+            }
+            else if (resultItem.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_3D)) {
+                logger.info("Setting channel specification for "+resultItem.getName()+" (id="+resultItem.getId()+") to "+channelSpec);
+                helper.setChannelSpec(resultItem, channelSpec);
             }
         }
 

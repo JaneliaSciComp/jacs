@@ -10,6 +10,8 @@
 		<input name="RESULT_ENTITY_NAME"/>
 		<input name="SIGNAL_CHANNELS"/>
 		<input name="REFERENCE_CHANNEL"/>
+        <input name="OPTICAL_RESOLUTION"/>
+        <input name="PIXEL_RESOLUTION"/>
 		
 	    <!-- Create a sample result node, with nested result nodes for all the pipeline steps -->
 	    <operation name="Create Sample Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateSeparationResultFileNodeService">
@@ -58,6 +60,8 @@
 			<input name="ROOT_FILE_NODE" value="$V{SEPARATE_RESULT_FILE_NODE}"/>
 			<input name="ROOT_ENTITY_ID"/>
 			<input name="RESULT_ENTITY_NAME"/>
+            <input name="OPTICAL_RESOLUTION"/>
+            <input name="PIXEL_RESOLUTION"/>
 	    </operation>
 	    
 	    <!-- Copy LSM metadata files -->

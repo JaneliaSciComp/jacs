@@ -8,8 +8,8 @@
 		<input name="SAMPLE_ENTITY_ID"/>
         <input name="PARAMETERIZED_ALIGNMENT_ALGORITHM"/>
 		<input name="SAMPLE_AREAS"/>
-		<input name="SIGNAL_CHANNELS"/>
-		<input name="REFERENCE_CHANNEL"/>
+        <input name="RUN_ANALYSIS"/>
+        <input name="ANALYSIS_ALGORITHM"/>
 
 	    <!-- Create a alignment result node, with nested result nodes for all the pipeline steps -->
 	    <operation name="Create Alignment Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateAlignmentResultFileNodeService">
@@ -20,17 +20,11 @@
                 
 	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
 	    <operation name="Init Alignment Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitAlignmentParametersService">
-			<input name="SAMPLE_ENTITY_ID"/>
-			<input name="SAMPLE_AREAS"/>
 			<input name="PARAMETERIZED_ALIGNMENT_ALGORITHM"/>
 			<output name="ALIGNMENT_SERVICE_CLASS"/>
 			<output name="ALIGNMENT_SCRIPT_NAME"/>
 			<output name="ALIGNMENT_RESULT_NAME"/>
 			<output name="ALIGNMENT_TILE_NAME"/>
-			<output name="INPUT_FILENAME"/>
-			<output name="OPTICAL_RESOLUTION"/>
-			<output name="MOUNTING_PROTOCOL"/>
-			<output name="GENDER"/>
 		</operation>
 	    
    	    <!-- Align the sample -->
@@ -38,15 +32,12 @@
 	        <operation name="Align" processor="queue/gridSubmitAndWait">
 	            <input name="iservice" value="$V{ALIGNMENT_SERVICE_CLASS}"/>
 	    		<input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
+	    		<input name="ALIGNMENT_SCRIPT_NAME"/>
+	    		<input name="SAMPLE_ENTITY_ID"/>
 	    		<input name="SAMPLE_AREAS"/>
-				<input name="INPUT_FILENAME"/>
-				<input name="ALIGNMENT_TILE_NAME"/>
-				<input name="ALIGNMENT_SCRIPT_NAME"/>
-				<input name="OPTICAL_RESOLUTION"/>
-				<input name="SIGNAL_CHANNELS"/>
-				<input name="REFERENCE_CHANNEL"/>
-                <input name="MOUNTING_PROTOCOL"/>
-                <input name="GENDER"/>
+                <output name="CHANNEL_SPEC"/>
+                <output name="SIGNAL_CHANNELS"/>
+                <output name="REFERENCE_CHANNEL"/>
 				<output name="ALIGNED_FILENAME"/>
 				<output name="ALIGNED_FILENAMES"/>
 	        </operation>
@@ -68,6 +59,7 @@
             <input name="ROOT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
             <input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
             <input name="RESULT_ENTITY_NAME" value="$V{ALIGNMENT_RESULT_NAME}"/>
+            <input name="CHANNEL_SPEC"/>
             <output name="RESULT_ENTITY_ID"/>
         </operation>
         
@@ -89,6 +81,8 @@
                     <input name="RESULT_ENTITY_ID"/>
                     <output name="OUTPUT_FILENAME"/>
                     <output name="ANALYSIS_PIPELINE_NAME"/>
+                    <output name="OPTICAL_RESOLUTION"/>
+                    <output name="PIXEL_RESOLUTION"/>
                 </operation>
                 
                 <!-- Run neuron separation on prealigned data -->
@@ -99,6 +93,8 @@
                     <input name="RESULT_ENTITY_NAME" value="Neuron Separation"/>
                     <input name="SIGNAL_CHANNELS"/>
                     <input name="REFERENCE_CHANNEL"/>
+                    <input name="OPTICAL_RESOLUTION"/>
+                    <input name="PIXEL_RESOLUTION"/>
                 </include>
     
             </sequence>

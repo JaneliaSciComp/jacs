@@ -5,6 +5,7 @@ import java.util.*;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.service.entity.EntityHelper;
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -17,9 +18,16 @@ import org.janelia.it.jacs.model.entity.EntityType;
  */
 public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDiscoveryService {
 	
+    private String opticalRes;
+    private String pixelRes;
+    
 	@Override
     public void execute(IProcessData processData) throws ServiceException {
     	processData.putItem("RESULT_ENTITY_TYPE", EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
+
+        this.opticalRes = (String)processData.getItem("OPTICAL_RESOLUTION");
+        this.pixelRes = (String)processData.getItem("PIXEL_RESOLUTION");
+        
     	super.execute(processData);
     }
     
@@ -39,6 +47,12 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
             logger.info("Cannot read from folder "+dir.getAbsolutePath());
             return;
         }
+        
+        EntityHelper entityHelper = new EntityHelper(entityBean, computeBean, ownerKey, logger);
+        entityHelper.setOpticalResolution(separationEntity, opticalRes);
+        logger.info("Set optical resolution to "+opticalRes+" on "+separationEntity.getName());
+        entityHelper.setPixelResolution(separationEntity, pixelRes);
+        logger.info("Set pixel resolution to "+opticalRes+" on "+separationEntity.getName());
         
         processSeparationFolder(separationEntity, dir);
     }

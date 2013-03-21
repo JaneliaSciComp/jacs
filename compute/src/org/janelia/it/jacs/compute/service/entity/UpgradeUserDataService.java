@@ -56,14 +56,13 @@ public class UpgradeUserDataService extends AbstractEntityService {
 
         entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_RESULT, EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE);
         
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, EntityConstants.ATTRIBUTE_INPUT);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, EntityConstants.ATTRIBUTE_SOURCE);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, EntityConstants.ATTRIBUTE_MASK_ENTITY_COLLECTION);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
 
         entityBean.createNewEntityAttr(EntityConstants.TYPE_IMAGE_3D, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_IMAGE_3D, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_IMAGE_3D, EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_IMAGE_3D, EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_IMAGE_3D, EntityConstants.ATTRIBUTE_CHANNEL_COLORS);
         
@@ -125,7 +124,7 @@ public class UpgradeUserDataService extends AbstractEntityService {
 
     /**
      * For one sample:
-     *    - Set alignment space 
+     *    - Set alignment space for the alignment result
      *    - Set optical format for each alignment result
      *    - Set optical format for each aligned neuron separation
      */
@@ -237,11 +236,13 @@ public class UpgradeUserDataService extends AbstractEntityService {
     }
 
     public void setOpticalResolution(Entity entity, String opticalRes) throws Exception {
+        if (entity==null) return;
         entityHelper.setOpticalResolution(entity, opticalRes);
         logger.info("Set optical resolution to "+opticalRes+" on "+entity.getName());
     }
 
     public void setPixelResolution(Entity entity, String pixelRes) throws Exception {
+        if (entity==null) return;
         entityHelper.setPixelResolution(entity, pixelRes);
         logger.info("Set pixel resolution to "+pixelRes+" on "+entity.getName());
     }

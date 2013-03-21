@@ -210,6 +210,7 @@
                         <input name="SAMPLE_ENTITY_ID"/>
                         <input name="CHANNEL_DYE_SPEC"/>
                         <input name="OUTPUT_CHANNEL_ORDER"/>
+                        <output name="CHANNEL_SPEC"/>
                         <output name="SIGNAL_CHANNELS"/>
                         <output name="REFERENCE_CHANNEL"/>
                     </operation>
@@ -288,6 +289,7 @@
         			<input name="RESULT_ENTITY_TYPE" value="Sample Processing Result"/>
         			<input name="RESULT_ENTITY_NAME" value="$V{SAMPLE_PROCESSING_RESULTS_NAME}"/>
         			<input name="SAMPLE_ENTITY_ID"/>
+        			<input name="CHANNEL_SPEC"/>
         			<output name="RESULT_ENTITY_ID"/>
         			<output name="RESULT_ENTITY"/>
         	    </operation>
@@ -355,10 +357,10 @@
                     <include name="Brain Alignment" process="FlyLightAlignmentPipeline">
                         <input name="PIPELINE_RUN_ENTITY_ID"/>
                         <input name="SAMPLE_ENTITY_ID"/>
-                        <input name="PARAMETERIZED_ALIGNMENT_ALGORITHM"/>
-                        <input name="SIGNAL_CHANNELS"/>
-                        <input name="REFERENCE_CHANNEL"/>
                         <input name="SAMPLE_AREAS" value="$V{SAMPLE_AREA}"/>
+                        <input name="PARAMETERIZED_ALIGNMENT_ALGORITHM"/>
+                        <input name="RUN_ANALYSIS"/>
+                        <input name="ANALYSIS_ALGORITHM"/>
                     </include>
                     
                 </sequence>

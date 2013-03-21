@@ -3,6 +3,8 @@ package org.janelia.it.jacs.compute.service.align;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -37,5 +39,19 @@ public abstract class LegacyAlignmentService extends AbstractAlignmentService {
     	}
     	
     	return 24;
+    }
+
+
+    @Override
+    public void postProcess() throws MissingDataException {
+
+        super.postProcess();
+        
+        outputFile = new File(resultFileNode.getDirectoryPath(),"Aligned.v3draw");
+        processData.putItem("ALIGNED_FILENAME", outputFile.getAbsolutePath());
+        
+        List<String> filenames = new ArrayList<String>();
+        filenames.add(outputFile.getAbsolutePath());
+        processData.putItem("ALIGNED_FILENAMES", filenames);
     }
 }

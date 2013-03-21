@@ -9,6 +9,7 @@ import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -30,6 +31,8 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 	protected static final String PUBLIC_DATA_SET_FOLDER_NAME = "Public Data Sets";
     
 	protected FileDiscoveryHelper fileHelper;
+	protected SampleHelper sampleHelper;
+	
 	protected Map<String,Entity> dataSetFolderByIdentifier = new HashMap<String,Entity>();
 	protected Map<String,Entity> dataSetEntityByIdentifier = new HashMap<String,Entity>();
     
@@ -43,6 +46,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     public void execute() throws Exception {
         
         this.fileHelper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
+        this.sampleHelper = new SampleHelper(entityBean, computeBean, ownerKey, logger);
         
         // Clear "visited" flags on all our Samples
         logger.info("Clearing visitation flags...");
@@ -299,7 +303,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             
             // Figure out the number of channels that should be in the final merged/stitched sample
             int sampleNumSignals = getNumSignalChannels(tileGroupList);
-            String sampleChannelSpec = getChanSpec(sampleNumSignals);
+            String sampleChannelSpec = sampleHelper.getDefaultChanSpec(sampleNumSignals);
             logger.debug("  Sample has "+sampleNumSignals+" signal channels, and thus specification '"+sampleChannelSpec+"'");
             
             // Find the sample, if it exists, or create a new one.
@@ -766,15 +770,6 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         
         return folder;
     }
-
-	protected String getChanSpec(int numSignals) {
-		StringBuilder buf = new StringBuilder();
-		for(int j=0; j<numSignals; j++) {
-			buf.append("s");
-		}
-		buf.append("r");
-		return buf.toString();
-	}
     
     protected class SlideImage {
     	Long sageId;

@@ -11,7 +11,6 @@ import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
-import org.janelia.it.jacs.model.entity.cv.MergeAlgorithm;
 import org.janelia.it.jacs.model.user_data.FileNode;
 
 /**
@@ -44,9 +43,14 @@ public class Vaa3DBulkMergeService extends SubmitDrmaaJobService {
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
         
         String mergeAlgorithm = (String)processData.getItem("MERGE_ALGORITHM");
-        if (MergeAlgorithm.FLYLIGHT_ORDERED.getName().equals(mergeAlgorithm)) {
+        
+        logger.info("Using merge algorithm: "+mergeAlgorithm);
+        
+        if ("FLYLIGHT_ORDERED".equals(mergeAlgorithm)) {
             multiscanblendVersion = "2";
         }
+        
+        logger.info("Using multiscanblendVersion: "+multiscanblendVersion);
         
         Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
         

@@ -28,17 +28,17 @@ public class CentralBrainAlignmentService extends LegacyAlignmentService {
 
         logger.info("Starting "+getClass().getName()+" with taskId=" + task.getObjectId() + 
         		" resultNodeId=" + resultFileNode.getObjectId() + " resultDir=" + resultFileNode.getDirectoryPath() +
-        		" workingDir="+alignFileNode.getDirectoryPath() + " inputFilename="+inputFilename);
+        		" workingDir="+resultFileNode.getDirectoryPath() + " inputFilename="+inputFilename);
 
         StringBuffer script = new StringBuffer();
         script.append(Vaa3DHelper.getVaa3dLibrarySetupCmd()+"\n");
-        script.append("cd " + alignFileNode.getDirectoryPath() + "\n " + 
+        script.append("cd " + resultFileNode.getDirectoryPath() + "\n " + 
         	PERL_EXE + " " + EXECUTABLE_DIR + ALIGNER_SCRIPT_CMD +
             " -v " +  Vaa3DHelper.getVaa3dExecutableCmd() +
             " -b " +  EXECUTABLE_DIR + ALIGNER_EXE_PATH +
             " -l " +  EXECUTABLE_DIR + LOBESEG_EXE_PATH +
             " -t " +  EXECUTABLE_DIR + TEMPLATE_DIR +
-            " -w " +  alignFileNode.getDirectoryPath() +
+            " -w " +  resultFileNode.getDirectoryPath() +
             " -i " +  inputFilename + 
         	" -r \"" + opticalResolution + "\"" +
         	" -c " +  refChannel + "\n");

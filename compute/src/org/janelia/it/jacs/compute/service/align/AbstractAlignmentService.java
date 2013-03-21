@@ -4,21 +4,40 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
+import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
+import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
+import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
+import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.vo.ParameterException;
 
 /**
- * Run the original central brain aligner from Hanchuan. Also serves as the base class for future alignment algorithms.
- * 
+ * Base class for all alignment algorithms. Parameters:
+ *   ALIGN_RESULT_FILE_NODE - the node for grid calculations
+ *   OUTPUT_FILE_NODE - the node where the output should finally go
+ *   SAMPLE_ENTITY_ID - the id of the sample to be aligned
+ *   SAMPLE_AREAS - the sample areas within the sample
+ *  
+ * Outputs:
+ *   ALIGNED_FILENAMES - a list of all of the aligned output files
+ *   ALIGNED_FILENAME - the main aligned output file
+ *   CHANNEL_SPEC - the channel specification for the main aligned output file
+ *   SIGNAL_CHANNELS - the signal channels for the main aligned output file
+ *   REFERENCE_CHANNEL - the reference channels for the main aligned output file
+ *  
+ *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
@@ -28,80 +47,122 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
 
     protected static final String EXECUTABLE_DIR = SystemConfigurationProperties.getString("Executables.ModuleBase");
 
-    protected FileNode outputFileNode;
-    protected FileNode alignFileNode;
-    protected File outputFile;
+    protected EntityBeanLocal entityBean;
+    protected ComputeBeanLocal computeBean;
+    protected String ownerKey;
+    protected SampleHelper sampleHelper;
+    protected EntityBeanEntityLoader entityLoader;
+    
+    protected Entity sampleEntity;
+    protected String alignedArea;
     protected String inputFilename;
-    protected String vncFilename;
+    protected String channelSpec;
     protected String opticalResolution;
-    protected String refChannel;
+    protected String gender;
+    protected Integer refChannel;
+    protected Integer refChannelOneIndexed;
+    protected File outputFile;
     
     @Override
     protected String getGridServicePrefixName() {
         return "align";
     }
-
+    
+    @Override
     protected void init(IProcessData processData) throws Exception {
     	super.init(processData);
-
-        outputFileNode = (FileNode)processData.getItem("OUTPUT_FILE_NODE");
-        if (outputFileNode==null) {
-        	outputFileNode = resultFileNode;
-        }
-
-        alignFileNode = (FileNode)processData.getItem("ALIGN_RESULT_FILE_NODE");
-        if (alignFileNode==null) {
-        	alignFileNode = resultFileNode;
-        }
-
-        inputFilename = (String)processData.getItem("INPUT_FILENAME");
-
-        List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>)processData.getItem("SAMPLE_AREAS");
-        if (sampleAreas!=null && sampleAreas.size()>1) {
+    	try {
+            this.entityBean = EJBFactory.getLocalEntityBean();
+            this.computeBean = EJBFactory.getLocalComputeBean();
+            String ownerName = ProcessDataHelper.getTask(processData).getOwner();
+            Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
+            this.ownerKey = subject.getKey();
+            this.sampleHelper = new SampleHelper(entityBean, computeBean, ownerKey, logger);
+            this.entityLoader = new EntityBeanEntityLoader(entityBean);
+            
+            String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
+            if (sampleEntityId == null || "".equals(sampleEntityId)) {
+                throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
+            }
+            
+            this.sampleEntity = entityBean.getEntityById(sampleEntityId);
+            if (sampleEntity == null) {
+                throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
+            }
+            
+            List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>)processData.getItem("SAMPLE_AREAS");
+            if (sampleAreas == null) {
+                throw new IllegalArgumentException("SAMPLE_AREAS may not be null");
+            }
+            
+            // The naive implementation tries to find the default brain area to align. Subclasses may have a different
+            // strategy for finding input files and other parameters.
+            
             for(AnatomicalArea anatomicalArea : sampleAreas) {
                 String areaName = anatomicalArea.getName();
-                String filename = anatomicalArea.getSampleProcessingResultFilename();
-                if ("VNC".equalsIgnoreCase(areaName)) {
-                    vncFilename  = filename;
-                }
-                else if ("Brain".equalsIgnoreCase(areaName)) {
-                    inputFilename = filename;    
-                }
-                else {
-                    logger.warn("Unrecognized sample area: "+areaName);
+                if ("Brain".equalsIgnoreCase(areaName) || "".equals(areaName)) {
+                    Entity result = entityBean.getEntityById(anatomicalArea.getSampleProcessingResultId());
+                    entityLoader.populateChildren(result);
+                    if (result!=null) {
+                        if (alignedArea!=null) {
+                            logger.warn("Found more than one default brain area to align. Using: "+alignedArea);
+                        }
+                        else {
+                            Entity image = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+                            this.alignedArea = areaName;    
+                            this.inputFilename = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                            this.channelSpec = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+                        }
+                    }
                 }
             }
+    
+            if (alignedArea!=null) {
+                logger.info("Found sample area to align: "+alignedArea);
+                logger.info("  Input filename: "+inputFilename);
+                logger.info("  Input channel spec: "+channelSpec);
+                
+                if (channelSpec.contains("r")) {
+                    this.refChannel = channelSpec.indexOf('r');
+                    this.refChannelOneIndexed = refChannel + 1;
+                    logger.info("  Reference channel: "+refChannel);
+                    logger.info("  Reference channel (one-indexed): "+refChannelOneIndexed);
+                    
+                    String signalChannels = sampleHelper.getSignalChannelIndexes(channelSpec);
+                    String referenceChannels = sampleHelper.getReferenceChannelIndexes(channelSpec);
+                    
+                    logger.info("Putting '"+channelSpec+"' in CHANNEL_SPEC");
+                    processData.putItem("CHANNEL_SPEC", channelSpec);
+                    logger.info("Putting '"+signalChannels+"' in SIGNAL_CHANNELS");
+                    processData.putItem("SIGNAL_CHANNELS", signalChannels);
+                    logger.info("Putting '"+referenceChannels+"' in REFERENCE_CHANNEL");
+                    processData.putItem("REFERENCE_CHANNEL", referenceChannels);
+                }
+            }
+            
+            this.gender = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_GENDER, alignedArea);
+            if (gender!=null) {
+                logger.info("Found gender consensus: "+gender);
+            }
+            
+            this.opticalResolution = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, alignedArea);
+            if (opticalResolution!=null) {
+                opticalResolution = opticalResolution.replaceAll("x", " ");
+                logger.info("Found optical resolution consensus: "+opticalResolution);
+            }
+        } 
+        catch (Exception e) {
+            throw new ServiceException(e);
         }
-        
-        if (inputFilename==null) {
-            throw new ServiceException("Input parameter INPUT_FILENAME may not be null");
-        }
-        
-        opticalResolution = (String)processData.getItem("OPTICAL_RESOLUTION");
-        if (opticalResolution==null) {
-        	logger.warn("Input parameter OPTICAL_RESOLUTION is null, assuming none.");
-        	opticalResolution = "";
-        }
-        else {
-        	opticalResolution = opticalResolution.replaceAll("x", " ");
-        }
-        
-        refChannel = (String)processData.getItem("REFERENCE_CHANNEL");
-        if (refChannel==null) {
-        	logger.warn("Input parameter REFERENCE_CHANNEL is null, assuming channel 3.");
-        	refChannel = "3";
-        }
-        
-        outputFile = new File(outputFileNode.getDirectoryPath(),"Aligned.v3draw");
-        processData.putItem("ALIGNED_FILENAME", outputFile.getAbsolutePath());
-        
-        List<String> filenames = new ArrayList<String>();
-        filenames.add(outputFile.getAbsolutePath());
-        processData.putItem("ALIGNED_FILENAMES", filenames);
     }
-
+    
     @Override
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
+        
+        if (inputFilename==null) {
+            throw new ServiceException("No input file was specified for alignment");
+        }
+        
         File configFile = new File(getSGEConfigurationDirectory() + File.separator + CONFIG_PREFIX + "1");
         boolean fileSuccess = configFile.createNewFile();
         if (!fileSuccess){
@@ -122,7 +183,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
     @Override
 	public void postProcess() throws MissingDataException {
 
-        File alignDir = new File(alignFileNode.getDirectoryPath());
+        File alignDir = new File(resultFileNode.getDirectoryPath());
     	File[] coreFiles = alignDir.listFiles(new FilenameFilter() {
 			@Override
 			public boolean accept(File dir, String name) {
@@ -131,7 +192,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
 		});
 
     	if (coreFiles.length > 0) {
-    		throw new MissingDataException("Brain alignment core dumped for "+alignFileNode.getDirectoryPath());
+    		throw new MissingDataException("Brain alignment core dumped for "+resultFileNode.getDirectoryPath());
     	}
 
     	if (!outputFile.exists()) {

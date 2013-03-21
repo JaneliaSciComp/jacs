@@ -6,7 +6,7 @@
             <input name="MERGE_ALGORITHMS" value="FLYLIGHT"/>
             <input name="STITCH_ALGORITHMS" value="FLYLIGHT"/>
             <input name="ALIGNMENT_ALGORITHMS" value="CONFIGURED"/>
-            <input name="ALIGNMENT_ALGORITHM_PARAMS" value="rightopticlobealign_512px_INT.sh"/>
+            <input name="ALIGNMENT_ALGORITHM_PARAMS" value="flyrightopticlobealign_512px_INT_MT.sh"/>
             <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
             <input name="PIPELINE_PROCESS" value="NernaRightOpticLobe"/>
         </include>

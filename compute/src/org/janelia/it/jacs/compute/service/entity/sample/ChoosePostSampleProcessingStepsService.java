@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.janelia.it.jacs.compute.service.align.ParameterizedAlignmentAlgorithm;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
-import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.cv.AlignmentAlgorithm;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.StringUtils;
@@ -18,15 +17,6 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
 public class ChoosePostSampleProcessingStepsService extends AbstractEntityService {
 
     public void execute() throws Exception {
-
-    	String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
-    	if (sampleEntityId == null || "".equals(sampleEntityId)) {
-    		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
-    	}
-    	Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
-    	if (sampleEntity == null) {
-    		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
-    	}
     	
     	String alignAlgorithms = (String)processData.getItem("ALIGNMENT_ALGORITHMS");
     	String alignAlgorithmParams = (String)processData.getItem("ALIGNMENT_ALGORITHM_PARAMS");
@@ -61,7 +51,7 @@ public class ChoosePostSampleProcessingStepsService extends AbstractEntityServic
 		processData.putItem("RUN_ALIGNMENT", new Boolean(runAlignment));
 		processData.putItem("RUN_ANALYSIS", new Boolean(runAnalysis));
 
-    	logger.info("Pipeline steps to execute for Sample "+sampleEntity.getName()+":");
+    	logger.info("Pipeline steps to execute:");
     	logger.info("    Alignment = "+runAlignment);
     	logger.info("    Analysis = "+runAnalysis);
     }

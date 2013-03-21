@@ -27,10 +27,10 @@ public class OpticLobeAlignmentService extends LegacyAlignmentService {
     @Override
     protected void init(IProcessData processData) throws Exception {
     	super.init(processData);
-    	tileName = (String)processData.getItem("ALIGNMENT_TILE_NAME");
-        if (tileName==null) {
-        	throw new ServiceException("Input parameter ALIGNMENT_TILE_NAME may not be null");
-        }
+    	
+        String[] parts = sampleEntity.getName().split("-");
+        this.tileName = parts[parts.length-1].replaceAll("_", " ");
+        processData.putItem("ALIGNMENT_TILE_NAME", tileName);
     }
     
     @Override
@@ -39,17 +39,17 @@ public class OpticLobeAlignmentService extends LegacyAlignmentService {
 
 		logger.info("Starting "+getClass().getName()+" with taskId=" + task.getObjectId() + " resultNodeId="
 				+ resultFileNode.getObjectId() + " resultDir=" + resultFileNode.getDirectoryPath() + " workingDir="
-				+ alignFileNode.getDirectoryPath() + " inputFilename=" + inputFilename);
+				+ resultFileNode.getDirectoryPath() + " inputFilename=" + inputFilename);
 
         StringBuffer script = new StringBuffer();
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix() + "\n");
         script.append(Vaa3DHelper.getVaa3dLibrarySetupCmd()+"\n");
-        script.append("cd " + alignFileNode.getDirectoryPath() + "\n ");
+        script.append("cd " + resultFileNode.getDirectoryPath() + "\n ");
         script.append(PERL_EXE + " " + EXECUTABLE_DIR + ALIGNER_SCRIPT_CMD +
             " -v " +  Vaa3DHelper.getVaa3dExecutableCmd() +
             " -b " +  EXECUTABLE_DIR + ALIGNER_EXE_PATH +
             " -t " +  EXECUTABLE_DIR + TEMPLATE_DIR +
-            " -w " +  alignFileNode.getDirectoryPath() +
+            " -w " +  resultFileNode.getDirectoryPath() +
             " -n \"" +  tileName + "\"" + 
             " -i \"" +  inputFilename + "\"" +
         	" -r \"" + opticalResolution + "\"" +

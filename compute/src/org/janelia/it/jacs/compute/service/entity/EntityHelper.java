@@ -275,6 +275,10 @@ public class EntityHelper {
         setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_BOUNDING_BOX, value);
     }
     
+    public void setChannelSpec(Entity entity, String value) throws Exception {
+        setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, value);
+    }
+    
     private void setAttributeIfNecessary(Entity entity, String attributeName, String value) throws Exception {
         if (entity==null || value==null) return;
         EntityData currEd = entity.getEntityDataByAttributeName(attributeName);

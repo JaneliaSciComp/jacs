@@ -12,7 +12,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  */
 public class Vaa3DHelper {
 
-    protected static final int STARTING_DISPLAY_PORT = 966;
+    protected static final int STARTING_DISPLAY_PORT = 5200;
 
     protected static final String VAA3D_BASE_CMD = "export LD_LIBRARY_PATH="+
             SystemConfigurationProperties.getString("VAA3D.LDLibraryPath")+":$LD_LIBRARY_PATH\n"+

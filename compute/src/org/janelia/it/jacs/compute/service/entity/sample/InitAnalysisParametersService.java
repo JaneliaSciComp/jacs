@@ -41,8 +41,21 @@ public class InitAnalysisParametersService extends AbstractEntityService {
     	}
     	
     	String filename = default3dImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-		
-    	logger.info("Putting '"+filename+"' in OUTPUT_FILENAME");
-    	processData.putItem("OUTPUT_FILENAME", filename);
+    	if (filename!=null) {
+            logger.info("Putting '"+filename+"' in OUTPUT_FILENAME");
+            processData.putItem("OUTPUT_FILENAME", filename);
+    	}
+        
+    	String opticalRes = default3dImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
+    	if (opticalRes!=null) {
+            logger.info("Putting '"+opticalRes+"' in OPTICAL_RESOLUTION");
+            processData.putItem("OPTICAL_RESOLUTION", opticalRes);
+    	}
+    	
+    	String pixelRes = default3dImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
+        if (pixelRes!=null) {
+            logger.info("Putting '"+pixelRes+"' in PIXEL_RESOLUTION");
+            processData.putItem("PIXEL_RESOLUTION", pixelRes);
+        }        
     }
 }

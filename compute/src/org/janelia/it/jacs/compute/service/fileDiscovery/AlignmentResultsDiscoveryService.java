@@ -11,9 +11,11 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
- * File discovery service for alignment results.
+ * File discovery service for alignment results. Reads .properties files and updates the discovered files
+ * with alignment properties. Also sets the channel specification for any found 3d images. 
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -33,6 +35,11 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
         }
 
         super.processFolderForData(alignmentResult);
+
+        String channelSpec = (String)processData.getItem("CHANNEL_SPEC");
+        if (StringUtils.isEmpty(channelSpec)) {
+            throw new IllegalArgumentException("CHANNEL_SPEC may not be null");
+        }
         
         Map<String,Entity> resultItemMap = new HashMap<String,Entity>();
         for(Entity resultItem : alignmentResult.getChildren()) {
@@ -42,42 +49,48 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
         String consensusAlignmentSpace = null;
         Entity supportingFiles = EntityUtils.getSupportingData(alignmentResult);
         
-        for(Entity textFile : EntityUtils.getChildrenOfType(supportingFiles, EntityConstants.TYPE_TEXT_FILE)) {
-            logger.info("Got text file: "+textFile.getName());
+        for(Entity resultItem : supportingFiles.getChildren()) {
             
-            if (textFile.getName().endsWith(".properties")) {
-                
-                logger.info("Got properties file: "+textFile.getName());
-                File propertiesFile = new File(textFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-                Properties properties = new Properties();
-                properties.load(new FileReader(propertiesFile));
-                
-                String filename = properties.getProperty("alignment.stack.filename");
-                Entity resultItem = resultItemMap.get(filename);
-                
-                if (resultItem==null) {
-                    logger.warn("Could not find result item with filename: "+filename);
-                    continue;
+            if (resultItem.getEntityType().getName().equals(EntityConstants.TYPE_TEXT_FILE)) {
+                logger.info("Got text file: "+resultItem.getName());    
+                if (resultItem.getName().endsWith(".properties")) {
+                    
+                    logger.info("Got properties file: "+resultItem.getName());
+                    File propertiesFile = new File(resultItem.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+                    Properties properties = new Properties();
+                    properties.load(new FileReader(propertiesFile));
+                    
+                    String filename = properties.getProperty("alignment.stack.filename");
+                    Entity entity = resultItemMap.get(filename);
+                    
+                    if (entity==null) {
+                        logger.warn("Could not find result item with filename: "+filename);
+                        continue;
+                    }
+                    
+                    String alignmentSpace = properties.getProperty("alignment.space.name");
+                    String opticalRes = properties.getProperty("alignment.resolution.voxels");
+                    String pixelRes = properties.getProperty("alignment.image.size");
+                    String boundingBox = properties.getProperty("alignment.bounding.box");
+                    String objective = properties.getProperty("alignment.objective");
+                    
+                    helper.setAlignmentSpace(entity, alignmentSpace);
+                    helper.setOpticalResolution(entity, opticalRes);
+                    helper.setPixelResolution(entity, pixelRes);
+                    helper.setBoundingBox(entity, boundingBox);
+                    helper.setObjective(entity, objective);
+                    
+                    if (consensusAlignmentSpace==null) {
+                        consensusAlignmentSpace = alignmentSpace;
+                    }
+                    else if (!consensusAlignmentSpace.equals(alignmentSpace)) {
+                        logger.warn("No consensus for alignment space: "+consensusAlignmentSpace+"!="+alignmentSpace);
+                    }
                 }
-                
-                String alignmentSpace = properties.getProperty("alignment.space.name");
-                String opticalRes = properties.getProperty("alignment.resolution.voxels");
-                String pixelRes = properties.getProperty("alignment.image.size");
-                String boundingBox = properties.getProperty("alignment.bounding.box");
-                String objective = properties.getProperty("alignment.objective");
-                
-                helper.setAlignmentSpace(resultItem, alignmentSpace);
-                helper.setOpticalResolution(resultItem, opticalRes);
-                helper.setPixelResolution(resultItem, pixelRes);
-                helper.setBoundingBox(resultItem, boundingBox);
-                helper.setObjective(resultItem, objective);
-                
-                if (consensusAlignmentSpace==null) {
-                    consensusAlignmentSpace = alignmentSpace;
-                }
-                else if (!consensusAlignmentSpace.equals(alignmentSpace)) {
-                    logger.warn("No consensus for alignment space: "+consensusAlignmentSpace+"!="+alignmentSpace);
-                }
+            }
+            else if (resultItem.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_3D)) {
+                logger.info("Setting channel specification for "+resultItem.getName()+" (id="+resultItem.getId()+") to "+channelSpec);
+                helper.setObjective(resultItem, channelSpec);
             }
         }   
         

@@ -38,6 +38,7 @@ public class EntityConstants {
     public static final String TYPE_IMAGE_3D                         = "Image 3D";
     public static final String TYPE_MOVIE                            = "Movie";
     public static final String TYPE_NEURON_FRAGMENT                  = "Neuron Fragment";
+    public static final String TYPE_NEURON_FRAGMENT_COLLECTION       = "Neuron Fragment Collection";
     public static final String TYPE_ALIGNED_BRAIN_STACK              = "Aligned Brain Stack";
     public static final String TYPE_TEXT_FILE                        = "Text File";
     public static final String TYPE_SWC_FILE                         = "SWC File";
@@ -84,8 +85,6 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ANNOTATION_SESSION_ID               = "Annotation Session Id";
     public static final String ATTRIBUTE_NUMBER                              = "Number";
     public static final String ATTRIBUTE_RESULT                              = "Result";
-    public static final String ATTRIBUTE_INPUT                               = "Input";
-    public static final String ATTRIBUTE_SOURCE                              = "Source";
     public static final String ATTRIBUTE_IS_ZIPPED                           = "Is Zipped";
     public static final String ATTRIBUTE_MERGED_STACK                        = "Merged Stack";
     public static final String ATTRIBUTE_TILING_PATTERN                      = "Tiling Pattern";
@@ -138,11 +137,6 @@ public class EntityConstants {
     public static final String VALUE_ONTOLOGY_TERM_TYPE_TEXT                = "Text";
     public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM_TEXT           = "EnumText";
 
-    /**
-     * @deprecated Use ATTRIBUTE_MASK_ENTITY_COLLECTION instead. This will be removed someday.
-     */
-    public static final String TYPE_NEURON_FRAGMENT_COLLECTION       = "Neuron Fragment Collection";
-    
     /**
      * @deprecated Use ATTRIBUTE_MASK_ENTITY_COLLECTION instead. This will be removed someday.
      */

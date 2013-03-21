@@ -3,7 +3,6 @@
 	    
 	    <input name="PIPELINE_PROCESS"/>
 	    <input name="CHANNEL_DYE_SPEC_63X"/>
-        <input name="OUTPUT_CHANNEL_ORDER_63X"/>
             
         <!-- Import variables from the task -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
@@ -21,18 +20,18 @@
         </operation>
 	       
         <sequence if="SAMPLE_20X_ID is not null">
-        
+
             <include name="20x Pipeline" process="FlyLightSamplePipeline">
                 <input name="SAMPLE_ENTITY_ID" value="$V{SAMPLE_20X_ID}"/>
                 <input name="PIPELINE_NAME" value="Polarity Pipeline 20x"/>
                 <input name="MERGE_ALGORITHMS" value="FLYLIGHT"/>
                 <input name="STITCH_ALGORITHMS" value="FLYLIGHT"/>
-                <input name="ALIGNMENT_ALGORITHMS" value="CONFIGURED"/>
+                <input name="ALIGNMENT_ALGORITHMS" value="CONFIGURED_BRAIN_VNC"/>
                 <input name="ALIGNMENT_ALGORITHM_PARAMS" value="flyalign20x_INT.sh"/>
                 <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
                 <input name="PIPELINE_PROCESS"/>
             </include>
-            
+
             <sequence if="SAMPLE_63X_ID is not null">
                 
                 <include name="63x Pipeline" process="FlyLightSamplePipeline">
@@ -45,7 +44,16 @@
                     <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
                     <input name="PIPELINE_PROCESS"/>
                     <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_63X}"/>
-                    <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_63X}"/>
+                    <input name="OUTPUT_CHANNEL_ORDER" value="presynaptic,membrane,reference"/>
+                </include>
+                
+                <include name="63x Pipeline" process="FlyLightDualSamplePipeline">
+                    <input name="SAMPLE_ENTITY_ID"/>
+                    <input name="PIPELINE_NAME" value="Polarity Pipeline"/>
+                    <input name="ALIGNMENT_ALGORITHMS" value="CONFIGURED_PAIR"/>
+                    <input name="ALIGNMENT_ALGORITHM_PARAMS" value="brainalignPolarityPair_1024px_INT.sh"/>
+                    <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
+                    <input name="PIPELINE_PROCESS"/>
                 </include>
                 
             </sequence>
