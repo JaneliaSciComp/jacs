@@ -22,7 +22,7 @@ public class ScreenScoresExportService extends ScreenScoresLoadingService {
     public void execute() throws Exception {
     	
         createDate = new Date();
-        helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
+        helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
         
         // Process arguments
         

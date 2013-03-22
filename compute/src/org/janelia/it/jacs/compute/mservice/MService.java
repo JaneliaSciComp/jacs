@@ -73,7 +73,7 @@ public class MService {
     protected FileDiscoveryHelper getFileDiscoveryHelper() {
         ComputeBeanLocal computeBean=getComputeBean();
         EntityBeanLocal entityBean=getEntityBean();
-        return new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
+        return new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
     }
 
     /////////// run method variations ///////////////////////////////////////////////////////////////////////////////

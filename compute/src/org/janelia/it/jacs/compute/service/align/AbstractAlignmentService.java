@@ -6,6 +6,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.List;
 
+import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
@@ -49,6 +50,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
 
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
+    protected AnnotationBeanLocal annotationBean;
     protected String ownerKey;
     protected SampleHelper sampleHelper;
     protected EntityBeanEntityLoader entityLoader;
@@ -74,10 +76,11 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
     	try {
             this.entityBean = EJBFactory.getLocalEntityBean();
             this.computeBean = EJBFactory.getLocalComputeBean();
+            this.annotationBean = EJBFactory.getLocalAnnotationBean();
             String ownerName = ProcessDataHelper.getTask(processData).getOwner();
             Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
             this.ownerKey = subject.getKey();
-            this.sampleHelper = new SampleHelper(entityBean, computeBean, ownerKey, logger);
+            this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
             this.entityLoader = new EntityBeanEntityLoader(entityBean);
             
             String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");

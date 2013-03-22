@@ -62,7 +62,7 @@ public class ScreenSampleLineCoordinationService implements IService {
             Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
             this.ownerKey = subject.getKey();
             createDate = new Date();
-            helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
+            helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
             
             screenPatternTopLevelFolder = getTopLevelFolder(ScreenSampleLineCoordinationService.SCREEN_PATTERN_TOP_LEVEL_FOLDER_NAME, true /* create */);
             screenSampleTopLevelFolder = getTopLevelFolder(FlyScreenDiscoveryService.SCREEN_SAMPLE_TOP_LEVEL_FOLDER_NAME, false /* create */);

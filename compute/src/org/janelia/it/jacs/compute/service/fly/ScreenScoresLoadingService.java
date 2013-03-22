@@ -64,7 +64,7 @@ public class ScreenScoresLoadingService extends AbstractEntityService {
     public void execute() throws Exception {
     	
         createDate = new Date();
-        helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
+        helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
         folderType = entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER);
         
         String acceptsFilepath = (String)processData.getItem("ACCEPTS_FILE_PATH");

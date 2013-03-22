@@ -24,20 +24,10 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  */
 public class FileDiscoveryHelper extends EntityHelper {
 
-    protected Logger logger = Logger.getLogger(FileDiscoveryHelper.class);
-
     public final Long FILE_3D_SIZE_THRESHOLD = new Long(5000000L);
 
     private Set<Pattern> exclusions = new HashSet<Pattern>();
     private boolean excludeSymLinks = true;
-    
-	public FileDiscoveryHelper(String ownerKey) {
-		super(ownerKey);
-	}
-    
-    public FileDiscoveryHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, String ownerKey) {
-        super(entityBean, computeBean, ownerKey, Logger.getLogger(FileDiscoveryHelper.class));
-    }
     
     public FileDiscoveryHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, String ownerKey, Logger logger) {
         super(entityBean, computeBean, ownerKey, logger);

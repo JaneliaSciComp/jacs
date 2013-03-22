@@ -8,7 +8,6 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeException;
-import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -31,14 +30,6 @@ public class EntityHelper {
     protected String ownerKey;
     protected EntityBeanEntityLoader entityLoader;
    
-	public EntityHelper(String ownerKey) {
-		this(EJBFactory.getLocalEntityBean(), EJBFactory.getLocalComputeBean(), ownerKey);
-	}
-	
-    public EntityHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, String ownerKey) {
-        this(entityBean, computeBean, ownerKey, Logger.getLogger(EntityHelper.class));
-    }
-    
     public EntityHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, String ownerKey, Logger logger) {
         this.entityBean = entityBean;
         this.computeBean  = computeBean;
@@ -46,7 +37,97 @@ public class EntityHelper {
         this.logger = logger;
         this.entityLoader = new EntityBeanEntityLoader(entityBean);
     }
-	
+
+    /**
+     * Create a child folder or verify it exists and return it.
+     * @param parentFolder
+     * @param childName
+     * @return
+     * @throws Exception
+     */
+    protected Entity verifyOrCreateChildFolder(Entity parentFolder, String childName) throws Exception {
+
+        entityLoader.populateChildren(parentFolder);
+        
+        Entity folder = null;
+        for (Entity child : EntityUtils.getChildrenOfType(parentFolder, EntityConstants.TYPE_FOLDER)) {
+            if (child.getName().equals(childName)) {
+                if (folder != null) {
+                    logger.warn("Unexpectedly found multiple child folders with name=" + childName+" for parent folder id="+parentFolder.getId());
+                }
+                else {
+                    folder = child;
+                }
+            }
+        }
+        
+        if (folder == null) {
+            // We need to create a new folder
+            Date createDate = new Date();
+            folder = new Entity();
+            folder.setCreationDate(createDate);
+            folder.setUpdatedDate(createDate);
+            folder.setOwnerKey(ownerKey);
+            folder.setName(childName);
+            folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+            folder = entityBean.saveOrUpdateEntity(folder);
+            addToParent(parentFolder, folder, null, EntityConstants.ATTRIBUTE_ENTITY);
+        }
+        
+        return folder;
+    }
+    
+    /**
+     * Create the given top level folder, or verify it exists and return it. 
+     * @param topLevelFolderName
+     * @param createIfNecessary
+     * @param loadTree
+     * @return
+     * @throws Exception
+     */
+    public Entity createOrVerifyRootEntity(String topLevelFolderName, boolean createIfNecessary, boolean loadTree) throws Exception {
+        Set<Entity> topLevelFolders = entityBean.getEntitiesByName(topLevelFolderName);
+        Entity topLevelFolder = null;
+        if (topLevelFolders != null) {
+            // Only accept the current user's top level folder
+            for (Entity entity : topLevelFolders) {
+                if (entity.getOwnerKey().equals(ownerKey)
+                        && entity.getEntityType().getName().equals(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER).getName())
+                        && entity.getAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
+                    // This is the folder we want, now load the entire folder hierarchy
+                    if (loadTree) {
+                        topLevelFolder = entityBean.getEntityTree(entity.getId());
+                    } else {
+                        topLevelFolder = entity;
+                    }
+                    logger.info("Found existing topLevelFolder common root, name=" + topLevelFolder.getName());
+                    break;
+                }
+            }
+        }
+
+        if (topLevelFolder == null) {
+            if (createIfNecessary) {
+                logger.info("Creating new topLevelFolder with name=" + topLevelFolderName);
+                Date createDate = new Date();
+                topLevelFolder = new Entity();
+                topLevelFolder.setCreationDate(createDate);
+                topLevelFolder.setUpdatedDate(createDate);
+                topLevelFolder.setOwnerKey(ownerKey);
+                topLevelFolder.setName(topLevelFolderName);
+                topLevelFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+                EntityUtils.addAttributeAsTag(topLevelFolder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
+                topLevelFolder = entityBean.saveOrUpdateEntity(topLevelFolder);
+                logger.info("Saved top level folder as " + topLevelFolder.getId());
+            } else {
+                throw new Exception("Could not find top-level folder by name=" + topLevelFolderName);
+            }
+        }
+
+        logger.info("Using topLevelFolder with id=" + topLevelFolder.getId());
+        return topLevelFolder;
+    }
+
 	/**
 	 * Remove the old-style default 2d image file path. 
 	 * @param entity

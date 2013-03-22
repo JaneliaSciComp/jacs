@@ -22,7 +22,7 @@ public class FastLoadResultsDiscoveryService extends AbstractEntityService {
 	@Override
     public void execute() throws Exception {
 
-        helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
+        helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
         
         List<Entity> entityList = (List<Entity>)processData.getItem("SEPARATION_LIST");
         if (entityList==null) {

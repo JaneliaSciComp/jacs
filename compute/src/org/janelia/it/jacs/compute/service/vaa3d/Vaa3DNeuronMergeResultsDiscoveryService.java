@@ -47,7 +47,7 @@ public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
             String ownerName = ProcessDataHelper.getTask(processData).getOwner();
             Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
             this.ownerKey = subject.getKey();
-            entityHelper = new EntityHelper(entityBean, computeBean, ownerKey);
+            entityHelper = new EntityHelper(entityBean, computeBean, ownerKey, logger);
             createDate = new Date();
             task = ProcessDataHelper.getTask(processData);
             Entity separationResultEntity = entityBean.getEntityTree(Long.valueOf(task.getParameter(NeuronMergeTask.PARAM_separationEntityId)));

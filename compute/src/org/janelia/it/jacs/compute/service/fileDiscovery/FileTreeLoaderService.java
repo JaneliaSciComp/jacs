@@ -162,7 +162,7 @@ public class FileTreeLoaderService implements IService {
             Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
             this.ownerKey = subject.getKey();
             
-            helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
+            helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
             helper.addFileExclusion("DrmaaSubmitter.log");
             helper.addFileExclusion("*.oos");
             helper.addFileExclusion("sge_*");

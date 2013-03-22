@@ -2712,12 +2712,14 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     		genericDelete(parentEd);
     	}
     	
-    	loadLazyEntity(subjectKey, entity, false);
-    	for(EntityData ed : new ArrayList<EntityData>(entity.getEntityData())) {
-    		if (ed.getChildEntity()!=null) {
-    			disassociateTreeFromNonOwners(subjectKey, ed.getChildEntity(), indent+"  ");
-    		}
-    	}
+    	// This would be the correct thing to do, but it makes this far too slow.
+    	// In practice it's probably not with the current state of the data, but maybe it will be in the future.
+//    	loadLazyEntity(subjectKey, entity, false);
+//    	for(EntityData ed : new ArrayList<EntityData>(entity.getEntityData())) {
+//    		if (ed.getChildEntity()!=null) {
+//    			disassociateTreeFromNonOwners(subjectKey, ed.getChildEntity(), indent+"  ");
+//    		}
+//    	}
     	
     	return entity;
     }

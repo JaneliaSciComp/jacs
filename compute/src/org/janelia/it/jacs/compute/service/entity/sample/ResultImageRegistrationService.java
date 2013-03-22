@@ -92,7 +92,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
         String ownerName = ProcessDataHelper.getTask(processData).getOwner();
         Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
         this.ownerKey = subject.getKey();
-        this.entityHelper = new EntityHelper(entityBean, computeBean, ownerKey);
+        this.entityHelper = new EntityHelper(entityBean, computeBean, ownerKey, logger);
         this.entityLoader = new EntityBeanEntityLoader(entityBean);
     	registerImages(resultEntity, pipelineRunEntity, sampleEntity, defaultImageFilename);
     }

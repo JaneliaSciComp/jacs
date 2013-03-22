@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
+import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
@@ -48,6 +49,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
     
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
+    protected AnnotationBeanLocal annotationBean;
     protected String ownerKey;
     protected SampleHelper sampleHelper;
     protected EntityBeanEntityLoader entityLoader;
@@ -71,10 +73,11 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
         try {
             this.entityBean = EJBFactory.getLocalEntityBean();
             this.computeBean = EJBFactory.getLocalComputeBean();
+            this.annotationBean = EJBFactory.getLocalAnnotationBean();
             String ownerName = ProcessDataHelper.getTask(processData).getOwner();
             Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
             this.ownerKey = subject.getKey();
-            this.sampleHelper = new SampleHelper(entityBean, computeBean, ownerKey, logger);
+            this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
             this.entityLoader = new EntityBeanEntityLoader(entityBean);
             this.randomPort = Vaa3DHelper.getRandomPort(START_DISPLAY_PORT);
             
@@ -155,6 +158,8 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
             List<String> outputChannelList = new ArrayList<String>();
             
             if (channelDyeSpec!=null && outputChannelOrder!=null) {
+            
+                // The dye-mapping method of channel ordering relies on a dye mapping and output channel order.
                 
                 outputChannelList.addAll(Arrays.asList(outputChannelOrder.split(",")));
                 
@@ -203,6 +208,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                 }
             }
             else {
+                // If there is no dye-mapping then we have to fall back on the old chan spec method.
                 
                 logger.info("Falling back on chanspec...");
                 
@@ -213,15 +219,21 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                 logger.info("  Input spec 1: "+chanSpec1);
                 
                 if (merged) {
+                    // When two files are merged, the reference is automatically relocated to the end. So in this case
+                    // the input chan spec consists of the non-reference channels of both files, followed by the  
+                    // reference channel. 
+                    
                     File lsm2 = new File(mergedLsmPair.getLsmFilepath2());
                     Entity lsm2Entity = lsmEntityMap.get(lsm2.getName());
                 
                     String chanSpec2 = sampleHelper.getLSMChannelSpec(lsm2Entity);
                     logger.info("  Input spec 2: "+chanSpec2);
                     
-                    inputChannelList.addAll(convertChanSpecToList(chanSpec1.replaceAll("r", "")));
-                    inputChannelList.addAll(convertChanSpecToList(chanSpec2.replaceAll("r", "")));
-                    inputChannelList.add("r");
+                    String chanSpec = chanSpec1.replaceAll("r", "")+chanSpec2.replaceAll("r", "")+"r";
+                    inputChannelList.addAll(convertChanSpecToList(chanSpec));
+                    
+                    // The output channel spec is defined by the sample (usually set during SAGE sync) and is 
+                    // probably the same. If the output spec is not defined by the sample, then the input spec is used.
                     
                     if (outputChanSpec==null) {
                         outputChannelList.addAll(inputChannelList);
@@ -232,11 +244,16 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                     
                 }
                 else {
+                    // When there is no merging, then the input chan spec is equal to the LSM's chan spec. 
                     inputChannelList.addAll(convertChanSpecToList(chanSpec1));
+
+                    // The output channel spec is defined by the sample (usually set during SAGE sync) and is 
+                    // probably the same. If the output spec is not defined by the sample, then the reference channel 
+                    // is just normalized to the end of the file. 
                     
                     if (outputChanSpec==null) {
-                        outputChannelList.addAll(convertChanSpecToList(chanSpec1.replaceAll("r", "")));
-                        outputChannelList.add("r");
+                        String chanSpec = chanSpec1.replaceAll("r", "")+"r";
+                        outputChannelList.addAll(convertChanSpecToList(chanSpec));
                     }
                     else {
                         outputChannelList.addAll(convertChanSpecToList(outputChanSpec));

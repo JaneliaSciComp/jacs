@@ -130,7 +130,7 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
         String ownerName = ProcessDataHelper.getTask(processData).getOwner();
         Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
         this.ownerKey = subject.getKey();
-        helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
+        helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
 
         createDate = new Date();
         refresh = task.getParameter(PARAM_refresh).trim().toLowerCase().equals("true");

@@ -147,7 +147,7 @@ public class MaskSampleAnnotationService  implements IService {
     protected void refreshEntityBeans() throws Exception {
         entityBean = EJBFactory.getLocalEntityBean();
         computeBean = EJBFactory.getLocalComputeBean();
-        entityHelper = new EntityHelper(entityBean, computeBean, ownerKey); // can't be in constructor or will timeout
+        entityHelper = new EntityHelper(entityBean, computeBean, ownerKey, logger); // can't be in constructor or will timeout
     }
 
 

@@ -52,7 +52,7 @@ public class FileDiscoveryService implements IService {
             this.ownerKey = subject.getKey();
             this.createDate = new Date();
             this.entityLoader = new EntityBeanEntityLoader(entityBean);
-            helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey);
+            helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
             helper.addFileExclusion("*.log");
             helper.addFileExclusion("*.oos");
             helper.addFileExclusion("sge_*");

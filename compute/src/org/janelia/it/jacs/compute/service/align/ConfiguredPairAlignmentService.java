@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.service.align;
 
+import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
@@ -22,6 +23,7 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
 
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
+    protected AnnotationBeanLocal annotationBean;
     protected String ownerKey;
     protected SampleHelper sampleHelper;
     protected EntityBeanEntityLoader entityLoader;
@@ -35,10 +37,11 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
         try {
             this.entityBean = EJBFactory.getLocalEntityBean();
             this.computeBean = EJBFactory.getLocalComputeBean();
+            this.annotationBean = EJBFactory.getLocalAnnotationBean();
             String ownerName = ProcessDataHelper.getTask(processData).getOwner();
             Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
             this.ownerKey = subject.getKey();
-            this.sampleHelper = new SampleHelper(entityBean, computeBean, ownerKey, logger);
+            this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
             this.entityLoader = new EntityBeanEntityLoader(entityBean);
             
             String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
