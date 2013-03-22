@@ -65,6 +65,7 @@ public class UpgradeUserDataService extends AbstractEntityService {
         entityBean.createNewEntityAttr(EntityConstants.TYPE_IMAGE_3D, EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_IMAGE_3D, EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES);
         entityBean.createNewEntityAttr(EntityConstants.TYPE_IMAGE_3D, EntityConstants.ATTRIBUTE_CHANNEL_COLORS);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_IMAGE_3D, EntityConstants.ATTRIBUTE_OBJECTIVE);
         
         entityBean.createNewEntityAttr(EntityConstants.TYPE_SAMPLE, EntityConstants.ATTRIBUTE_OBJECTIVE);
         

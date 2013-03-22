@@ -63,7 +63,7 @@ public class SampleHelper extends EntityHelper {
     }
 
     /**
-     * 
+     * Create a sample or update it if it already exists.
      * @param parentSample
      * @param sampleIdentifier
      * @param dataSetIdentifier
@@ -140,8 +140,8 @@ public class SampleHelper extends EntityHelper {
             
             // Figure out the number of channels that should be in the final merged/stitched sample
             int sampleNumSignals = getNumSignalChannels(tileGroupList);
-            String sampleChannelSpec = getDefaultChanSpec(sampleNumSignals);
-            logger.debug("  Sample has "+sampleNumSignals+" signal channels, and thus specification '"+sampleChannelSpec+"'");
+            String sampleChannelSpec = getDefaultChanSpec(sampleNumSignals+1);
+            logger.info("  Sample has "+sampleNumSignals+" signal channels, and thus specification '"+sampleChannelSpec+"'");
             
             // Find the sample, if it exists, or create a new one.
             sample = getOrCreateSample(sampleIdentifier, sampleChannelSpec, dataSetIdentifier, objective, tileGroupList);
@@ -164,14 +164,14 @@ public class SampleHelper extends EntityHelper {
     
     protected Entity getOrCreateSample(String sampleIdentifier, String channelSpec, String dataSetIdentifier, String objective, Collection<SlideImageGroup> tileGroupList) throws Exception {
 
-        Entity sample = findExistingSample(sampleIdentifier);
+        Entity sample = findOrAnnexExistingSample(sampleIdentifier);
         if (sample == null) {
             
             // Check if the same exists already with an old-style tagged name
             if (tileGroupList.size()==1) {
                 String tag = tileGroupList.iterator().next().getTag();
                 String tagSampleIdentifier = sampleIdentifier+"-"+tag.replace(" ", "_");
-                sample = findExistingSample(tagSampleIdentifier);
+                sample = findOrAnnexExistingSample(tagSampleIdentifier);
             }
             
             // Still null?
@@ -190,7 +190,13 @@ public class SampleHelper extends EntityHelper {
         return sample;
     }
     
-    protected Entity findExistingSample(String sampleIdentifier) throws ComputeException {
+    /**
+     * Find the sample with the given identifier. If it doesn't exist to the owner, then annex it. 
+     * @param sampleIdentifier
+     * @return
+     * @throws ComputeException
+     */
+    public Entity findOrAnnexExistingSample(String sampleIdentifier) throws ComputeException {
 
         List<Entity> matchingSamples = entityBean.getUserEntitiesByNameAndTypeName(ownerKey, 
                 sampleIdentifier, EntityConstants.TYPE_SAMPLE);

@@ -198,7 +198,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
     		throw new MissingDataException("Brain alignment core dumped for "+resultFileNode.getDirectoryPath());
     	}
 
-    	if (!outputFile.exists()) {
+    	if (outputFile!=null && !outputFile.exists()) {
     		throw new MissingDataException("Output file not found: "+outputFile.getAbsolutePath());
     	}
 	}
