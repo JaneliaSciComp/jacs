@@ -131,7 +131,7 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
                 defaultFilename = filenames.get(0);
             }
             
-            logger.info("Putting '"+outputFile.getCanonicalPath()+"' in ALIGNED_FILENAME");
+            logger.info("Putting '"+defaultFilename+"' in ALIGNED_FILENAME");
             processData.putItem("ALIGNED_FILENAME", defaultFilename);
 
     	}

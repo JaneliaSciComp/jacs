@@ -186,6 +186,8 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
     @Override
 	public void postProcess() throws MissingDataException {
 
+        this.outputFile = new File(resultFileNode.getDirectoryPath(),"Aligned.v3draw");
+        
         File alignDir = new File(resultFileNode.getDirectoryPath());
     	File[] coreFiles = alignDir.listFiles(new FilenameFilter() {
 			@Override
