@@ -41,13 +41,14 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
             throw new IllegalArgumentException("CHANNEL_SPEC may not be null");
         }
         
-        Map<String,Entity> resultItemMap = new HashMap<String,Entity>();
-        for(Entity resultItem : alignmentResult.getChildren()) {
-            resultItemMap.put(resultItem.getName(), resultItem);
-        }
-        
         String consensusAlignmentSpace = null;
         Entity supportingFiles = EntityUtils.getSupportingData(alignmentResult);
+        entityLoader.populateChildren(supportingFiles);
+        
+        Map<String,Entity> resultItemMap = new HashMap<String,Entity>();
+        for(Entity resultItem : supportingFiles.getChildren()) {
+            resultItemMap.put(resultItem.getName(), resultItem);
+        }
         
         for(Entity resultItem : supportingFiles.getChildren()) {
             
@@ -90,7 +91,7 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
             }
             else if (resultItem.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_3D)) {
                 logger.info("Setting channel specification for "+resultItem.getName()+" (id="+resultItem.getId()+") to "+channelSpec);
-                helper.setObjective(resultItem, channelSpec);
+                helper.setChannelSpec(resultItem, channelSpec);
             }
         }   
         

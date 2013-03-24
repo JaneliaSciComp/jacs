@@ -370,7 +370,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
             fw.close();
         }
     }
-
+    
     private void createShellScript(FileWriter writer) throws Exception {
         StringBuffer script = new StringBuffer();
         script.append("read INPUT_FILENAME\n");
@@ -378,11 +378,12 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
         script.append("read CHANNEL_MAPPING\n");
         script.append("read TEMP_FILE\n");
         script.append("read DISPLAY_PORT\n");
-        script.append(Vaa3DHelper.getVaa3DGridCommandPrefix("$DISPLAY_PORT"));
-        script.append("\n");
-        script.append(Vaa3DHelper.getMapChannelCommand("$INPUT_FILENAME", "$TEMP_FILE", "\"$CHANNEL_MAPPING\""));
-        script.append("\n");
+        script.append(Vaa3DHelper.getScratchDirCreationScript("WORKING_DIR"));
+        script.append(Vaa3DHelper.getVaa3DGridCommandPrefix("$DISPLAY_PORT")).append("\n");
+        script.append("TEMP_FILE=$WORKING_DIR/mapped.v3draw\n");
+        script.append(Vaa3DHelper.getMapChannelCommand("$INPUT_FILENAME", "$TEMP_FILE", "\"$CHANNEL_MAPPING\"")).append("\n");
         script.append("mv $TEMP_FILE $OUTPUT_FILENAME\n");
+        script.append(Vaa3DHelper.getScratchDirCleanupScript("WORKING_DIR"));
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix());
         script.append("\n");
         writer.write(script.toString());

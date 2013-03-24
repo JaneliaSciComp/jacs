@@ -26,6 +26,22 @@ public class Vaa3DHelper {
     protected static final String INTERSECTION_CMD =
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
                     SystemConfigurationProperties.getString("Intersection.ScriptPath");
+
+    protected static final String SCRATCH_DIR =
+            SystemConfigurationProperties.getString("computeserver.ClusterScratchDir");
+
+    public static String getScratchDirCreationScript(String scratchDirVariableName) {
+        StringBuffer buf = new StringBuffer();
+        buf.append("export TMPDIR=\""+SCRATCH_DIR+"\"\n");
+        buf.append(scratchDirVariableName+"=`mktemp -d`\n");
+        return buf.toString();
+    }
+
+    public static String getScratchDirCleanupScript(String scratchDirVariableName) {
+        StringBuffer buf = new StringBuffer();
+        buf.append("rm -rf $"+scratchDirVariableName+"\n");
+        return buf.toString();
+    }
     
     public static String getFormattedMergePipelineCommand(String inputFilePath1, String inputFilePath2, String outputFilePath, String multiscanBlendVersion) {
         StringBuffer buf = new StringBuffer();

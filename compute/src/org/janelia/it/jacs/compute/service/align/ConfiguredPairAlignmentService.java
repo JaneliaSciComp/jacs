@@ -59,8 +59,10 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
             }
 
             for(Entity objectiveSample : sampleEntity.getChildren()) {
-                if (Objective.OBJECTIVE_20X.getName().equals(objectiveSample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE))) {
-                    String filename = objectiveSample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+                String objective = objectiveSample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
+                String filename = objectiveSample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+                
+                if (Objective.OBJECTIVE_20X.getName().equals(objective)) {
                     logger.info("Found 20x sub-sample: "+objectiveSample.getName());
                     if (filename!=null) {
                         this.brain20xFilename = filename;
@@ -73,6 +75,34 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
                                 logger.info("Found 20x ref channel (one-indexed): "+refChannel20xOneIndexed);
                             }
                         }
+                    }
+                }
+                else if (Objective.OBJECTIVE_63X.getName().equals(objective)) {
+                    logger.info("Found 63x sub-sample: "+objectiveSample.getName());
+                    if (filename!=null) {
+                        this.inputFilename = filename;
+                        logger.info("Found 63x aligned stack: "+inputFilename);
+                        Entity aligned = objectiveSample.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+                        if (aligned!=null) {
+                            String channelSpec = aligned.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+                            if (channelSpec.contains("r")) {
+                                refChannel = channelSpec.indexOf('r');
+                                refChannelOneIndexed = refChannel + 1;
+                                logger.info("Found 63x ref channel (one-indexed): "+refChannelOneIndexed);
+                                putOutputVars(channelSpec);
+                            }
+                        }
+                    }
+
+                    this.gender = sampleHelper.getConsensusLsmAttributeValue(objectiveSample, EntityConstants.ATTRIBUTE_GENDER, alignedArea);
+                    if (gender!=null) {
+                        logger.info("Found gender consensus: "+gender);
+                    }
+                    
+                    this.opticalResolution = sampleHelper.getConsensusLsmAttributeValue(objectiveSample, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, alignedArea);
+                    if (opticalResolution!=null) {
+                        opticalResolution = opticalResolution.replaceAll("x", " ");
+                        logger.info("Found optical resolution consensus: "+opticalResolution);
                     }
                 }
             }

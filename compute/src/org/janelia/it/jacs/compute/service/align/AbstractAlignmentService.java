@@ -94,32 +94,29 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
             }
             
             List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>)processData.getItem("SAMPLE_AREAS");
-            if (sampleAreas == null) {
-                throw new IllegalArgumentException("SAMPLE_AREAS may not be null");
-            }
-            
-            // The naive implementation tries to find the default brain area to align. Subclasses may have a different
-            // strategy for finding input files and other parameters.
-            
-            for(AnatomicalArea anatomicalArea : sampleAreas) {
-                String areaName = anatomicalArea.getName();
-                if ("Brain".equalsIgnoreCase(areaName) || "".equals(areaName)) {
-                    Entity result = entityBean.getEntityById(anatomicalArea.getSampleProcessingResultId());
-                    entityLoader.populateChildren(result);
-                    if (result!=null) {
-                        if (alignedArea!=null) {
-                            logger.warn("Found more than one default brain area to align. Using: "+alignedArea);
-                        }
-                        else {
-                            Entity image = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-                            this.alignedArea = areaName;    
-                            this.inputFilename = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                            this.channelSpec = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+            if (sampleAreas != null) {
+                // The naive implementation tries to find the default brain area to align. Subclasses may have a different
+                // strategy for finding input files and other parameters.
+                for(AnatomicalArea anatomicalArea : sampleAreas) {
+                    String areaName = anatomicalArea.getName();
+                    if ("Brain".equalsIgnoreCase(areaName) || "".equals(areaName)) {
+                        Entity result = entityBean.getEntityById(anatomicalArea.getSampleProcessingResultId());
+                        entityLoader.populateChildren(result);
+                        if (result!=null) {
+                            if (alignedArea!=null) {
+                                logger.warn("Found more than one default brain area to align. Using: "+alignedArea);
+                            }
+                            else {
+                                Entity image = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+                                this.alignedArea = areaName;    
+                                this.inputFilename = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                                this.channelSpec = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+                            }
                         }
                     }
                 }
             }
-    
+            
             if (alignedArea!=null) {
                 logger.info("Found sample area to align: "+alignedArea);
                 logger.info("  Input filename: "+inputFilename);
@@ -130,33 +127,35 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
                     this.refChannelOneIndexed = refChannel + 1;
                     logger.info("  Reference channel: "+refChannel);
                     logger.info("  Reference channel (one-indexed): "+refChannelOneIndexed);
-                    
-                    String signalChannels = sampleHelper.getSignalChannelIndexes(channelSpec);
-                    String referenceChannels = sampleHelper.getReferenceChannelIndexes(channelSpec);
-                    
-                    logger.info("Putting '"+channelSpec+"' in CHANNEL_SPEC");
-                    processData.putItem("CHANNEL_SPEC", channelSpec);
-                    logger.info("Putting '"+signalChannels+"' in SIGNAL_CHANNELS");
-                    processData.putItem("SIGNAL_CHANNELS", signalChannels);
-                    logger.info("Putting '"+referenceChannels+"' in REFERENCE_CHANNEL");
-                    processData.putItem("REFERENCE_CHANNEL", referenceChannels);
+                    putOutputVars(channelSpec);
                 }
-            }
-            
-            this.gender = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_GENDER, alignedArea);
-            if (gender!=null) {
-                logger.info("Found gender consensus: "+gender);
-            }
-            
-            this.opticalResolution = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, alignedArea);
-            if (opticalResolution!=null) {
-                opticalResolution = opticalResolution.replaceAll("x", " ");
-                logger.info("Found optical resolution consensus: "+opticalResolution);
+
+                this.gender = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_GENDER, alignedArea);
+                if (gender!=null) {
+                    logger.info("Found gender consensus: "+gender);
+                }
+                
+                this.opticalResolution = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, alignedArea);
+                if (opticalResolution!=null) {
+                    opticalResolution = opticalResolution.replaceAll("x", " ");
+                    logger.info("Found optical resolution consensus: "+opticalResolution);
+                }
             }
         } 
         catch (Exception e) {
             throw new ServiceException(e);
         }
+    }
+    
+    protected void putOutputVars(String chanSpec) {
+        String signalChannels = sampleHelper.getSignalChannelIndexes(channelSpec);
+        String referenceChannels = sampleHelper.getReferenceChannelIndexes(channelSpec);
+        logger.info("Putting '"+channelSpec+"' in CHANNEL_SPEC");
+        processData.putItem("CHANNEL_SPEC", channelSpec);
+        logger.info("Putting '"+signalChannels+"' in SIGNAL_CHANNELS");
+        processData.putItem("SIGNAL_CHANNELS", signalChannels);
+        logger.info("Putting '"+referenceChannels+"' in REFERENCE_CHANNEL");
+        processData.putItem("REFERENCE_CHANNEL", referenceChannels);
     }
     
     @Override
