@@ -94,9 +94,11 @@ public class LSMMetadata {
         if (track==null) return null;
         String parts[] = channel.getName().split("-");
         String chan = parts[0];
-        for(DetectionChannel detChannel : track.getDetectionChannels()) {
-            if (detChannel.getName().equals(chan)) {
-                return detChannel;
+        if (track.getDetectionChannels()!=null) {
+            for(DetectionChannel detChannel : track.getDetectionChannels()) {
+                if (detChannel.getName().equals(chan)) {
+                    return detChannel;
+                }
             }
         }
         return null;
@@ -107,9 +109,11 @@ public class LSMMetadata {
         String chan = parts[0];
         Track track = getTrack(channel);
         if (track==null) return null;
-        for(DataChannel dataChannel : track.getDataChannels()) {
-            if (dataChannel.getName().equals(chan)) {
-                return dataChannel;
+        if (track.getDataChannels()!=null) {
+            for(DataChannel dataChannel : track.getDataChannels()) {
+                if (dataChannel.getName().equals(chan)) {
+                    return dataChannel;
+                }
             }
         }
         return null;
@@ -406,14 +410,18 @@ public class LSMMetadata {
 
     public static void main(String[] args) throws Exception {
 
-        File file = new File("testfiles/flpo3.json");
+        File file = new File("testfiles/flpo5.json");
         LSMMetadata zm = fromFile(file);
         
         int c = 0;
         for(Channel channel : zm.getChannels()) {
             System.out.println("Channel "+c+" ("+channel.getName()+"): "+channel.getColor());
-            System.out.println("  Data Channel Color: "+zm.getDataChannel(channel).getColor());
-            System.out.println("  Detection Channel Dye: "+zm.getDetectionChannel(channel).getDyeName());
+            if (zm.getDataChannel(channel)!=null) {
+                System.out.println("  Data Channel Color: "+zm.getDataChannel(channel).getColor());
+            }
+            if (zm.getDetectionChannel(channel) != null) {
+                System.out.println("  Detection Channel Dye: "+zm.getDetectionChannel(channel).getDyeName());
+            }
             System.out.println();
             c++;
         }
@@ -425,6 +433,7 @@ public class LSMMetadata {
         
         for(Track track : zm.getTracks()) {
             System.out.println(track.getName()+":");
+            System.out.println("  multiplexOrder="+track.getMultiplexOrder());
             System.out.println("  isBleach="+track.getIsBleachTrack());
             
             if ("0".equals(track.getIsBleachTrack())) {
