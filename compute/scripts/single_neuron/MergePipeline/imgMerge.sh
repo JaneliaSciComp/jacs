@@ -40,7 +40,7 @@ FINAL_DIR=${FINAL_OUTPUT%/*}
 FINAL_STUB=${FINAL_OUTPUT%.*}
 EXT=${FINAL_OUTPUT##*.}
 
-export TMPDIR="$FINAL_DIR"
+export TMPDIR="/scratch/jacs/"
 WORKING_DIR=`mktemp -d`
 OUTPUT="$WORKING_DIR/merged.v3draw"
 FILEPATH=$WORKING_DIR
@@ -51,6 +51,7 @@ echo "Working Dir: $WORKING_DIR"
 echo "Output Dir: $FINAL_DIR"
 echo "Input 1: $INPUT1"
 echo "Input 2: $INPUT2"
+echo "Multiscan Blend Version: multiscanblend$MULTISCAN_BLEND_VERSION"
 
 cd $WORKING_DIR
 
@@ -92,7 +93,7 @@ else
                 echo "$TYPE"
 
                 # merge images using rigid translations
-                $Vaa3D -x multiscanstacks.so -f multiscanblend -i "$INPUT1" "$INPUT2" -o "$OUTPUT"
+                $Vaa3D -x multiscanstacks.so -f multiscanblend$MULTISCAN_BLEND_VERSION -i "$INPUT1" "$INPUT2" -o "$OUTPUT"
 
             elif [ "$TYPE" = "1 non-rigid transformations." ];
             then
@@ -144,7 +145,7 @@ else
                 $Vaa3D -x ireg.so -f NiftiImageConverter -i $DEFORMED -p "#b 1"
 
                 echo "~ Running multiscanblend"
-                $Vaa3D -x multiscanstacks.so -f multiscanblend -i "$INPUT1" "$INPUT2" $DEFORMEDV3DRAW -o "$OUTPUT" -p "#d 1"
+                $Vaa3D -x multiscanstacks.so -f multiscanblend$MULTISCAN_BLEND_VERSION -i "$INPUT1" "$INPUT2" $DEFORMEDV3DRAW -o "$OUTPUT" -p "#d 1"
 
             else
                 echo "Invalid Transformations: '$TYPE'"
