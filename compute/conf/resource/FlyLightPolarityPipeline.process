@@ -2,8 +2,10 @@
 	<sequence>
 	    
 	    <input name="PIPELINE_PROCESS"/>
+       <input name="CHANNEL_DYE_SPEC_20X"/>
+        <input name="OUTPUT_CHANNEL_ORDER_20X"/>
 	    <input name="CHANNEL_DYE_SPEC_63X"/>
-        <input name="OUTPUT_CHANNEL_ORDER"/>
+        <input name="OUTPUT_CHANNEL_ORDER_63X"/>
             
         <!-- Import variables from the task -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
@@ -31,8 +33,8 @@
                 <input name="ALIGNMENT_ALGORITHM_PARAMS" value="flyalign20x_INT.sh"/>
                 <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
                 <input name="PIPELINE_PROCESS"/>
-                <input name="CHANNEL_DYE_SPEC" value="reference=Alexa Fluor 488;membrane=Alexa Fluor 647"/>
-                <input name="OUTPUT_CHANNEL_ORDER" value="membrane,reference"/>
+                <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_20X}"/>
+                <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_20X}"/>
             </include>
 
             <sequence if="SAMPLE_63X_ID is not null">
@@ -47,7 +49,7 @@
                     <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
                     <input name="PIPELINE_PROCESS"/>
                     <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_63X}"/>
-                    <input name="OUTPUT_CHANNEL_ORDER"/>
+                    <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_63X}"/>
                 </include>
                 
                 <include name="63x Pipeline" process="FlyLightDualSamplePipeline">

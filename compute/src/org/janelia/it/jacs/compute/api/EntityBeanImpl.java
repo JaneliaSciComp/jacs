@@ -204,7 +204,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
                 throw new DaoException("Entity does not exist "+entityId);
             }
             EntityData ed = _annotationDAO.addEntityToParent(parent, entity, index, attrName);
-        	_logger.info(subjectKey+" added entity data "+ed.getId());
+        	_logger.info(subjectKey+" added entity data "+ed.getId()+" (parent="+parent.getId()+",child="+entity.getId()+")");
         	
         	IndexingHelper.updateIndexAddAncestor(entityId, parentId);
         	

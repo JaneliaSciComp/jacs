@@ -47,7 +47,6 @@ public class SampleDataManager implements SampleDataManagerMBean {
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
                     taskParameters, "sampleMaintenancePipeline", "Sample Maintenance Pipeline");
-            task.setJobName("Sample Maintenance Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("SampleMaintenancePipeline", task.getObjectId());
         } catch (Exception ex) {
@@ -61,7 +60,6 @@ public class SampleDataManager implements SampleDataManagerMBean {
             taskParameters.add(new TaskParameter(SampleTrashCompactorService.PARAM_testRun, Boolean.toString(testRun), null)); 
             Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
                     taskParameters, "sampleCleaning", "Sample Cleaning");
-            task.setJobName("Sample Cleaning Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("SampleCleaning", task.getObjectId());
         } catch (Exception ex) {
@@ -75,7 +73,6 @@ public class SampleDataManager implements SampleDataManagerMBean {
             taskParameters.add(new TaskParameter(SampleTrashCompactorService.PARAM_testRun, Boolean.toString(testRun), null)); 
             Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
                     taskParameters, "sampleTrashCompactor", "Sample Trash Compactor");
-            task.setJobName("Sample Trash Compactor Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("SampleTrashCompactor", task.getObjectId());
         } catch (Exception ex) {
@@ -89,7 +86,6 @@ public class SampleDataManager implements SampleDataManagerMBean {
             taskParameters.add(new TaskParameter(SampleDataCompressionService.PARAM_testRun, Boolean.toString(testRun), null)); 
             Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
                     taskParameters, "sampleDataCompression", "Sample Data Compression");
-            task.setJobName("Sample Data Compression Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("SampleDataCompression", task.getObjectId());
         } catch (Exception ex) {
@@ -102,7 +98,6 @@ public class SampleDataManager implements SampleDataManagerMBean {
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
                     taskParameters, "sampleImageRegistration", "Sample Image Registration");
-            task.setJobName("Sample Image Registration Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("SampleImageRegistration", task.getObjectId());
         } catch (Exception ex) {
@@ -138,7 +133,6 @@ public class SampleDataManager implements SampleDataManagerMBean {
             taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null)); 
             Task task = new GenericTask(new HashSet<Node>(), username, new ArrayList<Event>(), 
                     taskParameters, "userDatSetPipelines", "User Data Set Pipelines");
-            task.setJobName("User Data Set Pipelines Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("FlyLightUserDataSetPipelines", task.getObjectId());
         } catch (Exception ex) {
@@ -174,8 +168,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             taskParameters.add(new TaskParameter("sample entity id", sampleId, null)); 
             taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null)); 
             Task task = new GenericTask(new HashSet<Node>(), sample.getOwnerKey(), new ArrayList<Event>(), 
-                    taskParameters, "flylightSampleAllPipelines", "Flylight Sample All Pipelines");
-            task.setJobName("Flylight Sample All Pipelines Task");
+                    taskParameters, "sampleAllPipelines", "Sample All Pipelines");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("GSPS_CompleteSamplePipeline", task.getObjectId());
         } catch (Exception ex) {
@@ -192,7 +185,6 @@ public class SampleDataManager implements SampleDataManagerMBean {
             taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null)); 
             Task task = new GenericTask(new HashSet<Node>(), sampleEntity.getOwnerKey(), new ArrayList<Event>(), 
                     taskParameters, "configuredSamplePipeline", "Configured Sample Pipeline");
-            task.setJobName("Configured Sample Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("PipelineConfig_"+configurationName, task.getObjectId());
         } catch (Exception ex) {
@@ -208,7 +200,6 @@ public class SampleDataManager implements SampleDataManagerMBean {
             taskParameters.add(new TaskParameter("result entity id", resultEntityId, null)); 
             Task task = new GenericTask(new HashSet<Node>(), sampleEntity.getOwnerKey(), new ArrayList<Event>(), 
                     taskParameters, "separationPipeline", "Separation Pipeline");
-            task.setJobName("Separation Pipeline Task");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("PipelineHarness_FlyLightSeparation", task.getObjectId());
         } catch (Exception ex) {

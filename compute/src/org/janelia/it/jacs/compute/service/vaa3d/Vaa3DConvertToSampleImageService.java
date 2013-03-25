@@ -204,7 +204,9 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                 
                 for(String dye : mergedDyeArray) {
                     String tag = dyeToTagMap.get(dye);
-                    inputChannelList.add(tag);
+                    if (tag!=null) {
+                        inputChannelList.add(tag);
+                    }
                 }
             }
             else {

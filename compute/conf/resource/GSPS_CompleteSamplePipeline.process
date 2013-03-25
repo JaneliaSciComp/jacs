@@ -35,6 +35,7 @@
 				<!-- Spawn a new task to process the Sample	-->
 		        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
 		            <input name="PROCESS_DEF_NAME" value="$V{PIPELINE_PROCESS_NAME}"/>
+		            <input name="TASK_NAME" value="$V{PIPELINE_PROCESS_NAME}"/>
 		            <input name="PARAMETER_1_KEY" value="sample entity id"/>
 		            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
                     <input name="PARAMETER_2_KEY" value="reuse processing"/>

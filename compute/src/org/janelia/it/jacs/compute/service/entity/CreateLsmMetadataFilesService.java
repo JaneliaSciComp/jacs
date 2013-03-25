@@ -7,23 +7,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.user_data.FileNode;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
- * Takes a Sample Entity and finds all the LSM stacks which are part of it, then creates lsmFileNames.txt with all the
- * LSM filenames, and a metadata file for each LSM. The parameters should be included in the ProcessData:
- *   SAMPLE_ENTITY_ID 
+ * Takes the bulk merge parameters, then creates lsmFileNames.txt with all the LSM filenames, and metadata files for 
+ * each one. ALso creates a sampleEntityId.txt with the sample identifier. 
+ * The parameters should be included in the ProcessData:
+ *   SAMPLE_ENTITY_ID
+ *   BULK_MERGE_PARAMETERS 
  *   RESULT_FILE_NODE
  *   OUTPUT_FILE_NODE
  * 
@@ -35,9 +34,7 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     
     protected File outputDir;
     protected Logger logger;
-    
     private List<File> inputFiles = new ArrayList<File>();
-    private Entity sampleEntity;
     
     protected void init(IProcessData processData) throws Exception {
     	super.init(processData);
@@ -54,16 +51,24 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     	if (sampleEntityId == null) {
     		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
     	}
-    	
-    	sampleEntity = EJBFactory.getLocalEntityBean().getEntityTree(new Long(sampleEntityId));
-    	if (sampleEntity == null) {
-    		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
-    	}
-    	
-    	for(Entity lsmStack : EntityUtils.getDescendantsOfType(sampleEntity, EntityConstants.TYPE_LSM_STACK, true)) {
-			String filepath = lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-			inputFiles.add(new File(filepath));
-    	}
+
+        Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
+        if (bulkMergeParamObj==null) {
+            throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS may not be null");
+        }
+
+        if (!(bulkMergeParamObj instanceof List)) {
+            throw new IllegalArgumentException("Input parameter BULK_MERGE_PARAMETERS must be a List");
+        }
+        
+        List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
+
+        for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
+            inputFiles.add(new File(mergedLsmPair.getLsmFilepath1()));
+            if (mergedLsmPair.getLsmFilepath2() != null) {
+                inputFiles.add(new File(mergedLsmPair.getLsmFilepath2()));    
+            }
+        }
     	
     	File sampleIdFile = new File(outputNode.getDirectoryPath(), "sampleEntityId.txt");
     	try {

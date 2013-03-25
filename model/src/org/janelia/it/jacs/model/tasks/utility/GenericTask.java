@@ -45,6 +45,10 @@ public class GenericTask extends Task {
         return displayName;
     }
 
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+    
     public ParameterVO getParameterVO(String key) throws ParameterException {
         if (key == null)
             return null;

@@ -174,6 +174,7 @@
         	        <operation name="Create Lsm Metadata Files" processor="queue/gridSubmitAndWait">
         	            <input name="iservice" value="org.janelia.it.jacs.compute.service.entity.CreateLsmMetadataFilesService"/>
         		        <input name="SAMPLE_ENTITY_ID"/>
+                        <input name="BULK_MERGE_PARAMETERS"/>
         		        <input name="RESULT_FILE_NODE" value="$V{METADATA_RESULT_FILE_NODE}"/>
         	    		<input name="OUTPUT_FILE_NODE" value="$V{METADATA_RESULT_FILE_NODE}"/>
         	        </operation>

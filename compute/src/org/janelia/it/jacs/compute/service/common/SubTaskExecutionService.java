@@ -47,10 +47,18 @@ public class SubTaskExecutionService implements IService {
         	
         	Task subtask = null;
         	String taskClassName = (String)processData.getItem("TASK_CLASS");
-        	
+
+            String taskName = (String)processData.getItem("TASK_NAME");
+            if (taskName==null) {
+                logger.warn("TASK_NAME is null for subtask with processDefName="+processDefName);
+            }
+            
         	try {
 	        	if (taskClassName == null) {
 	        		subtask = new GenericTask();
+	        		if (taskName!=null) {
+	        		    ((GenericTask)subtask).setDisplayName(taskName);
+	        		}
 	        	}
 	        	else {
 	            	subtask = (Task)Class.forName(taskClassName).newInstance();
@@ -76,11 +84,16 @@ public class SubTaskExecutionService implements IService {
         		subtask.setParameter(key, strValue);
                 num++;
         	}
+
+        	if (taskName!=null) {
+        	    subtask.setJobName(taskName+" Task");
+        	}
+        	else {
+        	    subtask.setJobName("Subtask "+processDefName);
+        	}
         	
             subtask.setParentTaskId(task.getObjectId());
             computeBean.saveOrUpdateTask(subtask);
-        	
-            subtask.setJobName("Subtask "+processDefName+" for "+task.getJobName());
             
             logger.info("Launching "+subtask.getJobName()+", task id="+task.getObjectId()+", subtask id="+subtask.getObjectId());
             computeBean.submitJob(processDefName, subtask.getObjectId());

@@ -41,6 +41,8 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
             throw new IllegalArgumentException("CHANNEL_SPEC may not be null");
         }
         
+        boolean hasConsensusAlignmentSpace = true;
+        String defaultAlignmentSpace = null;
         String consensusAlignmentSpace = null;
         Entity supportingFiles = EntityUtils.getSupportingData(alignmentResult);
         entityLoader.populateChildren(supportingFiles);
@@ -81,11 +83,15 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     helper.setBoundingBox(entity, boundingBox);
                     helper.setObjective(entity, objective);
                     
+                    if ("true".equals(properties.getProperty("default"))) {
+                        defaultAlignmentSpace = alignmentSpace;
+                    }
+                    
                     if (consensusAlignmentSpace==null) {
                         consensusAlignmentSpace = alignmentSpace;
                     }
                     else if (!consensusAlignmentSpace.equals(alignmentSpace)) {
-                        logger.warn("No consensus for alignment space: "+consensusAlignmentSpace+"!="+alignmentSpace);
+                        hasConsensusAlignmentSpace = false;
                     }
                 }
             }
@@ -95,8 +101,12 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
             }
         }   
         
-        if (consensusAlignmentSpace!=null) {
+        if (hasConsensusAlignmentSpace && consensusAlignmentSpace!=null) {
             helper.setAlignmentSpace(alignmentResult, consensusAlignmentSpace);
+        }
+        else {
+            logger.warn("No consensus for alignment space, using default: "+defaultAlignmentSpace);
+            helper.setAlignmentSpace(alignmentResult, defaultAlignmentSpace);
         }
     }
 }
