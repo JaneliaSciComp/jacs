@@ -209,6 +209,7 @@
                         <input name="METADATA_RESULT_FILE_NODE"/>
                         <input name="RUN_MERGE"/>
                         <input name="SAMPLE_ENTITY_ID"/>
+                        <input name="SAMPLE_AREA"/>
                         <input name="CHANNEL_DYE_SPEC"/>
                         <input name="OUTPUT_CHANNEL_ORDER"/>
                         <output name="CHANNEL_SPEC"/>
@@ -291,6 +292,7 @@
         			<input name="RESULT_ENTITY_NAME" value="$V{SAMPLE_PROCESSING_RESULTS_NAME}"/>
         			<input name="SAMPLE_ENTITY_ID"/>
         			<input name="CHANNEL_SPEC"/>
+        			<input name="SAMPLE_AREA"/>
         			<output name="RESULT_ENTITY_ID"/>
         			<output name="RESULT_ENTITY"/>
         	    </operation>
@@ -340,7 +342,6 @@
             
         <!-- Decide which types of processing will be run -->
         <operation name="Choose Next Steps" processor="org.janelia.it.jacs.compute.service.entity.sample.ChoosePostSampleProcessingStepsService">
-            <input name="SAMPLE_ENTITY_ID"/>
             <input name="ALIGNMENT_ALGORITHMS"/>
             <input name="ALIGNMENT_ALGORITHM_PARAMS"/>
             <input name="ANALYSIS_ALGORITHMS"/>

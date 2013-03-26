@@ -2,11 +2,11 @@ package org.janelia.it.jacs.compute.service.fileDiscovery;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -42,6 +42,11 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
         if (StringUtils.isEmpty(channelSpec)) {
             throw new IllegalArgumentException("CHANNEL_SPEC may not be null");
         }
+
+        AnatomicalArea sampleArea = (AnatomicalArea)processData.getItem("SAMPLE_AREA");
+        if (sampleArea==null) {
+            throw new IllegalArgumentException("SAMPLE_AREA may not be null");
+        }
         
         String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
         if (StringUtils.isEmpty(sampleEntityId)) {
@@ -73,11 +78,13 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
 
         if (sampleSupportingFiles!=null) {
             sampleSupportingFiles = entityBean.getEntityTree(sampleSupportingFiles.getId());
-            List<Entity> tileEntities = EntityUtils.getDescendantsOfType(sampleSupportingFiles, EntityConstants.TYPE_IMAGE_TILE, true);
-            for(Entity tileEntity : tileEntities) {
+            for(Entity tileEntity : sampleArea.getTiles()) {
                 for(EntityData ed : tileEntity.getOrderedEntityData()) {
                     Entity lsmStack = ed.getChildEntity();
                     if (lsmStack != null && lsmStack.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK)) {
+                        
+                        // Don't trust entities in ProcessData, fetch a fresh copy
+                        lsmStack = entityBean.getEntityById(lsmStack.getId());
                         
                         logger.info("Processing metadata for LSM: "+lsmStack.getName());
                         

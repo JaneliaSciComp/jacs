@@ -6,7 +6,7 @@
             <input name="CHANNEL_DYE_SPEC_20X" value="reference=Alexa Fluor 488;membrane=Alexa Fluor 633,Alexa Fluor 647"/>
             <input name="OUTPUT_CHANNEL_ORDER_20X" value="membrane,reference"/>
             <input name="CHANNEL_DYE_SPEC_63X" value="reference=Alexa Fluor 488;membrane=Alexa Fluor 633,Alexa Fluor 647;presynaptic=Alexa Fluor 568,Cy3"/>
-            <input name="OUTPUT_CHANNEL_ORDER_20X" value="presynaptic,membrane,reference"/>
+            <input name="OUTPUT_CHANNEL_ORDER_63X" value="presynaptic,membrane,reference"/>
         </include>
         
     </sequence>

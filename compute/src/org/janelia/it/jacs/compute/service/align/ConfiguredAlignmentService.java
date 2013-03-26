@@ -10,8 +10,10 @@ import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.vo.ParameterException;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Run a configured brain aligner script. Parameters:
@@ -39,7 +41,10 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
                 throw new ServiceException("Input parameter ALIGNMENT_SCRIPT_NAME may not be null");
             }
     
-            this.mountingProtocol = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL, alignedArea);
+            Entity supportingData = EntityUtils.getSupportingData(sampleEntity);
+            if (supportingData!=null) {
+                this.mountingProtocol = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL, alignedArea);
+            }
         } 
         catch (Exception e) {
             throw new ServiceException(e);

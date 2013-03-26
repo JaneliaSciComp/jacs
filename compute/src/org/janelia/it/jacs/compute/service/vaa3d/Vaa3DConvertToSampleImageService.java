@@ -12,6 +12,7 @@ import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -33,6 +34,7 @@ import com.google.common.collect.Multimap;
  *   METADATA_RESULT_FILE_NODE - the directory in which we can find json-format LSM metadata files
  *   RUN_MERGE - was merge actually run on the pairs in BULK_MERGE_PARAMETERS?
  *   SAMPLE_ENTITY_ID - the sample entity, with channel specifications
+ *   SAMPLE_AREA - the anatomical area we are interested in
  *   CHANNEL_DYE_SPEC (optional) - the dye specification
  *   OUTPUT_CHANNEL_ORDER (optional) - the requested channel ordering 
  * 
@@ -56,6 +58,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
     
     protected FileNode metadataFileNode;
     protected Entity sampleEntity;
+    protected AnatomicalArea sampleArea;
     protected List<MergedLsmPair> mergedLsmPairs;
     protected int randomPort;
     protected boolean merged = false;
@@ -89,6 +92,11 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
             Boolean runMerge = (Boolean)processData.getItem("RUN_MERGE");
             if (runMerge!=null) {
                 merged = runMerge.booleanValue();
+            }
+
+            this.sampleArea = (AnatomicalArea)processData.getItem("SAMPLE_AREA");
+            if (sampleArea==null) {
+                throw new IllegalArgumentException("SAMPLE_AREA may not be null");
             }
             
             String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
@@ -150,7 +158,6 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
             logger.info("Processing tile: "+mergedLsmPair.getTag());
             
             File lsm1 = new File(mergedLsmPair.getLsmFilepath1());
-            Entity lsm1Entity = lsmEntityMap.get(lsm1.getName());
             LSMMetadata lsm1Metadata = lsmMetadataMap.get(lsm1.getName());
             logger.info("Parsing file 1: "+lsm1);
             
@@ -192,6 +199,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                 if (merged) {
                     File lsm2 = new File(mergedLsmPair.getLsmFilepath2());
                     LSMMetadata lsm2Metadata = lsmMetadataMap.get(lsm2.getName());
+                    
                     logger.info("Parsing file 2: "+lsm2);
                     collectDyes(lsm2Metadata, referenceDyes, mergedDyeArray);
                     logger.info("Dyes from files 1 and 2: "+mergedDyeArray);
@@ -213,6 +221,9 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                 // If there is no dye-mapping then we have to fall back on the old chan spec method.
                 
                 logger.info("Falling back on chanspec...");
+
+                Entity lsm1Entity = lsmEntityMap.get(lsm1.getName());
+                if (lsm1Entity==null) throw new IllegalStateException("Could not find LSM entity for first LSM: "+lsm1.getName());
                 
                 String outputChanSpec = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
                 String chanSpec1 = sampleHelper.getLSMChannelSpec(lsm1Entity);
@@ -227,6 +238,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                     
                     File lsm2 = new File(mergedLsmPair.getLsmFilepath2());
                     Entity lsm2Entity = lsmEntityMap.get(lsm2.getName());
+                    if (lsm2Entity==null) throw new IllegalStateException("Could not find LSM entity for second LSM: "+lsm2.getName());
                 
                     String chanSpec2 = sampleHelper.getLSMChannelSpec(lsm2Entity);
                     logger.info("  Input spec 2: "+chanSpec2);
@@ -443,18 +455,22 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
     }
     
     private void populateMaps() throws Exception {
-        
-        entityLoader.populateChildren(sampleEntity);
-        Entity supportingData = EntityUtils.getSupportingData(sampleEntity);
-        entityLoader.populateChildren(supportingData);
-        for(Entity tile : EntityUtils.getChildrenOfType(supportingData, EntityConstants.TYPE_IMAGE_TILE)) {
-            entityLoader.populateChildren(tile);
+                
+        for(Entity tile : sampleArea.getTiles()) {
+            logger.info("Populating maps for tile: "+tile.getName());
+            
             for(Entity image : EntityUtils.getChildrenOfType(tile, EntityConstants.TYPE_LSM_STACK)) {    
-                lsmEntityMap.put(image.getName(), image);
-                File jsonFile = new File(metadataFileNode.getDirectoryPath(), image.getName()+".json");
+                logger.info("Populating maps for image: "+image.getName());
+                
+                // Don't trust entities in ProcessData, fetch a fresh copy
+                Entity lsmStack = entityBean.getEntityById(image.getId());
+                
+                lsmEntityMap.put(lsmStack.getName(), lsmStack);
+                File jsonFile = new File(metadataFileNode.getDirectoryPath(), lsmStack.getName()+".json");
                 try {
                     LSMMetadata metadata = LSMMetadata.fromFile(jsonFile);
-                    lsmMetadataMap.put(image.getName(), metadata);    
+                    logger.info("Parsed metadata from: "+jsonFile);
+                    lsmMetadataMap.put(lsmStack.getName(), metadata);
                 }
                 catch (Exception e) {
                     throw new Exception("Error parsing LSM metadata file: "+jsonFile,e);
