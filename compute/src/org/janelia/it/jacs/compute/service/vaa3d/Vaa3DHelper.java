@@ -23,6 +23,10 @@ public class Vaa3DHelper {
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
                     SystemConfigurationProperties.getString("MergePipeline.ScriptPath");
 
+    protected static final String MAP_CHANNEL_PIPELINE_CMD =
+            SystemConfigurationProperties.getString("Executables.ModuleBase") +
+                    SystemConfigurationProperties.getString("MapChannelPipeline.ScriptPath");
+    
     protected static final String INTERSECTION_CMD =
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
                     SystemConfigurationProperties.getString("Intersection.ScriptPath");
@@ -55,6 +59,17 @@ public class Vaa3DHelper {
         return buf.toString();
     }
 
+    public static String getFormattedMapChannelPipelineCommand(String inputFilePath, String outputFilePath, String channelMapping) {
+        StringBuffer buf = new StringBuffer();
+        buf.append("sh "+MAP_CHANNEL_PIPELINE_CMD);
+        buf.append(" -i \""+inputFilePath+"\""); 
+        buf.append(" -o \""+outputFilePath+"\""); 
+        if (!StringUtils.isEmpty(channelMapping)) {
+            buf.append(" -m \""+channelMapping+"\""); 
+        }
+        return buf.toString();
+    }
+    
     public static String getFormattedGrouperCommand(int referenceChannelIndex, String inputDirectoryPath, String outputFilePath) {
         return VAA3D_BASE_CMD +" -x imageStitch.so -f istitch-grouping -p \"#c "+referenceChannelIndex+"\" -i \""+inputDirectoryPath+"\" -o \""+outputFilePath+"\";";
     }
