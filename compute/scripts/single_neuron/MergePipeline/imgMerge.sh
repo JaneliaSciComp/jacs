@@ -40,7 +40,7 @@ FINAL_DIR=${FINAL_OUTPUT%/*}
 FINAL_STUB=${FINAL_OUTPUT%.*}
 EXT=${FINAL_OUTPUT##*.}
 
-export TMPDIR="/scratch/jacs/"
+export TMPDIR="$FINAL_DIR"
 WORKING_DIR=`mktemp -d`
 OUTPUT="$WORKING_DIR/merged.v3draw"
 FILEPATH=$WORKING_DIR
