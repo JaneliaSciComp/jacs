@@ -42,7 +42,7 @@ if [ $INPUT_FILE = $OUTPUT_FILE ]; then
     else
         cd $WORKING_DIR
         echo "Mapping file: $INPUT_FILE"
-        $Vaa3D -cmd image-loader -mapchannels $INPUT $TEMP_FILE \"$CHANNEL_MAPPING\"
+        $Vaa3D -cmd image-loader -mapchannels $INPUT $TEMP_FILE $CHANNEL_MAPPING
         mv $TEMP_FILE $OUTPUT_FILE
     fi
     
@@ -55,7 +55,7 @@ else
         $Vaa3D -cmd image-loader -convert $INPUT_FILE $OUTPUT_FILE
     else
         echo "Mapping file: $INPUT_FILE"
-        $Vaa3D -cmd image-loader -mapchannels $INPUT_FILE $OUTPUT_FILE \"$CHANNEL_MAPPING\"
+        $Vaa3D -cmd image-loader -mapchannels $INPUT_FILE $OUTPUT_FILE $CHANNEL_MAPPING
     fi
 fi
 
