@@ -1,5 +1,7 @@
 #!/usr/local/bin/perl
-
+# 
+# This pipeline is deprecated! Use Yang's configured aligner instead.
+#
 use Getopt::Std;
 use strict;
 
