@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Hudson build script for the Fly Workstation (part 1)
+# Hudson build script for the Workstation (part 1)
 #
 # This build script is meant to run on a Linux-based executor box, with 
 # similar characteristics as the final Linux deployment client. This will 

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Hudson build script for the Fly Workstation (part 2)
+# Hudson build script for the Workstation (part 2)
 # 
 # In part 1 of the build script, we compiled everything we could on a 
 # Linux box. This script (part 2) must run on a Mac box in order to 

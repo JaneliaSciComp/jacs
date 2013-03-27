@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Hudson build script for the Fly Workstation (part 3)
+# Hudson build script for the Workstation (part 3)
 #
 # The final part of the build script actually deploys the newly compiled
 # executables and the Jacs servers.
