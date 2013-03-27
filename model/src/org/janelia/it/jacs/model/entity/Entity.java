@@ -1,33 +1,34 @@
 package org.janelia.it.jacs.model.entity;
 
-import com.google.gwt.user.client.rpc.IsSerializable;
+import java.util.*;
 
 import javax.xml.bind.annotation.*;
-import java.util.*;
+
+import com.google.gwt.user.client.rpc.IsSerializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name="Entity")
 public class Entity  implements java.io.Serializable, IsSerializable {
-	
-	@XmlAttribute(name="guid")
+    
+    @XmlAttribute(name="guid")
     private Long id;
-	
-	@XmlElement
+    
+    @XmlElement
     private String name;
-	
-	@XmlElement
+    
+    @XmlElement
     private String ownerKey;
-	
-	@XmlElement
+    
+    @XmlElement
     private EntityStatus entityStatus;
 
-	@XmlElement
+    @XmlElement
     private EntityType entityType;
-	
-	@XmlTransient
+    
+    @XmlTransient
     private Date creationDate;
 
-	@XmlTransient
+    @XmlTransient
     private Date updatedDate;
     
     @XmlElement(name="entityData")
@@ -39,28 +40,28 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     
     public Entity() {
     }
-	
+    
     public Entity(Long id) {
-		this.id = id;
-	}
+        this.id = id;
+    }
 
-	public Entity(Long id, String name, String ownerKey, EntityStatus entityStatus, EntityType entityType, Date creationDate,
-			Date updatedDate, Set<EntityData> entityData) {
-		this.id = id;
-		this.name = name;
-		this.ownerKey = ownerKey;
-		this.entityStatus = entityStatus;
-		this.entityType = entityType;
-		this.creationDate = creationDate;
-		this.updatedDate = updatedDate;
-		this.entityData = entityData;
-	}
-	
+    public Entity(Long id, String name, String ownerKey, EntityStatus entityStatus, EntityType entityType, Date creationDate,
+            Date updatedDate, Set<EntityData> entityData) {
+        this.id = id;
+        this.name = name;
+        this.ownerKey = ownerKey;
+        this.entityStatus = entityStatus;
+        this.entityType = entityType;
+        this.creationDate = creationDate;
+        this.updatedDate = updatedDate;
+        this.entityData = entityData;
+    }
+    
     public Entity(Long id, String name, String ownerKey, EntityStatus entityStatus, EntityType entityType, Date creationDate,
                   Date updatedDate, Set<EntityData> entityData, Set<EntityActorPermission> entityActorPermissions) {
        this.id = id;
        this.name = name;
-		this.ownerKey = ownerKey;
+        this.ownerKey = ownerKey;
        this.entityStatus = entityStatus;
        this.entityType = entityType;
        this.creationDate = creationDate;
@@ -121,23 +122,23 @@ public class Entity  implements java.io.Serializable, IsSerializable {
         this.name = name;
     }
 
-	public String getOwnerKey() {
-		return ownerKey;
-	}
+    public String getOwnerKey() {
+        return ownerKey;
+    }
 
-	public void setOwnerKey(String ownerKey) {
-		this.ownerKey = ownerKey;
-	}
+    public void setOwnerKey(String ownerKey) {
+        this.ownerKey = ownerKey;
+    }
 
-	public Set<EntityActorPermission> getEntityActorPermissions() {
-		return entityActorPermissions;
-	}
+    public Set<EntityActorPermission> getEntityActorPermissions() {
+        return entityActorPermissions;
+    }
 
-	public void setEntityActorPermissions(Set<EntityActorPermission> entityActorPermissions) {
-		this.entityActorPermissions = entityActorPermissions;
-	}
+    public void setEntityActorPermissions(Set<EntityActorPermission> entityActorPermissions) {
+        this.entityActorPermissions = entityActorPermissions;
+    }
 
-	public EntityAttribute getAttributeByName(String name) {
+    public EntityAttribute getAttributeByName(String name) {
         Set<EntityAttribute> attributeSet = entityType.getAttributes();
         for (EntityAttribute ea : attributeSet) {
             if (ea.getName().equals(name)) {
@@ -147,43 +148,43 @@ public class Entity  implements java.io.Serializable, IsSerializable {
         return null;
     }
     
-	/**
-	 * Returns the set of EntityData objects with the given attribute name.
-	 */
-	public EntityData getEntityDataByAttributeName(String attributeName) {
-		Set<EntityData> matchingData = new HashSet<EntityData>();
-		for (EntityData ed : entityData) {
-			if (ed.getEntityAttribute().getName().matches(attributeName)) {
-				matchingData.add(ed);
-			}
-		}
-		if (matchingData.size() == 1) {
-			EntityData ed = matchingData.iterator().next();
-			return ed;
-		}
-		if (matchingData.size() > 1) {
-			System.out.println("Warning: expected single EntityData for "+attributeName+" in Entity#"+getId()+" but got "+matchingData.size());
-		}
-		return null;
-	}
+    /**
+     * Returns the set of EntityData objects with the given attribute name.
+     */
+    public EntityData getEntityDataByAttributeName(String attributeName) {
+        Set<EntityData> matchingData = new HashSet<EntityData>();
+        for (EntityData ed : entityData) {
+            if (ed.getEntityAttribute().getName().matches(attributeName)) {
+                matchingData.add(ed);
+            }
+        }
+        if (matchingData.size() == 1) {
+            EntityData ed = matchingData.iterator().next();
+            return ed;
+        }
+        if (matchingData.size() > 1) {
+            System.out.println("Warning: expected single EntityData for "+attributeName+" in Entity#"+getId()+" but got "+matchingData.size());
+        }
+        return null;
+    }
 
-	/**
-	 * Returns the value of the given attribute, if it exists and there is only one.
-	 */
-	public String getValueByAttributeName(String attributeName) {
-		EntityData ed = getEntityDataByAttributeName(attributeName);
-		if (ed == null) return null;
-		return ed.getValue();
-	}
+    /**
+     * Returns the value of the given attribute, if it exists and there is only one.
+     */
+    public String getValueByAttributeName(String attributeName) {
+        EntityData ed = getEntityDataByAttributeName(attributeName);
+        if (ed == null) return null;
+        return ed.getValue();
+    }
 
-	/**
-	 * Returns the child given by the attribute, if it exists and there is only one.
-	 */
-	public Entity getChildByAttributeName(String attributeName) {
-		EntityData ed = getEntityDataByAttributeName(attributeName);
-		if (ed == null) return null;
-		return ed.getChildEntity();
-	}
+    /**
+     * Returns the child given by the attribute, if it exists and there is only one.
+     */
+    public Entity getChildByAttributeName(String attributeName) {
+        EntityData ed = getEntityDataByAttributeName(attributeName);
+        if (ed == null) return null;
+        return ed.getChildEntity();
+    }
 
     // This is the sister method of the above 'getValueByAttributeName'
     // which does the inverse.
@@ -223,7 +224,7 @@ public class Entity  implements java.io.Serializable, IsSerializable {
 
     // This returns the EntityData so it can be persisted
     public EntityData addChildEntity(Entity entity) {
-    	return addChildEntity(entity, EntityConstants.ATTRIBUTE_ENTITY);
+        return addChildEntity(entity, EntityConstants.ATTRIBUTE_ENTITY);
     }
 
     // This returns the EntityData so it can be persisted
@@ -241,57 +242,57 @@ public class Entity  implements java.io.Serializable, IsSerializable {
         return ed;
     }
 
-	/**
-	 * Returns the an ordered list of EntityData objects with the given attribute name.
-	 */
-	public List<EntityData> getList(String attributeName) {
-		List<EntityData> matchingData = new ArrayList<EntityData>();
-		for (EntityData ed : getOrderedEntityData()) {
-			if (ed.getEntityAttribute().getName().matches(attributeName)) {
-				matchingData.add(ed);
-			}
-		}
-		return matchingData;
-	}
-	
-	public Integer getMaxOrderIndex() {
-		int max = 0;
-		for(EntityData ed : entityData) {
-			if (ed.getOrderIndex() != null && ed.getOrderIndex() > max) {
-				max = ed.getOrderIndex();
-			}
-		}
-		return max;
-	}
-	
+    /**
+     * Returns the an ordered list of EntityData objects with the given attribute name.
+     */
+    public List<EntityData> getList(String attributeName) {
+        List<EntityData> matchingData = new ArrayList<EntityData>();
+        for (EntityData ed : getOrderedEntityData()) {
+            if (ed.getEntityAttribute().getName().matches(attributeName)) {
+                matchingData.add(ed);
+            }
+        }
+        return matchingData;
+    }
+    
+    public Integer getMaxOrderIndex() {
+        int max = 0;
+        for(EntityData ed : entityData) {
+            if (ed.getOrderIndex() != null && ed.getOrderIndex() > max) {
+                max = ed.getOrderIndex();
+            }
+        }
+        return max;
+    }
+    
     public List<EntityData> getOrderedEntityData() {
-    	List<EntityData> orderedData = new ArrayList<EntityData>(getEntityData());
-    	Collections.sort(orderedData, new Comparator<EntityData>() {
-			@Override
-			public int compare(EntityData o1, EntityData o2) {
-				if (o1.getOrderIndex() == null) {
-					if (o2.getOrderIndex() == null) {
-						if (o1.getId()==null) {
-							if (o2.getId()==null) {
-								return 0;
-							}
-							return -1;
-						}
-						else if (o2.getId()==null) {
-							return 1;
-						}
-						return o1.getId().compareTo(o2.getId());
-					}
-					return -1;
-				}
-				else if (o2.getOrderIndex() == null) {
-					return 1;
-				}
-				return o1.getOrderIndex().compareTo(o2.getOrderIndex());
-			}
-    		
-		});
-    	return orderedData;
+        List<EntityData> orderedData = new ArrayList<EntityData>(getEntityData());
+        Collections.sort(orderedData, new Comparator<EntityData>() {
+            @Override
+            public int compare(EntityData o1, EntityData o2) {
+                if (o1.getOrderIndex() == null) {
+                    if (o2.getOrderIndex() == null) {
+                        if (o1.getId()==null) {
+                            if (o2.getId()==null) {
+                                return 0;
+                            }
+                            return -1;
+                        }
+                        else if (o2.getId()==null) {
+                            return 1;
+                        }
+                        return o1.getId().compareTo(o2.getId());
+                    }
+                    return -1;
+                }
+                else if (o2.getOrderIndex() == null) {
+                    return 1;
+                }
+                return o1.getOrderIndex().compareTo(o2.getOrderIndex());
+            }
+            
+        });
+        return orderedData;
     }
     
     /**
@@ -299,38 +300,30 @@ public class Entity  implements java.io.Serializable, IsSerializable {
      * @return
      */
     public List<Entity> getOrderedChildren() {
-    	List<Entity> children = new ArrayList<Entity>();
-    	for(EntityData ed : getOrderedEntityData()) {
-        	if (ed.getChildEntity() != null) children.add(ed.getChildEntity());
-    	}
-    	return children;
+        List<Entity> children = new ArrayList<Entity>();
+        for(EntityData ed : getOrderedEntityData()) {
+            if (ed.getChildEntity() != null) children.add(ed.getChildEntity());
+        }
+        return children;
     }
 
-	public boolean hasChildren() {
-    	for(EntityData ed : entityData) {
-        	if (ed.getChildEntity() != null) {
-        		return true;
-        	}
-    	}
-    	return false;
-	}
+    public boolean hasChildren() {
+        for(EntityData ed : entityData) {
+            if (ed.getChildEntity() != null) {
+                return true;
+            }
+        }
+        return false;
+    }
     
     public Set<Entity> getChildren() {
-    	Set<Entity> children = new HashSet<Entity>();
-    	for(EntityData ed : entityData) {
-        	if (ed.getChildEntity() != null) children.add(ed.getChildEntity());
-    	}
-    	return children;
+        Set<Entity> children = new HashSet<Entity>();
+        for(EntityData ed : entityData) {
+            if (ed.getChildEntity() != null) children.add(ed.getChildEntity());
+        }
+        return children;
     }
-
-    /**
-     * @return true if the OID is null;
-     */
-    public final boolean hasNullID() {
-        return getId() == null || getId()==0;
-
-    }
-
+    
     @Override
     public String toString() {
         return getName();
