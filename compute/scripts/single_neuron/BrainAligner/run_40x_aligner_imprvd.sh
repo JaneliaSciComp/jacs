@@ -266,6 +266,15 @@ echo "~ Moving final output to $FINAL_DIR"
 mv $PREPARED_OUTPUT $FINAL_OUTPUT
 mv $WORKING_DIR/*.png $FINAL_DIR
 
+if [[ -f "$FINAL_OUTPUT" ]]; then
+META=${FINAL_DIR}"/Aligned.properties"
+echo "alignment.stack.filename=$OUTPUT_FILENAME" >> $META
+echo "alignment.space.name=Unified 20x Alignment Space" >> $META
+echo "alignment.resolution.voxels=0.62x0.62x0.62" >> $META
+echo "alignment.image.size=1024x512x218" >> $META
+echo "alignment.objective=20x" >> $META
+fi
+
 echo "~ Removing temp files"
 rm -rf $WORKING_DIR
 
