@@ -57,7 +57,9 @@ public class ConfiguredBrainVNCAlignmentService extends ConfiguredAlignmentServi
     @Override
     protected String getAlignerCommand() {
         StringBuilder builder = new StringBuilder(super.getAlignerCommand());
-        builder.append(" -v " + vncFilename);
+        if (vncFilename!=null) {
+            builder.append(" -v " + vncFilename);
+        }
         return builder.toString();
     }
 }
