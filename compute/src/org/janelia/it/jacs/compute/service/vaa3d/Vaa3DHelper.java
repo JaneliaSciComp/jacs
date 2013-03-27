@@ -226,6 +226,10 @@ public class Vaa3DHelper {
                 "\" -fragments "+commaSeparatedFragmentList+" -outputMip \""+newOutputMIPPath+"\" -outputStack \""+newOutputStackPath+"\" ;";
     }
 
+    public static String getFormattedCellCounterCommand(String planPath) {
+        return VAA3D_BASE_CMD + " -cmd cell-counter -plan \""+planPath+"\" -i $INPUT_FILE";
+    }
+
     public static int getRandomPort() {
         return getRandomPort(STARTING_DISPLAY_PORT);
     }

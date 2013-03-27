@@ -4,21 +4,14 @@
 <process name="Cell Counting Process" processor="queue/consolePipelineLauncher" startEvent="pending" updateProcessStatus="on_success" >
 
     <sequence name="Cell Counting" waitForAsync="true">
-    
-        <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
-            <input name="TASK_PARAMETER_1" value="separationEntityId"/>
-            <input name="PROCESS_VARIABLE_1" value="ROOT_ENTITY_ID"/>
-            <output name="ROOT_ENTITY_ID"/>
-        </operation>
-        
-        <operation name="Create Cell Counting Result Node" processor="org.janelia.it.jacs.compute.service.vaa3d.CreateNeuronMergeResultFileNodeService">
+        <operation name="Create Cell Counting Result Node" processor="org.janelia.it.jacs.compute.service.cellCounting.CreateCellCountingResultFileNodeService">
             <output name="RESULT_FILE_NODE_ID"/>
             <output name="RESULT_FILE_NODE"/>
         </operation>
         
         <sequence name="Cell Counting Grid" waitForAsync="true">
-            <operation name="Neuron Merge" processor="queue/gridSubmitAndWait">
-                <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DNeuronMergeService"/>
+            <operation name="Cell Counting" processor="queue/gridSubmitAndWait">
+                <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3dCellCountingService"/>
                 <input name="RESULT_FILE_NODE_ID"/>
                 <input name="RESULT_FILE_NODE"/>
                 <output name="RESULT_FILE_NODE_ID"/>
@@ -27,10 +20,10 @@
         </sequence>
         
         <!-- Load the cell counting results into the database -->
-        <operation name="Cell Counting Results" processor="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DNeuronMergeResultsDiscoveryService">
+        <operation name="Cell Counting Results" processor="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DCellCounterResultsDiscoveryService">
             <input name="ROOT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
             <input name="ROOT_ENTITY_ID"/>
-            <input name="RESULT_ENTITY_TYPE" value="Curated Neuron"/>
+            <input name="RESULT_ENTITY_TYPE" value="Cell Counting Result"/>
             <input name="RESULT_ENTITY_NAME" value=""/>
         </operation>
         

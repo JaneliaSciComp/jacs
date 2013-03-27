@@ -687,6 +687,18 @@
                       select-before-update="false">
             </subclass>
 
+            <subclass name="org.janelia.it.jacs.model.user_data.cellCounting.CellCountingResultNode" discriminator-value="CellCountingResultNode"
+                      dynamic-update="true"
+                      dynamic-insert="true"
+                      select-before-update="false">
+            </subclass>
+
+            <subclass name="org.janelia.it.jacs.model.user_data.maskSearch.MaskSearchResultNode" discriminator-value="MaskSearchResultNode"
+                      dynamic-update="true"
+                      dynamic-insert="true"
+                      select-before-update="false">
+            </subclass>
+
             <subclass name="org.janelia.it.jacs.model.user_data.zlatic.ZlaticLabResultNode" discriminator-value="ZlaticLabResultNode"
                       dynamic-update="true"
                       dynamic-insert="true"

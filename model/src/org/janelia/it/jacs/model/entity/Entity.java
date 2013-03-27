@@ -1,10 +1,9 @@
 package org.janelia.it.jacs.model.entity;
 
-import java.util.*;
+import com.google.gwt.user.client.rpc.IsSerializable;
 
 import javax.xml.bind.annotation.*;
-
-import com.google.gwt.user.client.rpc.IsSerializable;
+import java.util.*;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name="Entity")
@@ -323,7 +322,15 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     	}
     	return children;
     }
-    
+
+    /**
+     * @return true if the OID is null;
+     */
+    public final boolean hasNullID() {
+        return getId() == null || getId()==0;
+
+    }
+
     @Override
     public String toString() {
         return getName();
