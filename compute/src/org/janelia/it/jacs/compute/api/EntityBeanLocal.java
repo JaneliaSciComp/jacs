@@ -1,14 +1,13 @@
 
 package org.janelia.it.jacs.compute.api;
 
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityData;
+
+import javax.ejb.Local;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import javax.ejb.Local;
-
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityData;
 
 /**
  * A local interface for invoking queries against the entity model. Affords access to everything in EntityBeanRemote
@@ -31,7 +30,7 @@ public interface EntityBeanLocal extends EntityBeanRemote {
 
     public Set<Entity> getEntitiesByName(String name) throws ComputeException;
     public List<Entity> getEntitiesByTypeName(String entityTypeName) throws ComputeException;
-    public List<Entity> getEntitiesByNameAndTypeName(String entityName, String entityTypeName) throws ComputeException;
+    public List<Entity> getEntitiesByNameAndTypeName(String subjectKey, String entityName, String entityTypeName) throws ComputeException;
     public List<Entity> getEntitiesWithAttributeValue(String attrName, String attrValue) throws ComputeException;
 
     public Set<EntityData> getParentEntityDatas(Long childEntityId) throws ComputeException;

@@ -22,12 +22,19 @@ public class MaskSearchTask extends SearchTask {
     transient public static final String DISPLAY_NAME   = "Mask Search";
     transient public static final String PARAM_inputFilePath    = "inputFilePath";
     transient public static final String PARAM_resultsFolderName    = "resultsFolderName";
+    transient public static final String PARAM_matrix       = "matrix";
+    transient public static final String PARAM_queryChannel = "queryChannel";
+
+    public static final String DEFAULT_MATRIX = "0 -1 -2 -3     -100 100 200 300     -200 200 400 600     -300 400 800 1200";
+    public static final String DEFAULT_QUERY_CHANNEL = "0";
 
     public MaskSearchTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet,
-                          String inputFilePath, String resultsFolderName) {
+                          String inputFilePath, String resultsFolderName, String matrixValue, String queryChannel) {
         super(inputNodes, owner, events, taskParameterSet, DISPLAY_NAME + " Task");
         setParameter(PARAM_inputFilePath, inputFilePath);
         setParameter(PARAM_resultsFolderName, resultsFolderName);
+        setParameter(PARAM_matrix, matrixValue);
+        setParameter(PARAM_queryChannel,queryChannel);
     }
 
     public MaskSearchTask() {
@@ -42,7 +49,8 @@ public class MaskSearchTask extends SearchTask {
         if (key == null)
             return null;
         String value = getParameter(key);
-        if (key.equals(PARAM_resultsFolderName) || key.equals(PARAM_inputFilePath)) {
+        if (key.equals(PARAM_resultsFolderName) || key.equals(PARAM_inputFilePath) || key.equals(PARAM_matrix) ||
+            key.equals(PARAM_queryChannel)) {
             return new TextParameterVO(value);
         }
         if (value == null)

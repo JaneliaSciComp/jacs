@@ -107,6 +107,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_CHANNEL_DYE_NAMES                   = "Channel Dye Names"; // e.g. "Alexa Fluor 488,Alexa Fluor 633,DY-547"
     public static final String ATTRIBUTE_CHANNEL_COLORS                      = "Channel Colors"; // e.g. "#7e5200,#ff00ff,#00ff00"
     public static final String ATTRIBUTE_METADATA_FILE                       = "Metadata File";
+    public static final String ATTRIBUTE_SEARCH_TASK_ID                      = "Search Task Id"; // Id of the search task that created this folder and results
     
     // Alignment Spaces
     public static final String ATTRIBUTE_ALIGNMENT_SPACE                     = "Alignment Space"; // e.g. "Unified 20x Alignment Space"

@@ -230,6 +230,15 @@ public class Vaa3DHelper {
         return VAA3D_BASE_CMD + " -cmd cell-counter -plan \""+planPath+"\" -i $INPUT_FILE";
     }
 
+    public static String getFormattedMaskSearchCommand(String indexFilePath, String queryChannel, String matrix) {
+        String tmpString = VAA3D_BASE_CMD + " -cmd volume-pattern-index -mode search -indexFile \""+indexFilePath+
+                "\" -query $INPUT_FILE -queryChannel "+queryChannel+" ";
+        if (null!=matrix && !"".equals(matrix)) {
+            tmpString+="-matrix \""+matrix+"\"";
+        }
+        return tmpString;
+    }
+
     public static int getRandomPort() {
         return getRandomPort(STARTING_DISPLAY_PORT);
     }

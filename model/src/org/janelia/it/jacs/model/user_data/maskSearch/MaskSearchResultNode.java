@@ -19,7 +19,7 @@ import java.io.Serializable;
 public class MaskSearchResultNode extends FileNode implements IsSerializable, Serializable {
 
     public static final String TAG_MIP = ".png";
-    public static final String TAG_STACK = ".v3dpbd";
+    public static final String TAG_RESULTS = ".txt";
 
     /**
      * constructor
