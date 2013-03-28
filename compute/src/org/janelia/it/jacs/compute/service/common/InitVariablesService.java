@@ -5,6 +5,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.shared.utils.ReflectionUtils;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 
 /**
@@ -24,6 +25,13 @@ public class InitVariablesService implements IService {
         try {
             Logger logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
 
+            boolean override = true;
+            String overrideStr = (String)processData.getItem("OVERRIDE");
+            if (!StringUtils.isEmpty(overrideStr)) {
+                override = Boolean.parseBoolean(overrideStr);   
+                logger.info("Will "+(override?"":"not ")+"override existing variables");
+            }
+            
         	int num = 1;
         	while (true) {
         		String processVarName = (String)processData.getItem("PROCESS_VARIABLE_"+num);	
@@ -38,12 +46,16 @@ public class InitVariablesService implements IService {
         		    if (bean==null) {
         		        throw new IllegalArgumentException(beanName+" may not be null");
         		    }
-                    logger.info("Setting "+beanPropertyName+" value on "+beanName+" to '"+value+"'");
-                    ReflectionUtils.set(bean, beanPropertyName, value);
+                    if (override || ReflectionUtils.get(bean, beanPropertyName)==null) {
+                        logger.info("Setting "+beanPropertyName+" value on "+beanName+" to '"+value+"'");
+                        ReflectionUtils.set(bean, beanPropertyName, value);
+                    }
         		}
         		else {
-                    logger.info("Putting value '"+value+"' in "+processVarName);
-                    processData.putItem(processVarName, value);    
+        		    if (override || processData.getItem(processVarName)==null) {
+                        logger.info("Putting value '"+value+"' in "+processVarName);
+                        processData.putItem(processVarName, value);    
+        		    }
         		}
         		
                 num++;

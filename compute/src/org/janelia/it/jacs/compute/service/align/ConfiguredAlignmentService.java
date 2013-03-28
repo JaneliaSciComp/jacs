@@ -41,6 +41,7 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
                 throw new ServiceException("Input parameter ALIGNMENT_SCRIPT_NAME may not be null");
             }
     
+            entityLoader.populateChildren(sampleEntity);
             Entity supportingData = EntityUtils.getSupportingData(sampleEntity);
             if (supportingData!=null) {
                 this.mountingProtocol = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL, alignedArea);

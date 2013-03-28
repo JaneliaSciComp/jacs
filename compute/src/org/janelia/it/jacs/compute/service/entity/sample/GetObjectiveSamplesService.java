@@ -19,7 +19,17 @@ public class GetObjectiveSamplesService extends AbstractEntityService {
     	if (sampleEntityId == null || "".equals(sampleEntityId)) {
     		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
     	}
-    	
+
+    	boolean reuse20xAlignment = true;
+        String reuse20xAlignmentStr = (String)processData.getItem("REUSE_20X_ALIGNMENT");
+        if (reuse20xAlignmentStr == null || "false".equals(reuse20xAlignmentStr)) {
+            reuse20xAlignment = false;
+        }
+        
+        if (reuse20xAlignment) {
+            logger.info("reuse20xAlignment: "+reuse20xAlignment);
+        }
+        
     	Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
     	if (sampleEntity == null) {
     		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
@@ -39,8 +49,38 @@ public class GetObjectiveSamplesService extends AbstractEntityService {
     	for(Entity subsample : EntityUtils.getChildrenOfType(sampleEntity, EntityConstants.TYPE_SAMPLE)) {
     	    String objective = subsample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
     	    if (Objective.OBJECTIVE_20X.getName().equals(objective)) {
-    	        logger.info("Putting '"+subsample.getId()+"' in SAMPLE_20X_ID");
-    	        processData.putItem("SAMPLE_20X_ID", subsample.getId().toString());
+
+    	        if (reuse20xAlignment) {
+    	            
+    	            Entity latest20x = null;
+    	            populateChildren(subsample);
+    	            for(Entity pipelineRun : subsample.getOrderedChildren()) {
+                        populateChildren(pipelineRun);
+    	                if (pipelineRun.getEntityType().getName().equals(EntityConstants.TYPE_PIPELINE_RUN)) {
+    	                    for(Entity a : pipelineRun.getChildren()) {
+    	                        populateChildren(a);
+    	                        if (a.getEntityType().getName().equals(EntityConstants.TYPE_ALIGNMENT_RESULT)) {
+    	                            if (EntityUtils.findChildWithType(a, EntityConstants.TYPE_ERROR) == null) {
+    	                                latest20x = a;    
+    	                            }
+    	                        }
+    	                    }
+    	                }
+    	            }
+    	            
+    	            if (latest20x == null) {
+    	                logger.info("Could not find existing 20x alignment for reuse");
+    	                logger.info("Putting '"+subsample.getId()+"' in SAMPLE_20X_ID");
+                        processData.putItem("SAMPLE_20X_ID", subsample.getId().toString());
+    	            }
+    	            else {
+    	                logger.info("Reusing existing 20x alignment: id="+latest20x.getId());
+    	            }
+    	        }
+    	        else {
+                    logger.info("Putting '"+subsample.getId()+"' in SAMPLE_20X_ID");
+                    processData.putItem("SAMPLE_20X_ID", subsample.getId().toString());
+    	        }
     	    }
     	    else if (Objective.OBJECTIVE_40X.getName().equals(objective)) {
     	        logger.info("Putting '"+subsample.getId()+"' in SAMPLE_40X_ID");

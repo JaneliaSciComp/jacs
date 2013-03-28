@@ -6,17 +6,29 @@
         <input name="OUTPUT_CHANNEL_ORDER_20X"/>
 	    <input name="CHANNEL_DYE_SPEC_63X"/>
         <input name="OUTPUT_CHANNEL_ORDER_63X"/>
-            
+        
         <!-- Import variables from the task -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="TASK_PARAMETER_1" value="sample entity id"/>
             <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
+            <input name="TASK_PARAMETER_2" value="reuse 20x alignment"/>
+            <input name="PROCESS_VARIABLE_2" value="REUSE_20X_ALIGNMENT"/>
             <output name="SAMPLE_ENTITY_ID"/>
+            <output name="REUSE_20X_ALIGNMENT"/>
+        </operation>
+        
+        <!-- Init variables -->
+        <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
+            <input name="OVERRIDE" value="false"/>
+            <input name="PROCESS_VARIABLE_1" value="REUSE_20X_ALIGNMENT"/>
+            <input name="PROCESS_VARIABLE_VALUE_1" value="true"/>
+            <output name="REUSE_20X_ALIGNMENT"/>
         </operation>
         
         <!-- Get sub-samples -->
         <operation name="Get Sub-Samples" processor="org.janelia.it.jacs.compute.service.entity.sample.GetObjectiveSamplesService">
             <input name="SAMPLE_ENTITY_ID"/>
+            <input name="REUSE_20X_ALIGNMENT"/>
             <output name="PARENT_SAMPLE_ID"/>
             <output name="SAMPLE_20X_ID"/>
             <output name="SAMPLE_63X_ID"/>
@@ -36,25 +48,25 @@
                 <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_20X}"/>
                 <input name="PIPELINE_PROCESS"/>
             </include>
-
-            <sequence if="SAMPLE_63X_ID is not null">
-                
-                <include name="63x Pipeline" process="FlyLightSamplePipeline">
-                    <input name="SAMPLE_ENTITY_ID" value="$V{SAMPLE_63X_ID}"/>
-                    <input name="PIPELINE_NAME" value="Polarity Pipeline 63x"/>
-                    <input name="MERGE_ALGORITHMS" value="FLYLIGHT_ORDERED"/>
-                    <input name="STITCH_ALGORITHMS" value="FLYLIGHT"/>
-                    <input name="ALIGNMENT_ALGORITHMS" value="CONFIGURED_PAIR"/>
-                    <input name="ALIGNMENT_ALGORITHM_PARAMS" value="brainalignPolarityPair_1024px_INT.sh"/>
-                    <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
-                    <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_63X}"/>
-                    <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_63X}"/>
-                    <input name="PIPELINE_PROCESS"/>
-                </include>
-                
-            </sequence>
         
         </sequence>
 		
+        <sequence if="SAMPLE_63X_ID is not null">
+            
+            <include name="63x Pipeline" process="FlyLightSamplePipeline">
+                <input name="SAMPLE_ENTITY_ID" value="$V{SAMPLE_63X_ID}"/>
+                <input name="PIPELINE_NAME" value="Polarity Pipeline 63x"/>
+                <input name="MERGE_ALGORITHMS" value="FLYLIGHT_ORDERED"/>
+                <input name="STITCH_ALGORITHMS" value="FLYLIGHT"/>
+                <input name="ALIGNMENT_ALGORITHMS" value="CONFIGURED_PAIR"/>
+                <input name="ALIGNMENT_ALGORITHM_PARAMS" value="brainalignPolarityPair_1024px_INT.sh"/>
+                <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
+                <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_63X}"/>
+                <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_63X}"/>
+                <input name="PIPELINE_PROCESS"/>
+            </include>
+            
+        </sequence>
+        
     </sequence>
 </process>
