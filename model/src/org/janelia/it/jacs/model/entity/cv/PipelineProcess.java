@@ -2,6 +2,7 @@ package org.janelia.it.jacs.model.entity.cv;
 
 public enum PipelineProcess implements NamedEnum {
 
+    // The enum must match the process file name after PipelineConfig_
 	FlyLightCentralBrain("FlyLight Central Brain Pipeline"),
 	FlyLightOpticLobe("FlyLight Optic Lobe Pipeline"),
 	FlyLightUnaligned("FlyLight Unaligned Pipeline"),
@@ -24,8 +25,10 @@ public enum PipelineProcess implements NamedEnum {
 	YoshiMBPolarityCase1("Yoshi MB Polarity Case 1 Pipeline"),
 	YoshiMBPolarityCase2("Yoshi MB Polarity Case 2 Pipeline"),
 	YoshiMBPolarityCase3("Yoshi MB Polarity Case 3 Pipeline"),
-	YoshiMBPolarityCase4("Yoshi MB Polarity Case 4 Pipeline");
-	
+	YoshiMBPolarityCase4("Yoshi MB Polarity Case 4 Pipeline"),
+
+    CellCounting("Cell Counting Pipeline");
+
 	private String name;
 	
 	private PipelineProcess(String name) {

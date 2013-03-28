@@ -263,8 +263,9 @@ public class FileDiscoveryHelper extends EntityHelper {
         return topLevelFolder;
     }
 
+
+
     public Entity createOrVerifyRootEntity(String topLevelFolderName, boolean createIfNecessary, boolean loadTree) throws Exception {
-    	
     	Entity topLevelFolder = getRootEntity(topLevelFolderName, loadTree);
         if (topLevelFolder == null) {
             if (createIfNecessary) {

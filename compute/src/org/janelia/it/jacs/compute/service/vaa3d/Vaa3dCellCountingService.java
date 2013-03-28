@@ -1,12 +1,12 @@
 package org.janelia.it.jacs.compute.service.vaa3d;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
-import org.janelia.it.jacs.model.tasks.cellCounting.CellCountingTask;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileWriter;
+import java.util.ArrayList;
 
 /**
  * Merge neuron fragments.
@@ -18,37 +18,34 @@ public class Vaa3dCellCountingService extends SubmitDrmaaJobService {
 
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
     private static final String CONFIG_PREFIX = "cellCountingConfiguration.";
-    private File[]targetFiles;
+    public static final String DEFAULT_PLAN =
+            "-ist 60 -nt 40 -cst 110 -dc 3 -ec 6 -mnr 90\n" +
+                    "-ist 50 -nt 35 -cst 90 -dc 3 -ec 5 -mnr 80\n" +
+                    "-ist 45 -nt 30 -cst 80 -dc 3 -ec 4 -mnr 70\n" +
+                    "-ist 40 -nt 25 -cst 80 -dc 3 -ec 4 -mnr 60\n" +
+                    "-ist 30 -nt 25 -cst 80 -dc 3 -ec 4 -mnr 50\n" +
+                    "-ist 25 -nt 25 -cst 75 -dc 3 -ec 3 -mnr 50\n" +
+                    "-ist 25 -nt 25 -cst 70 -dc 3 -ec 3 -mnr 50\n";
+
+
+    private File targetFile;
     protected void init(IProcessData processData) throws Exception {
         super.init(processData);
     }
 
     @Override
     protected String getGridServicePrefixName() {
-        return "celCounting";
+        return "cellCounting";
     }
 
     @Override
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
-        String tmpPath = task.getParameter(CellCountingTask.PARAM_inputFilePath);
-        int fileCount=1;
-        File tmpPathFile = new File(tmpPath);
-        targetFiles = new File[]{tmpPathFile};
-        // Should probably add logic to the filter to ensure proper image files are discovered and passed through
-        if (tmpPathFile.isDirectory()) {
-            targetFiles = tmpPathFile.listFiles(new FileFilter() {
-                @Override
-                public boolean accept(File file) {
-                    return !file.isDirectory();
-                }
-            });
-            fileCount = (null!=targetFiles)?targetFiles.length:0;
-        }
-
+        String tmpPath = (String) processData.getItem("INPUT_FILE");
+        targetFile = new File(tmpPath);
         String planPath = resultFileNode.getDirectoryPath()+File.separator+"cellCounterPlan.txt";
         FileWriter planWriter = new FileWriter(new File(planPath));
         try {
-            planWriter.append(task.getParameter(CellCountingTask.PARAM_planInformation));
+            planWriter.append(DEFAULT_PLAN);
         }
         finally {
             planWriter.flush();
@@ -56,23 +53,19 @@ public class Vaa3dCellCountingService extends SubmitDrmaaJobService {
         }
 
         writeInstanceFiles();
-        setJobIncrementStop(fileCount);
+        setJobIncrementStop(1);
         createShellScript(writer, planPath);
     }
 
     private void writeInstanceFiles() throws Exception {
-        int count = 1;
-        for (File targetFile : targetFiles) {
-            File configFile = new File(getSGEConfigurationDirectory(), CONFIG_PREFIX+count);
-            FileWriter writer = new FileWriter(configFile);
-            try {
-                writer.append(targetFile.getAbsolutePath());
-                count++;
-            }
-            finally {
-                writer.flush();
-                writer.close();
-            }
+        File configFile = new File(getSGEConfigurationDirectory(), CONFIG_PREFIX+"1");
+        FileWriter writer = new FileWriter(configFile);
+        try {
+            writer.append(targetFile.getAbsolutePath());
+        }
+        finally {
+            writer.flush();
+            writer.close();
         }
     }
 
@@ -100,4 +93,11 @@ public class Vaa3dCellCountingService extends SubmitDrmaaJobService {
         return TIMEOUT_SECONDS;
     }
 
+    @Override
+    public void postProcess() throws MissingDataException {
+        super.postProcess();
+        ArrayList<String> archiveList = new ArrayList<String>();
+        archiveList.add(resultFileNode.getDirectoryPath());
+        processData.putItem("ARCHIVE_FILE_PATHS", archiveList);
+    }
 }
