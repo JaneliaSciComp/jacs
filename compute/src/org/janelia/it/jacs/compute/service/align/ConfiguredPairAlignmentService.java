@@ -106,10 +106,10 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
                     logger.info("Found 63x aligned stack: "+inputFilename);
                     Entity aligned = objectiveSample.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
                     if (aligned!=null) {
-                        String channelSpec = aligned.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+                        this.channelSpec = aligned.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
                         if (channelSpec.contains("r")) {
-                            refChannel = channelSpec.indexOf('r');
-                            refChannelOneIndexed = refChannel + 1;
+                            this.refChannel = channelSpec.indexOf('r');
+                            this.refChannelOneIndexed = refChannel + 1;
                             logger.info("Found 63x ref channel (one-indexed): "+refChannelOneIndexed);
                             putOutputVars(channelSpec);
                         }

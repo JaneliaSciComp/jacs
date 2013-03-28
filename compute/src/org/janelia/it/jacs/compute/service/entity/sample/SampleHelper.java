@@ -620,10 +620,12 @@ public class SampleHelper extends EntityHelper {
     
     private String getChannelIndexes(String channelSpec, char channelCode) {
         StringBuilder builder = new StringBuilder();
-        for(int i=0; i<channelSpec.length(); i++) {
-            if (channelSpec.charAt(i) == channelCode) {
-                if (builder.length()>0) builder.append(" ");
-                builder.append(""+i);
+        if (channelSpec!=null) {
+            for(int i=0; i<channelSpec.length(); i++) {
+                if (channelSpec.charAt(i) == channelCode) {
+                    if (builder.length()>0) builder.append(" ");
+                    builder.append(""+i);
+                }
             }
         }
         return builder.toString();

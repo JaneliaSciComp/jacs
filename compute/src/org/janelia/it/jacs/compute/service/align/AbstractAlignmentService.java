@@ -148,12 +148,12 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
     }
     
     protected void putOutputVars(String chanSpec) {
-        String signalChannels = sampleHelper.getSignalChannelIndexes(channelSpec);
-        String referenceChannels = sampleHelper.getReferenceChannelIndexes(channelSpec);
-        logger.info("Putting '"+channelSpec+"' in CHANNEL_SPEC");
-        processData.putItem("CHANNEL_SPEC", channelSpec);
+        logger.info("Putting '"+chanSpec+"' in CHANNEL_SPEC");
+        processData.putItem("CHANNEL_SPEC", chanSpec);
+        String signalChannels = sampleHelper.getSignalChannelIndexes(chanSpec);
         logger.info("Putting '"+signalChannels+"' in SIGNAL_CHANNELS");
         processData.putItem("SIGNAL_CHANNELS", signalChannels);
+        String referenceChannels = sampleHelper.getReferenceChannelIndexes(chanSpec);
         logger.info("Putting '"+referenceChannels+"' in REFERENCE_CHANNEL");
         processData.putItem("REFERENCE_CHANNEL", referenceChannels);
     }
