@@ -20,7 +20,13 @@ public class GetObjectiveSamplesService extends AbstractEntityService {
     		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
     	}
 
-    	boolean reuse20xAlignment = true;
+        boolean reuseProcessing = true;
+        Boolean reuseProcessingBool = (Boolean)processData.getItem("REUSE_PROCESSING");
+        if (reuseProcessingBool == null || !reuseProcessingBool) {
+            reuseProcessing = false;
+        }
+        
+    	boolean reuse20xAlignment = reuseProcessing;
         String reuse20xAlignmentStr = (String)processData.getItem("REUSE_20X_ALIGNMENT");
         if (reuse20xAlignmentStr == null || "false".equals(reuse20xAlignmentStr)) {
             reuse20xAlignment = false;
