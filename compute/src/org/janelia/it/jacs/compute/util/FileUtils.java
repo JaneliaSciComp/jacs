@@ -1,12 +1,9 @@
 package org.janelia.it.jacs.compute.util;
 
-import org.apache.log4j.Logger;
-
 import java.io.*;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
+
+import org.apache.log4j.Logger;
 
 /**
  * Some methods for dealing with files and directories.
@@ -173,6 +170,7 @@ public class FileUtils {
      * @return
      */
     public static List<File> getOrderedFilesInDir(File dir) {
+        if (!dir.exists()) return new ArrayList<File>();
         List<File> files = Arrays.asList(dir.listFiles());
         sortFilesByName(files);
         return files;

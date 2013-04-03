@@ -232,4 +232,30 @@ public class SampleDataManager implements SampleDataManagerMBean {
             ex.printStackTrace();
         }
     }
+    
+    public void runSingleMaskChanArtifactPipeline(String separationEntityId) {
+        try {
+            Entity entity = EJBFactory.getLocalEntityBean().getEntityById(separationEntityId);
+            if (entity==null) throw new IllegalArgumentException("Entity with id "+separationEntityId+" does not exist");
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter(FastLoadArtifactService.PARAM_separationId, separationEntityId, null)); 
+            Task task = new GenericTask(new HashSet<Node>(), entity.getOwnerKey(), new ArrayList<Event>(), 
+                    taskParameters, "maskChanArtifactPipeline", "Mask Chan Artifact Pipeline");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("MaskChanArtifactSinglePipeline", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
+    public void runCompleteMaskChanArtifactPipeline(String user) {
+        try {
+            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
+                    new HashSet<TaskParameter>(), "maskChanArtifactPipeline", "Mask Chan Artifact Pipeline");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("MaskChanArtifactCompletePipeline", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
 }

@@ -114,6 +114,9 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ITEM                                = "Item";            // The actual entity item wrapped by an Aligned Item
     public static final String ATTRIBUTE_VISIBILITY                          = "Visibility";      // e.g. "true"
     public static final String ATTRIBUTE_COLOR                               = "Color";           // RGBA hex format, e.g. "ff0000ff"
+
+    public static final String ATTRIBUTE_MASK_IMAGE                          = "Mask Image";
+    public static final String ATTRIBUTE_CHAN_IMAGE                          = "Chan Image";
     
     // Fly Line Attributes
     public static final String ATTRIBUTE_SPLIT_PART                          = "Split Part";

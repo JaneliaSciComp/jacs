@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.service.entity;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -26,9 +27,7 @@ public class UpgradeUserDataService extends AbstractEntityService {
 	private static final Logger logger = Logger.getLogger(UpgradeUserDataService.class);
 
 	private enum AlignmentSpace {
-	    UNIFIED_20X,
-        RIGHT_OPTIC_LOBE,
-        LEFT_OPTIC_LOBE
+	    UNIFIED_20X
 	}
 	
 	private Map<AlignmentSpace,Entity> alignmentSpaces = new HashMap<AlignmentSpace,Entity>();
@@ -45,75 +44,21 @@ public class UpgradeUserDataService extends AbstractEntityService {
 
     private void createAlignmentSpaces() throws Exception {
         
-        entityBean.createNewEntityType(EntityConstants.TYPE_ALIGNMENT_SPACE);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_SPACE, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_SPACE, EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_SPACE, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_SPACE, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
+//        entityBean.createNewEntityType(EntityConstants.TYPE_ALIGNMENT_SPACE);
+//        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_SPACE, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+//        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_SPACE, EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+//        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_SPACE, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
+//        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_SPACE, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
+//
+//        entityBean.createNewEntityType(EntityConstants.TYPE_MASK_SET);
+//        entityBean.createNewEntityAttr(EntityConstants.TYPE_MASK_SET, EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE);
 
-        entityBean.createNewEntityType(EntityConstants.TYPE_MASK_SET);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_MASK_SET, EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_NEURON_FRAGMENT, EntityConstants.ATTRIBUTE_MASK_IMAGE);
+        entityBean.createNewEntityAttr(EntityConstants.TYPE_NEURON_FRAGMENT, EntityConstants.ATTRIBUTE_CHAN_IMAGE);
+        
+        List<Entity> unified20xList = entityBean.getEntitiesByNameAndTypeName("group:flylight", "Unified 20x Alignment Space", EntityConstants.TYPE_ALIGNMENT_SPACE);
+        alignmentSpaces.put(AlignmentSpace.UNIFIED_20X, unified20xList.iterator().next());
 
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_RESULT, EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE);
-        
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, EntityConstants.ATTRIBUTE_MASK_ENTITY_COLLECTION);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
-
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_IMAGE_3D, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_IMAGE_3D, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_IMAGE_3D, EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_IMAGE_3D, EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_IMAGE_3D, EntityConstants.ATTRIBUTE_CHANNEL_COLORS);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_IMAGE_3D, EntityConstants.ATTRIBUTE_OBJECTIVE);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_IMAGE_3D, EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_IMAGE_3D, EntityConstants.ATTRIBUTE_BOUNDING_BOX);
-        
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_SAMPLE, EntityConstants.ATTRIBUTE_OBJECTIVE);
-        
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
-        
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_LSM_STACK, EntityConstants.ATTRIBUTE_OBJECTIVE);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_LSM_STACK, EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_LSM_STACK, EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_LSM_STACK, EntityConstants.ATTRIBUTE_GENDER);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_LSM_STACK, EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_LSM_STACK, EntityConstants.ATTRIBUTE_CHANNEL_COLORS);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_LSM_STACK, EntityConstants.ATTRIBUTE_METADATA_FILE);
-        
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_BOARD, EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_BOARD, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_BOARD, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_BOARD, EntityConstants.ATTRIBUTE_ITEM);
-
-        entityBean.createNewEntityType(EntityConstants.TYPE_ALIGNED_ITEM);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNED_ITEM, EntityConstants.ATTRIBUTE_ITEM);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNED_ITEM, EntityConstants.ATTRIBUTE_ENTITY);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNED_ITEM, EntityConstants.ATTRIBUTE_VISIBILITY);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNED_ITEM, EntityConstants.ATTRIBUTE_COLOR);
-        
-        entityBean.createNewEntityType(EntityConstants.TYPE_DEFORMATION_MATRIX);
-        
-        Entity unified20x = entityBean.createEntity("group:flylight", EntityConstants.TYPE_ALIGNMENT_SPACE, "Unified 20x Alignment Space");
-        entityHelper.setDefault2dImage(unified20x, "/groups/scicomp/jacsData/AlignTemplates/configured_templates/wfb_atx_template_rec.tif");
-        unified20x.setValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, OPTICAL_RES_UNIFIED);
-        unified20x.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, PIXEL_RES_UNIFIED);
-        entityBean.saveOrUpdateEntity(unified20x);
-        alignmentSpaces.put(AlignmentSpace.UNIFIED_20X, unified20x);
-        
-        Entity rightOptic = entityBean.createEntity("group:flylight", EntityConstants.TYPE_ALIGNMENT_SPACE, "Right Optic Lobe 63x Alignment Space");
-        entityHelper.setDefault2dImage(rightOptic, "/groups/scicomp/jacsData/AlignTemplates/optic_templates/target_C1-110506_Slide1_110411_57C10_pos15_ROL__L5_Sum.tif.8bit.tif");
-        rightOptic.setValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, OPTICAL_RES_OPTIC);
-        rightOptic.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, PIXEL_RES_OPTIC);
-        entityBean.saveOrUpdateEntity(rightOptic);
-        alignmentSpaces.put(AlignmentSpace.RIGHT_OPTIC_LOBE, rightOptic);
-
-        Entity leftOptic = entityBean.createEntity("group:flylight", EntityConstants.TYPE_ALIGNMENT_SPACE, "Left Optic Lobe 63x Alignment Space");
-        entityHelper.setDefault2dImage(leftOptic, "/groups/scicomp/jacsData/AlignTemplates/optic_templates/flipped_target_C1-110506_Slide1_110411_57C10_pos15_ROL__L5_Sum.tif.8bit.v3draw");
-        leftOptic.setValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, OPTICAL_RES_OPTIC);
-        leftOptic.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, PIXEL_RES_OPTIC);
-        entityBean.saveOrUpdateEntity(leftOptic);
-        alignmentSpaces.put(AlignmentSpace.LEFT_OPTIC_LOBE, leftOptic);
     }
     
     private void processSamples() throws Exception {
@@ -222,18 +167,10 @@ public class UpgradeUserDataService extends AbstractEntityService {
     private void setAlignmentSpace(Entity sampleEntity, Entity alignmentResult) throws Exception {
 
         if ("Optic Lobe Alignment".equals(alignmentResult.getName())) {
-            if (sampleEntity.getName().contains("Left")) {
-                setAlignmentSpace(alignmentResult, AlignmentSpace.LEFT_OPTIC_LOBE);
-            }
-            else if (sampleEntity.getName().contains("Right")) {
-                setAlignmentSpace(alignmentResult, AlignmentSpace.RIGHT_OPTIC_LOBE);    
-            }
-            else {
-                logger.warn("Optic lobe sample with no 'Left' or 'Right' in name: "+sampleEntity.getName());
-            }
+            // No longer supporting old optic lobe alignments
         }
         else if ("Whole Brain 63x Alignment".equals(alignmentResult.getName())) {
-            // We're not supporting these padded alignments
+            // No longer supporting padded alignments
         }
         else {
             setAlignmentSpace(alignmentResult, AlignmentSpace.UNIFIED_20X);

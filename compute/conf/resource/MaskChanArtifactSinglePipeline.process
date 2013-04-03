@@ -1,0 +1,60 @@
+<!-- 
+	Process a neuron separation result and ensure it has all the necessary "mask/chan" artifacts.
+-->
+<process name="Single Mask/Chan Artifact Pipeline" processor="queue/analysisPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+	<sequence>
+	    
+    	<operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="TASK_PARAMETER_1" value="separation id"/>
+            <input name="PROCESS_VARIABLE_1" value="SEPARATION_ID"/>
+    	    <output name="SEPARATION_ID"/>
+    	</operation>
+	    
+	    <!-- Create the file path -->
+		<operation name="Get Separate File Path" processor="org.janelia.it.jacs.compute.service.entity.GetFilePathsService">
+			<input name="SEPARATION_ID" />
+			<input name="ENTITY_ID" value="$V{SEPARATION_ID}"/>
+			<output name="FILE_PATHS"/>
+		</operation>
+		
+	    <!-- Create a result node for this grid run -->
+	    <operation name="Create Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+		    <input name="NAME" value="Temp"/>
+	        <output name="RESULT_FILE_NODE"/>
+	        <output name="RESULT_FILE_NODE_ID"/>
+	    </operation>
+	    
+	    <!-- Generate fast load artifacts for all the separations in the list -->
+        <sequence name="Fast Load Artifacts" waitForAsync="true">
+		    <operation name="Fast Load Artifacts" processor="queue/gridSubmitAndWait">
+		        <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.MaskChanArtifactPipelineGridService"/>
+				<input name="RESULT_FILE_NODE"/>
+				<input name="FILE_PATHS"/>
+				<output name="FASTLOAD_PATHS"/>
+				<output name="ARCHIVE_FILE_PATH"/>
+		    </operation>
+        </sequence>
+	    
+	    <!-- Move the files over if necessary -->
+	    <sequence name="Wait For Archive Sync" waitForAsync="true">
+	        <sequence name="Limit Archive Access" processor="queue/archiveAccess">
+				<operation name="Copy files to archive" processor="org.janelia.it.jacs.compute.service.utility.SyncToArchiveService">
+					<input name="FILE_PATH" value="$V{ARCHIVE_FILE_PATH}"/>
+				</operation>
+			</sequence>
+        </sequence>
+		        
+	    <!-- Load the separation results into the database -->
+		<operation name="Discover Mask Chan Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.MaskChanResultsDiscoveryService">
+			<input name="SEPARATION_ID"/>
+	    </operation>
+		        
+	    <!-- Trash temporary file node 
+	    <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
+	        <input name="RESULT_FILE_NODE_ID"/>
+	        <input name="FILE_NODE_ID" value="$V{RESULT_FILE_NODE_ID}"/>
+	    </operation>
+	    -->
+	    
+    </sequence>
+</process>

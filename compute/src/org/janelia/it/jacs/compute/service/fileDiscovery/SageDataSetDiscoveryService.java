@@ -31,6 +31,8 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     
     public void execute() throws Exception {
         
+        logger.info("Running SAGE data set discovery for "+ownerKey);
+        
         this.fileHelper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
         this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
         

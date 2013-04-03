@@ -160,12 +160,58 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
 			}
         });
 
+
+        // Find mask/chan files
+        Map<Integer,String> maskFiles = new HashMap<Integer,String>();
+        Map<Integer,String> chanFiles = new HashMap<Integer,String>();
+        File maskChanDir = new File(dir.getAbsolutePath().replaceFirst("groups", "archive")+"/archive/maskChan");
+        if (maskChanDir.exists()) {
+            logger.info("Looking for mask/chan files in: "+maskChanDir.getAbsolutePath());
+            List<File> maskChanFiles = helper.collectFiles(maskChanDir, true);
+            logger.info("Collected "+maskChanFiles.size()+" files in "+dir);
+        
+            for(File file : maskChanFiles) {
+                String name = file.getName();
+                if (!name.endsWith("mask") && !name.endsWith("chan")) continue;
+                Integer index = null;
+                try {
+                    index = NeuronSeparatorResultsDiscoveryService.getMaskChanIndex(name);
+                }
+                catch (Exception e) {
+                    logger.warn("Could not parse mask/chan file name: "+name+", "+e.getMessage());
+                }
+                if (index==null) continue;
+                if (name.endsWith("mask")) {
+                    maskFiles.put(index, file.getAbsolutePath());
+                }
+                else if (name.endsWith("chan")) {
+                    chanFiles.put(index, file.getAbsolutePath());
+                }
+            }
+        }
+        else {
+            logger.warn("The mask/chan dir does not exist at: "+maskChanDir);
+        }
+        
         for(File file : fragmentMipFiles) {
             Entity fragmentMIP = helper.createResultItemForFile(file);         
             Integer index = getIndex(fragmentMIP.getName());
+            if (index==null) continue;
             Entity fragmentEntity = createFragmentEntity(fragmentType, index);
             helper.setDefault2dImage(fragmentEntity, fragmentMIP);
-            helper.addToParent(fragmentsFolder, fragmentEntity, index, EntityConstants.ATTRIBUTE_ENTITY);   
+            helper.addToParent(fragmentsFolder, fragmentEntity, index, EntityConstants.ATTRIBUTE_ENTITY);
+            
+            String maskFilepath = maskFiles.get(index);
+            if (maskFilepath!=null) {
+                Entity maskImage = helper.create3dImage(maskFilepath);
+                helper.setImage(fragmentEntity, EntityConstants.ATTRIBUTE_MASK_IMAGE, maskImage);
+            }
+
+            String chanFilepath = chanFiles.get(index);
+            if (chanFilepath!=null) {
+                Entity chanImage = helper.create3dImage(chanFilepath);
+                helper.setImage(fragmentEntity, EntityConstants.ATTRIBUTE_CHAN_IMAGE, chanImage);   
+            }
         }
     }
     
@@ -180,6 +226,11 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     		logger.warn("Error parsing number from MIP filename: "+mipNum);
     	}
     	return null;
+    }
+    
+    public static Integer getMaskChanIndex(String filename) throws Exception {
+        String index = filename.substring(filename.indexOf('_')+1,filename.indexOf('.'));
+        return Integer.parseInt(index);
     }
     
     protected Entity createFragmentEntity(EntityType fragmentType, Integer index) throws Exception {

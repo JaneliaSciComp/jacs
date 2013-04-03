@@ -16,10 +16,12 @@
 		</operation>
 		
 	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
-	    <operation name="Get Sample Attributes" processor="org.janelia.it.jacs.compute.service.entity.sample.InitSampleAttributesService">
-			<input name="SAMPLE_ENTITY_ID"/>
+	    <operation name="Get Sample Attributes" processor="org.janelia.it.jacs.compute.service.entity.sample.InitResultsAttributesService">
+			<input name="RESULT_ENTITY_ID"/>
 			<output name="SIGNAL_CHANNELS"/>
 			<output name="REFERENCE_CHANNEL"/>
+            <input name="OPTICAL_RESOLUTION"/>
+            <input name="PIXEL_RESOLUTION"/>
 		</operation>
 	
 	    <!-- Decide what pipeline to run -->
@@ -36,6 +38,8 @@
 			<input name="RESULT_ENTITY_NAME" value="Neuron Separation"/>
 			<input name="SIGNAL_CHANNELS"/>
 			<input name="REFERENCE_CHANNEL"/>
+            <input name="OPTICAL_RESOLUTION"/>
+            <input name="PIXEL_RESOLUTION"/>
         </include>
 		
     </sequence>

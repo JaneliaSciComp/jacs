@@ -667,7 +667,10 @@ public class EntityUtils {
 				|| EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE.equals(attrName) 
 				|| EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE.equals(attrName) 
 				|| EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE.equals(attrName) 
-				|| EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE.equals(attrName)) {
+				|| EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE.equals(attrName)
+				|| EntityConstants.ATTRIBUTE_MASK_IMAGE.equals(attrName) 
+				|| EntityConstants.ATTRIBUTE_CHAN_IMAGE.equals(attrName)
+				) {
 			return true;
 		}
 		return false;

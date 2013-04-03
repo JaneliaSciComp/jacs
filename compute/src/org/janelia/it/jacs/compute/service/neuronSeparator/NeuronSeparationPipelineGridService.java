@@ -116,7 +116,7 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
 
     @Override
     protected int getRequiredMemoryInGB() {
-    	return 30;
+    	return 40;
     }
     
     @Override

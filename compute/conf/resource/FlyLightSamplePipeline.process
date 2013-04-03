@@ -369,6 +369,11 @@
             </sequence>
         </sequence>
 
+        <!-- Move any large files over to archive -->
+        <include name="Move to Archive" process="SyncSampleToArchive">
+            <input name="SAMPLE_ENTITY_ID"/>
+        </include>
+                
 		<!-- Compress all the v3draw files we created  -->
         <include name="Compress raw files" process="SampleDataCompression">
             <input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>

@@ -23,6 +23,8 @@ public interface SampleDataManagerMBean {
     public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName, Boolean reuseProcessing);
     public void runNeuronSeparationPipeline(String resultEntityId);
     public void runSingleFastLoadArtifactPipeline(String separationEntityId);
+    public void runSingleMaskChanArtifactPipeline(String separationEntityId);
     public void runCompleteFastLoadArtifactPipeline(String user);
+    public void runCompleteMaskChanArtifactPipeline(String user);
     
 }

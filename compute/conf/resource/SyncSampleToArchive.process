@@ -1,0 +1,43 @@
+<!-- 
+	Copy the Sample's large files to the archive. The meaning of "large" can change over time, so this service can be 
+	run on the same Sample incrementally. 
+-->
+<process name="Synchronize sample to archive" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+    <sequence>
+	
+	   <input name="SAMPLE_ENTITY_ID"/>
+	
+	    <!-- Import variables from the task -->
+	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+    	    <input name="OVERRIDE" value="false"/>
+            <input name="TASK_PARAMETER_1" value="sample entity id"/>
+            <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
+	        <output name="SAMPLE_ENTITY_ID"/>
+	    </operation>
+	    
+        <!-- Create the output file list -->
+        <operation name="Get Files For Archive" processor="org.janelia.it.jacs.compute.service.entity.sample.SampleArchiveService">
+            <input name="MODE" value="CREATE_ARCHIVE_LIST"/>
+            <input name="SAMPLE_ENTITY_ID"/>
+            <output name="ORIGINAL_FILE_PATHS"/>
+            <output name="ARCHIVE_FILE_PATHS"/>
+        </operation>
+
+	    <!-- Move the files over if necessary -->
+        <sequence name="Limit Archive Access" waitForAsync="true" processor="queue/archiveAccess" startEvent="running">
+            <operation name="Move large files to archive" processor="org.janelia.it.jacs.compute.service.utility.SyncToArchiveService">
+                <output name="ORIGINAL_FILE_PATHS"/>
+                <input name="FILE_PATH" value="$V{ORIGINAL_FILE_PATHS}"/>
+            </operation>
+    	</sequence>
+	
+        <!--  Update the affected entities -->
+        <operation name="Update Sample" processor="org.janelia.it.jacs.compute.service.entity.SampleArchiveService">
+            <input name="MODE" value="COMPLETE"/>
+            <input name="SAMPLE_ENTITY_ID"/>
+            <input name="ORIGINAL_FILE_PATHS"/>
+            <input name="ARCHIVE_FILE_PATHS"/>
+        </operation>
+		
+    </sequence>
+</process>

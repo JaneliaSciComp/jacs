@@ -19,6 +19,10 @@ public class NeuronSeparatorHelper {
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("FastLoad.ScriptPath");
 
+    protected static final String MASK_CHAN_SCRIPT = 
+            SystemConfigurationProperties.getString("Executables.ModuleBase") +
+            SystemConfigurationProperties.getString("MaskChan.ScriptPath");
+    
     protected static final String MIP_CREATOR_SCRIPT = 
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("MipCreator.ScriptPath");
@@ -30,7 +34,11 @@ public class NeuronSeparatorHelper {
 	public static String getFastLoadCommands() {
 		return "sh "+FAST_LOAD_SCRIPT+" $INPUT_DIR";
 	}
-	
+
+    public static String getMaskChanCommands() {
+        return "sh "+MASK_CHAN_SCRIPT+" $INPUT_DIR";
+    }
+    
 	public static String getMipCreatorCommands() {
 		return "sh "+MIP_CREATOR_SCRIPT+" $OUTPUT_DIR png $INPUT_FILE \"$SIGNAL_CHAN\" \"$REF_CHAN\"";
 	}
