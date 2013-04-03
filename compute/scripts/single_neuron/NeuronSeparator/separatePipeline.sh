@@ -34,14 +34,19 @@ INPUT_FILE=$3
 SIGNAL_CHAN=$4
 REF_CHAN=$5
 PREVFILE=$6
-WORKING_DIR=$OUTDIR/temp
 
+WORKING_DIR=$OUTDIR/temp
+REF_CHAN_ONE_INDEXED=`expr $REF_CHAN + 1`
+
+echo "Neuron Separator Dir: $NSDIR"
+echo "Vaa3d Dir: $Vaa3D"
 echo "Run Dir: $DIR"
 echo "Working Dir: $WORKING_DIR"
 echo "Input file: $INPUT_FILE"
 echo "Output dir: $OUTDIR"
 echo "Signal channels: $SIGNAL_CHAN"
 echo "Reference channel: $REF_CHAN"
+echo "Reference chan (1-indexed): $REF_CHAN_ONE_INDEXED"
 
 mkdir $WORKING_DIR
 cd $WORKING_DIR
@@ -64,53 +69,37 @@ if [ $EXT == "v3dpbd" ]; then
     $Vaa3D -cmd image-loader -convert "$PBD_INPUT_FILE" "$INPUT_FILE"
 fi
 
-#Usage: setup4  [-c<double(5.0)>] [-e<double(3.5)>] [-s<int(300)>] 
-#                <output:FILE>  <inputs:FILE> ...
-#Usage: finish4  [-3BM] [-nr] [-cl]
-#                 <folder:FOLDER>  <core:STRING>  <input:FILE>
+SEP_INPUT_FILE=$INPUT_FILE
+echo "Seperator input file: $SEP_INPUT_FILE"
 
 # Decrease "c" to get more neurons
 # Decrease "s" to get more (smaller) neurons
 # Decrease "e" to get more neurons
-
-# The following assumes that the reference channel comes after the signal channels. 
-# It could be more robust.
-
-SEP_INPUT_FILE=$INPUT_FILE
-
-# We expect 3 signal channels (i.e. SIGNAL_CHAN="0 1 2")
-REF_CHAN_ONE_INDEXED=`expr $REF_CHAN + 1`
+SETUP_PARAMS="-c6.0 -e4.5 -s800"
 
 if [ ${#SIGNAL_CHAN} -eq 3 ] ; then
-    # 3 characters means 2 signal channels
-    MAPPED_INPUT=mapped.v3draw
-    #if [ ${#SIGNAL_CHAN} -lt 3 ] ; then
-        # Single channel (i.e. SIGNAL_CHAN="0")
-        #echo "Detected single channel image, duplicating channel 0 in channels 1 and 2"
-        #echo "$Vaa3D -cmd image-loader -mapchannels $INPUT_FILE $MAPPED_INPUT \"0,0,0,1,0,2,${REF_CHAN},3\""
-        #$Vaa3D -cmd image-loader -mapchannels $INPUT_FILE $MAPPED_INPUT "0,0,0,1,0,2,${REF_CHAN},3"
-    #else
-        # Dual channel (i.e. SIGNAL_CHAN="0 1")
-        echo "Detected two channel image, duplicating channel 1 in channel 2"
-        $Vaa3D -cmd image-loader -mapchannels $INPUT_FILE $MAPPED_INPUT "0,0,1,1,1,2,${REF_CHAN},3"
-        SEP_INPUT_FILE=$MAPPED_INPUT
-        REF_CHAN_ONE_INDEXED=4
-    #fi
+    channel_output=""
+    channel_pbd=""
+    for channel in $SIGNAL_CHAN
+    do
+        echo "~ Generating separation for channel $channel"
+        $NSDIR/setup11 $SETUP_PARAMS --single_channel $channel SeparationResultUnmapped$channel $SEP_INPUT_FILE
+        channel_output="$channel_output SeparationResultUnmapped$channel.nsp"
+        channel_pbd="$channel_pbd SeparationResultUnmapped$channel.pbd"
+    done
+    echo "~ Generating final combined separation"
+    $NSDIR/setup11 --concat 1 SeparationResultUnmapped $channel_output
+    $NSDIR/setup11 --save_channel -r$REF_CHAN_ONE_INDEXED SeparationResultUnmapped $channel_pbd
+else
+    echo "~ Converting input file to 16 bit"
+    SEP16_INPUT_FILE="Input16.v3draw"
+    cat $SEP_INPUT_FILE | $NSDIR/v3draw_to_16bit > $SEP16_INPUT_FILE
+    SEP_INPUT_FILE=$SEP16_INPUT_FILE
+    echo "~ Generating separation"
+    $NSDIR/setup10 $SETUP_PARAMS -r$REF_CHAN_ONE_INDEXED SeparationResultUnmapped $SEP_INPUT_FILE
 fi
 
-# The above logic forces the reference onto the fourth channel
-echo "Reference chan (1-indexed): $REF_CHAN_ONE_INDEXED"
-
-echo "~ Converting input file to 16 bit"
-SEP16_INPUT_FILE="Input16.v3draw"
-cat $SEP_INPUT_FILE | $NSDIR/v3draw_to_16bit > $SEP16_INPUT_FILE
-SEP_INPUT_FILE=$SEP16_INPUT_FILE
-
-echo "~ Generating separation"
-$NSDIR/setup10 -c6.0 -e4.5 -s800 -r$REF_CHAN_ONE_INDEXED SeparationResultUnmapped $SEP_INPUT_FILE
-
 echo "~ Separation complete"
-
 RESULT='SeparationResult.nsp'
 
 if [ -s SeparationResultUnmapped.nsp ]; then
@@ -181,6 +170,8 @@ echo "~ Finished with separation pipeline"
 if [ -s "$OUTDIR/ConsolidatedLabel.v3dpbd" ]; then
     echo "~ Launching fastLoad pipeline..."
     $DIR/fastLoadPipeline.sh $OUTDIR $INPUT_FILE
+    echo "~ Launching maskChan pipeline..."
+    $DIR/maskChanPipeline.sh $OUTDIR
 fi
 
 echo "~ Removing temp files"

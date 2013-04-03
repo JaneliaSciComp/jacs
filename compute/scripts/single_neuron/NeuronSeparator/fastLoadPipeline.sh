@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Run the neuron separation pipeline
+# Run the fast load artifact generation for a completed neuron separation
 #
 # Usage:
 # sh fastLoadPipeline.sh <separate dir> <original input file>
