@@ -82,7 +82,7 @@ public class MaskChanResultsDiscoveryService extends AbstractEntityService {
             if (!name.endsWith("mask") && !name.endsWith("chan")) continue;
             Integer index = null;
             try {
-                index = NeuronSeparatorResultsDiscoveryService.getMaskChanIndex(name);
+                index = NeuronSeparatorResultsDiscoveryService.getNeuronIndexFromMaskChanFile(name);
             }
             catch (Exception e) {
                 logger.warn("Could not parse mask/chan file name: "+name+", "+e.getMessage());
@@ -102,7 +102,7 @@ public class MaskChanResultsDiscoveryService extends AbstractEntityService {
             String indexStr = fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER);
             int index = Integer.parseInt(indexStr);
 
-            String maskFilepath = chanFiles.get(index);
+            String maskFilepath = maskFiles.get(index);
             if (maskFilepath==null) {
                 throw new MissingDataException("No mask file for neuron "+index);
             }

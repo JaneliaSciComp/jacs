@@ -20,24 +20,15 @@
             <input name="MODE" value="CREATE_ARCHIVE_LIST"/>
             <input name="SAMPLE_ENTITY_ID"/>
             <output name="ORIGINAL_FILE_PATHS"/>
-            <output name="ARCHIVE_FILE_PATHS"/>
         </operation>
 
 	    <!-- Move the files over if necessary -->
         <sequence name="Limit Archive Access" waitForAsync="true" processor="queue/archiveAccess" startEvent="running">
             <operation name="Move large files to archive" processor="org.janelia.it.jacs.compute.service.utility.SyncToArchiveService">
                 <output name="ORIGINAL_FILE_PATHS"/>
-                <input name="FILE_PATH" value="$V{ORIGINAL_FILE_PATHS}"/>
+                <input name="FILE_PATHS" value="$V{ORIGINAL_FILE_PATHS}"/>
             </operation>
     	</sequence>
-	
-        <!--  Update the affected entities -->
-        <operation name="Update Sample" processor="org.janelia.it.jacs.compute.service.entity.SampleArchiveService">
-            <input name="MODE" value="COMPLETE"/>
-            <input name="SAMPLE_ENTITY_ID"/>
-            <input name="ORIGINAL_FILE_PATHS"/>
-            <input name="ARCHIVE_FILE_PATHS"/>
-        </operation>
 		
     </sequence>
 </process>

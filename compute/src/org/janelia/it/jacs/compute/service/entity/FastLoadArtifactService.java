@@ -30,8 +30,6 @@ public class FastLoadArtifactService implements IService {
 	
     public static final String MODE_UNDEFINED = "UNDEFINED";
     public static final String MODE_CREATE_INPUT_LIST = "CREATE_INPUT_LIST";
-    public static final String MODE_CREATE_SINGLE_INPUT_LIST = "CREATE_SINGLE_INPUT_LIST";
-    public static final String MODE_COMPLETE = "COMPLETE";
     public static final int GROUP_SIZE = 200;
 	
     protected Logger logger;
@@ -63,12 +61,6 @@ public class FastLoadArtifactService implements IService {
             if (mode.equals(MODE_CREATE_INPUT_LIST)) {
                 doCreateInputList();
             }
-            else if (mode.equals(MODE_CREATE_SINGLE_INPUT_LIST)) {
-                doCreateSingleInputList();
-            }
-            else if (mode.equals(MODE_COMPLETE)) {
-                doComplete();
-            } 
             else {
                 logger.error("Unrecognized mode: "+mode);
             }
@@ -105,39 +97,6 @@ public class FastLoadArtifactService implements IService {
 		logger.info("Processed "+entities.size()+" entities into "+inputGroups.size()+" groups.");
     }
 
-    private void doCreateSingleInputList() throws ComputeException {
-    	
-    	String sepId = processData.getString("SEPARATION_ID");
-        logger.info("Getting neuron separation "+sepId);
-
-    	if (sepId == null) {
-    		throw new IllegalArgumentException("SEPARATION_ID may not be null");
-    	}
-        
-        Entity result = entityBean.getEntityById(sepId);
-        
-        List<Entity> entities = new ArrayList<Entity>();
-
-        if (!result.getEntityType().getName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
-        	throw new IllegalArgumentException("Entity with id="+sepId+" is not a neuron separation result");
-        }
-        
-		String dir = result.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-
-		if (fastLoadDirExists(dir)) {
-			logger.info("The fastLoad directory already exists under "+dir);
-			return;
-		}
-		
-		if (!dir.contains(centralDir)) {
-			throw new ComputeException("Entity path does not contain the FileStore.CentralDir: "+result.getId());
-		}
-		else {
-			entities.add(result);
-			processData.putItem("ENTITY_LIST", entities);
-		}
-    }
-
     private List<List> createGroups(Collection fullList, int groupSize) {
         List<List> groupList = new ArrayList<List>();
         List currentGroup = null;
@@ -160,8 +119,5 @@ public class FastLoadArtifactService implements IService {
     private boolean fastLoadDirExists(String dir) {
     	File fastLoadDir = new File(dir,"fastLoad");
     	return fastLoadDir.exists();
-    }
-    
-    private void doComplete() throws ComputeException {
     }
 }

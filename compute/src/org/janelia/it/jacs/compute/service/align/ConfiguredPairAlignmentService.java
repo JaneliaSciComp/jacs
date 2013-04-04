@@ -112,6 +112,7 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
                     if (channelSpec==null) throw new IllegalStateException("No chan spec for 63x file: "+aligned.getId());
                     this.refChannel = channelSpec.indexOf('r');
                     this.refChannelOneIndexed = refChannel + 1;
+                    this.numChannels = channelSpec.length();
                     logger.info("Found 63x ref channel (one-indexed): "+refChannelOneIndexed);
                     putOutputVars(channelSpec);
                 }

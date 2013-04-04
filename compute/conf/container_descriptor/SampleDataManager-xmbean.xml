@@ -216,4 +216,14 @@
         </parameter>
     </operation>
     
+    <operation>
+        <description>Archive all samples for a given user</description>
+        <name>runCompleteSampleArchival</name>
+        <parameter>
+            <description>User to run as (e.g. "flylight")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
 </mbean>

@@ -31,6 +31,7 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
 
 	protected String scriptFile;
 	protected String mountingProtocol;
+	protected Integer numChannels;
 	
     @Override
     protected void init(IProcessData processData) throws Exception {
@@ -46,6 +47,8 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
             if (supportingData!=null) {
                 this.mountingProtocol = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL, alignedArea);
             }
+            
+            this.numChannels = channelSpec.length();
         } 
         catch (Exception e) {
             throw new ServiceException(e);
@@ -87,6 +90,9 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
         }
         cmd.append(" -r " + refChannelOneIndexed);
         cmd.append(" -s " + opticalResolution.replaceAll(" ", "x"));
+        if (numChannels!=null) {
+            cmd.append(" -n " + numChannels);
+        }
         return cmd.toString();
     }
     

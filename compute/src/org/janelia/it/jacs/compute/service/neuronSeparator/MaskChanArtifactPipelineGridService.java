@@ -14,7 +14,7 @@ import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJob
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 
 /**
- * Run the fast load pipeline on a set of neuron separation result directories.
+ * Run the mask/chan pipeline on a set of neuron separation result directories.
  * 
  * Inputs variables:
  *   FILE_PATHS - input paths (e.g. /.../separate)

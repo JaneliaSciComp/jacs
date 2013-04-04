@@ -178,6 +178,23 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
+    public void runUpgradeData() {
+        try {
+            logger.info("Building list of users with data sets...");
+            Set<String> subjectKeys = new HashSet<String>();
+            for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
+                subjectKeys.add(dataSet.getOwnerKey());
+            }
+            logger.info("Found users with data sets: "+subjectKeys);
+            for(String subjectKey : subjectKeys) {
+                logger.info("Queuing upgrade pipelines for "+subjectKey);
+                runUpgradeUserData(subjectKey);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
     public void runUpgradeUserData(String user) {
         try {
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();

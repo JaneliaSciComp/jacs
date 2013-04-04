@@ -30,7 +30,6 @@
 		        <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.MaskChanArtifactPipelineGridService"/>
 				<input name="RESULT_FILE_NODE"/>
 				<input name="FILE_PATHS"/>
-				<output name="FASTLOAD_PATHS"/>
 				<output name="ARCHIVE_FILE_PATH"/>
 		    </operation>
         </sequence>

@@ -258,4 +258,18 @@ public class SampleDataManager implements SampleDataManagerMBean {
             ex.printStackTrace();
         }
     }
+    
+    public void runCompleteSampleArchival(String user) {
+        try {
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter("process def name", "SyncSampleToArchive", null)); 
+            taskParameters.add(new TaskParameter("subtask name", "Sync Sample To Archive", null)); 
+            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
+                    taskParameters, "completeSampleArchival", "Complete Sample Archival");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("CompleteSampleProcessingService", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
 }

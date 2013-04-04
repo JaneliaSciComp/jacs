@@ -25,6 +25,7 @@ public interface WorkstationDataManagerMBean {
 
 	// System Administration Pipelines
 	public void runOrphanAnnotationCheckerService(String user, Boolean deleteAnnotationsMissingTargets, Boolean deleteAnnotationsMissingTerms);
+	public void runUpgradeData();
     public void runUpgradeUserData(String user);
     public void runUpgradeSingleSample(String sampleEntityId);
     public void annexEntityTree(String subjectKey, String entityId);

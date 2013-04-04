@@ -175,7 +175,7 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
                 if (!name.endsWith("mask") && !name.endsWith("chan")) continue;
                 Integer index = null;
                 try {
-                    index = NeuronSeparatorResultsDiscoveryService.getMaskChanIndex(name);
+                    index = NeuronSeparatorResultsDiscoveryService.getNeuronIndexFromMaskChanFile(name);
                 }
                 catch (Exception e) {
                     logger.warn("Could not parse mask/chan file name: "+name+", "+e.getMessage());
@@ -228,9 +228,9 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     	return null;
     }
     
-    public static Integer getMaskChanIndex(String filename) throws Exception {
+    public static Integer getNeuronIndexFromMaskChanFile(String filename) throws Exception {
         String index = filename.substring(filename.indexOf('_')+1,filename.indexOf('.'));
-        return Integer.parseInt(index);
+        return Integer.parseInt(index)-1;
     }
     
     protected Entity createFragmentEntity(EntityType fragmentType, Integer index) throws Exception {

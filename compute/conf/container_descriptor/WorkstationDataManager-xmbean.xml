@@ -151,9 +151,13 @@
         </parameter>
     </operation>
     
+    <operation>
+        <description>Upgrade the entire data model to use the most current entity structure.</description>
+        <name>runUpgradeData</name>
+    </operation>
     
     <operation>
-        <description>Upgrade the given user's data model to use the most current entity structure. In this release, this just creates system-level groups and populated Is Protected flags on certain folders.</description>
+        <description>Upgrade the given user's data model to use the most current entity structure.</description>
         <name>runUpgradeUserData</name>
         <parameter>
             <description>User to run as (e.g. "flylight")</description>

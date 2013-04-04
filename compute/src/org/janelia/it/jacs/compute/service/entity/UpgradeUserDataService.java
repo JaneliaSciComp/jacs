@@ -1,14 +1,22 @@
 package org.janelia.it.jacs.compute.service.entity;
 
+import java.io.File;
+import java.io.FilenameFilter;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * Upgrade the model to use the most current entity structure.
@@ -25,7 +33,10 @@ public class UpgradeUserDataService extends AbstractEntityService {
     private static final String PIXEL_RES_OPTIC = "512x512x445";
     
 	private static final Logger logger = Logger.getLogger(UpgradeUserDataService.class);
-
+	private static DecimalFormat dfVoxelSize = new DecimalFormat("#.##");
+	
+	private SampleHelper sampleHelper;
+	
 	private enum AlignmentSpace {
 	    UNIFIED_20X
 	}
@@ -34,35 +45,30 @@ public class UpgradeUserDataService extends AbstractEntityService {
 		
     public void execute() throws Exception {
         
+        this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
+        
         final String serverVersion = computeBean.getAppVersion();
-        logger.info("Updating data model to latest version: "+serverVersion);
+        logger.info("Updating data model for "+ownerKey+" to latest version: "+serverVersion);
 
-        createAlignmentSpaces();
-        processSamples();
-        processNeuronSeparationResults();
-    }
-
-    private void createAlignmentSpaces() throws Exception {
-        
-//        entityBean.createNewEntityType(EntityConstants.TYPE_ALIGNMENT_SPACE);
-//        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_SPACE, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-//        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_SPACE, EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-//        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_SPACE, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
-//        entityBean.createNewEntityAttr(EntityConstants.TYPE_ALIGNMENT_SPACE, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
-//
-//        entityBean.createNewEntityType(EntityConstants.TYPE_MASK_SET);
-//        entityBean.createNewEntityAttr(EntityConstants.TYPE_MASK_SET, EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE);
-
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_NEURON_FRAGMENT, EntityConstants.ATTRIBUTE_MASK_IMAGE);
-        entityBean.createNewEntityAttr(EntityConstants.TYPE_NEURON_FRAGMENT, EntityConstants.ATTRIBUTE_CHAN_IMAGE);
-        
         List<Entity> unified20xList = entityBean.getEntitiesByNameAndTypeName("group:flylight", "Unified 20x Alignment Space", EntityConstants.TYPE_ALIGNMENT_SPACE);
         alignmentSpaces.put(AlignmentSpace.UNIFIED_20X, unified20xList.iterator().next());
 
+        String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
+        if (StringUtils.isEmpty(sampleEntityId)) {
+            processSamples();
+//          processNeuronSeparationResults();
+        }
+        else {
+            Entity sampleEntity = entityBean.getEntityAndChildren(new Long(sampleEntityId));
+            if (sampleEntity == null) {
+                throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
+            }    
+            processSample(entityBean.getEntityTree(sampleEntity.getId()));
+        }
     }
     
     private void processSamples() throws Exception {
-        for(Entity entity : entityBean.getEntitiesByTypeName(EntityConstants.TYPE_SAMPLE)) {
+        for(Entity entity : entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_SAMPLE)) {
             // This is intentionally not loaded into the looped entity because we would run out of memory
             Entity sample = entityBean.getEntityTree(entity.getId());
             if (sample!=null) { 
@@ -80,50 +86,102 @@ public class UpgradeUserDataService extends AbstractEntityService {
      */
     private void processSample(Entity sample) throws Exception {
         
+        String opticalRes = sampleHelper.getConsensusLsmAttributeValue(sample, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, null);
+        
         for(Entity pipelineRun : EntityUtils.getDescendantsOfType(sample, EntityConstants.TYPE_PIPELINE_RUN, true)) {
-            
-            for(Entity alignmentResult : EntityUtils.getDescendantsOfType(pipelineRun, EntityConstants.TYPE_ALIGNMENT_RESULT, true)) {
-                
-                setAlignmentSpace(sample, alignmentResult);
-                
-                Entity supportingFiles = EntityUtils.getSupportingData(alignmentResult);
-                Entity separation = EntityUtils.findChildWithType(alignmentResult, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
-                
-                Entity aligned20x = EntityUtils.findChildWithName(supportingFiles, "Aligned20xScale.v3dpbd");
-                
-                if (aligned20x != null) {
-                    setOpticalResolution(aligned20x, OPTICAL_RES_UNIFIED);
-                    setPixelResolution(aligned20x, PIXEL_RES_UNIFIED);
-                    Entity aligned63x = EntityUtils.findChildWithName(supportingFiles, "Aligned63xScale.v3dpbd");
-                    if (aligned63x!=null) {
-                        setOpticalResolution(aligned63x, OPTICAL_RES_UNIFIED_63x);
-                        setPixelResolution(aligned63x, PIXEL_RES_UNIFIED_63x);
-                        setOpticalResolution(separation, OPTICAL_RES_UNIFIED_63x);
-                        setPixelResolution(separation, PIXEL_RES_UNIFIED_63x);
+            for(Entity sampleProcessingResult : EntityUtils.getDescendantsOfType(pipelineRun, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, true)) {
+                for(Entity separation : EntityUtils.getDescendantsOfType(sampleProcessingResult, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, true)) {
+                    String nsOpticalRes = opticalRes;
+                    if (nsOpticalRes==null) {        
+                        String dir = separation.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                        nsOpticalRes = getOpticalResFromMetadataFile(dir);
                     }
-                }
-                else {
-                    Entity aligned = EntityUtils.findChildWithName(supportingFiles, "Aligned.v3dpbd");
-                    if (aligned!=null) {
-                        if ("Optic Lobe Alignment".equals(alignmentResult.getName())) {
-                            setOpticalResolution(aligned, OPTICAL_RES_OPTIC);
-                            setPixelResolution(aligned, PIXEL_RES_OPTIC);
-                            setOpticalResolution(separation, OPTICAL_RES_OPTIC);
-                            setPixelResolution(separation, PIXEL_RES_OPTIC);
-                        }
-                        else if ("Whole Brain 63x Alignment".equals(alignmentResult.getName())) {
-                            // Ignore. These need to be redone anyway. 
-                        }
-                        else {
-                            setOpticalResolution(aligned, OPTICAL_RES_UNIFIED);
-                            setPixelResolution(aligned, PIXEL_RES_UNIFIED);
-                            setOpticalResolution(separation, OPTICAL_RES_UNIFIED);
-                            setPixelResolution(separation, PIXEL_RES_UNIFIED);
-                        }
-                    }
+                    setOpticalResolution(separation, nsOpticalRes);
                 }
             }
+            
+//            for(Entity alignmentResult : EntityUtils.getDescendantsOfType(pipelineRun, EntityConstants.TYPE_ALIGNMENT_RESULT, true)) {
+//                
+//                setAlignmentSpace(sample, alignmentResult);
+//                
+//                Entity supportingFiles = EntityUtils.getSupportingData(alignmentResult);
+//                Entity separation = EntityUtils.findChildWithType(alignmentResult, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
+//                
+//                Entity aligned20x = EntityUtils.findChildWithName(supportingFiles, "Aligned20xScale.v3dpbd");
+//                
+//                if (aligned20x != null) {
+//                    setOpticalResolution(aligned20x, OPTICAL_RES_UNIFIED);
+//                    setPixelResolution(aligned20x, PIXEL_RES_UNIFIED);
+//                    Entity aligned63x = EntityUtils.findChildWithName(supportingFiles, "Aligned63xScale.v3dpbd");
+//                    if (aligned63x!=null) {
+//                        setOpticalResolution(aligned63x, OPTICAL_RES_UNIFIED_63x);
+//                        setPixelResolution(aligned63x, PIXEL_RES_UNIFIED_63x);
+//                        setOpticalResolution(separation, OPTICAL_RES_UNIFIED_63x);
+//                        setPixelResolution(separation, PIXEL_RES_UNIFIED_63x);
+//                    }
+//                }
+//                else {
+//                    Entity aligned = EntityUtils.findChildWithName(supportingFiles, "Aligned.v3dpbd");
+//                    if (aligned!=null) {
+//                        if ("Optic Lobe Alignment".equals(alignmentResult.getName())) {
+//                            setOpticalResolution(aligned, OPTICAL_RES_OPTIC);
+//                            setPixelResolution(aligned, PIXEL_RES_OPTIC);
+//                            setOpticalResolution(separation, OPTICAL_RES_OPTIC);
+//                            setPixelResolution(separation, PIXEL_RES_OPTIC);
+//                        }
+//                        else if ("Whole Brain 63x Alignment".equals(alignmentResult.getName())) {
+//                            // Ignore. These need to be redone anyway. 
+//                        }
+//                        else {
+//                            setOpticalResolution(aligned, OPTICAL_RES_UNIFIED);
+//                            setPixelResolution(aligned, PIXEL_RES_UNIFIED);
+//                            setOpticalResolution(separation, OPTICAL_RES_UNIFIED);
+//                            setPixelResolution(separation, PIXEL_RES_UNIFIED);
+//                        }
+//                    }
+//                }
+//            }
         }
+    }
+    
+    private String getOpticalResFromMetadataFile(String separationDir) throws Exception {
+
+        File[] metadataFiles = new File(separationDir).listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".metadata");
+            }
+        });
+        
+        for(File metadataFile : metadataFiles) {
+            Scanner scanner = new Scanner(metadataFile);
+            String lastLine = "";
+            while (scanner.hasNext()) {
+                lastLine = scanner.nextLine();
+            }
+            
+            Pattern p = Pattern.compile("([\\d\\.]+)\\s+([\\d\\.]+)\\s+([\\d\\.]+)");
+            Matcher m = p.matcher(lastLine);
+            if (m.matches()) {
+                String voxelSizeX = truncate(m.group(1));
+                String voxelSizeY = truncate(m.group(2));
+                String voxelSizeZ = truncate(m.group(3));
+                return voxelSizeX+"x"+voxelSizeY+"x"+voxelSizeZ;
+            }
+        }
+        
+        return null;
+    }
+    
+    private String truncate(String number) {
+        try {
+            Double d = Double.parseDouble(number);
+            return dfVoxelSize.format(d);
+        }
+        catch (NumberFormatException e) {
+            // Ignore
+        }
+        return number;
     }
     
     /**

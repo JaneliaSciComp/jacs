@@ -30,8 +30,6 @@ public class MaskChanArtifactService implements IService {
 	
     public static final String MODE_UNDEFINED = "UNDEFINED";
     public static final String MODE_CREATE_INPUT_LIST = "CREATE_INPUT_LIST";
-    public static final String MODE_CREATE_SINGLE_INPUT_LIST = "CREATE_SINGLE_INPUT_LIST";
-    public static final String MODE_COMPLETE = "COMPLETE";
     public static final int GROUP_SIZE = 200;
 	
     protected Logger logger;
@@ -63,12 +61,6 @@ public class MaskChanArtifactService implements IService {
             if (mode.equals(MODE_CREATE_INPUT_LIST)) {
                 doCreateInputList();
             }
-            else if (mode.equals(MODE_CREATE_SINGLE_INPUT_LIST)) {
-                doCreateSingleInputList();
-            }
-            else if (mode.equals(MODE_COMPLETE)) {
-                doComplete();
-            } 
             else {
                 logger.error("Unrecognized mode: "+mode);
             }
@@ -90,11 +82,14 @@ public class MaskChanArtifactService implements IService {
         for(Entity result : entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
         	logger.info("Processing neuron separation, id="+result.getId());
     		String dir = result.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-    		if (!maskChanDirExists(dir)) {
+            File maskChanDir = new File(dir.replaceFirst("/groups", "/archive"),"archive/maskChan");
+    		if (!maskChanDir.exists()) {
+    		    logger.info("  Mask/chan does not exist at: "+maskChanDir);
     			if (!dir.contains(centralDir)) {
-    				logger.info("Ignoring entity with path which does not contain the FileStore.CentralDir: "+result.getId());
+    				logger.info("  Ignoring entity with path which does not contain the FileStore.CentralDir: "+result.getId());
     			}
     			else {
+    			    logger.info("  Adding separation to list");
     				entities.add(result);		
     			}
     		}
@@ -103,39 +98,6 @@ public class MaskChanArtifactService implements IService {
         List<List> inputGroups = createGroups(entities, GROUP_SIZE);
         processData.putItem("ENTITY_LIST", inputGroups);
 		logger.info("Processed "+entities.size()+" entities into "+inputGroups.size()+" groups.");
-    }
-
-    private void doCreateSingleInputList() throws ComputeException {
-    	
-    	String sepId = processData.getString("SEPARATION_ID");
-        logger.info("Getting neuron separation "+sepId);
-
-    	if (sepId == null) {
-    		throw new IllegalArgumentException("SEPARATION_ID may not be null");
-    	}
-        
-        Entity result = entityBean.getEntityById(sepId);
-        
-        List<Entity> entities = new ArrayList<Entity>();
-
-        if (!result.getEntityType().getName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
-        	throw new IllegalArgumentException("Entity with id="+sepId+" is not a neuron separation result");
-        }
-        
-		String dir = result.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-
-		if (maskChanDirExists(dir)) {
-			logger.info("The maskChan directory already exists under "+dir);
-			return;
-		}
-		
-		if (!dir.contains(centralDir)) {
-			throw new ComputeException("Entity path does not contain the FileStore.CentralDir: "+result.getId());
-		}
-		else {
-			entities.add(result);
-			processData.putItem("ENTITY_LIST", entities);
-		}
     }
 
     private List<List> createGroups(Collection fullList, int groupSize) {
@@ -155,13 +117,5 @@ public class MaskChanArtifactService implements IService {
             groupList.add(currentGroup);
         }
         return groupList;
-    }
-
-    private boolean maskChanDirExists(String dir) {
-    	File maskChanDir = new File(dir,"maskChan");
-    	return maskChanDir.exists();
-    }
-    
-    private void doComplete() throws ComputeException {
     }
 }

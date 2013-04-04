@@ -26,5 +26,5 @@ public interface SampleDataManagerMBean {
     public void runSingleMaskChanArtifactPipeline(String separationEntityId);
     public void runCompleteFastLoadArtifactPipeline(String user);
     public void runCompleteMaskChanArtifactPipeline(String user);
-    
+    public void runCompleteSampleArchival(String user);   
 }
