@@ -24,6 +24,7 @@
                 <output name="RESULT_FILE_NODE_ID"/>
                 <output name="RESULT_FILE_NODE"/>
                 <output name="MIP_INPUT_LIST"/>
+                <output name="MIP_OUTPUT_LIST"/>
             </operation>
         </sequence>
         
@@ -31,8 +32,8 @@
             <operation name="MIP Generation" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.MIPGenerationService"/>
                 <input name="IGNORE_ERRORS" value="true"/>
-                <input name="RESULT_FILE_NODE" value="$V{MIP_RESULT_NODE}"/>
-                <input name="OUTPUT_FILE_NODE" value="$V{MIP_RESULT_NODE}"/>
+                <input name="RESULT_FILE_NODE"/>
+                <input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
                 <input name="INPUT_PATH_LIST" value="$V{MIP_INPUT_LIST}"/>
                 <input name="OUTPUT_PATH_LIST" value="$V{MIP_OUTPUT_LIST}"/>
             </operation>
@@ -42,8 +43,8 @@
             <operation name="MIP Conversion to PNG" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ImageConversionService"/>
                 <input name="IGNORE_ERRORS" value="true"/>
-                <input name="RESULT_FILE_NODE" value="$V{MIP_RESULT_NODE}"/>
-                <input name="OUTPUT_FILE_NODE" value="$V{MIP_RESULT_NODE}"/>
+                <input name="RESULT_FILE_NODE"/>
+                <input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
                 <input name="INPUT_FILENAME_REGEX" value="(mip(.*?))\.tif$"/>
                 <input name="OUTPUT_FILENAME_PATTERN" value="$1.png"/>
             </operation>

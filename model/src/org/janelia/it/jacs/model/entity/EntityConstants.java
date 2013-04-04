@@ -55,7 +55,8 @@ public class EntityConstants {
     public static final String TYPE_MASK                             = "Mask";
     public static final String TYPE_ALIGNED_ITEM                     = "Aligned Item";
     public static final String TYPE_DEFORMATION_MATRIX               = "Deformation Matrix";
-    
+    public static final String TYPE_3D_TILE_MICROSCOPE_SAMPLE        = "3D Tile Microscope Sample";
+
     // Entity Data Attributes
 
     public static final String ATTRIBUTE_DENORM_IDENTIFIER                   = "Denorm Identifier";
@@ -108,7 +109,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_CHANNEL_COLORS                      = "Channel Colors"; // e.g. "#7e5200,#ff00ff,#00ff00"
     public static final String ATTRIBUTE_METADATA_FILE                       = "Metadata File";
     public static final String ATTRIBUTE_SEARCH_TASK_ID                      = "Search Task Id"; // Id of the search task that created this folder and results
-    
+
     // Alignment Spaces
     public static final String ATTRIBUTE_ALIGNMENT_SPACE                     = "Alignment Space"; // e.g. "Unified 20x Alignment Space"
     public static final String ATTRIBUTE_ITEM                                = "Item";            // The actual entity item wrapped by an Aligned Item

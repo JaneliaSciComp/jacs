@@ -4,22 +4,10 @@
 -->
 <process name="Cell Counting Sample Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending">
     <sequence name="Main">
-
-        <!-- Import variables from the MCFOSamplePipelineTask -->
-        <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
-            <input name="TASK_PARAMETER_1" value="sample entity id"/>
-            <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
-            <input name="TASK_PARAMETER_2" value="pipeline name"/>
-            <input name="PROCESS_VARIABLE_2" value="PIPELINE_NAME"/>
-            <input name="TASK_PARAMETER_3" value="analysis algorithms"/>
-            <input name="PROCESS_VARIABLE_3" value="ANALYSIS_ALGORITHMS"/>
-            <input name="TASK_PARAMETER_4" value="pipeline process"/>
-            <input name="PROCESS_VARIABLE_4" value="PIPELINE_PROCESS"/>
-            <output name="SAMPLE_ENTITY_ID"/>
-            <output name="PIPELINE_NAME"/>
-            <output name="ANALYSIS_ALGORITHMS"/>
-            <output name="PIPELINE_PROCESS"/>
-        </operation>
+        <input name="SAMPLE_ENTITY_ID"/>
+        <input name="PIPELINE_NAME"/>
+        <input name="PIPELINE_PROCESS"/>
+        <input name="RUN_CELL_COUNTING"/>
 
         <!-- Create the pipeline run entity -->
         <operation name="Create Pipeline Run Entity" processor="org.janelia.it.jacs.compute.service.entity.sample.CreatePipelineRunEntityService">
@@ -98,6 +86,7 @@
         </sequence>
 
         <!-- Convert the image to the sample image format, with reference channel at the end -->
+        <!-- TODO Change this to convert the LSM, no input channel spec-->
         <sequence name="Convert to sample image" waitForAsync="true">
             <operation name="Convert to sample image" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DConvertToSampleImageService"/>
@@ -159,30 +148,32 @@
 
         <!-- Run analyses on unaligned results -->
         <!-- Decide what pipeline to run -->
-        <operation name="Get Parameters" processor="org.janelia.it.jacs.compute.service.entity.sample.InitAnalysisParametersService">
-            <input name="ANALYSIS_ALGORITHM"/>
-            <input name="RESULT_ENTITY_ID"/>
-            <output name="OUTPUT_FILENAME"/>
-            <output name="ANALYSIS_PIPELINE_NAME"/>
-        </operation>
-
-        <operation name="Create Cell Counting Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
-            <input name="NAME" value="CellCountingResultNode"/>
-            <input name="OUTPUT_VAR_NAME" value="CELL_COUNTING_FILE_NODE"/>
-            <output name="CELL_COUNTING_FILE_NODE"/>
-            <output name="CELL_COUNTING_FILE_NODE_ID"/>
-        </operation>
-
-        <sequence name="Cell Counting Grid" waitForAsync="true">
-            <operation name="Cell Counting" processor="queue/gridSubmitAndWait">
-                <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3dCellCountingService"/>
-                <input name="INPUT_FILE" value="${OUTPUT_FILENAME}"/>
-                <input name="RESULT_FILE_NODE_ID" value="$V{CELL_COUNTING_FILE_NODE_ID}"/>
-                <input name="RESULT_FILE_NODE" value="$V{CELL_COUNTING_FILE_NODE}"/>
-                <output name="RESULT_FILE_NODE_ID"/>
-                <output name="RESULT_FILE_NODE"/>
-                <output name="ARCHIVE_FILE_PATHS"/>
+        <sequence if="RUN_CELL_COUNTING=true">
+            <operation name="Get Parameters" processor="org.janelia.it.jacs.compute.service.entity.sample.InitAnalysisParametersService">
+                <input name="ANALYSIS_ALGORITHM"/>
+                <input name="RESULT_ENTITY_ID"/>
+                <output name="OUTPUT_FILENAME"/>
+                <output name="ANALYSIS_PIPELINE_NAME"/>
             </operation>
+
+            <operation name="Create Cell Counting Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+                <input name="NAME" value="CellCountingResultNode"/>
+                <input name="OUTPUT_VAR_NAME" value="CELL_COUNTING_FILE_NODE"/>
+                <output name="CELL_COUNTING_FILE_NODE"/>
+                <output name="CELL_COUNTING_FILE_NODE_ID"/>
+            </operation>
+
+            <sequence name="Cell Counting Grid" waitForAsync="true">
+                <operation name="Cell Counting" processor="queue/gridSubmitAndWait">
+                    <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3dCellCountingService"/>
+                    <input name="INPUT_FILE" value="${OUTPUT_FILENAME}"/>
+                    <input name="RESULT_FILE_NODE_ID" value="$V{CELL_COUNTING_FILE_NODE_ID}"/>
+                    <input name="RESULT_FILE_NODE" value="$V{CELL_COUNTING_FILE_NODE}"/>
+                    <output name="RESULT_FILE_NODE_ID"/>
+                    <output name="RESULT_FILE_NODE"/>
+                    <output name="ARCHIVE_FILE_PATHS"/>
+                </operation>
+            </sequence>
         </sequence>
 
         <operation name="Discover Sample Processing Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SupportingFilesDiscoveryService">
