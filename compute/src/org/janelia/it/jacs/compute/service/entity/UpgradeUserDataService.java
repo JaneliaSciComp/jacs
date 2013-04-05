@@ -166,6 +166,7 @@ public class UpgradeUserDataService extends AbstractEntityService {
                 String voxelSizeX = truncate(m.group(1));
                 String voxelSizeY = truncate(m.group(2));
                 String voxelSizeZ = truncate(m.group(3));
+                if (StringUtils.isEmpty(voxelSizeX) || StringUtils.isEmpty(voxelSizeY) || StringUtils.isEmpty(voxelSizeZ)) return null;
                 return voxelSizeX+"x"+voxelSizeY+"x"+voxelSizeZ;
             }
         }

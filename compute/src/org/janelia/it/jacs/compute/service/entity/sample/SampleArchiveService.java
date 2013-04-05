@@ -20,7 +20,6 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
 public class SampleArchiveService extends AbstractEntityService {
 
 	public transient static final String CENTRAL_DIR_PROP = "FileStore.CentralDir";
-	
 	private static final String centralDir = SystemConfigurationProperties.getString(CENTRAL_DIR_PROP);
 	
     public static final String MODE_CREATE_ARCHIVE_LIST = "CREATE_ARCHIVE_LIST";

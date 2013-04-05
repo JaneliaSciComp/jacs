@@ -12,6 +12,7 @@ import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 
 /**
  * Run the mask/chan pipeline on a set of neuron separation result directories.
@@ -27,7 +28,10 @@ import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class MaskChanArtifactPipelineGridService extends SubmitDrmaaJobService {
-	
+
+    public transient static final String CENTRAL_DIR_PROP = "FileStore.CentralDir";
+    private static final String centralDir = SystemConfigurationProperties.getString(CENTRAL_DIR_PROP);
+    
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
 
     private List<String> inputPaths;
@@ -44,6 +48,12 @@ public class MaskChanArtifactPipelineGridService extends SubmitDrmaaJobService {
         inputPaths = (List<String>)processData.getItem("FILE_PATHS");
         if (inputPaths==null) {
         	throw new ServiceException("Input parameter FILE_PATHS may not be empty");
+        }
+        
+        for(String filepath : inputPaths) {
+            if (!filepath.contains(centralDir)) {
+                throw new IllegalStateException("Cannot create mask/chan artifacts in dir which is not in the FileStore.CentralDir: "+filepath);
+            }
         }
         
         maskChanPaths = new ArrayList<String>();

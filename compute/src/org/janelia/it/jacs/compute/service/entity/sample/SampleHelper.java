@@ -579,7 +579,10 @@ public class SampleHelper extends EntityHelper {
         String consensus = null;
         entityLoader.populateChildren(sampleEntity);
         Entity supportingData = EntityUtils.getSupportingData(sampleEntity);
-        if (supportingData==null) throw new IllegalStateException("Sample has no supporting data: "+sampleEntity.getId());
+        if (supportingData==null) {
+            logger.error("Sample has no supporting data: "+sampleEntity.getId());
+            return null;
+        }
         entityLoader.populateChildren(supportingData);
         for(Entity tile : EntityUtils.getChildrenOfType(supportingData, EntityConstants.TYPE_IMAGE_TILE)) {
             entityLoader.populateChildren(tile);
