@@ -194,11 +194,11 @@ public class SampleDataManager implements SampleDataManagerMBean {
     
     public void runNeuronSeparationPipeline(String resultEntityId) {
         try {
-            Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(resultEntityId);
-            if (sampleEntity==null) throw new IllegalArgumentException("Entity with id "+resultEntityId+" does not exist");
+            Entity resultEntity = EJBFactory.getLocalEntityBean().getEntityById(resultEntityId);
+            if (resultEntity==null) throw new IllegalArgumentException("Entity with id "+resultEntityId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("result entity id", resultEntityId, null)); 
-            Task task = new GenericTask(new HashSet<Node>(), sampleEntity.getOwnerKey(), new ArrayList<Event>(), 
+            Task task = new GenericTask(new HashSet<Node>(), resultEntity.getOwnerKey(), new ArrayList<Event>(), 
                     taskParameters, "separationPipeline", "Separation Pipeline");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("PipelineHarness_FlyLightSeparation", task.getObjectId());
@@ -258,16 +258,28 @@ public class SampleDataManager implements SampleDataManagerMBean {
             ex.printStackTrace();
         }
     }
+
+    public void runSingleSampleArchival(String sampleEntityId) {
+        try {
+            Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null)); 
+            Task task = new GenericTask(new HashSet<Node>(), sampleEntity.getOwnerKey(), new ArrayList<Event>(), 
+                    taskParameters, "singleSampleArchival", "Single Sample Archival");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("SyncSampleToArchive", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
     
     public void runCompleteSampleArchival(String user) {
         try {
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-            taskParameters.add(new TaskParameter("process def name", "SyncSampleToArchive", null)); 
-            taskParameters.add(new TaskParameter("subtask name", "Sync Sample To Archive", null)); 
             Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
                     taskParameters, "completeSampleArchival", "Complete Sample Archival");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("CompleteSampleProcessingService", task.getObjectId());
+            EJBFactory.getLocalComputeBean().submitJob("CompleteSampleArchivalService", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }

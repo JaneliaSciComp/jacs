@@ -22,9 +22,14 @@ public interface SampleDataManagerMBean {
     public void runSamplePipelines(String sampleId, Boolean reuseProcessing);
     public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName, Boolean reuseProcessing);
     public void runNeuronSeparationPipeline(String resultEntityId);
+    
+    // Upgrade pipelines
     public void runSingleFastLoadArtifactPipeline(String separationEntityId);
-    public void runSingleMaskChanArtifactPipeline(String separationEntityId);
     public void runCompleteFastLoadArtifactPipeline(String user);
+    
+    public void runSingleMaskChanArtifactPipeline(String separationEntityId);
     public void runCompleteMaskChanArtifactPipeline(String user);
+    
+    public void runSingleSampleArchival(String sampleEntityId);  
     public void runCompleteSampleArchival(String user);   
 }

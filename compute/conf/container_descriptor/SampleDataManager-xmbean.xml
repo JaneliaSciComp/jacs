@@ -82,46 +82,6 @@
     </operation>
     
     <operation>
-        <description>Create the fastLoad artifacts for a single neuron separation</description>
-        <name>runSingleFastLoadArtifactPipeline</name>
-        <parameter>
-           <description>Entity id of the neuron separation result entity</description>
-           <name>separationEntityId</name>
-           <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Create the fastLoad artifacts for all single neuron separations</description>
-        <name>runCompleteFastLoadArtifactPipeline</name>
-        <parameter>
-            <description>User to run as (e.g. "flylight")</description>
-            <name>user</name>
-            <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Create the maskChan artifacts for a single neuron separation</description>
-        <name>runSingleMaskChanArtifactPipeline</name>
-        <parameter>
-           <description>Entity id of the neuron separation result entity</description>
-           <name>separationEntityId</name>
-           <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Create the maskChan artifacts for all single neuron separations</description>
-        <name>runCompleteMaskChanArtifactPipeline</name>
-        <parameter>
-            <description>User to run as (e.g. "flylight")</description>
-            <name>user</name>
-            <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
         <description>Run all pipelines for all Data Sets for all users</description>
         <name>runAllDataSetPipelines</name>
         <parameter>
@@ -212,6 +172,56 @@
         <parameter>
            <description>Entity id of the result to run (e.g. "1679282451010027618")</description>
            <name>resultEntityId</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
+        <description>Create the fastLoad artifacts for a single neuron separation</description>
+        <name>runSingleFastLoadArtifactPipeline</name>
+        <parameter>
+           <description>Entity id of the neuron separation result entity</description>
+           <name>separationEntityId</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
+        <description>Create the fastLoad artifacts for all single neuron separations</description>
+        <name>runCompleteFastLoadArtifactPipeline</name>
+        <parameter>
+            <description>User to run as (e.g. "flylight")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
+        <description>Create the maskChan artifacts for a single neuron separation</description>
+        <name>runSingleMaskChanArtifactPipeline</name>
+        <parameter>
+           <description>Entity id of the neuron separation result entity</description>
+           <name>separationEntityId</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
+        <description>Create the maskChan artifacts for all single neuron separations</description>
+        <name>runCompleteMaskChanArtifactPipeline</name>
+        <parameter>
+            <description>User to run as (e.g. "flylight")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
+        <description>Archive the given sample</description>
+        <name>runSingleSampleArchival</name>
+        <parameter>
+           <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
+           <name>sampleEntityId</name>
            <type>java.lang.String</type>
         </parameter>
     </operation>

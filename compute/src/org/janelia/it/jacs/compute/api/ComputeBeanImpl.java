@@ -43,6 +43,8 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * This class implements service calls used by remote clients of Compute server.  It also contains service
@@ -640,7 +642,51 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         }
         return true;
     }
-    
+
+
+    public void moveFileNodesToArchive(String filepath) throws DaoException {
+        try {
+            logger.info("moveFileNodesToArchive: "+filepath);
+            
+            Pattern p = Pattern.compile("((.*?)/(\\d+)/(\\d+)/(\\d+))(.*?)?");
+            Matcher m = p.matcher(filepath);
+            if (m.matches()) {
+                String parentFileNodePath = m.group(1);
+                Long nodeId = Long.parseLong(m.group(5));
+
+                logger.debug("  parentFileNodePath: "+parentFileNodePath);
+                logger.debug("  nodeId: "+nodeId);
+                
+                if (!parentFileNodePath.equals(filepath)) {
+                    // Update child node too
+                    FileNode childNode = (FileNode)computeDAO.getFileNodeByPathOverride(filepath);
+                    if (childNode!=null) {
+                        childNode.setPathOverride(filepath.replaceFirst("/groups", "/archive"));
+                        computeDAO.saveOrUpdate(childNode);
+                        logger.info("  changed path override on child node "+childNode.getObjectId()+" to: "+childNode.getPathOverride());
+                    }
+                }
+
+                String archiveParentFileNodePath = parentFileNodePath.replaceFirst("/groups", "/archive");
+                
+                FileNode node = (FileNode)computeDAO.getNodeById(nodeId);
+                if (node!=null) {
+                    node.setPathOverride(archiveParentFileNodePath);
+                    computeDAO.saveOrUpdate(node);
+                    logger.info("  changed path override on node "+node.getObjectId()+" to: "+node.getPathOverride());
+                }
+                
+                computeDAO.bulkUpdateNodePathOverridePrefix(parentFileNodePath, archiveParentFileNodePath);
+            }
+            else {
+                throw new Exception("Could not parse file node information from filepath: "+filepath);
+            }
+        }
+        catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+
     public int getNumCategoryResults(Long nodeId, String category) {
         try {
             String sql =

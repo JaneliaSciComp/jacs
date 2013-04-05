@@ -922,7 +922,31 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             query.setParameter("oldValue", oldValue);
             
             int rows = query.executeUpdate();
-            _logger.info("Bulk updated "+rows+" rows");
+            _logger.info("Bulk updated entity data value for "+rows+" rows");
+        }
+        catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+    
+    public void bulkUpdateEntityDataPrefix(String oldPrefix, String newPrefix) throws DaoException {
+        try {
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("bulkUpdateEntityDataPrefix(oldPrefix="+oldPrefix+",newPrefix="+newPrefix+")");  
+            }
+            
+            StringBuilder hql = new StringBuilder();
+            hql.append("update EntityData ed set ed.value = concat(:newPrefix,substring(ed.value, :prefixOffset)) "); 
+            hql.append("where ed.value like :oldPrefix");
+            
+            final Session currentSession = getCurrentSession();
+            Query query = currentSession.createQuery(hql.toString());
+            query.setParameter("newPrefix", newPrefix);
+            query.setParameter("prefixOffset", oldPrefix.length()+1);
+            query.setParameter("oldPrefix", oldPrefix+"%");
+            
+            int rows = query.executeUpdate();
+            _logger.info("Bulk updated entity data prefix for "+rows+" rows");
         }
         catch (Exception e) {
             throw new DaoException(e);

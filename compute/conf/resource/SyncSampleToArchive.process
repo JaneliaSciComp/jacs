@@ -2,7 +2,7 @@
 	Copy the Sample's large files to the archive. The meaning of "large" can change over time, so this service can be 
 	run on the same Sample incrementally. 
 -->
-<process name="Synchronize sample to archive" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Synchronize sample to archive" processor="queue/samplePipelineLauncher" startEvent="pending">
     <sequence>
 	
 	   <input name="SAMPLE_ENTITY_ID"/>
@@ -25,7 +25,6 @@
 	    <!-- Move the files over if necessary -->
         <sequence name="Limit Archive Access" waitForAsync="true" processor="queue/archiveAccess" startEvent="running">
             <operation name="Move large files to archive" processor="org.janelia.it.jacs.compute.service.utility.SyncToArchiveService">
-                <output name="ORIGINAL_FILE_PATHS"/>
                 <input name="FILE_PATHS" value="$V{ORIGINAL_FILE_PATHS}"/>
             </operation>
     	</sequence>

@@ -53,4 +53,6 @@ public interface ComputeBeanLocal extends ComputeBeanRemote {
     public boolean createUser(String newUserName) throws DaoException;
     
     public User createUser(String newUserName, String newFullName) throws ComputeException;
+    
+    public void moveFileNodesToArchive(String filepath) throws ComputeException;
 }

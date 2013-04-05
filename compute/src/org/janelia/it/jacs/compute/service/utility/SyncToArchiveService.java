@@ -34,11 +34,8 @@ public class SyncToArchiveService extends AbstractEntityService {
     protected static final String JACS_DATA_ARCHIVE_DIR =
             SystemConfigurationProperties.getString("JacsData.Dir.Archive.Linux");
 
-    protected static final String COPY_COMMAND = "cp -R"; 
     protected static final String SYNC_COMMAND = "rsync -aW"; 
     protected static final String REMOVE_COMMAND = "rm -rf"; 
-    
-    protected EntityBeanLocal entityBean;
     
     public void execute() throws Exception {
 
@@ -51,6 +48,8 @@ public class SyncToArchiveService extends AbstractEntityService {
         	truePaths = new ArrayList<String>();
         	truePaths.add(truePath);
         }
+        
+        logger.info("Synchronizing "+truePaths.size()+" paths to archive");
         
         for(String truePath : truePaths) {
         	try {
@@ -90,10 +89,19 @@ public class SyncToArchiveService extends AbstractEntityService {
         }
         
         // Looks like everything went well, so we can remove the original file
-        removePath(truePath);
+        
+        File file = new File(truePath);
+        try {
+            FileUtils.forceDelete(file);
+            logger.info("Deleted old path: "+truePath);
+        }
+        catch (Exception e) {
+            logger.info("Error deleting old path "+truePath+": "+e.getMessage());
+        }
     }
     
     private void syncPath(String sourcePath, String targetPath) throws Exception {
+        new File(targetPath).getParentFile().mkdirs();
         StringBuffer script = new StringBuffer();
         script.append(SYNC_COMMAND+" "+sourcePath+"/ "+targetPath+"/; ");
         logger.info("Running: "+script);
@@ -104,29 +112,11 @@ public class SyncToArchiveService extends AbstractEntityService {
         }
     }
     
-    private void removePath(String truePath) throws Exception {
-        StringBuffer script = new StringBuffer();
-        script.append(REMOVE_COMMAND+" "+truePath+"; ");
-        logger.info("Running: "+script);
-        SystemCall call = new SystemCall(logger);
-        int exitCode = call.emulateCommandLine(script.toString(), true, TIME_OUT_SECS);
-        if (0!=exitCode) {
-            throw new ServiceException("Synchronization to archive failed with exitCode "+exitCode);
-        }
-    }
-    
     private void updateEntities(String originalPath, String archivePath) throws ComputeException {
-
-        entityBean.bulkUpdateEntityDataValue(originalPath, archivePath);
+        computeBean.moveFileNodesToArchive(originalPath);
+        logger.info("Updated all file nodes to use archived file: "+archivePath);
+        entityBean.bulkUpdateEntityDataPrefix(originalPath, archivePath);
         logger.info("Updated all entities to use archived file: "+archivePath);
         
-        File file = new File(originalPath);
-        try {
-            FileUtils.forceDelete(file);
-            logger.info("Deleted old file: "+originalPath);
-        }
-        catch (Exception e) {
-            logger.info("Error deleting symlink "+originalPath+": "+e.getMessage());
-        }
     }
 }

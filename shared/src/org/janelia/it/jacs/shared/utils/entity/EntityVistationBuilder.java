@@ -8,9 +8,26 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * A builder for visiting hierarchical entity trees.
+ * 
+ * This is a powerful abstraction for lazily walking entity trees based on any common criteria such as entity types, 
+ * attribute types, and entity names. Child entities are loaded as needed. 
+ * 
+ * Example:
+ * 
+ * <code> 
+ *       EntityVistationBuilder.create(entityLoader).startAt(sampleEntity)
+ *               .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN)
+ *               .childrenOfAttr(EntityConstants.ATTRIBUTE_RESULT)
+ *               .run(new EntityVisitor() {
+ *           public void visit(Entity result) throws Exception {
+ *               log.info("Result: "+result.getId());
+ *           }
+ *       });
+ * </code>
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -22,6 +39,10 @@ public class EntityVistationBuilder {
 	private List<EntityFilter> filters = new ArrayList<EntityFilter>();
 	private AbstractEntityLoader loader;
 	private boolean visitRootOwnerOwnedEntitiesOnly = true;
+	
+	public static EntityVistationBuilder create(AbstractEntityLoader loader) {
+	    return new EntityVistationBuilder(loader);
+	}
 	
 	public EntityVistationBuilder(AbstractEntityLoader loader) {
 		this.loader = loader;
@@ -57,13 +78,18 @@ public class EntityVistationBuilder {
 		
 		if (entity==null || filters.isEmpty()) return;
 		loader.populateChildren(entity);
-		
+
+		String indent = StringUtils.getIndent(level, "  ");
+        logger.trace(indent+"Visiting "+entity.getName()+" (id="+entity.getId()+")");
+        
 		EntityFilter filter = filters.get(level);
 		
 		if (filter instanceof Ancestors) {
+		    logger.trace(indent+"Process ancestors:");
 			runRecursively(entity, visitor, new HashSet<Long>());
 		}
 		else if (filter instanceof Root) {
+		    logger.trace(indent+"Process root:");
 	    	visitor.visit(entity);
 			for(EntityData ed : entity.getEntityData()) {
 				visitor.visit(ed);
@@ -71,6 +97,7 @@ public class EntityVistationBuilder {
 		}
 		else if (filter instanceof ChildEntityFilter) {
 			ChildEntityFilter childFilter = (ChildEntityFilter)filter;
+			logger.trace(indent+"Filter ("+childFilter.getClass().getName()+"):");
 			for(EntityData ed : childFilter.getFilteredRelatives(entity)) {
 				if (level>=filters.size()-1) {
 					visitor.visit(ed);

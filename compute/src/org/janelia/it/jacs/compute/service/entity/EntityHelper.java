@@ -14,6 +14,7 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * A helper class for dealing with common entities such as default images. 
@@ -361,7 +362,7 @@ public class EntityHelper {
     }
     
     private void setAttributeIfNecessary(Entity entity, String attributeName, String value) throws Exception {
-        if (entity==null || value==null) return;
+        if (entity==null || StringUtils.isEmpty(value)) return;
         EntityData currEd = entity.getEntityDataByAttributeName(attributeName);
         if (currEd==null || !currEd.getValue().equals(value)) {
             entity.setValueByAttributeName(attributeName, value);

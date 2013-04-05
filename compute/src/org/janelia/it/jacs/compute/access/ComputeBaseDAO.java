@@ -16,10 +16,7 @@ import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskMessage;
 import org.janelia.it.jacs.model.tasks.search.SearchTask;
-import org.janelia.it.jacs.model.user_data.Group;
-import org.janelia.it.jacs.model.user_data.Node;
-import org.janelia.it.jacs.model.user_data.Subject;
-import org.janelia.it.jacs.model.user_data.User;
+import org.janelia.it.jacs.model.user_data.*;
 import org.janelia.it.jacs.model.user_data.search.SearchResultNode;
 
 /**
@@ -191,12 +188,41 @@ public class ComputeBaseDAO {
         return (Node) getCurrentSession().get(Node.class, nodeId);
     }
 
+    public FileNode getFileNodeByPathOverride(String pathOverride) {
+        Session session = getCurrentSession();
+        StringBuffer hql = new StringBuffer("select n from Node n ");
+        hql.append("where n.pathOverride = :pathOverride ");
+        Query query = session.createQuery(hql.toString());
+        query.setString("pathOverride", pathOverride);
+        return (FileNode)query.uniqueResult();
+    }
+    
     public Node getBlastDatabaseFileNodeByName(String name) {
         Query query = getCurrentSession().getNamedQuery("findBlastDatabaseNodeByName"); // Accesion is sic
         query.setParameter("name", name); // accesion is sic
         return (Node) query.uniqueResult();
     }
 
+    public void bulkUpdateNodePathOverridePrefix(String oldPrefix, String newPrefix) throws DaoException {
+        try {
+            StringBuilder hql = new StringBuilder();
+            hql.append("update Node n set n.pathOverride = concat(:newPrefix,substring(n.pathOverride, :prefixOffset)) "); 
+            hql.append("where n.pathOverride like :oldPrefix");
+            
+            final Session currentSession = getCurrentSession();
+            Query query = currentSession.createQuery(hql.toString());
+            query.setParameter("newPrefix", newPrefix);
+            query.setParameter("prefixOffset", oldPrefix.length()+1);
+            query.setParameter("oldPrefix", oldPrefix+"%");
+            
+            int rows = query.executeUpdate();
+            _logger.info("Bulk updated node path override prefix for "+rows+" rows");
+        }
+        catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+    
     /**
      * This method returns the first result node for a given task.
      * ie if you know the task this will return the node result of that task

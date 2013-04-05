@@ -13,6 +13,14 @@ public class StringUtils {
 		return s==null || "".equals(s);
 	}
 
+	public static String getIndent(int level, String single) {
+        StringBuilder indent = new StringBuilder();
+        for(int i=0; i<level; i++) {
+            indent.append(single);
+        }
+        return indent.toString();
+	}
+	
 	public static String underscoreToTitleCase(String name) {
     	String[] words = name.split("_");
     	StringBuffer buf = new StringBuffer();
