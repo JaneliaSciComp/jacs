@@ -343,7 +343,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
 
     public void bulkUpdateEntityDataPrefix(String oldPrefix, String newPrefix) throws ComputeException {
         try {
-            _annotationDAO.bulkUpdateEntityDataValue(oldPrefix, newPrefix);
+            _annotationDAO.bulkUpdateEntityDataPrefix(oldPrefix, newPrefix);
         }
         catch (Exception e) {
             _logger.error("Unexpected error while bulk updating entity data values", e);

@@ -15,7 +15,8 @@ import java.io.Serializable;
 public abstract class FileNode extends Node implements Serializable, IsSerializable {
     // Non-persistant fields
     public transient static final String CENTRAL_DIR_PROP = "FileStore.CentralDir";
-
+    public transient static final String CENTRAL_DIR_ARCHIVED_PROP = "FileStore.CentralDir.Archived";
+    
     // Persistant Fields
     // The pathOverride is intended to override the directory used - instead of the default filestore locations
     // It should always end with the file.separator

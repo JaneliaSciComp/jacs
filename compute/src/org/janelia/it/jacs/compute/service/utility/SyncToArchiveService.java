@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
-import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.util.FileUtils;
@@ -26,7 +25,7 @@ public class SyncToArchiveService extends AbstractEntityService {
 
 	protected Logger logger = Logger.getLogger(SyncToArchiveService.class);
 	
-	private static final int TIME_OUT_SECS = 300; // 5 minutes
+	private static final int TIME_OUT_SECS = 3600; // 1 hour
 	
 	protected static final String JACS_DATA_DIR =
         SystemConfigurationProperties.getString("JacsData.Dir.Linux");
@@ -58,7 +57,10 @@ public class SyncToArchiveService extends AbstractEntityService {
         	catch (Exception e) {
         		logger.error("Sync failed for dir "+truePath, e);
         	}
+            logger.info("Synchronization completed for "+truePath);
         }
+        
+        logger.info("Synchronization completed for all paths");
     }
 
     private void syncDir(String filePath) throws Exception {
@@ -117,6 +119,5 @@ public class SyncToArchiveService extends AbstractEntityService {
         logger.info("Updated all file nodes to use archived file: "+archivePath);
         entityBean.bulkUpdateEntityDataPrefix(originalPath, archivePath);
         logger.info("Updated all entities to use archived file: "+archivePath);
-        
     }
 }

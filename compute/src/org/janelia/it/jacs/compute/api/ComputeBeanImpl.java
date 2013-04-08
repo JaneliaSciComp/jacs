@@ -630,7 +630,16 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
             if (clearFromFilestoreIfAppropriate && targetNode instanceof FileNode) {
                 FileNode tmpFileNode = (FileNode) targetNode;
                 String centralDir = SystemConfigurationProperties.getString(FileNode.CENTRAL_DIR_PROP);
-                File trashDir = new File(centralDir, "trash");
+                String archiveDir = SystemConfigurationProperties.getString(FileNode.CENTRAL_DIR_ARCHIVED_PROP);
+                
+                File trashDir = null;
+                if (tmpFileNode.getDirectoryPath().startsWith(archiveDir)) {
+                    trashDir = new File(archiveDir, "trash");
+                }
+                else {
+                    trashDir = new File(centralDir, "trash");
+                }
+                
             	FileUtil.ensureDirExists(trashDir.getAbsolutePath());
             	FileUtil.moveFileUsingSystemCall(new File(tmpFileNode.getDirectoryPath()), trashDir);
                 logger.debug("Successfully moved " + tmpFileNode.getDirectoryPath()+" to trash directory ("+trashDir+")");

@@ -944,7 +944,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             query.setParameter("newPrefix", newPrefix);
             query.setParameter("prefixOffset", oldPrefix.length()+1);
             query.setParameter("oldPrefix", oldPrefix+"%");
-            
+                        
             int rows = query.executeUpdate();
             _logger.info("Bulk updated entity data prefix for "+rows+" rows");
         }
