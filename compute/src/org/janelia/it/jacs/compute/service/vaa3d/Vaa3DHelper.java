@@ -230,11 +230,18 @@ public class Vaa3DHelper {
         return VAA3D_BASE_CMD + " -cmd cell-counter -plan \""+planPath+"\" -i $INPUT_FILE";
     }
 
-    public static String getFormattedMaskSearchCommand(String indexFilePath, String queryChannel, String matrix) {
+    public static String getFormattedMaskSearchCommand(String indexFilePath, String queryChannel, String matrix,
+                                                       String maxHits, String skipZeroes) {
         String tmpString = VAA3D_BASE_CMD + " -cmd volume-pattern-index -mode search -indexFile \""+indexFilePath+
-                "\" -query $INPUT_FILE -queryChannel "+queryChannel+" ";
+                "\" -query $INPUT_FILE -queryChannel "+queryChannel;
         if (null!=matrix && !"".equals(matrix)) {
-            tmpString+="-matrix \""+matrix+"\"";
+            tmpString+=" -matrix \""+matrix+"\"";
+        }
+        if (null!=maxHits&& !"".equals(maxHits)) {
+            tmpString+=" -maxHits "+maxHits;
+        }
+        if (null!=skipZeroes&& !"".equals(skipZeroes) && Boolean.valueOf(skipZeroes)) {
+            tmpString+=" -skipzeros";
         }
         return tmpString;
     }

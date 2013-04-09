@@ -91,7 +91,7 @@ class JacsUtils {
 	def Entity newEntity(name, entityTypeName) {
 		Entity entity = new Entity()
 		entity.name = name
-		entity.owner = subject.key
+		entity.ownerKey = subject.key
 		entity.creationDate = createDate
 		entity.updatedDate = createDate
 		entity.entityType = e.getEntityTypeByName(entityTypeName)

@@ -24,17 +24,24 @@ public class MaskSearchTask extends SearchTask {
     transient public static final String PARAM_resultsFolderName    = "resultsFolderName";
     transient public static final String PARAM_matrix       = "matrix";
     transient public static final String PARAM_queryChannel = "queryChannel";
+    transient public static final String PARAM_maxHits = "maxHits";
+    transient public static final String PARAM_skipZeroes = "skipZeroes";
 
-    public static final String DEFAULT_MATRIX = "0 -1 -2 -3     -100 100 200 300     -200 200 400 600     -300 400 800 1200";
-    public static final String DEFAULT_QUERY_CHANNEL = "0";
+    public static final String DEFAULT_MATRIX       = "0 -1 -2 -3     -100 100 200 300     -200 200 400 600     -300 400 800 1200";
+    public static final String DEFAULT_QUERY_CHANNEL= "0";
+    public static final String DEFAULT_MAX_HITS     = "100";
+    public static final String DEFAULT_SKIP_ZEROES  = "TRUE";
 
     public MaskSearchTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet,
-                          String inputFilePath, String resultsFolderName, String matrixValue, String queryChannel) {
+                          String inputFilePath, String resultsFolderName, String matrixValue, String queryChannel,
+                          String maxHits, String skipZeroes) {
         super(inputNodes, owner, events, taskParameterSet, DISPLAY_NAME + " Task");
         setParameter(PARAM_inputFilePath, inputFilePath);
         setParameter(PARAM_resultsFolderName, resultsFolderName);
         setParameter(PARAM_matrix, matrixValue);
         setParameter(PARAM_queryChannel,queryChannel);
+        setParameter(PARAM_maxHits, maxHits);
+        setParameter(PARAM_skipZeroes, skipZeroes);
     }
 
     public MaskSearchTask() {
@@ -46,15 +53,11 @@ public class MaskSearchTask extends SearchTask {
     }
 
     public ParameterVO getParameterVO(String key) throws ParameterException {
-        if (key == null)
-            return null;
+        if (key == null) {return null;}
         String value = getParameter(key);
-        if (key.equals(PARAM_resultsFolderName) || key.equals(PARAM_inputFilePath) || key.equals(PARAM_matrix) ||
-            key.equals(PARAM_queryChannel)) {
+        if (value != null) {
             return new TextParameterVO(value);
         }
-        if (value == null)
-            return null;
         // No match
         return null;
     }

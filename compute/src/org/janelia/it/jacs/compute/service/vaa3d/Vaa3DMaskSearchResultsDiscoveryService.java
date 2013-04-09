@@ -60,13 +60,21 @@ public class Vaa3DMaskSearchResultsDiscoveryService implements IService{
             addToParent(parentFolder, textResultsEntity, parentFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
             addToParent(parentFolder, inputMaskEntity, parentFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
 
-            Scanner scanner = new Scanner(new File(tmpNode.getFilePathByTag(MaskSearchResultNode.TAG_RESULTS)));
+            Scanner scanner = new Scanner(new File(tmpNode.getDirectoryPath()+File.separator+"sge_error"+File.separator+"maskSearchError.1"));
             ArrayList<String> sampleNames = new ArrayList<String>();
+
+            boolean ignoreLines = true;
             while(scanner.hasNextLine()){
                 String tmpLine = scanner.nextLine();
-                tmpLine = tmpLine.substring(tmpLine.lastIndexOf("/")+1);
-                tmpLine = tmpLine.substring(0,tmpLine.indexOf("."));
-                sampleNames.add(tmpLine);
+                if (tmpLine.startsWith("=======================")) {
+                    ignoreLines=false;
+                    continue;
+                }
+                if (!ignoreLines) {
+                    tmpLine = tmpLine.substring(tmpLine.lastIndexOf("/")+1);
+                    tmpLine = tmpLine.substring(0,tmpLine.indexOf("."));
+                    sampleNames.add(tmpLine);
+                }
             }
 
             ArrayList<Long> searchResultSampleIds = new ArrayList<Long>();
@@ -85,12 +93,14 @@ public class Vaa3DMaskSearchResultsDiscoveryService implements IService{
             entityHelper.setDefault3dImage(inputMaskEntity, tmp3DStack);
         }
         catch (Exception e) {
-            throw new ServiceException("Unable to process the entities from the neuron merge step.",e);
+            throw new ServiceException("Unable to process the entities from the mask search step.",e);
         }
     }
 
     private Entity createMaskInputEntity(String inputFilePath) throws Exception {
+        File tmpFile = new File(inputFilePath);
         Entity inputEntity = new Entity();
+        inputEntity.setName(tmpFile.getName());
         inputEntity.setOwnerKey(ownerKey);
         inputEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D));
         inputEntity.setCreationDate(createDate);
@@ -102,7 +112,9 @@ public class Vaa3DMaskSearchResultsDiscoveryService implements IService{
     }
 
     protected Entity createMaskSearchResultEntity(String resultsFilePath) throws Exception {
+        File tmpFile = new File(resultsFilePath);
         Entity resultsEntity = new Entity();
+        resultsEntity.setName(tmpFile.getName());
         resultsEntity.setOwnerKey(ownerKey);
         resultsEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_TEXT_FILE));
         resultsEntity.setCreationDate(createDate);

@@ -1,11 +1,9 @@
 package org.janelia.it.jacs.compute.mbean;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanRemote;
 import org.janelia.it.jacs.compute.service.entity.FastLoadArtifactService;
 import org.janelia.it.jacs.compute.service.entity.SampleDataCompressionService;
 import org.janelia.it.jacs.compute.service.entity.SampleTrashCompactorService;
@@ -16,6 +14,11 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 public class SampleDataManager implements SampleDataManagerMBean {
 
@@ -284,4 +287,50 @@ public class SampleDataManager implements SampleDataManagerMBean {
             ex.printStackTrace();
         }
     }
+
+    @Override
+    public void create3DTileMicroscopeSample(String user, String destinationFolderName, String targetSampleName,
+                                             String targetSamplePath) {
+        try {
+            EntityBeanRemote e = EJBFactory.getRemoteEntityBean();
+            // Parameters
+            String subjectKey = "user:"+user;
+
+            // Main script
+            Set<Entity> folders = e.getEntitiesByName(subjectKey, destinationFolderName);
+            Entity folder;
+            if (folders!=null && folders.size()>0) {
+                folder = folders.iterator().next();
+            }
+            else {
+                folder = newEntity(destinationFolderName, EntityConstants.TYPE_FOLDER, subjectKey, true);
+            }
+            folder = e.saveOrUpdateEntity(subjectKey, folder);
+            Entity sample = newEntity(targetSampleName, EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE, subjectKey, false);
+            sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, targetSamplePath);
+            sample = e.saveOrUpdateEntity(subjectKey, sample);
+            System.out.println("Saved sample as "+sample.getId());
+            e.addEntityToParent(subjectKey, folder.getId(), sample.getId(), folder.getMaxOrderIndex() + 1, EntityConstants.ATTRIBUTE_ENTITY);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public Entity newEntity(String name, String entityTypeName, String ownerKey, boolean isCommonRoot) throws ComputeException {
+        Date createDate = new Date();
+        Entity entity = new Entity();
+        entity.setName(name);
+        entity.setOwnerKey(ownerKey);
+        entity.setCreationDate(createDate);
+        entity.setUpdatedDate(createDate);
+        entity.setEntityType(EJBFactory.getRemoteEntityBean().getEntityTypeByName(entityTypeName));
+        if (isCommonRoot) {
+            entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT, "Common Root");
+        }
+        return entity;
+    }
+
+
 }

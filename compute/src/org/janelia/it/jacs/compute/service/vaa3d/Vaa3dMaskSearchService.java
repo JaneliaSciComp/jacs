@@ -58,7 +58,10 @@ public class Vaa3dMaskSearchService extends SubmitDrmaaJobService {
         script.append("\n");
         script.append(Vaa3DHelper.getFormattedMaskSearchCommand("/groups/scicomp/jacsData/filestore/system/MaskSearch/All.pindex",
                 task.getParameter(MaskSearchTask.PARAM_queryChannel),
-                task.getParameter(MaskSearchTask.PARAM_matrix)));
+                task.getParameter(MaskSearchTask.PARAM_matrix),
+                task.getParameter(MaskSearchTask.PARAM_maxHits),
+                task.getParameter(MaskSearchTask.PARAM_skipZeroes)));
+        script.append(" > ").append(resultFileNode.getDirectoryPath()).append(File.separator).append("searchResults.txt");
         script.append("\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix());
         writer.write(script.toString());
@@ -81,8 +84,16 @@ public class Vaa3dMaskSearchService extends SubmitDrmaaJobService {
         archiveList.add(resultFileNode.getDirectoryPath());
         processData.putItem("ARCHIVE_FILE_PATHS", archiveList);
 
-        ArrayList<String> mipList = new ArrayList<String>();
-        mipList.add(task.getParameter(MaskSearchTask.PARAM_inputFilePath));
-        processData.putItem("MIP_INPUT_LIST", mipList);
+        File tmpFile = new File(task.getParameter(MaskSearchTask.PARAM_inputFilePath));
+        String outputPath=resultFileNode.getDirectoryPath()+File.separator+"mipArtifact_"+
+                tmpFile.getName().substring(0, tmpFile.getName().lastIndexOf("."))+".tif";
+
+        ArrayList<String> mipInputList = new ArrayList<String>();
+        mipInputList.add(tmpFile.getAbsolutePath());
+        processData.putItem("MIP_INPUT_LIST", mipInputList);
+
+        ArrayList<String> mipOutputList = new ArrayList<String>();
+        mipOutputList.add(outputPath);
+        processData.putItem("MIP_OUTPUT_LIST", mipOutputList);
     }
 }
