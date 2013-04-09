@@ -31,6 +31,7 @@ echo "Mapping residue: $R"
 
 if [ $INPUT_FILE = $OUTPUT_FILE ]; then
 
+    OUTPUT_DIR=${OUTPUT_FILE%/*}
     export TMPDIR="$OUTPUT_DIR"
     WORKING_DIR=`mktemp -d`
     TEMP_FILE="$WORKING_DIR/temp.v3draw"
