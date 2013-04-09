@@ -131,7 +131,7 @@ public class NAAManagementPanel extends VerticalPanel {
         _discoveryPanel = new TitledBox("Scan For New Directories");
         _geciImagePath = new TextBox();
         _geciImagePath.setVisibleLength(60);
-        _geciImagePath.setText("/groups/scicomp/jacsData/GECI/20111018/");
+        _geciImagePath.setText("need path");
         _scanDirForResultsButton = new RoundedButton("Scan Directory", new ClickListener() {
             @Override
             public void onClick(Widget sender) {
