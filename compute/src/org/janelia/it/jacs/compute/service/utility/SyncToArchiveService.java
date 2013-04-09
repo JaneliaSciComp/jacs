@@ -115,9 +115,9 @@ public class SyncToArchiveService extends AbstractEntityService {
     }
     
     private void updateEntities(String originalPath, String archivePath) throws ComputeException {
-        computeBean.moveFileNodesToArchive(originalPath);
-        logger.info("Updated all file nodes to use archived file: "+archivePath);
-        entityBean.bulkUpdateEntityDataPrefix(originalPath, archivePath);
-        logger.info("Updated all entities to use archived file: "+archivePath);
+        int updatedNodes = computeBean.moveFileNodesToArchive(originalPath);
+        logger.info("Updated "+updatedNodes+" file nodes to use archived file: "+archivePath);
+        int updatedDatas = entityBean.bulkUpdateEntityDataPrefix(originalPath, archivePath);
+        logger.info("Updated "+updatedDatas+" entity data values to use archived file: "+archivePath);
     }
 }

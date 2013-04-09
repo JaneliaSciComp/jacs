@@ -118,10 +118,7 @@ public abstract class Task implements java.io.Serializable, IsSerializable {
     }
 
     public void setOwner(String owner) {
-        this.owner = owner;
-        if (owner.contains(":")) {
-        	this.owner = owner.split(":")[1];
-        }
+    	this.owner = owner.contains(":") ? owner.split(":")[1] : owner;
     }
 
     public List<Event> getEvents() {

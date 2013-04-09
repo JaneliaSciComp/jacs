@@ -1,5 +1,5 @@
 <!-- 
-	Process all neuron separation results and ensure they have all the necessary "maskChan" artifacts.
+	Process all neuron separation results and ensure they have all the necessary "mask/chan" artifacts.
 -->
 <process name="Complete Mask/Chan Artifact Pipeline" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>

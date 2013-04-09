@@ -331,9 +331,9 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         }
     }
     
-    public void bulkUpdateEntityDataValue(String oldValue, String newValue) throws ComputeException {
+    public int bulkUpdateEntityDataValue(String oldValue, String newValue) throws ComputeException {
         try {
-            _annotationDAO.bulkUpdateEntityDataValue(oldValue, newValue);
+            return _annotationDAO.bulkUpdateEntityDataValue(oldValue, newValue);
         }
         catch (Exception e) {
             _logger.error("Unexpected error while bulk updating entity data values", e);
@@ -341,9 +341,9 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         }
     }
 
-    public void bulkUpdateEntityDataPrefix(String oldPrefix, String newPrefix) throws ComputeException {
+    public int bulkUpdateEntityDataPrefix(String oldPrefix, String newPrefix) throws ComputeException {
         try {
-            _annotationDAO.bulkUpdateEntityDataPrefix(oldPrefix, newPrefix);
+            return _annotationDAO.bulkUpdateEntityDataPrefix(oldPrefix, newPrefix);
         }
         catch (Exception e) {
             _logger.error("Unexpected error while bulk updating entity data values", e);

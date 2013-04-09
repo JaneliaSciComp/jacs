@@ -652,10 +652,10 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return true;
     }
 
-
-    public void moveFileNodesToArchive(String filepath) throws DaoException {
+    public int moveFileNodesToArchive(String filepath) throws DaoException {
         try {
-            logger.info("moveFileNodesToArchive: "+filepath);
+            int nodesUpdated = 0;
+            logger.debug("moveFileNodesToArchive: "+filepath);
             
             Pattern p = Pattern.compile("((.*?)/(\\d+)/(\\d+)/(\\d+))(.*?)?");
             Matcher m = p.matcher(filepath);
@@ -672,7 +672,8 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
                     if (childNode!=null) {
                         childNode.setPathOverride(filepath.replaceFirst("/groups", "/archive"));
                         computeDAO.saveOrUpdate(childNode);
-                        logger.info("  changed path override on child node "+childNode.getObjectId()+" to: "+childNode.getPathOverride());
+                        nodesUpdated++;
+                        logger.debug("  changed path override on child node "+childNode.getObjectId()+" to: "+childNode.getPathOverride());
                     }
                 }
 
@@ -682,14 +683,17 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
                 if (node!=null) {
                     node.setPathOverride(archiveParentFileNodePath);
                     computeDAO.saveOrUpdate(node);
-                    logger.info("  changed path override on node "+node.getObjectId()+" to: "+node.getPathOverride());
+                    nodesUpdated++;
+                    logger.debug("  changed path override on node "+node.getObjectId()+" to: "+node.getPathOverride());
                 }
                 
-                computeDAO.bulkUpdateNodePathOverridePrefix(parentFileNodePath, archiveParentFileNodePath);
+                nodesUpdated += computeDAO.bulkUpdateNodePathOverridePrefix(parentFileNodePath, archiveParentFileNodePath);
             }
             else {
                 throw new Exception("Could not parse file node information from filepath: "+filepath);
             }
+            
+            return nodesUpdated;
         }
         catch (Exception e) {
             throw new DaoException(e);

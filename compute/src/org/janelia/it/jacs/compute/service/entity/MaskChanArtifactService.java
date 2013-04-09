@@ -1,28 +1,21 @@
 package org.janelia.it.jacs.compute.service.entity;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.*;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.engine.service.IService;
-import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.user_data.Subject;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Create mask/load artifacts for existing neuron separations.
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class MaskChanArtifactService implements IService {
+public class MaskChanArtifactService extends AbstractEntityService {
 
 	private static final String centralDir = SystemConfigurationProperties.getString("FileStore.CentralDir");
 	
@@ -32,67 +25,51 @@ public class MaskChanArtifactService implements IService {
     public static final String MODE_CREATE_INPUT_LIST = "CREATE_INPUT_LIST";
     public static final int GROUP_SIZE = 200;
 	
-    protected Logger logger;
-    protected Task task;
-    protected String ownerKey;
-    protected AnnotationBeanLocal annotationBean;
-    protected EntityBeanLocal entityBean;
-    protected ComputeBeanLocal computeBean;
-    
     private String mode = MODE_UNDEFINED;
     protected IProcessData processData;
     
-    public void execute(IProcessData processData) throws ServiceException {
-
-    	try {
-            logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-            task = ProcessDataHelper.getTask(processData);
-            annotationBean = EJBFactory.getLocalAnnotationBean();
-            entityBean = EJBFactory.getLocalEntityBean();
-            computeBean = EJBFactory.getLocalComputeBean();
-            
-            String ownerName = ProcessDataHelper.getTask(processData).getOwner();
-            Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
-            this.ownerKey = subject.getKey();
-            
-            mode = processData.getString("MODE");
-            this.processData = processData;
-
-            if (mode.equals(MODE_CREATE_INPUT_LIST)) {
-                doCreateInputList();
-            }
-            else {
-                logger.error("Unrecognized mode: "+mode);
-            }
-    	}
-        catch (Exception e) {
-			logger.info("Encountered an exception. Before dying, we...");
-        	if (e instanceof ServiceException) {
-            	throw (ServiceException)e;
-            }
-            throw new ServiceException("Error running MaskLoadArtifactService", e);
+    public void execute() throws Exception {
+        mode = processData.getString("MODE");
+        if (mode.equals(MODE_CREATE_INPUT_LIST)) {
+            doCreateInputList();
+        }
+        else {
+            logger.error("Unrecognized mode: "+mode);
         }
     }
     
-    private void doCreateInputList() throws ComputeException {
+    private void doCreateInputList() throws Exception {
 
         logger.info("Finding neuron separations...");
         
         List<Entity> entities = new ArrayList<Entity>();
         for(Entity result : entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
         	logger.info("Processing neuron separation, id="+result.getId());
-    		String dir = result.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-            File maskChanDir = new File(dir.replaceFirst("/groups", "/archive"),"archive/maskChan");
-    		if (!maskChanDir.exists()) {
-    		    logger.info("  Mask/chan does not exist at: "+maskChanDir);
-    			if (!dir.contains(centralDir)) {
-    				logger.info("  Ignoring entity with path which does not contain the FileStore.CentralDir: "+result.getId());
-    			}
-    			else {
-    			    logger.info("  Adding separation to list");
-    				entities.add(result);		
-    			}
-    		}
+        	
+        	populateChildren(result);
+        	Entity neuronFragments = EntityUtils.findChildWithType(result, EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION);
+        	populateChildren(neuronFragments);
+        	
+        	// Check for missing mask or chan files
+        	boolean allMaskChans = true;
+        	for(Entity fragment : EntityUtils.getChildrenOfType(neuronFragments, EntityConstants.TYPE_NEURON_FRAGMENT)) {
+        	    populateChildren(fragment);    
+        	    if (fragment.getValueByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE) == null || fragment.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE) == null) {
+        	        allMaskChans = false;
+        	        break;
+        	    }
+        	}
+        	
+        	if (!allMaskChans) {
+                String dir = result.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                if (!dir.contains(centralDir)) {
+                    logger.info("  Ignoring entity with path which does not contain the FileStore.CentralDir: "+result.getId());
+                }
+                else {
+                    logger.info("  Adding separation to list");
+                    entities.add(result);       
+                }
+        	}
         }
         
         List<List> inputGroups = createGroups(entities, GROUP_SIZE);

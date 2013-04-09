@@ -50,7 +50,7 @@ public class MaskChanResultsDiscoveryService extends AbstractEntityService {
         			throw e;
         		}
         		else {
-        			logger.error("Results discovery failed for separation id="+entity.getId());	
+        			logger.error("Results discovery failed for separation id="+entity.getId(), e);	
         		}
         	}
         }
@@ -99,6 +99,21 @@ public class MaskChanResultsDiscoveryService extends AbstractEntityService {
         Entity fragmentFolder = separation.getChildByAttributeName(EntityConstants.ATTRIBUTE_MASK_ENTITY_COLLECTION);
         
         for(Entity fragmentEntity : EntityUtils.getChildrenOfType(fragmentFolder, EntityConstants.TYPE_NEURON_FRAGMENT)) {
+            
+            // Delete existing images, if any. They are being replaced.
+            
+            Entity maskImage = fragmentEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE);
+            if (maskImage!=null) {
+                entityBean.deleteEntityTree(maskImage.getOwnerKey(), maskImage.getId());
+            }
+            
+            Entity chanImage = fragmentEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE);
+            if (chanImage!=null) {
+                entityBean.deleteEntityTree(maskImage.getOwnerKey(), maskImage.getId());
+            }
+            
+            // Get mask/chan files for this neuron index
+            
             String indexStr = fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER);
             int index = Integer.parseInt(indexStr);
 
@@ -106,14 +121,14 @@ public class MaskChanResultsDiscoveryService extends AbstractEntityService {
             if (maskFilepath==null) {
                 throw new MissingDataException("No mask file for neuron "+index);
             }
-            Entity maskImage = helper.create3dImage(maskFilepath);
+            maskImage = helper.create3dImage(maskFilepath);
             helper.setImage(fragmentEntity, EntityConstants.ATTRIBUTE_MASK_IMAGE, maskImage);
             
             String chanFilepath = chanFiles.get(index);
             if (chanFilepath==null) {
                 throw new MissingDataException("No chan file for neuron "+index);
             }
-            Entity chanImage = helper.create3dImage(chanFilepath);
+            chanImage = helper.create3dImage(chanFilepath);
             helper.setImage(fragmentEntity, EntityConstants.ATTRIBUTE_CHAN_IMAGE, chanImage); 
         }
 		

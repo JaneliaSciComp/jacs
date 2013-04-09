@@ -203,7 +203,7 @@ public class ComputeBaseDAO {
         return (Node) query.uniqueResult();
     }
 
-    public void bulkUpdateNodePathOverridePrefix(String oldPrefix, String newPrefix) throws DaoException {
+    public int bulkUpdateNodePathOverridePrefix(String oldPrefix, String newPrefix) throws DaoException {
         try {
             StringBuilder hql = new StringBuilder();
             hql.append("update Node n set n.pathOverride = concat(:newPrefix,substring(n.pathOverride, :prefixOffset)) "); 
@@ -216,7 +216,8 @@ public class ComputeBaseDAO {
             query.setParameter("oldPrefix", oldPrefix+"%");
             
             int rows = query.executeUpdate();
-            _logger.info("Bulk updated node path override prefix for "+rows+" rows");
+            _logger.debug("Bulk updated node path override prefix for "+rows+" rows");
+            return rows;
         }
         catch (Exception e) {
             throw new DaoException(e);

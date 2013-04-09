@@ -47,7 +47,7 @@
                 <input name="STITCH_ALGORITHMS" value="FLYLIGHT"/>
                 <input name="ALIGNMENT_ALGORITHMS" value="CONFIGURED_BRAIN_VNC"/>
                 <input name="ALIGNMENT_ALGORITHM_PARAMS" value="flyalign20x_INT.sh"/>
-                <input name="ANALYSIS_ALGORITHMS" value=""/>
+                <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
                 <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_20X}"/>
                 <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_20X}"/>
                 <input name="PIPELINE_PROCESS"/>

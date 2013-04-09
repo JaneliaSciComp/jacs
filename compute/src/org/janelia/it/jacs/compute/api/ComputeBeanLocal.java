@@ -54,5 +54,5 @@ public interface ComputeBeanLocal extends ComputeBeanRemote {
     
     public User createUser(String newUserName, String newFullName) throws ComputeException;
     
-    public void moveFileNodesToArchive(String filepath) throws ComputeException;
+    public int moveFileNodesToArchive(String filepath) throws ComputeException;
 }

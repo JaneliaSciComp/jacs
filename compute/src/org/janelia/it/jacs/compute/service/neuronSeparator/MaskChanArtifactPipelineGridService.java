@@ -94,13 +94,15 @@ public class MaskChanArtifactPipelineGridService extends SubmitDrmaaJobService {
 
     protected void writeInstanceFile(FileWriter fw, String inputDir, int configIndex) throws IOException {
         fw.write(inputDir + "\n");
+        fw.write(resultFileNode.getDirectoryPath() + "\n");
     }
 
     protected void writeShellScript(FileWriter writer) throws Exception {
         StringBuffer script = new StringBuffer();
         script.append("read INPUT_DIR\n");
+        script.append("read WORK_DIR\n");
         script.append(Vaa3DHelper.getErrorExitPrefix() + "\n");
-        script.append(NeuronSeparatorHelper.getMaskChanCommands() + "\n");
+        script.append(NeuronSeparatorHelper.getMaskChanCommands() + " $WORK_DIR\n");
         writer.write(script.toString());
     }
     

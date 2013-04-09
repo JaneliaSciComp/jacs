@@ -907,7 +907,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
     }
 
-    public void bulkUpdateEntityDataValue(String oldValue, String newValue) throws DaoException {
+    public int bulkUpdateEntityDataValue(String oldValue, String newValue) throws DaoException {
         try {
             if (_logger.isDebugEnabled()) {
                 _logger.debug("bulkUpdateEntityDataValue(oldValue="+oldValue+",newValue="+newValue+")");  
@@ -922,14 +922,15 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             query.setParameter("oldValue", oldValue);
             
             int rows = query.executeUpdate();
-            _logger.info("Bulk updated entity data value for "+rows+" rows");
+            _logger.debug("Bulk updated entity data value for "+rows+" rows");
+            return rows;
         }
         catch (Exception e) {
             throw new DaoException(e);
         }
     }
     
-    public void bulkUpdateEntityDataPrefix(String oldPrefix, String newPrefix) throws DaoException {
+    public int bulkUpdateEntityDataPrefix(String oldPrefix, String newPrefix) throws DaoException {
         try {
             if (_logger.isDebugEnabled()) {
                 _logger.debug("bulkUpdateEntityDataPrefix(oldPrefix="+oldPrefix+",newPrefix="+newPrefix+")");  
@@ -946,7 +947,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             query.setParameter("oldPrefix", oldPrefix+"%");
                         
             int rows = query.executeUpdate();
-            _logger.info("Bulk updated entity data prefix for "+rows+" rows");
+            _logger.debug("Bulk updated entity data prefix for "+rows+" rows");
+            return rows;
         }
         catch (Exception e) {
             throw new DaoException(e);
@@ -3201,7 +3203,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             }
             
             int rows = query.executeUpdate();
-            _logger.info("Bulk deleted "+rows+" EntityData rows");
+            _logger.debug("Bulk deleted "+rows+" EntityData rows");
         }
         catch (Exception e) {
             throw new DaoException(e);

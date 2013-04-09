@@ -64,6 +64,11 @@ public class SampleArchiveService extends AbstractEntityService {
             throw new IllegalArgumentException("Sample not found with id="+sampleEntityId);
         }
         
+        entityLoader.populateChildren(sampleEntity);
+        for(Entity child : EntityUtils.getChildrenOfType(sampleEntity, EntityConstants.TYPE_SAMPLE)) {
+            addSampleFiles(child.getId());
+        }
+        
         EntityVistationBuilder.create(entityLoader).startAt(sampleEntity)
                 .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN)
                 .childrenOfAttr(EntityConstants.ATTRIBUTE_RESULT)
