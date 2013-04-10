@@ -6,6 +6,7 @@ import java.util.*;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.EntityHelper;
+import org.janelia.it.jacs.compute.service.neuronSeparator.NeuronSeparationPipelineGridService;
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -18,6 +19,8 @@ import org.janelia.it.jacs.model.entity.EntityType;
  */
 public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDiscoveryService {
 	
+    public static final String NEURON_MIP_PREFIX = NeuronSeparationPipelineGridService.NAME+".PR.neuron";
+    
 	@Override
     public void execute(IProcessData processData) throws ServiceException {
     	processData.putItem("RESULT_ENTITY_TYPE", EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
@@ -89,18 +92,18 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
         for(File file : files) {
             String filename = file.getName();
 
-            if (filename.startsWith("neuronSeparatorPipeline.PR.neuron") && filename.endsWith(".png")) {       
+            if (filename.startsWith(NEURON_MIP_PREFIX) && filename.endsWith(".png")) {       
                 fragmentMipFiles.add(file); // will be added to an entity later
             }
-            else if ("Reference.v3dpbd".equals(filename)) {
+            else if ("Reference.v3dpbd".equals(filename) || "Reference.v3draw".equals(filename)) {
                 referenceVolume = helper.createResultItemForFile(file);
                 helper.addToParent(supportingFiles, referenceVolume, supportingFiles.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
             }
-            else if ("ConsolidatedSignal.v3dpbd".equals(filename)) {
+            else if ("ConsolidatedSignal.v3dpbd".equals(filename) || "ConsolidatedSignal.v3draw".equals(filename)) {
                 signalVolume = helper.createResultItemForFile(file);
                 helper.addToParent(supportingFiles, signalVolume, supportingFiles.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
             }
-            else if ("ConsolidatedLabel.v3dpbd".equals(filename)) {
+            else if ("ConsolidatedLabel.v3dpbd".equals(filename) || "ConsolidatedLabel.v3draw".equals(filename)) {
                 labelVolume = helper.createResultItemForFile(file);
                 helper.addToParent(supportingFiles, labelVolume, supportingFiles.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
             }
@@ -164,7 +167,7 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
         // Find mask/chan files
         Map<Integer,String> maskFiles = new HashMap<Integer,String>();
         Map<Integer,String> chanFiles = new HashMap<Integer,String>();
-        File maskChanDir = new File(dir.getAbsolutePath().replaceFirst("groups", "archive")+"/archive/maskChan");
+        File maskChanDir = new File(dir.getAbsolutePath()+"/archive/maskChan");
         if (maskChanDir.exists()) {
             logger.info("Looking for mask/chan files in: "+maskChanDir.getAbsolutePath());
             List<File> maskChanFiles = helper.collectFiles(maskChanDir, true);
@@ -216,7 +219,7 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     }
     
     protected Integer getIndex(String filename) {
-    	String mipNum = filename.substring("neuronSeparatorPipeline.PR.neuron".length(), filename.lastIndexOf('.'));
+    	String mipNum = filename.substring(NEURON_MIP_PREFIX.length(), filename.lastIndexOf('.'));
     	try {
         	// New 2-stage neuron separator creates files with an extra dot in the filename, so we need to account for that
         	if (mipNum.startsWith(".")) mipNum = mipNum.substring(1); 
@@ -230,7 +233,7 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     
     public static Integer getNeuronIndexFromMaskChanFile(String filename) throws Exception {
         String index = filename.substring(filename.indexOf('_')+1,filename.indexOf('.'));
-        return Integer.parseInt(index)-1;
+        return Integer.parseInt(index);
     }
     
     protected Entity createFragmentEntity(EntityType fragmentType, Integer index) throws Exception {

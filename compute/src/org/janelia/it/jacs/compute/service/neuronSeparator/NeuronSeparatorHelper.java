@@ -15,6 +15,10 @@ public class NeuronSeparatorHelper {
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("Separator.ScriptPath");
 
+    protected static final String WARPED_SCRIPT = 
+            SystemConfigurationProperties.getString("Executables.ModuleBase") +
+            SystemConfigurationProperties.getString("Warped.ScriptPath");
+
     protected static final String FAST_LOAD_SCRIPT = 
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("FastLoad.ScriptPath");
@@ -27,8 +31,8 @@ public class NeuronSeparatorHelper {
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("MipCreator.ScriptPath");
     
-	public static String getNeuronSeparationCommands() throws ServiceException {
-        return "sh "+SEPARATOR_SCRIPT+" $OUTPUT_DIR neuronSeparatorPipeline $INPUT_FILE \"$SIGNAL_CHAN\" \"$REF_CHAN\" $PREVIOUS_OUTPUT";
+	public static String getNeuronSeparationCommands(boolean warped) throws ServiceException {
+        return "sh "+(warped?WARPED_SCRIPT:SEPARATOR_SCRIPT)+" $OUTPUT_DIR neuronSeparatorPipeline $INPUT_FILE \"$SIGNAL_CHAN\" \"$REF_CHAN\" $PREVIOUS_OUTPUT";
 	}
 
 	public static String getFastLoadCommands() {

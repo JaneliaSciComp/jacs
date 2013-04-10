@@ -119,6 +119,8 @@ public class EntityConstants {
     public static final String ATTRIBUTE_MASK_IMAGE                          = "Mask Image";
     public static final String ATTRIBUTE_CHAN_IMAGE                          = "Chan Image";
     
+    public static final String ATTRIBUTE_ALIGNED_CONSOLIDATED_LABEL          = "Aligned Consolidated Label";
+    
     // Fly Line Attributes
     public static final String ATTRIBUTE_SPLIT_PART                          = "Split Part";
     public static final String ATTRIBUTE_REPRESENTATIVE_SAMPLE               = "Representative Sample";

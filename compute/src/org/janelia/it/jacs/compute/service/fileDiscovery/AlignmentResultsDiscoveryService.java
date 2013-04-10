@@ -10,6 +10,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
@@ -47,10 +48,15 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
         Entity supportingFiles = EntityUtils.getSupportingData(alignmentResult);
         entityLoader.populateChildren(supportingFiles);
         
-        Map<String,Entity> resultItemMap = new HashMap<String,Entity>();
-        for(Entity resultItem : supportingFiles.getChildren()) {
-            resultItemMap.put(resultItem.getName(), resultItem);
+        Map<String,EntityData> resultItemMap = new HashMap<String,EntityData>();
+        for(EntityData resultItemEd : supportingFiles.getEntityData()) {
+            Entity resultItem = resultItemEd.getChildEntity();
+            if (resultItem!=null) {
+                resultItemMap.put(resultItem.getName(), resultItemEd);
+            }
         }
+        
+        boolean hasWarpedSeparation = false;
         
         for(Entity resultItem : supportingFiles.getChildren()) {
             
@@ -64,7 +70,8 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     properties.load(new FileReader(propertiesFile));
                     
                     String filename = properties.getProperty("alignment.stack.filename");
-                    Entity entity = resultItemMap.get(filename);
+                    EntityData entityEd = resultItemMap.get(filename);
+                    Entity entity = entityEd.getChildEntity();
                     
                     if (entity==null) {
                         logger.warn("Could not find result item with filename: "+filename);
@@ -93,6 +100,16 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     else if (!consensusAlignmentSpace.equals(alignmentSpace)) {
                         hasConsensusAlignmentSpace = false;
                     }
+                    
+                    String neuronMasksFilename = properties.getProperty("neuron.masks.filename");
+                    if (neuronMasksFilename!=null) {
+                        EntityData alignedNeuronMaskEd = resultItemMap.get(neuronMasksFilename);
+                        Entity alignedNeuronMask = alignedNeuronMaskEd.getChildEntity();
+                        helper.addImage(entity, EntityConstants.ATTRIBUTE_ALIGNED_CONSOLIDATED_LABEL, alignedNeuronMask);   
+                        supportingFiles.getEntityData().remove(alignedNeuronMaskEd);
+                        entityBean.deleteEntityData(alignedNeuronMaskEd);
+                        hasWarpedSeparation = true;
+                    }
                 }
             }
             else if (resultItem.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_3D)) {
@@ -108,5 +125,8 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
             logger.warn("No consensus for alignment space, using default: "+defaultAlignmentSpace);
             helper.setAlignmentSpace(alignmentResult, defaultAlignmentSpace);
         }
+        
+        logger.info("Putting "+hasWarpedSeparation+" in PREWARPED_SEPARATION");
+        processData.putItem("PREWARPED_SEPARATION", new Boolean(hasWarpedSeparation));
     }
 }

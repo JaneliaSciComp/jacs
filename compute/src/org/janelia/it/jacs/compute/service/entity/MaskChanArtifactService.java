@@ -26,8 +26,7 @@ public class MaskChanArtifactService extends AbstractEntityService {
     public static final int GROUP_SIZE = 200;
 	
     private String mode = MODE_UNDEFINED;
-    protected IProcessData processData;
-    
+
     public void execute() throws Exception {
         mode = processData.getString("MODE");
         if (mode.equals(MODE_CREATE_INPUT_LIST)) {
@@ -52,12 +51,17 @@ public class MaskChanArtifactService extends AbstractEntityService {
         	
         	// Check for missing mask or chan files
         	boolean allMaskChans = true;
-        	for(Entity fragment : EntityUtils.getChildrenOfType(neuronFragments, EntityConstants.TYPE_NEURON_FRAGMENT)) {
-        	    populateChildren(fragment);    
-        	    if (fragment.getValueByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE) == null || fragment.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE) == null) {
-        	        allMaskChans = false;
-        	        break;
-        	    }
+        	if (neuronFragments==null) {
+        	    allMaskChans = false;
+        	}
+        	else {
+                for(Entity fragment : EntityUtils.getChildrenOfType(neuronFragments, EntityConstants.TYPE_NEURON_FRAGMENT)) {
+                    populateChildren(fragment);    
+                    if (fragment.getValueByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE) == null || fragment.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE) == null) {
+                        allMaskChans = false;
+                        break;
+                    }
+                }
         	}
         	
         	if (!allMaskChans) {

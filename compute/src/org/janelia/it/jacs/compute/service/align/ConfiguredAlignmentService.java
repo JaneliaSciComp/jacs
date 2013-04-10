@@ -88,6 +88,9 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
         if (mountingProtocol!=null) {
             cmd.append(" -m '\"" + mountingProtocol+"\"'");
         }
+        if (inputSeparationFilename!=null) {
+            cmd.append(" -e "+inputSeparationFilename);
+        }
         cmd.append(" -r " + refChannelOneIndexed);
         cmd.append(" -s " + opticalResolution.replaceAll(" ", "x"));
         if (numChannels!=null) {

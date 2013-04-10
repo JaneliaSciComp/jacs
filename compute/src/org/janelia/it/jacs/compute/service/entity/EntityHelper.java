@@ -208,7 +208,7 @@ public class EntityHelper {
 	 * @throws ComputeException
 	 */
 	public void setImageIfNecessary(Entity entity, String attributeName, Entity image) throws ComputeException {
-		if (image==null) return;
+		if (image==null || entity==null) return;
     	EntityData currImage = entity.getEntityDataByAttributeName(attributeName);
     	if (currImage==null || currImage.getChildEntity()==null || !currImage.getId().equals(image.getId())) {
     		setImage(entity, attributeName, image);	
@@ -223,7 +223,7 @@ public class EntityHelper {
 	 * @throws ComputeException
 	 */
 	public void setImage(Entity entity, String attributeName, Entity image) throws ComputeException {
-		if (image==null) return;
+		if (image==null || entity==null) return;
 		removeEntityDataForAttributeName(entity, attributeName);
 		addImage(entity, attributeName, image);
 	}

@@ -23,6 +23,7 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.vo.ParameterException;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Base class for all alignment algorithms. Parameters:
@@ -58,6 +59,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
     protected Entity sampleEntity;
     protected String alignedArea;
     protected String inputFilename;
+    protected String inputSeparationFilename;
     protected String channelSpec;
     protected String opticalResolution;
     protected String gender;
@@ -111,6 +113,22 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
                                 this.alignedArea = areaName;    
                                 this.inputFilename = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                                 this.channelSpec = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+                                
+                                Entity separation = EntityUtils.findChildWithType(result, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
+                                if (separation!=null) {
+                                    entityLoader.populateChildren(separation);
+                                    Entity nsSupportingFiles = EntityUtils.getSupportingData(separation);
+                                    if (nsSupportingFiles!=null) { 
+                                        entityLoader.populateChildren(nsSupportingFiles);
+                                        Entity labelFile = EntityUtils.findChildWithNameAndType(nsSupportingFiles, "ConsolidatedLabel.v3dpbd", EntityConstants.TYPE_IMAGE_3D);
+                                        if (labelFile==null) {
+                                            labelFile = EntityUtils.findChildWithNameAndType(nsSupportingFiles, "ConsolidatedLabel.v3draw", EntityConstants.TYPE_IMAGE_3D);
+                                        }
+                                        if (labelFile!=null) {
+                                            this.inputSeparationFilename = labelFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH); 
+                                        }   
+                                    }
+                                }
                             }
                         }
                     }
@@ -121,6 +139,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
                 logger.info("Found sample area to align: "+alignedArea);
                 logger.info("  Input filename: "+inputFilename);
                 logger.info("  Input channel spec: "+channelSpec);
+                logger.info("  Input separation to warp: "+inputSeparationFilename);
                 
                 if (channelSpec.contains("r")) {
                     this.refChannel = channelSpec.indexOf('r');

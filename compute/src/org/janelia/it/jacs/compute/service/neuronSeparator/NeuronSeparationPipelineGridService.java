@@ -23,6 +23,8 @@ import org.janelia.it.jacs.model.user_data.FileNode;
  */
 public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
 	
+    public static final String NAME = "neuronSeparatorPipeline";
+    
     private static final String CONFIG_PREFIX = "neuSepConfiguration.";
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
 
@@ -31,6 +33,7 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
     private String previousResultFile;
     private String signalChannels;
     private String referenceChannel;
+    private String consolidatedLabel;
     
     @Override
     protected String getGridServicePrefixName() {
@@ -61,6 +64,8 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
         if (referenceChannel==null) {
         	referenceChannel = "3";
         }
+
+        consolidatedLabel = (String)processData.getItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH");        
         
         logger.info("Starting NeuronSeparationPipelineService with taskId=" + task.getObjectId() + " resultNodeId=" + resultFileNode.getObjectId() + " resultDir=" + resultFileNode.getDirectoryPath()+
                 " workingDir="+outputFileNode.getDirectoryPath() + " inputFilename="+inputFilename+ " signalChannels="+signalChannels+ " referenceChannel="+referenceChannel);
@@ -78,11 +83,12 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
         FileWriter fw = new FileWriter(configFile);
         try {
             fw.write(outputFileNode.getDirectoryPath() + "\n");
-            fw.write("neuronSeparatorPipeline\n");
+            fw.write(NAME + "\n");
             fw.write(inputFilename + "\n");
             fw.write(signalChannels + "\n");
             fw.write(referenceChannel + "\n");
             fw.write(previousResultFile==null?"":previousResultFile + "\n");
+            fw.write(consolidatedLabel==null?"":consolidatedLabel + "\n");
         }
         catch (IOException e) {
         	throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath(),e); 
@@ -93,6 +99,7 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
     }
 
     private void createShellScript(FileWriter writer) throws Exception {
+        boolean isWarped = consolidatedLabel!=null;
         StringBuffer script = new StringBuffer();
         script.append("read OUTPUT_DIR\n");
         script.append("read NAME\n");
@@ -100,10 +107,14 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
         script.append("read SIGNAL_CHAN\n");
         script.append("read REF_CHAN\n");
         script.append("read PREVIOUS_OUTPUT\n");
+        script.append("read CONSOLIDATED_LABEL\n");
         script.append(Vaa3DHelper.getErrorExitPrefix() + "\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix() + "\n");
         script.append(Vaa3DHelper.getVaa3dLibrarySetupCmd()+"\n");
-        script.append(NeuronSeparatorHelper.getNeuronSeparationCommands() + "\n");
+        if (isWarped) {
+            script.append("cp $CONSOLIDATED_LABEL $OUTPUT_DIR\n");
+        }
+        script.append(NeuronSeparatorHelper.getNeuronSeparationCommands(isWarped) + "\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix() + "\n");
         script.append("\n");
         writer.write(script.toString());
