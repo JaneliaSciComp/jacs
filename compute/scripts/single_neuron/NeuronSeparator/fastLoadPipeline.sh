@@ -32,11 +32,31 @@ MV_SIZES=( 25 50 100 ) # subsample sizes, in millions of voxels
 SEPDIR=$1 # e.g. /groups/scicomp/jacsData/filestore/.../separate
 INPUT_FILE=$2 # e.g. /groups/scicomp/jacsData/filestore/.../stitched-1679282762445488226.v3draw
 
-REF_FILE="$SEPDIR/Reference.v3dpbd"
-LABEL_FILE="$SEPDIR/ConsolidatedLabel.v3dpbd"
+REF_FILE="$SEPDIR/Reference.v3draw"
+LABEL_FILE="$SEPDIR/ConsolidatedLabel.v3draw"
+
+if [ ! -f "$LABEL_FILE" ]; then
+    LABEL_FILE="$SEPDIR/ConsolidatedLabel.v3dpbd"
+    if [ ! -f "$LABEL_FILE" ]; then
+        echo "Label file not found: $LABEL_FILE"
+        exit
+    fi
+fi
+
+if [ ! -f "$REF_FILE" ]; then
+    REF_FILE="$SEPDIR/Reference.v3dpbd"
+    if [ ! -f "$REF_FILE" ]; then
+        echo "Reference file not found: $REF_FILE"
+        exit
+    fi
+fi
+
 OUTDIR=$SEPDIR/fastLoad
 OUTDIR_LARGE=$SEPDIR/archive/fastLoad
-WORKING_DIR=$OUTDIR/temp
+
+export TMPDIR="$OUTDIR"
+WORKING_DIR=`mktemp -d`
+cd $WORKING_DIR
 
 echo "Run Dir: $DIR"
 echo "Working Dir: $WORKING_DIR"
@@ -59,10 +79,6 @@ if [ "$INPUT_FILE" = "" ]; then
         echo "    Got $INPUT_FILE"
     fi
 fi
-
-mkdir -p $OUTDIR
-mkdir -p $WORKING_DIR
-cd $WORKING_DIR
 
 EXT=${INPUT_FILE#*.}
 
@@ -150,6 +166,7 @@ done
 
 echo "~ Creating final output in: $OUTDIR"
 
+mkdir -p $OUTDIR
 $Vaa3D -cmd image-loader -convert ConsolidatedLabel3.v3draw $OUTDIR/ConsolidatedLabel3.v3dpbd
 #$Vaa3D -cmd image-loader -convert ConsolidatedSignal3.v3draw $OUTDIR/ConsolidatedSignal3.v3dpbd
 $Vaa3D -cmd image-loader -convert ConsolidatedSignal2.v3draw $OUTDIR/ConsolidatedSignal2.v3dpbd
@@ -182,7 +199,7 @@ cd $OUTDIR
 #ln -s ../Reference.v3dpbd Reference3.v3dpbd
 ln -s ConsolidatedLabel3.v3dpbd ConsolidatedLabel2.v3dpbd
 
-echo "~ Removing temp files"
+echo "~ Removing fastLoad temp files"
 rm -rf $WORKING_DIR
 
 echo "~ Moving large files to archive directory: $OUTDIR_LARGE"

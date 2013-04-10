@@ -34,9 +34,11 @@ INPUT_FILE=$3
 SIGNAL_CHAN=$4
 REF_CHAN=$5
 PREVFILE=$6
-
-WORKING_DIR=$OUTDIR/temp
 REF_CHAN_ONE_INDEXED=`expr $REF_CHAN + 1`
+
+export TMPDIR="$OUTDIR"
+WORKING_DIR=`mktemp -d`
+cd $WORKING_DIR
 
 echo "Neuron Separator Dir: $NSDIR"
 echo "Vaa3d Dir: $Vaa3D"
@@ -47,9 +49,6 @@ echo "Output dir: $OUTDIR"
 echo "Signal channels: $SIGNAL_CHAN"
 echo "Reference channel: $REF_CHAN"
 echo "Reference chan (1-indexed): $REF_CHAN_ONE_INDEXED"
-
-mkdir $WORKING_DIR
-cd $WORKING_DIR
 
 EXT=${INPUT_FILE#*.}
 if [ $EXT == "zip" ]; then
@@ -119,45 +118,19 @@ if [ -s SeparationResultUnmapped.nsp ]; then
 
         echo "~ Generating consolidated signal"
         cat $INPUT_FILE | $NSDIR/v3draw_select_channels $SIGNAL_CHAN | $NSDIR/v3draw_flip_y | $NSDIR/v3draw_to_8bit > ConsolidatedSignal.v3draw
-        $Vaa3D -cmd image-loader -convert ConsolidatedSignal.v3draw ConsolidatedSignal.v3dpbd
 
         echo "~ Generating consolidated label"
         $NSDIR/nsp10_to_labelv3draw16 < $RESULT > ConsolidatedLabel.v3draw
-        $Vaa3D -cmd image-loader -convert ConsolidatedLabel.v3draw ConsolidatedLabel.v3dpbd
 
         echo "~ Generating reference"
         cat $INPUT_FILE | $NSDIR/v3draw_select_channels $REF_CHAN > Reference.v3draw
-        $Vaa3D -cmd image-loader -convert Reference.v3draw Reference.v3dpbd
-
-        echo "~ Generating sample MIPs"
-        SIGNAL_MIP_PPM=ConsolidatedSignalMIP.ppm
-        cat ConsolidatedSignal.v3draw | $NSDIR/v3draw_to_mip | $NSDIR/v3draw_flip_y | $NSDIR/v3draw_to_ppm > $SIGNAL_MIP_PPM 
-        if [[ ${#SIGNAL_CHAN} -lt 3 ]] ; then
-            # single signal channel will come out as greyscale, so let's colorize it
-            echo "Converting single channel signal MIP to red"
-            $NETPBM_BIN/ppmtopgm $SIGNAL_MIP_PPM | $NETPBM_BIN/pgmtoppm "#FF0000" > tmp.ppm
-            mv tmp.ppm $SIGNAL_MIP_PPM
-        fi
-        cat $SIGNAL_MIP_PPM | $NETPBM_BIN/pamtotiff -truecolor > ConsolidatedSignalMIP.tif
-
-        $Vaa3D -x ireg -f iContrastEnhancer -i ConsolidatedSignalMIP.tif -o ConsolidatedSignalMIP2.tif -p "#m 5.0"
-        $NETPBM_BIN/tifftopnm ConsolidatedSignalMIP2.tif | $NETPBM_BIN/pnmtopng > ConsolidatedSignalMIP.png
-
-        cat Reference.v3draw | $NSDIR/v3draw_to_8bit | $NSDIR/v3draw_to_mip | $NSDIR/v3draw_to_ppm | $NETPBM_BIN/pamtotiff -truecolor > ReferenceMIP.tif
-        $Vaa3D -x ireg -f iContrastEnhancer -i ReferenceMIP.tif -o ReferenceMIP2.tif
-        $NETPBM_BIN/tifftopnm ReferenceMIP2.tif | $NETPBM_BIN/pnmtopng > ReferenceMIP.png
-
-        echo "~ Generating fragment MIPs"
-        $NSDIR/nsp10_to_neuron_mips "." $NAME $RESULT
 
         echo "~ Copying final output to: $OUTDIR"
         cp $RESULT $OUTDIR
         cp *.pbd $OUTDIR # companion file for the result
-        cp ConsolidatedSignal.v3dpbd $OUTDIR
-        cp ConsolidatedLabel.v3dpbd $OUTDIR
-        cp Reference.v3dpbd $OUTDIR
-        cp *.png $OUTDIR
-    
+        cp ConsolidatedSignal.v3draw $OUTDIR
+        cp ConsolidatedLabel.v3draw $OUTDIR
+        cp Reference.v3draw $OUTDIR
     fi
 fi
 
@@ -167,11 +140,9 @@ fi
 
 echo "~ Finished with separation pipeline"
 
-if [ -s "$OUTDIR/ConsolidatedLabel.v3dpbd" ]; then
-    echo "~ Launching fastLoad pipeline..."
-    $DIR/fastLoadPipeline.sh $OUTDIR $INPUT_FILE
-    echo "~ Launching maskChan pipeline..."
-    $DIR/maskChanPipeline.sh $OUTDIR
+if [ -s "$OUTDIR/ConsolidatedLabel.v3draw" ]; then
+    echo "~ Launching artifact pipeline..."
+    $DIR/artifactPipeline.sh $OUTDIR $NAME $INPUT_FILE "$SIGNAL_CHAN" "$REF_CHAN"
 fi
 
 echo "~ Removing temp files"

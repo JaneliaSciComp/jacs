@@ -38,6 +38,7 @@ REF_CHAN=$5
 
 export TMPDIR="$OUTDIR"
 WORKING_DIR=`mktemp -d`
+cd $WORKING_DIR
 
 if [ ! -s $INPUT_FILE ]; then
     echo "Input file does not exist: $INPUT_FILE"
@@ -60,9 +61,6 @@ echo "Signal channels: $SIGNAL_CHAN"
 echo "Reference channel: $REF_CHAN"
 echo "Output format: $FORMAT"
 echo "Output extension: $OUTEXT"
-
-mkdir -p $WORKING_DIR
-cd $WORKING_DIR
 
 EXT=${INPUT_FILE#*.}
 if [ "$EXT" == "v3dpbd" ] || [ "$EXT" == "lsm" ]; then

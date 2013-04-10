@@ -3,7 +3,7 @@
 # Generate mask and chan files for all neurons in a neuron separation
 #
 # Usage:
-# sh maskChanPipeline.sh <separate dir>
+# sh maskChanPipeline.sh <separate dir> <working dir>
 
 DIR=$(cd "$(dirname "$0")"; pwd)
 
@@ -24,11 +24,15 @@ if [ $NUMPARAMS -lt 1 ]
 then
     echo " "
     echo " USAGE ::  "
-    echo " sh maskChanPipeline.sh <separate dir>"
+    echo " sh maskChanPipeline.sh <separate dir> <working dir>"
     exit
 fi
 
 SEPDIR=$1 # e.g. /groups/scicomp/jacsData/filestore/.../separate
+WORK_DIR=$2
+if [ "$WORK_DIR" == "" ]; then
+    WORK_DIR=$SEP_DIR
+fi
 
 LABEL_FILE="$SEPDIR/ConsolidatedLabel.v3draw"
 SIGNAL_FILE="$SEPDIR/ConsolidatedSignal.v3draw"
@@ -50,16 +54,15 @@ if [ ! -f "$SIGNAL_FILE" ]; then
 fi
 
 OUTDIR=$SEPDIR/archive/maskChan
-WORKING_DIR=$OUTDIR/temp
+export TMPDIR="$WORK_DIR"
+WORKING_DIR=`mktemp -d`
+cd $WORKING_DIR
 
 echo "Run Dir: $DIR"
 echo "Working Dir: $WORKING_DIR"
 echo "Label file: $LABEL_FILE"
 echo "Signal file: $SIGNAL_FILE"
 echo "Output dir: $OUTDIR"
-
-mkdir -p $WORKING_DIR
-cd $WORKING_DIR
 
 echo "~ Creating mask/chan files"
 echo "$Vaa3D -cmd neuron-fragment-editor -mode reverse-label -sourceImage $SIGNAL_FILE -labelIndex $LABEL_FILE -outputDir $WORKING_DIR -outputPrefix neuron"
@@ -68,13 +71,14 @@ $Vaa3D -cmd neuron-fragment-editor -mode reverse-label -sourceImage $SIGNAL_FILE
 mkdir -p $OUTDIR
 if ls core* &> /dev/null; then
     echo "~ Error: core dumped"
-    touch $OUTDIR/core
+    touch $WORK_DIR/core
 else
     echo "~ Moving files to final output directory"
     mv $WORKING_DIR/* $OUTDIR
 fi
 
-echo "~ Removing temp files"
+echo "~ Removing maskChan temp files"
 rm -rf $WORKING_DIR
+
 echo "~ Finished with maskChan pipeline"
 
