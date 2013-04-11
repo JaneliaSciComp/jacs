@@ -54,7 +54,7 @@ fi
 OUTDIR=$SEPDIR/fastLoad
 OUTDIR_LARGE=$SEPDIR/archive/fastLoad
 
-export TMPDIR="$OUTDIR"
+export TMPDIR="$SEPDIR"
 WORKING_DIR=`mktemp -d`
 cd $WORKING_DIR
 

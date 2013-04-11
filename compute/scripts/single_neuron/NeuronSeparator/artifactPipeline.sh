@@ -73,9 +73,7 @@ $Vaa3D -x ireg -f iContrastEnhancer -i ReferenceMIP.tif -o ReferenceMIP2.tif
 $NETPBM_BIN/tifftopnm ReferenceMIP2.tif | $NETPBM_BIN/pnmtopng > ReferenceMIP.png
 
 echo "~ Generating fragment MIPs"
-# TODO: use v3d neuron editor to create mips
-#$NSDIR/nsp10_to_neuron_mips "." $NAME $RESULT
-
+$Vaa3D -cmd neuron-fragment-editor -mode mips -sourceImage $CONSOLIDATED_SIGNAL -labelIndex $CONSOLIDATED_LABEL -outputDir . -outputPrefix $NAME
 
 echo "~ Copying final artifacts to: $OUTDIR"
 cp *.png $OUTDIR

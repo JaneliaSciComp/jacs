@@ -54,7 +54,7 @@ if [ ! -f "$SIGNAL_FILE" ]; then
 fi
 
 OUTDIR=$SEPDIR/archive/maskChan
-export TMPDIR="$WORK_DIR"
+export TMPDIR="$SEPDIR"
 WORKING_DIR=`mktemp -d`
 cd $WORKING_DIR
 
@@ -71,7 +71,7 @@ $Vaa3D -cmd neuron-fragment-editor -mode reverse-label -sourceImage $SIGNAL_FILE
 mkdir -p $OUTDIR
 if ls core* &> /dev/null; then
     echo "~ Error: core dumped"
-    touch $WORK_DIR/core
+    touch $OUTDIR/core
 else
     echo "~ Moving files to final output directory"
     mv $WORKING_DIR/* $OUTDIR
