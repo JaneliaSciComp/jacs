@@ -2,6 +2,8 @@ package org.janelia.it.jacs.compute.service.fileDiscovery;
 
 import java.io.File;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -219,18 +221,21 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     }
     
     protected Integer getIndex(String filename) {
-    	String mipNum = filename.substring(NEURON_MIP_PREFIX.length(), filename.lastIndexOf('.'));
-    	try {
-        	// New 2-stage neuron separator creates files with an extra dot in the filename, so we need to account for that
-        	if (mipNum.startsWith(".")) mipNum = mipNum.substring(1); 
-    		return Integer.parseInt(mipNum);
-    	}
-    	catch (NumberFormatException e) {
-    		logger.warn("Error parsing number from MIP filename: "+mipNum);
-    	}
+        Pattern p = Pattern.compile("[^\\d]*?(\\d+)\\.png");
+        Matcher m = p.matcher(filename);
+        if (m.matches()) {
+            String mipNum = m.group(1);
+            try {
+                return Integer.parseInt(mipNum);
+            }
+            catch (NumberFormatException e) {
+                e.printStackTrace();
+                //logger.warn("Error parsing number from MIP filename: "+mipNum);
+            }
+        }
     	return null;
     }
-    
+        
     public static Integer getNeuronIndexFromMaskChanFile(String filename) throws Exception {
         String index = filename.substring(filename.indexOf('_')+1,filename.indexOf('.'));
         return Integer.parseInt(index);
