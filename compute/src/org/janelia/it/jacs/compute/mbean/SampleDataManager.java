@@ -1,5 +1,10 @@
 package org.janelia.it.jacs.compute.mbean;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -14,11 +19,6 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
 public class SampleDataManager implements SampleDataManagerMBean {
 
@@ -96,6 +96,21 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
+    public void runSingleSampleDataCompression(String sampleId) {
+        try {
+            Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleId);
+            if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleId+" does not exist");
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter("root entity id", sampleId, null)); 
+            Task task = new GenericTask(new HashSet<Node>(), sample.getOwnerKey(), new ArrayList<Event>(), 
+                    taskParameters, "singleSampleDataCompression", "Single Sample Data Compression");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("SampleDataCompression", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
     public void runSampleImageRegistration(String user) {
         try {
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();

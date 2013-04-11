@@ -51,7 +51,7 @@ public class SampleDataCompressionService implements IService {
     
     private String rootEntityId;
     private Set<String> inputFiles = new HashSet<String>();
-    private Map<String,Set<Entity>> entities = new HashMap<String,Set<Entity>>();
+    private Map<String,Set<Long>> entityMap = new HashMap<String,Set<Long>>();
     
     public void execute(IProcessData processData) throws ServiceException {
 
@@ -112,7 +112,7 @@ public class SampleDataCompressionService implements IService {
         
         List<List<String>> inputGroups = createGroups(inputFiles, GROUP_SIZE);
         processData.putItem("INPUT_PATH_LIST", inputGroups);
-        processData.putItem("ENTITY_MAP", entities);
+        processData.putItem("ENTITY_MAP", entityMap);
         
 		logger.info("Processed "+inputFiles.size()+" entities into "+inputGroups.size()+" groups.");
     }
@@ -208,17 +208,17 @@ public class SampleDataCompressionService implements IService {
     	
     	inputFiles.add(filepath);
     	
-    	Set<Entity> eset = entities.get(filepath);
+    	Set<Long> eset = entityMap.get(filepath);
     	if (eset == null) {
-    		eset = new HashSet<Entity>();
-    		entities.put(filepath, eset);
+    		eset = new HashSet<Long>();
+    		entityMap.put(filepath, eset);
     	}
-    	eset.add(imageEntity);
+    	eset.add(imageEntity.getId());
     }
     
     private void doComplete() throws ComputeException {
 
-    	this.entities = (Map<String,Set<Entity>>)processData.getItem("ENTITY_MAP");
+    	this.entityMap = (Map<String,Set<Long>>)processData.getItem("ENTITY_MAP");
     	List<String> inputPaths = (List<String>)processData.getItem("INPUT_PATH_LIST");
     	if (inputPaths == null) {
     		throw new IllegalArgumentException("INPUT_PATH_LIST may not be null");
@@ -246,20 +246,20 @@ public class SampleDataCompressionService implements IService {
     
     private void updateEntities(String inputPath, String outputPath) throws ComputeException {
 
-    	Set<Entity> inputEntites = entities.get(inputPath);
-    	if (inputEntites == null) {
-    		logger.warn("No entities found with this path: "+inputPath);
-    		return;
-    	}
-
     	try {
     	    // Update all entities which referred to the old path
-    	    entityBean.bulkUpdateEntityDataValue(inputPath, outputPath);
-            logger.info("Updated all entities to use new compressed file: "+outputPath);
-    	    
+    	    int numUpdated = entityBean.bulkUpdateEntityDataValue(inputPath, outputPath);
+            logger.info("Updated "+numUpdated+" entities to use new compressed file: "+outputPath);
+
+            Set<Long> inputEntites = entityMap.get(inputPath);
+            if (inputEntites == null) {
+                logger.warn("No entities found with this path: "+inputPath);
+                return;
+            }
+            
     	    // Update the input stacks
-        	for(Entity entity : inputEntites) {
-                
+        	for(Entity entity : entityBean.getEntitiesById(new ArrayList<Long>(inputEntites))) {
+        	    
         	    // Update the path. This was already fixed by the bulk update above, but we need to fix it again, 
         	    // because we're using an entity with the old state.
                 entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, outputPath);
@@ -293,25 +293,6 @@ public class SampleDataCompressionService implements IService {
 				}
 				catch (Exception e) {
 					logger.info("Error deleting symlink "+inputPath+": "+e.getMessage());
-				}
-    		}
-    		
-    		if (file.getName().startsWith("merged-")||file.getName().startsWith("tile-")) {
-    			// Delete the symlink as well, if there is one
-    			String filenodeDir = file.getParentFile().getParent();
-    			File symlink = new File(filenodeDir+"/group", file.getName());
-    			logger.info("Looking for symlink: "+symlink);
-				if (!isDebug) {
-					try {
-						FileUtils.forceDelete(symlink);
-						logger.info("Deleted symlink");
-					}
-					catch (FileNotFoundException e) {
-						logger.info("Symlink not found");
-					}
-					catch (Exception e) {
-						logger.info("Error deleting symlink: "+e.getMessage());
-					}
 				}
     		}
     		

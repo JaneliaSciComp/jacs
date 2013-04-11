@@ -13,6 +13,7 @@ public interface SampleDataManagerMBean {
     public void runSampleCleaning(String user, Boolean testRun);
     public void runSampleTrashCompactor(String user, Boolean testRun); 
     public void runSampleDataCompression(String user, Boolean testRun);
+    public void runSingleSampleDataCompression(String sampleId);
     public void runSampleImageRegistration(String user);
     
     // Generic confocal image processing pipelines, driven by pipeline configurations on a data-set basis
