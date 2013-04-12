@@ -30,7 +30,7 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     	this.objective = (String)processData.getItem("OBJECTIVE");
     	processData.putItem("RESULT_ENTITY_TYPE", EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
     	
-    	String resultEntityName = (String)processData.getItem("RESULT_ENTITY_NAME")+" ("+objective+")";
+    	String resultEntityName = (String)processData.getItem("RESULT_ENTITY_NAME")+" "+objective;
     	processData.putItem("RESULT_ENTITY_NAME", resultEntityName);
     	
     	super.execute(processData);
