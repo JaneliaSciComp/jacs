@@ -68,7 +68,8 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
         consolidatedLabel = (String)processData.getItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH");        
         
         logger.info("Starting NeuronSeparationPipelineService with taskId=" + task.getObjectId() + " resultNodeId=" + resultFileNode.getObjectId() + " resultDir=" + resultFileNode.getDirectoryPath()+
-                " workingDir="+outputFileNode.getDirectoryPath() + " inputFilename="+inputFilename+ " signalChannels="+signalChannels+ " referenceChannel="+referenceChannel);
+                " workingDir="+outputFileNode.getDirectoryPath() + " inputFilename="+inputFilename+ " signalChannels="+signalChannels+ " referenceChannel="+referenceChannel+
+                " previousResultFile="+previousResultFile+" consolidatedLabel="+consolidatedLabel);
     }
     
     @Override
@@ -87,8 +88,8 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
             fw.write(inputFilename + "\n");
             fw.write(signalChannels + "\n");
             fw.write(referenceChannel + "\n");
-            fw.write(previousResultFile==null?"":previousResultFile + "\n");
-            fw.write(consolidatedLabel==null?"":consolidatedLabel + "\n");
+            fw.write((previousResultFile==null?"":previousResultFile) + "\n");
+            fw.write((consolidatedLabel==null?"":consolidatedLabel) + "\n");
         }
         catch (IOException e) {
         	throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath(),e); 
@@ -108,7 +109,6 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
         script.append("read REF_CHAN\n");
         script.append("read PREVIOUS_OUTPUT\n");
         script.append("read CONSOLIDATED_LABEL\n");
-        script.append(Vaa3DHelper.getErrorExitPrefix() + "\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix() + "\n");
         script.append(Vaa3DHelper.getVaa3dLibrarySetupCmd()+"\n");
         if (isWarped) {
