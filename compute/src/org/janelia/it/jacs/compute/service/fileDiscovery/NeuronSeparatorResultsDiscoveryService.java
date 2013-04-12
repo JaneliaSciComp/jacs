@@ -23,10 +23,16 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
 	
     public static final String NEURON_MIP_PREFIX = NeuronSeparationPipelineGridService.NAME+".PR.neuron";
     
+    private String objective;
+    
 	@Override
     public void execute(IProcessData processData) throws ServiceException {
+    	this.objective = (String)processData.getItem("OBJECTIVE");
     	processData.putItem("RESULT_ENTITY_TYPE", EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
-        
+    	
+    	String resultEntityName = (String)processData.getItem("RESULT_ENTITY_NAME")+" ("+objective+")";
+    	processData.putItem("RESULT_ENTITY_NAME", resultEntityName);
+    	
     	super.execute(processData);
     }
     
@@ -50,6 +56,7 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
         String opticalRes = (String)processData.getItem("OPTICAL_RESOLUTION");
         String pixelRes = (String)processData.getItem("PIXEL_RESOLUTION");
         
+        
         EntityHelper entityHelper = new EntityHelper(entityBean, computeBean, ownerKey, logger);
         if (opticalRes!=null) {
             entityHelper.setOpticalResolution(separationEntity, opticalRes);
@@ -58,12 +65,21 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
         else {
             logger.info("No optical resolution defined for separation "+separationEntity.getId());
         }
+        
         if (pixelRes!=null) {
             entityHelper.setPixelResolution(separationEntity, pixelRes);
             logger.info("Set pixel resolution to "+pixelRes+" on "+separationEntity.getId());
         }
         else {
             logger.info("No pixel resolution defined for separation "+separationEntity.getId());
+        }
+
+        if (objective!=null) {
+            entityHelper.setObjective(separationEntity, objective);
+            logger.info("Set objective to "+objective+" on "+separationEntity.getId());
+        }
+        else {
+            logger.info("No objective defined for separation "+separationEntity.getId());
         }
         
         processSeparationFolder(separationEntity, dir);

@@ -48,7 +48,9 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
                 this.mountingProtocol = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL, alignedArea);
             }
             
-            this.numChannels = channelSpec.length();
+            if (channelSpec!=null) {
+                this.numChannels = channelSpec.length();
+            }
         } 
         catch (Exception e) {
             throw new ServiceException(e);

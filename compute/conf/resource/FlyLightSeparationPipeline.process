@@ -50,17 +50,6 @@
 				<output name="FILES_WERE_ARCHIVED"/>
 		    </operation>
         </sequence>
-
-        <!-- the entire sample gets archived by FlyLightSamplePipeline, so this should not be necessary
-    	<sequence if="FILES_WERE_ARCHIVED=true">
-    	
-			<operation name="Move large files to archive" processor="org.janelia.it.jacs.compute.service.utility.SyncToArchiveService">
-				<input name="ARCHIVE_FILE_PATH"/>
-				<input name="FILE_PATH" value="$V{ARCHIVE_FILE_PATH}"/>
-			</operation>
-			
-		</sequence>
-		 -->
 		
 	    <!-- Load the separation results into the database -->
 		<operation name="Discover Neuron Separation Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.NeuronSeparatorResultsDiscoveryService">
@@ -70,6 +59,7 @@
 			<input name="RESULT_ENTITY_NAME"/>
             <input name="OPTICAL_RESOLUTION"/>
             <input name="PIXEL_RESOLUTION"/>
+            <input name="OBJECTIVE"/>
 	    </operation>
 	    
     </sequence>

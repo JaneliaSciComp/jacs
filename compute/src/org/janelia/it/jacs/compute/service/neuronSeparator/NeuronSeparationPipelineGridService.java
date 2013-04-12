@@ -112,7 +112,8 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix() + "\n");
         script.append(Vaa3DHelper.getVaa3dLibrarySetupCmd()+"\n");
         if (isWarped) {
-            script.append("cp $CONSOLIDATED_LABEL $OUTPUT_DIR\n");
+            script.append("EXT=${CONSOLIDATED_LABEL#*.}\n");
+            script.append("cp $CONSOLIDATED_LABEL $OUTPUT_DIR/ConsolidatedLabel.$EXT\n");
         }
         script.append(NeuronSeparatorHelper.getNeuronSeparationCommands(isWarped) + "\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix() + "\n");

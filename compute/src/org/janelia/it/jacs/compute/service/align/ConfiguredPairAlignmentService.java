@@ -108,7 +108,7 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
                     logger.info("Found 63x stack: "+inputFilename);
                     Entity aligned = latest.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
                     if (aligned==null) throw new IllegalStateException("No default 2d image for 63x result: "+latest.getId());
-                    String channelSpec = aligned.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+                    this.channelSpec = aligned.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
                     if (channelSpec==null) throw new IllegalStateException("No chan spec for 63x file: "+aligned.getId());
                     this.refChannel = channelSpec.indexOf('r');
                     this.refChannelOneIndexed = refChannel + 1;
