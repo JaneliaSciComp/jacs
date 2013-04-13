@@ -14,6 +14,8 @@ public class Vaa3DHelper {
 
     protected static final int STARTING_DISPLAY_PORT = 5200;
 
+    protected static final int XVFB_RETRIES = 10;
+    
     protected static final String VAA3D_BASE_CMD = "export LD_LIBRARY_PATH="+
             SystemConfigurationProperties.getString("VAA3D.LDLibraryPath")+":$LD_LIBRARY_PATH\n"+
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
@@ -123,48 +125,51 @@ public class Vaa3DHelper {
 
         // Skip ports that are currently in use, or "locked"
         prefix.append("echo \"Finding a port for Xvfb, starting at "+displayPort+"...\"\n");
-        prefix.append("PORT="+displayPort+" COUNTER=0 RETRIES=5\n");
+        prefix.append("PORT="+displayPort+" COUNTER=0 RETRIES="+XVFB_RETRIES+"\n");
+        
+        // Clean up Xvfb on any exit
+        prefix.append("function cleanXvfb {\n");
+        prefix.append("    kill $MYPID\n");
+        prefix.append("    rm -f /tmp/.X${PORT}-lock\n");
+        prefix.append("    rm -f /tmp/.X11-unix/X${PORT}\n");
+        prefix.append("    echo \"Cleaned up Xvfb\"\n");
+        prefix.append("}\n");
+        prefix.append("trap cleanXvfb EXIT\n");
+        
         prefix.append("while [ \"$COUNTER\" -lt \"$RETRIES\" ]; do\n");
-        prefix.append("while (test -f \"/tmp/.X${PORT}-lock\") || (netstat -atwn | grep \"^.*:${PORT}.*:\\*\\s*LISTEN\\s*$\")\n");
-        prefix.append("do PORT=$(( ${PORT} + 1 ))\n");
-        prefix.append("done\n");
-        prefix.append("echo \"Found the first free port: $PORT\"\n");
+        prefix.append("    while (test -f \"/tmp/.X${PORT}-lock\") || (test -f \"/tmp/.X11-unix/X${PORT}\") || (netstat -atwn | grep \"^.*:${PORT}.*:\\*\\s*LISTEN\\s*$\")\n");
+        prefix.append("        do PORT=$(( ${PORT} + 1 ))\n");
+        prefix.append("    done\n");
+        prefix.append("    echo \"Found the first free port: $PORT\"\n");
         
         // Run Xvfb (virtual framebuffer) on the chosen port
-        prefix.append("/usr/bin/Xvfb :${PORT} -screen 0 1x1x24 -fp /usr/share/X11/fonts/misc > Xvfb.${PORT}.log 2>&1 &\n");
-        prefix.append("echo \"Started Xvfb on port $PORT\"\n");
+        prefix.append("    /usr/bin/Xvfb :${PORT} -screen 0 1x1x24 -fp /usr/share/X11/fonts/misc > Xvfb.${PORT}.log 2>&1 &\n");
+        prefix.append("    echo \"Started Xvfb on port $PORT\"\n");
         
         // Save the PID so that we can kill it when we're done
-        prefix.append("MYPID=$!\n");
-        prefix.append("export DISPLAY=\"localhost:${PORT}.0\"\n");
-
-        // Wait some time and check to make sure Xvfb is actually running, and retry if not. 
-        prefix.append("sleep 3\n");
-        prefix.append("if kill -0 $MYPID >/dev/null 2>&1; then\n");
-        prefix.append("    echo \"Xvfb is running as $MYPID\"\n");
-        prefix.append("    break\n");
-        prefix.append("else\n");
-        prefix.append("    echo \"Xvfb died immediately, trying again...\"\n");
-        prefix.append("    PORT=$(( ${PORT} + 1 ))\n");
-        prefix.append("    kill $MYPID >/dev/null 2>&1\n");
-        prefix.append("    rm -f /tmp/.X$MYPID-lock\n");
+        prefix.append("    MYPID=$!\n");
+        prefix.append("    export DISPLAY=\"localhost:${PORT}.0\"\n");
         
-        prefix.append("fi\n");
-        prefix.append("COUNTER=\"$(( $COUNTER + 1 ))\"\n");
+        // Wait some time and check to make sure Xvfb is actually running, and retry if not. 
+        prefix.append("    sleep 3\n");
+        prefix.append("    if kill -0 $MYPID >/dev/null 2>&1; then\n");
+        prefix.append("        echo \"Xvfb is running as $MYPID\"\n");
+        prefix.append("        break\n");
+        prefix.append("    else\n");
+        prefix.append("        echo \"Xvfb died immediately, trying again...\"\n");
+        prefix.append("        cleanXvfb");
+        prefix.append("        PORT=$(( ${PORT} + 1 ))\n");
+        prefix.append("    fi\n");
+        
+        prefix.append("    COUNTER=\"$(( $COUNTER + 1 ))\"\n");
         prefix.append("done\n");
 
         return prefix.toString();
     }
 
     public static String getVaa3DGridCommandSuffix() {
-        StringBuffer suffix = new StringBuffer();
-        
-        // Kill the Xvfb, and remove the lock file just in case it doesn't get automatically removed
-        suffix.append("kill $MYPID\n");
-        suffix.append("rm -f /tmp/.X$MYPID-lock\n");
-        suffix.append("echo \"Cleaned up Xvfb\"\n");
-        
-        return suffix.toString();
+        // No need to clean anything, because the cleanXvfb trap will clean it for us
+        return "";
     }
 
     public static String getFormattedMIPCommand(String inputFilepath, String outputFilepath, String extraOptions) throws ServiceException {
