@@ -101,7 +101,7 @@
                         <input name="ROOT_ENTITY_ID" value="$V{RESULT_ENTITY_ID}"/>
                         <input name="SAMPLE_ENTITY_ID"/>
                         <input name="INPUT_FILENAME" value="$V{FILENAME}"/>
-                        <input name="RESULT_ENTITY_NAME" value="Neuron Separation"/>
+                        <input name="RESULT_ENTITY_NAME" value="Aligned Neuron Separation"/>
                         <input name="SIGNAL_CHANNELS"/>
                         <input name="REFERENCE_CHANNEL"/>
                         <input name="OPTICAL_RESOLUTION"/>
