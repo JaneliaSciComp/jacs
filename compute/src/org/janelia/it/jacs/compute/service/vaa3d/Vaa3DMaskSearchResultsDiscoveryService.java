@@ -112,6 +112,7 @@ public class Vaa3DMaskSearchResultsDiscoveryService implements IService{
     }
 
     protected Entity createMaskSearchResultEntity(String resultsFilePath) throws Exception {
+        if (null==resultsFilePath || "".equals(resultsFilePath)) return null;
         File tmpFile = new File(resultsFilePath);
         Entity resultsEntity = new Entity();
         resultsEntity.setName(tmpFile.getName());
