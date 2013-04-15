@@ -35,10 +35,6 @@ REF_CHAN=$5
 PREVFILE=$6
 REF_CHAN_ONE_INDEXED=`expr $REF_CHAN + 1`
 
-export TMPDIR="$OUTDIR"
-WORKING_DIR=`mktemp -d`
-cd $WORKING_DIR
-
 echo "Neuron Separator Dir: $NSDIR"
 echo "Vaa3d Dir: $Vaa3D"
 echo "Run Dir: $DIR"
@@ -48,7 +44,19 @@ echo "Output dir: $OUTDIR"
 echo "Signal channels: $SIGNAL_CHAN"
 echo "Reference channel: $REF_CHAN"
 
-CONSOLIDATED_LABEL=$OUTDIR/ConsolidatedLabel.v3draw
+CONSOLIDATED_LABEL="$OUTDIR/ConsolidatedLabel.v3draw"
+
+if [ ! -s "$CONSOLIDATED_LABEL" ]; then
+    CONSOLIDATED_LABEL="$SEPDIR/ConsolidatedLabel.v3dpbd"
+    if [ ! -s "$CONSOLIDATED_LABEL" ]; then
+        echo "ConsolidatedLabel file not found in output directory"
+        exit 1
+    fi
+fi
+
+export TMPDIR="$OUTDIR"
+WORKING_DIR=`mktemp -d`
+cd $WORKING_DIR
 
 EXT=${INPUT_FILE#*.}
 if [ $EXT == "v3dpbd" ]; then

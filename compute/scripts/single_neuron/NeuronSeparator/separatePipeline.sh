@@ -127,7 +127,7 @@ if [ -s SeparationResultUnmapped.nsp ]; then
 
         echo "~ Copying final output to: $OUTDIR"
         cp $RESULT $OUTDIR
-        cp *.pbd $OUTDIR # companion file for the result
+        cp SeparationResultUnmapped.pbd $OUTDIR # companion file for the result
         cp ConsolidatedSignal.v3draw $OUTDIR
         cp ConsolidatedLabel.v3draw $OUTDIR
         cp Reference.v3draw $OUTDIR
