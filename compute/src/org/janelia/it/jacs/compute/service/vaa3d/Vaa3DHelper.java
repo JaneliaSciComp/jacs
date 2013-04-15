@@ -232,9 +232,9 @@ public class Vaa3DHelper {
     }
 
     public static String getFormattedMaskSearchCommand(String indexFilePath, String queryChannel, String matrix,
-                                                       String maxHits, String skipZeroes) {
+                                                       String maxHits, String skipZeroes, String outputFilePath) {
         String tmpString = VAA3D_BASE_CMD + " -cmd volume-pattern-index -mode search -indexFile \""+indexFilePath+
-                "\" -query $INPUT_FILE -queryChannel "+queryChannel;
+                "\" -query $INPUT_FILE -outputFile \""+outputFilePath+"\" -queryChannel "+queryChannel;
         if (null!=matrix && !"".equals(matrix)) {
             tmpString+=" -matrix \""+matrix+"\"";
         }

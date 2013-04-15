@@ -3,7 +3,7 @@
 	    
         <include name="Pipeline" process="FlyLightCellCountingPipeline">
             <input name="PIPELINE_NAME" value="FlyLight Cell Counting Pipeline"/>
-            <input name="PIPELINE_PROCESS" value="YoshiCellCounting"/>
+            <input name="PIPELINE_PROCESS" value="CellCounting"/>
         </include>
 		
     </sequence>

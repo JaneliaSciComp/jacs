@@ -60,8 +60,8 @@ public class Vaa3dMaskSearchService extends SubmitDrmaaJobService {
                 task.getParameter(MaskSearchTask.PARAM_queryChannel),
                 task.getParameter(MaskSearchTask.PARAM_matrix),
                 task.getParameter(MaskSearchTask.PARAM_maxHits),
-                task.getParameter(MaskSearchTask.PARAM_skipZeroes)));
-        script.append(" > ").append(resultFileNode.getDirectoryPath()).append(File.separator).append("searchResults.txt");
+                task.getParameter(MaskSearchTask.PARAM_skipZeroes),
+                resultFileNode.getDirectoryPath()+File.separator+"searchResults.txt"));
         script.append("\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix());
         writer.write(script.toString());
