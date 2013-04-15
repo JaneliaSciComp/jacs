@@ -85,6 +85,8 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
             this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
             this.entityLoader = new EntityBeanEntityLoader(entityBean);
             
+            boolean warpNeurons = !"false".equals((String)processData.getItem("WARP_NEURONS"));
+            
             String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
             if (sampleEntityId == null || "".equals(sampleEntityId)) {
                 throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
@@ -124,7 +126,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
                                         if (labelFile==null) {
                                             labelFile = EntityUtils.findChildWithNameAndType(nsSupportingFiles, "ConsolidatedLabel.v3draw", EntityConstants.TYPE_IMAGE_3D);
                                         }
-                                        if (labelFile!=null) {
+                                        if (labelFile!=null && warpNeurons) {
                                             this.inputSeparationFilename = labelFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH); 
                                         }   
                                     }

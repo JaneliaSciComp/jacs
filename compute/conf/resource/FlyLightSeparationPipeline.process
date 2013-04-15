@@ -45,7 +45,6 @@
 	            <input name="SIGNAL_CHANNELS"/>
 				<input name="REFERENCE_CHANNEL"/>
 				<input name="PREVIOUS_RESULT_FILENAME"/>
-				<!-- comment the next line out to disable warped neurons -->
                 <input name="ALIGNED_CONSOLIDATED_LABEL_FILEPATH"/>
 				<output name="ARCHIVE_FILE_PATH"/>
 				<output name="FILES_WERE_ARCHIVED"/>

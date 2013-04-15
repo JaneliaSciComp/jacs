@@ -35,6 +35,7 @@
 	    		<input name="ALIGNMENT_SCRIPT_NAME"/>
 	    		<input name="SAMPLE_ENTITY_ID"/>
 	    		<input name="SAMPLE_AREAS"/>
+	    		<input name="WARP_NEURONS" value="false"/>
                 <output name="CHANNEL_SPEC"/>
                 <output name="SIGNAL_CHANNELS"/>
                 <output name="REFERENCE_CHANNEL"/>
