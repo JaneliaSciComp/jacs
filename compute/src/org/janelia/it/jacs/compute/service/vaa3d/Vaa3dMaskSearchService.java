@@ -40,7 +40,7 @@ public class Vaa3dMaskSearchService extends SubmitDrmaaJobService {
         File configFile = new File(getSGEConfigurationDirectory(), CONFIG_PREFIX+"1");
         FileWriter writer = new FileWriter(configFile);
         try {
-            writer.append(task.getParameter(MaskSearchTask.PARAM_inputFilePath));
+            writer.append(task.getParameter(MaskSearchTask.PARAM_inputFilePath)).append("\n");
         }
         finally {
             writer.flush();
