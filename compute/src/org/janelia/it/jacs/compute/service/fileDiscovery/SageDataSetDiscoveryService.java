@@ -1,9 +1,7 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
-import java.sql.SQLException;
 import java.util.*;
 
-import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
@@ -97,12 +95,6 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 			if (slideGroup != null) {
                 processSlideGroup(dataSetIdentifier, currSlideCode, slideGroup);
 			}
-    	}
-    	catch (RuntimeException e) {
-    		if (e.getCause() instanceof SQLException) {
-    			throw new DaoException(e);
-    		}
-    		throw e;
     	}
         finally {
         	if (iterator!=null) iterator.close();

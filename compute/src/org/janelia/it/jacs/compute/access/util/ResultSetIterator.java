@@ -1,7 +1,9 @@
-package org.janelia.it.jacs.compute.access.util;
+    package org.janelia.it.jacs.compute.access.util;
 
 import java.sql.*;
 import java.util.*;
+
+import org.apache.log4j.Logger;
 
 
 /**
@@ -11,6 +13,8 @@ import java.util.*;
  */
 public class ResultSetIterator implements Iterator<Map<String,Object>> {
 
+    private Logger logger = Logger.getLogger(ResultSetIterator.class);
+    
 	private final Connection conn;
 	private final Statement stmt;
 	private final ResultSet rs;
@@ -87,7 +91,7 @@ public class ResultSetIterator implements Iterator<Map<String,Object>> {
     	try {
         	ResultSetMetaData md = rs.getMetaData();
         	for (int i = 1; i <= md.getColumnCount(); i++) {
-        		cols.add(md.getColumnName(i));
+        		cols.add(md.getColumnLabel(i));
         	}
     	}
     	catch (SQLException e) {
@@ -104,9 +108,9 @@ public class ResultSetIterator implements Iterator<Map<String,Object>> {
     	Map<String,Object> map = new HashMap<String,Object>();
         ResultSetMetaData md = rs.getMetaData();
     	for (int i = 1; i <= md.getColumnCount(); i++) {
-    		String columnName = md.getColumnName(i);
-    		Object value = rs.getObject(columnName);
-    		map.put(columnName, value);
+    		String columnLabel = md.getColumnLabel(i);
+    		Object value = rs.getObject(columnLabel);
+    		map.put(columnLabel, value);
     	}
         return map;
     }

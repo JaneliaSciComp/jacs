@@ -81,7 +81,29 @@ public class SageDAO {
     public ResultSetIterator getImagesByDataSet(String dataSetName) throws DaoException {
 
     	try {
-	    	String sql = "select * from image_data_mv where data_set = '"+dataSetName+"' and display=true order by slide_code,name ";
+    	    StringBuilder sql = new StringBuilder();
+
+    	    sql.append("select i.id id, slide_code.value slide_code, i.path path, tile.value tile, line.name line, channel_spec.value channel_spec, ");
+    	    sql.append("gender.value gender, area.value area, channels.value channels, mounting_protocol.value mounting_protocol, objective.value objective, ");
+    	    sql.append("voxel_size_x.value voxel_size_x, voxel_size_y.value voxel_size_y, voxel_size_z.value voxel_size_z ");
+    	    sql.append("from image i ");
+    	    sql.append("join line line on i.line_id = line.id ");
+    	    sql.append("join image_property_vw slide_code on i.id = slide_code.image_id and slide_code.type = 'slide_code' ");
+    	    sql.append("join image_property_vw data_set on i.id = data_set.image_id and data_set.type = 'data_set' ");
+    	    sql.append("left outer join image_property_vw tile on i.id = tile.image_id and tile.type = 'tile' ");
+    	    sql.append("left outer join image_property_vw channel_spec on i.id = channel_spec.image_id and channel_spec.type = 'channel_spec' ");
+    	    sql.append("left outer join image_property_vw gender on i.id = gender.image_id and gender.type = 'gender' ");
+    	    sql.append("left outer join image_property_vw area on i.id = area.image_id and area.type = 'area' ");
+    	    sql.append("left outer join image_property_vw channels on i.id = channels.image_id and channels.type = 'channels' ");
+    	    sql.append("left outer join image_property_vw mounting_protocol on i.id = mounting_protocol.image_id and mounting_protocol.type = 'mounting_protocol' ");
+    	    sql.append("left outer join image_property_vw objective on i.id = objective.image_id and objective.type = 'objective' ");
+    	    sql.append("left outer join image_property_vw voxel_size_x on i.id = voxel_size_x.image_id and voxel_size_x.type = 'voxel_size_x' ");
+    	    sql.append("left outer join image_property_vw voxel_size_y on i.id = voxel_size_y.image_id and voxel_size_y.type = 'voxel_size_y' ");
+    	    sql.append("left outer join image_property_vw voxel_size_z on i.id = voxel_size_z.image_id and voxel_size_z.type = 'voxel_size_z' ");
+    	    sql.append("where i.display=true ");
+    	    sql.append("and data_set.value like '"+dataSetName+"' ");
+    	    sql.append("order by slide_code.value, i.path ");
+    	    
         	Connection conn = getJdbcConnection();
         	PreparedStatement stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 	        stmt.setFetchSize(Integer.MIN_VALUE);
