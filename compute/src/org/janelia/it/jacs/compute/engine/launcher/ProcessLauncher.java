@@ -43,7 +43,7 @@ public class ProcessLauncher extends SeriesLauncher {
             enactActionPreProcessing(processData);
             launchSeries(processDef, processData);
             enactActionPostProcessing(processData/*, processDef*/);
-            _logger.info("Process " + processDef.getName() + " (id="+processId+") finished");
+            _logger.info("Process " + processDef.getName() + " (id="+processId+") finished\n");
         }
         catch (ServiceException e) {
             recordProcessError(processData, e);
