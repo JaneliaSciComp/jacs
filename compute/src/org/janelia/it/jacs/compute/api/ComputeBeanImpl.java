@@ -657,42 +657,54 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
             int nodesUpdated = 0;
             logger.debug("moveFileNodesToArchive: "+filepath);
             
+            String parentFileNodePath = null;
+            Long nodeId = null;
+            
             Pattern p = Pattern.compile("((.*?)/(\\d+)/(\\d+)/(\\d+))(.*?)?");
             Matcher m = p.matcher(filepath);
-            if (m.matches()) {
-                String parentFileNodePath = m.group(1);
-                Long nodeId = Long.parseLong(m.group(5));
-
-                logger.debug("  parentFileNodePath: "+parentFileNodePath);
-                logger.debug("  nodeId: "+nodeId);
+            if (!m.matches()) {
                 
-                if (!parentFileNodePath.equals(filepath)) {
-                    // Update child node too
-                    FileNode childNode = (FileNode)computeDAO.getFileNodeByPathOverride(filepath);
-                    if (childNode!=null) {
-                        childNode.setPathOverride(filepath.replaceFirst("/groups", "/archive"));
-                        computeDAO.saveOrUpdate(childNode);
-                        nodesUpdated++;
-                        logger.debug("  changed path override on child node "+childNode.getObjectId()+" to: "+childNode.getPathOverride());
-                    }
+                p = Pattern.compile("((.*?)/(\\d+))(.*?)?");
+                m = p.matcher(filepath);
+                if (!m.matches()) {
+                    throw new Exception("Could not parse file node information from filepath: "+filepath);
                 }
-
-                String archiveParentFileNodePath = parentFileNodePath.replaceFirst("/groups", "/archive");
-                
-                FileNode node = (FileNode)computeDAO.getNodeById(nodeId);
-                if (node!=null) {
-                    node.setPathOverride(archiveParentFileNodePath);
-                    computeDAO.saveOrUpdate(node);
-                    nodesUpdated++;
-                    logger.debug("  changed path override on node "+node.getObjectId()+" to: "+node.getPathOverride());
+                else {
+                    parentFileNodePath = m.group(1);
+                    nodeId = Long.parseLong(m.group(3));   
                 }
-                
-                nodesUpdated += computeDAO.bulkUpdateNodePathOverridePrefix(parentFileNodePath, archiveParentFileNodePath);
             }
             else {
-                throw new Exception("Could not parse file node information from filepath: "+filepath);
+                parentFileNodePath = m.group(1);
+                nodeId = Long.parseLong(m.group(5));   
+            }
+
+            logger.debug("  parentFileNodePath: "+parentFileNodePath);
+            logger.debug("  nodeId: "+nodeId);
+            
+            if (!parentFileNodePath.equals(filepath)) {
+                // Update child node too
+                FileNode childNode = (FileNode)computeDAO.getFileNodeByPathOverride(filepath);
+                if (childNode!=null) {
+                    childNode.setPathOverride(filepath.replaceFirst("/groups", "/archive"));
+                    computeDAO.saveOrUpdate(childNode);
+                    nodesUpdated++;
+                    logger.debug("  changed path override on child node "+childNode.getObjectId()+" to: "+childNode.getPathOverride());
+                }
+            }
+
+            String archiveParentFileNodePath = parentFileNodePath.replaceFirst("/groups", "/archive");
+            
+            FileNode node = (FileNode)computeDAO.getNodeById(nodeId);
+            if (node!=null) {
+                node.setPathOverride(archiveParentFileNodePath);
+                computeDAO.saveOrUpdate(node);
+                nodesUpdated++;
+                logger.debug("  changed path override on node "+node.getObjectId()+" to: "+node.getPathOverride());
             }
             
+            nodesUpdated += computeDAO.bulkUpdateNodePathOverridePrefix(parentFileNodePath, archiveParentFileNodePath);
+        
             return nodesUpdated;
         }
         catch (Exception e) {
