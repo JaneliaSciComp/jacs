@@ -56,6 +56,7 @@
         
         </sequence>
 		
+		<!--
         <sequence if="SAMPLE_63X_ID is not null">
             
             <include name="63x Pipeline" process="FlyLightSamplePipeline">
@@ -73,6 +74,7 @@
             </include>
             
         </sequence>
+        -->
         
     </sequence>
 </process>
