@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
@@ -76,7 +76,10 @@ public class MaskChanArtifactService extends AbstractEntityService {
         	}
         	
         	// Free memory
-        	result.setEntityData(null);
+        	for(EntityData childEd : result.getEntityData()) {
+        	    childEd.setChildEntity(null);
+        	}
+        	
         }
         
         List<List> inputGroups = createGroups(entities, GROUP_SIZE);
