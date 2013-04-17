@@ -74,6 +74,9 @@ public class MaskChanArtifactService extends AbstractEntityService {
                     entities.add(result);       
                 }
         	}
+        	
+        	// Free memory
+        	result.setEntityData(null);
         }
         
         List<List> inputGroups = createGroups(entities, GROUP_SIZE);
