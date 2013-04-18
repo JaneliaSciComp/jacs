@@ -363,7 +363,7 @@ public class LargeOperations {
     }
     
     private void associateImageProperties(Connection conn, Map<String,Object> imageProps) throws DaoException {
-    	String imagePath = (String)imageProps.get("name");
+    	String imagePath = (String)imageProps.get("path");
     	String[] path = imagePath.split("/"); // take just the filename
     	String filename = path[path.length-1];
 		for(Long imageId : annotationDAO.getImageIdsWithName(conn, null, filename)) {

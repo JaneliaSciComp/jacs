@@ -309,7 +309,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
 
     public long getNumDescendantsAnnotated(Long entityId) throws ComputeException {
         try {
-			SolrDAO solrDAO = new SolrDAO(_logger, true, true);
+			SolrDAO solrDAO = new SolrDAO(_logger, false, false);
 			SolrQuery query = new SolrQuery("(id:"+entityId+" OR ancestor_ids:"+entityId+") AND all_annotations:*");
 			return solrDAO.search(query).getResults().getNumFound();
 	    }
