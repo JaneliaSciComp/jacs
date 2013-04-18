@@ -59,6 +59,9 @@ public class EntityConstants {
 
     // Entity Data Attributes
 
+    public static final String ATTRIBUTE_LINE                                = "Line";
+    public static final String ATTRIBUTE_SLIDE_CODE                          = "Slide Code";
+    public static final String ATTRIBUTE_SAMPLE_NAME_SUFFIX                  = "Sample Name Suffix";
     public static final String ATTRIBUTE_DENORM_IDENTIFIER                   = "Denorm Identifier";
     public static final String ATTRIBUTE_DEFAULT_2D_IMAGE                    = "Default 2D Image";
     public static final String ATTRIBUTE_DEFAULT_3D_IMAGE                    = "Default 3D Image";
