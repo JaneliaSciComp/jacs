@@ -67,12 +67,12 @@ public class MaskChanResultsDiscoveryService extends AbstractEntityService {
 		
 		String filepath = separation.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
 
-        logger.info("Processing "+separation.getId()+" with path "+filepath);
+        logger.info("Processing mask/chan results for separation (id="+separation.getId()+") with path "+filepath);
 
         // Find mask/chan files
         File maskChanDir = new File(filepath.replaceFirst("groups", "archive")+"/archive/maskChan");
         List<File> maskChanFiles = helper.collectFiles(maskChanDir, true);
-        logger.info("Collected "+maskChanFiles.size()+" files in "+filepath);
+        logger.info("Collected "+maskChanFiles.size()+" files in "+maskChanDir);
         
         Map<Integer,String> maskFiles = new HashMap<Integer,String>();
         Map<Integer,String> chanFiles = new HashMap<Integer,String>();
@@ -97,6 +97,11 @@ public class MaskChanResultsDiscoveryService extends AbstractEntityService {
         }
         
         Entity fragmentFolder = separation.getChildByAttributeName(EntityConstants.ATTRIBUTE_MASK_ENTITY_COLLECTION);
+        
+        if (fragmentFolder==null) {
+            logger.warn("No fragment folder found for separation "+separation.getId());
+            return;
+        }
         
         for(Entity fragmentEntity : EntityUtils.getChildrenOfType(fragmentFolder, EntityConstants.TYPE_NEURON_FRAGMENT)) {
             

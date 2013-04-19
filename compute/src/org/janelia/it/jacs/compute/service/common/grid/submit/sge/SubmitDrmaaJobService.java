@@ -470,6 +470,10 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         // Use this hash to avoid identical messages
         File configDir = new File(getSGEErrorDirectory());
         File[] errorFiles = configDir.listFiles(new StdErrorFilenameFilter());
+        if (errorFiles==null) {
+            logger.warn("List of std error files came back null for dir=" + configDir.getAbsolutePath());
+            return false;
+        }
         if (logger.isInfoEnabled())
             logger.info("Found " + errorFiles.length + " stderr files in dir=" + configDir.getAbsolutePath());
         int numBytes = 0;
