@@ -16,7 +16,7 @@
 		</operation>
 		
 	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
-	    <operation name="Get Sample Attributes" processor="org.janelia.it.jacs.compute.service.entity.sample.InitResultsAttributesService">
+	    <operation name="Get Sample Attributes" processor="org.janelia.it.jacs.compute.service.entity.sample.InitResultAttributesService">
 			<input name="RESULT_ENTITY_ID"/>
 			<output name="SIGNAL_CHANNELS"/>
 			<output name="REFERENCE_CHANNEL"/>
