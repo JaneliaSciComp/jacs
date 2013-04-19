@@ -35,6 +35,15 @@ public class InitSampleAttributesService extends AbstractEntityService {
     	}
     	
     	logger.info("Retrieved sample: "+sampleEntity.getName()+" (id="+sampleEntityId+")");
+
+        String chanSpec = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+        SampleHelper sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
+        String signalChannels = sampleHelper.getSignalChannelIndexes(chanSpec);
+        logger.info("Putting '"+signalChannels+"' in SIGNAL_CHANNELS");
+        processData.putItem("SIGNAL_CHANNELS", signalChannels);
+        String referenceChannels = sampleHelper.getReferenceChannelIndexes(chanSpec);
+        logger.info("Putting '"+referenceChannels+"' in REFERENCE_CHANNEL");
+        processData.putItem("REFERENCE_CHANNEL", referenceChannels);    
         
         populateChildren(sampleEntity);
         Entity supportingFiles = EntityUtils.getSupportingData(sampleEntity);
@@ -73,5 +82,6 @@ public class InitSampleAttributesService extends AbstractEntityService {
 
         logger.info("Putting "+areaMap.values().size()+" values in SAMPLE_AREA");
         processData.putItem("SAMPLE_AREA", new ArrayList<AnatomicalArea>(areaMap.values()));
+          
     }
 }
