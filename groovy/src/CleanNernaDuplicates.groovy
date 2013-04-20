@@ -9,7 +9,7 @@ import org.janelia.it.jacs.model.entity.Entity
 
 import static org.janelia.it.jacs.model.entity.EntityConstants.*
 
-boolean DEBUG = true
+boolean DEBUG = false
 
 String ownerKey = "group:flylight";
 f = new JacsUtils(ownerKey, false);
@@ -83,7 +83,7 @@ for(String slideCode : slideCodeToSampleIdMap.keySet()) {
                     if (dataSet.endsWith("optic_central_border") && !sample.name.endsWith("Optic_Central_Border")) {
                         sample.name = sample.name+"-Optic_Central_Border"
                         print " --- Renaming sample to : "+sample.name
-                        if (!DEBUG) f.e.saveEntity(sample)
+                        if (!DEBUG) f.e.saveOrUpdateEntity(sample.ownerKey, sample)
                     }
                     else if (dataSet.endsWith("optic_lobe_tile") && !sample.name.endsWith("Optic_Lobe")) {
                         print " --- Sample should be renamed but I don't know what to call it!"
@@ -91,12 +91,12 @@ for(String slideCode : slideCodeToSampleIdMap.keySet()) {
                     else if (dataSet.endsWith("optic_lobe_left") && !sample.name.endsWith("Left_Optic_Lobe")) {
                         sample.name = sample.name+"-Left_Optic_Lobe"
                         print " --- Renaming sample to : "+sample.name
-                        if (!DEBUG) f.e.saveEntity(sample)
+                        if (!DEBUG) f.e.saveOrUpdateEntity(sample.ownerKey, sample)
                     }
                     else if (dataSet.endsWith("optic_lobe_right") && !sample.name.endsWith("Right_Optic_Lobe")) {
                         sample.name = sample.name+"-Right_Optic_Lobe"
                         print " --- Renaming sample to : "+sample.name
-                        if (!DEBUG) f.e.saveEntity(sample)
+                        if (!DEBUG) f.e.saveOrUpdateEntity(sample.ownerKey, sample)
                     }
                     else {
                         print " --- No action"
@@ -137,7 +137,7 @@ for(String slideCode : slideCodeToSampleDeletionCandidates.keySet()) {
         def dataSet = sample.getValueByAttributeName(ATTRIBUTE_DATA_SET_IDENTIFIER)
         def visited = "Visited".equals(sample.getValueByAttributeName(ATTRIBUTE_VISITED))
         println slideCode+" ("+annotationCountMap.get(sample.id)+") "+sample.id+" "+sample.name+" "
-        if (!DEBUG) f.e.deleteEntityTree(sample.ownerKey, sample)
+        if (!DEBUG) f.e.deleteEntityTree(sample.ownerKey, sample.id)
     }
 }
 
