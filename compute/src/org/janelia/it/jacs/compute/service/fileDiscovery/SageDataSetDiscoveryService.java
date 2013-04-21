@@ -12,7 +12,6 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.cv.Objective;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Discovers images in SAGE which are part of data sets defined in the workstation, and creates or updates Samples 
@@ -49,10 +48,11 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             else {
                 logger.info("Processing data set: "+dataSet.getName());
                 processSageDataSet(null, dataSet);
+                logger.info("Moving unvisited samples to trash for dataSet: "+dataSet.getName());
+                cleanUnvisitedSamples(dataSet);
+                fixOrderIndices(dataSet);
             }
-        }
-    
-        fixOrderIndices();
+        }    
         
         logger.info("Processed "+sageRowsProcessed+" rows, created "+sampleHelper.getNumSamplesCreated()+
         		" samples, updated "+sampleHelper.getNumSamplesUpdated()+" samples, added "+sampleHelper.getNumSamplesAdded()+
@@ -115,6 +115,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		slideImage.setAge((String)row.get("age"));
 		slideImage.setChannels((String)row.get("channels"));
 		slideImage.setMountingProtocol((String)row.get("mounting_protocol"));
+		slideImage.setEffector((String)row.get("effector"));
 		String objectiveStr = (String)row.get("objective");
 		if (objectiveStr!=null) {
     		if (objectiveStr.contains(Objective.OBJECTIVE_20X.getName())) {
@@ -184,41 +185,50 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         sampleHelper.createOrUpdateSample(null, slideCode, dataSet, tileGroupList);
     }
     
-    protected void fixOrderIndices() throws Exception {
-		logger.info("Fixing order indicies in children of "+sampleHelper.getTopLevelDataSetFolder().getName());
-		populateChildren(sampleHelper.getTopLevelDataSetFolder());
-		
-    	for(Entity childFolder : EntityUtils.getChildrenOfType(sampleHelper.getTopLevelDataSetFolder(), EntityConstants.TYPE_FOLDER)) {
-    		populateChildren(childFolder);
-    		
-			logger.info("Fixing sample order indicies in "+childFolder.getName()+" (id="+childFolder.getId()+")");
+    protected void cleanUnvisitedSamples(Entity dataSet) throws Exception {
+        String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+        Entity dataSetFolder = sampleHelper.getDataSetFolderByIdentifierMap().get(dataSetIdentifier);
+        for(EntityData ed : dataSetFolder.getEntityData()) {
+            Entity sample = ed.getChildEntity();
+            if (sample==null || sample.getEntityType().getName().equals(EntityConstants.TYPE_SAMPLE)) continue;
+            if (sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISITED)==null) {
+                logger.info("  Moving unvisited sample to trash: "+sample.getName()+" (id="+sample.getId()+")");
+            }
+        }
+    }
+    
+    protected void fixOrderIndices(Entity dataSet) throws Exception {
+     
+        String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+        Entity dataSetFolder = sampleHelper.getDataSetFolderByIdentifierMap().get(dataSetIdentifier);
+       
+        logger.info("Fixing sample order indicies in "+dataSetFolder.getName()+" (id="+dataSetFolder.getId()+")");
 
-	    	List<EntityData> orderedData = new ArrayList<EntityData>();
-			for(EntityData ed : childFolder.getEntityData()) {
-				if (ed.getChildEntity()!=null) {
-					orderedData.add(ed);
-				}
-			}
-	    	Collections.sort(orderedData, new Comparator<EntityData>() {
-				@Override
-				public int compare(EntityData o1, EntityData o2) {
-					int c = o1.getChildEntity().getCreationDate().compareTo(o2.getChildEntity().getCreationDate());
-					if (c==0) {
-						return o1.getChildEntity().getId().compareTo(o2.getChildEntity().getId());
-					}
-					return c;
-				}
-			});
-			
-	    	int orderIndex = 0;
-			for(EntityData ed : orderedData) {
-				if (ed.getOrderIndex()==null || orderIndex!=ed.getOrderIndex()) {
-					logger.info("  Updating link (id="+ed.getId()+") to "+ed.getChildEntity().getName()+" with order index "+orderIndex+" (was "+ed.getOrderIndex()+")");
-					ed.setOrderIndex(orderIndex);
-					entityBean.saveOrUpdateEntityData(ed);
-				}
-				orderIndex++;
-			}
-		}
+        List<EntityData> orderedData = new ArrayList<EntityData>();
+        for(EntityData ed : dataSetFolder.getEntityData()) {
+            if (ed.getChildEntity()!=null) {
+                orderedData.add(ed);
+            }
+        }
+        Collections.sort(orderedData, new Comparator<EntityData>() {
+            @Override
+            public int compare(EntityData o1, EntityData o2) {
+                int c = o1.getChildEntity().getCreationDate().compareTo(o2.getChildEntity().getCreationDate());
+                if (c==0) {
+                    return o1.getChildEntity().getId().compareTo(o2.getChildEntity().getId());
+                }
+                return c;
+            }
+        });
+        
+        int orderIndex = 0;
+        for(EntityData ed : orderedData) {
+            if (ed.getOrderIndex()==null || orderIndex!=ed.getOrderIndex()) {
+                logger.info("  Updating link (id="+ed.getId()+") to "+ed.getChildEntity().getName()+" with order index "+orderIndex+" (was "+ed.getOrderIndex()+")");
+                ed.setOrderIndex(orderIndex);
+                entityBean.saveOrUpdateEntityData(ed);
+            }
+            orderIndex++;
+        }
     }
 }

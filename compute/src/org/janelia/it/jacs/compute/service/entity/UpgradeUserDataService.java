@@ -11,6 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -53,18 +54,39 @@ public class UpgradeUserDataService extends AbstractEntityService {
         List<Entity> unified20xList = entityBean.getEntitiesByNameAndTypeName("group:flylight", "Unified 20x Alignment Space", EntityConstants.TYPE_ALIGNMENT_SPACE);
         alignmentSpaces.put(AlignmentSpace.UNIFIED_20X, unified20xList.iterator().next());
 
-        String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
-        if (StringUtils.isEmpty(sampleEntityId)) {
-            processSamples();
+        // Upgrade all data sets, regardless of user
+        for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
+            String dsi = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+            String pattern = "{Line}-{Slide Code}";
+            if (dsi.equals("nerna_optic_lobe_right")) {
+                pattern += "-Right_Optic_Lobe";
+            }
+            else if (dsi.equals("nerna_optic_lobe_left")) {
+                pattern += "-Left_Optic_Lobe";
+            }
+            else if (dsi.equals("nerna_optic_central_border")) {
+                pattern += "-Optic_Central_Border";
+            }
+            if (StringUtils.isEmpty(dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAMPLE_NAME_PATTERN))) {
+                dataSet.setValueByAttributeName(EntityConstants.ATTRIBUTE_SAMPLE_NAME_PATTERN, pattern);
+                entityBean.saveOrUpdateEntity(dataSet);
+                logger.info("Set sample name pattern for '"+dataSet.getName()+"' to '"+pattern+"'");
+            }
+        }
+        
+        
+//        String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
+//        if (StringUtils.isEmpty(sampleEntityId)) {
+//            processSamples();
 //          processNeuronSeparationResults();
-        }
-        else {
-            Entity sampleEntity = entityBean.getEntityAndChildren(new Long(sampleEntityId));
-            if (sampleEntity == null) {
-                throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
-            }    
-            processSample(entityBean.getEntityTree(sampleEntity.getId()));
-        }
+//        }
+//        else {
+//            Entity sampleEntity = entityBean.getEntityAndChildren(new Long(sampleEntityId));
+//            if (sampleEntity == null) {
+//                throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
+//            }    
+//            processSample(entityBean.getEntityTree(sampleEntity.getId()));
+//        }
     }
     
     private void processSamples() throws Exception {

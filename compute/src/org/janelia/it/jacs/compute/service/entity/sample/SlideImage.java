@@ -25,6 +25,7 @@ public class SlideImage {
     private String gender;
     private String area;
     private String age;
+    private String effector;
     private String mountingProtocol;
     private File file;
 	
@@ -61,6 +62,10 @@ public class SlideImage {
         
         if (age!=null) {
             properties.put(EntityConstants.ATTRIBUTE_AGE, age);
+        }
+
+        if (effector!=null) {
+            properties.put(EntityConstants.ATTRIBUTE_EFFECTOR, effector);
         }
         
         if (mountingProtocol!=null) {
@@ -142,6 +147,12 @@ public class SlideImage {
     }
     public void setAge(String age) {
         this.age = age;
+    }
+    public String getEffector() {
+        return effector;
+    }
+    public void setEffector(String effector) {
+        this.effector = effector;
     }
     public String getMountingProtocol() {
         return mountingProtocol;

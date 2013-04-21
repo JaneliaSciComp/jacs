@@ -11,6 +11,7 @@ import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.service.entity.EntityHelper;
 import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
@@ -28,12 +29,15 @@ public class SampleHelper extends EntityHelper {
 
     private static final String NO_CONSENSUS_VALUE = "NO_CONSENSUS";
     
+    protected static final String TRASH_FOLDER_NAME = "Trash";
     protected static final String PRIVATE_DATA_SET_FOLDER_NAME = "My Data Sets";
     protected static final String PUBLIC_DATA_SET_FOLDER_NAME = "Public Data Sets";
     
     protected AnnotationBeanLocal annotationBean;
+    protected boolean resetSampleNames = true;
     
     private Entity topLevelFolder;
+    private Entity trashFolder;
     private List<Entity> dataSets;
     private Map<String,Entity> dataSetFolderByIdentifier = new HashMap<String,Entity>();
     private Map<String,Entity> dataSetEntityByIdentifier = new HashMap<String,Entity>();
@@ -199,7 +203,13 @@ public class SampleHelper extends EntityHelper {
             numSamplesCreated++;
         }
         else {
-            logger.info("  Found existing sample: "+sample.getName());
+            String newName = getSampleName(dataSet, objective, isSubSample, sampleProperties);
+            if (resetSampleNames && sample.getName().equals(newName)) {
+                logger.info("  Updating sample name to: "+newName);
+                sample.setName(newName);
+                // No need to save the new name, since we'll save the sample in setSampleAttributes below
+            }
+            
             setSampleAttributes(sample, dataSet, channelSpec, objective, sampleProperties);
             entityLoader.populateChildren(sample);
             numSamplesUpdated++;
@@ -317,20 +327,20 @@ public class SampleHelper extends EntityHelper {
         Pattern pattern = Pattern.compile("\\{(.+?)\\}");
         Matcher matcher = pattern.matcher(sampleNameSuffix);
         StringBuffer buffer = new StringBuffer();
-        logger.info("    Building sample name:");
+        logger.trace("    Building sample name:");
         while (matcher.find()) {
             String replacement = sampleProperties.get(matcher.group(1));
             if (replacement != null) {
                 matcher.appendReplacement(buffer, "");
                 buffer.append(replacement);
             }
-            logger.info("        "+replacement+" -> "+buffer);
+            logger.trace("        "+replacement+" -> "+buffer);
         }
         matcher.appendTail(buffer);
-        logger.info("        append tail -> "+buffer);
+        logger.trace("        append tail -> "+buffer);
         if (isSubSample && !StringUtils.isEmpty(objective)) {
             buffer.append("~"+objective);
-            logger.info("        append subsample -> "+buffer);
+            logger.trace("        append subsample -> "+buffer);
         }
         return buffer.toString();
     }
@@ -348,6 +358,22 @@ public class SampleHelper extends EntityHelper {
     public Entity setSampleAttributes(Entity sample, Entity dataSet, String channelSpec, String objective, Map<String,String> sampleProperties) throws Exception {
         String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
         logger.info("    Setting sample properties: "+sampleProperties);
+        
+        // Find out which attributes a Sample can support. We only want to set those. 
+        Set<String> attrs = new HashSet<String>();
+        for(EntityAttribute attr : sample.getEntityType().getAttributes()) {
+            attrs.add(attr.getName());
+        }
+        
+        // Set all the properties that we can. 
+        for(String key : sampleProperties.keySet()) {
+            String value = sampleProperties.get(key);
+            if (attrs.contains(key) && value!=null && !NO_CONSENSUS_VALUE.equals(value)) {
+                sample.setValueByAttributeName(key, value);   
+            }
+        }
+
+        // Some attributes are known explicitly, so let's overwrite whatever the image properties gave us above. 
         if (dataSetIdentifier!=null) {
             sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier);   
         }
@@ -357,12 +383,7 @@ public class SampleHelper extends EntityHelper {
         if (objective!=null) {
             sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE, objective); 
         }
-        for(String key : sampleProperties.keySet()) {
-            String value = sampleProperties.get(key);
-            if (value!=null && !NO_CONSENSUS_VALUE.equals(value)) {
-                sample.setValueByAttributeName(key, value);   
-            }
-        }
+        
         sample = entityBean.saveOrUpdateEntity(sample);
         return sample;
     }    
@@ -541,36 +562,21 @@ public class SampleHelper extends EntityHelper {
      * @throws Exception
      */
     public Entity setLsmStackAttributes(Entity lsmStack, SlideImage image) throws Exception {
-        logger.info("    Setting LSM stack properties: channelSpec=" + image.getChannelSpec() + 
-                ", numChannels=" + image.getChannels()+ ", objective=" + image.getObjective() + 
-                ", opticalRes=" + image.getOpticalRes() + ", gender=" + image.getGender() + 
-                ", area=" + image.getArea() + ", age=" + image.getAge() + 
-                ", mountingProtocol=" + image.getMountingProtocol());
+        Map<String,String> imageProperties = image.getProperties();
+        logger.info("    Setting LSM stack properties:"+imageProperties);
         
-        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, image.getImagePath());
-        if (image.getChannels()!=null) {
-            lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS, image.getChannels());
+        // Find out which attributes a Sample can support. We only want to set those. 
+        Set<String> attrs = new HashSet<String>();
+        for(EntityAttribute attr : lsmStack.getEntityType().getAttributes()) {
+            attrs.add(attr.getName());
         }
-        if (image.getOpticalRes()!=null) {
-            lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, image.getOpticalRes());   
-        }
-        if (image.getChannelSpec()!=null) {
-            lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, image.getChannelSpec());
-        }
-        if (image.getObjective()!=null) {
-            lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE, image.getObjective());
-        }
-        if (image.getMountingProtocol()!=null) {
-            lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL, image.getMountingProtocol());
-        }
-        if (image.getGender()!=null) {
-            lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_GENDER, image.getGender());
-        }
-        if (image.getArea()!=null) {
-            lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA, image.getArea());
-        }
-        if (image.getAge()!=null) {
-            lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_AGE, image.getAge());
+        
+        // Set all the properties that we can. 
+        for(String key : imageProperties.keySet()) {
+            String value = imageProperties.get(key);
+            if (attrs.contains(key) && value!=null && !NO_CONSENSUS_VALUE.equals(value)) {
+                lsmStack.setValueByAttributeName(key, value);   
+            }
         }
         lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
         return lsmStack;
@@ -785,6 +791,18 @@ public class SampleHelper extends EntityHelper {
         return topLevelFolder;
     }
 
+    /**
+     * Return the top level trash folder for the configured owner.
+     * @return
+     * @throws Exception
+     */
+    public Entity getTrashFolder() throws Exception {
+        if (trashFolder==null) {
+            loadTrashFolder();
+        }
+        return trashFolder;
+    }
+
     public int getNumSamplesCreated() {
         return numSamplesCreated;
     }
@@ -797,6 +815,14 @@ public class SampleHelper extends EntityHelper {
         return numSamplesAdded;
     }
     
+    public Map<String, Entity> getDataSetFolderByIdentifierMap() {
+        return dataSetFolderByIdentifier;
+    }
+
+    public Map<String, Entity> getDataSetEntityByIdentifierMap() {
+        return dataSetEntityByIdentifier;
+    }
+
     private void loadDataSets() throws Exception {
         
         if (dataSets!=null) return;
@@ -837,5 +863,19 @@ public class SampleHelper extends EntityHelper {
         else {
             this.topLevelFolder = createOrVerifyRootEntity(PRIVATE_DATA_SET_FOLDER_NAME, true, false);
         }
+    }
+    
+    private void loadTrashFolder() throws Exception {
+        if (trashFolder!=null) return;
+        logger.info("Getting trash folder...");
+        this.trashFolder = createOrVerifyRootEntity(TRASH_FOLDER_NAME, true, false);
+    }
+
+    public boolean isResetSampleNames() {
+        return resetSampleNames;
+    }
+
+    public void setResetSampleNames(boolean resetSampleNames) {
+        this.resetSampleNames = resetSampleNames;
     }
 }
