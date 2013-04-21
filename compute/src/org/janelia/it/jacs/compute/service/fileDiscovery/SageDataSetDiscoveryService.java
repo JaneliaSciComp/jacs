@@ -48,7 +48,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             }
             else {
                 logger.info("Processing data set: "+dataSet.getName());
-                processSageDataSet(null, dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER));
+                processSageDataSet(null, dataSet);
             }
         }
     
@@ -62,7 +62,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     /**
      * Provide either imageFamily or dataSetIdentifier. 
      */
-    protected void processSageDataSet(String imageFamily, String dataSetIdentifier) throws Exception {
+    protected void processSageDataSet(String imageFamily, Entity dataSet) throws Exception {
     	
     	SageDAO sageDAO = new SageDAO(logger);
     	ResultSetIterator iterator = null;
@@ -70,6 +70,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     		List<SlideImage> slideGroup = null;
     		String currSlideCode = null;
     		
+    		String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
 			logger.info("Querying SAGE for data set: "+dataSetIdentifier);
 			iterator = sageDAO.getImagesByDataSet(dataSetIdentifier);
     		
@@ -80,7 +81,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 				if (!slideImage.getSlideCode().equals(currSlideCode)) {
 					// Process the current group
 					if (slideGroup != null) {
-		                processSlideGroup(dataSetIdentifier, currSlideCode, slideGroup);
+		                processSlideGroup(dataSet, currSlideCode, slideGroup);
 					}
 					// Start a new group
 					currSlideCode = slideImage.getSlideCode();
@@ -93,7 +94,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 
 			// Process the last group
 			if (slideGroup != null) {
-                processSlideGroup(dataSetIdentifier, currSlideCode, slideGroup);
+                processSlideGroup(dataSet, currSlideCode, slideGroup);
 			}
     	}
         finally {
@@ -111,6 +112,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		slideImage.setChannelSpec((String)row.get("channel_spec"));
 		slideImage.setGender((String)row.get("gender"));
 		slideImage.setArea((String)row.get("area"));
+		slideImage.setAge((String)row.get("age"));
 		slideImage.setChannels((String)row.get("channels"));
 		slideImage.setMountingProtocol((String)row.get("mounting_protocol"));
 		String objectiveStr = (String)row.get("objective");
@@ -134,10 +136,9 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		return slideImage;
     }
     
-    protected void processSlideGroup(String dataSetIdentifier, String slideCode, List<SlideImage> slideGroup) throws Exception {
+    protected void processSlideGroup(Entity dataSet, String slideCode, List<SlideImage> slideGroup) throws Exception {
     	
         HashMap<String, SlideImageGroup> tileGroups = new HashMap<String, SlideImageGroup>();
-        String sampleIdentifier = null;
         
         logger.info("Processing "+slideCode+", "+slideGroup.size()+" slide images");
         
@@ -166,10 +167,6 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     			logger.warn("File referenced by SAGE does not exist: "+slideImage.getImagePath());
     			return;
     		}
-    		
-            if (sampleIdentifier==null) {
-                sampleIdentifier = slideImage.getLine() + "-" + slideCode;
-            }
         	
             tileNum++;
         }
@@ -184,7 +181,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 			}
 		});
         
-        sampleHelper.createOrUpdateSample(null, sampleIdentifier, dataSetIdentifier, tileGroupList);
+        sampleHelper.createOrUpdateSample(null, slideCode, dataSet, tileGroupList);
     }
     
     protected void fixOrderIndices() throws Exception {

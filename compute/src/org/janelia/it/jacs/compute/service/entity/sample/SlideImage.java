@@ -1,6 +1,10 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.janelia.it.jacs.model.entity.EntityConstants;
 
 /**
  * Image data from SAGE that is used for creating Sample and LSM Stack entities. 
@@ -20,9 +24,52 @@ public class SlideImage {
     private String opticalRes;
     private String gender;
     private String area;
+    private String age;
     private String mountingProtocol;
     private File file;
 	
+    public Map<String,String> getProperties() {
+        Map<String,String> properties = new HashMap<String,String>();
+        properties.put(EntityConstants.ATTRIBUTE_SAGE_ID, sageId.toString());
+        properties.put(EntityConstants.ATTRIBUTE_SLIDE_CODE, slideCode);
+        properties.put(EntityConstants.ATTRIBUTE_FILE_PATH, imagePath);
+        properties.put(EntityConstants.ATTRIBUTE_LINE, line);
+        
+        if (channelSpec!=null) {
+            properties.put(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec);
+        }
+        
+        if (channels!=null) {
+            properties.put(EntityConstants.ATTRIBUTE_NUM_CHANNELS, channels);
+        }
+        
+        if (objective!=null) {
+            properties.put(EntityConstants.ATTRIBUTE_OBJECTIVE, objective);
+        }
+        
+        if (opticalRes!=null) {
+            properties.put(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, opticalRes);
+        }
+
+        if (gender!=null) {
+            properties.put(EntityConstants.ATTRIBUTE_GENDER, gender);
+        }
+
+        if (area!=null) {
+            properties.put(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA, area);
+        }
+        
+        if (age!=null) {
+            properties.put(EntityConstants.ATTRIBUTE_AGE, age);
+        }
+        
+        if (mountingProtocol!=null) {
+            properties.put(EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL, mountingProtocol);
+        }
+        
+        return properties;
+    }
+    
     public Long getSageId() {
         return sageId;
     }
@@ -89,6 +136,12 @@ public class SlideImage {
     }
     public void setArea(String area) {
         this.area = area;
+    }
+    public String getAge() {
+        return age;
+    }
+    public void setAge(String age) {
+        this.age = age;
     }
     public String getMountingProtocol() {
         return mountingProtocol;

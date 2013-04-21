@@ -61,7 +61,8 @@ public class EntityConstants {
 
     public static final String ATTRIBUTE_LINE                                = "Line";
     public static final String ATTRIBUTE_SLIDE_CODE                          = "Slide Code";
-    public static final String ATTRIBUTE_SAMPLE_NAME_SUFFIX                  = "Sample Name Suffix";
+    public static final String ATTRIBUTE_AGE                                 = "Age";
+    public static final String ATTRIBUTE_SAMPLE_NAME_PATTERN                 = "Sample Name Pattern";
     public static final String ATTRIBUTE_DENORM_IDENTIFIER                   = "Denorm Identifier";
     public static final String ATTRIBUTE_DEFAULT_2D_IMAGE                    = "Default 2D Image";
     public static final String ATTRIBUTE_DEFAULT_3D_IMAGE                    = "Default 3D Image";
@@ -137,6 +138,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_DATA_SET_IDENTIFIER                 = "Data Set Identifier";
     public static final String ATTRIBUTE_PIPELINE_PROCESS                    = "Pipeline Process";
     public static final String ATTRIBUTE_SAGE_SYNC                           = "SAGE Sync";
+    public static final String ATTRIBUTE_SAGE_ID                             = "SAGE Id";
     
     // Error Attributes
     public static final String ATTRIBUTE_MESSAGE                             = "Message";
