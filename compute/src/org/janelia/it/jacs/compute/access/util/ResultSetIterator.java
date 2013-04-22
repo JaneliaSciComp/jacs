@@ -1,10 +1,9 @@
-    package org.janelia.it.jacs.compute.access.util;
+package org.janelia.it.jacs.compute.access.util;
 
 import java.sql.*;
 import java.util.*;
 
 import org.apache.log4j.Logger;
-
 
 /**
  * Iterator-style wrapper for JDBC ResultSets. 
@@ -82,7 +81,7 @@ public class ResultSetIterator implements Iterator<Map<String,Object>> {
     		if (conn!=null) conn.close();
     	}
     	catch (SQLException e) {
-            rethrow(e);
+            logger.error("Error closing result set iterator",e);
     	}
     }
     
