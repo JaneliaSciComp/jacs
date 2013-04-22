@@ -128,7 +128,7 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
 
     @Override
     protected int getRequiredMemoryInGB() {
-    	return 30;
+    	return 40;
     }
 
 	@Override
