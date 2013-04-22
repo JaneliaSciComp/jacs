@@ -12,11 +12,12 @@ public class EntityConstants {
     public static final String STATUS_DEPRECATED                     = "Deprecated";
     public static final String STATUS_VALID                          = "Valid";
 
-    // Entity Names
+    // Common Entity Names
     public static final String NAME_SHARED_DATA                      = "Shared Data";
-    public static final String NAME_MY_DATA_SETS                     = "My Data Sets";
-    public static final String NAME_PUBLIC_DATA_SETS                 = "Public Data Sets";
     public static final String NAME_SPLIT_PICKING                    = "Split Picking";
+    public static final String NAME_DATA_SETS                        = "Data Sets";
+    public static final String NAME_ALIGNMENT_BOARDS                 = "Alignment Boards";
+    public static final String NAME_TRASH                            = "Trash";
     
     // Entity Types
     public static final String TYPE_ANNOTATION                       = "Annotation";

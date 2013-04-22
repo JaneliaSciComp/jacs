@@ -3209,4 +3209,24 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             throw new DaoException(e);
         }
     }
+    
+    public Entity createAlignmentBoard(String subjectKey, String alignmentBoardName, String alignmentSpace, String opticalRes, String pixelRes) throws ComputeException {
+        
+        Entity board = newEntity(EntityConstants.TYPE_ALIGNMENT_BOARD, alignmentBoardName, subjectKey);
+        board.setValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE, alignmentSpace);
+        board.setValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, opticalRes);
+        board.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, pixelRes);
+        saveOrUpdate(board);
+
+        Entity alignmentBoardFolder = getCommonRootFolderByName(subjectKey, EntityConstants.NAME_ALIGNMENT_BOARDS, true);
+        if (alignmentBoardFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PROTECTED)==null) {
+            EntityUtils.addAttributeAsTag(alignmentBoardFolder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
+            saveOrUpdate(alignmentBoardFolder);
+        }
+        
+        addEntityToParent(alignmentBoardFolder, board, alignmentBoardFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+        
+        return board;
+    }
+    
 }

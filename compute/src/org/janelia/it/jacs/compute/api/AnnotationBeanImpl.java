@@ -556,4 +556,17 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             throw new ComputeException("Error deleting attribute: "+attributeName,e);
         }
     }
+
+    public Entity createAlignmentBoard(String subjectKey, String alignmentBoardName, String alignmentSpace, String opticalRes, String pixelRes) throws ComputeException {
+        try {
+            Entity alignmentBoard = _annotationDAO.createAlignmentBoard(subjectKey, alignmentBoardName, alignmentSpace, opticalRes, pixelRes);
+            _logger.info("Created alignment board "+alignmentBoardName+" (id="+alignmentBoard.getId()+") for subject "+subjectKey);
+            return alignmentBoard;
+        }
+        catch (Exception e) {
+            _logger.error("Error creating new alignment board ("+alignmentBoardName+") for subject "+subjectKey,e);
+            throw new ComputeException("Error creating new alignment board ("+alignmentBoardName+") for subject "+subjectKey,e);
+        }
+    }
+    
 }

@@ -26,6 +26,9 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  */
 public class UpgradeUserDataService extends AbstractEntityService {
 
+    public static final String NAME_MY_DATA_SETS                     = "My Data Sets";
+    public static final String NAME_PUBLIC_DATA_SETS                 = "Public Data Sets";
+    
     private static final String OPTICAL_RES_UNIFIED = "0.62x0.62x0.62";
     private static final String PIXEL_RES_UNIFIED = "1024x512x218";
     private static final String OPTICAL_RES_UNIFIED_63x = "0.38x0.38x0.38";
@@ -74,54 +77,78 @@ public class UpgradeUserDataService extends AbstractEntityService {
             }
         }
         
-        
-//        String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
-//        if (StringUtils.isEmpty(sampleEntityId)) {
-//            processSamples();
-//          processNeuronSeparationResults();
-//        }
-//        else {
-//            Entity sampleEntity = entityBean.getEntityAndChildren(new Long(sampleEntityId));
-//            if (sampleEntity == null) {
-//                throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
-//            }    
-//            processSample(entityBean.getEntityTree(sampleEntity.getId()));
-//        }
-    }
-    
-    private void processSamples() throws Exception {
-        for(Entity entity : entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_SAMPLE)) {
-            // This is intentionally not loaded into the looped entity because we would run out of memory
-            Entity sample = entityBean.getEntityTree(entity.getId());
-            if (sample!=null) { 
-                logger.info("Processing sample "+sample.getName()+" ("+sample.getOwnerKey()+")");
-                processSample(sample);
-            }
-        }
-    }
+        // Upgrade all folders, regardless of user
 
-    /**
-     * For one sample:
-     *    - Set alignment space for the alignment result
-     *    - Set optical format for each alignment result
-     *    - Set optical format for each aligned neuron separation
-     */
-    private void processSample(Entity sample) throws Exception {
+        for(Entity folder : EJBFactory.getLocalEntityBean().getEntitiesByNameAndTypeName(null, NAME_MY_DATA_SETS, EntityConstants.TYPE_FOLDER)) {
+            EntityUtils.addAttributeAsTag(folder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
+            folder.setName(EntityConstants.NAME_DATA_SETS);
+            entityBean.saveOrUpdateEntity(folder);
+            logger.info("Updated Data Sets folder for "+folder.getOwnerKey());
+        }
+
+        for(Entity folder : EJBFactory.getLocalEntityBean().getEntitiesByNameAndTypeName(null, NAME_PUBLIC_DATA_SETS, EntityConstants.TYPE_FOLDER)) {
+            EntityUtils.addAttributeAsTag(folder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
+            folder.setName(EntityConstants.NAME_DATA_SETS);
+            entityBean.saveOrUpdateEntity(folder);
+            logger.info("Updated Data Sets folder for "+folder.getOwnerKey());
+        }
+
+        for(Entity folder : EJBFactory.getLocalEntityBean().getEntitiesByNameAndTypeName(null, EntityConstants.NAME_ALIGNMENT_BOARDS, EntityConstants.TYPE_FOLDER)) {
+            EntityUtils.addAttributeAsTag(folder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
+            entityBean.saveOrUpdateEntity(folder);
+            logger.info("Updated Alignment Boards folder for "+folder.getOwnerKey());
+        }
         
-        String opticalRes = sampleHelper.getConsensusLsmAttributeValue(sample, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, null);
+        // Update samples 
         
-        for(Entity pipelineRun : EntityUtils.getDescendantsOfType(sample, EntityConstants.TYPE_PIPELINE_RUN, true)) {
-            for(Entity sampleProcessingResult : EntityUtils.getDescendantsOfType(pipelineRun, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, true)) {
-                for(Entity separation : EntityUtils.getDescendantsOfType(sampleProcessingResult, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, true)) {
-                    String nsOpticalRes = opticalRes;
-                    if (nsOpticalRes==null) {        
-                        String dir = separation.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                        nsOpticalRes = getOpticalResFromMetadataFile(dir);
-                    }
-                    setOpticalResolution(separation, nsOpticalRes);
-                }
-            }
-            
+//      String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
+//      if (StringUtils.isEmpty(sampleEntityId)) {
+//          processSamples();
+//        processNeuronSeparationResults();
+//      }
+//      else {
+//          Entity sampleEntity = entityBean.getEntityAndChildren(new Long(sampleEntityId));
+//          if (sampleEntity == null) {
+//              throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
+//          }    
+//          processSample(entityBean.getEntityTree(sampleEntity.getId()));
+//      }
+        
+    }
+//    
+//    private void processSamples() throws Exception {
+//        for(Entity entity : entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_SAMPLE)) {
+//            // This is intentionally not loaded into the looped entity because we would run out of memory
+//            Entity sample = entityBean.getEntityTree(entity.getId());
+//            if (sample!=null) { 
+//                logger.info("Processing sample "+sample.getName()+" ("+sample.getOwnerKey()+")");
+//                processSample(sample);
+//            }
+//        }
+//    }
+
+//    /**
+//     * For one sample:
+//     *    - Set alignment space for the alignment result
+//     *    - Set optical format for each alignment result
+//     *    - Set optical format for each aligned neuron separation
+//     */
+//    private void processSample(Entity sample) throws Exception {
+//        
+//        String opticalRes = sampleHelper.getConsensusLsmAttributeValue(sample, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, null);
+//        
+//        for(Entity pipelineRun : EntityUtils.getDescendantsOfType(sample, EntityConstants.TYPE_PIPELINE_RUN, true)) {
+//            for(Entity sampleProcessingResult : EntityUtils.getDescendantsOfType(pipelineRun, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, true)) {
+//                for(Entity separation : EntityUtils.getDescendantsOfType(sampleProcessingResult, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, true)) {
+//                    String nsOpticalRes = opticalRes;
+//                    if (nsOpticalRes==null) {        
+//                        String dir = separation.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+//                        nsOpticalRes = getOpticalResFromMetadataFile(dir);
+//                    }
+//                    setOpticalResolution(separation, nsOpticalRes);
+//                }
+//            }
+//            
 //            for(Entity alignmentResult : EntityUtils.getDescendantsOfType(pipelineRun, EntityConstants.TYPE_ALIGNMENT_RESULT, true)) {
 //                
 //                setAlignmentSpace(sample, alignmentResult);
@@ -163,118 +190,118 @@ public class UpgradeUserDataService extends AbstractEntityService {
 //                    }
 //                }
 //            }
-        }
-    }
-    
-    private String getOpticalResFromMetadataFile(String separationDir) throws Exception {
-
-        File[] metadataFiles = new File(separationDir).listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return name.endsWith(".metadata");
-            }
-        });
-        
-        for(File metadataFile : metadataFiles) {
-            Scanner scanner = new Scanner(metadataFile);
-            String lastLine = "";
-            while (scanner.hasNext()) {
-                lastLine = scanner.nextLine();
-            }
-            
-            Pattern p = Pattern.compile("([\\d\\.]+)\\s+([\\d\\.]+)\\s+([\\d\\.]+)");
-            Matcher m = p.matcher(lastLine);
-            if (m.matches()) {
-                String voxelSizeX = truncate(m.group(1));
-                String voxelSizeY = truncate(m.group(2));
-                String voxelSizeZ = truncate(m.group(3));
-                if (StringUtils.isEmpty(voxelSizeX) || StringUtils.isEmpty(voxelSizeY) || StringUtils.isEmpty(voxelSizeZ)) return null;
-                return voxelSizeX+"x"+voxelSizeY+"x"+voxelSizeZ;
-            }
-        }
-        
-        return null;
-    }
-    
-    private String truncate(String number) {
-        try {
-            Double d = Double.parseDouble(number);
-            return dfVoxelSize.format(d);
-        }
-        catch (NumberFormatException e) {
-            // Ignore
-        }
-        return number;
-    }
-    
-    /**
-     * For each Neuron Separation:
-     *     1) Change "Neuron Fragments" to "Mask Entity Collection"
-     *     2) Set a Default 3d Image for each Neuron Separation
-     */
-    private void processNeuronSeparationResults() throws Exception {
-
-        for(Entity entity : entityBean.getEntitiesByTypeName(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
-            // This is intentionally not loaded into the looped entity because we would run out of memory
-            Entity separation = entityBean.getEntityTree(entity.getId());
-            logger.info("Processing separation "+separation.getName()+" ("+separation.getOwnerKey()+")");
-            
-            Entity supportingFiles = EntityUtils.getSupportingData(separation);
-            if (supportingFiles==null) {
-                // Skip invalid separations
-                continue;
-            }
-            
-            if (separation.getChildByAttributeName(EntityConstants.ATTRIBUTE_MASK_ENTITY_COLLECTION)==null) {
-                EntityData nfcEd = EntityUtils.findChildEntityDataWithType(separation, EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION);
-                if (nfcEd!=null) {
-                    nfcEd.setEntityAttribute(entityBean.getEntityAttributeByName(EntityConstants.ATTRIBUTE_MASK_ENTITY_COLLECTION));
-                    entityBean.saveOrUpdateEntityData(nfcEd);    
-                }
-            }
-            
-            Entity signalVolume = EntityUtils.findChildWithName(separation, "ConsolidatedSignal.v3dpbd");
-            if (signalVolume!=null) {
-                entityHelper.setImageIfNecessary(separation, EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE,  signalVolume);
-                Entity fastLoadFolder = EntityUtils.findChildWithName(separation, "Fast Load");    
-                if (fastLoadFolder!=null) {
-                    Entity fastSignal = EntityUtils.findChildWithName(separation, "ConsolidatedSignal2_25.mp4");        
-                    entityHelper.setImageIfNecessary(signalVolume, EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE, fastSignal);
-                }
-            }
-        }
-    }
-    
-    private void setAlignmentSpace(Entity sampleEntity, Entity alignmentResult) throws Exception {
-
-        if ("Optic Lobe Alignment".equals(alignmentResult.getName())) {
-            // No longer supporting old optic lobe alignments
-        }
-        else if ("Whole Brain 63x Alignment".equals(alignmentResult.getName())) {
-            // No longer supporting padded alignments
-        }
-        else {
-            setAlignmentSpace(alignmentResult, AlignmentSpace.UNIFIED_20X);
-        }
-    }
-
-    public void setOpticalResolution(Entity entity, String opticalRes) throws Exception {
-        if (entity==null) return;
-        entityHelper.setOpticalResolution(entity, opticalRes);
-        logger.info("Set optical resolution to "+opticalRes+" on "+entity.getName());
-    }
-
-    public void setPixelResolution(Entity entity, String pixelRes) throws Exception {
-        if (entity==null) return;
-        entityHelper.setPixelResolution(entity, pixelRes);
-        logger.info("Set pixel resolution to "+pixelRes+" on "+entity.getName());
-    }
-    
-    private void setAlignmentSpace(Entity entity, AlignmentSpace alignmentSpace) throws Exception {
-        if (entity==null || alignmentSpace==null) return;
-        if (EntityUtils.findChildWithType(entity, EntityConstants.TYPE_ALIGNMENT_SPACE)!=null) return;
-        Entity alignmentSpaceEntity = alignmentSpaces.get(alignmentSpace);
-        entityHelper.setAlignmentSpace(entity, alignmentSpaceEntity.getName());
-        logger.info("Set alignment space to "+alignmentSpaceEntity.getName()+" on "+entity.getName());
-    }
+//        }
+//    }
+//    
+//    private String getOpticalResFromMetadataFile(String separationDir) throws Exception {
+//
+//        File[] metadataFiles = new File(separationDir).listFiles(new FilenameFilter() {
+//            @Override
+//            public boolean accept(File dir, String name) {
+//                return name.endsWith(".metadata");
+//            }
+//        });
+//        
+//        for(File metadataFile : metadataFiles) {
+//            Scanner scanner = new Scanner(metadataFile);
+//            String lastLine = "";
+//            while (scanner.hasNext()) {
+//                lastLine = scanner.nextLine();
+//            }
+//            
+//            Pattern p = Pattern.compile("([\\d\\.]+)\\s+([\\d\\.]+)\\s+([\\d\\.]+)");
+//            Matcher m = p.matcher(lastLine);
+//            if (m.matches()) {
+//                String voxelSizeX = truncate(m.group(1));
+//                String voxelSizeY = truncate(m.group(2));
+//                String voxelSizeZ = truncate(m.group(3));
+//                if (StringUtils.isEmpty(voxelSizeX) || StringUtils.isEmpty(voxelSizeY) || StringUtils.isEmpty(voxelSizeZ)) return null;
+//                return voxelSizeX+"x"+voxelSizeY+"x"+voxelSizeZ;
+//            }
+//        }
+//        
+//        return null;
+//    }
+//    
+//    private String truncate(String number) {
+//        try {
+//            Double d = Double.parseDouble(number);
+//            return dfVoxelSize.format(d);
+//        }
+//        catch (NumberFormatException e) {
+//            // Ignore
+//        }
+//        return number;
+//    }
+//    
+//    /**
+//     * For each Neuron Separation:
+//     *     1) Change "Neuron Fragments" to "Mask Entity Collection"
+//     *     2) Set a Default 3d Image for each Neuron Separation
+//     */
+//    private void processNeuronSeparationResults() throws Exception {
+//
+//        for(Entity entity : entityBean.getEntitiesByTypeName(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
+//            // This is intentionally not loaded into the looped entity because we would run out of memory
+//            Entity separation = entityBean.getEntityTree(entity.getId());
+//            logger.info("Processing separation "+separation.getName()+" ("+separation.getOwnerKey()+")");
+//            
+//            Entity supportingFiles = EntityUtils.getSupportingData(separation);
+//            if (supportingFiles==null) {
+//                // Skip invalid separations
+//                continue;
+//            }
+//            
+//            if (separation.getChildByAttributeName(EntityConstants.ATTRIBUTE_MASK_ENTITY_COLLECTION)==null) {
+//                EntityData nfcEd = EntityUtils.findChildEntityDataWithType(separation, EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION);
+//                if (nfcEd!=null) {
+//                    nfcEd.setEntityAttribute(entityBean.getEntityAttributeByName(EntityConstants.ATTRIBUTE_MASK_ENTITY_COLLECTION));
+//                    entityBean.saveOrUpdateEntityData(nfcEd);    
+//                }
+//            }
+//            
+//            Entity signalVolume = EntityUtils.findChildWithName(separation, "ConsolidatedSignal.v3dpbd");
+//            if (signalVolume!=null) {
+//                entityHelper.setImageIfNecessary(separation, EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE,  signalVolume);
+//                Entity fastLoadFolder = EntityUtils.findChildWithName(separation, "Fast Load");    
+//                if (fastLoadFolder!=null) {
+//                    Entity fastSignal = EntityUtils.findChildWithName(separation, "ConsolidatedSignal2_25.mp4");        
+//                    entityHelper.setImageIfNecessary(signalVolume, EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE, fastSignal);
+//                }
+//            }
+//        }
+//    }
+//    
+//    private void setAlignmentSpace(Entity sampleEntity, Entity alignmentResult) throws Exception {
+//
+//        if ("Optic Lobe Alignment".equals(alignmentResult.getName())) {
+//            // No longer supporting old optic lobe alignments
+//        }
+//        else if ("Whole Brain 63x Alignment".equals(alignmentResult.getName())) {
+//            // No longer supporting padded alignments
+//        }
+//        else {
+//            setAlignmentSpace(alignmentResult, AlignmentSpace.UNIFIED_20X);
+//        }
+//    }
+//
+//    public void setOpticalResolution(Entity entity, String opticalRes) throws Exception {
+//        if (entity==null) return;
+//        entityHelper.setOpticalResolution(entity, opticalRes);
+//        logger.info("Set optical resolution to "+opticalRes+" on "+entity.getName());
+//    }
+//
+//    public void setPixelResolution(Entity entity, String pixelRes) throws Exception {
+//        if (entity==null) return;
+//        entityHelper.setPixelResolution(entity, pixelRes);
+//        logger.info("Set pixel resolution to "+pixelRes+" on "+entity.getName());
+//    }
+//    
+//    private void setAlignmentSpace(Entity entity, AlignmentSpace alignmentSpace) throws Exception {
+//        if (entity==null || alignmentSpace==null) return;
+//        if (EntityUtils.findChildWithType(entity, EntityConstants.TYPE_ALIGNMENT_SPACE)!=null) return;
+//        Entity alignmentSpaceEntity = alignmentSpaces.get(alignmentSpace);
+//        entityHelper.setAlignmentSpace(entity, alignmentSpaceEntity.getName());
+//        logger.info("Set alignment space to "+alignmentSpaceEntity.getName()+" on "+entity.getName());
+//    }
 }

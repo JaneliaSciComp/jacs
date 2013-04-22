@@ -29,10 +29,6 @@ public class SampleHelper extends EntityHelper {
 
     private static final String NO_CONSENSUS_VALUE = "NO_CONSENSUS";
     
-    protected static final String TRASH_FOLDER_NAME = "Trash";
-    protected static final String PRIVATE_DATA_SET_FOLDER_NAME = "My Data Sets";
-    protected static final String PUBLIC_DATA_SET_FOLDER_NAME = "Public Data Sets";
-    
     protected AnnotationBeanLocal annotationBean;
     protected boolean resetSampleNames = true;
     
@@ -204,7 +200,7 @@ public class SampleHelper extends EntityHelper {
         }
         else {
             String newName = getSampleName(dataSet, objective, isSubSample, sampleProperties);
-            if (resetSampleNames && sample.getName().equals(newName)) {
+            if (resetSampleNames && !sample.getName().equals(newName)) {
                 logger.info("  Updating sample name to: "+newName);
                 sample.setName(newName);
                 // No need to save the new name, since we'll save the sample in setSampleAttributes below
@@ -857,18 +853,13 @@ public class SampleHelper extends EntityHelper {
     private void loadTopLevelFolder() throws Exception {
         if (topLevelFolder!=null) return;
         logger.info("Getting data set folder...");
-        if ("group:flylight".equals(ownerKey)) {
-            this.topLevelFolder = createOrVerifyRootEntity(PUBLIC_DATA_SET_FOLDER_NAME, true, false);
-        }
-        else {
-            this.topLevelFolder = createOrVerifyRootEntity(PRIVATE_DATA_SET_FOLDER_NAME, true, false);
-        }
+        this.topLevelFolder = createOrVerifyRootEntity(EntityConstants.NAME_DATA_SETS, true, false);
     }
     
     private void loadTrashFolder() throws Exception {
         if (trashFolder!=null) return;
         logger.info("Getting trash folder...");
-        this.trashFolder = createOrVerifyRootEntity(TRASH_FOLDER_NAME, true, false);
+        this.trashFolder = createOrVerifyRootEntity(EntityConstants.NAME_TRASH, true, false);
     }
 
     public boolean isResetSampleNames() {

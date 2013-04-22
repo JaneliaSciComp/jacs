@@ -46,7 +46,7 @@ public class InitResultAttributesService extends AbstractEntityService {
         }
 
         String opticalRes = default3dImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
-        String pixelRes = default3dImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
+        String pixelRes = default3dImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
         logger.info("Putting '"+opticalRes+"' in OPTICAL_RESOLUTION");
         processData.putItem("OPTICAL_RESOLUTION", opticalRes);
         logger.info("Putting '"+pixelRes+"' in PIXEL_RESOLUTION");

@@ -73,4 +73,5 @@ public interface AnnotationBeanRemote {
     public Entity getUserDataSetByName(String subjectKey, String dataSetName) throws ComputeException;
     public Entity getUserDataSetByIdentifier(String dataSetIdentifier) throws ComputeException;
     
+    public Entity createAlignmentBoard(String subjectKey, String alignmentBoardName, String alignmentSpace, String opticalRes, String pixelRes) throws ComputeException;
 }

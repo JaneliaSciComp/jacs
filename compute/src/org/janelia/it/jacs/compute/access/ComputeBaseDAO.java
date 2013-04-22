@@ -5,8 +5,11 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.*;
 
+import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.rmi.PortableRemoteObject;
+import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
 import org.hibernate.*;
@@ -18,6 +21,7 @@ import org.janelia.it.jacs.model.tasks.TaskMessage;
 import org.janelia.it.jacs.model.tasks.search.SearchTask;
 import org.janelia.it.jacs.model.user_data.*;
 import org.janelia.it.jacs.model.user_data.search.SearchResultNode;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,26 +30,35 @@ import org.janelia.it.jacs.model.user_data.search.SearchResultNode;
  * Time: 2:24:24 PM
  */
 public class ComputeBaseDAO {
+    
     public static final int STATUS_TYPE = 0;
     public static final int STATUS_DESCRIPTION = 1;
-
+    
+    private final String jndiPath = SystemConfigurationProperties.getString("jdbc.jndiName", null);
+    private final String jdbcDriver = SystemConfigurationProperties.getString("jdbc.driverClassName", null);
+    private final String jdbcUrl = SystemConfigurationProperties.getString("jdbc.url", null);
+    private final String jdbcUser = SystemConfigurationProperties.getString("jdbc.username", null);
+    private final String jdbcPw = SystemConfigurationProperties.getString("jdbc.password", null);
+    
     protected Logger _logger;
     protected SessionFactory sessionFactory;
     protected Session externalSession;
 
     public Connection getJdbcConnection() throws DaoException {
     	try {
-            String jdbcDriver=SystemConfigurationProperties.getString("jdbc.driverClassName");
-            String jdbcUrl=SystemConfigurationProperties.getString("jdbc.url");
-            String jdbcUser=SystemConfigurationProperties.getString("jdbc.username");
-            String jdbcPw=SystemConfigurationProperties.getString("jdbc.password");
-            Class.forName(jdbcDriver);
-            Connection connection = DriverManager.getConnection(
-                    jdbcUrl,
-                    jdbcUser,
-                    jdbcPw);
+    	    Connection connection = null;
+            if (!StringUtils.isEmpty(jndiPath)) {
+                _logger.debug("getJdbcConnection() using these parameters: jndiPath="+jndiPath);
+                Context ctx = new InitialContext();
+                DataSource ds = (DataSource) PortableRemoteObject.narrow(ctx.lookup(jndiPath), DataSource.class);
+                connection = ds.getConnection();
+            }
+            else {
+                _logger.debug("getJdbcConnection() using these parameters: driverClassName="+jdbcDriver+" url="+jdbcUrl+" user="+jdbcUser);
+                Class.forName(jdbcDriver);
+                connection = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPw);
+            }
             connection.setAutoCommit(false);
-            _logger.debug("getJdbcConnection() using these parameters: driverClassName="+jdbcDriver+" url="+jdbcUrl+" user="+jdbcUser);
             return connection;
     	}
     	catch (Exception e) {

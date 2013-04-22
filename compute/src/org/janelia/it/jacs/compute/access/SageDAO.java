@@ -1,6 +1,17 @@
 
 package org.janelia.it.jacs.compute.access;
 
+import java.io.InputStream;
+import java.sql.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.rmi.PortableRemoteObject;
+import javax.sql.DataSource;
+
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -12,12 +23,7 @@ import org.dom4j.io.SAXReader;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.api.support.SageTerm;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-
-import java.io.InputStream;
-import java.sql.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * Simple JDBC access to the Sage database.
@@ -28,14 +34,26 @@ public class SageDAO {
 
     protected Logger _logger;
 
+    private final String jndiPath = SystemConfigurationProperties.getString("sage.jdbc.jndiName", null);
+    private final String jdbcDriver = SystemConfigurationProperties.getString("sage.jdbc.driverClassName", null);
+    private final String jdbcUrl = SystemConfigurationProperties.getString("sage.jdbc.url", null);
+    private final String jdbcUser = SystemConfigurationProperties.getString("sage.jdbc.username", null);
+    private final String jdbcPw = SystemConfigurationProperties.getString("sage.jdbc.password", null);
+    
     public Connection getJdbcConnection() throws DaoException {
     	try {
-            String jdbcDriver = SystemConfigurationProperties.getString("sage.jdbc.driverClassName");
-            String jdbcUrl = SystemConfigurationProperties.getString("sage.jdbc.url");
-            String jdbcUser = SystemConfigurationProperties.getString("sage.jdbc.username");
-            String jdbcPw = SystemConfigurationProperties.getString("sage.jdbc.password");
-            Class.forName(jdbcDriver);
-            Connection connection = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPw);
+            Connection connection = null;
+            if (!StringUtils.isEmpty(jndiPath)) {
+                _logger.debug("getJdbcConnection() using these parameters: jndiPath="+jndiPath);
+                Context ctx = new InitialContext();
+                DataSource ds = (DataSource) PortableRemoteObject.narrow(ctx.lookup(jndiPath), DataSource.class);
+                connection = ds.getConnection();
+            }
+            else {
+                _logger.debug("getJdbcConnection() using these parameters: driverClassName="+jdbcDriver+" url="+jdbcUrl+" user="+jdbcUser);
+                Class.forName(jdbcDriver);
+                connection = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPw);
+            }
             connection.setAutoCommit(false);
             return connection;
     	}
