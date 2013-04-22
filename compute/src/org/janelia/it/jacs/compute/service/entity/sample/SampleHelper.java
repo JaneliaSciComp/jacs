@@ -357,7 +357,7 @@ public class SampleHelper extends EntityHelper {
      */
     public Entity setSampleAttributes(Entity sample, Entity dataSet, String channelSpec, String objective, Map<String,String> sampleProperties) throws Exception {
         String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-        logger.info("    Setting sample properties: "+sampleProperties);
+        logger.debug("    Setting sample properties: "+sampleProperties);
         
         // Find out which attributes a Sample can support. We only want to set those. 
         Set<String> attrs = new HashSet<String>();
@@ -473,7 +473,7 @@ public class SampleHelper extends EntityHelper {
             addToParent(supportingFiles, imageTile, null, EntityConstants.ATTRIBUTE_ENTITY);
             
             for(SlideImage image : tileGroup.getImages()) {
-                logger.info("  Adding LSM file to sample: "+image.getImagePath());
+                logger.info("  Adding LSM file to sample: "+image.getFile().getName());
                 Entity lsmEntity = createLsmStackFromFile(image);
                 addToParent(imageTile, lsmEntity, imageTile.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
             }
@@ -550,7 +550,7 @@ public class SampleHelper extends EntityHelper {
         lsmStack.setUpdatedDate(createDate);
         lsmStack.setName(image.getFile().getName());
         lsmStack = setLsmStackAttributes(lsmStack, image);
-        logger.info("  Saved LSM stack as "+lsmStack.getId());
+        logger.info("    Saved LSM stack as "+lsmStack.getId());
         return lsmStack;
     }
     
@@ -563,7 +563,7 @@ public class SampleHelper extends EntityHelper {
      */
     public Entity setLsmStackAttributes(Entity lsmStack, SlideImage image) throws Exception {
         Map<String,String> imageProperties = image.getProperties();
-        logger.info("    Setting LSM stack properties:"+imageProperties);
+        logger.debug("    Setting LSM stack properties:"+imageProperties);
         
         // Find out which attributes a Sample can support. We only want to set those. 
         Set<String> attrs = new HashSet<String>();

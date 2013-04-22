@@ -98,7 +98,9 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 			}
     	}
         finally {
-        	if (iterator!=null) iterator.close();
+        	if (iterator!=null) {
+        	    iterator.close();
+        	}
         }
     }
     
@@ -224,7 +226,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         int orderIndex = 0;
         for(EntityData ed : orderedData) {
             if (ed.getOrderIndex()==null || orderIndex!=ed.getOrderIndex()) {
-                logger.info("  Updating link (id="+ed.getId()+") to "+ed.getChildEntity().getName()+" with order index "+orderIndex+" (was "+ed.getOrderIndex()+")");
+                logger.info("  Updating "+ed.getChildEntity().getName()+" with order index "+orderIndex+" (was "+ed.getOrderIndex()+")");
                 ed.setOrderIndex(orderIndex);
                 entityBean.saveOrUpdateEntityData(ed);
             }
