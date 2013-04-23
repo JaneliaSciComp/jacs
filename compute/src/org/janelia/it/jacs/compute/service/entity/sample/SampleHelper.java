@@ -96,7 +96,7 @@ public class SampleHelper extends EntityHelper {
             }
         }    
         
-        logger.info("  Sample objectives: "+objectiveGroups.keySet());
+        logger.debug("  Sample objectives: "+objectiveGroups.keySet());
         Entity sample = null;
         
         if (objectiveGroups.isEmpty()) {
@@ -469,7 +469,7 @@ public class SampleHelper extends EntityHelper {
             addToParent(supportingFiles, imageTile, null, EntityConstants.ATTRIBUTE_ENTITY);
             
             for(SlideImage image : tileGroup.getImages()) {
-                logger.info("  Adding LSM file to sample: "+image.getFile().getName());
+                logger.info("    Adding LSM file to sample: "+image.getFile().getName());
                 Entity lsmEntity = createLsmStackFromFile(image);
                 addToParent(imageTile, lsmEntity, imageTile.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
             }
@@ -546,7 +546,7 @@ public class SampleHelper extends EntityHelper {
         lsmStack.setUpdatedDate(createDate);
         lsmStack.setName(image.getFile().getName());
         lsmStack = setLsmStackAttributes(lsmStack, image);
-        logger.info("    Saved LSM stack as "+lsmStack.getId());
+        logger.info("      Saved LSM stack as "+lsmStack.getId());
         return lsmStack;
     }
     
