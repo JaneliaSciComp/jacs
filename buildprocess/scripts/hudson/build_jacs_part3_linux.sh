@@ -148,7 +148,7 @@ if [ $INSTALL_CLIENT == 1 ]; then
     #sleep 4
 
     echo "Create tarballs"
-    cd $STAGING_DIR
+    cd $FLYSUITE_CLIENTS_DIR
     tar cvfz "$FLYSUITE_TARBALL" $FLYSUITE_NAME
     tar cvfz "$FLYSUITE_LINUX_TARBALL" $FLYSUITE_LINUX_NAME
     #7z a "$FLYSUITE_WINDOWS_ZIPFILE" $FLYSUITE_WINDOWS_NAME
