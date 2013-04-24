@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.compute.api;
 
+import java.util.List;
+
 import javax.ejb.Local;
 
 import org.janelia.it.jacs.model.entity.Entity;
@@ -32,4 +34,12 @@ public interface AnnotationBeanLocal extends AnnotationBeanRemote {
 	 * @throws ComputeException
 	 */
 	public void deleteAttribute(String ownerKey, String attributeName) throws ComputeException;
+	
+	/**
+	 * Return the ids of all orphan annotations where the target entity id is no longer in existence. 
+	 * @param subjectKey
+	 * @return
+	 * @throws ComputeException
+	 */
+	public List<Long> getOrphanAnnotationIdsMissingTargets(String subjectKey) throws ComputeException;
 }

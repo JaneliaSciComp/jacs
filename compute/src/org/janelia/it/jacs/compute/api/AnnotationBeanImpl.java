@@ -568,5 +568,15 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             throw new ComputeException("Error creating new alignment board ("+alignmentBoardName+") for subject "+subjectKey,e);
         }
     }
+
+    public List<Long> getOrphanAnnotationIdsMissingTargets(String subjectKey) throws ComputeException {
+        try {
+            return _annotationDAO.getOrphanAnnotationIdsMissingTargets(subjectKey);
+        }
+        catch (DaoException e) {
+            _logger.error("Error getting orphan annotation ids for: "+subjectKey, e);
+            throw new ComputeException("Error getting orphan annotation ids for:: "+subjectKey,e);
+        }
+    }
     
 }

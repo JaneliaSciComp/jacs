@@ -1335,9 +1335,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         return getUserEntitiesWithAttributeValue(subjectKey, null, attrName, attrValue);
     }
     
-    
-    
-    
     public boolean deleteEntityById(String subjectKey, Long entityId) throws DaoException {
         Session session = null;
         Transaction transaction = null;
@@ -1350,7 +1347,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             	_logger.debug("The parent entity data with id=" + parentEd.getId() + " has been deleted.");
             }
             Entity entity = getEntityById(subjectKey, entityId);
-            if (entity!=null && entity.getOwnerKey().equals(subjectKey)) {
+            if (entity!=null && (subjectKey==null || entity.getOwnerKey().equals(subjectKey))) {
 	            session.delete(entity);
 	            _logger.debug("The entity with id=" + entityId + " has been deleted.");
             }
@@ -2682,6 +2679,55 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     	return sampleIds;
     }
 
+    public List<Long> getOrphanAnnotationIdsMissingTargets(String subjectKey) throws DaoException {
+        
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        
+        List<Long> annotationIds = new ArrayList<Long>();
+        
+        EntityType annotationType = getEntityTypeByName(EntityConstants.TYPE_ANNOTATION);
+        EntityAttribute targetAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
+        
+        try {
+            StringBuffer sql = new StringBuffer("select a.id from entity a ");
+            sql.append("join entityData aed on aed.parent_entity_id=a.id and aed.entity_att_id=? ");
+            sql.append("left outer join entity target on aed.value=target.id ");
+            sql.append("where a.entity_type_id=? ");
+            sql.append("and target.id is null ");
+            if (subjectKey!=null) {
+                sql.append("and a.ownerKey = ? ");
+            }
+            
+            conn = getJdbcConnection();
+            stmt = conn.prepareStatement(sql.toString());
+            stmt.setLong(1, targetAttr.getId());
+            stmt.setLong(2, annotationType.getId());
+            if (subjectKey!=null) {
+                stmt.setString(3, subjectKey);
+            }
+            
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                annotationIds.add(rs.getBigDecimal(1).longValue());
+            }
+        }
+        catch (SQLException e) {
+            throw new DaoException(e);
+        }
+        finally {
+            try {
+                if (stmt!=null) stmt.close();
+                if (conn!=null) conn.close(); 
+            }
+            catch (SQLException e) {
+                _logger.warn("Ignoring error encountered while closing JDBC connection",e);
+            }
+        }
+        
+        return annotationIds;
+    }
+    
     public void loadLazyEntity(String subjectKey, Entity entity, boolean recurse) throws DaoException {
 
         if (!EntityUtils.areLoaded(entity.getEntityData())) {
