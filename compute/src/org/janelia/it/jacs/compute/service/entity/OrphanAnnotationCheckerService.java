@@ -28,13 +28,16 @@ public class OrphanAnnotationCheckerService extends AbstractEntityService {
         List<Long> annotationIds = annotationBean.getOrphanAnnotationIdsMissingTargets(null);
         logger.info("Found "+annotationIds.size()+" annotations");
         
+        int numDeleted = 0;
+        
         if (deleteAnnotationsMissingTargets) {
             logger.info("Deleting "+annotationIds.size()+" annotations");
             for(Long id : annotationIds) {
             	entityBean.deleteEntityById(id);
+            	numDeleted++;
             }
         }
         
-        logger.info("Done with orphan annotation deletion");
+        logger.info("Done with orphan annotation deletion. Deleted "+numDeleted+" annotation entities.");
     }
 }
