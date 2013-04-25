@@ -25,7 +25,7 @@
         <sequence forEach="SAMPLE_ENTITY_ID">
     
             <!-- Move over to archive -->
-            <include name="Move to Archive" process="SyncSampleToArchive">
+            <include name="Move to Archive" process="CompleteSampleArchival_SyncSampleToArchive">
                 <input name="SAMPLE_ENTITY_ID"/>
             </include>
             
