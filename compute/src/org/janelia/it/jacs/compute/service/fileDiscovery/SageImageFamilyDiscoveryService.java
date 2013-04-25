@@ -7,6 +7,7 @@ import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -23,10 +24,8 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
 @Deprecated
 public class SageImageFamilyDiscoveryService extends AbstractEntityService {
 
-    protected static final String PRIVATE_DATA_SET_FOLDER_NAME = "My Data Sets";
-    protected static final String PUBLIC_DATA_SET_FOLDER_NAME = "Public Data Sets";
-    
     protected Entity topLevelFolder;
+    protected SampleHelper sampleHelper;
     
     protected int sageRowsProcessed = 0;
     protected int numSamplesCreated = 0;
@@ -36,22 +35,19 @@ public class SageImageFamilyDiscoveryService extends AbstractEntityService {
     @Override
     public void execute() throws Exception {
 
+        this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
+        
         // Clear "visited" flags on all our Samples
         logger.info("Clearing visitation flags...");
-        annotationBean.deleteAttribute(ownerKey, EntityConstants.ATTRIBUTE_VISITED);
+        sampleHelper.clearVisited();
         
         String sageImageFamily = (String)processData.getItem("SAGE_IMAGE_FAMILY");
         if (sageImageFamily==null) {
     		throw new IllegalArgumentException("SAGE_IMAGE_FAMILY may not be null");
         }
         
-		if ("group:flylight".equals(ownerKey)) {
-        	topLevelFolder = createOrVerifyRootEntity(PUBLIC_DATA_SET_FOLDER_NAME, true, false);
-		}
-		else {
-        	topLevelFolder = createOrVerifyRootEntity(PRIVATE_DATA_SET_FOLDER_NAME, true, false);
-		}
-        
+    	topLevelFolder = createOrVerifyRootEntity(EntityConstants.NAME_DATA_SETS, true, false);
+		
         logger.info("Will put discovered entities into top level entity "+topLevelFolder.getName()+", id="+topLevelFolder.getId());
         
         processSageDataSet(sageImageFamily, null);	
@@ -661,6 +657,18 @@ public class SageImageFamilyDiscoveryService extends AbstractEntityService {
         lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, image.channelSpec);   
         lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
         return lsmStack;
+    }
+
+    protected void cleanUnvisitedSamples(Entity dataSet) throws Exception {
+        String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+        Entity dataSetFolder = sampleHelper.getDataSetFolderByIdentifierMap().get(dataSetIdentifier);
+        for(EntityData ed : dataSetFolder.getEntityData()) {
+            Entity sample = ed.getChildEntity();
+            if (sample==null || sample.getEntityType().getName().equals(EntityConstants.TYPE_SAMPLE)) continue;
+            if (sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISITED)==null) {
+                logger.info("  Moving unvisited sample to trash: "+sample.getName()+" (id="+sample.getId()+")");
+            }
+        }
     }
     
     protected void fixOrderIndices() throws Exception {

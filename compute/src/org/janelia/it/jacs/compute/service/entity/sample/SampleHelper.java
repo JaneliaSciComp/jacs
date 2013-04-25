@@ -192,7 +192,7 @@ public class SampleHelper extends EntityHelper {
             throw new IllegalStateException("Sample consensus attribute Slide Code does not match slide code");
         }
         
-        Entity sample = findOrAnnexExistingSample(tileGroupList);
+        Entity sample = findOrAnnexExistingSample(tileGroupList, dataSet, sampleProperties);
         
         if (sample == null) {
             sample = createSample(dataSet, channelSpec, objective, sampleProperties, isSubSample);
@@ -215,12 +215,15 @@ public class SampleHelper extends EntityHelper {
     }
     
     /**
-     * Find the sample with the given identifier. If it doesn't exist to the owner, then annex it. 
-     * @param sampleIdentifier
+     * Find the sample with the given LSMs. If it doesn't exist to the owner, then annex it. If it doesn't exist, 
+     * try to annex a legacy sample from FlyLight, based on the putative sample identifier.
+     * @param tileGroupList
+     * @param dataSet
+     * @param sampleProperties
      * @return
      * @throws ComputeException
      */
-    public Entity findOrAnnexExistingSample(Collection<SlideImageGroup> tileGroupList) throws Exception {
+    public Entity findOrAnnexExistingSample(Collection<SlideImageGroup> tileGroupList, Entity dataSet, Map<String,String> sampleProperties) throws Exception {
 
         Set<String> lsmNames = new HashSet<String>();
         for(SlideImageGroup slideImageGroup : tileGroupList) {
@@ -233,13 +236,18 @@ public class SampleHelper extends EntityHelper {
         logger.info("  Looking for existing sample with LSM set: "+lsmNames);
         
         Entity matchedSample = null;
+        Set<Long> visitedSamples = new HashSet<Long>();
         
         for(String lsmName : lsmNames) {
             for(Entity lsm : entityBean.getEntitiesByName(lsmName)) {
                 Entity sample = entityBean.getAncestorWithType(null, lsm.getId(), EntityConstants.TYPE_SAMPLE);
                 if (sample!=null) {
-                    Set<String> matchedLsmNames = new HashSet<String>();
+                    if (visitedSamples.contains(sample.getId())) {
+                        continue;
+                    }
+                    visitedSamples.add(sample.getId());
                     
+                    Set<String> matchedLsmNames = new HashSet<String>();
                     entityLoader.populateChildren(sample);
                     Entity supportingData = EntityUtils.getSupportingData(sample);
                     if (supportingData != null) {
@@ -263,24 +271,38 @@ public class SampleHelper extends EntityHelper {
         }
         
         if (matchedSample==null) {
-            // Did not find any matching samples
+            // Did not find any matching samples, try legacy name-based search
+            
+            String sampleIdentifier = getSampleName(dataSet, null, false, sampleProperties);
+            List<Entity> matchingSamples = entityBean.getUserEntitiesByNameAndTypeName(null, 
+                    sampleIdentifier, EntityConstants.TYPE_SAMPLE);
+            
+            for(Entity entity : matchingSamples) {
+                if (entity.getOwnerKey().equals("group:flylight")) {
+                    logger.info("  Found legacy FlyLight sample with matching putative name: "+sampleIdentifier);
+                    return entity;
+                }
+            }            
+            
             return null;
         }
-        
-        if (matchedSample.getOwnerKey().equals(ownerKey)) {
-            // Reuse existing example
-            return matchedSample;
-        }
         else {
-            // Need to annex the sample if possible
-            if ("group:flylight".equals(ownerKey)) {
-                // FlyLight cannot steal samples from others
-                return null;
+            // Found matching sample
+            if (matchedSample.getOwnerKey().equals(ownerKey)) {
+                // Reuse existing example
+                return matchedSample;
             }
             else {
-                return entityBean.annexEntityTree(ownerKey, matchedSample.getId());        
+                // Need to annex the sample if possible
+                if ("group:flylight".equals(ownerKey)) {
+                    // FlyLight cannot steal samples from others
+                    return null;
+                }
+                else {
+                    return entityBean.annexEntityTree(ownerKey, matchedSample.getId());        
+                }
+                
             }
-            
         }
     }
     
