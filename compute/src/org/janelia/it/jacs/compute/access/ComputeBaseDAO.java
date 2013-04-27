@@ -34,11 +34,11 @@ public class ComputeBaseDAO {
     public static final int STATUS_TYPE = 0;
     public static final int STATUS_DESCRIPTION = 1;
     
-    private final String jndiPath = SystemConfigurationProperties.getString("jdbc.jndiName", null);
-    private final String jdbcDriver = SystemConfigurationProperties.getString("jdbc.driverClassName", null);
-    private final String jdbcUrl = SystemConfigurationProperties.getString("jdbc.url", null);
-    private final String jdbcUser = SystemConfigurationProperties.getString("jdbc.username", null);
-    private final String jdbcPw = SystemConfigurationProperties.getString("jdbc.password", null);
+    private final String jndiPath = SystemConfigurationProperties.getString("batch.jdbc.jndiName", null);
+    private final String jdbcDriver = SystemConfigurationProperties.getString("batch.jdbc.driverClassName", null);
+    private final String jdbcUrl = SystemConfigurationProperties.getString("batch.jdbc.url", null);
+    private final String jdbcUser = SystemConfigurationProperties.getString("batch.jdbc.username", null);
+    private final String jdbcPw = SystemConfigurationProperties.getString("batch.jdbc.password", null);
     
     protected Logger _logger;
     protected SessionFactory sessionFactory;
