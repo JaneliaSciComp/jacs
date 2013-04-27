@@ -321,6 +321,8 @@
                             <input name="RESULT_ENTITY_ID"/>
                             <output name="OUTPUT_FILENAME"/>
                             <output name="ANALYSIS_PIPELINE_NAME"/>
+                            <output name="OPTICAL_RESOLUTION"/>
+                            <output name="PIXEL_RESOLUTION"/>
                         </operation>
                         
                         <!-- Run neuron separation on prealigned data -->
@@ -331,6 +333,8 @@
                             <input name="RESULT_ENTITY_NAME" value="Neuron Separation"/>
                             <input name="SIGNAL_CHANNELS"/>
                             <input name="REFERENCE_CHANNEL"/>
+                            <input name="OPTICAL_RESOLUTION"/>
+                            <input name="PIXEL_RESOLUTION"/>
                         </include>
             
                     </sequence>

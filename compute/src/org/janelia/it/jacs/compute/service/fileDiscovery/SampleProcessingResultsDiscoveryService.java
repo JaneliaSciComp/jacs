@@ -7,6 +7,7 @@ import java.util.Map;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
+import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -57,7 +58,12 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
         if (sampleEntity == null) {
             throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
         }
-        
+
+        // Find consensus optical res
+        entityLoader.populateChildren(sampleEntity);
+        SampleHelper sampleHelper = new SampleHelper(entityBean, computeBean, null, ownerKey, logger);        
+        String opticalRes = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, sampleArea.getName());
+
         Entity supportingFiles = EntityUtils.getSupportingData(sampleProcessingResult);
         
         Map<String,Entity> jsonEntityMap = new HashMap<String,Entity>();
@@ -68,63 +74,62 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
                 logger.info("Found JSON metadata file: "+resultItem.getName());
             }
             else if (resultItem.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_3D)) {
-                logger.info("Setting channel specification for "+resultItem.getName()+" (id="+resultItem.getId()+") to "+channelSpec);
-                helper.setChannelSpec(resultItem, channelSpec);
+                if (channelSpec!=null) {
+                    logger.info("Setting channel specification for "+resultItem.getName()+" (id="+resultItem.getId()+") to "+channelSpec);
+                    helper.setChannelSpec(resultItem, channelSpec);
+                }
+                if (opticalRes!=null) {
+                    logger.info("Setting optic resolution for "+resultItem.getName()+" (id="+resultItem.getId()+") to "+opticalRes);
+                    helper.setOpticalResolution(resultItem, opticalRes);
+                }
             }
         }
 
-        entityLoader.populateChildren(sampleEntity);
-        Entity sampleSupportingFiles = EntityUtils.getSupportingData(sampleEntity);
+        for(Entity tileEntity : sampleArea.getTiles()) {
+            for(EntityData ed : tileEntity.getOrderedEntityData()) {
+                Entity lsmStack = ed.getChildEntity();
+                if (lsmStack != null && lsmStack.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK)) {
+                    
+                    // Don't trust entities in ProcessData, fetch a fresh copy
+                    lsmStack = entityBean.getEntityById(lsmStack.getId());
+                    
+                    logger.info("Processing metadata for LSM: "+lsmStack.getName());
+                    
+                    Entity jsonEntity = jsonEntityMap.get(lsmStack.getName());
+                    if (jsonEntity==null) {
+                        logger.warn("  No JSON metadata file found for LSM: "+lsmStack.getName());
+                        continue;
+                    }
 
-        if (sampleSupportingFiles!=null) {
-            sampleSupportingFiles = entityBean.getEntityTree(sampleSupportingFiles.getId());
-            for(Entity tileEntity : sampleArea.getTiles()) {
-                for(EntityData ed : tileEntity.getOrderedEntityData()) {
-                    Entity lsmStack = ed.getChildEntity();
-                    if (lsmStack != null && lsmStack.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK)) {
-                        
-                        // Don't trust entities in ProcessData, fetch a fresh copy
-                        lsmStack = entityBean.getEntityById(lsmStack.getId());
-                        
-                        logger.info("Processing metadata for LSM: "+lsmStack.getName());
-                        
-                        Entity jsonEntity = jsonEntityMap.get(lsmStack.getName());
-                        if (jsonEntity==null) {
-                            logger.warn("  No JSON metadata file found for LSM: "+lsmStack.getName());
-                            continue;
-                        }
-
-                        StringBuffer colors = new StringBuffer();
-                        StringBuffer dyeNames = new StringBuffer();
-                        File jsonFile = new File(jsonEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-                        
-                        try {
-                            LSMMetadata metadata = LSMMetadata.fromFile(jsonFile);
-                            for(Channel channel : metadata.getChannels()) {
-                                if (colors.length()>0) colors.append(",");
-                                if (dyeNames.length()>0) dyeNames.append(",");
-                                colors.append(channel.getColor());
-                                DetectionChannel detection = metadata.getDetectionChannel(channel);
-                                if (detection!=null) {
-                                    dyeNames.append(detection.getDyeName());
-                                }
+                    StringBuffer colors = new StringBuffer();
+                    StringBuffer dyeNames = new StringBuffer();
+                    File jsonFile = new File(jsonEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+                    
+                    try {
+                        LSMMetadata metadata = LSMMetadata.fromFile(jsonFile);
+                        for(Channel channel : metadata.getChannels()) {
+                            if (colors.length()>0) colors.append(",");
+                            if (dyeNames.length()>0) dyeNames.append(",");
+                            colors.append(channel.getColor());
+                            DetectionChannel detection = metadata.getDetectionChannel(channel);
+                            if (detection!=null) {
+                                dyeNames.append(detection.getDyeName());
                             }
                         }
-                        catch (Exception e) {
-                            throw new Exception("Error parsing LSM metadata file: "+jsonFile,e);
-                        }
-                        
-                        logger.info("  Setting colors: "+colors);
-                        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS, colors.toString());
-                        if (dyeNames.length()>0) {
-                            logger.info("  Setting dyes: "+dyeNames);
-                            lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES, dyeNames.toString());
-                        }
-                        entityBean.saveOrUpdateEntity(lsmStack);
                     }
+                    catch (Exception e) {
+                        throw new Exception("Error parsing LSM metadata file: "+jsonFile,e);
+                    }
+                    
+                    logger.info("  Setting colors: "+colors);
+                    lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS, colors.toString());
+                    if (dyeNames.length()>0) {
+                        logger.info("  Setting dyes: "+dyeNames);
+                        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES, dyeNames.toString());
+                    }
+                    entityBean.saveOrUpdateEntity(lsmStack);
                 }
             }
-
         }
         
     }

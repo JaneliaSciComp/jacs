@@ -396,7 +396,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     
     public List<Entity> getEntitiesByTypeName(String subjectKey, String entityTypeName) throws ComputeException {
         try {
-            return _annotationDAO.getEntitiesByTypeName(Arrays.asList(subjectKey), entityTypeName);
+            return _annotationDAO.getEntitiesByTypeName(subjectKey==null?null:Arrays.asList(subjectKey), entityTypeName);
         }
         catch (DaoException e) {
             _logger.error("Error trying to get the entities of type "+entityTypeName, e);

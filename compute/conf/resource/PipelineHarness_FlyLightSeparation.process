@@ -20,8 +20,6 @@
 			<input name="RESULT_ENTITY_ID"/>
 			<output name="SIGNAL_CHANNELS"/>
 			<output name="REFERENCE_CHANNEL"/>
-            <output name="OPTICAL_RESOLUTION"/>
-            <output name="PIXEL_RESOLUTION"/>
 		</operation>
 	
         <sequence if="REFERENCE_CHANNEL is null">
@@ -40,6 +38,9 @@
 			<input name="ANALYSIS_ALGORITHM" value="NEURON_SEPARATOR"/>
 			<input name="RESULT_ENTITY_ID"/>
 			<output name="OUTPUT_FILENAME"/>
+            <output name="ANALYSIS_PIPELINE_NAME"/>
+            <output name="OPTICAL_RESOLUTION"/>
+            <output name="PIXEL_RESOLUTION"/>
 		</operation>
 					
         <include name="Pipeline" process="FlyLightSeparationPipeline">
