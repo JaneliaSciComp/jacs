@@ -21,7 +21,7 @@ for (Entity sample : e.getUserEntitiesByTypeName(subject, TYPE_SAMPLE)) {
     def default3d = sample.getValueByAttributeName(ATTRIBUTE_DEFAULT_3D_IMAGE)
 
     boolean reprocess = false;
-    if (dataSet?.contains("asoy_mb_polarity_63x_case_1") && !default3d?.contains("Aligned")) {
+    if (dataSet?.contains("asoy_mb_polarity_63x_case_3") && !default3d?.contains("Aligned")) {
         reprocess = true;
     }
 
