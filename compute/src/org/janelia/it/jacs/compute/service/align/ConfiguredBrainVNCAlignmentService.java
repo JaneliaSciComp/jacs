@@ -53,12 +53,18 @@ public class ConfiguredBrainVNCAlignmentService extends ConfiguredAlignmentServi
             throw new ServiceException(e);
         }
     }
+
+    @Override
+    protected int getRequiredMemoryInGB() {
+        return 24;
+    }
     
     @Override
     protected String getAlignerCommand() {
         StringBuilder builder = new StringBuilder(super.getAlignerCommand());
         if (vncFilename!=null) {
             builder.append(" -v " + vncFilename);
+            builder.append(" -d 1024x512xZ"); // TODO: change this to use the real resolution once we can get it
         }
         return builder.toString();
     }
