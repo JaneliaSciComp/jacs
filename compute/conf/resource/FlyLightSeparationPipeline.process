@@ -44,6 +44,7 @@
 				<input name="INPUT_FILENAME"/>
 	            <input name="SIGNAL_CHANNELS"/>
 				<input name="REFERENCE_CHANNEL"/>
+				<input name="OBJECTIVE"/>
 				<input name="PREVIOUS_RESULT_FILENAME"/>
                 <input name="ALIGNED_CONSOLIDATED_LABEL_FILEPATH"/>
 				<output name="ARCHIVE_FILE_PATH"/>

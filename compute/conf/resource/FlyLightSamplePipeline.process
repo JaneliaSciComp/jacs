@@ -323,6 +323,7 @@
                             <output name="ANALYSIS_PIPELINE_NAME"/>
                             <output name="OPTICAL_RESOLUTION"/>
                             <output name="PIXEL_RESOLUTION"/>
+                            <output name="OBJECTIVE"/>
                         </operation>
                         
                         <!-- Run neuron separation on prealigned data -->
@@ -335,6 +336,7 @@
                             <input name="REFERENCE_CHANNEL"/>
                             <input name="OPTICAL_RESOLUTION"/>
                             <input name="PIXEL_RESOLUTION"/>
+                            <input name="OBJECTIVE"/>
                         </include>
             
                     </sequence>

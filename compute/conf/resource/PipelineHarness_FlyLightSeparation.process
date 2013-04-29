@@ -37,10 +37,12 @@
 	    <operation name="Get Parameters" processor="org.janelia.it.jacs.compute.service.entity.sample.InitAnalysisParametersService">
 			<input name="ANALYSIS_ALGORITHM" value="NEURON_SEPARATOR"/>
 			<input name="RESULT_ENTITY_ID"/>
+			<input name="SAMPLE_ENTITY_ID"/>
 			<output name="OUTPUT_FILENAME"/>
             <output name="ANALYSIS_PIPELINE_NAME"/>
             <output name="OPTICAL_RESOLUTION"/>
             <output name="PIXEL_RESOLUTION"/>
+            <output name="OBJECTIVE"/>
 		</operation>
 					
         <include name="Pipeline" process="FlyLightSeparationPipeline">
@@ -52,6 +54,7 @@
 			<input name="REFERENCE_CHANNEL"/>
             <input name="OPTICAL_RESOLUTION"/>
             <input name="PIXEL_RESOLUTION"/>
+            <input name="OBJECTIVE"/>
         </include>
 		
     </sequence>

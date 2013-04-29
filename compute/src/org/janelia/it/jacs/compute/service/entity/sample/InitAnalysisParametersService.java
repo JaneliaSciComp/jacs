@@ -14,7 +14,19 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
 public class InitAnalysisParametersService extends AbstractEntityService {
 	
     public void execute() throws Exception {
-    	
+
+        String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
+        if (sampleEntityId != null) {
+            Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
+            if (sampleEntity!=null) {
+                String objective = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
+                if (objective!=null) {
+                    logger.info("Putting '"+objective+"' in OBJECTIVE");
+                    processData.putItem("OBJECTIVE", objective);
+                }
+            }
+        }
+        
 		String analysisAlgorithm = (String)processData.getItem("ANALYSIS_ALGORITHM");
     	if (StringUtils.isEmpty(analysisAlgorithm)) {
     		throw new IllegalArgumentException("ANALYSIS_ALGORITHM may not be null");
