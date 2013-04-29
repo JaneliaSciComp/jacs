@@ -2,8 +2,7 @@
 <!DOCTYPE hibernate-mapping PUBLIC
     "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
     "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
-<hibernate-mapping schema="flyportal"
-                   package="org.janelia.it.jacs.model.user_data">
+<hibernate-mapping package="org.janelia.it.jacs.model.user_data">
     <class name="org.janelia.it.jacs.model.user_data.Subject" table="subject" lazy="true">
 
         <id name="id" access="field" column="id" type="java.lang.Long">
@@ -37,7 +36,7 @@
         </set>
 
         <map
-            name="preferenceMap" table="subject_preference_map" schema="flyportal"
+            name="preferenceMap" table="subject_preference_map" 
             lazy="false" inverse="false" cascade="all" sort="unsorted">
             <key column="user_id"/>
             <index column="category_and_name" type="string"/>

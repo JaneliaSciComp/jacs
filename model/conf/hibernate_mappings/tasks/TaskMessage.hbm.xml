@@ -27,8 +27,7 @@
     "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
     "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
 
-<hibernate-mapping schema="flyportal"
-				   package="org.janelia.it.jacs.model.tasks" >
+<hibernate-mapping package="org.janelia.it.jacs.model.tasks" >
 
        <class name="TaskMessage" table="task_message">
             <id name="messageId" column="message_id" type="java.lang.Long">

@@ -1,9 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
 "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
-<hibernate-mapping schema="flyportal"
-				   package="org.janelia.it.jacs.model.entity"
-                   >
+<hibernate-mapping package="org.janelia.it.jacs.model.entity">
     <class name="EntityActorPermission" table="entity_actor_permission">
         <id name="id" column="id" type="java.lang.Long">
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />

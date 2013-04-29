@@ -27,8 +27,7 @@
     "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
     "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
 
-<hibernate-mapping schema="flyportal"
-				   package="org.janelia.it.jacs.model.metadata"
+<hibernate-mapping package="org.janelia.it.jacs.model.metadata"
                    default-access="property"
                    default-lazy="false"
                    auto-import="true"
@@ -44,7 +43,7 @@
         <property name="filterMax" type="java.lang.Double" column="filter_max" not-null="true" />
         <property name="intellectualPropertyNotice" type="java.lang.String" column="intellectual_property_notice" />        
         <property name="title" type="java.lang.String" column="sample_title" />
-        <array name="comments" table="bio_sample_comment" schema="flyportal" inverse="false" >
+        <array name="comments" table="bio_sample_comment" inverse="false" >
              <key column="sample_id" foreign-key="bio_sample_comment_fk_sample"/>
              <index column="comment_no"/>
              <element type="string" column="comment_text"/>

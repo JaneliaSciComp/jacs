@@ -27,8 +27,7 @@
     "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
     "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
 
-<hibernate-mapping schema="flyportal"
-				   package="org.janelia.it.jacs.model.genomics">
+<hibernate-mapping package="org.janelia.it.jacs.model.genomics">
 
     <resultset name="searchJobInfoMapping">
     <return-scalar column="taskId" type="long"/>
@@ -326,16 +325,16 @@
          where tp.task_id = task.task_id
            and tp.parameter_name = 'searchTopic') as searchTopic
          from
-           (select t.*, (select max(event_no) from flyportal.task_event e where e.task_id=t.task_id) as last_event_no
+           (select t.*, (select max(event_no) from task_event e where e.task_id=t.task_id) as last_event_no
             from task t
             where t.task_owner=:userLogin and not coalesce(t.task_deleted_flag,false) and t.subclass||'' = 'search'
             order by t.task_id desc limit 5) as task
-           inner join flyportal.task_event as first_event on first_event.task_id=task.task_id and first_event.event_no = 0
-           inner join flyportal.task_event as last_event on last_event.task_id=task.task_id and last_event.event_no=task.last_event_no
+           inner join task_event as first_event on first_event.task_id=task.task_id and first_event.event_no = 0
+           inner join task_event as last_event on last_event.task_id=task.task_id and last_event.event_no=task.last_event_no
     </sql-query>
 
     <sql-query name="taskParameterPvoStringQuery" resultset-ref="taskParameterPvoStringMapping">
-       select task.task_id, task.parameters from flyportal.task order by task_id asc;
+       select task.task_id, task.parameters from task order by task_id asc;
     </sql-query>
 
 </hibernate-mapping>
