@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.service.fileDiscovery;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -63,8 +64,11 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
         entityLoader.populateChildren(sampleEntity);
         SampleHelper sampleHelper = new SampleHelper(entityBean, computeBean, null, ownerKey, logger);        
         String opticalRes = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, sampleArea.getName());
-
+        
         Entity supportingFiles = EntityUtils.getSupportingData(sampleProcessingResult);
+        String pixelRes = null;
+        
+        Entity image3d = null;
         
         Map<String,Entity> jsonEntityMap = new HashMap<String,Entity>();
         for(Entity resultItem : supportingFiles.getChildren()) {
@@ -73,7 +77,14 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
                 jsonEntityMap.put(stub, resultItem);
                 logger.info("Found JSON metadata file: "+resultItem.getName());
             }
+            else if (resultItem.getName().endsWith(".tc")) {
+                pixelRes = getStitchedDimensions(resultItem.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+            }
             else if (resultItem.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_3D)) {
+                if (image3d!=null) {
+                    logger.warn("More than one 3d image result detected for sample processing "+sampleProcessingResult.getId());
+                }
+                image3d = resultItem; 
                 if (channelSpec!=null) {
                     logger.info("Setting channel specification for "+resultItem.getName()+" (id="+resultItem.getId()+") to "+channelSpec);
                     helper.setChannelSpec(resultItem, channelSpec);
@@ -85,6 +96,16 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
             }
         }
 
+        if (pixelRes==null) {
+            // The result image was not stitched (since no *.tc file was found), so we can get the pixel resolution from the LSMs
+            pixelRes = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, sampleArea.getName());
+        }
+
+        if (pixelRes!=null) {
+            logger.info("Setting pixel resolution for "+image3d.getName()+" (id="+image3d.getId()+") to "+pixelRes);
+            helper.setPixelResolution(image3d, pixelRes);
+        }
+        
         for(Entity tileEntity : sampleArea.getTiles()) {
             for(EntityData ed : tileEntity.getOrderedEntityData()) {
                 Entity lsmStack = ed.getChildEntity();
@@ -132,5 +153,28 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
             }
         }
         
+    }
+
+    public static String getStitchedDimensions(String filePath) throws Exception {
+        
+        boolean takeNext = false;
+        String dimensions = null;
+        Scanner scanner = new Scanner(new File(filePath));
+        while (scanner.hasNextLine()) {
+            String line = scanner.nextLine();
+            if (takeNext) {
+                dimensions = line;
+                break;
+            }
+            else if (line.contains("# dimensions")) {
+                takeNext = true;
+            }
+        }
+        
+        scanner.close();
+        
+        String[] parts = dimensions.split(" ");
+        if (parts.length<3) return null;
+        return parts[0]+"x"+parts[1]+"x"+parts[2];
     }
 }
