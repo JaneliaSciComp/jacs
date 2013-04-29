@@ -39,7 +39,7 @@ public class OpticLobeAlignmentService extends LegacyAlignmentService {
 
 		logger.info("Starting "+getClass().getName()+" with taskId=" + task.getObjectId() + " resultNodeId="
 				+ resultFileNode.getObjectId() + " resultDir=" + resultFileNode.getDirectoryPath() + " workingDir="
-				+ resultFileNode.getDirectoryPath() + " inputFilename=" + inputFilename);
+				+ resultFileNode.getDirectoryPath() + " inputFilename=" + input1.getInputFilename());
 
         StringBuffer script = new StringBuffer();
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix() + "\n");
@@ -51,9 +51,9 @@ public class OpticLobeAlignmentService extends LegacyAlignmentService {
             " -t " +  EXECUTABLE_DIR + TEMPLATE_DIR +
             " -w " +  resultFileNode.getDirectoryPath() +
             " -n \"" +  tileName + "\"" + 
-            " -i \"" +  inputFilename + "\"" +
-        	" -r \"" + opticalResolution + "\"" +
-        	" -c " +  refChannel + "\n");
+            " -i \"" +  input1.getInputFilename() + "\"" +
+        	" -r \"" + input1.getOpticalResolution() + "\"" +
+        	" -c " +  input1.getRefChannel() + "\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix() + "\n");
         writer.write(script.toString());
 	}

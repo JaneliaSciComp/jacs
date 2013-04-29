@@ -58,14 +58,12 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
     
     protected Entity sampleEntity;
     protected String alignedArea;
-    protected String inputFilename;
-    protected String inputSeparationFilename;
-    protected String channelSpec;
-    protected String opticalResolution;
     protected String gender;
-    protected Integer refChannel;
-    protected Integer refChannelOneIndexed;
     protected File outputFile;
+    
+    protected boolean warpNeurons;
+    protected AlignmentInputFile input1;
+    protected AlignmentInputFile input2;
     
     @Override
     protected String getGridServicePrefixName() {
@@ -85,7 +83,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
             this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
             this.entityLoader = new EntityBeanEntityLoader(entityBean);
             
-            boolean warpNeurons = !"false".equals((String)processData.getItem("WARP_NEURONS"));
+            this.warpNeurons = !"false".equals((String)processData.getItem("WARP_NEURONS"));
             
             String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
             if (sampleEntityId == null || "".equals(sampleEntityId)) {
@@ -113,59 +111,65 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
                             else {
                                 Entity image = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
                                 this.alignedArea = areaName;    
-                                this.inputFilename = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                                this.channelSpec = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-                                
-                                Entity separation = EntityUtils.findChildWithType(result, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
-                                if (separation!=null) {
-                                    entityLoader.populateChildren(separation);
-                                    Entity nsSupportingFiles = EntityUtils.getSupportingData(separation);
-                                    if (nsSupportingFiles!=null) { 
-                                        entityLoader.populateChildren(nsSupportingFiles);
-                                        Entity labelFile = EntityUtils.findChildWithNameAndType(nsSupportingFiles, "ConsolidatedLabel.v3dpbd", EntityConstants.TYPE_IMAGE_3D);
-                                        if (labelFile==null) {
-                                            labelFile = EntityUtils.findChildWithNameAndType(nsSupportingFiles, "ConsolidatedLabel.v3draw", EntityConstants.TYPE_IMAGE_3D);
-                                        }
-                                        if (labelFile!=null && warpNeurons) {
-                                            this.inputSeparationFilename = labelFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH); 
-                                        }   
-                                    }
-                                }
+                                input1 = new AlignmentInputFile();
+                                input1.setPropertiesFromEntity(image);
+                                if (warpNeurons) input1.setInputSeparationFilename(getConsolidatedLabel(result));
                             }
                         }
                     }
                 }
             }
             
-            if (alignedArea!=null) {
-                logger.info("Found sample area to align: "+alignedArea);
-                logger.info("  Input filename: "+inputFilename);
-                logger.info("  Input channel spec: "+channelSpec);
-                logger.info("  Input separation to warp: "+inputSeparationFilename);
+            if (input1!=null) {
+                logInputFound("input stack", input1); 
+                logger.info("  Sample area: "+alignedArea);
                 
-                if (channelSpec.contains("r")) {
-                    this.refChannel = channelSpec.indexOf('r');
-                    this.refChannelOneIndexed = refChannel + 1;
-                    logger.info("  Reference channel: "+refChannel);
-                    logger.info("  Reference channel (one-indexed): "+refChannelOneIndexed);
-                    putOutputVars(channelSpec);
+                if (input1.getOpticalResolution()==null) {
+                    // Interoperability with legacy samples
+                    logger.warn("No optical resolution on the input file. Trying to find a consensus among the LSMs...");
+                    input1.setOpticalResolution(sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, alignedArea));
+                    if (input1.getOpticalResolution()!=null) {
+                        logger.info("Found optical resolution consensus: "+input1.getOpticalResolution());
+                    }
                 }
-
+                else {
+                    logger.info("  Optical resolution: "+input1.getOpticalResolution());
+                }
+                
+                if (input1.getPixelResolution()==null) {
+                    // Interoperability with legacy samples
+                    logger.warn("No pixel resolution on the input file. Trying to find a consensus among the LSMs...");
+                    input1.setPixelResolution(sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, alignedArea));
+                    if (input1.getPixelResolution()!=null) {
+                        logger.info("Found pixel resolution consensus: "+input1.getPixelResolution());
+                    }
+                }
+                else {
+                    logger.info("  Pixel resolution: "+input1.getPixelResolution());
+                }
+                
                 this.gender = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_GENDER, alignedArea);
                 if (gender!=null) {
                     logger.info("Found gender consensus: "+gender);
                 }
                 
-                this.opticalResolution = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, alignedArea);
-                if (opticalResolution!=null) {
-                    opticalResolution = opticalResolution.replaceAll("x", " ");
-                    logger.info("Found optical resolution consensus: "+opticalResolution);
-                }
+                putOutputVars(input1.getChannelSpec());
             }
         } 
         catch (Exception e) {
             throw new ServiceException(e);
         }
+    }
+    
+    protected void logInputFound(String type, AlignmentInputFile input) {
+        logger.info("Found "+type+": ");
+        logger.info("  Input filename: "+input.getInputFilename());
+        logger.info("  Input channel spec: "+input.getChannelSpec());
+        logger.info("  Input separation to warp: "+input.getInputSeparationFilename());
+        logger.info("  Reference channel: "+input.getRefChannel());
+        logger.info("  Reference channel (one-indexed): "+input.getRefChannelOneIndexed());    
+        logger.info("  Optical resolution: "+input.getOpticalResolution());
+        logger.info("  Pixel resolution: "+input.getPixelResolution());
     }
     
     protected void putOutputVars(String chanSpec) {
@@ -179,10 +183,29 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
         processData.putItem("REFERENCE_CHANNEL", referenceChannels);
     }
     
+    protected String getConsolidatedLabel(Entity result) throws Exception {
+
+        Entity separation = EntityUtils.findChildWithType(result, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
+        if (separation!=null) {
+            entityLoader.populateChildren(separation);
+            Entity nsSupportingFiles = EntityUtils.getSupportingData(separation);
+            if (nsSupportingFiles!=null) { 
+                entityLoader.populateChildren(nsSupportingFiles);
+                Entity labelFile = EntityUtils.findChildWithNameAndType(nsSupportingFiles, "ConsolidatedLabel.v3dpbd", EntityConstants.TYPE_IMAGE_3D);
+                if (labelFile==null) {
+                    labelFile = EntityUtils.findChildWithNameAndType(nsSupportingFiles, "ConsolidatedLabel.v3draw", EntityConstants.TYPE_IMAGE_3D);
+                }
+                if (labelFile!=null) {
+                    return labelFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH); 
+                }   
+            }
+        }
+        return null;
+    }
+    
     @Override
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
-        
-        if (inputFilename==null) {
+        if (input1==null) {
             throw new ServiceException("No input file was specified for alignment");
         }
         

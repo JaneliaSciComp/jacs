@@ -30,10 +30,10 @@ public abstract class LegacyAlignmentService extends AbstractAlignmentService {
     protected int getRequiredMemoryInGB() {
 
     	// For large input files we need more memory
-    	File inputFile = new File(inputFilename);
+    	File inputFile = new File(input1.getInputFilename());
     	long fileSize = inputFile.length();
-    	if ((inputFilename.endsWith("raw") && fileSize>LARGE_FILE_SIZE_THRESHOLD_UNCOMPRESSED) || 
-    			(inputFilename.endsWith("pbd") && fileSize>LARGE_FILE_SIZE_THRESHOLD_COMPRESSED)) {
+    	if ((input1.getInputFilename().endsWith("raw") && fileSize>LARGE_FILE_SIZE_THRESHOLD_UNCOMPRESSED) || 
+    			(input1.getInputFilename().endsWith("pbd") && fileSize>LARGE_FILE_SIZE_THRESHOLD_COMPRESSED)) {
     		logger.info("Input file size "+fileSize+" exceeds threshold. Will use 16 nodes for processing.");
     		return 96;
     	}

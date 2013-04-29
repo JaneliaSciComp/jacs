@@ -31,7 +31,6 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
 
 	protected String scriptFile;
 	protected String mountingProtocol;
-	protected Integer numChannels;
 	
     @Override
     protected void init(IProcessData processData) throws Exception {
@@ -47,10 +46,6 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
             if (supportingData!=null) {
                 this.mountingProtocol = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL, alignedArea);
             }
-            
-            if (channelSpec!=null) {
-                this.numChannels = channelSpec.length();
-            }
         } 
         catch (Exception e) {
             throw new ServiceException(e);
@@ -63,8 +58,7 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
 
 		logger.info("Running configured aligner "+ALIGNER_SCRIPT_CMD+" ("
 				+ " resultNodeId=" + resultFileNode.getObjectId() 
-				+ " outputDir=" + resultFileNode.getDirectoryPath() 
-				+ " inputFilename=" + inputFilename
+				+ " outputDir=" + resultFileNode.getDirectoryPath()
 				+")");
 		
         StringBuffer script = new StringBuffer();
@@ -86,19 +80,32 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
         cmd.append(" -c " + CONFIG_DIR + "/systemvars.apconf");
         cmd.append(" -t " + TEMPLATE_DIR);
         cmd.append(" -k " + TOOLKITS_DIR);
-        cmd.append(" -i " + inputFilename);
         if (mountingProtocol!=null) {
             cmd.append(" -m '\"" + mountingProtocol+"\"'");
         }
-        if (inputSeparationFilename!=null) {
-            cmd.append(" -e "+inputSeparationFilename);
+        if (input1!=null) {
+            cmd.append(" -i " + getInputParameter(input1));
+            cmd.append(" -e "+input1.getInputSeparationFilename());
         }
-        cmd.append(" -r " + refChannelOneIndexed);
-        cmd.append(" -s " + opticalResolution.replaceAll(" ", "x"));
-        if (numChannels!=null) {
-            cmd.append(" -n " + numChannels);
+        if (input2!=null) {
+            cmd.append(" -j " + getInputParameter(input2));
+            cmd.append(" -f "+input2.getInputSeparationFilename());
         }
         return cmd.toString();
+    }
+    
+    protected String getInputParameter(AlignmentInputFile input) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(input.getInputFilename());
+        sb.append(",");
+        sb.append(input.getNumChannels());
+        sb.append(",");
+        sb.append(input.getRefChannelOneIndexed());
+        sb.append(",");
+        sb.append(input.getOpticalResolution());
+        sb.append(",");
+        sb.append(input.getPixelResolution());
+        return sb.toString();
     }
     
     @Override

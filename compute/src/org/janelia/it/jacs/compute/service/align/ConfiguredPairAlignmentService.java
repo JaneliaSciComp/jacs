@@ -1,18 +1,10 @@
 package org.janelia.it.jacs.compute.service.align;
 
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
-import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
-import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
-import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
-import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.cv.Objective;
-import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
@@ -21,49 +13,16 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
-
-    protected EntityBeanLocal entityBean;
-    protected ComputeBeanLocal computeBean;
-    protected AnnotationBeanLocal annotationBean;
-    protected String ownerKey;
-    protected SampleHelper sampleHelper;
-    protected EntityBeanEntityLoader entityLoader;
-
-    protected String brain20xFilename;
-    protected int refChannel20xOneIndexed;
     
     @Override
     protected void init(IProcessData processData) throws Exception {
         super.init(processData);
         try {
-            this.entityBean = EJBFactory.getLocalEntityBean();
-            this.computeBean = EJBFactory.getLocalComputeBean();
-            this.annotationBean = EJBFactory.getLocalAnnotationBean();
-            String ownerName = ProcessDataHelper.getTask(processData).getOwner();
-            Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
-            this.ownerKey = subject.getKey();
-            this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
-            this.entityLoader = new EntityBeanEntityLoader(entityBean);
-            
-            String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
-            if (sampleEntityId == null || "".equals(sampleEntityId)) {
-                throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
-            }
-            
-            Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
-            if (sampleEntity == null) {
-                throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
-            }
-            
-            if (!EntityConstants.TYPE_SAMPLE.equals(sampleEntity.getEntityType().getName())) {
-                throw new IllegalArgumentException("Entity is not a sample: "+sampleEntityId);
-            }
-
             if (Objective.OBJECTIVE_63X.getName().equals(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE))) {
                 // Already within the 63x sample, we need the parent
                 Entity parentSample = entityBean.getAncestorWithType(sampleEntity, EntityConstants.TYPE_SAMPLE);
                 if (parentSample==null) {
-                    throw new IllegalStateException("Parent sample is null for 63x sample: "+sampleEntityId);
+                    throw new IllegalStateException("Parent sample is null for 63x sample: "+sampleEntity.getId());
                 }
                 initParameters(parentSample);
             }
@@ -84,48 +43,34 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
             String objective = objectiveSample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
             if (Objective.OBJECTIVE_20X.getName().equals(objective)) {
                 logger.info("Found 20x sub-sample: "+objectiveSample.getName());
-                Entity latest = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_ALIGNMENT_RESULT);
-                if (latest != null) {
-                    String filename = latest.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-                    if (filename!=null) {
-                        this.brain20xFilename = filename;
-                        logger.info("Found 20x aligned stack: "+brain20xFilename);
-                        Entity aligned = latest.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-                        if (aligned==null) throw new IllegalStateException("No default 2d image for 20x alignment result: "+latest.getId());
-                        String channelSpec = aligned.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-                        if (channelSpec==null) throw new IllegalStateException("No chan spec for 20x aligned file: "+aligned.getId());
-                        this.refChannel20xOneIndexed = channelSpec.indexOf('r') + 1;
-                        logger.info("Found 20x ref channel (one-indexed): "+refChannel20xOneIndexed);
+                Entity result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_ALIGNMENT_RESULT);
+                if (result != null) {
+                    Entity image = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+                    if (image!=null) {
+                        input2 = new AlignmentInputFile();
+                        input2.setPropertiesFromEntity(image);
+                        if (warpNeurons) input2.setInputSeparationFilename(getConsolidatedLabel(result));
+                        logger.info("Found 20x aligned stack: "+input2.getInputFilename());
+                        logInputFound("first input (20x aligned stack)", input2);
                     }
                 }
             }
             else if (Objective.OBJECTIVE_63X.getName().equals(objective)) {
                 logger.info("Found 63x sub-sample: "+objectiveSample.getName());
-                Entity latest = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT);
-                if (latest!=null) {
-                    String filename = latest.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-                    this.inputFilename = filename;
-                    logger.info("Found 63x stack: "+inputFilename);
-                    Entity aligned = latest.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-                    if (aligned==null) throw new IllegalStateException("No default 2d image for 63x result: "+latest.getId());
-                    this.channelSpec = aligned.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-                    if (channelSpec==null) throw new IllegalStateException("No chan spec for 63x file: "+aligned.getId());
-                    this.refChannel = channelSpec.indexOf('r');
-                    this.refChannelOneIndexed = refChannel + 1;
-                    this.numChannels = channelSpec.length();
-                    logger.info("Found 63x ref channel (one-indexed): "+refChannelOneIndexed);
-                    putOutputVars(channelSpec);
+                Entity result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT);
+                if (result!=null) {
+                    Entity image = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+                    if (image!=null) {
+                        input1 = new AlignmentInputFile();
+                        input1.setPropertiesFromEntity(image);
+                        if (warpNeurons) input2.setInputSeparationFilename(getConsolidatedLabel(result));
+                        logInputFound("second input (63x stack)", input1);
+                    }
                 }
 
                 this.gender = sampleHelper.getConsensusLsmAttributeValue(objectiveSample, EntityConstants.ATTRIBUTE_GENDER, alignedArea);
                 if (gender!=null) {
                     logger.info("Found gender consensus: "+gender);
-                }
-                
-                this.opticalResolution = sampleHelper.getConsensusLsmAttributeValue(objectiveSample, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, alignedArea);
-                if (opticalResolution!=null) {
-                    opticalResolution = opticalResolution.replaceAll("x", " ");
-                    logger.info("Found optical resolution consensus: "+opticalResolution);
                 }
             }
         }
@@ -147,13 +92,5 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
             }
         }
         return null;
-    }
-    
-    @Override
-    protected String getAlignerCommand() {
-        StringBuilder builder = new StringBuilder(super.getAlignerCommand());
-        builder.append(" -p " + brain20xFilename);
-        builder.append(" -q " + refChannel20xOneIndexed);
-        return builder.toString();
     }
 }

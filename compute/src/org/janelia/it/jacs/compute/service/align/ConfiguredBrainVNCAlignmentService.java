@@ -14,8 +14,6 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class ConfiguredBrainVNCAlignmentService extends ConfiguredAlignmentService {
-
-    protected String vncFilename;
     
     @Override
     protected void init(IProcessData processData) throws Exception {
@@ -31,16 +29,18 @@ public class ConfiguredBrainVNCAlignmentService extends ConfiguredAlignmentServi
                 String areaName = anatomicalArea.getName();
                 Entity result = entityBean.getEntityById(anatomicalArea.getSampleProcessingResultId());
                 if (result!=null) {
-                    String filename = result.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-                    if (filename!=null)  {
+                    entityLoader.populateChildren(result);
+                    Entity image = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+                    if (image!=null)  {
                         if ("VNC".equalsIgnoreCase(areaName)) {
-                            vncFilename  = filename;
+                            input2 = new AlignmentInputFile();
+                            input2.setPropertiesFromEntity(image);
+                            if (warpNeurons) input1.setInputSeparationFilename(getConsolidatedLabel(result));
                         }
                         else if ("Brain".equalsIgnoreCase(areaName)) {
-                            if (!filename.equals(inputFilename)) {
-                                logger.warn("Aligner's default pick for input file does not match the Brain area input that was found on result entity with id="+result.getId());
-                            }
-                            inputFilename = filename;    
+                            input1 = new AlignmentInputFile();
+                            input1.setPropertiesFromEntity(image);
+                            if (warpNeurons) input1.setInputSeparationFilename(getConsolidatedLabel(result));
                         }
                         else {
                             logger.warn("Unrecognized sample area: "+areaName);
@@ -57,15 +57,5 @@ public class ConfiguredBrainVNCAlignmentService extends ConfiguredAlignmentServi
     @Override
     protected int getRequiredMemoryInGB() {
         return 24;
-    }
-    
-    @Override
-    protected String getAlignerCommand() {
-        StringBuilder builder = new StringBuilder(super.getAlignerCommand());
-        if (vncFilename!=null) {
-            builder.append(" -v " + vncFilename);
-            builder.append(" -d 1024x512xZ"); // TODO: change this to use the real resolution once we can get it
-        }
-        return builder.toString();
     }
 }
