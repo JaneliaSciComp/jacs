@@ -22,6 +22,7 @@ public class SlideImage {
     private String channels;
     private String objective;
     private String opticalRes;
+    private String pixelRes;
     private String gender;
     private String area;
     private String age;
@@ -50,6 +51,10 @@ public class SlideImage {
         
         if (opticalRes!=null) {
             properties.put(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, opticalRes);
+        }
+
+        if (pixelRes!=null) {
+            properties.put(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, pixelRes);
         }
 
         if (gender!=null) {
@@ -129,6 +134,12 @@ public class SlideImage {
     }
     public void setOpticalRes(String voxelSizeX, String voxelSizeY, String voxelSizeZ) {
         this.opticalRes = voxelSizeX+"x"+voxelSizeY+"x"+voxelSizeZ;
+    }
+    public String getPixelRes() {
+        return pixelRes;
+    }
+    public void setPixelRes(String imageSizeX, String imageSizeY, String imageSizeZ) {
+        this.pixelRes = imageSizeX+"x"+imageSizeY+"x"+imageSizeZ;
     }
     public String getGender() {
         return gender;

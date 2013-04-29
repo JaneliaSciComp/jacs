@@ -136,6 +136,12 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		if (voxelSizeX!=null && voxelSizeY!=null && voxelSizeZ!=null) {
 		    slideImage.setOpticalRes(voxelSizeX,voxelSizeY,voxelSizeZ);
 		}
+		String imageSizeX = (String)row.get("dimension_x");
+        String imageSizeY = (String)row.get("dimension_y");
+        String imageSizeZ = (String)row.get("dimension_z");
+        if (imageSizeX!=null && imageSizeY!=null && imageSizeZ!=null) {
+            slideImage.setPixelRes(imageSizeX,imageSizeY,imageSizeZ);
+        }
 		return slideImage;
     }
     
