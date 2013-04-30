@@ -14,6 +14,7 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * Run a configured brain aligner script. Parameters:
@@ -85,26 +86,30 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
         }
         if (input1!=null) {
             cmd.append(" -i " + getInputParameter(input1));
-            cmd.append(" -e "+input1.getInputSeparationFilename());
+            if (input1.getInputSeparationFilename()!=null) {
+                cmd.append(" -e "+input1.getInputSeparationFilename());
+            }
         }
         if (input2!=null) {
             cmd.append(" -j " + getInputParameter(input2));
-            cmd.append(" -f "+input2.getInputSeparationFilename());
+            if (input2.getInputSeparationFilename()!=null) {
+                cmd.append(" -f "+input2.getInputSeparationFilename());
+            }
         }
         return cmd.toString();
     }
     
     protected String getInputParameter(AlignmentInputFile input) {
         StringBuilder sb = new StringBuilder();
-        sb.append(input.getInputFilename());
+        sb.append(StringUtils.emptyIfNull(input.getInputFilename()));
         sb.append(",");
-        sb.append(input.getNumChannels());
+        sb.append(StringUtils.emptyIfNull(input.getNumChannels()));
         sb.append(",");
-        sb.append(input.getRefChannelOneIndexed());
+        sb.append(StringUtils.emptyIfNull(input.getRefChannelOneIndexed()));
         sb.append(",");
-        sb.append(input.getOpticalResolution());
+        sb.append(StringUtils.emptyIfNull(input.getOpticalResolution()));
         sb.append(",");
-        sb.append(input.getPixelResolution());
+        sb.append(StringUtils.emptyIfNull(input.getPixelResolution()));
         return sb.toString();
     }
     

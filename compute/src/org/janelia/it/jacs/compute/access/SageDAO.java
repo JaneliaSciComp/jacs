@@ -121,7 +121,7 @@ public class SageDAO {
     	    sql.append("left outer join image_property_vw voxel_size_x on i.id = voxel_size_x.image_id and voxel_size_x.type = 'voxel_size_x' ");
     	    sql.append("left outer join image_property_vw voxel_size_y on i.id = voxel_size_y.image_id and voxel_size_y.type = 'voxel_size_y' ");
     	    sql.append("left outer join image_property_vw voxel_size_z on i.id = voxel_size_z.image_id and voxel_size_z.type = 'voxel_size_z' ");
-            sql.append("left outer join image_property_vw dimension_x on i.id = dimension_x.image_id and dimension_xtype = 'dimension_x' ");
+            sql.append("left outer join image_property_vw dimension_x on i.id = dimension_x.image_id and dimension_x.type = 'dimension_x' ");
             sql.append("left outer join image_property_vw dimension_y on i.id = dimension_y.image_id and dimension_y.type = 'dimension_y' ");
             sql.append("left outer join image_property_vw dimension_z on i.id = dimension_z.image_id and dimension_z.type = 'dimension_z' ");
     	    sql.append("where i.display=true ");

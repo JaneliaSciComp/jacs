@@ -63,7 +63,7 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
                     if (image!=null) {
                         input1 = new AlignmentInputFile();
                         input1.setPropertiesFromEntity(image);
-                        if (warpNeurons) input2.setInputSeparationFilename(getConsolidatedLabel(result));
+                        if (warpNeurons) input1.setInputSeparationFilename(getConsolidatedLabel(result));
                         logInputFound("second input (63x stack)", input1);
                     }
                 }

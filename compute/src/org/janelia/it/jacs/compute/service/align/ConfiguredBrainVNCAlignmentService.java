@@ -35,7 +35,7 @@ public class ConfiguredBrainVNCAlignmentService extends ConfiguredAlignmentServi
                         if ("VNC".equalsIgnoreCase(areaName)) {
                             input2 = new AlignmentInputFile();
                             input2.setPropertiesFromEntity(image);
-                            if (warpNeurons) input1.setInputSeparationFilename(getConsolidatedLabel(result));
+                            if (warpNeurons) input2.setInputSeparationFilename(getConsolidatedLabel(result));
                         }
                         else if ("Brain".equalsIgnoreCase(areaName)) {
                             input1 = new AlignmentInputFile();
