@@ -7,7 +7,6 @@ import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
-import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.service.entity.EntityHelper;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -112,6 +111,7 @@ public class SampleHelper extends EntityHelper {
             
             // There is more than one objective. Create a parent Sample, and then a SubSample for each objective.
             sample = getOrCreateSample(slideCode, dataSet, null, null, tileGroupList, null);
+            
             String childObjective = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
             
             if (childObjective!=null) {
@@ -130,6 +130,8 @@ public class SampleHelper extends EntityHelper {
                 // Create a new parent
                 sample = getOrCreateSample(slideCode, dataSet, null, null, tileGroupList, null);
             }
+            
+            synchronizeTiles(sample, tileGroupList, false);
             
             List<String> objectives = new ArrayList<String>(objectiveGroups.keySet());
             Collections.sort(objectives);
@@ -152,7 +154,7 @@ public class SampleHelper extends EntityHelper {
             
             // Find the sample, if it exists, or create a new one.
             sample = getOrCreateSample(slideCode, dataSet, sampleChannelSpec, objective, tileGroupList, parentSample);
-            synchronizeTiles(sample, tileGroupList);
+            synchronizeTiles(sample, tileGroupList, true);
             
             // Ensure the sample is a child of something
             if (parentSample==null) {
@@ -234,7 +236,7 @@ public class SampleHelper extends EntityHelper {
         }
         
         logger.info("  Looking for existing sample with LSM set: "+lsmNames);
-        logger.info("    (With tile names: "+tileNames+")");
+        logger.debug("    (With tile names: "+tileNames+")");
         
         Entity matchedSample = null;
         Set<Long> visitedSamples = new HashSet<Long>();
@@ -255,9 +257,9 @@ public class SampleHelper extends EntityHelper {
                     Entity supportingData = EntityUtils.getSupportingData(sample);
                     if (supportingData != null) {
                         entityLoader.populateChildren(supportingData);
-                        for(Entity imageTile : supportingData.getChildren()) {
-                            entityLoader.populateChildren(imageTile);    
-                            for(Entity siblingLsm : imageTile.getChildren()) {
+                        for(Entity imageTile : EntityUtils.getChildrenOfType(supportingData, EntityConstants.TYPE_IMAGE_TILE)) {
+                            entityLoader.populateChildren(imageTile);
+                            for(Entity siblingLsm : EntityUtils.getChildrenOfType(imageTile, EntityConstants.TYPE_LSM_STACK)) {
                                 matchedTileNames.add(imageTile.getName());
                                 matchedLsmNames.add(siblingLsm.getName());
                             }
@@ -270,8 +272,8 @@ public class SampleHelper extends EntityHelper {
                         break;
                     }
                     else {
-                        logger.info("  Sample "+sample.getName()+" does not match: "+matchedLsmNames);
-                        logger.info("    (With tile names: "+matchedTileNames+")");
+                        logger.debug("  Sample "+sample.getName()+" does not match: "+matchedLsmNames);
+                        logger.debug("    (With tile names: "+matchedTileNames+")");
                     }
                 }
             }
@@ -439,11 +441,11 @@ public class SampleHelper extends EntityHelper {
      * @param tileGroupList
      * @throws Exception
      */
-    public void synchronizeTiles(Entity sample, Collection<SlideImageGroup> tileGroupList) throws Exception {
+    public void synchronizeTiles(Entity sample, Collection<SlideImageGroup> tileGroupList, boolean setLsmAttributes) throws Exception {
         
         Set<String> tileNameSet = new HashSet<String>();
         for (SlideImageGroup tileGroup : tileGroupList) {
-            addTileToSample(sample, tileGroup);
+            addTileToSample(sample, tileGroup, setLsmAttributes);
             tileNameSet.add(tileGroup.getTag());
         }
         
@@ -466,7 +468,7 @@ public class SampleHelper extends EntityHelper {
      * @param tileGroup
      * @throws Exception
      */
-    public void addTileToSample(Entity sample, SlideImageGroup tileGroup) throws Exception {
+    public void addTileToSample(Entity sample, SlideImageGroup tileGroup, boolean setLsmAttributes) throws Exception {
         
         // Get the existing Supporting Files, or create a new one
         Entity supportingFiles = EntityUtils.getSupportingData(sample);
@@ -492,11 +494,13 @@ public class SampleHelper extends EntityHelper {
                 imageTile = null;
             }
             else {
-                logger.info("  Tile '"+imageTile.getName()+"' exists (id="+imageTileEd.getId()+")");
-                for(Entity lsmStack : EntityUtils.getChildrenOfType(imageTile, EntityConstants.TYPE_LSM_STACK)) {
-                    for(SlideImage image : tileGroup.getImages()) {
-                        if (image.getFile().getName().equals(lsmStack.getName())) {
-                            setLsmStackAttributes(lsmStack, image);
+                logger.debug("  Tile '"+imageTile.getName()+"' exists (id="+imageTileEd.getId()+")");
+                if (setLsmAttributes) {
+                    for(Entity lsmStack : EntityUtils.getChildrenOfType(imageTile, EntityConstants.TYPE_LSM_STACK)) {
+                        for(SlideImage image : tileGroup.getImages()) {
+                            if (image.getFile().getName().equals(lsmStack.getName())) {
+                                setLsmStackAttributes(lsmStack, image);
+                            }
                         }
                     }
                 }
@@ -517,7 +521,7 @@ public class SampleHelper extends EntityHelper {
             
             for(SlideImage image : tileGroup.getImages()) {
                 logger.info("    Adding LSM file to sample: "+image.getFile().getName());
-                Entity lsmEntity = createLsmStackFromFile(image);
+                Entity lsmEntity = createLsmStackFromFile(image, setLsmAttributes);
                 addToParent(imageTile, lsmEntity, imageTile.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
             }
         }
@@ -584,7 +588,7 @@ public class SampleHelper extends EntityHelper {
      * @return
      * @throws Exception
      */
-    public Entity createLsmStackFromFile(SlideImage image) throws Exception {
+    public Entity createLsmStackFromFile(SlideImage image, boolean setLsmAttributes) throws Exception {
         Date createDate = new Date();
         Entity lsmStack = new Entity();
         lsmStack.setOwnerKey(ownerKey);
@@ -592,7 +596,12 @@ public class SampleHelper extends EntityHelper {
         lsmStack.setCreationDate(createDate);
         lsmStack.setUpdatedDate(createDate);
         lsmStack.setName(image.getFile().getName());
-        lsmStack = setLsmStackAttributes(lsmStack, image);
+        if (setLsmAttributes) {
+            lsmStack = setLsmStackAttributes(lsmStack, image);
+        }
+        else {
+            lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
+        }
         logger.info("      Saved LSM stack as "+lsmStack.getId());
         return lsmStack;
     }
@@ -617,8 +626,13 @@ public class SampleHelper extends EntityHelper {
         // Set all the properties that we can. 
         for(String key : imageProperties.keySet()) {
             String value = imageProperties.get(key);
-            if (attrs.contains(key) && value!=null && !NO_CONSENSUS_VALUE.equals(value)) {
-                lsmStack.setValueByAttributeName(key, value);   
+            if (value!=null) {
+                if (!attrs.contains(key)) {
+                    logger.warn("LSM stack does not support property: "+key);
+                }
+                else {
+                    lsmStack.setValueByAttributeName(key, value);   
+                }
             }
         }
         lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
