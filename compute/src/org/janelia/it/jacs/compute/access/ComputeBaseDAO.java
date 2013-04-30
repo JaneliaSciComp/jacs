@@ -14,6 +14,7 @@ import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.hibernate.*;
 import org.janelia.it.jacs.compute.engine.def.ProcessDef;
+import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
@@ -483,6 +484,72 @@ public class ComputeBaseDAO {
             taskList.add(t);
         }
         return taskList;
+    }
+
+    protected void createEntityType(String name, Set<String> attributeNameSet) {
+        Session session = getCurrentSession();
+
+        Criteria c = session.createCriteria(EntityType.class);
+        List<EntityType> entityTypeList = (List<EntityType>) c.list();
+        EntityType entityType = null;
+
+        boolean containsType = false;
+        for (EntityType et : entityTypeList) {
+            if (et.getName().equals(name)) {
+                _logger.info("Found EntityType name=" + name + " id=" + et.getId());
+                entityType = et;
+                containsType = true;
+            }
+        }
+        if (!containsType) {
+            entityType = new EntityType();
+            entityType.setName(name);
+            session.saveOrUpdate(entityType);
+            _logger.info("Created EntityType name=" + name + " id=" + entityType.getId());
+        }
+        Set<EntityAttribute> currentAttributeSet = entityType.getAttributes();
+        if (attributeNameSet != null) {
+            Set<EntityAttribute> attributeSet = getEntityAttributesByName(attributeNameSet);
+            entityType.setAttributes(attributeSet);
+        }
+        session.saveOrUpdate(entityType);
+    }
+
+    protected void createEntityAttribute(String name) {
+        try {
+            Session session = getCurrentSession();
+            Criteria c = session.createCriteria(EntityAttribute.class);
+            List<EntityAttribute> attributeList = (List<EntityAttribute>) c.list();
+            boolean containsAttribute=false;
+            for (EntityAttribute ea : attributeList) {
+                if (ea.getName().equals(name)) {
+                    containsAttribute=true;
+                }
+            }
+            if (!containsAttribute) {
+                EntityAttribute entityAttribute = new EntityAttribute();
+                entityAttribute.setName(name);
+                session.save(entityAttribute);
+            }
+        }
+        catch (HibernateException e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected Set<EntityAttribute> getEntityAttributesByName(Set<String> names) {
+        Session session = getCurrentSession();
+
+        Criteria c = session.createCriteria(EntityAttribute.class);
+        List<EntityAttribute> attributeList = (List<EntityAttribute>) c.list();
+
+        Set<EntityAttribute> resultSet = new HashSet<EntityAttribute>();
+        for (EntityAttribute ea : attributeList) {
+            if (names.contains(ea.getName())) {
+                resultSet.add(ea);
+            }
+        }
+        return resultSet;
     }
 
 }

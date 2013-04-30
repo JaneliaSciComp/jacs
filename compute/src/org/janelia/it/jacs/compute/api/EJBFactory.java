@@ -35,6 +35,8 @@ public class EJBFactory {
     private static final String REMOTE_GENOME_CONTEXT_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("GenomeContextEJB.Name") + "/remote";
     private static final String LOCAL_JOB_CONTROL_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("JobControlEJB.Name") + "/local";
     private static final String REMOTE_JOB_CONTROL_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("JobControlEJB.Name") + "/remote";
+    private static final String LOCAL_TILED_MICROSCOPE_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("TiledMicroscopeEJB.Name") + "/local";
+    private static final String REMOTE_TILED_MICROSCOPE_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("TiledMicroscopeEJB.Name") + "/remote";
     private static Properties icProperties = new Properties();
 
     static {
@@ -105,6 +107,10 @@ public class EJBFactory {
 
     public static JobControlBeanLocal getLocalJobControlBean() {
         return (JobControlBeanLocal) getLocalInterface(LOCAL_JOB_CONTROL_JNDI_NAME);
+    }
+
+    public static TiledMicroscopeBeanLocal getLocalTiledMicroscopeBean() {
+        return (TiledMicroscopeBeanLocal) getLocalInterface(LOCAL_TILED_MICROSCOPE_JNDI_NAME);
     }
 
     /**
@@ -195,5 +201,8 @@ public class EJBFactory {
         return (JobControlBeanRemote) getRemoteInterface(REMOTE_JOB_CONTROL_JNDI_NAME);
     }
 
+    public static TiledMicroscopeBeanRemote getRemoteTiledMicroscopeBean() {
+        return (TiledMicroscopeBeanRemote) getRemoteInterface(REMOTE_TILED_MICROSCOPE_JNDI_NAME);
+    }
 
 }
