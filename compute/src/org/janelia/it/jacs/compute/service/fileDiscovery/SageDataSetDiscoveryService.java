@@ -48,7 +48,6 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             else {
                 logger.info("Processing data set: "+dataSet.getName());
                 processSageDataSet(null, dataSet);
-                logger.info("Moving unvisited samples to trash for dataSet: "+dataSet.getName());
                 cleanUnvisitedSamples(dataSet);
                 fixOrderIndices(dataSet);
             }
@@ -196,6 +195,8 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     protected void cleanUnvisitedSamples(Entity dataSet) throws Exception {
         String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
         Entity dataSetFolder = sampleHelper.getDataSetFolderByIdentifierMap().get(dataSetIdentifier);
+        if (dataSetFolder==null) return;
+        logger.info("Moving unvisited samples to trash for dataSet: "+dataSet.getName());
         for(EntityData ed : dataSetFolder.getEntityData()) {
             Entity sample = ed.getChildEntity();
             if (sample==null || sample.getEntityType().getName().equals(EntityConstants.TYPE_SAMPLE)) continue;
@@ -209,7 +210,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
      
         String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
         Entity dataSetFolder = sampleHelper.getDataSetFolderByIdentifierMap().get(dataSetIdentifier);
-       
+        if (dataSetFolder==null) return;        
         logger.info("Fixing sample order indicies in "+dataSetFolder.getName()+" (id="+dataSetFolder.getId()+")");
 
         List<EntityData> orderedData = new ArrayList<EntityData>();
