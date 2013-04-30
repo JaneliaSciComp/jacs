@@ -46,4 +46,9 @@ public class StringUtils {
 		}
 		return buf.toString();
 	}
+	
+	public static String emptyIfNull(Object o) {
+	    if (o==null) return "";
+	    return o.toString();
+	}
 }
