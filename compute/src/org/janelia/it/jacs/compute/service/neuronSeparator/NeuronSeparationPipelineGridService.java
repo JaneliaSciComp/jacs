@@ -10,6 +10,7 @@ import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
+import org.janelia.it.jacs.model.entity.cv.Objective;
 import org.janelia.it.jacs.model.user_data.FileNode;
 
 /**
@@ -30,6 +31,7 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
 
     private FileNode outputFileNode;
     private String inputFilename;
+    private String objective;
     private String previousResultFile;
     private String signalChannels;
     private String referenceChannel;
@@ -59,6 +61,8 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
         if (signalChannels==null) {
         	signalChannels = "0 1 2";
         }
+
+        objective = (String)processData.getItem("OBJECTIVE");
         
         referenceChannel = (String)processData.getItem("REFERENCE_CHANNEL");
         if (referenceChannel==null) {
@@ -128,7 +132,8 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
 
     @Override
     protected int getRequiredMemoryInGB() {
-    	return 40;
+        // 20x samples can run on a regular node, but anything larger needs a high memory node
+        return Objective.OBJECTIVE_20X.equals(objective) ? 24 : 40;
     }
     
     @Override
