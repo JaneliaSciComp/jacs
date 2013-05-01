@@ -25,6 +25,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 	protected SampleHelper sampleHelper;
     
     protected int sageRowsProcessed = 0;
+    protected int samplesMovedToTrash = 0;
     
     public void execute() throws Exception {
         
@@ -48,6 +49,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             else {
                 logger.info("Processing data set: "+dataSet.getName());
                 processSageDataSet(null, dataSet);
+                sampleHelper.annexSamples();
                 cleanUnvisitedSamples(dataSet);
                 fixOrderIndices(dataSet);
             }
@@ -55,7 +57,8 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         
         logger.info("Processed "+sageRowsProcessed+" rows, created "+sampleHelper.getNumSamplesCreated()+
         		" samples, updated "+sampleHelper.getNumSamplesUpdated()+" samples, added "+sampleHelper.getNumSamplesAdded()+
-        		" samples to their corresponding data set folders.");
+        		" samples to their corresponding data set folders. Annexed "+sampleHelper.getNumSamplesAnnexed()+
+        		" samples, and moved "+samplesMovedToTrash+" samples to the Retired Data folder.");
     }
     
     /**
@@ -197,11 +200,18 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         Entity dataSetFolder = sampleHelper.getDataSetFolderByIdentifierMap().get(dataSetIdentifier);
         if (dataSetFolder==null) return;
         logger.info("Moving unvisited samples to trash for dataSet: "+dataSet.getName());
-        for(EntityData ed : dataSetFolder.getEntityData()) {
+        List<EntityData> dataSetEds = new ArrayList<EntityData>(dataSetFolder.getEntityData());
+        for(EntityData ed : dataSetEds) {
             Entity sample = ed.getChildEntity();
             if (sample==null || sample.getEntityType().getName().equals(EntityConstants.TYPE_SAMPLE)) continue;
             if (sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISITED)==null) {
                 logger.info("  Moving unvisited sample to trash: "+sample.getName()+" (id="+sample.getId()+")");
+                Entity trashFolder = sampleHelper.getTrashFolder();
+                dataSetFolder.getEntityData().remove(ed);
+                trashFolder.getEntityData().add(ed);
+                ed.setParentEntity(trashFolder);
+                entityBean.saveOrUpdateEntityData(ed);
+                samplesMovedToTrash++;
             }
         }
     }

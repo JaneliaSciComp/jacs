@@ -72,7 +72,7 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
         consolidatedLabel = (String)processData.getItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH");        
         
         logger.info("Starting NeuronSeparationPipelineService with taskId=" + task.getObjectId() + " resultNodeId=" + resultFileNode.getObjectId() + " resultDir=" + resultFileNode.getDirectoryPath()+
-                " workingDir="+outputFileNode.getDirectoryPath() + " inputFilename="+inputFilename+ " signalChannels="+signalChannels+ " referenceChannel="+referenceChannel+
+                " workingDir="+outputFileNode.getDirectoryPath() + " inputFilename="+inputFilename+ " signalChannels="+signalChannels+ " referenceChannel="+referenceChannel+ " objective="+objective+
                 " previousResultFile="+previousResultFile+" consolidatedLabel="+consolidatedLabel);
     }
     
@@ -133,7 +133,9 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
     @Override
     protected int getRequiredMemoryInGB() {
         // 20x samples can run on a regular node, but anything larger needs a high memory node
-        return Objective.OBJECTIVE_20X.equals(objective) ? 24 : 40;
+        int mem = Objective.OBJECTIVE_20X.equals(objective) ? 24 : 40;
+        logger.info("Objective is "+objective+". Will request "+mem+" GB for processing.");
+        return mem;
     }
     
     @Override

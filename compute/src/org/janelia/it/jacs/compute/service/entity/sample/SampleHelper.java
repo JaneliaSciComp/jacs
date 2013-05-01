@@ -38,9 +38,11 @@ public class SampleHelper extends EntityHelper {
     private List<Entity> dataSets;
     private Map<String,Entity> dataSetFolderByIdentifier = new HashMap<String,Entity>();
     private Map<String,Entity> dataSetEntityByIdentifier = new HashMap<String,Entity>();
+    private Set<Long> samplesToAnnex = new HashSet<Long>();
     private int numSamplesCreated = 0;
     private int numSamplesUpdated = 0;
     private int numSamplesAdded = 0;
+    private int numSamplesAnnexed = 0;
     
     public SampleHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, AnnotationBeanLocal annotationBean, String ownerKey, Logger logger) {
         super(entityBean, computeBean, ownerKey, logger);
@@ -314,10 +316,32 @@ public class SampleHelper extends EntityHelper {
                     logger.warn("  Found matching sample, but it is not owned by us or FlyLight, so we can't use it.");
                     return null;
                 }
-                else {
-                    return entityBean.annexEntityTree(ownerKey, matchedSample.getId());        
+                else {        
+                    // Annex it later, so we don't hold the connection open for too long
+                    logger.warn("  Found matching sample, owned by FlyLight. We will annex it later.");
+                    samplesToAnnex.add(matchedSample.getId());
+                    return matchedSample;
                 }
                 
+            }
+        }
+    }
+
+    /**
+     * Annex all the samples that were tracked as needing annexing, during processing with findOrAnnexExistingSample().
+     * @throws Exception
+     */
+    public void annexSamples() throws Exception {
+        if (samplesToAnnex.isEmpty()) return;
+        logger.info("Will annexing "+samplesToAnnex.size()+" samples");
+        for(Long entityId : new ArrayList<Long>(samplesToAnnex)) {
+            try {
+                samplesToAnnex.remove(entityId);
+                entityBean.annexEntityTree(ownerKey, entityId);
+                numSamplesAnnexed++;
+            }
+            catch (Exception e) {
+                logger.error("Error annexing sample: "+entityId, e);
             }
         }
     }
@@ -871,6 +895,10 @@ public class SampleHelper extends EntityHelper {
     public int getNumSamplesAdded() {
         return numSamplesAdded;
     }
+
+    public int getNumSamplesAnnexed() {
+        return numSamplesAnnexed;
+    }
     
     public Map<String, Entity> getDataSetFolderByIdentifierMap() {
         return dataSetFolderByIdentifier;
@@ -920,7 +948,7 @@ public class SampleHelper extends EntityHelper {
     private void loadTrashFolder() throws Exception {
         if (trashFolder!=null) return;
         logger.info("Getting trash folder...");
-        this.trashFolder = createOrVerifyRootEntity(EntityConstants.NAME_TRASH, true, false);
+        this.trashFolder = createOrVerifyRootEntity(EntityConstants.NAME_RETIRED_DATA, true, false);
     }
 
     public boolean isResetSampleNames() {

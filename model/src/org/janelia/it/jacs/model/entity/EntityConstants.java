@@ -17,7 +17,7 @@ public class EntityConstants {
     public static final String NAME_SPLIT_PICKING                    = "Split Picking";
     public static final String NAME_DATA_SETS                        = "Data Sets";
     public static final String NAME_ALIGNMENT_BOARDS                 = "Alignment Boards";
-    public static final String NAME_TRASH                            = "Trash";
+    public static final String NAME_RETIRED_DATA                     = "Retired Data";
     
     // Entity Types
     public static final String TYPE_ANNOTATION                       = "Annotation";

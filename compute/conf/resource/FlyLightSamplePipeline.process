@@ -319,6 +319,7 @@
                         <operation name="Get Parameters" processor="org.janelia.it.jacs.compute.service.entity.sample.InitAnalysisParametersService">
                             <input name="ANALYSIS_ALGORITHM"/>
                             <input name="RESULT_ENTITY_ID"/>
+                            <input name="SAMPLE_ENTITY_ID"/>
                             <output name="OUTPUT_FILENAME"/>
                             <output name="ANALYSIS_PIPELINE_NAME"/>
                             <output name="OPTICAL_RESOLUTION"/>
@@ -380,10 +381,11 @@
             <input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
         </include>
 
-        <!-- Move any large files over to archive -->
+        <!-- Move any large files over to archive 
         <include name="Move to Archive" process="SyncSampleToArchive">
             <input name="SAMPLE_ENTITY_ID"/>
         </include>
+        -->
         
 	    <exceptionHandler>
 	    
