@@ -57,6 +57,11 @@ public class EntityConstants {
     public static final String TYPE_ALIGNED_ITEM                     = "Aligned Item";
     public static final String TYPE_DEFORMATION_MATRIX               = "Deformation Matrix";
     public static final String TYPE_3D_TILE_MICROSCOPE_SAMPLE        = "3D Tile Microscope Sample";
+    public static final String TYPE_TILE_MICROSCOPE_WORKSPACE        = "Tile Microscope Workspace";
+    public static final String TYPE_TILE_MICROSCOPE_NEURON           = "Tile Microscope Neuron";
+    public static final String TYPE_TILE_MICROSCOPE_WS_PREFS         = "Tile Microscope Workspace Preferences";
+    public static final String TYPE_GEOMETRIC_TREE                   = "Geometric Tree";
+    public static final String TYPE_PROPERTY_SET                     = "Property Set";
 
     // Entity Data Attributes
 
@@ -115,6 +120,13 @@ public class EntityConstants {
     public static final String ATTRIBUTE_CHANNEL_COLORS                      = "Channel Colors"; // e.g. "#7e5200,#ff00ff,#00ff00"
     public static final String ATTRIBUTE_METADATA_FILE                       = "Metadata File";
     public static final String ATTRIBUTE_SEARCH_TASK_ID                      = "Search Task Id"; // Id of the search task that created this folder and results
+    public static final String ATTRIBUTE_PROPERTY                            = "Property"; // has string "<property>=<value>"
+
+    // Geometric Tree
+    //
+    //  "<id>:<parentId>:<index>:<x,y,z>:<comment>"
+    //
+    public static final String ATTRIBUTE_GEO_TREE_COORDINATE                 = "Geometric Tree Coordinate";
 
     // Alignment Spaces
     public static final String ATTRIBUTE_ALIGNMENT_SPACE                     = "Alignment Space"; // e.g. "Unified 20x Alignment Space"
