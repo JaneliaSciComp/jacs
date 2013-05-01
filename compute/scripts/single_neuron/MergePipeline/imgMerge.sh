@@ -145,7 +145,7 @@ else
                 $Vaa3D -x ireg.so -f NiftiImageConverter -i $DEFORMED -p "#b 1"
 
                 echo "~ Running multiscanblend"
-                $Vaa3D -x multiscanstacks.so -f multiscanblend -i "$INPUT1" "$INPUT2" $DEFORMEDV3DRAW -o "$OUTPUT" -p "#d 1"
+                $Vaa3D -x multiscanstacks.so -f multiscanblend$MULTISCAN_BLEND_VERSION -i "$INPUT1" "$INPUT2" $DEFORMEDV3DRAW -o "$OUTPUT" -p "#d 1"
 
             else
                 echo "Invalid Transformations: '$TYPE'"
