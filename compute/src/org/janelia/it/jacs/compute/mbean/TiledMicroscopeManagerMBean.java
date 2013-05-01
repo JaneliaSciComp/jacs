@@ -11,4 +11,6 @@ public interface TiledMicroscopeManagerMBean {
 
     public void createTiledMicroscopeEntityTypes();
 
+    public void test();
+
 }

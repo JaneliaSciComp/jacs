@@ -19,4 +19,9 @@ public class TiledMicroscopeManager implements TiledMicroscopeManagerMBean {
         }
     }
 
+    public void test() {
+        System.out.println("TiledMicroscopeManager test() start");
+        System.out.println("TiledMicroscopeManager test() end");
+    }
+
 }

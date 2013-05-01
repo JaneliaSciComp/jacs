@@ -16,4 +16,9 @@
         <name>createTiledMicroscopeEntityTypes</name>
     </operation>
 
+    <operation>
+        <description>Test creation and usages of Tiled Microscope Entities</description>
+        <name>test</name>
+    </operation>
+
 </mbean>
