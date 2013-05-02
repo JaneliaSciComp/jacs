@@ -76,7 +76,7 @@ echo "Seperator input file: $SEP_INPUT_FILE"
 # Decrease "e" to get more neurons
 SETUP_PARAMS="-c6.0 -e4.5 -s800"
 
-if [ ${#SIGNAL_CHAN} -eq 3 ] ; then
+if [ ${#SIGNAL_CHAN} -eq 3 ] || [ ${#SIGNAL_CHAN} -eq 1 ] ; then
     channel_output=""
     channel_pbd=""
     for channel in $SIGNAL_CHAN
