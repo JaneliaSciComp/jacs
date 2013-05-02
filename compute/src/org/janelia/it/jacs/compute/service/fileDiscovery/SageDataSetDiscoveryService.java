@@ -199,18 +199,20 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
         Entity dataSetFolder = sampleHelper.getDataSetFolderByIdentifierMap().get(dataSetIdentifier);
         if (dataSetFolder==null) return;
-        logger.info("Moving unvisited samples to trash for dataSet: "+dataSet.getName());
+        logger.info("Cleaning unvisited samples in dataSet: "+dataSet.getName());
         List<EntityData> dataSetEds = new ArrayList<EntityData>(dataSetFolder.getEntityData());
         for(EntityData ed : dataSetEds) {
             Entity sample = ed.getChildEntity();
-            if (sample==null || sample.getEntityType().getName().equals(EntityConstants.TYPE_SAMPLE)) continue;
+            if (sample==null || !sample.getEntityType().getName().equals(EntityConstants.TYPE_SAMPLE)) continue;
             if (sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISITED)==null) {
-                logger.info("  Moving unvisited sample to trash: "+sample.getName()+" (id="+sample.getId()+")");
-                Entity trashFolder = sampleHelper.getTrashFolder();
+                logger.info("  Moving unvisited sample to retired data folder: "+sample.getName()+" (id="+sample.getId()+")");
+                Entity retiredDataFolder = sampleHelper.getTrashFolder();
                 dataSetFolder.getEntityData().remove(ed);
-                trashFolder.getEntityData().add(ed);
-                ed.setParentEntity(trashFolder);
+                retiredDataFolder.getEntityData().add(ed);
+                ed.setParentEntity(retiredDataFolder);
                 entityBean.saveOrUpdateEntityData(ed);
+                sample.setName(sample.getName()+"-Retired");
+                entityBean.saveOrUpdateEntity(sample);
                 samplesMovedToTrash++;
             }
         }
@@ -243,7 +245,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         int orderIndex = 0;
         for(EntityData ed : orderedData) {
             if (ed.getOrderIndex()==null || orderIndex!=ed.getOrderIndex()) {
-                logger.info("  Updating "+ed.getChildEntity().getName()+" with order index "+orderIndex+" (was "+ed.getOrderIndex()+")");
+                logger.debug("  Updating "+ed.getChildEntity().getName()+" with order index "+orderIndex+" (was "+ed.getOrderIndex()+")");
                 ed.setOrderIndex(orderIndex);
                 entityBean.saveOrUpdateEntityData(ed);
             }

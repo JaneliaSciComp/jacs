@@ -943,12 +943,20 @@ public class SampleHelper extends EntityHelper {
         if (topLevelFolder!=null) return;
         logger.info("Getting data set folder...");
         this.topLevelFolder = createOrVerifyRootEntity(EntityConstants.NAME_DATA_SETS, true, false);
+        if (topLevelFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PROTECTED)==null) {
+            EntityUtils.addAttributeAsTag(topLevelFolder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
+            entityBean.saveOrUpdateEntity(topLevelFolder);
+        }
     }
     
     private void loadTrashFolder() throws Exception {
         if (trashFolder!=null) return;
         logger.info("Getting trash folder...");
         this.trashFolder = createOrVerifyRootEntity(EntityConstants.NAME_RETIRED_DATA, true, false);
+        if (trashFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PROTECTED)==null) {
+            EntityUtils.addAttributeAsTag(trashFolder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
+            entityBean.saveOrUpdateEntity(trashFolder);
+        }
     }
 
     public boolean isResetSampleNames() {

@@ -31,6 +31,7 @@ public class SageImageFamilyDiscoveryService extends AbstractEntityService {
     protected int numSamplesCreated = 0;
     protected int numSamplesUpdated = 0;
     protected int numSamplesAdded = 0;
+    protected int samplesMovedToTrash = 0;
     
     @Override
     public void execute() throws Exception {
@@ -51,7 +52,8 @@ public class SageImageFamilyDiscoveryService extends AbstractEntityService {
         logger.info("Will put discovered entities into top level entity "+topLevelFolder.getName()+", id="+topLevelFolder.getId());
         
         processSageDataSet(sageImageFamily, null);	
-    
+
+        cleanUnvisitedSamples();
         fixOrderIndices();
         fixTilingPatternFolderIndices();
         
@@ -670,6 +672,35 @@ public class SageImageFamilyDiscoveryService extends AbstractEntityService {
             }
         }
     }
+
+    protected void cleanUnvisitedSamples() throws Exception {
+
+        logger.info("Cleaning unvisited samples in children of "+topLevelFolder.getName());
+        populateChildren(topLevelFolder);
+        
+        for(Entity childFolder : EntityUtils.getChildrenOfType(topLevelFolder, EntityConstants.TYPE_FOLDER)) {
+            populateChildren(childFolder);
+            
+            logger.info("Cleaning unvisited samples in "+childFolder.getName()+" (id="+childFolder.getId()+")");
+
+            List<EntityData> childFolderEds = new ArrayList<EntityData>(childFolder.getEntityData());
+            for(EntityData ed : childFolderEds) {
+                Entity sample = ed.getChildEntity();
+                if (sample==null || !sample.getEntityType().getName().equals(EntityConstants.TYPE_SAMPLE)) continue;
+                if (sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISITED)==null) {
+                    logger.info("  Moving unvisited sample to retired data folder: "+sample.getName()+" (id="+sample.getId()+")");
+                    Entity retiredDataFolder = sampleHelper.getTrashFolder();
+                    childFolder.getEntityData().remove(ed);
+                    retiredDataFolder.getEntityData().add(ed);
+                    ed.setParentEntity(retiredDataFolder);
+                    entityBean.saveOrUpdateEntityData(ed);
+                    sample.setName(sample.getName()+"-Retired");
+                    entityBean.saveOrUpdateEntity(sample);
+                    samplesMovedToTrash++;
+                }
+            }
+        }
+    }
     
     protected void fixOrderIndices() throws Exception {
         logger.info("Fixing order indicies in children of "+topLevelFolder.getName());
@@ -700,7 +731,7 @@ public class SageImageFamilyDiscoveryService extends AbstractEntityService {
             int orderIndex = 0;
             for(EntityData ed : orderedData) {
                 if (ed.getOrderIndex()==null || orderIndex!=ed.getOrderIndex()) {
-                    logger.info("  Updating link (id="+ed.getId()+") to "+ed.getChildEntity().getName()+" with order index "+orderIndex+" (was "+ed.getOrderIndex()+")");
+                    logger.debug("  Updating link (id="+ed.getId()+") to "+ed.getChildEntity().getName()+" with order index "+orderIndex+" (was "+ed.getOrderIndex()+")");
                     ed.setOrderIndex(orderIndex);
                     entityBean.saveOrUpdateEntityData(ed);
                 }
