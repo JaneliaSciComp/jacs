@@ -1,9 +1,10 @@
-  <process name="FlyLight Cell Counting Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending">
+  <process name="FlyLight Cell Counting Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	    
         <include name="Pipeline" process="FlyLightCellCountingPipeline">
             <input name="PIPELINE_NAME" value="FlyLight Cell Counting Pipeline"/>
             <input name="PIPELINE_PROCESS" value="CellCounting"/>
+            <input name="ANALYSIS_ALGORITHMS" value="CELL_COUNTING"/>
         </include>
 		
     </sequence>

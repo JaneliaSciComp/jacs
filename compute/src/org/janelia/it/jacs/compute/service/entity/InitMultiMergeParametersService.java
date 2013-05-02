@@ -36,7 +36,7 @@ public class InitMultiMergeParametersService implements IService {
                 for (MergedLsmPair lsmPair : mergedLsmPairs) {
                     tileFilePaths.add(lsmPair.getMergedFilepath());
                 }
-                processData.putItem("TILE_FILENAME", tileFilePaths);
+                processData.putItem("STITCHED_FILENAME", tileFilePaths);
             }
             
         } catch (Exception e) {

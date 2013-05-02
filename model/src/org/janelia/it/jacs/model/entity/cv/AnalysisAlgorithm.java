@@ -2,7 +2,8 @@ package org.janelia.it.jacs.model.entity.cv;
 
 public enum AnalysisAlgorithm implements NamedEnum {
 
-	NEURON_SEPARATOR("Gene Myers Neuron Separator");
+	NEURON_SEPARATOR("Gene Myers Neuron Separator"),
+    CELL_COUNTING("Cell Counting");
 	
 	private String name;
 	
