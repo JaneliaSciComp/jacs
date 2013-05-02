@@ -117,7 +117,26 @@ if [ -s SeparationResultUnmapped.nsp ]; then
     if [ -s $RESULT ]; then
 
         echo "~ Generating consolidated signal"
-        cat $INPUT_FILE | $NSDIR/v3draw_select_channels $SIGNAL_CHAN | $NSDIR/v3draw_flip_y | $NSDIR/v3draw_to_8bit > ConsolidatedSignal.v3draw
+        CONSIGNAL="ConSignal.v3draw"
+        
+        cat $INPUT_FILE | $NSDIR/v3draw_select_channels $SIGNAL_CHAN | $NSDIR/v3draw_flip_y | $NSDIR/v3draw_to_8bit > $CONSIGNAL
+
+        if [ ${#SIGNAL_CHAN} -lt 5 ] ; then
+            # Less than 5 characters, which means less than 3 signal channels. 
+            MAPPED_INPUT=ConSignalMapped.v3draw
+            if [ ${#SIGNAL_CHAN} -lt 2 ] ; then
+                # Single channel
+                echo "Detected single channel image, duplicating channel 0 in channels 1 and 2"
+                echo "$Vaa3D -cmd image-loader -mapchannels $CONSIGNAL $MAPPED_INPUT \"0,0,0,1,0,2\""
+                $Vaa3D -cmd image-loader -mapchannels $CONSIGNAL $MAPPED_INPUT "0,0,0,1,0,2"
+            else
+                # Dual channel
+                echo "Detected two channel image, duplicating channel 1 in channel 2"
+                echo "$Vaa3D -cmd image-loader -mapchannels $CONSIGNAL $MAPPED_INPUT \"0,0,1,1,1,2\""
+                $Vaa3D -cmd image-loader -mapchannels $CONSIGNAL $MAPPED_INPUT "0,0,1,1,1,2"
+            fi
+            CONSIGNAL=$MAPPED_INPUT
+        fi
 
         echo "~ Generating consolidated label"
         $NSDIR/nsp10_to_labelv3draw16 < $RESULT > ConsolidatedLabel.v3draw
@@ -128,7 +147,7 @@ if [ -s SeparationResultUnmapped.nsp ]; then
         echo "~ Copying final output to: $OUTDIR"
         cp $RESULT $OUTDIR
         cp SeparationResultUnmapped.pbd $OUTDIR # companion file for the result
-        cp ConsolidatedSignal.v3draw $OUTDIR
+        cp $CONSIGNAL $OUTDIR/ConsolidatedSignal.v3draw
         cp ConsolidatedLabel.v3draw $OUTDIR
         cp Reference.v3draw $OUTDIR
     fi
