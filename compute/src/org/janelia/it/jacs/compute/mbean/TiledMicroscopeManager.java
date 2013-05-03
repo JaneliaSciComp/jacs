@@ -21,6 +21,11 @@ public class TiledMicroscopeManager implements TiledMicroscopeManagerMBean {
 
     public void test() {
         System.out.println("TiledMicroscopeManager test() start");
+
+        System.out.println("Part I : Create new Tiled Microscope Workspace");
+
+
+
         System.out.println("TiledMicroscopeManager test() end");
     }
 
