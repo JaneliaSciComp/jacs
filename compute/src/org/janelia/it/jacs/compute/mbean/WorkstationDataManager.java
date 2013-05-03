@@ -75,6 +75,22 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
+    @Override
+    public void runCompartmentLoading(String user, String maskChanPath, String topLevelFolderName) {
+        try {
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter("mask chan file path", maskChanPath, null));
+            taskParameters.add(new TaskParameter("top level folder name", topLevelFolderName, null));
+            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(),
+                    taskParameters, "compartmentLoading", "Mask Chan Encoded Compartment Loading");
+            task.setJobName("Mask Chan Compartment Pipeline Task");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("MaskChanCompartmentLoadPipeline", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
     public void runScreenScoresExport(String user, String outputFilepath) {
         try {
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();

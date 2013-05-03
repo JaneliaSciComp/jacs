@@ -40,11 +40,13 @@ public interface WorkstationDataManagerMBean {
     
     // Other data pipelines
     public void runFileTreeLoaderPipeline(String user, String rootDirectoryPath, String topLevelFolderName);
-    
+
     public void runTicPipeline(String user, String dirOfInputFile, String inputFileName, String transformationMatrixFile,
                                String borderValue, String correctionFile, String microscopeSettingsFile);
 
     public void runNeuronMergeTest(String taskOwner, String separationEntityId, String commaSeparatedNeuronFragmentList);
+
+    public void runCompartmentLoading(String user, String maskChanPath, String topLevelFolderName);
 
     public void runSlowImportTask(String parentDirPath, String topLevelFolderName, String owner);
     public void runDataDeDuplication();

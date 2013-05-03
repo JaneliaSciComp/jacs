@@ -181,8 +181,7 @@ public class FileDiscoveryHelper extends EntityHelper {
 	
 	/**
 	 * Create and save a new supporting files folder with the given owner. 
-	 * @param ownerKey
-	 * @return
+	 * @return supporting files folder entity
 	 * @throws ComputeException
 	 */
 	public Entity createSupportingFilesFolder() throws ComputeException {
@@ -341,7 +340,7 @@ public class FileDiscoveryHelper extends EntityHelper {
         		||filenameLowerCase.endsWith(".pbd")
         		||filenameLowerCase.endsWith(".v3dpbd")) {
             return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
-        } 
+        }
         else if (filenameLowerCase.endsWith(".nsp")) {
             return entityBean.getEntityTypeByName(EntityConstants.TYPE_MYERS_NEURON_SEPARATION_FILE);
         }
@@ -354,7 +353,13 @@ public class FileDiscoveryHelper extends EntityHelper {
         		||filenameLowerCase.endsWith(".json")
         		||filenameLowerCase.endsWith(".txt")) {
             return entityBean.getEntityTypeByName(EntityConstants.TYPE_TEXT_FILE);
-        } 
+        }
+        else if (filenameLowerCase.endsWith(".mask")) {
+            return entityBean.getEntityTypeByName(EntityConstants.TYPE_MC_MASK_FILE);
+        }
+        else if (filenameLowerCase.endsWith(".chan")) {
+            return entityBean.getEntityTypeByName(EntityConstants.TYPE_MC_CHANNEL_FILE);
+        }
         else {
             return entityBean.getEntityTypeByName(EntityConstants.TYPE_FILE);
         }
