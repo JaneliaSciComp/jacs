@@ -107,7 +107,7 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
 
             // Create the compartment and add it to the set.
             int index = indexFromName( key );
-            Entity compartment = createCompartmentEntity( compartmentEntityType, index + 1, indexToName.get( index ) );
+            Entity compartment = createCompartmentEntity( compartmentEntityType, index, indexToName.get( index ) );
             helper.addToParent(compartmentSetEntity, compartment, compartmentSetEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
 
             // Create the mask and channel and add them to the compartment.
@@ -122,7 +122,7 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
 
     private int indexFromName( String fileName ) {
         if ( fileName.startsWith(COMPARTMENT_FILE_PREFIX) ) {
-            return Integer.parseInt( fileName.substring( COMPARTMENT_FILE_PREFIX.length() ) );
+            return Integer.parseInt( fileName.substring( COMPARTMENT_FILE_PREFIX.length() ) ) + 1;
         }
         else {
             throw new IllegalArgumentException( "File name " + fileName + " not in expected format." );
@@ -237,7 +237,7 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
                 throw new Exception( "No files found in " + inputFolderStr );
             }
             else {
-                Map<String, MaskChannel> nameToFileList = new HashMap<String, MaskChannel>();
+                Map<String, MaskChannel> nameToFileList = new TreeMap<String, MaskChannel>();
                 for ( File file: maskAndChanFiles ) {
                     String justFileName = file.getName().substring(0, file.getName().lastIndexOf("."));
                     MaskChannel maskChannel = nameToFileList.get( justFileName );
@@ -259,7 +259,7 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
     }
 
     private Map<String,Integer> digestMaskNameIndex() throws Exception {
-        Map<String, Integer> nameVsNum = new HashMap<String,Integer>();
+        Map<String, Integer> nameVsNum = new TreeMap<String, Integer>();
         BufferedReader rdr = new BufferedReader( new FileReader( COMPARTMENT_NAMES_FILE  ) );
         String nextLine = null;
 
