@@ -781,7 +781,7 @@ public class SampleHelper extends EntityHelper {
             entityLoader.populateChildren(tile);
             for(Entity image : EntityUtils.getChildrenOfType(tile, EntityConstants.TYPE_LSM_STACK)) {    
                 String lsmArea = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
-                if (areaName==null || areaName.equals(lsmArea)) {
+                if (areaName==null || (StringUtils.isEmpty(areaName) && StringUtils.isEmpty(lsmArea)) || areaName.equals(lsmArea)) {
                     String value = image.getValueByAttributeName(attrName);
                     if (consensus!=null && !consensus.equals(value)) {
                         logger.warn("No consensus for attribute '"+attrName+"' can be reached for sample "+sampleEntity.getId());
