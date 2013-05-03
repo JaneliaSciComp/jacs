@@ -39,7 +39,6 @@ public class SageImageFamilyDiscoveryService extends AbstractEntityService {
         this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
         
         // Clear "visited" flags on all our Samples
-        logger.info("Clearing visitation flags...");
         sampleHelper.clearVisited();
         
         String sageImageFamily = (String)processData.getItem("SAGE_IMAGE_FAMILY");
@@ -683,9 +682,15 @@ public class SageImageFamilyDiscoveryService extends AbstractEntityService {
             
             logger.info("Cleaning unvisited samples in "+childFolder.getName()+" (id="+childFolder.getId()+")");
 
+            // Make sure to fetch fresh samples, so that we have the latest visited flags
+            Map<Long, Entity> samples = new HashMap<Long, Entity>();
+            for(Entity entity : entityBean.getChildEntities(childFolder.getId())) {
+                samples.put(entity.getId(), entity);
+            }
+            
             List<EntityData> childFolderEds = new ArrayList<EntityData>(childFolder.getEntityData());
             for(EntityData ed : childFolderEds) {
-                Entity sample = ed.getChildEntity();
+                Entity sample = samples.get(ed.getChildEntity().getId());
                 if (sample==null || !sample.getEntityType().getName().equals(EntityConstants.TYPE_SAMPLE)) continue;
                 if (sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISITED)==null) {
                     logger.info("  Moving unvisited sample to retired data folder: "+sample.getName()+" (id="+sample.getId()+")");

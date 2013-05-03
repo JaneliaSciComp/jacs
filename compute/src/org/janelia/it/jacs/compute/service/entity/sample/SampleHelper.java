@@ -18,6 +18,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.sun.corba.se.spi.legacy.connection.GetEndPointInfoAgainException;
 
 /**
  * Helper methods for dealing with Samples.
@@ -53,6 +54,7 @@ public class SampleHelper extends EntityHelper {
      * Clear all the visited flags on all entities owned by the user.
      */
     public void clearVisited() throws Exception {
+        logger.info("Clearing visited flag on all entities for user "+ownerKey);
         annotationBean.deleteAttribute(ownerKey, EntityConstants.ATTRIBUTE_VISITED);
     }
     
@@ -169,6 +171,7 @@ public class SampleHelper extends EntityHelper {
             }
         }
 
+        logger.info("  Setting visited flag on sample: "+sample.getName()+" (id="+sample.getId()+")");
         setVisited(sample);
         return sample;
     }
@@ -240,6 +243,7 @@ public class SampleHelper extends EntityHelper {
         logger.info("  Looking for existing sample with LSM set: "+lsmNames);
         logger.debug("    (With tile names: "+tileNames+")");
         
+        Entity matchedUnownedSample = null;
         Entity matchedSample = null;
         Set<Long> visitedSamples = new HashSet<Long>();
         
@@ -269,9 +273,17 @@ public class SampleHelper extends EntityHelper {
                     }
                     
                     if (matchedLsmNames.equals(lsmNames)) {
-                        logger.info("  Found sample with matching LSM set: "+sample.getName());
-                        matchedSample = sample;
-                        break;
+                        if (sample.getOwnerKey().equals(ownerKey)) {
+                            logger.info("  Found sample with matching LSM set: "+sample.getName());
+                            matchedSample = sample;    
+                            break;
+                        }
+                        else {
+                            logger.info("  Found sample with matching LSM set, but it is not owned by us, so we'll keep looking: "+sample.getName());
+                            matchedUnownedSample = sample;
+                        }
+                        
+                        
                     }
                     else {
                         logger.debug("  Sample "+sample.getName()+" does not match: "+matchedLsmNames);
@@ -280,6 +292,11 @@ public class SampleHelper extends EntityHelper {
                 }
             }
             if (matchedSample!=null) break;
+        }
+        
+        // Only use the unowned sample if we didn't find any owned samples
+        if (matchedSample==null) {
+            matchedSample = matchedUnownedSample;
         }
         
         if (matchedSample==null) {

@@ -68,6 +68,8 @@ public class InitAnalysisParametersService extends AbstractEntityService {
         if (pixelRes!=null) {
             logger.info("Putting '"+pixelRes+"' in PIXEL_RESOLUTION");
             processData.putItem("PIXEL_RESOLUTION", pixelRes);
-        }        
+        }
+        
+        processData.putItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH", null);
     }
 }

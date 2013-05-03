@@ -35,7 +35,6 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
         
         // Clear "visited" flags on all our Samples
-        logger.info("Clearing visitation flags...");
         sampleHelper.clearVisited();
         
         Entity topLevelFolder = sampleHelper.getTopLevelDataSetFolder();
@@ -199,20 +198,43 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
         Entity dataSetFolder = sampleHelper.getDataSetFolderByIdentifierMap().get(dataSetIdentifier);
         if (dataSetFolder==null) return;
+        
         logger.info("Cleaning unvisited samples in dataSet: "+dataSet.getName());
+
+        // Make sure to fetch fresh samples, so that we have the latest visited flags
+        Map<Long, Entity> samples = new HashMap<Long, Entity>();
+        for(Entity entity : entityBean.getChildEntities(dataSetFolder.getId())) {
+            samples.put(entity.getId(), entity);
+        }
+        
+        Set<Long> retiredIds = new HashSet<Long>();
+        Entity retiredDataFolder = sampleHelper.getTrashFolder();
+        for(EntityData ed : retiredDataFolder.getEntityData()) {
+            if (ed.getChildEntity()!=null) {
+                retiredIds.add(ed.getChildEntity().getId());
+            }
+        }
+        
         List<EntityData> dataSetEds = new ArrayList<EntityData>(dataSetFolder.getEntityData());
         for(EntityData ed : dataSetEds) {
-            Entity sample = ed.getChildEntity();
+            Entity sample = samples.get(ed.getChildEntity().getId());
             if (sample==null || !sample.getEntityType().getName().equals(EntityConstants.TYPE_SAMPLE)) continue;
             if (sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISITED)==null) {
-                logger.info("  Moving unvisited sample to retired data folder: "+sample.getName()+" (id="+sample.getId()+")");
-                Entity retiredDataFolder = sampleHelper.getTrashFolder();
-                dataSetFolder.getEntityData().remove(ed);
-                retiredDataFolder.getEntityData().add(ed);
-                ed.setParentEntity(retiredDataFolder);
-                entityBean.saveOrUpdateEntityData(ed);
-                sample.setName(sample.getName()+"-Retired");
-                entityBean.saveOrUpdateEntity(sample);
+
+                if (retiredIds.contains(sample.getId())) {
+                    logger.info("  Sample was already retired. Removing from data folder: "+sample.getName()+" (id="+sample.getId()+")");    
+                    dataSetFolder.getEntityData().remove(ed);
+                    entityBean.deleteEntityData(ed);
+                }
+                else {
+                    logger.info("  Moving unvisited sample to retired data folder: "+sample.getName()+" (id="+sample.getId()+")");
+                    dataSetFolder.getEntityData().remove(ed);
+                    retiredDataFolder.getEntityData().add(ed);
+                    ed.setParentEntity(retiredDataFolder);
+                    entityBean.saveOrUpdateEntityData(ed);
+                    sample.setName(sample.getName()+"-Retired");
+                    entityBean.saveOrUpdateEntity(sample);   
+                }
                 samplesMovedToTrash++;
             }
         }

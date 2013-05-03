@@ -20,7 +20,7 @@ public class OrphanAnnotationCheckerService extends AbstractEntityService {
         deleteAnnotationsMissingTargets = Boolean.parseBoolean(task.getParameter(PARAM_removeAnnotationsMissingTargets));
         deleteAnnotationsMissingTerms = Boolean.parseBoolean(task.getParameter(PARAM_removeAnnotationsMissingTerms));
 
-        logger.info("Orphan annotations checker");
+        logger.info("Checking annotations for "+ownerKey);
         logger.info("    deleteAnnotationsMissingTargets="+deleteAnnotationsMissingTargets);
         logger.info("    deleteAnnotationsMissingTerms="+deleteAnnotationsMissingTerms+" (this feature is not implemented at this time)");
     
