@@ -1,8 +1,15 @@
 package org.janelia.it.jacs.compute.access;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.model.user_data.User;
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmNeuron;
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmWorkspace;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -16,8 +23,11 @@ import java.util.Set;
 
 public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
+    AnnotationDAO annotationDAO;
+
     public TiledMicroscopeDAO(Logger logger) {
         super(logger);
+        annotationDAO=new AnnotationDAO(logger);
     }
 
     public void createTiledMicroscopeEntityTypes() throws DaoException {
@@ -50,7 +60,44 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             throw new DaoException(e);
         }
 
-        _logger.debug("creteTiledMicroscopeEntityTypes() - done");
+        _logger.debug("createTiledMicroscopeEntityTypes() - done");
     }
+
+    public TmWorkspace createTiledMicroscopeWorkspace(Long brainSampleId, String name, String ownerKey) throws DaoException {
+        try {
+            // Validate sample
+            Entity brainSampleEntity = EJBFactory.getLocalEntityBean().getEntityById(brainSampleId);
+            if (!brainSampleEntity.getEntityType().getName().equals(EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE)) {
+                throw new Exception("Tiled Microscope Workspace must be created with valid 3D Tile Microscope Sample Id");
+            }
+            Entity workspace=new Entity();
+            workspace.setCreationDate(new Date());
+            workspace.setName(name);
+            User user = EJBFactory.getLocalComputeBean().getUserByNameOrKey(ownerKey);
+            if (user==null) {
+                throw new Exception("Owner Key="+ownerKey+" is not valid");
+            }
+            workspace.setOwnerKey(ownerKey);
+            EntityType tiledMicroscopeWorkspaceType=annotationDAO.getEntityTypeByName(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE);
+            workspace.setEntityType(tiledMicroscopeWorkspaceType);
+            EJBFactory.getLocalEntityBean().saveOrUpdateEntity(workspace);
+            TmWorkspace tmWorkspace=new TmWorkspace(workspace);
+            return tmWorkspace;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+    }
+
+    public TmNeuron createTiledMicroscopeNeuron(Long workspaceId, String name) throws DaoException {
+        try {
+            return null; // TODO
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+    }
+
+
 
 }
