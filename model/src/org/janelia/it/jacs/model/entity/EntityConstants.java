@@ -40,6 +40,8 @@ public class EntityConstants {
     public static final String TYPE_MOVIE                            = "Movie";
     public static final String TYPE_NEURON_FRAGMENT                  = "Neuron Fragment";
     public static final String TYPE_NEURON_FRAGMENT_COLLECTION       = "Neuron Fragment Collection";
+    public static final String TYPE_COMPARTMENT_SET                  = "Compartment Set";
+    public static final String TYPE_COMPARTMENT                      = "Compartment";
     public static final String TYPE_ALIGNED_BRAIN_STACK              = "Aligned Brain Stack";
     public static final String TYPE_TEXT_FILE                        = "Text File";
     public static final String TYPE_SWC_FILE                         = "SWC File";
@@ -54,6 +56,8 @@ public class EntityConstants {
     public static final String TYPE_ALIGNMENT_SPACE                  = "Alignment Space";
     public static final String TYPE_MASK_SET                         = "Mask Set";
     public static final String TYPE_MASK                             = "Mask";
+    public static final String TYPE_MC_MASK_FILE                     = "MC Mask File";
+    public static final String TYPE_MC_CHANNEL_FILE                  = "MC Channels File";
     public static final String TYPE_ALIGNED_ITEM                     = "Aligned Item";
     public static final String TYPE_DEFORMATION_MATRIX               = "Deformation Matrix";
     public static final String TYPE_3D_TILE_MICROSCOPE_SAMPLE        = "3D Tile Microscope Sample";
