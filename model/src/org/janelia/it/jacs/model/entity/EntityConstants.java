@@ -100,6 +100,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ANNOTATION_TARGET_ID                = "Annotation Target Id";
     public static final String ATTRIBUTE_ANNOTATION_SESSION_ID               = "Annotation Session Id";
     public static final String ATTRIBUTE_NUMBER                              = "Number";
+    public static final String ATTRIBUTE_NAME                                = "Name";
     public static final String ATTRIBUTE_RESULT                              = "Result";
     public static final String ATTRIBUTE_IS_ZIPPED                           = "Is Zipped";
     public static final String ATTRIBUTE_MERGED_STACK                        = "Merged Stack";
