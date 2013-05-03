@@ -89,6 +89,9 @@ if [ ${#SIGNAL_CHAN} -eq 3 ] || [ ${#SIGNAL_CHAN} -eq 1 ] ; then
     echo "~ Generating final combined separation"
     $NSDIR/setup11 --concat 1 SeparationResultUnmapped $channel_output
     $NSDIR/setup11 --save_channel -r$REF_CHAN_ONE_INDEXED SeparationResultUnmapped $channel_pbd
+    echo "~ Merging neurons"
+    mv SeparationResultUnmapped.nsp SeparationResultUnmapped_unmerged.nsp
+    $NSDIR/merge_neuron SeparationResultUnmapped_unmerged.nsp -o SeparationResultUnmapped.nsp --dist_thre 5
 else
     echo "~ Converting input file to 16 bit"
     SEP16_INPUT_FILE="Input16.v3draw"
