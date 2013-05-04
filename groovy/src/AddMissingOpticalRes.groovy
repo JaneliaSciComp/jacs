@@ -1,30 +1,27 @@
-import java.util.HashSet;
-import java.util.Set;
-
-import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.entity.Entity
 import org.janelia.it.jacs.model.entity.EntityConstants
 import org.janelia.it.jacs.shared.utils.entity.EntityVisitor
 import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder
 import org.janelia.it.FlyWorkstation.api.facade.concrete_facade.ejb.EJBEntityLoader
-import static org.janelia.it.jacs.model.entity.EntityConstants.*
+
+import static org.janelia.it.jacs.model.entity.EntityConstants.TYPE_SAMPLE
 
 boolean DEBUG = false
 
 final JacsUtils f = new JacsUtils(null, false)
 
 Set<String> subjectKeys = new HashSet<String>();
-//for(Entity dataSet : f.e.getEntitiesByTypeName(null, EntityConstants.TYPE_DATA_SET)) {
-//    subjectKeys.add(dataSet.getOwnerKey());
-//}
+for(Entity dataSet : f.e.getEntitiesByTypeName(null, EntityConstants.TYPE_DATA_SET)) {
+    subjectKeys.add(dataSet.getOwnerKey());
+}
 //subjectKeys.add("user:asoy,")
 //subjectKeys.add("group:flylight")
 //subjectKeys.add("user:korffw")
-subjectKeys.add("group:leetlab")
-subjectKeys.add("user:wolfft")
-subjectKeys.add("user:nerna")
-subjectKeys.add("user:taes")
-subjectKeys.add("group:heberleinlab")
+//subjectKeys.add("group:leetlab")
+//subjectKeys.add("user:wolfft")
+//subjectKeys.add("user:nerna")
+//subjectKeys.add("user:taes")
+//subjectKeys.add("group:heberleinlab")
 
 println "Found users with data sets: "+subjectKeys
 for(String subjectKey : subjectKeys) {
