@@ -133,60 +133,61 @@
                 <!-- If we're not stitching then the single tile is considered the stitched file -->
                 <operation name="Create Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitMultiMergeParametersService">
                     <input name="BULK_MERGE_PARAMETERS"/>
-                    <output name="STITCHED_FILENAME"/>
+                    <input name="STACK_FILENAMES"/>
+                    <output name="TILE_FILENAMES"/>
+                    <output name="STACK_FILENAME"/>
                 </operation>
             </sequence>
 
-            <sequence forEach="STITCHED_FILENAME"><!-- Generate MIP for the file -->
-                <sequence name="Generate sample MIPs" waitForAsync="true">
-                    <operation name="Generate MIPs" processor="queue/gridSubmitAndWait">
-                        <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.MIPGenerationService"/>
-                        <input name="RESULT_FILE_NODE" value="$V{STITCH_RESULT_FILE_NODE}"/>
-                        <input name="INPUT_FILENAMES" value="$V{STACK_FILENAMES}"/>
-                        <input name="SIGNAL_CHANNELS"/>
-                        <input name="REFERENCE_CHANNEL"/>
+            <sequence name="Generate sample MIPs" waitForAsync="true">
+                <operation name="Generate MIPs" processor="queue/gridSubmitAndWait">
+                    <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.MIPGenerationService"/>
+                    <input name="RESULT_FILE_NODE" value="$V{STITCH_RESULT_FILE_NODE}"/>
+                    <input name="INPUT_FILENAMES" value="$V{STACK_FILENAMES}"/>
+                    <input name="SIGNAL_CHANNELS"/>
+                    <input name="REFERENCE_CHANNEL"/>
+                </operation>
+            </sequence>
+
+            <!-- Load the sample analysis results into the database -->
+            <operation name="Discover Sample Processing Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SupportingFilesDiscoveryService">
+                <input name="ROOT_FILE_NODE" value="$V{SAMPLE_RESULT_FILE_NODE}"/>
+                <input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
+                <input name="RESULT_ENTITY_TYPE" value="Sample Processing Result"/>
+                <input name="RESULT_ENTITY_NAME" value="Sample Processing"/>
+                <output name="RESULT_ENTITY_ID"/>
+            </operation>
+
+            <!-- Register MIP images -->
+            <operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
+                <input name="SAMPLE_ENTITY_ID"/>
+                <input name="PIPELINE_RUN_ENTITY_ID"/>
+                <input name="RESULT_ENTITY_ID"/>
+                <input name="DEFAULT_IMAGE_FILENAME" value="$V{STACK_FILENAME}"/>
+            </operation>
+
+            <!-- Run analyses on unaligned results -->
+            <!-- Decide what pipeline to run -->
+            <sequence if="RUN_CELL_COUNTING=yes">
+                <sequence forEach="ANALYSIS_ALGORITHM">
+                    <operation name="Get Parameters" processor="org.janelia.it.jacs.compute.service.entity.sample.InitAnalysisParametersService">
+                        <input name="ANALYSIS_ALGORITHM"/>
+                        <input name="RESULT_ENTITY_ID"/>
+                        <output name="OUTPUT_FILENAME"/>
+                        <output name="ANALYSIS_PIPELINE_NAME"/>
                     </operation>
-                </sequence>
 
-                <!-- Load the sample analysis results into the database -->
-                <operation name="Discover Sample Processing Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SupportingFilesDiscoveryService">
-                    <input name="ROOT_FILE_NODE" value="$V{SAMPLE_RESULT_FILE_NODE}"/>
-                    <input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
-                    <input name="RESULT_ENTITY_TYPE" value="Sample Processing Result"/>
-                    <input name="RESULT_ENTITY_NAME" value="Sample Processing"/>
-                    <output name="RESULT_ENTITY_ID"/>
-                </operation>
-
-                <!-- Register MIP images -->
-                <operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
-                    <input name="SAMPLE_ENTITY_ID"/>
-                    <input name="PIPELINE_RUN_ENTITY_ID"/>
-                    <input name="RESULT_ENTITY_ID"/>
-                    <input name="DEFAULT_IMAGE_FILENAME" value="$V{STITCHED_FILENAME}"/>
-                </operation>
-
-                <!-- Run analyses on unaligned results -->
-                <!-- Decide what pipeline to run -->
-                <sequence if="RUN_CELL_COUNTING=yes">
-                    <sequence forEach="ANALYSIS_ALGORITHM">
-                        <operation name="Get Parameters" processor="org.janelia.it.jacs.compute.service.entity.sample.InitAnalysisParametersService">
-                            <input name="ANALYSIS_ALGORITHM"/>
-                            <input name="RESULT_ENTITY_ID"/>
-                            <output name="OUTPUT_FILENAME"/>
-                            <output name="ANALYSIS_PIPELINE_NAME"/>
-                        </operation>
-
+                    <sequence forEach="TILE_FILENAMES">
                         <operation name="Create Cell Counting Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
                             <input name="NAME" value="CellCounting"/>
                             <input name="OUTPUT_VAR_NAME" value="CELL_COUNTING_FILE_NODE"/>
                             <output name="CELL_COUNTING_FILE_NODE"/>
                             <output name="CELL_COUNTING_FILE_NODE_ID"/>
                         </operation>
-
                         <sequence name="Cell Counting Grid" waitForAsync="true">
                             <operation name="Cell Counting" processor="queue/gridSubmitAndWait">
                                 <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3dCellCountingService"/>
-                                <input name="INPUT_FILE" value="$V{OUTPUT_FILENAME}"/>
+                                <input name="INPUT_FILE" value="$V{TILE_FILENAMES}"/>
                                 <input name="RESULT_FILE_NODE_ID" value="$V{CELL_COUNTING_FILE_NODE_ID}"/>
                                 <input name="RESULT_FILE_NODE" value="$V{CELL_COUNTING_FILE_NODE}"/>
                                 <output name="RESULT_FILE_NODE_ID"/>
@@ -194,24 +195,23 @@
                                 <output name="ARCHIVE_FILE_PATHS"/>
                             </operation>
                         </sequence>
-                        <operation name="Discover Sample Processing Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SupportingFilesDiscoveryService">
+                        <operation name="Discover Sample Processing Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.CellCountingResultsDiscoveryService">
                             <input name="ROOT_FILE_NODE" value="$V{CELL_COUNTING_FILE_NODE}"/>
                             <input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
                             <input name="RESULT_ENTITY_TYPE" value="Cell Counting Result"/>
                             <input name="RESULT_ENTITY_NAME" value="Cell Counting Result"/>
                             <output name="RESULT_ENTITY_ID"/>
                         </operation>
-
-                        <include name="Compress raw files" process="SampleDataCompression">
-                            <input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
-                        </include>
-                        <!-- Move the files over if necessary -->
-                        <sequence name="Wait For Archive Sync" waitForAsync="true">
-                            <sequence name="Limit Archive Access" processor="queue/archiveAccess">
-                                <operation name="Copy files to archive" processor="org.janelia.it.jacs.compute.service.utility.SyncToArchiveService">
-                                    <input name="FILE_PATHS" value="$V{ARCHIVE_FILE_PATHS}"/>
-                                </operation>
-                            </sequence>
+                    </sequence>
+                    <include name="Compress raw files" process="SampleDataCompression">
+                        <input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
+                    </include>
+                    <!-- Move the files over if necessary -->
+                    <sequence name="Wait For Archive Sync" waitForAsync="true">
+                        <sequence name="Limit Archive Access" processor="queue/archiveAccess">
+                            <operation name="Copy files to archive" processor="org.janelia.it.jacs.compute.service.utility.SyncToArchiveService">
+                                <input name="FILE_PATHS" value="$V{ARCHIVE_FILE_PATHS}"/>
+                            </operation>
                         </sequence>
                     </sequence>
                 </sequence>
