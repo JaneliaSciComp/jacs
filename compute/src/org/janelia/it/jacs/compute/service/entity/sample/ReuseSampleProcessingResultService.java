@@ -42,6 +42,7 @@ public class ReuseSampleProcessingResultService extends AbstractEntityService {
                 for(Entity sp : pipelineRun.getChildren()) {
                     if (sp.getEntityType().getName().equals(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)) {
                         String spArea = sp.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
+                        if (spArea==null) spArea = "";
                         if (sampleArea!=null && !sampleArea.getName().equals(spArea)) {
                             logger.info("Can't use "+sp.getId()+" because "+sampleArea.getName()+"!="+spArea);
                             continue;
