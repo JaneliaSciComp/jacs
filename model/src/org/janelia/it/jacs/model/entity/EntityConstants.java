@@ -74,7 +74,6 @@ public class EntityConstants {
     public static final String ATTRIBUTE_AGE                                 = "Age";
     public static final String ATTRIBUTE_EFFECTOR                            = "Effector";
     public static final String ATTRIBUTE_SAMPLE_NAME_PATTERN                 = "Sample Name Pattern";
-    public static final String ATTRIBUTE_DENORM_IDENTIFIER                   = "Denorm Identifier";
     public static final String ATTRIBUTE_DEFAULT_2D_IMAGE                    = "Default 2D Image";
     public static final String ATTRIBUTE_DEFAULT_3D_IMAGE                    = "Default 3D Image";
     public static final String ATTRIBUTE_DEFAULT_FAST_3D_IMAGE               = "Default Fast 3D Image";
