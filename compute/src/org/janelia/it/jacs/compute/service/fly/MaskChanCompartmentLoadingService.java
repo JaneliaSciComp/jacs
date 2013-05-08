@@ -8,6 +8,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 import java.io.*;
 import java.util.*;
@@ -92,12 +93,7 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
         helper.addToParent( topLevelFolder, compartmentSetEntity, topLevelFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY );
 
         // Get the mask/name index contents.
-        Map<String,Integer> maskNameIndex = digestMaskNameIndex();
-        // Invert the map.
-        Map<Integer,String> indexToName = new HashMap<Integer,String>();
-        for ( String key: maskNameIndex.keySet() ) {
-            indexToName.put( maskNameIndex.get( key ), key );
-        }
+        Map<Integer,CompartmentDescriptor> indexToCompartment = parseCompartmentsDescriptorFile();
 
         // Process each Mask/Channel combination.  Indexes start at 0, so bump by one.
         EntityType compartmentEntityType = entityBean.getEntityTypeByName( EntityConstants.TYPE_COMPARTMENT );
@@ -107,7 +103,7 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
 
             // Create the compartment and add it to the set.
             int index = indexFromName( key );
-            Entity compartment = createCompartmentEntity( compartmentEntityType, index, indexToName.get( index ) );
+            Entity compartment = createCompartmentEntity(compartmentEntityType, index, indexToCompartment.get(index));
             helper.addToParent(compartmentSetEntity, compartment, compartmentSetEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
 
             // Create the mask and channel and add them to the compartment.
@@ -136,11 +132,16 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
 		return entity;
     }
 
-    protected Entity createCompartmentEntity(EntityType entityType, Integer index, String compartmentShortName) throws Exception {
+    protected Entity createCompartmentEntity(EntityType entityType, Integer index, CompartmentDescriptor compartmentDescriptor) throws Exception {
+        String compartmentShortName = compartmentDescriptor.getName();
         Entity compartmentEntity = new Entity();
         compartmentEntity.setOwnerKey(ownerKey);
         compartmentEntity.setEntityType(entityType);
         compartmentEntity.setName(compartmentShortName + " Compartment");
+        compartmentEntity.setValueByAttributeName(
+                EntityConstants.ATTRIBUTE_COLOR,
+                StringUtils.encodeToHex( compartmentDescriptor.getColors(), logger )
+        );
         compartmentEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER, index.toString());
         String compartmentDescriptiveName = PatternAnnotationDataManager.getCompartmentDescription( compartmentShortName );
         compartmentEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_NAME, compartmentDescriptiveName);
@@ -165,11 +166,14 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
     protected void createAndAddMaskChanEntities( Entity compartment, MaskChannel maskChannel ) throws Exception {
 
         Entity mask3d = helper.create3dImage( maskChannel.maskFile.getAbsolutePath() );
-        helper.addToParent(compartment, mask3d, compartment.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_MASK_IMAGE);
+        helper.setImage( compartment, EntityConstants.ATTRIBUTE_MASK_IMAGE, mask3d );
+        //helper.addToParent(compartment, mask3d, compartment.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_MASK_IMAGE);
 
         Entity channel3d = helper.create3dImage( maskChannel.channelFile.getAbsolutePath() );
-        helper.addToParent(compartment, channel3d, compartment.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_CHAN_IMAGE);
+        helper.setImage( compartment, EntityConstants.ATTRIBUTE_CHAN_IMAGE, channel3d );
+        //helper.addToParent(compartment, channel3d, compartment.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_CHAN_IMAGE);
     }
+
 
     private Entity saveStampedEntity(Entity entity) throws ComputeException {
         logger.info("At save-stamped-entity time, owner key is " + ownerKey);
@@ -258,10 +262,10 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
         }
     }
 
-    private Map<String,Integer> digestMaskNameIndex() throws Exception {
-        Map<String, Integer> nameVsNum = new TreeMap<String, Integer>();
+    private Map<Integer,CompartmentDescriptor> parseCompartmentsDescriptorFile() throws Exception {
+        Map<Integer, CompartmentDescriptor> indexVsCompartment = new TreeMap<Integer, CompartmentDescriptor>();
         BufferedReader rdr = new BufferedReader( new FileReader( COMPARTMENT_NAMES_FILE  ) );
-        String nextLine = null;
+        String nextLine;
 
         // Prototype input line:
         // 56 WED_L "Description" ( 53 45 215 )
@@ -270,15 +274,72 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
             if ( fields.length >= 8 ) {
                 Integer labelNum = Integer.parseInt( fields[ 0 ] );
                 String compartmentName = fields[ 1 ];
-                nameVsNum.put( compartmentName, labelNum );
+                int openParenPos = nextLine.lastIndexOf("(");
+                int closeParenPos = nextLine.lastIndexOf(")");
+                String colorNums = nextLine.substring( openParenPos + 1, closeParenPos );
+
+                String[] colorNumArr = colorNums.trim().split(" ");
+                int[] rgb = new int[] {
+                        Integer.parseInt( colorNumArr[ 0 ] ),
+                        Integer.parseInt( colorNumArr[ 1 ] ),
+                        Integer.parseInt( colorNumArr[ 2 ] ),
+                };
+
+                CompartmentDescriptor descriptor = new CompartmentDescriptor( compartmentName, labelNum, rgb, colorNums );
+                indexVsCompartment.put(labelNum, descriptor);
             }
         }
         rdr.close();
-        return nameVsNum;
+        return indexVsCompartment;
     }
 
     private static class MaskChannel {
         public File maskFile;
         public File channelFile;
+    }
+
+    private static class CompartmentDescriptor {
+        private String name;
+        private Integer compartmentNum;
+        private String colors;
+        private int[] rgb;
+
+        public CompartmentDescriptor( String name, Integer compartmentNum, int[] rgb, String colors ) {
+            this.name = name;
+            this.compartmentNum = compartmentNum;
+            this.rgb = rgb;
+            this.colors = colors;
+        }
+
+        public String getName() { return name; }
+
+        public Integer getCompartmentNum() {
+            return compartmentNum;
+        }
+
+        public String getColors() {
+            return colors;
+        }
+
+        public int[] getRgb() {
+            return rgb;
+        }
+
+        @Override
+        public boolean equals( Object o ) {
+            boolean rtnVal = false;
+            if ( o != null  &&  o instanceof CompartmentDescriptor ) {
+                CompartmentDescriptor otherDescriptor = (CompartmentDescriptor)o;
+                if ( otherDescriptor.getCompartmentNum() == compartmentNum ) {
+                    rtnVal = true;
+                }
+            }
+            return rtnVal;
+        }
+
+        @Override
+        public int hashCode() {
+            return compartmentNum;
+        }
     }
 }
