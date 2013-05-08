@@ -311,5 +311,106 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
+    public void removeWorkspacePreference(Long workspaceId, String key) throws DaoException {
+        try {
+            Entity workspaceEntity = EJBFactory.getLocalEntityBean().getEntityById(workspaceId);
+            if (!workspaceEntity.getEntityType().getName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
+                throw new Exception("Neurons must be parented with valid Workspace Id");
+            }
+            for (Entity e : workspaceEntity.getChildren()) {
+                if (e.getEntityType().getName().equals(EntityConstants.TYPE_PROPERTY_SET)) {
+                    Set<EntityData> edToRemove=new HashSet<EntityData>();
+                    for (EntityData ed : e.getEntityData()) {
+                        String pString=ed.getValue();
+                        String[] pArr=pString.split("=");
+                        String pKey=pArr[0];
+                        if (pKey.equals(key)) {
+                            edToRemove.add(ed);
+                        }
+                    }
+                    for (EntityData ed : edToRemove) {
+                        EJBFactory.getLocalEntityBean().deleteEntityData(ed);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+    }
+
+    public void createOrUpdateWorkspacePreference(Long workspaceId, String key, String value) throws DaoException {
+        try {
+            Entity workspaceEntity = EJBFactory.getLocalEntityBean().getEntityById(workspaceId);
+            if (!workspaceEntity.getEntityType().getName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
+                throw new Exception("Neurons must be parented with valid Workspace Id");
+            }
+            EntityAttribute propertyAttribute=EJBFactory.getLocalEntityBean().getEntityAttributeByName(EntityConstants.ATTRIBUTE_PROPERTY);
+            for (Entity e : workspaceEntity.getChildren()) {
+                if (e.getEntityType().getName().equals(EntityConstants.TYPE_PROPERTY_SET)) {
+                    EntityData edToUpdate=null;
+                    for (EntityData ed : e.getEntityData()) {
+                        String pString=ed.getValue();
+                        String[] pArr=pString.split("=");
+                        String pKey=pArr[0];
+                        if (pKey.equals(key)) {
+                            edToUpdate=ed;
+                        }
+                    }
+                    if (edToUpdate==null) {
+
+                    //public EntityData(Long id, EntityAttribute entityAttribute, Entity parentEntity, Entity childEntity, String ownerKey,
+//                            String value, Date creationDate, Date updatedDate, Integer orderIndex) {
+
+
+                        EntityData ed=new EntityData(null, propertyAttribute, e, null, e.getOwnerKey(), key+"="+value, new Date(), null, 0);
+                        e.getEntityData().add(ed);
+                    } else {
+                        edToUpdate.setValue(key+"="+value);
+                    }
+                    EJBFactory.getLocalEntityBean().saveOrUpdateEntity(e);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+    }
+
+    protected void generalTreeDelete(String ownerKey, Long entityId, String type) throws DaoException {
+        try {
+            Entity entity = EJBFactory.getLocalEntityBean().getEntityById(entityId);
+            if (!entity.getEntityType().getName().equals(type)) {
+                throw new Exception("Neurons must be parented with valid Workspace Id");
+            }
+            if (entity.getOwnerKey().equals(ownerKey)) {
+                EJBFactory.getLocalEntityBean().deleteEntityTree(ownerKey, entityId);
+            } else {
+                throw new Exception("Owners do not match");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+    }
+
+    public void deleteNeuron(String ownerKey, Long neuronId) throws DaoException {
+        generalTreeDelete(ownerKey, neuronId, EntityConstants.TYPE_TILE_MICROSCOPE_NEURON);
+    }
+
+    public void deleteWorkspace(String ownerKey, Long workspaceId) throws DaoException {
+        generalTreeDelete(ownerKey, workspaceId, EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE);
+    }
+
+    public void deleteGeometricAnnotation(Long geoId) throws DaoException {
+        try {
+            EntityData ed=(EntityData) EJBFactory.getLocalComputeBean().genericLoad(EntityData.class, geoId);
+            EJBFactory.getLocalComputeBean().genericDelete(ed);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+    }
+
 
 }
