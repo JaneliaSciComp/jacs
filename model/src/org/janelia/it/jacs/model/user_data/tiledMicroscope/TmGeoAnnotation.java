@@ -28,6 +28,10 @@ public class TmGeoAnnotation {
         this.parent=parent;
     }
 
+    public static String toStringFromArguments(Long id, Long parentId, int index, Double x, Double y, Double z, String comment) {
+        return id + ":" + parentId + ":" + index + ":" + x.toString() + "," + y.toString() + "," + z.toString() + ":" + comment;
+    }
+
     // format expected: <id>:<parentId>:<index>:<x,y,z>:<comment>
     public TmGeoAnnotation(String geoString) throws Exception {
         String[] fields=geoString.split(":");

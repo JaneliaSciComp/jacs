@@ -2,17 +2,11 @@ package org.janelia.it.jacs.compute.access;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.user_data.User;
-import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmNeuron;
-import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmPreferences;
-import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmWorkspace;
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -25,6 +19,7 @@ import java.util.Set;
 public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
     AnnotationDAO annotationDAO;
+    public final static String TMP_GEO_VALUE="@@@ new geo value string @@@";
 
     public TiledMicroscopeDAO(Logger logger) {
         super(logger);
@@ -83,6 +78,8 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             workspace.setEntityType(tiledMicroscopeWorkspaceType);
             workspace=EJBFactory.getLocalEntityBean().saveOrUpdateEntity(workspace);
             TmPreferences preferences=createTiledMicroscopePreferences(workspace.getId());
+            brainSampleEntity.addChildEntity(workspace);
+            EJBFactory.getLocalEntityBean().saveOrUpdateEntity(brainSampleEntity);
             TmWorkspace tmWorkspace=new TmWorkspace(workspace);
             tmWorkspace.setPreferences(preferences);
             return tmWorkspace;
@@ -105,6 +102,8 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             EntityType neuronType = annotationDAO.getEntityTypeByName(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON);
             neuron.setEntityType(neuronType);
             neuron=EJBFactory.getLocalEntityBean().saveOrUpdateEntity(neuron);
+            workspace.addChildEntity(neuron, EntityConstants.ATTRIBUTE_ENTITY);
+            EJBFactory.getLocalEntityBean().saveOrUpdateEntity(workspace);
             TmNeuron tmNeuron=new TmNeuron(neuron);
             return tmNeuron;
         } catch (Exception e) {
@@ -135,6 +134,182 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
+    public TmGeoAnnotation addGeometricAnnotation(Long neuronId, Long parentAnnotationId, int index,
+                                                  double x, double y, double z, String comment) throws DaoException {
+        try {
+            // Retrieve neuron
+            Entity neuron=EJBFactory.getLocalEntityBean().getEntityById(neuronId);
+            if (!neuron.getEntityType().getName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
+                throw new Exception("Id is not valid TmNeuron type="+neuronId);
+            }
+            // Check if root
+            boolean isRoot=false;
+            if (parentAnnotationId==null) {
+                boolean neuronAlreadyHasRoot=false;
+                // Assume this is root - check for other roots
+                for (EntityData ed : neuron.getEntityData()) {
+                    if (ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
+                        neuronAlreadyHasRoot=true;
+                    }
+                }
+                if (neuronAlreadyHasRoot) {
+                    throw new Exception("Neuron already has root element - two are not permitted");
+                }
+                isRoot=true;
+            } else {
+                // Validate
+                boolean foundParent=false;
+                for (EntityData ed : neuron.getEntityData()) {
+                    if (ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE)) {
+                        String value=ed.getValue();
+                        String[] vArr=value.split(":");
+                        Long pId=new Long(vArr[0]);
+                        if (pId==parentAnnotationId) {
+                            foundParent=true;
+                        }
+                    }
+                }
+                if (!foundParent) {
+                    throw new Exception("Could not find parent matching parendId="+parentAnnotationId);
+                }
+            }
+            EntityData geoEd=new EntityData();
+            geoEd.setOwnerKey(neuron.getOwnerKey());
+            geoEd.setCreationDate(new Date());
+            EntityAttribute geoAttr;
+            Long parentId=0L;
+            if (isRoot) {
+                parentId = neuron.getId();
+                geoAttr=annotationDAO.getEntityAttributeByName(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE);
+            } else {
+                parentId=parentAnnotationId;
+                geoAttr=annotationDAO.getEntityAttributeByName(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE);
+            }
+            geoEd.setEntityAttribute(geoAttr);
+            geoEd.setOrderIndex(0);
+            geoEd.setParentEntity(neuron);
+            geoEd.setValue(TMP_GEO_VALUE);
+            neuron.getEntityData().add(geoEd);
+            neuron=EJBFactory.getLocalEntityBean().saveOrUpdateEntity(neuron);
+            // Find and update value string
+            boolean valueStringUpdated=false;
+            String valueString=null;
+            for (EntityData ed : neuron.getEntityData()) {
+                if (isRoot) {
+                    if (ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
+                        valueString=TmGeoAnnotation.toStringFromArguments(ed.getId(), parentId, index, x, y, z, comment);
+                        ed.setValue(valueString);
+                        EJBFactory.getLocalEntityBean().saveOrUpdateEntityData(ed);
+                        valueStringUpdated=true;
+                    }
+                } else {
+                    if (ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE)) {
+                        if (ed.getValue().equals(TMP_GEO_VALUE)) {
+                            valueString=TmGeoAnnotation.toStringFromArguments(ed.getId(), parentId, index, x, y, z, comment);
+                            ed.setValue(valueString);
+                            EJBFactory.getLocalEntityBean().saveOrUpdateEntityData(ed);
+                            valueStringUpdated=true;
+                        }
+                    }
+                }
+            }
+            if (!valueStringUpdated) {
+                throw new Exception("Could not find geo entry to update for value string");
+            }
+            TmGeoAnnotation geoAnnotation=new TmGeoAnnotation(valueString);
+            return geoAnnotation;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+    }
+
+    public void updateGeometricAnnotation(TmGeoAnnotation geoAnnotation,
+                       int index, double x, double y, double z, String comment) throws DaoException {
+        try {
+            EntityData ed=(EntityData) EJBFactory.getLocalComputeBean().genericLoad(EntityData.class, geoAnnotation.getId());
+            String valueString=TmGeoAnnotation.toStringFromArguments(geoAnnotation.getId(), geoAnnotation.getParentId(),
+                    index, x, y, z, comment);
+            ed.setValue(valueString);
+            EJBFactory.getLocalComputeBean().genericSave(ed);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+    }
+
+    public List<TmWorkspaceDescriptor> getWorkspacesForBrainSample(Long brainSampleId, String ownerKey) throws DaoException {
+        try {
+            // Validate sample
+            Entity brainSampleEntity = EJBFactory.getLocalEntityBean().getEntityById(brainSampleId);
+            if (!brainSampleEntity.getEntityType().getName().equals(EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE)) {
+                throw new Exception("Workspaces must be parented with valid 3D Tile Microscope Sample Id");
+            }
+            List<TmWorkspaceDescriptor> descriptorList=new ArrayList<TmWorkspaceDescriptor>();
+            EntityType tiledMicroscopeWorkspaceType=annotationDAO.getEntityTypeByName(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE);
+            EntityType neuronType=annotationDAO.getEntityTypeByName(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON);
+            for (Entity possibleWorkspace : brainSampleEntity.getChildren()) {
+                if (possibleWorkspace.getEntityType().getName().equals(tiledMicroscopeWorkspaceType.getName())) {
+                    if (possibleWorkspace.getOwnerKey().equals(ownerKey)) {
+                        Long wId=possibleWorkspace.getId();
+                        String wName=possibleWorkspace.getName();
+                        int neuronCount=0;
+                        for (EntityData ed : possibleWorkspace.getEntityData()) {
+                            String edName=ed.getEntityAttribute().getName();
+                            if (edName.equals(neuronType)) {
+                                neuronCount++;
+                            }
+                        }
+                        TmWorkspaceDescriptor descriptor=new TmWorkspaceDescriptor(wId, wName, neuronCount);
+                        descriptorList.add(descriptor);
+                    }
+                }
+            }
+            Collections.sort(descriptorList, new Comparator<TmWorkspaceDescriptor>() { @Override public int compare(TmWorkspaceDescriptor a,
+                    TmWorkspaceDescriptor b) { if (a.getId() < b.getId()) { return 1; } else { return 0; } } });
+            return descriptorList;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+    }
+
+    public List<TmNeuronDescriptor> getNeuronsForWorkspace(Long workspaceId, String ownerKey) throws DaoException {
+        try {
+            // Validate sample
+            Entity workspaceEntity = EJBFactory.getLocalEntityBean().getEntityById(workspaceId);
+            if (!workspaceEntity.getEntityType().getName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
+                throw new Exception("Neurons must be parented with valid Workspace Id");
+            }
+            List<TmNeuronDescriptor> descriptorList=new ArrayList<TmNeuronDescriptor>();
+            EntityType neuronType=annotationDAO.getEntityTypeByName(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON);
+            EntityAttribute geoRoot=annotationDAO.getEntityAttributeByName(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE);
+            EntityAttribute geoTree=annotationDAO.getEntityAttributeByName(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE);
+            for (Entity possibleNeuron : workspaceEntity.getChildren()) {
+                if (possibleNeuron.getEntityType().getName().equals(neuronType.getName())) {
+                    if (possibleNeuron.getOwnerKey().equals(ownerKey)) {
+                        Long nId=possibleNeuron.getId();
+                        String nName=possibleNeuron.getName();
+                        int annoCount=0;
+                        for (EntityData ed : possibleNeuron.getEntityData()) {
+                            String edName=ed.getEntityAttribute().getName();
+                            if (edName.equals(geoRoot) || edName.equals(geoTree)) {
+                                annoCount++;
+                            }
+                        }
+                        TmNeuronDescriptor descriptor=new TmNeuronDescriptor(nId, nName, annoCount);
+                        descriptorList.add(descriptor);
+                    }
+                }
+            }
+            Collections.sort(descriptorList, new Comparator<TmNeuronDescriptor>() { @Override public int compare(TmNeuronDescriptor a,
+                  TmNeuronDescriptor b) { if (a.getId() < b.getId()) { return 1; } else { return 0; } } });
+            return descriptorList;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+    }
 
 
 }

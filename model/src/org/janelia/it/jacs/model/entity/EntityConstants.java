@@ -131,7 +131,7 @@ public class EntityConstants {
     //  "<id>:<parentId>:<index>:<x,y,z>:<comment>"
     //
     public static final String ATTRIBUTE_GEO_TREE_COORDINATE                 = "Geometric Tree Coordinate";
-    public static final String ATTRIBUTE_GEO_ROOT_ID                         = "Root Geometric Tree Element";
+    public static final String ATTRIBUTE_GEO_ROOT_COORDINATE                 = "Root Geometric Tree Element";
 
     // Alignment Spaces
     public static final String ATTRIBUTE_ALIGNMENT_SPACE                     = "Alignment Space"; // e.g. "Unified 20x Alignment Space"

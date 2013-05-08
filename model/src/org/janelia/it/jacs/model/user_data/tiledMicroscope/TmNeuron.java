@@ -16,13 +16,10 @@ import java.util.Map;
  */
 public class TmNeuron {
 
-    public static final Long ROOT_ID = 1L;
-
     Long id;
     String name;
     Map<Long, TmGeoAnnotation> geoAnnotationMap=new HashMap<Long, TmGeoAnnotation>();
     TmGeoAnnotation rootAnnotation=null;
-
 
     public Long getId() {
         return id;
@@ -53,13 +50,13 @@ public class TmNeuron {
         this.name=name;
     }
 
-    public void addGeoAnnotation(TmGeoAnnotation annotation) throws Exception {
+    protected void addGeoAnnotation(TmGeoAnnotation annotation) throws Exception {
         if (rootAnnotation==null) {
             if (getGeoAnnotationMap().size()>0) {
                 throw new Exception("Unexpectedly have null rootAnnotation but nonempty annotationMap");
             }
             rootAnnotation=annotation;
-            rootAnnotation.setParentId(ROOT_ID);
+            rootAnnotation.setParentId(this.id);
             geoAnnotationMap.put(rootAnnotation.getId(), rootAnnotation);
         } else {
             Long parentId=annotation.getParentId();
@@ -90,7 +87,7 @@ public class TmNeuron {
         for (EntityData ed : entity.getEntityData()) {
             if (ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE)) {
                 TmGeoAnnotation ga = new TmGeoAnnotation(ed.getValue());
-                if (ga.getParentId()==ROOT_ID) {
+                if (ga.getParentId()==this.id) {
                     if (foundRoot) {
                         throw new Exception("Only single root node permitted");
                     }
@@ -112,7 +109,7 @@ public class TmNeuron {
         }
         // Last step is check to make sure every Annotation has a parent
         for (TmGeoAnnotation ga : geoAnnotationMap.values()) {
-            if (ga.getParent()==null && ga.getParentId()!=ROOT_ID) {
+            if (ga.getParent()==null && ga.getParentId()!=this.id) {
                 throw new Exception("TmGeoAnnotation unexpectedly does not have a valid parent="+ga.getId());
             }
         }
