@@ -1,11 +1,5 @@
 package org.janelia.it.jacs.compute.service.entity;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
@@ -16,6 +10,12 @@ import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.user_data.FileNode;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Takes the bulk merge parameters, then creates lsmFileNames.txt with all the LSM filenames, and metadata files for 

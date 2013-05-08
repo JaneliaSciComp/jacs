@@ -193,6 +193,19 @@
                                 <output name="RESULT_FILE_NODE_ID"/>
                                 <output name="RESULT_FILE_NODE"/>
                                 <output name="ARCHIVE_FILE_PATHS"/>
+                                <output name="CELL_COUNTING_FILE_NODE"/>
+                                <output name="CELL_COUNTING_FILE_NODE_ID"/>
+                                <output name="CELL_COUNTING_MIP_FILES"/>
+                                <output name="RAW_RESULT_FILE"/>
+                            </operation>
+                        </sequence>
+                        <sequence name="Generate sample MIPs" waitForAsync="true">
+                            <operation name="Generate MIPs" processor="queue/gridSubmitAndWait">
+                                <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.MIPGenerationService"/>
+                                <input name="RESULT_FILE_NODE" value="$V{CELL_COUNTING_FILE_NODE}"/>
+                                <input name="INPUT_FILENAMES" value="$V{CELL_COUNTING_MIP_FILES}"/>
+                                <input name="SIGNAL_CHANNELS"/>
+                                <input name="REFERENCE_CHANNEL"/>
                             </operation>
                         </sequence>
                         <operation name="Discover Sample Processing Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.CellCountingResultsDiscoveryService">
@@ -201,6 +214,13 @@
                             <input name="RESULT_ENTITY_TYPE" value="Cell Counting Result"/>
                             <input name="RESULT_ENTITY_NAME" value="Cell Counting Result"/>
                             <output name="RESULT_ENTITY_ID"/>
+                        </operation>
+                        <!-- Register MIP images -->
+                        <operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
+                            <input name="SAMPLE_ENTITY_ID"/>
+                            <input name="PIPELINE_RUN_ENTITY_ID"/>
+                            <input name="RESULT_ENTITY_ID"/>
+                            <input name="DEFAULT_IMAGE_FILENAME" value="$V{RAW_RESULT_FILE}"/>
                         </operation>
                     </sequence>
                     <include name="Compress raw files" process="SampleDataCompression">

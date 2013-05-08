@@ -7,6 +7,7 @@ import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJob
 import java.io.File;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Merge neuron fragments.
@@ -26,7 +27,7 @@ public class Vaa3dCellCountingService extends SubmitDrmaaJobService {
                     "-ist 30 -nt 25 -cst 80 -dc 3 -ec 4 -mnr 50\n" +
                     "-ist 25 -nt 25 -cst 75 -dc 3 -ec 3 -mnr 50\n" +
                     "-ist 25 -nt 25 -cst 70 -dc 3 -ec 3 -mnr 50\n\n";
-    private String inputFilePath, convertedFilePath;
+    private String inputFilePath, convertedFilePath, tifOutputPath, rawOutputPath;
 
     protected void init(IProcessData processData) throws Exception {
         super.init(processData);
@@ -43,6 +44,8 @@ public class Vaa3dCellCountingService extends SubmitDrmaaJobService {
         File tmpInputFile = new File(inputFilePath);
         String tmpName = tmpInputFile.getName();
         convertedFilePath = resultFileNode.getDirectoryPath()+File.separator+tmpName.substring(0,tmpName.lastIndexOf("."))+".v3dpbd";
+        tifOutputPath = resultFileNode.getDirectoryPath()+File.separator+tmpName.substring(0,tmpName.lastIndexOf("."))+"_CellCounterImage.tif";
+        rawOutputPath = tifOutputPath.substring(0,tifOutputPath.lastIndexOf("."))+".v3draw";
         String planPath = resultFileNode.getDirectoryPath()+File.separator+"cellCounterPlan.txt";
         FileWriter planWriter = new FileWriter(new File(planPath));
         try {
@@ -77,7 +80,8 @@ public class Vaa3dCellCountingService extends SubmitDrmaaJobService {
         StringBuilder script = new StringBuilder();
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix()).append("\n");
         script.append(Vaa3DHelper.getFormattedConvertCommand(inputFilePath, convertedFilePath, "8")).append("\n");
-        script.append(Vaa3DHelper.getFormattedCellCounterCommand(planPath,convertedFilePath)).append("\n");
+        script.append(Vaa3DHelper.getFormattedCellCounterCommand(planPath, convertedFilePath)).append("\n");
+        script.append(Vaa3DHelper.getFormattedConvertCommand(tifOutputPath, rawOutputPath)).append("\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix());
         writer.write(script.toString());
     }
@@ -100,5 +104,17 @@ public class Vaa3dCellCountingService extends SubmitDrmaaJobService {
             archiveList.add(resultFileNode.getDirectoryPath());
         }
         processData.putItem("ARCHIVE_FILE_PATHS", archiveList);
+
+        //Look for the resultant stacks
+        File tmpDir = new File(resultFileNode.getDirectoryPath());
+        List<String> mipPathList = new ArrayList<String>();
+        for (File file : tmpDir.listFiles()) {
+            if (file.getName().endsWith(".v3dpbd")||file.getName().endsWith(".v3draw")) {
+                mipPathList.add(file.getAbsolutePath());
+            }
+        }
+        processData.putItem("CELL_COUNTING_MIP_FILES", mipPathList);
+
+        processData.putItem("RAW_RESULT_FILE", rawOutputPath);
     }
 }
