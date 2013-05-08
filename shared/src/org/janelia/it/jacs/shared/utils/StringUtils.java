@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.shared.utils;
 
+import org.apache.log4j.Logger;
+
 import java.util.Collection;
 
 /**
@@ -8,7 +10,6 @@ import java.util.Collection;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class StringUtils {
-
 	public static boolean isEmpty(String s) {
 		return s==null || "".equals(s);
 	}
@@ -51,4 +52,32 @@ public class StringUtils {
 	    if (o==null) return "";
 	    return o.toString();
 	}
+
+    /** Prototype color: 91 121 227 must be turned into a 6-digit hex representation. */
+    public static String encodeToHex(String colors, Logger logger) {
+        StringBuilder builder = new StringBuilder();
+        String[] colorArr = colors.trim().split(" ");
+        if ( colorArr.length != 3 ) {
+            logger.warn("Color parse did not yield three values.  Leaving all-red : " + colors);
+        }
+        else {
+            for ( int i = 0; i < colorArr.length; i++ ) {
+                try {
+                    String hexStr = Integer.toHexString(Integer.parseInt(colorArr[i])).toUpperCase();
+                    if ( hexStr.length() == 1 ) {
+                        hexStr = "0" + hexStr;
+                    }
+                    if ( hexStr.length() == 1 ) {
+                        hexStr = "0" + hexStr;
+                    }
+                    builder.append( hexStr );
+                } catch ( NumberFormatException nfe ) {
+                    logger.warn("Failed to parse " + colorArr[i] + " as Int.  Leaving 80.");
+                    builder.append( "80" );
+                }
+            }
+        }
+        return builder.toString();
+    }
+
 }
