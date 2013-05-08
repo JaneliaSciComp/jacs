@@ -45,7 +45,7 @@ public class Vaa3dCellCountingService extends SubmitDrmaaJobService {
         String tmpName = tmpInputFile.getName();
         convertedFilePath = resultFileNode.getDirectoryPath()+File.separator+tmpName.substring(0,tmpName.lastIndexOf("."))+".v3dpbd";
         tifOutputPath = resultFileNode.getDirectoryPath()+File.separator+tmpName.substring(0,tmpName.lastIndexOf("."))+"_CellCounterImage.tif";
-        rawOutputPath = tifOutputPath.substring(0,tifOutputPath.lastIndexOf("."))+".v3draw";
+        rawOutputPath = tifOutputPath.substring(0,tifOutputPath.lastIndexOf("_"))+"-CellCounterImage.v3draw";
         String planPath = resultFileNode.getDirectoryPath()+File.separator+"cellCounterPlan.txt";
         FileWriter planWriter = new FileWriter(new File(planPath));
         try {

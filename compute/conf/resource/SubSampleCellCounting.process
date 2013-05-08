@@ -204,8 +204,8 @@
                                 <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.MIPGenerationService"/>
                                 <input name="RESULT_FILE_NODE" value="$V{CELL_COUNTING_FILE_NODE}"/>
                                 <input name="INPUT_FILENAMES" value="$V{CELL_COUNTING_MIP_FILES}"/>
-                                <input name="SIGNAL_CHANNELS"/>
-                                <input name="REFERENCE_CHANNEL"/>
+                                <input name="SIGNAL_CHANNELS" value="0 1 2"/>
+                                <input name="REFERENCE_CHANNEL" value=""/>
                             </operation>
                         </sequence>
                         <operation name="Discover Sample Processing Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.CellCountingResultsDiscoveryService">
