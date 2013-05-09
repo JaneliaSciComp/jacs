@@ -1,8 +1,7 @@
 <!-- 
-	Copy the Sample's large files to the archive. The meaning of "large" can change over time, so this service can be 
-	run on the same Sample incrementally. 
+	Asynchronously move the Sample's file node to the archive. 
 -->
-<process name="Synchronize sample to archive" processor="queue/samplePipelineLauncher" startEvent="pending">
+<process name="Asynchronously synchronize sample to archive" processor="queue/samplePipelineLauncher" startEvent="pending">
     <sequence>
 	
 	   <input name="SAMPLE_ENTITY_ID"/>
@@ -15,19 +14,11 @@
 	        <output name="SAMPLE_ENTITY_ID"/>
 	    </operation>
 	    
-        <!-- Create the output file list -->
-        <operation name="Get Files For Archive" processor="org.janelia.it.jacs.compute.service.entity.sample.SampleArchiveService">
-            <input name="MODE" value="CREATE_ARCHIVE_LIST"/>
+        <!-- Send a message to archive the sample nodes asynchronously -->
+        <operation name="Send archival message" processor="org.janelia.it.jacs.compute.service.entity.sample.SampleArchiveService">
+            <input name="MODE" value="SEND_ARCHIVAL_MESSAGE"/>
             <input name="SAMPLE_ENTITY_ID"/>
-            <output name="ORIGINAL_FILE_PATHS"/>
         </operation>
 
-	    <!-- Move the files over if necessary -->
-        <sequence name="Limit Archive Access" waitForAsync="true" processor="queue/archiveAccess">
-            <operation name="Move large files to archive" processor="org.janelia.it.jacs.compute.service.utility.SyncToArchiveService">
-                <input name="FILE_PATHS" value="$V{ORIGINAL_FILE_PATHS}"/>
-            </operation>
-    	</sequence>
-		
     </sequence>
 </process>

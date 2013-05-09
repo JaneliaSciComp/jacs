@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.launcher.indexing;
+package org.janelia.it.jacs.compute.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.DelayQueue;
 
-import org.apache.log4j.Logger;
 
 /**
  * A delayed processing queue which does not accept duplicates, thereby eliminating any duplicates that occur within
@@ -16,8 +15,6 @@ import org.apache.log4j.Logger;
  */
 public abstract class DedupingDelayQueue<T> {
 
-	private static Logger logger = Logger.getLogger(DedupingDelayQueue.class);
-	
 	private long workItemDelay = 5000; // Wait 5 seconds for each item by default
 
 	private final BlockingQueue<PostponedWorkItem<T>> delayed = new DelayQueue<PostponedWorkItem<T>>();

@@ -2,10 +2,12 @@ package org.janelia.it.jacs.compute.service.utility;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.util.FileUtils;
@@ -18,6 +20,8 @@ import org.janelia.it.jacs.shared.utils.SystemCall;
  * Input variables:
  *   FILE_PATH - path in JacsData.Dir.Linux to move or sync to corresponding location in JacsData.Dir.Archive.Linux
  *   FILE_PATHS - alternative variable for providing a list of FILE_PATH
+ *   
+ * This service can also be called directly, with the execute(filepath) method. 
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -47,22 +51,62 @@ public class SyncToArchiveService extends AbstractEntityService {
         	truePaths = new ArrayList<String>();
         	truePaths.add(truePath);
         }
-        
-        logger.info("Synchronizing "+truePaths.size()+" paths to archive");
-        
-        for(String truePath : truePaths) {
-        	try {
-        		syncDir(truePath);
-        	}
-        	catch (Exception e) {
-        		logger.error("Sync failed for dir "+truePath, e);
-        	}
+        syncPaths(truePaths);
+    }
+
+    /**
+     * Alternative execution method which does not run within the launcher framework, or require ProcessData.
+     */
+    public void execute(String filepath) throws ServiceException {
+        try {
+            this.logger = Logger.getLogger(this.getClass());
+            this.entityBean = EJBFactory.getLocalEntityBean();
+            this.computeBean = EJBFactory.getLocalComputeBean();
+            List<String> paths = new ArrayList<String>();
+            paths.add(filepath);
+            syncPaths(paths);
+        } 
+        catch (Exception e) {
+            throw new ServiceException(e);
+        }
+    }
+    
+    /**
+     * Alternative execution method which does not run within the launcher framework, or require ProcessData.
+     */
+    public void execute(Collection<String> filepaths) throws ServiceException {
+        try {
+            this.logger = Logger.getLogger(this.getClass());
+            this.entityBean = EJBFactory.getLocalEntityBean();
+            this.computeBean = EJBFactory.getLocalComputeBean();
+            syncPaths(filepaths);
+        } 
+        catch (Exception e) {
+            throw new ServiceException(e);
+        }
+    }
+    
+    private void syncPaths(Collection<String> filepaths) {
+
+        logger.info("Synchronizing "+filepaths.size()+" paths to archive");
+
+        long start = System.currentTimeMillis();
+        for(String truePath : filepaths) {
+            try {
+                syncDir(truePath);
+            }
+            catch (Exception e) {
+                logger.error("Sync failed for dir "+truePath, e);
+            }
             logger.info("Synchronization completed for "+truePath);
         }
+
+        long end = System.currentTimeMillis();
+        logger.info("Synchronization of "+filepaths.size()+" paths took "+(end-start)+"ms");
         
         logger.info("Synchronization completed for all paths");
     }
-
+    
     private void syncDir(String filePath) throws Exception {
 
     	String archivePath = null;
@@ -80,7 +124,10 @@ public class SyncToArchiveService extends AbstractEntityService {
     	}
 
         logger.info("Synchronizing to archive: "+truePath);
+        long start = System.currentTimeMillis();
     	syncPath(truePath, archivePath);
+    	long end = System.currentTimeMillis();
+    	logger.info("Synchronization of "+truePath+" took "+(end-start)+"ms");
     	
         try {
             updateEntities(truePath, archivePath);
@@ -91,7 +138,6 @@ public class SyncToArchiveService extends AbstractEntityService {
         }
         
         // Looks like everything went well, so we can remove the original file
-        
         File file = new File(truePath);
         try {
             FileUtils.forceDelete(file);

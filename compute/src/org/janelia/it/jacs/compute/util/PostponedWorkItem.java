@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.launcher.indexing;
+package org.janelia.it.jacs.compute.util;
 
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;

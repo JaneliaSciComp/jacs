@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.launcher.archive.ArchiveAccessHelper;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -25,7 +26,8 @@ public class SampleArchiveService extends AbstractEntityService {
 	private static final String centralDir = SystemConfigurationProperties.getString(CENTRAL_DIR_PROP);
 	
     public static final String MODE_CREATE_ARCHIVE_LIST = "CREATE_ARCHIVE_LIST";
-	
+    public static final String MODE_SEND_ARCHIVAL_MESSAGE = "SEND_ARCHIVAL_MESSAGE";
+    
     protected int numChanges;
     private String mode;
     
@@ -44,6 +46,9 @@ public class SampleArchiveService extends AbstractEntityService {
         if (mode.equals(MODE_CREATE_ARCHIVE_LIST)) {
             doCreateArchiveList();
         }
+        else if (mode.equals(MODE_SEND_ARCHIVAL_MESSAGE)) {
+            sendArchivalMessage();
+        }
         else {
             logger.error("Do not recognize mode type="+mode);
         }
@@ -55,9 +60,16 @@ public class SampleArchiveService extends AbstractEntityService {
         logger.info("Putting "+originalPaths.size()+" paths in ORIGINAL_FILE_PATHS");
         processData.putItem("ORIGINAL_FILE_PATHS", new ArrayList<String>(originalPaths));
     }
-	
+
+    private void sendArchivalMessage() throws Exception {
+        logger.info("Finding files to archive...");
+        addSampleFiles(sampleEntityId);
+        logger.info("Sending messages to archive "+originalPaths.size()+" paths");
+        ArchiveAccessHelper.sendMoveToArchiveMessage(originalPaths);
+    }
+    
 	private void addSampleFiles(Long sampleEntityId) throws Exception {
-	    logger.info("Finding sample image files under id="+sampleEntityId);
+	    logger.info("Finding file nodes under sample id="+sampleEntityId);
         
         Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
         if (sampleEntity == null) {

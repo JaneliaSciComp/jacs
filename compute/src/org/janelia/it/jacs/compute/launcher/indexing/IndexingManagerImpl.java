@@ -8,6 +8,7 @@ import javax.ejb.TransactionAttributeType;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.solr.SolrDAO;
+import org.janelia.it.jacs.compute.util.DedupingDelayQueue;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.jboss.annotation.ejb.Management;
 import org.jboss.annotation.ejb.Service;
