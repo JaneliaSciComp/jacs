@@ -18,7 +18,6 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.sun.corba.se.spi.legacy.connection.GetEndPointInfoAgainException;
 
 /**
  * Helper methods for dealing with Samples.
