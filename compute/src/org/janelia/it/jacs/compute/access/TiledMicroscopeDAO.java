@@ -412,5 +412,27 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
+    public TmWorkspace loadWorkspace(Long workspaceId) throws DaoException {
+        try {
+            Entity workspaceEntity = EJBFactory.getLocalEntityBean().getEntityById(workspaceId);
+            TmWorkspace workspace=new TmWorkspace(workspaceEntity);
+            return workspace;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+    }
+
+    public TmNeuron loadNeuron(Long neuronId) throws DaoException {
+        try {
+            Entity neuronEntity = EJBFactory.getLocalEntityBean().getEntityById(neuronId);
+            TmNeuron neuron=new TmNeuron(neuronEntity);
+            return neuron;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+    }
+
 
 }
