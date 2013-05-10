@@ -31,8 +31,7 @@ public interface SampleDataManagerMBean {
     public void runSingleMaskChanArtifactPipeline(String separationEntityId);
     public void runCompleteMaskChanArtifactPipeline(String user);
 
-    public void create3DTileMicroscopeSample(String user, String destinationFolderName, String targetSampleName,
-                                             String targetSamplePath);
+    public void create3DTileMicroscopeSamples(String user, String destinationFolderName);
     public void runSingleSampleArchival(String sampleEntityId);  
     public void runCompleteSampleArchival(String user);   
 }

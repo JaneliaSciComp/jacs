@@ -1,10 +1,5 @@
 package org.janelia.it.jacs.compute.mbean;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -19,6 +14,13 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
+
+import java.io.File;
+import java.io.FileFilter;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 public class SampleDataManager implements SampleDataManagerMBean {
 
@@ -304,9 +306,10 @@ public class SampleDataManager implements SampleDataManagerMBean {
     }
 
     @Override
-    public void create3DTileMicroscopeSample(String user, String destinationFolderName, String targetSampleName,
-                                             String targetSamplePath) {
+    public void create3DTileMicroscopeSamples(String user, String destinationFolderName) {
         try {
+            // Two main areas for data
+            String[] rootPaths = new String[]{"/groups/mousebrainmicro/mousebrainmicro/render"};
             EntityBeanRemote e = EJBFactory.getRemoteEntityBean();
             // Parameters
             String subjectKey = "user:"+user;
@@ -319,13 +322,29 @@ public class SampleDataManager implements SampleDataManagerMBean {
             }
             else {
                 folder = newEntity(destinationFolderName, EntityConstants.TYPE_FOLDER, subjectKey, true);
+                folder = e.saveOrUpdateEntity(subjectKey, folder);
             }
-            folder = e.saveOrUpdateEntity(subjectKey, folder);
-            Entity sample = newEntity(targetSampleName, EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE, subjectKey, false);
-            sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, targetSamplePath);
-            sample = e.saveOrUpdateEntity(subjectKey, sample);
-            System.out.println("Saved sample as "+sample.getId());
-            e.addEntityToParent(subjectKey, folder.getId(), sample.getId(), folder.getMaxOrderIndex() + 1, EntityConstants.ATTRIBUTE_ENTITY);
+
+            // Loop through the main areas and pull out the data directories.  Create entities for them if necessary
+            for (String rootPath : rootPaths) {
+                File[] rootPathDataDirs = (new File(rootPath)).listFiles(new FileFilter() {
+                    @Override
+                    public boolean accept(File file) {
+                        return file.isDirectory();
+                    }
+                });
+                for (File tmpData : rootPathDataDirs) {
+                    // If they exist do nothing
+                    Set<Entity> testFolders = e.getEntitiesByName(subjectKey, tmpData.getName());
+                    if (null!=testFolders && testFolders.size()>0) continue;
+                    // else add in the new data
+                    Entity sample = newEntity(tmpData.getName(), EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE, subjectKey, false);
+                    sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, tmpData.getAbsolutePath());
+                    sample = e.saveOrUpdateEntity(subjectKey, sample);
+                    System.out.println("Saved sample as "+sample.getId());
+                    e.addEntityToParent(subjectKey, folder.getId(), sample.getId(), folder.getMaxOrderIndex() + 1, EntityConstants.ATTRIBUTE_ENTITY);
+                }
+            }
         }
         catch (Exception e) {
             e.printStackTrace();

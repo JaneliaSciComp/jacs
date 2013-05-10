@@ -188,25 +188,15 @@
 
     <operation>
         <description>Add Sample Folders to 3D Tile Microscope Samples</description>
-        <name>create3DTileMicroscopeSample</name>
+        <name>create3DTileMicroscopeSamples</name>
         <parameter>
-            <description>Subject key</description>
+            <description>Subject Login</description>
             <name>user</name>
             <type>java.lang.String</type>
         </parameter>
         <parameter>
             <description>Name of the destination folder</description>
             <name>destinationFolderName</name>
-            <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-            <description>New Sample Name</description>
-            <name>targetSampleName</name>
-            <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-            <description>Path to the New Sample</description>
-            <name>targetSamplePath</name>
             <type>java.lang.String</type>
         </parameter>
     </operation>
