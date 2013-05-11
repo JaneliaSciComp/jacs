@@ -124,7 +124,7 @@ public class SageDAO {
             sql.append("left outer join image_property_vw dimension_x on i.id = dimension_x.image_id and dimension_x.type = 'dimension_x' ");
             sql.append("left outer join image_property_vw dimension_y on i.id = dimension_y.image_id and dimension_y.type = 'dimension_y' ");
             sql.append("left outer join image_property_vw dimension_z on i.id = dimension_z.image_id and dimension_z.type = 'dimension_z' ");
-    	    sql.append("where i.display=true ");
+    	    sql.append("where i.display=true and i.path is not null ");
     	    sql.append("and data_set.value like '"+dataSetName+"' ");
     	    sql.append("order by slide_code.value, i.path ");
     	    
