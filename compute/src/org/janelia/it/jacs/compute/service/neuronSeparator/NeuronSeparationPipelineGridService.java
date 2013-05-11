@@ -133,7 +133,7 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
     @Override
     protected int getRequiredMemoryInGB() {
         // 20x samples can run on a regular node, but anything larger needs a high memory node
-        return Objective.OBJECTIVE_20X.toString().equals(objective) ? 24 : 40;
+        return Objective.OBJECTIVE_20X.getName().equals(objective) ? 24 : 40;
     }
     
     @Override
