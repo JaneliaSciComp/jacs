@@ -43,8 +43,8 @@
             <include name="20x Pipeline" process="FlyLightSamplePipeline">
                 <input name="SAMPLE_ENTITY_ID" value="$V{SAMPLE_20X_ID}"/>
                 <input name="PIPELINE_NAME" value="Polarity Pipeline 20x"/>
-                <input name="MERGE_ALGORITHMS" value="FLYLIGHT"/>
-                <input name="STITCH_ALGORITHMS" value="FLYLIGHT"/>
+                <input name="MERGE_ALGORITHMS" value=""/>
+                <input name="STITCH_ALGORITHMS" value=""/>
                 <input name="ALIGNMENT_ALGORITHMS" value=""/>
                 <input name="ALIGNMENT_ALGORITHM_PARAMS" value=""/>
                 <!--

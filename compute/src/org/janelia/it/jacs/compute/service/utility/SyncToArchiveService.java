@@ -98,13 +98,10 @@ public class SyncToArchiveService extends AbstractEntityService {
             catch (Exception e) {
                 logger.error("Sync failed for dir "+truePath, e);
             }
-            logger.info("Synchronization completed for "+truePath);
         }
 
         long end = System.currentTimeMillis();
-        logger.info("Synchronization of "+filepaths.size()+" paths took "+(end-start)+"ms");
-        
-        logger.info("Synchronization completed for all paths");
+        logger.info("Total synchronization of "+filepaths.size()+" paths took "+(end-start)+"ms");
     }
     
     private void syncDir(String filePath) throws Exception {

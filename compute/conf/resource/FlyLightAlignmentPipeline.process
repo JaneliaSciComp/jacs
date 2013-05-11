@@ -37,6 +37,7 @@
 	    		<input name="SAMPLE_AREAS"/>
 	    		<input name="WARP_NEURONS" value="true"/>
                 <output name="CHANNEL_SPEC"/>
+                <output name="CHANNEL_COLORS"/>
                 <output name="SIGNAL_CHANNELS"/>
                 <output name="REFERENCE_CHANNEL"/>
 				<output name="ALIGNED_FILENAME"/>
@@ -61,7 +62,7 @@
             <input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
             <input name="RESULT_ENTITY_NAME" value="$V{ALIGNMENT_RESULT_NAME}"/>
             <input name="CHANNEL_SPEC"/>
-            <output name="RESULT_ENTITY_ID"/>
+            <input name="CHANNEL_COLORS"/>
             <output name="RESULT_ENTITY_ID"/>
             <output name="PREWARPED_SEPARATION"/>
         </operation>

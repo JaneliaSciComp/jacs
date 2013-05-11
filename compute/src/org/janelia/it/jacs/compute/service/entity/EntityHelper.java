@@ -360,6 +360,10 @@ public class EntityHelper {
     public void setChannelSpec(Entity entity, String value) throws Exception {
         setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, value);
     }
+
+    public void setChannelColors(Entity entity, String value) throws Exception {
+        setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_CHANNEL_COLORS, value);
+    }
     
     private void setAttributeIfNecessary(Entity entity, String attributeName, String value) throws Exception {
         if (entity==null || StringUtils.isEmpty(value)) return;

@@ -152,7 +152,7 @@ public class SampleHelper extends EntityHelper {
             
             // Figure out the number of channels that should be in the final merged/stitched sample
             int sampleNumSignals = getNumSignalChannels(tileGroupList);
-            String sampleChannelSpec = getDefaultChanSpec(sampleNumSignals+1);
+            String sampleChannelSpec = getDefaultChanSpec(sampleNumSignals+1, null);
             logger.info("  Sample has "+sampleNumSignals+" signal channels, and thus specification '"+sampleChannelSpec+"'");
             
             // Find the sample, if it exists, or create a new one.
@@ -684,13 +684,18 @@ public class SampleHelper extends EntityHelper {
      * @param numSignals
      * @return
      */
-    public String getDefaultChanSpec(int numChannels) {
+    public String getDefaultChanSpec(int numChannels, Integer refIndex) {
         int numSignals = numChannels-1;
         StringBuilder buf = new StringBuilder();
-        for(int j=0; j<numSignals; j++) {
-            buf.append("s");
+        if (refIndex==null) refIndex = numChannels;
+        for(int j=0; j<numSignals+1; j++) {
+            if (refIndex!=null && refIndex==j) {
+                buf.append("r");
+            }
+            else {
+                buf.append("s");    
+            }
         }
-        buf.append("r");
         return buf.toString();
     }
     
@@ -699,18 +704,23 @@ public class SampleHelper extends EntityHelper {
      * @param lsmEntity
      * @return
      */
-    public String getLSMChannelSpec(Entity lsmEntity) {
+    public String getLSMChannelSpec(Entity lsmEntity, int refIndex) {
+        
         String chanSpec = lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-        if (!StringUtils.isEmpty(chanSpec)) return chanSpec;
+        if (!StringUtils.isEmpty(chanSpec)) {
+            return chanSpec;
+        }
+        
         String numChannelsStr = lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS);
         if (!StringUtils.isEmpty(numChannelsStr)) {
             try {
-                return getDefaultChanSpec(Integer.parseInt(numChannelsStr));    
+                return getDefaultChanSpec(Integer.parseInt(numChannelsStr), refIndex);    
             }
             catch (NumberFormatException e) {
                 logger.warn("Could not parse Num Channels ('"+numChannelsStr+"') on LSM entity with id="+lsmEntity.getId());
             }
         }
+        
         throw new IllegalStateException("LSM has no Channel Specification and no Num Channels");
     }
 

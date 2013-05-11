@@ -37,6 +37,8 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
 
         super.processFolderForData(alignmentResult);
 
+        String channelColors = (String)processData.getItem("CHANNEL_COLORS");
+        
         String channelSpec = (String)processData.getItem("CHANNEL_SPEC");
         if (StringUtils.isEmpty(channelSpec)) {
             throw new IllegalArgumentException("CHANNEL_SPEC may not be null");
@@ -115,6 +117,10 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
             else if (resultItem.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_3D)) {
                 logger.info("Setting channel specification for "+resultItem.getName()+" (id="+resultItem.getId()+") to "+channelSpec);
                 helper.setChannelSpec(resultItem, channelSpec);
+                if (!StringUtils.isEmpty(channelColors)) {
+                    logger.info("Setting channel colors for "+resultItem.getName()+" (id="+resultItem.getId()+") to "+channelColors);
+                    helper.setChannelSpec(resultItem, channelColors);
+                }
             }
         }   
         

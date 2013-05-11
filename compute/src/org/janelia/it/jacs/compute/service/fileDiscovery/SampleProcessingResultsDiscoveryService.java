@@ -1,9 +1,7 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -12,6 +10,7 @@ import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata;
@@ -40,6 +39,9 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
 
         super.processFolderForData(sampleProcessingResult);
 
+        String channelMappingStr = (String)processData.getItem("LSM_CHANNEL_MAPPING");
+        Collection<String> channelMapping = Task.listOfStringsFromCsvString(channelMappingStr);
+        
         String channelSpec = (String)processData.getItem("CHANNEL_SPEC");
         if (StringUtils.isEmpty(channelSpec)) {
             throw new IllegalArgumentException("CHANNEL_SPEC may not be null");
@@ -105,8 +107,13 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
             logger.info("Setting pixel resolution for "+image3d.getName()+" (id="+image3d.getId()+") to "+pixelRes);
             helper.setPixelResolution(image3d, pixelRes);
         }
+
+        List<String> consensusLsmColors = null;
         
         for(Entity tileEntity : sampleArea.getTiles()) {
+            
+            List<String> allLsmColors = new ArrayList<String>();
+            
             for(EntityData ed : tileEntity.getOrderedEntityData()) {
                 Entity lsmStack = ed.getChildEntity();
                 if (lsmStack != null && lsmStack.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK)) {
@@ -122,19 +129,17 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
                         continue;
                     }
 
-                    StringBuffer colors = new StringBuffer();
-                    StringBuffer dyeNames = new StringBuffer();
+                    List<String> colors = new ArrayList<String>();
+                    List<String> dyeNames = new ArrayList<String>();
                     File jsonFile = new File(jsonEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
                     
                     try {
                         LSMMetadata metadata = LSMMetadata.fromFile(jsonFile);
                         for(Channel channel : metadata.getChannels()) {
-                            if (colors.length()>0) colors.append(",");
-                            if (dyeNames.length()>0) dyeNames.append(",");
-                            colors.append(channel.getColor());
+                            colors.add(channel.getColor());
                             DetectionChannel detection = metadata.getDetectionChannel(channel);
                             if (detection!=null) {
-                                dyeNames.append(detection.getDyeName());
+                                dyeNames.add(detection.getDyeName());
                             }
                         }
                     }
@@ -142,17 +147,46 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
                         throw new Exception("Error parsing LSM metadata file: "+jsonFile,e);
                     }
                     
-                    logger.info("  Setting colors: "+colors);
-                    lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS, colors.toString());
-                    if (dyeNames.length()>0) {
-                        logger.info("  Setting dyes: "+dyeNames);
-                        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES, dyeNames.toString());
+                    allLsmColors.addAll(colors);
+                    
+                    logger.info("  Setting LSM colors: "+colors);
+                    lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS, Task.csvStringFromCollection(colors));
+                    if (!dyeNames.isEmpty()) {
+                        logger.info("  Setting LSM dyes: "+dyeNames);
+                        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES, Task.csvStringFromCollection(dyeNames));
                     }
                     entityBean.saveOrUpdateEntity(lsmStack);
                 }
             }
+            
+            if (consensusLsmColors==null) {
+                consensusLsmColors = allLsmColors;
+            }
+            else if (!consensusLsmColors.equals(allLsmColors)) {
+                throw new IllegalStateException("No color consensus among tiles ("+consensusLsmColors+"!="+allLsmColors+")");
+            }
+        }
+
+        logger.debug("channelMapping="+channelMapping);
+        logger.debug("consensusLsmColors="+consensusLsmColors);
+        
+        List<String> resultColors = new ArrayList<String>();
+        for(String indexStr : channelMapping) {
+            int originalIndex = Integer.parseInt(indexStr);
+            String originalColor = consensusLsmColors.get(originalIndex);
+            if (originalColor!=null) {
+                resultColors.add(originalColor);   
+            }
+            else {
+                resultColors.add("");
+            }
         }
         
+        if (image3d!=null && !resultColors.isEmpty()) {
+            String resultColorsStr = Task.csvStringFromCollection(resultColors);
+            logger.info("Setting result image colors: "+resultColorsStr);
+            helper.setChannelColors(image3d, resultColorsStr);
+        }
     }
 
     public static String getStitchedDimensions(String filePath) throws Exception {

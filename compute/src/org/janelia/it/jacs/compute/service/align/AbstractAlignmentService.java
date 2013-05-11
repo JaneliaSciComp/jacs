@@ -147,13 +147,17 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
                 else {
                     logger.info("  Pixel resolution: "+input1.getPixelResolution());
                 }
+
+                if (input1.getChannelColors()!=null) {
+                    logger.info("  Channel colors: "+input1.getChannelColors());
+                }
                 
                 this.gender = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_GENDER, alignedArea);
                 if (gender!=null) {
                     logger.info("Found gender consensus: "+gender);
                 }
                 
-                putOutputVars(input1.getChannelSpec());
+                putOutputVars(input1.getChannelSpec(), input1.getChannelColors());
             }
         } 
         catch (Exception e) {
@@ -165,6 +169,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
         logger.info("Found "+type+": ");
         logger.info("  Input filename: "+input.getInputFilename());
         logger.info("  Input channel spec: "+input.getChannelSpec());
+        logger.info("  Input channel colors: "+input.getChannelColors());
         logger.info("  Input separation to warp: "+input.getInputSeparationFilename());
         logger.info("  Reference channel: "+input.getRefChannel());
         logger.info("  Reference channel (one-indexed): "+input.getRefChannelOneIndexed());    
@@ -172,7 +177,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
         logger.info("  Pixel resolution: "+input.getPixelResolution());
     }
     
-    protected void putOutputVars(String chanSpec) {
+    protected void putOutputVars(String chanSpec, String channelColors) {
         logger.info("Putting '"+chanSpec+"' in CHANNEL_SPEC");
         processData.putItem("CHANNEL_SPEC", chanSpec);
         String signalChannels = sampleHelper.getSignalChannelIndexes(chanSpec);
@@ -181,6 +186,8 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
         String referenceChannels = sampleHelper.getReferenceChannelIndexes(chanSpec);
         logger.info("Putting '"+referenceChannels+"' in REFERENCE_CHANNEL");
         processData.putItem("REFERENCE_CHANNEL", referenceChannels);
+        logger.info("Putting '"+channelColors+"' in CHANNEL_COLORS");
+        processData.putItem("CHANNEL_COLORS", channelColors);
     }
     
     protected String getConsolidatedLabel(Entity result) throws Exception {

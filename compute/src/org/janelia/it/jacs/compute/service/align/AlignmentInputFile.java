@@ -15,12 +15,14 @@ public class AlignmentInputFile {
     protected String opticalResolution;
     protected String pixelResolution;
     protected String channelSpec;
+    protected String channelColors;
     protected Integer refChannel;
     protected Integer refChannelOneIndexed;
     protected Integer numChannels;
     
     public void setPropertiesFromEntity(Entity image) {
         setInputFilename(image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+        setChannelColors(image.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS));
         setChannelSpec(image.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION));
         setOpticalResolution(image.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION));
         setPixelResolution(image.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION));
@@ -49,6 +51,12 @@ public class AlignmentInputFile {
     }
     public void setPixelResolution(String pixelResolution) {
         this.pixelResolution = pixelResolution==null?null:pixelResolution.replaceAll(" ", "x");
+    }
+    public String getChannelColors() {
+        return channelColors;
+    }
+    public void setChannelColors(String channelColors) {
+        this.channelColors = channelColors;
     }
     public String getChannelSpec() {
         return channelSpec;

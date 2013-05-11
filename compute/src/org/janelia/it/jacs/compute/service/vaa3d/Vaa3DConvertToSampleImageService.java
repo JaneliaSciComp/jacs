@@ -17,6 +17,8 @@ import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.cv.MergeAlgorithm;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
@@ -62,7 +64,8 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
     protected List<MergedLsmPair> mergedLsmPairs;
     protected int randomPort;
     protected boolean merged = false;
-        
+    protected String mergeAlgorithm;    
+    
     // Data lookup maps, keys by the LSM file name
     protected Map<String,Entity> lsmEntityMap = new HashMap<String,Entity>();
     protected Map<String,LSMMetadata> lsmMetadataMap = new HashMap<String,LSMMetadata>();
@@ -124,6 +127,11 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
             else {
                 throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS must be an ArrayList<MergedLsmPair>");
             }
+
+            List<String> mergeAlgorithms = (List<String>)processData.getItem("MERGE_ALGORITHM");
+            if (mergeAlgorithms != null && !mergeAlgorithms.isEmpty()) {
+                mergeAlgorithm = mergeAlgorithms.get(0);
+            }
             
             populateMaps();
         } 
@@ -149,6 +157,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
         
         int configIndex = 1;
 
+        String consensusChannelMapping = null;
         String consensusSignalChannels = null;
         String consensusReferenceChannels = null;
         String consensusChanSpec = null;
@@ -161,11 +170,15 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
             LSMMetadata lsm1Metadata = lsmMetadataMap.get(lsm1.getName());
             logger.info("Parsing file 1: "+lsm1);
             
+            List<String> unmergedChannelList = new ArrayList<String>();
             List<String> inputChannelList = new ArrayList<String>();
             List<String> outputChannelList = new ArrayList<String>();
             
             if (channelDyeSpec!=null && outputChannelOrder!=null) {
-            
+
+                List<String> input1ChannelList = new ArrayList<String>();
+                List<String> input2ChannelList = new ArrayList<String>();
+                
                 // The dye-mapping method of channel ordering relies on a dye mapping and output channel order.
                 
                 outputChannelList.addAll(Arrays.asList(outputChannelOrder.split(",")));
@@ -189,11 +202,14 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                     c++;
                 }
 
+                List<String> lsm1DyeArray = new ArrayList<String>();
+                List<String> lsm2DyeArray = new ArrayList<String>();
                 List<String> mergedDyeArray = new ArrayList<String>();
+                
                 Collection<String> referenceDyes = tagToDyesMap.get("reference");
                 logger.info("Reference dyes: "+referenceDyes);
                 
-                collectDyes(lsm1Metadata, referenceDyes, mergedDyeArray);
+                collectDyes(lsm1Metadata, referenceDyes, mergedDyeArray, lsm1DyeArray);
                 logger.info("Dyes from file 1: "+mergedDyeArray);
                 
                 if (merged) {
@@ -201,7 +217,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                     LSMMetadata lsm2Metadata = lsmMetadataMap.get(lsm2.getName());
                     
                     logger.info("Parsing file 2: "+lsm2);
-                    collectDyes(lsm2Metadata, referenceDyes, mergedDyeArray);
+                    collectDyes(lsm2Metadata, referenceDyes, mergedDyeArray, lsm2DyeArray);
                     logger.info("Dyes from files 1 and 2: "+mergedDyeArray);
                     
                     // Add the reference dye back in, at the end, where the merge operation placed it
@@ -210,12 +226,12 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                     logger.info("All dyes: "+mergedDyeArray);
                 }
                 
-                for(String dye : mergedDyeArray) {
-                    String tag = dyeToTagMap.get(dye);
-                    if (tag!=null) {
-                        inputChannelList.add(tag);
-                    }
-                }
+                input1ChannelList.addAll(convertDyesToTags(lsm1DyeArray, dyeToTagMap));
+                input2ChannelList.addAll(convertDyesToTags(lsm2DyeArray, dyeToTagMap));
+                inputChannelList.addAll(convertDyesToTags(mergedDyeArray, dyeToTagMap));
+                
+                unmergedChannelList.addAll(input1ChannelList);
+                unmergedChannelList.addAll(input2ChannelList);
             }
             else {
                 // If there is no dye-mapping then we have to fall back on the old chan spec method.
@@ -224,14 +240,17 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
 
                 Entity lsm1Entity = lsmEntityMap.get(lsm1.getName());
                 if (lsm1Entity==null) throw new IllegalStateException("Could not find LSM entity for first LSM: "+lsm1.getName());
-                
+
                 String outputChanSpec = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-                String chanSpec1 = sampleHelper.getLSMChannelSpec(lsm1Entity);
+                
+                int refIndex1 = getRefIndex(lsm1Metadata);
+                String chanSpec1 = sampleHelper.getLSMChannelSpec(lsm1Entity, refIndex1);
                 
                 logger.info("  Output spec: "+outputChanSpec);
                 logger.info("  Input spec 1: "+chanSpec1);
                 
                 if (merged) {
+                    
                     // When two files are merged, the reference is automatically relocated to the end. So in this case
                     // the input chan spec consists of the non-reference channels of both files, followed by the  
                     // reference channel. 
@@ -240,24 +259,73 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                     Entity lsm2Entity = lsmEntityMap.get(lsm2.getName());
                     if (lsm2Entity==null) throw new IllegalStateException("Could not find LSM entity for second LSM: "+lsm2.getName());
                 
-                    String chanSpec2 = sampleHelper.getLSMChannelSpec(lsm2Entity);
+                    LSMMetadata lsm2Metadata = lsmMetadataMap.get(lsm2.getName());
+                    int refIndex2 = getRefIndex(lsm2Metadata);
+                    
+                    String chanSpec2 = sampleHelper.getLSMChannelSpec(lsm2Entity, refIndex2);
                     logger.info("  Input spec 2: "+chanSpec2);
                     
-                    String chanSpec = chanSpec1.replaceAll("r", "")+chanSpec2.replaceAll("r", "")+"r";
-                    inputChannelList.addAll(convertChanSpecToList(chanSpec));
+
+                    unmergedChannelList.addAll(convertChanSpecToList(chanSpec1+chanSpec2));
                     
-                    // The output channel spec is defined by the sample (usually set during SAGE sync) and is 
-                    // probably the same. If the output spec is not defined by the sample, then the input spec is used.
-                    
-                    if (outputChanSpec==null) {
-                        outputChannelList.addAll(inputChannelList);
+                    if (MergeAlgorithm.FLYLIGHT_ORDERED.getName().equals(mergeAlgorithm)) {
+                        // Channels were kept in original order, but the reference was moved to the end
+
+                        String chanSpec = chanSpec1.replaceAll("r", "")+chanSpec2.replaceAll("r", "")+"r";
+                        inputChannelList.addAll(convertChanSpecToList(chanSpec));
+                        
+                        // The output channel spec is defined by the sample (usually set during SAGE sync) and is 
+                        // probably the same. If the output spec is not defined by the sample, then the input spec is used.
+                        
+                        if (outputChanSpec==null) {
+                            outputChannelList.addAll(inputChannelList);
+                        }
+                        else {
+                            outputChannelList.addAll(convertChanSpecToList(outputChanSpec));
+                        }
                     }
                     else {
-                        outputChannelList.addAll(convertChanSpecToList(outputChanSpec));
+                        // Channels were reordered to RGB order by the merge step, and the reference was moved to the end
+
+                        String redTag = null;
+                        String greenTag = null;
+                        String blueTag = null;
+                        String refTag = null;
+                        
+                        List<String> tags = new ArrayList<String>(unmergedChannelList);
+                        
+                        List<Channel> allChannels = new ArrayList<Channel>();
+                        allChannels.addAll(lsm1Metadata.getChannels());
+                        allChannels.addAll(lsm2Metadata.getChannels());
+                        
+                        for(Channel channel : allChannels) {
+                            String tag = tags.remove(0);
+                            String color = channel.getColor();
+                            if ("#FF0000".equalsIgnoreCase(color)) {
+                                redTag = tag;
+                            }
+                            else if ("#00FF00".equalsIgnoreCase(color)) {
+                                greenTag = tag;
+                            }
+                            else if ("#0000FF".equalsIgnoreCase(color)) {
+                                blueTag = tag;
+                            }
+                            else if (refTag==null) {
+                                refTag = tag;
+                            }
+                        }
+                           
+                        inputChannelList.add(redTag);
+                        inputChannelList.add(greenTag);
+                        inputChannelList.add(blueTag);
+                        inputChannelList.add(refTag);
                     }
-                    
+
+                    // The channels are already ordered by the merge step
+                    outputChannelList.addAll(inputChannelList);
                 }
                 else {
+                    unmergedChannelList.addAll(convertChanSpecToList(chanSpec1));
                     // When there is no merging, then the input chan spec is equal to the LSM's chan spec. 
                     inputChannelList.addAll(convertChanSpecToList(chanSpec1));
 
@@ -274,13 +342,25 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                     }
                 }
             }
-
+            
+            logger.info("Unmerged input channel order: "+unmergedChannelList);
             logger.info("Input channel order: "+inputChannelList);
             logger.info("Output channel order: "+outputChannelList);
 
-            StringBuffer signalChannels = new StringBuffer();            
-            StringBuffer referenceChannels = new StringBuffer();
-            StringBuffer chanSpec = new StringBuffer();
+            List<Integer> channelMapping = new ArrayList<Integer>();
+            for(String outputTag : outputChannelList) {
+                int originalIndex = unmergedChannelList.indexOf(outputTag);
+                if (originalIndex<0) {
+                    throw new IllegalStateException("Cannot find requested output channel in the input LSMs: "+outputTag);
+                }
+                channelMapping.add(originalIndex);
+            }
+            
+            String channelMappingStr = Task.csvStringFromCollection(channelMapping);
+            
+            StringBuilder signalChannels = new StringBuilder();            
+            StringBuilder referenceChannels = new StringBuilder();
+            StringBuilder chanSpec = new StringBuilder();
             
             int index = 0;
             for(String tag : outputChannelList) {
@@ -297,6 +377,14 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                     chanSpec.append("s");
                 }
                 index++;
+            }
+            
+
+            if (consensusChannelMapping==null) {
+                consensusChannelMapping = channelMappingStr;
+            }
+            else if (!consensusChannelMapping.equals(channelMappingStr)) {
+                throw new IllegalStateException("No channel mapping consensus among tiles ("+consensusChannelMapping+"!="+channelMappingStr+")");
             }
             
             if (consensusReferenceChannels==null) {
@@ -327,6 +415,8 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
         createShellScript(writer);
         setJobIncrementStop(configIndex-1);
         
+        logger.info("Putting '"+consensusChannelMapping+"' in LSM_CHANNEL_MAPPING");
+        processData.putItem("LSM_CHANNEL_MAPPING", consensusChannelMapping);
         logger.info("Putting '"+consensusChanSpec+"' in CHANNEL_SPEC");
         processData.putItem("CHANNEL_SPEC", consensusChanSpec);
         logger.info("Putting '"+consensusSignalChannels+"' in SIGNAL_CHANNELS");
@@ -335,29 +425,51 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
         processData.putItem("REFERENCE_CHANNEL", consensusReferenceChannels);
     }
     
-    private void collectDyes(LSMMetadata lsmMetadata, Collection<String> referenceDyes, List<String> dyes) {
+    private int getRefIndex(LSMMetadata lsmMetadata) {
+        int i = 0;
+        int refIndex = 0;
+        for(Channel channel : lsmMetadata.getChannels()) {
+            if ("#FFFFFF".equalsIgnoreCase(channel.getColor())) {
+                refIndex = i;
+            }
+            i++;
+        }
+        return refIndex;
+    }
+    private void collectDyes(LSMMetadata lsmMetadata, Collection<String> referenceDyes, Collection<String> signalDyes, Collection<String> allDyes) {
 
         for(Channel channel : lsmMetadata.getChannels()) {
             DetectionChannel detection = lsmMetadata.getDetectionChannel(channel);
             if (detection!=null) {
                 String dye = detection.getDyeName();
-                logger.info("  Considering dye: "+dye);
+                logger.debug("  Considering dye: "+dye);
                 if (merged && referenceDyes.contains(dye)) {
-                    logger.info("    This is a reference dye");
+                    logger.debug("    This is a reference dye");
                     // If this is a merged pair, treat the reference dye differently from the rest
                     if (referenceDye==null) {
                         referenceDye = dye;    
                     }
                     else if (!referenceDye.equals(dye)) {
-                        logger.warn("  Multiple reference dyes detected ("+referenceDye+"!="+dye+")");
+                        throw new IllegalStateException("Multiple reference dyes detected in a single image ("+referenceDye+"!, "+dye+")");
                     }
                 }
                 else {
-                    dyes.add(dye);    
+                    signalDyes.add(dye);    
                 }
-                
+                allDyes.add(dye);
             }
         }
+    }
+    
+    private Collection<String> convertDyesToTags(Collection<String> dyes, Map<String,String> dyeToTagMap) {
+        List<String> tags = new ArrayList<String>();
+        for(String dye : dyes) {
+            String tag = dyeToTagMap.get(dye);
+            if (tag!=null) {
+                tags.add(tag);
+            }
+        }
+        return tags;
     }
 
     private void writeInstanceFiles(MergedLsmPair mergedLsmPair, String mapping, int configIndex) throws Exception {
