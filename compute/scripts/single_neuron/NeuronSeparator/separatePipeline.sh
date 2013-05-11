@@ -148,8 +148,8 @@ if [ -s SeparationResultUnmapped.nsp ]; then
         cat $INPUT_FILE | $NSDIR/v3draw_select_channels $REF_CHAN > Reference.v3draw
 
         echo "~ Copying final output to: $OUTDIR"
-        cp $RESULT $OUTDIR
-        cp SeparationResultUnmapped.pbd $OUTDIR # companion file for the result
+        cp SeparationResultUnmapped.* $OUTDIR 
+        cp SeparationResultUnmapped_unmerged.* $OUTDIR
         cp $CONSIGNAL $OUTDIR/ConsolidatedSignal.v3draw
         cp ConsolidatedLabel.v3draw $OUTDIR
         cp Reference.v3draw $OUTDIR
