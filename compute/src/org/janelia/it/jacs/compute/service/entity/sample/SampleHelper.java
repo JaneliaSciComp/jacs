@@ -152,7 +152,7 @@ public class SampleHelper extends EntityHelper {
             
             // Figure out the number of channels that should be in the final merged/stitched sample
             int sampleNumSignals = getNumSignalChannels(tileGroupList);
-            String sampleChannelSpec = getDefaultChanSpec(sampleNumSignals+1, null);
+            String sampleChannelSpec = getDefaultChanSpec(sampleNumSignals+1, sampleNumSignals);
             logger.info("  Sample has "+sampleNumSignals+" signal channels, and thus specification '"+sampleChannelSpec+"'");
             
             // Find the sample, if it exists, or create a new one.
@@ -685,6 +685,7 @@ public class SampleHelper extends EntityHelper {
      * @return
      */
     public String getDefaultChanSpec(int numChannels, Integer refIndex) {
+        if (refIndex==null) refIndex = 0;
         int numSignals = numChannels-1;
         StringBuilder buf = new StringBuilder();
         if (refIndex==null) refIndex = numChannels;
