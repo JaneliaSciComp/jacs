@@ -70,24 +70,51 @@ public class SampleTraversalService extends AbstractEntityService {
         }
         
 		if (RUN_MODE_NEW.equals(runMode)) {
-	    	populateChildren(sample);
-	    	Entity pipelineRun = EntityUtils.getLatestChildOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
-	    	return (pipelineRun==null);
+            return includeSample(sample, true, false);
 		} 
 		else if (RUN_MODE_INCOMPLETE.equals(runMode)) {
-	    	populateChildren(sample);
-	    	Entity pipelineRun = EntityUtils.getLatestChildOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
-	    	if (pipelineRun==null) {
-	    		return true;
-	    	}
-	    	populateChildren(pipelineRun);
-	    	Entity error = EntityUtils.getLatestChildOfType(pipelineRun, EntityConstants.TYPE_ERROR);
-	    	return (error!=null); 
+		    return includeSample(sample, true, true);
 		}
 		else if (RUN_MODE_ALL.equals(runMode)) {
 			return true;
 		}
 		
 		throw new IllegalStateException("Illegal mode: "+runMode);
+    }
+    
+    private boolean includeSample(Entity sample, boolean includeNewSamples, boolean includeErrorSamples) throws Exception {
+
+        populateChildren(sample);
+
+        List<Entity> childSamples = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_SAMPLE);
+        if (childSamples.isEmpty()) {
+
+            if (includeNewSamples) {
+                Entity pipelineRun = EntityUtils.getLatestChildOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
+                if (pipelineRun==null) {
+                    return true;
+                }
+            }
+            if (includeErrorSamples) {
+                Entity pipelineRun = EntityUtils.getLatestChildOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
+                populateChildren(pipelineRun);
+                Entity error = EntityUtils.getLatestChildOfType(pipelineRun, EntityConstants.TYPE_ERROR);
+                if (error!=null) {
+                    return true;
+                }
+            }
+        }
+        else {
+            for(Entity childSample : childSamples) {
+                populateChildren(childSample);
+                if (!includeSample(childSample, includeNewSamples, includeErrorSamples)) {
+                    return false;
+                }    
+            }
+            // All child samples passed
+            return true;
+        }
+        
+        return false;
     }
 }
