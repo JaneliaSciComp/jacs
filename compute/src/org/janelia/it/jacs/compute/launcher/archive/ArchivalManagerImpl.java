@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.launcher.archive;
 import java.util.Collection;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.service.utility.SyncFromArchiveService;
 import org.janelia.it.jacs.compute.service.utility.SyncToArchiveService;
 import org.jboss.annotation.ejb.Management;
 import org.jboss.annotation.ejb.Service;
@@ -41,5 +42,17 @@ public class ArchivalManagerImpl implements ArchivalManagerManagement {
         logger.debug("Executing archival of "+filepaths.size()+" file paths");
         SyncToArchiveService service = new SyncToArchiveService();
         service.execute(filepaths);
+    }
+    
+    public void copyFromArchive(String sourceFilepath, String targetFilepath) throws Exception {
+        logger.debug("Executing dearchival of "+sourceFilepath);
+        SyncFromArchiveService service = new SyncFromArchiveService();
+        service.execute(sourceFilepath, targetFilepath);
+    }
+    
+    public void copyFromArchive(Collection<String> sourceFilepaths, Collection<String> targetFilepaths) throws Exception {
+        logger.debug("Executing dearchival of "+sourceFilepaths.size()+" file paths");
+        SyncFromArchiveService service = new SyncFromArchiveService();
+        service.execute(sourceFilepaths, targetFilepaths);
     }
 }

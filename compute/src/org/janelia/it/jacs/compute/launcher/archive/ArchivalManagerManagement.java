@@ -20,7 +20,11 @@ public interface ArchivalManagerManagement {
 
 	void destroy();
 
-	public void moveToArchive(String filepath) throws Exception;
+	public void moveToArchive(String sourceFilepath) throws Exception;
 	
-	public void moveToArchive(Collection<String> filepaths) throws Exception;
+	public void moveToArchive(Collection<String> sourceFilepaths) throws Exception;
+	
+	public void copyFromArchive(String sourceFilepath, String targetFilepath) throws Exception;
+    
+    public void copyFromArchive(Collection<String> sourceFilepaths, Collection<String> targetFilepaths) throws Exception;
 }

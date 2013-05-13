@@ -1,14 +1,16 @@
 package org.janelia.it.jacs.compute.launcher.archive;
 
-import java.util.Set;
-
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.EJBException;
 import javax.ejb.MessageDriven;
 import javax.jms.Message;
+import javax.jms.ObjectMessage;
+import javax.jms.Queue;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.engine.launcher.ejb.SeriesLauncherMDB;
+import org.janelia.it.jacs.compute.engine.util.JmsUtil;
+import org.janelia.it.jacs.compute.jtc.AsyncMessageInterface;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.jboss.annotation.ejb.Depends;
 import org.jboss.annotation.ejb.PoolClass;
@@ -33,6 +35,7 @@ public class ArchiveAccessMDB extends SeriesLauncherMDB {
     private static Logger logger = Logger.getLogger(ArchiveAccessMDB.class);
     
     public static final String REQUEST_MOVE_TO_ARCHIVE = "moveToArchive";
+    public static final String REQUEST_COPY_FROM_ARCHIVE = "copyFromArchive";
     
     @Depends({"jboss:custom=ArchivalManager"})
     private ArchivalManagerManagement archivalManager;
@@ -54,10 +57,51 @@ public class ArchiveAccessMDB extends SeriesLauncherMDB {
                 else {
                     archivalManager.moveToArchive(filepath);      
                 }
+                
+                Queue replyToQueue = (Queue) message.getJMSReplyTo();
+                if (replyToQueue == null) {
+                    logger.info("Nobody to reply to");
+                    return;
+                }
+                AsyncMessageInterface messageInterface = JmsUtil.createAsyncMessageInterface();
+                ObjectMessage replyMessage = messageInterface.createObjectMessage();
+                message.setStringProperty("REQUEST", request);
+                message.setBooleanProperty("COMPLETE", true);
+                messageInterface.sendMessage(replyMessage, replyToQueue, messageInterface.localConnectionType);
+            }
+            else if (REQUEST_COPY_FROM_ARCHIVE.equals(request)) {
+                logger.debug("Limiting archive access for copyFromArchive request");
+                String filepath = message.getStringProperty("SOURCE_FILE_PATH");
+                String targetFilepaths = "";
+                if (filepath==null) {
+                    String filepaths = message.getStringProperty("SOURCE_FILE_PATHS");
+                    if (filepaths==null) {
+                        throw new IllegalStateException("Both SOURCE_FILE_PATH and SOURCE_FILE_PATHS cannot be null when REQUEST="+REQUEST_MOVE_TO_ARCHIVE);
+                    }
+                    targetFilepaths = message.getStringProperty("TARGET_FILE_PATHS");
+                    archivalManager.copyFromArchive(Task.listOfStringsFromCsvString(filepaths), Task.listOfStringsFromCsvString(targetFilepaths));      
+                }
+                else {
+                    targetFilepaths = message.getStringProperty("TARGET_FILE_PATH");
+                    archivalManager.copyFromArchive(filepath, targetFilepaths);      
+                }
+                
+                Queue replyToQueue = (Queue) message.getJMSReplyTo();
+                if (replyToQueue == null) {
+                    logger.info("Nobody to reply to");
+                    return;
+                }
+
+                AsyncMessageInterface messageInterface = JmsUtil.createAsyncMessageInterface();
+                ObjectMessage replyMessage = messageInterface.createObjectMessage();
+                message.setStringProperty("REQUEST", request);
+                message.setStringProperty("COMPLETED_FILE_PATHS", targetFilepaths);
+                messageInterface.sendMessage(replyMessage, replyToQueue, messageInterface.localConnectionType);
             }
             else {
                 logger.debug("Limiting archive access for message");
-                super.onMessage(message);    
+                super.onMessage(message);
+                return;
             }
         }
         catch (Exception e) {

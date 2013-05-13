@@ -4,15 +4,25 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+
+import javax.jms.ObjectMessage;
+import javax.jms.Queue;
 
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
+import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
+import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
+import org.janelia.it.jacs.compute.engine.data.QueueMessage;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.engine.util.JmsUtil;
+import org.janelia.it.jacs.compute.jtc.AsyncMessageInterface;
+import org.janelia.it.jacs.compute.launcher.archive.ArchiveAccessHelper;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
@@ -46,7 +56,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
 	
 	protected static final String CONFIG_PREFIX = "alignConfiguration.";
 	protected static final int TIMEOUT_SECONDS = 3600;  // 60 minutes
-
+	
     protected static final String EXECUTABLE_DIR = SystemConfigurationProperties.getString("Executables.ModuleBase");
 
     protected EntityBeanLocal entityBean;
@@ -208,6 +218,63 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
             }
         }
         return null;
+    }
+    
+    @Override
+    protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
+        
+        // Copy input files over from archive if necessary
+        if (input2!=null) copyFromArchive(input1);
+        if (input2!=null) copyFromArchive(input2);
+        
+        return super.prepareJobTemplate(drmaa);
+    }
+    
+    protected AsyncMessageInterface messageInterface;
+    
+    private void copyFromArchive(AlignmentInputFile input) throws Exception {
+        if (!input.getInputFilename().startsWith("/archive")) return;
+        
+        messageInterface = JmsUtil.createAsyncMessageInterface();
+        Queue tempWaitQueue = messageInterface.getQueueForReceivingMessages(messageInterface.localConnectionType);
+        String tempQueueName = tempWaitQueue.getQueueName();
+        
+        List<String> archivedFiles = new ArrayList<String>();
+        List<String> targetFiles = new ArrayList<String>();
+        archivedFiles.add(input.getInputFilename());
+        
+        String newInput = new File(resultFileNode.getDirectoryPath(), new File(input.getInputFilename()).getName()).getAbsolutePath();
+        targetFiles.add(newInput);
+        if (input.getInputSeparationFilename()!=null) {
+            archivedFiles.add(input.getInputSeparationFilename());
+            String newInputSeperation = new File(resultFileNode.getDirectoryPath(), new File(input.getInputSeparationFilename()).getName()).getAbsolutePath();
+            targetFiles.add(newInputSeperation);
+        }
+        
+        logger.info("Sending archive message");
+        ArchiveAccessHelper.sendCopyFromArchiveMessage(archivedFiles, targetFiles, tempWaitQueue);
+        
+        logger.info("Waiting on temp queue: "+tempQueueName);
+        ObjectMessage responseMessage = (ObjectMessage) messageInterface.waitForMessageOnQueue(TIMEOUT_SECONDS, tempWaitQueue);
+        if (responseMessage == null) {
+            throw new ServiceException("Failed to receive message from temporary queue:" + tempQueueName);
+        }
+        
+        String completedFilepaths = responseMessage.getStringProperty("COMPLETED_FILE_PATHS");
+        if (!completedFilepaths.equals(targetFiles)) {
+            logger.warn("The completed file paths ("+completedFilepaths+") do not match the target files ("+targetFiles+")");
+        }
+
+        messageInterface.returnQueueForReceivingMessages(tempWaitQueue);
+        
+        for(String targetFilepath : targetFiles) {
+            File file = new File(targetFilepath);
+            if (!file.exists()) {
+                throw new ServiceException("Cannot find input file copied from archive: "+file);
+            }
+        }
+        
+        logger.info("Retrieved necessary files for archive for alignment input "+input.getInputFilename());
     }
     
     @Override

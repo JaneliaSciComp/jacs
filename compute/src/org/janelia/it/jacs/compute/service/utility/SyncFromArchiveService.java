@@ -2,6 +2,8 @@ package org.janelia.it.jacs.compute.service.utility;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -34,7 +36,9 @@ public class SyncFromArchiveService implements IService {
     
     protected static final String COPY_COMMAND = "cp -a"; 
     protected static final String SYNC_COMMAND = "rsync -aW"; 
-
+    protected static final String MOVE_COMMAND = "mv";
+    protected static final String REMOVE_COMMAND = "rm -rf";
+    
     public void execute(IProcessData processData) throws ServiceException {
 
     	try {
@@ -48,9 +52,15 @@ public class SyncFromArchiveService implements IService {
             	truePaths.add(truePath);
             }
             
+            List<String> targetPaths = new ArrayList<String>();
             for(String truePath : truePaths) {
-            	syncDir(truePath);
+                if (!truePath.contains(JACS_DATA_ARCHIVE_DIR)) {
+                    throw new ServiceException("Unrecognized archive path: "+truePath);
+                }
+                targetPaths.add(truePath.replaceFirst(JACS_DATA_ARCHIVE_DIR, JACS_DATA_DIR));
             }
+            
+            syncPaths(truePaths, targetPaths);
     	}
         catch (Exception e) {
         	if (e instanceof ServiceException) {
@@ -59,38 +69,60 @@ public class SyncFromArchiveService implements IService {
             throw new ServiceException("Synchronization from archive failed", e);
         }
     }
+
+    /**
+     * Alternative execution method which does not run within the launcher framework, or require ProcessData.
+     */
+    public void execute(String sourceFilepath, String targetFilepath) throws ServiceException {
+        List<String> sourcepPaths = new ArrayList<String>();
+        sourcepPaths.add(sourceFilepath);
+        List<String> targetPaths = new ArrayList<String>();
+        targetPaths.add(sourceFilepath);
+        execute(sourcepPaths, targetPaths);
+    }
     
-    private void syncDir(String filePath) throws Exception {
-        
-    	logger.info("Synchronizing from archive: "+filePath);
+    /**
+     * Alternative execution method which does not run within the launcher framework, or require ProcessData.
+     */
+    public void execute(Collection<String> sourceFilepaths, Collection<String> targetFilepaths) throws ServiceException {
+        try {
+            syncPaths(sourceFilepaths, targetFilepaths);
+        } 
+        catch (Exception e) {
+            throw new ServiceException(e);
+        }
+    }
+    
+    private void syncPaths(Collection<String> sourceFilepaths, Collection<String> targetFilepaths) throws Exception {
+        LinkedList<String> targets = new LinkedList<String>(targetFilepaths);
+        for(String sourceFilepath : sourceFilepaths) {
+            String targetFilepath = targets.remove();
+            syncPath(sourceFilepath, targetFilepath);
+        }
+    }
+    
+    private void syncPath(String sourceFilepath, String targetFilepath) throws Exception {
+        logger.info("Synchronizing "+sourceFilepath+" to "+targetFilepath);
     	
-    	String archivePath = null;
-    	String truePath = null;
-    	if (filePath.contains(JACS_DATA_DIR)) {
-    		truePath = filePath;
-    		archivePath = filePath.replaceFirst(JACS_DATA_DIR, JACS_DATA_ARCHIVE_DIR);
-    	}
-    	else if (filePath.contains(JACS_DATA_ARCHIVE_DIR)) {
-    		archivePath = filePath;
-    		truePath = filePath.replaceFirst(JACS_DATA_ARCHIVE_DIR, JACS_DATA_DIR);
-    	}
-    	else {
-    		throw new ServiceException("Unrecognized path: "+filePath);
-    	}
-    	
-    	File file = new File(truePath);
+        File sourceFile = new File(sourceFilepath);
+    	File targetFile = new File(targetFilepath);
     	StringBuffer script = new StringBuffer();
     	
-    	if (file.exists()) {
-    		// Destination already exists, just update it
-    		script.append(SYNC_COMMAND+" "+archivePath+" "+file.getParent());
+    	if (targetFile.exists() && sourceFile.getName().equals(targetFile.getName())) {
+            // Destination already exists, just update it
+            script.append(SYNC_COMMAND+" "+sourceFilepath+" "+targetFile.getParent());
     	}
     	else {
-    		// Destination does not exist, sync to a temp directory and then move it into place
-    		File tempFile = new File(file.getParent(),"tmp-"+System.nanoTime());
-        	script.append(COPY_COMMAND+" "+archivePath+" "+tempFile.getAbsolutePath()+"; ");
-        	script.append("mv "+tempFile.getAbsolutePath()+" "+truePath);
+    	    // Otherwise, we just need to move it into place
+    	    if (targetFile.exists() && targetFile.isDirectory()) {
+    	        // Remove the target directory first
+    	        script.append(REMOVE_COMMAND+" "+targetFile+"; ");
+    	    }
+            File tempFile = new File(targetFile.getParent(),"tmp-"+System.nanoTime());
+            script.append(COPY_COMMAND+" "+sourceFilepath+" "+tempFile.getAbsolutePath()+"; ");
+            script.append(MOVE_COMMAND+" "+tempFile.getAbsolutePath()+" "+targetFile);
     	}
+    	
     	
     	logger.info("Running: "+script);
     	
