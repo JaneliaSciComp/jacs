@@ -12,6 +12,7 @@ import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJob
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.entity.cv.Objective;
 import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * Run neuron separator on some input files and generate a bunch of stuff. Parameters:
@@ -104,7 +105,7 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
     }
 
     private void createShellScript(FileWriter writer) throws Exception {
-        boolean isWarped = consolidatedLabel!=null;
+        boolean isWarped = !StringUtils.isEmpty(consolidatedLabel);
         StringBuffer script = new StringBuffer();
         script.append("read OUTPUT_DIR\n");
         script.append("read NAME\n");
