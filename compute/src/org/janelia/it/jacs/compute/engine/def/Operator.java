@@ -15,5 +15,7 @@ public enum Operator {
     GREATER_THAN_OR_EQUALS,
     LESS_THAN_OR_EQUALS,
     IS_NULL,
-    IS_NOT_NULL
+    IS_NOT_NULL,
+    IS_EMPTY,
+    IS_NOT_EMPTY,
 }

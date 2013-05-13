@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.engine.def;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 import java.io.Serializable;
 
@@ -65,6 +66,10 @@ public class Condition implements Serializable {
                 return actualValue!=null;
             case IS_NULL:
                 return actualValue==null;
+            case IS_NOT_EMPTY:
+                return actualValue!=null && !StringUtils.isEmpty(actualValue.toString());
+            case IS_EMPTY:
+                return actualValue==null || StringUtils.isEmpty(actualValue.toString());
             default:
                 throw new RuntimeException("not supported");
         }
@@ -160,6 +165,12 @@ public class Condition implements Serializable {
         else if (condition.contains("is null")) {
             return Operator.IS_NULL;
         }
+        else if (condition.contains("is not empty")) {
+            return Operator.IS_NOT_EMPTY;
+        }
+        else if (condition.contains("is empty")) {
+            return Operator.IS_EMPTY;
+        }
         else {
             throw new IllegalArgumentException("Illegal operator in condition" + condition);
         }
@@ -200,6 +211,14 @@ public class Condition implements Serializable {
             case IS_NULL:
                 String[] array2 = {condition.replaceFirst(" is null", ""), ""};
                 nameValue = array2;
+                break;
+            case IS_NOT_EMPTY:
+                String[] array3 = {condition.replaceFirst(" is not empty", ""), ""};
+                nameValue = array3;
+                break;
+            case IS_EMPTY:
+                String[] array4 = {condition.replaceFirst(" is empty", ""), ""};
+                nameValue = array4;
                 break;
             default:
                 throw new IllegalArgumentException("Illegal operator:" + operator);

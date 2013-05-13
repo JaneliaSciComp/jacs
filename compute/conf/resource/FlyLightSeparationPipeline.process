@@ -22,7 +22,7 @@
 	        <output name="SEPARATE_RESULT_FILE_NODE"/>
 	    </operation>
         
-        <sequence if="ALIGNED_CONSOLIDATED_LABEL_FILEPATH is null">
+        <sequence if="ALIGNED_CONSOLIDATED_LABEL_FILEPATH is empty">
             
     	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
     	    <operation name="Init Separation Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitSeparationParametersService">
