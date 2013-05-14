@@ -148,6 +148,8 @@ public class SyncToArchiveService extends AbstractEntityService {
     private void syncPath(String sourcePath, String targetPath) throws Exception {
         new File(targetPath).getParentFile().mkdirs();
         StringBuffer script = new StringBuffer();
+        // The forward slash at the end of both paths is critical, as it tells rsync to mirror the directory structure.
+        // Without the slash, it may create an additional level at the target. 
         script.append(SYNC_COMMAND+" "+sourcePath+"/ "+targetPath+"/; ");
         logger.info("Running: "+script);
         SystemCall call = new SystemCall(logger);
