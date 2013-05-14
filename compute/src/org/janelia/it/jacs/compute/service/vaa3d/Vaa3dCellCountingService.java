@@ -92,6 +92,11 @@ public class Vaa3dCellCountingService extends SubmitDrmaaJobService {
     }
 
     @Override
+    protected int getRequiredMemoryInGB() {
+        return 12;
+    }
+
+    @Override
     public int getJobTimeoutSeconds() {
         return TIMEOUT_SECONDS;
     }
