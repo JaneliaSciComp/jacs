@@ -63,11 +63,13 @@ public class AlignmentInputFile {
     }
     public void setChannelSpec(String channelSpec) {
         this.channelSpec = channelSpec;
-        if (channelSpec.contains("r")) {
-            this.refChannel = channelSpec.indexOf('r');
-            this.refChannelOneIndexed = refChannel + 1;
+        if (channelSpec!=null) {
+            if (channelSpec.contains("r")) {
+                this.refChannel = channelSpec.indexOf('r');
+                this.refChannelOneIndexed = refChannel + 1;
+            }
+            this.numChannels = channelSpec.length();
         }
-        this.numChannels = channelSpec.length();
     }
     public Integer getRefChannel() {
         return refChannel;

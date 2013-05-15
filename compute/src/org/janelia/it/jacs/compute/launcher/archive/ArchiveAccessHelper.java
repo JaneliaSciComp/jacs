@@ -51,7 +51,7 @@ public class ArchiveAccessHelper {
         AsyncMessageInterface messageInterface = JmsUtil.createAsyncMessageInterface();
         messageInterface.startMessageSession(queueName, messageInterface.localConnectionType);
         ObjectMessage message = messageInterface.createObjectMessage();
-        message.setStringProperty("REQUEST", ArchiveAccessMDB.REQUEST_MOVE_TO_ARCHIVE);
+        message.setStringProperty("REQUEST", ArchiveAccessMDB.REQUEST_COPY_FROM_ARCHIVE);
         message.setStringProperty("SOURCE_FILE_PATHS", Task.csvStringFromCollection(sourceFilePaths));
         message.setStringProperty("TARGET_FILE_PATHS", Task.csvStringFromCollection(targetFilePaths));
         if (replyToQueue != null) {

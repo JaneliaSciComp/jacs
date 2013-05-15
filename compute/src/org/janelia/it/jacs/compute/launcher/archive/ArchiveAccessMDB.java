@@ -1,16 +1,16 @@
 package org.janelia.it.jacs.compute.launcher.archive;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.EJBException;
 import javax.ejb.MessageDriven;
 import javax.jms.Message;
-import javax.jms.ObjectMessage;
 import javax.jms.Queue;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.engine.launcher.ejb.SeriesLauncherMDB;
-import org.janelia.it.jacs.compute.engine.util.JmsUtil;
-import org.janelia.it.jacs.compute.jtc.AsyncMessageInterface;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.jboss.annotation.ejb.Depends;
 import org.jboss.annotation.ejb.PoolClass;
@@ -44,30 +44,27 @@ public class ArchiveAccessMDB extends SeriesLauncherMDB {
     public void onMessage(Message message) {
         try {
             String request = message.getStringProperty("REQUEST");
+            List<String> filePathList = new ArrayList<String>();
             if (REQUEST_MOVE_TO_ARCHIVE.equals(request)) {
                 logger.debug("Limiting archive access for moveToArchive request");
                 String filepath = message.getStringProperty("FILE_PATH");
                 if (filepath==null) {
                     String filepaths = message.getStringProperty("FILE_PATHS");
                     if (filepaths==null) {
-                        throw new IllegalStateException("Both FILE_PATH and FILE_PATHS cannot be null when REQUEST="+REQUEST_MOVE_TO_ARCHIVE);
+                        throw new IllegalStateException("Both FILE_PATH and FILE_PATHS cannot be null when REQUEST="+request);
                     }
-                    archivalManager.moveToArchive(Task.listOfStringsFromCsvString(filepaths));      
+                    filePathList.addAll(Task.listOfStringsFromCsvString(filepaths));
+                    archivalManager.moveToArchive(filePathList);      
                 }
                 else {
+                    filePathList.add(filepath);
                     archivalManager.moveToArchive(filepath);      
                 }
                 
-                Queue replyToQueue = (Queue) message.getJMSReplyTo();
-                if (replyToQueue == null) {
-                    logger.info("Nobody to reply to");
-                    return;
+                List<String> targetFilepaths = new ArrayList<String>();
+                for(String sourceFilepath : filePathList) {
+                    targetFilepaths.add(sourceFilepath.replaceFirst("/archive", "/groups"));
                 }
-                AsyncMessageInterface messageInterface = JmsUtil.createAsyncMessageInterface();
-                ObjectMessage replyMessage = messageInterface.createObjectMessage();
-                message.setStringProperty("REQUEST", request);
-                message.setBooleanProperty("COMPLETE", true);
-                messageInterface.sendMessage(replyMessage, replyToQueue, messageInterface.localConnectionType);
             }
             else if (REQUEST_COPY_FROM_ARCHIVE.equals(request)) {
                 logger.debug("Limiting archive access for copyFromArchive request");
@@ -76,7 +73,7 @@ public class ArchiveAccessMDB extends SeriesLauncherMDB {
                 if (filepath==null) {
                     String filepaths = message.getStringProperty("SOURCE_FILE_PATHS");
                     if (filepaths==null) {
-                        throw new IllegalStateException("Both SOURCE_FILE_PATH and SOURCE_FILE_PATHS cannot be null when REQUEST="+REQUEST_MOVE_TO_ARCHIVE);
+                        throw new IllegalStateException("Both SOURCE_FILE_PATH and SOURCE_FILE_PATHS cannot be null when REQUEST="+request);
                     }
                     targetFilepaths = message.getStringProperty("TARGET_FILE_PATHS");
                     archivalManager.copyFromArchive(Task.listOfStringsFromCsvString(filepaths), Task.listOfStringsFromCsvString(targetFilepaths));      
@@ -85,18 +82,6 @@ public class ArchiveAccessMDB extends SeriesLauncherMDB {
                     targetFilepaths = message.getStringProperty("TARGET_FILE_PATH");
                     archivalManager.copyFromArchive(filepath, targetFilepaths);      
                 }
-                
-                Queue replyToQueue = (Queue) message.getJMSReplyTo();
-                if (replyToQueue == null) {
-                    logger.info("Nobody to reply to");
-                    return;
-                }
-
-                AsyncMessageInterface messageInterface = JmsUtil.createAsyncMessageInterface();
-                ObjectMessage replyMessage = messageInterface.createObjectMessage();
-                message.setStringProperty("REQUEST", request);
-                message.setStringProperty("COMPLETED_FILE_PATHS", targetFilepaths);
-                messageInterface.sendMessage(replyMessage, replyToQueue, messageInterface.localConnectionType);
             }
             else {
                 logger.debug("Limiting archive access for message");

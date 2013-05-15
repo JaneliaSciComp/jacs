@@ -18,7 +18,6 @@ import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
-import org.janelia.it.jacs.compute.engine.data.QueueMessage;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.engine.util.JmsUtil;
 import org.janelia.it.jacs.compute.jtc.AsyncMessageInterface;
@@ -224,18 +223,16 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
     protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
         
         // Copy input files over from archive if necessary
-        if (input2!=null) copyFromArchive(input1);
+        if (input1!=null) copyFromArchive(input1);
         if (input2!=null) copyFromArchive(input2);
         
         return super.prepareJobTemplate(drmaa);
     }
     
-    protected AsyncMessageInterface messageInterface;
-    
     private void copyFromArchive(AlignmentInputFile input) throws Exception {
         if (!input.getInputFilename().startsWith("/archive")) return;
         
-        messageInterface = JmsUtil.createAsyncMessageInterface();
+        AsyncMessageInterface messageInterface = JmsUtil.createAsyncMessageInterface();
         Queue tempWaitQueue = messageInterface.getQueueForReceivingMessages(messageInterface.localConnectionType);
         String tempQueueName = tempWaitQueue.getQueueName();
         
@@ -254,23 +251,20 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
         logger.info("Sending archive message");
         ArchiveAccessHelper.sendCopyFromArchiveMessage(archivedFiles, targetFiles, tempWaitQueue);
         
-        logger.info("Waiting on temp queue: "+tempQueueName);
-        ObjectMessage responseMessage = (ObjectMessage) messageInterface.waitForMessageOnQueue(TIMEOUT_SECONDS, tempWaitQueue);
-        if (responseMessage == null) {
-            throw new ServiceException("Failed to receive message from temporary queue:" + tempQueueName);
-        }
-        
-        String completedFilepaths = responseMessage.getStringProperty("COMPLETED_FILE_PATHS");
-        if (!completedFilepaths.equals(targetFiles)) {
-            logger.warn("The completed file paths ("+completedFilepaths+") do not match the target files ("+targetFiles+")");
-        }
-
-        messageInterface.returnQueueForReceivingMessages(tempWaitQueue);
-        
         for(String targetFilepath : targetFiles) {
             File file = new File(targetFilepath);
-            if (!file.exists()) {
-                throw new ServiceException("Cannot find input file copied from archive: "+file);
+            logger.info("Waiting for file to appear: "+file.getAbsolutePath());
+            long start = System.currentTimeMillis();
+            while (!file.exists()) {
+                if ((System.currentTimeMillis()-start)>(TIMEOUT_SECONDS*1000)) {
+                    throw new ServiceException("TImed out after waiting "+TIMEOUT_SECONDS+" secs for file from archive");
+                }
+                try {
+                    Thread.sleep(2000);
+                }
+                catch (InterruptedException e) {
+                    logger.error("Was interrupted while waiting for file to appear",e);
+                }   
             }
         }
         
