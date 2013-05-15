@@ -25,11 +25,6 @@ public class CreatePipelineRunEntityService extends AbstractEntityService {
     	}
     	
     	String pipelineRunName = pipelineName+" Results";
-
-    	AnatomicalArea sampleArea = (AnatomicalArea)processData.getItem("SAMPLE_AREA");
-    	if (sampleArea!=null && !StringUtils.isEmpty(sampleArea.getName())) {
-            pipelineRunName += " ("+sampleArea.getName()+")";
-        }
         
     	String pipelineProcess = (String)processData.getItem("PIPELINE_PROCESS");
     	if (StringUtils.isEmpty(pipelineProcess)) {
@@ -43,10 +38,6 @@ public class CreatePipelineRunEntityService extends AbstractEntityService {
     	
     	Entity pipelineRun = entityBean.createEntity(ownerKey, EntityConstants.TYPE_PIPELINE_RUN, pipelineRunName);
     	pipelineRun.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS, pipelineProcess);
-    	
-    	if (sampleArea!=null) {
-    	    pipelineRun.setValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA, sampleArea.getName());
-    	}
     	
     	entityBean.saveOrUpdateEntity(pipelineRun);
     	entityBean.addEntityToParent(ownerKey, sampleEntity.getId(), pipelineRun.getId(), sampleEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);

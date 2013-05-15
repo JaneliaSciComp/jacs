@@ -29,7 +29,6 @@
     			<input name="SAMPLE_ENTITY_ID"/>
     			<input name="ROOT_ENTITY_ID"/>
     			<input name="RESULT_ENTITY_NAME"/>
-    			<output name="PREVIOUS_RESULT_ID"/>
     			<output name="PREVIOUS_RESULT_FILENAME"/>
     		</operation>
     		
