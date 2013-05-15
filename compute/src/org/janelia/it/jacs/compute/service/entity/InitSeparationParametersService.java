@@ -41,48 +41,74 @@ public class InitSeparationParametersService extends AbstractEntityService {
     		throw new IllegalArgumentException("Root entity not found with id="+sampleEntityId);
     	}
     	
-    	populateChildren(sampleEntity);
-    	List<Entity> children = sampleEntity.getOrderedChildren();
-    	Collections.reverse(children);
-    	
-    	Entity prevRun = null;
-    	for(Entity child : children) {
-    		if (EntityConstants.TYPE_PIPELINE_RUN.equals(child.getEntityType().getName()) 
-    				&& child.getName().equals(resultEntityName)) {
-    			prevRun = child;
-    			break;
-    		}
+    	populateChildren(rootEntity);
+    	Entity prevSeparation = EntityUtils.getLatestChildOfType(rootEntity, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
+    	if (prevSeparation != null) {
+    	    logger.info("Found previous separation in the current result entity");
+    	    putPrevResult(prevSeparation);
     	}
-    	
-		if (prevRun != null) {
-			
-			Entity prevResult = null;
-			for(Entity result : prevRun.getChildren()) {
-				if (result.getName().equals(rootEntity.getName())) {
-					prevResult = result;
-				}
-			}
-			
-			if (prevResult != null) {
-    			
-    			Entity prevResultFile = null;
-    			for(Entity file : EntityUtils.getSupportingData(prevResult).getChildren()) {
-    				if (file.getName().endsWith(".nsp")) {
-    					prevResultFile = file;
-    					break;
-    				}
-    			}
-    			
-    			if (prevResultFile!=null) {
-    				String filepath = EntityUtils.getFilePath(prevResultFile);
-    				if (filepath!=null && !"".equals(filepath)) {
-    	    			logger.info("Putting "+prevRun.getId()+" in PREVIOUS_RESULT_ID");
-    	    			processData.putItem("PREVIOUS_RESULT_ID", prevResult.getId());
-    					logger.info("Putting "+filepath+" in PREVIOUS_RESULT_ID");
-    					processData.putItem("PREVIOUS_RESULT_FILENAME", filepath);
-    				}
-    			}
-			}
-		}
+    	else {
+    	    populateChildren(sampleEntity);
+            List<Entity> runs = EntityUtils.getChildrenOfType(sampleEntity, EntityConstants.TYPE_PIPELINE_RUN);
+            Collections.reverse(runs);
+            
+            boolean sepFound = false;
+            
+            for(Entity run : runs) {
+                populateChildren(run);
+                    
+                Entity lastResult = null;
+                boolean resultFound = false;
+                for(Entity result : EntityUtils.getChildrenOfType(run, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)) {
+                    lastResult = result;
+                    if (result.getId().equals(rootEntityId)) {
+                        resultFound = true;
+                        break;
+                    }
+                }
+                
+                logger.info("Check pipeline run "+run.getId()+" containsCurrentResult?="+resultFound+" resultFound?="+(lastResult!=null));
+                    
+                if (!resultFound && lastResult!=null) {
+                    populateChildren(lastResult);
+                    List<Entity> separations = EntityUtils.getChildrenOfType(lastResult, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
+                    Collections.reverse(separations);
+                    
+                    for(Entity separation : separations) {
+                        logger.info("Found previous separation in the previous pipeline run");
+                        putPrevResult(separation);
+                        sepFound = true;
+                        break;    
+                    }
+                }
+                
+                if (sepFound) break;
+            }
+    	}
+    }
+    
+    private void putPrevResult(Entity separation) throws Exception {
+
+        logger.info("Getting previous result from separation with id="+separation.getId());
+        
+        populateChildren(separation);
+        Entity supportingFiles = EntityUtils.getSupportingData(separation);
+        populateChildren(supportingFiles);
+        
+        Entity prevResultFile = null;
+        for(Entity file : supportingFiles.getChildren()) {
+            if (file.getName().equals("SeparationResultUnmapped.nsp") || file.getName().equals("SeparationResult.nsp")) {
+                prevResultFile = file;
+                break;
+            }
+        }
+        
+        if (prevResultFile!=null) {
+            String filepath = EntityUtils.getFilePath(prevResultFile);
+            if (filepath!=null && !"".equals(filepath)) {
+                logger.info("Putting "+filepath+" in PREVIOUS_RESULT_ID");
+                processData.putItem("PREVIOUS_RESULT_FILENAME", filepath);
+            }
+        }
     }
 }
