@@ -13,15 +13,15 @@ boolean DEBUG = false
 final JacsUtils f = new JacsUtils(null, false)
 
 Set<String> subjectKeys = new HashSet<String>();
-//for(Entity dataSet : f.e.getEntitiesByTypeName(null, EntityConstants.TYPE_DATA_SET)) {
-//    subjectKeys.add(dataSet.getOwnerKey());
-//}
+for(Entity dataSet : f.e.getEntitiesByTypeName(null, EntityConstants.TYPE_DATA_SET)) {
+    subjectKeys.add(dataSet.getOwnerKey());
+}
 //subjectKeys.add("user:asoy")
 //subjectKeys.add("group:flylight")
 //subjectKeys.add("user:korffw")
 //subjectKeys.add("group:leetlab")
 //subjectKeys.add("user:wolfft")
-subjectKeys.add("user:nerna")
+//subjectKeys.add("user:nerna")
 //subjectKeys.add("user:taes")
 //subjectKeys.add("group:heberleinlab")
 
@@ -30,8 +30,7 @@ for(String subjectKey : subjectKeys) {
     println "Processing "+subjectKey;
 
     final EJBEntityLoader entityLoader = new EJBEntityLoader(f.e)
-//    for(Entity sample : f.e.getUserEntitiesByTypeName(subjectKey, TYPE_SAMPLE)) {
-    for(Entity sample : f.e.getChildEntities(subjectKey, 1874592534466920608L)) {
+    for(Entity sample : f.e.getUserEntitiesByTypeName(subjectKey, TYPE_SAMPLE)) {
 
         cf = new AreaConsensusFinder()
         cf.findConsensus(sample, entityLoader)
