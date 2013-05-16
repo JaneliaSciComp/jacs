@@ -253,6 +253,27 @@
     </operation>
 
     <operation>
+        <!-- Added by Les Foster (fosterl) on 5.1.2013 -->
+        <description>Load Mask-Channel Compartment Files to DB Entities</description>
+        <name>runCompartmentLoading</name>
+        <parameter>
+            <description>User to run as (e.g. "flylight")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Directory path of compartment mask-channel files to import (e.g. /groups/scicomp/jacsData/MaskResources/Compartment/A_DIRECTORY_CONTAINING_MASK_CHAN_DATA).</description>
+            <name>maskChanPath</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Name for top-level folder in Workstation (e.g., /compartmentMaskChan1024x512x218 ).</description>
+            <name>topLevelFolderName</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+
+    <operation>
         <description>createPatternAnnotationQuantifierSummaryFile</description>
         <name>createPatternAnnotationQuantifierSummaryFile</name>
     </operation>
