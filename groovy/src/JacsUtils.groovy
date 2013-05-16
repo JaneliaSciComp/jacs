@@ -1,3 +1,6 @@
+import org.apache.solr.client.solrj.SolrQuery
+import org.apache.solr.common.SolrDocument
+import org.apache.solr.common.SolrDocumentList
 import org.janelia.it.FlyWorkstation.api.facade.concrete_facade.ejb.EJBFacadeManager;
 import org.janelia.it.FlyWorkstation.api.facade.concrete_facade.ejb.EJBFactory
 import org.janelia.it.FlyWorkstation.api.facade.facade_mgr.FacadeManager;
@@ -58,7 +61,7 @@ class JacsUtils {
 	
 	def Entity loadChildren(Entity entity) {
 		if (entity==null || entity.id==null) return entity
-		EntityUtils.replaceChildNodes(entity, e.getChildEntities(subject.key, entity.id))
+		EntityUtils.replaceChildNodes(entity, e.getChildEntities(subject==null?entity.ownerKey:subject.key, entity.id))
 		return entity
 	}
 	
@@ -109,5 +112,4 @@ class JacsUtils {
 		println "Added "+entity.entityType.name+"#"+entity.id+" as child of "+parent.entityType.name+"#"+parent.id;
 		return ed
 	}
-	
 }
