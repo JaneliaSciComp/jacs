@@ -67,7 +67,7 @@ public class InitSeparationParametersService extends AbstractEntityService {
                     }
                 }
                 
-                logger.info("Check pipeline run "+run.getId()+" containsCurrentResult?="+resultFound+" resultFound?="+(lastResult!=null));
+                logger.debug("Check pipeline run "+run.getId()+" containsCurrentResult?="+resultFound+" resultFound?="+(lastResult!=null));
                     
                 if (!resultFound && lastResult!=null) {
                     populateChildren(lastResult);
@@ -75,7 +75,7 @@ public class InitSeparationParametersService extends AbstractEntityService {
                     Collections.reverse(separations);
                     
                     for(Entity separation : separations) {
-                        logger.info("Found previous separation in the previous pipeline run");
+                        logger.debug("Found previous separation in the previous pipeline run");
                         putPrevResult(separation);
                         sepFound = true;
                         break;    

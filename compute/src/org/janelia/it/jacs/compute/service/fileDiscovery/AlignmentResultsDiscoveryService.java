@@ -119,7 +119,7 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                 helper.setChannelSpec(resultItem, channelSpec);
                 if (!StringUtils.isEmpty(channelColors)) {
                     logger.info("Setting channel colors for "+resultItem.getName()+" (id="+resultItem.getId()+") to "+channelColors);
-                    helper.setChannelSpec(resultItem, channelColors);
+                    helper.setChannelColors(resultItem, channelColors);
                 }
             }
         }   
