@@ -1108,29 +1108,27 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
 
-    public List<Entity> getEntitiesByTypeName(List<String> subjectKeyList, String entityTypeName) throws DaoException {
+    public List<Entity> getEntitiesByTypeName(String subjectKey, String entityTypeName) throws DaoException {
         try {
         	if (_logger.isDebugEnabled()) {
-        		_logger.debug("getEntitiesByTypeName(subjectKeyList="+subjectKeyList+",entityTypeName="+entityTypeName+")");
+        		_logger.debug("getEntitiesByTypeName(subjectKey="+subjectKey+",entityTypeName="+entityTypeName+")");
         	}
         	
             StringBuilder hql = new StringBuilder(256);
 
-            final boolean filterByUsers =
-                    ((subjectKeyList != null) && (subjectKeyList.size() > 0));
-
             hql.append("select e from Entity e ");
             hql.append("left outer join fetch e.entityActorPermissions p ");
             hql.append("where e.entityType.name = :entityTypeName ");
-            if (filterByUsers) {
+            if (null != subjectKey) {
             	hql.append("and (e.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
             }
 
             final Session currentSession = getCurrentSession();
             Query query = currentSession.createQuery(hql.toString());
             query.setParameter("entityTypeName", entityTypeName);
-            if (filterByUsers) {
-	            query.setParameterList("subjectKeyList", subjectKeyList);
+            if (null != subjectKey) {
+                List<String> subjectKeyList = getSubjectKeys(subjectKey);
+                query.setParameterList("subjectKeyList", subjectKeyList);
             }
 
             return filterDuplicates(query.list());

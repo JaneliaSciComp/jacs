@@ -359,8 +359,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
 
     public List<Entity> getAlignmentSpaces(String subjectKey) throws ComputeException {
         try {
-            List<String> subjectKeyList = _annotationDAO.getSubjectKeys(subjectKey);
-            return _annotationDAO.getEntitiesByTypeName(subjectKeyList, EntityConstants.TYPE_ALIGNMENT_SPACE);
+            return _annotationDAO.getEntitiesByTypeName(subjectKey, EntityConstants.TYPE_ALIGNMENT_SPACE);
         }
         catch (DaoException e) {
             _logger.error("Error trying to get common root entities for "+subjectKey, e);
