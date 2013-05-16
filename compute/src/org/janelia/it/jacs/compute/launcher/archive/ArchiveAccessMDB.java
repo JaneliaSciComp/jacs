@@ -7,7 +7,6 @@ import javax.ejb.ActivationConfigProperty;
 import javax.ejb.EJBException;
 import javax.ejb.MessageDriven;
 import javax.jms.Message;
-import javax.jms.Queue;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.engine.launcher.ejb.SeriesLauncherMDB;

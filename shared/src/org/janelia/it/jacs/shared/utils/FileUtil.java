@@ -1,20 +1,21 @@
 
 package org.janelia.it.jacs.shared.utils;
 
-import org.apache.log4j.Logger;
-
 import java.io.*;
 import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Scanner;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+
+import org.apache.log4j.Logger;
 
 /**
  * This class has some common Java I/O utility methods
@@ -1116,5 +1117,32 @@ public class FileUtil {
         for (File sourceFile : sourceFiles) {
             moveFileUsingSystemCall(sourceFile, new File(destinationDir.getAbsolutePath()+File.separator+sourceFile.getName()));
         }
+    }
+    
+    /**
+     * Wait timeoutMs milliseconds for the given files to appear. If they are not in place by that time, return false. 
+     * Otherwise, return true. 
+     * @param filepaths
+     * @param timeoutMs
+     * @return
+     */
+    public static boolean waitForFiles(Collection<String> filepaths, long timeoutMs) {
+        long start = System.currentTimeMillis();
+        for(String targetFilepath : filepaths) {
+            File file = new File(targetFilepath);
+            logger.debug("Waiting for file to appear: "+file.getAbsolutePath());
+            while (!file.exists()) {
+                if ((System.currentTimeMillis()-start)>timeoutMs) {
+                    return false;
+                }
+                try {
+                    Thread.sleep(2000);
+                }
+                catch (InterruptedException e) {
+                    logger.error("Was interrupted while waiting for file to appear",e);
+                }   
+            }
+        }
+        return true;
     }
 }

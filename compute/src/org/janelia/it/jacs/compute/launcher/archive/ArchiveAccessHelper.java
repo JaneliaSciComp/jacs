@@ -47,16 +47,13 @@ public class ArchiveAccessHelper {
         messageInterface.endMessageSession();
     }
 
-    public static void sendCopyFromArchiveMessage(List<String> sourceFilePaths, List<String> targetFilePaths, Queue replyToQueue) throws Exception {
+    public static void sendCopyFromArchiveMessage(List<String> sourceFilePaths, List<String> targetFilePaths) throws Exception {
         AsyncMessageInterface messageInterface = JmsUtil.createAsyncMessageInterface();
         messageInterface.startMessageSession(queueName, messageInterface.localConnectionType);
         ObjectMessage message = messageInterface.createObjectMessage();
         message.setStringProperty("REQUEST", ArchiveAccessMDB.REQUEST_COPY_FROM_ARCHIVE);
         message.setStringProperty("SOURCE_FILE_PATHS", Task.csvStringFromCollection(sourceFilePaths));
         message.setStringProperty("TARGET_FILE_PATHS", Task.csvStringFromCollection(targetFilePaths));
-        if (replyToQueue != null) {
-            message.setJMSReplyTo(replyToQueue);
-        }
         messageInterface.sendMessageWithinTransaction(message);
         messageInterface.commit();
         messageInterface.endMessageSession();

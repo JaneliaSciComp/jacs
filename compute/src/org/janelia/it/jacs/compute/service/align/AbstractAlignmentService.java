@@ -7,9 +7,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.jms.ObjectMessage;
-import javax.jms.Queue;
-
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -19,8 +16,6 @@ import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.engine.util.JmsUtil;
-import org.janelia.it.jacs.compute.jtc.AsyncMessageInterface;
 import org.janelia.it.jacs.compute.launcher.archive.ArchiveAccessHelper;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
@@ -33,6 +28,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.FileUtil;
 
 /**
  * Base class for all alignment algorithms. Parameters:
@@ -232,10 +228,6 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
     private void copyFromArchive(AlignmentInputFile input) throws Exception {
         if (!input.getInputFilename().startsWith("/archive")) return;
         
-        AsyncMessageInterface messageInterface = JmsUtil.createAsyncMessageInterface();
-        Queue tempWaitQueue = messageInterface.getQueueForReceivingMessages(messageInterface.localConnectionType);
-        String tempQueueName = tempWaitQueue.getQueueName();
-        
         List<String> archivedFiles = new ArrayList<String>();
         List<String> targetFiles = new ArrayList<String>();
         archivedFiles.add(input.getInputFilename());
@@ -249,23 +241,11 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
         }
         
         logger.info("Sending archive message");
-        ArchiveAccessHelper.sendCopyFromArchiveMessage(archivedFiles, targetFiles, tempWaitQueue);
+        ArchiveAccessHelper.sendCopyFromArchiveMessage(archivedFiles, targetFiles);
         
-        for(String targetFilepath : targetFiles) {
-            File file = new File(targetFilepath);
-            logger.info("Waiting for file to appear: "+file.getAbsolutePath());
-            long start = System.currentTimeMillis();
-            while (!file.exists()) {
-                if ((System.currentTimeMillis()-start)>(TIMEOUT_SECONDS*1000)) {
-                    throw new ServiceException("TImed out after waiting "+TIMEOUT_SECONDS+" secs for file from archive");
-                }
-                try {
-                    Thread.sleep(2000);
-                }
-                catch (InterruptedException e) {
-                    logger.error("Was interrupted while waiting for file to appear",e);
-                }   
-            }
+        logger.debug("Waiting for files to appear");
+        if (!FileUtil.waitForFiles(targetFiles, TIMEOUT_SECONDS*1000)) {
+            throw new ServiceException("TImed out after waiting "+TIMEOUT_SECONDS+" secs for file from archive");
         }
         
         logger.info("Retrieved necessary files for archive for alignment input "+input.getInputFilename());
