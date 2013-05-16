@@ -18,7 +18,7 @@ my $refChannel  = $opt_c;
 
 my ($opticalResX, $opticalResY, $opticalResZ) = ("0.3800","0.3800","0.3800");
 if ($opticalRes) {
-    ($opticalResX, $opticalResY, $opticalResZ) = split / /,$opticalRes;
+    ($opticalResX, $opticalResY, $opticalResZ) = split /x/,$opticalRes;
 }
 
 if (! -e $v3d) {
