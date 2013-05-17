@@ -40,6 +40,10 @@ public class InitSeparationParametersService extends AbstractEntityService {
     	if (rootEntity == null) {
     		throw new IllegalArgumentException("Root entity not found with id="+sampleEntityId);
     	}
+
+    	// Clear out the previous result
+        logger.info("Putting '' in PREVIOUS_RESULT_ID");
+        processData.putItem("PREVIOUS_RESULT_FILENAME", "");
     	
     	populateChildren(rootEntity);
     	Entity prevSeparation = EntityUtils.getLatestChildOfType(rootEntity, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
@@ -48,6 +52,8 @@ public class InitSeparationParametersService extends AbstractEntityService {
     	    putPrevResult(prevSeparation);
     	}
     	else {
+    	    logger.info("Checking sample for previous separations: "+sampleEntityId);
+    	    
     	    populateChildren(sampleEntity);
             List<Entity> runs = EntityUtils.getChildrenOfType(sampleEntity, EntityConstants.TYPE_PIPELINE_RUN);
             Collections.reverse(runs);
@@ -67,7 +73,7 @@ public class InitSeparationParametersService extends AbstractEntityService {
                     }
                 }
                 
-                logger.debug("Check pipeline run "+run.getId()+" containsCurrentResult?="+resultFound+" resultFound?="+(lastResult!=null));
+                logger.info("Check pipeline run "+run.getId()+" containsCurrentResult?="+resultFound+" resultFound?="+(lastResult!=null));
                     
                 if (!resultFound && lastResult!=null) {
                     populateChildren(lastResult);
@@ -106,7 +112,7 @@ public class InitSeparationParametersService extends AbstractEntityService {
         if (prevResultFile!=null) {
             String filepath = EntityUtils.getFilePath(prevResultFile);
             if (filepath!=null && !"".equals(filepath)) {
-                logger.info("Putting "+filepath+" in PREVIOUS_RESULT_ID");
+                logger.info("Putting '"+filepath+"' in PREVIOUS_RESULT_ID");
                 processData.putItem("PREVIOUS_RESULT_FILENAME", filepath);
             }
         }
