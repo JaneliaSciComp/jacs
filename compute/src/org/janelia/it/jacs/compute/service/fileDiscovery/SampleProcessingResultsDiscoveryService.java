@@ -109,6 +109,7 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
         }
 
         List<String> consensusLsmColors = null;
+        boolean consensusColors = true;
         
         for(Entity tileEntity : sampleArea.getTiles()) {
             
@@ -163,29 +164,33 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
                 consensusLsmColors = allLsmColors;
             }
             else if (!consensusLsmColors.equals(allLsmColors)) {
-                throw new IllegalStateException("No color consensus among tiles ("+consensusLsmColors+"!="+allLsmColors+")");
+                logger.warn("No color consensus among tiles ("+consensusLsmColors+"!="+allLsmColors+")");
+                consensusColors = false;
             }
         }
 
         logger.debug("channelMapping="+channelMapping);
-        logger.debug("consensusLsmColors="+consensusLsmColors);
         
-        List<String> resultColors = new ArrayList<String>();
-        for(String indexStr : channelMapping) {
-            int originalIndex = Integer.parseInt(indexStr);
-            String originalColor = consensusLsmColors.get(originalIndex);
-            if (originalColor!=null) {
-                resultColors.add(originalColor);   
-            }
-            else {
-                resultColors.add("");
-            }
-        }
+        if (consensusColors) {
+            logger.debug("consensusLsmColors="+consensusLsmColors);
         
-        if (image3d!=null && !resultColors.isEmpty()) {
-            String resultColorsStr = Task.csvStringFromCollection(resultColors);
-            logger.info("Setting result image colors: "+resultColorsStr);
-            helper.setChannelColors(image3d, resultColorsStr);
+            List<String> resultColors = new ArrayList<String>();
+            for(String indexStr : channelMapping) {
+                int originalIndex = Integer.parseInt(indexStr);
+                String originalColor = consensusLsmColors.get(originalIndex);
+                if (originalColor!=null) {
+                    resultColors.add(originalColor);   
+                }
+                else {
+                    resultColors.add("");
+                }
+            }
+            
+            if (image3d!=null && !resultColors.isEmpty()) {
+                String resultColorsStr = Task.csvStringFromCollection(resultColors);
+                logger.info("Setting result image colors: "+resultColorsStr);
+                helper.setChannelColors(image3d, resultColorsStr);
+            }
         }
     }
 
