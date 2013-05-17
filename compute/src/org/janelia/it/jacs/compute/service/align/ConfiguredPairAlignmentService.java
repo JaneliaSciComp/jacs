@@ -43,15 +43,14 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
             String objective = objectiveSample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
             if (Objective.OBJECTIVE_20X.getName().equals(objective)) {
                 logger.info("Found 20x sub-sample: "+objectiveSample.getName());
-                Entity result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_ALIGNMENT_RESULT);
+                Entity result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT);
                 if (result != null) {
                     Entity image = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
                     if (image!=null) {
                         input2 = new AlignmentInputFile();
                         input2.setPropertiesFromEntity(image);
                         if (warpNeurons) input2.setInputSeparationFilename(getConsolidatedLabel(result));
-                        logger.info("Found 20x aligned stack: "+input2.getInputFilename());
-                        logInputFound("first input (20x aligned stack)", input2);
+                        logInputFound("second input (20x stack)", input2);
                     }
                 }
             }
@@ -64,7 +63,7 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
                         input1 = new AlignmentInputFile();
                         input1.setPropertiesFromEntity(image);
                         if (warpNeurons) input1.setInputSeparationFilename(getConsolidatedLabel(result));
-                        logInputFound("second input (63x stack)", input1);
+                        logInputFound("first input (63x stack)", input1);
                     }
                 }
 
