@@ -165,6 +165,7 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
 
     protected void createAndAddMaskChanEntities( Entity compartment, MaskChannel maskChannel ) throws Exception {
 
+        // create3dImage takes the owner key and sets it on its nascent entity.
         Entity mask3d = helper.create3dImage( maskChannel.maskFile.getAbsolutePath() );
         helper.setImage( compartment, EntityConstants.ATTRIBUTE_MASK_IMAGE, mask3d );
         //helper.addToParent(compartment, mask3d, compartment.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_MASK_IMAGE);
@@ -207,6 +208,7 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
         if (topLevelFolder == null && createIfNecessary) {
             logger.info("Creating new topLevelFolder with name=" + topLevelFolderName);
             topLevelFolder = new Entity();
+            topLevelFolder.setOwnerKey( ownerKey );
             topLevelFolder.setCreationDate(createDate);
             topLevelFolder.setUpdatedDate(createDate);
             topLevelFolder.setOwnerKey(ownerKey);
