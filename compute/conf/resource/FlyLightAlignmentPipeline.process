@@ -34,7 +34,6 @@
 	    		<input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
 	    		<input name="ALIGNMENT_SCRIPT_NAME"/>
 	    		<input name="SAMPLE_ENTITY_ID"/>
-	    		<input name="PIPELINE_RUN_ENTITY_ID"/>
 	    		<input name="SAMPLE_AREAS"/>
 	    		<input name="WARP_NEURONS" value="true"/>
                 <output name="CHANNEL_SPEC"/>

@@ -63,7 +63,6 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
     protected EntityBeanEntityLoader entityLoader;
     
     protected Entity sampleEntity;
-    protected Entity pipelineRun;
     protected String alignedArea;
     protected String gender;
     protected File outputFile;
@@ -100,17 +99,6 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
             this.sampleEntity = entityBean.getEntityById(sampleEntityId);
             if (sampleEntity == null) {
                 throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
-            }
-
-            String pipelineRunId = (String)processData.getItem("PIPELINE_RUN_ENTITY_ID");
-            if (StringUtils.isEmpty(pipelineRunId)) {
-                throw new IllegalArgumentException("PIPELINE_RUN_ENTITY_ID may not be null");
-            }
-            
-            for(Entity pipelineRun : EntityUtils.getChildrenOfType(sampleEntity, EntityConstants.TYPE_PIPELINE_RUN)) {
-                if (pipelineRun.getId().toString().equals(pipelineRunId)) {
-                    this.pipelineRun = pipelineRun;
-                }
             }
             
             List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>)processData.getItem("SAMPLE_AREAS");
