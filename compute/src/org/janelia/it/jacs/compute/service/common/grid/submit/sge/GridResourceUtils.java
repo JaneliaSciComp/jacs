@@ -24,7 +24,7 @@ public class GridResourceUtils {
         int minMem = requiredMemoryInGB;
     	
     	if (useR620Nodes) {
-    		spec.append("-l r620=true ");
+    		spec.append("-l new=true ");
     		slotsPerNode = 16;
     		memPerNode = 128;
     	}
