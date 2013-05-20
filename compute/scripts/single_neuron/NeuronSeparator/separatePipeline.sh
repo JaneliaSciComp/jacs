@@ -108,7 +108,7 @@ if [ -s SeparationResultUnmapped.nsp ]; then
 
     if [ "$PREVFILE" ]; then
         echo "~ Mapping neurons to previous fragment indexes found in $PREVFILE"
-        $NSDIR/map_neurons SeparationResultUnmapped.nsp $PREVFILE > SeparationResult.nsp
+        $NSDIR/map_neurons SeparationResultUnmapped.nsp $PREVFILE >SeparationResult.nsp 2>mapping_issues.txt
         if [ ! -s "SeparationResult.nsp" ]; then
             echo "~ Mapping was not successful, proceeding with unmapped result"
             RESULT='SeparationResultUnmapped.nsp'
@@ -148,8 +148,9 @@ if [ -s SeparationResultUnmapped.nsp ]; then
         cat $INPUT_FILE | $NSDIR/v3draw_select_channels $REF_CHAN > Reference.v3draw
 
         echo "~ Copying final output to: $OUTDIR"
-        cp SeparationResultUnmapped.* $OUTDIR 
-        cp SeparationResultUnmapped_unmerged.* $OUTDIR
+        cp *.nsp $OUTDIR 
+        cp *.pbd $OUTDIR
+        cp *.txt $OUTDIR
         cp $CONSIGNAL $OUTDIR/ConsolidatedSignal.v3draw
         cp ConsolidatedLabel.v3draw $OUTDIR
         cp Reference.v3draw $OUTDIR
@@ -168,5 +169,5 @@ if [ -s "$OUTDIR/ConsolidatedLabel.v3draw" ]; then
 fi
 
 echo "~ Removing temp files"
-rm -rf $WORKING_DIR
+#rm -rf $WORKING_DIR
 
