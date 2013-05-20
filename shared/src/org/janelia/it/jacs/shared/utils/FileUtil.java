@@ -1126,14 +1126,14 @@ public class FileUtil {
      * @param timeoutMs
      * @return
      */
-    public static boolean waitForFiles(Collection<String> filepaths, long timeoutMs) {
+    public static boolean waitForFiles(Collection<String> filepaths, long timeoutMs) throws Exception {
         long start = System.currentTimeMillis();
         for(String targetFilepath : filepaths) {
             File file = new File(targetFilepath);
             logger.debug("Waiting for file to appear: "+file.getAbsolutePath());
             while (!file.exists()) {
                 if ((System.currentTimeMillis()-start)>timeoutMs) {
-                    return false;
+                    throw new Exception("Timed out after waiting "+timeoutMs+" secs for file to appear: "+file);
                 }
                 try {
                     Thread.sleep(2000);

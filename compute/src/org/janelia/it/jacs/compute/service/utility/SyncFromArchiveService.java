@@ -26,7 +26,7 @@ public class SyncFromArchiveService implements IService {
 
 	protected Logger logger = Logger.getLogger(SyncFromArchiveService.class);
 
-	private static final int TIME_OUT_SECS = 300; // 5 minutes
+	private static final int TIME_OUT_SECS = 1800; // 30 minutes
 	
 	protected static final String JACS_DATA_DIR =
         SystemConfigurationProperties.getString("JacsData.Dir.Linux");
