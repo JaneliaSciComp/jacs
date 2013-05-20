@@ -43,7 +43,7 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
     private void initParameters(Entity sample) throws Exception {
 
         entityLoader.populateChildren(sample);
-        for(Entity objectiveSample : sample.getChildren()) {
+        for(Entity objectiveSample : EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_SAMPLE)) {
             
             String objective = objectiveSample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
             if (Objective.OBJECTIVE_20X.getName().equals(objective)) {
@@ -96,13 +96,13 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
         for(Entity pipelineRun : pipelineRuns) {
             entityLoader.populateChildren(pipelineRun);
             
-            logger.info("Check pipeline run "+pipelineRun.getName()+" (id="+pipelineRun.getId()+")");
+            logger.info("  Check pipeline run "+pipelineRun.getName()+" (id="+pipelineRun.getId()+")");
             
-            List<Entity> results = EntityUtils.getChildrenForAttribute(objectiveSample, EntityConstants.ATTRIBUTE_RESULT);
+            List<Entity> results = EntityUtils.getChildrenForAttribute(pipelineRun, EntityConstants.ATTRIBUTE_RESULT);
             Collections.reverse(results);
             for(Entity result : results) {
 
-                logger.info("Check result "+result.getName()+" (id="+result.getId()+")");
+                logger.info("    Check result "+result.getName()+" (id="+result.getId()+")");
                 
                 if (result.getEntityType().getName().equals(resultType)) {
                     if (anatomicalArea==null || anatomicalArea.equalsIgnoreCase(result.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA))) {

@@ -231,25 +231,25 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
         
         List<String> archivedFiles = new ArrayList<String>();
         List<String> targetFiles = new ArrayList<String>();
-        archivedFiles.add(input.getInputFilename());
         
+        archivedFiles.add(input.getInputFilename());
         String newInput = new File(resultFileNode.getDirectoryPath(), new File(input.getInputFilename()).getName()).getAbsolutePath();
         targetFiles.add(newInput);
+        input.setInputFilename(newInput);
+        
         if (input.getInputSeparationFilename()!=null) {
             archivedFiles.add(input.getInputSeparationFilename());
             String newInputSeperation = new File(resultFileNode.getDirectoryPath(), new File(input.getInputSeparationFilename()).getName()).getAbsolutePath();
             targetFiles.add(newInputSeperation);
+            input.setInputSeparationFilename(newInputSeperation);
         }
         
         logger.info("Sending archive message");
         ArchiveAccessHelper.sendCopyFromArchiveMessage(archivedFiles, targetFiles);
         
-        logger.debug("Waiting for files to appear");
-        if (!FileUtil.waitForFiles(targetFiles, TIMEOUT_SECONDS*1000)) {
-            throw new ServiceException("TImed out after waiting "+TIMEOUT_SECONDS+" secs for file from archive");
-        }
-        
-        logger.info("Retrieved necessary files for archive for alignment input "+input.getInputFilename());
+        logger.debug("Waiting for files to appear: "+targetFiles);
+        FileUtil.waitForFiles(targetFiles, TIMEOUT_SECONDS*1000);
+        logger.debug("Retrieved necessary files for archive for alignment input "+input.getInputFilename());
     }
     
     @Override
