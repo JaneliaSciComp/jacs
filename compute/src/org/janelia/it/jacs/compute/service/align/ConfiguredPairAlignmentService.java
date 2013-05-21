@@ -84,6 +84,10 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
                 }
             }
         }
+
+        if (input1!=null) {
+            putOutputVars(input1.getChannelSpec(), input1.getChannelColors());
+        }
     }
     
     private Entity getLatestResultOfType(Entity objectiveSample, String resultType, String anatomicalArea) throws Exception {
