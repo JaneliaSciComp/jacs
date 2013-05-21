@@ -58,7 +58,8 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
     protected ComputeDAO computeDAO;
     protected static final String NORMAL_QUEUE = SystemConfigurationProperties.getString("Grid.NormalQueue");
     protected static final int MAX_JOBS_IN_ARRAY = SystemConfigurationProperties.getInt("Grid.MaxNumberOfJobs");
-
+    protected GridResourceSpec gridResourceSpec;
+    
     /**
      * This method is part of IService interface and used when this class
      * or it's child is used as a processor in process file
@@ -158,6 +159,17 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
     }
 
     /**
+     * Override this method to specify that the job needs to run exclusively on the entire node.
+     * 
+     * Defaults to false.
+     * 
+     * @return
+     */
+    protected boolean isExclusive() {
+        return false;
+    }
+    
+    /**
      * Override this method to specify the minimum number of slots needed for this grid job. At least this many slots
      * will be allocated, but more slots may be allocated to fulfill the memory requirement provided by 
      * getRequiredMemoryInGB.
@@ -215,7 +227,8 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         else {
         	int mem = getRequiredMemoryInGB();
         	int slots = getRequiredSlots();
-        	String ns = GridResourceUtils.getSpec(USE_R620_NODES, mem, slots);
+        	this.gridResourceSpec = new GridResourceSpec(USE_R620_NODES, mem, slots, isExclusive());
+        	String ns = gridResourceSpec.getNativeSpec();
         	if (!USE_R620_NODES && isShortJob()) {
         		ns += " -l short=true -now n";
         	}
