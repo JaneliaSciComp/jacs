@@ -133,18 +133,16 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
     }
 
     protected Entity createCompartmentEntity(EntityType entityType, Integer index, CompartmentDescriptor compartmentDescriptor) throws Exception {
-        String compartmentShortName = compartmentDescriptor.getName();
+        String compartmentDescriptiveName = compartmentDescriptor.getCompartmentDescriptiveName();
         Entity compartmentEntity = new Entity();
         compartmentEntity.setOwnerKey(ownerKey);
         compartmentEntity.setEntityType(entityType);
-        compartmentEntity.setName(compartmentShortName + " Compartment");
+        compartmentEntity.setName(compartmentDescriptiveName);
         compartmentEntity.setValueByAttributeName(
                 EntityConstants.ATTRIBUTE_COLOR,
-                StringUtils.encodeToHex( compartmentDescriptor.getColors(), logger )
+                StringUtils.encodeToHex(compartmentDescriptor.getColors(), logger)
         );
         compartmentEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER, index.toString());
-        String compartmentDescriptiveName = PatternAnnotationDataManager.getCompartmentDescription( compartmentShortName );
-        compartmentEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_NAME, compartmentDescriptiveName);
         compartmentEntity = saveStampedEntity(compartmentEntity);
         logger.info("Saved compartment entity as " + compartmentEntity.getId());
         return compartmentEntity;
@@ -199,14 +197,14 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
                     } else {
                         topLevelFolder = entity;
                     }
-                    logger.info("Found existing topLevelFolder common root, name=" + topLevelFolder.getName());
+                    logger.info("Found existing topLevelFolder common root, compartmentShortName=" + topLevelFolder.getName());
                     break;
                 }
             }
         }
 
         if (topLevelFolder == null && createIfNecessary) {
-            logger.info("Creating new topLevelFolder with name=" + topLevelFolderName);
+            logger.info("Creating new topLevelFolder with compartmentShortName=" + topLevelFolderName);
             topLevelFolder = new Entity();
             topLevelFolder.setOwnerKey( ownerKey );
             topLevelFolder.setCreationDate(createDate);
@@ -301,19 +299,23 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
     }
 
     private static class CompartmentDescriptor {
-        private String name;
+        private String compartmentShortName;
+        private String compartmentDescriptiveName;
         private Integer compartmentNum;
         private String colors;
         private int[] rgb;
 
         public CompartmentDescriptor( String name, Integer compartmentNum, int[] rgb, String colors ) {
-            this.name = name;
+            this.compartmentShortName = name;
             this.compartmentNum = compartmentNum;
             this.rgb = rgb;
             this.colors = colors;
+            this.compartmentDescriptiveName =
+                    PatternAnnotationDataManager.getCompartmentDescription( compartmentShortName )
+                            + " (" + compartmentShortName + ")";
         }
 
-        public String getName() { return name; }
+        public String getCompartmentShortName() { return compartmentShortName; }
 
         public Integer getCompartmentNum() {
             return compartmentNum;
@@ -342,6 +344,10 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
         @Override
         public int hashCode() {
             return compartmentNum;
+        }
+
+        public String getCompartmentDescriptiveName() {
+            return compartmentDescriptiveName;
         }
     }
 }
