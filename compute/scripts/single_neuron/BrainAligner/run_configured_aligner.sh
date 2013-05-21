@@ -5,13 +5,13 @@
 
 DIR=$(cd "$(dirname "$0")"; pwd)
 
-# Use all the cpus 
-export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=8
-
 SCRIPT_PATH=$1
+NUM_THREADS=$2
 OUTPUT_DIR=""
-shift 1
+shift 2
 ARGS="$@"
+
+export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=$NUM_THREADS
 
 while getopts ":o:h:" opt
 do case "$opt" in
