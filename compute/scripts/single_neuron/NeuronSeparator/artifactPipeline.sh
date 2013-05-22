@@ -72,8 +72,8 @@ cat $REFERENCE | $NSDIR/v3draw_to_8bit | $NSDIR/v3draw_to_mip | $NSDIR/v3draw_to
 $Vaa3D -x ireg -f iContrastEnhancer -i ReferenceMIP.tif -o ReferenceMIP2.tif
 $NETPBM_BIN/tifftopnm ReferenceMIP2.tif | $NETPBM_BIN/pnmtopng > ReferenceMIP.png
 
-echo "~ Generating fragment MIPs"
-$Vaa3D -cmd neuron-fragment-editor -mode mips -sourceImage $CONSOLIDATED_SIGNAL -labelIndex $CONSOLIDATED_LABEL -outputDir . -outputPrefix $NAME.PR.neuron
+echo "~ Generating fragment MIPs with $NFE_MAX_THREAD_COUNT threads"
+$Vaa3D -cmd neuron-fragment-editor -mode mips -sourceImage $CONSOLIDATED_SIGNAL -labelIndex $CONSOLIDATED_LABEL -outputDir . -outputPrefix $NAME.PR.neuron -maxThreadCount $NFE_MAX_THREAD_COUNT
 
 for FILE in $NAME.PR.neuron*.tif
 do

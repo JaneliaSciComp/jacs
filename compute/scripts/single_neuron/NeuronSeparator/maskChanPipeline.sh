@@ -64,9 +64,9 @@ echo "Label file: $LABEL_FILE"
 echo "Signal file: $SIGNAL_FILE"
 echo "Output dir: $OUTDIR"
 
-echo "~ Creating mask/chan files"
-echo "$Vaa3D -cmd neuron-fragment-editor -mode reverse-label -sourceImage $SIGNAL_FILE -labelIndex $LABEL_FILE -outputDir $WORKING_DIR -outputPrefix neuron"
-$Vaa3D -cmd neuron-fragment-editor -mode reverse-label -sourceImage $SIGNAL_FILE -labelIndex $LABEL_FILE -outputDir $WORKING_DIR -outputPrefix neuron
+echo "~ Creating mask/chan files with $NFE_MAX_THREAD_COUNT threads"
+echo "$Vaa3D -cmd neuron-fragment-editor -mode reverse-label -sourceImage $SIGNAL_FILE -labelIndex $LABEL_FILE -outputDir $WORKING_DIR -outputPrefix neuron -maxThreadCount $NFE_MAX_THREAD_COUNT"
+$Vaa3D -cmd neuron-fragment-editor -mode reverse-label -sourceImage $SIGNAL_FILE -labelIndex $LABEL_FILE -outputDir $WORKING_DIR -outputPrefix neuron -maxThreadCount $NFE_MAX_THREAD_COUNT
 
 mkdir -p $OUTDIR
 if ls core* &> /dev/null; then
