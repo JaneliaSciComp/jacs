@@ -117,7 +117,7 @@ public class MIPGenerationService extends SubmitDrmaaJobService {
         script.append("read DISPLAY_PORT\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix("$DISPLAY_PORT"));
         script.append("\n");
-        script.append(NeuronSeparatorHelper.getMipCreatorCommands());
+        script.append(NeuronSeparatorHelper.getMipCreatorCommands(getGridResourceSpec().getSlots()));
         script.append("\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix());
         script.append("\n");

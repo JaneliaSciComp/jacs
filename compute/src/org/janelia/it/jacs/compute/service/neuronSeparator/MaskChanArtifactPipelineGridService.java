@@ -101,7 +101,7 @@ public class MaskChanArtifactPipelineGridService extends SubmitDrmaaJobService {
         StringBuffer script = new StringBuffer();
         script.append("read INPUT_DIR\n");
         script.append("read WORK_DIR\n");
-        script.append(NeuronSeparatorHelper.getMaskChanCommands() + " $WORK_DIR\n");
+        script.append(NeuronSeparatorHelper.getMaskChanCommands(getGridResourceSpec().getSlots()) + " $WORK_DIR\n");
         writer.write(script.toString());
     }
     

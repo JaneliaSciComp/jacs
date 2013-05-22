@@ -58,7 +58,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
     protected ComputeDAO computeDAO;
     protected static final String NORMAL_QUEUE = SystemConfigurationProperties.getString("Grid.NormalQueue");
     protected static final int MAX_JOBS_IN_ARRAY = SystemConfigurationProperties.getInt("Grid.MaxNumberOfJobs");
-    protected GridResourceSpec gridResourceSpec;
+    private GridResourceSpec gridResourceSpec;
     
     /**
      * This method is part of IService interface and used when this class
@@ -213,7 +213,10 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
     protected String getNativeSpecificationOverride() {
     	return null;
     }
-    
+
+    public GridResourceSpec getGridResourceSpec() {
+        return gridResourceSpec;
+    }
 
     protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
 

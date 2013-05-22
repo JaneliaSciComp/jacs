@@ -116,11 +116,7 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
         script.append("read CONSOLIDATED_LABEL\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix() + "\n");
         script.append(Vaa3DHelper.getVaa3dLibrarySetupCmd()+"\n");
-        if (isWarped) {
-            script.append("EXT=${CONSOLIDATED_LABEL#*.}\n");
-            script.append("cp $CONSOLIDATED_LABEL $OUTPUT_DIR/ConsolidatedLabel.$EXT\n");
-        }
-        script.append(NeuronSeparatorHelper.getNeuronSeparationCommands(isWarped) + "\n");
+        script.append(NeuronSeparatorHelper.getNeuronSeparationCommands(getGridResourceSpec().getSlots(), isWarped) + "\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix() + "\n");
         script.append("\n");
         writer.write(script.toString());
@@ -131,17 +127,11 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
         return TIMEOUT_SECONDS;
     }
 
-//    @Override
-//    protected int getRequiredMemoryInGB() {
-//        // 20x and 40x samples can run on a regular node, but anything larger needs a high memory node.
-//        // Either way, we have to run exclusively, because the mask/chan part gobbles up all available resources.
-//        return Objective.OBJECTIVE_63X.getName().equals(objective) ? 96 : 24;
-//    }
-
     @Override
-    protected boolean isExclusive() {
-        // This pipeline must run exclusively because the Qt threaded parts make it gobble up all the CPUs it can find
-        return true;
+    protected int getRequiredMemoryInGB() {
+        // 20x and 40x samples can run on a regular node, but anything larger needs a high memory node.
+        // Either way, we have to run exclusively, because the mask/chan part gobbles up all available resources.
+        return Objective.OBJECTIVE_63X.getName().equals(objective) ? 96 : 24;
     }
     
     @Override

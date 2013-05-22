@@ -77,7 +77,7 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
         StringBuffer cmd = new StringBuffer();
         cmd.append("sh "+ALIGNER_SCRIPT_CMD);
         cmd.append(" " + BRAIN_ALIGNER_DIR + "/" + scriptFile);
-        cmd.append(" "+gridResourceSpec.getSlots());
+        cmd.append(" "+getGridResourceSpec().getSlots());
         cmd.append(" -o " + resultFileNode.getDirectoryPath());
         cmd.append(" -c " + CONFIG_DIR + "/systemvars.apconf");
         cmd.append(" -t " + TEMPLATE_DIR);
