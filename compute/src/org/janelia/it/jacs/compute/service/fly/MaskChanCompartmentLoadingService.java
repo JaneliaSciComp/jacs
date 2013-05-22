@@ -95,6 +95,19 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
         // Get the mask/name index contents.
         Map<Integer,CompartmentDescriptor> indexToCompartment = parseCompartmentsDescriptorFile();
 
+        // Order them, and map back to the order number.
+        Set<CompartmentDescriptor> orderedCompartments = new TreeSet<CompartmentDescriptor>();
+        for ( Integer key: indexToCompartment.keySet() ) {
+            CompartmentDescriptor descriptor = indexToCompartment.get( key );
+            orderedCompartments.add(descriptor);
+        }
+
+        Map<CompartmentDescriptor,Integer> descriptorToOrder = new TreeMap<CompartmentDescriptor,Integer>();
+        int ord = 0;
+        for ( CompartmentDescriptor nextDescriptor: orderedCompartments ) {
+            descriptorToOrder.put( nextDescriptor, ord++ );
+        }
+
         // Process each Mask/Channel combination.  Indexes start at 0, so bump by one.
         EntityType compartmentEntityType = entityBean.getEntityTypeByName( EntityConstants.TYPE_COMPARTMENT );
     	for ( String key: folderContents.keySet() ) {
@@ -103,8 +116,14 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
 
             // Create the compartment and add it to the set.
             int index = indexFromName( key );
-            Entity compartment = createCompartmentEntity(compartmentEntityType, index, indexToCompartment.get(index));
-            helper.addToParent(compartmentSetEntity, compartment, compartmentSetEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+            CompartmentDescriptor compartmentDescriptor = indexToCompartment.get(index);
+            Entity compartment = createCompartmentEntity(compartmentEntityType, index, compartmentDescriptor);
+            helper.addToParent(
+                    compartmentSetEntity,
+                    compartment,
+                    descriptorToOrder.get( compartmentDescriptor ),
+                    EntityConstants.ATTRIBUTE_ENTITY
+            );
 
             // Create the mask and channel and add them to the compartment.
             createAndAddMaskChanEntities( compartment, maskChannel );
@@ -298,7 +317,7 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
         public File channelFile;
     }
 
-    private static class CompartmentDescriptor {
+    private static class CompartmentDescriptor implements Comparable<CompartmentDescriptor> {
         private String compartmentShortName;
         private String compartmentDescriptiveName;
         private Integer compartmentNum;
@@ -348,6 +367,11 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
 
         public String getCompartmentDescriptiveName() {
             return compartmentDescriptiveName;
+        }
+
+        @Override
+        public int compareTo(CompartmentDescriptor o) {
+            return compartmentDescriptiveName.compareTo( o.getCompartmentDescriptiveName() );
         }
     }
 }
