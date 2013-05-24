@@ -33,6 +33,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
             _logger.debug("Creating attributes");
             createEntityAttribute(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE);
+            createEntityAttribute(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE);
             createEntityAttribute(EntityConstants.ATTRIBUTE_PROPERTY);
 
             _logger.debug("Creating Workspace entity");
