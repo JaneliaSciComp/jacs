@@ -2,6 +2,7 @@ package org.janelia.it.jacs.model.entity.cv;
 
 public enum Objective implements NamedEnum {
 
+    OBJECTIVE_10X("10x"),
 	OBJECTIVE_20X("20x"),
 	OBJECTIVE_40X("40x"),
 	OBJECTIVE_63X("63x");
