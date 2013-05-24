@@ -63,8 +63,6 @@ public class EntityConstants {
     public static final String TYPE_3D_TILE_MICROSCOPE_SAMPLE        = "3D Tile Microscope Sample";
     public static final String TYPE_TILE_MICROSCOPE_WORKSPACE        = "Tile Microscope Workspace";
     public static final String TYPE_TILE_MICROSCOPE_NEURON           = "Tile Microscope Neuron";
-    public static final String TYPE_TILE_MICROSCOPE_WS_PREFS         = "Tile Microscope Workspace Preferences";
-    public static final String TYPE_GEOMETRIC_TREE                   = "Geometric Tree";
     public static final String TYPE_PROPERTY_SET                     = "Property Set";
     public static final String TYPE_CELL_COUNTING_RESULT             = "Cell Counting Result";
     // Entity Data Attributes
