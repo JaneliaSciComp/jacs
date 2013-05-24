@@ -61,6 +61,8 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
         if (sampleEntity == null) {
             throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
         }
+        
+        String stitchedFilename = (String)processData.getItem("STITCHED_FILENAME");
 
         // Find consensus optical res
         entityLoader.populateChildren(sampleEntity);
@@ -83,17 +85,23 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
                 pixelRes = getStitchedDimensions(resultItem.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
             }
             else if (resultItem.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_3D)) {
-                if (image3d!=null) {
-                    logger.warn("More than one 3d image result detected for sample processing "+sampleProcessingResult.getId());
+                if (stitchedFilename.equals(resultItem.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH))) {
+                    if (image3d!=null) {
+                        logger.warn("More than one 3d image result detected for sample processing "+sampleProcessingResult.getId());
+                    }   
+                    logger.info("Using as main 3d image: "+resultItem.getName());
+                    image3d = resultItem; 
+                    if (channelSpec!=null) {
+                        logger.info("Setting channel specification for "+resultItem.getName()+" (id="+resultItem.getId()+") to "+channelSpec);
+                        helper.setChannelSpec(resultItem, channelSpec);
+                    }
+                    if (opticalRes!=null) {
+                        logger.info("Setting optic resolution for "+resultItem.getName()+" (id="+resultItem.getId()+") to "+opticalRes);
+                        helper.setOpticalResolution(resultItem, opticalRes);
+                    }
                 }
-                image3d = resultItem; 
-                if (channelSpec!=null) {
-                    logger.info("Setting channel specification for "+resultItem.getName()+" (id="+resultItem.getId()+") to "+channelSpec);
-                    helper.setChannelSpec(resultItem, channelSpec);
-                }
-                if (opticalRes!=null) {
-                    logger.info("Setting optic resolution for "+resultItem.getName()+" (id="+resultItem.getId()+") to "+opticalRes);
-                    helper.setOpticalResolution(resultItem, opticalRes);
+                else {
+                    logger.info("Ignoring 3d image which is not the stitched file: "+resultItem.getName());
                 }
             }
         }
