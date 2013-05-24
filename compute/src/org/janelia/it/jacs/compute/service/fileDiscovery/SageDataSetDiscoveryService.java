@@ -121,7 +121,10 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		slideImage.setEffector((String)row.get("effector"));
 		String objectiveStr = (String)row.get("objective");
 		if (objectiveStr!=null) {
-    		if (objectiveStr.contains(Objective.OBJECTIVE_20X.getName())) {
+		    if (objectiveStr.contains(Objective.OBJECTIVE_10X.getName())) {
+                slideImage.setObjective(Objective.OBJECTIVE_10X.getName());
+            }
+		    else if (objectiveStr.contains(Objective.OBJECTIVE_20X.getName())) {
     		    slideImage.setObjective(Objective.OBJECTIVE_20X.getName());
     		}
     		else if (objectiveStr.contains(Objective.OBJECTIVE_40X.getName())) {

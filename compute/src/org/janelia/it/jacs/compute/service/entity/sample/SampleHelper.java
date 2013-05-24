@@ -103,10 +103,7 @@ public class SampleHelper extends EntityHelper {
         logger.debug("  Sample objectives: "+objectiveGroups.keySet());
         Entity sample = null;
         
-        if (objectiveGroups.isEmpty()) {
-            throw new IllegalStateException("Sample "+slideCode+" has no objective groups");
-        }
-        else if (objectiveGroups.keySet().size()>1) {
+        if (objectiveGroups.keySet().size()>1) {
             
             if (parentSample!=null) {
                 throw new IllegalStateException("Sample "+slideCode+" has already been subdivided but still contains multiple objectives: "+parentSample.getId());
