@@ -143,6 +143,10 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
                 Entity resultItem = helper.createResultItemForFile(file);
                 helper.addToParent(supportingFiles, resultItem, supportingFiles.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
             }
+            else if (filename.endsWith(".txt")) {
+                Entity resultItem = helper.createResultItemForFile(file);
+                helper.addToParent(supportingFiles, resultItem, supportingFiles.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+            }
             else {
                 // Ignore other files
             }
