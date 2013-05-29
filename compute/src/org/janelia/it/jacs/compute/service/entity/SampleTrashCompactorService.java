@@ -6,6 +6,7 @@ import java.util.List;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.entity.AlignmentResultNode;
 import org.janelia.it.jacs.model.user_data.entity.NamedFileNode;
@@ -23,12 +24,17 @@ public class SampleTrashCompactorService extends AbstractEntityService {
     public transient static final String PARAM_testRun = "is test run";
     
 	public transient static final String CENTRAL_DIR_PROP = "FileStore.CentralDir";
+	public transient static final String CENTRAL_ARCHIVE_DIR_PROP = "FileStore.CentralDir.Archived";
 	
 	private String username;
     private boolean isDebug = false;
     private int numDirs = 0;
     private int numResultNodes = 0;
     private int numDeletedResultNodes = 0;
+    private int numDefunctDirs = 0;
+    
+    private File userFilestore;
+    private File archiveFilestore;
     
     public void execute() throws Exception {
 
@@ -38,7 +44,8 @@ public class SampleTrashCompactorService extends AbstractEntityService {
         }
         
         this.username = ownerKey.split(":")[1];
-        File userFilestore = new File(SystemConfigurationProperties.getString(CENTRAL_DIR_PROP) + File.separator + username + File.separator);
+        this.userFilestore = new File(SystemConfigurationProperties.getString(CENTRAL_DIR_PROP) + File.separator + username + File.separator);
+        this.archiveFilestore = new File(SystemConfigurationProperties.getString(CENTRAL_ARCHIVE_DIR_PROP) + File.separator + username + File.separator);
         
         logger.info("Synchronizing file share directory to DB: "+userFilestore.getAbsolutePath());
         
@@ -49,14 +56,19 @@ public class SampleTrashCompactorService extends AbstractEntityService {
         	logger.info("This is the real thing. Files will be moved and/or deleted!");
         }
         
-        processChildren(new File(userFilestore, "Sample"));
-        processChildren(new File(userFilestore, "Alignment"));
-        processChildren(new File(userFilestore, "Separation"));
-        processChildren(new File(userFilestore, "Intersection"));
-        processChildren(new File(userFilestore, "Temp"));
+        processFilestore(userFilestore);
+        processFilestore(archiveFilestore);
         
-		logger.info("Processed "+numDirs+" directories. Found "+numResultNodes+" result nodes. Trashed "+
-				numDeletedResultNodes+" nodes. Left "+(numResultNodes-numDeletedResultNodes)+" nodes alone.");
+		logger.info("Processed "+numDirs+" directories. Found "+numResultNodes+" result nodes, of which "+numDefunctDirs+
+		        " were defunct. Trashed "+numDeletedResultNodes+" nodes. Left "+(numResultNodes-numDeletedResultNodes)+" nodes alone.");
+    }
+    
+    private void processFilestore(File filestoreDir) throws Exception {
+        processChildren(new File(filestoreDir, "Sample"));
+        processChildren(new File(filestoreDir, "Alignment"));
+        processChildren(new File(filestoreDir, "Separation"));
+        processChildren(new File(filestoreDir, "Intersection"));
+        processChildren(new File(filestoreDir, "Temp"));
     }
     
     private void processChildren(File dir) throws Exception {
@@ -87,23 +99,39 @@ public class SampleTrashCompactorService extends AbstractEntityService {
 		}
 		
         if (null == node) {
-            // This may be a node owned by another database... just leave it alone 
-        	logger.info("Ignoring subdir because it is not a node: "+dir.getName());
+            // This may be a node owned by another database, or it may be a rogue directory. Let's just leave it alone.
+        	logger.warn("Ignoring subdir because it is not a node: "+dir.getName());
         }
         else if (node instanceof SampleResultNode || node instanceof AlignmentResultNode 
         		|| node instanceof SeparationResultNode || node instanceof NamedFileNode) {
         	
-        	numResultNodes++;
-        	
-        	List<Entity> entities = entityBean.getEntitiesWithAttributeValue(EntityConstants.ATTRIBUTE_FILE_PATH, dir.getAbsolutePath()+"%");
-        	if (entities.isEmpty()) {
-                if (!isDebug) computeBean.trashNode(username, node.getObjectId(), true);
-                logger.debug("Trashed unreferenced node: " + node.getObjectId());	
-                numDeletedResultNodes++;
-        	}
-        	else {
-        		logger.debug("Node " + node.getObjectId() +" has "+entities.size()+" references to it, leaving it alone.");
-        	}
+            FileNode filenode = (FileNode)node;
+            
+            if (!dir.getAbsolutePath().equals(filenode.getDirectoryPath())) {
+                logger.warn("Node "+node.getObjectId()+" is no longer located at "+dir);
+                numDefunctDirs++;
+                if (!isDebug) {
+                    if (dir.delete()) {
+                        logger.info("Deleted defunct node directory "+dir);
+                    }
+                    else {
+                        logger.error("Defunct node directory cannot be deleted: "+dir);
+                    }
+                }
+            }
+            else {
+                numResultNodes++;
+                List<Entity> entities = entityBean.getEntitiesWithAttributeValue(EntityConstants.ATTRIBUTE_FILE_PATH, dir.getAbsolutePath()+"%");
+                if (entities.isEmpty()) {
+                    logger.info(dir+ " has no references, trashing it.");    
+                    if (!isDebug) computeBean.trashNode(username, node.getObjectId(), true);
+                    numDeletedResultNodes++;
+                }
+                else {
+                    logger.info(dir +" has "+entities.size()+" references to it, leaving it alone.");
+                }
+            }
+            
         }
         else {
 			logger.info("Ignoring subdir which is not a recognized node type (class is "+node.getClass().getName()+")");

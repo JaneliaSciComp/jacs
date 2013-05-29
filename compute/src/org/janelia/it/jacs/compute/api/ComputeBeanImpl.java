@@ -629,19 +629,14 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
             // Clean up the filestore if asked
             if (clearFromFilestoreIfAppropriate && targetNode instanceof FileNode) {
                 FileNode tmpFileNode = (FileNode) targetNode;
-                String centralDir = SystemConfigurationProperties.getString(FileNode.CENTRAL_DIR_PROP);
-                String archiveDir = SystemConfigurationProperties.getString(FileNode.CENTRAL_DIR_ARCHIVED_PROP);
-                
-                File trashDir = null;
-                if (tmpFileNode.getDirectoryPath().startsWith(archiveDir)) {
-                    trashDir = new File(archiveDir, "trash");
-                }
-                else {
-                    trashDir = new File(centralDir, "trash");
-                }
-                
+                String centralDir = SystemConfigurationProperties.getString(FileNode.CENTRAL_DIR_PROP); // /groups/scicomp/jacsData/filestore
+                String archiveDir = SystemConfigurationProperties.getString(FileNode.CENTRAL_DIR_ARCHIVED_PROP); // /archive/scicomp/jacsData/filestore
+                String dir = tmpFileNode.getDirectoryPath();
+                File nodeDir = new File(dir);
+                File trashedDir = new File(dir.replace(dir.startsWith(archiveDir) ? archiveDir : centralDir, archiveDir), "trash");
+                File trashDir = trashedDir.getParentFile();
             	FileUtil.ensureDirExists(trashDir.getAbsolutePath());
-            	FileUtil.moveFileUsingSystemCall(new File(tmpFileNode.getDirectoryPath()), trashDir);
+            	FileUtil.moveFileUsingSystemCall(nodeDir, trashDir);
                 logger.debug("Successfully moved " + tmpFileNode.getDirectoryPath()+" to trash directory ("+trashDir+")");
             }
         }
