@@ -629,19 +629,23 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
             // Clean up the filestore if asked
             if (clearFromFilestoreIfAppropriate && targetNode instanceof FileNode) {
                 FileNode tmpFileNode = (FileNode) targetNode;
-                String centralDir = SystemConfigurationProperties.getString(FileNode.CENTRAL_DIR_PROP); // /groups/scicomp/jacsData/filestore
-                String archiveDir = SystemConfigurationProperties.getString(FileNode.CENTRAL_DIR_ARCHIVED_PROP); // /archive/scicomp/jacsData/filestore
+                String centralDir = SystemConfigurationProperties.getString(FileNode.CENTRAL_DIR_PROP); 
+                String archiveDir = SystemConfigurationProperties.getString(FileNode.CENTRAL_DIR_ARCHIVED_PROP); 
                 String dir = tmpFileNode.getDirectoryPath();
                 File nodeDir = new File(dir);
-                File trashedDir = new File(dir.replace(dir.startsWith(archiveDir) ? archiveDir : centralDir, archiveDir), "trash");
+                String prefix = dir.startsWith(archiveDir) ? archiveDir : centralDir;
+                File trashedDir = new File(dir.replace(prefix, prefix+"/trash"));
+                if (!trashedDir.getAbsolutePath().contains("trash")) {
+                    throw new IllegalStateException("Trashed dir was not formed correctly: "+trashedDir);
+                }
                 File trashDir = trashedDir.getParentFile();
             	FileUtil.ensureDirExists(trashDir.getAbsolutePath());
+            	logger.info("Moving " + tmpFileNode.getDirectoryPath()+" to trash directory "+trashDir);
             	FileUtil.moveFileUsingSystemCall(nodeDir, trashDir);
-                logger.debug("Successfully moved " + tmpFileNode.getDirectoryPath()+" to trash directory ("+trashDir+")");
             }
         }
         catch (Exception e) {
-            logger.error("Unsuccessful in moving node to trash: " + e.getMessage());
+            logger.error("Error trashing node",e);
             return false;
         }
         return true;
