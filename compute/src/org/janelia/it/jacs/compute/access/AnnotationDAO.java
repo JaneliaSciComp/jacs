@@ -1332,6 +1332,43 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     public List<Entity> getUserEntitiesWithAttributeValue(String subjectKey, String attrName, String attrValue) throws DaoException {
         return getUserEntitiesWithAttributeValue(subjectKey, null, attrName, attrValue);
     }
+
+    public long getCountUserEntitiesWithAttributeValue(String subjectKey, String typeName, String attrName, String attrValue) throws DaoException {
+        try {
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("getCountUserEntitiesWithAttributeValue(subjectKey="+subjectKey+", typeName="+typeName+", attrName="+attrName+", attrValue="+attrValue+")");
+            }
+            
+            Session session = getCurrentSession();
+            StringBuffer hql = new StringBuffer("select count(ed.parentEntity) from EntityData ed ");
+            if (typeName != null) {
+                hql.append("join ed.parentEntity.entityType ");
+            }
+            hql.append("where ed.entityAttribute.name=:attrName and ed.value like :value ");
+            if (typeName != null) {
+                hql.append("and ed.parentEntity.entityType.name=:typeName ");
+            }
+            if (null != subjectKey) {
+                hql.append("and ed.parentEntity.ownerKey=:subjectKey ");
+            }
+            Query query = session.createQuery(hql.toString());
+            query.setString("attrName", attrName);
+            query.setString("value", attrValue);
+            if (typeName != null) {
+                query.setString("typeName", typeName);
+            }
+            if (null != subjectKey) {
+                query.setString("subjectKey", subjectKey);
+            }
+            return (Long)query.list().get(0);
+        } catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+    
+    public long getCountUserEntitiesWithAttributeValue(String subjectKey, String attrName, String attrValue) throws DaoException {
+        return getCountUserEntitiesWithAttributeValue(subjectKey, null, attrName, attrValue);
+    }
     
     public boolean deleteEntityById(String subjectKey, Long entityId) throws DaoException {
         Session session = null;

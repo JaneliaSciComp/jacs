@@ -465,7 +465,16 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     		throw new ComputeException("Error searching for entities with",e);
     	}
     }
-    
+
+    public long getCountUserEntitiesWithAttributeValue(String subjectKey, String attrName, String attrValue) throws ComputeException {
+        try {
+            return _annotationDAO.getCountUserEntitiesWithAttributeValue(subjectKey, attrName, attrValue);
+        }
+        catch (DaoException e) {
+            _logger.error("Error getting count for entities with "+attrName+" like "+attrValue+" owned by "+subjectKey,e);
+            throw new ComputeException("Error searching for entities with",e);
+        }
+    }
     
     public Set<Entity> getEntitiesByName(String name) throws ComputeException {
         return getUserEntitiesByName(null, name);
@@ -481,6 +490,10 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
 
     public List<Entity> getEntitiesWithAttributeValue(String attrName, String attrValue) throws ComputeException {
         return getUserEntitiesWithAttributeValue(null, attrName, attrValue);
+    }
+    
+    public long getCountEntitiesWithAttributeValue(String attrName, String attrValue) throws ComputeException {
+        return getCountUserEntitiesWithAttributeValue(null, attrName, attrValue);
     }
 
     public Entity getEntityTree(Long entityId) throws ComputeException {

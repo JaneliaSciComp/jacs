@@ -120,15 +120,39 @@ public class SampleTrashCompactorService extends AbstractEntityService {
                 }
             }
             else {
+                String path = dir.getAbsolutePath();
+                
                 numResultNodes++;
-                List<Entity> entities = entityBean.getEntitiesWithAttributeValue(EntityConstants.ATTRIBUTE_FILE_PATH, dir.getAbsolutePath()+"%");
-                if (entities.isEmpty()) {
-                    logger.info(dir+ " has no references, trashing it.");    
-                    if (!isDebug) computeBean.trashNode(username, node.getObjectId(), true);
-                    numDeletedResultNodes++;
+                long numEntities = entityBean.getCountUserEntitiesWithAttributeValue(null, EntityConstants.ATTRIBUTE_FILE_PATH, path+"%");
+                if (numEntities==0) {
+                    
+                    // Because some nodes may have dual citizenship on /groups and /archive, for legacy reasons, we need
+                    // to check the sister directory as well:
+                    
+                    String sisterPath = null;
+                    if (path.startsWith("/groups")) {
+                        sisterPath = path.replaceFirst("/groups", "/archive");
+                    }
+                    else  if (path.startsWith("/archive")) {
+                        sisterPath = path.replaceFirst("/archive", "/groups");
+                    }
+                    else {
+                        logger.error("Unknown path prefix: "+path);
+                        return;
+                    }
+                    
+                    numEntities = entityBean.getCountUserEntitiesWithAttributeValue(null, EntityConstants.ATTRIBUTE_FILE_PATH, sisterPath+"%");
+                    if (numEntities==0) {
+                        logger.info(dir+ " has no references, trashing it.");    
+                        if (!isDebug) computeBean.trashNode(username, node.getObjectId(), true);
+                        numDeletedResultNodes++;
+                    }
+                    else {
+                        logger.info(dir +" has "+numEntities+" references to its sister path, leaving it alone.");
+                    }
                 }
                 else {
-                    logger.info(dir +" has "+entities.size()+" references to it, leaving it alone.");
+                    logger.info(dir +" has "+numEntities+" references to it, leaving it alone.");
                 }
             }
             
