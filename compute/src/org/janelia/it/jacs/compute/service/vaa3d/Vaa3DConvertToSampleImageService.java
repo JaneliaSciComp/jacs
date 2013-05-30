@@ -144,7 +144,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
     protected String getGridServicePrefixName() {
         return "convert";
     }
-
+    
     @Override
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
 
@@ -198,6 +198,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                             throw new IllegalStateException("Dye "+dye+" is already mapped as "+dyeToTagMap.get(dye));
                         }
                         dyeToTagMap.put(dye, channelTag);
+                        logger.info("Mapping dye '"+dye+"' to channel tag '"+channelTag+"'");
                     }
                     c++;
                 }
