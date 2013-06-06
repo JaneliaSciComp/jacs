@@ -165,15 +165,29 @@ public class FileUtils {
 
 
     /**
-     * Returns the child files of the given directory, sorted by name.
-     * @param dir
-     * @return
+     * @param  dir  the directory to examine.
+     *
+     * @return the child files of the given directory, sorted by name.
+     *         An empty list is returned if the directory does not exist or is not a directory.
      */
     public static List<File> getOrderedFilesInDir(File dir) {
-        if (!dir.exists()) return new ArrayList<File>();
-        List<File> files = Arrays.asList(dir.listFiles());
-        sortFilesByName(files);
-        return files;
+
+        List<File> orderedFiles = null;
+
+        if ((dir != null) && dir.isDirectory()) {
+            final File[] files = dir.listFiles();
+            if (files != null) {
+                orderedFiles = Arrays.asList(files);
+            }
+        }
+
+        if (orderedFiles == null) {
+            orderedFiles = new ArrayList<File>();
+        } else {
+            sortFilesByName(orderedFiles);
+        }
+
+        return orderedFiles;
     }
     
     /**
