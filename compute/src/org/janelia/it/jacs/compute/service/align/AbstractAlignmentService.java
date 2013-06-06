@@ -249,7 +249,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
         
         logger.debug("Waiting for files to appear: "+targetFiles);
         FileUtil.waitForFiles(targetFiles, TIMEOUT_SECONDS*1000);
-        logger.debug("Retrieved necessary files for archive for alignment input "+input.getInputFilename());
+        logger.debug("Retrieved necessary files from archive for alignment input "+input.getInputFilename());
     }
     
     @Override

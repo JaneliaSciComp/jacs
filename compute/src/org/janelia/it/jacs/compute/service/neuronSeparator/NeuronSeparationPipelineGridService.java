@@ -4,14 +4,18 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.launcher.archive.ArchiveAccessHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.entity.cv.Objective;
 import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
@@ -33,10 +37,11 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
     private FileNode outputFileNode;
     private String inputFilename;
     private String objective;
-    private String previousResultFile;
+    private String previousResultFilepath;
     private String signalChannels;
     private String referenceChannel;
-    private String consolidatedLabel;
+    private String consolidatedLabelFilepath;
+    private File fromArchiveDir;
     
     @Override
     protected String getGridServicePrefixName() {
@@ -56,7 +61,7 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
         	throw new ServiceException("Input parameter INPUT_FILENAME may not be empty");
         }
     	
-        previousResultFile = (String)processData.getItem("PREVIOUS_RESULT_FILENAME");
+        previousResultFilepath = (String)processData.getItem("PREVIOUS_RESULT_FILENAME");
         
         signalChannels = (String)processData.getItem("SIGNAL_CHANNELS");
         if (signalChannels==null) {
@@ -70,11 +75,54 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
         	referenceChannel = "3";
         }
 
-        consolidatedLabel = (String)processData.getItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH");        
+        consolidatedLabelFilepath = (String)processData.getItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH");        
+        
+        copyInputsFromArchive();
         
         logger.info("Starting NeuronSeparationPipelineService with taskId=" + task.getObjectId() + " resultNodeId=" + resultFileNode.getObjectId() + " resultDir=" + resultFileNode.getDirectoryPath()+
                 " workingDir="+outputFileNode.getDirectoryPath() + " inputFilename="+inputFilename+ " signalChannels="+signalChannels+ " referenceChannel="+referenceChannel+ " objective="+objective+
-                " previousResultFile="+previousResultFile+" consolidatedLabel="+consolidatedLabel);
+                " previousResultFile="+previousResultFilepath+" consolidatedLabel="+consolidatedLabelFilepath);
+    }
+
+    private void copyInputsFromArchive() throws Exception {
+        
+        List<String> archivedFiles = new ArrayList<String>();
+        List<String> targetFiles = new ArrayList<String>();
+        
+        File fromArchiveDir = new File(resultFileNode.getDirectoryPath(), "from_archive");
+        
+        if (previousResultFilepath!=null && previousResultFilepath.startsWith("/archive")) {
+            File prevResultFile = new File(previousResultFilepath);
+            File previousCompanionFile = new File(prevResultFile.getParent(), prevResultFile.getName().substring(0, prevResultFile.getName().lastIndexOf('.'))+".pbd");
+            
+            archivedFiles.add(previousResultFilepath);
+            previousResultFilepath = new File(fromArchiveDir, prevResultFile.getName()).getAbsolutePath();
+            targetFiles.add(previousResultFilepath);
+            
+            archivedFiles.add(previousCompanionFile.getAbsolutePath());
+            previousCompanionFile = new File(fromArchiveDir, previousCompanionFile.getName());
+            targetFiles.add(previousCompanionFile.getAbsolutePath());
+        }
+        
+        if (consolidatedLabelFilepath!=null && consolidatedLabelFilepath.startsWith("/archive")) {
+            archivedFiles.add(consolidatedLabelFilepath);
+            consolidatedLabelFilepath = new File(fromArchiveDir, new File(consolidatedLabelFilepath).getName()).getAbsolutePath();
+            targetFiles.add(consolidatedLabelFilepath);
+        }
+        
+        if (!archivedFiles.isEmpty()) {
+            logger.info("Creating temporary directory: "+fromArchiveDir.getAbsolutePath());
+            fromArchiveDir.mkdirs();
+            
+            logger.info("Sending archive message");
+            ArchiveAccessHelper.sendCopyFromArchiveMessage(archivedFiles, targetFiles);
+            
+            logger.info("Waiting for files to appear: "+targetFiles);
+            FileUtil.waitForFiles(targetFiles, TIMEOUT_SECONDS*1000);
+            logger.info("Retrieved necessary files from archive for separation "+resultFileNode.getDirectoryPath());   
+            
+            this.fromArchiveDir = fromArchiveDir;
+        }
     }
     
     @Override
@@ -93,8 +141,8 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
             fw.write(inputFilename + "\n");
             fw.write(signalChannels + "\n");
             fw.write(referenceChannel + "\n");
-            fw.write((previousResultFile==null?"":previousResultFile) + "\n");
-            fw.write((consolidatedLabel==null?"":consolidatedLabel) + "\n");
+            fw.write((previousResultFilepath==null?"":previousResultFilepath) + "\n");
+            fw.write((consolidatedLabelFilepath==null?"":consolidatedLabelFilepath) + "\n");
         }
         catch (IOException e) {
         	throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath(),e); 
@@ -105,7 +153,7 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
     }
 
     private void createShellScript(FileWriter writer) throws Exception {
-        boolean isWarped = !StringUtils.isEmpty(consolidatedLabel);
+        boolean isWarped = !StringUtils.isEmpty(consolidatedLabelFilepath);
         StringBuffer script = new StringBuffer();
         script.append("read OUTPUT_DIR\n");
         script.append("read NAME\n");
@@ -118,6 +166,9 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
         script.append(Vaa3DHelper.getVaa3dLibrarySetupCmd()+"\n");
         script.append(NeuronSeparatorHelper.getNeuronSeparationCommands(getGridResourceSpec().getSlots(), isWarped) + "\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix() + "\n");
+        if (fromArchiveDir!=null) {
+            script.append("rm -rf "+fromArchiveDir.getAbsolutePath()+"\n");
+        }
         script.append("\n");
         writer.write(script.toString());
     }
