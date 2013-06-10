@@ -1,19 +1,15 @@
 package org.janelia.it.jacs.compute.api;
 
-import org.janelia.it.jacs.compute.access.DaoException;
-import org.janelia.it.jacs.model.entity.*;
-import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
 
 import javax.ejb.Remote;
-import java.util.*;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
  * User: murphys
  * Date: 4/30/13
  * Time: 12:52 PM
- * To change this template use File | Settings | File Templates.
  */
 @Remote
 public interface TiledMicroscopeBeanRemote {
