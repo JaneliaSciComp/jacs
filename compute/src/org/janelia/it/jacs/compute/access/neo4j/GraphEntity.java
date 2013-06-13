@@ -4,21 +4,21 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.neo4j.graphdb.Direction;
-import org.springframework.data.neo4j.annotation.GraphId;
-import org.springframework.data.neo4j.annotation.Indexed;
-import org.springframework.data.neo4j.annotation.NodeEntity;
-import org.springframework.data.neo4j.annotation.RelatedTo;
+//import org.springframework.data.neo4j.annotation.GraphId;
+//import org.springframework.data.neo4j.annotation.Indexed;
+//import org.springframework.data.neo4j.annotation.NodeEntity;
+//import org.springframework.data.neo4j.annotation.RelatedTo;
 
-@NodeEntity
+//@NodeEntity
 public class GraphEntity {
 
-	@GraphId 
+//	@GraphId 
 	private Long id;
 
-	@Indexed
+//	@Indexed
 	private Long entityId;
 
-	@Indexed
+//	@Indexed
     private String name;
     
 	private String username;
@@ -31,10 +31,10 @@ public class GraphEntity {
 //    
 //    private Map<String, String> attributes = new HashMap<String, String>();
     
-    @RelatedTo(type = "PARENT_CHILD", direction = Direction.OUTGOING)
+//    @RelatedTo(type = "PARENT_CHILD", direction = Direction.OUTGOING)
     private Set<GraphEntity> children = new HashSet<GraphEntity>();
     
-    @RelatedTo(type = "PARENT_CHILD", direction = Direction.INCOMING)
+//    @RelatedTo(type = "PARENT_CHILD", direction = Direction.INCOMING)
     private Set<GraphEntity> parents = new HashSet<GraphEntity>();
 
 //    @Fetch @RelatedToVia(type = "PARENT_CHILD", direction = Direction.OUTGOING) 

@@ -11,8 +11,8 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.index.Index;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.neo4j.support.Neo4jTemplate;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.data.neo4j.support.Neo4jTemplate;
 
 /**
  * Access to the Neo4j graph database service defined in the neo4j-beans.xml configuration file.
@@ -21,7 +21,7 @@ import org.springframework.data.neo4j.support.Neo4jTemplate;
  */
 public class GraphAccess {
 	
-	@Autowired Neo4jTemplate template;
+//	@Autowired Neo4jTemplate template;
 	
 	private Node subjectReferenceNode;
 	private Node rootReferenceNode;
@@ -40,7 +40,7 @@ public class GraphAccess {
     }
 	
 	public GraphDatabaseService getGraphDatabaseService() {
-		return template.getGraphDatabaseService();
+		return null;//template.getGraphDatabaseService();
 	}
 
 	/**
@@ -50,7 +50,7 @@ public class GraphAccess {
 	 */
 	public void initRefNodes() {
 		
-		GraphDatabaseService gds = template.getGraphDatabaseService();
+		GraphDatabaseService gds = null;//template.getGraphDatabaseService();
 		Transaction tx = gds.beginTx();
 		
 		try {
@@ -76,7 +76,7 @@ public class GraphAccess {
 	 * @return
 	 */
 	public Node createEntityNode(Entity entity) {
-		GraphDatabaseService gds = template.getGraphDatabaseService();
+		GraphDatabaseService gds = null;//template.getGraphDatabaseService();
 		Node node = gds.createNode();
 		node.setProperty("entityId", entity.getId());
 		node.setProperty("name", entity.getName());
@@ -108,7 +108,7 @@ public class GraphAccess {
 		if (subjectMap.containsKey(subjectKey)) {
 			return subjectMap.get(subjectKey);
 		}
-		GraphDatabaseService gds = template.getGraphDatabaseService();
+		GraphDatabaseService gds = null;//template.getGraphDatabaseService();
 		Node node = gds.createNode();
         node.setProperty("subjectKey", subjectKey);
         subjectIndex.add(node, "subjectKey", subjectKey);

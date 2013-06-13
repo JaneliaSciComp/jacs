@@ -72,7 +72,7 @@
 			<fileset dir="${common.dir}/Solrj" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/ehcache" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/MongoDB" includes="**/*.jar"/>
-			<fileset dir="${common.dir}/Spring-3" includes="**/*.jar"/>
+			<fileset dir="${common.dir}/Neo4j" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/Guava" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/commons-vfs" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/commons-net" includes="**/*.jar"/>

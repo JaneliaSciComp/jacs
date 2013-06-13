@@ -17,7 +17,7 @@ import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.mongodb.MongoDbDAO;
-import org.janelia.it.jacs.compute.access.neo4j.Neo4jDAO;
+import org.janelia.it.jacs.compute.access.neo4j.Neo4jBatchDAO;
 import org.janelia.it.jacs.compute.access.solr.SolrDAO;
 import org.janelia.it.jacs.compute.api.support.SageTerm;
 import org.janelia.it.jacs.compute.api.support.SolrDocTypeEnum;
@@ -113,7 +113,7 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     // TODO: move this to its own bean, or rename this one
     public void neo4jAllEntities(boolean clearDb) throws ComputeException {
     	try {
-    		Neo4jDAO neo4jDAO = new Neo4jDAO(_logger);
+    		Neo4jBatchDAO neo4jDAO = new Neo4jBatchDAO(_logger);
     		if (clearDb) {
     			neo4jDAO.dropDatabase();
     		}

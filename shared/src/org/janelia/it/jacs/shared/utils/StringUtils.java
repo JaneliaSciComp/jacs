@@ -47,7 +47,17 @@ public class StringUtils {
 		}
 		return buf.toString();
 	}
-	
+
+    public static String defaultIfNullOrEmpty(String o, String defaultString) {
+        if (isEmpty(o)) return defaultString;
+        return o.toString();
+    }
+    
+    public static String defaultIfNull(Object o, String defaultString) {
+        if (o==null) return defaultString;
+        return o.toString();
+    }
+
 	public static String emptyIfNull(Object o) {
 	    if (o==null) return "";
 	    return o.toString();
