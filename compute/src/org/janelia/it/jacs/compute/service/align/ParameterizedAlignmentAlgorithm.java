@@ -6,11 +6,13 @@ public class ParameterizedAlignmentAlgorithm {
 
 	private AlignmentAlgorithm algorithm;
 	private String parameter;
+	private String resultName;
 	
 	public ParameterizedAlignmentAlgorithm(AlignmentAlgorithm algorithm,
-			String parameter) {
+			String parameter, String resultName) {
 		this.algorithm = algorithm;
 		this.parameter = parameter;
+		this.resultName = resultName;
 	}
 
 	public AlignmentAlgorithm getAlgorithm() {
@@ -19,5 +21,9 @@ public class ParameterizedAlignmentAlgorithm {
 
 	public String getParameter() {
 		return parameter;
+	}
+	
+	public String getResultName() {
+	    return resultName;
 	}
 }

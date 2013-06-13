@@ -2,15 +2,15 @@ package org.janelia.it.jacs.compute.service.fileDiscovery;
 
 import java.io.File;
 import java.io.FileReader;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.text.DecimalFormat;
+import java.util.*;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
@@ -21,7 +21,9 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoveryService {
-
+    
+    private static DecimalFormat dfScore = new DecimalFormat("#.######");
+    
     @Override
     public void execute(IProcessData processData) throws ServiceException {
         processData.putItem("RESULT_ENTITY_TYPE", EntityConstants.TYPE_ALIGNMENT_RESULT);
@@ -85,12 +87,32 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     String pixelRes = properties.getProperty("alignment.image.size");
                     String boundingBox = properties.getProperty("alignment.bounding.box");
                     String objective = properties.getProperty("alignment.objective");
+                    String scoreNcc = properties.getProperty("alignment.quality.score.ncc");
+                    String scoreQi = properties.getProperty("alignment.quality.score.qi");
+                    
+                    String score1MinusQi = null;
+                    if (!StringUtils.isEmpty(scoreQi)) {
+                        List<String> inconsistencyScores = new ArrayList<String>();
+                        for(String qiScore : Task.listOfStringsFromCsvString(scoreQi)) {
+                            try {
+                                double score = 1 - Double.parseDouble(qiScore);
+                                inconsistencyScores.add(dfScore.format(score));
+                            }
+                            catch (NumberFormatException e) {
+                                logger.error("Error parsing double: "+e);
+                            }
+                        }
+                        score1MinusQi = Task.csvStringFromCollection(inconsistencyScores);
+                    }
+                    
                     
                     helper.setAlignmentSpace(entity, alignmentSpace);
                     helper.setOpticalResolution(entity, opticalRes);
                     helper.setPixelResolution(entity, pixelRes);
                     helper.setBoundingBox(entity, boundingBox);
                     helper.setObjective(entity, objective);
+                    helper.setNccScore(entity, scoreNcc);
+                    helper.setQiScore(entity, score1MinusQi);
                     
                     if ("true".equals(properties.getProperty("default"))) {
                         defaultAlignmentSpace = alignmentSpace;

@@ -20,10 +20,12 @@ public class ChoosePostSampleProcessingStepsService extends AbstractEntityServic
     	
     	String alignAlgorithms = (String)processData.getItem("ALIGNMENT_ALGORITHMS");
     	String alignAlgorithmParams = (String)processData.getItem("ALIGNMENT_ALGORITHM_PARAMS");
+        String alignAlgorithmResultNames = (String)processData.getItem("ALIGNMENT_ALGORITHM_RESULT_NAMES");
     	String analysisAlgorithms = (String)processData.getItem("ANALYSIS_ALGORITHMS");
     	
     	List<String> aas = Task.listOfStringsFromCsvString(alignAlgorithms);
     	List<String> aaps = Task.listOfStringsFromCsvString(alignAlgorithmParams);
+    	List<String> aarms = Task.listOfStringsFromCsvString(alignAlgorithmResultNames);
     	List<ParameterizedAlignmentAlgorithm> paas = new ArrayList<ParameterizedAlignmentAlgorithm>();
     	
     	for(int i=0; i<aas.size(); i++) {
@@ -35,7 +37,15 @@ public class ChoosePostSampleProcessingStepsService extends AbstractEntityServic
     			logger.info("Alignment algorithm "+aa+" specified with no parameter");
     			// Ignore. Maybe this algorithm doesn't need a parameter.
     		}
-    		ParameterizedAlignmentAlgorithm paa = new ParameterizedAlignmentAlgorithm(aa, p);
+    		String n = null;
+    		try {
+    		    n = aarms.get(i);
+            } catch (IndexOutOfBoundsException e) {
+                logger.info("Alignment algorithm "+aa+" specified with no result name");
+                // Ignore. Maybe this algorithm doesn't need a parameter.
+            }
+            
+    		ParameterizedAlignmentAlgorithm paa = new ParameterizedAlignmentAlgorithm(aa, p, n);
     		paas.add(paa);
     	}
     	

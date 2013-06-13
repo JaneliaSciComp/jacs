@@ -11,6 +11,7 @@
         <input name="STITCH_ALGORITHMS"/>
         <input name="ALIGNMENT_ALGORITHMS"/>
         <input name="ALIGNMENT_ALGORITHM_PARAMS"/>
+        <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES"/>
         <input name="ANALYSIS_ALGORITHMS"/>
         <input name="PIPELINE_PROCESS"/>
         <input name="CHANNEL_DYE_SPEC"/>
@@ -25,6 +26,7 @@
             <input name="STITCH_ALGORITHMS"/>
             <input name="ALIGNMENT_ALGORITHMS"/>
             <input name="ALIGNMENT_ALGORITHM_PARAMS"/>
+            <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES"/>
             <input name="ANALYSIS_ALGORITHMS"/>
             <input name="PIPELINE_PROCESS"/>
             <input name="REUSE_PROCESSING"/>
@@ -41,18 +43,21 @@
             <input name="PROCESS_VARIABLE_5" value="ALIGNMENT_ALGORITHMS"/>
             <input name="TASK_PARAMETER_6" value="alignment algorithm parameters"/>
             <input name="PROCESS_VARIABLE_6" value="ALIGNMENT_ALGORITHM_PARAMS"/>
-            <input name="TASK_PARAMETER_7" value="analysis algorithms"/>
-            <input name="PROCESS_VARIABLE_7" value="ANALYSIS_ALGORITHMS"/>
-            <input name="TASK_PARAMETER_8" value="pipeline process"/>
-            <input name="PROCESS_VARIABLE_8" value="PIPELINE_PROCESS"/>
-            <input name="TASK_PARAMETER_9" value="reuse processing"/>
-            <input name="PROCESS_VARIABLE_9" value="REUSE_PROCESSING"/>
+            <input name="TASK_PARAMETER_7" value="alignment algorithm result names"/>
+            <input name="PROCESS_VARIABLE_7" value="ALIGNMENT_ALGORITHM_RESULT_NAMES"/>
+            <input name="TASK_PARAMETER_8" value="analysis algorithms"/>
+            <input name="PROCESS_VARIABLE_8" value="ANALYSIS_ALGORITHMS"/>
+            <input name="TASK_PARAMETER_9" value="pipeline process"/>
+            <input name="PROCESS_VARIABLE_9" value="PIPELINE_PROCESS"/>
+            <input name="TASK_PARAMETER_10" value="reuse processing"/>
+            <input name="PROCESS_VARIABLE_10" value="REUSE_PROCESSING"/>
 	        <output name="SAMPLE_ENTITY_ID"/>
 	        <output name="PIPELINE_NAME"/>
 	        <output name="MERGE_ALGORITHMS"/>
 	        <output name="STITCH_ALGORITHMS"/>
 	        <output name="ALIGNMENT_ALGORITHMS"/>
             <output name="ALIGNMENT_ALGORITHM_PARAMS"/>
+            <output name="ALIGNMENT_ALGORITHM_RESULT_NAMES"/>
 	        <output name="ANALYSIS_ALGORITHMS"/>
 	        <output name="PIPELINE_PROCESS"/>
 	        <output name="REUSE_PROCESSING"/>
@@ -357,6 +362,7 @@
         <operation name="Choose Next Steps" processor="org.janelia.it.jacs.compute.service.entity.sample.ChoosePostSampleProcessingStepsService">
             <input name="ALIGNMENT_ALGORITHMS"/>
             <input name="ALIGNMENT_ALGORITHM_PARAMS"/>
+            <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES"/>
             <input name="ANALYSIS_ALGORITHMS"/>
             <output name="RUN_ALIGNMENT"/>
             <output name="RUN_ANALYSIS"/>

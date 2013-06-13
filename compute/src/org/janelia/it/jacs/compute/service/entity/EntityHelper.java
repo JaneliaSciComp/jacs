@@ -365,6 +365,18 @@ public class EntityHelper {
         setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_CHANNEL_COLORS, value);
     }
     
+    public void setQiScore(Entity entity, String value) throws Exception {
+        setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE, value);
+    }
+    
+    public void setQmScore(Entity entity, String value) throws Exception {
+        setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE, value);
+    }
+    
+    public void setNccScore(Entity entity, String value) throws Exception {
+        setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_ALIGNMENT_NCC_SCORE, value);
+    }
+    
     private void setAttributeIfNecessary(Entity entity, String attributeName, String value) throws Exception {
         if (entity==null || StringUtils.isEmpty(value)) return;
         EntityData currEd = entity.getEntityDataByAttributeName(attributeName);
