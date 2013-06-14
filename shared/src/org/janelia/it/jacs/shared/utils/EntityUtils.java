@@ -184,18 +184,27 @@ public class EntityUtils {
 			edMap2.put(ed.getId(),ed);
 		}
 		
-		if (!edMap1.equals(edMap2)) {
-			log.debug("Entity areEqual? attributes differ");
-			return false;
-		}
-		
 		for(EntityData ed1 : edMap1.values()) {
 		    EntityData ed2 = edMap2.get(ed1.getId());
 		    if (!areEqual(ed1,ed2)) {
+		        log.debug("Entity 2 does not have the same "+ed1.getEntityAttribute().getName());
 		        return false;
 		    }
 		}
+		
+        for(EntityData ed2 : edMap2.values()) {
+            EntityData ed1 = edMap1.get(ed2.getId());
+            if (!areEqual(ed1,ed2)) {
+                log.debug("Entity 1 does not have the same "+ed2.getEntityAttribute().getName());
+                return false;
+            }
+        }
 
+        if (edMap1.size()!=edMap2.size()) {
+            log.debug("Entity areEqual? attribute sizes differ");
+            return false;
+        }
+        
 		if (EntityUtils.isInitialized(entity1.getEntityActorPermissions()) && EntityUtils.isInitialized(entity2.getEntityActorPermissions())) {
 			
 			Set<Long> eapIds1 = new HashSet<Long>();
@@ -228,6 +237,8 @@ public class EntityUtils {
      */
     public static boolean areEqual(EntityData ed1, EntityData ed2) {
     	
+        if (ed1==null || ed2==null) return false;
+        
     	ComparisonChain chain = ComparisonChain.start()
 	        	.compare(ed1.getId(), ed2.getId(), Ordering.natural().nullsFirst())
 	            .compare(ed1.getOrderIndex(), ed2.getOrderIndex(), Ordering.natural().nullsFirst())
