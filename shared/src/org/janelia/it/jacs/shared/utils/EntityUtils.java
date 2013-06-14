@@ -199,9 +199,14 @@ public class EntityUtils {
                 return false;
             }
         }
-
+        
         if (edMap1.size()!=edMap2.size()) {
             log.debug("Entity areEqual? attribute sizes differ");
+            return false;
+        }
+
+        if (!edMap1.equals(edMap2)) {
+            log.debug("Entity areEqual? attributes maps differ");
             return false;
         }
         
