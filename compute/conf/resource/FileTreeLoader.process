@@ -17,7 +17,7 @@
 
 -->
 
-<process name="File Tree Loader Pipeline" processor="queue/fileTreeLoaderPipelineLauncher" startEvent="pending">
+<process name="File Tree Loader Pipeline" processor="queue/fileTreeLoaderPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	    <sequence>
 
@@ -32,14 +32,22 @@
                 <input name="PROCESS_VARIABLE_1" value="TOP_LEVEL_FOLDER_NAME"/>
                 <input name="TASK_PARAMETER_2" value="root directory path"/>
                 <input name="PROCESS_VARIABLE_2" value="FILE_TREE_ROOT_DIRECTORY"/>
+                <input name="TASK_PARAMETER_3" value="files uploaded"/>
+                <input name="PROCESS_VARIABLE_3" value="FILES_UPLOADED"/>
+                <input name="TASK_PARAMETER_4" value="top level folder id"/>
+                <input name="PROCESS_VARIABLE_4" value="TOP_LEVEL_FOLDER_ID"/>
                 <output name="TOP_LEVEL_FOLDER_NAME"/>
                 <output name="FILE_TREE_ROOT_DIRECTORY"/>
+                <output name="FILES_UPLOADED"/>
+                <output name="TOP_LEVEL_FOLDER_ID"/>
     	    </operation>
 
 	    	<operation name="Initial File Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FileTreeLoaderService">
 	    	    <input name="MODE" value="SETUP"/>
     			<input name="TOP_LEVEL_FOLDER_NAME"/>
     			<input name="FILE_TREE_ROOT_DIRECTORY"/>
+                <input name="FILES_UPLOADED"/>
+    			<input name="TOP_LEVEL_FOLDER_ID"/>
     			<input name="PBD_SIZE_THRESHOLD" value="5000000"/>
     			<input name="PBD_EXTENSIONS" value="LSM TIF RAW V3DRAW VAA3DRAW"/>
     			<input name="MIP_EXTENSIONS" value="LSM TIF RAW V3DRAW VAA3DRAW V3DPBD PBD"/>
@@ -49,6 +57,7 @@
     			<output name="RESULT_NODE_ID"/>
     			<output name="PBD_INDEX"/>
     			<output name="MIP_INDEX"/>
+    			<output name="FILE_TREE_ROOT_DIRECTORY"/>
     		</operation>
 
 	        <!-- Do pbds first -->

@@ -4,6 +4,7 @@ import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.model.vo.BooleanParameterVO;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.model.vo.ParameterVO;
 import org.janelia.it.jacs.model.vo.TextParameterVO;
@@ -26,31 +27,47 @@ public class FileTreeLoaderPipelineTask extends Task {
     // Parameter Keys
     transient public static final String PARAM_rootDirectoryPath = "root directory path";
     transient public static final String PARAM_topLevelFolderName = "top level folder name";
+    transient public static final String PARAM_filesUploadedFlag = "files uploaded";
+    transient public static final String PARAM_topLevelFolderId = "top level folder id";
 
-    // Default values - default overrides
-    public FileTreeLoaderPipelineTask(Set<Node> inputNodes, String owner, List<Event> events,
-                                      Set<TaskParameter> taskParameterSet, String rootDirectoryPath, String topLevelFolderName) {
+    public FileTreeLoaderPipelineTask(Set<Node> inputNodes,
+                                      String owner,
+                                      List<Event> events,
+                                      Set<TaskParameter> taskParameterSet,
+                                      String rootDirectoryPath,
+                                      String topLevelFolderName,
+                                      boolean filesUploadedFlag,
+                                      Long topLevelFolderId) {
         super(inputNodes, owner, events, taskParameterSet);
-        setDefaultValues();
+        this.taskName = TASK_NAME;
         setParameter(PARAM_rootDirectoryPath, rootDirectoryPath);
         setParameter(PARAM_topLevelFolderName, topLevelFolderName);
+        setParameter(PARAM_filesUploadedFlag, String.valueOf(filesUploadedFlag));
+        setParameter(PARAM_topLevelFolderId, String.valueOf(topLevelFolderId));
     }
 
-    public FileTreeLoaderPipelineTask(Set<Node> inputNodes, String owner, List<Event> events,
-                                      Set<TaskParameter> taskParameterSet) {
-        super(inputNodes, owner, events, taskParameterSet);
-        setDefaultValues();
+    public FileTreeLoaderPipelineTask(Set<Node> inputNodes,
+                                      String owner,
+                                      List<Event> events,
+                                      Set<TaskParameter> taskParameterSet,
+                                      String rootDirectoryPath,
+                                      String topLevelFolderName) {
+        this(inputNodes, owner, events, taskParameterSet, rootDirectoryPath, topLevelFolderName, false, null);
     }
 
+    // no-arg constructor required by pipeline framework
+    @SuppressWarnings("UnusedDeclaration")
     public FileTreeLoaderPipelineTask() {
         super();
         setDefaultValues();
     }
 
     private void setDefaultValues() {
+        this.taskName = TASK_NAME;
         setParameter(PARAM_rootDirectoryPath, "");
         setParameter(PARAM_topLevelFolderName, getDefaultTopLevelFolderName());
-        this.taskName = TASK_NAME;
+        setParameter(PARAM_filesUploadedFlag, String.valueOf(false));
+        setParameter(PARAM_topLevelFolderId, "null");
     }
 
     private String getDefaultTopLevelFolderName() {
@@ -63,16 +80,18 @@ public class FileTreeLoaderPipelineTask extends Task {
     }
 
     public ParameterVO getParameterVO(String key) throws ParameterException {
-        if (key == null)
-            return null;
-        String value = getParameter(key);
-        if (value == null)
-            return null;
-        if (key.equals(PARAM_rootDirectoryPath) || key.equals(PARAM_topLevelFolderName)) {
-            return new TextParameterVO(value, 4000);
+        ParameterVO valueObject = null;
+        final String value = getParameter(key);
+        if (value != null) {
+            if (PARAM_rootDirectoryPath.equals(key) ||
+                PARAM_topLevelFolderName.equals(key) ||
+                PARAM_topLevelFolderId.equals(key)) {
+                valueObject = new TextParameterVO(value, 4000);
+            } else if (PARAM_filesUploadedFlag.equals(key)) {
+                valueObject = new BooleanParameterVO(Boolean.parseBoolean(value));
+            }
         }
-        // No match
-        return null;
+        return valueObject;
     }
 
     public String getDisplayName() {

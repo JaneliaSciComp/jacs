@@ -1,8 +1,5 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
-import java.io.File;
-import java.util.*;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -22,8 +19,17 @@ import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.FileTreeLoaderResultNode;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.FileUtil;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -93,7 +99,6 @@ public class FileTreeLoaderService implements IService {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-    final public String MODE_UNDEFINED="UNDEFINED";
     final public String MODE_SETUP="SETUP";
     final public String MODE_COMPLETE="COMPLETE";
     final public String MODE_PBDLIST="PBDLIST";
@@ -118,7 +123,9 @@ public class FileTreeLoaderService implements IService {
     protected String sessionName;
     protected String visibility;
     protected String topLevelFolderName;
+    protected Long topLevelFolderId;
     protected String rootDirectoryPath;
+    protected boolean filesUploaded;
     protected Entity topLevelFolder;
     protected Entity supportingFilesFolder;
     protected File rootDirectory;
@@ -171,7 +178,21 @@ public class FileTreeLoaderService implements IService {
 
             logger.info("Creating top-level folder");
             topLevelFolderName=processData.getString("TOP_LEVEL_FOLDER_NAME");
-            topLevelFolder=createOrVerifyRootEntity(topLevelFolderName);
+
+            final String topLevelFolderIdStr = processData.getString("TOP_LEVEL_FOLDER_ID");
+            if ((topLevelFolderIdStr == null) || "null".equals(topLevelFolderIdStr)) {
+                topLevelFolderId = null;
+                topLevelFolder = createOrVerifyRootEntity(topLevelFolderName);
+            } else {
+                try {
+                    topLevelFolderId = Long.parseLong(topLevelFolderIdStr);
+                } catch (NumberFormatException e) {
+                    throw new ServiceException(
+                            "failed to parse TOP_LEVEL_FOLDER_ID '" + topLevelFolderIdStr + "'", e);
+                }
+                topLevelFolder = entityBean.getEntityById(topLevelFolderId);
+            }
+
 
             logger.info("Creating supporting files folder");
             supportingFilesFolder=verifyOrCreateVirtualSubFolder(topLevelFolder, SUPPORTING_FILES_FOLDER_NAME);
@@ -182,6 +203,9 @@ public class FileTreeLoaderService implements IService {
             if (!rootDirectory.exists()) {
                 throw new Exception("Could not find rootDirectory="+rootDirectory.getAbsolutePath());
             }
+
+            filesUploaded = Boolean.parseBoolean(
+                    String.valueOf(processData.getItem("FILES_UPLOADED")));
 
             logger.info("Getting GROUP_SIZE");
             groupSize = new Integer(processData.getString("GROUP_SIZE").trim());
@@ -207,9 +231,12 @@ public class FileTreeLoaderService implements IService {
                 throw new Exception("Do not recognize mode="+mode);
             }
 
-       } catch (Exception e) {
-            logger.error("Error in FileTreeLoader execute() : " + e.getMessage());
-            throw new ServiceException(e.getMessage());
+        } catch (ServiceException se) {
+            logger.error("Error in FileTreeLoader execute() : " + se.getMessage(), se);
+            throw se;
+        } catch (Exception e) {
+            logger.error("Error in FileTreeLoader execute() : " + e.getMessage(), e);
+            throw new ServiceException(e);
         }
     }
 
@@ -296,7 +323,12 @@ public class FileTreeLoaderService implements IService {
         // In the 'COMPLETION' phase we will create entities for the MIPs and PBDs, and set the attributes
         // of the source entities to match these results.
 
-        addDirectoryAndContentsToFolder(topLevelFolder, rootDirectory, 0 /*index*/);
+        if (filesUploaded) {
+            moveUploadedFilesIntoFileStore();
+        } else {
+            addDirectoryAndContentsToFolder(topLevelFolder, rootDirectory, 0 /*index*/);
+        }
+
         processData.putItem("GROUP_SIZE", Long.toString(groupSize));
         List<Long> pbdKeyList=new ArrayList<Long>(pbdGroupMap.keySet());
         Collections.sort(pbdKeyList);
@@ -311,6 +343,8 @@ public class FileTreeLoaderService implements IService {
     }
 
     protected void addDirectoryAndContentsToFolder(Entity folder, File dir, Integer index) throws Exception {
+        logger.info("addDirectoryAndContentsToFolder: entry, folder=" +
+                    folder + ", dir="+ dir.getAbsolutePath());
         Entity dirEntity=verifyOrCreateChildFolderFromDir(folder, dir, index);
         List<File> orderedFiles=FileUtils.getOrderedFilesInDir(dir);
         for (int i=0;i<orderedFiles.size();i++) {
@@ -476,7 +510,8 @@ public class FileTreeLoaderService implements IService {
         FileTreeLoaderResultNode resultNode=new FileTreeLoaderResultNode(ownerKey, task, "FileTreeLoaderResultNode",
                 "FileTreeLoaderResultNode for "+rootDirectoryPath+" pbd group index="+groupIndex, visibility, sessionName);
         resultNode=(FileTreeLoaderResultNode)computeBean.saveOrUpdateNode(resultNode);
-        logger.info("Created resultNode id="+resultNode.getObjectId()+" PBD groupIndex="+groupIndex+" listSize="+artifactList.size());
+        logger.info("Created resultNode id=" + resultNode.getObjectId() + " PBD groupIndex=" +
+                    groupIndex + " listSize=" + artifactList.size());
         FileUtil.ensureDirExists(resultNode.getDirectoryPath());
         List<String> inputPathList=new ArrayList<String>();
         List<String> outputPathList=new ArrayList<String>();
@@ -632,13 +667,19 @@ public class FileTreeLoaderService implements IService {
                         if (pngName.endsWith(".png")) {
                             String tifName=pngName.substring(0, pngName.length()-4)+".tif";
                             File tifFile=new File(mipResultFile.getParentFile(), tifName);
-                            tifFile.delete();
+                            if (! tifFile.delete()) {
+                                logger.warn("failed to delete " + tifFile.getAbsolutePath());
+                            }
                         }
                     }
                 }
             }
         }
 
+        // remove supporting files entity if it is empty
+        if (! supportingFilesFolder.hasChildren()) {
+            entityBean.deleteSmallEntityTree(ownerKey, supportingFilesFolder.getId());
+        }
 
         clearResultMaps();
 
@@ -653,5 +694,68 @@ public class FileTreeLoaderService implements IService {
         }
     }
 
+    private void moveUploadedFilesIntoFileStore() throws Exception {
+
+        final File uploadDirectory = rootDirectory;
+        final File fileStoreDirectory = new File(resultNode.getDirectoryPath());
+
+        if (uploadDirectory.isDirectory()) {
+
+            if (! uploadDirectory.getAbsolutePath().contains("/upload/")) {
+                throw new ServiceException(
+                        "'/upload/' is expected somewhere in the upload path to prevent " +
+                        "accidental movement of inappropriate files, aborting task since" +
+                        "upload path was specified as " + uploadDirectory.getAbsolutePath());
+            }
+
+            File[] uploadFiles = uploadDirectory.listFiles();
+
+            if ((uploadFiles == null) || (uploadFiles.length == 0)) {
+                throw new ServiceException("rootDirectoryPath for upload " +
+                                           uploadDirectory.getAbsolutePath() +
+                                           " is empty");
+            }
+
+            List<File> movedFiles = new ArrayList<File>(uploadFiles.length);
+            List<File> movedDirectories = new ArrayList<File>(uploadFiles.length);
+
+            logger.info("moveUploadedFilesIntoFileStore: moving " + uploadFiles.length +
+                        " uploaded file(s) to " + fileStoreDirectory.getAbsolutePath());
+
+            File fileStoreFile;
+            for (File uploadFile : uploadFiles) {
+                fileStoreFile = new File(fileStoreDirectory, uploadFile.getName());
+
+                FileUtil.moveFileUsingSystemCall(uploadFile, fileStoreFile);
+
+                if (fileStoreFile.isDirectory()) {
+                    movedDirectories.add(fileStoreFile);
+                } else {
+                    movedFiles.add(fileStoreFile);
+                }
+            }
+
+            if (! uploadDirectory.delete()) {
+                logger.warn("failed to remove parent upload directory " +
+                            uploadDirectory.getAbsolutePath());
+            }
+
+            for (File movedDir : movedDirectories) {
+                addDirectoryAndContentsToFolder(topLevelFolder, movedDir, 0 /*index*/);
+            }
+
+            for (File movedFile : movedFiles) {
+                verifyOrCreateFileEntityForFolder(topLevelFolder, movedFile, 1 /*index*/);
+            }
+
+        } else {
+            throw new ServiceException("rootDirectoryPath for upload " +
+                                       uploadDirectory.getAbsolutePath() +
+                                       " is not a directory");
+        }
+
+        rootDirectory = fileStoreDirectory;
+        processData.putItem("FILE_TREE_ROOT_DIRECTORY", fileStoreDirectory.getAbsolutePath());
+    }
 
 }
