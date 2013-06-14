@@ -344,7 +344,8 @@ public class FileDiscoveryHelper extends EntityHelper {
         else if (filenameLowerCase.endsWith(".nsp")) {
             return entityBean.getEntityTypeByName(EntityConstants.TYPE_MYERS_NEURON_SEPARATION_FILE);
         }
-        else if (filenameLowerCase.endsWith(".mp4")) {
+        else if (filenameLowerCase.endsWith(".mp4")
+                ||filenameLowerCase.endsWith(".mov")) {
             return entityBean.getEntityTypeByName(EntityConstants.TYPE_MOVIE);
         }
         else if (filenameLowerCase.endsWith(".metadata")
