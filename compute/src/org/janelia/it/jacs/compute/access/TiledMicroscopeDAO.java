@@ -19,11 +19,15 @@ import java.util.*;
 public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
     AnnotationDAO annotationDAO;
+    ComputeDAO computeDAO;
+
     public final static String TMP_GEO_VALUE="@@@ new geo value string @@@";
 
     public TiledMicroscopeDAO(Logger logger) {
         super(logger);
         annotationDAO=new AnnotationDAO(logger);
+        computeDAO=new ComputeDAO(logger);
+
     }
 
     public void createTiledMicroscopeEntityTypes() throws DaoException {
@@ -63,27 +67,50 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     public TmWorkspace createTiledMicroscopeWorkspace(Long brainSampleId, String name, String ownerKey) throws DaoException {
         try {
             // Validate sample
-            Entity brainSampleEntity = EJBFactory.getLocalEntityBean().getEntityById(brainSampleId);
+//            Entity brainSampleEntity = EJBFactory.getLocalEntityBean().getEntityById(brainSampleId);
+//            if (!brainSampleEntity.getEntityType().getName().equals(EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE)) {
+//                throw new Exception("Tiled Microscope Workspace must be created with valid 3D Tile Microscope Sample Id");
+//            }
+//            Entity workspace=new Entity();
+//            workspace.setCreationDate(new Date());
+//            workspace.setName(name);
+//            User user = EJBFactory.getLocalComputeBean().getUserByNameOrKey(ownerKey);
+//            if (user==null) {
+//                throw new Exception("Owner Key="+ownerKey+" is not valid");
+//            }
+//            workspace.setOwnerKey(ownerKey);
+//            EntityType tiledMicroscopeWorkspaceType=annotationDAO.getEntityTypeByName(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE);
+//            workspace.setEntityType(tiledMicroscopeWorkspaceType);
+//            workspace=EJBFactory.getLocalEntityBean().saveOrUpdateEntity(workspace);
+//            TmPreferences preferences=createTiledMicroscopePreferences(workspace.getId());
+//            brainSampleEntity.addChildEntity(workspace);
+//            EJBFactory.getLocalEntityBean().saveOrUpdateEntity(brainSampleEntity);
+//            TmWorkspace tmWorkspace=new TmWorkspace(workspace);
+//            tmWorkspace.setPreferences(preferences);
+//            return tmWorkspace;
+
+            Entity brainSampleEntity = annotationDAO.getEntityById(brainSampleId);
             if (!brainSampleEntity.getEntityType().getName().equals(EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE)) {
                 throw new Exception("Tiled Microscope Workspace must be created with valid 3D Tile Microscope Sample Id");
             }
             Entity workspace=new Entity();
             workspace.setCreationDate(new Date());
             workspace.setName(name);
-            User user = EJBFactory.getLocalComputeBean().getUserByNameOrKey(ownerKey);
+            User user = computeDAO.getUserByNameOrKey(ownerKey);
             if (user==null) {
                 throw new Exception("Owner Key="+ownerKey+" is not valid");
             }
             workspace.setOwnerKey(ownerKey);
             EntityType tiledMicroscopeWorkspaceType=annotationDAO.getEntityTypeByName(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE);
             workspace.setEntityType(tiledMicroscopeWorkspaceType);
-            workspace=EJBFactory.getLocalEntityBean().saveOrUpdateEntity(workspace);
+            annotationDAO.saveOrUpdate(workspace);
             TmPreferences preferences=createTiledMicroscopePreferences(workspace.getId());
             brainSampleEntity.addChildEntity(workspace);
-            EJBFactory.getLocalEntityBean().saveOrUpdateEntity(brainSampleEntity);
+            annotationDAO.saveOrUpdate(brainSampleEntity);
             TmWorkspace tmWorkspace=new TmWorkspace(workspace);
             tmWorkspace.setPreferences(preferences);
             return tmWorkspace;
+
         } catch (Exception e) {
             e.printStackTrace();
             throw new DaoException(e);
