@@ -142,7 +142,8 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
     protected TmPreferences createTiledMicroscopePreferences(Long workspaceId) throws DaoException {
         try {
-            Entity workspace = EJBFactory.getLocalEntityBean().getEntityById(workspaceId);
+            // Entity workspace = EJBFactory.getLocalEntityBean().getEntityById(workspaceId);
+            Entity workspace = annotationDAO.getEntityById(workspaceId);
             if (!workspace.getEntityType().getName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
                 throw new Exception("Tiled Neuron must be created with valid Workspace Id");
             }
@@ -151,9 +152,11 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             preferences.setOwnerKey(workspace.getOwnerKey());
             EntityType propertyType = annotationDAO.getEntityTypeByName(EntityConstants.TYPE_PROPERTY_SET);
             preferences.setEntityType(propertyType);
-            preferences=EJBFactory.getLocalEntityBean().saveOrUpdateEntity(preferences);
+            // preferences=EJBFactory.getLocalEntityBean().saveOrUpdateEntity(preferences);
+            annotationDAO.saveOrUpdate(preferences);
             workspace.addChildEntity(preferences, EntityConstants.ATTRIBUTE_ENTITY);
-            EJBFactory.getLocalEntityBean().saveOrUpdateEntity(workspace);
+            // EJBFactory.getLocalEntityBean().saveOrUpdateEntity(workspace);
+            annotationDAO.saveOrUpdate(workspace);
             TmPreferences tmPreferences=new TmPreferences(preferences);
             return tmPreferences;
         } catch (Exception e) {
