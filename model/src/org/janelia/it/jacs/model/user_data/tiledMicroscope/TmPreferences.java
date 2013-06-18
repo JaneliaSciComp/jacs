@@ -40,6 +40,7 @@ public class TmPreferences {
         if (!entity.getEntityType().getName().equals(EntityConstants.TYPE_PROPERTY_SET)) {
             throw new Exception("Entity type must be " + EntityConstants.TYPE_PROPERTY_SET);
         }
+        this.id=entity.getId();
         for (EntityData ed : entity.getEntityData()) {
             if (ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_PROPERTY)) {
                 String propertyString=ed.getValue();
