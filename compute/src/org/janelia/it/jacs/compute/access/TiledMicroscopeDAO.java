@@ -39,10 +39,12 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             createEntityAttribute(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE);
             createEntityAttribute(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE);
             createEntityAttribute(EntityConstants.ATTRIBUTE_PROPERTY);
+            createEntityAttribute(EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS);
 
             _logger.debug("Creating Workspace entity");
             Set<String> workspaceAttributeSet = new HashSet<String>();
             workspaceAttributeSet.add(EntityConstants.ATTRIBUTE_ENTITY);
+            workspaceAttributeSet.add(EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS);
             createEntityType(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE, workspaceAttributeSet);
 
             _logger.debug("Creating Neuron entity");
