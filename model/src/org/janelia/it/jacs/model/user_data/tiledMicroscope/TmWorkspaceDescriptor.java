@@ -1,13 +1,16 @@
 package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 
+import com.google.gwt.user.client.rpc.IsSerializable;
+
+import java.io.Serializable;
+
 /**
  * Created with IntelliJ IDEA.
  * User: murphys
  * Date: 5/7/13
  * Time: 5:17 PM
- * To change this template use File | Settings | File Templates.
  */
-public class TmWorkspaceDescriptor {
+public class TmWorkspaceDescriptor implements IsSerializable, Serializable {
     private Long id;
     private String name;
     int neuronCount;

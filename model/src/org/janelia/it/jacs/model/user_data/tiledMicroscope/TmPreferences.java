@@ -1,9 +1,11 @@
 package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 
+import com.google.gwt.user.client.rpc.IsSerializable;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,9 +14,8 @@ import java.util.Map;
  * User: murphys
  * Date: 5/1/13
  * Time: 1:22 PM
- * To change this template use File | Settings | File Templates.
  */
-public class TmPreferences {
+public class TmPreferences implements IsSerializable, Serializable {
     Long id;
     Map<String,String> propertyMap=new HashMap<String,String>();
 

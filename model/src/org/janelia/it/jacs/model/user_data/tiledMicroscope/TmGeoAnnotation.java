@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 
+import com.google.gwt.user.client.rpc.IsSerializable;
+
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,9 +11,8 @@ import java.util.List;
  * User: murphys
  * Date: 5/1/13
  * Time: 1:23 PM
- * To change this template use File | Settings | File Templates.
  */
-public class TmGeoAnnotation {
+public class TmGeoAnnotation implements IsSerializable, Serializable {
     Long id;
     Long parentId;
     String comment;

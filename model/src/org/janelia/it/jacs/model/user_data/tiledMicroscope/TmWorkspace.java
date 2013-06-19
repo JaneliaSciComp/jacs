@@ -1,7 +1,10 @@
 package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 
+import com.google.gwt.user.client.rpc.IsSerializable;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -9,10 +12,9 @@ import java.util.List;
  * User: murphys
  * Date: 5/1/13
  * Time: 1:21 PM
- * To change this template use File | Settings | File Templates.
  */
 
-public class TmWorkspace {
+public class TmWorkspace implements IsSerializable, Serializable {
     Long id;
     String name;
     String ownerKey;
