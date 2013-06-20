@@ -227,8 +227,8 @@ public class Vaa3DHelper {
                 "\" -fragments "+commaSeparatedFragmentList+" -outputMip \""+newOutputMIPPath+"\" -outputStack \""+newOutputStackPath+"\" ;";
     }
 
-    public static String getFormattedCellCounterCommand(String planPath, String convertedFilePath) {
-        return VAA3D_BASE_CMD + " -cmd cell-counter -plan "+planPath+" -i "+convertedFilePath;
+    public static String getFormattedCellCounterCommand(String planPath, String convertedFilePath, String cellChannel, String bkgdChannel) {
+        return VAA3D_BASE_CMD + " -cmd cell-counter -cch "+cellChannel+" -bch "+bkgdChannel+" -plan "+planPath+" -i "+convertedFilePath;
     }
 
     public static String getFormattedMaskSearchCommand(String indexFilePath, String queryChannel, String matrix,

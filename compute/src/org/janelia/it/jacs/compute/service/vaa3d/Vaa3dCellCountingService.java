@@ -20,14 +20,17 @@ public class Vaa3dCellCountingService extends SubmitDrmaaJobService {
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
     private static final String CONFIG_PREFIX = "cellCountingConfiguration.";
     public static final String DEFAULT_PLAN =
-                    "-ist 60 -nt 40 -cst 110 -dc 3 -ec 6 -mnr 90\n" +
-                    "-ist 50 -nt 35 -cst 90 -dc 3 -ec 5 -mnr 80\n" +
-                    "-ist 45 -nt 30 -cst 80 -dc 3 -ec 4 -mnr 70\n" +
-                    "-ist 40 -nt 25 -cst 80 -dc 3 -ec 4 -mnr 60\n" +
-                    "-ist 30 -nt 25 -cst 80 -dc 3 -ec 4 -mnr 50\n" +
-                    "-ist 25 -nt 25 -cst 75 -dc 3 -ec 3 -mnr 50\n" +
-                    "-ist 25 -nt 25 -cst 70 -dc 3 -ec 3 -mnr 50\n\n";
-    private String inputFilePath, convertedFilePath, tifOutputPath, rawOutputPath;
+            "-ist 40 -nt 40 -cst 130 -dc 1 -ec 7 -mnr 90\n"+
+            "-ist 38 -nt 35 -cst 115 -dc 2 -ec 6 -mnr 85\n"+
+            "-ist 36 -nt 30 -cst 100 -dc 3 -ec 5 -mnr 80\n"+
+            "-ist 34 -nt 30 -cst 90 -dc 3 -ec 5 -mnr 70\n"+
+            "-ist 32 -nt 30 -cst 80 -dc 3 -ec 5 -mnr 60\n"+
+            "-ist 30 -nt 30 -cst 70 -dc 3 -ec 4 -mnr 50\n"+
+            "-ist 25 -nt 30 -cst 60 -dc 2 -ec 4 -mnr 40\n"+
+            "-ist 20 -nt 30 -cst 55 -dc 2 -ec 3 -mnr 30\n"+
+            "-ist 20 -nt 30 -cst 50 -dc 2 -ec 3 -mnr 30\n"+
+            "-ist 20 -nt 30 -cst 50 -dc 0 -ec 2 -mnr 30\n\n";
+    private String signalChannel, referenceChannel, inputFilePath, convertedFilePath, tifOutputPath, rawOutputPath;
 
     protected void init(IProcessData processData) throws Exception {
         super.init(processData);
@@ -40,6 +43,15 @@ public class Vaa3dCellCountingService extends SubmitDrmaaJobService {
 
     @Override
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
+        signalChannel = (String)processData.getItem("SIGNAL_CHANNELS");
+        if (signalChannel==null) {
+            throw new IllegalArgumentException("SIGNAL_CHANNELS may not be null");
+        }
+
+        referenceChannel = (String)processData.getItem("REFERENCE_CHANNEL");
+        if (referenceChannel==null) {
+            throw new IllegalArgumentException("REFERENCE_CHANNEL may not be null");
+        }
         inputFilePath = (String) processData.getItem("INPUT_FILE");
         File tmpInputFile = new File(inputFilePath);
         String tmpName = tmpInputFile.getName();
@@ -80,7 +92,7 @@ public class Vaa3dCellCountingService extends SubmitDrmaaJobService {
         StringBuilder script = new StringBuilder();
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix()).append("\n");
         script.append(Vaa3DHelper.getFormattedConvertCommand(inputFilePath, convertedFilePath, "8")).append("\n");
-        script.append(Vaa3DHelper.getFormattedCellCounterCommand(planPath, convertedFilePath)).append("\n");
+        script.append(Vaa3DHelper.getFormattedCellCounterCommand(planPath, convertedFilePath, signalChannel, referenceChannel)).append("\n");
         script.append(Vaa3DHelper.getFormattedConvertCommand(tifOutputPath, rawOutputPath)).append("\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix());
         writer.write(script.toString());

@@ -125,6 +125,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_SEARCH_TASK_ID                      = "Search Task Id"; // Id of the search task that created this folder and results
     public static final String ATTRIBUTE_PROPERTY                            = "Property"; // has string "<property>=<value>"
     public static final String ATTRIBUTE_WORKSPACE_SAMPLE_IDS                = "Workspace Sample Ids";
+    public static final String ATTRIBUTE_CELL_COUNT                          = "Cell Count";
 
     // Geometric Tree
     //

@@ -8,6 +8,9 @@
         <input name="PIPELINE_NAME"/>
         <input name="PIPELINE_PROCESS"/>
         <input name="RUN_CELL_COUNTING"/>
+        <input name="CHANNEL_DYE_SPEC"/>
+        <input name="OUTPUT_CHANNEL_ORDER"/>
+
 
         <!-- Create the pipeline run entity -->
         <operation name="Create Pipeline Run Entity" processor="org.janelia.it.jacs.compute.service.entity.sample.CreatePipelineRunEntityService">
@@ -20,8 +23,6 @@
         <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
         <operation name="Get Sample Attributes" processor="org.janelia.it.jacs.compute.service.entity.sample.InitSampleAttributesService">
             <input name="SAMPLE_ENTITY_ID"/>
-            <output name="SAMPLE_CHANNEL_SPEC"/>
-            <output name="IMAGE_CHANNEL_SPEC"/>
             <output name="SIGNAL_CHANNELS"/>
             <output name="REFERENCE_CHANNEL"/>
             <output name="SAMPLE_AREA"/>
@@ -104,8 +105,7 @@
                 </operation>
             </sequence>
 
-            <!-- Convert the image to the sample image format, with reference channel at the end -->
-            <!-- TODO Change this to convert the LSM, no input channel spec-->
+            <!-- Convert the image to the sample image format, leave the channels alone -->
             <sequence name="Convert to sample image" waitForAsync="true">
                 <operation name="Convert to sample image" processor="queue/gridSubmitAndWait">
                     <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DConvertToSampleImageService"/>
@@ -114,8 +114,8 @@
                     <input name="METADATA_RESULT_FILE_NODE"/>
                     <input name="BULK_MERGE_PARAMETERS"/>
                     <input name="SAMPLE_AREA"/>
-                    <input name="SAMPLE_CHANNEL_SPEC"/>
-                    <input name="IMAGE_CHANNEL_SPEC"/>
+                    <input name="CHANNEL_DYE_SPEC"/>
+                    <input name="OUTPUT_CHANNEL_ORDER"/>
                     <output name="CHANNEL_SPEC"/>
                     <output name="SIGNAL_CHANNELS"/>
                     <output name="REFERENCE_CHANNEL"/>
@@ -190,6 +190,8 @@
                                 <input name="INPUT_FILE" value="$V{TILE_FILENAMES}"/>
                                 <input name="RESULT_FILE_NODE_ID" value="$V{CELL_COUNTING_FILE_NODE_ID}"/>
                                 <input name="RESULT_FILE_NODE" value="$V{CELL_COUNTING_FILE_NODE}"/>
+                                <input name="SIGNAL_CHANNELS"/>
+                                <input name="REFERENCE_CHANNEL"/>
                                 <output name="RESULT_FILE_NODE_ID"/>
                                 <output name="RESULT_FILE_NODE"/>
                                 <output name="ARCHIVE_FILE_PATHS"/>
@@ -211,6 +213,7 @@
                         <operation name="Discover Sample Processing Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.CellCountingResultsDiscoveryService">
                             <input name="ROOT_FILE_NODE" value="$V{CELL_COUNTING_FILE_NODE}"/>
                             <input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
+                            <input name="SAMPLE_AREA"/>
                             <input name="RESULT_ENTITY_TYPE" value="Cell Counting Result"/>
                             <input name="RESULT_ENTITY_NAME" value="Cell Counting Result"/>
                             <output name="RESULT_ENTITY_ID"/>
@@ -222,18 +225,18 @@
                             <input name="RESULT_ENTITY_ID"/>
                             <input name="DEFAULT_IMAGE_FILENAME" value="$V{RAW_RESULT_FILE}"/>
                         </operation>
+                        <!-- Move the files over if necessary -->
+                        <sequence name="Wait For Archive Sync" waitForAsync="true">
+                            <sequence name="Limit Archive Access" processor="queue/archiveAccess">
+                                <operation name="Copy files to archive" processor="org.janelia.it.jacs.compute.service.utility.SyncToArchiveService">
+                                    <input name="FILE_PATHS" value="$V{ARCHIVE_FILE_PATHS}"/>
+                                </operation>
+                            </sequence>
+                        </sequence>
                     </sequence>
                     <include name="Compress raw files" process="SampleDataCompression">
                         <input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
                     </include>
-                    <!-- Move the files over if necessary -->
-                    <sequence name="Wait For Archive Sync" waitForAsync="true">
-                        <sequence name="Limit Archive Access" processor="queue/archiveAccess">
-                            <operation name="Copy files to archive" processor="org.janelia.it.jacs.compute.service.utility.SyncToArchiveService">
-                                <input name="FILE_PATHS" value="$V{ARCHIVE_FILE_PATHS}"/>
-                            </operation>
-                        </sequence>
-                    </sequence>
                 </sequence>
             </sequence>
         </sequence>
