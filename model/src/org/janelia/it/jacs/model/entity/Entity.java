@@ -1,10 +1,9 @@
 package org.janelia.it.jacs.model.entity;
 
-import java.util.*;
+import com.google.gwt.user.client.rpc.IsSerializable;
 
 import javax.xml.bind.annotation.*;
-
-import com.google.gwt.user.client.rpc.IsSerializable;
+import java.util.*;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name="Entity")
@@ -145,6 +144,7 @@ public class Entity  implements java.io.Serializable, IsSerializable {
                 return ea;
             }
         }
+        System.out.println("\n\n\nCannot find attribute ("+name+") for entityType "+entityType.getName()+"\n\n\n");
         return null;
     }
     
