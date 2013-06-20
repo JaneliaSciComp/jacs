@@ -213,7 +213,6 @@
                         <operation name="Discover Sample Processing Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.CellCountingResultsDiscoveryService">
                             <input name="ROOT_FILE_NODE" value="$V{CELL_COUNTING_FILE_NODE}"/>
                             <input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
-                            <input name="SAMPLE_AREA"/>
                             <input name="RESULT_ENTITY_TYPE" value="Cell Counting Result"/>
                             <input name="RESULT_ENTITY_NAME" value="Cell Counting Result"/>
                             <output name="RESULT_ENTITY_ID"/>

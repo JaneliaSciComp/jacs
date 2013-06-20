@@ -2,7 +2,6 @@ package org.janelia.it.jacs.compute.service.fileDiscovery;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 
@@ -25,8 +24,7 @@ public class CellCountingResultsDiscoveryService extends FileDiscoveryService {
 
     @Override
     public void execute(IProcessData processData) throws ServiceException {
-        AnatomicalArea areaPrefix = (AnatomicalArea)processData.getItem("SAMPLE_AREA");
-        this.resultEntityName = areaPrefix.getName()+" "+(String)processData.getItem("RESULT_ENTITY_NAME");
+        this.resultEntityName = (String)processData.getItem("RESULT_ENTITY_NAME");
         if (resultEntityName==null) {
             throw new ServiceException("Input parameter RESULT_ENTITY_NAME may not be null");
         }
