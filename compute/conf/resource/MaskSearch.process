@@ -25,6 +25,7 @@
                 <output name="RESULT_FILE_NODE"/>
                 <output name="MIP_INPUT_LIST"/>
                 <output name="MIP_OUTPUT_LIST"/>
+                <output name="ARCHIVE_FILE_PATHS"/>
             </operation>
         </sequence>
         

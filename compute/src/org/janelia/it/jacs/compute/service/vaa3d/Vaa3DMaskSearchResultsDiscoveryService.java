@@ -60,21 +60,14 @@ public class Vaa3DMaskSearchResultsDiscoveryService implements IService{
             addToParent(parentFolder, textResultsEntity, parentFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
             addToParent(parentFolder, inputMaskEntity, parentFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
 
-            Scanner scanner = new Scanner(new File(tmpNode.getDirectoryPath()+File.separator+"sge_error"+File.separator+"maskSearchError.1"));
+            Scanner scanner = new Scanner(new File(tmpNode.getDirectoryPath()+File.separator+"searchResults.txt"));
             ArrayList<String> sampleNames = new ArrayList<String>();
 
-            boolean ignoreLines = true;
             while(scanner.hasNextLine()){
                 String tmpLine = scanner.nextLine();
-                if (tmpLine.startsWith("=======================")) {
-                    ignoreLines=false;
-                    continue;
-                }
-                if (!ignoreLines) {
-                    tmpLine = tmpLine.substring(tmpLine.lastIndexOf("/")+1);
-                    tmpLine = tmpLine.substring(0,tmpLine.indexOf("."));
-                    sampleNames.add(tmpLine);
-                }
+                tmpLine = tmpLine.substring(tmpLine.lastIndexOf("/")+1);
+                tmpLine = tmpLine.substring(0,tmpLine.indexOf("."));
+                sampleNames.add(tmpLine);
             }
 
             ArrayList<Long> searchResultSampleIds = new ArrayList<Long>();
