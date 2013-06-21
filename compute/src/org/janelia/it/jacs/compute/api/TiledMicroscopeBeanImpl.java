@@ -40,9 +40,9 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
-    public TmWorkspace createTiledMicroscopeWorkspace(Long brainSampleId, String name, String ownerKey) throws ComputeException {
+    public TmWorkspace createTiledMicroscopeWorkspace(Long parentId, Long brainSampleId, String name, String ownerKey) throws ComputeException {
         try {
-            TmWorkspace workspace = _tiledMicroscopeDAO.createTiledMicroscopeWorkspace(brainSampleId, name, ownerKey);
+            TmWorkspace workspace = _tiledMicroscopeDAO.createTiledMicroscopeWorkspace(parentId, brainSampleId, name, ownerKey);
             return workspace;
         } catch (Exception e) {
             String errorString="Error calling createTiledMicroscopeWorkspace in DAO layer: " + e.getMessage();

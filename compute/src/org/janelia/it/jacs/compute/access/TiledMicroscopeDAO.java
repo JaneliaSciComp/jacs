@@ -5,6 +5,7 @@ import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
+import org.omg.PortableServer.ID_UNIQUENESS_POLICY_ID;
 
 import java.util.*;
 
@@ -66,7 +67,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         _logger.debug("createTiledMicroscopeEntityTypes() - done");
     }
 
-    public TmWorkspace createTiledMicroscopeWorkspace(Long brainSampleId, String name, String ownerKey) throws DaoException {
+    public TmWorkspace createTiledMicroscopeWorkspace(Long parentId, Long brainSampleId, String name, String ownerKey) throws DaoException {
         try {
             // Validate sample
 //            Entity brainSampleEntity = EJBFactory.getLocalEntityBean().getEntityById(brainSampleId);
@@ -97,6 +98,8 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             }
             Entity workspace=new Entity();
             workspace.setCreationDate(new Date());
+            // this isn't auto-populated?
+            workspace.setUpdatedDate(new Date());
             workspace.setName(name);
             User user = computeDAO.getUserByNameOrKey(ownerKey);
             if (user==null) {
@@ -107,8 +110,11 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             workspace.setEntityType(tiledMicroscopeWorkspaceType);
             annotationDAO.saveOrUpdate(workspace);
             TmPreferences preferences=createTiledMicroscopePreferences(workspace.getId());
-            brainSampleEntity.addChildEntity(workspace);
-            annotationDAO.saveOrUpdate(brainSampleEntity);
+            Entity parentEntity = annotationDAO.getEntityById(parentId);
+            // need to validate that parentEntity is a folder here!
+            EntityData ed = parentEntity.addChildEntity(workspace);
+            annotationDAO.saveOrUpdate(ed);
+            annotationDAO.saveOrUpdate(parentEntity);
             TmWorkspace tmWorkspace=new TmWorkspace(workspace);
             tmWorkspace.setPreferences(preferences);
             return tmWorkspace;
@@ -151,12 +157,15 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             }
             Entity preferences=new Entity();
             preferences.setCreationDate(new Date());
+            // this isn't auto-populated?
+            preferences.setUpdatedDate(new Date());
             preferences.setOwnerKey(workspace.getOwnerKey());
             EntityType propertyType = annotationDAO.getEntityTypeByName(EntityConstants.TYPE_PROPERTY_SET);
             preferences.setEntityType(propertyType);
             // preferences=EJBFactory.getLocalEntityBean().saveOrUpdateEntity(preferences);
             annotationDAO.saveOrUpdate(preferences);
-            workspace.addChildEntity(preferences, EntityConstants.ATTRIBUTE_ENTITY);
+            EntityData ed = workspace.addChildEntity(preferences, EntityConstants.ATTRIBUTE_ENTITY);
+            annotationDAO.saveOrUpdate(ed);
             // EJBFactory.getLocalEntityBean().saveOrUpdateEntity(workspace);
             annotationDAO.saveOrUpdate(workspace);
             TmPreferences tmPreferences=new TmPreferences(preferences);
@@ -203,7 +212,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                     }
                 }
                 if (!foundParent) {
-                    throw new Exception("Could not find parent matching parendId="+parentAnnotationId);
+                    throw new Exception("Could not find parent matching parentId="+parentAnnotationId);
                 }
             }
             EntityData geoEd=new EntityData();

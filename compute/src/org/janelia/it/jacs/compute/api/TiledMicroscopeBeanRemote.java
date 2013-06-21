@@ -16,7 +16,7 @@ public interface TiledMicroscopeBeanRemote {
 
     public void createTiledMicroscopeEntityTypes() throws ComputeException;
 
-    public TmWorkspace createTiledMicroscopeWorkspace(Long brainSampleId, String name, String ownerKey) throws ComputeException;
+    public TmWorkspace createTiledMicroscopeWorkspace(Long parentId, Long brainSampleId, String name, String ownerKey) throws ComputeException;
 
     public TmNeuron createTiledMicroscopeNeuron(Long workspaceId, String name) throws ComputeException;
 
