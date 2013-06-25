@@ -47,7 +47,7 @@
     			<input name="TOP_LEVEL_FOLDER_NAME"/>
     			<input name="FILE_TREE_ROOT_DIRECTORY"/>
                 <input name="FILES_UPLOADED"/>
-    			<input name="TOP_LEVEL_FOLDER_ID"/>
+                <input name="TOP_LEVEL_FOLDER_ID"/>
     			<input name="PBD_SIZE_THRESHOLD" value="5000000"/>
     			<input name="PBD_EXTENSIONS" value="LSM TIF RAW V3DRAW VAA3DRAW"/>
     			<input name="MIP_EXTENSIONS" value="LSM TIF RAW V3DRAW VAA3DRAW V3DPBD PBD"/>
@@ -72,6 +72,7 @@
 				            <input name="PBD_INDEX"/>
  			                <input name="TOP_LEVEL_FOLDER_NAME"/>
     			            <input name="FILE_TREE_ROOT_DIRECTORY"/>
+                            <input name="TOP_LEVEL_FOLDER_ID"/>
     				        <output name="PBD_RESULT_NODE"/>
 				            <output name="PBD_INPUT_LIST"/>
 				            <output name="PBD_OUTPUT_LIST"/>
@@ -102,6 +103,7 @@
 				<input name="MIP_INDEX"/>
  			    <input name="TOP_LEVEL_FOLDER_NAME"/>
     			<input name="FILE_TREE_ROOT_DIRECTORY"/>
+                <input name="TOP_LEVEL_FOLDER_ID"/>
     			<output name="MIP_INDEX"/>
             </operation>
 
@@ -117,6 +119,7 @@
 				            <input name="MIP_INDEX"/>
  			                <input name="TOP_LEVEL_FOLDER_NAME"/>
     			            <input name="FILE_TREE_ROOT_DIRECTORY"/>
+                            <input name="TOP_LEVEL_FOLDER_ID"/>
 				            <output name="MIP_RESULT_NODE"/>
 				            <output name="MIP_INPUT_LIST"/>
 				            <output name="MIP_OUTPUT_LIST"/>
@@ -159,6 +162,7 @@
     			<input name="RESULT_NODE_ID"/>
  			    <input name="TOP_LEVEL_FOLDER_NAME"/>
     			<input name="FILE_TREE_ROOT_DIRECTORY"/>
+                <input name="TOP_LEVEL_FOLDER_ID"/>
      	    </operation>
 
      	</sequence>

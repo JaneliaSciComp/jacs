@@ -176,21 +176,23 @@ public class FileTreeLoaderService implements IService {
             helper.addFileExclusion("temp");
             helper.addFileExclusion("core.*");
 
-            logger.info("Creating top-level folder");
             topLevelFolderName=processData.getString("TOP_LEVEL_FOLDER_NAME");
 
             final String topLevelFolderIdStr = processData.getString("TOP_LEVEL_FOLDER_ID");
             if ((topLevelFolderIdStr == null) || "null".equals(topLevelFolderIdStr)) {
+                logger.info("Creating top-level folder");
                 topLevelFolderId = null;
                 topLevelFolder = createOrVerifyRootEntity(topLevelFolderName);
             } else {
+                logger.info("Loading top-level folder using id");
                 try {
                     topLevelFolderId = Long.parseLong(topLevelFolderIdStr);
                 } catch (NumberFormatException e) {
                     throw new ServiceException(
                             "failed to parse TOP_LEVEL_FOLDER_ID '" + topLevelFolderIdStr + "'", e);
                 }
-                topLevelFolder = entityBean.getEntityById(topLevelFolderId);
+                // need to load entire tree since children get checked for supporting files
+                topLevelFolder = entityBean.getEntityTree(topLevelFolderId);
             }
 
 
