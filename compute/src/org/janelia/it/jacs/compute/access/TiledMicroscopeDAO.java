@@ -134,6 +134,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 throw new Exception("Tiled Neuron must be created with valid Workspace Id");
             }
             Entity preferences=new Entity();
+            preferences.setName(workspace.getName() + " preferences");
             preferences.setCreationDate(new Date());
             preferences.setUpdatedDate(new Date());
             preferences.setOwnerKey(workspace.getOwnerKey());

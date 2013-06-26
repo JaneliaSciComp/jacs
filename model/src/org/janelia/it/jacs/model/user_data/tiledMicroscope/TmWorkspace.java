@@ -5,6 +5,7 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -79,6 +80,7 @@ public class TmWorkspace implements IsSerializable, Serializable {
         this.id=entity.getId();
         this.name=entity.getName();
         this.ownerKey=entity.getOwnerKey();
+        this.neuronList = new ArrayList<TmNeuron>();
         for (Entity child : entity.getChildren()) {
             if (child.getEntityType().getName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
                 TmNeuron neuron=new TmNeuron(child);
