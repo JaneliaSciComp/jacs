@@ -38,6 +38,11 @@ public class TmNeuron implements IsSerializable, Serializable {
         this.name = name;
     }
 
+    @Override
+    public String toString() {
+        return name;
+    }
+
     public Map<Long, TmGeoAnnotation> getGeoAnnotationMap() {
         return geoAnnotationMap;
     }

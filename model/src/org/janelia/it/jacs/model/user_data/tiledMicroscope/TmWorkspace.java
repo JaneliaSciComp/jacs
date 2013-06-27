@@ -38,6 +38,11 @@ public class TmWorkspace implements IsSerializable, Serializable {
         this.name = name;
     }
 
+    @Override
+    public String toString() {
+        return name;
+    }
+
     public String getOwnerKey() {
         return ownerKey;
     }
