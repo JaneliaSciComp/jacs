@@ -86,12 +86,27 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             EntityType tiledMicroscopeWorkspaceType=annotationDAO.getEntityTypeByName(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE);
             workspace.setEntityType(tiledMicroscopeWorkspaceType);
             annotationDAO.saveOrUpdate(workspace);
+            // create preferences
             TmPreferences preferences=createTiledMicroscopePreferences(workspace.getId());
             Entity parentEntity = annotationDAO.getEntityById(parentId);
-            // need to validate that parentEntity is a folder here!
             EntityData ed = parentEntity.addChildEntity(workspace);
             annotationDAO.saveOrUpdate(ed);
             annotationDAO.saveOrUpdate(parentEntity);
+            // associate brain sample
+            EntityData sampleEd = new EntityData();
+            sampleEd.setOwnerKey(workspace.getOwnerKey());
+            sampleEd.setCreationDate(new Date());
+            sampleEd.setUpdatedDate(new Date());
+            EntityAttribute sampleAttr = annotationDAO.getEntityAttributeByName(EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS);
+            sampleEd.setEntityAttribute(sampleAttr);
+            // need this?
+            // sampleEd.setOrderIndex(0);
+            sampleEd.setParentEntity(workspace);
+            sampleEd.setValue(brainSampleId.toString());
+            annotationDAO.saveOrUpdate(sampleEd);
+            workspace.getEntityData().add(sampleEd);
+            annotationDAO.saveOrUpdate(workspace);
+            // back to user
             TmWorkspace tmWorkspace=new TmWorkspace(workspace);
             tmWorkspace.setPreferences(preferences);
             return tmWorkspace;
