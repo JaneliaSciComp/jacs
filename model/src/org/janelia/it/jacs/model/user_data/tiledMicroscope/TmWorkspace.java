@@ -3,6 +3,7 @@ package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 import com.google.gwt.user.client.rpc.IsSerializable;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ public class TmWorkspace implements IsSerializable, Serializable {
     Long id;
     String name;
     String ownerKey;
+    Long sampleID;
     List<TmNeuron> neuronList;
     TmPreferences preferences;
 
@@ -28,6 +30,14 @@ public class TmWorkspace implements IsSerializable, Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getSampleID() {
+        return sampleID;
+    }
+
+    public void setSampleID(Long id) {
+        this.sampleID = id;
     }
 
     public String getName() {
@@ -67,10 +77,11 @@ public class TmWorkspace implements IsSerializable, Serializable {
         this.preferences = preferences;
     }
 
-    public TmWorkspace(Long id, String name, String ownerKey, List<TmNeuron> neuronList, TmPreferences preferences) {
+    public TmWorkspace(Long id, String name, String ownerKey, Long sampleID, List<TmNeuron> neuronList, TmPreferences preferences) {
         this.id=id;
         this.name=name;
         this.ownerKey=ownerKey;
+        this.sampleID = sampleID;
         this.neuronList=neuronList;
         this.preferences=preferences;
     }
@@ -93,6 +104,13 @@ public class TmWorkspace implements IsSerializable, Serializable {
             } else if (child.getEntityType().getName().equals(EntityConstants.TYPE_PROPERTY_SET)) {
                 preferences=new TmPreferences(child);
             }
+        }
+
+        EntityData sampleEd = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS);
+        if (sampleEd == null) {
+            throw new Exception("workspace " + entity.getName() + " has no associated brand sample!");
+        } else {
+            this.sampleID = Long.valueOf(sampleEd.getValue());
         }
     }
 
