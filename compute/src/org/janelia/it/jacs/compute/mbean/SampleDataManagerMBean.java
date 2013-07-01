@@ -18,7 +18,7 @@ public interface SampleDataManagerMBean {
     
     // Generic confocal image processing pipelines, driven by pipeline configurations on a data-set basis
     public void runAllDataSetPipelines(String runMode, Boolean reuseProcessing);
-    public void runUserDataSetPipelines(String username, String runMode, Boolean reuseProcessing);
+    public void runUserDataSetPipelines(String username, String dataSetName, String runMode, Boolean reuseProcessing);
     public void runSampleFolder(String folderId, Boolean reuseProcessing);
     public void runSamplePipelines(String sampleId, Boolean reuseProcessing);
     public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName, Boolean reuseProcessing);

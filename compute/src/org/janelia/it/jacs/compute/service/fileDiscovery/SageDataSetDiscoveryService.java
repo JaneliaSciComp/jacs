@@ -1,7 +1,5 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
-import java.util.*;
-
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
@@ -13,6 +11,16 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.cv.Objective;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * Discovers images in SAGE which are part of data sets defined in the workstation, and creates or updates Samples 
  * within the entity model.
@@ -23,14 +31,19 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
    
 	protected FileDiscoveryHelper fileHelper;
 	protected SampleHelper sampleHelper;
-    
+
+    protected String dataSetName = null;
+
     protected int sageRowsProcessed = 0;
     protected int samplesMovedToTrash = 0;
     
     public void execute() throws Exception {
-        
-        logger.info("Running SAGE data set discovery for "+ownerKey);
-        
+
+        dataSetName = (String) processData.getItem("DATA_SET_NAME");
+
+        logger.info("Running SAGE data set discovery, ownerKey=" + ownerKey +
+                    ", dataSetName=" + dataSetName);
+
         this.fileHelper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
         this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
         
@@ -40,20 +53,33 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         Entity topLevelFolder = sampleHelper.getTopLevelDataSetFolder();
 		logger.info("Will put discovered entities into top level entity "+topLevelFolder.getName()+", id="+topLevelFolder.getId());
 
+        Collection<Entity> nameFilteredDataSets;
+        if (dataSetName == null) {
+            nameFilteredDataSets = sampleHelper.getDataSets();
+        } else {
+            nameFilteredDataSets = new ArrayList<Entity>();
+            for (Entity dataSet : sampleHelper.getDataSets()) {
+                if (dataSetName.equals(dataSet.getName())) {
+                    nameFilteredDataSets.add(dataSet);
+                    break;
+                }
+            }
+        }
+
     	logger.info("Processing data sets...");
-        for(Entity dataSet : sampleHelper.getDataSets()) {
+        for(Entity dataSet : nameFilteredDataSets) {
             if (dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_SYNC)==null) {
                 logger.info("Skipping non-SAGE data set: "+dataSet.getName());
             }
             else {
                 logger.info("Processing data set: "+dataSet.getName());
-                processSageDataSet(null, dataSet);
+                processSageDataSet(dataSet);
                 sampleHelper.annexSamples();
                 cleanUnvisitedSamples(dataSet);
                 fixOrderIndices(dataSet);
             }
-        }    
-        
+        }
+
         logger.info("Processed "+sageRowsProcessed+" rows, created "+sampleHelper.getNumSamplesCreated()+
         		" samples, updated "+sampleHelper.getNumSamplesUpdated()+" samples, added "+sampleHelper.getNumSamplesAdded()+
         		" samples to their corresponding data set folders. Annexed "+sampleHelper.getNumSamplesAnnexed()+
@@ -63,7 +89,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     /**
      * Provide either imageFamily or dataSetIdentifier. 
      */
-    protected void processSageDataSet(String imageFamily, Entity dataSet) throws Exception {
+    protected void processSageDataSet(Entity dataSet) throws Exception {
     	
     	SageDAO sageDAO = new SageDAO(logger);
     	ResultSetIterator iterator = null;

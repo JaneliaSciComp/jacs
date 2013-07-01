@@ -115,6 +115,11 @@
             <type>java.lang.String</type>
         </parameter>
         <parameter>
+            <description>Data Set Name (e.g. "Cell Count" or leave empty to run all data sets for the user)</description>
+            <name>dataSetName</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
             <description>Mode for processing (NEW, INCOMPLETE, ALL, NONE)</description>
             <name>runMode</name>
             <type>java.lang.String</type>

@@ -10,14 +10,18 @@
             <input name="PROCESS_VARIABLE_1" value="RUN_MODE"/>
             <input name="TASK_PARAMETER_2" value="reuse processing"/>
             <input name="PROCESS_VARIABLE_2" value="REUSE_PROCESSING"/>
+            <input name="TASK_PARAMETER_3" value="data set name"/>
+            <input name="PROCESS_VARIABLE_3" value="DATA_SET_NAME"/>
 	        <output name="RUN_MODE"/>
 	        <output name="REUSE_PROCESSING"/>
+            <output name="DATA_SET_NAME"/>
 	        <output name="TASK_OWNER"/>
 	    </operation>
 	    
 	    <!-- Discover samples in Sage and load them into the database as Entities -->
 		<operation name="Initial Image Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SageDataSetDiscoveryService">
 	        <input name="DEFAULT_CHANNEL_SPECIFICATION" value="sssr"/>
+            <input name="DATA_SET_NAME"/>
 		</operation>
 		
     	<sequence if="TASK_OWNER=flylight">

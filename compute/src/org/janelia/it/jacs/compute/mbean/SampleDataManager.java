@@ -139,18 +139,21 @@ public class SampleDataManager implements SampleDataManagerMBean {
             logger.info("Found users with data sets: "+subjectKeys);
             for(String subjectKey : subjectKeys) {
                 logger.info("Queuing data set pipelines for "+subjectKey);
-                runUserDataSetPipelines(subjectKey, runMode, reuseProcessing);
+                runUserDataSetPipelines(subjectKey, null, runMode, reuseProcessing);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
     
-    public void runUserDataSetPipelines(String username, String runMode, Boolean reuseProcessing) {
+    public void runUserDataSetPipelines(String username, String dataSetName, String runMode, Boolean reuseProcessing) {
         try {
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("run mode", runMode, null)); 
-            taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null)); 
+            taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null));
+            if ((dataSetName != null) && (dataSetName.trim().length() > 0)) {
+                taskParameters.add(new TaskParameter("data set name", dataSetName, null));
+            }
             Task task = new GenericTask(new HashSet<Node>(), username, new ArrayList<Event>(), 
                     taskParameters, "userDatSetPipelines", "User Data Set Pipelines");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
