@@ -1,6 +1,8 @@
 
 package org.janelia.it.jacs.shared.utils;
 
+import org.apache.log4j.Logger;
+
 import java.io.*;
 import java.net.URL;
 import java.nio.channels.FileChannel;
@@ -14,8 +16,6 @@ import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
-
-import org.apache.log4j.Logger;
 
 /**
  * This class has some common Java I/O utility methods
@@ -1133,7 +1133,7 @@ public class FileUtil {
             logger.debug("Waiting for file to appear: "+file.getAbsolutePath());
             while (!file.exists()) {
                 if ((System.currentTimeMillis()-start)>timeoutMs) {
-                    throw new Exception("Timed out after waiting "+timeoutMs+" secs for file to appear: "+file);
+                    throw new Exception("Timed out after waiting "+timeoutMs+" milliseconds for file to appear: "+file);
                 }
                 try {
                     Thread.sleep(2000);
