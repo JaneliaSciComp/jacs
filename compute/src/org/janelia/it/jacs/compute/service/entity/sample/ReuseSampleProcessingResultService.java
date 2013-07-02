@@ -44,7 +44,7 @@ public class ReuseSampleProcessingResultService extends AbstractEntityService {
                         String spArea = sp.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
                         if (spArea==null) spArea = "";
                         if (sampleArea!=null && !sampleArea.getName().equals(spArea)) {
-                            logger.info("Can't use "+sp.getId()+" because "+sampleArea.getName()+"!="+spArea);
+                            logger.debug("Can't use "+sp.getId()+" because "+sampleArea.getName()+"!="+spArea);
                             continue;
                         }
                         latestSp = sp;
@@ -65,6 +65,8 @@ public class ReuseSampleProcessingResultService extends AbstractEntityService {
                 logger.info("Reusing sample processing result "+latestSp.getId()+" for "+sampleArea.getName()+" area in new pipeline run "+pipelineRunId);
                 processData.putItem("RESULT_ENTITY", latestSp);
                 logger.info("Putting '"+latestSp+"' in RESULT_ENTITY");
+                processData.putItem("RESULT_ENTITY_ID", latestSp.getId().toString());
+                logger.info("Putting '"+latestSp.getId()+"' in RESULT_ENTITY_ID");
                 processData.putItem("STITCHED_FILENAME", stitchedFilename);    
                 logger.info("Putting '"+stitchedFilename+"' in STITCHED_FILENAME");
                 processData.putItem("RUN_PROCESSING", Boolean.FALSE);    

@@ -1,9 +1,6 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -80,8 +77,27 @@ public class InitSampleAttributesService extends AbstractEntityService {
             anatomicalArea.addTile(tileEntity);
         }
 
+        List<AnatomicalArea> sampleAreas = new ArrayList<AnatomicalArea>(areaMap.values());
+        
+        // A bit of a hack... sort brains last so that they are the default 2d images later on
+        Collections.sort(sampleAreas, new Comparator<AnatomicalArea>()  {
+            @Override
+            public int compare(AnatomicalArea o1, AnatomicalArea o2) {
+                if (o1.getName().equals(o2.getName())) {
+                    return 0;
+                }
+                if (o1.getName().equalsIgnoreCase("Brain")) {
+                    return 1;
+                }
+                if (o2.getName().equalsIgnoreCase("Brain")) {
+                    return -1;
+                }
+                return o1.getName().compareTo(o1.getName());
+            }
+        });
+        
         logger.info("Putting "+areaMap.values().size()+" values in SAMPLE_AREA");
-        processData.putItem("SAMPLE_AREA", new ArrayList<AnatomicalArea>(areaMap.values()));
+        processData.putItem("SAMPLE_AREA", sampleAreas);
           
     }
 }

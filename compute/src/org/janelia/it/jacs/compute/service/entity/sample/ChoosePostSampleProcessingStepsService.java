@@ -10,7 +10,7 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
- * Decides which types of processing will be run for a Sample after the inital processing is done.
+ * Decides which types of processing will be run for a Sample after the initial processing is done.
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -48,8 +48,10 @@ public class ChoosePostSampleProcessingStepsService extends AbstractEntityServic
     		ParameterizedAlignmentAlgorithm paa = new ParameterizedAlignmentAlgorithm(aa, p, n);
     		paas.add(paa);
     	}
-    	
+
+        logger.info("Putting "+paas.size()+" algorithms in PARAMETERIZED_ALIGNMENT_ALGORITHM");
 		processData.putItem("PARAMETERIZED_ALIGNMENT_ALGORITHM",paas);
+		logger.info("Putting '"+analysisAlgorithms+"' in ANALYSIS_ALGORITHM");
 		processData.putItem("ANALYSIS_ALGORITHM", Task.listOfStringsFromCsvString(analysisAlgorithms));
 		
         boolean hasAlignment = !StringUtils.isEmpty(alignAlgorithms);

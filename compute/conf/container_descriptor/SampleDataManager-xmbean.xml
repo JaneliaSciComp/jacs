@@ -100,8 +100,13 @@
             <type>java.lang.String</type>
         </parameter>
         <parameter>
-            <description>Reuse previous sample processing result</description>
+            <description>Reuse previous sample processing results</description>
             <name>reuseProcessing</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+            <description>Reuse previous alignment results</description>
+            <name>reuseAlignment</name>
             <type>java.lang.Boolean</type>
         </parameter>
     </operation>
@@ -125,8 +130,13 @@
             <type>java.lang.String</type>
         </parameter>
         <parameter>
-            <description>Reuse previous sample processing result</description>
+            <description>Reuse previous sample processing results</description>
             <name>reuseProcessing</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+            <description>Reuse previous alignment results</description>
+            <name>reuseAlignment</name>
             <type>java.lang.Boolean</type>
         </parameter>
     </operation>
@@ -140,8 +150,13 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-            <description>Reuse previous sample processing result</description>
+            <description>Reuse previous sample processing results</description>
             <name>reuseProcessing</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+            <description>Reuse previous alignment results</description>
+            <name>reuseAlignment</name>
             <type>java.lang.Boolean</type>
         </parameter>
     </operation>
@@ -155,8 +170,13 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-            <description>Reuse previous sample processing result</description>
+            <description>Reuse previous sample processing results</description>
             <name>reuseProcessing</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+            <description>Reuse previous alignment results</description>
+            <name>reuseAlignment</name>
             <type>java.lang.Boolean</type>
         </parameter>
     </operation>
@@ -175,8 +195,13 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-            <description>Reuse previous sample processing result</description>
+            <description>Reuse previous sample processing results</description>
             <name>reuseProcessing</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+            <description>Reuse previous alignment results</description>
+            <name>reuseAlignment</name>
             <type>java.lang.Boolean</type>
         </parameter>
     </operation>

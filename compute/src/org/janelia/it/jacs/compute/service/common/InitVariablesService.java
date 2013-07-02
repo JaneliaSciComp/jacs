@@ -38,6 +38,13 @@ public class InitVariablesService implements IService {
         		if (processVarName == null || num>100) break;
         		Object value = processData.getItem("PROCESS_VARIABLE_VALUE_"+num);
         		
+        		if (value.equals("true")) {
+        		    value = Boolean.TRUE;
+        		}
+        		else if (value.equals("false")) {
+                    value = Boolean.FALSE;
+                }
+
         		if (processVarName.contains(".")) {
         		    String[] parts = processVarName.split("\\.");
         		    String beanName = parts[0];

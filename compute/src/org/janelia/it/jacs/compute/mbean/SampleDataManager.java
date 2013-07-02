@@ -129,7 +129,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     // Generic confocal image processing pipelines
     // -----------------------------------------------------------------------------------------------------
 
-    public void runAllDataSetPipelines(String runMode, Boolean reuseProcessing) {
+    public void runAllDataSetPipelines(String runMode, Boolean reuseProcessing, Boolean reuseAlignment) {
         try {
             logger.info("Building list of users with data sets...");
             Set<String> subjectKeys = new HashSet<String>();
@@ -139,18 +139,19 @@ public class SampleDataManager implements SampleDataManagerMBean {
             logger.info("Found users with data sets: "+subjectKeys);
             for(String subjectKey : subjectKeys) {
                 logger.info("Queuing data set pipelines for "+subjectKey);
-                runUserDataSetPipelines(subjectKey, null, runMode, reuseProcessing);
+                runUserDataSetPipelines(subjectKey, null, runMode, reuseProcessing, reuseAlignment);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
     
-    public void runUserDataSetPipelines(String username, String dataSetName, String runMode, Boolean reuseProcessing) {
+    public void runUserDataSetPipelines(String username, String dataSetName, String runMode, Boolean reuseProcessing, Boolean reuseAlignment) {
         try {
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("run mode", runMode, null)); 
             taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null));
+            taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
             if ((dataSetName != null) && (dataSetName.trim().length() > 0)) {
                 taskParameters.add(new TaskParameter("data set name", dataSetName, null));
             }
@@ -163,18 +164,18 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    public void runSampleFolder(String folderId, Boolean reuseProcessing) {
+    public void runSampleFolder(String folderId, Boolean reuseProcessing, Boolean reuseAlignment) {
         try {
             Entity entity = EJBFactory.getLocalEntityBean().getEntityById(folderId);
             if (entity==null) throw new IllegalArgumentException("Entity with id "+folderId+" does not exist");
             EJBFactory.getLocalEntityBean().loadLazyEntity(entity, false);
             for(Entity child : entity.getChildren()) {
                 if (EntityConstants.TYPE_FOLDER.equals(child.getEntityType().getName())) {
-                    runSampleFolder(child.getId().toString(), reuseProcessing);
+                    runSampleFolder(child.getId().toString(), reuseProcessing, reuseAlignment);
                 }
                 else if (EntityConstants.TYPE_SAMPLE.equals(child.getEntityType().getName())) {
                     logger.info("Running sample: "+child.getName()+" (id="+child.getId()+")");
-                    runSamplePipelines(child.getId().toString(), reuseProcessing);  
+                    runSamplePipelines(child.getId().toString(), reuseProcessing, reuseAlignment);  
                     Thread.sleep(1000); // Sleep so that the logs are a little cleaner
                 }
             }
@@ -183,13 +184,14 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    public void runSamplePipelines(String sampleId, Boolean reuseProcessing) {
+    public void runSamplePipelines(String sampleId, Boolean reuseProcessing, Boolean reuseAlignment) {
         try {
             Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleId);
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("sample entity id", sampleId, null)); 
             taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null)); 
+            taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
             Task task = new GenericTask(new HashSet<Node>(), sample.getOwnerKey(), new ArrayList<Event>(), 
                     taskParameters, "sampleAllPipelines", "Sample All Pipelines");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
@@ -199,13 +201,14 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
     
-    public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName, Boolean reuseProcessing) {
+    public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName, Boolean reuseProcessing, Boolean reuseAlignment) {
         try {
             Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
             if (sampleEntity==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null)); 
             taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null)); 
+            taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
             Task task = new GenericTask(new HashSet<Node>(), sampleEntity.getOwnerKey(), new ArrayList<Event>(), 
                     taskParameters, "configuredSamplePipeline", "Configured Sample Pipeline");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);

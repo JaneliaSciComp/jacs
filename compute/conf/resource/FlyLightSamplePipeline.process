@@ -17,6 +17,7 @@
         <input name="CHANNEL_DYE_SPEC"/>
         <input name="OUTPUT_CHANNEL_ORDER"/>
         <input name="REUSE_PROCESSING"/>
+        <input name="REUSE_ALIGNMENT"/>
         
         <!-- Import variables from the task if any were not passed in as input parameters above -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
@@ -30,6 +31,7 @@
             <input name="ANALYSIS_ALGORITHMS"/>
             <input name="PIPELINE_PROCESS"/>
             <input name="REUSE_PROCESSING"/>
+            <input name="REUSE_ALIGNMENT"/>
             <input name="OVERRIDE" value="false"/>
             <input name="TASK_PARAMETER_1" value="sample entity id"/>
             <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
@@ -51,6 +53,8 @@
             <input name="PROCESS_VARIABLE_9" value="PIPELINE_PROCESS"/>
             <input name="TASK_PARAMETER_10" value="reuse processing"/>
             <input name="PROCESS_VARIABLE_10" value="REUSE_PROCESSING"/>
+            <input name="TASK_PARAMETER_11" value="reuse alignment"/>
+            <input name="PROCESS_VARIABLE_11" value="REUSE_ALIGNMENT"/>
 	        <output name="SAMPLE_ENTITY_ID"/>
 	        <output name="PIPELINE_NAME"/>
 	        <output name="MERGE_ALGORITHMS"/>
@@ -61,6 +65,7 @@
 	        <output name="ANALYSIS_ALGORITHMS"/>
 	        <output name="PIPELINE_PROCESS"/>
 	        <output name="REUSE_PROCESSING"/>
+            <output name="REUSE_ALIGNMENT"/>
 	    </operation>
     
         <!-- Create the pipeline run entity -->
@@ -105,14 +110,24 @@
                     <output name="RESULT_ENTITY"/>
                     <output name="STITCHED_FILENAME"/>
                     <output name="RUN_PROCESSING"/>
+                    <output name="RESULT_ENTITY_ID"/>
                 </operation>
             
+                <!-- Was there a sample processing result that could be reused? -->
                 <sequence if="RUN_PROCESSING=false">
                 
                     <!-- Set the result for this sample area -->
                     <operation name="Set Sample Processing Results" processor="org.janelia.it.jacs.compute.service.entity.sample.SetSampleProcessingAreaService">
                         <input name="SAMPLE_AREA"/>
                         <input name="RESULT_ENTITY"/>
+                    </operation>
+                    
+                    <!-- Register MIP images -->
+                    <operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
+                        <input name="SAMPLE_ENTITY_ID"/>
+                        <input name="PIPELINE_RUN_ENTITY_ID"/>
+                        <input name="RESULT_ENTITY_ID"/>
+                        <input name="DEFAULT_IMAGE_FILENAME" value="$V{STITCHED_FILENAME}"/>
                     </operation>
                     
                 </sequence>
@@ -381,7 +396,9 @@
                         <input name="SAMPLE_AREAS" value="$V{SAMPLE_AREA}"/>
                         <input name="PARAMETERIZED_ALIGNMENT_ALGORITHM"/>
                         <input name="RUN_ANALYSIS"/>
+                        <input name="RUN_ALIGNMENT"/>
                         <input name="ANALYSIS_ALGORITHM"/>
+                        <input name="REUSE_ALIGNMENT"/>
                     </include>
                     
                 </sequence>

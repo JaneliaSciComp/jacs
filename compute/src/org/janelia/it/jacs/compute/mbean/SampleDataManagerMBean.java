@@ -17,17 +17,16 @@ public interface SampleDataManagerMBean {
     public void runSampleImageRegistration(String user);
     
     // Generic confocal image processing pipelines, driven by pipeline configurations on a data-set basis
-    public void runAllDataSetPipelines(String runMode, Boolean reuseProcessing);
-    public void runUserDataSetPipelines(String username, String dataSetName, String runMode, Boolean reuseProcessing);
-    public void runSampleFolder(String folderId, Boolean reuseProcessing);
-    public void runSamplePipelines(String sampleId, Boolean reuseProcessing);
-    public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName, Boolean reuseProcessing);
+    public void runAllDataSetPipelines(String runMode, Boolean reuseProcessing, Boolean reuseAlignment);
+    public void runUserDataSetPipelines(String username, String dataSetName, String runMode, Boolean reuseProcessing, Boolean reuseAlignment);
+    public void runSampleFolder(String folderId, Boolean reuseProcessing, Boolean reuseAlignment);
+    public void runSamplePipelines(String sampleId, Boolean reuseProcessing, Boolean reuseAlignment);
+    public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName, Boolean reuseProcessing, Boolean reuseAlignment);
     public void runNeuronSeparationPipeline(String resultEntityId);
     
     // Upgrade pipelines
     public void runSingleFastLoadArtifactPipeline(String separationEntityId);
     public void runCompleteFastLoadArtifactPipeline(String user);
-    
     public void runSingleMaskChanArtifactPipeline(String separationEntityId);
     public void runCompleteMaskChanArtifactPipeline(String user);
 
