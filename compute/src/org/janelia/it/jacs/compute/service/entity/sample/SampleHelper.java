@@ -515,19 +515,34 @@ public class SampleHelper extends EntityHelper {
             addToParent(sample, supportingFiles, 0, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
         }
         else {
-            if (!EntityUtils.areLoaded(supportingFiles.getEntityData())) {
-                entityBean.loadLazyEntity(supportingFiles, true);
+            // Reload the whole thing in case we've already modified it
+            supportingFiles = entityBean.getEntityTree(supportingFiles.getId());
+            // Set it back to the sample
+            EntityData ed = EntityUtils.findChildEntityDataWithType(sample, EntityConstants.TYPE_SUPPORTING_DATA);
+            ed.setChildEntity(supportingFiles);
+        }
+        
+        EntityData imageTileEd = null;
+        for (EntityData ed : supportingFiles.getEntityData()) {
+            Entity child = ed.getChildEntity();
+            if (child!=null && child.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_TILE)) {
+                if (child.getName().equals(tileGroup.getTag())) {
+                    String area = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
+                    if (area==null || area.equals(tileGroup.getAnatomicalArea())) {
+                        imageTileEd = ed;
+                        break;
+                    }
+                    
+                }
             }
         }
         
-        EntityData imageTileEd = EntityUtils.findChildEntityDataWithNameAndType(supportingFiles, tileGroup.getTag(), EntityConstants.TYPE_IMAGE_TILE);
         Entity imageTile = null;
-        
         if (imageTileEd != null) {
             imageTile = imageTileEd.getChildEntity();
             if (!existingTileMatches(imageTile, tileGroup)) {
                 logger.info("  Tile '"+imageTile.getName()+"' (id="+imageTileEd.getId()+") has changed, will delete and recreate it.");
-                entityBean.deleteSmallEntityTree(imageTile.getOwnerKey(), imageTile.getId());
+                entityBean.deleteEntityTree(imageTile.getOwnerKey(), imageTile.getId());
                 imageTile = null;
             }
             else {
@@ -545,22 +560,16 @@ public class SampleHelper extends EntityHelper {
         }
         
         if (imageTile == null) {
-            Date createDate = new Date();
-            imageTile = new Entity();
-            imageTile.setOwnerKey(ownerKey);
-            imageTile.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_TILE));
-            imageTile.setCreationDate(createDate);
-            imageTile.setUpdatedDate(createDate);
-            imageTile.setName(tileGroup.getTag());
-            imageTile = entityBean.saveOrUpdateEntity(imageTile);
-            logger.info("  Saved image tile '"+imageTile.getName()+"' as "+imageTile.getId());
+            imageTile = createTile(tileGroup, true);
             addToParent(supportingFiles, imageTile, null, EntityConstants.ATTRIBUTE_ENTITY);
-            
             for(SlideImage image : tileGroup.getImages()) {
                 logger.info("    Adding LSM file to sample: "+image.getFile().getName());
                 Entity lsmEntity = createLsmStackFromFile(image, setLsmAttributes);
                 addToParent(imageTile, lsmEntity, imageTile.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
             }
+        }
+        else {
+            imageTile = setTileAttributes(imageTile, tileGroup);
         }
     }
 
@@ -619,6 +628,46 @@ public class SampleHelper extends EntityHelper {
         return filesFolder;
     }
 
+    /**
+     * Create and return an LSM Stack entity based on the given SAGE image data.
+     * @param image
+     * @return
+     * @throws Exception
+     */
+    public Entity createTile(SlideImageGroup tileGroup, boolean setTileAttributes) throws Exception {
+        Date createDate = new Date();
+        Entity imageTile = new Entity();
+        imageTile.setOwnerKey(ownerKey);
+        imageTile.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_TILE));
+        imageTile.setCreationDate(createDate);
+        imageTile.setUpdatedDate(createDate);
+        imageTile.setName(tileGroup.getTag());
+        imageTile = entityBean.saveOrUpdateEntity(imageTile);
+        if (setTileAttributes) {
+            imageTile = setTileAttributes(imageTile, tileGroup);
+        }
+        else {
+            imageTile = entityBean.saveOrUpdateEntity(imageTile);
+        }
+        logger.info("  Saved image tile '"+imageTile.getName()+"' as "+imageTile.getId());
+        return imageTile;
+    }
+    
+    /**
+     * Set the tile attributes from the given SAGE image data.
+     * @param lsmStack
+     * @param image
+     * @return
+     * @throws Exception
+     */
+    public Entity setTileAttributes(Entity imageTile, SlideImageGroup tileGroup) throws Exception {
+        logger.debug("    Setting tile properties: name="+tileGroup.getTag()+", anatomicalArea="+tileGroup.getAnatomicalArea());
+        imageTile.setName(tileGroup.getTag());
+        imageTile.setValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA, tileGroup.getAnatomicalArea());
+        imageTile = entityBean.saveOrUpdateEntity(imageTile);
+        return imageTile;
+    }
+    
     /**
      * Create and return an LSM Stack entity based on the given SAGE image data.
      * @param image
@@ -685,7 +734,6 @@ public class SampleHelper extends EntityHelper {
         if (refIndex==null) refIndex = 0;
         int numSignals = numChannels-1;
         StringBuilder buf = new StringBuilder();
-        if (refIndex==null) refIndex = numChannels;
         for(int j=0; j<numSignals+1; j++) {
             if (refIndex!=null && refIndex==j) {
                 buf.append("r");
