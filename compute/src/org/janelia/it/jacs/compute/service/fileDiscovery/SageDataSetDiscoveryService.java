@@ -188,17 +188,18 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         		logger.warn("Slide code "+slideImage.getSlideCode()+" has an image with a null path, so it is not ready for synchronization.");
         		return;
         	}
-        	
-        	SlideImageGroup tileGroup = tileGroups.get(slideImage.getTileType());
+
+            String area = slideImage.getArea();
+            String tag = slideImage.getTileType();
+            if (tag==null) {
+                tag = "Tile "+(tileNum+1);
+            }
+            
+            String groupKey = area+"_"+tag;
+        	SlideImageGroup tileGroup = tileGroups.get(groupKey);
             if (tileGroup==null) {
-            	
-            	String tag = slideImage.getTileType();
-            	if (tag==null) {
-            		tag = "Tile "+(tileNum+1);
-            	}
-            	
-            	tileGroup = new SlideImageGroup(tag);
-        		tileGroups.put(tileGroup.getTag(), tileGroup);
+            	tileGroup = new SlideImageGroup(area, tag);
+        		tileGroups.put(groupKey, tileGroup);
             }
             
         	tileGroup.addFile(slideImage);
