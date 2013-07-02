@@ -12,8 +12,11 @@
             <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
             <input name="TASK_PARAMETER_2" value="reuse processing"/>
             <input name="PROCESS_VARIABLE_2" value="REUSE_PROCESSING"/>
+            <input name="TASK_PARAMETER_3" value="reuse alignment"/>
+            <input name="PROCESS_VARIABLE_3" value="REUSE_ALIGNMENT"/>
 	        <output name="SAMPLE_ENTITY_ID"/>
             <output name="REUSE_PROCESSING"/>
+            <output name="REUSE_ALIGNMENT"/>
 	    </operation>
 	    
 	    <!-- Get the list of data sets which the sample is a part of -->
@@ -40,6 +43,8 @@
 		            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
                     <input name="PARAMETER_2_KEY" value="reuse processing"/>
                     <input name="PARAMETER_2_VALUE" value="$V{REUSE_PROCESSING}"/>
+                    <input name="PARAMETER_3_KEY" value="reuse alignment"/>
+                    <input name="PARAMETER_3_VALUE" value="$V{REUSE_ALIGNMENT}"/>
 		        </operation>
 			        
 	    	</sequence>
