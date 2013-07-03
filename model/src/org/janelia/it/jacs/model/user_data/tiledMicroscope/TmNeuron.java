@@ -91,9 +91,11 @@ public class TmNeuron implements IsSerializable, Serializable {
         boolean foundRoot=false;
         // First step is to create TmGeoAnnotation objects
         for (EntityData ed : entity.getEntityData()) {
-            if (ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE)) {
+            String edAttr = ed.getEntityAttribute().getName();
+            if (edAttr.equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE) ||
+                    edAttr.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
                 TmGeoAnnotation ga = new TmGeoAnnotation(ed.getValue());
-                if (ga.getParentId()==this.id) {
+                if (edAttr.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
                     if (foundRoot) {
                         throw new Exception("Only single root node permitted");
                     }
@@ -106,16 +108,20 @@ public class TmNeuron implements IsSerializable, Serializable {
         // Second step to to use child/parent fields to construct graph
         for (TmGeoAnnotation ga : geoAnnotationMap.values()) {
             Long parentId = ga.getParentId();
-            TmGeoAnnotation parent = geoAnnotationMap.get(parentId);
-            if (parent==null) {
-                throw new Exception("Could not find parent for TmGeoAnnotation id="+ga.getId());
+            // if parent ID is the neuron ID, it's a root, the ID won't be in
+            //  the map, and we don't need to connect it:
+            if (!parentId.equals(this.id)) {
+                TmGeoAnnotation parent = geoAnnotationMap.get(parentId);
+                if (parent==null) {
+                    throw new Exception("Could not find parent for TmGeoAnnotation id="+ga.getId());
+                }
+                parent.addChild(ga);
+                ga.setParent(parent);
             }
-            parent.addChild(ga);
-            ga.setParent(parent);
         }
-        // Last step is check to make sure every Annotation has a parent
+        // Last step is check to make sure every non-root annotation has a parent
         for (TmGeoAnnotation ga : geoAnnotationMap.values()) {
-            if (ga.getParent()==null && ga.getParentId()!=this.id) {
+            if (ga.getParent()==null && !ga.getParentId().equals(this.id)) {
                 throw new Exception("TmGeoAnnotation unexpectedly does not have a valid parent="+ga.getId());
             }
         }

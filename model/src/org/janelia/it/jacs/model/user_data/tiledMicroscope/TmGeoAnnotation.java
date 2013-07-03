@@ -19,7 +19,7 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
     Integer index;
     Double x, y, z;
     TmGeoAnnotation parent=null;
-    List<TmGeoAnnotation> children=null;
+    List<TmGeoAnnotation> children=new ArrayList<TmGeoAnnotation>();
 
     public TmGeoAnnotation(Long id, String comment, Double x, Double y, Double z, TmGeoAnnotation parent) {
         this.id=id;
@@ -112,9 +112,6 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
     }
 
     public void addChild(TmGeoAnnotation child) {
-        if (children==null) {
-            children=new ArrayList<TmGeoAnnotation>();
-        }
         children.add(child);
     }
 
