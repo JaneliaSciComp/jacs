@@ -1,12 +1,12 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Returns all the samples for the task owner which match the parameters. Parameters must be provided in the ProcessData:
@@ -27,8 +27,8 @@ public class SampleTraversalService extends AbstractEntityService {
 	public static final String RUN_MODE_ALL = "ALL";
 
 	protected boolean excludeChildSamples = true;
-	
     protected String runMode;
+    protected String dataSetName = null;
 
     public void execute() throws Exception {
     	
@@ -41,16 +41,53 @@ public class SampleTraversalService extends AbstractEntityService {
         		throw new IllegalArgumentException("Both OUTVAR_ENTITY_ID and OUTVAR_ENTITY may not be null");
         	}
     	}
-    	
+
+        dataSetName = (String) processData.getItem("DATA_SET_NAME");
+
         this.runMode = (String)processData.getItem("RUN_MODE");
-        List outObjects = new ArrayList();
+        List<Object> outObjects = new ArrayList<Object>();
         
         if (!RUN_MODE_NONE.equals(runMode)) {
-        	
-	    	logger.info("Searching for Samples owned by "+ownerKey+"...");
-	        List<Entity> entities = entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_SAMPLE);
-	
-			logger.info("Found "+entities.size()+" Samples. Filtering...");
+
+            List<Entity> entities;
+            if (dataSetName == null) {
+
+                logger.info("Searching for samples owned by " + ownerKey + "...");
+
+                entities = entityBean.getUserEntitiesByTypeName(ownerKey,
+                                                                EntityConstants.TYPE_SAMPLE);
+            } else {
+
+                List<Entity> dataSets = entityBean.getUserEntitiesByNameAndTypeName(
+                        ownerKey,
+                        dataSetName,
+                        EntityConstants.TYPE_DATA_SET);
+
+                if (dataSets.size() == 1) {
+
+                    final Entity dataSetEntity = dataSets.get(0);
+                    final String dataSetIdentifier = dataSetEntity.getValueByAttributeName(
+                            EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+
+                    logger.info("Searching for " + ownerKey + " '" + dataSetName +
+                                "' data set (" + dataSetIdentifier + ") samples ...");
+
+                    entities = entityBean.getUserEntitiesWithAttributeValueAndTypeName(
+                            ownerKey,
+                            EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER,
+                            dataSetIdentifier,
+                            EntityConstants.TYPE_SAMPLE);
+
+                } else {
+                    throw new IllegalArgumentException("found " + dataSets.size() +
+                                                       " entities for " + ownerKey +
+                                                       " data set '" + dataSetName +
+                                                       "' when only one is expected");
+                }
+
+            }
+
+			logger.info("Found " + entities.size() + " Samples. Filtering...");
 			
 	    	for(Entity entity : entities) {
 	    		if (includeSample(entity)) {
@@ -68,7 +105,7 @@ public class SampleTraversalService extends AbstractEntityService {
         if (excludeChildSamples && sample.getName().contains("~")) {
             return false;
         }
-        
+
 		if (RUN_MODE_NEW.equals(runMode)) {
             return includeSample(sample, true, false);
 		} 

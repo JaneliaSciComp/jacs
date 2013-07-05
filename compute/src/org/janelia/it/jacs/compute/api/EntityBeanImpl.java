@@ -1,21 +1,28 @@
 
 package org.janelia.it.jacs.compute.api;
 
-import java.util.*;
-
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
-import org.janelia.it.jacs.model.entity.*;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityActorPermission;
+import org.janelia.it.jacs.model.entity.EntityAttribute;
+import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
+
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Implementation of queries against the entity model. 
@@ -455,7 +462,26 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             throw new ComputeException("Error trying to get entities",e);
         }
     }
-    
+
+    public List<Entity> getUserEntitiesWithAttributeValueAndTypeName(String subjectKey,
+                                                                     String attrName,
+                                                                     String attrValue,
+                                                                     String entityTypeName)
+            throws ComputeException {
+
+        try {
+            return _annotationDAO.getUserEntitiesWithAttributeValue(subjectKey,
+                                                                    entityTypeName,
+                                                                    attrName,
+                                                                    attrValue);
+        } catch (DaoException e) {
+            final String msg = "Error searching for entities of type " + entityTypeName + " with " +
+                               attrName + " like " + attrValue + " owned by " + subjectKey;
+            _logger.error(msg, e);
+            throw new ComputeException(msg, e);
+        }
+    }
+
     public List<Entity> getUserEntitiesWithAttributeValue(String subjectKey, String attrName, String attrValue) throws ComputeException {
     	try {
     		return _annotationDAO.getUserEntitiesWithAttributeValue(subjectKey, attrName, attrValue);

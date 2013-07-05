@@ -38,12 +38,13 @@
 		<operation name="Sample Traversal" processor="org.janelia.it.jacs.compute.service.entity.sample.SampleTraversalService">
 			<input name="RUN_MODE"/>
 			<input name="OUTVAR_ENTITY_ID" value="SAMPLE_ENTITY_ID"/>
+            <input name="DATA_SET_NAME"/>
 			<output name="SAMPLE_ENTITY_ID"/>
 		</operation>
 		
 	    <!-- Process each Sample Entity -->
         <sequence forEach="SAMPLE_ENTITY_ID">
-				
+
 			<!-- Spawn a new task to process the Sample	-->
 	        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
 	            <input name="PROCESS_DEF_NAME" value="GSPS_CompleteSamplePipeline"/>
@@ -55,6 +56,6 @@
 	        </operation>
 	        
 	    </sequence>
-	    
+
     </sequence>
 </process>
