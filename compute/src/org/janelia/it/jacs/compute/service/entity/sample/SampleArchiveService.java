@@ -64,8 +64,13 @@ public class SampleArchiveService extends AbstractEntityService {
     private void sendArchivalMessage() throws Exception {
         logger.info("Finding files to archive...");
         addSampleFiles(sampleEntityId);
-        logger.info("Sending messages to archive "+originalPaths.size()+" paths");
-        ArchiveAccessHelper.sendMoveToArchiveMessage(originalPaths, null);
+        if (!originalPaths.isEmpty()) {
+            logger.info("Sending messages to archive "+originalPaths.size()+" paths");
+            ArchiveAccessHelper.sendMoveToArchiveMessage(originalPaths, null);
+        }
+        else {
+            logger.info("No files found");
+        }
     }
     
 	private void addSampleFiles(Long sampleEntityId) throws Exception {
