@@ -142,16 +142,16 @@ public class InitSampleProcessingParametersService extends AbstractEntityService
             File mergedFile = null;
                 
             File lsmFile1 = new File(lsmFilepath1);
-            if (!lsmFile1.exists()||!lsmFile1.canRead()) {
-                throw new FileNotFoundException("LSM file does not exist or is not readable: "+lsmFile1.getAbsolutePath());
-            }
+//            if (!lsmFile1.exists()||!lsmFile1.canRead()) {
+//                throw new FileNotFoundException("LSM file does not exist or is not readable: "+lsmFile1.getAbsolutePath());
+//            }
             
             File lsmFile2 = null;
             if (lsmFilepath2!=null) {
                 lsmFile2 = new File(lsmFilepath2);  
-                if (!lsmFile2.exists()||!lsmFile2.canRead()) {
-                    throw new FileNotFoundException("LSM file does not exist or is not readable: "+lsmFile2.getAbsolutePath());
-                }
+//                if (!lsmFile2.exists()||!lsmFile2.canRead()) {
+//                    throw new FileNotFoundException("LSM file does not exist or is not readable: "+lsmFile2.getAbsolutePath());
+//                }
                 mergedFile = new File(mergeResultNode.getDirectoryPath(), "tile-"+tileEntity.getId()+".v3draw");
             }
             else {
