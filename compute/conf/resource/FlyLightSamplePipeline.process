@@ -150,43 +150,49 @@
         	    
         	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
         	    <sequence name="Wait Async" waitForAsync="true">
-        	        <sequence name="Limit Archive Access" processor="queue/archiveAccess">
-        			    <operation name="Init Processing Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitSampleProcessingParametersService">
-        			        <input name="MERGE_RESULT_FILE_NODE"/>
-        			        <input name="STITCH_RESULT_FILE_NODE"/>
-        					<input name="SAMPLE_ENTITY_ID"/>
-                            <input name="SAMPLE_AREA"/>
-        					<input name="RUN_STITCH"/>
-        					<output name="BULK_MERGE_PARAMETERS"/>
-        					<output name="STITCHED_FILENAME"/>
-        					<output name="STACK_FILENAMES"/>
-        					<output name="COPY_FROM_ARCHIVE"/>
-        					<output name="SAMPLE_PROCESSING_RESULTS_NAME"/>
-        				</operation>
-        			</sequence>
+    			    <operation name="Init Processing Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitSampleProcessingParametersService">
+    			        <input name="MERGE_RESULT_FILE_NODE"/>
+    			        <input name="STITCH_RESULT_FILE_NODE"/>
+    					<input name="SAMPLE_ENTITY_ID"/>
+                        <input name="SAMPLE_AREA"/>
+    					<input name="RUN_STITCH"/>
+    					<output name="BULK_MERGE_PARAMETERS"/>
+    					<output name="STITCHED_FILENAME"/>
+    					<output name="STACK_FILENAMES"/>
+    					<output name="COPY_FROM_ARCHIVE"/>
+    					<output name="SAMPLE_PROCESSING_RESULTS_NAME"/>
+    				</operation>
         	    </sequence>
         	    
             	<sequence if="COPY_FROM_ARCHIVE=true">
         		    
         		    <!-- Create a result node for this group -->
-        		    <operation name="Create Group Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+        		    <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
         			    <input name="NAME" value="Temp"/>
         			    <input name="OUTPUT_VAR_NAME" value="LSM_FILE_NODE"/>
         		        <output name="LSM_FILE_NODE"/>
         		        <output name="LSM_FILE_NODE_ID"/>
         		    </operation>
         		    
-        		    <!-- Copy the files, and update the paths in the merge parameters -->
-        		    <sequence name="Wait Async" waitForAsync="true">
-        	        	<sequence name="Limit Archive Access" processor="queue/archiveAccess">
-        			        <operation name="Copy Lsms" processor="org.janelia.it.jacs.compute.service.entity.sample.CopyLsmsFromArchiveService">
-        			    		<input name="RESULT_FILE_NODE" value="$V{LSM_FILE_NODE}"/>
-        						<input name="BULK_MERGE_PARAMETERS"/>
-        						<output name="BULK_MERGE_PARAMETERS"/>
-        			        </operation>
-        		        </sequence>
-        	        </sequence>
+        		    <!-- Get the LSM file paths and update the bulk merge parameters to use the copied files -->
+			        <operation name="Get LSM file paths" processor="org.janelia.it.jacs.compute.service.entity.sample.GetLsmFilePathsService">
+			            <input name="RESULT_FILE_NODE" value="$V{LSM_FILE_NODE}"/>
+						<input name="BULK_MERGE_PARAMETERS"/>
+                        <output name="BULK_MERGE_PARAMETERS"/>
+                        <output name="LSM_SOURCE_FILE_PATHS"/>
+                        <output name="LSM_TARGET_FILE_PATHS"/>
+    		        </operation>
         		
+                    <!-- Copy the files from archive -->
+                    <sequence name="Wait Async" waitForAsync="true">
+                        <operation name="Copy LSMs" processor="queue/gridSubmitAndWait">
+                            <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ArchiveGridService"/>
+                            <input name="RESULT_FILE_NODE" value="$V{LSM_FILE_NODE}"/>
+                            <input name="SOURCE_FILE_PATHS" value="$V{LSM_SOURCE_FILE_PATHS}"/>
+                            <input name="TARGET_FILE_PATHS" value="$V{LSM_TARGET_FILE_PATHS}"/>
+                        </operation>
+                    </sequence>
+                    
                 </sequence>
                 
         	    <!-- Asynchronously create the metadata describing the input LSM files -->
@@ -410,11 +416,10 @@
             <input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
         </include>
         
-        <!-- Send a message to archive the sample nodes asynchronously -->
-        <operation name="Send archival message" processor="org.janelia.it.jacs.compute.service.entity.sample.SampleArchiveService">
-            <input name="MODE" value="SEND_ARCHIVAL_MESSAGE"/>
-            <input name="SAMPLE_ENTITY_ID"/>
-        </operation>
+        <!-- Move all generated files to archive -->
+        <include name="Move sample to archive" process="SyncSampleToArchive">
+            <input name="SAMPLE_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
+        </include>
         
 	    <exceptionHandler>
 	    

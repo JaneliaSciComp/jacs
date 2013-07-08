@@ -1,14 +1,23 @@
 package org.janelia.it.jacs.compute.launcher.archive;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import javax.jms.ObjectMessage;
 import javax.jms.Queue;
 
+import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.util.JmsUtil;
 import org.janelia.it.jacs.compute.jtc.AsyncMessageInterface;
+import org.janelia.it.jacs.compute.service.utility.ArchiveGridService;
+import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.tasks.TaskParameter;
+import org.janelia.it.jacs.model.tasks.utility.GenericTask;
+import org.janelia.it.jacs.model.user_data.Node;
 
 /**
  * Helper class for moving to and from the archive.
@@ -16,7 +25,9 @@ import org.janelia.it.jacs.model.tasks.Task;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class ArchiveAccessHelper {
-	
+
+    protected static Logger logger = Logger.getLogger(ArchiveAccessHelper.class);
+    
 	private static final String queueName = "queue/archiveAccess";
 	
 	public static void sendMoveToArchiveMessage(String filePath, Queue replyToQueue) throws Exception {
@@ -57,5 +68,37 @@ public class ArchiveAccessHelper {
         messageInterface.sendMessageWithinTransaction(message);
         messageInterface.commit();
         messageInterface.endMessageSession();
+    }
+    
+    public static Task synchronousGridifiedArchiveCopy(Task parentTask, 
+            List<String> sourceFilePaths, List<String> targetFilePaths, boolean async) throws Exception {
+
+        HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        taskParameters.add(new TaskParameter(ArchiveGridService.PARAM_sourceFilePaths, Task.csvStringFromCollection(sourceFilePaths), null)); 
+        taskParameters.add(new TaskParameter(ArchiveGridService.PARAM_targetFilePaths, Task.csvStringFromCollection(targetFilePaths), null)); 
+        
+        Task subtask = new GenericTask(new HashSet<Node>(), parentTask.getOwner(), new ArrayList<Event>(), 
+                taskParameters, "archiveGridCopy", "Archive Grid Copy");
+        subtask.setParentTaskId(parentTask.getObjectId());
+        subtask = EJBFactory.getLocalComputeBean().saveOrUpdateTask(subtask);
+
+        logger.info("Launching "+subtask.getJobName()+", parent task id="+parentTask.getObjectId()+", subtask id="+subtask.getObjectId());
+        EJBFactory.getLocalComputeBean().submitJob("ArchiveGridCopy", subtask.getObjectId());
+
+        if (async) return subtask;
+
+        logger.info("Waiting for completion of archive copy subtask (id="+subtask.getObjectId()+")");
+        boolean complete = false;
+        while (!complete) {
+            String[] statusTypeAndValue = EJBFactory.getLocalComputeBean().getTaskStatus(subtask.getObjectId());
+            if (statusTypeAndValue[0]!=null && Task.isDone(statusTypeAndValue[0])) {
+                complete = true;
+            }
+            else {
+                Thread.sleep(5000);
+            }
+        }
+        
+        return subtask;
     }
 }

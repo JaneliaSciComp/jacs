@@ -1,26 +1,23 @@
 <!-- 
-	Asynchronously move the Sample's file node to the archive. 
+	Use to the grid to copy any number of files to or from the archive.
 -->
 <process name="Asynchronously synchronize sample to archive" processor="queue/samplePipelineLauncher" startEvent="pending">
     <sequence>
-	
-	   <input name="SAMPLE_ENTITY_ID"/>
-	
+	   
+        <input name="SOURCE_FILE_PATHS"/>
+    	<input name="TARGET_FILE_PATHS"/>
+	   
 	    <!-- Import variables from the task -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
     	    <input name="OVERRIDE" value="false"/>
-            <input name="TASK_PARAMETER_1" value="sample entity id"/>
-            <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
-	        <output name="SAMPLE_ENTITY_ID"/>
+            <input name="TASK_PARAMETER_1" value="source file paths"/>
+            <input name="PROCESS_VARIABLE_1" value="SOURCE_FILE_PATHS"/>
+            <input name="TASK_PARAMETER_2" value="target file paths"/>
+            <input name="PROCESS_VARIABLE_2" value="TARGET_FILE_PATHS"/>
+	        <output name="SOURCE_FILE_PATHS"/>
+	        <output name="TARGET_FILE_PATHS"/>
 	    </operation>
-	    
-        <!-- Get list of file paths to archive -->
-        <operation name="Send archival message" processor="org.janelia.it.jacs.compute.service.entity.sample.SampleArchiveService">
-            <input name="MODE" value="CREATE_ARCHIVE_LIST"/>
-            <input name="SAMPLE_ENTITY_ID"/>
-            <output name="ORIGINAL_FILE_PATHS"/>
-        </operation>
-    
+
         <!-- Create a result node -->
         <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
             <input name="NAME" value="Temp"/>
@@ -29,12 +26,13 @@
             <output name="RESULT_FILE_NODE_ID"/>
         </operation>
         
-        <!-- Copy the files to archive -->
+        <!-- Copy the files to or from archive -->
         <sequence name="Wait Async" waitForAsync="true">
-            <operation name="Copy LSMs" processor="queue/gridSubmitAndWait">
+            <operation name="Copy files" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ArchiveGridService"/>
                 <input name="RESULT_FILE_NODE"/>
-                <input name="SOURCE_FILE_PATHS" value="$V{ORIGINAL_FILE_PATHS}"/>
+                <input name="SOURCE_FILE_PATHS"/>
+                <input name="TARGET_FILE_PATHS"/>
             </operation>
         </sequence>
         

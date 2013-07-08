@@ -29,7 +29,6 @@ import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.FileUtil;
-import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * Base class for all alignment algorithms. Parameters:
@@ -51,7 +50,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
 public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
 	
 	protected static final String CONFIG_PREFIX = "alignConfiguration.";
-	protected static final int TIMEOUT_SECONDS = 3600;  // 60 minutes
+	protected static final int TIMEOUT_SECONDS = 30; 
 	
     protected static final String EXECUTABLE_DIR = SystemConfigurationProperties.getString("Executables.ModuleBase");
 
@@ -243,9 +242,9 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
             targetFiles.add(newInputSeperation);
             input.setInputSeparationFilename(newInputSeperation);
         }
-        
-        logger.info("Sending archive message");
-        ArchiveAccessHelper.sendCopyFromArchiveMessage(archivedFiles, targetFiles);
+
+        logger.info("Copying files from archive");
+        ArchiveAccessHelper.synchronousGridifiedArchiveCopy(task, archivedFiles, targetFiles, false);
         
         logger.debug("Waiting for files to appear: "+targetFiles);
         FileUtil.waitForFiles(targetFiles, TIMEOUT_SECONDS*1000);

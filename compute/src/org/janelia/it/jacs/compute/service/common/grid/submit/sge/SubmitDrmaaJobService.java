@@ -25,6 +25,8 @@ import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
+import com.google.common.base.Strings;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
@@ -202,11 +204,19 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
     protected boolean isShortJob() {
     	return false;
     }
+
+    /**
+     * Override this method to add flags to the native specification. 
+     * @return
+     */
+    protected String getAdditionalNativeSpecification() {
+        return null;
+    }
     
     /**
      * Override this method to specify a complete override to the native specification. This method returns null
-     * by default. If it is overridden to return a non-null value, then isShortJob, getRequiredSlots, and 
-     * getRequiredMemoryInGB will be ignored.
+     * by default. If it is overridden to return a non-null value, then isShortJob, getRequiredSlots,  
+     * getRequiredMemoryInGB, and getAdditionalNativeSpecification will be ignored.
      * 
      * @return
      */
@@ -234,6 +244,10 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         	String ns = gridResourceSpec.getNativeSpec();
         	if (!USE_R620_NODES && isShortJob()) {
         		ns += " -l short=true -now n";
+        	}
+        	String ans = getAdditionalNativeSpecification();
+        	if (!Strings.isNullOrEmpty(ans)) {
+        	    ns += " "+ans;
         	}
         	logger.info("Setting native specification to accomodate "+mem+" GB of memory and "+slots+" slot(s): "+ns);
         	jt.setNativeSpecification(ns);	
