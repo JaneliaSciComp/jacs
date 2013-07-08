@@ -51,6 +51,11 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
         comment=fields[4];
     }
 
+    public String toString() {
+        //return String.format("ann id %d", id);
+        return String.format("(%.1f, %.1f, %.1f)", x, y, z);
+    }
+
     public Long getId() {
         return id;
     }
