@@ -75,6 +75,11 @@ public class ArchiveGridService extends SubmitDrmaaJobService {
                 throw new ServiceException("SOURCE_FILE_PATHS cannot be null.");
             }
             
+            if (sourcePaths.isEmpty()) {
+                logger.info("SOURCE_FILE_PATHS is empty, nothing to do.");
+                return;
+            }
+            
             Object targetFilePathObject = processData.getItem("TARGET_FILE_PATHS");
             if (targetFilePathObject!=null) {
                 if (targetFilePathObject instanceof List) {

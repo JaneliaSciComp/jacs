@@ -19,29 +19,34 @@
             <input name="MODE" value="CREATE_ARCHIVE_LIST"/>
             <input name="SAMPLE_ENTITY_ID"/>
             <output name="ORIGINAL_FILE_PATHS"/>
+            <output name="RUN_ARCHIVAL"/>
         </operation>
     
-        <!-- Create a result node -->
-        <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
-            <input name="NAME" value="Temp"/>
-            <input name="OUTPUT_VAR_NAME" value="RESULT_FILE_NODE"/>
-            <output name="RESULT_FILE_NODE"/>
-            <output name="RESULT_FILE_NODE_ID"/>
-        </operation>
-        
-        <!-- Copy the files to archive -->
-        <sequence name="Wait Async" waitForAsync="true">
-            <operation name="Copy LSMs" processor="queue/gridSubmitAndWait">
-                <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ArchiveGridService"/>
-                <input name="RESULT_FILE_NODE"/>
-                <input name="SOURCE_FILE_PATHS" value="$V{ORIGINAL_FILE_PATHS}"/>
+        <sequence if="RUN_ARCHIVAL=true">
+    
+            <!-- Create a result node -->
+            <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+                <input name="NAME" value="Temp"/>
+                <input name="OUTPUT_VAR_NAME" value="RESULT_FILE_NODE"/>
+                <output name="RESULT_FILE_NODE"/>
+                <output name="RESULT_FILE_NODE_ID"/>
             </operation>
+            
+            <!-- Copy the files to archive -->
+            <sequence name="Wait Async" waitForAsync="true">
+                <operation name="Copy LSMs" processor="queue/gridSubmitAndWait">
+                    <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ArchiveGridService"/>
+                    <input name="RESULT_FILE_NODE"/>
+                    <input name="SOURCE_FILE_PATHS" value="$V{ORIGINAL_FILE_PATHS}"/>
+                </operation>
+            </sequence>
+            
+            <!-- We're done with the node -->
+            <operation name="Remove Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
+                <input name="FILE_NODE_ID" value="$V{RESULT_FILE_NODE_ID}"/>
+            </operation>
+        
         </sequence>
-        
-        <!-- We're done with the node -->
-        <operation name="Remove Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
-            <input name="FILE_NODE_ID" value="$V{RESULT_FILE_NODE_ID}"/>
-        </operation>
-        
+    
     </sequence>
 </process>
