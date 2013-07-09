@@ -193,11 +193,12 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 // Validate
                 boolean foundParent=false;
                 for (EntityData ed : neuron.getEntityData()) {
-                    if (ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE)) {
+                    if (ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE) ||
+                            ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
                         String value=ed.getValue();
                         String[] vArr=value.split(":");
                         Long pId=new Long(vArr[0]);
-                        if (pId==parentAnnotationId) {
+                        if (pId.equals(parentAnnotationId)) {
                             foundParent=true;
                         }
                     }
