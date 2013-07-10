@@ -1,4 +1,4 @@
-<process name="FlyLight Whole Brain 63x Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending">
+<process name="FlyLight Whole Brain 63x Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	    
         <include name="Pipeline" process="FlyLightSamplePipeline">

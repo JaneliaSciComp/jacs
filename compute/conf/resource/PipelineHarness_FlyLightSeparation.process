@@ -1,4 +1,4 @@
-<process name="FlyLight Separation Task Harness" processor="queue/analysisPipelineLauncher" startEvent="pending">
+<process name="FlyLight Separation Task Harness" processor="queue/analysisPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	    
 	    <!-- Import variables from the task -->
