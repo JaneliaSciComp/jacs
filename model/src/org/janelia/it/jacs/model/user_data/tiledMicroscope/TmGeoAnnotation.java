@@ -35,6 +35,8 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
     }
 
     // format expected: <id>:<parentId>:<index>:<x,y,z>:<comment>
+    // note1: can't currently handle empty comments
+    // note2: can't currently handle comments including ":"
     public TmGeoAnnotation(String geoString) throws Exception {
         String[] fields=geoString.split(":");
         if (fields.length!=5) {
@@ -116,6 +118,13 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
         return children;
     }
 
+    /**
+     * this method returns a list of all children in the subtree of the current
+     * annotation, plus the annotation itself; the order is such that the
+     * annotation itself is first, and each child is guaranteed to appear
+     * after its parent
+     * @return list of annotations in subtree rooted at current annotation
+     */
     public List<TmGeoAnnotation> getSubTreeList() {
         ArrayList<TmGeoAnnotation> subtreeList = new ArrayList<TmGeoAnnotation>();
         appendSubTreeList(subtreeList, this);
