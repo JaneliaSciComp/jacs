@@ -116,6 +116,19 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
         return children;
     }
 
+    public List<TmGeoAnnotation> getSubTreeList() {
+        ArrayList<TmGeoAnnotation> subtreeList = new ArrayList<TmGeoAnnotation>();
+        appendSubTreeList(subtreeList, this);
+        return subtreeList;
+    }
+
+    private void appendSubTreeList(List<TmGeoAnnotation> annList, TmGeoAnnotation ann) {
+        annList.add(ann);
+        for (TmGeoAnnotation a: ann.getChildren()) {
+            appendSubTreeList(annList, a);
+        }
+    }
+
     public void addChild(TmGeoAnnotation child) {
         children.add(child);
     }
