@@ -1,105 +1,163 @@
 package org.janelia.it.jacs.compute.access.neo4j;
 
+import java.net.URI;
 import java.util.List;
 
+import javax.ws.rs.core.MediaType;
+
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.access.AnnotationDAO;
-import org.janelia.it.jacs.compute.access.DaoException;
-import org.janelia.it.jacs.compute.access.large.LargeOperations;
-import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Transaction;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.janelia.it.jacs.compute.access.neo4j.rest.*;
+import org.janelia.it.jacs.compute.access.neo4j.rest.TraversalDefinition.Relation;
+
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
 
 /**
- * Data access to the Neo4j data store.
+ * Data access to the Neo4j data store via its REST API.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class Neo4jDAO extends AnnotationDAO {
+public class Neo4jDAO {//extends AnnotationDAO {
 
-    protected final static int NEO4J_LOADER_BATCH_SIZE = 3000;
-    
-    protected static final String NEO4J_SERVER_URL = SystemConfigurationProperties.getString("Neo4j.ServerURL");
+    protected static final String SERVER_ROOT_URI = "http://rokicki-ws:7474/db/data";//SystemConfigurationProperties.getString("Neo4j.ServerURL");
 
-    protected GraphAccess ga;
-    protected Transaction tx;
-    protected int numAdded = 0;
-    protected LargeOperations largeOp;
-    
     public Neo4jDAO(Logger _logger) {
-        super(_logger);
-
-        ClassPathXmlApplicationContext appContext = new ClassPathXmlApplicationContext(
-                new String[] {"neo4j-beans.xml"});
-        BeanFactory factory = (BeanFactory) appContext;
-        this.ga = (GraphAccess)factory.getBean("graphAccess");
+//        super(_logger);
         
-        this.largeOp = new LargeOperations(this);
+        // There is a Java API binding for the REST API, but it has not caught up with the latest Neo4j release 
+        // (as of 2.0 milestones): https://github.com/neo4j/java-rest-binding
+        // Therefore, we need to use REST manually, which is probably for the best because it allows us to be more efficient. 
+
+        WebResource resource = Client.create().resource(SERVER_ROOT_URI);
+        ClientResponse response = resource.get(ClientResponse.class);
+        System.out.println(String.format("GET on [%s], status code [%d]", SERVER_ROOT_URI, response.getStatus()));
+        response.close();
     }
 
-    public void loadAllEntities() throws DaoException {
+    public URI createNode() {
+        final String nodeEntryPointUri = SERVER_ROOT_URI + "node";
+        // http://localhost:7474/db/data/node
 
-        tx = ga.getGraphDatabaseService().beginTx();
-        _logger.info("Creating references nodes");
-        ga.initRefNodes();
+        WebResource resource = Client.create().resource(nodeEntryPointUri);
+        // POST {} to the node entry point URI
+        ClientResponse response = resource.accept(MediaType.APPLICATION_JSON).type(MediaType.APPLICATION_JSON)
+                .entity("{}").post(ClientResponse.class);
+
+        final URI location = response.getLocation();
+        System.out.println(String.format("POST to [%s], status code [%d], location header [%s]", nodeEntryPointUri,
+                response.getStatus(), location.toString()));
+        response.close();
+
+        return location;
+    }
+
+
+    public void traverse(URI startNode) throws Exception {
         
-        try {
-            List<Entity> roots = getUserEntitiesWithAttributeValue(null, EntityConstants.ATTRIBUTE_COMMON_ROOT, EntityConstants.ATTRIBUTE_COMMON_ROOT);
-            
-            _logger.info("Found "+roots.size()+" common roots");
-            
-            for(Entity root : roots) {
-                _logger.info("Loading "+root.getName());
-                loadEntity(root);
+        TraversalDefinition t = new TraversalDefinition();
+        t.setOrder(TraversalDefinition.DEPTH_FIRST);
+        t.setUniqueness(TraversalDefinition.NODE);
+        t.setMaxDepth(10);
+        t.addRelationship(new Relation("entity", Relation.OUT));
+
+        // Once we have defined the parameters of our traversal, we just need to transfer it. We do this by determining the URI of the traversers for the start node, and then POST-ing the JSON representation of the traverser to it.
+        URI traverserUri = new URI(startNode.toString() + "/traverse/node");
+        WebResource resource = Client.create().resource(traverserUri);
+        String jsonTraverserPayload = t.toJson();
+        
+        System.out.println("Payload:\n"+jsonTraverserPayload);
+        
+        ClientResponse response = resource.accept(MediaType.APPLICATION_JSON)
+                .type(MediaType.APPLICATION_JSON)
+                .entity(jsonTraverserPayload)
+                .post(ClientResponse.class);
+         
+//        System.out.println( String.format(
+//                "POST [%s] to [%s], status code [%d], returned data: "
+//                        + System.getProperty( "line.separator" ) + "%s",
+//                jsonTraverserPayload, traverserUri, response.getStatus(),
+//                response.getEntity(String.class)));
+        
+        String json = response.getEntity(String.class);
+        response.close();
+        
+        json = "{\"data\":["+json+"]}";
+        System.out.println("JSON:\n"+json);
+        QueryResults gg = QueryResults.fromJson(json);
+
+        for(List<Node> result : gg.getData()) {
+            System.out.println("RESULT");
+            for (Node n : result) {
+                System.out.println("  "+n.getProperties().get("name"));
             }
-            tx.success();
-        }
-        catch (Exception e) {
-            tx.failure();
-            throw new DaoException("Error loading entities",e);
-        }
-        finally {
-            tx.finish();
-            ga.getGraphDatabaseService().shutdown();
         }
         
-        _logger.info("Completed loading "+numAdded+" entities");
+        
     }
     
-    private Node loadEntity(Entity entity) throws DaoException {
+    public void cypherQuery2() throws Exception {
         
-        if (numAdded>0 && numAdded % NEO4J_LOADER_BATCH_SIZE == 0) {
-            _logger.info("  Commiting a batch");
-            tx.success();
-            tx.finish();
-            tx = ga.getGraphDatabaseService().beginTx();
-        }
+        QueryDefinition query = new QueryDefinition("match (e:Entity) where e.entity_id=1889491941918244962 return e");
+        URI cypherUri = new URI(SERVER_ROOT_URI + "/cypher");
+        WebResource resource = Client.create().resource(cypherUri);
+        String payload = query.toJson();
+        ClientResponse response = resource.accept(MediaType.APPLICATION_JSON)
+                .type(MediaType.APPLICATION_JSON)
+                .entity(payload)
+                .post(ClientResponse.class);
+
+        String json = response.getEntity(String.class);
+//        System.out.println( String.format("POST [%s] to [%s], status code [%d], returned data: \n%s",
+//                        payload, cypherUri, response.getStatus(), json));
         
-        Node node = null;
+        QueryResults gg = QueryResults.fromJson(json);
         
-        Long neo4jId = (Long)largeOp.getValue(LargeOperations.NEO4J_MAP, entity.getId());
-        if (neo4jId!=null) {
-            return ga.getGraphDatabaseService().getNodeById(neo4jId);
-        }
-        else {
-            node = ga.createEntityNode(entity);
-            largeOp.putValue(LargeOperations.NEO4J_MAP, entity.getId(), node.getId());
-            for(Entity child : entity.getChildren()) {
-                Node childNode = loadEntity(child);
-                ga.createChildRelationship(node, childNode);
+        for(List<Node> result : gg.getData()) {
+            System.out.println("RESULT");
+            for (Node n : result) {
+                System.out.println("  "+n);
+                
+                traverse(new URI(n.getSelfUri()));
+                
+                
             }
-            numAdded++;
         }
         
-        return node;
+        response.close();
     }
     
-    public void dropDatabase() throws DaoException {
-        // How is there no way to do this via the API?
-    }
+    
+    public void cypherQuery() throws Exception {
+        
+        QueryDefinition query = new QueryDefinition("match (e:Entity)-->child where e.entity_id=1889491941918244962 return child");
+        URI cypherUri = new URI(SERVER_ROOT_URI + "/cypher");
+        WebResource resource = Client.create().resource(cypherUri);
+        String payload = query.toJson();
+        ClientResponse response = resource.accept(MediaType.APPLICATION_JSON)
+                .type(MediaType.APPLICATION_JSON)
+                .entity(payload)
+                .post(ClientResponse.class);
 
+        String json = response.getEntity(String.class);
+//        System.out.println( String.format("POST [%s] to [%s], status code [%d], returned data: \n%s",
+//                        payload, cypherUri, response.getStatus(), json));
+        
+        QueryResults gg = QueryResults.fromJson(json);
+        
+        for(List<Node> result : gg.getData()) {
+            System.out.println("RESULT");
+            for (Node n : result) {
+                System.out.println("  "+n);
+            }
+        }
+        
+        response.close();
+    }
+    
+    public static void main(String[] args) throws Exception {
+        Neo4jDAO dao = new Neo4jDAO(Logger.getLogger(Neo4jDAO.class));
+        dao.cypherQuery2();
+    }
+    
 }
