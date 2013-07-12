@@ -36,7 +36,7 @@ public class Neo4jBatchDAO extends AnnotationDAO {
     private static final String LABEL_ENTITY = "Entity";
     private static final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
 
-    private String loadDatabaseDir = "/home/rokickik/dev/neo4j-community-2.0.0-M03/data/graph.db";
+    private String loadDatabaseDir = "/home/rokickik/dev/neo4j-community-2.0.0-M03/data/load.db";
     private FileSystemAbstraction fileSystem;
 
     protected LargeOperations largeOp;
@@ -46,7 +46,13 @@ public class Neo4jBatchDAO extends AnnotationDAO {
 
     protected int numNodesAdded = 0;
     protected int numRelationshipsAdded = 0;
+    protected int numAnnotationsAdded = 0;
+    protected int numOntologiesAdded = 0;
 
+    private RelationshipType target_rel = DynamicRelationshipType.withName("target");
+    private RelationshipType key_term_rel = DynamicRelationshipType.withName("key_term");
+    private RelationshipType value_term_rel = DynamicRelationshipType.withName("value_term");
+    
     public Neo4jBatchDAO(Logger _logger) {
         super(_logger);
         this.fileSystem = new DefaultFileSystemAbstraction();
@@ -73,15 +79,36 @@ public class Neo4jBatchDAO extends AnnotationDAO {
             rootEd.setChildEntity(root);
             loadDescendants(null, rootEd);
         }
-        
-//        Entity root = getEntityById(1882947953992138923L);
-//        populateDescendants(null, root);
-//        EntityData rootEd = new EntityData();
-//        rootEd.setChildEntity(root);
-//        Long rootNeoId = loadDescendants(null, rootEd);
 
-        _logger.info("Completed loading " + numNodesAdded + " nodes and " + numRelationshipsAdded
-                + " relationships into the Neo4j database.");
+        _logger.info("Completed loading " + numNodesAdded + " nodes and " + numRelationshipsAdded + " relationships.");
+        
+        List<Entity> ontologyRoots = getEntitiesByTypeName(null, EntityConstants.TYPE_ONTOLOGY_ROOT);
+        for(Entity ontologyRoot : ontologyRoots) {
+            EntityData rootEd = new EntityData();
+            rootEd.setChildEntity(ontologyRoot);
+            loadDescendants(null, rootEd);
+            numOntologiesAdded++;
+            
+            // Free memory
+            Session session = getCurrentSession();
+            session.evict(ontologyRoot);
+            ontologyRoot.setEntityData(null);
+        }
+
+        _logger.info("Completed loading " + numOntologiesAdded + " ontologies.");
+
+        
+        List<Entity> annotations = getEntitiesByTypeName(null, EntityConstants.TYPE_ANNOTATION);
+        for(Entity annotation : annotations) {
+            loadAnnotation(annotation);
+            
+            // Free memory
+            Session session = getCurrentSession();
+            session.evict(annotation);
+            annotation.setEntityData(null);
+        }
+        
+        _logger.info("Completed loading " + numAnnotationsAdded + " annotations.");
 
         inserter.shutdown();
         
@@ -89,6 +116,8 @@ public class Neo4jBatchDAO extends AnnotationDAO {
         // Because inserter.createDeferredSchemaIndex does not work, we need to connect as an embedded database and 
         // then create the indexes.
 
+        _logger.info("Creating indexes...");
+        
         GraphDatabaseService graphDb = new GraphDatabaseFactory().newEmbeddedDatabase(loadDatabaseDir);
         
         Schema schema = graphDb.schema();
@@ -96,8 +125,10 @@ public class Neo4jBatchDAO extends AnnotationDAO {
         try {
             schema.indexFor(commonRootLabel).on("entity_id").create();
             schema.indexFor(commonRootLabel).on("name").create();
+            schema.indexFor(commonRootLabel).on("owner_key").create();
             schema.indexFor(entityLabel).on("entity_id").create();
             schema.indexFor(entityLabel).on("name").create();
+            schema.indexFor(entityLabel).on("owner_key").create();
             tx.success();
         } 
         finally {
@@ -105,7 +136,7 @@ public class Neo4jBatchDAO extends AnnotationDAO {
         }
         
         _logger.info("Awaiting index population...");
-        schema.awaitIndexesOnline(10, TimeUnit.MINUTES);
+        schema.awaitIndexesOnline(24, TimeUnit.HOURS);
 
         graphDb.shutdown();
         
@@ -125,8 +156,7 @@ public class Neo4jBatchDAO extends AnnotationDAO {
             throw new DaoException("Error populating entity "+entity.getId(), e);
         }
         
-        Long neoId = loadEntity(parentNeoId, ed);    
-        
+        Long neoId = loadEntityData(parentNeoId, ed);    
 
         for (EntityData childEd : entity.getEntityData()) {
             Entity child = childEd.getChildEntity();
@@ -135,6 +165,7 @@ public class Neo4jBatchDAO extends AnnotationDAO {
             }
         }
         
+        // Free memory
         Session session = getCurrentSession();
         session.evict(entity);
         entity.setEntityData(null);
@@ -142,50 +173,34 @@ public class Neo4jBatchDAO extends AnnotationDAO {
         return neoId;
     }
 
-    private Long loadEntity(Long parentNeoId, EntityData ed) throws DaoException {
+    private Long loadEntityData(Long parentNeoId, EntityData ed) throws DaoException {
 
         Entity entity = ed.getChildEntity();
         if (entity == null) return null;
 
         Long neoId = (Long) largeOp.getValue(LargeOperations.NEO4J_MAP, entity.getId());
-        if (neoId != null) return neoId;
+        if (neoId != null) {
+            loadRelationship(parentNeoId, neoId, ed);
+            return neoId;
+        }
 
         _logger.info("loadEntity " + entity.getId() + " (with parentNeoId=" + parentNeoId + ")");
 
         try {
-            Map<String, Object> properties = new HashMap<String, Object>();
-            addIfNotNull(properties, "entity_id", entity.getId());
-            addIfNotNull(properties, "name", entity.getName());
-            addIfNotNull(properties, "type", entity.getEntityType().getName());
-            addIfNotNull(properties, "creation_date", getFormattedDateTime(entity.getCreationDate()));
-            addIfNotNull(properties, "updated_date", getFormattedDateTime(entity.getUpdatedDate()));
-            addIfNotNull(properties, "owner_key", entity.getOwnerKey());
-    
-            for (EntityData childEd : entity.getEntityData()) {
-                if (childEd.getValue() != null) {
-                    addIfNotNull(properties, getFormattedFieldName(childEd.getEntityAttribute().getName()), childEd.getValue());
-                }
-            }
-    
+            Map<String, Object> properties = getEntityProperties(entity);
             neoId = inserter.createNode(properties);
             numNodesAdded++;
-    
+            
             Label entityTypeLabel = DynamicLabel.label(getFormattedLabelName(entity.getEntityType().getName()));
-    
+
             if (parentNeoId != null) {
                 inserter.setNodeLabels(neoId, entityLabel, entityTypeLabel);
-                RelationshipType childRel = DynamicRelationshipType.withName(getFormattedFieldName(ed.getEntityAttribute()
-                        .getName()));
-                properties = new HashMap<String, Object>();
-                addIfNotNull(properties, "creation_date", getFormattedDateTime(ed.getCreationDate()));
-                addIfNotNull(properties, "updated_date", getFormattedDateTime(ed.getUpdatedDate()));
-                addIfNotNull(properties, "owner_key", ed.getOwnerKey());
-                inserter.createRelationship(parentNeoId, neoId, childRel, properties);
-                numRelationshipsAdded++;
-            } else {
+                loadRelationship(parentNeoId, neoId, ed);
+            } 
+            else {
                 inserter.setNodeLabels(neoId, entityLabel, entityTypeLabel, commonRootLabel);
             }
-    
+            
             largeOp.putValue(LargeOperations.NEO4J_MAP, entity.getId(), neoId);
             return neoId;
             
@@ -194,7 +209,65 @@ public class Neo4jBatchDAO extends AnnotationDAO {
             throw new DaoException("Error indexing entity "+entity.getId(), e);
         }
     }
+    
+    private void loadRelationship(Long parentNeoId, Long childNeoId, EntityData ed) {
+        RelationshipType childRel = DynamicRelationshipType.withName(getFormattedFieldName(ed.getEntityAttribute().getName()));
+        Map<String, Object> properties = new HashMap<String, Object>();
+        addIfNotNull(properties, "entity_data_id", ed.getId());
+        addIfNotNull(properties, "type", ed.getEntityAttribute().getName());
+        addIfNotNull(properties, "creation_date", getFormattedDateTime(ed.getCreationDate()));
+        addIfNotNull(properties, "updated_date", getFormattedDateTime(ed.getUpdatedDate()));
+        addIfNotNull(properties, "order_index", ed.getOrderIndex());
+        addIfNotNull(properties, "owner_key", ed.getOwnerKey());
+        inserter.createRelationship(parentNeoId, childNeoId, childRel, properties);
+        numRelationshipsAdded++;
+    }
+    
+    private void loadAnnotation(Entity annotation) {
+        
+        String targetId = annotation.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
+        Entity key = annotation.getChildByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
+        Entity value = annotation.getChildByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_ENTITY_ID);
+        Long targetNeoId = (Long) largeOp.getValue(LargeOperations.NEO4J_MAP, targetId);
 
+        _logger.info("loadAnnotation " + annotation.getId() + " (with targetId=" + targetNeoId + ")");
+        
+        Map<String, Object> properties = getEntityProperties(annotation);
+        Long annotationNeoId = inserter.createNode(properties);
+        numAnnotationsAdded++;
+        
+        Label entityTypeLabel = DynamicLabel.label(getFormattedLabelName(annotation.getEntityType().getName()));
+        inserter.setNodeLabels(annotationNeoId, entityLabel, entityTypeLabel);
+
+        inserter.createRelationship(annotationNeoId, targetNeoId, target_rel, new HashMap<String, Object>());
+        
+        if (key!=null) {
+            Long keyNeoId = (Long) largeOp.getValue(LargeOperations.NEO4J_MAP, key.getId());
+            inserter.createRelationship(annotationNeoId, keyNeoId, key_term_rel, new HashMap<String, Object>());
+        }
+        
+        if (value!=null) {
+            Long valueNeoId = (Long) largeOp.getValue(LargeOperations.NEO4J_MAP, value.getId());
+            inserter.createRelationship(annotationNeoId, valueNeoId, value_term_rel, new HashMap<String, Object>());
+        }
+    }
+
+    private Map<String, Object> getEntityProperties(Entity entity) {
+        Map<String, Object> properties = new HashMap<String, Object>();
+        addIfNotNull(properties, "entity_id", entity.getId());
+        addIfNotNull(properties, "name", entity.getName());
+        addIfNotNull(properties, "type", entity.getEntityType().getName());
+        addIfNotNull(properties, "creation_date", getFormattedDateTime(entity.getCreationDate()));
+        addIfNotNull(properties, "updated_date", getFormattedDateTime(entity.getUpdatedDate()));
+        addIfNotNull(properties, "owner_key", entity.getOwnerKey());
+        for (EntityData childEd : entity.getEntityData()) {
+            if (childEd.getValue() != null) {
+                addIfNotNull(properties, getFormattedFieldName(childEd.getEntityAttribute().getName()), childEd.getValue());
+            }
+        }
+        return properties;
+    }
+    
     public void dropDatabase() throws DaoException {
         _logger.info("Deleting existing database at " + loadDatabaseDir);
         FileUtil.deleteDirectory(loadDatabaseDir);

@@ -4,7 +4,7 @@ import java.util.Map;
 
 import com.google.gson.annotations.SerializedName;
 
-public class Node {
+public class NodeResult {
     
     @SerializedName("data") private Map<String,String> propertyMap;
     
@@ -30,16 +30,13 @@ public class Node {
         return selfUri;
     }
 
-
     public void setSelfUri(String selfUri) {
         this.selfUri = selfUri;
     }
 
-
-
     @Override
     public String toString() {
-        return "Node [propertyMap=" + propertyMap + "]";
+        return "NodeResult [propertyMap=" + propertyMap + "]";
     }
     
     
