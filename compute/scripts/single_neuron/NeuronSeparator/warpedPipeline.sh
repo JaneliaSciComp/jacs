@@ -47,7 +47,7 @@ echo "Reference channel: $REF_CHAN"
 CONSOLIDATED_LABEL="$OUTDIR/ConsolidatedLabel.v3draw"
 
 if [ ! -s "$CONSOLIDATED_LABEL" ]; then
-    CONSOLIDATED_LABEL="$SEPDIR/ConsolidatedLabel.v3dpbd"
+    CONSOLIDATED_LABEL="$OUTDIR/ConsolidatedLabel.v3dpbd"
     if [ ! -s "$CONSOLIDATED_LABEL" ]; then
         echo "ConsolidatedLabel file not found in output directory"
         exit 1
