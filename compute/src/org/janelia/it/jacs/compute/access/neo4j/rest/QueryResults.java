@@ -27,7 +27,7 @@ public class QueryResults {
         return data;
     }
     
-    public static QueryResults fromJson(String json, Class<? extends Object>... resultTypes) {
+    public static QueryResults fromJson(String json, Class... resultTypes) {
         
         Gson gson = new Gson();
         JsonParser parser = new JsonParser();
@@ -39,7 +39,7 @@ public class QueryResults {
             List<Object> row = new ArrayList<Object>();
             int c=0;
             for(JsonElement f : e.getAsJsonArray()) {
-                Class<? extends Object> resultType = resultTypes[c];
+                Class resultType = resultTypes[c];
                 row.add(gson.fromJson(f, resultType));
                 c++;
             }

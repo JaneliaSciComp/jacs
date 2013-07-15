@@ -53,7 +53,7 @@ public class Neo4jDAO {
         return location;
     }
     
-    public QueryResults getCypherResults(String cypherQuery, Class<? extends Object>... resultTypes) throws Exception {
+    public QueryResults getCypherResults(String cypherQuery, Class... resultTypes) throws Exception {
 
         long start = System.currentTimeMillis();
         
@@ -88,7 +88,6 @@ public class Neo4jDAO {
 
         long start = System.currentTimeMillis();
         
-        @SuppressWarnings("unchecked")
         QueryResults results = getCypherResults(
                 "match e:Entity-[r]->child where e.entity_id=1859269906990628962 return r,child", 
                 RelationshipResult.class, NodeResult.class);
@@ -107,7 +106,6 @@ public class Neo4jDAO {
 
         long start = System.currentTimeMillis();
         
-        @SuppressWarnings("unchecked")
         QueryResults results = getCypherResults(
                 "match e:CommonRoot-[r:entity]->child where e.owner_key=\"user:nerna\" return e.name,count(r)", 
                 String.class, Integer.class);
