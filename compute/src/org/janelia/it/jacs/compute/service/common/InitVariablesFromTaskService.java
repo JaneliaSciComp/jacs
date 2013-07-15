@@ -26,7 +26,7 @@ public class InitVariablesFromTaskService implements IService {
             String overrideStr = (String)processData.getItem("OVERRIDE");
             if (!StringUtils.isEmpty(overrideStr)) {
                 override = Boolean.parseBoolean(overrideStr);   
-                logger.info("Will "+(override?"":"not ")+"override existing variables");
+                logger.debug("Will "+(override?"":"not ")+"override existing variables");
             }
             
         	int num = 1;

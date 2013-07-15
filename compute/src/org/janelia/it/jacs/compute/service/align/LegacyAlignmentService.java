@@ -44,8 +44,8 @@ public abstract class LegacyAlignmentService extends AbstractAlignmentService {
 
     @Override
     public void postProcess() throws MissingDataException {
-        
-        super.postProcess();
+
+        File outputFile = new File(resultFileNode.getDirectoryPath(),"Aligned.v3draw");
         
         processData.putItem("ALIGNED_FILENAME", outputFile.getAbsolutePath());
         

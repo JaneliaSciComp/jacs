@@ -265,10 +265,11 @@ public class EntityHelper {
         }
         
         for (EntityData ed : toDelete) {
+            // Update in-memory model
+            entity.getEntityData().remove(ed);
+            ed.setParentEntity(null);
         	// Update database
             entityBean.deleteEntityData(ed);
-        	// Update in-memory model
-        	entity.getEntityData().remove(ed);
         }
     }
 	

@@ -32,7 +32,7 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
     public static final String NAME = "neuronSeparatorPipeline";
     
     private static final String CONFIG_PREFIX = "neuSepConfiguration.";
-    private static final int TIMEOUT_SECONDS = 30;
+    private static final int TIMEOUT_SECONDS = 60 * 60;
 
     private FileNode outputFileNode;
     private String inputFilename;
@@ -115,10 +115,12 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
             fromArchiveDir.mkdirs();
             
             logger.info("Copying files from archive");
-            ArchiveAccessHelper.synchronousGridifiedArchiveCopy(task, archivedFiles, targetFiles, false);
+            ArchiveAccessHelper.sendCopyFromArchiveMessage(archivedFiles, targetFiles);
+//            ArchiveAccessHelper.synchronousGridifiedArchiveCopy(task, archivedFiles, targetFiles, false);
 
             logger.debug("Waiting for files to appear: "+targetFiles);
             FileUtil.waitForFiles(targetFiles, TIMEOUT_SECONDS*1000);
+            
             logger.info("Retrieved necessary files from archive for separation "+resultFileNode.getDirectoryPath());   
             
             this.fromArchiveDir = fromArchiveDir;

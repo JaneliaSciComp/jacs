@@ -57,7 +57,7 @@
     			<output name="ALIGNMENT_RESULT_NAME"/>
     			<output name="ALIGNMENT_TILE_NAME"/>
     		</operation>
-    	    
+    		
        	    <!-- Align the sample -->
             <sequence name="Align" waitForAsync="true">
     	        <operation name="Align" processor="queue/gridSubmitAndWait">

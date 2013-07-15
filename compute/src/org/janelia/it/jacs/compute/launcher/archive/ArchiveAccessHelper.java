@@ -28,6 +28,8 @@ public class ArchiveAccessHelper {
 
     protected static Logger logger = Logger.getLogger(ArchiveAccessHelper.class);
     
+    private static final int TIMEOUT_SECONDS = 60 * 60;
+    
 	private static final String queueName = "queue/archiveAccess";
 	
 	public static void sendMoveToArchiveMessage(String filePath, Queue replyToQueue) throws Exception {
@@ -89,16 +91,23 @@ public class ArchiveAccessHelper {
 
         logger.info("Waiting for completion of archive copy subtask (id="+subtask.getObjectId()+")");
         boolean complete = false;
+        long start = System.currentTimeMillis();
+        long timeoutMs = TIMEOUT_SECONDS*1000;
         while (!complete) {
             String[] statusTypeAndValue = EJBFactory.getLocalComputeBean().getTaskStatus(subtask.getObjectId());
             if (statusTypeAndValue[0]!=null && Task.isDone(statusTypeAndValue[0])) {
                 complete = true;
             }
             else {
+                if ((System.currentTimeMillis()-start)>timeoutMs) {
+                    throw new Exception("Timed out after waiting "+timeoutMs+
+                            " milliseconds for archive copy subtask to finish (id="+subtask.getObjectId()+")");
+                }
                 Thread.sleep(5000);
             }
         }
         
+        logger.info("Archive copy subtask is complete (id="+subtask.getObjectId()+")");
         return subtask;
     }
 }

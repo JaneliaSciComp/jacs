@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.janelia.it.jacs.compute.service.align.ParameterizedAlignmentAlgorithm;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.cv.AlignmentAlgorithm;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.StringUtils;
@@ -17,7 +18,16 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
 public class ChoosePostSampleProcessingStepsService extends AbstractEntityService {
 
     public void execute() throws Exception {
-    	
+
+        String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
+        if (sampleEntityId == null || "".equals(sampleEntityId)) {
+            throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
+        }
+        Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
+        if (sampleEntity == null) {
+            throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
+        }
+
     	String alignAlgorithms = (String)processData.getItem("ALIGNMENT_ALGORITHMS");
     	String alignAlgorithmParams = (String)processData.getItem("ALIGNMENT_ALGORITHM_PARAMS");
         String alignAlgorithmResultNames = (String)processData.getItem("ALIGNMENT_ALGORITHM_RESULT_NAMES");
@@ -63,8 +73,10 @@ public class ChoosePostSampleProcessingStepsService extends AbstractEntityServic
 		processData.putItem("RUN_ALIGNMENT", new Boolean(runAlignment));
 		processData.putItem("RUN_ANALYSIS", new Boolean(runAnalysis));
 
-    	logger.info("Pipeline steps to execute:");
-    	logger.info("    Alignment = "+runAlignment);
-    	logger.info("    Analysis = "+runAnalysis);
+        List<String> steps = new ArrayList<String>();
+        if (runAlignment) steps.add("alignment");
+        if (runAnalysis) steps.add("analysis");
+
+        logger.info("Post processing pipeline for Sample "+sampleEntity.getName()+": "+Task.csvStringFromCollection(steps));
     }
 }

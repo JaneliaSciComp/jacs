@@ -169,14 +169,18 @@ public class SampleDataManager implements SampleDataManagerMBean {
             Entity entity = EJBFactory.getLocalEntityBean().getEntityById(folderId);
             if (entity==null) throw new IllegalArgumentException("Entity with id "+folderId+" does not exist");
             EJBFactory.getLocalEntityBean().loadLazyEntity(entity, false);
-            for(Entity child : entity.getChildren()) {
+            for(Entity child : entity.getOrderedChildren()) {
                 if (EntityConstants.TYPE_FOLDER.equals(child.getEntityType().getName())) {
+                    logger.info("runSampleFolder - Running folder: "+child.getName()+" (id="+child.getId()+")");
                     runSampleFolder(child.getId().toString(), reuseProcessing, reuseAlignment);
                 }
                 else if (EntityConstants.TYPE_SAMPLE.equals(child.getEntityType().getName())) {
-                    logger.info("Running sample: "+child.getName()+" (id="+child.getId()+")");
+                    logger.info("runSampleFolder - Running sample: "+child.getName()+" (id="+child.getId()+")");
                     runSamplePipelines(child.getId().toString(), reuseProcessing, reuseAlignment);  
                     Thread.sleep(1000); // Sleep so that the logs are a little cleaner
+                }
+                else {
+                    logger.info("runSampleFolder - Ignoring child which is not a folder or sample: "+child.getName()+" (id="+child.getId()+")");
                 }
             }
         } catch (Exception ex) {

@@ -180,6 +180,7 @@ public class JmsUtil {
             messageInterface.commit();
             messageInterface.endMessageSession();
             queueMessage.setMessageId(jmsMessage.getJMSMessageID());
+            logger.debug("Sent message with messageId:" + jmsMessage.getJMSMessageID() + " for taskId:" + processData.getItem(IProcessData.TASK));
             return queueMessage;
         }
         catch (Throwable e) {

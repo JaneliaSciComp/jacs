@@ -50,7 +50,7 @@ import org.janelia.it.jacs.shared.utils.FileUtil;
 public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
 	
 	protected static final String CONFIG_PREFIX = "alignConfiguration.";
-	protected static final int TIMEOUT_SECONDS = 30; 
+	protected static final int TIMEOUT_SECONDS = 60*30; // 30 minutes 
 	
     protected static final String EXECUTABLE_DIR = SystemConfigurationProperties.getString("Executables.ModuleBase");
 
@@ -64,7 +64,6 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
     protected Entity sampleEntity;
     protected String alignedArea;
     protected String gender;
-    protected File outputFile;
     
     protected boolean warpNeurons;
     protected AlignmentInputFile input1;
@@ -243,12 +242,14 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
             input.setInputSeparationFilename(newInputSeperation);
         }
 
-        logger.info("Copying files from archive");
-        ArchiveAccessHelper.synchronousGridifiedArchiveCopy(task, archivedFiles, targetFiles, false);
+        logger.info("Copying files from archive (task_id="+task+")");
+        ArchiveAccessHelper.sendCopyFromArchiveMessage(archivedFiles, targetFiles);
+//        ArchiveAccessHelper.synchronousGridifiedArchiveCopy(task, archivedFiles, targetFiles, false);
         
-        logger.debug("Waiting for files to appear: "+targetFiles);
+        logger.info("Waiting for files to appear (task_id="+task+")");
         FileUtil.waitForFiles(targetFiles, TIMEOUT_SECONDS*1000);
-        logger.debug("Retrieved necessary files from archive for alignment input "+input.getInputFilename());
+        
+        logger.info("Files have appeared (task_id="+task+")");
     }
     
     @Override
@@ -277,7 +278,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
     @Override
 	public void postProcess() throws MissingDataException {
 
-        this.outputFile = new File(resultFileNode.getDirectoryPath(),"Aligned.v3draw");
+        File outputFile = new File(resultFileNode.getDirectoryPath(),"Aligned.v3draw");
         
         File alignDir = new File(resultFileNode.getDirectoryPath());
     	File[] coreFiles = alignDir.listFiles(new FilenameFilter() {

@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
@@ -66,10 +67,12 @@ public class ChooseSampleAreaPipelineStepsService extends AbstractEntityService 
 		processData.putItem("RUN_STITCH", new Boolean(runStitch));
 		processData.putItem("RUN_ANALYSIS", new Boolean(runAnalysis));
 
-    	logger.info("Pipeline steps to execute for Sample "+sampleEntity.getName()+":");
-    	logger.info("    Processing = "+runProcessing);
-    	logger.info("    Merge = "+runMerge);
-    	logger.info("    Stitch = "+runStitch +((!runStitch&&hasStitch)?" (configured but not necessary for a single tile)":""));
-    	logger.info("    Analysis = "+runAnalysis);
+		List<String> steps = new ArrayList<String>();
+		if (runProcessing) steps.add("processing");
+		if (runMerge) steps.add("merge");
+		if (runStitch) steps.add("stitch");
+		if (runAnalysis) steps.add("analysis");
+		
+    	logger.info("Processing pipeline for Sample "+sampleEntity.getName()+": "+Task.csvStringFromCollection(steps));
     }
 }

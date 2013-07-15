@@ -35,7 +35,7 @@ public class GetPipelinesForDataSetService extends AbstractEntityService {
     			if (StringUtils.isEmpty(process)) continue;
     			processNames.add("PipelineConfig_"+process);
     		}
-    		logger.info("Putting "+processNames.size()+" strings in PIPELINE_PROCESS_NAME");
+    		logger.info("Putting "+processNames+" in PIPELINE_PROCESS_NAME");
         	processData.putItem("PIPELINE_PROCESS_NAME", processNames);	
     	}
     }

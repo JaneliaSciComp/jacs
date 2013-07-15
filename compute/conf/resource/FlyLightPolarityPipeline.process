@@ -22,6 +22,7 @@
         
         <!-- Init variables -->
         <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
+            <input name="REUSE_ALIGNMENT"/>
             <input name="OVERRIDE" value="false"/>
             <input name="PROCESS_VARIABLE_1" value="REUSE_ALIGNMENT"/>
             <input name="PROCESS_VARIABLE_VALUE_1" value="true"/>

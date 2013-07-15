@@ -381,6 +381,7 @@
             
         <!-- Decide which types of processing will be run -->
         <operation name="Choose Next Steps" processor="org.janelia.it.jacs.compute.service.entity.sample.ChoosePostSampleProcessingStepsService">
+            <input name="SAMPLE_ENTITY_ID"/>
             <input name="ALIGNMENT_ALGORITHMS"/>
             <input name="ALIGNMENT_ALGORITHM_PARAMS"/>
             <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES"/>

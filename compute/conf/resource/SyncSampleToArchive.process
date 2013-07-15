@@ -1,7 +1,7 @@
 <!-- 
 	Asynchronously move the Sample's file node to the archive. 
 -->
-<process name="Asynchronously synchronize sample to archive" processor="queue/samplePipelineLauncher" startEvent="pending">
+<process name="Synchronize sample to archive" processor="queue/gridArchiveAccess" startEvent="pending" updateProcessStatus="on_success">
     <sequence>
 	
 	   <input name="SAMPLE_ENTITY_ID"/>
