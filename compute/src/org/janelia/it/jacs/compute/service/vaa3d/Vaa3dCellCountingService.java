@@ -20,16 +20,17 @@ public class Vaa3dCellCountingService extends SubmitDrmaaJobService {
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
     private static final String CONFIG_PREFIX = "cellCountingConfiguration.";
     public static final String DEFAULT_PLAN =
-            "-ist 40 -nt 40 -cst 130 -dc 1 -ec 7 -mnr 90\n"+
-            "-ist 38 -nt 35 -cst 115 -dc 2 -ec 6 -mnr 85\n"+
-            "-ist 36 -nt 30 -cst 100 -dc 3 -ec 5 -mnr 80\n"+
-            "-ist 34 -nt 30 -cst 90 -dc 3 -ec 5 -mnr 70\n"+
-            "-ist 32 -nt 30 -cst 80 -dc 3 -ec 5 -mnr 60\n"+
-            "-ist 30 -nt 30 -cst 70 -dc 3 -ec 4 -mnr 50\n"+
-            "-ist 25 -nt 30 -cst 60 -dc 2 -ec 4 -mnr 40\n"+
-            "-ist 20 -nt 30 -cst 55 -dc 2 -ec 3 -mnr 30\n"+
-            "-ist 20 -nt 30 -cst 50 -dc 2 -ec 3 -mnr 30\n"+
-            "-ist 20 -nt 30 -cst 50 -dc 0 -ec 2 -mnr 30\n\n";
+            "-ist 40 -nt 40 -cst 130 -dc 1 -ec 7 -mnr 90 -mr 13\n" +
+            "-ist 38 -nt 35 -cst 115 -dc 2 -ec 6 -mnr 90 -mr 13\n" +
+            "-ist 36 -nt 30 -cst 100 -dc 3 -ec 5 -mnr 90 -mr 13\n" +
+            "-ist 34 -nt 30 -cst 90 -dc 3 -ec 5 -mnr 90 -mr 13\n" +
+            "-ist 32 -nt 30 -cst 80 -dc 3 -ec 5 -mnr 90 -mr 13\n" +
+            "-ist 30 -nt 30 -cst 70 -dc 3 -ec 4 -mnr 90 -mr 13\n" +
+            "-ist 25 -nt 30 -cst 60 -dc 2 -ec 4 -mnr 90 -mr 13\n" +
+            "-ist 20 -nt 30 -cst 55 -dc 2 -ec 3 -mnr 90 -mr 13\n" +
+            "-ist 20 -nt 30 -cst 50 -dc 2 -ec 3 -mnr 90 -mr 13\n" +
+            "-ist 20 -nt 30 -cst 50 -dc 0 -ec 2 -mnr 90 -mr 13\n\n";
+
     private String signalChannel, referenceChannel, inputFilePath, convertedFilePath, tifOutputPath, rawOutputPath;
 
     protected void init(IProcessData processData) throws Exception {
