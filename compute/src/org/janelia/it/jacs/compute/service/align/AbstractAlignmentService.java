@@ -242,14 +242,14 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
             input.setInputSeparationFilename(newInputSeperation);
         }
 
-        logger.info("Copying files from archive (task_id="+task+")");
+        logger.info("Copying files from archive (task_id="+task.getObjectId()+")");
         ArchiveAccessHelper.sendCopyFromArchiveMessage(archivedFiles, targetFiles);
 //        ArchiveAccessHelper.synchronousGridifiedArchiveCopy(task, archivedFiles, targetFiles, false);
         
-        logger.info("Waiting for files to appear (task_id="+task+")");
+        logger.info("Waiting for files to appear (task_id="+task.getObjectId()+"). Last file: "+targetFiles.get(targetFiles.size()-1));
         FileUtil.waitForFiles(targetFiles, TIMEOUT_SECONDS*1000);
         
-        logger.info("Files have appeared (task_id="+task+")");
+        logger.info("Files have appeared (task_id="+task.getObjectId()+"). Last file: "+targetFiles.get(targetFiles.size()-1));
     }
     
     @Override

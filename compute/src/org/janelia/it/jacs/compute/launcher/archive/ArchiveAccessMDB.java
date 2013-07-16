@@ -24,11 +24,11 @@ import org.jboss.annotation.ejb.PoolClass;
         @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
         @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/archiveAccess"),
-        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "5"),
+        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "1"),
         @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 5, timeout = 10000)
+@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 1, timeout = 10000)
 public class ArchiveAccessMDB extends SeriesLauncherMDB {
 
     private static Logger logger = Logger.getLogger(ArchiveAccessMDB.class);
@@ -42,10 +42,11 @@ public class ArchiveAccessMDB extends SeriesLauncherMDB {
     @Override
     public void onMessage(Message message) {
         try {
+            logger.info("ArchiveAccessMDB got message "+message.getJMSMessageID());
             String request = message.getStringProperty("REQUEST");
             List<String> filePathList = new ArrayList<String>();
             if (REQUEST_MOVE_TO_ARCHIVE.equals(request)) {
-                logger.debug("Limiting archive access for moveToArchive request");
+                logger.info("Limiting archive access for moveToArchive request");
                 String filepath = message.getStringProperty("FILE_PATH");
                 if (filepath==null) {
                     String filepaths = message.getStringProperty("FILE_PATHS");
@@ -66,7 +67,7 @@ public class ArchiveAccessMDB extends SeriesLauncherMDB {
                 }
             }
             else if (REQUEST_COPY_FROM_ARCHIVE.equals(request)) {
-                logger.debug("Limiting archive access for copyFromArchive request");
+                logger.info("Limiting archive access for copyFromArchive request");
                 String filepath = message.getStringProperty("SOURCE_FILE_PATH");
                 String targetFilepaths = "";
                 if (filepath==null) {
@@ -83,10 +84,11 @@ public class ArchiveAccessMDB extends SeriesLauncherMDB {
                 }
             }
             else {
-                logger.debug("Limiting archive access for message");
+                logger.info("Limiting archive access for message");
                 super.onMessage(message);
                 return;
             }
+            logger.info("ArchiveAccessMDB completed message "+message.getJMSMessageID());
         }
         catch (Exception e) {
             throw new EJBException(e);

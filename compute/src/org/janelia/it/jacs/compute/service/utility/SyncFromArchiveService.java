@@ -123,12 +123,10 @@ public class SyncFromArchiveService implements IService {
             script.append(MOVE_COMMAND+" "+tempFile.getAbsolutePath()+" "+targetFile);
     	}
     	
-    	
-    	logger.info("Running: "+script);
-    	
+    	logger.info("Running synchronization script: "+script);
         SystemCall call = new SystemCall(logger);
         int exitCode = call.emulateCommandLine(script.toString(), true, TIME_OUT_SECS);
-
+        
         if (0!=exitCode) {
         	throw new ServiceException("Synchronization from archive failed with exitCode "+exitCode);
         }

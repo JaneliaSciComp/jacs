@@ -113,15 +113,15 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
         if (!archivedFiles.isEmpty()) {
             logger.info("Creating temporary directory: "+fromArchiveDir.getAbsolutePath());
             fromArchiveDir.mkdirs();
-            
-            logger.info("Copying files from archive");
+
+            logger.info("Copying files from archive (task_id="+task.getObjectId()+")");
             ArchiveAccessHelper.sendCopyFromArchiveMessage(archivedFiles, targetFiles);
 //            ArchiveAccessHelper.synchronousGridifiedArchiveCopy(task, archivedFiles, targetFiles, false);
 
-            logger.debug("Waiting for files to appear: "+targetFiles);
+            logger.info("Waiting for files to appear (task_id="+task.getObjectId()+"). Last file: "+targetFiles.get(targetFiles.size()-1));
             FileUtil.waitForFiles(targetFiles, TIMEOUT_SECONDS*1000);
-            
-            logger.info("Retrieved necessary files from archive for separation "+resultFileNode.getDirectoryPath());   
+
+            logger.info("Files have appeared (task_id="+task.getObjectId()+"). Last file: "+targetFiles.get(targetFiles.size()-1));
             
             this.fromArchiveDir = fromArchiveDir;
         }

@@ -16,10 +16,10 @@ import org.jboss.annotation.ejb.PoolClass;
         @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
         @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/gridArchiveAccess"),
-        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "3"),
+        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "15"),
         @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 3, timeout = 10000)
+@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 15, timeout = 10000)
 public class GridArchiveAccessMDB extends SeriesLauncherMDB {
 }
