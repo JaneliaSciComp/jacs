@@ -270,9 +270,11 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                     unmergedChannelList.addAll(convertChanSpecToList(chanSpec1+chanSpec2));
                     
                     if (MergeAlgorithm.FLYLIGHT_ORDERED.getName().equals(mergeAlgorithm)) {
+                        
                         // Channels were kept in original order, but the reference was moved to the end
 
                         String chanSpec = chanSpec1.replaceAll("r", "")+chanSpec2.replaceAll("r", "")+"r";
+                        logger.info("  Using ordered merge algorithm with chanspec: "+chanSpec);
                         inputChannelList.addAll(convertChanSpecToList(chanSpec));
                         
                         // The output channel spec is defined by the sample (usually set during SAGE sync) and is 
@@ -287,7 +289,8 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                     }
                     else {
                         // Channels were reordered to RGB order by the merge step, and the reference was moved to the end
-
+                        logger.info("  Using RGB merge algorithm");
+                        
                         String redTag = null;
                         String greenTag = null;
                         String blueTag = null;
@@ -316,6 +319,8 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                             }
                         }
                            
+                        logger.info("    Found RGB tags: "+redTag+","+greenTag+","+blueTag+" and Ref tag:"+refTag);
+                        
                         inputChannelList.add(redTag);
                         inputChannelList.add(greenTag);
                         inputChannelList.add(blueTag);
@@ -326,6 +331,8 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                     outputChannelList.addAll(inputChannelList);
                 }
                 else {
+                    logger.info("  Using unmerged algorithm");
+                    
                     unmergedChannelList.addAll(convertChanSpecToList(chanSpec1));
                     // When there is no merging, then the input chan spec is equal to the LSM's chan spec. 
                     inputChannelList.addAll(convertChanSpecToList(chanSpec1));

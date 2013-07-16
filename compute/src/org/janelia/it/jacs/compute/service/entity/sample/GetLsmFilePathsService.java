@@ -49,12 +49,21 @@ public class GetLsmFilePathsService implements IService {
         	
         	List<MergedLsmPair> newPairs = new ArrayList<MergedLsmPair>();
             for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
-            	String newPath1 = getTargetLocation(mergedLsmPair.getLsmFilepath1(), resultNode);
-            	String newPath2 = getTargetLocation(mergedLsmPair.getLsmFilepath2(), resultNode);
-            	sourceFilePaths.add(mergedLsmPair.getLsmFilepath1());
-            	sourceFilePaths.add(mergedLsmPair.getLsmFilepath2());
-            	targetFilePaths.add(newPath1);
-            	targetFilePaths.add(newPath2);
+                
+                String newPath1 = null;
+                if (mergedLsmPair.getLsmFilepath1()!=null) {
+                    newPath1 = getTargetLocation(mergedLsmPair.getLsmFilepath1(), resultNode);
+                	sourceFilePaths.add(mergedLsmPair.getLsmFilepath1());
+                	targetFilePaths.add(newPath1);
+                }
+            	
+                String newPath2 = null;
+            	if (mergedLsmPair.getLsmFilepath2()!=null) {
+            	    newPath2 = getTargetLocation(mergedLsmPair.getLsmFilepath2(), resultNode);
+            	    sourceFilePaths.add(mergedLsmPair.getLsmFilepath2());
+            	    targetFilePaths.add(newPath2);
+            	}
+            	
             	MergedLsmPair newPair = new MergedLsmPair(newPath1, newPath2, mergedLsmPair.getMergedFilepath(), mergedLsmPair.getTag());
             	newPairs.add(newPair);
             }

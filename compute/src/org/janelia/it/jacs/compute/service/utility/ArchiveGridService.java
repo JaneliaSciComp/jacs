@@ -123,8 +123,13 @@ public class ArchiveGridService extends SubmitDrmaaJobService {
         LinkedList<String> targets = new LinkedList<String>(targetPaths);
         for(String sourceFilepath : sourcePaths) {
             String targetFilepath = targets.remove();
-            logger.info("Will copy "+sourceFilepath);
-            writeInstanceFiles(sourceFilepath, targetFilepath, configIndex++);
+            if (sourceFilepath!=null && targetFilepath!=null) {
+                logger.info("Will copy "+sourceFilepath);
+                writeInstanceFiles(sourceFilepath, targetFilepath, configIndex++);
+            }
+            else {
+                logger.warn("Null source or target filepath. Source:"+sourceFilepath+", Target:"+targetFilepath);
+            }
         }
         writeShellScript(writer);
         setJobIncrementStop(configIndex-1);
