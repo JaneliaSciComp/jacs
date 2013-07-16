@@ -23,7 +23,7 @@
         </operation>
 
 	    <!-- Move the files over if necessary -->
-        <sequence name="Limit Archive Access" waitForAsync="true" processor="queue/backgroundArchiveAccess">
+        <sequence name="Limit Archive Access" waitForAsync="true" processor="queue/archiveAccess">
             <operation name="Move large files to archive" processor="org.janelia.it.jacs.compute.service.utility.SyncToArchiveService">
                 <input name="FILE_PATHS" value="$V{ORIGINAL_FILE_PATHS}"/>
             </operation>
