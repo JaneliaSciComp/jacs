@@ -18,8 +18,9 @@ INSTALL_VAA3D=$3
 INSTALL_NEUSEP=$4
 INSTALL_SCRIPTS=$5
 INSTALL_DATA_SERVER=$6
-INSTALL_PROD_SERVER=$7
-INSTALL_CLIENT=$8
+INSTALL_DATA_SERVER2=$7
+INSTALL_PROD_SERVER=$8
+INSTALL_CLIENT=$9
 
 JACSDATA_DIR="/groups/scicomp/jacsData"
 EXE_DIR="$JACSDATA_DIR/servers/$SERVER/executables"
@@ -178,6 +179,19 @@ if [ $INSTALL_DATA_SERVER == 1 ]; then
     echo "Janelia Workstation Version ${JWVER} (Tomcat web front-end) was successfully deployed to the JACS production data-loading server."
 fi 
     
+################################################################
+# Install Jacs to the jacs-data2 (nightly data refresh) server
+################################################################
+if [ $INSTALL_DATA_SERVER2 == 1 ]; then
+    echo "  Deploying to server 'jacs-data2'..."
+    cd $JACS_COMPILE_DIR/compute
+    ant -Duser.server.machine=jacs-data2 -Duser.server.login=jacs "deploy-[your-server]-dev"
+    echo "Janelia Workstation Version ${JWVER} (JBoss server) was successfully deployed to the JACS production nightly update server."
+    cd $JACS_COMPILE_DIR/jacs
+    ant -Duser.server.machine=jacs-data2 -Duser.server.login=jacs "deploy-[your-server]-dev"
+    echo "Janelia Workstation Version ${JWVER} (Tomcat web front-end) was successfully deployed to the JACS production nightly update server."
+fi
+
 ################################################################
 # Install Jacs to the jacs (production) server
 ################################################################
