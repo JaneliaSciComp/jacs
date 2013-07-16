@@ -209,6 +209,14 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
             logger.info("Putting "+targetFiles.size()+" objects in TARGET_FILE_PATHS");
             processData.putItem("TARGET_FILE_PATHS", Task.csvStringFromCollection(targetFiles));
         }
+        else {
+            logger.info("Putting false in COPY_FROM_ARCHIVE");
+            processData.putItem("COPY_FROM_ARCHIVE", Boolean.FALSE);
+            logger.info("Putting null in SOURCE_FILE_PATHS");
+            processData.putItem("SOURCE_FILE_PATHS", null);
+            logger.info("Putting null in TARGET_FILE_PATHS");
+            processData.putItem("TARGET_FILE_PATHS", null);
+        }
     }
     
     protected String getConsolidatedLabel(Entity result) throws Exception {
