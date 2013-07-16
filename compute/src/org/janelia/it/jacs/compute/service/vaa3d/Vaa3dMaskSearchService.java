@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.service.vaa3d;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.maskSearch.MaskSearchTask;
 
 import java.io.File;
@@ -56,7 +57,7 @@ public class Vaa3dMaskSearchService extends SubmitDrmaaJobService {
         script.append("read INPUT_FILE\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix());
         script.append("\n");
-        script.append(Vaa3DHelper.getFormattedMaskSearchCommand("/groups/scicomp/jacsData/filestore/system/MaskSearch/All.pindex",
+        script.append(Vaa3DHelper.getFormattedMaskSearchCommand(SystemConfigurationProperties.getString("FileStore.CentralDir")+"/system/MaskSearch/All.pindex",
                 task.getParameter(MaskSearchTask.PARAM_queryChannel),
                 task.getParameter(MaskSearchTask.PARAM_matrix),
                 task.getParameter(MaskSearchTask.PARAM_maxHits),

@@ -1,7 +1,7 @@
 #!/bin/sh
-FWVER=$1
+JWVER=$1
 SERVER=$2
-DIR="/groups/scicomp/jacsData/servers/${SERVER}/executables/compile/neusep_FlySuite_${FWVER}-redhat"
+DIR="/groups/jacs/jacsHosts/servers/${SERVER}/executables/compile/neusep_JaneliaWorkstation_${JWVER}-redhat"
 echo "Building $DIR"
 cd $DIR
 mkdir build_cmake.redhat

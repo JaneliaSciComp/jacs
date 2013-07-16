@@ -101,7 +101,7 @@
        other than the default ./data under the Solr home.  If
        replication is in use, this should match the replication
        configuration.
-  <dataDir>${solr.data.dir:/groups/scicomp/jacsData/servers/rokicki-ws/solr/jacs/core_FlyWorkstation/data}</dataDir>
+  <dataDir>${solr.data.dir:/groups/jacs/jacsDev/servers/rokicki-ws/solr/jacs/core_FlyWorkstation/data}</dataDir>
     -->
   <dataDir>${solr.data.dir:/home/rokickik/dev/solr/jacs/core0/data}</dataDir>
 

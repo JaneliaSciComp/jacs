@@ -324,15 +324,6 @@
         <property name="downloadDAO"  ref="downloadDAO" />
     </bean>
 
-    <!-- Needed because sessionFactory is mooreSessionFactory connecting to MySQL database
-         and downloadService uses jacsdb sessionFactory -->
-    <bean name="mooreService"
-          class="org.janelia.it.jacs.web.gwt.download.server.MooreServiceImpl"
-          parent="baseServiceController">
-        <property name="mooreDAO" ref="mooreDAO" />
-    </bean>
-
-
 
     <!-- ========================= SPECIFIC VIEW DEFINITIONS FOR  ========================= -->
     <!-- ========================= DEFINITION FOR NON-SECURED CONTROLLERS========================= -->
@@ -365,7 +356,6 @@
                 <entry key="/**/search.oas" value-ref="searchService"/>
                 <entry key="/**/sampledetail.oas" value-ref="sampleDetailService"/>
                 <entry key="/**/log.oas" value-ref="logService"/>
-                <entry key="/**/mooreFoundationData.oas" value-ref="mooreService"/>
             </map>
         </property>
     </bean>

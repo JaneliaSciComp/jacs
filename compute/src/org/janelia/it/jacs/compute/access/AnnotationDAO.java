@@ -1,15 +1,6 @@
 package org.janelia.it.jacs.compute.access;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
-
+import com.google.common.collect.ImmutableSet;
 import org.apache.log4j.Logger;
 import org.hibernate.*;
 import org.hibernate.criterion.Expression;
@@ -37,7 +28,15 @@ import org.janelia.it.jacs.shared.utils.entity.AbstractEntityLoader;
 import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
 import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 
-import com.google.common.collect.ImmutableSet;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
 
 public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoader {
 	
@@ -3023,7 +3022,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     public Object[] getMaskQuantifierMapsFromSummary(String maskFolderName) throws DaoException {
         try {
             MaskAnnotationDataManager maskManager=new MaskAnnotationDataManager();
-            String resourceDirString= SystemConfigurationProperties.getString("MaskSampleAnnotation.ResourceDir");
+            String resourceDirString= SystemConfigurationProperties.getString("FileStore.CentralDir")+
+                    SystemConfigurationProperties.getString("MaskSampleAnnotation.ResourceDir");
             String quantifierSummaryFilename= SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationQuantifierSummaryFile");
             File summaryFile=new File(resourceDirString + File.separator+maskFolderName, quantifierSummaryFilename);
             File nameIndexFile=new File(resourceDirString + File.separator+maskFolderName, "maskNameIndex.txt");

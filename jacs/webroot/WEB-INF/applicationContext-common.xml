@@ -128,11 +128,6 @@
         <property name="userDao" ref="userDAO"/>
     </bean>
 
-    <!-- Separate DAO needed for MF150 MySQL database because downloadDAO has jacsdb sessionfactory injected  -->
-    <bean id="mooreDAO" class="org.janelia.it.jacs.server.access.hibernate.MooreDAOImpl">
-        <property name="sessionFactory" ref="sessionFactory"/>
-    </bean>
-
     <!-- Hibernate 3.0's JMX statistics service -->
 	<!-- Implements the StatisticsServiceMBean management interface -->
 	<bean name="jacs:type=HibernateStatistics" class="org.hibernate.jmx.StatisticsService">

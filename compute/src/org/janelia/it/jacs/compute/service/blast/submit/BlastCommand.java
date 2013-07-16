@@ -14,8 +14,8 @@ import java.util.Properties;
  * @author Sean Murphy
  */
 public class BlastCommand {
-    private static final String BLAST_CMD_PROP = "BlastServer.BlastCmd";
-    private String blastCmd = SystemConfigurationProperties.getString(BLAST_CMD_PROP);
+    private String blastCmd = SystemConfigurationProperties.getString("Executables.ModuleBase")+
+            SystemConfigurationProperties.getString("BlastServer.BlastCmd");
     private static Properties programMap = null;
 
     static {

@@ -56,13 +56,6 @@
 		<property name="password" value="${jdbc.password}"/>
 	</bean>
 
-    <!--<bean id="mooreDataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">-->
-		<!--<property name="driverClassName" value="${moore.jdbc.driverClassName}"/>-->
-		<!--<property name="url" value="${moore.jdbc.url}"/>-->
-		<!--<property name="username" value="${moore.jdbc.username}"/>-->
-		<!--<property name="password" value="${moore.jdbc.password}"/>-->
-	<!--</bean>-->
-
     <!-- JNDI DataSource for J2EE environments -->
 	<!--
 	<bean id="dataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
@@ -103,27 +96,6 @@
 			</map>
 		</property>
 	</bean>
-
-    <!-- Separate session factory needed to MF150 MySQL database -->
-    <!--<bean id="mooreSessionFactory" class="org.springframework.orm.hibernate3.LocalSessionFactoryBean">-->
-        <!--<property name="dataSource" ref="mooreDataSource"/>-->
-        <!--<property name="mappingJarLocations" value="cam-moore-model.jar"/>-->
-        <!--<property name="hibernateProperties">-->
-            <!--<props>-->
-                <!--<prop key="hibernate.current_session_context_class">thread</prop>-->
-                <!--<prop key="hibernate.show_sql">false</prop>-->
-                <!--<prop key="hibernate.format_sql">true</prop>-->
-                <!--<prop key="hibernate.generate_statistics">true</prop>-->
-            <!--</props>-->
-        <!--</property>-->
-        <!--<property name="eventListeners">-->
-            <!--<map>-->
-                <!--<entry key="merge">-->
-                    <!--<bean class="org.springframework.orm.hibernate3.support.IdTransferringMergeEventListener"/>-->
-                <!--</entry>-->
-            <!--</map>-->
-        <!--</property>-->
-    <!--</bean>-->
 
         <!-- Transaction manager for a single Hibernate SessionFactory (alternative to JTA) -->
 	<bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">

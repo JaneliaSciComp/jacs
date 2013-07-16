@@ -9,7 +9,7 @@
 # Exit after any error
 set -o errexit
 
-FWVER=$1
+JWVER=$1
 SERVER=$2
 
 SVN_OPTIONS="--trust-server-cert --non-interactive"
@@ -25,40 +25,40 @@ JACSDATA_DIR="/groups/scicomp/jacsData"
 EXE_DIR="$JACSDATA_DIR/servers/$SERVER/executables"
 
 COMPILE_DIR="$EXE_DIR/compile"
-VAA3D_COMPILE_REDHAT_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-redhat"
-VAA3D_COMPILE_FEDORA_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-fedora"
-NEUSEP_COMPILE_REDHAT_DIR="$COMPILE_DIR/neusep_FlySuite_${FWVER}-redhat"
-JACS_COMPILE_DIR="$COMPILE_DIR/jacs_FlySuite_${FWVER}"
+VAA3D_COMPILE_REDHAT_DIR="$COMPILE_DIR/vaa3d_JaneliaWorkstation_${JWVER}-redhat"
+VAA3D_COMPILE_FEDORA_DIR="$COMPILE_DIR/vaa3d_JaneliaWorkstation_${JWVER}-fedora"
+NEUSEP_COMPILE_REDHAT_DIR="$COMPILE_DIR/neusep_JaneliaWorkstation_${JWVER}-redhat"
+JACS_COMPILE_DIR="$COMPILE_DIR/jacs_JaneliaWorkstation_${JWVER}"
 
 INSTALL_DIR="$EXE_DIR/install"
-VAA3D_INSTALL_REDHAT_DIR="$INSTALL_DIR/vaa3d_FlySuite_${FWVER}-redhat"
-VAA3D_INSTALL_FEDORA_DIR="$INSTALL_DIR/vaa3d_FlySuite_${FWVER}-fedora"
-NEUSEP_INSTALL_REDHAT_DIR="$INSTALL_DIR/neusep_FlySuite_${FWVER}-redhat"
+VAA3D_INSTALL_REDHAT_DIR="$INSTALL_DIR/vaa3d_JaneliaWorkstation_${JWVER}-redhat"
+VAA3D_INSTALL_FEDORA_DIR="$INSTALL_DIR/vaa3d_JaneliaWorkstation_${JWVER}-fedora"
+NEUSEP_INSTALL_REDHAT_DIR="$INSTALL_DIR/neusep_JaneliaWorkstation_${JWVER}-redhat"
 VAA3D_INSTALL_SYMLINK="$INSTALL_DIR/vaa3d-redhat"
 NEUSEP_INSTALL_SYMLINK="$INSTALL_DIR/neusep-redhat"
-SCRIPTS_INSTALL_DIR="$INSTALL_DIR/scripts_${FWVER}"
+SCRIPTS_INSTALL_DIR="$INSTALL_DIR/scripts_${JWVER}"
 SCRIPTS_INSTALL_SYMLINK="$INSTALL_DIR/scripts"
 ALIGN_TEMPLATES_DIR="$JACSDATA_DIR/AlignTemplates"
 ALIGN_TEMPLATES_SYMLINK="$INSTALL_DIR/scripts/single_neuron/BrainAligner/AlignTemplates"
 
-FLYSUITE_NAME="FlySuite_${FWVER}"
-FLYSUITE_LINUX_NAME="FlySuite_linux_${FWVER}"
-FLYSUITE_WINDOWS_NAME="FlySuite_windows_${FWVER}"
+JANELIAWORKSTATION_NAME="JaneliaWorkstation_${JWVER}"
+JANELIAWORKSTATION_LINUX_NAME="JaneliaWorkstation_linux_${JWVER}"
+JANELIAWORKSTATION_WINDOWS_NAME="JaneliaWorkstation_windows_${JWVER}"
 
-STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
-PACKAGE_MAC_DIR="$STAGING_DIR/$FLYSUITE_NAME"
-PACKAGE_LINUX_DIR="$STAGING_DIR/$FLYSUITE_LINUX_NAME"
-PACKAGE_WINDOWS_DIR="$STAGING_DIR/$FLYSUITE_WINDOWS_NAME"
+STAGING_DIR="$JACSDATA_DIR/JaneliaWorkstationStaging"
+PACKAGE_MAC_DIR="$STAGING_DIR/$JANELIAWORKSTATION_NAME"
+PACKAGE_LINUX_DIR="$STAGING_DIR/$JANELIAWORKSTATION_LINUX_NAME"
+PACKAGE_WINDOWS_DIR="$STAGING_DIR/$JANELIAWORKSTATION_WINDOWS_NAME"
 
-FLYSUITE_CLIENTS_DIR="$JACSDATA_DIR/FlySuite"
-FLYSUITE_INSTALL_DIR="$FLYSUITE_CLIENTS_DIR/$FLYSUITE_NAME"
-FLYSUITE_LINUX_INSTALL_DIR="$FLYSUITE_CLIENTS_DIR/$FLYSUITE_LINUX_NAME"
-FLYSUITE_WINDOWS_INSTALL_DIR="$FLYSUITE_CLIENTS_DIR/$FLYSUITE_WINDOWS_NAME"
-FLYSUITE_TARBALL="$FLYSUITE_INSTALL_DIR.tgz"
-FLYSUITE_LINUX_TARBALL="$FLYSUITE_LINUX_INSTALL_DIR.tgz"
-FLYSUITE_WINDOWS_ZIPFILE="$FLYSUITE_WINDOWS_INSTALL_DIR.zip"
+JANELIAWORKSTATION_CLIENTS_DIR="$JACSDATA_DIR/JaneliaWorkstation"
+JANELIAWORKSTATION_INSTALL_DIR="$JANELIAWORKSTATION_CLIENTS_DIR/$JANELIAWORKSTATION_NAME"
+JANELIAWORKSTATION_LINUX_INSTALL_DIR="$JANELIAWORKSTATION_CLIENTS_DIR/$JANELIAWORKSTATION_LINUX_NAME"
+JANELIAWORKSTATION_WINDOWS_INSTALL_DIR="$JANELIAWORKSTATION_CLIENTS_DIR/$JANELIAWORKSTATION_WINDOWS_NAME"
+JANELIAWORKSTATION_TARBALL="$JANELIAWORKSTATION_INSTALL_DIR.tgz"
+JANELIAWORKSTATION_LINUX_TARBALL="$JANELIAWORKSTATION_LINUX_INSTALL_DIR.tgz"
+JANELIAWORKSTATION_WINDOWS_ZIPFILE="$JANELIAWORKSTATION_WINDOWS_INSTALL_DIR.zip"
 
-echo "Installing FlySuite version $FWVER (Part 3)"
+echo "Installing Janelia Workstation version $JWVER (Part 3)"
 
 ################################################################
 # Install Vaa3d for Redhat (Grid) and Fedora (Client) 
@@ -103,9 +103,9 @@ if [ $INSTALL_SCRIPTS == 1 ]; then
     echo "Installing single neuron scripts in $SCRIPTS_INSTALL_DIR"
     rm -rf $SCRIPTS_INSTALL_DIR || true
     mkdir -p $SCRIPTS_INSTALL_DIR
-    svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tags/FlySuite_${FWVER}/compute/scripts/single_neuron $SCRIPTS_INSTALL_DIR/single_neuron
+    svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tags/JaneliaWorkstation_${JWVER}/compute/scripts/single_neuron $SCRIPTS_INSTALL_DIR/single_neuron
 
-    svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/BrainAligner/tags/FlySuite_${FWVER}/pipelines/brainaligner $SCRIPTS_INSTALL_DIR/brainaligner
+    svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/BrainAligner/tags/JaneliaWorkstation_${JWVER}/pipelines/brainaligner $SCRIPTS_INSTALL_DIR/brainaligner
 
     echo "Creating Toolkit symbolic links"
     
@@ -127,41 +127,41 @@ if [ $INSTALL_SCRIPTS == 1 ]; then
 fi
 
 ################################################################
-# Install FlySuite Deployment Packages
+# Install Janelia Workstation Deployment Packages
 ################################################################
 if [ $INSTALL_CLIENT == 1 ]; then
     echo "Installing deployment packages"
     
-    rm -rf $FLYSUITE_INSTALL_DIR || true
-    mkdir -p $FLYSUITE_INSTALL_DIR
-    cp -R $PACKAGE_MAC_DIR/FlySuite.app $FLYSUITE_INSTALL_DIR
+    rm -rf $JANELIAWORKSTATION_INSTALL_DIR || true
+    mkdir -p $JANELIAWORKSTATION_INSTALL_DIR
+    cp -R $PACKAGE_MAC_DIR/JaneliaWorkstation.app $JANELIAWORKSTATION_INSTALL_DIR
 
-    rm -rf $FLYSUITE_LINUX_INSTALL_DIR || true
-    cp -R $PACKAGE_LINUX_DIR $FLYSUITE_LINUX_INSTALL_DIR
+    rm -rf $JANELIAWORKSTATION_LINUX_INSTALL_DIR || true
+    cp -R $PACKAGE_LINUX_DIR $JANELIAWORKSTATION_LINUX_INSTALL_DIR
 
-    rm -rf $FLYSUITE_WINDOWS_INSTALL_DIR || true
-    cp -R $PACKAGE_WINDOWS_DIR $FLYSUITE_WINDOWS_INSTALL_DIR
+    rm -rf $JANELIAWORKSTATION_WINDOWS_INSTALL_DIR || true
+    cp -R $PACKAGE_WINDOWS_DIR $JANELIAWORKSTATION_WINDOWS_INSTALL_DIR
 
-    #cd $FLYSUITE_CLIENTS_DIR
+    #cd $JANELIAWORKSTATION_CLIENTS_DIR
     #echo "Sync filesystem"
     #sync
     #sleep 4
 
     echo "Create tarballs"
-    cd $FLYSUITE_CLIENTS_DIR
-    tar cvfz "$FLYSUITE_TARBALL" $FLYSUITE_NAME
-    tar cvfz "$FLYSUITE_LINUX_TARBALL" $FLYSUITE_LINUX_NAME
-    #7z a "$FLYSUITE_WINDOWS_ZIPFILE" $FLYSUITE_WINDOWS_NAME
+    cd $JANELIAWORKSTATION_CLIENTS_DIR
+    tar cvfz "$JANELIAWORKSTATION_TARBALL" $JANELIAWORKSTATION_NAME
+    tar cvfz "$JANELIAWORKSTATION_LINUX_TARBALL" $JANELIAWORKSTATION_LINUX_NAME
+    #7z a "$JANELIAWORKSTATION_WINDOWS_ZIPFILE" $JANELIAWORKSTATION_WINDOWS_NAME
 
-    echo "FlySuite Version ${FWVER} (client) was successfully installed into the following locations:"
-    echo "  Mac: $FLYSUITE_INSTALL_DIR"
-    echo "  Linux: $FLYSUITE_LINUX_INSTALL_DIR"
-    echo "  Windows: $FLYSUITE_WINDOWS_INSTALL_DIR"
+    echo "Janelia Workstation Version ${JWVER} (client) was successfully installed into the following locations:"
+    echo "  Mac: $JANELIAWORKSTATION_INSTALL_DIR"
+    echo "  Linux: $JANELIAWORKSTATION_LINUX_INSTALL_DIR"
+    echo "  Windows: $JANELIAWORKSTATION_WINDOWS_INSTALL_DIR"
     echo ""
     echo "Tarballs are also available (these are used by the auto-updater):"
-    echo "  Mac: $FLYSUITE_TARBALL"
-    echo "  Linux: $FLYSUITE_LINUX_TARBALL"
-    echo "  Windows: $FLYSUITE_WINDOWS_ZIPFILE"
+    echo "  Mac: $JANELIAWORKSTATION_TARBALL"
+    echo "  Linux: $JANELIAWORKSTATION_LINUX_TARBALL"
+    echo "  Windows: $JANELIAWORKSTATION_WINDOWS_ZIPFILE"
     echo ""
 fi
 
@@ -172,10 +172,10 @@ if [ $INSTALL_DATA_SERVER == 1 ]; then
     echo "  Deploying to server 'jacs-data'..."
     cd $JACS_COMPILE_DIR/compute
     ant -Duser.server.machine=jacs-data -Duser.server.login=jacs "deploy-[your-server]-dev"
-    echo "FlySuite Version ${FWVER} (JBoss server) was successfully deployed to the JACS production data-loading server."
+    echo "Janelia Workstation Version ${JWVER} (JBoss server) was successfully deployed to the JACS production data-loading server."
     cd $JACS_COMPILE_DIR/jacs
     ant -Duser.server.machine=jacs-data -Duser.server.login=jacs "deploy-[your-server]-dev"
-    echo "FlySuite Version ${FWVER} (Tomcat web front-end) was successfully deployed to the JACS production data-loading server."
+    echo "Janelia Workstation Version ${JWVER} (Tomcat web front-end) was successfully deployed to the JACS production data-loading server."
 fi 
     
 ################################################################
@@ -185,10 +185,10 @@ if [ $INSTALL_PROD_SERVER == 1 ]; then
     echo "  Deploying to server 'jacs'..."
     cd $JACS_COMPILE_DIR/compute
     ant -Duser.server.machine=jacs -Duser.server.login=jacs "deploy-[your-server]-dev"
-    echo "FlySuite Version ${FWVER} (JBoss server) was successfully deployed to the JACS production server."
+    echo "Janelia Workstation Version ${JWVER} (JBoss server) was successfully deployed to the JACS production server."
     cd $JACS_COMPILE_DIR/jacs
     ant -Duser.server.machine=jacs -Duser.server.login=jacs "deploy-[your-server]-dev"
-    echo "FlySuite Version ${FWVER} (Tomcat web front-end) was successfully deployed to the JACS production server."
+    echo "Janelia Workstation Version ${JWVER} (Tomcat web front-end) was successfully deployed to the JACS production server."
 fi
 
 

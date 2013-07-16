@@ -1,12 +1,5 @@
 package org.janelia.it.jacs.compute.service.fly;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeException;
@@ -32,6 +25,13 @@ import org.janelia.it.jacs.model.user_data.entity.NamedFileNode;
 import org.janelia.it.jacs.model.user_data.entity.ScreenSampleResultNode;
 import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
 import org.janelia.it.jacs.shared.utils.FileUtil;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -66,7 +66,8 @@ public class MaskSampleAnnotationService  implements IService {
     final public String MODE_SETUP="SETUP";
     final public String MODE_COMPLETE="COMPLETE";
 
-    protected String maskAnnotationTopResourceDir=SystemConfigurationProperties.getString("MaskSampleAnnotation.ResourceDir");
+    protected String maskAnnotationTopResourceDir=SystemConfigurationProperties.getString("FileStore.CentralDir")+
+            SystemConfigurationProperties.getString("MaskSampleAnnotation.ResourceDir");
     protected String patternChannel=SystemConfigurationProperties.getString("FlyScreen.AlignedStackPatternChannel");
 
     //protected EntityBeanLocal entityBean;

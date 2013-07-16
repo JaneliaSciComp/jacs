@@ -43,7 +43,8 @@ public class CddSearchService extends SubmitDrmaaJobService {
     protected static String cddsearchMaxEval = SystemConfigurationProperties.getString("CddSearch.MaxEval");
     protected static String cddsearchOtherOpts = SystemConfigurationProperties.getString("CddSearch.OtherOpts");
     protected static String cddsearchDb = SystemConfigurationProperties.getString("CddSearch.Db");
-    protected static String rpsBlastCmd = SystemConfigurationProperties.getString("CddSearch.RpsBlastCmd");
+    protected static String rpsBlastCmd = SystemConfigurationProperties.getString("Executables.ModuleBase")+
+            SystemConfigurationProperties.getString("CddSearch.RpsBlastCmd");
 
     private static final String queueName = SystemConfigurationProperties.getString("CddSearch.Queue");
 

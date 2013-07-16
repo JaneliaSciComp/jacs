@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.service.fly;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityType;
@@ -26,7 +27,8 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
     private static final String FOLDER_PARAM = "TOP_LEVEL_FOLDER_NAME";
     private static final String INPATH_PARAM = "MASK_CHAN_PATH";
 
-    private static final String COMPARTMENT_NAMES_FILE = "/groups/scicomp/jacsData/MaskResources/Compartment/maskNameIndex.txt";
+    private static final String FILESTORE_ROOT_PATH = SystemConfigurationProperties.getString("FileStore.CentralDir");
+    private static final String COMPARTMENT_NAMES_FILE = FILESTORE_ROOT_PATH+File.separator+"/MaskResources/Compartment/maskNameIndex.txt";
     private static final String COMPARTMENT_FILE_PREFIX = "compartment_";
 
     private static final String DEFAULT_ALIGNMENT_SPACE = "Unified 20x Alignment Space";

@@ -5,7 +5,6 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.util.SubjectDBUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.DataSource;
 import org.janelia.it.jacs.model.user_data.FastaFileNode;
 import org.janelia.it.jacs.model.user_data.Node;
@@ -23,7 +22,6 @@ import org.janelia.it.jacs.shared.utils.SystemCall;
 import javax.naming.InitialContext;
 import java.io.*;
 import java.sql.Connection;
-import java.util.HashSet;
 import java.util.Properties;
 import java.util.Scanner;
 
@@ -97,7 +95,8 @@ public class FileNodeManager implements FileNodeManagerMBean {
             pf.setPartitionEntries(SystemConfigurationProperties.getLong(PARTITION_ENTRIES_PROP));
             Properties prop = new Properties();
             prop.setProperty(FormatDBTool.FORMATDB_PATH_PROP,
-                    SystemConfigurationProperties.getString(FormatDBTool.FORMATDB_PATH_PROP));
+                    SystemConfigurationProperties.getString("Executables.ModuleBase")+
+                        SystemConfigurationProperties.getString(FormatDBTool.FORMATDB_PATH_PROP));
             prop.setProperty(SystemCall.SCRATCH_DIR_PROP,
                     SystemConfigurationProperties.getString(SystemCall.SCRATCH_DIR_PROP));
             prop.setProperty(SystemCall.SHELL_PATH_PROP,

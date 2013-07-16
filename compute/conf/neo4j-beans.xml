@@ -24,7 +24,7 @@
     <context:annotation-config/>
     
     <!-- 
-    <neo4j:config storeDirectory="/groups/scicomp/jacsData/servers/rokicki-ws/neo4j/data/graph.db"/>
+    <neo4j:config storeDirectory="/groups/jacs/jacsDev/servers/rokicki-ws/neo4j/data/graph.db"/>
      -->
 	     
 	<bean id="graphDatabaseService" class="org.neo4j.kernel.EmbeddedGraphDatabase" destroy-method="shutdown">

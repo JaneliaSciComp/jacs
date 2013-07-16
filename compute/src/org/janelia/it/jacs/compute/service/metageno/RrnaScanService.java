@@ -105,7 +105,8 @@ public class RrnaScanService extends SubmitDrmaaJobService {
      */
 
     private static final String databasePath = SystemConfigurationProperties.getString("RrnaScan.Database");
-    private static final String blastCmd = SystemConfigurationProperties.getString("RrnaScan.BlastCmd");
+    private static final String blastCmd = SystemConfigurationProperties.getString("Executables.ModuleBase")+
+            SystemConfigurationProperties.getString("RrnaScan.BlastCmd");
     private static final String blast2btabCmd = SystemConfigurationProperties.getString("RrnaScan.Blast2BtabCmd");
     private static final String btab2bsmlCmd = SystemConfigurationProperties.getString("RrnaScan.Btab2BsmlCmd");
     private static final String bsml2fastaCmd = SystemConfigurationProperties.getString("RrnaScan.Bsml2FastaCmd");

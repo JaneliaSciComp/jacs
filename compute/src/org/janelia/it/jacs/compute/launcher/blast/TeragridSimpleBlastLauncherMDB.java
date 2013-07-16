@@ -22,12 +22,12 @@ import javax.ejb.MessageDriven;
         @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
         @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/teragridSimpleBlastLauncher"),
-        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "20"),
+        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "3"),
 //    @ActivationConfigProperty(propertyName="MaxMessages", propertyValue="30"),
         @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
         // DLQMaxResent is a JBoss-specific management property. 0 = no resent messages
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 20, timeout = 10000)
+@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 3, timeout = 10000)
 public class TeragridSimpleBlastLauncherMDB extends SeriesLauncherMDB {
 }

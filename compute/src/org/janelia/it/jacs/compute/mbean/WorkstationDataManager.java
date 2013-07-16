@@ -356,7 +356,8 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         try {
             Map<Entity, Map<String, Double>> entityQuantifierMap=EJBFactory.getLocalAnnotationBean().getMaskQuantifiers(maskFolderName);
             MaskAnnotationDataManager maskManager=new MaskAnnotationDataManager();
-            String resourceDirString= SystemConfigurationProperties.getString("MaskSampleAnnotation.ResourceDir");
+            String resourceDirString= SystemConfigurationProperties.getString("FileStore.CentralDir")+
+                    SystemConfigurationProperties.getString("MaskSampleAnnotation.ResourceDir");
             String quantifierSummaryFilename= SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationQuantifierSummaryFile");
             File summaryFile=new File(resourceDirString + File.separator+maskFolderName, quantifierSummaryFilename);
             File nameIndexFile=new File(resourceDirString + File.separator+maskFolderName, "maskNameIndex.txt");

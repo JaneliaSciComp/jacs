@@ -1,9 +1,5 @@
 package org.janelia.it.jacs.compute.service.fly;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.util.*;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -26,7 +22,10 @@ import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.MaskAnnotationResultNode;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.util.*;
 
 
 /**
@@ -78,7 +77,8 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
 
     public static final String TOP_LEVEL_GUIDE_DIR_NAME = "Pattern Guides";
 
-    protected String maskAnnotationTopResourceDir=SystemConfigurationProperties.getString("MaskSampleAnnotation.ResourceDir");
+    protected String maskAnnotationTopResourceDir=SystemConfigurationProperties.getString("FileStore.CentralDir")+
+            SystemConfigurationProperties.getString("MaskSampleAnnotation.ResourceDir");
 
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;

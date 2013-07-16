@@ -75,7 +75,8 @@ public class PriamEcService extends SubmitDrmaaJobService {
     protected static String priamOtherOpts = SystemConfigurationProperties.getString("Priam.OtherOpts");
     protected static String priamDb = SystemConfigurationProperties.getString("Priam.Db");
     protected static String priamPssm = SystemConfigurationProperties.getString("Priam.Pssm");
-    protected static String rpsBlastCmd = SystemConfigurationProperties.getString("Priam.RpsBlastCmd");
+    protected static String rpsBlastCmd = SystemConfigurationProperties.getString("Executables.ModuleBase")+
+            SystemConfigurationProperties.getString("Priam.RpsBlastCmd");
     protected static String ecListCmd = SystemConfigurationProperties.getString("Priam.CreateEcListCmd");
     protected static String parserCmd = SystemConfigurationProperties.getString("MgAnnotation.Parser");
     protected static String deflineMapFile = SystemConfigurationProperties.getString("Priam.DeflineMap");

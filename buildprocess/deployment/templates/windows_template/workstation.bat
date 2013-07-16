@@ -1,6 +1,6 @@
 @ECHO OFF
 ::
-:: Check for updates before starting the FlySuite.  NOTE: this script should never run on Mac, so no
+:: Check for updates before starting the Janelia Workstation.  NOTE: this script should never run on Mac, so no
 :: extra-pathing info will be checked.
 ::
 
@@ -25,7 +25,7 @@ set UPDATEBAT="%TEMP%"\__workstation.bat
 IF NOT "%ErrorLevel%"=="0" goto Update
     echo Already at latest version.
 	cd %INSTALL%
-    call FlySuite.bat
+    call JaneliaWorkstation.bat
 	exit 0
 
 :Update
@@ -41,7 +41,7 @@ IF NOT "%ErrorLevel%"=="0" goto Update
     echo xcopy /S "%DOWNLOAD%" "%INSTALL%"   >> %UPDATEBAT%
     echo echo done.  Update complete.        >> %UPDATEBAT%
 	echo cd "%INSTALL%"                      >> %UPDATEBAT%
-	echo FlySuite.bat                        >> %UPDATEBAT%
+	echo JaneliaWorkstation.bat              >> %UPDATEBAT%
 	echo exit 0                              >> %UPDATEBAT%
 
     :: Now run the file created above.  Exit afterwards.

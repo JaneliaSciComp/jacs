@@ -38,7 +38,8 @@ public class ReversePsiBlastSubmitJobService extends SubmitDrmaaJobService {
     private static final String mergeSortMinMemory = SystemConfigurationProperties.getString("BlastServer.GridMergeSortMinimumMemoryMB");
     private static final String mergeSortMaxMemory = SystemConfigurationProperties.getString("BlastServer.GridMergeSortMaximumMemoryMB");
 
-    private static final String rpsBlastCmd = SystemConfigurationProperties.getString("RpsBlast.Cmd");
+    private static final String rpsBlastCmd = SystemConfigurationProperties.getString("Executables.ModuleBase")+
+            SystemConfigurationProperties.getString("RpsBlast.Cmd");
     private static final String resultFilename = SystemConfigurationProperties.getString("RpsBlast.ResultName");
     private static final String localTmpDirPath = SystemConfigurationProperties.getString("computeserver.ScratchDir");
     private static final String normalQueue = SystemConfigurationProperties.getString("Grid.NormalQueue");

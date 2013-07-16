@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Check for updates before starting the FlySuite.
+# Check for updates before starting the Janelia Workstation.
 #
 
 TEMP=/tmp

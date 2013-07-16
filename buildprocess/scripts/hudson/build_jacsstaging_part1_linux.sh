@@ -13,13 +13,13 @@
 # 
 # For example, to create manually build 0.1.1 from the trunk of all 3 repositories: 
 # 
-# FWVER=0.1.1
+# JWVER=0.1.1
 #
-# svn copy https://svn.janelia.org/penglab/projects/vaa3d/trunk https://svn.janelia.org/penglab/projects/vaa3d/tags/FlySuite_${FWVER} -m "Creating a branch for Workstation Suite, release ${FWVER}"
+# svn copy https://svn.janelia.org/penglab/projects/vaa3d/trunk https://svn.janelia.org/penglab/projects/vaa3d/tags/JaneliaWorkstation_${JWVER} -m "Creating a branch for Workstation, release ${JWVER}"
 #
-# svn copy https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tags/FlySuite_${FWVER} -m "Creating a branch for Workstation Suite, release ${FWVER}" 
+# svn copy https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tags/JaneliaWorkstation_${JWVER} -m "Creating a branch for Workstation, release ${JWVER}"
 #
-# svn copy https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/trunk https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/tags/FlySuite_${FWVER} -m "Creating a branch for Workstation Suite, release ${FWVER}"
+# svn copy https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/trunk https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/tags/JaneliaWorkstation_${JWVER} -m "Creating a branch for Workstation, release ${JWVER}"
 #
 #
 
@@ -29,15 +29,15 @@ set -o errexit
 # Configure SGE for doing grid builds
 . /sge/current/default/common/settings.sh
 
-FWVER=$1
+JWVER=$1
 SERVER=$2
 BUILD_VAA3D=$3
 BUILD_NEUSEP=$4
 BUILD_JACS=$5
-BUILD_FLYSUITE=$6
+BUILD_JANELIAWORKSTATION=$6
 RUN_PART2=$7
 PART2_BUILD_VAA3D=$8
-PART2_BUILD_FLYSUITE=$9
+PART2_BUILD_JANELIAWORKSTATION=$9
 PART2_BUILD_JACSTEST=$10
 
 JACSHOME_DIR="/home/jacs"
@@ -52,27 +52,27 @@ MAC_EXECUTOR_HOST="saffordt-wm1"
 SSH_OPTIONS=""
 
 COMPILE_DIR="$EXE_DIR/compile"
-#VAA3D_COMPILE_REDHAT_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-redhat"
-#VAA3D_COMPILE_FEDORA_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-fedora"
-#NEUSEP_COMPILE_REDHAT_DIR="$COMPILE_DIR/neusep_FlySuite_${FWVER}-redhat"
-#JACS_COMPILE_DIR="$COMPILE_DIR/jacs_FlySuite_${FWVER}"
+#VAA3D_COMPILE_REDHAT_DIR="$COMPILE_DIR/vaa3d_JaneliaWorkstation_${JWVER}-redhat"
+#VAA3D_COMPILE_FEDORA_DIR="$COMPILE_DIR/vaa3d_JaneliaWorkstation_${JWVER}-fedora"
+#NEUSEP_COMPILE_REDHAT_DIR="$COMPILE_DIR/neusep_JaneliaWorkstation_${JWVER}-redhat"
+#JACS_COMPILE_DIR="$COMPILE_DIR/jacs_JaneliaWorkstation_${JWVER}"
 
 
-VAA3D_COMPILE_REDHAT_DIR="$COMPILE_DIR/vaa3d_FlySuite_Staging-redhat"
-VAA3D_COMPILE_FEDORA_DIR="$COMPILE_DIR/vaa3d_FlySuite_Staging-fedora"
-NEUSEP_COMPILE_REDHAT_DIR="$COMPILE_DIR/neusep_FlySuite_Staging-redhat"
-JACS_COMPILE_DIR="$COMPILE_DIR/jacs_FlySuite_Staging"
+VAA3D_COMPILE_REDHAT_DIR="$COMPILE_DIR/vaa3d_JaneliaWorkstation_Staging-redhat"
+VAA3D_COMPILE_FEDORA_DIR="$COMPILE_DIR/vaa3d_JaneliaWorkstation_Staging-fedora"
+NEUSEP_COMPILE_REDHAT_DIR="$COMPILE_DIR/neusep_JaneliaWorkstation_Staging-redhat"
+JACS_COMPILE_DIR="$COMPILE_DIR/jacs_JaneliaWorkstation_Staging"
 
 
-STAGING_DIR="$EXE_DIR/FlySuiteStaging"
+STAGING_DIR="$EXE_DIR/JaneliaWorkstationStaging"
 #TEMPLATE_DIR="$EXE_DIR/templates"
 
-#PACKAGE_MAC_DIR="$STAGING_DIR/FlySuite_${FWVER}"
-#PACKAGE_LINUX_DIR="$STAGING_DIR/FlySuite_linux_${FWVER}"
+#PACKAGE_MAC_DIR="$STAGING_DIR/JaneliaWorkstation_${JWVER}"
+#PACKAGE_LINUX_DIR="$STAGING_DIR/JaneliaWorkstation_linux_${JWVER}"
 
-PACKAGE_MAC_DIR="$STAGING_DIR/FlySuite_Staging"
-PACKAGE_LINUX_DIR="$STAGING_DIR/FlySuite_linux_Staging"
-echo "Building FlySuite version Staging (Part 1)"
+PACKAGE_MAC_DIR="$STAGING_DIR/JaneliaWorkstation_Staging"
+PACKAGE_LINUX_DIR="$STAGING_DIR/JaneliaWorkstation_linux_Staging"
+echo "Building Janelia Workstation version Staging (Part 1)"
 
 ################################################################
 # Make sure the latest scripts are in an accessible place.
@@ -80,7 +80,7 @@ echo "Building FlySuite version Staging (Part 1)"
 # access that.)
 ################################################################
 rm -rf $SCRIPT_DIR || true
-#svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tags/FlySuite_${FWVER}/buildprocess/scripts/hudson $SCRIPT_DIR
+#svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tags/JaneliaWorkstation_${JWVER}/buildprocess/scripts/hudson $SCRIPT_DIR
 svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk/buildprocess/scripts/hudson $SCRIPT_DIR
 
 ################################################################
@@ -88,7 +88,7 @@ svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Proje
 # client packages 
 ################################################################
 rm -rf $TEMPLATE_DIR || true
-#svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tags/FlySuite_${FWVER}/buildprocess/deployment/templates $TEMPLATE_DIR
+#svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tags/JaneliaWorkstation_${JWVER}/buildprocess/deployment/templates $TEMPLATE_DIR
 svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk/buildprocess/deployment/templates $TEMPLATE_DIR
 
 
@@ -106,11 +106,11 @@ if [ $BUILD_VAA3D == 1 ]; then
     rm -rf $VAA3D_COMPILE_FEDORA_DIR || true
 
     echo "  Checking out from SVN"
-    #svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/tags/FlySuite_${FWVER} $VAA3D_COMPILE_REDHAT_DIR
+    #svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/tags/JaneliaWorkstation_${JWVER} $VAA3D_COMPILE_REDHAT_DIR
     svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/trunk $VAA3D_COMPILE_REDHAT_DIR
     if [ ! -e $VAA3D_COMPILE_REDHAT_DIR ]; then
-        #echo "SVN tag not found for Vaa3d: FlySuite_${FWVER}"
-        echo "SVN tag not found for Vaa3d: FlySuite_Staging"
+        #echo "SVN tag not found for Vaa3d: JaneliaWorkstation_${JWVER}"
+        echo "SVN tag not found for Vaa3d: JaneliaWorkstation_Staging"
         exit 1
     fi
     svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/BrainAligner/trunk/jba $VAA3D_COMPILE_REDHAT_DIR/jba
@@ -122,7 +122,7 @@ if [ $BUILD_VAA3D == 1 ]; then
     cp -R $VAA3D_COMPILE_REDHAT_DIR $VAA3D_COMPILE_FEDORA_DIR
 
     echo "  Building Vaa3D for the grid (in the background)"
-    #echo "sh \"$VAA3D_COMPILE_REDHAT_DIR/qsub_vaa3d_build.sh\" $FWVER $SERVER" > "$VAA3D_COMPILE_REDHAT_DIR/build.sh"
+    #echo "sh \"$VAA3D_COMPILE_REDHAT_DIR/qsub_vaa3d_build.sh\" $JWVER $SERVER" > "$VAA3D_COMPILE_REDHAT_DIR/build.sh"
     echo "sh \"$VAA3D_COMPILE_REDHAT_DIR/qsub_vaa3d_build.sh\" Staging $SERVER" > "$VAA3D_COMPILE_REDHAT_DIR/build.sh"
     qsub -l short=true -sync y "$VAA3D_COMPILE_REDHAT_DIR/build.sh" &
     VAA3D_QSUB_PID=$!
@@ -143,16 +143,16 @@ if [ $BUILD_NEUSEP == 1 ]; then
     rm -rf $NEUSEP_COMPILE_REDHAT_DIR || true
     
     echo "  Checking out from SVN"
-    #svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/tags/FlySuite_${FWVER} $NEUSEP_COMPILE_REDHAT_DIR
+    #svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/tags/JaneliaWorkstation_${JWVER} $NEUSEP_COMPILE_REDHAT_DIR
     svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/NeuronSeparator/trunk $NEUSEP_COMPILE_REDHAT_DIR
     if [ ! -e $NEUSEP_COMPILE_REDHAT_DIR ]; then
-        #echo "SVN tag not found for NeuronSeparator: FlySuite_${FWVER}"
-        echo "SVN tag not found for NeuronSeparator: FlySuite_Staging"
+        #echo "SVN tag not found for NeuronSeparator: JaneliaWorkstation_${JWVER}"
+        echo "SVN tag not found for NeuronSeparator: JaneliaWorkstation_Staging"
         exit 1
     fi
     #cp "$SCRIPT_DIR/qsub_neusep_build.sh" $NEUSEP_COMPILE_REDHAT_DIR
     #echo "  Building NeuronSeparator for the grid (in the background)"
-    #echo "sh \"$NEUSEP_COMPILE_REDHAT_DIR/qsub_neusep_build.sh\" $FWVER $SERVER" > "$NEUSEP_COMPILE_REDHAT_DIR/build.sh"
+    #echo "sh \"$NEUSEP_COMPILE_REDHAT_DIR/qsub_neusep_build.sh\" $JWVER $SERVER" > "$NEUSEP_COMPILE_REDHAT_DIR/build.sh"
     #qsub -sync y "$NEUSEP_COMPILE_REDHAT_DIR/build.sh" &
     #NEUSEP_QSUB_PID=$!
 fi
@@ -168,11 +168,11 @@ if [ $BUILD_JACS == 1 ]; then
     rm -rf $JACS_COMPILE_DIR || true
     
     echo "  Checking out from SVN"
-    #svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tags/FlySuite_${FWVER} $JACS_COMPILE_DIR
+    #svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/tags/JaneliaWorkstation_${JWVER} $JACS_COMPILE_DIR
     svn $SVN_OPTIONS co https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk $JACS_COMPILE_DIR
     if [ ! -e $JACS_COMPILE_DIR ]; then
-        #echo "SVN tag not found for jacs: FlySuite_${FWVER}"
-        echo "SVN tag not found for jacs: FlySuite_Staging"
+        #echo "SVN tag not found for jacs: JaneliaWorkstation_${JWVER}"
+        echo "SVN tag not found for jacs: JaneliaWorkstation_Staging"
         exit 1
     fi
 
@@ -185,9 +185,9 @@ if [ $BUILD_JACS == 1 ]; then
 fi
 
 ################################################################
-# Build FlySuite Deployment Packages
+# Build Janelia Workstation Deployment Packages
 ################################################################
-if [[ $SERVER == "jacs-staging" ]] && [[ $BUILD_FLYSUITE == 1 ]]; then
+if [[ $SERVER == "jacs-staging" ]] && [[ $BUILD_JANELIAWORKSTATION == 1 ]]; then
     echo "Creating deployment packages"
     
     echo "  Removing $PACKAGE_MAC_DIR"
@@ -223,6 +223,6 @@ echo ""
 
 if [ $RUN_PART2 == 1 ]; then
     echo "Now running part 2 on a Mac..."
-    ssh $SSH_OPTIONS $MAC_EXECUTOR_HOST "sh $SCRIPT_DIR/build_jacsstaging_part2_mac.sh $FWVER $SERVER $PART2_BUILD_VAA3D $PART2_BUILD_FLYSUITE"
+    ssh $SSH_OPTIONS $MAC_EXECUTOR_HOST "sh $SCRIPT_DIR/build_jacsstaging_part2_mac.sh $JWVER $SERVER $PART2_BUILD_VAA3D $PART2_BUILD_JANELIAWORKSTATION"
 fi
 

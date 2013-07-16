@@ -30,7 +30,8 @@ public class FormatDBTool {
     public static void main(String[] args) {
         Properties prop = new Properties();
         prop.setProperty(FormatDBTool.FORMATDB_PATH_PROP,
-                SystemConfigurationProperties.getString(FormatDBTool.FORMATDB_PATH_PROP));
+                SystemConfigurationProperties.getString("Executables.ModuleBase")+
+                    SystemConfigurationProperties.getString(FormatDBTool.FORMATDB_PATH_PROP));
         prop.setProperty(SystemCall.SCRATCH_DIR_PROP,
                 SystemConfigurationProperties.getString(SystemCall.SCRATCH_DIR_PROP));
         prop.setProperty(SystemCall.SHELL_PATH_PROP,
@@ -90,7 +91,7 @@ public class FormatDBTool {
     public FormatDBTool(Properties props, Logger logger, String partitionPrefix) {
         if (props != null) {
             properties = props;
-            String formatDBPathString = props.getProperty(FORMATDB_PATH_PROP);
+            String formatDBPathString = SystemConfigurationProperties.getString("Executables.ModuleBase")+props.getProperty(FORMATDB_PATH_PROP);
             if (formatDBPathString != null) formatDBPath = formatDBPathString;
         }
         this.logger = logger;

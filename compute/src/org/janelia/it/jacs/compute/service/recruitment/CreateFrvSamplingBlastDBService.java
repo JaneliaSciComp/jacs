@@ -62,7 +62,8 @@ public class CreateFrvSamplingBlastDBService implements IService {
             pf.setPartitionEntries(SystemConfigurationProperties.getLong("BlastServer.PartitionEntries"));
             Properties prop = new Properties();
             prop.setProperty(FormatDBTool.FORMATDB_PATH_PROP,
-                    SystemConfigurationProperties.getString(FormatDBTool.FORMATDB_PATH_PROP));
+                    SystemConfigurationProperties.getString("Executables.ModuleBase")+
+                        SystemConfigurationProperties.getString(FormatDBTool.FORMATDB_PATH_PROP));
             prop.setProperty(SystemCall.SCRATCH_DIR_PROP, rsdfn.getDirectoryPath());
             prop.setProperty(SystemCall.SHELL_PATH_PROP,
                     SystemConfigurationProperties.getString(SystemCall.SHELL_PATH_PROP));

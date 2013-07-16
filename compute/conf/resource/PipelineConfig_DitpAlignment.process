@@ -9,7 +9,7 @@
             <!-- ALIGNMENT_ALGORITHMS comma separated values must match an enum from org.janelia.it.jacs.model.entity.cv.AlignmentAlgorithm -->
             <input name="ALIGNMENT_ALGORITHMS" value="CONFIGURED_BRAIN_VNC"/>
 
-            <!-- ALIGNMENT_ALGORITHM_PARAMS identifies script in /groups/scicomp/jacsData/servers/[instance-name]/executables/install/scripts/brainaligner/ -->
+            <!-- ALIGNMENT_ALGORITHM_PARAMS identifies script in /groups/jacs/jacsHosts/servers/[instance-name]/executables/install/scripts/brainaligner/ -->
             <input name="ALIGNMENT_ALGORITHM_PARAMS" value="flybrainaligner20x_ditp_JBA.sh"/>
 
             <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>

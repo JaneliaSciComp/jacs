@@ -12,11 +12,11 @@ import javax.ejb.MessageDriven;
         @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
         @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/muscleLauncher"),
-        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "5"),
+        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "3"),
         @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 5, timeout = 10000)
+@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 3, timeout = 10000)
 public class MuscleLauncherMDB extends SeriesLauncherMDB {
 
 }

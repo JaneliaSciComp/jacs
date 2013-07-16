@@ -1,1 +1,1 @@
-These directories contain files which are deployed with the FlySuite for each platform. 
+These directories contain files which are deployed with the Janelia Workstation for each platform.

@@ -42,7 +42,7 @@ public class LocalTestManager implements LocalTestManagerMBean {
 							.entity(EntityConstants.TYPE_FOLDER, "Diptera")
 								.entity(EntityConstants.TYPE_FOLDER, "Drosophilidae")
 									.entity(EntityConstants.TYPE_FOLDER, "Drosophila")
-										.attr(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, "/groups/scicomp/jacsData/FlySuite/FlySuite_linux_1.0.0.0/fly.png")
+										.attr(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, "/groups/scicomp/jacsData/JaneliaWorkstation/JaneliaWorkstation_linux_1.5.3.0/workstation_128_icon.png")
 									.up()
 								.up()
 							.up()

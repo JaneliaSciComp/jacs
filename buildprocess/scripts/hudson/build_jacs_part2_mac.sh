@@ -14,10 +14,10 @@
 # Exit after any error
 set -o errexit
 
-FWVER=$1
+JWVER=$1
 SERVER=$2
 BUILD_VAA3D=$3
-BUILD_FLYSUITE=$4
+BUILD_JANELIAWORKSTATION=$4
 
 JACSDATA_DIR="/groups/scicomp/jacsData"
 HOME_DIR="/Users/jacs"
@@ -27,14 +27,14 @@ EXE_DIR="$JACSDATA_DIR/servers/$SERVER/executables"
 SCRIPT_DIR="$JACSDATA_DIR/servers/$SERVER/scripts"
 
 COMPILE_DIR="$EXE_DIR/compile"
-VAA3D_COMPILE_MAC_DIR="$COMPILE_DIR/vaa3d_FlySuite_${FWVER}-mac"
-VAA3D_COMPILE_LOCAL_DIR="$HOME_DIR/vaa3d_FlySuite_${FWVER}-mac"
-JACS_COMPILE_DIR="$COMPILE_DIR/jacs_FlySuite_${FWVER}"
+VAA3D_COMPILE_MAC_DIR="$COMPILE_DIR/vaa3d_JaneliaWorkstation_${JWVER}-mac"
+VAA3D_COMPILE_LOCAL_DIR="$HOME_DIR/vaa3d_JaneliaWorkstation_${JWVER}-mac"
+JACS_COMPILE_DIR="$COMPILE_DIR/jacs_JaneliaWorkstation_${JWVER}"
 
-STAGING_DIR="$JACSDATA_DIR/FlySuiteStaging"
-PACKAGE_MAC_DIR="$STAGING_DIR/FlySuite_${FWVER}"
+STAGING_DIR="$JACSDATA_DIR/JaneliaWorkstationStaging"
+PACKAGE_MAC_DIR="$STAGING_DIR/JaneliaWorkstation_${JWVER}"
 
-echo "Building FlySuite version $FWVER (Part 2)"
+echo "Building Janelia Workstation version $JWVER (Part 2)"
 
 ################################################################
 # Build Vaa3d for the Mac client
@@ -48,9 +48,9 @@ if [ $BUILD_VAA3D == 1 ]; then
     rm -rf "$VAA3D_COMPILE_MAC_DIR" || true
 
     echo "  Checking out from SVN"
-    svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/tags/FlySuite_${FWVER} $VAA3D_COMPILE_MAC_DIR
+    svn $SVN_OPTIONS co https://svn.janelia.org/penglab/projects/vaa3d/tags/JaneliaWorkstation_${JWVER} $VAA3D_COMPILE_MAC_DIR
     if [ ! -e $VAA3D_COMPILE_MAC_DIR ]; then
-        echo "SVN tag not found for Vaa3d: FlySuite_${FWVER}"
+        echo "SVN tag not found for Vaa3d: JaneliaWorkstation_${JWVER}"
         exit 1
     fi
 
@@ -70,22 +70,22 @@ fi
 # Create the Mac Bundle
 ################################################################
 
-if [ $BUILD_FLYSUITE == 1 ]; then
+if [ $BUILD_JANELIAWORKSTATION == 1 ]; then
 
     mkdir -p $PACKAGE_MAC_DIR # this should have been created by part 1
     cp -R $VAA3D_COMPILE_MAC_DIR/bin/vaa3d64.app $PACKAGE_MAC_DIR/vaa3d64.app
 
-    ICON_FILE="$JACS_COMPILE_DIR/console/src/main/java/images/fly.png"
+    ICON_FILE="$JACS_COMPILE_DIR/console/src/main/java/images/workstation_128_icon.png"
     WORKSTATION_JAR="$PACKAGE_MAC_DIR/workstation.jar"
     WORKSTATION_LIB="$PACKAGE_MAC_DIR/workstation_lib"
     VAA3D_BUNDLE="$PACKAGE_MAC_DIR/vaa3d64.app"
     BUNDLE_SCRIPT="$PACKAGE_MAC_DIR/workstation.sh"
     START_SCRIPT="$PACKAGE_MAC_DIR/start.sh"
-    TMP_BUNDLE_FILE="/tmp/FlySuite.app"
-    BUNDLE_FILE="$PACKAGE_MAC_DIR/FlySuite.app"
+    TMP_BUNDLE_FILE="/tmp/JaneliaWorkstation.app"
+    BUNDLE_FILE="$PACKAGE_MAC_DIR/JaneliaWorkstation.app"
 
     rm -rf $BUNDLE_FILE || true
-    /usr/local/bin/platypus -a 'FlySuite' -o 'None' -p '/bin/sh' -u 'HHMI'  -V "${FWVER}"  -I 'org.janelia.FlySuite' -i "$ICON_FILE" -f "$WORKSTATION_JAR" -f "$WORKSTATION_LIB" -f "$VAA3D_BUNDLE" -f "$START_SCRIPT" -c "$BUNDLE_SCRIPT" "$TMP_BUNDLE_FILE"
+    /usr/local/bin/platypus -a 'JaneliaWorkstation' -o 'None' -p '/bin/sh' -u 'HHMI'  -V "${JWVER}"  -I 'org.janelia.JaneliaWorkstation' -i "$ICON_FILE" -f "$WORKSTATION_JAR" -f "$WORKSTATION_LIB" -f "$VAA3D_BUNDLE" -f "$START_SCRIPT" -c "$BUNDLE_SCRIPT" "$TMP_BUNDLE_FILE"
 
     mv "$TMP_BUNDLE_FILE" "$BUNDLE_FILE"
 fi

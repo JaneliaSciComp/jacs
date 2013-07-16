@@ -817,7 +817,7 @@
             <param name="deployment-specific.properties.file" value="${deployment-specific.properties.file.name}"/>
             <param name="server.username" value="${user.server.login}" />
             <param name="server.address" value="${server.address}" />
-            <param name="tomcat.home" value="/groups/scicomp/jacsData/servers/${server.address}/apache-tomcat-7.0.5" />
+            <param name="tomcat.home" value="${user.server.path}/${server.address}/apache-tomcat-7.0.5" />
         </antcall>
     </target>
 
