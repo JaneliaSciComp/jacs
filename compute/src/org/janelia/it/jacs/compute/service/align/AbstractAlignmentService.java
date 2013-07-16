@@ -11,12 +11,9 @@ import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
-import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
-import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.launcher.archive.ArchiveAccessHelper;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
@@ -25,10 +22,10 @@ import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
-import org.janelia.it.jacs.shared.utils.FileUtil;
 
 /**
  * Base class for all alignment algorithms. Parameters:
@@ -47,13 +44,8 @@ import org.janelia.it.jacs.shared.utils.FileUtil;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
+public abstract class AbstractAlignmentService extends SubmitDrmaaJobService implements Aligner {
 	
-	protected static final String CONFIG_PREFIX = "alignConfiguration.";
-	protected static final int TIMEOUT_SECONDS = 60*30; // 30 minutes 
-	
-    protected static final String EXECUTABLE_DIR = SystemConfigurationProperties.getString("Executables.ModuleBase");
-
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
     protected AnnotationBeanLocal annotationBean;
@@ -68,16 +60,22 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
     protected boolean warpNeurons;
     protected AlignmentInputFile input1;
     protected AlignmentInputFile input2;
+    protected List<String> archivedFiles = new ArrayList<String>();
+    protected List<String> targetFiles = new ArrayList<String>();
+    
+    // ****************************************************************************************************************
+    // When this service is run with the Aligner interface method, it determines and outputs the alignment inputs
+    // ****************************************************************************************************************
     
     @Override
-    protected String getGridServicePrefixName() {
-        return "align";
-    }
-    
-    @Override
-    protected void init(IProcessData processData) throws Exception {
-    	super.init(processData);
-    	try {
+    public void populateInputVariables(IProcessData processData) throws ServiceException {
+
+        try {
+            // From SubmitDrammaJobService
+            this.logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
+            this.processData = processData;
+            this.resultFileNode = ProcessDataHelper.getResultFileNode(processData);
+            
             this.entityBean = EJBFactory.getLocalEntityBean();
             this.computeBean = EJBFactory.getLocalComputeBean();
             this.annotationBean = EJBFactory.getLocalAnnotationBean();
@@ -161,13 +159,21 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
                     logger.info("Found gender consensus: "+gender);
                 }
                 
-                putOutputVars(input1.getChannelSpec(), input1.getChannelColors());
+                List<AlignmentInputFile> alignmentInputFiles = new ArrayList<AlignmentInputFile>();
+                alignmentInputFiles.add(input1);
+                alignmentInputFiles.add(input2);
+                
+                if (input1!=null) checkForArchival(input1);
+                if (input2!=null) checkForArchival(input2);
+                
+                putOutputVars(input1.getChannelSpec(), input1.getChannelColors(), alignmentInputFiles);
             }
         } 
         catch (Exception e) {
             throw new ServiceException(e);
         }
     }
+    
     
     protected void logInputFound(String type, AlignmentInputFile input) {
         logger.info("Found "+type+": ");
@@ -180,8 +186,8 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
         logger.info("  Optical resolution: "+input.getOpticalResolution());
         logger.info("  Pixel resolution: "+input.getPixelResolution());
     }
-    
-    protected void putOutputVars(String chanSpec, String channelColors) {
+
+    protected void putOutputVars(String chanSpec, String channelColors, List<AlignmentInputFile> alignmentInputFiles) {
         logger.info("Putting '"+chanSpec+"' in CHANNEL_SPEC");
         processData.putItem("CHANNEL_SPEC", chanSpec);
         String signalChannels = sampleHelper.getSignalChannelIndexes(chanSpec);
@@ -192,6 +198,17 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
         processData.putItem("REFERENCE_CHANNEL", referenceChannels);
         logger.info("Putting '"+channelColors+"' in CHANNEL_COLORS");
         processData.putItem("CHANNEL_COLORS", channelColors);
+        logger.info("Putting "+alignmentInputFiles.size()+" objects in ALIGNMENT_INPUTS");
+        processData.putItem("ALIGNMENT_INPUTS", alignmentInputFiles);
+        
+        if (!archivedFiles.isEmpty()) {
+            logger.info("Putting true in COPY_FROM_ARCHIVE");
+            processData.putItem("COPY_FROM_ARCHIVE", Boolean.TRUE);
+            logger.info("Putting "+archivedFiles.size()+" objects in SOURCE_FILE_PATHS");
+            processData.putItem("SOURCE_FILE_PATHS", Task.csvStringFromCollection(archivedFiles));
+            logger.info("Putting "+targetFiles.size()+" objects in TARGET_FILE_PATHS");
+            processData.putItem("TARGET_FILE_PATHS", Task.csvStringFromCollection(targetFiles));
+        }
     }
     
     protected String getConsolidatedLabel(Entity result) throws Exception {
@@ -213,43 +230,81 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService {
         }
         return null;
     }
-    
-    @Override
-    protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
-        
-        // Copy input files over from archive if necessary
-        if (input1!=null) copyFromArchive(input1);
-        if (input2!=null) copyFromArchive(input2);
-        
-        return super.prepareJobTemplate(drmaa);
-    }
-    
-    private void copyFromArchive(AlignmentInputFile input) throws Exception {
-        if (!input.getInputFilename().startsWith("/archive")) return;
-        
-        List<String> archivedFiles = new ArrayList<String>();
-        List<String> targetFiles = new ArrayList<String>();
-        
-        archivedFiles.add(input.getInputFilename());
-        String newInput = new File(resultFileNode.getDirectoryPath(), new File(input.getInputFilename()).getName()).getAbsolutePath();
-        targetFiles.add(newInput);
-        input.setInputFilename(newInput);
+
+    protected void checkForArchival(AlignmentInputFile input) throws Exception {
+
+        if (input.getInputFilename().startsWith("/archive")) {
+            archivedFiles.add(input.getInputFilename());
+            String newInput = new File(resultFileNode.getDirectoryPath(), new File(input.getInputFilename()).getName()).getAbsolutePath();
+            targetFiles.add(newInput);
+            input.setInputFilename(newInput);
+        }
         
         if (input.getInputSeparationFilename()!=null) {
-            archivedFiles.add(input.getInputSeparationFilename());
-            String newInputSeperation = new File(resultFileNode.getDirectoryPath(), new File(input.getInputSeparationFilename()).getName()).getAbsolutePath();
-            targetFiles.add(newInputSeperation);
-            input.setInputSeparationFilename(newInputSeperation);
+            if (input.getInputSeparationFilename().startsWith("/archive")) {
+                archivedFiles.add(input.getInputSeparationFilename());
+                String newInputSeperation = new File(resultFileNode.getDirectoryPath(), new File(input.getInputSeparationFilename()).getName()).getAbsolutePath();
+                targetFiles.add(newInputSeperation);
+                input.setInputSeparationFilename(newInputSeperation);
+            }
         }
+    }
+    
+    // ****************************************************************************************************************
+    // When this service is run as a grid submission, it runs the aligner
+    // ****************************************************************************************************************
 
-        logger.info("Copying files from archive (task_id="+task.getObjectId()+")");
-        ArchiveAccessHelper.sendCopyFromArchiveMessage(archivedFiles, targetFiles);
-//        ArchiveAccessHelper.synchronousGridifiedArchiveCopy(task, archivedFiles, targetFiles, false);
-        
-        logger.info("Waiting for files to appear (task_id="+task.getObjectId()+"). Last file: "+targetFiles.get(targetFiles.size()-1));
-        FileUtil.waitForFiles(targetFiles, TIMEOUT_SECONDS*1000);
-        
-        logger.info("Files have appeared (task_id="+task.getObjectId()+"). Last file: "+targetFiles.get(targetFiles.size()-1));
+    protected static final String CONFIG_PREFIX = "alignConfiguration.";
+    protected static final int TIMEOUT_SECONDS = 60*30; // 30 minutes 
+    
+    protected static final String EXECUTABLE_DIR = SystemConfigurationProperties.getString("Executables.ModuleBase");
+
+    @Override
+    protected String getGridServicePrefixName() {
+        return "align";
+    }
+    
+    @Override
+    protected void init(IProcessData processData) throws Exception {        
+
+        try {
+            this.entityBean = EJBFactory.getLocalEntityBean();
+            this.computeBean = EJBFactory.getLocalComputeBean();
+            this.annotationBean = EJBFactory.getLocalAnnotationBean();
+            String ownerName = ProcessDataHelper.getTask(processData).getOwner();
+            Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
+            this.ownerKey = subject.getKey();
+            this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
+            this.entityLoader = new EntityBeanEntityLoader(entityBean);
+            
+            String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
+            if (sampleEntityId == null || "".equals(sampleEntityId)) {
+                throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
+            }
+            
+            this.sampleEntity = entityBean.getEntityById(sampleEntityId);
+            if (sampleEntity == null) {
+                throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
+            }
+            
+            List<AlignmentInputFile> alignmentInputs = (List)processData.getItem("ALIGNMENT_INPUTS");
+            if (alignmentInputs == null) {
+                throw new IllegalArgumentException("ALIGNMENT_INPUTS may not be null");
+            }
+            
+            if (alignmentInputs.size()>0) {
+                this.input1 = alignmentInputs.get(0);
+            }
+            
+            if (alignmentInputs.size()>1) {
+                this.input2 = alignmentInputs.get(1);
+            }
+            
+            super.init(processData);
+        }
+        catch (Exception e) {
+            throw new ServiceException(e);
+        }
     }
     
     @Override

@@ -55,22 +55,60 @@
     			<output name="ALIGNMENT_SERVICE_CLASS"/>
     			<output name="ALIGNMENT_SCRIPT_NAME"/>
     			<output name="ALIGNMENT_RESULT_NAME"/>
-    			<output name="ALIGNMENT_TILE_NAME"/>
     		</operation>
     		
+            <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
+            <operation name="Get Alignment Parameters" processor="org.janelia.it.jacs.compute.service.entity.GetAlignmentInputsService">
+                <input name="iservice" value="$V{ALIGNMENT_SERVICE_CLASS}"/>
+                <input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
+                <input name="SAMPLE_ENTITY_ID"/>
+                <input name="SAMPLE_AREAS"/>
+                <input name="WARP_NEURONS" value="true"/>
+                <output name="ALIGNMENT_INPUTS"/>
+                <output name="CHANNEL_SPEC"/>
+                <output name="CHANNEL_COLORS"/>
+                <output name="SIGNAL_CHANNELS"/>
+                <output name="REFERENCE_CHANNEL"/>
+                <output name="COPY_FROM_ARCHIVE"/>
+                <output name="SOURCE_FILE_PATHS"/>
+                <output name="TARGET_FILE_PATHS"/>
+            </operation>
+        
+            <sequence if="COPY_FROM_ARCHIVE=true">
+            
+                <!-- Create a result node for this group -->
+                <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+                    <input name="NAME" value="Temp"/>
+                    <input name="OUTPUT_VAR_NAME" value="INPUT_FILE_NODE"/>
+                    <output name="INPUT_FILE_NODE"/>
+                    <output name="INPUT_FILE_NODE_ID"/>
+                </operation>
+                
+                <!-- Copy the files from archive -->
+                <sequence name="Wait Async" waitForAsync="true">
+                    <operation name="Copy Input Files" processor="queue/gridSubmitAndWait">
+                        <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ArchiveGridService"/>
+                        <input name="RESULT_FILE_NODE" value="$V{INPUT_FILE_NODE}"/>
+                        <input name="SOURCE_FILE_PATHS"/>
+                        <input name="TARGET_FILE_PATHS"/>
+                    </operation>
+                </sequence>
+                            
+                <!-- We're done with the temp node -->
+                <operation name="Remove Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
+                    <input name="FILE_NODE_ID" value="$V{INPUT_FILE_NODE_ID}"/>
+                </operation>
+                    
+            </sequence>
+                    
        	    <!-- Align the sample -->
             <sequence name="Align" waitForAsync="true">
     	        <operation name="Align" processor="queue/gridSubmitAndWait">
     	            <input name="iservice" value="$V{ALIGNMENT_SERVICE_CLASS}"/>
     	    		<input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
     	    		<input name="ALIGNMENT_SCRIPT_NAME"/>
+    	    		<input name="ALIGNMENT_INPUTS"/>
     	    		<input name="SAMPLE_ENTITY_ID"/>
-    	    		<input name="SAMPLE_AREAS"/>
-    	    		<input name="WARP_NEURONS" value="true"/>
-                    <output name="CHANNEL_SPEC"/>
-                    <output name="CHANNEL_COLORS"/>
-                    <output name="SIGNAL_CHANNELS"/>
-                    <output name="REFERENCE_CHANNEL"/>
     				<output name="ALIGNED_FILENAME"/>
     				<output name="ALIGNED_FILENAMES"/>
     	        </operation>

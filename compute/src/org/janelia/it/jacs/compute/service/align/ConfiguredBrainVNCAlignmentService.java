@@ -14,10 +14,11 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class ConfiguredBrainVNCAlignmentService extends ConfiguredAlignmentService {
-    
+
     @Override
-    protected void init(IProcessData processData) throws Exception {
-        super.init(processData);
+    public void populateInputVariables(IProcessData processData) throws ServiceException {
+
+        super.populateInputVariables(processData);
         
         try {
             List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>)processData.getItem("SAMPLE_AREAS");

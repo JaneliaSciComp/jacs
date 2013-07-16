@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.compute.service.align;
 
+import java.io.Serializable;
+
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 
@@ -8,7 +10,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class AlignmentInputFile {
+public class AlignmentInputFile implements Serializable {
 
     protected String inputFilename;
     protected String inputSeparationFilename;

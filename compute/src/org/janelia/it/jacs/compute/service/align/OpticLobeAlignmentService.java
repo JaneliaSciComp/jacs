@@ -27,10 +27,8 @@ public class OpticLobeAlignmentService extends LegacyAlignmentService {
     @Override
     protected void init(IProcessData processData) throws Exception {
     	super.init(processData);
-    	
         String[] parts = sampleEntity.getName().split("-");
         this.tileName = parts[parts.length-1].replaceAll("_", " ");
-        processData.putItem("ALIGNMENT_TILE_NAME", tileName);
     }
     
     @Override

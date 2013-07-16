@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.service.align;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -18,10 +19,10 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
 public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
     
     private static final String BRAIN_AREA = "Brain";
-    
+
     @Override
-    protected void init(IProcessData processData) throws Exception {
-        super.init(processData);
+    public void populateInputVariables(IProcessData processData) throws ServiceException {
+        super.populateInputVariables(processData);
         try {
             if (Objective.OBJECTIVE_63X.getName().equals(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE))) {
                 // Already within the 63x sample, we need the parent
@@ -85,8 +86,15 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
             }
         }
 
+        List<AlignmentInputFile> alignmentInputFiles = new ArrayList<AlignmentInputFile>();
+        alignmentInputFiles.add(input1);
+        alignmentInputFiles.add(input2);
+        
+        if (input1!=null) checkForArchival(input1);
+        if (input2!=null) checkForArchival(input2);
+        
         if (input1!=null) {
-            putOutputVars(input1.getChannelSpec(), input1.getChannelColors());
+            putOutputVars(input1.getChannelSpec(), input1.getChannelColors(), alignmentInputFiles);
         }
     }
     
