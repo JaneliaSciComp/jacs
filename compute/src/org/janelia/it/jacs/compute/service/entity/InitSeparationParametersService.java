@@ -1,10 +1,15 @@
 package org.janelia.it.jacs.compute.service.entity;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
@@ -13,9 +18,15 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class InitSeparationParametersService extends AbstractEntityService {
+
+    protected FileNode resultFileNode;
+    protected List<String> archivedFiles = new ArrayList<String>();
+    protected List<String> targetFiles = new ArrayList<String>();
     
     public void execute() throws Exception {
 
+        this.resultFileNode = ProcessDataHelper.getResultFileNode(processData);
+        
     	String resultEntityName = (String)processData.getItem("RESULT_ENTITY_NAME");
     	if (resultEntityName == null || "".equals(resultEntityName)) {
     		throw new IllegalArgumentException("RESULT_ENTITY_NAME may not be null");
@@ -41,24 +52,55 @@ public class InitSeparationParametersService extends AbstractEntityService {
     		throw new IllegalArgumentException("Root entity not found with id="+sampleEntityId);
     	}
 
-    	// Clear out the previous result
-        logger.info("Putting '' in PREVIOUS_RESULT_ID");
-        processData.putItem("PREVIOUS_RESULT_FILENAME", "");
-    	
-    	populateChildren(rootEntity);
-    	Entity prevSeparation = EntityUtils.getLatestChildOfType(rootEntity, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
-    	if (prevSeparation != null) {
-    	    logger.info("Found previous separation in the current result entity");
-    	    putPrevResult(prevSeparation);
-    	}
-    	else {
-    	    logger.info("Checking sample for previous separations: "+sampleEntityId);
-    	    
-    	    populateChildren(sampleEntity);
+        String alignedConsolidatedLabelFilepath = (String)processData.getItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH");
+        String previousResultFilename = null;
+        
+        if (alignedConsolidatedLabelFilepath==null) {
+            Entity prevResult = findPrevResult(rootEntity, sampleEntity);
+            previousResultFilename = getPrevResultFilename(prevResult);
+        }
+        
+        alignedConsolidatedLabelFilepath = checkForArchival(alignedConsolidatedLabelFilepath);
+        previousResultFilename = checkForArchival(previousResultFilename);
+
+        logger.info("Putting '"+alignedConsolidatedLabelFilepath+"' in ALIGNED_CONSOLIDATED_LABEL_FILEPATH");
+        processData.putItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH", alignedConsolidatedLabelFilepath);
+        
+        logger.info("Putting '"+previousResultFilename+"' in PREVIOUS_RESULT_FILENAME");
+        processData.putItem("PREVIOUS_RESULT_FILENAME", previousResultFilename);
+
+        if (!archivedFiles.isEmpty()) {
+            logger.info("Putting true in COPY_FROM_ARCHIVE");
+            processData.putItem("COPY_FROM_ARCHIVE", Boolean.TRUE);
+            logger.info("Putting "+archivedFiles.size()+" objects in SOURCE_FILE_PATHS");
+            processData.putItem("SOURCE_FILE_PATHS", Task.csvStringFromCollection(archivedFiles));
+            logger.info("Putting "+targetFiles.size()+" objects in TARGET_FILE_PATHS");
+            processData.putItem("TARGET_FILE_PATHS", Task.csvStringFromCollection(targetFiles));
+        }
+        else {
+            logger.info("Putting false in COPY_FROM_ARCHIVE");
+            processData.putItem("COPY_FROM_ARCHIVE", Boolean.FALSE);
+            logger.info("Putting null in SOURCE_FILE_PATHS");
+            processData.putItem("SOURCE_FILE_PATHS", null);
+            logger.info("Putting null in TARGET_FILE_PATHS");
+            processData.putItem("TARGET_FILE_PATHS", null);
+        }
+    }
+    
+    protected Entity findPrevResult(Entity rootEntity, Entity sampleEntity) throws Exception {
+
+        populateChildren(rootEntity);
+        Entity prevSeparation = EntityUtils.getLatestChildOfType(rootEntity, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
+        if (prevSeparation != null) {
+            logger.info("Found previous separation in the current result entity");
+            return prevSeparation;
+        }
+        else {
+            logger.info("Checking sample for previous separations: "+sampleEntity.getId());
+            
+            populateChildren(sampleEntity);
             List<Entity> runs = EntityUtils.getChildrenOfType(sampleEntity, EntityConstants.TYPE_PIPELINE_RUN);
             Collections.reverse(runs);
-            
-            boolean sepFound = false;
             
             for(Entity run : runs) {
                 populateChildren(run);
@@ -67,7 +109,7 @@ public class InitSeparationParametersService extends AbstractEntityService {
                 boolean resultFound = false;
                 for(Entity result : EntityUtils.getChildrenOfType(run, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)) {
                     lastResult = result;
-                    if (result.getId().equals(rootEntityId)) {
+                    if (result.getId().equals(rootEntity.getId())) {
                         resultFound = true;
                         break;
                     }
@@ -82,18 +124,16 @@ public class InitSeparationParametersService extends AbstractEntityService {
                     
                     for(Entity separation : separations) {
                         logger.debug("Found previous separation in the previous pipeline run");
-                        putPrevResult(separation);
-                        sepFound = true;
-                        break;    
+                        return separation;
                     }
                 }
-                
-                if (sepFound) break;
             }
-    	}
+        }
+        
+        return null;
     }
     
-    private void putPrevResult(Entity separation) throws Exception {
+    protected String getPrevResultFilename(Entity separation) throws Exception {
 
         logger.info("Getting previous result from separation with id="+separation.getId());
         
@@ -112,9 +152,21 @@ public class InitSeparationParametersService extends AbstractEntityService {
         if (prevResultFile!=null) {
             String filepath = EntityUtils.getFilePath(prevResultFile);
             if (filepath!=null && !"".equals(filepath)) {
-                logger.info("Putting '"+filepath+"' in PREVIOUS_RESULT_ID");
-                processData.putItem("PREVIOUS_RESULT_FILENAME", filepath);
+                return filepath;
             }
         }
+        
+        return null;
+    }
+
+    protected String checkForArchival(String filepath) throws Exception {
+        if (filepath==null) return null;
+        if (filepath.startsWith("/archive")) {
+            archivedFiles.add(filepath);
+            String newPath = new File(resultFileNode.getDirectoryPath(), new File(filepath).getName()).getAbsolutePath();
+            targetFiles.add(newPath);
+            return newPath;
+        }
+        return filepath;
     }
 }

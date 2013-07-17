@@ -22,18 +22,30 @@
 	        <output name="SEPARATE_RESULT_FILE_NODE"/>
 	    </operation>
         
-        <sequence if="ALIGNED_CONSOLIDATED_LABEL_FILEPATH is empty">
-            
-    	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
-    	    <operation name="Init Separation Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitSeparationParametersService">
-    			<input name="SAMPLE_ENTITY_ID"/>
-    			<input name="ROOT_ENTITY_ID"/>
-    			<input name="RESULT_ENTITY_NAME"/>
-    			<output name="PREVIOUS_RESULT_FILENAME"/>
-    		</operation>
-    		
-		</sequence>
-		
+	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
+	    <operation name="Init Separation Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitSeparationParametersService">
+	        <input name="RESULT_FILE_NODE"/>
+			<input name="SAMPLE_ENTITY_ID"/>
+			<input name="ROOT_ENTITY_ID"/>
+			<input name="RESULT_ENTITY_NAME"/>
+			<input name="ALIGNED_CONSOLIDATED_LABEL_FILEPATH"/>
+			<output name="PREVIOUS_RESULT_FILENAME"/>
+			<output name="ALIGNED_CONSOLIDATED_LABEL_FILEPATH"/>
+            <output name="COPY_FROM_ARCHIVE"/>
+            <output name="SOURCE_FILE_PATHS"/>
+            <output name="TARGET_FILE_PATHS"/>
+		</operation>
+
+        <sequence if="COPY_FROM_ARCHIVE=true">
+        
+            <!-- Copy the files from archive -->
+            <include name="Archive Grid Copy" process="ArchiveGridCopy">
+                <input name="SOURCE_FILE_PATHS"/>
+                <input name="TARGET_FILE_PATHS"/>
+            </include>
+                
+        </sequence>
+        
 	    <!-- Run neuron separation on the stitched result -->
         <sequence name="Neuron Separation" waitForAsync="true">
 		    <operation name="Neuron Separation" processor="queue/gridSubmitAndWait">
@@ -46,8 +58,6 @@
 				<input name="OBJECTIVE"/>
 				<input name="PREVIOUS_RESULT_FILENAME"/>
                 <input name="ALIGNED_CONSOLIDATED_LABEL_FILEPATH"/>
-				<output name="ARCHIVE_FILE_PATH"/>
-				<output name="FILES_WERE_ARCHIVED"/>
 		    </operation>
         </sequence>
 		

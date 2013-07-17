@@ -76,28 +76,11 @@
         
             <sequence if="COPY_FROM_ARCHIVE=true">
             
-                <!-- Create a result node for this group -->
-                <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
-                    <input name="NAME" value="Temp"/>
-                    <input name="OUTPUT_VAR_NAME" value="INPUT_FILE_NODE"/>
-                    <output name="INPUT_FILE_NODE"/>
-                    <output name="INPUT_FILE_NODE_ID"/>
-                </operation>
-                
                 <!-- Copy the files from archive -->
-                <sequence name="Wait Async" waitForAsync="true">
-                    <operation name="Copy Input Files" processor="queue/gridSubmitAndWait">
-                        <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ArchiveGridService"/>
-                        <input name="RESULT_FILE_NODE" value="$V{INPUT_FILE_NODE}"/>
-                        <input name="SOURCE_FILE_PATHS"/>
-                        <input name="TARGET_FILE_PATHS"/>
-                    </operation>
-                </sequence>
-                            
-                <!-- We're done with the temp node -->
-                <operation name="Remove Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
-                    <input name="FILE_NODE_ID" value="$V{INPUT_FILE_NODE_ID}"/>
-                </operation>
+                <include name="Archive Grid Copy" process="ArchiveGridCopy">
+                    <input name="SOURCE_FILE_PATHS"/>
+                    <input name="TARGET_FILE_PATHS"/>
+                </include>
                     
             </sequence>
                     
