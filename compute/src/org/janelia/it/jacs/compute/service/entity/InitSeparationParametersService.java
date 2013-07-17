@@ -11,6 +11,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * Extracts metadata from the entity model to be used for the neuron separator. 
@@ -55,17 +56,19 @@ public class InitSeparationParametersService extends AbstractEntityService {
         String alignedConsolidatedLabelFilepath = (String)processData.getItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH");
         String previousResultFilename = null;
         
-        if (alignedConsolidatedLabelFilepath==null) {
+        if (StringUtils.isEmpty(alignedConsolidatedLabelFilepath)) {
             Entity prevResult = findPrevResult(rootEntity, sampleEntity);
             previousResultFilename = getPrevResultFilename(prevResult);
         }
         
         alignedConsolidatedLabelFilepath = checkForArchival(alignedConsolidatedLabelFilepath);
         previousResultFilename = checkForArchival(previousResultFilename);
-
+        
+        if (alignedConsolidatedLabelFilepath==null) alignedConsolidatedLabelFilepath = "";
         logger.info("Putting '"+alignedConsolidatedLabelFilepath+"' in ALIGNED_CONSOLIDATED_LABEL_FILEPATH");
         processData.putItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH", alignedConsolidatedLabelFilepath);
         
+        if (previousResultFilename==null) previousResultFilename = "";
         logger.info("Putting '"+previousResultFilename+"' in PREVIOUS_RESULT_FILENAME");
         processData.putItem("PREVIOUS_RESULT_FILENAME", previousResultFilename);
 
