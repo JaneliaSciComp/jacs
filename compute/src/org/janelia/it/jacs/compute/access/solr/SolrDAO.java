@@ -40,7 +40,7 @@ public class SolrDAO extends AnnotationDAO {
 	
 	protected static final int MAX_ID_LIST_SIZE = 200;
     protected static final int SOLR_LOADER_BATCH_SIZE = 25000;
-    protected static final int SOLR_LOADER_COMMIT_SIZE = 250000;
+    protected static final int SOLR_LOADER_COMMIT_SIZE = 300000;
 	protected static final int SOLR_LOADER_QUEUE_SIZE = 100;
 	protected static final int SOLR_LOADER_THREAD_COUNT = 2;
 	protected static final String SOLR_SERVER_URL = SystemConfigurationProperties.getString("Solr.ServerURL");
@@ -196,7 +196,7 @@ public class SolrDAO extends AnnotationDAO {
         		if (conn!=null) conn.close();
         	}
             catch (Exception e) {
-        		throw new DaoException(e);
+        		_logger.warn("Error closing JDBC connection",e);
             }
         }
 
