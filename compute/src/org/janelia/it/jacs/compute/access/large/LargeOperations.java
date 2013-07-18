@@ -151,7 +151,7 @@ public class LargeOperations {
         		if (conn!=null) conn.close();	
         	}
             catch (Exception e) {
-        		throw new DaoException(e);
+                logger.warn("Error closing JDBC connection",e);
             }
         }
     	
@@ -214,7 +214,7 @@ public class LargeOperations {
         		if (conn!=null) conn.close();	
         	}
             catch (Exception e) {
-        		throw new DaoException(e);
+                logger.warn("Error closing JDBC connection",e);
             }
         }
 
@@ -357,7 +357,7 @@ public class LargeOperations {
 	            if (conn!=null) conn.close(); 
 	    	}
 	    	catch (SQLException e) {
-	    		logger.warn("Ignoring error encountered while closing JDBC connection",e);
+                logger.warn("Error closing JDBC connection",e);
 	    	}
     	}
     }

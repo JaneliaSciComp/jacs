@@ -1,5 +1,9 @@
 package org.janelia.it.jacs.compute.access.neo4j;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -13,9 +17,7 @@ import org.hibernate.Session;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.large.LargeOperations;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
@@ -97,16 +99,7 @@ public class Neo4jBatchDAO extends AnnotationDAO {
 
         _logger.info("Completed loading " + numOntologiesAdded + " ontologies.");
 
-        
-        List<Entity> annotations = getEntitiesByTypeName(null, EntityConstants.TYPE_ANNOTATION);
-        for(Entity annotation : annotations) {
-            loadAnnotation(annotation);
-            
-            // Free memory
-            Session session = getCurrentSession();
-            session.evict(annotation);
-            annotation.setEntityData(null);
-        }
+        loadAnnotations();
         
         _logger.info("Completed loading " + numAnnotationsAdded + " annotations.");
 
@@ -144,6 +137,99 @@ public class Neo4jBatchDAO extends AnnotationDAO {
         
     }
 
+    public void loadAnnotations() throws DaoException {
+        
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            conn = getJdbcConnection();
+            
+            StringBuffer sql = new StringBuffer();
+
+            sql.append("select a.id, a.creation_date, a.updated_date, a.name, a.owner_key, aedt.value, aedk.value, aedv.value, aedkid.child_entity_id, aedvid.child_entity_id ");
+            sql.append("from entity a ");
+            sql.append("left outer join entityData aedt on a.id=aedt.parent_entity_id and aedt.entity_att_id = ? ");
+            sql.append("left outer join entityData aedk on a.id=aedk.parent_entity_id and aedk.entity_att_id = ? ");
+            sql.append("left outer join entityData aedv on a.id=aedv.parent_entity_id and aedv.entity_att_id = ? ");
+            sql.append("left outer join entityData aedkid on a.id=aedkid.parent_entity_id and aedkid.entity_att_id = ? ");
+            sql.append("left outer join entityData aedvid on a.id=aedvid.parent_entity_id and aedvid.entity_att_id = ? ");
+            sql.append("where a.entity_type_id = 1623103351174463664 ");
+            sql.append("order by a.owner_key, aedt.value ");
+                        
+            
+            sql.append("select a.id, a.name, aedt.value, aedk.value, aedv.value, a.owner_key ");
+            sql.append("from entity a ");
+            sql.append("left outer join entityData aedt on a.id=aedt.parent_entity_id ");
+            sql.append("left outer join entityData aedk on a.id=aedk.parent_entity_id ");
+            sql.append("left outer join entityData aedv on a.id=aedv.parent_entity_id ");
+            sql.append("where a.entity_type_id = ? ");
+            sql.append("and aedt.entity_att_id = ? ");
+            sql.append("and aedk.entity_att_id = ? ");
+            sql.append("and aedv.entity_att_id = ? ");
+            sql.append("order by a.owner_key, aedt.value");
+
+            EntityType annotationType = getEntityTypeByName(EntityConstants.TYPE_ANNOTATION);
+            EntityAttribute targetAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
+            EntityAttribute keyAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_TERM);
+            EntityAttribute valueAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM);
+            EntityAttribute keyIdAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
+            EntityAttribute valueIdAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_ENTITY_ID);
+            
+            stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+            stmt.setFetchSize(Integer.MIN_VALUE);
+            
+            stmt.setLong(1, annotationType.getId());
+            stmt.setLong(2, targetAttr.getId());
+            stmt.setLong(3, keyAttr.getId());
+            stmt.setLong(4, valueAttr.getId());
+            stmt.setLong(5, keyIdAttr.getId());
+            stmt.setLong(6, valueIdAttr.getId());
+            
+            rs = stmt.executeQuery();
+            _logger.info("    Processing annotation results");
+            
+            int i = 0;
+            while (rs.next()) {
+                Long annotationId = rs.getBigDecimal(1).longValue();
+                Date creationDate = rs.getDate(2);
+                Date updatedDate = rs.getDate(3);
+                String annotationName = rs.getString(4);
+                String entityIdStr = rs.getString(5);
+                String owner = rs.getString(6);
+                String key = rs.getString(7);
+                String value = rs.getString(8);
+                Long keyId = rs.getLong(9);
+                Long valueId = rs.getLong(10);
+                
+                Long entityId = null;
+                try {
+                    entityId = new Long(entityIdStr);
+                }
+                catch (NumberFormatException e) {
+                    _logger.warn("Cannot parse annotation target id for annotation="+annotationId);
+                }
+
+                loadAnnotation(annotationId, annotationName, entityId, key, value, keyId, valueId, owner, creationDate, updatedDate);
+
+                i++;
+            }
+        }
+        catch (SQLException e) {
+            throw new DaoException(e);
+        }
+        finally {
+            try {
+                if (rs!=null) rs.close();
+                if (stmt!=null) stmt.close();
+                if (conn!=null) conn.close();   
+            }
+            catch (Exception e) {
+                _logger.warn("Error closing JDBC connection",e);
+            }
+        }
+    }
+    
     private Long loadDescendants(Long parentNeoId, EntityData ed) throws DaoException {
 
         Entity entity = ed.getChildEntity();
@@ -222,32 +308,38 @@ public class Neo4jBatchDAO extends AnnotationDAO {
         inserter.createRelationship(parentNeoId, childNeoId, childRel, properties);
         numRelationshipsAdded++;
     }
+
     
-    private void loadAnnotation(Entity annotation) {
-        
-        String targetId = annotation.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
-        Entity key = annotation.getChildByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
-        Entity value = annotation.getChildByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_ENTITY_ID);
+    private void loadAnnotation(Long annotationId, String annotationName, Long targetId, String key, String value, 
+            Long keyId, Long valueId, String ownerKey, Date creationDate, Date updatedDate) {
+             
         Long targetNeoId = (Long) largeOp.getValue(LargeOperations.NEO4J_MAP, targetId);
 
-        _logger.info("loadAnnotation " + annotation.getId() + " (with targetId=" + targetNeoId + ")");
+        _logger.info("loadAnnotation " + annotationId + " (with targetId=" + targetNeoId + ")");
         
-        Map<String, Object> properties = getEntityProperties(annotation);
+        Map<String, Object> properties = new HashMap<String, Object>();
+        addIfNotNull(properties, "entity_id", annotationId);
+        addIfNotNull(properties, "name", annotationName);
+        addIfNotNull(properties, "type", EntityConstants.TYPE_ANNOTATION);
+        addIfNotNull(properties, "creation_date", getFormattedDateTime(creationDate));
+        addIfNotNull(properties, "updated_date", getFormattedDateTime(updatedDate));
+        addIfNotNull(properties, "owner_key", ownerKey);
+        
         Long annotationNeoId = inserter.createNode(properties);
         numAnnotationsAdded++;
         
-        Label entityTypeLabel = DynamicLabel.label(getFormattedLabelName(annotation.getEntityType().getName()));
+        Label entityTypeLabel = DynamicLabel.label(getFormattedLabelName(EntityConstants.TYPE_ANNOTATION));
         inserter.setNodeLabels(annotationNeoId, entityLabel, entityTypeLabel);
 
         inserter.createRelationship(annotationNeoId, targetNeoId, target_rel, new HashMap<String, Object>());
         
-        if (key!=null) {
-            Long keyNeoId = (Long) largeOp.getValue(LargeOperations.NEO4J_MAP, key.getId());
+        if (keyId!=null) {
+            Long keyNeoId = (Long) largeOp.getValue(LargeOperations.NEO4J_MAP, keyId);
             inserter.createRelationship(annotationNeoId, keyNeoId, key_term_rel, new HashMap<String, Object>());
         }
         
-        if (value!=null) {
-            Long valueNeoId = (Long) largeOp.getValue(LargeOperations.NEO4J_MAP, value.getId());
+        if (valueId!=null) {
+            Long valueNeoId = (Long) largeOp.getValue(LargeOperations.NEO4J_MAP, valueId);
             inserter.createRelationship(annotationNeoId, valueNeoId, value_term_rel, new HashMap<String, Object>());
         }
     }
