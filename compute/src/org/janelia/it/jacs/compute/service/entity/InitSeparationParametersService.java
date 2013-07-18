@@ -58,7 +58,9 @@ public class InitSeparationParametersService extends AbstractEntityService {
         
         if (StringUtils.isEmpty(alignedConsolidatedLabelFilepath)) {
             Entity prevResult = findPrevResult(rootEntity, sampleEntity);
-            previousResultFilename = getPrevResultFilename(prevResult);
+            if (prevResult!=null) {
+                previousResultFilename = getPrevResultFilename(prevResult);
+            }
         }
         
         alignedConsolidatedLabelFilepath = checkForArchival(alignedConsolidatedLabelFilepath);
