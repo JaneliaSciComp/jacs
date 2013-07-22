@@ -4,7 +4,6 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -43,11 +42,9 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
     }
 
     // format expected: <id>:<parentId>:<index>:<x,y,z>:<comment>
-    // note1: can't currently handle empty comments
-    // note2: can't currently handle comments including ":"
     public TmGeoAnnotation(String geoString) throws Exception {
-        String[] fields=geoString.split(":");
-        if (fields.length!=5) {
+        String[] fields=geoString.split(":", -1);
+        if (fields.length < 5) {
             throw new Exception("Could not parse geoString="+geoString);
         }
         id=new Long(fields[0]);
@@ -58,7 +55,20 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
         x=new Double(cArr[0].trim());
         y=new Double(cArr[1].trim());
         z=new Double(cArr[2].trim());
-        comment=fields[4];
+
+        if (fields.length > 5) {
+            // comment field had a : in it; reassemble:
+            // (I'd like to use Guava Joiner here, but it's not happy for some reason)
+            StringBuilder builder = new StringBuilder();
+            builder.append(fields[4]);
+            for (int i = 5; i < fields.length; i++ ) {
+                builder.append(":");
+                builder.append(fields[i]);
+            }
+            comment = builder.toString();
+        } else {
+            comment=fields[4];
+        }
     }
 
     public String toString() {
@@ -152,7 +162,7 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
      */
     public List<TmGeoAnnotation> getSubTreeListReversed() {
         List<TmGeoAnnotation> tempList = getSubTreeList();
-        Collections.reverse(tempList);
+        // Collections.reverse(tempList);
         return tempList;
     }
 
