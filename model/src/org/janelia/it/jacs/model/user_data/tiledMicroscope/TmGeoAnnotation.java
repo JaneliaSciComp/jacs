@@ -4,6 +4,7 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -14,10 +15,17 @@ import java.util.List;
  */
 public class TmGeoAnnotation implements IsSerializable, Serializable {
     Long id;
+    // parentID is the neuron (if root annotation) or another TmGeoAnn
     Long parentId;
     String comment;
     Integer index;
     Double x, y, z;
+
+    // parent and children fields only filled in when the annotation is in a neuron!
+    //  I'd like to have a flag that is set when these are correct, but there's no
+    //  way for the GeoAnn to keep it up-to-date, as it's not involved when operations
+    //  are performed on other GeoAnns (creation, deletion, update), so the info
+    //  would get stale fast
     TmGeoAnnotation parent=null;
     List<TmGeoAnnotation> children=new ArrayList<TmGeoAnnotation>();
 
@@ -136,6 +144,16 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
         for (TmGeoAnnotation a: ann.getChildren()) {
             appendSubTreeList(annList, a);
         }
+    }
+
+    /**
+     * see getSubTreeList; this version guarantees that the children will
+     * precede the parents instead
+     */
+    public List<TmGeoAnnotation> getSubTreeListReversed() {
+        List<TmGeoAnnotation> tempList = getSubTreeList();
+        Collections.reverse(tempList);
+        return tempList;
     }
 
     public void addChild(TmGeoAnnotation child) {

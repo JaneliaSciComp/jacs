@@ -56,6 +56,12 @@ public class TmNeuron implements IsSerializable, Serializable {
         this.name=name;
     }
 
+    /*
+    * this method has serious problems and is not currently used; disable so it's
+    * not inadvertantly used before it's fixed
+    * - loop to find key should just ask map for key?
+    * - if not root, annotation never inserted into map!
+    *
     protected void addGeoAnnotation(TmGeoAnnotation annotation) throws Exception {
         if (rootAnnotation==null) {
             if (getGeoAnnotationMap().size()>0) {
@@ -81,6 +87,7 @@ public class TmNeuron implements IsSerializable, Serializable {
             }
         }
     }
+     */
 
     public TmNeuron(Entity entity) throws Exception {
         if (!entity.getEntityType().getName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
