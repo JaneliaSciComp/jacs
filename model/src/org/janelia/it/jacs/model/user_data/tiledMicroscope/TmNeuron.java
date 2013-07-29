@@ -6,7 +6,9 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,7 +22,7 @@ public class TmNeuron implements IsSerializable, Serializable {
     Long id;
     String name;
     Map<Long, TmGeoAnnotation> geoAnnotationMap=new HashMap<Long, TmGeoAnnotation>();
-    TmGeoAnnotation rootAnnotation=null;
+    List<TmGeoAnnotation> rootAnnotations=new ArrayList<TmGeoAnnotation>();
 
     public Long getId() {
         return id;
@@ -47,8 +49,8 @@ public class TmNeuron implements IsSerializable, Serializable {
         return geoAnnotationMap;
     }
 
-    public TmGeoAnnotation getRootAnnotation() {
-        return rootAnnotation;
+    public List<TmGeoAnnotation> getRootAnnotations() {
+        return rootAnnotations;
     }
 
     public TmNeuron(Long id, String name) {
@@ -61,6 +63,8 @@ public class TmNeuron implements IsSerializable, Serializable {
     * not inadvertantly used before it's fixed
     * - loop to find key should just ask map for key?
     * - if not root, annotation never inserted into map!
+    *
+    * also: not updated since change to getRootAnnotation() (to return list)
     *
     protected void addGeoAnnotation(TmGeoAnnotation annotation) throws Exception {
         if (rootAnnotation==null) {
@@ -95,7 +99,6 @@ public class TmNeuron implements IsSerializable, Serializable {
         }
         this.id=entity.getId();
         this.name=entity.getName();
-        boolean foundRoot=false;
         // First step is to create TmGeoAnnotation objects
         for (EntityData ed : entity.getEntityData()) {
             String edAttr = ed.getEntityAttribute().getName();
@@ -103,11 +106,7 @@ public class TmNeuron implements IsSerializable, Serializable {
                     edAttr.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
                 TmGeoAnnotation ga = new TmGeoAnnotation(ed.getValue());
                 if (edAttr.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
-                    if (foundRoot) {
-                        throw new Exception("Only single root node permitted");
-                    }
-                    foundRoot=true;
-                    rootAnnotation=ga;
+                    rootAnnotations.add(ga);
                 }
                 geoAnnotationMap.put(ga.getId(), ga);
             }

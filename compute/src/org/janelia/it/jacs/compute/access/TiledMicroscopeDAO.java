@@ -175,19 +175,9 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             if (!neuron.getEntityType().getName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
                 throw new Exception("Id is not valid TmNeuron type="+neuronId);
             }
-            // Check if root
+            // Check if root; if not, find its parent
             boolean isRoot=false;
             if (parentAnnotationId==null) {
-                boolean neuronAlreadyHasRoot=false;
-                // Assume this is root - check for other roots
-                for (EntityData ed : neuron.getEntityData()) {
-                    if (ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
-                        neuronAlreadyHasRoot=true;
-                    }
-                }
-                if (neuronAlreadyHasRoot) {
-                    throw new Exception("Neuron already has root element - two are not permitted");
-                }
                 isRoot=true;
             } else {
                 // Validate
@@ -196,6 +186,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                     if (ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE) ||
                             ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
                         String value=ed.getValue();
+                        // note: really ought to unify this parsing with the parsing of EntityData in TmNeuron
                         String[] vArr=value.split(":");
                         Long pId=new Long(vArr[0]);
                         if (pId.equals(parentAnnotationId)) {
