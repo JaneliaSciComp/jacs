@@ -224,10 +224,12 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             for (EntityData ed : neuron.getEntityData()) {
                 if (isRoot) {
                     if (ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
-                        valueString=TmGeoAnnotation.toStringFromArguments(ed.getId(), parentId, index, x, y, z, comment);
-                        ed.setValue(valueString);
-                        annotationDAO.saveOrUpdate(ed);
-                        valueStringUpdated=true;
+                        if (ed.getValue().equals(TMP_GEO_VALUE)) {
+                            valueString=TmGeoAnnotation.toStringFromArguments(ed.getId(), parentId, index, x, y, z, comment);
+                            ed.setValue(valueString);
+                            annotationDAO.saveOrUpdate(ed);
+                            valueStringUpdated=true;
+                        }
                     }
                 } else {
                     if (ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE)) {
