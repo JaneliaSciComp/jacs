@@ -25,7 +25,7 @@ import java.util.HashSet;
  * Time: 10:18:16 PM
  */
 public abstract class ProkAnnotationBaseService extends SubmitDrmaaJobService {
-    private static final String temporaryDirectory = SystemConfigurationProperties.getString("computeserver.ScratchDir");
+    private static final String temporaryDirectory = SystemConfigurationProperties.getString("SystemCall.ScratchDir");
     protected static final String perlPath = SystemConfigurationProperties.getString("Perl.Path");
     protected static final String basePath = SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("ProkAnnotation.PerlBaseDir");

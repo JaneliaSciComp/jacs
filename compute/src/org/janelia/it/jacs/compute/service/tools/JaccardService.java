@@ -217,7 +217,7 @@ public class JaccardService extends SubmitDrmaaJobService {
 
         parseInputListFile(inputListFile);
 
-        tmpDir = new File(SystemConfigurationProperties.getString("computeserver.ScratchDir") + File.separator + jaccardTask.getObjectId());
+        tmpDir = new File(SystemConfigurationProperties.getString("SystemCall.ScratchDir") + File.separator + jaccardTask.getObjectId());
 
         if(!tmpDir.mkdir()){
            throw new IOException("Could not create tmp directory:" + tmpDir.toString());

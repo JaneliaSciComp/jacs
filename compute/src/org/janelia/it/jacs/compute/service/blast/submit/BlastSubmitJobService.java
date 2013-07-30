@@ -35,7 +35,7 @@ public class BlastSubmitJobService extends SubmitDrmaaJobService {
     private static final String resultFilename = SystemConfigurationProperties.getString(RESULT_NAME_PROP);
     private static final String gridJavaPath = SystemConfigurationProperties.getString("Java.Path");
     private static final String mergeSortClasspath = SystemConfigurationProperties.getFilePath("Grid.Lib.Path", "Grid.Jar.Name");
-    private static final String temporaryDirectory = SystemConfigurationProperties.getString("computeserver.ScratchDir");
+    private static final String temporaryDirectory = SystemConfigurationProperties.getString("SystemCall.ScratchDir");
     private static final String mergeSortProcessor = SystemConfigurationProperties.getString("BlastServer.PostblastMergeSortProcessor");
     private static final String entryOffsetProcessor = SystemConfigurationProperties.getString("BlastServer.PostBlastEntryOffsetProcessor");
     private static final String mergeSortMinMemory = SystemConfigurationProperties.getString("BlastServer.GridMergeSortMinimumMemoryMB");

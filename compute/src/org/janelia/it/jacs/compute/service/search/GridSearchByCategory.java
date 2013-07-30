@@ -51,7 +51,7 @@ public class GridSearchByCategory implements IService {
     private static final String TEXTSEARCH_GRID_QUEUE = SystemConfigurationProperties.getString("ts.GridQueue");
     private static final int TEXTSEARCH_GRID_POOLTIME = SystemConfigurationProperties.getInt("ts.GridPoolTime");
     private static final int SEARCH_TIMEOUT = SystemConfigurationProperties.getInt("ts.WaitForGridTimeout");
-    private static final String GRID_TEMP_DIR = SystemConfigurationProperties.getString("computeserver.ScratchDir");
+    private static final String GRID_TEMP_DIR = SystemConfigurationProperties.getString("SystemCall.ScratchDir");
 
 
     private SearchTask searchTask;

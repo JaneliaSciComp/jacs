@@ -41,7 +41,7 @@ public class ReversePsiBlastSubmitJobService extends SubmitDrmaaJobService {
     private static final String rpsBlastCmd = SystemConfigurationProperties.getString("Executables.ModuleBase")+
             SystemConfigurationProperties.getString("RpsBlast.Cmd");
     private static final String resultFilename = SystemConfigurationProperties.getString("RpsBlast.ResultName");
-    private static final String localTmpDirPath = SystemConfigurationProperties.getString("computeserver.ScratchDir");
+    private static final String localTmpDirPath = SystemConfigurationProperties.getString("SystemCall.ScratchDir");
     private static final String normalQueue = SystemConfigurationProperties.getString("Grid.NormalQueue");
     private static final String lowQueue = SystemConfigurationProperties.getString("Grid.LowQueue");
     private static final Float lowThreshold = SystemConfigurationProperties.getFloat("RpsBlast.LowThreshold");
