@@ -72,35 +72,13 @@ public class Neo4jBatchDAO extends AnnotationDAO {
         this.commonRootLabel = DynamicLabel.label(LABEL_COMMON_ROOT);
         this.entityLabel = DynamicLabel.label(LABEL_ENTITY);
 
-        List<Entity> roots = getUserEntitiesWithAttributeValue(null, EntityConstants.ATTRIBUTE_COMMON_ROOT, EntityConstants.ATTRIBUTE_COMMON_ROOT);
-        _logger.info("Found "+roots.size()+" common roots");
-
-        for(Entity root : roots) {
-            _logger.info("Loading common root "+root.getName());
-            EntityData rootEd = new EntityData();
-            rootEd.setChildEntity(root);
-            loadDescendants(null, rootEd);
-        }
-
+        loadEntities();
         _logger.info("Completed loading " + numNodesAdded + " nodes and " + numRelationshipsAdded + " relationships.");
         
-        List<Entity> ontologyRoots = getEntitiesByTypeName(null, EntityConstants.TYPE_ONTOLOGY_ROOT);
-        for(Entity ontologyRoot : ontologyRoots) {
-            EntityData rootEd = new EntityData();
-            rootEd.setChildEntity(ontologyRoot);
-            loadDescendants(null, rootEd);
-            numOntologiesAdded++;
-            
-            // Free memory
-            Session session = getCurrentSession();
-            session.evict(ontologyRoot);
-            ontologyRoot.setEntityData(null);
-        }
-
+        loadOntologies();
         _logger.info("Completed loading " + numOntologiesAdded + " ontologies.");
 
         loadAnnotations();
-        
         _logger.info("Completed loading " + numAnnotationsAdded + " annotations.");
 
         inserter.shutdown();
@@ -108,7 +86,6 @@ public class Neo4jBatchDAO extends AnnotationDAO {
         // Add indexes
         // Because inserter.createDeferredSchemaIndex does not work, we need to connect as an embedded database and 
         // then create the indexes.
-
         _logger.info("Creating indexes...");
         
         GraphDatabaseService graphDb = new GraphDatabaseFactory().newEmbeddedDatabase(loadDatabaseDir);
@@ -136,8 +113,35 @@ public class Neo4jBatchDAO extends AnnotationDAO {
         _logger.info("Index population complete. Neo4j is ready.");
         
     }
+    
+    private void loadEntities() throws DaoException  {
+        List<Entity> roots = getUserEntitiesWithAttributeValue(null, EntityConstants.ATTRIBUTE_COMMON_ROOT, EntityConstants.ATTRIBUTE_COMMON_ROOT);
+        _logger.info("Found "+roots.size()+" common roots");
 
-    public void loadAnnotations() throws DaoException {
+        for(Entity root : roots) {
+            _logger.info("Loading common root "+root.getName());
+            EntityData rootEd = new EntityData();
+            rootEd.setChildEntity(root);
+            loadDescendants(null, rootEd);
+        }
+    }
+    
+    private void loadOntologies() throws DaoException {
+        List<Entity> ontologyRoots = getEntitiesByTypeName(null, EntityConstants.TYPE_ONTOLOGY_ROOT);
+        for(Entity ontologyRoot : ontologyRoots) {
+            EntityData rootEd = new EntityData();
+            rootEd.setChildEntity(ontologyRoot);
+            loadDescendants(null, rootEd);
+            numOntologiesAdded++;
+            
+            // Free memory
+            Session session = getCurrentSession();
+            session.evict(ontologyRoot);
+            ontologyRoot.setEntityData(null);
+        }
+    }
+
+    private void loadAnnotations() throws DaoException {
         
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -154,20 +158,8 @@ public class Neo4jBatchDAO extends AnnotationDAO {
             sql.append("left outer join entityData aedv on a.id=aedv.parent_entity_id and aedv.entity_att_id = ? ");
             sql.append("left outer join entityData aedkid on a.id=aedkid.parent_entity_id and aedkid.entity_att_id = ? ");
             sql.append("left outer join entityData aedvid on a.id=aedvid.parent_entity_id and aedvid.entity_att_id = ? ");
-            sql.append("where a.entity_type_id = 1623103351174463664 ");
-            sql.append("order by a.owner_key, aedt.value ");
-                        
-            
-            sql.append("select a.id, a.name, aedt.value, aedk.value, aedv.value, a.owner_key ");
-            sql.append("from entity a ");
-            sql.append("left outer join entityData aedt on a.id=aedt.parent_entity_id ");
-            sql.append("left outer join entityData aedk on a.id=aedk.parent_entity_id ");
-            sql.append("left outer join entityData aedv on a.id=aedv.parent_entity_id ");
             sql.append("where a.entity_type_id = ? ");
-            sql.append("and aedt.entity_att_id = ? ");
-            sql.append("and aedk.entity_att_id = ? ");
-            sql.append("and aedv.entity_att_id = ? ");
-            sql.append("order by a.owner_key, aedt.value");
+            sql.append("order by a.owner_key, aedt.value ");
 
             EntityType annotationType = getEntityTypeByName(EntityConstants.TYPE_ANNOTATION);
             EntityAttribute targetAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
@@ -179,12 +171,12 @@ public class Neo4jBatchDAO extends AnnotationDAO {
             stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
             stmt.setFetchSize(Integer.MIN_VALUE);
             
-            stmt.setLong(1, annotationType.getId());
-            stmt.setLong(2, targetAttr.getId());
-            stmt.setLong(3, keyAttr.getId());
-            stmt.setLong(4, valueAttr.getId());
-            stmt.setLong(5, keyIdAttr.getId());
-            stmt.setLong(6, valueIdAttr.getId());
+            stmt.setLong(1, targetAttr.getId());
+            stmt.setLong(2, keyAttr.getId());
+            stmt.setLong(3, valueAttr.getId());
+            stmt.setLong(4, keyIdAttr.getId());
+            stmt.setLong(5, valueIdAttr.getId());
+            stmt.setLong(6, annotationType.getId());
             
             rs = stmt.executeQuery();
             _logger.info("    Processing annotation results");
@@ -205,14 +197,12 @@ public class Neo4jBatchDAO extends AnnotationDAO {
                 Long entityId = null;
                 try {
                     entityId = new Long(entityIdStr);
+                    loadAnnotation(annotationId, annotationName, entityId, key, value, keyId, valueId, owner, creationDate, updatedDate);
+                    i++;
                 }
                 catch (NumberFormatException e) {
                     _logger.warn("Cannot parse annotation target id for annotation="+annotationId);
                 }
-
-                loadAnnotation(annotationId, annotationName, entityId, key, value, keyId, valueId, owner, creationDate, updatedDate);
-
-                i++;
             }
         }
         catch (SQLException e) {
