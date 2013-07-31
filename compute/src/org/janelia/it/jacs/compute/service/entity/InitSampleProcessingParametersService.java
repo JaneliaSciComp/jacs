@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
-import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -21,8 +20,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  */
 public class InitSampleProcessingParametersService extends AbstractEntityService {
 
-    protected static final String JACS_DATA_ARCHIVE_DIR =
-            SystemConfigurationProperties.getString("JacsData.Dir.Archive.Linux");
+    protected static final String ARCHIVE_PREFIX = "/archive";
     
     private FileNode mergeResultNode;
     private FileNode stitchResultNode;
@@ -145,16 +143,9 @@ public class InitSampleProcessingParametersService extends AbstractEntityService
             File mergedFile = null;
                 
             File lsmFile1 = new File(lsmFilepath1);
-//            if (!lsmFile1.exists()||!lsmFile1.canRead()) {
-//                throw new FileNotFoundException("LSM file does not exist or is not readable: "+lsmFile1.getAbsolutePath());
-//            }
-            
             File lsmFile2 = null;
             if (lsmFilepath2!=null) {
                 lsmFile2 = new File(lsmFilepath2);  
-//                if (!lsmFile2.exists()||!lsmFile2.canRead()) {
-//                    throw new FileNotFoundException("LSM file does not exist or is not readable: "+lsmFile2.getAbsolutePath());
-//                }
                 mergedFile = new File(mergeResultNode.getDirectoryPath(), "tile-"+tileEntity.getId()+".v3draw");
             }
             else {
@@ -165,7 +156,7 @@ public class InitSampleProcessingParametersService extends AbstractEntityService
             String lsmRealPath1 = lsmFile1.getCanonicalPath();
             String lsmRealPath2 = lsmFile2==null?null:lsmFile2.getCanonicalPath();
             
-            if (lsmRealPath1.startsWith(JACS_DATA_ARCHIVE_DIR) || (lsmRealPath2!=null && lsmRealPath2.startsWith(JACS_DATA_ARCHIVE_DIR))) {
+            if (lsmRealPath1.startsWith(ARCHIVE_PREFIX) || (lsmRealPath2!=null && lsmRealPath2.startsWith(ARCHIVE_PREFIX))) {
                 archived = true;
             }
             

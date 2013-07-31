@@ -46,8 +46,7 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  */
 public abstract class AbstractAlignmentService extends SubmitDrmaaJobService implements Aligner {
 
-    protected static final String JACS_DATA_ARCHIVE_DIR =
-            SystemConfigurationProperties.getString("JacsData.Dir.Archive.Linux");
+    protected static final String ARCHIVE_PREFIX = "/archive";
     
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
@@ -244,7 +243,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
 
     protected void checkForArchival(AlignmentInputFile input) throws Exception {
 
-        if (input.getInputFilename().startsWith(JACS_DATA_ARCHIVE_DIR)) {
+        if (input.getInputFilename().startsWith(ARCHIVE_PREFIX)) {
             archivedFiles.add(input.getInputFilename());
             String newInput = new File(resultFileNode.getDirectoryPath(), new File(input.getInputFilename()).getName()).getAbsolutePath();
             targetFiles.add(newInput);
@@ -252,7 +251,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         }
         
         if (input.getInputSeparationFilename()!=null) {
-            if (input.getInputSeparationFilename().startsWith(JACS_DATA_ARCHIVE_DIR)) {
+            if (input.getInputSeparationFilename().startsWith(ARCHIVE_PREFIX)) {
                 archivedFiles.add(input.getInputSeparationFilename());
                 String newInputSeperation = new File(resultFileNode.getDirectoryPath(), new File(input.getInputSeparationFilename()).getName()).getAbsolutePath();
                 targetFiles.add(newInputSeperation);

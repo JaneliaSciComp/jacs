@@ -35,8 +35,7 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
     private static final String CONFIG_PREFIX = "neuSepConfiguration.";
     private static final int TIMEOUT_SECONDS = 60 * 60;
 
-    protected static final String JACS_DATA_ARCHIVE_DIR =
-            SystemConfigurationProperties.getString("JacsData.Dir.Archive.Linux");
+    protected static final String ARCHIVE_PREFIX = "/archive";
     
     private FileNode outputFileNode;
     private String inputFilename;
@@ -95,7 +94,7 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
         
         File fromArchiveDir = new File(resultFileNode.getDirectoryPath(), "from_archive");
         
-        if (previousResultFilepath!=null && previousResultFilepath.startsWith(JACS_DATA_ARCHIVE_DIR)) {
+        if (previousResultFilepath!=null && previousResultFilepath.startsWith(ARCHIVE_PREFIX)) {
             File prevResultFile = new File(previousResultFilepath);
             File previousCompanionFile = new File(prevResultFile.getParent(), prevResultFile.getName().substring(0, prevResultFile.getName().lastIndexOf('.'))+".pbd");
             
@@ -108,7 +107,7 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
             targetFiles.add(previousCompanionFile.getAbsolutePath());
         }
         
-        if (consolidatedLabelFilepath!=null && consolidatedLabelFilepath.startsWith(JACS_DATA_ARCHIVE_DIR)) {
+        if (consolidatedLabelFilepath!=null && consolidatedLabelFilepath.startsWith(ARCHIVE_PREFIX)) {
             archivedFiles.add(consolidatedLabelFilepath);
             consolidatedLabelFilepath = new File(fromArchiveDir, new File(consolidatedLabelFilepath).getName()).getAbsolutePath();
             targetFiles.add(consolidatedLabelFilepath);

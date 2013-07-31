@@ -1,10 +1,8 @@
 package org.janelia.it.jacs.compute.service.entity;
 
 import java.io.File;
-import java.util.List;
 
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
