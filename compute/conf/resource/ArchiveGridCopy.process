@@ -6,6 +6,7 @@
 	   
         <input name="SOURCE_FILE_PATHS"/>
     	<input name="TARGET_FILE_PATHS"/>
+        <input name="DELETE_SOURCE_FILES"/>
 	   
 	    <!-- Import variables from the task -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
@@ -33,6 +34,7 @@
                 <input name="RESULT_FILE_NODE"/>
                 <input name="SOURCE_FILE_PATHS"/>
                 <input name="TARGET_FILE_PATHS"/>
+                <input name="DELETE_SOURCE_FILES"/>
             </operation>
         </sequence>
         

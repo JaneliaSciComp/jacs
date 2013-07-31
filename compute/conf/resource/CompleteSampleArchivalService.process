@@ -24,10 +24,19 @@
 	    <!-- Process each Sample Entity -->
         <sequence forEach="SAMPLE_ENTITY_ID">
     
-            <!-- Move over to archive -->
-            <include name="Move to Archive" process="CompleteSampleArchival_SyncSampleToArchive">
+            <!-- Spawn a new task to archive the Sample -->
+            <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
+                <input name="PROCESS_DEF_NAME" value="SyncSampleToArchive"/>
+                <input name="TASK_NAME" value="SyncSampleToArchive"/>
+                <input name="PARAMETER_1_KEY" value="sample entity id"/>
+                <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
+            </operation>
+                
+            <!-- Move all generated files to archive
+            <include name="Move sample to archive" process="SyncSampleToArchive">
                 <input name="SAMPLE_ENTITY_ID"/>
             </include>
+             -->
             
 	    </sequence>
 	    

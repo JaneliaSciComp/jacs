@@ -40,19 +40,17 @@ public class ArchiveGridService extends SubmitDrmaaJobService {
 
     protected static final String ARCHIVE_SYNC_CMD = SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("ArchiveSync.ScriptPath");
+
+    protected static final String REMOVE_COMMAND = "rm -rf"; 
     
     @Override
     protected String getGridServicePrefixName() {
         return "archive";
     }
     
-    protected static final String COPY_COMMAND = "cp -a"; 
-    protected static final String SYNC_COMMAND = "rsync -aW"; 
-    protected static final String MOVE_COMMAND = "mv";
-    protected static final String REMOVE_COMMAND = "rm -rf";
-    
     private List<String> sourcePaths;
     private List<String> targetPaths;
+    private boolean deleteSourceFiles = false;
     
     protected void init(IProcessData processData) throws Exception {
         super.init(processData);
@@ -108,6 +106,14 @@ public class ArchiveGridService extends SubmitDrmaaJobService {
                     }
                 }
             }
+            
+            processData.putItem("INPUT_FILE_PATHS", sourcePaths);
+            processData.putItem("OUTPUT_FILE_PATHS", targetPaths);
+            
+            String deleteSourceFilesStr = (String)processData.getItem("DELETE_SOURCE_FILES");
+            if (deleteSourceFilesStr!=null && deleteSourceFilesStr.equalsIgnoreCase("true")) {
+                deleteSourceFiles = true;
+            }
         }
         catch (Exception e) {
             if (e instanceof ServiceException) {
@@ -159,6 +165,9 @@ public class ArchiveGridService extends SubmitDrmaaJobService {
         script.append("read SOURCE_FILE\n");
         script.append("read TARGET_FILE\n");
         script.append(ARCHIVE_SYNC_CMD + " $SOURCE_FILE $TARGET_FILE\n");
+        if (deleteSourceFiles) {
+            script.append(REMOVE_COMMAND + " $SOURCE_FILE\n");    
+        }
         writer.write(script.toString());
     }
     

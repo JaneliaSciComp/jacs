@@ -14,13 +14,15 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.shared.utils.SystemCall;
 
 /**
- * Copy a file or a directory tree over from archive.
+ * Copy a file or a directory tree over from archive. Before using this service, consider using ArchiveGridService
+ * to do the copies on the grid instead.
  *   
  * Input variables:
  *   FILE_PATH - path in JacsData.Dir.Archive.Linux to copy or sync to corresponding location in JacsData.Dir.Linux
  *   FILE_PATHS - alternative variable for providing a list of FILE_PATH
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ * @see org.janelia.it.jacs.compute.service.utility.ArchiveGridService
  */
 public class SyncFromArchiveService implements IService {
 

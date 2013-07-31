@@ -15,7 +15,8 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.shared.utils.SystemCall;
 
 /**
- * Move a file or a directory tree over to the archive.
+ * Move a file or a directory tree over to the archive. Before using this service, consider relying on
+ * SyncSampleToArchive.process to move all files instead.
  *   
  * Input variables:
  *   FILE_PATH - path in JacsData.Dir.Linux to move or sync to corresponding location in JacsData.Dir.Archive.Linux
