@@ -13,6 +13,7 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.launcher.archive.ArchiveAccessHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.cv.Objective;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
@@ -34,6 +35,9 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
     private static final String CONFIG_PREFIX = "neuSepConfiguration.";
     private static final int TIMEOUT_SECONDS = 60 * 60;
 
+    protected static final String JACS_DATA_ARCHIVE_DIR =
+            SystemConfigurationProperties.getString("JacsData.Dir.Archive.Linux");
+    
     private FileNode outputFileNode;
     private String inputFilename;
     private String objective;
@@ -91,7 +95,7 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
         
         File fromArchiveDir = new File(resultFileNode.getDirectoryPath(), "from_archive");
         
-        if (previousResultFilepath!=null && previousResultFilepath.startsWith("/archive")) {
+        if (previousResultFilepath!=null && previousResultFilepath.startsWith(JACS_DATA_ARCHIVE_DIR)) {
             File prevResultFile = new File(previousResultFilepath);
             File previousCompanionFile = new File(prevResultFile.getParent(), prevResultFile.getName().substring(0, prevResultFile.getName().lastIndexOf('.'))+".pbd");
             
@@ -104,7 +108,7 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
             targetFiles.add(previousCompanionFile.getAbsolutePath());
         }
         
-        if (consolidatedLabelFilepath!=null && consolidatedLabelFilepath.startsWith("/archive")) {
+        if (consolidatedLabelFilepath!=null && consolidatedLabelFilepath.startsWith(JACS_DATA_ARCHIVE_DIR)) {
             archivedFiles.add(consolidatedLabelFilepath);
             consolidatedLabelFilepath = new File(fromArchiveDir, new File(consolidatedLabelFilepath).getName()).getAbsolutePath();
             targetFiles.add(consolidatedLabelFilepath);

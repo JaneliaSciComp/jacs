@@ -25,7 +25,14 @@ public class SampleTrashCompactorService extends AbstractEntityService {
     
 	public transient static final String CENTRAL_DIR_PROP = "FileStore.CentralDir";
 	public transient static final String CENTRAL_ARCHIVE_DIR_PROP = "FileStore.CentralDir.Archived";
-	
+
+    protected static final String JACS_DATA_DIR =
+        SystemConfigurationProperties.getString("JacsData.Dir.Linux");
+    
+    protected static final String JACS_DATA_ARCHIVE_DIR =
+            SystemConfigurationProperties.getString("JacsData.Dir.Archive.Linux");
+    
+    
 	private String username;
     private boolean isDebug = false;
     private int numDirs = 0;
@@ -126,15 +133,15 @@ public class SampleTrashCompactorService extends AbstractEntityService {
                 long numEntities = entityBean.getCountUserEntitiesWithAttributeValue(null, EntityConstants.ATTRIBUTE_FILE_PATH, path+"%");
                 if (numEntities==0) {
                     
-                    // Because some nodes may have dual citizenship on /groups and /archive, for legacy reasons, we need
+                    // Because some nodes may have dual citizenship on groups and archive, for legacy reasons, we need
                     // to check the sister directory as well:
                     
                     String sisterPath = null;
-                    if (path.startsWith("/groups")) {
-                        sisterPath = path.replaceFirst("/groups", "/archive");
+                    if (path.startsWith(JACS_DATA_DIR)) {
+                        sisterPath = path.replaceFirst(JACS_DATA_DIR, JACS_DATA_ARCHIVE_DIR);
                     }
-                    else  if (path.startsWith("/archive")) {
-                        sisterPath = path.replaceFirst("/archive", "/groups");
+                    else  if (path.startsWith(JACS_DATA_ARCHIVE_DIR)) {
+                        sisterPath = path.replaceFirst(JACS_DATA_ARCHIVE_DIR, JACS_DATA_DIR);
                     }
                     else {
                         logger.error("Unknown path prefix: "+path);

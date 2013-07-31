@@ -64,6 +64,13 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     public static final String COMPUTE_EJB_PROP = "ComputeEJB.Name";
     public static final String MDB_PROVIDER_URL_PROP = "AsyncMessageInterface.ProviderURL";
     public static final String FILE_STORE_CENTRAL_DIR_PROP = "FileStore.CentralDir";
+
+    protected static final String JACS_DATA_DIR =
+        SystemConfigurationProperties.getString("JacsData.Dir.Linux");
+    
+    protected static final String JACS_DATA_ARCHIVE_DIR =
+            SystemConfigurationProperties.getString("JacsData.Dir.Archive.Linux");
+    
     private ComputeDAO computeDAO = new ComputeDAO(logger);
     private UserDAO userDAO = new UserDAO(logger);
     
@@ -685,14 +692,14 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
                 // Update child node too
                 FileNode childNode = (FileNode)computeDAO.getFileNodeByPathOverride(filepath);
                 if (childNode!=null) {
-                    childNode.setPathOverride(filepath.replaceFirst("/groups", "/archive"));
+                    childNode.setPathOverride(filepath.replaceFirst(JACS_DATA_DIR, JACS_DATA_ARCHIVE_DIR));
                     computeDAO.saveOrUpdate(childNode);
                     nodesUpdated++;
                     logger.debug("  changed path override on child node "+childNode.getObjectId()+" to: "+childNode.getPathOverride());
                 }
             }
 
-            String archiveParentFileNodePath = parentFileNodePath.replaceFirst("/groups", "/archive");
+            String archiveParentFileNodePath = parentFileNodePath.replaceFirst(JACS_DATA_DIR, JACS_DATA_ARCHIVE_DIR);
             
             FileNode node = (FileNode)computeDAO.getNodeById(nodeId);
             if (node!=null) {

@@ -10,6 +10,7 @@ import javax.jms.Message;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.engine.launcher.ejb.SeriesLauncherMDB;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.jboss.annotation.ejb.Depends;
 import org.jboss.annotation.ejb.PoolClass;
@@ -35,6 +36,12 @@ public class ArchiveAccessMDB extends SeriesLauncherMDB {
     
     public static final String REQUEST_MOVE_TO_ARCHIVE = "moveToArchive";
     public static final String REQUEST_COPY_FROM_ARCHIVE = "copyFromArchive";
+
+    protected static final String JACS_DATA_DIR =
+        SystemConfigurationProperties.getString("JacsData.Dir.Linux");
+    
+    protected static final String JACS_DATA_ARCHIVE_DIR =
+            SystemConfigurationProperties.getString("JacsData.Dir.Archive.Linux");
     
     @Depends({"jboss:custom=ArchivalManager"})
     private ArchivalManagerManagement archivalManager;
@@ -63,7 +70,7 @@ public class ArchiveAccessMDB extends SeriesLauncherMDB {
                 
                 List<String> targetFilepaths = new ArrayList<String>();
                 for(String sourceFilepath : filePathList) {
-                    targetFilepaths.add(sourceFilepath.replaceFirst("/archive", "/groups"));
+                    targetFilepaths.add(sourceFilepath.replaceFirst(JACS_DATA_ARCHIVE_DIR, JACS_DATA_DIR));
                 }
             }
             else if (REQUEST_COPY_FROM_ARCHIVE.equals(request)) {

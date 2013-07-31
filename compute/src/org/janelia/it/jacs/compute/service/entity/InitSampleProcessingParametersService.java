@@ -1,12 +1,12 @@
 package org.janelia.it.jacs.compute.service.entity;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -21,6 +21,9 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  */
 public class InitSampleProcessingParametersService extends AbstractEntityService {
 
+    protected static final String JACS_DATA_ARCHIVE_DIR =
+            SystemConfigurationProperties.getString("JacsData.Dir.Archive.Linux");
+    
     private FileNode mergeResultNode;
     private FileNode stitchResultNode;
     
@@ -162,7 +165,7 @@ public class InitSampleProcessingParametersService extends AbstractEntityService
             String lsmRealPath1 = lsmFile1.getCanonicalPath();
             String lsmRealPath2 = lsmFile2==null?null:lsmFile2.getCanonicalPath();
             
-            if (lsmRealPath1.startsWith("/archive") || (lsmRealPath2!=null && lsmRealPath2.startsWith("/archive"))) {
+            if (lsmRealPath1.startsWith(JACS_DATA_ARCHIVE_DIR) || (lsmRealPath2!=null && lsmRealPath2.startsWith(JACS_DATA_ARCHIVE_DIR))) {
                 archived = true;
             }
             

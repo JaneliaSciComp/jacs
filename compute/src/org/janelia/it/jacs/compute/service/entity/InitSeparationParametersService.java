@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
@@ -20,6 +21,9 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  */
 public class InitSeparationParametersService extends AbstractEntityService {
 
+    protected static final String JACS_DATA_ARCHIVE_DIR =
+            SystemConfigurationProperties.getString("JacsData.Dir.Archive.Linux");
+    
     protected FileNode resultFileNode;
     protected List<String> archivedFiles = new ArrayList<String>();
     protected List<String> targetFiles = new ArrayList<String>();
@@ -166,7 +170,7 @@ public class InitSeparationParametersService extends AbstractEntityService {
 
     protected String checkForArchival(String filepath) throws Exception {
         if (filepath==null) return null;
-        if (filepath.startsWith("/archive")) {
+        if (filepath.startsWith(JACS_DATA_ARCHIVE_DIR)) {
             archivedFiles.add(filepath);
             String newPath = new File(resultFileNode.getDirectoryPath(), new File(filepath).getName()).getAbsolutePath();
             targetFiles.add(newPath);
