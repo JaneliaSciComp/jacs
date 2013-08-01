@@ -21,7 +21,7 @@ INSTALL_DATA_SERVER=$6
 INSTALL_PROD_SERVER=$7
 INSTALL_CLIENT=$8
 
-JACSDATA_DIR="/groups/scicomp/jacsData"
+JACSDATA_DIR="/groups/jacs/jacsDev"
 EXE_DIR="$JACSDATA_DIR/servers/$SERVER/executables"
 
 COMPILE_DIR="$EXE_DIR/compile"

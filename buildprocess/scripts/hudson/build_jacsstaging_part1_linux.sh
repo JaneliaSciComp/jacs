@@ -41,7 +41,8 @@ PART2_BUILD_JANELIAWORKSTATION=$9
 PART2_BUILD_JACSTEST=$10
 
 JACSHOME_DIR="/home/jacs"
-JACSDATA_DIR="/groups/scicomp/jacsData"
+JACSDATA_DIR="/groups/jacs/jacsDev"
+#JACSDATA_DIR="/groups/scicomp/jacsData"
 EXE_DIR="$JACSDATA_DIR/servers/$SERVER/executables"
 SCRIPT_DIR="$JACSDATA_DIR/servers/$SERVER/scripts"
 TEMPLATE_DIR="$JACSDATA_DIR/servers/$SERVER/templates"
