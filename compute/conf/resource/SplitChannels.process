@@ -1,0 +1,43 @@
+<!-- 
+	Split the channels for an image and place the results in the temporary directory for download.
+-->
+<process name="Split Channels" processor="queue/consolePipelineLauncher" startEvent="pending" updateProcessStatus="on_success" >
+    <sequence name="Split Channels" waitForAsync="true">
+        
+        <input name="FILE_PATH"/>
+        
+        <sequence name="Preparing task" startEvent="running">
+            
+            <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+                <input name="TASK_PARAMETER_1" value="filepath"/>
+                <input name="PROCESS_VARIABLE_1" value="FILE_PATH"/>
+                <output name="FILE_PATH"/>
+            </operation>
+    	    
+    	    <operation name="Create Temporary Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+    		    <input name="NAME" value="Temp"/>
+    	        <output name="RESULT_FILE_NODE"/>
+    	        <output name="RESULT_FILE_NODE_ID"/>
+                <output name="RESULT_FILE_NODE_DIR"/>
+    	    </operation>
+    	    
+        </sequence>
+        
+        <sequence name="Splitting channels" waitForAsync="true" startEvent="running">
+            <operation name="Split Channels" processor="queue/gridSubmitAndWait">
+                <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DBulkChannelSplitService"/>
+                <input name="ARCHIVE_FLAG" value="true"/>
+                <input name="RESULT_FILE_NODE"/>
+                <input name="INPUT_FILE" value="$V{FILE_PATH}"/>
+                <input name="OUTPUT_EXTENSION" value="tif"/>
+            </operation>
+        </sequence>
+	    
+	    <sequence name="Finalizing output" startEvent="running">
+            <operation name="Set Results as Task Message" processor="org.janelia.it.jacs.compute.service.utility.SetSplitChannelsResultsService">
+                <input name="RESULT_FILE_NODE"/>
+            </operation>
+        </sequence>
+        
+    </sequence>
+</process>

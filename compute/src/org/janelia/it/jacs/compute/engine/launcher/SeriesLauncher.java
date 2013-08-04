@@ -298,7 +298,7 @@ public abstract class SeriesLauncher implements ILauncher {
                 description = "Sending message to " + actionDef.getProcessorName() + " queue";
             }
             else {
-                description = "Starting " + actionDef.getActionType().toString().toLowerCase() + " " + actionDef.getName();
+                description = actionDef.getName();
             }
             EJBFactory.getLocalComputeBean().updateTaskStatus(processData.getProcessId(), actionDef.getStartEvent(), description);
         }

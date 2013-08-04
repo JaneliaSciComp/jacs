@@ -206,10 +206,14 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
     }
 
     /**
-     * Override this method to add flags to the native specification. 
+     * Override this method to add flags to the native specification. If you override this method, call super
+     * in order to process ARCHIVE_FLAG.
      * @return
      */
     protected String getAdditionalNativeSpecification() {
+        if ("true".equals((String)processData.getItem("ARCHIVE_FLAG"))) {
+            return "-l archive=true";    
+        }
         return null;
     }
     
@@ -227,7 +231,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
     public GridResourceSpec getGridResourceSpec() {
         return gridResourceSpec;
     }
-
+    
     protected SerializableJobTemplate prepareJobTemplate(DrmaaHelper drmaa) throws Exception {
 
         SerializableJobTemplate jt = drmaa.createJobTemplate(new SerializableJobTemplate());

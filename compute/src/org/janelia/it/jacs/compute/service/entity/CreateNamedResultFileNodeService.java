@@ -48,6 +48,7 @@ public class CreateNamedResultFileNodeService implements IService {
             else {
             	processData.putItem(ProcessDataConstants.RESULT_FILE_NODE, resultFileNode);
             	processData.putItem(ProcessDataConstants.RESULT_FILE_NODE_ID, resultFileNode.getObjectId());
+                processData.putItem(ProcessDataConstants.RESULT_FILE_NODE_DIR, resultFileNode.getDirectoryPath());
             }
             
             logger.info("Created named result node: "+resultFileNode.getDirectoryPath());

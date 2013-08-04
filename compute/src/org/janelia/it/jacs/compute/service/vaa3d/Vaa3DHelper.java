@@ -33,6 +33,10 @@ public class Vaa3DHelper {
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
                     SystemConfigurationProperties.getString("Intersection.ScriptPath");
 
+    protected static final String SPLIT_CHANNELS_CMD =
+            SystemConfigurationProperties.getString("Executables.ModuleBase") +
+                    SystemConfigurationProperties.getString("SplitChannels.ScriptPath");
+    
     protected static final String SCRATCH_DIR =
             SystemConfigurationProperties.getString("computeserver.ClusterScratchDir");
 
@@ -219,6 +223,10 @@ public class Vaa3DHelper {
      */
     public static String getFormattedIntersectionCommand(String inputFilepath1, String inputFilepath2, String outputFilepath, String method, String kernelSize) throws ServiceException {
         return INTERSECTION_CMD +" \""+inputFilepath1+"\" \""+inputFilepath2+"\" \""+outputFilepath+"\" "+method+" "+kernelSize;
+    }
+
+    public static String getFormattedSplitChannelsCommand(String inputFilepath, String outputFilepath, String outputExtension) throws ServiceException {
+        return SPLIT_CHANNELS_CMD +" \""+inputFilepath+"\" \""+outputFilepath+"\" "+outputExtension;
     }
     
     public static String getFormattedNeuronMergeCommand(String originalImageFilePath, String consolidatedSignalLabelIndexFilePath,
