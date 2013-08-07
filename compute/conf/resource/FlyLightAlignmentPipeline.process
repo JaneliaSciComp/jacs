@@ -127,48 +127,52 @@
     			<input name="DEFAULT_IMAGE_FILENAME" value="$V{ALIGNED_FILENAME}"/>
     	    </operation>
     	    
-    	    <!-- Run analyses on aligned results -->
-            <sequence if="RUN_ANALYSIS=true">
-                <sequence forEach="ANALYSIS_ALGORITHM">
-                        
-                    <!-- Get the aligned image ids -->
-                    <operation name="Get Aligned Images" processor="org.janelia.it.jacs.compute.service.entity.sample.GetAlignedImagesService">
-                        <input name="RESULT_ENTITY_ID"/>
-                        <output name="IMAGE_ID"/>
-                    </operation>
-                    
-                    <!-- Run separation for each alignment output (e.g. 20x, 63x, etc...) -->
-                    <sequence forEach="IMAGE_ID">
+    	    <!-- Run analyses on aligned results, if there are signal channels to analyze -->
+    	    <sequence if="SIGNAL_CHANNELS is not empty">
+        	    
+                <sequence if="RUN_ANALYSIS=true">
+                    <sequence forEach="ANALYSIS_ALGORITHM">
                             
-                        <!-- Decide what pipeline to run -->
-                        <operation name="Get Parameters" processor="org.janelia.it.jacs.compute.service.entity.sample.InitAlignedImagePropertiesService">
-                            <input name="IMAGE_ID"/>
-                            <output name="FILENAME"/>
-                            <output name="OPTICAL_RESOLUTION"/>
-                            <output name="PIXEL_RESOLUTION"/>
-                            <output name="OBJECTIVE"/>
-                            <output name="ALIGNED_CONSOLIDATED_LABEL_FILEPATH"/>
+                        <!-- Get the aligned image ids -->
+                        <operation name="Get Aligned Images" processor="org.janelia.it.jacs.compute.service.entity.sample.GetAlignedImagesService">
+                            <input name="RESULT_ENTITY_ID"/>
+                            <output name="IMAGE_ID"/>
                         </operation>
                         
-                        <!-- Run neuron separation on prealigned data -->
-                        <include name="Neuron Separation" process="FlyLightSeparationPipeline">
-                            <input name="ROOT_ENTITY_ID" value="$V{RESULT_ENTITY_ID}"/>
-                            <input name="SAMPLE_ENTITY_ID"/>
-                            <input name="INPUT_FILENAME" value="$V{FILENAME}"/>
-                            <input name="RESULT_ENTITY_NAME" value="Aligned Neuron Separation"/>
-                            <input name="SIGNAL_CHANNELS"/>
-                            <input name="REFERENCE_CHANNEL"/>
-                            <input name="OPTICAL_RESOLUTION"/>
-                            <input name="PIXEL_RESOLUTION"/>
-                            <input name="OBJECTIVE"/>
-                            <input name="ALIGNED_CONSOLIDATED_LABEL_FILEPATH"/>
-                        </include>
-                    
+                        <!-- Run separation for each alignment output (e.g. 20x, 63x, etc...) -->
+                        <sequence forEach="IMAGE_ID">
+                                
+                            <!-- Decide what pipeline to run -->
+                            <operation name="Get Parameters" processor="org.janelia.it.jacs.compute.service.entity.sample.InitAlignedImagePropertiesService">
+                                <input name="IMAGE_ID"/>
+                                <output name="FILENAME"/>
+                                <output name="OPTICAL_RESOLUTION"/>
+                                <output name="PIXEL_RESOLUTION"/>
+                                <output name="OBJECTIVE"/>
+                                <output name="ALIGNED_CONSOLIDATED_LABEL_FILEPATH"/>
+                            </operation>
+                            
+                            <!-- Run neuron separation on prealigned data -->
+                            <include name="Neuron Separation" process="FlyLightSeparationPipeline">
+                                <input name="ROOT_ENTITY_ID" value="$V{RESULT_ENTITY_ID}"/>
+                                <input name="SAMPLE_ENTITY_ID"/>
+                                <input name="INPUT_FILENAME" value="$V{FILENAME}"/>
+                                <input name="RESULT_ENTITY_NAME" value="Aligned Neuron Separation"/>
+                                <input name="SIGNAL_CHANNELS"/>
+                                <input name="REFERENCE_CHANNEL"/>
+                                <input name="OPTICAL_RESOLUTION"/>
+                                <input name="PIXEL_RESOLUTION"/>
+                                <input name="OBJECTIVE"/>
+                                <input name="ALIGNED_CONSOLIDATED_LABEL_FILEPATH"/>
+                            </include>
+                        
+                        </sequence>
+                        
                     </sequence>
-                    
                 </sequence>
-            </sequence>
         
+            </sequence>
+            
         </sequence>
     
     </sequence>
