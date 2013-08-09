@@ -99,7 +99,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	
 	private void registerImages(Entity resultEntity, Entity pipelineRunEntity, Entity sampleEntity, String defaultImageFilename) throws Exception {
 
-    	logger.info("Finding images under "+resultEntity.getName());
+    	logger.info("Finding images under "+resultEntity.getName()+" (id="+resultEntity.getId()+")");
     	
     	// Find all the 2d and 3d images in this result tree, and populate all of the lookup maps and lists
     	
@@ -148,6 +148,10 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 			    	EntityData currRefMip = image3d.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE);
 			    	if (currRefMip==null || currRefMip.getChildEntity()==null || !currRefMip.getId().equals(refMip.getId())) {
 			    		entityHelper.setImageIfNecessary(image3d, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);
+			    	}
+			    	if (signalMip==null) {
+			    	    // No signal MIP, use the reference as the default 
+                        entityHelper.setDefault2dImage(image3d, refMip);
 			    	}
 				}
 			}	
@@ -260,8 +264,14 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	}
 	
 	private void setMIPs(Entity entity, Entity signalMip, Entity refMip) throws ComputeException {
-		entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, signalMip);
-		entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMip);
-		entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);
+	    if (signalMip!=null) {
+	        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, signalMip);
+	        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMip);
+	        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);
+	    }
+	    else {
+	        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, refMip);
+	        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);
+	    }
 	}
 }
