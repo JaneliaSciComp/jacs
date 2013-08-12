@@ -164,9 +164,9 @@ public class ArchiveGridService extends SubmitDrmaaJobService {
         StringBuffer script = new StringBuffer();
         script.append("read SOURCE_FILE\n");
         script.append("read TARGET_FILE\n");
-        script.append(ARCHIVE_SYNC_CMD + " $SOURCE_FILE $TARGET_FILE\n");
+        script.append(ARCHIVE_SYNC_CMD + " \"$SOURCE_FILE\" \"$TARGET_FILE\"\n");
         if (deleteSourceFiles) {
-            script.append(REMOVE_COMMAND + " $SOURCE_FILE\n");    
+            script.append(REMOVE_COMMAND + " \"$SOURCE_FILE\"\n");    
         }
         writer.write(script.toString());
     }
