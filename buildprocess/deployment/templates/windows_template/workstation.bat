@@ -38,7 +38,7 @@ IF NOT "%ErrorLevel%"=="0" goto Update
     echo echo Deleting old version...        >> %UPDATEBAT%
     echo rmdir /S /Q "%INSTALL%"             >> %UPDATEBAT%
 	echo echo Copying new version...         >> %UPDATEBAT%
-    echo xcopy /S "%DOWNLOAD%" "%INSTALL%"   >> %UPDATEBAT%
+    echo xcopy /s "%DOWNLOAD%" "%INSTALL%"   >> %UPDATEBAT%
     echo echo done.  Update complete.        >> %UPDATEBAT%
 	echo cd "%INSTALL%"                      >> %UPDATEBAT%
 	echo JaneliaWorkstation.bat              >> %UPDATEBAT%
