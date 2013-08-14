@@ -3,10 +3,7 @@ package org.janelia.it.jacs.compute.access.solr;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.*;
 
 import org.apache.log4j.Logger;
@@ -195,8 +192,8 @@ public class SolrDAO extends AnnotationDAO {
         		if (stmt!=null) stmt.close();
         		if (conn!=null) conn.close();
         	}
-            catch (Exception e) {
-        		_logger.warn("Error closing JDBC connection",e);
+            catch (Throwable e) {
+        		_logger.warn("Error closing JDBC connection. Ignoring error.",e);
             }
         }
 
