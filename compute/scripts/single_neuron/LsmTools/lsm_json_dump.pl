@@ -34,5 +34,7 @@ my $jsync = JSYNC::dump($lsm, {pretty => 1});
 $jsync =~ s/^\s+"!".*?$//gm;
 $jsync =~ s/^\s*\n+//mg;
 
-print $jsync;
+if ($jsync !~ /{}\s*/) {
+    print $jsync;
+}
 
