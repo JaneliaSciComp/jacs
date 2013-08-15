@@ -127,7 +127,7 @@ public class FileTreeLoaderService implements IService {
     protected String rootDirectoryPath;
     protected boolean filesUploaded;
     protected Entity topLevelFolder;
-    protected Entity supportingFilesFolder;
+//    protected Entity supportingFilesFolder;
     protected File rootDirectory;
     protected FileTreeLoaderResultNode resultNode;
     protected String mode;
@@ -191,13 +191,33 @@ public class FileTreeLoaderService implements IService {
                     throw new ServiceException(
                             "failed to parse TOP_LEVEL_FOLDER_ID '" + topLevelFolderIdStr + "'", e);
                 }
-                // need to load entire tree since children get checked for supporting files
-                topLevelFolder = entityBean.getEntityTree(topLevelFolderId);
+                
+                if (topLevelFolderName!=null) {
+                    // need to load entire tree since children get checked for supporting files
+                    Entity parentFolder = entityBean.getEntityAndChildren(topLevelFolderId);
+                    List<Entity> orderedChildren = parentFolder.getOrderedChildren();
+                    Collections.reverse(orderedChildren);
+                    Entity foundChild = null;
+                    for(Entity child : orderedChildren) {
+                        if (child.getName().equals(topLevelFolderName)) {
+                            foundChild = child;
+                        }
+                    }
+                    if (foundChild!=null) {
+                        topLevelFolder = foundChild;
+                    }
+                    else {
+                        topLevelFolder = helper.addChildFolderToEntity(parentFolder, topLevelFolderName, null);
+                    }
+                }
+                else {
+                    // need to load entire tree since children get checked for supporting files
+                    topLevelFolder = entityBean.getEntityTree(topLevelFolderId);
+                }
             }
 
-
-            logger.info("Creating supporting files folder");
-            supportingFilesFolder=verifyOrCreateVirtualSubFolder(topLevelFolder, SUPPORTING_FILES_FOLDER_NAME);
+//            logger.info("Creating supporting files folder");
+//            supportingFilesFolder=verifyOrCreateVirtualSubFolder(topLevelFolder, SUPPORTING_FILES_FOLDER_NAME);
 
             logger.info("Validating root directorypath");
             rootDirectoryPath=processData.getString("FILE_TREE_ROOT_DIRECTORY");
@@ -615,7 +635,7 @@ public class FileTreeLoaderService implements IService {
                         pbdResultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_ARTIFACT_SOURCE_ID, ai.sourceEntityId.toString());
                         logger.info("doComplete() saving pbdResultEntity");
                         entityBean.saveOrUpdateEntity(pbdResultEntity);
-                        helper.addToParent(supportingFilesFolder, pbdResultEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
+//                        helper.addToParent(supportingFilesFolder, pbdResultEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
                         // Second, add this entity as the proxy attribute of the source Entity
                         logger.info("doComplete() adding entity as performance proxy");
                         Entity sourceEntity=entityBean.getEntityById(ai.sourceEntityId.toString());
@@ -650,7 +670,7 @@ public class FileTreeLoaderService implements IService {
                     	Entity mipResultEntity=createEntityForFile(mipResultFile, mipResultEntityType);
                         mipResultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_ARTIFACT_SOURCE_ID, ai.sourceEntityId.toString());
                         entityBean.saveOrUpdateEntity(mipResultEntity);
-                        helper.addToParent(supportingFilesFolder, mipResultEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
+//                        helper.addToParent(supportingFilesFolder, mipResultEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
                         // Add as default 2D image
                         Entity sourceEntity=entityBean.getEntityById(ai.sourceEntityId.toString());
                         File sourceFile=new File(sourceEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
@@ -679,9 +699,9 @@ public class FileTreeLoaderService implements IService {
         }
 
         // remove supporting files entity if it is empty
-        if (! supportingFilesFolder.hasChildren()) {
-            entityBean.deleteSmallEntityTree(ownerKey, supportingFilesFolder.getId());
-        }
+//        if (! supportingFilesFolder.hasChildren()) {
+//            entityBean.deleteSmallEntityTree(ownerKey, supportingFilesFolder.getId());
+//        }
 
         clearResultMaps();
 

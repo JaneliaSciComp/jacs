@@ -152,7 +152,7 @@ public class FileDiscoveryHelper extends EntityHelper {
 
     public Entity addChildFolderToEntity(Entity parent, String name, String directoryPath) throws Exception {
     	Entity folder = createFolderForFile(name, false, directoryPath); 
-        addToParent(parent, folder, null, EntityConstants.ATTRIBUTE_ENTITY);
+        addToParent(parent, folder, parent.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
         return folder;
     }
 

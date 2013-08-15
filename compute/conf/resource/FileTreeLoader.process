@@ -42,7 +42,7 @@
                 <output name="TOP_LEVEL_FOLDER_ID"/>
     	    </operation>
 
-	    	<operation name="Initial File Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FileTreeLoaderService">
+	    	<operation name="Initial File Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FileTreeLoaderService" startEvent="running">
 	    	    <input name="MODE" value="SETUP"/>
     			<input name="TOP_LEVEL_FOLDER_NAME"/>
     			<input name="FILE_TREE_ROOT_DIRECTORY"/>
@@ -61,7 +61,7 @@
     		</operation>
 
 	        <!-- Do pbds first -->
-	        <sequence forEach="PBD_INDEX" waitForAsync="true">
+	        <sequence name="PBD Conversion" forEach="PBD_INDEX" waitForAsync="true" startEvent="running">
 	            <sequence async="true">
 	                <sequence>
 
@@ -108,7 +108,7 @@
             </operation>
 
 	        <!-- Do MIPs next to take advantage of pbd loading -->
-	        <sequence forEach="MIP_INDEX" waitForAsync="true">
+	        <sequence name="MIP Generation" forEach="MIP_INDEX" waitForAsync="true" startEvent="running">
 	            <sequence async="true">
 	                <sequence>
 
@@ -155,7 +155,7 @@
         	    </sequence>
             </sequence>
 
-            <operation name="Completion Step for Entity Creation" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FileTreeLoaderService">
+            <operation name="Creating Entities" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FileTreeLoaderService" startEvent="running">
                 <input name="MODE" value="COMPLETE"/>
                 <input name="GROUP_SIZE"/>
    			    <input name="RESULT_NODE"/>
