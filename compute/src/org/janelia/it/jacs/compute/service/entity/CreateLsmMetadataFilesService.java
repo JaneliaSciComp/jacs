@@ -10,6 +10,8 @@ import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata;
+import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.Channel;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -35,6 +37,9 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     protected File outputDir;
     protected Logger logger;
     private List<File> inputFiles = new ArrayList<File>();
+
+    private File lsmDataFile;
+    private File jsonDataFile;
     
     protected void init(IProcessData processData) throws Exception {
     	super.init(processData);
@@ -94,14 +99,14 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     	createShellScript(writer);
         setJobIncrementStop(configIndex-1);
     }
-
+    
     private void writeInstanceFiles(File inputFile, int configIndex) throws Exception {
         File configFile = new File(getSGEConfigurationDirectory(), CONFIG_PREFIX+configIndex);
         FileWriter fw = new FileWriter(configFile);
         try {
             String metadataStub = createLsmMetadataFilename(inputFile);
-            File lsmDataFile = new File(outputDir, metadataStub+".metadata");
-            File jsonDataFile = new File(outputDir, metadataStub+".json");
+            this.lsmDataFile = new File(outputDir, metadataStub+".metadata");
+            this.jsonDataFile = new File(outputDir, metadataStub+".json");
             fw.write(inputFile.getAbsolutePath() + "\n");
             fw.write(lsmDataFile.getAbsolutePath() + "\n");
             fw.write(jsonDataFile.getAbsolutePath() + "\n");
@@ -159,5 +164,26 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     @Override
     public void postProcess() throws MissingDataException {
 
+        if (!jsonDataFile.exists()) {
+            throw new MissingDataException("JSON metadata file does not exist: "+jsonDataFile);
+        }
+
+        if (jsonDataFile.length()<=0) {
+            throw new MissingDataException("JSON metadata file is empty: "+jsonDataFile);
+        }
+        
+        try {
+            LSMMetadata metadata = LSMMetadata.fromFile(jsonDataFile);
+            if(metadata.getChannels().isEmpty()) {
+                throw new MissingDataException("No channels in JSON metadata file: "+jsonDataFile);
+            }
+        }
+        catch (MissingDataException e) {
+            throw e;
+        }
+        catch (Exception e) {
+            throw new MissingDataException("JSON metadata file cannot be parsed: "+jsonDataFile,e);
+        }
+        
     }
 }
