@@ -18,6 +18,9 @@ public class ImageConversionService extends ParallelFileProcessingService {
     protected static final String CONVERT_BASE_CMD = SystemConfigurationProperties.getString("Executables.ModuleBase") +
     		SystemConfigurationProperties.getString("ImageMagick.Bin.Path")+"/convert";
 
+    protected static final String CONVERT_LIB_DIR = SystemConfigurationProperties.getString("Executables.ModuleBase") +
+            SystemConfigurationProperties.getString("ImageMagick.Lib.Path");
+    
     @Override
     protected void init(IProcessData processData) throws Exception {
         String altWorkingPath=processData.getString("ALTERNATE_WORKING_DIR_PATH");
@@ -41,8 +44,8 @@ public class ImageConversionService extends ParallelFileProcessingService {
     protected void writeShellScript(FileWriter writer) throws Exception {
     	super.writeShellScript(writer);
         StringBuffer script = new StringBuffer();
-        script.append(CONVERT_BASE_CMD+" $INPUT_FILENAME $OUTPUT_FILENAME");
-        script.append("\n");
+        script.append("export LD_LIBRARY_PATH="+CONVERT_LIB_DIR+"\n");
+        script.append(CONVERT_BASE_CMD+" $INPUT_FILENAME $OUTPUT_FILENAME\n");
         writer.write(script.toString());
     }
 }
