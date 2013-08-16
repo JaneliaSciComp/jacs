@@ -84,7 +84,7 @@ createMip()
     SIGNAL_MIP_PPM="${FILE_STUB}_${NAME}.ppm"
     cat $INPUT_FILE | $NSDIR/v3draw_select_channels $CHANNELS | $NSDIR/v3draw_to_8bit | $NSDIR/v3draw_to_mip | $NSDIR/v3draw_to_ppm > $SIGNAL_MIP_PPM
 
-    if [[ ${NAME} = "signal" && ${#CHANNELS} -lt 3 ]] ; then
+    if [[ ${NAME} == "signal" && ${#CHANNELS} -lt 3 ]] ; then
         # single signal channel will come out as greyscale, so let's colorize it
         echo "Converting single channel signal MIP to red"
         $NETPBM_BIN/ppmtopgm $SIGNAL_MIP_PPM | $NETPBM_BIN/pgmtoppm "#FF0000" > tmp.ppm
