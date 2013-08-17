@@ -51,8 +51,8 @@ public class ChoosePostSampleProcessingStepsService extends AbstractEntityServic
     		try {
     		    n = aarms.get(i);
             } catch (IndexOutOfBoundsException e) {
-                logger.info("Alignment algorithm "+aa+" specified with no result name");
-                // Ignore. Maybe this algorithm doesn't need a parameter.
+                n = "Brain Alignment";
+                logger.info("Alignment algorithm "+aa+" specified with default name: "+n);
             }
             
     		ParameterizedAlignmentAlgorithm paa = new ParameterizedAlignmentAlgorithm(aa, p, n);
