@@ -1,0 +1,50 @@
+<!-- 
+	Convert a file to an specified extension and place the result in the temporary directory for download.
+-->
+<process name="Convert File" processor="queue/consolePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+    <sequence name="Convert File" waitForAsync="true">
+        
+        <input name="FILE_PATH"/>
+        <input name="OUTPUT_EXTENSION"/>
+        
+        <sequence name="Preparing task" startEvent="running">
+            
+            <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+                <input name="TASK_PARAMETER_1" value="filepath"/>
+                <input name="PROCESS_VARIABLE_1" value="FILE_PATH"/>
+                <input name="TASK_PARAMETER_2" value="output extension"/>
+                <input name="PROCESS_VARIABLE_2" value="OUTPUT_EXTENSION"/>
+                <output name="FILE_PATH"/>
+                <output name="OUTPUT_EXTENSION"/>
+            </operation>
+    	    
+    	    <operation name="Create Temporary Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+    		    <input name="NAME" value="Temp"/>
+    	        <output name="RESULT_FILE_NODE"/>
+    	        <output name="RESULT_FILE_NODE_ID"/>
+                <output name="RESULT_FILE_NODE_DIR"/>
+    	    </operation>
+    	    
+        </sequence>
+
+        <sequence name="Convert files" waitForAsync="true" startEvent="running">
+            <operation name="Convert files" processor="queue/gridSubmitAndWait">
+                <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DConversionService"/>
+                <input name="ARCHIVE_FLAG" value="true"/>
+                <input name="IGNORE_ERRORS" value="true"/>
+                <input name="RESULT_FILE_NODE"/>
+                <input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
+                <input name="INPUT_PATH_1" value="$V{FILE_PATH}"/>
+                <input name="OUTPUT_EXTENSION"/>
+            </operation>
+        </sequence>
+	    
+	    <sequence name="Finalizing output" startEvent="running">
+            <operation name="Set Results as Task Message" processor="org.janelia.it.jacs.compute.service.utility.SetTaskFileResultsService">
+                <input name="RESULT_FILE_NODE"/>
+                <input name="OUTPUT_EXTENSION"/>
+            </operation>
+        </sequence>
+        
+    </sequence>
+</process>

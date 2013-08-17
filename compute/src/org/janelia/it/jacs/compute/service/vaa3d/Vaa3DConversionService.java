@@ -36,6 +36,8 @@ public class Vaa3DConversionService extends ParallelFileProcessingService {
     	
     	int configIndex = 1;
     	while (true) {
+    	    // This might be better, but it needs to be tested:
+    	    //if (!(inputFiles.size()>configIndex || outputFiles.size()>configIndex)) break;    	    
     		String outputFilename = (String)processData.getItem("OUTPUT_FILENAME_"+configIndex);
     		if (outputFilename == null) break;
     	    String is8bit = (String)processData.getItem("OUTPUT_8BIT_"+configIndex);	
@@ -47,7 +49,9 @@ public class Vaa3DConversionService extends ParallelFileProcessingService {
     }
 
     protected void writeInstanceFile(FileWriter fw, File inputFile, File outputFile, int configIndex) throws IOException {
+        boolean copyOnly = getExtension(inputFile).equals(getExtension(outputFile));
         super.writeInstanceFile(fw, inputFile, outputFile, configIndex);
+        fw.write(copyOnly + "\n");
         if (global8bitFlag) {
             fw.write("8" + "\n");
         } else {
@@ -57,17 +61,29 @@ public class Vaa3DConversionService extends ParallelFileProcessingService {
     
     protected void writeShellScript(FileWriter writer) throws Exception {
     	super.writeShellScript(writer);
+    	writer.write("read COPY_ONLY\n");
         writer.write("read SAVE_TO_8BIT\n");
         StringBuffer script = new StringBuffer();
         script.append(Vaa3DHelper.getHeadlessGridCommandPrefix());
         script.append("\n");
-        script.append(Vaa3DHelper.getFormattedConvertCommand("$INPUT_FILENAME", "$OUTPUT_FILENAME", "$SAVE_TO_8BIT"));
-        script.append("\n");
+        script.append("if [ \"$COPY_ONLY\" == \"true\" && \"$SAVE_TO_8BIT\" == \"\" ]; then\n");
+        script.append("    echo \"Copying $INPUT_FILENAME to $OUTPUT_FILENAME\"\n");
+        script.append("    "+Vaa3DHelper.getFormattedCopyCommand("$INPUT_FILENAME", "$OUTPUT_FILENAME")).append("\n");
+        script.append("else\n");
+        script.append("    "+Vaa3DHelper.getFormattedConvertCommand("$INPUT_FILENAME", "$OUTPUT_FILENAME", "$SAVE_TO_8BIT")).append("\n");
+        script.append("fi\n");
         script.append(Vaa3DHelper.getHeadlessGridCommandSuffix());
         script.append("\n");
         writer.write(script.toString());
     }
     
+    private String getExtension(File file) {
+        int dot = file.getName().indexOf('.');
+        if (dot>0) {
+            return file.getName().substring(dot+1);
+        }
+        return "";
+    }
     @Override
     protected int getRequiredMemoryInGB() {
     	return 12;

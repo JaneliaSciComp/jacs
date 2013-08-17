@@ -12,16 +12,17 @@ import org.janelia.it.jacs.model.tasks.TaskMessage;
 import org.janelia.it.jacs.model.user_data.FileNode;
 
 /**
- * Sets the split channel result filepaths as a message on the current Task object.
+ * Sets the result filepaths as a message on the current Task object.
  * 
  * Input variables:
  *   RESULT_FILE_NODE - The result node containing the result tif files
+ *   OUTPUT_EXTENSION - The extension to match 
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SetSplitChannelsResultsService extends AbstractEntityService {
+public class SetTaskFileResultsService extends AbstractEntityService {
 
-	protected Logger logger = Logger.getLogger(SetSplitChannelsResultsService.class);
+	protected Logger logger = Logger.getLogger(SetTaskFileResultsService.class);
 	
     public void execute() throws Exception {
         
@@ -29,21 +30,26 @@ public class SetSplitChannelsResultsService extends AbstractEntityService {
         if (finalOutputNode==null) {
             throw new IllegalArgumentException("RESULT_FILE_NODE cannot be null");
         }
-
+        
+        final String extension = (String)processData.getItem("OUTPUT_EXTENSION");
+        if (extension==null) {
+            throw new IllegalArgumentException("OUTPUT_EXTENSION cannot be null");
+        }
+        
         File outputDir = new File(finalOutputNode.getDirectoryPath());
-        File[] splitFiles = outputDir.listFiles(new FilenameFilter() {
+        File[] outputFiles = outputDir.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
-                return name.endsWith("tif");
+                return name.endsWith(extension);
             }
         });
 
-        if (splitFiles!=null && splitFiles.length>0) {
+        if (outputFiles!=null && outputFiles.length>0) {
             StringBuffer message = new StringBuffer(outputDir.getAbsolutePath());
             message.append(":");
             
             int i = 0;
-            for(File file : splitFiles) {
+            for(File file : outputFiles) {
                 if (i++>0) message.append(",");
                 message.append(file.getName());
             }
@@ -53,7 +59,7 @@ public class SetSplitChannelsResultsService extends AbstractEntityService {
             computeBean.saveTaskMessages(task.getObjectId(), messages);
         }
         else {
-            throw new MissingDataException("Split channel files not found");
+            throw new MissingDataException("Output files not found");
         }
     }
 }

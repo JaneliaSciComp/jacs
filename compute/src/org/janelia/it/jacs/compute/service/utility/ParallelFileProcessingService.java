@@ -28,8 +28,8 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
     // These 2 vars are the core which must be populated for the service to run.
     // Additionally, a result node or id must be supplied for SubmitDrmaaJobService, which may
     // be the first ID in a result node list.
-    private List<File> inputFiles = new ArrayList<File>();
-    private List<File> outputFiles = new ArrayList<File>();
+    protected List<File> inputFiles = new ArrayList<File>();
+    protected List<File> outputFiles = new ArrayList<File>();
 
     private List<FileNode> outputFileNodes;
 
@@ -123,6 +123,7 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
         final List<String> inputPathListGlobal=(List<String>)processData.getItem("INPUT_PATH_LIST");
         final List<String> outputPathListGlobal=(List<String>)processData.getItem("OUTPUT_PATH_LIST");
         final String alternateWorkingDirectory=processData.getString("ALTERNATE_WORKING_DIR_PATH");
+        final String outputExtension=(String)processData.getItem("OUTPUT_EXTENSION");
 
         // Next, configure input/output arguments
         int argumentIndex=1;
@@ -268,6 +269,19 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
                             else if (!outputPathList.isEmpty()) {
                                 if (DEBUG) logger.info("      Case 2: outputPathList:"+outputPathList.size());
                                 outputFile=new File(outputPathList.get(argIndex));
+                            }
+                            else if (outputExtension!=null) {
+                                if (DEBUG) logger.info("      Case 3: outputExtension:"+outputExtension);
+                                String inputFileName = inputFile.getName();
+                                if (inputFileName.lastIndexOf('.')>0) {
+                                    outputFile=new File(outputNode.getDirectoryPath(),inputFileName.substring(0,inputFileName.lastIndexOf('.'))+"."+outputExtension);    
+                                }
+                                else {
+                                    outputFile=new File(outputNode.getDirectoryPath(),inputFileName+"."+outputExtension);    
+                                }
+                            }
+                            else {
+                                throw new IllegalStateException("Output file not defined for input: "+inputFile);
                             }
                         }
 

@@ -16,6 +16,8 @@ public class Vaa3DHelper {
 
     protected static final int XVFB_RETRIES = 10;
     
+    protected static final String COPY_CMD = "cp";
+    
     protected static final String VAA3D_BASE_CMD = "export LD_LIBRARY_PATH="+
             SystemConfigurationProperties.getString("VAA3D.LDLibraryPath")+":$LD_LIBRARY_PATH\n"+
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
@@ -207,6 +209,10 @@ public class Vaa3DHelper {
 
     public static String getFormattedConvertCommand(String inputFilepath, String outputFilepath, String saveTo8bit) throws ServiceException {
     	return VAA3D_BASE_CMD +" -cmd image-loader -convert"+saveTo8bit+" \""+inputFilepath+"\" \""+outputFilepath+"\" ;";
+    }
+
+    public static String getFormattedCopyCommand(String inputFilepath, String outputFilepath) throws ServiceException {
+        return COPY_CMD +" \""+inputFilepath+"\" \""+outputFilepath+"\" ;";
     }
     
     /**
