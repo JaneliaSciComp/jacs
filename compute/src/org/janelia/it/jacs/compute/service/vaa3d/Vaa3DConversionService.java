@@ -66,7 +66,7 @@ public class Vaa3DConversionService extends ParallelFileProcessingService {
         StringBuffer script = new StringBuffer();
         script.append(Vaa3DHelper.getHeadlessGridCommandPrefix());
         script.append("\n");
-        script.append("if [ \"$COPY_ONLY\" == \"true\" && \"$SAVE_TO_8BIT\" == \"\" ]; then\n");
+        script.append("if [ \"$COPY_ONLY\" == \"true\" ] && [ \"$SAVE_TO_8BIT\" == \"\" ]; then\n");
         script.append("    echo \"Copying $INPUT_FILENAME to $OUTPUT_FILENAME\"\n");
         script.append("    "+Vaa3DHelper.getFormattedCopyCommand("$INPUT_FILENAME", "$OUTPUT_FILENAME")).append("\n");
         script.append("else\n");
