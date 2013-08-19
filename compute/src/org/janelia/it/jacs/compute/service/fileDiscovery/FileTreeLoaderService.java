@@ -137,6 +137,7 @@ public class FileTreeLoaderService implements IService {
     protected List<String> pbdExtensions;
     protected List<String> mipExtensions;
     protected Long pbdThreshold;
+    protected List<String> nodeFilePaths;
 
     protected static class ArtifactInfo {
         public Long sourceEntityId;
@@ -168,6 +169,8 @@ public class FileTreeLoaderService implements IService {
             String ownerName = ProcessDataHelper.getTask(processData).getOwner();
             Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
             this.ownerKey = subject.getKey();
+            
+            getNodeDirs();
             
             helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
             helper.addFileExclusion("DrmaaSubmitter.log");
@@ -310,6 +313,18 @@ public class FileTreeLoaderService implements IService {
         }
         return mipGroupMap;
     }
+    
+    private void getNodeDirs() {
+        this.nodeFilePaths = (List<String>)processData.getItem("NODE_FILE_PATHS");
+        if (nodeFilePaths==null) {
+            nodeFilePaths = new ArrayList<String>();
+            processData.putItem("NODE_FILE_PATHS", nodeFilePaths);    
+        }
+    }
+    
+    private void addNodeDir(String nodeFilePath) {
+        nodeFilePaths.add(0, nodeFilePath);
+    }
 
     protected void doSetup() throws Exception {
         logger.info("Starting doSetup()");
@@ -334,12 +349,15 @@ public class FileTreeLoaderService implements IService {
         resultNode = new FileTreeLoaderResultNode(task.getOwner(), task, "FileTreeLoaderResultNode",
                 "FileTreeLoaderResultNode for task " + task.getObjectId(), visibility, sessionName);
         EJBFactory.getLocalComputeBean().saveOrUpdateNode(resultNode);
+        addNodeDir(resultNode.getDirectoryPath());
+        
         logger.info("FileTreeLoaderService  doSetup()  resultNodeId="+resultNode.getObjectId()+ " intended path="+resultNode.getDirectoryPath());
         FileUtil.ensureDirExists(resultNode.getDirectoryPath());
         FileUtil.cleanDirectory(resultNode.getDirectoryPath());
         processData.putItem(ProcessDataConstants.RESULT_FILE_NODE, resultNode);
         processData.putItem(ProcessDataConstants.RESULT_FILE_NODE_ID, resultNode.getObjectId());
-
+        processData.putItem(ProcessDataConstants.RESULT_FILE_NODE_DIR, resultNode.getDirectoryPath());
+        
         // Next, we will recursively traverse the file tree, and as we do so, we will create entities for
         // directories and files. We will also create lists of files for PBD and MIP generation.
         // In the 'COMPLETION' phase we will create entities for the MIPs and PBDs, and set the attributes
@@ -386,6 +404,8 @@ public class FileTreeLoaderService implements IService {
         logger.info("Looking for folder entity with path "+dir.getAbsolutePath()+" in parent folder "+parentFolder.getId());
         Entity folder = null;
 
+        entityBean.loadLazyEntity(parentFolder, false);
+        
         for (EntityData ed : parentFolder.getEntityData()) {
             Entity child = ed.getChildEntity();
 
@@ -530,9 +550,12 @@ public class FileTreeLoaderService implements IService {
         Long groupIndex=processData.getLong("PBD_INDEX");
         logger.info("PBD_INDEX="+groupIndex);
         List<ArtifactInfo> artifactList=pbdGroupMap.get(groupIndex);
+        
         FileTreeLoaderResultNode resultNode=new FileTreeLoaderResultNode(ownerKey, task, "FileTreeLoaderResultNode",
                 "FileTreeLoaderResultNode for "+rootDirectoryPath+" pbd group index="+groupIndex, visibility, sessionName);
         resultNode=(FileTreeLoaderResultNode)computeBean.saveOrUpdateNode(resultNode);
+        addNodeDir(resultNode.getDirectoryPath());
+        
         logger.info("Created resultNode id=" + resultNode.getObjectId() + " PBD groupIndex=" +
                     groupIndex + " listSize=" + artifactList.size());
         FileUtil.ensureDirExists(resultNode.getDirectoryPath());
@@ -570,9 +593,12 @@ public class FileTreeLoaderService implements IService {
         Long groupIndex=processData.getLong("MIP_INDEX");
         logger.info("MIP_INDEX="+groupIndex);
         List<ArtifactInfo> artifactList=mipGroupMap.get(groupIndex);
+        
         FileTreeLoaderResultNode resultNode=new FileTreeLoaderResultNode(ownerKey, task, "FileTreeLoaderResultNode",
                 "FileTreeLoaderResultNode for "+rootDirectoryPath+" mip group index="+groupIndex, visibility, sessionName);
         resultNode=(FileTreeLoaderResultNode)computeBean.saveOrUpdateNode(resultNode);
+        addNodeDir(resultNode.getDirectoryPath());
+        
         logger.info("Created resultNode id="+resultNode.getObjectId()+" MIP groupIndex="+groupIndex+" listSize="+artifactList.size());
         FileUtil.ensureDirExists(resultNode.getDirectoryPath());
         List<String> inputPathList=new ArrayList<String>();

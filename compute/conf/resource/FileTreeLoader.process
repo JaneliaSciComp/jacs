@@ -55,13 +55,15 @@
     			<output name="GROUP_SIZE"/>
     			<output name="RESULT_NODE"/>
     			<output name="RESULT_NODE_ID"/>
+    			<output name="RESULT_FILE_NODE_DIR"/>
     			<output name="PBD_INDEX"/>
     			<output name="MIP_INDEX"/>
     			<output name="FILE_TREE_ROOT_DIRECTORY"/>
+    			<output name="NODE_FILE_PATHS"/>
     		</operation>
 
 	        <!-- Do pbds first -->
-	        <sequence name="PBD Conversion" forEach="PBD_INDEX" waitForAsync="true" startEvent="running">
+	        <sequence name="Converting to PBD format" forEach="PBD_INDEX" waitForAsync="true" startEvent="running">
 	            <sequence async="true">
 	                <sequence>
 
@@ -108,7 +110,7 @@
             </operation>
 
 	        <!-- Do MIPs next to take advantage of pbd loading -->
-	        <sequence name="MIP Generation" forEach="MIP_INDEX" waitForAsync="true" startEvent="running">
+	        <sequence name="Generating MIPs" forEach="MIP_INDEX" waitForAsync="true" startEvent="running">
 	            <sequence async="true">
 	                <sequence>
 
@@ -154,16 +156,51 @@
         	        </sequence>
         	    </sequence>
             </sequence>
-
-            <operation name="Creating Entities" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FileTreeLoaderService" startEvent="running">
-                <input name="MODE" value="COMPLETE"/>
-                <input name="GROUP_SIZE"/>
-   			    <input name="RESULT_NODE"/>
-    			<input name="RESULT_NODE_ID"/>
- 			    <input name="TOP_LEVEL_FOLDER_NAME"/>
-    			<input name="FILE_TREE_ROOT_DIRECTORY"/>
-                <input name="TOP_LEVEL_FOLDER_ID"/>
-     	    </operation>
+            
+            <sequence name="Moving to archive" startEvent="running">
+                
+                <operation name="Creating Entities" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FileTreeLoaderService" startEvent="running">
+                    <input name="MODE" value="COMPLETE"/>
+                    <input name="GROUP_SIZE"/>
+                    <input name="RESULT_NODE"/>
+                    <input name="RESULT_NODE_ID"/>
+                    <input name="TOP_LEVEL_FOLDER_NAME"/>
+                    <input name="FILE_TREE_ROOT_DIRECTORY"/>
+                    <input name="TOP_LEVEL_FOLDER_ID"/>
+                </operation>
+        
+                <!-- Create a result node -->
+                <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+                    <input name="NAME" value="Temp"/>
+                    <input name="OUTPUT_VAR_NAME" value="RESULT_FILE_NODE"/>
+                    <output name="RESULT_FILE_NODE"/>
+                    <output name="RESULT_FILE_NODE_ID"/>
+                </operation>
+                
+                <!-- Copy the files to archive -->
+                <sequence name="Wait Async" waitForAsync="true">
+                    <operation name="Copy LSMs" processor="queue/gridSubmitAndWait">
+                        <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ArchiveGridService"/>
+                        <input name="RESULT_FILE_NODE"/>
+                        <input name="SOURCE_FILE_PATHS" value="$V{NODE_FILE_PATHS}"/>
+                        <input name="DELETE_SOURCE_FILES" value="true"/>
+                        <output name="INPUT_FILE_PATHS"/>
+                        <output name="OUTPUT_FILE_PATHS"/>
+                    </operation>
+                </sequence>
+                
+                <!-- We're done with the node -->
+                <operation name="Remove Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
+                    <input name="FILE_NODE_ID" value="$V{RESULT_FILE_NODE_ID}"/>
+                </operation>
+                
+                <!-- Update the nodes and entities -->
+                <operation name="Update Nodes and Entites" processor="org.janelia.it.jacs.compute.service.utility.UpdateFileNodeService">
+                    <input name="INPUT_FILE_PATHS"/>
+                    <input name="OUTPUT_FILE_PATHS"/>
+                </operation>
+                
+            </sequence>
 
      	</sequence>
     </sequence>
