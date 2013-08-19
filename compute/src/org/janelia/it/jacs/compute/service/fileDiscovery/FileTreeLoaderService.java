@@ -433,6 +433,7 @@ public class FileTreeLoaderService implements IService {
         // First check to see if an entity for this file path already exists
         Entity fileEntity=null;
         boolean alreadyExists=false;
+        entityBean.loadLazyEntity(folder, false);
         for (Entity child : folder.getChildren()) {
             String filePath=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
             if (filePath!=null && filePath.equals(f.getAbsolutePath())) {
