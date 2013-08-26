@@ -95,9 +95,10 @@ public class SampleHelper extends EntityHelper {
                     logger.warn("  No consensus for objective in tile group '"+tileGroup.getTag()+"' ("+groupObjective+" != "+slideImage.getObjective()+")");
                 }
             }
-            if (groupObjective!=null) {
-                objectiveGroups.put(groupObjective, tileGroup);
+            if (groupObjective==null) {
+                groupObjective = "";
             }
+            objectiveGroups.put(groupObjective, tileGroup);
         }    
         
         logger.debug("  Sample objectives: "+objectiveGroups.keySet());
