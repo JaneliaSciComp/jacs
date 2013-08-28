@@ -1,7 +1,7 @@
 #!/bin/sh
 
 export JACS_INSTALL_DIR="/groups/scicomp/jacsData/install"
-export QTDIR="${JACS_INSTALL_DIR}/Qt-4.7.4-mac"
+export QTDIR="/usr/"
 export CMAKE_DIR="${JACS_INSTALL_DIR}/cmake-2.8.9-mac/CMake-2.8-9.app/Contents"
 export BOOST_DIR="${JACS_INSTALL_DIR}/boost-1.51.0-mac"
 export QTLIB=$QTDIR/lib
