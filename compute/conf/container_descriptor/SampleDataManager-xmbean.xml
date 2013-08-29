@@ -82,6 +82,16 @@
     </operation>
     
     <operation>
+        <description>Register default image for the given result</description>
+        <name>runResultImageRegistration</name>
+        <parameter>
+            <description>Entity id of the result to register (e.g. "1679282451010027618")</description>
+            <name>resultId</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
         <description>Register all images for a user's samples</description>
         <name>runSampleImageRegistration</name>
         <parameter>

@@ -113,6 +113,20 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
     
+    public void runResultImageRegistration(String resultId) {
+        try {
+            Entity result = EJBFactory.getLocalEntityBean().getEntityById(resultId);
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter("result entity id", resultId, null)); 
+            Task task = new GenericTask(new HashSet<Node>(), result.getOwnerKey(), new ArrayList<Event>(), 
+                    taskParameters, "resultImageRegistration", "Result Image Registration");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("ResultImageRegistration", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
     public void runSampleImageRegistration(String user) {
         try {
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();

@@ -33,6 +33,8 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
     
     public void execute() throws Exception {
         
+        this.resultImageRegService = new ResultImageRegistrationService();
+        
         final String serverVersion = computeBean.getAppVersion();
         logger.info("Updating data model to latest version: "+serverVersion);
         
@@ -110,7 +112,7 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
      */
     private void upgradeSample(Entity sample) throws Exception {
         fixShortcutImages(sample);
-        
+          
     	for(Entity pipelineRun : EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_PIPELINE_RUN)) {
     	    fixShortcutImages(pipelineRun);
     	    
@@ -119,74 +121,21 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
     				continue;
     			}
     			Entity result = pred.getChildEntity();
-    			Entity supportingFiles = EntityUtils.getSupportingData(result);
 
     			logger.info("  Processing result: "+result.getName()+" (id="+result.getId()+")");
     			fixShortcutImages(result);
-    			
-    			String defaultImageFilename = result.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-		        
-    			if (defaultImageFilename==null) {
-    				logger.info("  Result's default 3d image is missing. Attempting to infer...");
-    				
-    				String resultDefault2dImage = result.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-    				int priority = 0;
-    				
-					for (Entity file : supportingFiles.getChildren()) {
-						String filename = file.getName();
-						String filepath = file.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-						String fileDefault2dImage = file.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-						if (StringUtils.isEmpty(filepath)) continue;
-						
-						logger.debug("    Considering "+filename);
-						logger.debug("      filepath: "+filepath);
-						if (fileDefault2dImage!=null) {
-							logger.debug("      default 2d image: "+fileDefault2dImage);
-						}
-						
-						if (resultDefault2dImage!=null && resultDefault2dImage.equals(fileDefault2dImage) && priority < 20) {
-							defaultImageFilename = filepath;
-							priority = 20;
-							logger.debug("      Using as default image");
-						}
-						if (filename.matches("Aligned.v3d(raw|pbd)") && priority < 10) {
-							defaultImageFilename = filepath;
-							priority = 10;
-							logger.debug("      Using as default image");
-						}
-						else if (filename.matches("stitched-(\\w+?).v3d(raw|pbd)") && priority < 9) {
-							defaultImageFilename = filepath;
-							priority = 9;
-							logger.debug("      Using as default image");
-						}
-						else if (filename.matches("tile-(\\w+?).v3d(raw|pbd)") && priority < 8) {
-							defaultImageFilename = filepath;
-							priority = 8;
-							logger.debug("      Using as default image");
-						}
-						else if (filename.matches("merged-(\\w+?).v3d(raw|pbd)") && priority < 7) {
-							defaultImageFilename = filepath;
-							priority = 7;
-							logger.debug("      Using as default image");
-						}
-					}
-    			}
-    			
-				if (defaultImageFilename==null) {
-					logger.warn("  Could not find default image for result "+result.getId());
-				}
-				else {
-					logger.info("  Running result image registration with "+new File(defaultImageFilename).getName());
-			    	if (!isDebug) {
-				        resultImageRegService = new ResultImageRegistrationService();
-						resultImageRegService.execute(processData, result, pipelineRun, sample, defaultImageFilename);
-			    	}
-				}
+
+			    String defaultImageFilename = result.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                logger.info("  Running result image registration with "+new File(defaultImageFilename).getName());
+                
+                if (!isDebug) {
+                    resultImageRegService.execute(processData, result, defaultImageFilename);
+                }
     		}
     	}
     	
-    	logger.info("Upgraded Sample:");
-    	printSample(sample);
+//    	logger.info("Registered Images for Sample:");
+//    	printSample(sample);
     }
     
     private void fixShortcutImages(Entity parent) throws Exception {

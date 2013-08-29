@@ -18,6 +18,8 @@ import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.entity.cv.Objective;
+import org.janelia.it.jacs.model.entity.cv.SampleImageType;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
@@ -27,8 +29,6 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  * should be set as attributes of the Result, the Pipeline Run, and the Sample.
  * 
  * Parameters:
- *   SAMPLE_ENTITY_ID - the id of the sample for which will update the 2d images, and 2d images for the Image Tiles
- *   PIPELINE_RUN_ENTITY_ID - the id of the pipeline run containing the result entity id
  *   RESULT_ENTITY_ID - the id of the root entity to look for 2d images within
  *   DEFAULT_IMAGE_FILENAME - the file to use as the "Default 2D Image" for the root entity
  * 
@@ -44,33 +44,10 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	public void execute() throws Exception {
 
         String defaultImageFilename = (String)processData.getItem("DEFAULT_IMAGE_FILENAME");
-    	if (defaultImageFilename == null || "".equals(defaultImageFilename)) {
-    		throw new IllegalArgumentException("DEFAULT_IMAGE_FILENAME may not be null");
-    	}
-
-    	String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
-    	if (StringUtils.isEmpty(sampleEntityId)) {
-    		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
-    	}
-    	
-    	String pipelineRunEntityId = (String)processData.getItem("PIPELINE_RUN_ENTITY_ID");
-    	if (StringUtils.isEmpty(pipelineRunEntityId)) {
-    		throw new IllegalArgumentException("PIPELINE_RUN_ENTITY_ID may not be null");
-    	}
     	
     	String resultEntityId = (String)processData.getItem("RESULT_ENTITY_ID");
     	if (StringUtils.isEmpty(resultEntityId)) {
     		throw new IllegalArgumentException("RESULT_ENTITY_ID may not be null");
-    	}
-
-    	Entity sampleEntity = entityBean.getEntityAndChildren(new Long(sampleEntityId));
-    	if (sampleEntity == null) {
-    		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
-    	}
-
-    	Entity pipelineRunEntity = entityBean.getEntityAndChildren(new Long(pipelineRunEntityId));
-    	if (pipelineRunEntity == null) {
-    		throw new IllegalArgumentException("Pipeline run entity not found with id="+pipelineRunEntity);
     	}
     	
     	Entity resultEntity = entityBean.getEntityTree(new Long(resultEntityId));
@@ -78,10 +55,10 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     		throw new IllegalArgumentException("Entity not found with id="+resultEntityId);
     	}
     	
-    	registerImages(resultEntity, pipelineRunEntity, sampleEntity, defaultImageFilename);
+    	registerImages(resultEntity, defaultImageFilename);
     }
 
-	public void execute(IProcessData processData, Entity resultEntity, Entity pipelineRunEntity, Entity sampleEntity, String defaultImageFilename) throws Exception {
+	public void execute(IProcessData processData, Entity resultEntity, String defaultImageFilename) throws Exception {
 
         this.logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         this.task = ProcessDataHelper.getTask(processData);
@@ -94,11 +71,26 @@ public class ResultImageRegistrationService extends AbstractEntityService {
         this.ownerKey = subject.getKey();
         this.entityHelper = new EntityHelper(entityBean, computeBean, ownerKey, logger);
         this.entityLoader = new EntityBeanEntityLoader(entityBean);
-    	registerImages(resultEntity, pipelineRunEntity, sampleEntity, defaultImageFilename);
+    	registerImages(resultEntity, defaultImageFilename);
     }
 	
-	private void registerImages(Entity resultEntity, Entity pipelineRunEntity, Entity sampleEntity, String defaultImageFilename) throws Exception {
+	private void registerImages(Entity resultEntity, String defaultImageFilename) throws Exception {
 
+	    Entity pipelineRunEntity = entityBean.getAncestorWithType(resultEntity, EntityConstants.TYPE_PIPELINE_RUN);
+	    Entity sampleEntity = entityBean.getAncestorWithType(resultEntity, EntityConstants.TYPE_SAMPLE);
+        
+	    if (defaultImageFilename==null) {
+	        Entity defaultImage = resultEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+	        if (defaultImage==null) {
+	            logger.info("  Result's default 3d image is missing. Attempting to infer...");
+	            defaultImage = findDefaultImage(resultEntity);
+	            if (defaultImage==null) {
+	                throw new IllegalArgumentException("Could not determine default image for result entity "+resultEntity.getId());
+	            }
+	        }
+	        defaultImageFilename = defaultImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+	    }
+	    
     	logger.info("Finding images under "+resultEntity.getName()+" (id="+resultEntity.getId()+")");
     	
     	// Find all the 2d and 3d images in this result tree, and populate all of the lookup maps and lists
@@ -161,14 +153,40 @@ public class ResultImageRegistrationService extends AbstractEntityService {
         	logger.info("Applying default 3d image to the Result, Pipeline Run, and Sample ("+sampleEntity.getName()+")");
         	entityHelper.setDefault3dImage(resultEntity, default3dImage);
         	entityHelper.setDefault3dImage(pipelineRunEntity, default3dImage);
-        	entityHelper.setDefault3dImage(sampleEntity, default3dImage);
-        	
-        	Entity parentSample = entityBean.getAncestorWithType(sampleEntity, EntityConstants.TYPE_SAMPLE);
-        	if (parentSample!=null) {
-        	    logger.info("Applying default 3d image to the Parent Sample ("+parentSample.getName()+")");
-        	    entityHelper.setDefault3dImage(parentSample, default3dImage);
-        	}
-        	
+
+        	Entity topLevelSample = sampleEntity;
+            Entity parentSample = entityBean.getAncestorWithType(sampleEntity, EntityConstants.TYPE_SAMPLE);
+            if (parentSample==null) {
+                // Already at top level sample
+            }
+            else {
+                // Set the image on the subsample
+                logger.info("Applying default 3d image to the sub-sample ("+parentSample.getName()+")");
+                entityHelper.setDefault3dImage(sampleEntity, default3dImage);
+                topLevelSample = parentSample;
+            }
+            
+            // Set the top level sample, if this image matches the user's preference for the sample's data set
+            
+        	String dataSetIdentifier = topLevelSample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+            Entity dataSet = annotationBean.getUserDataSetByIdentifier(dataSetIdentifier);
+            if (dataSet!=null) {
+                String sampleImageTypeName = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAMPLE_IMAGE_TYPE);
+                logger.info("Sample image type is: "+sampleImageTypeName);
+                if (sampleImageTypeName!=null) {
+                    SampleImageType sampleImageType = SampleImageType.valueOf(sampleImageTypeName);
+                    if (sampleShouldUseResultImage(sampleEntity, sampleImageType, default3dImage)) {
+                        logger.info("Applying default 3d image to the top-level sample ("+topLevelSample.getName()+")");
+                        entityHelper.setDefault3dImage(topLevelSample, default3dImage);  
+                    }
+                }
+                else {
+                    // Default to Latest
+                    logger.info("Applying default 3d image to the top-level sample ("+topLevelSample.getName()+")");
+                    entityHelper.setDefault3dImage(topLevelSample, default3dImage);        
+                }
+            }
+            
         	// Find and apply fast 3d image, if available
     		Entity separation = EntityUtils.getLatestChildOfType(resultEntity, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
     		if (separation!=null) {
@@ -209,6 +227,90 @@ public class ResultImageRegistrationService extends AbstractEntityService {
             	setMIPs(imageTile, signalMip, refMip);
             }
     	}
+	}
+
+    private Entity findDefaultImage(Entity result) {
+        
+        Entity supportingFiles = EntityUtils.getSupportingData(result);
+        Entity defaultImage = null;
+        
+        String resultDefault2dImage = result.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+        int priority = 0;
+
+        for (Entity file : supportingFiles.getChildren()) {
+            String filename = file.getName();
+            String filepath = file.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+            String fileDefault2dImage = file.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+            if (StringUtils.isEmpty(filepath))
+                continue;
+
+            logger.debug("    Considering " + filename);
+            logger.debug("      filepath: " + filepath);
+            if (fileDefault2dImage != null) {
+                logger.debug("      default 2d image: " + fileDefault2dImage);
+            }
+
+            if (resultDefault2dImage != null && resultDefault2dImage.equals(fileDefault2dImage) && priority < 20) {
+                defaultImage = file;
+                priority = 20;
+                logger.debug("      Using as default image");
+            }
+            if (filename.matches("Aligned.v3d(raw|pbd)") && priority < 10) {
+                defaultImage = file;
+                priority = 10;
+                logger.debug("      Using as default image");
+            } else if (filename.matches("stitched-(\\w+?).v3d(raw|pbd)") && priority < 9) {
+                defaultImage = file;
+                priority = 9;
+                logger.debug("      Using as default image");
+            } else if (filename.matches("tile-(\\w+?).v3d(raw|pbd)") && priority < 8) {
+                defaultImage = file;
+                priority = 8;
+                logger.debug("      Using as default image");
+            } else if (filename.matches("merged-(\\w+?).v3d(raw|pbd)") && priority < 7) {
+                defaultImage = file;
+                priority = 7;
+                logger.debug("      Using as default image");
+            }
+        }
+        
+        return defaultImage;
+    }
+
+    /**
+	 * Returns true if the given 3d image should be used as a sample image, given the user's preferred sample image type.
+	 * @param sampleImageType
+	 * @param image3d
+	 * @return
+	 */
+	public boolean sampleShouldUseResultImage(Entity sample, SampleImageType sampleImageType, Entity image3d) {
+        
+	    logger.info("sampleImageType: "+sampleImageType);
+	    
+	    if (sampleImageType==null || sampleImageType==SampleImageType.Latest) {
+	        // Use any image, if the user wants the latest
+	        return true;
+	    }
+
+        String objectiveName = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
+        logger.info("objectiveName: "+objectiveName);
+        
+	    if (objectiveName==null) {
+	        // Image has no objective, and user has specified an objective
+	        return false;
+	    }
+	    
+	    String alignmentSpace = image3d.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE);
+	    logger.info("alignmentSpace: "+alignmentSpace);
+	    
+        switch (sampleImageType) {
+        case Latest: return true;
+        case Unaligned20x: return alignmentSpace==null && Objective.OBJECTIVE_20X.getName().equals(objectiveName);
+        case Unaligned63x: return alignmentSpace==null && Objective.OBJECTIVE_63X.getName().equals(objectiveName);
+        case Aligned20x: return alignmentSpace!=null && Objective.OBJECTIVE_20X.getName().equals(objectiveName);
+        case Aligned63x: return alignmentSpace!=null && Objective.OBJECTIVE_63X.getName().equals(objectiveName);
+        }
+        return false;
 	}
 	
 	private void findImages(Entity entity) throws Exception {

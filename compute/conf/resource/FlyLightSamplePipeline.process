@@ -124,8 +124,6 @@
                     
                     <!-- Register MIP images -->
                     <operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
-                        <input name="SAMPLE_ENTITY_ID"/>
-                        <input name="PIPELINE_RUN_ENTITY_ID"/>
                         <input name="RESULT_ENTITY_ID"/>
                         <input name="DEFAULT_IMAGE_FILENAME" value="$V{STITCHED_FILENAME}"/>
                     </operation>
@@ -329,8 +327,6 @@
             	    
         	    <!-- Register MIP images -->
         		<operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
-        			<input name="SAMPLE_ENTITY_ID"/>
-        			<input name="PIPELINE_RUN_ENTITY_ID"/>
         			<input name="RESULT_ENTITY_ID"/>
         			<input name="DEFAULT_IMAGE_FILENAME" value="$V{STITCHED_FILENAME}"/>
         	    </operation>
