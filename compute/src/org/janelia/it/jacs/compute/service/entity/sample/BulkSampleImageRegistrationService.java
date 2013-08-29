@@ -29,11 +29,8 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
     
     private Set<Long> visited = new HashSet<Long>();
     private boolean isDebug = false;
-    private ResultImageRegistrationService resultImageRegService;
     
     public void execute() throws Exception {
-        
-        this.resultImageRegService = new ResultImageRegistrationService();
         
         final String serverVersion = computeBean.getAppVersion();
         logger.info("Updating data model to latest version: "+serverVersion);
@@ -113,6 +110,8 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
     private void upgradeSample(Entity sample) throws Exception {
         fixShortcutImages(sample);
           
+        ResultImageRegistrationService resultImageRegService = new ResultImageRegistrationService();
+        
     	for(Entity pipelineRun : EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_PIPELINE_RUN)) {
     	    fixShortcutImages(pipelineRun);
     	    
