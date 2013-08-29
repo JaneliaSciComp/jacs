@@ -99,7 +99,17 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
             nodeColNames.add("updated_date:string");
             nodeColNames.add("owner_key:string");
             for(EntityAttribute attr : attrs) {
-                nodeColNames.add(getFormattedFieldName(attr.getName()));
+                String attrName = getFormattedFieldName(attr.getName());
+                if (attr.getName().equals(EntityConstants.ATTRIBUTE_ENTITY)) {
+                    attrName = "child";
+                }
+                else if (attr.getName().equals(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID)) {
+                    attrName = "annotation_ontology_key_entity";
+                }
+                else if (attr.getName().equals(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_ENTITY_ID)) {
+                    attrName = "annotation_ontology_value_entity";
+                }
+                nodeColNames.add(attrName);
             }
             writeCols(entityNodeCsvWriter, nodeColNames);
             writeCols(entityRelsCsvWriter, "entity_id:long:entity", "entity_id:long:entity", "type:string", "entity_data_id:long", "creation_date:string", "updated_date:string", "owner_key:string", "order_index:long");
@@ -392,7 +402,6 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
         }
     }
     
-    
     private void loadSubject(Long subjectId, String type, String subjectKey, String name, String fullName, String email) {
         writeCols(subjectNodeCsvWriter, subjectId.toString(), getFormattedTypeName(type), subjectKey, name, fullName, email);
         numNodesExported++;
@@ -409,7 +418,18 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
         values.add(simpleEntity.owner);
         for (EntityAttribute attr : attrs) {
             String value = simpleEntity.attributes.get(attr.getName());
-            if (value!=null) {
+            if (attr.getName().equals(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID)) {
+                if (value!=null) {
+                    try {
+                        Long targetId = new Long(value);
+                        loadRelationship(simpleEntity.id, targetId, "ANNOTATION_TARGET", null, simpleEntity.creationDate, simpleEntity.updatedDate, simpleEntity.owner, null);    
+                    }
+                    catch (NumberFormatException e) {
+                        _logger.warn("Could not parse target id: "+value,e);
+                    }
+                }
+            }
+            else {
                 values.add(getFormattedValue(value));
             }
         }
@@ -429,8 +449,14 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
             relType = "CHILD";
         }
         
-        writeCols(entityRelsCsvWriter, parentId.toString(), childId.toString(), relType, entityDataId.toString(), 
-                getFormattedDateTime(creationDate), getFormattedDateTime(updatedDate), ownerKey, 
+        writeCols(entityRelsCsvWriter, 
+                parentId.toString(), 
+                childId.toString(), 
+                relType, 
+                entityDataId==null?"":entityDataId.toString(), 
+                getFormattedDateTime(creationDate), 
+                getFormattedDateTime(updatedDate), 
+                ownerKey, 
                 orderIndex==null?"":orderIndex.toString());
         numRelationshipsExported++;
     }
@@ -477,6 +503,7 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
      * @return
      */
     private String getFormattedValue(String value) {
+        if (value==null) return "";
         return value.replaceAll("\n","[NEWLINE]").replaceAll("\t","[TAB]");
     }
     
