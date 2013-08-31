@@ -36,8 +36,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  */
 public class ResultImageRegistrationService extends AbstractEntityService {
 	
-	private List<Entity> images2d = new ArrayList<Entity>();
-	private List<Entity> images3d = new ArrayList<Entity>();
+	private Map<Long,Entity> images3d = new HashMap<Long,Entity>();
 	private Map<String,Entity> signalMipPrefixMap = new HashMap<String,Entity>();
 	private Map<String,Entity> refMipPrefixMap = new HashMap<String,Entity>();
 	
@@ -78,41 +77,39 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 
 	    Entity pipelineRunEntity = entityBean.getAncestorWithType(resultEntity, EntityConstants.TYPE_PIPELINE_RUN);
 	    Entity sampleEntity = entityBean.getAncestorWithType(resultEntity, EntityConstants.TYPE_SAMPLE);
+
+        Entity default3dImage = null;
         
 	    if (defaultImageFilename==null) {
-	        Entity defaultImage = resultEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-	        if (defaultImage==null) {
-	            logger.info("  Result's default 3d image is missing. Attempting to infer...");
-	            defaultImage = findDefaultImage(resultEntity);
-	            if (defaultImage==null) {
+	        default3dImage = resultEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+	        if (default3dImage==null) {
+	            default3dImage = findDefaultImage(resultEntity);
+	            if (default3dImage==null) {
 	                throw new IllegalArgumentException("Could not determine default image for result entity "+resultEntity.getId());
 	            }
 	        }
-	        defaultImageFilename = defaultImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+	        defaultImageFilename = default3dImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
 	    }
 	    
-    	logger.info("Finding images under "+resultEntity.getName()+" (id="+resultEntity.getId()+")");
-    	
+	    logger.info("Registering images for result: "+resultEntity.getName()+" (id="+resultEntity.getId()+")");
+	    logger.info("Using default image: "+default3dImage.getName()+" (id="+default3dImage.getId()+")");
+	    
     	// Find all the 2d and 3d images in this result tree, and populate all of the lookup maps and lists
     	
     	findImages(resultEntity);
-    	logger.info("Found "+images3d.size()+" 3d images and "+images2d.size()+" 2d images");
+    	logger.info("Found "+images3d.size()+" 3d images");
     	
     	// Ensure all 3d images have their shortcut images correctly set. At the same time, find which of these
     	// 3d images is the default image for this result.
 
     	String defaultImageCanonicalFilename = new File(defaultImageFilename).getCanonicalPath();
-    	Entity default3dImage = null;
     	
-    	logger.debug("Looking for default image: "+defaultImageFilename);
-    	logger.debug("         (canonical path): "+defaultImageCanonicalFilename);
-    	
-    	for(Entity image3d : images3d) {
+    	for(Entity image3d : images3d.values()) {
 			String filepath = image3d.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
 			
-			logger.debug("  Considering "+filepath);
+			logger.info("  Setting MIPs on 3d image: "+image3d.getName()+" (id="+image3d.getId()+")");
 			
-			if (filepath.equals(defaultImageFilename) || filepath.equals(defaultImageCanonicalFilename)) {
+			if (default3dImage==null && (filepath.equals(defaultImageFilename) || filepath.equals(defaultImageCanonicalFilename))) {
 				default3dImage = image3d;
 			}
 				
@@ -128,10 +125,12 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 				if (signalMip!=null) {
 			    	EntityData currDefault2dImage = image3d.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
 			    	if (currDefault2dImage==null || currDefault2dImage.getChildEntity()==null || !currDefault2dImage.getId().equals(signalMip.getId())) {
+			    	    logger.info("    Setting default 2d MIP to: "+signalMip.getName());
 			    		entityHelper.setDefault2dImage(image3d, signalMip);
 			    	}
 			    	EntityData currSignalMip = image3d.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE);
 			    	if (currSignalMip==null || currSignalMip.getChildEntity()==null || !currSignalMip.getId().equals(signalMip.getId())) {
+			    	    logger.info("    Setting signal MIP to: "+signalMip.getName());
 			    		entityHelper.setImageIfNecessary(image3d, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMip);
 			    	}
 				}
@@ -139,10 +138,12 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 				if (refMip!=null) {
 			    	EntityData currRefMip = image3d.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE);
 			    	if (currRefMip==null || currRefMip.getChildEntity()==null || !currRefMip.getId().equals(refMip.getId())) {
+			    	    logger.info("    Setting reference MIP to: "+refMip.getName());
 			    		entityHelper.setImageIfNecessary(image3d, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);
 			    	}
 			    	if (signalMip==null) {
 			    	    // No signal MIP, use the reference as the default 
+			    	    logger.info("    Setting default 2d MIP to: "+refMip.getName());
                         entityHelper.setDefault2dImage(image3d, refMip);
 			    	}
 				}
@@ -201,8 +202,6 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 		
     	// Finally, set the images on the sample tiles 
     	
-    	logger.info("Applying MIPs to sample tiles");
-    	
     	populateChildren(sampleEntity);
     	Entity supportingFiles = EntityUtils.getSupportingData(sampleEntity);
     	if (supportingFiles!=null) {
@@ -231,6 +230,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 
     private Entity findDefaultImage(Entity result) {
         
+        logger.info("  Result's default 3d image is missing. Attempting to infer...");
         Entity supportingFiles = EntityUtils.getSupportingData(result);
         Entity defaultImage = null;
         
@@ -274,6 +274,9 @@ public class ResultImageRegistrationService extends AbstractEntityService {
             }
         }
         
+        if (defaultImage!=null) {
+            logger.info("  Inferred default image: "+defaultImage.getName());
+        }
         return defaultImage;
     }
 
@@ -285,7 +288,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	 */
 	public boolean sampleShouldUseResultImage(Entity sample, SampleImageType sampleImageType, Entity image3d) {
         
-	    logger.info("sampleImageType: "+sampleImageType);
+	    logger.info("sampleShouldUseResultImage? sampleImageType: "+sampleImageType);
 	    
 	    if (sampleImageType==null || sampleImageType==SampleImageType.Latest) {
 	        // Use any image, if the user wants the latest
@@ -293,7 +296,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	    }
 
         String objectiveName = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
-        logger.info("objectiveName: "+objectiveName);
+        logger.info("sampleShouldUseResultImage? objectiveName: "+objectiveName);
         
 	    if (objectiveName==null) {
 	        // Image has no objective, and user has specified an objective
@@ -301,7 +304,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	    }
 	    
 	    String alignmentSpace = image3d.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE);
-	    logger.info("alignmentSpace: "+alignmentSpace);
+	    logger.info("sampleShouldUseResultImage? alignmentSpace: "+alignmentSpace);
 	    
         switch (sampleImageType) {
         case Latest: return true;
@@ -332,11 +335,9 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 					refMipPrefixMap.put(prefix, entity);
 				}
 			}
-			
-			images2d.add(entity);
 		}
 		else if (entityType.equals(EntityConstants.TYPE_IMAGE_3D)) {
-			images3d.add(entity);
+			images3d.put(entity.getId(), entity);
 		}
 		else {
 			populateChildren(entity);
@@ -367,11 +368,13 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	
 	private void setMIPs(Entity entity, Entity signalMip, Entity refMip) throws ComputeException {
 	    if (signalMip!=null) {
+	        logger.info("Applying signal/reference MIPs to tile "+entity.getName());
 	        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, signalMip);
 	        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMip);
 	        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);
 	    }
 	    else {
+	        logger.info("Applying reference MIPs to tile "+entity.getName());
 	        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, refMip);
 	        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);
 	    }

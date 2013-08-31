@@ -1,6 +1,5 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -123,12 +122,9 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
 
     			logger.info("  Processing result: "+result.getName()+" (id="+result.getId()+")");
     			fixShortcutImages(result);
-
-			    String defaultImageFilename = result.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                logger.info("  Running result image registration with "+new File(defaultImageFilename).getName());
                 
                 if (!isDebug) {
-                    resultImageRegService.execute(processData, result, defaultImageFilename);
+                    resultImageRegService.execute(processData, result, null);
                 }
     		}
     	}
@@ -153,53 +149,53 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
         }   
     }
     
-    private void printSample(Entity sample) {
-
-    	logger.info(""+sample);
-    	printImages("  ",sample);
-    	
-    	for(Entity pipelineRun : EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_PIPELINE_RUN)) {
-    		
-    		logger.info("    "+pipelineRun.getName());
-    		printImages("      ",pipelineRun);
-    		
-    		for(EntityData pred : pipelineRun.getOrderedEntityData()) {
-    			if (!pred.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_RESULT)) {
-    				continue;
-    			}
-    			Entity result = pred.getChildEntity();
-        		logger.info("        "+result.getName());
-        		printImages("          ",result);
-    		}
-    	}
-    }
-
-    private void printImages(String indent, Entity entity) {
-
-    	EntityData default3dImage = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-    	if (default3dImage!=null) {
-    		logger.info(indent+"Default3d: "+new File(default3dImage.getValue()).getName());
-    		
-        	EntityData fast3dImage = default3dImage.getChildEntity().getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE);
-        	if (fast3dImage!=null) {
-        		logger.info(indent+"Fast3d: "+new File(fast3dImage.getValue()).getName());
-        	}
-    	}
-    	
-    	EntityData default2dImage = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-    	if (default2dImage!=null) {
-    		logger.info(indent+"Default2d: "+new File(default2dImage.getValue()).getName());
-    	}
-    	
-    	EntityData signalMip = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE);
-    	if (signalMip!=null) {
-    		logger.info(indent+"SignalMip: "+new File(signalMip.getValue()).getName());
-    	}
-    	
-    	EntityData refMip = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE);
-    	if (refMip!=null) {
-    		logger.info(indent+"ReferenceMip: "+new File(refMip.getValue()).getName());
-    	}
-    }
+//    private void printSample(Entity sample) {
+//
+//    	logger.info(""+sample);
+//    	printImages("  ",sample);
+//    	
+//    	for(Entity pipelineRun : EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_PIPELINE_RUN)) {
+//    		
+//    		logger.info("    "+pipelineRun.getName());
+//    		printImages("      ",pipelineRun);
+//    		
+//    		for(EntityData pred : pipelineRun.getOrderedEntityData()) {
+//    			if (!pred.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_RESULT)) {
+//    				continue;
+//    			}
+//    			Entity result = pred.getChildEntity();
+//        		logger.info("        "+result.getName());
+//        		printImages("          ",result);
+//    		}
+//    	}
+//    }
+//
+//    private void printImages(String indent, Entity entity) {
+//
+//    	EntityData default3dImage = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+//    	if (default3dImage!=null) {
+//    		logger.info(indent+"Default3d: "+new File(default3dImage.getValue()).getName());
+//    		
+//        	EntityData fast3dImage = default3dImage.getChildEntity().getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE);
+//        	if (fast3dImage!=null) {
+//        		logger.info(indent+"Fast3d: "+new File(fast3dImage.getValue()).getName());
+//        	}
+//    	}
+//    	
+//    	EntityData default2dImage = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+//    	if (default2dImage!=null) {
+//    		logger.info(indent+"Default2d: "+new File(default2dImage.getValue()).getName());
+//    	}
+//    	
+//    	EntityData signalMip = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE);
+//    	if (signalMip!=null) {
+//    		logger.info(indent+"SignalMip: "+new File(signalMip.getValue()).getName());
+//    	}
+//    	
+//    	EntityData refMip = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE);
+//    	if (refMip!=null) {
+//    		logger.info(indent+"ReferenceMip: "+new File(refMip.getValue()).getName());
+//    	}
+//    }
     
 }
