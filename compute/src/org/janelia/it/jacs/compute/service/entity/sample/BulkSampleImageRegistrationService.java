@@ -46,7 +46,12 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
         	List<Entity> samples = entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_SAMPLE);
         	logger.info("Processing "+samples.size()+" samples");
             for(Entity sample : samples) {
-                processSample(sample);
+                try {
+                    processSample(sample);
+                }
+                catch (Exception e) {
+                    logger.error("Error processing sample: "+sample.getName(),e);
+                }
             }    		
     	}
     	else {

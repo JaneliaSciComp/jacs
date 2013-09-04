@@ -92,7 +92,12 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	    }
 	    
 	    logger.info("Registering images for result: "+resultEntity.getName()+" (id="+resultEntity.getId()+")");
-	    logger.info("Using default image: "+default3dImage.getName()+" (id="+default3dImage.getId()+")");
+	    if (default3dImage!=null) {
+	        logger.info("Using default image: "+default3dImage.getName()+" (id="+default3dImage.getId()+")");
+	    }
+	    else {
+	        logger.info("Will find default image: "+defaultImageFilename);
+	    }
 	    
     	// Find all the 2d and 3d images in this result tree, and populate all of the lookup maps and lists
     	
@@ -107,9 +112,10 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     	for(Entity image3d : images3d.values()) {
 			String filepath = image3d.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
 			
-			logger.info("  Setting MIPs on 3d image: "+image3d.getName()+" (id="+image3d.getId()+")");
+			logger.info("  Processing "+image3d.getName()+" (id="+image3d.getId()+")");
 			
 			if (default3dImage==null && (filepath.equals(defaultImageFilename) || filepath.equals(defaultImageCanonicalFilename))) {
+			    logger.info("  Found default 3d image");
 				default3dImage = image3d;
 			}
 				
