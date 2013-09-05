@@ -74,6 +74,17 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    public void reparentGeometricAnnotation(TmGeoAnnotation annotation, Long newParentAnnotationID,
+                                            TmNeuron neuron) throws ComputeException {
+        try {
+            _tiledMicroscopeDAO.reparentGeometricAnnotation(annotation, newParentAnnotationID, neuron);
+        } catch (Exception e) {
+            String errorString="Error calling reparentGeometricAnnotation in DAO layer: " + e.getMessage();
+            _logger.error(errorString);
+            throw new ComputeException(errorString);
+        }
+    }
+
     public void updateGeometricAnnotation(TmGeoAnnotation geoAnnotation,
                                           int index, double x, double y, double z, String comment) throws ComputeException {
         try {

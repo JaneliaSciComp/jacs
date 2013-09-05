@@ -267,6 +267,49 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
+    /**
+     * reparent a geometric annotation to another one (taking its whole subtree with it);
+     * both annotations must be in the input neuron
+     *
+     * @param annotation
+     * @param newParentAnnotationID
+     * @param neuron
+     * @throws DaoException
+     */
+    public void reparentGeometricAnnotation(TmGeoAnnotation annotation, Long newParentAnnotationID,
+        TmNeuron neuron) throws DaoException {
+
+        // verify that both annotations are in the input neuron
+        if (!neuron.getGeoAnnotationMap().containsKey(annotation.getId())) {
+            throw new DaoException("input neuron doesn't contain annotation " + annotation.getId());
+        }
+        if (!neuron.getGeoAnnotationMap().containsKey(newParentAnnotationID)) {
+            throw new DaoException("input neuron doesn't contain annotation " + newParentAnnotationID);
+        }
+
+        // if annotation is a root annotation, change its attribute and save
+        EntityData ed;
+        try {
+            ed=(EntityData) computeDAO.genericLoad(EntityData.class, annotation.getId());
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+
+        // if the annotation is a root annotation, change its attribute:
+        if (ed.getEntityAttribute().equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
+            ed.setEntityAttribute(annotationDAO.getEntityAttributeByName(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE));
+        }
+
+        // change the parent ID and save
+        String valueString=TmGeoAnnotation.toStringFromArguments(annotation.getId(), newParentAnnotationID,
+                annotation.getIndex(), annotation.getX(), annotation.getY(), annotation.getZ(),
+                annotation.getComment());
+        ed.setValue(valueString);
+        annotationDAO.saveOrUpdate(ed);
+
+    }
+
     public List<TmWorkspaceDescriptor> getWorkspacesForBrainSample(Long brainSampleId, String ownerKey) throws DaoException {
         try {
             // Validate sample
