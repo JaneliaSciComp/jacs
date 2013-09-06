@@ -217,6 +217,41 @@
     </operation>
     
     <operation>
+        <description>Apply the given process file to every sample in the data set</description>
+        <name>applyProcessToDataset</name>
+        <parameter>
+            <description>User to run as (e.g. "flylight")</description>
+            <name>username</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Data Set Name (e.g. "Cell Count" or leave empty to run all data sets for the user)</description>
+            <name>dataSetName</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Process file name (e.g. "PostPipeline_AddVerifyMovie")</description>
+           <name>processName</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
+        <description>Apply the given process file to the sample</description>
+        <name>applyProcessToSample</name>
+        <parameter>
+           <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
+           <name>sampleEntityId</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Process file name (e.g. "PostPipeline_AddVerifyMovie")</description>
+           <name>processName</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+        
+    <operation>
         <description>Run a separation for a given result entity</description>
         <name>runNeuronSeparationPipeline</name>
         <parameter>

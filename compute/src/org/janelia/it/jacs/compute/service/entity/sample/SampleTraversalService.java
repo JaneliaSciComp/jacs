@@ -4,6 +4,7 @@ import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,9 @@ public class SampleTraversalService extends AbstractEntityService {
 	public static final String RUN_MODE_INCOMPLETE = "INCOMPLETE";
 	public static final String RUN_MODE_ALL = "ALL";
 
+	protected boolean excludeParentSamples = false;
 	protected boolean excludeChildSamples = true;
+	
     protected String runMode;
     protected String dataSetName = null;
 
@@ -41,7 +44,17 @@ public class SampleTraversalService extends AbstractEntityService {
         		throw new IllegalArgumentException("Both OUTVAR_ENTITY_ID and OUTVAR_ENTITY may not be null");
         	}
     	}
-
+        
+        String excludeParentSamplesStr = (String) processData.getItem("EXCLUDE_PARENT_SAMPLES");
+        if (!StringUtils.isEmpty(excludeParentSamplesStr)) { 
+            excludeParentSamples = Boolean.parseBoolean(excludeParentSamplesStr);
+        }
+    	
+    	String excludeChildSamplesStr = (String) processData.getItem("EXCLUDE_CHILD_SAMPLES");
+    	if (!StringUtils.isEmpty(excludeChildSamplesStr)) { 
+    	    excludeChildSamples = Boolean.parseBoolean(excludeChildSamplesStr);
+    	}
+    	
         dataSetName = (String) processData.getItem("DATA_SET_NAME");
 
         this.runMode = (String)processData.getItem("RUN_MODE");
@@ -102,7 +115,13 @@ public class SampleTraversalService extends AbstractEntityService {
     
     private boolean includeSample(Entity sample) throws Exception {
 
+        populateChildren(sample);
+        
         if (excludeChildSamples && sample.getName().contains("~")) {
+            return false;
+        }
+        
+        if (excludeParentSamples && !EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_SAMPLE).isEmpty()) {
             return false;
         }
 
@@ -121,7 +140,6 @@ public class SampleTraversalService extends AbstractEntityService {
     
     private boolean includeSample(Entity sample, boolean includeNewSamples, boolean includeErrorSamples) throws Exception {
 
-        populateChildren(sample);
 
         List<Entity> childSamples = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_SAMPLE);
         if (childSamples.isEmpty()) {

@@ -25,6 +25,10 @@ public interface SampleDataManagerMBean {
     public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName, Boolean reuseProcessing, Boolean reuseAlignment);
     public void runNeuronSeparationPipeline(String resultEntityId);
     
+    // Generic sample processing
+    public void applyProcessToDataset(String username, String dataSetName, String processName);
+    public void applyProcessToSample(String sampleEntityId, String processName);
+    
     // Upgrade pipelines
     public void runSingleFastLoadArtifactPipeline(String separationEntityId);
     public void runCompleteFastLoadArtifactPipeline(String user);

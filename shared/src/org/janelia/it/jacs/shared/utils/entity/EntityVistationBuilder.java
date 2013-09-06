@@ -1,13 +1,11 @@
 package org.janelia.it.jacs.shared.utils.entity;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
@@ -83,6 +81,7 @@ public class EntityVistationBuilder {
         logger.trace(indent+"Visiting "+entity.getName()+" (id="+entity.getId()+")");
         
 		EntityFilter filter = filters.get(level);
+		EntityFilter nextFilter = filters.size()>level+1 ? filters.get(level+1) : null;
 		
 		if (filter instanceof Ancestors) {
 		    logger.trace(indent+"Process ancestors:");
@@ -97,8 +96,15 @@ public class EntityVistationBuilder {
 		}
 		else if (filter instanceof ChildEntityFilter) {
 			ChildEntityFilter childFilter = (ChildEntityFilter)filter;
-			logger.trace(indent+"Filter ("+childFilter.getClass().getName()+"):");
-			for(EntityData ed : childFilter.getFilteredRelatives(entity)) {
+			logger.info(indent+"Filter ("+childFilter.getClass().getName()+"):");
+			List<EntityData> filtered = childFilter.getFilteredRelatives(entity);
+			if (nextFilter!=null && nextFilter instanceof SameLevelFilter) {
+			    logger.info(indent+"SameLevelFilter ("+nextFilter.getClass().getName()+"):");
+			    SameLevelFilter sameLevelFilter = (SameLevelFilter)nextFilter;
+			    filtered = sameLevelFilter.getFiltered(filtered);
+			    level++; // skip this filter
+			}
+			for(EntityData ed : filtered) {
 				if (level>=filters.size()-1) {
 					visitor.visit(ed);
 				}
@@ -184,7 +190,17 @@ public class EntityVistationBuilder {
 		filters.add(new ChildOfName(entityName));
 		return this;
 	}
-
+	
+    public EntityVistationBuilder first() {
+        filters.add(new FirstEntityFilter());
+        return this;
+    }
+    
+    public EntityVistationBuilder last() {
+        filters.add(new LastEntityFilter());
+        return this;
+    }
+    
     private class Ancestors implements EntityFilter {
     }
 
@@ -244,8 +260,32 @@ public class EntityVistationBuilder {
     		return (ed.getChildEntity()!=null && ed.getChildEntity().getName().equals(parameter));
     	}
     }
-
+    
     private interface EntityFilter {
+    }
+    
+    private interface SameLevelFilter extends EntityFilter {        
+        public List<EntityData> getFiltered(List<EntityData> entityData);
+    }
+
+    private class FirstEntityFilter implements SameLevelFilter {
+        public List<EntityData> getFiltered(List<EntityData> entityData) {
+            if (entityData.isEmpty()) return entityData;
+            List<EntityData> orderedData = sort(entityData);
+            List<EntityData> filtered = new ArrayList<EntityData>();
+            filtered.add(orderedData.get(0));
+            return filtered;
+        }
+    }
+    
+    private class LastEntityFilter implements SameLevelFilter {
+        public List<EntityData> getFiltered(List<EntityData> entityData) {
+            if (entityData.isEmpty()) return entityData;
+            List<EntityData> orderedData = sort(entityData);
+            List<EntityData> filtered = new ArrayList<EntityData>();
+            filtered.add(orderedData.get(orderedData.size()-1));
+            return filtered;
+        }
     }
     
     private abstract class ChildEntityFilter implements EntityFilter {
@@ -299,5 +339,25 @@ public class EntityVistationBuilder {
     		}
     		return filtered;
     	}
+    }
+    
+    private List<EntityData> sort(List <EntityData> entityData) {
+        List<EntityData> orderedData = new ArrayList<EntityData>(entityData);
+        Collections.sort(orderedData, new Comparator<EntityData>() {
+            @Override
+            public int compare(EntityData o1, EntityData o2) {
+                if (o1.getId()==null) {
+                    if (o2.getId()==null) {
+                        return 0;
+                    }
+                    return -1;
+                }
+                else if (o2.getId()==null) {
+                    return 1;
+                }
+                return o1.getId().compareTo(o2.getId());
+            }
+        });
+        return orderedData;
     }
 }

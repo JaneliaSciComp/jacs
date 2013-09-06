@@ -37,6 +37,7 @@ public class InitVariablesService implements IService {
         		String processVarName = (String)processData.getItem("PROCESS_VARIABLE_"+num);	
         		if (processVarName == null || num>100) break;
         		Object value = processData.getItem("PROCESS_VARIABLE_VALUE_"+num);
+        		if (value==null) continue;
         		
         		if (value.equals("true")) {
         		    value = Boolean.TRUE;

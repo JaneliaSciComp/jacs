@@ -14,13 +14,11 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class SampleDataManager implements SampleDataManagerMBean {
 
@@ -246,6 +244,41 @@ public class SampleDataManager implements SampleDataManagerMBean {
                     taskParameters, "separationPipeline", "Separation Pipeline");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("PipelineHarness_FlyLightSeparation", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void applyProcessToDataset(String owner, String dataSetName, String processName) {
+        try {
+            if (!StringUtils.isEmpty(dataSetName)) {
+                List<Entity> dataSets = EJBFactory.getLocalEntityBean().getEntitiesByNameAndTypeName(owner,
+                        dataSetName, EntityConstants.TYPE_DATA_SET);
+                if (dataSets.isEmpty()) throw new IllegalArgumentException("Data set with name "+dataSetName+" does not exist");
+                if (dataSets.size()>1) throw new IllegalArgumentException("More than one data set with name "+dataSetName+" exists");   
+            }
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter("data set name", dataSetName, null)); 
+            taskParameters.add(new TaskParameter("process def name", processName, null)); 
+            Task task = new GenericTask(new HashSet<Node>(), owner, new ArrayList<Event>(), 
+                    taskParameters, "applyProcessToDataset", "Apply Process To Dataset");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("GSPS_ApplyProcessToSample", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
+    public void applyProcessToSample(String sampleEntityId, String processName) {
+        try {
+            Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
+            if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null)); 
+            Task task = new GenericTask(new HashSet<Node>(), sample.getOwnerKey(), new ArrayList<Event>(), 
+                    taskParameters, "applyProcessToSample", "Apply Process To Sample");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob(processName, task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }
