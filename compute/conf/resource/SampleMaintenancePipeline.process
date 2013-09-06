@@ -14,9 +14,6 @@
         
 	    <include name="Compress Raw Files" process="SampleDataCompression">
 	    </include>
-    
-        <include name="Re-register all images" process="SampleImageRegistration">
-        </include>
         
     </sequence>
         

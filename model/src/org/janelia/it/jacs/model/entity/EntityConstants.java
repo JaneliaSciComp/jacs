@@ -106,6 +106,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ALIGNMENT_NCC_SCORE                 = "Alignment Normalized Cross Correlation Score";
     public static final String ATTRIBUTE_ALIGNMENT_QI_SCORE                  = "Alignment Inconsistency Score";
     public static final String ATTRIBUTE_ALIGNMENT_QM_SCORE                  = "Alignment Model Violation Score";
+    public static final String ATTRIBUTE_ALIGNMENT_VERIFY_MOVIE              = "Alignment Verify Movie";
     public static final String ATTRIBUTE_ALIGNMENT_BOARD_USER_SETTINGS       = "Alignment Board User Settings";
     public static final String ATTRIBUTE_RESULT_NODE_ID                      = "Result Node Id";
     public static final String ATTRIBUTE_PERFORMANCE_PROXY_IMAGE             = "Performance Proxy Image";

@@ -73,13 +73,21 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     Properties properties = new Properties();
                     properties.load(new FileReader(propertiesFile));
                     
-                    String filename = properties.getProperty("alignment.stack.filename");
-                    EntityData entityEd = resultItemMap.get(filename);
-                    Entity entity = entityEd.getChildEntity();
+                    String stackFilename = properties.getProperty("alignment.stack.filename");
                     
-                    if (entity==null) {
-                        logger.warn("Could not find result item with filename: "+filename);
+                    EntityData stackEntityEd = resultItemMap.get(stackFilename);
+                    Entity stackEntity = stackEntityEd.getChildEntity();
+                    
+                    if (stackEntity==null) {
+                        logger.warn("Could not find result item with filename: "+stackFilename);
                         continue;
+                    }
+
+                    String verifyFilename = properties.getProperty("alignment.verify.filename");
+                    if (verifyFilename!=null) {
+                        EntityData verifyEntityEd = resultItemMap.get(verifyFilename);
+                        Entity verifyEntity = verifyEntityEd.getChildEntity();
+                        helper.addToParent(stackEntity, verifyEntity, 0, EntityConstants.ATTRIBUTE_ALIGNMENT_VERIFY_MOVIE);
                     }
                     
                     String alignmentSpace = properties.getProperty("alignment.space.name");
@@ -106,13 +114,13 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     }
                     
                     
-                    helper.setAlignmentSpace(entity, alignmentSpace);
-                    helper.setOpticalResolution(entity, opticalRes);
-                    helper.setPixelResolution(entity, pixelRes);
-                    helper.setBoundingBox(entity, boundingBox);
-                    helper.setObjective(entity, objective);
-                    helper.setNccScore(entity, scoreNcc);
-                    helper.setQiScore(entity, score1MinusQi);
+                    helper.setAlignmentSpace(stackEntity, alignmentSpace);
+                    helper.setOpticalResolution(stackEntity, opticalRes);
+                    helper.setPixelResolution(stackEntity, pixelRes);
+                    helper.setBoundingBox(stackEntity, boundingBox);
+                    helper.setObjective(stackEntity, objective);
+                    helper.setNccScore(stackEntity, scoreNcc);
+                    helper.setQiScore(stackEntity, score1MinusQi);
                     
                     if ("true".equals(properties.getProperty("default"))) {
                         defaultAlignmentSpace = alignmentSpace;
@@ -129,7 +137,7 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     if (neuronMasksFilename!=null) {
                         EntityData alignedNeuronMaskEd = resultItemMap.get(neuronMasksFilename);
                         Entity alignedNeuronMask = alignedNeuronMaskEd.getChildEntity();
-                        helper.addImage(entity, EntityConstants.ATTRIBUTE_ALIGNED_CONSOLIDATED_LABEL, alignedNeuronMask);   
+                        helper.addImage(stackEntity, EntityConstants.ATTRIBUTE_ALIGNED_CONSOLIDATED_LABEL, alignedNeuronMask);   
                         supportingFiles.getEntityData().remove(alignedNeuronMaskEd);
                         entityBean.deleteEntityData(alignedNeuronMaskEd);
                         hasWarpedSeparation = true;
