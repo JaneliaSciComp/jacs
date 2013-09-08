@@ -230,6 +230,11 @@
             <type>java.lang.String</type>
         </parameter>
         <parameter>
+            <description>Include parent samples or children samples, a.k.a subsamples (e.g. "parent" or "children")</description>
+            <name>parentOrChildren</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
            <description>Process file name (e.g. "PostPipeline_AddVerifyMovie")</description>
            <name>processName</name>
            <type>java.lang.String</type>

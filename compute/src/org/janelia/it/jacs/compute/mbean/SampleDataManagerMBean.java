@@ -26,7 +26,7 @@ public interface SampleDataManagerMBean {
     public void runNeuronSeparationPipeline(String resultEntityId);
     
     // Generic sample processing
-    public void applyProcessToDataset(String username, String dataSetName, String processName);
+    public void applyProcessToDataset(String username, String dataSetName, String parentOrChildren, String processName);
     public void applyProcessToSample(String sampleEntityId, String processName);
     
     // Upgrade pipelines

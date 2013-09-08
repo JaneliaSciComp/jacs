@@ -249,7 +249,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    public void applyProcessToDataset(String owner, String dataSetName, String processName) {
+    public void applyProcessToDataset(String owner, String dataSetName, String parentOrChildren, String processName) {
         try {
             if (!StringUtils.isEmpty(dataSetName)) {
                 List<Entity> dataSets = EJBFactory.getLocalEntityBean().getEntitiesByNameAndTypeName(owner,
@@ -259,11 +259,12 @@ public class SampleDataManager implements SampleDataManagerMBean {
             }
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("data set name", dataSetName, null)); 
-            taskParameters.add(new TaskParameter("process def name", processName, null)); 
+            taskParameters.add(new TaskParameter("process def name", processName, null));
+            taskParameters.add(new TaskParameter("parent or children", parentOrChildren, null));
             Task task = new GenericTask(new HashSet<Node>(), owner, new ArrayList<Event>(), 
                     taskParameters, "applyProcessToDataset", "Apply Process To Dataset");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("GSPS_ApplyProcessToSample", task.getObjectId());
+            EJBFactory.getLocalComputeBean().submitJob("GSPS_ApplyProcessToSamples", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }

@@ -112,12 +112,12 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
      * Check for Samples with the old result structure.
      */
     private void upgradeSample(Entity sample) throws Exception {
-        fixShortcutImages(sample);
+//        fixShortcutImages(sample);
           
         ResultImageRegistrationService resultImageRegService = new ResultImageRegistrationService();
         
     	for(Entity pipelineRun : EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_PIPELINE_RUN)) {
-    	    fixShortcutImages(pipelineRun);
+//    	    fixShortcutImages(pipelineRun);
     	    
     		for(EntityData pred : pipelineRun.getOrderedEntityData()) {
     			if (!pred.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_RESULT)) {
@@ -126,7 +126,7 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
     			Entity result = pred.getChildEntity();
 
     			logger.info("  Processing result: "+result.getName()+" (id="+result.getId()+")");
-    			fixShortcutImages(result);
+//    			fixShortcutImages(result);
                 
                 if (!isDebug) {
                     resultImageRegService.execute(processData, result, null);
@@ -137,23 +137,23 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
 //    	logger.info("Registered Images for Sample:");
 //    	printSample(sample);
     }
-    
-    private void fixShortcutImages(Entity parent) throws Exception {
-        for(EntityData ed : EntityUtils.getOrderedEntityDataForAttribute(parent, EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE)) {
-            fixShortcutImageEd(ed);
-        }
-    }
-    
-    private void fixShortcutImageEd(EntityData imageEd) throws Exception {
-        Entity child = imageEd.getChildEntity();
-        String filepath = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        if (!filepath.equals(imageEd.getValue())) {
-            logger.info("  Fixed shortcut for image "+filepath);
-            imageEd.setValue(filepath);
-            entityBean.saveOrUpdateEntityData(imageEd);
-        }   
-    }
-    
+//    
+//    private void fixShortcutImages(Entity parent) throws Exception {
+//        for(EntityData ed : EntityUtils.getOrderedEntityDataForAttribute(parent, EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE)) {
+//            fixShortcutImageEd(ed);
+//        }
+//    }
+//    
+//    private void fixShortcutImageEd(EntityData imageEd) throws Exception {
+//        Entity child = imageEd.getChildEntity();
+//        String filepath = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+//        if (!filepath.equals(imageEd.getValue())) {
+//            logger.info("  Fixed shortcut for image "+filepath);
+//            imageEd.setValue(filepath);
+//            entityBean.saveOrUpdateEntityData(imageEd);
+//        }   
+//    }
+//    
 //    private void printSample(Entity sample) {
 //
 //    	logger.info(""+sample);
