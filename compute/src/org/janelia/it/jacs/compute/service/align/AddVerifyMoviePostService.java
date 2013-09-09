@@ -39,7 +39,6 @@ public class AddVerifyMoviePostService extends AbstractEntityGridService {
     
     private Entity sampleEntity;
     private Entity alignment;
-    private String alignmentDir;
     private Entity defaultImage;
     private Entity supportingFiles;
     
@@ -71,15 +70,23 @@ public class AddVerifyMoviePostService extends AbstractEntityGridService {
             public void visit(Entity result) throws Exception {
                 entityLoader.populateChildren(result);
                 alignment = result;
-                logger.info("Found alignment: "+alignment.getName());
-                alignmentDir = alignment.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                logger.info("Found alignment dir: "+alignmentDir);
-                defaultImage = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-                logger.info("Found 3d image: "+defaultImage.getName());
-                supportingFiles = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_SUPPORTING_FILES);   
-                logger.info("Found supporting files: "+supportingFiles.getName());
+                if (alignment!=null) {
+                    logger.info("Found alignment: "+alignment.getName());
+                    defaultImage = alignment.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+                    if (defaultImage!=null) {
+                        logger.info("Found 3d image: "+defaultImage.getName());
+                        supportingFiles = alignment.getChildByAttributeName(EntityConstants.ATTRIBUTE_SUPPORTING_FILES);   
+                        if (supportingFiles!=null) {
+                            logger.info("Found supporting files: "+supportingFiles.getName());
+                        }      
+                    }
+                }
             }
         });
+
+        if (alignment==null) {
+            throw new IllegalStateException("Sample "+sampleEntity.getId()+" has no alignment");
+        }
         
         if (defaultImage==null) {
             throw new IllegalStateException("Alignment "+alignment.getId()+" has no default image");
@@ -150,7 +157,8 @@ public class AddVerifyMoviePostService extends AbstractEntityGridService {
         if (!outputFile.exists()) {
             throw new MissingDataException("Missing output file: "+outputFile.getAbsolutePath());
         }
-        
+
+        String  alignmentDir = alignment.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         File finalFile = new File(alignmentDir, outputFile.getName());
         
         try {

@@ -45,15 +45,28 @@ public class SampleTraversalService extends AbstractEntityService {
         	}
     	}
         
-        String excludeParentSamplesStr = (String) processData.getItem("EXCLUDE_PARENT_SAMPLES");
-        if (!StringUtils.isEmpty(excludeParentSamplesStr)) { 
-            excludeParentSamples = Boolean.parseBoolean(excludeParentSamplesStr);
+        String parentOrChildren = (String) processData.getItem("PARENT_OR_CHILDREN");
+        
+        if (parentOrChildren!=null) {
+            if (parentOrChildren.equals("parent")) {
+                logger.info("Will exclude child samples and include parent samples");
+                excludeChildSamples = true;
+                excludeParentSamples = false;
+            }
+            else if (parentOrChildren.equals("children")) {
+                logger.info("Will exclude parent samples and include child samples");
+                excludeChildSamples = false;
+                excludeParentSamples = true;
+            }
+            else if (parentOrChildren.equals("both")) {
+                logger.info("Will include BOTH parent and child samples");
+                excludeChildSamples = false;
+                excludeParentSamples = true;
+            }
+            else {
+                throw new IllegalArgumentException("Unrecognized value for PARENT_OR_CHILDREN:"+parentOrChildren);
+            }
         }
-    	
-    	String excludeChildSamplesStr = (String) processData.getItem("EXCLUDE_CHILD_SAMPLES");
-    	if (!StringUtils.isEmpty(excludeChildSamplesStr)) { 
-    	    excludeChildSamples = Boolean.parseBoolean(excludeChildSamplesStr);
-    	}
     	
         dataSetName = (String) processData.getItem("DATA_SET_NAME");
 
@@ -65,7 +78,7 @@ public class SampleTraversalService extends AbstractEntityService {
             List<Entity> entities;
             if (dataSetName == null) {
 
-                logger.info("Searching for samples owned by " + ownerKey + "...");
+                logger.info("Searching for "+parentOrChildren+" samples owned by " + ownerKey + "...");
 
                 entities = entityBean.getUserEntitiesByTypeName(ownerKey,
                                                                 EntityConstants.TYPE_SAMPLE);
@@ -83,7 +96,7 @@ public class SampleTraversalService extends AbstractEntityService {
                             EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
 
                     logger.info("Searching for " + ownerKey + " '" + dataSetName +
-                                "' data set (" + dataSetIdentifier + ") samples ...");
+                                "' data set (" + dataSetIdentifier + ") "+parentOrChildren+" samples ...");
 
                     entities = entityBean.getUserEntitiesWithAttributeValueAndTypeName(
                             ownerKey,
