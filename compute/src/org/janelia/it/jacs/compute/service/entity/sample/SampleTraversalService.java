@@ -1,13 +1,14 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
-import org.janelia.it.jacs.shared.utils.StringUtils;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Returns all the samples for the task owner which match the parameters. Parameters must be provided in the ProcessData:
@@ -27,11 +28,12 @@ public class SampleTraversalService extends AbstractEntityService {
 	public static final String RUN_MODE_INCOMPLETE = "INCOMPLETE";
 	public static final String RUN_MODE_ALL = "ALL";
 
-	protected boolean excludeParentSamples = false;
-	protected boolean excludeChildSamples = true;
-	
-    protected String runMode;
-    protected String dataSetName = null;
+    protected boolean includeParentSamples = false;
+    protected boolean includeChildSamples = true;
+    protected boolean includeAllSamples;
+    protected boolean includeNewSamples;
+    protected boolean includeErrorSamples;
+   
 
     public void execute() throws Exception {
     	
@@ -44,80 +46,84 @@ public class SampleTraversalService extends AbstractEntityService {
         		throw new IllegalArgumentException("Both OUTVAR_ENTITY_ID and OUTVAR_ENTITY may not be null");
         	}
     	}
+
+        logger.info("Traversing samples owned by "+ownerKey+", with rules:");
         
         String parentOrChildren = (String) processData.getItem("PARENT_OR_CHILDREN");
+        logger.info("    parentOrChildren="+parentOrChildren);
         
         if (parentOrChildren!=null) {
             if (parentOrChildren.equals("parent")) {
-                logger.info("Will exclude child samples and include parent samples");
-                excludeChildSamples = true;
-                excludeParentSamples = false;
+                includeChildSamples = false;
+                includeParentSamples = true;
             }
             else if (parentOrChildren.equals("children")) {
-                logger.info("Will exclude parent samples and include child samples");
-                excludeChildSamples = false;
-                excludeParentSamples = true;
+                includeChildSamples = true;
+                includeParentSamples = false;
             }
             else if (parentOrChildren.equals("both")) {
-                logger.info("Will include BOTH parent and child samples");
-                excludeChildSamples = false;
-                excludeParentSamples = true;
+                includeChildSamples = true;
+                includeParentSamples = true;
             }
             else {
                 throw new IllegalArgumentException("Unrecognized value for PARENT_OR_CHILDREN:"+parentOrChildren);
             }
         }
     	
-        dataSetName = (String) processData.getItem("DATA_SET_NAME");
-
-        this.runMode = (String)processData.getItem("RUN_MODE");
+        String dataSetName = (String) processData.getItem("DATA_SET_NAME");
+        logger.info("    dataSetName="+dataSetName);
+        
+        String runMode = (String)processData.getItem("RUN_MODE");
+        logger.info("    runMode="+runMode);
+        
+        if (RUN_MODE_NEW.equals(runMode)) {
+            includeNewSamples = true;
+        } 
+        else if (RUN_MODE_INCOMPLETE.equals(runMode)) {
+            includeErrorSamples = true;
+        }
+        else if (RUN_MODE_ALL.equals(runMode)) {
+            includeAllSamples = true;
+        }
+        else {
+            throw new IllegalStateException("Illegal mode: "+runMode);    
+        }
+        
         List<Object> outObjects = new ArrayList<Object>();
         
         if (!RUN_MODE_NONE.equals(runMode)) {
 
             List<Entity> entities;
             if (dataSetName == null) {
-
-                logger.info("Searching for "+parentOrChildren+" samples owned by " + ownerKey + "...");
-
-                entities = entityBean.getUserEntitiesByTypeName(ownerKey,
-                                                                EntityConstants.TYPE_SAMPLE);
-            } else {
-
-                List<Entity> dataSets = entityBean.getUserEntitiesByNameAndTypeName(
-                        ownerKey,
-                        dataSetName,
-                        EntityConstants.TYPE_DATA_SET);
-
+                entities = entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_SAMPLE);
+            } 
+            else {
+                List<Entity> dataSets = entityBean.getUserEntitiesByNameAndTypeName(ownerKey, dataSetName, EntityConstants.TYPE_DATA_SET);
                 if (dataSets.size() == 1) {
-
-                    final Entity dataSetEntity = dataSets.get(0);
-                    final String dataSetIdentifier = dataSetEntity.getValueByAttributeName(
-                            EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-
-                    logger.info("Searching for " + ownerKey + " '" + dataSetName +
-                                "' data set (" + dataSetIdentifier + ") "+parentOrChildren+" samples ...");
-
-                    entities = entityBean.getUserEntitiesWithAttributeValueAndTypeName(
-                            ownerKey,
-                            EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER,
-                            dataSetIdentifier,
+                    Entity dataSetEntity = dataSets.get(0);
+                    String dataSetIdentifier = dataSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+                    entities = entityBean.getUserEntitiesWithAttributeValueAndTypeName(ownerKey,
+                            EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier,
                             EntityConstants.TYPE_SAMPLE);
-
-                } else {
-                    throw new IllegalArgumentException("found " + dataSets.size() +
-                                                       " entities for " + ownerKey +
-                                                       " data set '" + dataSetName +
-                                                       "' when only one is expected");
+                } 
+                else {
+                    throw new IllegalArgumentException("found " + dataSets.size() + " entities for " + ownerKey
+                            + " data set '" + dataSetName + "' when only one is expected");
                 }
 
             }
 
-			logger.info("Found " + entities.size() + " Samples. Filtering...");
+			logger.info("Found " + entities.size() + " Samples. Filtering with rules:");
+			logger.info("    includeNewSamples="+includeNewSamples);
+			logger.info("    includeErrorSamples="+includeErrorSamples);
+			logger.info("    includeAllSamples="+includeAllSamples);
+			logger.info("    includeChildSamples="+includeChildSamples);
+			logger.info("    includeParentSamples="+includeParentSamples);
 			
 	    	for(Entity entity : entities) {
-	    		if (includeSample(entity)) {
-	    			outObjects.add(outputObjects ? entity : entity.getId());	
+	    	    Set<Entity> included = getIncludedSamples(entity);
+	    		for(Entity sample : included) {
+	    			outObjects.add(outputObjects ? sample : sample.getId());	
 	    		}
 	    	}
         }
@@ -126,61 +132,83 @@ public class SampleTraversalService extends AbstractEntityService {
     	processData.putItem(outvar, outObjects);
     }
     
-    private boolean includeSample(Entity sample) throws Exception {
+    private Set<Entity> getIncludedSamples(Entity sample) throws Exception {
 
+        Set<Entity> included = new HashSet<Entity>();
+        
         populateChildren(sample);
-        
-        if (excludeChildSamples && sample.getName().contains("~")) {
-            return false;
-        }
-        
-        if (excludeParentSamples && !EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_SAMPLE).isEmpty()) {
-            return false;
-        }
-
-		if (RUN_MODE_NEW.equals(runMode)) {
-            return includeSample(sample, true, false);
-		} 
-		else if (RUN_MODE_INCOMPLETE.equals(runMode)) {
-		    return includeSample(sample, true, true);
-		}
-		else if (RUN_MODE_ALL.equals(runMode)) {
-			return true;
-		}
-		
-		throw new IllegalStateException("Illegal mode: "+runMode);
-    }
-    
-    private boolean includeSample(Entity sample, boolean includeNewSamples, boolean includeErrorSamples) throws Exception {
-
-
         List<Entity> childSamples = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_SAMPLE);
+        
         if (childSamples.isEmpty()) {
-
-            if (includeNewSamples) {
-                Entity pipelineRun = EntityUtils.getLatestChildOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
-                if (pipelineRun==null) {
-                    return true;
-                }
+            // Childless samples are always included
+            if (includeSample(sample)) {
+                included.add(sample);
+                logger.info("Included "+sample+" (childless sample)");
             }
-            if (includeErrorSamples) {
-                Entity pipelineRun = EntityUtils.getLatestChildOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
-                populateChildren(pipelineRun);
-                Entity error = EntityUtils.getLatestChildOfType(pipelineRun, EntityConstants.TYPE_ERROR);
-                if (error!=null) {
-                    return true;
-                }
+            else {
+                logger.info("Excluded "+sample+" (childless sample)");
             }
         }
         else {
+            // This is a parent sample because it has child samples. Check if any of the children are to be included.
+            Set<Entity> childrenIncluded = new HashSet<Entity>();
+            Set<Entity> childrenExcluded = new HashSet<Entity>();
             for(Entity childSample : childSamples) {
                 populateChildren(childSample);
-                if (!includeSample(childSample, includeNewSamples, includeErrorSamples)) {
-                    return false;
-                }    
+                if (includeSample(childSample)) {
+                    childrenIncluded.add(childSample);
+                }
+                else {
+                    childrenExcluded.add(childSample);
+                }
             }
-            // All child samples passed
+            
+            if (includeParentSamples && !childrenIncluded.isEmpty()) {
+                // The parent sample should be included if any of the children samples are included
+                included.add(sample);
+                logger.info("Included "+sample+" (parent sample)");
+            }
+            else {
+                logger.info("Excluded "+sample+" (parent sample)");
+            }
+            
+            for(Entity childSample : childrenIncluded) {
+                if (includeChildSamples) {
+                    logger.info("  Included "+childSample+" (child sample)");
+                    included.add(childSample);
+                }
+                else {
+                    logger.info("  Excluded "+childSample+" (child sample) because child samples are not wanted");    
+                }
+            }
+
+            for(Entity childSample : childrenExcluded) {
+                logger.info("  Excluded "+childSample+" (child sample) because it does not fit the run mode");
+            }
+        }
+        
+        return included;
+    }
+    
+    private boolean includeSample(Entity sample) throws Exception {
+
+        if (includeAllSamples) {
             return true;
+        }
+        
+        if (includeNewSamples) {
+            Entity pipelineRun = EntityUtils.getLatestChildOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
+            if (pipelineRun==null) {
+                return true;
+            }
+        }
+        if (includeErrorSamples) {
+            Entity pipelineRun = EntityUtils.getLatestChildOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
+            populateChildren(pipelineRun);
+            Entity error = EntityUtils.getLatestChildOfType(pipelineRun, EntityConstants.TYPE_ERROR);
+            if (error!=null) {
+                return true;
+            }
         }
         
         return false;
