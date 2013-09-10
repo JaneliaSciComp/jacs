@@ -5,7 +5,6 @@ import java.util.*;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
@@ -96,10 +95,10 @@ public class EntityVistationBuilder {
 		}
 		else if (filter instanceof ChildEntityFilter) {
 			ChildEntityFilter childFilter = (ChildEntityFilter)filter;
-			logger.info(indent+"Filter ("+childFilter.getClass().getName()+"):");
+			logger.trace(indent+"Filter ("+childFilter.getClass().getName()+"):");
 			List<EntityData> filtered = childFilter.getFilteredRelatives(entity);
 			if (nextFilter!=null && nextFilter instanceof SameLevelFilter) {
-			    logger.info(indent+"SameLevelFilter ("+nextFilter.getClass().getName()+"):");
+			    logger.trace(indent+"SameLevelFilter ("+nextFilter.getClass().getName()+"):");
 			    SameLevelFilter sameLevelFilter = (SameLevelFilter)nextFilter;
 			    filtered = sameLevelFilter.getFiltered(filtered);
 			    level++; // skip this filter
