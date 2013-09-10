@@ -85,6 +85,9 @@ public class SampleTraversalService extends AbstractEntityService {
         else if (RUN_MODE_ALL.equals(runMode)) {
             includeAllSamples = true;
         }
+        else if (RUN_MODE_NONE.equals(runMode)) {
+            // No samples will be selected
+        }
         else {
             throw new IllegalStateException("Illegal mode: "+runMode);    
         }
@@ -121,7 +124,7 @@ public class SampleTraversalService extends AbstractEntityService {
 			logger.info("    includeParentSamples="+includeParentSamples);
 			
 	    	for(Entity entity : entities) {
-	    	    Set<Entity> included = getIncludedSamples(entity);
+	    	    List<Entity> included = getIncludedSamples(entity);
 	    		for(Entity sample : included) {
 	    			outObjects.add(outputObjects ? sample : sample.getId());	
 	    		}
@@ -132,9 +135,9 @@ public class SampleTraversalService extends AbstractEntityService {
     	processData.putItem(outvar, outObjects);
     }
     
-    private Set<Entity> getIncludedSamples(Entity sample) throws Exception {
+    private List<Entity> getIncludedSamples(Entity sample) throws Exception {
 
-        Set<Entity> included = new HashSet<Entity>();
+        List<Entity> included = new ArrayList<Entity>();
         
         populateChildren(sample);
         List<Entity> childSamples = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_SAMPLE);
