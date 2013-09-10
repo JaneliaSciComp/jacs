@@ -49,16 +49,16 @@ public class StartupVerificationsBean implements StartupVerificationService {
         Field[] constantFields = EntityConstants.class.getFields();
         for (Field constantField : constantFields) {
             if (constantField.getName().toUpperCase().startsWith("TYPE") && constantField.getType().getName().equals("java.lang.String")){
-                if (!dbTypeMap.keySet().contains((String)constantField.get(new String()))) {
+                if (!dbTypeMap.keySet().contains(constantField.get(""))) {
                     System.out.println("WARNING!!!!!:  The database does not know about TYPE constant: "+
-                            constantField.getName()+" "+(String)constantField.get(new String()));
+                            constantField.getName()+" "+constantField.get(""));
                     missingFields = true;
                 }
             }
             else if (constantField.getName().toUpperCase().startsWith("ATTRIBUTE") && constantField.getType().getName().equals("java.lang.String")) {
-                if (!dbAttributeMap.keySet().contains((String)constantField.get(new String()))) {
+                if (!dbAttributeMap.keySet().contains(constantField.get(""))) {
                     System.out.println("WARNING!!!!!:  The database does not know about ATTRIBUTE constant: "+
-                            constantField.getName()+" "+(String)constantField.get(new String()));
+                            constantField.getName()+" "+constantField.get(""));
                     missingFields = true;
                 }
             }
