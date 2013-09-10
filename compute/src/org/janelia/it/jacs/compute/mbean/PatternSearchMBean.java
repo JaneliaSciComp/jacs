@@ -12,5 +12,7 @@ public interface PatternSearchMBean {
 
     public void changePatternAnnotationFolderName();
 
+    public void runCompartmentAnnotation3DService(String user, String configurationName, String folderName, String inputStackListFilePath);
+
 
 }

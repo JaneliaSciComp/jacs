@@ -13,6 +13,12 @@ import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.compute.service.fly.ScreenSampleLineCoordinationService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.tasks.Event;
+import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.tasks.TaskParameter;
+import org.janelia.it.jacs.model.tasks.annotation.CompartmentAnnotation3DTask;
+import org.janelia.it.jacs.model.tasks.utility.GenericTask;
+import org.janelia.it.jacs.model.user_data.Node;
 
 import java.util.*;
 
@@ -156,5 +162,22 @@ public class PatternSearch implements PatternSearchMBean {
     }
 
 
+    public void runCompartmentAnnotation3DService(String user, String configurationName, String folderName, String inputStackListFilePath) {
+        try {
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            CompartmentAnnotation3DTask task = new CompartmentAnnotation3DTask(
+                    new HashSet<Node>(),
+                    user,
+                    new ArrayList<Event>(),
+                    taskParameters,
+                    folderName,
+                    "0",
+                    configurationName);
+            task = (CompartmentAnnotation3DTask)EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("CompartmentAnnotation3D", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
 
 }

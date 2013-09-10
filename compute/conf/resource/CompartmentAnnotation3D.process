@@ -1,0 +1,9 @@
+<!--
+	Creates 3D Compartment Annotation for a file which lists a set of input files
+-->
+<process name="Compartment Annotation 3D Process" processor="queue/compartmentAnnotation3DLauncher" startEvent="pending">
+   <sequence>
+      <operation name="Compartment Annotation 3D" processor="org.janelia.it.jacs.compute.service.annotation.CompartmentAnnotation3DService">
+      </operation>
+   </sequence>
+</process>

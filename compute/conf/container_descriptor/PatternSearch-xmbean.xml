@@ -26,4 +26,36 @@
         <name>changeMaskFolderName</name>
     </operation>
 
+    <operation>
+
+        <description>Compartment Annotation Service for 3D Stacks</description>
+
+        <name>runCompartmentAnnotation3DService</name>
+
+        <parameter>
+            <description>User Name</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+
+        <parameter>
+            <description>Configuration Name</description>
+            <name>configurationName</name>
+            <type>java.lang.String</type>
+        </parameter>
+
+        <parameter>
+            <description>Folder Name</description>
+            <name>folderName</name>
+            <type>java.lang.String</type>
+        </parameter>
+
+        <parameter>
+            <description>Input Stack List Filepath</description>
+            <name>inputStackListFilePath</name>
+            <type>java.lang.String</type>
+        </parameter>
+
+    </operation>
+
 </mbean>
