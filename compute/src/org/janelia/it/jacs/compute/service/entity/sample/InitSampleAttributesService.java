@@ -16,88 +16,120 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
 public class InitSampleAttributesService extends AbstractEntityService {
 
     public void execute() throws Exception {
-        	        
-    	String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
-    	if (sampleEntityId == null || "".equals(sampleEntityId)) {
-    		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
-    	}
-    	
-    	Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
-    	if (sampleEntity == null) {
-    		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
-    	}
-    	
-    	if (!EntityConstants.TYPE_SAMPLE.equals(sampleEntity.getEntityType().getName())) {
-    		throw new IllegalArgumentException("Entity is not a sample: "+sampleEntityId);
-    	}
-    	
-    	logger.info("Retrieved sample: "+sampleEntity.getName()+" (id="+sampleEntityId+")");
 
-        String chanSpec = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-        SampleHelper sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
-        String signalChannels = sampleHelper.getSignalChannelIndexes(chanSpec);
-        logger.info("Putting '"+signalChannels+"' in SIGNAL_CHANNELS");
-        processData.putItem("SIGNAL_CHANNELS", signalChannels);
-        String referenceChannels = sampleHelper.getReferenceChannelIndexes(chanSpec);
-        logger.info("Putting '"+referenceChannels+"' in REFERENCE_CHANNEL");
-        processData.putItem("REFERENCE_CHANNEL", referenceChannels);    
-        
+        final Entity sampleEntity = entityHelper.getRequiredSampleEntity(data);
+        final String chanSpec = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+        final SampleHelper sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
+        final String signalChannels = sampleHelper.getSignalChannelIndexes(chanSpec);
+        data.putItem("SIGNAL_CHANNELS", signalChannels);
+
+        final String referenceChannels = sampleHelper.getReferenceChannelIndexes(chanSpec);
+        data.putItem("REFERENCE_CHANNEL", referenceChannels);
+
+        boolean parentSampleHasLamina = false;
+
+        List<AnatomicalArea> sampleAreas = getSampleAreas(sampleEntity);
+
+        if (sampleAreas != null) {
+            data.putItem("SAMPLE_AREA", sampleAreas);
+
+            if (hasLamina(sampleAreas)) {
+
+                parentSampleHasLamina = true;
+
+            } else {
+
+                final String key = "SAMPLE_63X_ID";
+                final String sample63xId = data.getStringItem(key);
+                if (sample63xId != null) {
+                    if (! sample63xId.equals(sampleEntity.getId().toString())) {
+                        final Entity sample63xEntity = entityHelper.getRequiredSampleEntity(key, sample63xId);
+                        sampleAreas = getSampleAreas(sample63xEntity);
+                        parentSampleHasLamina = hasLamina(sampleAreas);
+                    }
+                }
+
+            }
+        }
+
+        data.putItem("PARENT_SAMPLE_HAS_LAMINA", parentSampleHasLamina);
+    }
+
+    private List<AnatomicalArea> getSampleAreas(Entity sampleEntity) throws Exception {
+
+        List<AnatomicalArea> sampleAreas = null;
+
         populateChildren(sampleEntity);
         Entity supportingFiles = EntityUtils.getSupportingData(sampleEntity);
 
-        // Parent samples may not have the rest of these attributes
-        if (supportingFiles==null) return;
-        
-        supportingFiles = entityBean.getEntityTree(supportingFiles.getId());
-        List<Entity> tileEntities = EntityUtils.getDescendantsOfType(supportingFiles, EntityConstants.TYPE_IMAGE_TILE, true);
-        
-        
-        Map<String,AnatomicalArea> areaMap = new HashMap<String,AnatomicalArea>();
-        
-        for(Entity tileEntity : tileEntities) {
-            String area = null;
-            for(EntityData ed : tileEntity.getOrderedEntityData()) {
-                Entity lsmStack = ed.getChildEntity();
-                if (lsmStack != null && lsmStack.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK)) {
-                    String lsmArea = lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
-                    if (lsmArea==null) lsmArea = "";
-                    if (area == null) {
-                        area = lsmArea;
-                    }
-                    else if (!area.equals(lsmArea)) {
-                        throw new IllegalStateException("No consensus for area in tile '"+tileEntity.getName()+"' on sample "+sampleEntity.getName());
+        if (supportingFiles == null) {
+
+            contextLogger.info("skipping SAMPLE_AREA derviation, no supporting files for sample " +
+                               sampleEntity.getName());
+
+        } else {
+
+            supportingFiles = entityBean.getEntityTree(supportingFiles.getId());
+            final List<Entity> tileEntities = EntityUtils.getDescendantsOfType(supportingFiles,
+                                                                               EntityConstants.TYPE_IMAGE_TILE,
+                                                                               true);
+
+            Map<String,AnatomicalArea> areaMap = new HashMap<String,AnatomicalArea>();
+
+            for(Entity tileEntity : tileEntities) {
+                String area = null;
+                for(EntityData ed : tileEntity.getOrderedEntityData()) {
+                    Entity lsmStack = ed.getChildEntity();
+                    if (lsmStack != null && lsmStack.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK)) {
+                        String lsmArea = lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
+                        if (lsmArea==null) lsmArea = "";
+                        if (area == null) {
+                            area = lsmArea;
+                        }
+                        else if (!area.equals(lsmArea)) {
+                            throw new IllegalStateException("No consensus for area in tile '"+tileEntity.getName()+"' on sample "+sampleEntity.getName());
+                        }
                     }
                 }
+                AnatomicalArea anatomicalArea = areaMap.get(area);
+                if (anatomicalArea==null) {
+                    anatomicalArea = new AnatomicalArea(area);
+                    areaMap.put(area, anatomicalArea);
+                }
+                anatomicalArea.addTile(tileEntity);
             }
-            AnatomicalArea anatomicalArea = areaMap.get(area);
-            if (anatomicalArea==null) {
-                anatomicalArea = new AnatomicalArea(area);
-                areaMap.put(area, anatomicalArea);
-            }
-            anatomicalArea.addTile(tileEntity);
+
+            sampleAreas = new ArrayList<AnatomicalArea>(areaMap.values());
+
+            // A bit of a hack... sort brains last so that they are the default 2d images later on
+            Collections.sort(sampleAreas, new Comparator<AnatomicalArea>() {
+                @Override
+                public int compare(AnatomicalArea o1, AnatomicalArea o2) {
+                    if (o1.getName().equals(o2.getName())) {
+                        return 0;
+                    }
+                    if (o1.getName().equalsIgnoreCase("Brain")) {
+                        return 1;
+                    }
+                    if (o2.getName().equalsIgnoreCase("Brain")) {
+                        return -1;
+                    }
+                    return o1.getName().compareTo(o1.getName());
+                }
+            });
         }
 
-        List<AnatomicalArea> sampleAreas = new ArrayList<AnatomicalArea>(areaMap.values());
-        
-        // A bit of a hack... sort brains last so that they are the default 2d images later on
-        Collections.sort(sampleAreas, new Comparator<AnatomicalArea>()  {
-            @Override
-            public int compare(AnatomicalArea o1, AnatomicalArea o2) {
-                if (o1.getName().equals(o2.getName())) {
-                    return 0;
-                }
-                if (o1.getName().equalsIgnoreCase("Brain")) {
-                    return 1;
-                }
-                if (o2.getName().equalsIgnoreCase("Brain")) {
-                    return -1;
-                }
-                return o1.getName().compareTo(o1.getName());
+        return sampleAreas;
+    }
+
+    private boolean hasLamina(List<AnatomicalArea> sampleAreas) {
+        boolean hasLamina = false;
+        for (AnatomicalArea area : sampleAreas) {
+            if (area.hasLamina()) {
+                hasLamina = true;
+                break;
             }
-        });
-        
-        logger.info("Putting "+areaMap.values().size()+" values in SAMPLE_AREA");
-        processData.putItem("SAMPLE_AREA", sampleAreas);
-          
+        }
+        return hasLamina;
     }
 }

@@ -26,4 +26,13 @@ public class ParameterizedAlignmentAlgorithm {
 	public String getResultName() {
 	    return resultName;
 	}
+
+    @Override
+    public String toString() {
+        return "ParameterizedAlignmentAlgorithm{" +
+                "algorithm=" + algorithm +
+                ", parameter='" + parameter + '\'' +
+                ", resultName='" + resultName + '\'' +
+                '}';
+    }
 }

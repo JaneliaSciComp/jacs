@@ -4,8 +4,9 @@
  -->
  <process name="FlyLight Sample Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending">
 	<sequence name="Main">
-	
+
     	<input name="SAMPLE_ENTITY_ID"/>
+        <input name="SAMPLE_63X_ID"/>
         <input name="PIPELINE_NAME"/>
         <input name="MERGE_ALGORITHMS"/>
         <input name="STITCH_ALGORITHMS"/>
@@ -79,7 +80,9 @@
         <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
         <operation name="Get Sample Attributes" processor="org.janelia.it.jacs.compute.service.entity.sample.InitSampleAttributesService">
             <input name="SAMPLE_ENTITY_ID"/>
+            <input name="SAMPLE_63X_ID"/>
             <output name="SAMPLE_AREA"/>
+            <output name="PARENT_SAMPLE_HAS_LAMINA"/>
         </operation>
 		
         <sequence forEach="SAMPLE_AREA">
@@ -382,6 +385,7 @@
         <!-- Decide which types of processing will be run -->
         <operation name="Choose Next Steps" processor="org.janelia.it.jacs.compute.service.entity.sample.ChoosePostSampleProcessingStepsService">
             <input name="SAMPLE_ENTITY_ID"/>
+            <input name="PARENT_SAMPLE_HAS_LAMINA"/>
             <input name="ALIGNMENT_ALGORITHMS"/>
             <input name="ALIGNMENT_ALGORITHM_PARAMS"/>
             <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES"/>
