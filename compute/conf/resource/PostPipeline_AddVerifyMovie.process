@@ -1,7 +1,7 @@
 <!-- 
 	Ex Post Facto pipeline for adding verification movies to existing alignments.
 -->
-<process name="Add Verify Movie Post Pipeline" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Add Verify Movie Post Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	    
 	    <input name="SAMPLE_ENTITY_ID"/>
