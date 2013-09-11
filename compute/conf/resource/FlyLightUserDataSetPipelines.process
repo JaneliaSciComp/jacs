@@ -24,15 +24,16 @@
             <input name="DATA_SET_NAME"/>
 		</operation>
 		
+		<!--
     	<sequence if="TASK_OWNER=flylight">
     	
-		    <!-- Discover samples in Sage which are not assigned to data sets -->
 			<operation name="Initial Image Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SageImageFamilyDiscoveryService">
 		        <input name="DEFAULT_CHANNEL_SPECIFICATION" value="sssr"/>
 		        <input name="SAGE_IMAGE_FAMILY" value="flylight_flip"/>
 			</operation>
 			
 		</sequence>
+		-->
 		
 	    <!-- Find all the Sample Entities in the database -->
 		<operation name="Sample Traversal" processor="org.janelia.it.jacs.compute.service.entity.sample.SampleTraversalService">
