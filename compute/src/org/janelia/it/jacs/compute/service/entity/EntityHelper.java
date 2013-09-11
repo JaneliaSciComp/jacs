@@ -9,10 +9,13 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
+import org.janelia.it.jacs.compute.service.common.ContextLogger;
+import org.janelia.it.jacs.compute.service.common.ProcessDataAccessor;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
@@ -26,17 +29,31 @@ public class EntityHelper {
 	private static final boolean DEBUG = false;
 	
     protected Logger logger;
+    protected ContextLogger contextLogger;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
     protected String ownerKey;
     protected EntityBeanEntityLoader entityLoader;
    
     public EntityHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, String ownerKey, Logger logger) {
+        this(entityBean, computeBean, ownerKey, logger, null);
+    }
+
+    public EntityHelper(EntityBeanLocal entityBean,
+                        ComputeBeanLocal computeBean,
+                        String ownerKey,
+                        Logger logger,
+                        ContextLogger contextLogger) {
         this.entityBean = entityBean;
         this.computeBean  = computeBean;
         this.ownerKey = ownerKey;
         this.logger = logger;
         this.entityLoader = new EntityBeanEntityLoader(entityBean);
+        if (contextLogger == null) {
+            this.contextLogger = new ContextLogger(logger);
+        } else {
+            this.contextLogger = contextLogger;
+        }
     }
 
     /**
@@ -394,4 +411,37 @@ public class EntityHelper {
         logger.trace("Added "+entity.getName() +" ("+entity.getEntityType().getName()+"#"+entity.getId()+
                 ") as child of "+parent.getName()+" ("+parent.getEntityType().getName()+"#"+parent.getId()+")");
     }
+
+    public Entity getRequiredSampleEntity(String key,
+                                          String sampleEntityId) throws Exception {
+        final Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
+        if (sampleEntity == null) {
+            throw new IllegalArgumentException("Entity not found for " + key + " " + sampleEntityId);
+        }
+
+        final EntityType sampleEntityType = sampleEntity.getEntityType();
+        String sampleEntityTypeName = null;
+        if (sampleEntityType != null) {
+            sampleEntityTypeName = sampleEntityType.getName();
+        }
+        if (! EntityConstants.TYPE_SAMPLE.equals(sampleEntityTypeName)) {
+            throw new IllegalArgumentException(key + " " + sampleEntityId + " has entity type " +
+                    sampleEntityTypeName + " which is not a sample");
+        }
+
+        if (contextLogger.isInfoEnabled()) {
+            contextLogger.info("Retrieved sample " + sampleEntity.getName() + " for " + key + " " + sampleEntityId);
+        }
+
+        contextLogger.appendToLogContext("sample " + sampleEntity.getName());
+
+        return sampleEntity;
+    }
+
+    public Entity getRequiredSampleEntity(ProcessDataAccessor data) throws Exception {
+        final String defaultKey = "SAMPLE_ENTITY_ID";
+        final String sampleEntityId = data.getRequiredStringItem(defaultKey);
+        return getRequiredSampleEntity(defaultKey, sampleEntityId);
+    }
+
 }
