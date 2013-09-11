@@ -26,33 +26,16 @@ public class InitSampleAttributesService extends AbstractEntityService {
         final String referenceChannels = sampleHelper.getReferenceChannelIndexes(chanSpec);
         data.putItem("REFERENCE_CHANNEL", referenceChannels);
 
-        boolean parentSampleHasLamina = false;
+        boolean hasLamina = false;
 
         List<AnatomicalArea> sampleAreas = getSampleAreas(sampleEntity);
 
         if (sampleAreas != null) {
             data.putItem("SAMPLE_AREA", sampleAreas);
-
-            if (hasLamina(sampleAreas)) {
-
-                parentSampleHasLamina = true;
-
-            } else {
-
-                final String key = "SAMPLE_63X_ID";
-                final String sample63xId = data.getStringItem(key);
-                if (sample63xId != null) {
-                    if (! sample63xId.equals(sampleEntity.getId().toString())) {
-                        final Entity sample63xEntity = entityHelper.getRequiredSampleEntity(key, sample63xId);
-                        sampleAreas = getSampleAreas(sample63xEntity);
-                        parentSampleHasLamina = hasLamina(sampleAreas);
-                    }
-                }
-
-            }
+            hasLamina = hasLamina(sampleAreas);
         }
 
-        data.putItem("PARENT_SAMPLE_HAS_LAMINA", parentSampleHasLamina);
+        data.putItem("SAMPLE_HAS_LAMINA", hasLamina);
     }
 
     private List<AnatomicalArea> getSampleAreas(Entity sampleEntity) throws Exception {

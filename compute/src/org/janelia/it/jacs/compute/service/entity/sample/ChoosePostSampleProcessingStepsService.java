@@ -56,8 +56,8 @@ public class ChoosePostSampleProcessingStepsService extends AbstractEntityServic
         data.putItem("ANALYSIS_ALGORITHM", analysisAlgorithms);
 
         final boolean hasAlignment = numberOfAlignAlgorithms > 0;
-        final boolean parentSampleHasLamina = data.getBooleanItem("PARENT_SAMPLE_HAS_LAMINA");
-        final boolean runAlignment = hasAlignment && (! parentSampleHasLamina);
+        final boolean sampleHasLamina = data.getBooleanItem("SAMPLE_HAS_LAMINA");
+        final boolean runAlignment = hasAlignment && (! sampleHasLamina);
         final boolean runAnalysis = analysisAlgorithms.size() > 0;
 
         data.putItem("RUN_ALIGNMENT", runAlignment);
