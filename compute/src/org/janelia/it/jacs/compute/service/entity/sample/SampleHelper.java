@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
+import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.service.entity.EntityHelper;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -34,7 +35,8 @@ public class SampleHelper extends EntityHelper {
     protected boolean resetSampleNames = true;
     
     private Entity topLevelFolder;
-    private Entity trashFolder;
+    private Entity retiredDataFolder;
+    private Entity blockedDataFolder;
     private List<Entity> dataSets;
     private Map<String,Entity> dataSetFolderByIdentifier = new HashMap<String,Entity>();
     private Map<String,Entity> dataSetEntityByIdentifier = new HashMap<String,Entity>();
@@ -43,6 +45,7 @@ public class SampleHelper extends EntityHelper {
     private int numSamplesUpdated = 0;
     private int numSamplesAdded = 0;
     private int numSamplesAnnexed = 0;
+    private int numSamplesMovedToBlockedFolder = 0;
     
     public SampleHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, AnnotationBeanLocal annotationBean, String ownerKey, Logger logger) {
         super(entityBean, computeBean, ownerKey, logger);
@@ -279,8 +282,6 @@ public class SampleHelper extends EntityHelper {
                             logger.info("  Found sample with matching LSM set, but it is not owned by us, so we'll keep looking: "+sample.getName());
                             matchedUnownedSample = sample;
                         }
-                        
-                        
                     }
                     else {
                         logger.debug("  Sample "+sample.getName()+" does not match: "+matchedLsmNames);
@@ -891,8 +892,17 @@ public class SampleHelper extends EntityHelper {
      */
     public void putInCorrectDataSetFolder(Entity sample) throws Exception {
         loadDataSets();
+        
         String sampleDataSetIdentifier = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-        logger.info("  Putting sample "+sample.getName()+" in data set folder for "+sampleDataSetIdentifier);   
+        
+        boolean blocked = sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_PROCESSING_BLOCK)!=null;
+        if (blocked) {
+            logger.info("  Ensuring blocked sample "+sample.getName()+" is in Blocked Data folder");   
+        }
+        else {
+            logger.info("  Ensuring sample "+sample.getName()+" is in "+sampleDataSetIdentifier+" folder");       
+        }
+        
         for(String dataSetIdentifier : dataSetEntityByIdentifier.keySet()) {
             Entity dataSetFolder = dataSetFolderByIdentifier.get(dataSetIdentifier);
             // Either this is the folder we want, or the folder at least exists so that we can remove from it if necessary
@@ -903,11 +913,14 @@ public class SampleHelper extends EntityHelper {
                     dataSetFolderByIdentifier.put(dataSetIdentifier, dataSetFolder);
                 }
                 EntityData ed = EntityUtils.findChildEntityDataWithChildId(dataSetFolder, sample.getId());
-                if (dataSetIdentifier.equals(sampleDataSetIdentifier)) {
+                if (dataSetIdentifier.equals(sampleDataSetIdentifier) && !blocked) {
                     if (ed==null) {
                         logger.info("    Adding to data set folder: "+dataSetFolder.getName()+" (id="+dataSetFolder.getId()+")");   
                         addToParent(dataSetFolder, sample, dataSetFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
                         numSamplesAdded++;
+                    }
+                    else {
+                        logger.trace("    Already in data set folder: "+dataSetFolder.getName()+" (id="+dataSetFolder.getId()+")");
                     }
                 }
                 else {
@@ -916,7 +929,33 @@ public class SampleHelper extends EntityHelper {
                         dataSetFolder.getEntityData().remove(ed);
                         entityBean.deleteEntityData(ed);
                     }
+                    else {
+                        logger.trace("    Already missing from data set folder: "+dataSetFolder.getName()+" (id="+dataSetFolder.getId()+")");
+                    }
                 }
+            }
+        }
+        // Check the blocked data folder
+        Entity blockedFolder = getBlockedDataFolder();
+        EntityData ed = EntityUtils.findChildEntityDataWithChildId(blockedDataFolder, sample.getId());
+        if (blocked) {
+            if (ed==null) {
+                logger.info("    Adding to blocked data folder");  
+                addToParent(blockedFolder, sample, blockedFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+                numSamplesMovedToBlockedFolder++;
+            }
+            else {
+                logger.trace("    Already in blocked data folder");
+            }
+        }
+        else {
+            if (ed!=null) {
+                logger.info("    Removing from blocked data folder");   
+                blockedFolder.getEntityData().remove(ed);
+                entityBean.deleteEntityData(ed);
+            }
+            else {
+                logger.trace("    Already missing from blocked data folder");
             }
         }
     }
@@ -945,18 +984,20 @@ public class SampleHelper extends EntityHelper {
         return topLevelFolder;
     }
 
-    /**
-     * Return the top level trash folder for the configured owner.
-     * @return
-     * @throws Exception
-     */
-    public Entity getTrashFolder() throws Exception {
-        if (trashFolder==null) {
-            loadTrashFolder();
+    public Entity getRetiredDataFolder() throws Exception {
+        if (retiredDataFolder==null) {
+            loadRetiredDataFolder();
         }
-        return trashFolder;
+        return retiredDataFolder;
     }
-
+    
+    public Entity getBlockedDataFolder() throws Exception {
+        if (blockedDataFolder==null) {
+            loadBlockedDataFolder();
+        }
+        return blockedDataFolder;
+    }
+    
     public int getNumSamplesCreated() {
         return numSamplesCreated;
     }
@@ -973,6 +1014,10 @@ public class SampleHelper extends EntityHelper {
         return numSamplesAnnexed;
     }
     
+    public int getNumSamplesMovedToBlockedFolder() {
+        return numSamplesMovedToBlockedFolder;
+    }
+
     public Map<String, Entity> getDataSetFolderByIdentifierMap() {
         return dataSetFolderByIdentifier;
     }
@@ -1022,21 +1067,45 @@ public class SampleHelper extends EntityHelper {
         }
     }
     
-    private void loadTrashFolder() throws Exception {
-        if (trashFolder!=null) return;
-        logger.info("Getting trash folder...");
-        this.trashFolder = createOrVerifyRootEntity(EntityConstants.NAME_RETIRED_DATA, true, false);
-        if (trashFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PROTECTED)==null) {
-            EntityUtils.addAttributeAsTag(trashFolder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
-            entityBean.saveOrUpdateEntity(trashFolder);
+    private void loadRetiredDataFolder() throws Exception {
+        if (retiredDataFolder!=null) return;
+        logger.info("Getting retired data folder...");
+        this.retiredDataFolder = createOrVerifyRootEntity(EntityConstants.NAME_RETIRED_DATA, true, false);
+        if (retiredDataFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PROTECTED)==null) {
+            EntityUtils.addAttributeAsTag(retiredDataFolder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
+            entityBean.saveOrUpdateEntity(retiredDataFolder);
         }
     }
 
+    private void loadBlockedDataFolder() throws Exception {
+        if (blockedDataFolder!=null) return;
+        logger.info("Getting blocked data folder...");
+        this.blockedDataFolder = createOrVerifyRootEntity(EntityConstants.NAME_BLOCKED_DATA, true, false);
+        if (blockedDataFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PROTECTED)==null) {
+            EntityUtils.addAttributeAsTag(blockedDataFolder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
+            entityBean.saveOrUpdateEntity(blockedDataFolder);
+        }
+    }
+    
     public boolean isResetSampleNames() {
         return resetSampleNames;
     }
 
     public void setResetSampleNames(boolean resetSampleNames) {
         this.resetSampleNames = resetSampleNames;
+    }
+    
+    public Entity blockSampleProcessing(Long sampleId) throws ComputeException {
+        try {
+            Entity sample = entityBean.getEntityById(sampleId);
+            Entity block = entityBean.createEntity(sample.getOwnerKey(), EntityConstants.TYPE_PROCESSING_BLOCK, "Processing Block");
+            block.setValueByAttributeName(EntityConstants.ATTRIBUTE_MESSAGE, "Further processing is blocked for this sample");
+            entityBean.saveOrUpdateEntity(block);
+            addToParent(sample, block, sample.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_PROCESSING_BLOCK);    
+            return sample;
+        }
+        catch (Exception e) {
+            throw new ComputeException("Error blocking sample from processing",e);
+        }
     }
 }

@@ -18,7 +18,7 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  * Discovers images in SAGE which are part of a particular image family and not part of a data set, and creates 
  * or updates Samples within the entity model.
  * 
- * @deprecated This is a legacy service in the process of being retired. Use SageDataSetDiscoveryService instead.
+ * @deprecated This is a legacy service that should not be used. Use SageDataSetDiscoveryService instead.
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @Deprecated
@@ -31,7 +31,7 @@ public class SageImageFamilyDiscoveryService extends AbstractEntityService {
     protected int numSamplesCreated = 0;
     protected int numSamplesUpdated = 0;
     protected int numSamplesAdded = 0;
-    protected int samplesMovedToTrash = 0;
+    protected int samplesMovedToRetiredData = 0;
     
     @Override
     public void execute() throws Exception {
@@ -694,14 +694,14 @@ public class SageImageFamilyDiscoveryService extends AbstractEntityService {
                 if (sample==null || !sample.getEntityType().getName().equals(EntityConstants.TYPE_SAMPLE)) continue;
                 if (sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISITED)==null) {
                     logger.info("  Moving unvisited sample to retired data folder: "+sample.getName()+" (id="+sample.getId()+")");
-                    Entity retiredDataFolder = sampleHelper.getTrashFolder();
+                    Entity retiredDataFolder = sampleHelper.getRetiredDataFolder();
                     childFolder.getEntityData().remove(ed);
                     retiredDataFolder.getEntityData().add(ed);
                     ed.setParentEntity(retiredDataFolder);
                     entityBean.saveOrUpdateEntityData(ed);
                     sample.setName(sample.getName()+"-Retired");
                     entityBean.saveOrUpdateEntity(sample);
-                    samplesMovedToTrash++;
+                    samplesMovedToRetiredData++;
                 }
             }
         }

@@ -138,6 +138,12 @@ public class SampleTraversalService extends AbstractEntityService {
     private List<Entity> getIncludedSamples(Entity sample) throws Exception {
 
         List<Entity> included = new ArrayList<Entity>();
+
+        // Ignore blocked samples
+        if (sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_PROCESSING_BLOCK)!=null) {
+            logger.info("Excluded "+sample+" (blocked)");
+            return included;
+        }
         
         populateChildren(sample);
         List<Entity> childSamples = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_SAMPLE);
@@ -195,6 +201,8 @@ public class SampleTraversalService extends AbstractEntityService {
     
     private boolean includeSample(Entity sample) throws Exception {
 
+        if (sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_PROCESSING_BLOCK)!=null) return false;
+        
         if (includeAllSamples) {
             return true;
         }

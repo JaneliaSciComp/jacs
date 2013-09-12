@@ -360,6 +360,20 @@ public class FileUtil {
         return fileToDelete.delete();
     }
 
+    public static boolean deleteFile(File file) throws IOException {
+        return deleteFile(file.getParent(), file.getName());
+    }
+    
+    public static boolean deletePath(String path) throws IOException {
+        File file = new File(path);
+        if (file.isDirectory()) {
+            return FileUtil.deleteDirectory(file);
+        }
+        else {
+            return FileUtil.deleteFile(file);
+        }
+    }
+    
     /**
      * This method copies the contents of <code>sourceFilePath</code> to <code>destFilePath</code>
      *

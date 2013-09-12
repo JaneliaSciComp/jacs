@@ -18,6 +18,7 @@ public class EntityConstants {
     public static final String NAME_DATA_SETS                        = "Data Sets";
     public static final String NAME_ALIGNMENT_BOARDS                 = "Alignment Boards";
     public static final String NAME_RETIRED_DATA                     = "Retired Data";
+    public static final String NAME_BLOCKED_DATA                     = "Blocked Data";
     
     // Entity Types
     public static final String TYPE_ANNOTATION                       = "Annotation";
@@ -51,6 +52,7 @@ public class EntityConstants {
     public static final String TYPE_CURATED_NEURON_COLLECTION        = "Curated Neuron Collection";
     public static final String TYPE_PIPELINE_RUN                     = "Pipeline Run";
     public static final String TYPE_ERROR                            = "Error";
+    public static final String TYPE_PROCESSING_BLOCK                 = "Processing Block";
     public static final String TYPE_DATA_SET                         = "Data Set";
     public static final String TYPE_ALIGNMENT_BOARD                  = "Alignment Board";
     public static final String TYPE_ALIGNMENT_SPACE                  = "Alignment Space";
@@ -128,6 +130,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_PROPERTY                            = "Property"; // has string "<property>=<value>"
     public static final String ATTRIBUTE_WORKSPACE_SAMPLE_IDS                = "Workspace Sample Ids";
     public static final String ATTRIBUTE_CELL_COUNT                          = "Cell Count";
+    public static final String ATTRIBUTE_PROCESSING_BLOCK                    = "Processing Block";
 
     // Geometric Tree
     //

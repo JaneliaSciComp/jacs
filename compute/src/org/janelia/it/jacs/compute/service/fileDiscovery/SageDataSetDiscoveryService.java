@@ -35,7 +35,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     protected String dataSetName = null;
 
     protected int sageRowsProcessed = 0;
-    protected int samplesMovedToTrash = 0;
+    protected int samplesMovedToRetiredFolder = 0;
     
     public void execute() throws Exception {
 
@@ -83,7 +83,8 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         logger.info("Processed "+sageRowsProcessed+" rows, created "+sampleHelper.getNumSamplesCreated()+
         		" samples, updated "+sampleHelper.getNumSamplesUpdated()+" samples, added "+sampleHelper.getNumSamplesAdded()+
         		" samples to their corresponding data set folders. Annexed "+sampleHelper.getNumSamplesAnnexed()+
-        		" samples, and moved "+samplesMovedToTrash+" samples to the Retired Data folder.");
+        		" samples, moved "+sampleHelper.getNumSamplesMovedToBlockedFolder()+
+        		" samples to Blocked Data folder, and moved "+samplesMovedToRetiredFolder+" samples to the Retired Data folder.");
     }
     
     /**
@@ -238,7 +239,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         }
         
         Set<Long> retiredIds = new HashSet<Long>();
-        Entity retiredDataFolder = sampleHelper.getTrashFolder();
+        Entity retiredDataFolder = sampleHelper.getRetiredDataFolder();
         for(EntityData ed : retiredDataFolder.getEntityData()) {
             if (ed.getChildEntity()!=null) {
                 retiredIds.add(ed.getChildEntity().getId());
@@ -265,7 +266,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
                     sample.setName(sample.getName()+"-Retired");
                     entityBean.saveOrUpdateEntity(sample);   
                 }
-                samplesMovedToTrash++;
+                samplesMovedToRetiredFolder++;
             }
         }
     }
