@@ -15,6 +15,7 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.tasks.annotation.CompartmentAnnotation3DTask;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
@@ -41,13 +42,25 @@ import java.util.regex.Pattern;
 public class CompartmentAnnotation3DService implements IService {
 
     private static final Logger logger = Logger.getLogger(CompartmentAnnotation3DService.class);
-
+    CompartmentAnnotation3DTask task;
+    FileNode inputNode;
 
     public void execute(IProcessData processData) throws ServiceException {
         try {
-
             logger.info("CompartmentAnnotation3DService execute() start");
 
+            // Get the input node, which should be a file with a list of stacks to process
+            task = (CompartmentAnnotation3DTask)ProcessDataHelper.getTask(processData);
+            File inputFile=new File(task.getParameter(CompartmentAnnotation3DTask.PARAM_inputStackListPath));
+
+            if (inputFile.exists()) {
+                logger.info("Found input file="+inputFile.getAbsolutePath());
+            } else {
+                throw new Exception("Could not find input file at location="+inputFile.getAbsolutePath());
+            }
+
+
+            logger.info("CompartmentAnnotation3DService execute() end");
         }
         catch (Exception e) {
             throw new ServiceException(e);

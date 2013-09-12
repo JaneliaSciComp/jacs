@@ -27,6 +27,7 @@ public class CompartmentAnnotation3DTask extends Task {
     transient public static final String PARAM_folderName = "folder name";
     transient public static final String PARAM_parentEntityId = "parent entity id";
     transient public static final String PARAM_configurationName = "configuration name";
+    transient public static final String PARAM_inputStackListPath = "input stack list path";
 
     // Default values - default overrides
 
@@ -36,12 +37,14 @@ public class CompartmentAnnotation3DTask extends Task {
                                        Set<TaskParameter> taskParameterSet,
                                        String folderName,
                                        String parentEntityIdString,
-                                       String configurationName) {
+                                       String configurationName,
+                                       String inputStackListPath) {
         super(inputNodes, owner, events, taskParameterSet);
         setDefaultValues();
         setParameter(PARAM_folderName, folderName);
         setParameter(PARAM_parentEntityId, parentEntityIdString);
         setParameter(PARAM_configurationName, configurationName);
+        setParameter(PARAM_inputStackListPath, inputStackListPath);
     }
 
     public CompartmentAnnotation3DTask() {
@@ -52,6 +55,7 @@ public class CompartmentAnnotation3DTask extends Task {
         setParameter(PARAM_folderName, "Compartment 3D Annotation");
         setParameter(PARAM_parentEntityId, "0");
         setParameter(PARAM_configurationName, "");
+        setParameter(PARAM_inputStackListPath, "");
         this.taskName = TASK_NAME;
     }
 
@@ -66,6 +70,8 @@ public class CompartmentAnnotation3DTask extends Task {
         }  else if (key.equals(PARAM_parentEntityId)) {
             return new LongParameterVO(new Long(value));
         } else if (key.equals(PARAM_configurationName)) {
+            return new TextParameterVO(value, 4000);
+        } else if (key.equals(PARAM_inputStackListPath)) {
             return new TextParameterVO(value, 4000);
         }
         // No match

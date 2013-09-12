@@ -18,6 +18,7 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.annotation.CompartmentAnnotation3DTask;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
+import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 
 import java.util.*;
@@ -162,7 +163,7 @@ public class PatternSearch implements PatternSearchMBean {
     }
 
 
-    public void runCompartmentAnnotation3DService(String user, String configurationName, String folderName, String inputStackListFilePath) {
+    public void runCompartmentAnnotation3DService(String user, String configurationName, String folderName, String inputStackListPath) {
         try {
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             CompartmentAnnotation3DTask task = new CompartmentAnnotation3DTask(
@@ -172,7 +173,8 @@ public class PatternSearch implements PatternSearchMBean {
                     taskParameters,
                     folderName,
                     "0",
-                    configurationName);
+                    configurationName,
+                    inputStackListPath);
             task = (CompartmentAnnotation3DTask)EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("CompartmentAnnotation3D", task.getObjectId());
         } catch (Exception ex) {
