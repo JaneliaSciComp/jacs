@@ -4,6 +4,7 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
+import org.janelia.it.jacs.compute.api.EntityBeanRemote;
 import org.janelia.it.jacs.compute.service.entity.OrphanAnnotationCheckerService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FlyScreenDiscoveryService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.SampleRun;
@@ -497,4 +498,63 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
+    @Override
+    public void create3DTileMicroscopeSamples(String user, String destinationFolderName) {
+        try {
+            // Two main areas for data
+            String[] rootPaths = new String[]{"/groups/mousebrainmicro/mousebrainmicro/render"};
+            EntityBeanRemote e = EJBFactory.getRemoteEntityBean();
+            // Parameters
+            String subjectKey = "user:"+user;
+
+            // Main script
+            Set<Entity> folders = e.getEntitiesByName(subjectKey, destinationFolderName);
+            Entity folder;
+            if (folders!=null && folders.size()>0) {
+                folder = folders.iterator().next();
+            }
+            else {
+                folder = newEntity(destinationFolderName, EntityConstants.TYPE_FOLDER, subjectKey, true);
+                folder = e.saveOrUpdateEntity(subjectKey, folder);
+            }
+
+            // Loop through the main areas and pull out the data directories.  Create entities for them if necessary
+            for (String rootPath : rootPaths) {
+                File[] rootPathDataDirs = (new File(rootPath)).listFiles(new FileFilter() {
+                    @Override
+                    public boolean accept(File file) {
+                        return file.isDirectory();
+                    }
+                });
+                for (File tmpData : rootPathDataDirs) {
+                    // If they exist do nothing
+                    Set<Entity> testFolders = e.getEntitiesByName(subjectKey, tmpData.getName());
+                    if (null!=testFolders && testFolders.size()>0) continue;
+                    // else add in the new data
+                    Entity sample = newEntity(tmpData.getName(), EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE, subjectKey, false);
+                    sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, tmpData.getAbsolutePath());
+                    sample = e.saveOrUpdateEntity(subjectKey, sample);
+                    System.out.println("Saved sample as "+sample.getId());
+                    e.addEntityToParent(subjectKey, folder.getId(), sample.getId(), folder.getMaxOrderIndex() + 1, EntityConstants.ATTRIBUTE_ENTITY);
+                }
+            }
+        }
+        catch (Exception ex) {
+            logger.error("Error running pipeline", ex);
+        }
+    }
+
+    public Entity newEntity(String name, String entityTypeName, String ownerKey, boolean isCommonRoot) throws ComputeException {
+        Date createDate = new Date();
+        Entity entity = new Entity();
+        entity.setName(name);
+        entity.setOwnerKey(ownerKey);
+        entity.setCreationDate(createDate);
+        entity.setUpdatedDate(createDate);
+        entity.setEntityType(EJBFactory.getRemoteEntityBean().getEntityTypeByName(entityTypeName));
+        if (isCommonRoot) {
+            entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT, "Common Root");
+        }
+        return entity;
+    }
 }

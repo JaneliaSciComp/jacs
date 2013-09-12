@@ -51,4 +51,6 @@ public interface WorkstationDataManagerMBean {
     public void runSlowImportTask(String parentDirPath, String topLevelFolderName, String owner);
     public void runDataDeDuplication();
 
+    // Tile viewer pipelines
+    public void create3DTileMicroscopeSamples(String user, String destinationFolderName);
 }

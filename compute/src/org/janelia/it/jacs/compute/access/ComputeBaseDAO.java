@@ -109,9 +109,17 @@ public class ComputeBaseDAO {
             Session session = getCurrentSession();
             Task task = (Task) session.load(Task.class, taskId, LockMode.READ);
             if (task.isDone() && !Event.ERROR_EVENT.equals(status)) {
-                _logger.error("Cannot update a task to status \"" + status + "\" as it is already in DONE status: Task= " + task.toString());
+                _logger.warn("Cannot update task "+task.getObjectId()+" to status \"" + status + "\" as it is already in DONE status.");
                 return;
             }
+            
+            if (task.getLastEvent().getEventType().equals(status) && task.getLastEvent().getDescription().equals(comment)) {
+                // Compensate for bad error handling in the process framework. Some errors can be logged multiple times,
+                // so this attempts to dedup them so that we keep the database clean.
+                _logger.debug("Cannot update task "+task.getObjectId()+" to status \"" + status + "\" as it is already in that status with the same message.");
+                return;
+            }
+            
             if (_logger.isDebugEnabled()) {
                 _logger.debug("Retrieved task=" + task.getObjectId().toString() + " from the db.");
             }

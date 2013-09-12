@@ -102,6 +102,26 @@
     </operation>
     
     <operation>
+        <description>Archive the given sample</description>
+        <name>runSingleSampleArchival</name>
+        <parameter>
+           <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
+           <name>sampleEntityId</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
+        <description>Archive all samples for a given user</description>
+        <name>runCompleteSampleArchival</name>
+        <parameter>
+            <description>User to run as (e.g. "flylight")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
         <description>Run all pipelines for all Data Sets for all users</description>
         <name>runAllDataSetPipelines</name>
         <parameter>
@@ -126,7 +146,7 @@
         <name>runUserDataSetPipelines</name>
         <parameter>
             <description>User to run as (e.g. "flylight")</description>
-            <name>username</name>
+            <name>user</name>
             <type>java.lang.String</type>
         </parameter>
         <parameter>
@@ -221,7 +241,7 @@
         <name>applyProcessToDataset</name>
         <parameter>
             <description>User to run as (e.g. "flylight")</description>
-            <name>username</name>
+            <name>user</name>
             <type>java.lang.String</type>
         </parameter>
         <parameter>
@@ -267,21 +287,6 @@
     </operation>
 
     <operation>
-        <description>Add Sample Folders to 3D Tile Microscope Samples</description>
-        <name>create3DTileMicroscopeSamples</name>
-        <parameter>
-            <description>Subject Login</description>
-            <name>user</name>
-            <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-            <description>Name of the destination folder</description>
-            <name>destinationFolderName</name>
-            <type>java.lang.String</type>
-        </parameter>
-    </operation>
-
-    <operation>
         <description>Create the fastLoad artifacts for a single neuron separation</description>
         <name>runSingleFastLoadArtifactPipeline</name>
         <parameter>
@@ -314,26 +319,6 @@
     <operation>
         <description>Create the maskChan artifacts for all single neuron separations</description>
         <name>runCompleteMaskChanArtifactPipeline</name>
-        <parameter>
-            <description>User to run as (e.g. "flylight")</description>
-            <name>user</name>
-            <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Archive the given sample</description>
-        <name>runSingleSampleArchival</name>
-        <parameter>
-           <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
-           <name>sampleEntityId</name>
-           <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Archive all samples for a given user</description>
-        <name>runCompleteSampleArchival</name>
         <parameter>
             <description>User to run as (e.g. "flylight")</description>
             <name>user</name>

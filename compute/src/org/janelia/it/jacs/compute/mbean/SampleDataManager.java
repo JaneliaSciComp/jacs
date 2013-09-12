@@ -1,9 +1,12 @@
 package org.janelia.it.jacs.compute.mbean;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.api.EntityBeanRemote;
 import org.janelia.it.jacs.compute.service.entity.FastLoadArtifactService;
 import org.janelia.it.jacs.compute.service.entity.SampleDataCompressionService;
 import org.janelia.it.jacs.compute.service.entity.SampleTrashCompactorService;
@@ -14,20 +17,33 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.StringUtils;
-
-import java.io.File;
-import java.io.FileFilter;
-import java.util.*;
 
 public class SampleDataManager implements SampleDataManagerMBean {
 
     private static final Logger logger = Logger.getLogger(SampleDataManager.class);
 
+    private void saveAndRunTask(String user, String processName, String displayName) throws Exception {
+        HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        saveAndRunTask(user, processName, displayName, taskParameters);
+    }
+    
+    private void saveAndRunTask(String user, String processName, String displayName, HashSet<TaskParameter> parameters) throws Exception {
+        GenericTask task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
+                parameters, processName, displayName);
+        saveAndRunTask(task);
+    }
+    
+    private void saveAndRunTask(GenericTask task) throws Exception {
+        task = (GenericTask)EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+        EJBFactory.getLocalComputeBean().submitJob(task.getTaskName(), task.getObjectId());
+    }
+    
     // -----------------------------------------------------------------------------------------------------
     // Maintenance Pipelines    
     // -----------------------------------------------------------------------------------------------------
-
+    
     public void runAllSampleMaintenancePipelines() {
         try {
             logger.info("Building list of users with samples...");
@@ -40,100 +56,128 @@ public class SampleDataManager implements SampleDataManagerMBean {
                 logger.info("Queuing maintenance pipelines for "+subjectKey);
                 runUserSampleMaintenancePipelines(subjectKey);
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } 
+        catch (Exception ex) {
+            logger.error("Error running pipeline", ex);
         }
     }
 
     public void runUserSampleMaintenancePipelines(String user) {
         try {
-            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-                    taskParameters, "sampleMaintenancePipeline", "Sample Maintenance Pipeline");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("SampleMaintenancePipeline", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            String processName = "SampleMaintenancePipeline";
+            String displayName = "Sample Maintenance Pipeline";
+            saveAndRunTask(user, processName, displayName);
+        } 
+        catch (Exception ex) {
+            logger.error("Error running pipeline", ex);
         }
     }
 
     public void runSampleCleaning(String user, Boolean testRun) {
         try {
+            String processName = "SampleCleaning";
+            String displayName = "Sample Cleaning";
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter(SampleTrashCompactorService.PARAM_testRun, Boolean.toString(testRun), null)); 
-            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-                    taskParameters, "sampleCleaning", "Sample Cleaning");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("SampleCleaning", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            saveAndRunTask(user, processName, displayName, taskParameters);
+        } 
+        catch (Exception ex) {
+            logger.error("Error running pipeline", ex);
         }
     }
     
     public void runSampleTrashCompactor(String user, Boolean testRun) {
         try {
+            String processName = "SampleTrashCompactor";
+            String displayName = "Sample Trash Compactor";
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter(SampleTrashCompactorService.PARAM_testRun, Boolean.toString(testRun), null)); 
-            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-                    taskParameters, "sampleTrashCompactor", "Sample Trash Compactor");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("SampleTrashCompactor", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            saveAndRunTask(user, processName, displayName, taskParameters);
+        } 
+        catch (Exception ex) {
+            logger.error("Error running pipeline", ex);
         }
     }
     
     public void runSampleDataCompression(String user, Boolean testRun) {
         try {
+            String processName = "SampleDataCompression";
+            String displayName = "Sample Data Compression";
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter(SampleDataCompressionService.PARAM_testRun, Boolean.toString(testRun), null)); 
-            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-                    taskParameters, "sampleDataCompression", "Sample Data Compression");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("SampleDataCompression", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            saveAndRunTask(user, processName, displayName, taskParameters);
+        } 
+        catch (Exception ex) {
+            logger.error("Error running pipeline", ex);
         }
     }
 
     public void runSingleSampleDataCompression(String sampleId) {
         try {
+            String processName = "SampleDataCompression";
+            String displayName = "Single Sample Data Compression";
             Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleId);
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("root entity id", sampleId, null)); 
-            Task task = new GenericTask(new HashSet<Node>(), sample.getOwnerKey(), new ArrayList<Event>(), 
-                    taskParameters, "singleSampleDataCompression", "Single Sample Data Compression");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("SampleDataCompression", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            String user = sample.getOwnerKey();
+            saveAndRunTask(user, processName, displayName, taskParameters);
+        } 
+        catch (Exception ex) {
+            logger.error("Error running pipeline", ex);
         }
     }
     
     public void runResultImageRegistration(String resultId) {
         try {
+            String processName = "ResultImageRegistration";
+            String displayName = "Result Image Registration";
             Entity result = EJBFactory.getLocalEntityBean().getEntityById(resultId);
+            if (result==null) throw new IllegalArgumentException("Entity with id "+resultId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("result entity id", resultId, null)); 
-            Task task = new GenericTask(new HashSet<Node>(), result.getOwnerKey(), new ArrayList<Event>(), 
-                    taskParameters, "resultImageRegistration", "Result Image Registration");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("ResultImageRegistration", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            String user = result.getOwnerKey();
+            saveAndRunTask(user, processName, displayName, taskParameters);
+        } 
+        catch (Exception ex) {
+            logger.error("Error running pipeline", ex);
         }
     }
 
     public void runSampleImageRegistration(String user) {
         try {
+            String processName = "SampleImageRegistration";
+            String displayName = "Sample Image Registration";
+            saveAndRunTask(user, processName, displayName);
+        } 
+        catch (Exception ex) {
+            logger.error("Error running pipeline", ex);
+        }
+    }
+
+    public void runSingleSampleArchival(String sampleEntityId) {
+        try {
+            Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-                    taskParameters, "sampleImageRegistration", "Sample Image Registration");
+            taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null)); 
+            Task task = new GenericTask(new HashSet<Node>(), sampleEntity.getOwnerKey(), new ArrayList<Event>(), 
+                    taskParameters, "singleSampleArchival", "Single Sample Archival");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("SampleImageRegistration", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            EJBFactory.getLocalComputeBean().submitJob("SyncSampleToArchive", task.getObjectId());
+        } 
+        catch (Exception ex) {
+            logger.error("Error running pipeline", ex);
+        }
+    }
+    
+    public void runCompleteSampleArchival(String user) {
+        try {
+            String processName = "CompleteSampleArchivalService";
+            String displayName = "Complete Sample Archival";
+            saveAndRunTask(user, processName, displayName);
+        } 
+        catch (Exception ex) {
+            logger.error("Error running pipeline", ex);
         }
     }
     
@@ -154,12 +198,14 @@ public class SampleDataManager implements SampleDataManagerMBean {
                 runUserDataSetPipelines(subjectKey, null, runMode, reuseProcessing, reuseAlignment);
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            logger.error("Error running pipeline", ex);
         }
     }
     
-    public void runUserDataSetPipelines(String username, String dataSetName, String runMode, Boolean reuseProcessing, Boolean reuseAlignment) {
+    public void runUserDataSetPipelines(String user, String dataSetName, String runMode, Boolean reuseProcessing, Boolean reuseAlignment) {
         try {
+            String processName = "FlyLightUserDataSetPipelines";
+            String displayName = "User Data Set Pipelines";
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("run mode", runMode, null)); 
             taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null));
@@ -167,12 +213,10 @@ public class SampleDataManager implements SampleDataManagerMBean {
             if ((dataSetName != null) && (dataSetName.trim().length() > 0)) {
                 taskParameters.add(new TaskParameter("data set name", dataSetName, null));
             }
-            Task task = new GenericTask(new HashSet<Node>(), username, new ArrayList<Event>(), 
-                    taskParameters, "userDatSetPipelines", "User Data Set Pipelines");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("FlyLightUserDataSetPipelines", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            saveAndRunTask(user, processName, displayName, taskParameters);
+        } 
+        catch (Exception ex) {
+            logger.error("Error running pipeline", ex);
         }
     }
 
@@ -196,233 +240,151 @@ public class SampleDataManager implements SampleDataManagerMBean {
                 }
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            logger.error("Error running pipeline", ex);
         }
     }
 
     public void runSamplePipelines(String sampleId, Boolean reuseProcessing, Boolean reuseAlignment) {
         try {
+            String processName = "GSPS_CompleteSamplePipeline";
+            String displayName = "Sample All Pipelines";
             Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleId);
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("sample entity id", sampleId, null)); 
             taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null)); 
             taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
-            Task task = new GenericTask(new HashSet<Node>(), sample.getOwnerKey(), new ArrayList<Event>(), 
-                    taskParameters, "sampleAllPipelines", "Sample All Pipelines");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("GSPS_CompleteSamplePipeline", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            String user = sample.getOwnerKey();
+            saveAndRunTask(user, processName, displayName, taskParameters);
+        } 
+        catch (Exception ex) {
+            logger.error("Error running pipeline", ex);
         }
     }
     
     public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName, Boolean reuseProcessing, Boolean reuseAlignment) {
         try {
-            Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
-            if (sampleEntity==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
+            String processName = "PipelineConfig_"+configurationName;
+            String displayName = "Configured Sample Pipeline";
+            Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
+            if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null)); 
             taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null)); 
             taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
-            Task task = new GenericTask(new HashSet<Node>(), sampleEntity.getOwnerKey(), new ArrayList<Event>(), 
-                    taskParameters, "configuredSamplePipeline", "Configured Sample Pipeline");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("PipelineConfig_"+configurationName, task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            String user = sample.getOwnerKey();
+            saveAndRunTask(user, processName, displayName, taskParameters);
+        } 
+        catch (Exception ex) {
+            logger.error("Error running pipeline", ex);
         }
     }
     
     public void runNeuronSeparationPipeline(String resultEntityId) {
         try {
-            Entity resultEntity = EJBFactory.getLocalEntityBean().getEntityById(resultEntityId);
-            if (resultEntity==null) throw new IllegalArgumentException("Entity with id "+resultEntityId+" does not exist");
+            String processName = "PipelineHarness_FlyLightSeparation";
+            String displayName = "Standalone Neuron Separation Pipeline";
+            Entity result = EJBFactory.getLocalEntityBean().getEntityById(resultEntityId);
+            if (result==null) throw new IllegalArgumentException("Entity with id "+resultEntityId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("result entity id", resultEntityId, null)); 
-            Task task = new GenericTask(new HashSet<Node>(), resultEntity.getOwnerKey(), new ArrayList<Event>(), 
-                    taskParameters, "separationPipeline", "Separation Pipeline");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("PipelineHarness_FlyLightSeparation", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            String user = result.getOwnerKey();
+            saveAndRunTask(user, processName, displayName, taskParameters);
+        } 
+        catch (Exception ex) {
+            logger.error("Error running pipeline", ex);
         }
     }
 
-    public void applyProcessToDataset(String owner, String dataSetName, String parentOrChildren, String processName) {
+    public void applyProcessToDataset(String user, String dataSetName, String parentOrChildren, String processName) {
         try {
             if (!StringUtils.isEmpty(dataSetName)) {
-                List<Entity> dataSets = EJBFactory.getLocalEntityBean().getEntitiesByNameAndTypeName(owner,
+                Subject subject = EJBFactory.getLocalComputeBean().getSubjectByNameOrKey(user);
+                if (subject==null) throw new IllegalArgumentException("User with name "+user+" does not exist");
+                List<Entity> dataSets = EJBFactory.getLocalEntityBean().getEntitiesByNameAndTypeName(subject.getKey(),
                         dataSetName, EntityConstants.TYPE_DATA_SET);
                 if (dataSets.isEmpty()) throw new IllegalArgumentException("Data set with name "+dataSetName+" does not exist");
                 if (dataSets.size()>1) throw new IllegalArgumentException("More than one data set with name "+dataSetName+" exists");   
             }
+            String parentProcessName = "GSPS_ApplyProcessToSamples";
+            String displayName = "Apply Process To Dataset";
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("data set name", dataSetName, null)); 
             taskParameters.add(new TaskParameter("process def name", processName, null));
             taskParameters.add(new TaskParameter("parent or children", parentOrChildren, null));
-            Task task = new GenericTask(new HashSet<Node>(), owner, new ArrayList<Event>(), 
-                    taskParameters, "applyProcessToDataset", "Apply Process To Dataset");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("GSPS_ApplyProcessToSamples", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            saveAndRunTask(user, parentProcessName, displayName, taskParameters);
+        } 
+        catch (Exception ex) {
+            logger.error("Error running pipeline", ex);
         }
     }
     
     public void applyProcessToSample(String sampleEntityId, String processName) {
         try {
+            String displayName = "Apply Process To Sample";
             Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null)); 
-            Task task = new GenericTask(new HashSet<Node>(), sample.getOwnerKey(), new ArrayList<Event>(), 
-                    taskParameters, "applyProcessToSample", "Apply Process To Sample");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob(processName, task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            String user = sample.getOwnerKey();
+            saveAndRunTask(user, processName, displayName, taskParameters);
+        } 
+        catch (Exception ex) {
+            logger.error("Error running pipeline", ex);
         }
     }
     
     public void runSingleFastLoadArtifactPipeline(String separationEntityId) {
         try {
+            String processName = "FastLoadArtifactSinglePipeline";
+            String displayName = "Fast Load Artifact Pipeline";
             Entity entity = EJBFactory.getLocalEntityBean().getEntityById(separationEntityId);
             if (entity==null) throw new IllegalArgumentException("Entity with id "+separationEntityId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter(FastLoadArtifactService.PARAM_separationId, separationEntityId, null)); 
-            Task task = new GenericTask(new HashSet<Node>(), entity.getOwnerKey(), new ArrayList<Event>(), 
-                    taskParameters, "fastLoadArtifactPipeline", "Fast Load Artifact Pipeline");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("FastLoadArtifactSinglePipeline", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            String user = entity.getOwnerKey();
+            saveAndRunTask(user, processName, displayName, taskParameters);
+        } 
+        catch (Exception ex) {
+            logger.error("Error running pipeline", ex);
         }
     }
 
     public void runCompleteFastLoadArtifactPipeline(String user) {
         try {
-            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-                    new HashSet<TaskParameter>(), "fastLoadArtifactPipeline", "Fast Load Artifact Pipeline");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("FastLoadArtifactCompletePipeline", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            String processName = "FastLoadArtifactCompletePipeline";
+            String displayName = "Fast Load Artifact Pipeline";
+            saveAndRunTask(user, processName, displayName);
+        } 
+        catch (Exception ex) {
+            logger.error("Error running pipeline", ex);
         }
     }
     
     public void runSingleMaskChanArtifactPipeline(String separationEntityId) {
         try {
+            String processName = "MaskChanArtifactSinglePipeline";
+            String displayName = "Mask Chan Artifact Pipeline";
             Entity entity = EJBFactory.getLocalEntityBean().getEntityById(separationEntityId);
             if (entity==null) throw new IllegalArgumentException("Entity with id "+separationEntityId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter(FastLoadArtifactService.PARAM_separationId, separationEntityId, null)); 
-            Task task = new GenericTask(new HashSet<Node>(), entity.getOwnerKey(), new ArrayList<Event>(), 
-                    taskParameters, "maskChanArtifactPipeline", "Mask Chan Artifact Pipeline");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("MaskChanArtifactSinglePipeline", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            String user = entity.getOwnerKey();
+            saveAndRunTask(user, processName, displayName, taskParameters);
+        } 
+        catch (Exception ex) {
+            logger.error("Error running pipeline", ex);
         }
     }
     
     public void runCompleteMaskChanArtifactPipeline(String user) {
         try {
-            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-                    new HashSet<TaskParameter>(), "maskChanArtifactPipeline", "Mask Chan Artifact Pipeline");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("MaskChanArtifactCompletePipeline", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            String processName = "MaskChanArtifactCompletePipeline";
+            String displayName = "Mask Chan Artifact Pipeline";
+            saveAndRunTask(user, processName, displayName);
+        } 
+        catch (Exception ex) {
+            logger.error("Error running pipeline", ex);
         }
     }
-
-    public void runSingleSampleArchival(String sampleEntityId) {
-        try {
-            Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
-            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-            taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null)); 
-            Task task = new GenericTask(new HashSet<Node>(), sampleEntity.getOwnerKey(), new ArrayList<Event>(), 
-                    taskParameters, "singleSampleArchival", "Single Sample Archival");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("SyncSampleToArchive", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-    
-    public void runCompleteSampleArchival(String user) {
-        try {
-            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), 
-                    taskParameters, "completeSampleArchival", "Complete Sample Archival");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("CompleteSampleArchivalService", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    @Override
-    public void create3DTileMicroscopeSamples(String user, String destinationFolderName) {
-        try {
-            // Two main areas for data
-            String[] rootPaths = new String[]{"/groups/mousebrainmicro/mousebrainmicro/render"};
-            EntityBeanRemote e = EJBFactory.getRemoteEntityBean();
-            // Parameters
-            String subjectKey = "user:"+user;
-
-            // Main script
-            Set<Entity> folders = e.getEntitiesByName(subjectKey, destinationFolderName);
-            Entity folder;
-            if (folders!=null && folders.size()>0) {
-                folder = folders.iterator().next();
-            }
-            else {
-                folder = newEntity(destinationFolderName, EntityConstants.TYPE_FOLDER, subjectKey, true);
-                folder = e.saveOrUpdateEntity(subjectKey, folder);
-            }
-
-            // Loop through the main areas and pull out the data directories.  Create entities for them if necessary
-            for (String rootPath : rootPaths) {
-                File[] rootPathDataDirs = (new File(rootPath)).listFiles(new FileFilter() {
-                    @Override
-                    public boolean accept(File file) {
-                        return file.isDirectory();
-                    }
-                });
-                for (File tmpData : rootPathDataDirs) {
-                    // If they exist do nothing
-                    Set<Entity> testFolders = e.getEntitiesByName(subjectKey, tmpData.getName());
-                    if (null!=testFolders && testFolders.size()>0) continue;
-                    // else add in the new data
-                    Entity sample = newEntity(tmpData.getName(), EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE, subjectKey, false);
-                    sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, tmpData.getAbsolutePath());
-                    sample = e.saveOrUpdateEntity(subjectKey, sample);
-                    System.out.println("Saved sample as "+sample.getId());
-                    e.addEntityToParent(subjectKey, folder.getId(), sample.getId(), folder.getMaxOrderIndex() + 1, EntityConstants.ATTRIBUTE_ENTITY);
-                }
-            }
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    public Entity newEntity(String name, String entityTypeName, String ownerKey, boolean isCommonRoot) throws ComputeException {
-        Date createDate = new Date();
-        Entity entity = new Entity();
-        entity.setName(name);
-        entity.setOwnerKey(ownerKey);
-        entity.setCreationDate(createDate);
-        entity.setUpdatedDate(createDate);
-        entity.setEntityType(EJBFactory.getRemoteEntityBean().getEntityTypeByName(entityTypeName));
-        if (isCommonRoot) {
-            entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT, "Common Root");
-        }
-        return entity;
-    }
-
-
 }

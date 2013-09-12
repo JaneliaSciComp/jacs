@@ -45,18 +45,22 @@ public class ProcessLauncher extends SeriesLauncher {
             enactActionPostProcessing(processData/*, processDef*/);
             _logger.info("Process " + processDef.getName() + " (id="+processId+") finished\n");
         }
+        // Note: this method used to throw exceptions but in my experience that just results in duplicate stack traces 
+        // and the logging of secondary errors such as "Unexpected error delivering message org.jboss.mq.SpyObjectMessage" 
+        // which are distracting from the original problem. If there is any value in having these exceptions propagated, 
+        // then we should reinstate these lines below, but for now I'm going to see if we can live without them. -KR
         catch (ServiceException e) {
             recordProcessError(processData, e);
-            throw e;
+//            throw e;
         }
         catch (LauncherException e) {
             recordProcessError(processData, e);
-            throw e;
+//            throw e;
         }
         catch (Throwable e) {
             LauncherException ee = new LauncherException("Action " + actionDef.getActionType() + " " + actionDef.getName() + " encountered unexpected exception: ", e);
             recordProcessError(processData, ee);
-            throw ee;
+//            throw ee;
         }
     }
 

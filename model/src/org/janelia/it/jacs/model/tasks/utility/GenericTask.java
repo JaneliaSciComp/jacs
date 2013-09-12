@@ -19,16 +19,13 @@ public class GenericTask extends Task {
 
     transient public static final String DEFAULT_TASK_NAME = "genericTask";
     transient public static final String DISPLAY_NAME = "Generic Task";
-    
-    private String displayName;
-    
+        
     public GenericTask(Set<Node> inputNodes, String owner, List<Event> events,
     		Set<TaskParameter> taskParameterSet, String taskName, String displayName) {
         super(inputNodes, owner, events, taskParameterSet);
         setDefaultValues();
-        this.taskName = taskName;
-        this.displayName = displayName;
-        setJobName(displayName+" Task");
+        setTaskName(taskName);
+        setJobName(displayName);
     }
 
     public GenericTask() {
@@ -37,16 +34,12 @@ public class GenericTask extends Task {
     }
 
     private void setDefaultValues() {
-    	this.taskName = DEFAULT_TASK_NAME;
-    	this.displayName = DISPLAY_NAME;
+    	setTaskName(DEFAULT_TASK_NAME);
+    	setJobName(DISPLAY_NAME);
     }
 
     public String getDisplayName() {
-        return displayName;
-    }
-
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
+        return getJobName();
     }
     
     public ParameterVO getParameterVO(String key) throws ParameterException {

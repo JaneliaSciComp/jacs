@@ -17,8 +17,8 @@ import org.janelia.it.jacs.model.user_data.Node;
 
 /**
  * Creates and executes a sub-task with some parameters. Inputs:
- *   PROCESS_DEF_NAME - name of the process definition to execute the task with
- *   TASK_CLASS - fully qualified class name of the task to create
+ *   PROCESS_DEF_NAME - name of the process definition to execute the task with (also used as Task.taskName)
+ *   DISPLAY_NAME - the display name of the task (Task.jobName)
  *   PARAMETER_{X}_KEY - name of a task parameter
  *   PARAMETER_{X}_VALUE - value of the same task parameter 
  *   WAIT_FOR_COMPLETION - if true then execute synchronously (wait until the subtask completes). Default to false.
@@ -44,35 +44,13 @@ public class SubTaskExecutionService implements IService {
         	if (processDefName == null) {
         		throw new IllegalArgumentException("PROCESS_DEF_NAME may not be null");
         	}
-        	
-        	Task subtask = null;
-        	String taskClassName = (String)processData.getItem("TASK_CLASS");
 
-            String taskName = (String)processData.getItem("TASK_NAME");
-            if (taskName==null) {
-                logger.warn("TASK_NAME is null for subtask with processDefName="+processDefName);
+            String displayName = (String)processData.getItem("DISPLAY_NAME");
+            if (displayName==null) {
+                displayName = processDefName+" Task";
             }
             
-        	try {
-	        	if (taskClassName == null) {
-	        		subtask = new GenericTask();
-	        		if (taskName!=null) {
-	        		    ((GenericTask)subtask).setDisplayName(taskName);
-	        		}
-	        	}
-	        	else {
-	            	subtask = (Task)Class.forName(taskClassName).newInstance();
-	            	if (subtask == null) throw new Exception("Null task");
-	        	}
-        	}
-        	catch (Exception e) {
-        		throw new ServiceException("Could not instantiate task class "+taskClassName,e);
-        	}
-        	
-        	subtask.setInputNodes(new HashSet<Node>());
-        	subtask.setOwner(task.getOwner());
-        	subtask.setEvents(new ArrayList<Event>());
-        	subtask.setTaskParameterSet(new HashSet<TaskParameter>());
+            GenericTask subtask = new GenericTask(new HashSet<Node>(), task.getOwner(), new ArrayList<Event>(), new HashSet<TaskParameter>(), processDefName, displayName);
         	
         	int num = 1;
         	while (true) {
@@ -83,13 +61,6 @@ public class SubTaskExecutionService implements IService {
                 logger.info("Setting subtask parameter "+key+" = '"+strValue+"'");
         		subtask.setParameter(key, strValue);
                 num++;
-        	}
-
-        	if (taskName!=null) {
-        	    subtask.setJobName(taskName+" Task");
-        	}
-        	else {
-        	    subtask.setJobName("Subtask "+processDefName);
         	}
         	
             subtask.setParentTaskId(task.getObjectId());
