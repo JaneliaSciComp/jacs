@@ -18,6 +18,7 @@ import org.janelia.it.jacs.model.tasks.blast.CreateBlastDatabaseTask;
 import org.janelia.it.jacs.model.tasks.utility.UploadFileTask;
 import org.janelia.it.jacs.model.user_data.FastaFileNode;
 import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.blast.BlastDatabaseFileNode;
 import org.janelia.it.jacs.shared.blast.CreateBlastDatabaseFromFastaTool;
 import org.janelia.it.jacs.shared.blast.FormatDBTool;
@@ -131,7 +132,7 @@ public class CreateBlastDBService implements IService {
 
             // build the tera-blast database
             try {
-                if ( bdfn.getOwner().equals("system") ) {
+                if ( bdfn.getOwner().equals(User.SYSTEM_USER_LOGIN) ) {
                     String buildCmd = "dc_run -query " + tmpFasta.getAbsolutePath()
                             + " -database VICS_" + bdfn.getObjectId().toString()
                             + " -description \"" + bdfn.getName() + "\"";

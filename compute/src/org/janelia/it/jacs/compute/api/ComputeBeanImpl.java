@@ -88,14 +88,38 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return appVersion;
     }
 
-    public void beginSession(String userLogin, String clientVersion) {
+    /**
+     * Method used to initiate a session.  A call to this forces a unique session id to be created and passed
+     * back to a calling client
+     * @param userLogin the principal user who is performing the action
+     * @param clientVersion version of the tool being used; assumes the tool is the Workstation at this point
+     * @return the first UserToolEvent object.  The calling client is going to grab the session id from here to use on
+     *          all subsequent calls
+     */
+    public UserToolEvent beginSession(String userLogin, String toolName, String clientVersion) {
     	logger.info("Begin session for "+userLogin+" using "+clientVersion);
+        return addEventToSession(new UserToolEvent(null, userLogin, toolName,
+                UserToolEvent.TOOL_CATEGORY_SESSION, UserToolEvent.TOOL_EVENT_LOGIN, new Date()));
     }
 
-    public void endSession(String userLogin) {
-    	logger.info("End session for "+userLogin);
+    public UserToolEvent addEventToSession(UserToolEvent userToolEvent) {
+        // Try to log an event but DO NOT tank anything if this fails.  Record the error only in the log.
+        try {
+            return computeDAO.addEventToSession(userToolEvent);
+        }
+        catch (DaoException e) {
+            logger.error("Cannot log event to session: "+(null==userToolEvent?"null":userToolEvent.toString()));
+            logger.error("Error: "+e.getMessage());
+        }
+        return null;
     }
-    
+
+    public void endSession(String userLogin, String toolName, Long userSessionId) {
+    	logger.info("End session for "+userLogin);
+        addEventToSession(new UserToolEvent(userSessionId, userLogin, toolName,
+                UserToolEvent.TOOL_CATEGORY_SESSION, UserToolEvent.TOOL_EVENT_LOGOUT, new Date()));
+    }
+
     public Subject login(String userLogin, String password) {
         try {
             if (userLogin.contains(":")) {

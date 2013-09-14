@@ -6,10 +6,7 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.blast.BlastTask;
-import org.janelia.it.jacs.model.user_data.Group;
-import org.janelia.it.jacs.model.user_data.Node;
-import org.janelia.it.jacs.model.user_data.Subject;
-import org.janelia.it.jacs.model.user_data.User;
+import org.janelia.it.jacs.model.user_data.*;
 import org.janelia.it.jacs.model.user_data.blast.BlastDatabaseFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultNode;
@@ -36,8 +33,8 @@ public interface ComputeBeanRemote {
 
     public String getAppVersion() throws RemoteException;
     public Subject login(String userLogin, String password) throws ComputeException;
-    public void beginSession(String userLogin, String clientVersion);
-    public void endSession(String userLogin);
+    public UserToolEvent beginSession(String userLogin, String toolName, String clientVersion);
+    public void endSession(String userLogin, String toolname, Long userSessionId);
     public Node saveOrUpdateNode(Node node) throws DaoException, RemoteException;
     public Task saveOrUpdateTask(Task task) throws DaoException;
     public Subject saveOrUpdateSubject(Subject subject) throws DaoException;
@@ -128,4 +125,6 @@ public interface ComputeBeanRemote {
 	public void addUserToGroup(String groupUser, String groupName) throws DaoException;
     public void removeGroup(String groupName) throws DaoException;
     public void removeUserFromGroup(String groupUser, String groupName) throws DaoException;
+
+    public UserToolEvent addEventToSession(UserToolEvent userToolEvent);
 }

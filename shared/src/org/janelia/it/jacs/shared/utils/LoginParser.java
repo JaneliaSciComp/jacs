@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.shared.utils;
 
+import org.janelia.it.jacs.model.user_data.Group;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,7 +43,7 @@ public class LoginParser {
             while (scanner.hasNextLine()){
                 String tmpLine = scanner.nextLine();
                 String[] pieces = tmpLine.substring(tmpLine.indexOf(":")+1).split(" ");
-                if (!excludedLogins.contains(pieces[8])&&!pieces[8].toLowerCase().startsWith("admin")) {
+                if (!excludedLogins.contains(pieces[8])&&!pieces[8].toLowerCase().startsWith(Group.ADMIN_GROUP_NAME)) {
                     // Manage the unique users
                     if (userMap.containsKey(pieces[8])) {
                         userMap.get(pieces[8]).add(pieces[0]+" "+pieces[1]);

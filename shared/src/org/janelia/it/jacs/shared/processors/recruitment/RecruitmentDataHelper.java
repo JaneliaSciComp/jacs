@@ -3,6 +3,7 @@ package org.janelia.it.jacs.shared.processors.recruitment;
 
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.recruitment.RecruitmentViewerFilterDataTask;
+import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.genome.GenomeProjectFileNode;
 import org.janelia.it.jacs.model.user_data.recruitment.RecruitmentFileNode;
 import org.janelia.it.jacs.model.user_data.recruitment.RecruitmentResultFileNode;
@@ -1085,7 +1086,7 @@ public class RecruitmentDataHelper {
      */
     public static synchronized void buildGenbankFileList() throws Exception {
         String systemGenomeProjectDir = SystemConfigurationProperties.getString("FileStore.CentralDir") + File.separator +
-                "system" + File.separator + GenomeProjectFileNode.SUB_DIRECTORY;
+                User.SYSTEM_USER_LOGIN + File.separator + GenomeProjectFileNode.SUB_DIRECTORY;
         File gpDir = new File(systemGenomeProjectDir);
         if (!gpDir.exists() || !gpDir.isDirectory()) {
             throw new Exception("Cannot find the system GenomeProject directory");
@@ -1179,7 +1180,7 @@ public class RecruitmentDataHelper {
 
     public static List<GenbankFileInfo> getGenbankFileList() {
         String systemGenomeProjectDir = SystemConfigurationProperties.getString("FileStore.CentralDir") + File.separator +
-                "system" + File.separator + GenomeProjectFileNode.SUB_DIRECTORY;
+                User.SYSTEM_USER_LOGIN + File.separator + GenomeProjectFileNode.SUB_DIRECTORY;
         File allGenbankInfoFile = new File(systemGenomeProjectDir+File.separator+ALL_GENBANK_INFO_FILE);
         ArrayList<GenbankFileInfo> completeFileList = new ArrayList<GenbankFileInfo>();
         Scanner scanner=null;

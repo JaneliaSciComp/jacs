@@ -25,6 +25,7 @@ import org.janelia.it.jacs.model.tasks.recruitment.RecruitmentViewerFilterDataTa
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
+import org.janelia.it.jacs.model.user_data.UserToolEvent;
 import org.janelia.it.jacs.model.user_data.blast.BlastDatabaseFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastDatasetNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultFileNode;
@@ -827,5 +828,21 @@ public class ComputeDAO extends ComputeBaseDAO {
     	catch (IOException e) {
     		throw new DaoException("Error creating temp file", e);
     	}
+    }
+
+    public UserToolEvent addEventToSession(UserToolEvent userToolEvent) throws DaoException {
+        try {
+            // If there is no session AND the event is the initial login then save to get the first GUID for the session
+            if (null==userToolEvent.getSessionId() && UserToolEvent.TOOL_EVENT_LOGIN.equals(userToolEvent.getAction())) {
+                getCurrentSession().saveOrUpdate(userToolEvent);
+                userToolEvent.setSessionId(userToolEvent.getId());
+            }
+            getCurrentSession().saveOrUpdate(userToolEvent);
+        }
+        catch (HibernateException e) {
+            throw new DaoException("Error recording tool event", e);
+        }
+
+        return userToolEvent;
     }
 }
