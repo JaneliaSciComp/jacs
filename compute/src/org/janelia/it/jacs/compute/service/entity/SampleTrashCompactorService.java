@@ -73,6 +73,7 @@ public class SampleTrashCompactorService extends AbstractEntityService {
         processChildren(new File(filestoreDir, "Alignment"));
         processChildren(new File(filestoreDir, "Separation"));
         processChildren(new File(filestoreDir, "Intersection"));
+        processChildren(new File(filestoreDir, "NeuronMerge"));
         processChildren(new File(filestoreDir, "Temp"));
     }
     
@@ -153,17 +154,17 @@ public class SampleTrashCompactorService extends AbstractEntityService {
                         numDeletedResultNodes++;
                     }
                     else {
-                        logger.info(dir +" has "+numEntities+" references to its sister path, leaving it alone.");
+                        logger.debug(dir +" has "+numEntities+" references to its sister path, leaving it alone.");
                     }
                 }
                 else {
-                    logger.info(dir +" has "+numEntities+" references to it, leaving it alone.");
+                    logger.debug(dir +" has "+numEntities+" references to it, leaving it alone.");
                 }
             }
             
         }
         else {
-			logger.info("Ignoring subdir which is not a recognized node type (class is "+node.getClass().getName()+")");
+			logger.warn("Ignoring subdir which is not a recognized node type (class is "+node.getClass().getName()+")");
         }
     }
     
