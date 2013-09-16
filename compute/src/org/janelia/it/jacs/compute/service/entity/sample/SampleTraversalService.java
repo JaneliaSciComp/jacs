@@ -52,24 +52,26 @@ public class SampleTraversalService extends AbstractEntityService {
         String parentOrChildren = (String) processData.getItem("PARENT_OR_CHILDREN");
         logger.info("    parentOrChildren="+parentOrChildren);
         
-        if (parentOrChildren!=null) {
-            if (parentOrChildren.equals("parent")) {
-                includeChildSamples = false;
-                includeParentSamples = true;
-            }
-            else if (parentOrChildren.equals("children")) {
-                includeChildSamples = true;
-                includeParentSamples = false;
-            }
-            else if (parentOrChildren.equals("both")) {
-                includeChildSamples = true;
-                includeParentSamples = true;
-            }
-            else {
-                throw new IllegalArgumentException("Unrecognized value for PARENT_OR_CHILDREN:"+parentOrChildren);
-            }
+        if (parentOrChildren==null) {
+            parentOrChildren = "parent";
         }
-    	
+
+        if (parentOrChildren.equals("parent")) {
+            includeChildSamples = false;
+            includeParentSamples = true;
+        }
+        else if (parentOrChildren.equals("children")) {
+            includeChildSamples = true;
+            includeParentSamples = false;
+        }
+        else if (parentOrChildren.equals("both")) {
+            includeChildSamples = true;
+            includeParentSamples = true;
+        }
+        else {
+            throw new IllegalArgumentException("Unrecognized value for PARENT_OR_CHILDREN:"+parentOrChildren);
+        }
+        
         String dataSetName = (String) processData.getItem("DATA_SET_NAME");
         logger.info("    dataSetName="+dataSetName);
         
