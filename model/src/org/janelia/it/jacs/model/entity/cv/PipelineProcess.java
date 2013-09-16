@@ -19,6 +19,7 @@ public enum PipelineProcess implements NamedEnum {
     LeetWholeBrain40xImproved("Lee Whole Brain 40x Improved Pipeline"),
 
     NernaLeftOpticLobe("Aljoscha Left Optic Lobe 63x Pipeline"),
+    NernaMCFOCase1("Aljoscha MCFO Case 1 Pipeline"),
     NernaRightOpticLobe("Aljoscha Right Optic Lobe 63x Pipeline"),
 
     WolfftMCFOCase1("Tanya Central Brain MCFO Case 1 Pipeline"),
