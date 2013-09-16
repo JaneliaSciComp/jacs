@@ -14,6 +14,8 @@ import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.service.common.ContextLogger;
+import org.janelia.it.jacs.compute.service.common.ProcessDataAccessor;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.SubmitJobException;
 import org.janelia.it.jacs.compute.service.common.grid.submit.SubmitJobService;
@@ -50,9 +52,11 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
 	protected static final Boolean USE_R620_NODES = SystemConfigurationProperties.getBoolean("Grid.UseR620Nodes");
 	
     protected Logger logger;
+    protected ContextLogger contextLogger;
 
     protected Task task;
     protected IProcessData processData;
+    protected ProcessDataAccessor data;
     protected FileNode resultFileNode;
     protected Set<String> jobSet = null;
     // This attribute keeps track of how many nodes we want to engage.  Minimum value is 1
@@ -137,11 +141,18 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
 
     protected void init(IProcessData processData) throws Exception {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
+        this.contextLogger = new ContextLogger(this.logger);
+
         this.processData = processData;
+        this.data = new ProcessDataAccessor(processData, this.contextLogger);
+
         // Permit the task to be predefined elsewhere
         if (this.task == null) {
             this.task = ProcessDataHelper.getTask(processData);
         }
+
+        this.contextLogger.appendToLogContext(this.task);
+
         // Permit the resultNode to be defined elsewhere
         if (this.resultFileNode == null) {
             this.resultFileNode = ProcessDataHelper.getResultFileNode(processData);

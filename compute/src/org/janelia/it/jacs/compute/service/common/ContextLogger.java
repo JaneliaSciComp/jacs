@@ -61,13 +61,24 @@ public class ContextLogger {
     }
 
     /**
-     * Logs the specified message with the current context appended.
+     * Logs the specified info message with the current context appended.
      *
      * @param  msg  detail message to log.
      */
     public void info(String msg) {
         if (logger.isInfoEnabled()) {
             logger.info(msg + logContext);
+        }
+    }
+
+    /**
+     * Logs the specified debug message with the current context appended.
+     *
+     * @param  msg  detail message to log.
+     */
+    public void debug(String msg) {
+        if (logger.isDebugEnabled()) {
+            logger.debug(msg + logContext);
         }
     }
 

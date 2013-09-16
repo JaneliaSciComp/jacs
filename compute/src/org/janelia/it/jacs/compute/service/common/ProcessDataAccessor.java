@@ -56,6 +56,14 @@ public class ProcessDataAccessor {
         return (String) getItem(key);
     }
 
+    public Object getRequiredItem(String key) throws IllegalArgumentException {
+        final Object value = getItem(key);
+        if (value == null) {
+            throw new IllegalArgumentException(key + " must be specified");
+        }
+        return value;
+    }
+
     public String getRequiredStringItem(String key) throws IllegalArgumentException {
         final String value = getStringItem(key);
         if (StringUtils.isEmpty(value)) {

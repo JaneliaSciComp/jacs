@@ -9,6 +9,7 @@ import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
+import org.janelia.it.jacs.compute.service.common.ContextLogger;
 import org.janelia.it.jacs.compute.service.entity.EntityHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
@@ -48,7 +49,16 @@ public class SampleHelper extends EntityHelper {
     private int numSamplesMovedToBlockedFolder = 0;
     
     public SampleHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, AnnotationBeanLocal annotationBean, String ownerKey, Logger logger) {
-        super(entityBean, computeBean, ownerKey, logger);
+        this(entityBean, computeBean, annotationBean, ownerKey, logger, null);
+    }
+
+    public SampleHelper(EntityBeanLocal entityBean,
+                        ComputeBeanLocal computeBean,
+                        AnnotationBeanLocal annotationBean,
+                        String ownerKey,
+                        Logger logger,
+                        ContextLogger contextLogger) {
+        super(entityBean, computeBean, ownerKey, logger, contextLogger);
         this.annotationBean = annotationBean;
     }
 

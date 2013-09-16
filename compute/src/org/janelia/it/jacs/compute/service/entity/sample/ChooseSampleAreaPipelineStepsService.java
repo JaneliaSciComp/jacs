@@ -19,60 +19,56 @@ public class ChooseSampleAreaPipelineStepsService extends AbstractEntityService 
 
     public void execute() throws Exception {
 
-    	String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
-    	if (sampleEntityId == null || "".equals(sampleEntityId)) {
-    		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
-    	}
-    	Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
-    	if (sampleEntity == null) {
-    		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
-    	}
+        final Entity sampleEntity = entityHelper.getRequiredSampleEntity(data);
+        AnatomicalArea sampleArea = (AnatomicalArea) data.getRequiredItem("SAMPLE_AREA");
 
-        AnatomicalArea sampleArea = (AnatomicalArea)processData.getItem("SAMPLE_AREA");
-        if (sampleArea==null) {
-            throw new IllegalArgumentException("SAMPLE_AREA may not be null");
-        }
-        
         List<Entity> tiles = sampleArea.getTiles();
-    	Integer numImagesPerTile = null;    
-    	Integer numTiles = tiles.size();
-        for(Entity tile : tiles) {
+        Integer numImagesPerTile = null;
+        Integer numTiles = tiles.size();
+        for (Entity tile : tiles) {
             populateChildren(tile);
             List<Entity> lsms = EntityUtils.getChildrenOfType(tile, EntityConstants.TYPE_LSM_STACK);
-            if (numImagesPerTile!=null && numImagesPerTile!=lsms.size()) {
-                throw new IllegalStateException("Sample has differing numbers of images per tile: "+sampleEntityId);
+            if (numImagesPerTile != null && numImagesPerTile != lsms.size()) {
+                throw new IllegalStateException("Sample " + sampleEntity.getName() + " (" + sampleEntity.getId() +
+                                                ") has differing numbers of images per tile");
             }
             numImagesPerTile = lsms.size();
         }
-    	
-    	String mergeAlgorithms = (String)processData.getItem("MERGE_ALGORITHMS");
-    	String stitchAlgorithms = (String)processData.getItem("STITCH_ALGORITHMS");
-    	String analysisAlgorithms = (String)processData.getItem("ANALYSIS_ALGORITHMS");
-    	
-    	processData.putItem("MERGE_ALGORITHM", Task.listOfStringsFromCsvString(mergeAlgorithms));
-		processData.putItem("STITCH_ALGORITHM", Task.listOfStringsFromCsvString(stitchAlgorithms));
-		processData.putItem("ANALYSIS_ALGORITHM", Task.listOfStringsFromCsvString(analysisAlgorithms));
-		
-        boolean hasMerge = !StringUtils.isEmpty(mergeAlgorithms);
-        boolean hasStitch = !StringUtils.isEmpty(stitchAlgorithms);
-        boolean hasAnalysis = !StringUtils.isEmpty(analysisAlgorithms);
-        
-        boolean runProcessing = true;
-        boolean runMerge = hasMerge && numImagesPerTile>1;
-        boolean runStitch = hasStitch && numTiles>1;
-		boolean runAnalysis = hasAnalysis;
 
-        processData.putItem("RUN_PROCESSING", new Boolean(runProcessing));
-		processData.putItem("RUN_MERGE", new Boolean(runMerge));
-		processData.putItem("RUN_STITCH", new Boolean(runStitch));
-		processData.putItem("RUN_ANALYSIS", new Boolean(runAnalysis));
+        final String mergeAlgorithms = data.getStringItem("MERGE_ALGORITHMS");
+        final String stitchAlgorithms = data.getStringItem("STITCH_ALGORITHMS");
+        final String analysisAlgorithms = data.getStringItem("ANALYSIS_ALGORITHMS");
 
-		List<String> steps = new ArrayList<String>();
-		if (runProcessing) steps.add("processing");
-		if (runMerge) steps.add("merge");
-		if (runStitch) steps.add("stitch");
-		if (runAnalysis) steps.add("analysis");
-		
-    	logger.info("Processing pipeline for Sample "+sampleEntity.getName()+": "+Task.csvStringFromCollection(steps));
+        data.putItem("MERGE_ALGORITHM", Task.listOfStringsFromCsvString(mergeAlgorithms));
+        data.putItem("STITCH_ALGORITHM", Task.listOfStringsFromCsvString(stitchAlgorithms));
+        data.putItem("ANALYSIS_ALGORITHM", Task.listOfStringsFromCsvString(analysisAlgorithms));
+
+        final boolean hasMerge = !StringUtils.isEmpty(mergeAlgorithms);
+        final boolean hasStitch = !StringUtils.isEmpty(stitchAlgorithms);
+
+        final boolean runProcessing = true;
+        final boolean runMerge = hasMerge && (numImagesPerTile != null) && (numImagesPerTile > 1);
+        final boolean runStitch = hasStitch && numTiles>1;
+        final boolean runAnalysis = !StringUtils.isEmpty(analysisAlgorithms);
+
+        data.putItem("RUN_PROCESSING", runProcessing);
+        data.putItem("RUN_MERGE", runMerge);
+        data.putItem("RUN_STITCH", runStitch);
+        data.putItem("RUN_ANALYSIS", runAnalysis);
+
+        List<String> steps = new ArrayList<String>();
+        steps.add("processing"); // runProcessing is always true
+
+        if (runMerge) {
+            steps.add("merge");
+        }
+        if (runStitch) {
+            steps.add("stitch");
+        }
+        if (runAnalysis) {
+            steps.add("analysis");
+        }
+
+        logger.info("Processing pipeline for Sample "+sampleEntity.getName()+": "+Task.csvStringFromCollection(steps));
     }
 }
