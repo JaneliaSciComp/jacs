@@ -20,6 +20,7 @@ public enum PipelineProcess implements NamedEnum {
 
     NernaLeftOpticLobe("Aljoscha Left Optic Lobe 63x Pipeline"),
     NernaMCFOCase1("Aljoscha MCFO Case 1 Pipeline"),
+    NernaMCFOCase1Without20xMerge("Aljoscha MCFO Case 1 Without 20x Merge Pipeline"),
     NernaRightOpticLobe("Aljoscha Right Optic Lobe 63x Pipeline"),
 
     WolfftMCFOCase1("Tanya Central Brain MCFO Case 1 Pipeline"),
