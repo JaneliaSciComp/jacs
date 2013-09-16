@@ -1,6 +1,16 @@
 
 package org.janelia.it.jacs.compute.engine.launcher;
 
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import javax.jms.JMSException;
+import javax.jms.ObjectMessage;
+import javax.jms.Queue;
+import javax.naming.NamingException;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.UserDAO;
@@ -14,19 +24,10 @@ import org.janelia.it.jacs.compute.jtc.AsyncMessageInterface;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.FileNode;
-import org.janelia.it.jacs.model.user_data.User;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.prefs.SubjectPreference;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.MailHelper;
-
-import javax.jms.JMSException;
-import javax.jms.ObjectMessage;
-import javax.jms.Queue;
-import javax.naming.NamingException;
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Base class for launching of Series actions i.e. a processes and sequences
@@ -357,7 +358,7 @@ public abstract class SeriesLauncher implements ILauncher {
         Task task = ProcessDataHelper.getTask(processData);
         String ownerName = task.getOwner();
         // Check to see if the user wants email
-        User tmpUser = new UserDAO(logger).getUserByNameOrKey(ownerName);
+        Subject tmpUser = new UserDAO(logger).getSubjectByNameOrKey(ownerName);
         if (null == tmpUser) {
             logger.warn("Cannot notify user: " + ownerName + ". User does not exist in the db.");
             return;
@@ -368,7 +369,7 @@ public abstract class SeriesLauncher implements ILauncher {
         }
         String emailAddress = tmpUser.getEmail();
         if (null == emailAddress || "".equals(emailAddress)) {
-            logger.debug("No email exists for the user.  Skipping mail step.");
+            logger.debug("No email exists for the user. Skipping mail step.");
             return;
         }
 
