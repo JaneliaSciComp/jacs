@@ -185,7 +185,7 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
 
     @Override
     protected int getRequiredMemoryInGB() {
-        if (objective==null) return 96;
+        if (StringUtils.isEmpty(objective)) return 96;
         switch (Objective.valueOf("OBJECTIVE_"+objective.toUpperCase())) {
         case OBJECTIVE_10X: return 24;
         case OBJECTIVE_20X: return 24;
