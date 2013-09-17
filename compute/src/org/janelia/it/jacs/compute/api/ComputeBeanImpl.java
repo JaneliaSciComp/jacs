@@ -88,6 +88,24 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return appVersion;
     }
 
+
+    /**
+     * @deprecated
+     * @param userLogin
+     * @param clientVersion
+     */
+    public void beginSession(String userLogin, String clientVersion) {
+        logger.info("Begin session for "+userLogin+" using "+clientVersion);
+    }
+
+    /**
+     * @deprecated
+     * @param userLogin
+     */
+    public void endSession(String userLogin) {
+        logger.info("End session for "+userLogin);
+    }
+
     /**
      * Method used to initiate a session.  A call to this forces a unique session id to be created and passed
      * back to a calling client

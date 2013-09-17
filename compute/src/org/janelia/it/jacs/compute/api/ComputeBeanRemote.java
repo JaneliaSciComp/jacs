@@ -127,4 +127,14 @@ public interface ComputeBeanRemote {
     public void removeUserFromGroup(String groupUser, String groupName) throws DaoException;
 
     public UserToolEvent addEventToSession(UserToolEvent userToolEvent);
+
+    /**
+     * @deprecated
+     */
+    public void beginSession(String userLogin, String clientVersion);
+    /**
+     * @deprecated
+     */
+    public void endSession(String userLogin);
+
 }
