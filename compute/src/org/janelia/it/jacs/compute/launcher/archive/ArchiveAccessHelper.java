@@ -72,42 +72,42 @@ public class ArchiveAccessHelper {
         messageInterface.endMessageSession();
     }
     
-    public static Task synchronousGridifiedArchiveCopy(Task parentTask, 
-            List<String> sourceFilePaths, List<String> targetFilePaths, boolean async) throws Exception {
-
-        HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-        taskParameters.add(new TaskParameter(ArchiveGridService.PARAM_sourceFilePaths, Task.csvStringFromCollection(sourceFilePaths), null)); 
-        taskParameters.add(new TaskParameter(ArchiveGridService.PARAM_targetFilePaths, Task.csvStringFromCollection(targetFilePaths), null)); 
-        
-        Task subtask = new GenericTask(new HashSet<Node>(), parentTask.getOwner(), new ArrayList<Event>(), 
-                taskParameters, "archiveGridCopy", "Archive Grid Copy");
-        subtask.setParentTaskId(parentTask.getObjectId());
-        subtask = EJBFactory.getLocalComputeBean().saveOrUpdateTask(subtask);
-
-        logger.info("Launching "+subtask.getJobName()+", parent task id="+parentTask.getObjectId()+", subtask id="+subtask.getObjectId());
-        EJBFactory.getLocalComputeBean().submitJob("ArchiveGridCopy", subtask.getObjectId());
-
-        if (async) return subtask;
-
-        logger.info("Waiting for completion of archive copy subtask (id="+subtask.getObjectId()+")");
-        boolean complete = false;
-        long start = System.currentTimeMillis();
-        long timeoutMs = TIMEOUT_SECONDS*1000;
-        while (!complete) {
-            String[] statusTypeAndValue = EJBFactory.getLocalComputeBean().getTaskStatus(subtask.getObjectId());
-            if (statusTypeAndValue[0]!=null && Task.isDone(statusTypeAndValue[0])) {
-                complete = true;
-            }
-            else {
-                if ((System.currentTimeMillis()-start)>timeoutMs) {
-                    throw new Exception("Timed out after waiting "+timeoutMs+
-                            " milliseconds for archive copy subtask to finish (id="+subtask.getObjectId()+")");
-                }
-                Thread.sleep(5000);
-            }
-        }
-        
-        logger.info("Archive copy subtask is complete (id="+subtask.getObjectId()+")");
-        return subtask;
-    }
+//    public static Task synchronousGridifiedArchiveCopy(Task parentTask, 
+//            List<String> sourceFilePaths, List<String> targetFilePaths, boolean async) throws Exception {
+//
+//        HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+//        taskParameters.add(new TaskParameter(ArchiveGridService.PARAM_sourceFilePaths, Task.csvStringFromCollection(sourceFilePaths), null)); 
+//        taskParameters.add(new TaskParameter(ArchiveGridService.PARAM_targetFilePaths, Task.csvStringFromCollection(targetFilePaths), null)); 
+//        
+//        Task subtask = new GenericTask(new HashSet<Node>(), parentTask.getOwner(), new ArrayList<Event>(), 
+//                taskParameters, "archiveGridCopy", "Archive Grid Copy");
+//        subtask.setParentTaskId(parentTask.getObjectId());
+//        subtask = EJBFactory.getLocalComputeBean().saveOrUpdateTask(subtask);
+//
+//        logger.info("Launching "+subtask.getJobName()+", parent task id="+parentTask.getObjectId()+", subtask id="+subtask.getObjectId());
+//        EJBFactory.getLocalComputeBean().submitJob("ArchiveGridCopy", subtask.getObjectId());
+//
+//        if (async) return subtask;
+//
+//        logger.info("Waiting for completion of archive copy subtask (id="+subtask.getObjectId()+")");
+//        boolean complete = false;
+//        long start = System.currentTimeMillis();
+//        long timeoutMs = TIMEOUT_SECONDS*1000;
+//        while (!complete) {
+//            String[] statusTypeAndValue = EJBFactory.getLocalComputeBean().getTaskStatus(subtask.getObjectId());
+//            if (statusTypeAndValue[0]!=null && Task.isDone(statusTypeAndValue[0])) {
+//                complete = true;
+//            }
+//            else {
+//                if ((System.currentTimeMillis()-start)>timeoutMs) {
+//                    throw new Exception("Timed out after waiting "+timeoutMs+
+//                            " milliseconds for archive copy subtask to finish (id="+subtask.getObjectId()+")");
+//                }
+//                Thread.sleep(5000);
+//            }
+//        }
+//        
+//        logger.info("Archive copy subtask is complete (id="+subtask.getObjectId()+")");
+//        return subtask;
+//    }
 }
