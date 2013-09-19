@@ -82,6 +82,7 @@ public class SampleTraversalService extends AbstractEntityService {
             includeNewSamples = true;
         } 
         else if (RUN_MODE_INCOMPLETE.equals(runMode)) {
+        	includeNewSamples = true;
             includeErrorSamples = true;
         }
         else if (RUN_MODE_ALL.equals(runMode)) {
@@ -217,10 +218,12 @@ public class SampleTraversalService extends AbstractEntityService {
         }
         if (includeErrorSamples) {
             Entity pipelineRun = EntityUtils.getLatestChildOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
-            populateChildren(pipelineRun);
-            Entity error = EntityUtils.getLatestChildOfType(pipelineRun, EntityConstants.TYPE_ERROR);
-            if (error!=null) {
-                return true;
+            if (pipelineRun!=null) {
+	            populateChildren(pipelineRun);
+	            Entity error = EntityUtils.getLatestChildOfType(pipelineRun, EntityConstants.TYPE_ERROR);
+	            if (error!=null) {
+	                return true;
+	            }
             }
         }
         
