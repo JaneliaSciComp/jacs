@@ -169,6 +169,7 @@
             <name>reuseAlignment</name>
             <type>java.lang.Boolean</type>
         </parameter>
+        <return-type>java.lang.String</return-type>
     </operation>
     
     <operation>

@@ -157,6 +157,19 @@ public class ComputeBaseDAO {
         return (Task) getCurrentSession().get(Task.class, taskId);
     }
 
+    public List<Task> getMostRecentTasksWithName(String owner, String taskName) {
+        String ownerName = owner.contains(":") ? owner.split(":")[1] : owner;
+        Session session = getCurrentSession();
+        StringBuffer hql = new StringBuffer("select t from Task t ");
+        hql.append("where t.owner = :owner ");
+        hql.append("and t.taskName = :name ");
+        hql.append("order by t.objectId desc");
+        Query query = session.createQuery(hql.toString());
+        query.setString("owner", ownerName);
+        query.setString("name", taskName);
+        return (List<Task>)query.list();
+    }
+    
     public SearchResultNode getSearchTaskResultNode(long searchTaskId) throws DaoException {
         SearchTask st = (SearchTask) getCurrentSession().get(Task.class, searchTaskId);
         return st.getSearchResultNode();

@@ -202,9 +202,9 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
     
-    public void runUserDataSetPipelines(String user, String dataSetName, String runMode, Boolean reuseProcessing, Boolean reuseAlignment) {
+    public String runUserDataSetPipelines(String user, String dataSetName, String runMode, Boolean reuseProcessing, Boolean reuseAlignment) {
         try {
-            String processName = "FlyLightUserDataSetPipelines";
+            String processName = "GSPS_UserDataSetPipelines";
             String displayName = "User Data Set Pipelines";
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("run mode", runMode, null)); 
@@ -213,10 +213,29 @@ public class SampleDataManager implements SampleDataManagerMBean {
             if ((dataSetName != null) && (dataSetName.trim().length() > 0)) {
                 taskParameters.add(new TaskParameter("data set name", dataSetName, null));
             }
+            Task task = EJBFactory.getLocalComputeBean().getMostRecentTaskWithNameAndParameters(user, processName, taskParameters);
+            if (task!=null) {
+                if (!task.isDone()) {
+                    return "Error: pipeline is already running";
+                }
+                List<Task> childTasks = EJBFactory.getLocalComputeBean().getChildTasksByParentTaskId(task.getObjectId());
+                boolean allDone = true;
+                for(Task subtask : childTasks) {
+                    if (!subtask.isDone()) {
+                        allDone = false;
+                        break;
+                    }
+                }
+                if (!allDone) {
+                    return "Error: pipeline subtasks are still running";
+                }
+            }
             saveAndRunTask(user, processName, displayName, taskParameters);
+            return "Success";
         } 
         catch (Exception ex) {
             logger.error("Error running pipeline", ex);
+            return "Error: "+ex.getMessage();
         }
     }
 

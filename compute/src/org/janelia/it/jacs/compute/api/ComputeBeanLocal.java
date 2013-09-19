@@ -1,9 +1,6 @@
 package org.janelia.it.jacs.compute.api;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import javax.ejb.Local;
 
@@ -11,6 +8,7 @@ import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskMessage;
+import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 
@@ -55,4 +53,6 @@ public interface ComputeBeanLocal extends ComputeBeanRemote {
     public User createUser(String newUserName, String newFullName) throws ComputeException;
     
     public int moveFileNodesToArchive(String filepath) throws ComputeException;
+    
+    public Task getMostRecentTaskWithNameAndParameters(String owner, String taskName, HashSet<TaskParameter> taskParameters);
 }

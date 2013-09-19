@@ -1,7 +1,7 @@
 <!-- 
-	Run a subtask for every sample for a given user.
+	Run a subtask process for every sample for a given user.
 -->
-<process name="Complete sample processing" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Apply Process To Samples" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	    
         <!-- Import variables from the task -->

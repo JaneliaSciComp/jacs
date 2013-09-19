@@ -17,6 +17,7 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskMessage;
+import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.blast.*;
 import org.janelia.it.jacs.model.tasks.utility.ContinuousExecutionTask;
 import org.janelia.it.jacs.model.user_data.*;
@@ -349,6 +350,30 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     	catch (DaoException e) {
     		throw new ServiceException(e);
     	}
+    }
+
+    public Task getMostRecentTaskWithNameAndParameters(String owner, String taskName, HashSet<TaskParameter> taskParameters) {
+        Task matchingTask = null;
+        logger.info("Looking for matching task with params:");
+        for(TaskParameter taskParameter : taskParameters) {
+            logger.info("  "+taskParameter.getName()+"="+taskParameter.getValue());
+        }
+        for(Task task : computeDAO.getMostRecentTasksWithName(owner, taskName)) {
+            logger.info("Found recent "+task.getTaskName()+" task with params:");
+            for(TaskParameter taskParameter : task.getTaskParameterSet()) {
+                logger.info("  "+taskParameter.getName()+"="+taskParameter.getValue());
+            }    
+            if (task.getTaskParameterSet().equals(taskParameters)) {
+                logger.info("Found it.  ");
+                matchingTask = task;
+                break;
+            }
+        }
+        // Init lazy-loading events
+        if (matchingTask!=null) {
+            matchingTask.getEvents().size();
+        }
+        return matchingTask;
     }
     
     public Task getTaskById(long taskId) {
