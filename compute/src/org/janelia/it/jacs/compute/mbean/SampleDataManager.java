@@ -185,7 +185,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     // Generic confocal image processing pipelines
     // -----------------------------------------------------------------------------------------------------
 
-    public void runAllDataSetPipelines(String runMode, Boolean reuseProcessing, Boolean reuseAlignment) {
+    public String runAllDataSetPipelines(String runMode, Boolean reuseProcessing, Boolean reuseAlignment, Boolean force) {
         try {
             logger.info("Building list of users with data sets...");
             Set<String> subjectKeys = new HashSet<String>();
@@ -193,16 +193,23 @@ public class SampleDataManager implements SampleDataManagerMBean {
                 subjectKeys.add(dataSet.getOwnerKey());
             }
             logger.info("Found users with data sets: "+subjectKeys);
+            
+            StringBuilder sb = new StringBuilder();
             for(String subjectKey : subjectKeys) {
                 logger.info("Queuing data set pipelines for "+subjectKey);
-                runUserDataSetPipelines(subjectKey, null, runMode, reuseProcessing, reuseAlignment);
+                String ret = runUserDataSetPipelines(subjectKey, null, runMode, reuseProcessing, reuseAlignment, force);
+                if (sb.length()>0) sb.append(",\n");
+                sb.append(subjectKey+": "+ret+"");
             }
-        } catch (Exception ex) {
+            return sb.toString();
+        } 
+        catch (Exception ex) {
             logger.error("Error running pipeline", ex);
+            return "Error: "+ex.getMessage();
         }
     }
     
-    public String runUserDataSetPipelines(String user, String dataSetName, String runMode, Boolean reuseProcessing, Boolean reuseAlignment) {
+    public String runUserDataSetPipelines(String user, String dataSetName, String runMode, Boolean reuseProcessing, Boolean reuseAlignment, Boolean force) {
         try {
             String processName = "GSPS_UserDataSetPipelines";
             String displayName = "User Data Set Pipelines";
@@ -213,22 +220,27 @@ public class SampleDataManager implements SampleDataManagerMBean {
             if ((dataSetName != null) && (dataSetName.trim().length() > 0)) {
                 taskParameters.add(new TaskParameter("data set name", dataSetName, null));
             }
-            Task task = EJBFactory.getLocalComputeBean().getMostRecentTaskWithNameAndParameters(user, processName, taskParameters);
-            if (task!=null) {
-                if (!task.isDone()) {
-                    return "Error: pipeline is already running";
-                }
-                List<Task> childTasks = EJBFactory.getLocalComputeBean().getChildTasksByParentTaskId(task.getObjectId());
-                boolean allDone = true;
-                for(Task subtask : childTasks) {
-                    if (!subtask.isDone()) {
-                        allDone = false;
-                        break;
-                    }
-                }
-                if (!allDone) {
-                    return "Error: pipeline subtasks are still running";
-                }
+            if (!force) {
+		        Task task = EJBFactory.getLocalComputeBean().getMostRecentTaskWithNameAndParameters(user, processName, taskParameters);
+		        if (task!=null) {
+		        	logger.info("Checking most recent similar task: "+task.getObjectId());
+		            if (!task.isDone()) {
+		            	logger.info("Pipeline is still running (last event: "+task.getLastEvent().getEventType()+"). Skipping run.");
+		                return "Error: pipeline is already running";
+		            }
+		            List<Task> childTasks = EJBFactory.getLocalComputeBean().getChildTasksByParentTaskId(task.getObjectId());
+		            boolean allDone = true;
+		            for(Task subtask : childTasks) {
+		                if (!subtask.isDone()) {
+		                    allDone = false;
+		                    break;
+		                }
+		            }
+		            if (!allDone) {
+		            	logger.info("One of the subtasks is not done, skipping run.");
+		                return "Error: pipeline subtasks are still running";
+		            }
+		        }
             }
             saveAndRunTask(user, processName, displayName, taskParameters);
             return "Success";

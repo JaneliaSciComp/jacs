@@ -129,7 +129,7 @@ public class SampleTraversalService extends AbstractEntityService {
 	    	for(Entity entity : entities) {
 	    	    List<Entity> included = getIncludedSamples(entity);
 	    		for(Entity sample : included) {
-	    			outObjects.add(outputObjects ? sample : sample.getId());	
+	    			outObjects.add(outputObjects ? sample : sample.getId().toString());	
 	    		}
 	    	}
         }

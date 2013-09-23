@@ -40,6 +40,7 @@ import javax.ejb.TransactionAttributeType;
 import javax.naming.Context;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -354,17 +355,18 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
 
     public Task getMostRecentTaskWithNameAndParameters(String owner, String taskName, HashSet<TaskParameter> taskParameters) {
         Task matchingTask = null;
-        logger.info("Looking for matching task with params:");
+        logger.debug("Looking for matching task with params:");
         for(TaskParameter taskParameter : taskParameters) {
-            logger.info("  "+taskParameter.getName()+"="+taskParameter.getValue());
+            logger.debug("  "+taskParameter.getName()+"="+taskParameter.getValue());
         }
         for(Task task : computeDAO.getMostRecentTasksWithName(owner, taskName)) {
-            logger.info("Found recent "+task.getTaskName()+" task with params:");
+            logger.debug("Considering recent "+task.getTaskName()+" task with params:");
             for(TaskParameter taskParameter : task.getTaskParameterSet()) {
-                logger.info("  "+taskParameter.getName()+"="+taskParameter.getValue());
-            }    
-            if (task.getTaskParameterSet().equals(taskParameters)) {
-                logger.info("Found it.  ");
+                logger.debug("  "+taskParameter.getName()+"="+taskParameter.getValue());
+            }
+            
+            if (areEqual(task.getTaskParameterSet(),taskParameters)) {
+                logger.debug("Found match.");
                 matchingTask = task;
                 break;
             }
@@ -374,6 +376,21 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
             matchingTask.getEvents().size();
         }
         return matchingTask;
+    }
+    
+    private boolean areEqual(Set<TaskParameter> taskParameters1, Set<TaskParameter> taskParameters2) {
+    	if (taskParameters1.size()!=taskParameters2.size()) return false;
+    	Map<String, String> taskParameterMap1 = asMap(taskParameters1);
+    	Map<String, String> taskParameterMap2 = asMap(taskParameters2);
+    	return taskParameterMap1.equals(taskParameterMap2);
+    }
+    
+    private Map<String,String> asMap(Set<TaskParameter> taskParameters) {
+    	Map<String, String> map = new HashMap<String, String>();
+    	for(TaskParameter taskParameter : taskParameters) {
+    		map.put(taskParameter.getName(), taskParameter.getValue());
+    	}
+    	return map;
     }
     
     public Task getTaskById(long taskId) {
@@ -977,7 +994,12 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     }
 
     public List<Task> getChildTasksByParentTaskId(long taskId) {
-        return computeDAO.getChildTasksByParentTaskId(taskId);
+        List<Task> tasks = computeDAO.getChildTasksByParentTaskId(taskId);
+        for(Task task : tasks) {
+        	// Init lazy-loading events
+        	task.getEvents().size();
+        }
+    	return tasks;
     }
 
     public Long getSystemDatabaseIdByName(String databaseName) {

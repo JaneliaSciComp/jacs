@@ -139,6 +139,12 @@
             <name>reuseAlignment</name>
             <type>java.lang.Boolean</type>
         </parameter>
+        <parameter>
+            <description>Force pipeline to run even if a previous one has not finished</description>
+            <name>force</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <return-type>java.lang.String</return-type>
     </operation>
     
     <operation>
@@ -167,6 +173,11 @@
         <parameter>
             <description>Reuse previous alignment results</description>
             <name>reuseAlignment</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+            <description>Force pipeline to run even if a previous one has not finished</description>
+            <name>force</name>
             <type>java.lang.Boolean</type>
         </parameter>
         <return-type>java.lang.String</return-type>
