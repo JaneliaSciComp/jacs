@@ -27,8 +27,10 @@
 	        <input name="RESULT_FILE_NODE"/>
 			<input name="SAMPLE_ENTITY_ID"/>
 			<input name="ROOT_ENTITY_ID"/>
+			<input name="INPUT_FILENAME"/>
 			<input name="RESULT_ENTITY_NAME"/>
 			<input name="ALIGNED_CONSOLIDATED_LABEL_FILEPATH"/>
+			<output name="INPUT_FILENAME"/>
 			<output name="PREVIOUS_RESULT_FILENAME"/>
 			<output name="ALIGNED_CONSOLIDATED_LABEL_FILEPATH"/>
             <output name="COPY_FROM_ARCHIVE"/>

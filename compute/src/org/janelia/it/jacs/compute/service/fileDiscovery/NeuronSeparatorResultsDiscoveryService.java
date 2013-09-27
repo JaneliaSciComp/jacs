@@ -189,6 +189,8 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
 
 
         // Find mask/chan files
+        String refMaskFile = null;
+        String refChanFile = null;
         Map<Integer,String> maskFiles = new HashMap<Integer,String>();
         Map<Integer,String> chanFiles = new HashMap<Integer,String>();
         File maskChanDir = new File(dir.getAbsolutePath()+"/archive/maskChan");
@@ -200,24 +202,48 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
             for(File file : maskChanFiles) {
                 String name = file.getName();
                 if (!name.endsWith("mask") && !name.endsWith("chan")) continue;
-                Integer index = null;
-                try {
-                    index = NeuronSeparatorResultsDiscoveryService.getNeuronIndexFromMaskChanFile(name);
+                if (name.equals("ref.mask")) {
+                	refMaskFile = file.getAbsolutePath();
                 }
-                catch (Exception e) {
-                    logger.warn("Could not parse mask/chan file name: "+name+", "+e.getMessage());
+                else if (name.equals("ref.chan")) {
+                	refChanFile = file.getAbsolutePath();
                 }
-                if (index==null) continue;
-                if (name.endsWith("mask")) {
-                    maskFiles.put(index, file.getAbsolutePath());
-                }
-                else if (name.endsWith("chan")) {
-                    chanFiles.put(index, file.getAbsolutePath());
+                else {
+                    Integer index = null;
+                    try {
+                        index = NeuronSeparatorResultsDiscoveryService.getNeuronIndexFromMaskChanFile(name);
+                    }
+                    catch (Exception e) {
+                        logger.warn("Could not parse mask/chan file name: "+name+", "+e.getMessage());
+                    }
+                    if (index==null) continue;
+                    if (name.endsWith("mask")) {
+                        maskFiles.put(index, file.getAbsolutePath());
+                    }
+                    else if (name.endsWith("chan")) {
+                        chanFiles.put(index, file.getAbsolutePath());
+                    }
                 }
             }
         }
         else {
             logger.warn("The mask/chan dir does not exist at: "+maskChanDir);
+        }
+
+        if (refMaskFile!=null) {
+            Entity maskImage = helper.create3dImage(refMaskFile);
+            helper.setImage(referenceVolume, EntityConstants.ATTRIBUTE_MASK_IMAGE, maskImage);
+        }
+        else {
+        	logger.warn("Missing ref mask file");
+        }
+        
+        if (refChanFile!=null) {
+            Entity chanImage = helper.create3dImage(refChanFile);
+            helper.setImage(referenceVolume, EntityConstants.ATTRIBUTE_CHAN_IMAGE, chanImage);
+    	}
+        else {
+        	logger.warn("Missing ref chan file");
         }
         
         for(File file : fragmentMipFiles) {

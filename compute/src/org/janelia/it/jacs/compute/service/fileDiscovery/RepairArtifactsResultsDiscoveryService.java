@@ -18,7 +18,7 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class MaskChanResultsDiscoveryService extends AbstractEntityService {
+public class RepairArtifactsResultsDiscoveryService extends AbstractEntityService {
 
     protected FileDiscoveryHelper helper;
     

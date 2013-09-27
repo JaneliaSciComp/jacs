@@ -245,6 +245,10 @@ public class Vaa3DHelper {
         return VAA3D_BASE_CMD + " -cmd cell-counter -cch "+cellChannel+" -bch "+bkgdChannel+" -plan "+planPath+" -i "+convertedFilePath;
     }
 
+    public static String getFormattedMaskFromStackCommand(String refPath, String outputDir, String outputPrefix, String channel, String threshold) {
+        return VAA3D_BASE_CMD + " -cmd neuron-fragment-editor -mode mask-from-stack -sourceImage \""+refPath+"\" -channel "+channel+" -threshold "+threshold+" -outputDir \""+outputDir+"\" -outputPrefix ";
+    }
+    
     public static String getFormattedMaskSearchCommand(String indexFilePath, String queryChannel, String matrix,
                                                        String maxHits, String skipZeroes, String outputFilePath) {
         String tmpString = VAA3D_BASE_CMD + " -cmd volume-pattern-index -mode search -indexFile \""+indexFilePath+

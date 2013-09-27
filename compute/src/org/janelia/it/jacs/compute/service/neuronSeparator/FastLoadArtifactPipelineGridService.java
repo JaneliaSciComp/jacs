@@ -92,7 +92,7 @@ public class FastLoadArtifactPipelineGridService extends SubmitDrmaaJobService {
     protected void writeShellScript(FileWriter writer) throws Exception {
         StringBuffer script = new StringBuffer();
         script.append("read INPUT_DIR\n");
-        script.append(NeuronSeparatorHelper.getFastLoadCommands(getGridResourceSpec().getSlots()) + "\n");
+        script.append(NeuronSeparatorHelper.getFastLoadCommands(getGridResourceSpec().getSlots(), "$INPUT_DIR") + "\n");
         writer.write(script.toString());
     }
     

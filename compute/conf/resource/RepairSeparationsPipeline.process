@@ -1,0 +1,75 @@
+<!-- 
+	Process all neuron separation results and ensure they have all the necessary artifacts.
+-->
+<process name="Repair Separations Pipeline" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+	<sequence>
+	            
+		<operation name="Get Incomplete Separations" processor="org.janelia.it.jacs.compute.service.entity.GetIncompleteSeparationsService">
+			<output name="RUN_MODE_ITEM_GROUPS"/>
+		</operation>
+		
+        <sequence forEach="RUN_MODE_ITEM_GROUPS">
+        
+            <operation name="Get Run Mode Groups" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromBeanService">
+                <input name="BEAN" value="$V{RUN_MODE_ITEM_GROUPS}"/>
+                <input name="BEAN_PROPERTY_1" value="runMode"/>
+                <input name="PROCESS_VARIABLE_1" value="RUN_MODE"/>
+                <input name="BEAN_PROPERTY_2" value="groupList"/>
+                <input name="PROCESS_VARIABLE_2" value="ENTITY_LIST"/>
+                <output name="RUN_MODE"/>
+                <output name="ENTITY_LIST"/>
+            </operation>
+        
+    	    <sequence forEach="ENTITY_LIST">
+            
+			    <!-- Create a result node for this grid run -->
+			    <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+				    <input name="NAME" value="Temp"/>
+			        <output name="RESULT_FILE_NODE"/>
+			        <output name="RESULT_FILE_NODE_ID"/>
+			    </operation>
+			    
+			    <!-- Generate artifacts for all the separations in the list -->
+		        <sequence name="Generate Artifacts" waitForAsync="true">
+				    <operation name="Generate Artifacts" processor="queue/gridSubmitAndWait">
+				        <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.RepairArtifactsPipelineGridService"/>
+						<input name="RESULT_FILE_NODE"/>
+						<input name="ARCHIVE_FLAG" value="true"/>
+						<input name="RUN_MODE"/>
+						<input name="ENTITY_LIST"/>
+						<output name="OUTPUT_PATHS"/>
+						<output name="FINAL_PATHS"/>
+				    </operation>
+		        </sequence>
+			    
+                <!-- Copy the files to archive -->
+                <sequence name="Wait Async" waitForAsync="true">
+                    <operation name="Copy LSMs" processor="queue/gridSubmitAndWait">
+                        <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ArchiveGridService"/>
+                        <input name="RESULT_FILE_NODE"/>
+                        <input name="SOURCE_FILE_PATHS" value="$V{OUTPUT_PATHS}"/>
+                        <input name="TARGET_FILE_PATHS" value="$V{FINAL_PATHS}"/>
+                        <input name="DELETE_SOURCE_FILES" value="false"/>
+                        <output name="INPUT_FILE_PATHS"/>
+                        <output name="OUTPUT_FILE_PATHS"/>
+                    </operation>
+                </sequence>
+                
+			    <!-- Load the separation results into the database -->
+				<operation name="Discover Bulk Mask/Chan Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.RepairArtifactsResultsDiscoveryService">
+				    <input name="RUN_MODE"/>
+					<input name="SEPARATION_LIST" value="$V{ENTITY_LIST}"/>
+			    </operation>
+				        
+			    <!-- Trash temporary file node -->
+			    <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
+			        <input name="RESULT_FILE_NODE_ID"/>
+			        <input name="FILE_NODE_ID" value="$V{RESULT_FILE_NODE_ID}"/>
+			    </operation>
+	    
+    		</sequence>  
+    		
+        </sequence>      
+	    
+    </sequence>
+</process>

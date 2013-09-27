@@ -19,9 +19,22 @@ public class InitVariablesFromBeanService implements IService {
     public void execute(IProcessData processData) throws ServiceException {
         try {
             Logger logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
+            
+            Object bean = processData.getItem("BEAN");
+            
+            if (bean==null) {
+	            String beanName = (String)processData.getItem("BEAN_NAME");
+	            
+	            if (beanName==null) {
+	            	throw new IllegalArgumentException("Both BEAN and BEAN_NAME may not be null");
+	            }
+	            
+	            bean = processData.getItem(beanName);
+            }
 
-            String beanName = (String)processData.getItem("BEAN_NAME");    
-            Object bean = processData.getItem(beanName);	
+            if (bean==null) {
+            	throw new IllegalArgumentException("Bean is null");
+            }
             
         	int num = 1;
         	while (true) {

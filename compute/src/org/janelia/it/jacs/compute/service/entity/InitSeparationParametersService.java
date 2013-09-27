@@ -29,6 +29,11 @@ public class InitSeparationParametersService extends AbstractEntityService {
     public void execute() throws Exception {
 
         this.resultFileNode = ProcessDataHelper.getResultFileNode(processData);
+
+        String inputFilename = (String)processData.getItem("INPUT_FILENAME");
+        if (inputFilename==null || "".equals(inputFilename)) {
+            throw new IllegalArgumentException("Input parameter INPUT_FILENAME may not be empty");
+        }
         
     	String resultEntityName = (String)processData.getItem("RESULT_ENTITY_NAME");
     	if (resultEntityName == null || "".equals(resultEntityName)) {
@@ -65,8 +70,13 @@ public class InitSeparationParametersService extends AbstractEntityService {
             }
         }
         
+        inputFilename = checkForArchival(inputFilename);
         alignedConsolidatedLabelFilepath = checkForArchival(alignedConsolidatedLabelFilepath);
         previousResultFilename = checkForArchival(previousResultFilename);
+
+        if (inputFilename==null) inputFilename = "";
+        logger.info("Putting '"+inputFilename+"' in INPUT_FILENAME");
+        processData.putItem("INPUT_FILENAME", inputFilename);
         
         if (alignedConsolidatedLabelFilepath==null) alignedConsolidatedLabelFilepath = "";
         logger.info("Putting '"+alignedConsolidatedLabelFilepath+"' in ALIGNED_CONSOLIDATED_LABEL_FILEPATH");

@@ -41,17 +41,17 @@ public class NeuronSeparatorHelper {
         return script.toString();
 	}
 
-	public static String getFastLoadCommands(int numThreads) {
+	public static String getFastLoadCommands(int numThreads, String inputFile) {
         StringBuilder script = new StringBuilder();
         script.append("export NFE_MAX_THREAD_COUNT="+numThreads+"\n");
-        script.append("sh "+FAST_LOAD_SCRIPT+" $INPUT_DIR");
+        script.append("sh "+FAST_LOAD_SCRIPT+" "+inputFile);
         return script.toString();
 	}
 
-    public static String getMaskChanCommands(int numThreads) {
+    public static String getMaskChanCommands(int numThreads, String inputFile) {
         StringBuilder script = new StringBuilder();
         script.append("export NFE_MAX_THREAD_COUNT="+numThreads+"\n");
-        script.append("sh "+MASK_CHAN_SCRIPT+" $INPUT_DIR");
+        script.append("sh "+MASK_CHAN_SCRIPT+" "+inputFile);
         return script.toString();
     }
     
