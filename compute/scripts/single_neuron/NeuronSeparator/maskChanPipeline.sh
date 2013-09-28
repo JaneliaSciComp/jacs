@@ -29,13 +29,10 @@ then
 fi
 
 SEPDIR=$1 # e.g. /groups/scicomp/jacsData/filestore/.../separate
-WORK_DIR=$2
-if [ "$WORK_DIR" == "" ]; then
-    WORK_DIR=$SEP_DIR
-fi
 
 LABEL_FILE="$SEPDIR/ConsolidatedLabel.v3draw"
 SIGNAL_FILE="$SEPDIR/ConsolidatedSignal.v3draw"
+REF_FILE="$SEPDIR/Reference.v3draw"
 
 if [ ! -f "$LABEL_FILE" ]; then
     LABEL_FILE="$SEPDIR/ConsolidatedLabel.v3dpbd"
@@ -67,6 +64,10 @@ echo "Output dir: $OUTDIR"
 echo "~ Creating mask/chan files with $NFE_MAX_THREAD_COUNT threads"
 echo "$Vaa3D -cmd neuron-fragment-editor -mode reverse-label -sourceImage $SIGNAL_FILE -labelIndex $LABEL_FILE -outputDir $WORKING_DIR -outputPrefix neuron -maxThreadCount $NFE_MAX_THREAD_COUNT"
 $Vaa3D -cmd neuron-fragment-editor -mode reverse-label -sourceImage $SIGNAL_FILE -labelIndex $LABEL_FILE -outputDir $WORKING_DIR -outputPrefix neuron -maxThreadCount $NFE_MAX_THREAD_COUNT
+
+echo "~ Creating mask/chan reference files"
+echo "$Vaa3D -cmd neuron-fragment-editor -mode mask-from-stack -sourceImage $REF_FILE -channel 1 -threshold 0.08 -outputDir $WORKING_DIR  -outputPrefix ref"
+$Vaa3D -cmd neuron-fragment-editor -mode mask-from-stack -sourceImage $REF_FILE -channel 1 -threshold 0.08 -outputDir $WORKING_DIR -outputPrefix ref
 
 mkdir -p $OUTDIR
 if ls core* &> /dev/null; then
