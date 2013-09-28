@@ -37,23 +37,8 @@
 						<input name="ARCHIVE_FLAG" value="true"/>
 						<input name="RUN_MODE"/>
 						<input name="ENTITY_LIST"/>
-						<output name="OUTPUT_PATHS"/>
-						<output name="FINAL_PATHS"/>
 				    </operation>
 		        </sequence>
-			    
-                <!-- Copy the files to archive -->
-                <sequence name="Wait Async" waitForAsync="true">
-                    <operation name="Copy LSMs" processor="queue/gridSubmitAndWait">
-                        <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ArchiveGridService"/>
-                        <input name="RESULT_FILE_NODE"/>
-                        <input name="SOURCE_FILE_PATHS" value="$V{OUTPUT_PATHS}"/>
-                        <input name="TARGET_FILE_PATHS" value="$V{FINAL_PATHS}"/>
-                        <input name="DELETE_SOURCE_FILES" value="false"/>
-                        <output name="INPUT_FILE_PATHS"/>
-                        <output name="OUTPUT_FILE_PATHS"/>
-                    </operation>
-                </sequence>
                 
 			    <!-- Load the separation results into the database -->
 				<operation name="Discover Bulk Mask/Chan Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.RepairArtifactsResultsDiscoveryService">

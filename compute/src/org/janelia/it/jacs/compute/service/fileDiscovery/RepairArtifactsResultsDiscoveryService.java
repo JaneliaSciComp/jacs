@@ -1,7 +1,6 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,49 +8,42 @@ import java.util.Map;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.entity.GetIncompleteSeparationsService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
- * File discovery service for a list of mask/chan results.
+ * File discovery service for artifacts that repair neuron separation results.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class RepairArtifactsResultsDiscoveryService extends AbstractEntityService {
 
-    protected FileDiscoveryHelper helper;
+	private FileDiscoveryHelper helper;
+    private String runMode;
+    private List<Entity> separations;
     
 	@Override
     public void execute() throws Exception {
 
         helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
-        
-        List<Entity> entityList = (List<Entity>)processData.getItem("SEPARATION_LIST");
-        if (entityList==null) {
-        	Entity entity = (Entity)processData.getItem("SEPARATION");
-        	if (entity==null) {
-        		String entityId = (String)processData.getItem("SEPARATION_ID");
-        		if (entityId==null) {
-        			throw new ServiceException("Both SEPARATION/SEPARATION_ID and SEPARATION_LIST may not be null");	
-        		}
-        		entity = entityBean.getEntityById(entityId);
-        	}
-        	entityList = new ArrayList<Entity>();
-        	entityList.add(entity);
+    	runMode = (String)processData.getItem("RUN_MODE");
+        if (runMode==null) {
+        	throw new ServiceException("Input parameter RUN_MODE may not be null");
+        }
+
+        separations = (List<Entity>)processData.getItem("ENTITY_LIST");
+        if (separations==null) {
+        	throw new ServiceException("Input parameter ENTITY_LIST may not be empty");
         }
         
-        for(Entity entity : entityList) {
+        for(Entity separation : separations) {
         	try {
-        		processSeparation(entity);
+        		processSeparation(separation);
         	}
         	catch (Exception e) {
-        		if (entityList.size()==1) {
-        			throw e;
-        		}
-        		else {
-        			logger.error("Results discovery failed for separation id="+entity.getId(), e);	
-        		}
+    			logger.error("Results discovery failed for separation with id="+separation.getId(), e);	
         	}
         }
     }
@@ -63,10 +55,29 @@ public class RepairArtifactsResultsDiscoveryService extends AbstractEntityServic
     		return;
     	}
 	
+    	// Load the entire neuron separation entity tree
 		entityBean.loadLazyEntity(separation, true);
 		
 		String filepath = separation.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
 
+        if (runMode.equals(GetIncompleteSeparationsService.MODE_REF_MASK_CHAN)) {
+        	discoverRefMaskChan(separation, filepath);
+        }
+        else if (runMode.equals(GetIncompleteSeparationsService.MODE_ALL_MASK_CHAN)) {
+        	discoverAllMaskChan(separation, filepath);
+        }
+        else if (runMode.equals(GetIncompleteSeparationsService.MODE_FASTLOAD)) {
+        	discoverFastLoad(separation, filepath);        	
+        }
+	}
+
+	private void discoverFastLoad(Entity separation, String filepath) throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void discoverAllMaskChan(Entity separation, String filepath) throws Exception {
+		
         logger.info("Processing mask/chan results for separation (id="+separation.getId()+") with path "+filepath);
 
         // Find mask/chan files
@@ -136,6 +147,11 @@ public class RepairArtifactsResultsDiscoveryService extends AbstractEntityServic
             chanImage = helper.create3dImage(chanFilepath);
             helper.setImage(fragmentEntity, EntityConstants.ATTRIBUTE_CHAN_IMAGE, chanImage); 
         }
+		
+	}
+
+	private void discoverRefMaskChan(Entity separation, String filepath) throws Exception {
+		// TODO Auto-generated method stub
 		
 	}
 }

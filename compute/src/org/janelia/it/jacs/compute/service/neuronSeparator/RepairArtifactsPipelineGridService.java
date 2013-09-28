@@ -49,6 +49,9 @@ public class RepairArtifactsPipelineGridService extends AbstractEntityGridServic
     	super.init(processData);
     	
     	runMode = (String)processData.getItem("RUN_MODE");
+        if (runMode==null) {
+        	throw new ServiceException("Input parameter RUN_MODE may not be null");
+        }
 
         if (!runMode.equals(GetIncompleteSeparationsService.MODE_REF_MASK_CHAN)) {
         	logger.error("Run mode "+runMode+" is currently not supported.");
@@ -82,7 +85,10 @@ public class RepairArtifactsPipelineGridService extends AbstractEntityGridServic
     private void writeInstanceFiles(Entity separation, int configIndex) throws Exception {
     	File configFile = new File(getSGEConfigurationDirectory(), getGridServicePrefixName()+"Configuration."+configIndex);
         FileWriter fw = new FileWriter(configFile);
+        
         try {
+        	String sepPath = separation.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        	
         	if (runMode.equals(GetIncompleteSeparationsService.MODE_REF_MASK_CHAN)) {
 
             	// Load children
@@ -100,14 +106,13 @@ public class RepairArtifactsPipelineGridService extends AbstractEntityGridServic
     	        	}
     	        	populateChildren(reference);
             	}
-            	String inputPath = reference.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                fw.write(inputPath + "\n");
-                File maskChanDir = new File(resultFileNode.getDirectoryPath()+"/archive/maskChan");
-                fw.write(maskChanDir.getAbsolutePath()+"\n");
+            	
+            	String refPath = reference.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                fw.write(refPath + "\n");
+                fw.write(sepPath + "/archive/maskChan\n");
         	}
         	else {
-        		String inputPath = separation.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        		fw.write(inputPath + "\n");
+        		fw.write(sepPath + "\n");
         	}
         }
         catch (IOException e) {
@@ -121,10 +126,10 @@ public class RepairArtifactsPipelineGridService extends AbstractEntityGridServic
     protected void writeShellScript(FileWriter writer) throws Exception {
         StringBuffer script = new StringBuffer();
         script.append("read INPUT\n");
-        script.append("read OUTPUT_DIR\n");
-        script.append("mkdir -p $OUTPUT_DIR\n");
         
         if (runMode.equals(GetIncompleteSeparationsService.MODE_REF_MASK_CHAN)) {
+            script.append("read OUTPUT_DIR\n");
+            script.append("mkdir -p $OUTPUT_DIR\n");
         	script.append(Vaa3DHelper.getFormattedMaskFromStackCommand("$INPUT","$OUTPUT_DIR","ref","1","0.08"));
         }
         else if (runMode.equals(GetIncompleteSeparationsService.MODE_ALL_MASK_CHAN)) {
@@ -150,33 +155,5 @@ public class RepairArtifactsPipelineGridService extends AbstractEntityGridServic
     @Override
 	public void postProcess() throws MissingDataException {
     	
-    	
-//    	
-//    	for(String maskChanDir : maskChanPaths) {
-//
-//    		File dir = new File(maskChanDir);
-//    		if (!dir.exists()) {
-//				if (maskChanPaths.size()==1) {
-//					throw new MissingDataException("Missing mask/chan directory: "+maskChanDir);
-//				}
-//				else {
-//	    			logger.error("Missing mask/chan directory: "+maskChanDir);
-//				}
-//    		}
-//
-//    		if (!dir.exists()) {
-//				if (maskChanPaths.size()==1) {
-//					throw new MissingDataException("Missing fast load directory: "+maskChanDir);
-//				}
-//				else {
-//	    			logger.error("Missing fast load directory: "+maskChanDir);
-//				}
-//    		}
-//    	}
-//
-//    	processData.putItem("ARCHIVE_FILE_PATHS", maskChanPaths);
-//    	if (maskChanPaths.size()==1) {
-//    		processData.putItem("ARCHIVE_FILE_PATH", maskChanPaths.get(0));
-//    	}
 	}
 }

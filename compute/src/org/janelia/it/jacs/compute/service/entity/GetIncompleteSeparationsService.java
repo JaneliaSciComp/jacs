@@ -81,6 +81,7 @@ public class GetIncompleteSeparationsService extends AbstractEntityService {
             	logger.info("  Adding separation to missingFastLoad list");
             	missingFastload.add(result);
             }
+            
             if (!hasNeuronMaskChans) {
             	logger.info("  Adding separation to missingAllMaskChan list");
             	missingAllMaskChan.add(result);
@@ -94,10 +95,9 @@ public class GetIncompleteSeparationsService extends AbstractEntityService {
         	for(EntityData childEd : result.getEntityData()) {
         	    childEd.setChildEntity(null);
         	}
-        	
         }
         
-        logger.info("missingRefMaskChan.size="+missingRefMaskChan.size());
+        logger.info("missingFastload.size="+missingFastload.size());
         logger.info("missingAllMaskChan.size="+missingAllMaskChan.size());
         logger.info("missingRefMaskChan.size="+missingRefMaskChan.size());
         

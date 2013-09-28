@@ -24,6 +24,8 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
     public static final String NEURON_MIP_PREFIX = NeuronSeparationPipelineGridService.NAME+".PR.neuron";
     
     private String objective;
+    private String opticalRes;
+    private String pixelRes;
     
 	@Override
     public void execute(IProcessData processData) throws ServiceException {
@@ -34,7 +36,10 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
         	String resultEntityName = (String)processData.getItem("RESULT_ENTITY_NAME")+" "+objective;
         	processData.putItem("RESULT_ENTITY_NAME", resultEntityName);
     	}
-    	
+
+        this.opticalRes = (String)processData.getItem("OPTICAL_RESOLUTION");
+        this.pixelRes = (String)processData.getItem("PIXEL_RESOLUTION");
+        
     	super.execute(processData);
     }
     
@@ -54,10 +59,6 @@ public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDisco
             logger.info("Cannot read from folder "+dir.getAbsolutePath());
             return;
         }
-
-        String opticalRes = (String)processData.getItem("OPTICAL_RESOLUTION");
-        String pixelRes = (String)processData.getItem("PIXEL_RESOLUTION");
-        
         
         EntityHelper entityHelper = new EntityHelper(entityBean, computeBean, ownerKey, logger);
         if (opticalRes!=null) {
