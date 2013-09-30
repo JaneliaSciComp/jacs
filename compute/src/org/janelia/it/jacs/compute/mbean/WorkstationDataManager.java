@@ -77,11 +77,13 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     }
 
     @Override
-    public void runCompartmentLoading(String user, String maskChanPath, String topLevelFolderName) {
+    public void runCompartmentLoading(String user, String maskChanPath, String topLevelFolderName, String opticalResolution, String pixelResolution) {
         try {
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("mask chan file path", maskChanPath, null));
             taskParameters.add(new TaskParameter("top level folder name", topLevelFolderName, null));
+            taskParameters.add(new TaskParameter("optical resolution", opticalResolution, null));
+            taskParameters.add(new TaskParameter("pixel resolution", pixelResolution, null));
             Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(),
                     taskParameters, "compartmentLoading", "Mask Chan Encoded Compartment Loading");
             task.setJobName("Mask Chan Compartment Pipeline Task");

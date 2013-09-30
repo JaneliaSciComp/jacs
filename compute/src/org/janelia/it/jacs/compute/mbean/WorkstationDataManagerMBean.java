@@ -46,7 +46,7 @@ public interface WorkstationDataManagerMBean {
 
     public void runNeuronMergeTest(String taskOwner, String separationEntityId, String commaSeparatedNeuronFragmentList);
 
-    public void runCompartmentLoading(String user, String maskChanPath, String topLevelFolderName);
+    public void runCompartmentLoading(String user, String maskChanPath, String topLevelFolderName, String opticalResolution, String pixelResolution);
 
     public void runSlowImportTask(String parentDirPath, String topLevelFolderName, String owner);
     public void runDataDeDuplication();

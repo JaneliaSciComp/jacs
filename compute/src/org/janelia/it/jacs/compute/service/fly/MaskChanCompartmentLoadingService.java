@@ -26,6 +26,8 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
 	
     private static final String FOLDER_PARAM = "TOP_LEVEL_FOLDER_NAME";
     private static final String INPATH_PARAM = "MASK_CHAN_PATH";
+    private static final String OPTICAL_RES_PARAM = "OPTICAL_RESOLUTION";
+    private static final String PIXEL_RES_PARAM = "PIXEL_RESOLUTION";
 
     private static final String FILESTORE_ROOT_PATH = SystemConfigurationProperties.getString("FileStore.CentralDir");
     private static final String COMPARTMENT_NAMES_FILE = FILESTORE_ROOT_PATH+File.separator+"/MaskResources/Compartment/maskNameIndex.txt";
@@ -50,8 +52,14 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
      *      <input name="PROCESS_VARIABLE_1" value="MASK_CHAN_PATH"/>
      *      <input name="TASK_PARAMETER_2" value="top level folder name"/>
      *      <input name="PROCESS_VARIABLE_2" value="TOP_LEVEL_FOLDER_NAME"/>
+     *      <input name="TASK_PARAMETER_3" value="optical resolution"/>
+     *      <input name="PROCESS_VARIABLE_3" value="OPTICAL_RESOLUTION"/>
+     *      <input name="TASK_PARAMETER_4" value="pixel resolution"/>
+     *      <input name="PROCESS_VARIABLE_4" value="PIXEL_RESOLUTION"/>
      *      <output name="MASK_CHAN_PATH"/>
      *      <output name="TOP_LEVEL_FOLDER_NAME"/>
+     *      <output name="OPTICAL_RESOLUTION"/>
+     *      <output name="PIXEL_RESOLUTION"/>
      *      </operation>
      *
      * @throws Exception
@@ -73,6 +81,16 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
     	if (jacsFolder == null) {
     		throw new IllegalArgumentException(FOLDER_PARAM + " may not be null");
     	}
+
+        String opticalResolution = (String)processData.getItem(OPTICAL_RES_PARAM);
+        if ( opticalResolution == null ) {
+            opticalResolution = DEFAULT_OPTICAL_RESOLUTION;
+        }
+
+        String pixelResolution = (String)processData.getItem(PIXEL_RES_PARAM);
+        if ( pixelResolution == null ) {
+            pixelResolution = DEFAULT_PIXEL_RESOLUTION;
+        }
     	
         // Check input path: has files of correct type?  If so, get them into a convenient form.
         Map<String,MaskChannel> folderContents = readInputFolderContents(inputFSFolder);
@@ -88,8 +106,8 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
 
         // Compartments belong to a compartment set that has characteristics of all contents.
         EntityType compartmentSetEntityType = entityBean.getEntityTypeByName( EntityConstants.TYPE_COMPARTMENT_SET );
-        String compartmentSetName = "Compartment Set " + DEFAULT_ALIGNMENT_SPACE + " " + DEFAULT_OPTICAL_RESOLUTION + " " + DEFAULT_PIXEL_RESOLUTION;
-        Entity compartmentSetEntity = createCompartmentSetEntity( compartmentSetEntityType, compartmentSetName );
+        String compartmentSetName = "Compartment Set " + DEFAULT_ALIGNMENT_SPACE + " " + opticalResolution + " " + pixelResolution;
+        Entity compartmentSetEntity = createCompartmentSetEntity( compartmentSetEntityType, compartmentSetName, opticalResolution, pixelResolution );
 
         // Add this set as an entity-child of the folder.
         helper.addToParent( topLevelFolder, compartmentSetEntity, topLevelFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY );
@@ -169,14 +187,14 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
         return compartmentEntity;
     }
 
-    protected Entity createCompartmentSetEntity(EntityType entityType, String compartmentSetName) throws Exception {
+    protected Entity createCompartmentSetEntity(EntityType entityType, String compartmentSetName, String opticalResolution, String pixelResolution) throws Exception {
         Entity compartmentSetEntity = new Entity();
         compartmentSetEntity.setOwnerKey(ownerKey);
         compartmentSetEntity.setEntityType(entityType);
         compartmentSetEntity.setName(compartmentSetName);
         compartmentSetEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE, DEFAULT_ALIGNMENT_SPACE);
-        compartmentSetEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, DEFAULT_OPTICAL_RESOLUTION);
-        compartmentSetEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, DEFAULT_PIXEL_RESOLUTION);
+        compartmentSetEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, opticalResolution);
+        compartmentSetEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, pixelResolution);
         compartmentSetEntity = saveStampedEntity(compartmentSetEntity);
         logger.info("Saved compartment set entity as " + compartmentSetEntity.getId());
         return compartmentSetEntity;

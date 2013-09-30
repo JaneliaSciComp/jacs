@@ -267,8 +267,18 @@
             <type>java.lang.String</type>
         </parameter>
         <parameter>
-            <description>Name for top-level folder in Workstation (e.g., /compartmentMaskChan1024x512x218 ).</description>
+            <description>Name for top-level folder in Workstation (e.g., /compartmentMaskChan1024x512x218 or /compartmentMaskChan1712x1370x492).</description>
             <name>topLevelFolderName</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Optical resolution (e.g., 0.62x0.62x0.62 or 0.38x0.38x0.38).</description>
+            <name>opticalResolution</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Pixel resolution (e.g., 1024x512x218 or 1712x1370x492).</description>
+            <name>pixelResolution</name>
             <type>java.lang.String</type>
         </parameter>
     </operation>
