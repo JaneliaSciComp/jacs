@@ -43,8 +43,8 @@ public abstract class PatternAnnotationDataManager implements Serializable {
         QS_COMPARTMENT_LIST.add("ATL_R"); QS_DESCRIPTION_MAP.put("ATL_R", "Antler R");
         QS_COMPARTMENT_LIST.add("AVLP_L"); QS_DESCRIPTION_MAP.put("AVLP_L", "Anterior Ventrolateral Protocerebrum L");
         QS_COMPARTMENT_LIST.add("AVLP_R"); QS_DESCRIPTION_MAP.put("AVLP_R", "Anterior Ventrolateral Protocerebrum R");
-        QS_COMPARTMENT_LIST.add("CRE_L"); QS_DESCRIPTION_MAP.put("CRE_L", "Crepine R");
-        QS_COMPARTMENT_LIST.add("CRE_R"); QS_DESCRIPTION_MAP.put("CRE_R", "Crepine L");
+        QS_COMPARTMENT_LIST.add("CRE_L"); QS_DESCRIPTION_MAP.put("CRE_L", "Crepine L");
+        QS_COMPARTMENT_LIST.add("CRE_R"); QS_DESCRIPTION_MAP.put("CRE_R", "Crepine R");
         QS_COMPARTMENT_LIST.add("EB"); QS_DESCRIPTION_MAP.put("EB", "Ellipsoid Body");
         QS_COMPARTMENT_LIST.add("EPA_L"); QS_DESCRIPTION_MAP.put("EPA_L", "Epaulette L");
         QS_COMPARTMENT_LIST.add("EPA_R"); QS_DESCRIPTION_MAP.put("EPA_R", "Epaulette R");
