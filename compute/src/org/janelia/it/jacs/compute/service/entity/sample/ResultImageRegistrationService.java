@@ -1,9 +1,7 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -237,6 +235,8 @@ public class ResultImageRegistrationService extends AbstractEntityService {
             	setMIPs(imageTile, signalMip, refMip);
             }
     	}
+    	
+    	processData.putItem("DEFAULT_IMAGE_ID", default3dImage.getId());
 	}
 
     private Entity findDefaultImage(Entity result) throws Exception {

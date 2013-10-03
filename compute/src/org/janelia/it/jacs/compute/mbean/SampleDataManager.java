@@ -364,54 +364,11 @@ public class SampleDataManager implements SampleDataManagerMBean {
             logger.error("Error running pipeline", ex);
         }
     }
-    
-    public void runSingleFastLoadArtifactPipeline(String separationEntityId) {
-        try {
-            String processName = "FastLoadArtifactSinglePipeline";
-            String displayName = "Fast Load Artifact Pipeline";
-            Entity entity = EJBFactory.getLocalEntityBean().getEntityById(separationEntityId);
-            if (entity==null) throw new IllegalArgumentException("Entity with id "+separationEntityId+" does not exist");
-            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-            taskParameters.add(new TaskParameter(FastLoadArtifactService.PARAM_separationId, separationEntityId, null)); 
-            String user = entity.getOwnerKey();
-            saveAndRunTask(user, processName, displayName, taskParameters);
-        } 
-        catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
-        }
-    }
 
-    public void runCompleteFastLoadArtifactPipeline(String user) {
+    public void runRepairSeparationsPipeline(String user) {
         try {
-            String processName = "FastLoadArtifactCompletePipeline";
-            String displayName = "Fast Load Artifact Pipeline";
-            saveAndRunTask(user, processName, displayName);
-        } 
-        catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
-        }
-    }
-    
-    public void runSingleMaskChanArtifactPipeline(String separationEntityId) {
-        try {
-            String processName = "MaskChanArtifactSinglePipeline";
-            String displayName = "Mask Chan Artifact Pipeline";
-            Entity entity = EJBFactory.getLocalEntityBean().getEntityById(separationEntityId);
-            if (entity==null) throw new IllegalArgumentException("Entity with id "+separationEntityId+" does not exist");
-            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-            taskParameters.add(new TaskParameter(FastLoadArtifactService.PARAM_separationId, separationEntityId, null)); 
-            String user = entity.getOwnerKey();
-            saveAndRunTask(user, processName, displayName, taskParameters);
-        } 
-        catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
-        }
-    }
-    
-    public void runCompleteMaskChanArtifactPipeline(String user) {
-        try {
-            String processName = "MaskChanArtifactCompletePipeline";
-            String displayName = "Mask Chan Artifact Pipeline";
+            String processName = "RepairSeparationsPipeline";
+            String displayName = "Repair Separations Pipeline";
             saveAndRunTask(user, processName, displayName);
         } 
         catch (Exception ex) {

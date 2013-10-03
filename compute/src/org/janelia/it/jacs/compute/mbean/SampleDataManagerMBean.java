@@ -32,8 +32,5 @@ public interface SampleDataManagerMBean {
     public void applyProcessToSample(String sampleEntityId, String processName);
     
     // Upgrade pipelines
-    public void runSingleFastLoadArtifactPipeline(String separationEntityId);
-    public void runCompleteFastLoadArtifactPipeline(String user);
-    public void runSingleMaskChanArtifactPipeline(String separationEntityId);
-    public void runCompleteMaskChanArtifactPipeline(String user);
+    public void runRepairSeparationsPipeline(String user);
 }

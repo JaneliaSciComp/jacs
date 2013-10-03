@@ -356,10 +356,10 @@ public class FileDiscoveryHelper extends EntityHelper {
             return entityBean.getEntityTypeByName(EntityConstants.TYPE_TEXT_FILE);
         }
         else if (filenameLowerCase.endsWith(".mask")) {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_MC_MASK_FILE);
+            return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
         }
         else if (filenameLowerCase.endsWith(".chan")) {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_MC_CHANNEL_FILE);
+            return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
         }
         else {
             return entityBean.getEntityTypeByName(EntityConstants.TYPE_FILE);

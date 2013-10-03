@@ -297,40 +297,10 @@
            <type>java.lang.String</type>
         </parameter>
     </operation>
-
-    <operation>
-        <description>Create the fastLoad artifacts for a single neuron separation</description>
-        <name>runSingleFastLoadArtifactPipeline</name>
-        <parameter>
-           <description>Entity id of the neuron separation result entity</description>
-           <name>separationEntityId</name>
-           <type>java.lang.String</type>
-        </parameter>
-    </operation>
     
     <operation>
-        <description>Create the fastLoad artifacts for all single neuron separations</description>
-        <name>runCompleteFastLoadArtifactPipeline</name>
-        <parameter>
-            <description>User to run as (e.g. "flylight")</description>
-            <name>user</name>
-            <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Create the maskChan artifacts for a single neuron separation</description>
-        <name>runSingleMaskChanArtifactPipeline</name>
-        <parameter>
-           <description>Entity id of the neuron separation result entity</description>
-           <name>separationEntityId</name>
-           <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Create the maskChan artifacts for all single neuron separations</description>
-        <name>runCompleteMaskChanArtifactPipeline</name>
+        <description>Repair any neuron separations which are incomplete</description>
+        <name>runRepairSeparationsPipeline</name>
         <parameter>
             <description>User to run as (e.g. "flylight")</description>
             <name>user</name>

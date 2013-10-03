@@ -152,6 +152,7 @@
                             <include name="Neuron Separation" process="FlyLightSeparationPipeline">
                                 <input name="ROOT_ENTITY_ID" value="$V{RESULT_ENTITY_ID}"/>
                                 <input name="SAMPLE_ENTITY_ID"/>
+                                <input name="INPUT_IMAGE_ID" value="$V{IMAGE_ID}"/>
                                 <input name="INPUT_FILENAME" value="$V{FILENAME}"/>
                                 <input name="RESULT_ENTITY_NAME" value="Aligned Neuron Separation"/>
                                 <input name="SIGNAL_CHANNELS"/>

@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.service.entity;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -15,33 +16,41 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  */
 public class GetIncompleteSeparationsService extends AbstractEntityService {
 
+    private static final String centralDir = SystemConfigurationProperties.getString("FileStore.CentralDir");
+    private static final String centralDirArchived = SystemConfigurationProperties.getString("FileStore.CentralDir.Archived");
+    
     public static final String MODE_FASTLOAD = "fastLoad";
     public static final String MODE_ALL_MASK_CHAN = "maskChan"; 
     public static final String MODE_REF_MASK_CHAN = "refMaskChan";
     
     public void execute() throws Exception {
 
-        String runMode = (String)processData.getItem("RUN_MODE");
+        logger.info("Finding neuron separations in need of repair, which are owned by "+ownerKey+" and located in "+centralDir);
         
-        logger.info("Finding neuron separations in need of "+runMode+" repair");
+        List<String> missingFastload = new ArrayList<String>();
+        List<String> missingAllMaskChan = new ArrayList<String>();
+        List<String> missingRefMaskChan = new ArrayList<String>();
         
-        List<Entity> missingFastload = new ArrayList<Entity>();
-        List<Entity> missingAllMaskChan = new ArrayList<Entity>();
-        List<Entity> missingRefMaskChan = new ArrayList<Entity>();
-        
-        for(Entity result : entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
-        	logger.info("Processing neuron separation, id="+result.getId());
-        	
+        for(Entity separation : entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
+
+        	String inputPath = separation.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+            if (!inputPath.startsWith(centralDir) && !inputPath.startsWith(centralDirArchived)) {
+                logger.debug("  Cannot repair artifacts in dir which is not in the FileStore.CentralDir: "+inputPath);
+                continue;
+            }
+            
+        	logger.info("Processing neuron separation, id="+separation.getId());
+        		
         	boolean hasFastLoad = false; 
         	boolean hasRefMask = false;
         	boolean hasRefChan = false;
         	boolean hasNeuronMaskChans = false;
         	
         	// Load children
-        	populateChildren(result);
-        	Entity neuronFragments = EntityUtils.findChildWithType(result, EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION);
+        	populateChildren(separation);
+        	Entity neuronFragments = EntityUtils.findChildWithType(separation, EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION);
         	populateChildren(neuronFragments);
-        	Entity supportingData = EntityUtils.findChildWithType(result, EntityConstants.TYPE_SUPPORTING_DATA);
+        	Entity supportingData = EntityUtils.findChildWithType(separation, EntityConstants.TYPE_SUPPORTING_DATA);
         	populateChildren(supportingData);
 
         	// Load reference stack
@@ -76,35 +85,28 @@ public class GetIncompleteSeparationsService extends AbstractEntityService {
         	}
         	
         	logger.info("  hasFastLoad="+hasFastLoad+", hasRefMask="+hasRefMask+", hasRefChan="+hasRefChan+", hasNeuronMaskChans="+hasNeuronMaskChans);
-        	
+            
             if (!hasFastLoad) {
-            	logger.info("  Adding separation to missingFastLoad list");
-            	missingFastload.add(result);
+            	missingFastload.add(separation.getId().toString());
             }
             
             if (!hasNeuronMaskChans) {
-            	logger.info("  Adding separation to missingAllMaskChan list");
-            	missingAllMaskChan.add(result);
+            	missingAllMaskChan.add(separation.getId().toString());
             }
             else if (!hasRefMask || !hasRefChan) {
-            	logger.info("  Adding separation to missingRefMaskChan list");
-            	missingRefMaskChan.add(result);
+            	missingRefMaskChan.add(separation.getId().toString());
             }
             
         	// Free memory
-        	for(EntityData childEd : result.getEntityData()) {
+        	for(EntityData childEd : separation.getEntityData()) {
         	    childEd.setChildEntity(null);
         	}
         }
         
-        logger.info("missingFastload.size="+missingFastload.size());
-        logger.info("missingAllMaskChan.size="+missingAllMaskChan.size());
-        logger.info("missingRefMaskChan.size="+missingRefMaskChan.size());
-        
-        List<RunModeItemGroups> allModeGroups = new ArrayList<RunModeItemGroups>();
-        allModeGroups.add(new RunModeItemGroups(MODE_FASTLOAD, missingFastload));
-        allModeGroups.add(new RunModeItemGroups(MODE_ALL_MASK_CHAN, missingAllMaskChan));
-        allModeGroups.add(new RunModeItemGroups(MODE_REF_MASK_CHAN, missingRefMaskChan));
+        List<RunModeItemGroups<String>> allModeGroups = new ArrayList<RunModeItemGroups<String>>();
+        allModeGroups.add(new RunModeItemGroups<String>(MODE_FASTLOAD, missingFastload));
+        allModeGroups.add(new RunModeItemGroups<String>(MODE_ALL_MASK_CHAN, missingAllMaskChan));
+        allModeGroups.add(new RunModeItemGroups<String>(MODE_REF_MASK_CHAN, missingRefMaskChan));
         				
         processData.putItem("RUN_MODE_ITEM_GROUPS", allModeGroups);
     }

@@ -35,11 +35,6 @@ public class InitSeparationParametersService extends AbstractEntityService {
             throw new IllegalArgumentException("Input parameter INPUT_FILENAME may not be empty");
         }
         
-    	String resultEntityName = (String)processData.getItem("RESULT_ENTITY_NAME");
-    	if (resultEntityName == null || "".equals(resultEntityName)) {
-    		throw new IllegalArgumentException("RESULT_ENTITY_NAME may not be null");
-    	}
-
     	String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
     	if (sampleEntityId == null || "".equals(sampleEntityId)) {
     		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");

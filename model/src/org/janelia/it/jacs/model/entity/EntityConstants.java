@@ -58,8 +58,6 @@ public class EntityConstants {
     public static final String TYPE_ALIGNMENT_SPACE                  = "Alignment Space";
     public static final String TYPE_MASK_SET                         = "Mask Set";
     public static final String TYPE_MASK                             = "Mask";
-    public static final String TYPE_MC_MASK_FILE                     = "MC Mask File";
-    public static final String TYPE_MC_CHANNEL_FILE                  = "MC Channels File";
     public static final String TYPE_ALIGNED_ITEM                     = "Aligned Item";
     public static final String TYPE_DEFORMATION_MATRIX               = "Deformation Matrix";
     public static final String TYPE_3D_TILE_MICROSCOPE_SAMPLE        = "3D Tile Microscope Sample";
@@ -131,7 +129,8 @@ public class EntityConstants {
     public static final String ATTRIBUTE_WORKSPACE_SAMPLE_IDS                = "Workspace Sample Ids";
     public static final String ATTRIBUTE_CELL_COUNT                          = "Cell Count";
     public static final String ATTRIBUTE_PROCESSING_BLOCK                    = "Processing Block";
-
+    public static final String ATTRIBUTE_INPUT_IMAGE                         = "Input Image";
+    
     // Geometric Tree
     //
     //  "<id>:<parentId>:<index>:<x,y,z>:<comment>"
@@ -175,6 +174,16 @@ public class EntityConstants {
     public static final String VALUE_ONTOLOGY_TERM_TYPE_TEXT                = "Text";
     public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM_TEXT           = "EnumText";
 
+    /**
+     * @deprecated Use TYPE_IMAGE_3D instead. This will be removed someday.
+     */
+    public static final String TYPE_MC_MASK_FILE                     = "MC Mask File";
+    
+    /**
+     * @deprecated Use TYPE_IMAGE_3D instead. This will be removed someday.
+     */
+    public static final String TYPE_MC_CHANNEL_FILE                  = "MC Channels File";
+    
     /**
      * @deprecated Use ATTRIBUTE_MASK_ENTITY_COLLECTION instead. This will be removed someday.
      */

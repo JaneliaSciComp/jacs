@@ -11,30 +11,30 @@ import org.apache.log4j.Logger;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class RunModeItemGroups {
+public class RunModeItemGroups<T> {
 
 	private static final Logger logger = Logger.getLogger(RunModeItemGroups.class);
 	
     public static final int GROUP_SIZE = 200;
     
 	private String runMode;
-	private List<List> groupList = new ArrayList<List>();
+	private List<List<T>> groupList = new ArrayList<List<T>>();
 	
-	public RunModeItemGroups(String runMode, Collection fullList) {
+	public RunModeItemGroups(String runMode, Collection<T> fullList) {
 		this.runMode = runMode;
 		createGroups(fullList, GROUP_SIZE);
 		logger.info("Processed "+fullList.size()+" "+runMode+" entities into "+groupList.size()+" groups.");
 	}
 	
-    private List<List> createGroups(Collection fullList, int groupSize) {
-        List currentGroup = null;
-        for (Object s : fullList) {
+    private List<List<T>> createGroups(Collection<T> fullList, int groupSize) {
+        List<T> currentGroup = null;
+        for (T s : fullList) {
             if (currentGroup==null) {
-                currentGroup = new ArrayList();
+                currentGroup = new ArrayList<T>();
             } 
             else if (currentGroup.size()==groupSize) {
                 groupList.add(currentGroup);
-                currentGroup = new ArrayList();
+                currentGroup = new ArrayList<T>();
             }
             currentGroup.add(s);
         }
@@ -48,7 +48,7 @@ public class RunModeItemGroups {
 		return runMode;
 	}
 
-	public List<List> getGroupList() {
+	public List<List<T>> getGroupList() {
 		return groupList;
 	}    
 }

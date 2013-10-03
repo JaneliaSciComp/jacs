@@ -201,7 +201,7 @@ public class EntityHelper {
 	 * @throws ComputeException
 	 */
 	public void setDefault2dImage(Entity entity, Entity default2dImage) throws ComputeException {
-        setImage(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, default2dImage);
+        setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, default2dImage);
     }
 
 	/**

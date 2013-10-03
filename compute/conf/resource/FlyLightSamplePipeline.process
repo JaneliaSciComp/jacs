@@ -330,6 +330,7 @@
         		<operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
         			<input name="RESULT_ENTITY_ID"/>
         			<input name="DEFAULT_IMAGE_FILENAME" value="$V{STITCHED_FILENAME}"/>
+        			<output name="DEFAULT_IMAGE_ID"/>
         	    </operation>
     		
                 <!-- Set the result for this sample area -->
@@ -362,7 +363,7 @@
                                 <input name="ROOT_ENTITY_ID" value="$V{RESULT_ENTITY_ID}"/>
                                 <input name="SAMPLE_ENTITY_ID"/>
                                 <input name="INPUT_FILENAME" value="$V{OUTPUT_FILENAME}"/>
-                                <input name="RESULT_ENTITY_NAME" value="Neuron Separation"/>
+                                <input name="INPUT_IMAGE_ID" value="$V{DEFAULT_IMAGE_ID}"/>
                                 <input name="SIGNAL_CHANNELS"/>
                                 <input name="REFERENCE_CHANNEL"/>
                                 <input name="OPTICAL_RESOLUTION"/>

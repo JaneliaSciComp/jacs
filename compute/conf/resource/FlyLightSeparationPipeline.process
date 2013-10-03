@@ -6,6 +6,7 @@
 	    
 		<input name="ROOT_ENTITY_ID"/>
 		<input name="SAMPLE_ENTITY_ID"/>
+		<input name="INPUT_IMAGE_ID"/>
 		<input name="INPUT_FILENAME"/>
 		<input name="RESULT_ENTITY_NAME"/>
 		<input name="SIGNAL_CHANNELS"/>
@@ -28,7 +29,6 @@
 			<input name="SAMPLE_ENTITY_ID"/>
 			<input name="ROOT_ENTITY_ID"/>
 			<input name="INPUT_FILENAME"/>
-			<input name="RESULT_ENTITY_NAME"/>
 			<input name="ALIGNED_CONSOLIDATED_LABEL_FILEPATH"/>
 			<output name="INPUT_FILENAME"/>
 			<output name="PREVIOUS_RESULT_FILENAME"/>
@@ -64,14 +64,14 @@
         </sequence>
 		
 	    <!-- Load the separation results into the database -->
-		<operation name="Discover Neuron Separation Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.NeuronSeparatorResultsDiscoveryService">
-			<input name="SEPARATE_RESULT_FILE_NODE"/>
+		<operation name="Discover Neuron Separation Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.IncrementalSeparationDiscoveryService">
 			<input name="ROOT_FILE_NODE" value="$V{SEPARATE_RESULT_FILE_NODE}"/>
 			<input name="ROOT_ENTITY_ID"/>
 			<input name="RESULT_ENTITY_NAME"/>
             <input name="OPTICAL_RESOLUTION"/>
             <input name="PIXEL_RESOLUTION"/>
             <input name="OBJECTIVE"/>
+            <input name="INPUT_IMAGE_ID"/>
 	    </operation>
 	    
     </sequence>
