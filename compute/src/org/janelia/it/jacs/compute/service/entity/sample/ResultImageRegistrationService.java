@@ -236,7 +236,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
             }
     	}
     	
-    	processData.putItem("DEFAULT_IMAGE_ID", default3dImage.getId());
+    	processData.putItem("DEFAULT_IMAGE_ID", default3dImage.getId().toString());
 	}
 
     private Entity findDefaultImage(Entity result) throws Exception {
