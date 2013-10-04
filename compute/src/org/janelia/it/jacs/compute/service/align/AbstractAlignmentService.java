@@ -136,9 +136,6 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
                         logger.info("Found optical resolution consensus: "+input1.getOpticalResolution());
                     }
                 }
-                else {
-                    logger.info("  Optical resolution: "+input1.getOpticalResolution());
-                }
                 
                 if (input1.getPixelResolution()==null) {
                     // Interoperability with legacy samples
@@ -148,10 +145,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
                         logger.info("Found pixel resolution consensus: "+input1.getPixelResolution());
                     }
                 }
-                else {
-                    logger.info("  Pixel resolution: "+input1.getPixelResolution());
-                }
-
+                
                 if (input1.getChannelColors()!=null) {
                     logger.info("  Channel colors: "+input1.getChannelColors());
                 }
