@@ -306,49 +306,26 @@ public class SampleHelper extends EntityHelper {
         if (matchedSample==null) {
             matchedSample = matchedUnownedSample;
         }
-        
-        if (matchedSample==null) {
-            // Did not find any matching samples, try legacy name-based search
-            
-            String sampleIdentifier = getSampleName(dataSet, objective, parentSample, sampleProperties);
-            logger.info("  No matching samples found, trying legacy search on sample name: "+sampleIdentifier);
-            
-            List<Entity> matchingSamples = entityBean.getUserEntitiesByNameAndTypeName(null, 
-                    sampleIdentifier, EntityConstants.TYPE_SAMPLE);
-            
-            for(Entity entity : matchingSamples) {
-                if (entity.getOwnerKey().equals(ownerKey) || entity.getOwnerKey().equals("group:flylight")) {
-                    logger.info("  Found legacy FlyLight sample with matching name: "+sampleIdentifier);
-                    return entity;
-                }
-                else {
-                    logger.warn("  Found legacy sample with matching name, but it is not owned by us or FlyLight, so we can't use it. This is unexpected.");
-                }
-            }            
-            
-            return null;
+    
+        // Found matching sample
+        if (matchedSample.getOwnerKey().equals(ownerKey)) {
+            // Reuse existing example
+            return matchedSample;
         }
         else {
-            // Found matching sample
-            if (matchedSample.getOwnerKey().equals(ownerKey)) {
-                // Reuse existing example
+            // Need to annex the sample if possible
+            if ("group:flylight".equals(ownerKey)) {
+                // FlyLight cannot steal samples from others
+                logger.warn("  Found matching sample, but it is not owned by us or FlyLight, so we can't use it.");
+                return null;
+            }
+            else {        
+                // Annex it later, so we don't hold the connection open for too long
+                logger.warn("  Found matching sample, owned by FlyLight. We will annex it later.");
+                samplesToAnnex.add(matchedSample.getId());
                 return matchedSample;
             }
-            else {
-                // Need to annex the sample if possible
-                if ("group:flylight".equals(ownerKey)) {
-                    // FlyLight cannot steal samples from others
-                    logger.warn("  Found matching sample, but it is not owned by us or FlyLight, so we can't use it.");
-                    return null;
-                }
-                else {        
-                    // Annex it later, so we don't hold the connection open for too long
-                    logger.warn("  Found matching sample, owned by FlyLight. We will annex it later.");
-                    samplesToAnnex.add(matchedSample.getId());
-                    return matchedSample;
-                }
-                
-            }
+            
         }
     }
 
