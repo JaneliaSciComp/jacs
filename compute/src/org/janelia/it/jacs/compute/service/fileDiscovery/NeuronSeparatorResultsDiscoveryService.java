@@ -17,6 +17,8 @@ import org.janelia.it.jacs.model.entity.EntityType;
 /**
  * File discovery service for neuron separation results.
  * 
+ * @deprecated Use the IncrementalSeparationDiscoveryService instead. This service will be removed in the next release.
+ * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class NeuronSeparatorResultsDiscoveryService extends SupportingFilesDiscoveryService {
