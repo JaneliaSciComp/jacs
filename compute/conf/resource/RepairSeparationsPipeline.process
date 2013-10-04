@@ -6,6 +6,7 @@
 	            
 		<operation name="Get Incomplete Separations" processor="org.janelia.it.jacs.compute.service.entity.GetIncompleteSeparationsService">
 			<output name="RUN_MODE_ITEM_GROUPS"/>
+			<output name="INCOMPLETE_ITEMS"/>
 		</operation>
 		
         <sequence forEach="RUN_MODE_ITEM_GROUPS">
@@ -39,16 +40,6 @@
 						<input name="ENTITY_LIST"/>
 				    </operation>
 		        </sequence>
-                
-                <!-- For each neuron separation -->
-                <sequence forEach="ENTITY_LIST">
-                
-    			    <!-- Load the separation results into the database -->
-    				<operation name="Repair Separation Result" processor="org.janelia.it.jacs.compute.service.fileDiscovery.IncrementalSeparationDiscoveryService">
-    					<input name="SEPARATION_ID" value="$V{ENTITY_LIST}"/>
-    			    </operation>
-    			    
-                </sequence>  
 				        
 			    <!-- Trash temporary file node -->
 			    <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
@@ -60,5 +51,14 @@
     		
         </sequence>      
 	    
+        <sequence forEach="INCOMPLETE_ITEMS">
+        
+            <!-- Load the separation results into the database -->
+            <operation name="Repair Separation Result" processor="org.janelia.it.jacs.compute.service.fileDiscovery.IncrementalSeparationDiscoveryService">
+                <input name="SEPARATION_ID" value="$V{INCOMPLETE_ITEMS}"/>
+            </operation>
+            
+        </sequence>      
+            
     </sequence>
 </process>

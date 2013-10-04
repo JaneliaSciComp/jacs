@@ -1,7 +1,9 @@
 package org.janelia.it.jacs.compute.service.entity;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -30,6 +32,7 @@ public class GetIncompleteSeparationsService extends AbstractEntityService {
         List<String> missingFastload = new ArrayList<String>();
         List<String> missingAllMaskChan = new ArrayList<String>();
         List<String> missingRefMaskChan = new ArrayList<String>();
+        Set<String> incompleteItems = new HashSet<String>();
         
         for(Entity separation : entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
 
@@ -103,11 +106,16 @@ public class GetIncompleteSeparationsService extends AbstractEntityService {
         	}
         }
         
+        incompleteItems.addAll(missingFastload);
+        incompleteItems.addAll(missingAllMaskChan);
+        incompleteItems.addAll(missingRefMaskChan);
+        
         List<RunModeItemGroups<String>> allModeGroups = new ArrayList<RunModeItemGroups<String>>();
         allModeGroups.add(new RunModeItemGroups<String>(MODE_FASTLOAD, missingFastload));
         allModeGroups.add(new RunModeItemGroups<String>(MODE_ALL_MASK_CHAN, missingAllMaskChan));
         allModeGroups.add(new RunModeItemGroups<String>(MODE_REF_MASK_CHAN, missingRefMaskChan));
-        				
+        
         processData.putItem("RUN_MODE_ITEM_GROUPS", allModeGroups);
+        processData.putItem("INCOMPLETE_ITEMS", new ArrayList<String>(incompleteItems));
     }
 }

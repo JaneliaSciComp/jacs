@@ -17,6 +17,7 @@ import org.janelia.it.jacs.compute.service.neuronSeparator.NeuronSeparationPipel
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
@@ -245,11 +246,11 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
         }
         
         // Add all the new files to the Supporting Data folder
-        addToParent(supportingFiles, labelVolume);
-        addToParent(supportingFiles, signalVolume);
-        addToParent(supportingFiles, referenceVolume);
+        addToParentIfNecessary(supportingFiles, labelVolume, EntityConstants.ATTRIBUTE_ENTITY);
+        addToParentIfNecessary(supportingFiles, signalVolume, EntityConstants.ATTRIBUTE_ENTITY);
+        addToParentIfNecessary(supportingFiles, referenceVolume, EntityConstants.ATTRIBUTE_ENTITY);
         for(Entity result : resultFiles) {
-        	addToParent(supportingFiles, result);
+        	addToParentIfNecessary(supportingFiles, result, EntityConstants.ATTRIBUTE_ENTITY);
         }
         
         // Set default images
@@ -408,7 +409,15 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
         return fragmentEntity;
     }
 
-	private void addToParent(Entity parent, Entity child) throws Exception {
-        helper.addToParent(parent, child, parent.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+	private void addToParentIfNecessary(Entity parent, Entity child, String entityAttrName) throws Exception {
+		for(EntityData ed : parent.getOrderedEntityData()) {
+			Entity existingChild = ed.getChildEntity();
+			if (existingChild!=null) {
+				if (ed.getEntityAttribute().getName().equals(entityAttrName) && existingChild.getId().equals(child.getId())) {
+					return; // already an entity child
+				}
+			}
+		}
+        helper.addToParent(parent, child, parent.getMaxOrderIndex()+1, entityAttrName);
 	}
 }
