@@ -170,7 +170,8 @@ public class BaseServiceMDB implements MessageListener {
 //                logger.error("Process: " + queueMessage.getProcessDef() + " failed", e);
 //            }
             if (operationDef.updateProcessStatusOnFailure()) {
-                EJBFactory.getLocalComputeBean().recordProcessError(queueMessage.getProcessDef(), queueMessage.getProcessId(), e);
+            	logger.info("Not calling recordProcessError because it should be called elsewhere");
+//                EJBFactory.getLocalComputeBean().recordProcessError(queueMessage.getProcessDef(), queueMessage.getProcessId(), e);
             }
         }
         catch (MissingDataException ee) {
