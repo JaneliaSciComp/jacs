@@ -65,10 +65,15 @@ public class InitSeparationParametersService extends AbstractEntityService {
             }
         }
         
+        // First, make sure we fetch the companion file
+        if (previousResultFilename!=null) {
+        	checkForArchival(previousResultFilename.replaceFirst("\\.nsp$", ".pbd"));
+        }
+        
         inputFilename = checkForArchival(inputFilename);
         alignedConsolidatedLabelFilepath = checkForArchival(alignedConsolidatedLabelFilepath);
         previousResultFilename = checkForArchival(previousResultFilename);
-
+        
         if (inputFilename==null) inputFilename = "";
         logger.info("Putting '"+inputFilename+"' in INPUT_FILENAME");
         processData.putItem("INPUT_FILENAME", inputFilename);
@@ -118,18 +123,18 @@ public class InitSeparationParametersService extends AbstractEntityService {
                 populateChildren(run);
                     
                 Entity lastResult = null;
-                boolean resultFound = false;
+                boolean currentResultFound = false;
                 for(Entity result : EntityUtils.getChildrenOfType(run, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)) {
                     lastResult = result;
                     if (result.getId().equals(rootEntity.getId())) {
-                        resultFound = true;
+                        currentResultFound = true;
                         break;
                     }
                 }
                 
-                logger.info("Check pipeline run "+run.getId()+" containsCurrentResult?="+resultFound+" resultFound?="+(lastResult!=null));
+                logger.info("Check pipeline run "+run.getId()+" containsCurrentResult?="+currentResultFound+" resultFound?="+(lastResult!=null));
                     
-                if (!resultFound && lastResult!=null) {
+                if (!currentResultFound && lastResult!=null) {
                     populateChildren(lastResult);
                     List<Entity> separations = EntityUtils.getChildrenOfType(lastResult, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
                     Collections.reverse(separations);
@@ -175,8 +180,9 @@ public class InitSeparationParametersService extends AbstractEntityService {
         if (filepath==null) return null;
         if (filepath.startsWith(ARCHIVE_PREFIX)) {
             archivedFiles.add(filepath);
-            String newPath = new File(resultFileNode.getDirectoryPath(), new File(filepath).getName()).getAbsolutePath();
+            String newPath = new File(resultFileNode.getDirectoryPath()+"/tmp/", new File(filepath).getName()).getAbsolutePath();
             targetFiles.add(newPath);
+            logger.info("Archived file "+filepath+" will be copied to "+newPath);
             return newPath;
         }
         return filepath;

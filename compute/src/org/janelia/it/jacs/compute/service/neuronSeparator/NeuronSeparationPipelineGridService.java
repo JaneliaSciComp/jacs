@@ -4,19 +4,14 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.launcher.archive.ArchiveAccessHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
-import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.cv.Objective;
 import org.janelia.it.jacs.model.user_data.FileNode;
-import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
@@ -25,6 +20,9 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  *   RESULT_FILE_NODE - node in which to run the grid job
  *   OUTPUT_FILE_NODE - node to place the results (defaults to RESULT_FILE_NODE)
  *   PREVIOUS_RESULT_FILENAME - name of the previous result (*.nsp file) to map fragments against
+ *   OBJECTIVE - objective of the input, used to estimate the number of grid nodes to use (e.g. 63x files are larger than 20x, and need more processing power)
+ *   SIGNAL_CHANNELS - the signal channels of the input file
+ *   REFERENCE_CHANNEL - reference channel of the input file
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -80,54 +78,9 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
 
         consolidatedLabelFilepath = (String)processData.getItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH");        
         
-        copyInputsFromArchive();
-        
         logger.info("Starting NeuronSeparationPipelineService with taskId=" + task.getObjectId() + " resultNodeId=" + resultFileNode.getObjectId() + " resultDir=" + resultFileNode.getDirectoryPath()+
                 " workingDir="+outputFileNode.getDirectoryPath() + " inputFilename="+inputFilename+ " signalChannels="+signalChannels+ " referenceChannel="+referenceChannel+ " objective="+objective+
                 " previousResultFile="+previousResultFilepath+" consolidatedLabel="+consolidatedLabelFilepath);
-    }
-
-    private void copyInputsFromArchive() throws Exception {
-        
-        List<String> archivedFiles = new ArrayList<String>();
-        List<String> targetFiles = new ArrayList<String>();
-        
-        File fromArchiveDir = new File(resultFileNode.getDirectoryPath(), "from_archive");
-        
-        if (previousResultFilepath!=null && previousResultFilepath.startsWith(ARCHIVE_PREFIX)) {
-            File prevResultFile = new File(previousResultFilepath);
-            File previousCompanionFile = new File(prevResultFile.getParent(), prevResultFile.getName().substring(0, prevResultFile.getName().lastIndexOf('.'))+".pbd");
-            
-            archivedFiles.add(previousResultFilepath);
-            previousResultFilepath = new File(fromArchiveDir, prevResultFile.getName()).getAbsolutePath();
-            targetFiles.add(previousResultFilepath);
-            
-            archivedFiles.add(previousCompanionFile.getAbsolutePath());
-            previousCompanionFile = new File(fromArchiveDir, previousCompanionFile.getName());
-            targetFiles.add(previousCompanionFile.getAbsolutePath());
-        }
-        
-        if (consolidatedLabelFilepath!=null && consolidatedLabelFilepath.startsWith(ARCHIVE_PREFIX)) {
-            archivedFiles.add(consolidatedLabelFilepath);
-            consolidatedLabelFilepath = new File(fromArchiveDir, new File(consolidatedLabelFilepath).getName()).getAbsolutePath();
-            targetFiles.add(consolidatedLabelFilepath);
-        }
-        
-        if (!archivedFiles.isEmpty()) {
-            logger.info("Creating temporary directory: "+fromArchiveDir.getAbsolutePath());
-            fromArchiveDir.mkdirs();
-
-            logger.info("Copying files from archive (task_id="+task.getObjectId()+")");
-            ArchiveAccessHelper.sendCopyFromArchiveMessage(archivedFiles, targetFiles);
-//            ArchiveAccessHelper.synchronousGridifiedArchiveCopy(task, archivedFiles, targetFiles, false);
-
-            logger.info("Waiting for files to appear (task_id="+task.getObjectId()+"). Last file: "+targetFiles.get(targetFiles.size()-1));
-            FileUtil.waitForFiles(targetFiles, TIMEOUT_SECONDS*1000);
-
-            logger.info("Files have appeared (task_id="+task.getObjectId()+"). Last file: "+targetFiles.get(targetFiles.size()-1));
-            
-            this.fromArchiveDir = fromArchiveDir;
-        }
     }
     
     @Override
