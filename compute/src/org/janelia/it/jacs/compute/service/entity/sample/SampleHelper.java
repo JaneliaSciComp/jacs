@@ -308,25 +308,24 @@ public class SampleHelper extends EntityHelper {
         }
     
         // Found matching sample
-        if (matchedSample.getOwnerKey().equals(ownerKey)) {
-            // Reuse existing example
-            return matchedSample;
-        }
-        else {
-            // Need to annex the sample if possible
-            if ("group:flylight".equals(ownerKey)) {
-                // FlyLight cannot steal samples from others
-                logger.warn("  Found matching sample, but it is not owned by us or FlyLight, so we can't use it.");
-                return null;
+        if (matchedSample != null) {
+            final String matchedOwnerKey = matchedSample.getOwnerKey();
+            if ((matchedOwnerKey == null) || (! matchedOwnerKey.equals(ownerKey))) {
+                // Need to annex the sample if possible
+                if ("group:flylight".equals(ownerKey)) {
+                    // FlyLight cannot steal samples from others
+                    logger.warn("  Found matching sample, but it is not owned by us or FlyLight, so we can't use it.");
+                    matchedSample = null;
+                } else {
+                    // Annex it later, so we don't hold the connection open for too long
+                    logger.warn("  Found matching sample, owned by FlyLight. We will annex it later.");
+                    samplesToAnnex.add(matchedSample.getId());
+                }
             }
-            else {        
-                // Annex it later, so we don't hold the connection open for too long
-                logger.warn("  Found matching sample, owned by FlyLight. We will annex it later.");
-                samplesToAnnex.add(matchedSample.getId());
-                return matchedSample;
-            }
-            
         }
+
+        return matchedSample;
+
     }
 
     /**
