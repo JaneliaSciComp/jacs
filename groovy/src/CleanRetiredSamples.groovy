@@ -6,7 +6,7 @@ import org.janelia.it.jacs.shared.utils.EntityUtils
 
 boolean DEBUG = false
 
-String ownerKey = "group:flylight"
+String ownerKey = "user:nerna"
 f = new JacsUtils(ownerKey, false)
 
 int numProcessed = 0
@@ -23,16 +23,18 @@ for(Entity folder : f.e.getUserEntitiesByNameAndTypeName(ownerKey, "Retired Data
         SolrDocumentList results = f.s.search(null, query, false).response.results
         int count = results.numFound
 
-        numProcessed++
         println "  "+count+"\t"+sample.name+" "
 
         if (count==0) {
             toDelete.add(sample)
         }
+
+        numProcessed++
     }
 }
 
 println "Processed "+numProcessed+" samples. Found "+toDelete.size()+" candidate samples for deletion"
+
 if (!DEBUG) {
     println "DELETING SAMPLES:"
     for(Entity sample in toDelete) {

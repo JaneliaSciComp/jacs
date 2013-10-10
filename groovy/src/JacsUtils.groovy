@@ -1,6 +1,7 @@
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.common.SolrDocument
 import org.apache.solr.common.SolrDocumentList
+import org.janelia.it.FlyWorkstation.api.entity_model.management.ModelMgr
 import org.janelia.it.FlyWorkstation.api.facade.concrete_facade.ejb.EJBFacadeManager;
 import org.janelia.it.FlyWorkstation.api.facade.concrete_facade.ejb.EJBFactory
 import org.janelia.it.FlyWorkstation.api.facade.facade_mgr.FacadeManager;
@@ -14,6 +15,8 @@ import org.janelia.it.jacs.model.entity.Entity
 import org.janelia.it.jacs.model.entity.EntityData
 import org.janelia.it.jacs.model.user_data.Subject
 import org.janelia.it.jacs.shared.utils.EntityUtils
+import org.janelia.it.jacs.shared.utils.entity.AbstractEntityLoader
+
 import static org.janelia.it.jacs.model.entity.EntityConstants.*
 
 class JacsUtils {
@@ -112,4 +115,26 @@ class JacsUtils {
 		println "Added "+entity.entityType.name+"#"+entity.id+" as child of "+parent.entityType.name+"#"+parent.id;
 		return ed
 	}
+
+    def AbstractEntityLoader getEntityLoader() {
+        return new GroovyEntityLoader(this)
+    }
+}
+
+class GroovyEntityLoader implements AbstractEntityLoader {
+
+    def JacsUtils j
+
+    public GroovyEntityLoader(JacsUtils j) {
+        this.j = j
+    }
+
+    public Set<EntityData> getParents(Entity entity) throws Exception {
+        return new HashSet<EntityData>(j.e.getParentEntityDatas(entity.id))
+    }
+
+    public Entity populateChildren(Entity entity) throws Exception {
+        j.loadChildren(entity)
+        return entity
+    }
 }
