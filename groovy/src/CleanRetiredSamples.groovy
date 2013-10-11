@@ -6,7 +6,7 @@ import org.janelia.it.jacs.shared.utils.EntityUtils
 
 boolean DEBUG = false
 
-String ownerKey = "user:nerna"
+String ownerKey = "group:flylight"
 f = new JacsUtils(ownerKey, false)
 
 int numProcessed = 0

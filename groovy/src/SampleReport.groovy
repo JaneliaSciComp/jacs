@@ -42,15 +42,19 @@ Collections.sort(keys);
 
 int numSlideCodes = 0
 int numRetiredSamples = 0
+int numStitchingErrors = 0
+int numDuplications = 0
 
 if (Constants.HTML) {
     file.println("<html><body><head><style>" +
-            "td { font: 8pt sans-serif; vertical-align:top; border: 1px solid #aaa;} table { border-collapse: collapse; } " +
+            "td { font: 8pt sans-serif; vertical-align:top; border: 0px solid #aaa;} table { border-collapse: collapse; } " +
             "</style></head>")
     file.println("<h3>"+Constants.OWNER+" Retired Samples</h3>")
     file.println("<table>")
     file.println("<tr><td>Owner</td><td>Sample Name</td><td>Data Set</td><td>Matching Active Sample</td><td>Fragments</td><td>Annotations</td></tr>")
 }
+
+List<Entity> samplesForDeletion = new ArrayList<Entity>();
 
 for(String key : keys) {
 
@@ -72,7 +76,7 @@ for(String key : keys) {
 
         if (Constants.HTML) {
             file.println("<tr><td colspan=6 style='background-color:#aaa'>"+key+"</td></tr>");
-            println(key) // to see progress
+            println("Processing slide code "+key) // to see progress
         }
         else {
             file.println()
@@ -125,34 +129,44 @@ for(String key : keys) {
             }
         })
 
+        Set<String> situations = new HashSet<String>()
+
         for(Entity sample : orderedSamples) {
 
-            SampleInfo info = new SampleInfo(sample)
+            f.loadChildren(sample)
+
             annotations = getAnnotations(sample.id)
             visited = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISITED)
             data_set = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER)
             retired = (visited==null?"Retired":"")
 
-            if (visited==null) numRetiredSamples++
-
-            Set<Entity> transferSamples = transferMap.get(sample)
-            StringBuilder sb = new StringBuilder()
-
-            if (transferSamples!=null) {
-                transferSamples.each {
-                    if (sb.length()>0) sb.append(",")
-                    sb.append(it.name)
-                }
-            }
-
-            f.loadChildren(sample)
-
             NeuronCounter counter = new NeuronCounter(f.getEntityLoader())
             counter.count(sample)
 
-            Set annotSet = new HashSet<String>(annotations)
-            if (annotSet.contains("Stitching_error")) {
-    
+            Set<Entity> transferSamples = transferMap.get(sample)
+            StringBuilder transferSamplesSb = new StringBuilder()
+            if (transferSamples!=null) {
+                transferSamples.each {
+                    if (transferSamplesSb.length()>0) transferSamplesSb.append(",")
+                    transferSamplesSb.append(it.name)
+                }
+            }
+
+            if (visited==null) {
+                // Retired sample
+                numRetiredSamples++
+                if (sample.name.startsWith(transferSamplesSb.toString())) {
+                    situations.add('duplication')
+                }
+            }
+            else {
+                // Active sample
+                Set annotSet = new HashSet<String>(annotations)
+                if (annotSet.contains("Stitching_error") || annotSet.contains("something_wrong")) {
+                    situations.add('stitching')
+                    samplesForDeletion.add(sample)
+                    println("  Stitching error detected. Will delete this sample later.")
+                }
             }
 
 
@@ -162,8 +176,8 @@ for(String key : keys) {
                 file.println("<tr><td>"+sample.ownerKey.replaceAll("group:","").replaceAll("user:","")+"</td>")
                 file.println("<td style='background-color:#"+color+"'><nobr><b>"+sample.name+"</b></nobr></td>")
                 file.println("<td>"+data_set+"</td>")
-                if (sb.length()>0) {
-                    file.println("<td style='background-color:#"+Constants.COLOR_ACTIVE+"'><nobr><b>"+sb+"</b></nobr></td>")
+                if (transferSamplesSb.length()>0) {
+                    file.println("<td style='background-color:#"+Constants.COLOR_ACTIVE+"'><nobr><b>"+transferSamplesSb+"</b></nobr></td>")
                 }
                 else {
                     file.println("<td></td>");
@@ -172,7 +186,7 @@ for(String key : keys) {
                 file.println("<td>"+annots.substring(1,annots.length()-1)+"</td></tr>")
             }
             else {
-                transfer = sb.length()>0?"--> "+sb:""
+                transfer = transferSamplesSb.length()>0?"--> "+transferSamplesSb:""
                 file.println padRight(sample.ownerKey, 16) + padRight(sample.name, 65) + padRight(data_set, 40) + " " + transfer + " " + counter.numFragments + " "+ annotations
 
             }
@@ -208,20 +222,53 @@ for(String key : keys) {
 
             // free memory
             sample.setEntityData(null)
-
         }
+
+        if (Constants.HTML) {
+            def situation = ""
+            def color = "fff"
+
+            if (situations.contains("stitching") && situations.contains("duplication")) {
+                color = "afa"
+                situation = "Retired sample duplicated with stitching error";
+                numStitchingErrors++
+            }
+            else if (situations.contains("duplication")) {
+                color = "aff"
+                situation = "Retired sample duplicated";
+                numDuplications++
+            }
+            else {
+                situation = situations.toString()
+            }
+            file.println("<tr><td colspan=6 style='background-color:#"+color+"; text-align:right'>"+situation+"</td></tr>")
+            file.println("<tr><td height=40 colspan=6>&nbsp;</td></td>")
+        }
+
+
     }
 }
 
+println("Deleting unwanted samples...")
+for(Entity sample : samplesForDeletion) {
+    println("Unlinking and deleting "+sample.name)
+    f.e.deleteSmallEntityTree(sample.ownerKey, sample.id, true)
+}
+
 if (Constants.HTML) {
-    file.println("</table>");
+    file.println("</table>")
     file.println("<br>Slide codes: "+numSlideCodes)
-    file.println("<br>Samples codes: "+numSlideCodes)
-    file.println("</body></html>");
+    file.println("<br>Retired samples: "+numRetiredSamples)
+    file.println("<br>Stitching errors: "+numStitchingErrors)
+    file.println("<br>Duplications: "+numDuplications)
+    file.println("</body></html>")
 }
 else {
     file.println("Slide codes: "+numSlideCodes)
-    file.println("Samples: "+numRetiredSamples)
+    file.println("Retired samples: "+numRetiredSamples)
+    file.println("Stitching errors: "+numStitchingErrors)
+    file.println("Duplications: "+numDuplications)
+
 }
 
 file.close()
@@ -310,10 +357,7 @@ class SampleInfo {
             line = ""
             slide_code = sampleName
         }
-
-
     }
-
 }
 
 class NeuronCounter {
