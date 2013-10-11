@@ -5,7 +5,7 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/GWT"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Groovy"/>
 	<classpathentry exported="true" kind="con" path="GROOVY_SUPPORT"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/workstation.jar"/>
+	<classpathentry exported="true" kind="con" path="GROOVY_DSL_SUPPORT"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/activation-1.1.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/antlr-2.7.6.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/antlr-2.7.7.jar"/>
@@ -38,35 +38,21 @@
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/bcel-5.1.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/bio-formats.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/cglib-2.1.3.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/com.springsource.javax.validation-1.0.0.GA.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/com.springsource.org.aspectj.tools-1.6.8.RELEASE.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/com.springsource.org.codehaus.jackson-1.4.2.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/com.springsource.org.codehaus.jackson.mapper-1.4.2.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/com.springsource.org.jboss.util-2.0.4.GA.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/commons-codec-1.3.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/commons-codec-1.4.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/commons-codec-1.5.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/commons-collections-2.1.1.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/commons-fileupload-1.2.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/commons-httpclient-3.1.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/commons-io-1.4.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/commons-io-2.0.1.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/commons-logging-1.0.4.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/commons-logging-1.1.1.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/commons-net-2.0.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/commons-vfs-1.0.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/compute-client.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/JGoogleAnalytics_0.4.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/XmlSchema-1.4.3.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/compute-drmaa.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/compute-test.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/compute.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/drmaa.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/ehcache-core-2.5.1.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/forms-1.2.1.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/geronimo-annotation_1.0_spec-1.1.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/geronimo-jaxws_2.1_spec-1.0.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/geronimo-jta_1.1_spec-1.1.1.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/geronimo-jta_1.1_spec-1.1.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/geronimo-saaj_1.3_spec-1.0.1.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/geronimo-stax-api_1.0_spec-1.0.1.jar"/>
@@ -78,34 +64,27 @@
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/gluegen-rt-natives-windows-i586.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/gluegen-rt.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/groovy-all-1.8.6.jar"/>
+	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/gson-2.2.2.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/guava-13.0.1.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/gwt-serializable.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/gwt-servlet.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/hibernate-annotations.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/hibernate-entitymanager.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/hibernate3.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/httpclient-4.1.2.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/httpcore-4.0.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/httpcore-4.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/ij-1.48c.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jackrabbit-webdav-2.5.2.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jacs-model.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jacs-shared.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jai_codec.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jai_core.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jalopy-1.5rc3.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/javassist-3.12.1.GA.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/javassist.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jaxb-api-2.1.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jaxb-api-2.2.3.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jaxb-impl-2.1.7.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jaxb-impl-2.2.4.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jaxb-xjc-2.1.7.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jaxen-1.1.1.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jaxrs-api-2.3.4.Final.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jbossall-client.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jcip-annotations-1.0.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jdatepicker-1.3.2.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jersey-bundle-1.12.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jettison-1.0-RC2.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jetty-continuation-8.1.8.v20121106.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jetty-http-8.1.8.v20121106.jar"/>
@@ -115,6 +94,7 @@
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jetty-util-8.1.8.v20121106.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jibx-bind-1.2.1.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jibx-run-1.2.1.jar"/>
+	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jktx-1.6.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jna.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jogl-all-natives-linux-amd64.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jogl-all-natives-linux-i586.jar"/>
@@ -122,10 +102,7 @@
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jogl-all-natives-windows-amd64.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jogl-all-natives-windows-i586.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jogl.all.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jsr250-api-1.0.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jsr311-api-1.1.1.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/juli-6.0.16.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jxl.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/jython.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/loci_plugins.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/loci-common.jar"/>
@@ -133,60 +110,30 @@
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/logback-access-1.0.7.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/logback-classic-1.0.7.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/logback-core-1.0.7.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/lucene-core-3.5.0.jar"/>
+	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/lz4-1.1.1-sources.jar"/>
+	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/lz4-1.1.1.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/mac_widgets-0.9.5.jar"/>
+	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/MagicApplet.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/mail-1.4.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/metakit.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/mex-1.5.5-impl.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/miglayout-4.0-swing.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/mongo-2.7.3.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/neethi-2.0.5.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/neo4j-community-1.6.1.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/neo4j-cypher-1.6.1.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/neo4j-graph-algo-1.6.1.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/neo4j-graph-matching-1.6.1.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/neo4j-jmx-1.6.1.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/neo4j-kernel-1.6.1-tests.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/neo4j-kernel-1.6.1.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/neo4j-lucene-index-1.6.1.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/neo4j-rest-api.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/neo4j-shell-1.6.1.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/neo4j-udc-1.6.1.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/ome_plugins.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/ome-io.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/ome-xml.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/org-netbeans-swing-outline.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/org.apache.servicemix.bundles.jline-0.9.94_1.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/org.springframework.aop-3.0.7.RELEASE.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/org.springframework.asm-3.0.7.RELEASE.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/org.springframework.aspects-3.0.7.RELEASE.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/org.springframework.beans-3.0.7.RELEASE.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/org.springframework.context-3.0.7.RELEASE.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/org.springframework.core-3.0.7.RELEASE.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/org.springframework.expression-3.0.7.RELEASE.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/org.springframework.test-3.0.7.RELEASE.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/org.springframework.transaction-3.0.7.RELEASE.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/owlapi-bin.jar"/>
+	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/pal-optimization.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/perf4j-0.9.16-logbackonly.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/platform.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/regexp-1.2.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/resteasy-jaxb-provider-2.3.4.Final.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/resteasy-jaxrs-2.3.4.Final.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/saaj-impl-1.3.2.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/scala-library-2.9.0-1.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/scannotation-1.0.3.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/scifio.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/server-api-1.6.1.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/servlet-api-3.0.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/slf4j-api-1.6.4.jar"/>
+	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/Simple_Neurite_Tracer-2.0.2-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/slf4j-api-1.6.6.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/slf4j-log4j12-1.6.4.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/spring-data-commons-core-1.2.1.RELEASE.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/spring-data-neo4j-2.1.0.M1.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/spring-data-neo4j-aspects-2.1.0.M1.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/spring-data-neo4j-cross-store-2.1.0.M1.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/spring-data-neo4j-rest-2.1.0.M1.jar"/>
-	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/stax-api-1.0-2.jar"/>
+	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/snappy-java-1.0.5-M3.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/swingx-all-1.6.3.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/synthetica.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/syntheticaAluOxide.jar"/>
@@ -194,6 +141,7 @@
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/syntheticaBlackMoon.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/syntheticaBlackStar.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/syntheticaBlueIce.jar"/>
+	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/syntheticaBlueLight.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/syntheticaBlueMoon.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/syntheticaBlueSteel.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/syntheticaClassy.jar"/>
@@ -205,9 +153,12 @@
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/syntheticaSkyMetallic.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/syntheticaWhiteVision.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/tribes-6.0.16.jar"/>
+	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/vecmath.jar"/>
+	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/VIB-lib-2.0.0-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/vlcj-1.3.0-b1.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/woden-api-1.0M8.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/woden-impl-dom-1.0M8.jar"/>
+	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/workstation.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/wsdl4j-1.6.2.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/wstx-asl-3.2.7.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/wstx-asl-3.2.9.jar"/>
@@ -215,7 +166,7 @@
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/xercesImpl-2.8.1.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/xml-resolver-1.2.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/xmlbeans-2.3.0.jar"/>
+	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/XmlSchema-1.4.3.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/xuggle-xuggler-5.4.jar"/>
-	<classpathentry exported="true" kind="con" path="GROOVY_DSL_SUPPORT"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
