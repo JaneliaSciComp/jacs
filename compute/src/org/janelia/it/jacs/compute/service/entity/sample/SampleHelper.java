@@ -257,50 +257,50 @@ public class SampleHelper extends EntityHelper {
         Entity matchedSample = null;
         Set<Long> visitedSamples = new HashSet<Long>();
         
-        for(String lsmName : lsmNames) {
-            for(Entity lsm : entityBean.getEntitiesByName(lsmName)) {
-                Entity sample = entityBean.getAncestorWithType(null, lsm.getId(), EntityConstants.TYPE_SAMPLE);
-                if (sample!=null) {
-                    if (visitedSamples.contains(sample.getId())) {
-                        continue;
-                    }
-                    visitedSamples.add(sample.getId());
-                    
-                    Set<String> matchedLsmNames = new HashSet<String>();
-                    Set<String> matchedTileNames = new HashSet<String>();
-                    
-                    entityLoader.populateChildren(sample);
-                    Entity supportingData = EntityUtils.getSupportingData(sample);
-                    if (supportingData != null) {
-                        entityLoader.populateChildren(supportingData);
-                        for(Entity imageTile : EntityUtils.getChildrenOfType(supportingData, EntityConstants.TYPE_IMAGE_TILE)) {
-                            entityLoader.populateChildren(imageTile);
-                            for(Entity siblingLsm : EntityUtils.getChildrenOfType(imageTile, EntityConstants.TYPE_LSM_STACK)) {
-                                matchedTileNames.add(imageTile.getName());
-                                matchedLsmNames.add(siblingLsm.getName());
-                            }
+        // Check if the any sample in the database has an LSM set that matches the current LSM set.
+        // We can start at any of the LSMs, because they all need to be present.
+        for(Entity lsm : entityBean.getEntitiesByName(lsmNames.iterator().next())) {
+            Entity sample = entityBean.getAncestorWithType(null, lsm.getId(), EntityConstants.TYPE_SAMPLE);
+            if (sample!=null) {
+                if (visitedSamples.contains(sample.getId())) {
+                    continue;
+                }
+                visitedSamples.add(sample.getId());
+                
+                Set<String> matchedLsmNames = new HashSet<String>();
+                Set<String> matchedTileNames = new HashSet<String>();
+                
+                entityLoader.populateChildren(sample);
+                Entity supportingData = EntityUtils.getSupportingData(sample);
+                if (supportingData != null) {
+                    entityLoader.populateChildren(supportingData);
+                    for(Entity imageTile : EntityUtils.getChildrenOfType(supportingData, EntityConstants.TYPE_IMAGE_TILE)) {
+                        entityLoader.populateChildren(imageTile);
+                        for(Entity siblingLsm : EntityUtils.getChildrenOfType(imageTile, EntityConstants.TYPE_LSM_STACK)) {
+                            matchedTileNames.add(imageTile.getName());
+                            matchedLsmNames.add(siblingLsm.getName());
                         }
-                    }
-                    
-                    if (matchedLsmNames.equals(lsmNames)) {
-                        if (sample.getOwnerKey().equals(ownerKey)) {
-                            logger.info("  Found sample with matching LSM set: "+sample.getName());
-                            matchedSample = sample;    
-                            break;
-                        }
-                        else {
-                            logger.info("  Found sample with matching LSM set, but it is not owned by us, so we'll keep looking: "+sample.getName());
-                            matchedUnownedSample = sample;
-                        }
-                    }
-                    else {
-                        logger.debug("  Sample "+sample.getName()+" does not match: "+matchedLsmNames);
-                        logger.debug("    (With tile names: "+matchedTileNames+")");
                     }
                 }
+                
+                if (matchedLsmNames.equals(lsmNames)) {
+                    if (sample.getOwnerKey().equals(ownerKey)) {
+                        logger.info("  Found sample with matching LSM set: "+sample.getName());
+                        matchedSample = sample;    
+                        break;
+                    }
+                    else {
+                        logger.info("  Found sample with matching LSM set, but it is not owned by us, so we'll keep looking: "+sample.getName());
+                        matchedUnownedSample = sample;
+                    }
+                }
+                else {
+                    logger.debug("  Sample "+sample.getName()+" does not match: "+matchedLsmNames);
+                    logger.debug("    (With tile names: "+matchedTileNames+")");
+                }
             }
-            if (matchedSample!=null) break;
         }
+
         
         // Only use the unowned sample if we didn't find any owned samples
         if (matchedSample==null) {
@@ -316,7 +316,8 @@ public class SampleHelper extends EntityHelper {
                     // FlyLight cannot steal samples from others
                     logger.warn("  Found matching sample, but it is not owned by us or FlyLight, so we can't use it.");
                     matchedSample = null;
-                } else {
+                } 
+                else {
                     // Annex it later, so we don't hold the connection open for too long
                     logger.warn("  Found matching sample, owned by FlyLight. We will annex it later.");
                     samplesToAnnex.add(matchedSample.getId());
