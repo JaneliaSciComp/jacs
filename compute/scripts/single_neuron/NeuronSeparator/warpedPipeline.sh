@@ -77,6 +77,9 @@ echo "~ Generating aligned reference"
 cat $INPUT_FILE | $NSDIR/v3draw_select_channels $REF_CHAN > Reference.v3draw
 
 echo "~ Copying final output to: $OUTDIR"
+cp *.nsp $OUTDIR
+cp *.pbd $OUTDIR
+cp *.txt $OUTDIR
 cp ConsolidatedSignal.v3draw $OUTDIR
 cp Reference.v3draw $OUTDIR
 

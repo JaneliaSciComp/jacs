@@ -169,6 +169,9 @@ if [ -s "$OUTDIR/ConsolidatedLabel.v3draw" ]; then
     $DIR/artifactPipeline.sh $OUTDIR $NAME $INPUT_FILE "$SIGNAL_CHAN" "$REF_CHAN"
 fi
 
-echo "~ Removing temp files"
+echo "~ Removing working files: $WORKING_DIR"
 rm -rf $WORKING_DIR
+
+echo "~ Removing temp files: $OUTDIR/tmp*"
+rm -rf $OUTDIR/tmp*
 
