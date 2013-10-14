@@ -1,31 +1,14 @@
 package org.janelia.it.jacs.compute;
 
-import org.janelia.it.jacs.compute.api.*;
-import org.janelia.it.jacs.compute.mbean.*;
-import org.janelia.it.jacs.compute.api.EJBFactory;
-import java.util.*;
-import javax.naming.*;
-import java.rmi.RemoteException;
-import org.janelia.it.jacs.compute.api.support.EntityMapStep;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityAttribute;
-import org.janelia.it.jacs.compute.api.*;
-import org.apache.solr.client.solrj.*;
-import org.apache.solr.common.SolrDocument;
-import org.apache.solr.common.SolrDocumentList;
-import org.janelia.it.jacs.compute.access.solr.SolrDAO;
-import org.janelia.it.jacs.compute.api.support.*;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityAttribute;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.user_data.FileNode;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
-import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
+import org.janelia.it.jacs.compute.api.EntityBeanRemote;
+import org.junit.Test;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import java.util.Hashtable;
+
 //import org.janelia.it.jacs.shared.utils.*;
-import org.junit.*;
-import static org.junit.Assert.*;
 
 /****
 	author:	Anitha Parvatham
@@ -52,7 +35,7 @@ public class ComputeLoginTest {
         	if (cobj==null)
             		System.out.println("ComputeBean is null");
         
-        	assert(cobj.login("jacstest", "CC0ntrol!1") == true); 
+        	assert(cobj.login("jacstest", "CC0ntrol!1") !=null);
 
                 System.out.println("\n LOGIN IS TESTED SUCCESSFULYY ");
 

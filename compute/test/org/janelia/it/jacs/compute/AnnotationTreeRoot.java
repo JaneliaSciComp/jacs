@@ -1,30 +1,15 @@
 package org.janelia.it.jacs.compute;
 
-import org.janelia.it.jacs.compute.api.*;
-import org.janelia.it.jacs.compute.mbean.*;
-import org.janelia.it.jacs.compute.api.EJBFactory;
-import java.util.*;
-import javax.naming.*;
-import java.rmi.RemoteException;
-import org.janelia.it.jacs.compute.api.support.EntityMapStep;
+import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
 import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityAttribute;
-import org.janelia.it.jacs.compute.api.*;
-import org.apache.solr.client.solrj.*;
-import org.apache.solr.common.SolrDocument;
-import org.apache.solr.common.SolrDocumentList;
-import org.janelia.it.jacs.compute.access.solr.SolrDAO;
-import org.janelia.it.jacs.compute.api.support.*;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityAttribute;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.user_data.FileNode;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
-import org.janelia.it.jacs.shared.utils.StringUtils;
-import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
-import org.junit.*;
-import static org.junit.Assert.*;
+import org.junit.Test;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import java.util.Hashtable;
+import java.util.List;
+
+import static junit.framework.Assert.assertNotNull;
 
 /****
 	author:	Anitha Parvatham
@@ -51,7 +36,7 @@ public class AnnotationTreeRoot {
                 if (aobj == null)
                         System.out.println("AnnotationBean is null");
 
-                List<Entity> roots = aobj.getCommonRootEntitiesByTypeName("system", "Folder"); 
+                List<Entity> roots = aobj.getCommonRootEntities("system");
 
 		System.out.println("*** BROWSING THE DATA OUTLINE - DISPLAY THE TOP MENU ***\n ");
 		//System.out.println("Roots Length0: "+roots.size());
