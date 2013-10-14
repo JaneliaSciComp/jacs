@@ -278,6 +278,11 @@
         <archive path="/common/Scripting/groovy-all-1.8.6.jar"/>
         <archive path="/common/Scripting/jython.jar"/>
     </library>
+    <library name="SimpleNeuriteTracer" systemlibrary="false">
+        <archive path="/common/Simple-Neurite-Tracer/ij-1.48c.jar"/>
+        <archive path="/common/Simple-Neurite-Tracer/Simple_Neurite_Tracer-2.0.2-SNAPSHOT.jar"/>
+        <archive path="/common/Simple-Neurite-Tracer/VIB-lib-2.0.0-SNAPSHOT.jar"/>
+    </library>
     <library name="Snappy" systemlibrary="false">
         <archive path="/common/Snappy/snappy-java-1.0.5-M3.jar"/>
     </library>
