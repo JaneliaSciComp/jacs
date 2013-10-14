@@ -7,11 +7,17 @@ import org.janelia.it.jacs.compute.api.EntityBeanRemote;
 import org.janelia.it.jacs.model.entity.DataSet;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.model.tasks.Event;
+import org.janelia.it.jacs.model.tasks.utility.LsTestTask;
 import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
 import org.jboss.resteasy.annotations.providers.jaxb.Wrapped;
 import org.jboss.resteasy.spi.NotFoundException;
 
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -104,6 +110,27 @@ public class RestfulWebService {
         }
 
         return dataSetList;
+    }
+
+    /**
+     */
+    @GET
+    @Path("lsTest")
+    public Response runLsTest(
+            @QueryParam("owner")String owner,
+            @QueryParam("path")String path)
+    {
+        logger.info("Heard call for lsTest API");
+        try {
+            LsTestTask task = new LsTestTask(owner, new ArrayList<Event>(), path);
+            task = (LsTestTask)EJBFactory.getRemoteComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getRemoteComputeBean().submitJob("LsTestService", task.getObjectId());
+            logger.info("Done lsTest call ("+owner+", "+path+")");
+        }
+        catch (Exception e) {
+            logger.error("runLsTest: failed execution", e);
+        }
+        return null;
     }
 
     /**

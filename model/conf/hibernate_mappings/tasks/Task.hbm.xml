@@ -284,6 +284,10 @@
               discriminator-value="compartmentAnnotation3DTask">
     </subclass>
 
+    <subclass name="org.janelia.it.jacs.model.tasks.utility.LsTestTask" extends="org.janelia.it.jacs.model.tasks.Task"
+              discriminator-value="lsTestTask">
+    </subclass>
+
     <subclass name="org.janelia.it.jacs.model.tasks.utility.GenericTask" extends="org.janelia.it.jacs.model.tasks.Task"
               discriminator-value="genericTask">
     </subclass>
