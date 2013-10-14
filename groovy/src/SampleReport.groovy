@@ -135,7 +135,7 @@ for(String key : keys) {
 
             f.loadChildren(sample)
 
-            annotations = getAnnotations(sample.id)
+            annotations = getAnnotations(j, sample.id)
             visited = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISITED)
             data_set = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER)
             retired = (visited==null?"Retired":"")
@@ -252,7 +252,12 @@ for(String key : keys) {
 println("Deleting unwanted samples...")
 for(Entity sample : samplesForDeletion) {
     println("Unlinking and deleting "+sample.name)
-    f.e.deleteSmallEntityTree(sample.ownerKey, sample.id, true)
+    try {
+        f.e.deleteSmallEntityTree(sample.ownerKey, sample.id, true)
+    }
+    catch (Exception e) {
+        println("Error deleting small entity tree "+sample.id+": "+e.getMessage())
+    }
 }
 
 if (Constants.HTML) {
@@ -289,8 +294,9 @@ def addSamples(Multimap<String, Entity> sampleMap, Collection<Entity> samples) {
     }
 }
 
-def getAnnotations(sampleId) {
-    SolrQuery query = new SolrQuery("(id:"+sampleId+" OR ancestor_ids:"+sampleId+") AND all_annotations:*")
+def getAnnotations(JacsUtils f, Long sampleId) {
+    q = "(id:"+sampleId+" OR ancestor_ids:"+sampleId+") AND all_annotations:*"
+    SolrQuery query = new SolrQuery(q)
     SolrDocumentList results = f.s.search(null, query, false).response.results
     List<String> annotations = new ArrayList<String>()
     results.each {
