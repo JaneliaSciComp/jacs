@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.service.entity;
 import java.io.File;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -104,7 +105,7 @@ public class EntityHelper {
      * @throws Exception
      */
     public Entity createOrVerifyRootEntity(String topLevelFolderName, boolean createIfNecessary, boolean loadTree) throws Exception {
-        Set<Entity> topLevelFolders = entityBean.getEntitiesByName(topLevelFolderName);
+        List<Entity> topLevelFolders = entityBean.getEntitiesWithTag(ownerKey, EntityConstants.ATTRIBUTE_COMMON_ROOT);
         Entity topLevelFolder = null;
         if (topLevelFolders != null) {
             // Only accept the current user's top level folder

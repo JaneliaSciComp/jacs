@@ -18,6 +18,7 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -431,7 +432,15 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         }
     }
     
-    
+    public List<Entity> getEntitiesWithTag(String subjectKey, String attrTag) throws ComputeException {
+        try {
+            return _annotationDAO.getEntitiesWithTag(subjectKey, attrTag);
+        }
+        catch (DaoException e) {
+            _logger.error("Error searching for entities with tag "+attrTag,e);
+            throw new ComputeException("Error searching for entities with tag "+attrTag,e);
+        }
+    }
     
     public Set<Entity> getUserEntitiesByName(String subjectKey, String name) throws ComputeException {
         try {

@@ -7,7 +7,11 @@ import java.util.Set;
 import javax.ejb.Remote;
 
 import org.janelia.it.jacs.compute.api.support.MappedId;
-import org.janelia.it.jacs.model.entity.*;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityActorPermission;
+import org.janelia.it.jacs.model.entity.EntityAttribute;
+import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.entity.EntityType;
 
 /**
  * A remote interface to generic queries against the Entity model. This interface does not concern itself with any
@@ -48,6 +52,7 @@ public interface EntityBeanRemote {
     public List<Entity> getEntitiesByTypeName(String subjectKey, String entityTypeName) throws ComputeException;
     public List<Entity> getEntitiesByNameAndTypeName(String subjectKey, String entityName, String entityTypeName) throws ComputeException;
     public List<Entity> getEntitiesWithAttributeValue(String subjectKey, String attrName, String attrValue) throws ComputeException;
+    public List<Entity> getEntitiesWithTag(String subjectKey, String attrTag) throws ComputeException;
     
     public Set<Entity> getUserEntitiesByName(String subjectKey, String name) throws ComputeException;
     public List<Entity> getUserEntitiesByTypeName(String subjectKey, String entityTypeName) throws ComputeException;
