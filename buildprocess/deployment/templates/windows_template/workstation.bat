@@ -10,7 +10,7 @@ cd %INSTALL%
 :: Reading the last line of the file produced by running the workstation AutoUpdater application.
 ::  The last line should be the full path to a downloaded update.
 ::
-java -cp workstation.jar -Xms512m -Xmx1024m org.janelia.it.FlyWorkstation.gui.application.AutoUpdater > autoupdate.log
+java -Xms512m -Xmx1024m -cp workstation.jar org.janelia.it.FlyWorkstation.gui.application.AutoUpdater > autoupdate.log
 
 ::  Get last line of file.  If file contains a path to new installation, it will be that one.
 ::
