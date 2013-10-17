@@ -95,7 +95,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                 metadataFileNode = resultFileNode;
             }
 
-            merged = data.getBooleanItem("RUN_MERGE");
+            merged = data.getItemAsBoolean("RUN_MERGE");
             sampleArea = (AnatomicalArea) data.getRequiredItem("SAMPLE_AREA");
 
             final Object bulkMergeParamObj = data.getRequiredItem("BULK_MERGE_PARAMETERS");
@@ -129,8 +129,8 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
     @Override
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
 
-        String channelDyeSpec = data.getStringItem("CHANNEL_DYE_SPEC");
-        String outputChannelOrder = data.getStringItem("OUTPUT_CHANNEL_ORDER");
+        String channelDyeSpec = data.getItemAsString("CHANNEL_DYE_SPEC");
+        String outputChannelOrder = data.getItemAsString("OUTPUT_CHANNEL_ORDER");
 
         int configIndex = 1;
 

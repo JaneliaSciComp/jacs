@@ -441,7 +441,7 @@ public class EntityHelper {
 
     public Entity getRequiredSampleEntity(ProcessDataAccessor data) throws Exception {
         final String defaultKey = "SAMPLE_ENTITY_ID";
-        final String sampleEntityId = data.getRequiredStringItem(defaultKey);
+        final String sampleEntityId = data.getRequiredItemAsString(defaultKey);
         return getRequiredSampleEntity(defaultKey, sampleEntityId);
     }
 

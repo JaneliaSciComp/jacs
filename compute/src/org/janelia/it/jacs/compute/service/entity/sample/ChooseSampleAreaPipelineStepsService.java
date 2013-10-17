@@ -35,9 +35,9 @@ public class ChooseSampleAreaPipelineStepsService extends AbstractEntityService 
             numImagesPerTile = lsms.size();
         }
 
-        final String mergeAlgorithms = data.getStringItem("MERGE_ALGORITHMS");
-        final String stitchAlgorithms = data.getStringItem("STITCH_ALGORITHMS");
-        final String analysisAlgorithms = data.getStringItem("ANALYSIS_ALGORITHMS");
+        final String mergeAlgorithms = data.getItemAsString("MERGE_ALGORITHMS");
+        final String stitchAlgorithms = data.getItemAsString("STITCH_ALGORITHMS");
+        final String analysisAlgorithms = data.getItemAsString("ANALYSIS_ALGORITHMS");
 
         data.putItem("MERGE_ALGORITHM", Task.listOfStringsFromCsvString(mergeAlgorithms));
         data.putItem("STITCH_ALGORITHM", Task.listOfStringsFromCsvString(stitchAlgorithms));

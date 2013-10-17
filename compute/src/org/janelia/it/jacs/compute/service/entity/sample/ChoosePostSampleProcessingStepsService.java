@@ -20,10 +20,10 @@ public class ChoosePostSampleProcessingStepsService extends AbstractEntityServic
 
     public void execute() throws Exception {
 
-        final List<String> alignAlgorithms = data.getCsvStringItem("ALIGNMENT_ALGORITHMS");
-        final List<String> alignAlgorithmParams = data.getCsvStringItem("ALIGNMENT_ALGORITHM_PARAMS");
-        final List<String> alignAlgorithmResultNames = data.getCsvStringItem("ALIGNMENT_ALGORITHM_RESULT_NAMES");
-        final List<String> analysisAlgorithms = data.getCsvStringItem("ANALYSIS_ALGORITHMS");
+        final List<String> alignAlgorithms = data.getItemAsCsvStringList("ALIGNMENT_ALGORITHMS");
+        final List<String> alignAlgorithmParams = data.getItemAsCsvStringList("ALIGNMENT_ALGORITHM_PARAMS");
+        final List<String> alignAlgorithmResultNames = data.getItemAsCsvStringList("ALIGNMENT_ALGORITHM_RESULT_NAMES");
+        final List<String> analysisAlgorithms = data.getItemAsCsvStringList("ANALYSIS_ALGORITHMS");
 
         final int numberOfAlignAlgorithms = alignAlgorithms.size();
         final int numberOfAlignAlgorithmParams = alignAlgorithmParams.size();
@@ -74,7 +74,7 @@ public class ChoosePostSampleProcessingStepsService extends AbstractEntityServic
 
         boolean skipAlignment = false;
 
-        final String skipAlignmentTileFilter = data.getStringItem("SKIP_ALIGNMENT_TILE_FILTER");
+        final String skipAlignmentTileFilter = data.getItemAsString("SKIP_ALIGNMENT_TILE_FILTER");
         if (! StringUtils.isEmpty(skipAlignmentTileFilter)) {
             final Pattern skipTileNamePattern = Pattern.compile(skipAlignmentTileFilter);
 

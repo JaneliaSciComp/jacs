@@ -41,7 +41,7 @@ public class ProcessDataAccessor {
         return value;
     }
 
-    public boolean getBooleanItem(String key) {
+    public boolean getItemAsBoolean(String key) {
         boolean booleanValue = false;
         final Object value = getItem(key);
         if (value instanceof String) {
@@ -52,8 +52,32 @@ public class ProcessDataAccessor {
         return booleanValue;
     }
 
-    public String getStringItem(String key) {
+    public String getItemAsString(String key) {
         return (String) getItem(key);
+    }
+
+    public Long getItemAsLong(String key) throws NumberFormatException {
+        Long longValue = null;
+        Object value = getItem(key);
+        if (value instanceof Long) {
+            longValue = (Long) value;
+        } else if (value instanceof String) {
+            longValue = Long.parseLong((String) value);
+        } else if (value instanceof Number) {
+            longValue = ((Number) value).longValue();
+        } else if (value != null) {
+            throw new NumberFormatException("cannot convert " + value.getClass().getName() +
+                                            " value " + value + " to a Long");
+        }
+        return longValue;
+    }
+
+    public Long getRequiredItemAsLong(String key) throws NumberFormatException {
+        final Long value = getItemAsLong(key);
+        if (value == null) {
+            throw new IllegalArgumentException(key + " must be specified");
+        }
+        return value;
     }
 
     public Object getRequiredItem(String key) throws IllegalArgumentException {
@@ -64,16 +88,16 @@ public class ProcessDataAccessor {
         return value;
     }
 
-    public String getRequiredStringItem(String key) throws IllegalArgumentException {
-        final String value = getStringItem(key);
+    public String getRequiredItemAsString(String key) throws IllegalArgumentException {
+        final String value = getItemAsString(key);
         if (StringUtils.isEmpty(value)) {
             throw new IllegalArgumentException(key + " must be specified");
         }
         return value;
     }
 
-    public List<String> getCsvStringItem(String key) {
-        final String value = getStringItem(key);
+    public List<String> getItemAsCsvStringList(String key) {
+        final String value = getItemAsString(key);
         return Task.listOfStringsFromCsvString(value);
     }
 
