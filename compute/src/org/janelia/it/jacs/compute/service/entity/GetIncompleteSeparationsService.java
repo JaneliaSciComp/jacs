@@ -37,17 +37,25 @@ public class GetIncompleteSeparationsService extends AbstractEntityService {
         for(Entity separation : entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
 
         	String inputPath = separation.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-            if (!inputPath.startsWith(centralDir) && !inputPath.startsWith(centralDirArchived)) {
-                logger.debug("  Cannot repair artifacts in dir which is not in the FileStore.CentralDir: "+inputPath);
-                continue;
-            }
+//            if (!inputPath.startsWith(centralDir) && !inputPath.startsWith(centralDirArchived)) {
+//                logger.debug("  Cannot repair artifacts in dir which is not in the FileStore.CentralDir: "+inputPath);
+//                continue;
+//            }
             
-        	logger.info("Processing neuron separation, id="+separation.getId());
-        		
-        	boolean hasFastLoad = false; 
-        	boolean hasRefMask = false;
-        	boolean hasRefChan = false;
-        	boolean hasNeuronMaskChans = false;
+        	boolean isAligned = false;
+        	for(Entity parent : entityBean.getParentEntities(separation.getId())) {
+        	    if (parent.getEntityType().getName().equals(EntityConstants.TYPE_ALIGNMENT_RESULT)) {
+        	        isAligned = true;
+        	        break;
+        	    }
+        	}
+            
+        	logger.info("Processing "+separation.getName()+", id="+separation.getId()+", isAligned="+isAligned);
+        	
+        	if (!isAligned) {
+        	    logger.info("  Skipping unaligned separation");
+        	    continue;
+        	}
         	
         	// Load children
         	populateChildren(separation);
@@ -66,37 +74,49 @@ public class GetIncompleteSeparationsService extends AbstractEntityService {
 	        	}
 	        	populateChildren(reference);
         	}
-        	
-        	if (reference!=null) {
-            	// Check for missing fastload
-        		hasFastLoad = reference.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE)!=null;
-            	// Check for missing ref mask/chan
-            	hasRefMask = reference.getChildByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE)!=null;
-            	hasRefChan = reference.getChildByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE)!=null;
-        	}
-        	
-        	// Check for missing mask or chan files
-        	if (neuronFragments!=null) {
-        		hasNeuronMaskChans = true;
-	            for(Entity fragment : EntityUtils.getChildrenOfType(neuronFragments, EntityConstants.TYPE_NEURON_FRAGMENT)) {
-	                populateChildren(fragment);    
-	                if (fragment.getValueByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE) == null || fragment.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE) == null) {
-	                	hasNeuronMaskChans = false;
-	                    break;
-	                }
-	            }
-        	}
-        	
-        	logger.info("  hasFastLoad="+hasFastLoad+", hasRefMask="+hasRefMask+", hasRefChan="+hasRefChan+", hasNeuronMaskChans="+hasNeuronMaskChans);
             
-            if (!hasFastLoad) {
+            boolean missingNeuronMaskChan = false;
+            if (isAligned) {
+                // Check for missing mask or chan files
+                if (neuronFragments!=null) {
+                    for(Entity fragment : EntityUtils.getChildrenOfType(neuronFragments, EntityConstants.TYPE_NEURON_FRAGMENT)) {
+                        populateChildren(fragment);    
+                        if (fragment.getValueByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE) == null || fragment.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE) == null) {
+                            missingNeuronMaskChan = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            boolean missingFastLoad = false;
+            boolean missingRefChan = false;
+            if (!missingNeuronMaskChan && isAligned && reference!=null) {
+            	// Check for missing fastload
+        	    if (reference.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE)==null) {
+        	        missingFastLoad = true;
+        	    }
+            	// Check for missing ref mask/chan
+        		if (isAligned) {
+                	if (reference.getChildByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE)==null) {
+                	    missingRefChan = true;
+                	}
+                	if (reference.getChildByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE)==null) {
+                	    missingRefChan = true;
+                	}
+        		}
+            }
+        	
+        	logger.info("  missingFastLoad="+missingFastLoad+", missingRefChan="+missingRefChan+", missingNeuronMaskChan="+missingNeuronMaskChan);
+            
+            if (missingFastLoad) {
             	missingFastload.add(separation.getId().toString());
             }
             
-            if (!hasNeuronMaskChans) {
+            if (missingNeuronMaskChan) {
             	missingAllMaskChan.add(separation.getId().toString());
             }
-            else if (!hasRefMask || !hasRefChan) {
+            else if (missingRefChan) {
             	missingRefMaskChan.add(separation.getId().toString());
             }
             
