@@ -2,10 +2,14 @@ package org.janelia.it.jacs.compute.service.entity.sample;
 
 import org.janelia.it.jacs.compute.service.align.ParameterizedAlignmentAlgorithm;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.cv.AlignmentAlgorithm;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Decides which types of processing will be run for a Sample after the initial processing is done.
@@ -56,11 +60,48 @@ public class ChoosePostSampleProcessingStepsService extends AbstractEntityServic
         data.putItem("ANALYSIS_ALGORITHM", analysisAlgorithms);
 
         final boolean hasAlignment = numberOfAlignAlgorithms > 0;
-        final boolean sampleHasLamina = data.getBooleanItem("SAMPLE_HAS_LAMINA");
-        final boolean runAlignment = hasAlignment && (! sampleHasLamina);
+        final boolean runAlignment = hasAlignment && (! skipAlignment());
         final boolean runAnalysis = analysisAlgorithms.size() > 0;
 
         data.putItem("RUN_ALIGNMENT", runAlignment);
         data.putItem("RUN_ANALYSIS", runAnalysis);
+    }
+
+    /**
+     * @return true if a skip alignment tile filter has been set and this sample contains at least one matching tile.
+     */
+    private boolean skipAlignment() {
+
+        boolean skipAlignment = false;
+
+        final String skipAlignmentTileFilter = data.getStringItem("SKIP_ALIGNMENT_TILE_FILTER");
+        if (! StringUtils.isEmpty(skipAlignmentTileFilter)) {
+            final Pattern skipTileNamePattern = Pattern.compile(skipAlignmentTileFilter);
+
+            @SuppressWarnings("unchecked")
+            final List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>) data.getItem("SAMPLE_AREA");
+            if (sampleAreas != null) {
+                List<Entity> tiles;
+                String tileName;
+                for (AnatomicalArea area : sampleAreas) {
+                    tiles = area.getTiles();
+                    for (Entity tile: tiles) {
+                        tileName = tile.getName();
+                        final Matcher m = skipTileNamePattern.matcher(tileName);
+                        if (m.matches()) {
+                            skipAlignment = true;
+                            contextLogger.info("skipping alignment because SAMPLE_AREA contains tile '" +
+                                               tileName + "'");
+                            break;
+                        }
+                    }
+                    if (skipAlignment) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        return skipAlignment;
     }
 }

@@ -12,6 +12,7 @@
         <input name="ALIGNMENT_ALGORITHMS"/>
         <input name="ALIGNMENT_ALGORITHM_PARAMS"/>
         <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES"/>
+        <input name="SKIP_ALIGNMENT_TILE_FILTER"/>
         <input name="ANALYSIS_ALGORITHMS"/>
         <input name="PIPELINE_PROCESS"/>
         <input name="CHANNEL_DYE_SPEC"/>
@@ -67,7 +68,16 @@
 	        <output name="REUSE_PROCESSING"/>
             <output name="REUSE_ALIGNMENT"/>
 	    </operation>
-    
+
+        <!-- By default, skip alignment if any lamina tiles are present. -->
+        <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
+            <input name="SKIP_ALIGNMENT_TILE_FILTER"/>
+            <input name="OVERRIDE" value="false"/>
+            <input name="PROCESS_VARIABLE_1" value="SKIP_ALIGNMENT_TILE_FILTER"/>
+            <input name="PROCESS_VARIABLE_VALUE_1" value="(?i).*lamina.*"/>
+            <output name="SKIP_ALIGNMENT_TILE_FILTER"/>
+        </operation>
+
         <!-- Create the pipeline run entity -->
         <operation name="Create Pipeline Run Entity" processor="org.janelia.it.jacs.compute.service.entity.sample.CreatePipelineRunEntityService">
             <input name="SAMPLE_ENTITY_ID"/>
@@ -80,7 +90,6 @@
         <operation name="Get Sample Attributes" processor="org.janelia.it.jacs.compute.service.entity.sample.InitSampleAttributesService">
             <input name="SAMPLE_ENTITY_ID"/>
             <output name="SAMPLE_AREA"/>
-            <output name="SAMPLE_HAS_LAMINA"/>
         </operation>
 		
         <sequence forEach="SAMPLE_AREA">
@@ -384,10 +393,11 @@
         <!-- Decide which types of processing will be run -->
         <operation name="Choose Next Steps" processor="org.janelia.it.jacs.compute.service.entity.sample.ChoosePostSampleProcessingStepsService">
             <input name="SAMPLE_ENTITY_ID"/>
-            <input name="SAMPLE_HAS_LAMINA"/>
+            <input name="SAMPLE_AREA"/>
             <input name="ALIGNMENT_ALGORITHMS"/>
             <input name="ALIGNMENT_ALGORITHM_PARAMS"/>
             <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES"/>
+            <input name="SKIP_ALIGNMENT_TILE_FILTER"/>
             <input name="ANALYSIS_ALGORITHMS"/>
             <output name="RUN_ALIGNMENT"/>
             <output name="RUN_ANALYSIS"/>
