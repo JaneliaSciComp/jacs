@@ -5,6 +5,8 @@ public enum PipelineProcess implements NamedEnum {
     // The enum must match the process file name after PipelineConfig_
     CellCounting("Cell Counting Pipeline"),
 
+    DicksonVTGal4Screen("Dickson VT Gal4 Screen Pipeline"),
+
     DitpAlignment("DITP Alignment Pipeline"),
 
     FlyLightCentralBrain("FlyLight Central Brain Pipeline"),
