@@ -24,10 +24,9 @@ public class CompartmentAnnotation3DTask extends Task {
     // Sample input file
 
     // Parameter Keys
-    transient public static final String PARAM_folderName = "folder name";
-    transient public static final String PARAM_parentEntityId = "parent entity id";
     transient public static final String PARAM_configurationName = "configuration name";
-    transient public static final String PARAM_inputStackListPath = "input stack list path";
+    transient public static final String PARAM_sampleIdListPath = "sample id list path";
+    transient public static final String PARAM_patternChannel = "pattern channel";
 
     // Default values - default overrides
 
@@ -35,16 +34,14 @@ public class CompartmentAnnotation3DTask extends Task {
                                        String owner,
                                        List<Event> events,
                                        Set<TaskParameter> taskParameterSet,
-                                       String folderName,
-                                       String parentEntityIdString,
                                        String configurationName,
-                                       String inputStackListPath) {
+                                       String sampleIdListPath,
+                                       Integer patternChannel) {
         super(inputNodes, owner, events, taskParameterSet);
         setDefaultValues();
-        setParameter(PARAM_folderName, folderName);
-        setParameter(PARAM_parentEntityId, parentEntityIdString);
         setParameter(PARAM_configurationName, configurationName);
-        setParameter(PARAM_inputStackListPath, inputStackListPath);
+        setParameter(PARAM_sampleIdListPath, sampleIdListPath);
+        setParameter(PARAM_patternChannel, patternChannel.toString());
     }
 
     public CompartmentAnnotation3DTask() {
@@ -52,10 +49,9 @@ public class CompartmentAnnotation3DTask extends Task {
     }
 
     private void setDefaultValues() {
-        setParameter(PARAM_folderName, "Compartment 3D Annotation");
-        setParameter(PARAM_parentEntityId, "0");
         setParameter(PARAM_configurationName, "");
-        setParameter(PARAM_inputStackListPath, "");
+        setParameter(PARAM_sampleIdListPath, "");
+        setParameter(PARAM_patternChannel, "0");
         this.taskName = TASK_NAME;
     }
 
@@ -65,14 +61,12 @@ public class CompartmentAnnotation3DTask extends Task {
         String value = getParameter(key);
         if (value == null)
             return null;
-        if (key.equals(PARAM_folderName)) {
+        if (key.equals(PARAM_configurationName)) {
             return new TextParameterVO(value, 4000);
-        }  else if (key.equals(PARAM_parentEntityId)) {
+        } else if (key.equals(PARAM_sampleIdListPath)) {
+            return new TextParameterVO(value, 4000);
+        } else if (key.equals(PARAM_patternChannel)) {
             return new LongParameterVO(new Long(value));
-        } else if (key.equals(PARAM_configurationName)) {
-            return new TextParameterVO(value, 4000);
-        } else if (key.equals(PARAM_inputStackListPath)) {
-            return new TextParameterVO(value, 4000);
         }
         // No match
         return null;

@@ -45,14 +45,14 @@
         </parameter>
 
         <parameter>
-            <description>Folder Name</description>
-            <name>folderName</name>
+            <description>Sample ID List Filepath</description>
+            <name>sampleIdListPath</name>
             <type>java.lang.String</type>
         </parameter>
 
         <parameter>
-            <description>Input Stack List Filepath</description>
-            <name>inputStackListFilePath</name>
+            <description>Pattern Channel</description>
+            <name>patternChannelString</name>
             <type>java.lang.String</type>
         </parameter>
 

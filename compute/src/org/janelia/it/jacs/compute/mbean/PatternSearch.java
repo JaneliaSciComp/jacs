@@ -163,18 +163,19 @@ public class PatternSearch implements PatternSearchMBean {
     }
 
 
-    public void runCompartmentAnnotation3DService(String user, String configurationName, String folderName, String inputStackListPath) {
+    public void runCompartmentAnnotation3DService(String user, String configurationName, String sampleIdListPath,
+                                                  String patternChannelString) {
         try {
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            int patternChannel=new Integer(patternChannelString.trim());
             CompartmentAnnotation3DTask task = new CompartmentAnnotation3DTask(
                     new HashSet<Node>(),
                     user,
                     new ArrayList<Event>(),
                     taskParameters,
-                    folderName,
-                    "0",
                     configurationName,
-                    inputStackListPath);
+                    sampleIdListPath,
+                    patternChannel);
             task = (CompartmentAnnotation3DTask)EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("CompartmentAnnotation3D", task.getObjectId());
         } catch (Exception ex) {
