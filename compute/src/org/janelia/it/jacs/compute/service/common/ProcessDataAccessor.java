@@ -72,6 +72,11 @@ public class ProcessDataAccessor {
         return longValue;
     }
 
+    public List<String> getItemAsCsvStringList(String key) {
+        final String value = getItemAsString(key);
+        return Task.listOfStringsFromCsvString(value);
+    }
+
     public Object getRequiredItem(String key) throws IllegalArgumentException {
         final Object value = getItem(key);
         if (value == null) {
@@ -94,11 +99,6 @@ public class ProcessDataAccessor {
             throw new IllegalArgumentException(key + " must be specified");
         }
         return value;
-    }
-
-    public List<String> getItemAsCsvStringList(String key) {
-        final String value = getItemAsString(key);
-        return Task.listOfStringsFromCsvString(value);
     }
 
     public void putItem(String key,
