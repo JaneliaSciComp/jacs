@@ -72,14 +72,6 @@ public class ProcessDataAccessor {
         return longValue;
     }
 
-    public Long getRequiredItemAsLong(String key) throws NumberFormatException {
-        final Long value = getItemAsLong(key);
-        if (value == null) {
-            throw new IllegalArgumentException(key + " must be specified");
-        }
-        return value;
-    }
-
     public Object getRequiredItem(String key) throws IllegalArgumentException {
         final Object value = getItem(key);
         if (value == null) {
@@ -91,6 +83,14 @@ public class ProcessDataAccessor {
     public String getRequiredItemAsString(String key) throws IllegalArgumentException {
         final String value = getItemAsString(key);
         if (StringUtils.isEmpty(value)) {
+            throw new IllegalArgumentException(key + " must be specified");
+        }
+        return value;
+    }
+
+    public Long getRequiredItemAsLong(String key) throws NumberFormatException {
+        final Long value = getItemAsLong(key);
+        if (value == null) {
             throw new IllegalArgumentException(key + " must be specified");
         }
         return value;
