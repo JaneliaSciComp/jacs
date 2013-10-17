@@ -37,10 +37,10 @@ public class GetIncompleteSeparationsService extends AbstractEntityService {
         for(Entity separation : entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
 
         	String inputPath = separation.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-//            if (!inputPath.startsWith(centralDir) && !inputPath.startsWith(centralDirArchived)) {
-//                logger.debug("  Cannot repair artifacts in dir which is not in the FileStore.CentralDir: "+inputPath);
-//                continue;
-//            }
+            if (!inputPath.startsWith(centralDir) && !inputPath.startsWith(centralDirArchived)) {
+                logger.debug("  Cannot repair artifacts in dir which is not in the FileStore.CentralDir: "+inputPath);
+                continue;
+            }
             
         	boolean isAligned = false;
         	for(Entity parent : entityBean.getParentEntities(separation.getId())) {
