@@ -1,43 +1,49 @@
-import com.google.common.collect.HashMultimap
-import com.google.common.collect.Multimap
 import org.apache.solr.client.solrj.SolrQuery
-import org.apache.solr.common.SolrDocument
 import org.apache.solr.common.SolrDocumentList
+import org.janelia.it.FlyWorkstation.api.entity_model.management.*
 import org.janelia.it.jacs.model.entity.Entity
 import org.janelia.it.jacs.model.entity.EntityConstants
 import org.janelia.it.jacs.model.entity.EntityData
 import org.janelia.it.jacs.shared.utils.EntityUtils
 import org.janelia.it.jacs.shared.utils.StringUtils
-import org.janelia.it.FlyWorkstation.api.entity_model.management.*
 import org.janelia.it.jacs.shared.utils.entity.*
+
+import com.google.common.collect.HashMultimap
+import com.google.common.collect.Multimap
 
 class Constants {
     static final OWNER = "nerna"
     static final GROUP = "flylight"
     static final OWNER_KEY = "user:"+OWNER
     static final GROUP_KEY = "group:"+GROUP
-    static final HTML = true
+    static final OUTPUT_HTML = true
+	static final CREATE_FOLDERS = true
     static final COLOR_RETIRED = "aaf"
     static final COLOR_ACTIVE = "faa"
-    static final OUTPUT_FILE = "/Users/rokickik/retired." + (HTML?"html":"txt")
+    static final OUTPUT_FILE = "/Users/rokickik/retired_prod." + (OUTPUT_HTML?"html":"txt")
+	static final OUTPUT_ROOT_NAME = "Retired Duplicates"
 }
 
 def file = null
-if (Constants.HTML) {
+if (Constants.OUTPUT_HTML) {
     file = new PrintWriter(Constants.OUTPUT_FILE)
 }
 else {
     file = System.out
 }
 
-f = new JacsUtils(Constants.OWNER_KEY, false)
+f = new JacsUtils(Constants.OWNER_KEY, true)
 
 Multimap<String, Entity> sampleMap = HashMultimap.<String,Entity>create();
+Set<Long> retiredSampleSet = new HashSet<Long>()
 
-addSamples(sampleMap, f.e.getUserEntitiesByTypeName(Constants.OWNER_KEY, "Sample"));
-addSamples(sampleMap, f.e.getUserEntitiesByTypeName(Constants.GROUP_KEY, "Sample"));
+addSamples(sampleMap, f.e.getUserEntitiesByTypeName(Constants.OWNER_KEY, "Sample"))
+addSamples(sampleMap, f.e.getUserEntitiesByTypeName(Constants.GROUP_KEY, "Sample"))
 
-List<String> keys = new ArrayList<String>(sampleMap.keySet());
+addRetiredSamples(f, retiredSampleSet, f.getRootEntity(Constants.OWNER_KEY, "Retired Data"))
+addRetiredSamples(f, retiredSampleSet, f.getRootEntity(Constants.GROUP_KEY, "Retired Data"))
+
+List<String> keys = new ArrayList<String>(sampleMap.keySet())
 Collections.sort(keys);
 
 int numSlideCodes = 0
@@ -45,7 +51,7 @@ int numRetiredSamples = 0
 int numStitchingErrors = 0
 int numDuplications = 0
 
-if (Constants.HTML) {
+if (Constants.OUTPUT_HTML) {
     file.println("<html><body><head><style>" +
             "td { font: 8pt sans-serif; vertical-align:top; border: 0px solid #aaa;} table { border-collapse: collapse; } " +
             "</style></head>")
@@ -56,27 +62,44 @@ if (Constants.HTML) {
 
 List<Entity> samplesForDeletion = new ArrayList<Entity>();
 
+def rootFolder = null
+if (Constants.CREATE_FOLDERS) {
+	rootFolder = f.getRootEntity(Constants.OUTPUT_ROOT_NAME)
+    if (rootFolder!=null) {
+        println "Deleting root folder "+Constants.OUTPUT_ROOT_NAME+". This may take a while!"
+        f.deleteEntityTree(rootFolder.id)
+    }
+	rootFolder = f.createRootEntity(Constants.OUTPUT_ROOT_NAME)
+}
+
+int index = 0
+
 for(String key : keys) {
 
     Collection<Entity> samples = sampleMap.get(key);
 
-    boolean unvisited = false;
+    boolean hasRetired = false;
 
     for(Entity sample : samples) {
-        visited = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISITED)
-        if (StringUtils.isEmpty(visited)) {
-            unvisited = true;
+        if (retiredSampleSet.contains(sample.id)) {
+            hasRetired = true;
             break;
         }
     }
 
-    if (unvisited) {
+    if (hasRetired) {
 
+        index++
         numSlideCodes++
-
-        if (Constants.HTML) {
+		
+		Entity keyFolder = null
+		if (Constants.CREATE_FOLDERS) {
+			keyFolder = f.verifyOrCreateChildFolder(rootFolder, key)
+		}
+		
+        if (Constants.OUTPUT_HTML) {
             file.println("<tr><td colspan=6 style='background-color:#aaa'>"+key+"</td></tr>");
-            println("Processing slide code "+key) // to see progress
+            println("Processing slide code "+key+" ("+index+")") // to see progress
         }
         else {
             file.println()
@@ -85,12 +108,10 @@ for(String key : keys) {
             file.println("-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
         }
 
-
-        List<Entity> activeSamples = new ArrayList<Entity>();
-        List<Entity> retiredSamples = new ArrayList<Entity>();
+        List<Entity> activeSamples = new ArrayList<Entity>()
+        List<Entity> retiredSamples = new ArrayList<Entity>()
         for(Entity sample : samples) {
-            visited = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISITED)
-            if (visited==null) {
+            if (retiredSampleSet.contains(sample.id)) {
                 retiredSamples.add(sample);
             }
             else {
@@ -113,12 +134,12 @@ for(String key : keys) {
 
         Collections.sort(orderedSamples, new Comparator<Entity>() {
             int compare(Entity o1, Entity o2) {
-                def visited1 = o1.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISITED)
-                def visited2 = o2.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISITED)
-                if (visited1==null && visited2!=null) {
+                def retired1 = retiredSampleSet.contains(o1.id)
+                def retired2 = retiredSampleSet.contains(o2.id)
+                if (retired1 && !retired2) {
                     return -1;
                 }
-                if (visited2==null && visited1!=null) {
+                if (retired2 && !retired1) {
                     return 1;
                 }
                 int c = o1.ownerKey.compareTo(o2.ownerKey)
@@ -135,10 +156,9 @@ for(String key : keys) {
 
             f.loadChildren(sample)
 
-            annotations = getAnnotations(j, sample.id)
-            visited = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISITED)
+            annotations = getAnnotations(f, sample.id)
             data_set = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER)
-            retired = (visited==null?"Retired":"")
+            retired = (retiredSampleSet.contains(sample.id)?"Retired":"")
 
             NeuronCounter counter = new NeuronCounter(f.getEntityLoader())
             counter.count(sample)
@@ -152,7 +172,7 @@ for(String key : keys) {
                 }
             }
 
-            if (visited==null) {
+            if (retired) {
                 // Retired sample
                 numRetiredSamples++
                 if (sample.name.startsWith(transferSamplesSb.toString())) {
@@ -169,10 +189,13 @@ for(String key : keys) {
                 }
             }
 
-
-            if (Constants.HTML) {
+			if (Constants.CREATE_FOLDERS) {
+				f.addToParent(keyFolder, sample, keyFolder.maxOrderIndex+1, EntityConstants.ATTRIBUTE_ENTITY)
+			}
+			
+            if (Constants.OUTPUT_HTML) {
                 def annots = annotations.toString()
-                def color = (visited==null?Constants.COLOR_RETIRED:Constants.COLOR_ACTIVE)
+                def color = (retired?Constants.COLOR_RETIRED:Constants.COLOR_ACTIVE)
                 file.println("<tr><td>"+sample.ownerKey.replaceAll("group:","").replaceAll("user:","")+"</td>")
                 file.println("<td style='background-color:#"+color+"'><nobr><b>"+sample.name+"</b></nobr></td>")
                 file.println("<td>"+data_set+"</td>")
@@ -197,7 +220,7 @@ for(String key : keys) {
             if (supportingData != null) {
                 for(Entity imageTile : EntityUtils.getChildrenForAttribute(supportingData, EntityConstants.ATTRIBUTE_ENTITY)) {
 
-                    if (Constants.HTML) {
+                    if (Constants.OUTPUT_HTML) {
                         lsb.append("&nbsp&nbsp"+imageTile.name+"<br>")
                     }
                     else {
@@ -206,7 +229,7 @@ for(String key : keys) {
 
                     f.loadChildren(imageTile)
                     for(Entity lsm : EntityUtils.getChildrenForAttribute(imageTile, EntityConstants.ATTRIBUTE_ENTITY)) {
-                        if (Constants.HTML) {
+                        if (Constants.OUTPUT_HTML) {
                             lsb.append("&nbsp&nbsp&nbsp&nbsp"+lsm.name+"<br>")
                         }
                         else {
@@ -216,7 +239,7 @@ for(String key : keys) {
                 }
             }
 
-            if (Constants.HTML) {
+            if (Constants.OUTPUT_HTML) {
                 file.println("<tr><td></td><td>"+lsb+"</td><td colspan=4></td></tr>")
             }
 
@@ -224,7 +247,7 @@ for(String key : keys) {
             sample.setEntityData(null)
         }
 
-        if (Constants.HTML) {
+        if (Constants.OUTPUT_HTML) {
             def situation = ""
             def color = "fff"
 
@@ -244,23 +267,16 @@ for(String key : keys) {
             file.println("<tr><td colspan=6 style='background-color:#"+color+"; text-align:right'>"+situation+"</td></tr>")
             file.println("<tr><td height=40 colspan=6>&nbsp;</td></td>")
         }
-
-
     }
 }
 
 println("Deleting unwanted samples...")
 for(Entity sample : samplesForDeletion) {
     println("Unlinking and deleting "+sample.name)
-    try {
-        f.e.deleteSmallEntityTree(sample.ownerKey, sample.id, true)
-    }
-    catch (Exception e) {
-        println("Error deleting small entity tree "+sample.id+": "+e.getMessage())
-    }
+    f.e.deleteSmallEntityTree(sample.ownerKey, sample.id, true)
 }
 
-if (Constants.HTML) {
+if (Constants.OUTPUT_HTML) {
     file.println("</table>")
     file.println("<br>Slide codes: "+numSlideCodes)
     file.println("<br>Retired samples: "+numRetiredSamples)
@@ -294,9 +310,15 @@ def addSamples(Multimap<String, Entity> sampleMap, Collection<Entity> samples) {
     }
 }
 
+def addRetiredSamples(JacsUtils f, Set<Long> retiredSampleSet, Entity retiredSampleFolder) {
+    f.loadChildren(retiredSampleFolder)
+    for(Entity child : retiredSampleFolder.children) {
+        retiredSampleSet.add(child.id)
+    }
+}
+
 def getAnnotations(JacsUtils f, Long sampleId) {
-    q = "(id:"+sampleId+" OR ancestor_ids:"+sampleId+") AND all_annotations:*"
-    SolrQuery query = new SolrQuery(q)
+    SolrQuery query = new SolrQuery("(id:"+sampleId+" OR ancestor_ids:"+sampleId+") AND all_annotations:*")
     SolrDocumentList results = f.s.search(null, query, false).response.results
     List<String> annotations = new ArrayList<String>()
     results.each {

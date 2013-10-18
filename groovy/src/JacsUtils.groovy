@@ -1,26 +1,27 @@
-import org.apache.solr.client.solrj.SolrQuery
-import org.apache.solr.common.SolrDocument
-import org.apache.solr.common.SolrDocumentList
-import org.janelia.it.FlyWorkstation.api.entity_model.management.ModelMgr
-import org.janelia.it.FlyWorkstation.api.facade.concrete_facade.ejb.EJBFacadeManager;
+import org.janelia.it.jacs.model.entity.EntityConstants
+
+import static org.janelia.it.jacs.model.entity.EntityConstants.*
+
+import org.apache.log4j.Logger
+import org.janelia.it.FlyWorkstation.api.facade.concrete_facade.ejb.EJBFacadeManager
 import org.janelia.it.FlyWorkstation.api.facade.concrete_facade.ejb.EJBFactory
-import org.janelia.it.FlyWorkstation.api.facade.facade_mgr.FacadeManager;
+import org.janelia.it.FlyWorkstation.api.facade.facade_mgr.FacadeManager
 import org.janelia.it.FlyWorkstation.gui.framework.session_mgr.SessionMgr
 import org.janelia.it.jacs.compute.api.AnnotationBeanRemote
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote
 import org.janelia.it.jacs.compute.api.EntityBeanRemote
-import org.janelia.it.jacs.compute.api.SolrBeanRemote;
-import org.janelia.it.jacs.compute.api.support.SolrResults;
+import org.janelia.it.jacs.compute.api.SolrBeanRemote
+import org.janelia.it.jacs.compute.api.support.SolrResults
 import org.janelia.it.jacs.model.entity.Entity
 import org.janelia.it.jacs.model.entity.EntityData
 import org.janelia.it.jacs.model.user_data.Subject
 import org.janelia.it.jacs.shared.utils.EntityUtils
 import org.janelia.it.jacs.shared.utils.entity.AbstractEntityLoader
 
-import static org.janelia.it.jacs.model.entity.EntityConstants.*
-
 class JacsUtils {
 
+	Logger logger = Logger.getLogger(JacsUtils.class);
+	
 	EntityBeanRemote e
 	AnnotationBeanRemote a
 	ComputeBeanRemote c
@@ -54,26 +55,56 @@ class JacsUtils {
 	
 	def Entity save(Entity entity) {
 		if (!persist) return entity
-		e.saveOrUpdateEntity(entity)
+		e.saveOrUpdateEntity(subject.key, entity)
 	}
 	
 	def EntityData save(EntityData ed) {
 		if (!persist) return ed
-		e.saveOrUpdateEntityData(ed)
+		e.saveOrUpdateEntityData(subject.key, ed)
 	}
+
+    def deleteEntityTree(Long entityId) {
+        if (persist) {
+            e.deleteEntityTree(subject.key, entityId)
+            println "Deleted entity tree with id "+entityId
+        }
+    }
 	
 	def Entity loadChildren(Entity entity) {
 		if (entity==null || entity.id==null) return entity
 		EntityUtils.replaceChildNodes(entity, e.getChildEntities(subject==null?entity.ownerKey:subject.key, entity.id))
 		return entity
 	}
-	
+
+    def getRootEntity(String topLevelFolderName) {
+        return getRootEntity(subject.key, topLevelFolderName);
+    }
+
+    def getRootEntity(String ownerKey, String topLevelFolderName) {
+        return a.getCommonRootFolderByName(ownerKey, topLevelFolderName, false);
+    }
+
+    def createRootEntity(String topLevelFolderName) {
+        Date createDate = new Date();
+        Entity topLevelFolder = new Entity();
+        topLevelFolder.setCreationDate(createDate);
+        topLevelFolder.setUpdatedDate(createDate);
+        topLevelFolder.setOwnerKey(subject.key);
+        topLevelFolder.setName(topLevelFolderName);
+        topLevelFolder.setEntityType(e.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+        EntityUtils.addAttributeAsTag(topLevelFolder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
+        if (persist) {
+            topLevelFolder = e.saveOrUpdateEntity(subject.key, topLevelFolder);
+        }
+        return topLevelFolder;
+    }
+
 	def verifyOrCreateChildFolder(parentFolder, childName) {
 		def folder = parentFolder.children.find({ it.entityType.name==TYPE_FOLDER && it.name==childName })
 		if (folder == null) {
 			folder = newEntity(childName, TYPE_FOLDER)
 			folder = save(folder)
-			println "Saved folder "+childName+" as "+folder.id
+            if (folder.id) println "Saved folder "+childName+" as "+folder.id
 			addToParent(parentFolder, folder, null, ATTRIBUTE_ENTITY)
 		}
 		return folder
@@ -83,14 +114,14 @@ class JacsUtils {
 		Entity sample = newEntity(name, TYPE_SAMPLE)
 		sample.setValueByAttributeName(ATTRIBUTE_TILING_PATTERN, tilingPattern)
 		sample = save(sample)
-		println "Saved sample as "+sample.id
+		if (sample.id) println "Saved sample as "+sample.id
 		return sample
 	}
 	
 	def Entity createSupportingFilesFolder() {
 		Entity filesFolder = newEntity("Supporting Files", TYPE_SUPPORTING_DATA)
 		filesFolder = save(filesFolder)
-		println "Saved supporting files folder as "+filesFolder.id
+        if (filesFolder.id) println "Saved supporting files folder as "+filesFolder.id
 		return filesFolder
 	}
 	
@@ -112,7 +143,7 @@ class JacsUtils {
 		EntityData ed = parent.addChildEntity(entity, attrName)
 		ed.orderIndex = index
 		save(ed)
-		println "Added "+entity.entityType.name+"#"+entity.id+" as child of "+parent.entityType.name+"#"+parent.id;
+        if (ed.id) println "Added "+entity.entityType.name+"#"+entity.id+" as child of "+parent.entityType.name+"#"+parent.id;
 		return ed
 	}
 
