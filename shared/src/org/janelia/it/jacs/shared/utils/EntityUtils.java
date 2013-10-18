@@ -183,6 +183,16 @@ public class EntityUtils {
 		for(EntityData ed : entity2.getEntityData()) {
 			edMap2.put(ed.getId(),ed);
 		}
+        
+        if (edMap1.size()!=edMap2.size()) {
+            log.debug("Entity areEqual? attribute sizes differ");
+            return false;
+        }
+
+        if (!edMap1.keySet().equals(edMap2.keySet())) {
+            log.debug("Entity areEqual? attribute id sets differ");
+            return false;
+        }
 		
 		for(EntityData ed1 : edMap1.values()) {
 		    EntityData ed2 = edMap2.get(ed1.getId());
@@ -198,16 +208,6 @@ public class EntityUtils {
                 log.debug("Entity 1 does not have the same "+ed2.getEntityAttribute().getName());
                 return false;
             }
-        }
-        
-        if (edMap1.size()!=edMap2.size()) {
-            log.debug("Entity areEqual? attribute sizes differ");
-            return false;
-        }
-
-        if (!edMap1.equals(edMap2)) {
-            log.debug("Entity areEqual? attributes maps differ");
-            return false;
         }
         
 		if (EntityUtils.isInitialized(entity1.getEntityActorPermissions()) && EntityUtils.isInitialized(entity2.getEntityActorPermissions())) {
