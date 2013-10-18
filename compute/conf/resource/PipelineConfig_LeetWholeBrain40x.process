@@ -5,7 +5,7 @@
             <input name="PIPELINE_NAME" value="FlyLight Pipeline"/>
             <input name="MERGE_ALGORITHMS" value=""/>
             <input name="STITCH_ALGORITHMS" value="FLYLIGHT"/>
-            <input name="ALIGNMENT_ALGORITHMS" value="WHOLE_40X"/>
+            <input name="ALIGNMENT_ALGORITHMS" value=""/>
             <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
             <input name="PIPELINE_PROCESS" value="LeetWholeBrain40x"/>
         </include>
