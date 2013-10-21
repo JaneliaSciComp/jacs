@@ -14,6 +14,7 @@ import org.janelia.it.jacs.compute.service.entity.GetIncompleteSeparationsServic
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
@@ -45,7 +46,18 @@ public class RepairArtifactsPipelineGridService extends AbstractEntityGridServic
         	throw new ServiceException("Input parameter RUN_MODE may not be null");
         }
     	
-        separationIds = (List<String>)processData.getItem("ENTITY_LIST");
+        Object entityListObj = processData.getItem("ENTITY_LIST");
+        
+        if (entityListObj instanceof String) {
+            separationIds = Task.listOfStringsFromCsvString(entityListObj.toString());
+        }
+        else if (entityListObj instanceof List) {
+            separationIds = (List<String>)entityListObj;    
+        }
+        else {
+            throw new IllegalArgumentException("Expected String or List in ENTITY_LIST, but got "+entityListObj.getClass().getName());
+        }
+        
         if (separationIds==null) {
         	throw new ServiceException("Input parameter ENTITY_LIST may not be empty");
         }
@@ -82,9 +94,9 @@ public class RepairArtifactsPipelineGridService extends AbstractEntityGridServic
             	
             	// Load reference stack
             	Entity reference = null;
-        		logger.info("Checking "+supportingData.getName()+" "+supportingData.getId());
+        		logger.debug("Checking "+supportingData.getName()+" "+supportingData.getId());
 	        	for(Entity image3d : EntityUtils.getChildrenOfType(supportingData, EntityConstants.TYPE_IMAGE_3D)) {
-	        		logger.info("Checking "+image3d.getName());
+	        		logger.debug("Checking "+image3d.getName());
 	        		if (image3d.getName().startsWith("Reference.")) {
 	        			reference = image3d;
 	        			break;

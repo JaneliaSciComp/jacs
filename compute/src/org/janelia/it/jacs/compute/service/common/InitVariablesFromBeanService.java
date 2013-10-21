@@ -42,7 +42,11 @@ public class InitVariablesFromBeanService implements IService {
         		if (beanPropertyName == null || num>100) break;
         		String processVarName = (String)processData.getItem("PROCESS_VARIABLE_"+num);
         		Object value = ReflectionUtils.get(bean, beanPropertyName);
-            	logger.info("Putting value '"+value+"' in "+processVarName);
+        		String printValue = value.toString();
+        		if (printValue.length()>1000) {
+        		    printValue = printValue.substring(0, 1000)+"...";
+        		}
+            	logger.info("Putting value '"+printValue+"' in "+processVarName);
             	processData.putItem(processVarName, value);
                 num++;
         	}

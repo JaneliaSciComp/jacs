@@ -50,7 +50,6 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
     private Map<String,Entity> resultItems = new HashMap<String,Entity>();
 	private List<Entity> newResultItems = new ArrayList<Entity>();
 	
-    
 	@Override
     public void execute() throws Exception {
 
@@ -295,16 +294,21 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
         for(File file : fragmentMipFiles) {
             Entity fragmentMIP = getOrCreateResultItem(separation, file);         
             Integer index = getIndex(fragmentMIP.getName());
+            
+            logger.trace("Processing neuron #"+index+" with MIP "+fragmentMIP.getName());
+            
             if (index==null) continue;
             Entity fragmentEntity = getOrCreateFragmentEntity(fragmentsFolder, fragmentType, index, fragmentMIP);
             
             Entity maskEntity = maskEntities.get(index);
             if (maskEntity!=null) {
+                logger.trace("  Adding mask entity");
                 helper.setImageIfNecessary(fragmentEntity, EntityConstants.ATTRIBUTE_MASK_IMAGE, maskEntity);
             }
 
             Entity chanEntity = chanEntities.get(index);
             if (chanEntity!=null) {
+                logger.trace("  Adding chan entity");
                 helper.setImageIfNecessary(fragmentEntity, EntityConstants.ATTRIBUTE_CHAN_IMAGE, chanEntity);   
             }
         }
@@ -410,6 +414,7 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
     }
 
 	private void addToParentIfNecessary(Entity parent, Entity child, String entityAttrName) throws Exception {
+	    if (child==null) return;
 		for(EntityData ed : parent.getOrderedEntityData()) {
 			Entity existingChild = ed.getChildEntity();
 			if (existingChild!=null) {

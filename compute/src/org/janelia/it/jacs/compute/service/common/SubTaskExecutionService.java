@@ -2,6 +2,7 @@ package org.janelia.it.jacs.compute.service.common;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
@@ -57,8 +58,21 @@ public class SubTaskExecutionService implements IService {
         		String key = processData.getString("PARAMETER_"+num+"_KEY");	
         		if (key == null || num>100) break;
         		Object value = processData.getItem("PARAMETER_"+num+"_VALUE");
-        		String strValue = value==null?"":value.toString();
-                logger.info("Setting subtask parameter "+key+" = '"+strValue+"'");
+        		
+        		String strValue = null;
+        		if (value instanceof List) {
+        		    strValue = Task.csvStringFromCollection((List)value);
+        		}
+        		else {
+        		    strValue = value==null?"":value.toString();    
+        		}
+
+                String printValue = strValue.toString();
+                if (printValue.length()>1000) {
+                    printValue = printValue.substring(0, 1000)+"...";
+                }
+                
+                logger.info("Setting subtask parameter "+key+" = '"+printValue+"'");
         		subtask.setParameter(key, strValue);
                 num++;
         	}

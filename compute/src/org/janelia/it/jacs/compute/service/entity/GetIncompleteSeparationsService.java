@@ -27,7 +27,7 @@ public class GetIncompleteSeparationsService extends AbstractEntityService {
     
     public void execute() throws Exception {
 
-        logger.info("Finding neuron separations in need of repair, which are owned by "+ownerKey+" and located in "+centralDir);
+        logger.info("Finding neuron separations in need of repair, which are owned by "+ownerKey+" and located in "+centralDir+" or "+centralDirArchived);
         
         List<String> missingFastload = new ArrayList<String>();
         List<String> missingAllMaskChan = new ArrayList<String>();

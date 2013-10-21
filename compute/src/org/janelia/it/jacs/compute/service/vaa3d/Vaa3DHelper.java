@@ -246,7 +246,7 @@ public class Vaa3DHelper {
     }
 
     public static String getFormattedMaskFromStackCommand(String refPath, String outputDir, String outputPrefix, String channel, String threshold) {
-        return VAA3D_BASE_CMD + " -cmd neuron-fragment-editor -mode mask-from-stack -sourceImage \""+refPath+"\" -channel "+channel+" -threshold "+threshold+" -outputDir \""+outputDir+"\" -outputPrefix ";
+        return VAA3D_BASE_CMD + " -cmd neuron-fragment-editor -mode mask-from-stack -sourceImage \""+refPath+"\" -channel "+channel+" -threshold "+threshold+" -outputDir \""+outputDir+"\" -outputPrefix "+outputPrefix;
     }
     
     public static String getFormattedMaskSearchCommand(String indexFilePath, String queryChannel, String matrix,
