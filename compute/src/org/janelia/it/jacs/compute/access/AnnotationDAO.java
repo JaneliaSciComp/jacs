@@ -796,7 +796,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     	deleteSmallEntityTree(subjectKey, entity, unlinkMultipleParents, 0, new HashSet<Long>());
     }
     
-    public void deleteSmallEntityTree(String subjectKey, Entity entity, boolean unlinkMultipleParents, int level, Set<Long> deleted) throws DaoException {
+    private void deleteSmallEntityTree(String subjectKey, Entity entity, boolean unlinkMultipleParents, int level, Set<Long> deleted) throws DaoException {
 
     	StringBuffer indent = new StringBuffer();
 		for (int i = 0; i < level; i++) {
