@@ -15,7 +15,7 @@ final toDelete = []
 
 println "INSPECTING SAMPLES:"
 
-for(Entity folder : f.e.getUserEntitiesByNameAndTypeName(ownerKey, "Central Brain 63x", "Folder")) {
+for(Entity folder : f.e.getUserEntitiesByNameAndTypeName(ownerKey, "Pan Lineage 40x", "Folder")) {
     f.loadChildren(folder)
     EntityVistationBuilder.create(f.getEntityLoader())
             .startAt(folder)
@@ -42,7 +42,7 @@ println "Processed "+numProcessed+" samples. Found "+toDelete.size()+" candidate
 if (!DEBUG) {
     println "DELETING SAMPLES:"
     for(Entity alignmentResult in toDelete) {
-//        f.e.deleteEntityTree(alignmentResult.ownerKey, alignmentResult.id)
+//        f.e.deleteSmallEntityTree(alignmentResult.ownerKey, alignmentResult.id, true)
     }
 }
 
