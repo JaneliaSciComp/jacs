@@ -53,4 +53,6 @@ public interface WorkstationDataManagerMBean {
 
     // Tile viewer pipelines
     public void create3DTileMicroscopeSamples(String user, String destinationFolderName);
+    
+    public void addChildFolder(String parentId, String folderName);
 }

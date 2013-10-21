@@ -1,5 +1,19 @@
 package org.janelia.it.jacs.compute.mbean;
 
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.Set;
+import java.util.TreeMap;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -30,9 +44,6 @@ import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
-
-import java.io.*;
-import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -558,5 +569,22 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT, "Common Root");
         }
         return entity;
+    }
+    
+    public void addChildFolder(String parentId, String folderName) {
+        
+        try {
+            EntityBeanRemote e = EJBFactory.getRemoteEntityBean();
+            Entity parent = e.getEntityById(null, Long.parseLong(parentId));
+            
+            Entity folder = newEntity(folderName, EntityConstants.TYPE_FOLDER, parent.getOwnerKey(), false);
+            folder = e.saveOrUpdateEntity(parent.getOwnerKey(), folder);
+
+            EntityData ed = parent.addChildEntity(folder, EntityConstants.ATTRIBUTE_ENTITY);
+            e.saveOrUpdateEntityData(parent.getOwnerKey(), ed);
+        }
+        catch (Exception ex) {
+            logger.error("Error running addChildFolder", ex);
+        }
     }
 }

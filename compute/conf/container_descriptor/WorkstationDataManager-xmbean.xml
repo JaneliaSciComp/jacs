@@ -443,4 +443,19 @@
         </parameter>
     </operation>
     
+    <operation>
+        <description>Add a child Folder to an Entity</description>
+        <name>addChildFolder</name>
+        <parameter>
+            <description>Entity id of the parent entity</description>
+            <name>parentId</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Name of the new folder</description>
+            <name>folderName</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
 </mbean>
