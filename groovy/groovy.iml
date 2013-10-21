@@ -6,8 +6,9 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry type="library" name="groovy-2.1.7" level="application" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Groovy" level="project" />
+    <orderEntry type="library" name="Solrj" level="project" />
     <orderEntry type="module" module-name="console" />
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
