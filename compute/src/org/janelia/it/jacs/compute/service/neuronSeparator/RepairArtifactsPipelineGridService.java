@@ -168,8 +168,8 @@ public class RepairArtifactsPipelineGridService extends AbstractEntityGridServic
     }
 
     @Override
-    protected int getRequiredMemoryInGB() {
-    	return 8;
+    protected int getRequiredSlots() {
+        return 16;
     }
     
     @Override
