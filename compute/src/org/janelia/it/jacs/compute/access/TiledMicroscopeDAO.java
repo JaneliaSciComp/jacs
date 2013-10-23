@@ -318,7 +318,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     }
 
     public void updateAnchoredPath(TmAnchoredPath anchoredPath, Long annotationID1, Long annotationID2,
-       List<Vector<Integer>> pointList) throws DaoException {
+       List<List<Integer>> pointList) throws DaoException {
         try {
             EntityData ed=(EntityData) computeDAO.genericLoad(EntityData.class, anchoredPath.getId());
             String valueString=TmAnchoredPath.toStringFromArguments(anchoredPath.getId(),

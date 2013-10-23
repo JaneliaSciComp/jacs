@@ -3,8 +3,8 @@ package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 
 /**
@@ -28,9 +28,9 @@ public class TmAnchoredPath implements IsSerializable, Serializable {
 
     // VoxelIndex and Vec3 not available to model, so wing it; these
     //  will be 3-vectors (x, y, z):
-    List<Vector<Integer>> pointList;
+    List<List<Integer>> pointList;
 
-    public TmAnchoredPath(Long id, Long annotationID1, Long annotationID2, List<Vector<Integer>> pointList) throws Exception{
+    public TmAnchoredPath(Long id, Long annotationID1, Long annotationID2, List<List<Integer>> pointList) throws Exception{
         this.id = id;
         setAnnotationIDs(annotationID1, annotationID2);
         setPointList(pointList);
@@ -54,7 +54,7 @@ public class TmAnchoredPath implements IsSerializable, Serializable {
             if (coords.length != 3) {
                 throw new Exception(String.format("couldn't parse coordinates %s", fields[i]));
             }
-            Vector<Integer> temp = new Vector<Integer>(3);
+            ArrayList<Integer> temp = new ArrayList<Integer>(3);
             temp.set(0, Integer.parseInt(coords[0]));
             temp.set(1, Integer.parseInt(coords[1]));
             temp.set(2, Integer.parseInt(coords[2]));
@@ -63,13 +63,13 @@ public class TmAnchoredPath implements IsSerializable, Serializable {
 
     }
 
-    public static String toStringFromArguments(Long id, Long annotationID1, Long annotationID2, List<Vector<Integer>> pointList)
+    public static String toStringFromArguments(Long id, Long annotationID1, Long annotationID2, List<List<Integer>> pointList)
         throws Exception {
         // make a gross estimate at initial capacity, given format
         StringBuilder builder = new StringBuilder(30 + 15 * pointList.size());
         builder.append(String.format("%d:%d:%d", id, annotationID1, annotationID2));
-        for (Vector<Integer> vect: pointList) {
-            builder.append(String.format(":%d,%d,%d", vect.get(0), vect.get(1), vect.get(2)));
+        for (List<Integer> point : pointList) {
+            builder.append(String.format(":%d,%d,%d", point.get(0), point.get(1), point.get(2)));
         }
         // 1G is the approx. limit on data transfer in MySQL in our environment
         if (builder.length() > 1000000000) {
@@ -107,17 +107,17 @@ public class TmAnchoredPath implements IsSerializable, Serializable {
         }
     }
 
-    public List<Vector<Integer>> getPointList() {
+    public List<List<Integer>> getPointList() {
         return pointList;
     }
 
     /**
      * points must be ordered list of 3-vectors (x, y, z)
      */
-    public void setPointList(List<Vector<Integer>> pointList) throws Exception {
-        for (Vector<Integer> vect: pointList) {
-            if (vect.size() != 3) {
-                throw new Exception("found vector with dimension not equal to three!");
+    public void setPointList(List<List<Integer>> pointList) throws Exception {
+        for (List<Integer> point: pointList) {
+            if (point.size() != 3) {
+                throw new Exception("found point with dimension not equal to three!");
             }
         }
         this.pointList = pointList;
