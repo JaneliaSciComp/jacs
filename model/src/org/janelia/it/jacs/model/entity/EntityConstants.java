@@ -138,6 +138,10 @@ public class EntityConstants {
     public static final String ATTRIBUTE_GEO_TREE_COORDINATE                 = "Geometric Tree Coordinate";
     public static final String ATTRIBUTE_GEO_ROOT_COORDINATE                 = "Root Geometric Tree Element";
 
+    // Anchored path
+    // "<id>:<attributeID1>:<attributeID2>:x,y,z:(repeat x,y,z)"
+    public static final String ATTRIBUTE_ANCHORED_PATH                      = "Anchored Path";
+
     // Alignment Spaces
     public static final String ATTRIBUTE_ALIGNMENT_SPACE                     = "Alignment Space"; // e.g. "Unified 20x Alignment Space"
     public static final String ATTRIBUTE_ITEM                                = "Item";            // The actual entity item wrapped by an Aligned Item

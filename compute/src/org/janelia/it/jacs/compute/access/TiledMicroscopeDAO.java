@@ -1,11 +1,9 @@
 package org.janelia.it.jacs.compute.access;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
-import org.omg.PortableServer.ID_UNIQUENESS_POLICY_ID;
 
 import java.util.*;
 
@@ -14,7 +12,6 @@ import java.util.*;
  * User: murphys
  * Date: 4/30/13
  * Time: 12:57 PM
- * To change this template use File | Settings | File Templates.
  */
 
 public class TiledMicroscopeDAO extends ComputeBaseDAO {
@@ -39,6 +36,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             _logger.debug("Creating attributes");
             createEntityAttribute(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE);
             createEntityAttribute(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE);
+            createEntityAttribute(EntityConstants.ATTRIBUTE_ANCHORED_PATH);
             createEntityAttribute(EntityConstants.ATTRIBUTE_PROPERTY);
             createEntityAttribute(EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS);
 
@@ -167,6 +165,72 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
+    public TmAnchoredPath addAnchoredPath(Long neuronID, Long annotationID1, Long annotationID2,
+        List<Vector<Integer>> pointlist) throws Exception {
+
+        try {
+            for (Vector<Integer> vect: pointlist) {
+                if (vect.size() != 3) {
+                    throw new Exception("all points must be 3-vectors");
+                }
+            }
+            if (annotationID1 > annotationID2) {
+                Long temp = annotationID1;
+                annotationID1 = annotationID2;
+                annotationID2 = temp;
+            }
+
+            // retrieve neuron; object is easier to check that annotations in neuron
+            TmNeuron neuron = loadNeuron(neuronID);
+            if (!neuron.getGeoAnnotationMap().containsKey(annotationID1) ||
+                    !neuron.getGeoAnnotationMap().containsKey(annotationID2)) {
+                throw new Exception("both annotations must be in neuron");
+            }
+
+            // to do real work, though, we need the entity:
+            Entity neuronEntity = annotationDAO.getEntityById(neuronID);
+            if (!neuronEntity.getEntityType().getName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
+                throw new Exception("Id is not valid TmNeuron type="+neuronID);
+            }
+
+            EntityData pathData=new EntityData();
+            pathData.setOwnerKey(neuronEntity.getOwnerKey());
+            pathData.setCreationDate(new Date());
+            pathData.setUpdatedDate(new Date());
+            EntityAttribute pathAttribute = annotationDAO.getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANCHORED_PATH);
+            pathData.setEntityAttribute(pathAttribute);
+            pathData.setOrderIndex(0);
+            pathData.setParentEntity(neuronEntity);
+            // perhaps not entirely kosher to use this temp value, but it works
+            pathData.setValue(TMP_GEO_VALUE);
+            annotationDAO.saveOrUpdate(pathData);
+            neuronEntity.getEntityData().add(pathData);
+            annotationDAO.saveOrUpdate(neuronEntity);
+
+            // Find and update value string
+            boolean valueStringUpdated=false;
+            String valueString=null;
+            for (EntityData ed: neuronEntity.getEntityData()) {
+                if (ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_ANCHORED_PATH)) {
+                    if (ed.getValue().equals(TMP_GEO_VALUE)) {
+                        valueString=TmAnchoredPath.toStringFromArguments(ed.getId(), annotationID1, annotationID2, pointlist);
+                        ed.setValue(valueString);
+                        annotationDAO.saveOrUpdate(ed);
+                        valueStringUpdated=true;
+                    }
+                }
+            }
+            if (!valueStringUpdated) {
+                throw new Exception("Could not find anchor path entity data to update for value string");
+            }
+            TmAnchoredPath anchoredPath = new TmAnchoredPath(valueString);
+            return anchoredPath;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+    }
+
     public TmGeoAnnotation addGeometricAnnotation(Long neuronId, Long parentAnnotationId, int index,
                                                   double x, double y, double z, String comment) throws DaoException {
         try {
@@ -247,6 +311,20 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             }
             TmGeoAnnotation geoAnnotation=new TmGeoAnnotation(valueString);
             return geoAnnotation;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+    }
+
+    public void updateAnchoredPath(TmAnchoredPath anchoredPath, Long annotationID1, Long annotationID2,
+       List<Vector<Integer>> pointList) throws DaoException {
+        try {
+            EntityData ed=(EntityData) computeDAO.genericLoad(EntityData.class, anchoredPath.getId());
+            String valueString=TmAnchoredPath.toStringFromArguments(anchoredPath.getId(),
+                    annotationID1, annotationID2, pointList);
+            ed.setValue(valueString);
+            annotationDAO.saveOrUpdate(ed);
         } catch (Exception e) {
             e.printStackTrace();
             throw new DaoException(e);
@@ -457,6 +535,16 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             } else {
                 throw new Exception("Owners do not match");
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+    }
+
+    public void deleteAnchoredPath(Long pathID) throws DaoException {
+        try {
+            EntityData ed=(EntityData) annotationDAO.genericLoad(EntityData.class, pathID);
+            annotationDAO.genericDelete(ed);
         } catch (Exception e) {
             e.printStackTrace();
             throw new DaoException(e);
