@@ -166,11 +166,11 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     }
 
     public TmAnchoredPath addAnchoredPath(Long neuronID, Long annotationID1, Long annotationID2,
-        List<Vector<Integer>> pointlist) throws Exception {
+        List<List<Integer>> pointlist) throws Exception {
 
         try {
-            for (Vector<Integer> vect: pointlist) {
-                if (vect.size() != 3) {
+            for (List<Integer> point: pointlist) {
+                if (point.size() != 3) {
                     throw new Exception("all points must be 3-vectors");
                 }
             }
