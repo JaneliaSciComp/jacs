@@ -70,7 +70,13 @@ public class RepairArtifactsPipelineGridService extends AbstractEntityGridServic
     	int configIndex = 1;
     	for(String separationId : separationIds) {
     		Entity separation = entityBean.getEntityTree(Long.parseLong(separationId));
-        	writeInstanceFiles(separation, configIndex++);	
+    		
+    		// Check to make sure this separation exists. Otherwise vaa3d may hang indefinitely.
+    		String sepPath = separation.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+    		File file = new File(sepPath);
+    		if (file.exists()) {
+    		    writeInstanceFiles(separation, configIndex++);
+    		}
     	}
     	writeShellScript(writer);
         setJobIncrementStop(configIndex-1);
