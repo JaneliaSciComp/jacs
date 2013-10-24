@@ -47,4 +47,12 @@ public interface TiledMicroscopeBeanRemote {
 
     public TmNeuron loadNeuron(Long neuronId) throws ComputeException;
 
+    public TmAnchoredPath addAnchoredPath(Long neuronID, Long annotationID1, Long annotationID2,
+                                          List<List<Integer>> pointlist) throws ComputeException;
+
+    public void updateAnchoredPath(TmAnchoredPath anchoredPath, Long annotationID1, Long annotationID2,
+                List<List<Integer>> pointList) throws ComputeException;
+
+    public void deleteAnchoredPath(Long pathID) throws ComputeException;
+
 }

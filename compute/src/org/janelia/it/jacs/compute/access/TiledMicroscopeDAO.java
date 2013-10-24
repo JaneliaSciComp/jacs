@@ -174,11 +174,6 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                     throw new Exception("all points must be 3-vectors");
                 }
             }
-            if (annotationID1 > annotationID2) {
-                Long temp = annotationID1;
-                annotationID1 = annotationID2;
-                annotationID2 = temp;
-            }
 
             // retrieve neuron; object is easier to check that annotations in neuron
             TmNeuron neuron = loadNeuron(neuronID);

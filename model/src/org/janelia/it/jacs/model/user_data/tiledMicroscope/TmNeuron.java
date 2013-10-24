@@ -22,6 +22,7 @@ public class TmNeuron implements IsSerializable, Serializable {
     Long id;
     String name;
     Map<Long, TmGeoAnnotation> geoAnnotationMap=new HashMap<Long, TmGeoAnnotation>();
+    Map<TmAnchoredPathEndpoints, TmAnchoredPath> anchoredPathMap = new HashMap<TmAnchoredPathEndpoints, TmAnchoredPath>();
     List<TmGeoAnnotation> rootAnnotations=new ArrayList<TmGeoAnnotation>();
 
     public Long getId() {
@@ -47,6 +48,10 @@ public class TmNeuron implements IsSerializable, Serializable {
 
     public Map<Long, TmGeoAnnotation> getGeoAnnotationMap() {
         return geoAnnotationMap;
+    }
+
+    public Map<TmAnchoredPathEndpoints, TmAnchoredPath> getAnchoredPathMap() {
+        return anchoredPathMap;
     }
 
     public List<TmGeoAnnotation> getRootAnnotations() {
@@ -99,7 +104,8 @@ public class TmNeuron implements IsSerializable, Serializable {
         }
         this.id=entity.getId();
         this.name=entity.getName();
-        // First step is to create TmGeoAnnotation objects
+
+        // First step is to create TmGeoAnnotation and TmAnchoredPath objects
         for (EntityData ed : entity.getEntityData()) {
             String edAttr = ed.getEntityAttribute().getName();
             if (edAttr.equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE) ||
@@ -109,9 +115,13 @@ public class TmNeuron implements IsSerializable, Serializable {
                     rootAnnotations.add(ga);
                 }
                 geoAnnotationMap.put(ga.getId(), ga);
+            } else if (edAttr.equals(EntityConstants.ATTRIBUTE_ANCHORED_PATH)) {
+                TmAnchoredPath path = new TmAnchoredPath(ed.getValue());
+                anchoredPathMap.put(path.getEndpoints(), path);
             }
         }
-        // Second step to to use child/parent fields to construct graph
+        // Second step to to use child/parent fields to construct graph for
+        //  the GeoAnnotations
         for (TmGeoAnnotation ga : geoAnnotationMap.values()) {
             Long parentId = ga.getParentId();
             // if parent ID is the neuron ID, it's a root, the ID won't be in

@@ -21,18 +21,16 @@ import java.util.List;
 public class TmAnchoredPath implements IsSerializable, Serializable {
     Long id;
 
-    // two IDs of the annotations between which the path runs; we choose to maintain
-    //  annotationID1 < annotationID2
-    Long annotationID1;
-    Long annotationID2;
+    // two IDs of the annotations between which the path runs
+    TmAnchoredPathEndpoints endpoints;
 
     // VoxelIndex and Vec3 not available to model, so wing it; these
     //  will be 3-vectors (x, y, z):
     List<List<Integer>> pointList;
 
-    public TmAnchoredPath(Long id, Long annotationID1, Long annotationID2, List<List<Integer>> pointList) throws Exception{
+    public TmAnchoredPath(Long id, TmAnchoredPathEndpoints endpoints, List<List<Integer>> pointList) throws Exception{
         this.id = id;
-        setAnnotationIDs(annotationID1, annotationID2);
+        this.endpoints = endpoints;
         setPointList(pointList);
     }
 
@@ -46,8 +44,7 @@ public class TmAnchoredPath implements IsSerializable, Serializable {
             throw new Exception("not enough separators in pathString");
         }
         id = new Long(fields[0]);
-        annotationID1 = new Long(fields[1]);
-        annotationID2 = new Long(fields[2]);
+        endpoints = new TmAnchoredPathEndpoints(new Long(fields[1]), new Long(fields[2]));
 
         for (int i=3; i<fields.length; i++) {
             String[] coords = fields[i].split(",");
@@ -65,6 +62,16 @@ public class TmAnchoredPath implements IsSerializable, Serializable {
 
     public static String toStringFromArguments(Long id, Long annotationID1, Long annotationID2, List<List<Integer>> pointList)
         throws Exception {
+        // side note: we don't use TmAnchoredPathEndpoints here because this method is typically
+        //  for the use of TiledMicroscopeDAO, which ends up working with the individual 
+        //  annotations and strings thereof
+
+        if (annotationID1 > annotationID2) {
+            Long temp = annotationID1;
+            annotationID1 = annotationID2;
+            annotationID2 = temp;
+        }
+
         // make a gross estimate at initial capacity, given format
         StringBuilder builder = new StringBuilder(30 + 15 * pointList.size());
         builder.append(String.format("%d:%d:%d", id, annotationID1, annotationID2));
@@ -79,7 +86,7 @@ public class TmAnchoredPath implements IsSerializable, Serializable {
     }
 
     public String toString() {
-        return String.format("<path between %d, %d", annotationID1, annotationID2);
+        return String.format("<path between %d, %d", endpoints.getAnnotationID1(), endpoints.getAnnotationID2());
     }
 
     public Long getId() {
@@ -90,21 +97,12 @@ public class TmAnchoredPath implements IsSerializable, Serializable {
         this.id = id;
     }
 
-    public Long getAnnotationID1() {
-        return annotationID1;
+    public TmAnchoredPathEndpoints getEndpoints() {
+        return endpoints;
     }
 
-    public Long getAnnotationID2() {
-        return annotationID2;
-    }
-
-    public void setAnnotationIDs(Long annotationID1, Long annotationID2) {
-        this.annotationID1 = annotationID1;
-        this.annotationID2 = annotationID2;
-        if (annotationID2 != null && annotationID1 != null && annotationID1 > annotationID2) {
-            this.annotationID1 = annotationID2;
-            this.annotationID2 = annotationID1;
-        }
+    public void setEndpoints(TmAnchoredPathEndpoints endpoints) {
+        this.endpoints = endpoints;
     }
 
     public List<List<Integer>> getPointList() {

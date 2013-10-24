@@ -184,7 +184,41 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
             TmNeuron neuron = _tiledMicroscopeDAO.loadNeuron(neuronId);
             return neuron;
         } catch (Exception e) {
-            String errorString="Error calling loadWorkspace in DAO layer: " + e.getMessage();
+            String errorString="Error calling loadNeuron in DAO layer: " + e.getMessage();
+            _logger.error(errorString);
+            throw new ComputeException(errorString);
+        }
+    }
+
+    public TmAnchoredPath addAnchoredPath(Long neuronID, Long annotationID1, Long annotationID2,
+        List<List<Integer>> pointlist) throws ComputeException {
+        try {
+            TmAnchoredPath anchoredPath = _tiledMicroscopeDAO.addAnchoredPath(neuronID,
+                    annotationID1, annotationID2, pointlist);
+            return anchoredPath;
+        } catch (Exception e) {
+            String errorString="Error calling addAnchoredPath in DAO layer: " + e.getMessage();
+            _logger.error(errorString);
+            throw new ComputeException(errorString);
+        }
+    }
+
+    public void updateAnchoredPath(TmAnchoredPath anchoredPath, Long annotationID1, Long annotationID2,
+        List<List<Integer>> pointlist) throws ComputeException {
+        try {
+            _tiledMicroscopeDAO.updateAnchoredPath(anchoredPath, annotationID1, annotationID2, pointlist);
+        } catch (Exception e) {
+            String errorString="Error calling updateAnchoredPathin DAO layer: " + e.getMessage();
+            _logger.error(errorString);
+            throw new ComputeException(errorString);
+        }
+    }
+
+    public void deleteAnchoredPath(Long pathID) throws ComputeException {
+        try {
+            _tiledMicroscopeDAO.deleteAnchoredPath(pathID);
+        } catch (Exception e) {
+            String errorString="Error calling deleteAnchoredPathin DAO layer: " + e.getMessage();
             _logger.error(errorString);
             throw new ComputeException(errorString);
         }
