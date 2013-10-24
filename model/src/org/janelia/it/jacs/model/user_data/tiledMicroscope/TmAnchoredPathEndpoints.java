@@ -13,11 +13,11 @@ public class TmAnchoredPathEndpoints {
     private Long annotationID1;
     private Long annotationID2;
 
-    TmAnchoredPathEndpoints(Long annotationID1, Long annotationID2) {
+    public TmAnchoredPathEndpoints(Long annotationID1, Long annotationID2) {
         setAnnotations(annotationID1, annotationID2);
     }
 
-    TmAnchoredPathEndpoints(TmGeoAnnotation annotation1, TmGeoAnnotation annotation2) {
+    public TmAnchoredPathEndpoints(TmGeoAnnotation annotation1, TmGeoAnnotation annotation2) {
         setAnnotations(annotation1.getId(), annotation2.getId());
     }
 
@@ -31,8 +31,8 @@ public class TmAnchoredPathEndpoints {
             return false;
         }
 
-        return (annotationID1 == ((TmAnchoredPathEndpoints) o).getAnnotationID1() &&
-                annotationID2 == ((TmAnchoredPathEndpoints) o).getAnnotationID2());
+        return (annotationID1.equals(((TmAnchoredPathEndpoints) o).getAnnotationID1()) &&
+                annotationID2.equals(((TmAnchoredPathEndpoints) o).getAnnotationID2()));
     }
 
     @Override
@@ -44,15 +44,15 @@ public class TmAnchoredPathEndpoints {
         return result;
     }
 
-    Long getAnnotationID1() {
+    public Long getAnnotationID1() {
         return annotationID1;
     }
 
-    Long getAnnotationID2() {
+    public Long getAnnotationID2() {
         return annotationID2;
     }
 
-    void setAnnotations(Long annotationID1, Long annotationID2) {
+    public void setAnnotations(Long annotationID1, Long annotationID2) {
         if (annotationID2 < annotationID1) {
             this.annotationID1 = annotationID2;
             this.annotationID2 = annotationID1;
