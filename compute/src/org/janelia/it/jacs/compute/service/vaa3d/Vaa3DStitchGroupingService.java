@@ -85,7 +85,7 @@ public class Vaa3DStitchGroupingService extends SubmitDrmaaJobService {
 
     @Override
     protected int getRequiredMemoryInGB() {
-    	return 24;
+    	return 64;
     }
 
 	@Override
