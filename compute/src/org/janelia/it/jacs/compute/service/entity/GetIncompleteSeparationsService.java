@@ -29,9 +29,9 @@ public class GetIncompleteSeparationsService extends AbstractEntityService {
 
         logger.info("Finding neuron separations in need of repair, which are owned by "+ownerKey+" and located in "+centralDir+" or "+centralDirArchived);
         
-        List<String> missingFastload = new ArrayList<String>();
-        List<String> missingAllMaskChan = new ArrayList<String>();
-        List<String> missingRefMaskChan = new ArrayList<String>();
+        List<String> sepsMissingFastLoad = new ArrayList<String>();
+        List<String> sepsMissingAllMaskChan = new ArrayList<String>();
+        List<String> sepsMissingRefMaskChan = new ArrayList<String>();
         Set<String> incompleteItems = new HashSet<String>();
         
         for(Entity separation : entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
@@ -110,14 +110,14 @@ public class GetIncompleteSeparationsService extends AbstractEntityService {
         	logger.info("  missingFastLoad="+missingFastLoad+", missingRefChan="+missingRefChan+", missingNeuronMaskChan="+missingNeuronMaskChan);
             
             if (missingFastLoad) {
-            	missingFastload.add(separation.getId().toString());
+            	sepsMissingFastLoad.add(separation.getId().toString());
             }
             
             if (missingNeuronMaskChan) {
-            	missingAllMaskChan.add(separation.getId().toString());
+            	sepsMissingAllMaskChan.add(separation.getId().toString());
             }
             else if (missingRefChan) {
-            	missingRefMaskChan.add(separation.getId().toString());
+            	sepsMissingRefMaskChan.add(separation.getId().toString());
             }
             
         	// Free memory
@@ -126,14 +126,14 @@ public class GetIncompleteSeparationsService extends AbstractEntityService {
         	}
         }
         
-        incompleteItems.addAll(missingFastload);
-        incompleteItems.addAll(missingAllMaskChan);
-        incompleteItems.addAll(missingRefMaskChan);
+        incompleteItems.addAll(sepsMissingFastLoad);
+        incompleteItems.addAll(sepsMissingAllMaskChan);
+        incompleteItems.addAll(sepsMissingRefMaskChan);
         
         List<RunModeItemGroups<String>> allModeGroups = new ArrayList<RunModeItemGroups<String>>();
-        allModeGroups.add(new RunModeItemGroups<String>(MODE_FASTLOAD, missingFastload));
-        allModeGroups.add(new RunModeItemGroups<String>(MODE_ALL_MASK_CHAN, missingAllMaskChan));
-        allModeGroups.add(new RunModeItemGroups<String>(MODE_REF_MASK_CHAN, missingRefMaskChan));
+        allModeGroups.add(new RunModeItemGroups<String>(MODE_FASTLOAD, sepsMissingFastLoad));
+        allModeGroups.add(new RunModeItemGroups<String>(MODE_ALL_MASK_CHAN, sepsMissingAllMaskChan));
+        allModeGroups.add(new RunModeItemGroups<String>(MODE_REF_MASK_CHAN, sepsMissingRefMaskChan));
         
         processData.putItem("RUN_MODE_ITEM_GROUPS", allModeGroups);
         processData.putItem("INCOMPLETE_ITEMS", new ArrayList<String>(incompleteItems));

@@ -308,4 +308,14 @@
         </parameter>
     </operation>
     
+    <operation>
+        <description>Repair all neuron separations results</description>
+        <name>runRepairSeparationResultsPipeline</name>
+        <parameter>
+            <description>User to run as (e.g. "flylight")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
 </mbean>

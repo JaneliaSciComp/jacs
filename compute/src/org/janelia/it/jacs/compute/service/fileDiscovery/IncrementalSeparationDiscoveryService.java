@@ -69,6 +69,10 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
         	String separationId = (String)processData.getItem("SEPARATION_ID");
         	if (separationId!=null) {
         		separation = entityBean.getEntityTree(Long.parseLong(separationId));
+        		if (separation==null) {
+        		    logger.error("Separation "+separationId+" no longer exists. There is nothing to do.");
+        		    return;
+        		}
         	}
         }
         

@@ -33,4 +33,5 @@ public interface SampleDataManagerMBean {
     
     // Upgrade pipelines
     public void runRepairSeparationsPipeline(String user);
+    public void runRepairSeparationResultsPipeline(String user);
 }

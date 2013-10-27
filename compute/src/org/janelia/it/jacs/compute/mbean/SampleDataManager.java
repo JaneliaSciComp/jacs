@@ -375,4 +375,15 @@ public class SampleDataManager implements SampleDataManagerMBean {
             logger.error("Error running pipeline", ex);
         }
     }
+
+    public void runRepairSeparationResultsPipeline(String user) {
+        try {
+            String processName = "RepairSeparationResultsPipeline";
+            String displayName = "Repair Separation Results Pipeline";
+            saveAndRunTask(user, processName, displayName);
+        } 
+        catch (Exception ex) {
+            logger.error("Error running pipeline", ex);
+        }
+    }
 }
