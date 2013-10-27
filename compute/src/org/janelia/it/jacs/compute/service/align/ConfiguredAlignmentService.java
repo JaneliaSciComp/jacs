@@ -130,6 +130,10 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
     			}
     		});
     		
+        	if (propertiesFiles==null) {
+        	    throw new MissingDataException("Output directory missing for alignment: "+outputDir);
+        	}
+        	
         	List<String> filenames = new ArrayList<String>();
         	String defaultFilename = null;
         	

@@ -207,6 +207,8 @@ public class ResultImageRegistrationService extends AbstractEntityService {
             		entityHelper.setImageIfNecessary(default3dImage, EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE, fast3dImage);
         		}
     		}
+            
+            processData.putItem("DEFAULT_IMAGE_ID", default3dImage.getId().toString());
     	}		
 		
     	// Finally, set the images on the sample tiles 
@@ -235,8 +237,6 @@ public class ResultImageRegistrationService extends AbstractEntityService {
             	setMIPs(imageTile, signalMip, refMip);
             }
     	}
-    	
-    	processData.putItem("DEFAULT_IMAGE_ID", default3dImage.getId().toString());
 	}
 
     private Entity findDefaultImage(Entity result) throws Exception {
