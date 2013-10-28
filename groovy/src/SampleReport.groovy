@@ -1,17 +1,15 @@
-import org.apache.solr.client.solrj.SolrQuery
-import org.apache.solr.common.SolrDocumentList
-import org.janelia.it.FlyWorkstation.api.entity_model.management.*
-import org.janelia.it.jacs.model.entity.Entity
-import org.janelia.it.jacs.model.entity.EntityConstants
-import org.janelia.it.jacs.model.entity.EntityData
-import org.janelia.it.jacs.shared.utils.EntityUtils
-import org.janelia.it.jacs.shared.utils.StringUtils
-import org.janelia.it.jacs.shared.utils.entity.*
-
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
+import org.apache.solr.client.solrj.SolrQuery
+import org.apache.solr.common.SolrDocumentList
+import org.janelia.it.jacs.model.entity.Entity
+import org.janelia.it.jacs.shared.utils.EntityUtils
+import org.janelia.it.jacs.shared.utils.entity.AbstractEntityLoader
+import org.janelia.it.jacs.shared.utils.entity.EntityVisitor
+import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder
+import org.janelia.it.jacs.model.entity.EntityConstants
 
-class Constants {
+class SampleReportConstants {
     static final OWNER = "nerna"
     static final GROUP = "flylight"
     static final OWNER_KEY = "user:"+OWNER
@@ -25,23 +23,23 @@ class Constants {
 }
 
 def file = null
-if (Constants.OUTPUT_HTML) {
-    file = new PrintWriter(Constants.OUTPUT_FILE)
+if (SampleReportConstants.OUTPUT_HTML) {
+    file = new PrintWriter(SampleReportConstants.OUTPUT_FILE)
 }
 else {
     file = System.out
 }
 
-f = new JacsUtils(Constants.OWNER_KEY, true)
+f = new JacsUtils(SampleReportConstants.OWNER_KEY, true)
 
 Multimap<String, Entity> sampleMap = HashMultimap.<String,Entity>create();
 Set<Long> retiredSampleSet = new HashSet<Long>()
 
-addSamples(sampleMap, f.e.getUserEntitiesByTypeName(Constants.OWNER_KEY, "Sample"))
-addSamples(sampleMap, f.e.getUserEntitiesByTypeName(Constants.GROUP_KEY, "Sample"))
+addSamples(sampleMap, f.e.getUserEntitiesByTypeName(SampleReportConstants.OWNER_KEY, "Sample"))
+addSamples(sampleMap, f.e.getUserEntitiesByTypeName(SampleReportConstants.GROUP_KEY, "Sample"))
 
-addRetiredSamples(f, retiredSampleSet, f.getRootEntity(Constants.OWNER_KEY, "Retired Data"))
-addRetiredSamples(f, retiredSampleSet, f.getRootEntity(Constants.GROUP_KEY, "Retired Data"))
+addRetiredSamples(f, retiredSampleSet, f.getRootEntity(SampleReportConstants.OWNER_KEY, "Retired Data"))
+addRetiredSamples(f, retiredSampleSet, f.getRootEntity(SampleReportConstants.GROUP_KEY, "Retired Data"))
 
 List<String> keys = new ArrayList<String>(sampleMap.keySet())
 Collections.sort(keys);
@@ -51,11 +49,11 @@ int numRetiredSamples = 0
 int numStitchingErrors = 0
 int numDuplications = 0
 
-if (Constants.OUTPUT_HTML) {
+if (SampleReportConstants.OUTPUT_HTML) {
     file.println("<html><body><head><style>" +
             "td { font: 8pt sans-serif; vertical-align:top; border: 0px solid #aaa;} table { border-collapse: collapse; } " +
             "</style></head>")
-    file.println("<h3>"+Constants.OWNER+" Retired Samples</h3>")
+    file.println("<h3>"+SampleReportConstants.OWNER+" Retired Samples</h3>")
     file.println("<table>")
     file.println("<tr><td>Owner</td><td>Sample Name</td><td>Data Set</td><td>Matching Active Sample</td><td>Fragments</td><td>Annotations</td></tr>")
 }
@@ -63,13 +61,13 @@ if (Constants.OUTPUT_HTML) {
 List<Entity> samplesForDeletion = new ArrayList<Entity>();
 
 def rootFolder = null
-if (Constants.CREATE_FOLDERS) {
-	rootFolder = f.getRootEntity(Constants.OUTPUT_ROOT_NAME)
+if (SampleReportConstants.CREATE_FOLDERS) {
+	rootFolder = f.getRootEntity(SampleReportConstants.OUTPUT_ROOT_NAME)
     if (rootFolder!=null) {
-        println "Deleting root folder "+Constants.OUTPUT_ROOT_NAME+". This may take a while!"
+        println "Deleting root folder "+SampleReportConstants.OUTPUT_ROOT_NAME+". This may take a while!"
         f.deleteEntityTree(rootFolder.id)
     }
-	rootFolder = f.createRootEntity(Constants.OUTPUT_ROOT_NAME)
+	rootFolder = f.createRootEntity(SampleReportConstants.OUTPUT_ROOT_NAME)
 }
 
 int index = 0
@@ -93,11 +91,11 @@ for(String key : keys) {
         numSlideCodes++
 		
 		Entity keyFolder = null
-		if (Constants.CREATE_FOLDERS) {
+		if (SampleReportConstants.CREATE_FOLDERS) {
 			keyFolder = f.verifyOrCreateChildFolder(rootFolder, key)
 		}
 		
-        if (Constants.OUTPUT_HTML) {
+        if (SampleReportConstants.OUTPUT_HTML) {
             file.println("<tr><td colspan=6 style='background-color:#aaa'>"+key+"</td></tr>");
             println("Processing slide code "+key+" ("+index+")") // to see progress
         }
@@ -133,7 +131,8 @@ for(String key : keys) {
         orderedSamples.addAll(activeSamples);
 
         Collections.sort(orderedSamples, new Comparator<Entity>() {
-            int compare(Entity o1, Entity o2) {
+
+            public int compare(Entity o1, Entity o2) {
                 def retired1 = retiredSampleSet.contains(o1.id)
                 def retired2 = retiredSampleSet.contains(o2.id)
                 if (retired1 && !retired2) {
@@ -160,7 +159,7 @@ for(String key : keys) {
             data_set = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER)
             retired = (retiredSampleSet.contains(sample.id)?"Retired":"")
 
-            NeuronCounter counter = new NeuronCounter(f.getEntityLoader())
+            SampleReportNeuronCounter counter = new SampleReportNeuronCounter(f.getEntityLoader())
             counter.count(sample)
 
             Set<Entity> transferSamples = transferMap.get(sample)
@@ -189,18 +188,18 @@ for(String key : keys) {
                 }
             }
 
-			if (Constants.CREATE_FOLDERS) {
+			if (SampleReportConstants.CREATE_FOLDERS) {
 				f.addToParent(keyFolder, sample, keyFolder.maxOrderIndex+1, EntityConstants.ATTRIBUTE_ENTITY)
 			}
 			
-            if (Constants.OUTPUT_HTML) {
+            if (SampleReportConstants.OUTPUT_HTML) {
                 def annots = annotations.toString()
-                def color = (retired?Constants.COLOR_RETIRED:Constants.COLOR_ACTIVE)
+                def color = (retired?SampleReportConstants.COLOR_RETIRED:SampleReportConstants.COLOR_ACTIVE)
                 file.println("<tr><td>"+sample.ownerKey.replaceAll("group:","").replaceAll("user:","")+"</td>")
                 file.println("<td style='background-color:#"+color+"'><nobr><b>"+sample.name+"</b></nobr></td>")
                 file.println("<td>"+data_set+"</td>")
                 if (transferSamplesSb.length()>0) {
-                    file.println("<td style='background-color:#"+Constants.COLOR_ACTIVE+"'><nobr><b>"+transferSamplesSb+"</b></nobr></td>")
+                    file.println("<td style='background-color:#"+SampleReportConstants.COLOR_ACTIVE+"'><nobr><b>"+transferSamplesSb+"</b></nobr></td>")
                 }
                 else {
                     file.println("<td></td>");
@@ -220,7 +219,7 @@ for(String key : keys) {
             if (supportingData != null) {
                 for(Entity imageTile : EntityUtils.getChildrenForAttribute(supportingData, EntityConstants.ATTRIBUTE_ENTITY)) {
 
-                    if (Constants.OUTPUT_HTML) {
+                    if (SampleReportConstants.OUTPUT_HTML) {
                         lsb.append("&nbsp&nbsp"+imageTile.name+"<br>")
                     }
                     else {
@@ -229,7 +228,7 @@ for(String key : keys) {
 
                     f.loadChildren(imageTile)
                     for(Entity lsm : EntityUtils.getChildrenForAttribute(imageTile, EntityConstants.ATTRIBUTE_ENTITY)) {
-                        if (Constants.OUTPUT_HTML) {
+                        if (SampleReportConstants.OUTPUT_HTML) {
                             lsb.append("&nbsp&nbsp&nbsp&nbsp"+lsm.name+"<br>")
                         }
                         else {
@@ -239,7 +238,7 @@ for(String key : keys) {
                 }
             }
 
-            if (Constants.OUTPUT_HTML) {
+            if (SampleReportConstants.OUTPUT_HTML) {
                 file.println("<tr><td></td><td>"+lsb+"</td><td colspan=4></td></tr>")
             }
 
@@ -247,7 +246,7 @@ for(String key : keys) {
             sample.setEntityData(null)
         }
 
-        if (Constants.OUTPUT_HTML) {
+        if (SampleReportConstants.OUTPUT_HTML) {
             def situation = ""
             def color = "fff"
 
@@ -276,7 +275,7 @@ for(Entity sample : samplesForDeletion) {
     f.e.deleteSmallEntityTree(sample.ownerKey, sample.id, true)
 }
 
-if (Constants.OUTPUT_HTML) {
+if (SampleReportConstants.OUTPUT_HTML) {
     file.println("</table>")
     file.println("<br>Slide codes: "+numSlideCodes)
     file.println("<br>Retired samples: "+numRetiredSamples)
@@ -305,7 +304,7 @@ def padLeft(String s, int n) {
 
 def addSamples(Multimap<String, Entity> sampleMap, Collection<Entity> samples) {
     for(Entity sample : samples) {
-        SampleInfo info = new SampleInfo(sample)
+        SampleReportSampleInfo info = new SampleReportSampleInfo(sample)
         sampleMap.put(info.slide_code, sample);
     }
 }
@@ -322,7 +321,7 @@ def getAnnotations(JacsUtils f, Long sampleId) {
     SolrDocumentList results = f.s.search(null, query, false).response.results
     List<String> annotations = new ArrayList<String>()
     results.each {
-        def all = it.getFieldValues(Constants.OWNER+"_annotations")
+        def all = it.getFieldValues(SampleReportConstants.OWNER+"_annotations")
         if (all!=null) annotations.addAll(all)
     }
     return annotations
@@ -350,13 +349,13 @@ def getLsmSet(JacsUtils f, Entity sample) {
     return lsmSet
 }
 
-class SampleInfo {
+class SampleReportSampleInfo {
     def sampleName = "";
     def line = "";
     def slide_code = "";
     def objective = "";
 
-    SampleInfo(Entity sample) {
+    SampleReportSampleInfo(Entity sample) {
 
         sampleName = sample.name;
         def parts = sampleName.split("~")
@@ -388,12 +387,12 @@ class SampleInfo {
     }
 }
 
-class NeuronCounter {
+class SampleReportNeuronCounter {
 
     AbstractEntityLoader loader
     int numFragments;
 
-    public NeuronCounter(AbstractEntityLoader loader) {
+    public SampleReportNeuronCounter(AbstractEntityLoader loader) {
         this.loader = loader
         this.numFragments = 0
     }
