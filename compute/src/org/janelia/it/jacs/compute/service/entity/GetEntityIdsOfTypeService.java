@@ -1,9 +1,9 @@
 package org.janelia.it.jacs.compute.service.entity;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
@@ -21,7 +21,10 @@ public class GetEntityIdsOfTypeService extends AbstractEntityService {
     	}
 
     	List<Entity> entities = entityBean.getEntitiesByTypeName(ownerKey, entityTypeName);
-    	List<Long> entityIds = EntityUtils.getEntityIdList(entities);
+    	List<String> entityIds = new ArrayList<String>();
+    	for(Entity entity : entities) {
+    	    entityIds.add(entity.getId().toString());
+    	}
     	
     	logger.info("Putting "+entityIds.size()+" result ids in ENTITY_ID");
     	processData.putItem("ENTITY_ID", entityIds);
