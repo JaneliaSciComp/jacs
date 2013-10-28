@@ -86,7 +86,7 @@ public class LargeOperations {
     	try {
 	        conn = annotationDAO.getJdbcConnection();
 	        
-	        StringBuffer sql = new StringBuffer();
+            StringBuilder sql = new StringBuilder();
 	        sql.append("select a.id, a.name, aedt.value, aedk.value, aedv.value, a.owner_key ");
 	        sql.append("from entity a ");
 	        sql.append("left outer join entityData aedt on a.id=aedt.parent_entity_id ");
@@ -130,7 +130,9 @@ public class LargeOperations {
 					logger.warn("Cannot parse annotation target id for annotation="+annotationId);
 				}
 				
-				Set<SimpleAnnotation> annots = (Set<SimpleAnnotation>)getValue(annotationMapCache, entityId);
+                @SuppressWarnings("unchecked")
+                Set<SimpleAnnotation> annots = (Set<SimpleAnnotation>)
+                        getValue(annotationMapCache, entityId);
 				if (annots == null) {
 					annots = new HashSet<SimpleAnnotation>();
 				}
@@ -138,7 +140,7 @@ public class LargeOperations {
 				annots.add(new SimpleAnnotation(annotationName, key, value, owner));
 				putValue(annotationMapCache, entityId, annots);
 				i++;
-			}
+                }
 			logger.info("    Processed "+i+" annotations on "+annotationMapCache.getSize()+" targets");
     	}
     	catch (SQLException e) {
@@ -173,19 +175,19 @@ public class LargeOperations {
     	try {
 	        conn = annotationDAO.getJdbcConnection();
 	        
-	        StringBuffer sql = new StringBuffer();
+            StringBuilder sql = new StringBuilder();
 	        sql.append("select ed.child_entity_id, e.id ");
     		sql.append("from entity e ");
 	        sql.append("join entityData ed on e.id=ed.parent_entity_id ");
 	        sql.append("where ed.child_entity_id is not null ");
 	        sql.append("order by ed.child_entity_id ");
-	        
+
 	        Long currChildId = null;
 	        AncestorSet ancestorSet = new AncestorSet();
 	        	
 	        stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 	        stmt.setFetchSize(Integer.MIN_VALUE);
-	    	
+
 			rs = stmt.executeQuery();
 	    	logger.info("    Processing results");
 			while (rs.next()) {
@@ -197,8 +199,8 @@ public class LargeOperations {
 				}
 				currChildId = childId;
 				ancestorSet.getAncestors().add(entityId);
-			}
-			
+                }
+
 			if (currChildId!=null) {
 				putValue(ancestorMapCache, currChildId, ancestorSet);
 			}	
@@ -220,26 +222,25 @@ public class LargeOperations {
 
     	logger.info("    Loaded entity graph, now to find the ancestors...");
 
-    	int i = 0;
     	for(Object entityIdObj : ancestorMapCache.getKeys()) {
     		calculateAncestors((Long)entityIdObj, new HashSet<Long>(), 0);
-    		i++;
-    	}
+        }
 
     	logger.info("    Verifying ancestors...");
-    	
+
     	for(Object entityIdObj : ancestorMapCache.getKeys()) {
     		Long entityId = (Long)entityIdObj;
     		AncestorSet ancestorSet = (AncestorSet)getValue(ancestorMapCache, entityId);
     		if (!ancestorSet.isComplete()) {
     			logger.warn("Incomplete ancestor set for "+entityId);
     		}
-    	}
-    
+        }
+
     	logger.info("    Done, ancestorMap.size="+ancestorMapCache.getSize());
     }
-    
-    boolean debugAncestors = false;
+
+    private static final HashSet<Long> EMPTY_SET = new HashSet<Long>();
+//    boolean debugAncestors = false;
     private Set<Long> calculateAncestors(Long entityId, Set<Long> visited, int level) {
 
     	Cache ancestorMapCache = caches.get(ANCESTOR_MAP);
@@ -248,23 +249,23 @@ public class LargeOperations {
     		throw new IllegalStateException("Something went wrong calculating ancestors");
     	}
     	
-    	StringBuffer b = new StringBuffer();
-    	for(int i=0; i<level; i++) {
-    		b.append("    ");
-    	}
-    	if (debugAncestors) logger.info(b+""+entityId);
+//    	StringBuffer b = new StringBuffer();
+//    	for(int i=0; i<level; i++) {
+//    		b.append("    ");
+//    	}
+//    	if (debugAncestors) logger.info(b+""+entityId);
     	
     	AncestorSet ancestorSet = (AncestorSet)getValue(ancestorMapCache, entityId);
     	
     	if (ancestorSet==null) {
     		// Hit a root, it has no ancestors
-    		if (debugAncestors) logger.info(b+""+entityId+" is root");
-    		return new HashSet<Long>();
+//    		if (debugAncestors) logger.info(b+""+entityId+" is root");
+    		return EMPTY_SET;
     	}
     		
     	if (ancestorSet.isComplete()) {
     		// The work's already been done
-    		if (debugAncestors) logger.info(b+""+entityId+" is complete");
+//    		if (debugAncestors) logger.info(b+""+entityId+" is complete");
     		return ancestorSet.getAncestors();
     	}
 
@@ -272,7 +273,7 @@ public class LargeOperations {
     		// Loop detected because the set isn't complete but we're hitting the same entity again. Break out of it..
     		ancestorSet.setComplete(true);
     		putValue(ancestorMapCache, entityId, ancestorSet);
-    		if (debugAncestors) logger.info(b+""+entityId+" is loop");
+//    		if (debugAncestors) logger.info(b+""+entityId+" is loop");
     		return ancestorSet.getAncestors();
     	}
 
@@ -286,7 +287,7 @@ public class LargeOperations {
     	ancestorSet.setComplete(true);
     	putValue(ancestorMapCache, entityId, ancestorSet);
     	
-    	if (debugAncestors) logger.info(b+""+entityId+" has "+ancestorSet.getAncestors().size()+" ancestors");
+//    	if (debugAncestors) logger.info(b+""+entityId+" has "+ancestorSet.getAncestors().size()+" ancestors");
     	return ancestorSet.getAncestors();
     }
     
@@ -311,7 +312,7 @@ public class LargeOperations {
 	        	ResultSetIterator iterator = null;
 	        	
 	        	try {
-	        		iterator = sage.getImagesByDataSet(dataSetIdentifier);
+                    iterator = sage.getAllImagePropertiesByDataSet(dataSetIdentifier);
 	        		while (iterator.hasNext()) {
 	            		Map<String,Object> row = iterator.next();
 	    				associateImageProperties(conn, row);

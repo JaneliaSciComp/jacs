@@ -13,8 +13,21 @@ public class SageTerm implements Serializable {
 	private String displayName;
 	private String dataType;
 	private String definition;
-	
-	public String getName() {
+
+    public SageTerm() {
+    }
+
+    public SageTerm(String name,
+                    String displayName,
+                    String dataType,
+                    String definition) {
+        this.name = name;
+        this.displayName = displayName;
+        this.dataType = dataType;
+        this.definition = definition;
+    }
+
+    public String getName() {
 		return name;
 	}
 	public void setName(String name) {

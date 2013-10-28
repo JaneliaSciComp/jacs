@@ -111,6 +111,11 @@
 			   debug="${compile.debug}" optimize="${compile.optimize}" deprecation="${compile.deprecation}">
 			<classpath refid="test.compile.classpath.final"/>
 		</javac>
+
+        <copy todir="${build.test.classes.dir}" >
+            <fileset file="${test.src.dir}/resources/jndi.properties"/>
+        </copy>
+
 	</target>
 
 	<target name="make-test-classes-dir">

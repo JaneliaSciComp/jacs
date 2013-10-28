@@ -6,30 +6,40 @@ import java.util.*;
 import org.apache.log4j.Logger;
 
 /**
- * Iterator-style wrapper for JDBC ResultSets. 
- * 
+ * Iterator-style wrapper for JDBC ResultSets.
+ *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class ResultSetIterator implements Iterator<Map<String,Object>> {
 
     private Logger logger = Logger.getLogger(ResultSetIterator.class);
-    
-	private final Connection conn;
-	private final Statement stmt;
-	private final ResultSet rs;
-	
-	private Map<String,Object> nextRow;
-   
+
+    private final Connection conn;
+    private final Statement stmt;
+    private final ResultSet rs;
+
+    private List<String> orderedColumnLabels;
+    private Map<String, Object> nextRow;
+
     public ResultSetIterator(Connection conn, Statement stmt, ResultSet rs) {
-    	this.conn = conn;
-    	this.stmt = stmt;
+
+        this.conn = conn;
+        this.stmt = stmt;
         this.rs = rs;
+
         try {
-        	if (rs.next()) {
-        		nextRow = toMap(rs);
-        	}
-        }
-        catch (SQLException e) {
+            final ResultSetMetaData md = rs.getMetaData();
+            final int columnCount = md.getColumnCount();
+            orderedColumnLabels = new ArrayList<String>(columnCount);
+            for (int i = 1; i <= columnCount; i++) {
+                orderedColumnLabels.add(md.getColumnLabel(i));
+            }
+
+            if (rs.next()) {
+                nextRow = toMap(rs);
+            }
+
+        } catch (SQLException e) {
             rethrow(e);
         }
     }
@@ -48,15 +58,15 @@ public class ResultSetIterator implements Iterator<Map<String,Object>> {
     @Override
     public Map<String,Object> next() {
         try {
-        	Map<String,Object> toReturn = nextRow;
+            Map<String,Object> toReturn = nextRow;
             if (rs.next()) {
-            	nextRow = toMap(rs);
+                nextRow = toMap(rs);
             }
             else {
-            	nextRow = null;	
+                nextRow = null;
             }
             return toReturn;
-        } 
+        }
         catch (SQLException e) {
             rethrow(e);
             return null;
@@ -75,45 +85,64 @@ public class ResultSetIterator implements Iterator<Map<String,Object>> {
      * Should be called when the client is done with the iterator.
      */
     public void close() {
-    	try {
-    		if (rs!=null) rs.close();
-    		if (stmt!=null) stmt.close();
-    		if (conn!=null) conn.close();
-    	}
-    	catch (SQLException e) {
-            logger.error("Error closing result set iterator",e);
-    	}
+        close(rs, stmt, conn, logger);
     }
-    
-    public List<String> getColumnNames() {
-		List<String> cols = new ArrayList<String>();
-    	try {
-        	ResultSetMetaData md = rs.getMetaData();
-        	for (int i = 1; i <= md.getColumnCount(); i++) {
-        		cols.add(md.getColumnLabel(i));
-        	}
-    	}
-    	catch (SQLException e) {
-            rethrow(e);
-    	}
-    	return cols;
-    }
-    
-    public ResultSet getResultSet() {
-    	return rs;
+
+    /**
+     * Utility to close all non-null resources
+     * (in reverse order: result set, statement, connection).
+     *
+     * @param  resultSet    result set to close.
+     * @param  statement    statement to close.
+     * @param  connection   connection to close.
+     * @param  logger       logger for any close exceptions (which do not get thrown).
+     */
+    public static void close(ResultSet resultSet,
+                             Statement statement,
+                             Connection connection,
+                             Logger logger) {
+
+        if (resultSet != null) {
+            try {
+                resultSet.close();
+            } catch (SQLException e) {
+                logger.error("failed to close result set", e);
+            }
+        }
+
+        if (statement != null) {
+            try {
+                statement.close();
+            } catch (SQLException e) {
+                logger.error("failed to close statement", e);
+            }
+        }
+
+        if (connection != null) {
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                logger.error("failed to close connection", e);
+            }
+        }
     }
 
     private Map<String,Object> toMap(ResultSet rs) throws SQLException {
-    	Map<String,Object> map = new HashMap<String,Object>();
-        ResultSetMetaData md = rs.getMetaData();
-    	for (int i = 1; i <= md.getColumnCount(); i++) {
-    		String columnLabel = md.getColumnLabel(i);
-    		Object value = rs.getObject(columnLabel);
-    		map.put(columnLabel, value);
-    	}
+
+        final int columnCount = orderedColumnLabels.size();
+        Map<String, Object> map = new HashMap<String,Object>(columnCount * 2);
+
+        Object value;
+        for (int i = 0; i < columnCount; i++) {
+            value = rs.getObject(i + 1);
+            if (value != null) {
+                map.put(orderedColumnLabels.get(i), value);
+            }
+        }
+
         return map;
     }
-    
+
     private void rethrow(SQLException e) {
         throw new RuntimeException(e.getMessage(), e);
     }

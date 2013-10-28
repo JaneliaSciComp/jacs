@@ -4,6 +4,7 @@ package org.janelia.it.jacs.compute;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import org.janelia.it.jacs.compute.access.ComputeDAOTest;
+import org.janelia.it.jacs.compute.access.SageDAOTest;
 import org.janelia.it.jacs.compute.app.ejb.ComputeBeanImplTest;
 import org.janelia.it.jacs.compute.service.blast.*;
 import org.janelia.it.jacs.compute.service.search.AccessionSearcherTest;
@@ -33,7 +34,8 @@ public class ComputeModuleTestSuite extends TestSuite {
         suite.addTestSuite(ComputeDAOTest.class);
         suite.addTestSuite(JacsAccessionSearchResultBuilderTest.class);
         suite.addTestSuite(AccessionSearcherTest.class);
-        
+
+        suite.addTestSuite(SageDAOTest.class);
         return suite;
     }
 
