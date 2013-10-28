@@ -7,9 +7,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="library" name="Solrj" level="project" />
     <orderEntry type="module" module-name="console" />
+    <orderEntry type="library" name="Groovy" level="project" />
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">
