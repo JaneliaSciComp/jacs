@@ -387,407 +387,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     	deleteSmallEntityTree(owner, entity);
     }
 
-    private void deleteLargeEntityTree(String subjectKey, Entity entity) throws Exception {
-        Session session = getCurrentSession();
-
-        Map<Long,Set<Long[]>> entityMap=new HashMap<Long, Set<Long[]>>();
-        Map<Long,Set<Long>> parentMap=new HashMap<Long, Set<Long>>();
-        Map<Long,Set<Long>> nonOwnedParentEdMap=new HashMap<Long, Set<Long>>();
-        Set<Long> commonRootSet =  new HashSet<Long>();
-        _logger.info("Building entity graph for user "+subjectKey);
-        getEntityTreeForUserByJdbc(subjectKey, entityMap, parentMap, commonRootSet);
-        _logger.info("Built entity graph for user "+subjectKey+". entityMap.size="+entityMap.size()+" parentMap.size="+parentMap.size());
-        getNonOwnedParents(subjectKey, nonOwnedParentEdMap);
-        
-        // Next, get the sub-entity-graph we care about
-        Set<Long> entitySetCandidatesToDelete=walkEntityMap(entity.getId(), entityMap, new HashSet<Long>());
-        
-        if (debugDeletions) {
-	        for(Long id : entitySetCandidatesToDelete) {
-	        	_logger.info("entitySetCandidatesToDelete contains "+id);
-	        }
-        }
-        
-        // Get the subset which do not have external parents
-        Set<Long> exclusionList=new HashSet<Long>();
-        for (Long candidateId : entitySetCandidatesToDelete) {
-            if (candidateId != entity.getId()) { /* we expect the top-level entity to have external parents but still want to delete it */
-            	if (debugDeletions) _logger.info("Checking external parents of candidateId=" + candidateId);
-                Set<Long> parentSet = parentMap.get(candidateId);
-                boolean shouldExclude = false;
-                for (Long parentId : parentSet) {
-                	if (debugDeletions) _logger.info("Found parentId=" + parentId);
-                    if (!entitySetCandidatesToDelete.contains(parentId)) {
-                        shouldExclude = true;
-                        break;
-                    }
-                }
-                if (debugDeletions) _logger.info("Checking for common rootness of candidateId=" + candidateId);
-                if (commonRootSet.contains(candidateId)) {
-                	if (debugDeletions) _logger.info("Excluding common root candidateId=" + candidateId);
-                	shouldExclude = true;
-                }
-                if (shouldExclude) {
-                	if (debugDeletions) _logger.info("Marking candidateId=" + candidateId + " for exclusion");
-                    exclusionList.add(candidateId);
-                } else {
-                	if (debugDeletions) _logger.info("Marking candidateId=" + candidateId + " OK to include");
-                }
-            }
-        }
-
-    	if (debugDeletions) _logger.info("Checking for additional exclusions...");
-        int i = 0;
-        Set<Long> additionalExclusions;
-        do {
-        	additionalExclusions = getAdditionalExclusions(parentMap, entitySetCandidatesToDelete, exclusionList);
-        	if (debugDeletions) _logger.info("Got "+additionalExclusions.size()+" additional exclusions on iteration "+i);
-        	exclusionList.addAll(additionalExclusions);
-        }
-        while (!additionalExclusions.isEmpty() && ++i<100);
-        
-        Set<Long> entitySetToDelete=walkEntityMap(entity.getId(), entityMap, exclusionList);
-
-        // We now have our list of entities to delete. First, we need to collect a list
-        // of entityData to delete. We can construct such a list by simply adding the
-        // entity-data children of all the entities-to-delete, and then adding to this
-        // the entity-data pointing-to the top entity.
-        Set<Long> entityDataSetToDelete=new HashSet<Long>();
-        for (Long entityId : entitySetToDelete) {
-            Set<Long[]> edSet = entityMap.get(entityId);
-            if (edSet!=null) {
-                for (Long[] edArr : edSet) {
-                    entityDataSetToDelete.add(edArr[0]);
-                }
-            }
-        }
-        Set<Long> topParentSet=parentMap.get(entity.getId());
-        if (topParentSet != null) {
-            for (Long parentEntityId : topParentSet) {
-            	if (debugDeletions) _logger.info("Checking top-level parentId=" + parentEntityId + " for entity data to be deleted");
-                Set<Long[]> edSet = entityMap.get(parentEntityId);
-                for (Long[] edArr : edSet) {
-                	if (debugDeletions) _logger.info("  Found entityData entry id=" + edArr[0] + " childId=" + edArr[1]);
-                    Long childEntityId = edArr[1];
-                    if (childEntityId != null) {
-                        if (childEntityId.longValue() == entity.getId().longValue()) {
-                        	if (debugDeletions) _logger.info("    This matches the top-level entity, so including for deletion");
-                            entityDataSetToDelete.add(edArr[0]);
-                        } 
-                        else if (entitySetToDelete.contains(childEntityId.longValue())) {
-                        	if (debugDeletions) _logger.info("    This matches an internal node, so including for deletion");
-                            entityDataSetToDelete.add(edArr[0]);
-                        } 
-                        else {
-                        	if (debugDeletions) _logger.info("    This does not match the top-level entity or any internal entity, so excluding");
-                        }
-                    }
-                }
-            }
-        }
-
-        // Add all EDs from parents we don't own 
-        for (Long entityId : entitySetToDelete) {
-        	Set<Long> parentEdIds = nonOwnedParentEdMap.get(entityId);
-        	if (parentEdIds!=null) {
-	        	for(Long parentEdId : parentEdIds) {
-	        		_logger.info("Adding ED reference (id="+parentEdId+") from non-owned entity, to owned entity with id="+entityId);	
-	        	}
-	        	entityDataSetToDelete.addAll(parentEdIds);
-        	}
-        }
-        
-        if (debugDeletions) {
-	        for (Long entityId : entitySetToDelete) {
-	            _logger.info("Entity for deletion="+entityId);
-//	            for (Long ei : entityMap.keySet()) {
-//	                Set<Long[]> childSet = entityMap.get(ei);
-//	                for (Long[] cl : childSet) {
-//	                    if (cl[1]!=null && cl[1].longValue()==entityId.longValue()) {
-//	                        _logger.info("Found child entityDataId="+cl[0]+" parentEntityId="+ei);
-//	                    }
-//	                }
-//	            }
-	        }
-        }
-
-        // Do this in a transaction so that we're not left with orphans if things go wrong
-        Connection connection = null;
-        try {
-        	connection = getJdbcConnection();
-        	connection.setAutoCommit(false);
-            // Now time to actually delete. First the entity-data, then the entities
-            deleteIdSetByJdbc(connection, entityDataSetToDelete, "entityData", "id");
-            deleteIdSetByJdbc(connection, entitySetToDelete, "entity", "id");	
-        }
-        catch (Exception e) {
-        	connection.rollback();
-        	throw e;
-        }
-        finally {
-            connection.commit();
-        	try {
-                if (connection!=null) connection.close();	
-        	}
-        	catch (SQLException e) {
-        		_logger.warn("Ignoring error encountered while closing JDBC connection",e);
-        	}
-        }
-    }
-    
-    /** 
-     * Iteratively exclude entities based on if any of their ancestors were excluded.
-     */
-    protected Set<Long> getAdditionalExclusions(Map<Long, Set<Long>> parentMap, Set<Long> entitySetCandidatesToDelete, Set<Long> exclusionList) {
-    	Set<Long> additionalExclusions=new HashSet<Long>();
-    	for(Long candidateId : entitySetCandidatesToDelete) {
-    		if (exclusionList.contains(candidateId)) continue; // Skip things we've already excluded
-    		if (areAncestorsExcluded(candidateId, parentMap, exclusionList, new HashSet<Long>())) {
-            	if (debugDeletions) _logger.info("    Marking candidateId=" + candidateId + " for exclusion");
-    			additionalExclusions.add(candidateId);
-    		}
-    	}
-
-    	if (debugDeletions) _logger.info("    Found "+additionalExclusions.size()+" additional exclusions");
-    	return additionalExclusions;
-    }
-    
-    protected boolean areAncestorsExcluded(Long entityId, Map<Long, Set<Long>> parentMap, Set<Long> exclusionList, Set<Long> visited) {
-
-    	if (visited.contains(entityId)) return false;
-    	visited.add(entityId);
-    	
-    	if (debugDeletions) _logger.info("    Checking if any ancestors of "+entityId+" were excluded");
-    	Set<Long> parents = parentMap.get(entityId);
-    	if (parents != null) {
-			for(Long parentId : parents) {
-				if (exclusionList.contains(parentId)) {
-			    	if (debugDeletions) _logger.info("    Parent of "+entityId+" (parentId="+parentId+") was excluded");
-					return true;
-				}
-				if (areAncestorsExcluded(parentId, parentMap, exclusionList, visited)) {
-					if (debugDeletions) _logger.info("    Some ancestor of "+entityId+" (via parentId="+parentId+") was excluded");
-					return true;
-				}
-			}
-    	}
-		return false;
-    }
-
-    protected void getEntityTreeForUserByJdbc(String subjectKey, Map<Long, Set<Long[]>> entityMap, Map<Long, Set<Long>> parentMap, Set<Long> commonRootSet) throws Exception {
-    	
-    	Connection conn = null;
-    	PreparedStatement stmt = null;
-    	try {
-	        conn = getJdbcConnection();
-	        
-	        StringBuffer sql = new StringBuffer();
-	        sql.append("select e.id, ed.id, ce.id, ce.owner_dkey, ea.name ");
-	        sql.append("from entity e ");
-	        sql.append("left outer join entityData ed on e.id=ed.parent_entity_id ");
-	        sql.append("left outer join entityAttribute ea on ed.entity_att_id = ea.id ");
-	        sql.append("left outer join entity ce on ed.child_entity_id=ce.id and ce.owner_dkey='"+subjectKey+"' ");
-	        sql.append("where e.owner_dkey='"+subjectKey+"' ");
-
-	        if (debugDeletions) _logger.info("getEntityTreeForUserByJdbc subjectKey="+subjectKey);
-	        if (debugDeletions) _logger.info("getEntityTreeForUserByJdbc sql="+sql);
-	        stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-	        
-	        stmt.setFetchSize(JDBC_FETCH_SIZE);
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next()) {
-				Long entityId = rs.getBigDecimal(1).longValue();
-				BigDecimal entityDataBD = rs.getBigDecimal(2);
-				Long entityDataId = null;
-				if (entityDataBD != null) {
-					entityDataId = entityDataBD.longValue();
-				}
-				BigDecimal childIdBD = rs.getBigDecimal(3);
-				Long childId = null;
-				if (childIdBD != null) {
-					childId = childIdBD.longValue();
-				}
-				BigDecimal childUserIdBD = rs.getBigDecimal(4);
-				Long childOwnerKey = null;
-				if (childUserIdBD != null) {
-					childOwnerKey = childUserIdBD.longValue();
-					if (!childOwnerKey.equals(subjectKey)) {
-						// We don't own the child, so let's forget about it. This case should be prevented by the join condition on the last outer join above.
-						childId = null;
-						childOwnerKey = null;
-					}
-				}
-				
-				// Handle common roots
-				String attrName = rs.getString(5);
-				if (EntityConstants.ATTRIBUTE_COMMON_ROOT.equals(attrName)) {
-					commonRootSet.add(entityId);
-				}
-				
-				// _logger.info("TreeResult entityId="+entityId+" entityDataId="+entityDataId+" childId="+(childId==null?"null":childId));
-				Long[] childData = new Long[2];
-				childData[0] = entityDataId;
-				childData[1] = childId;
-				// Handle child direction
-				Set<Long[]> childSet = entityMap.get(entityId);
-				if (childSet == null) {
-					childSet = new HashSet<Long[]>();
-					entityMap.put(entityId, childSet);
-				}
-				if (childData[0] != null) {
-					childSet.add(childData);
-				}
-				// Handle parent direction
-				if (childId != null) {
-					Set<Long> parentSet = parentMap.get(childId);
-					if (parentSet == null) {
-						parentSet = new HashSet<Long>();
-						parentMap.put(childId, parentSet);
-					}
-					parentSet.add(entityId);
-				}
-			}
-    	}
-        finally {
-        	try {
-                if (stmt!=null) stmt.close();
-                if (conn!=null) conn.close();	
-        	}
-        	catch (SQLException e) {
-        		_logger.warn("Ignoring error encountered while closing JDBC connection",e);
-        	}
-        }
-    }
-    
-    protected void getNonOwnedParents(String subjectKey, Map<Long, Set<Long>> nonOwnedParentEdMap) throws Exception {
-    	
-    	Connection conn = null;
-    	PreparedStatement stmt = null;
-    	try {
-	        conn = getJdbcConnection();
-	        
-	        StringBuffer sql = new StringBuffer();
-	        sql.append("select e.id, ed.id, ce.id, ce.owner_dkey, ea.name ");
-	        sql.append("from entity e ");
-	        sql.append("left outer join entityData ed on e.id=ed.parent_entity_id ");
-	        sql.append("left outer join entityAttribute ea on ed.entity_att_id = ea.id ");
-	        sql.append("join entity ce on ed.child_entity_id=ce.id and ce.owner_dkey='"+subjectKey+"' ");
-	        sql.append("where e.owner_dkey!='"+subjectKey+"' ");
-
-	        if (debugDeletions) _logger.info("getNonOwnedParents subjectKey="+subjectKey);
-	        if (debugDeletions) _logger.info("getNonOwnedParents sql="+sql);
-	        stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-	        
-	        stmt.setFetchSize(JDBC_FETCH_SIZE);
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next()) {
-				BigDecimal entityDataBD = rs.getBigDecimal(2);
-				Long entityDataId = null;
-				if (entityDataBD != null) {
-					entityDataId = entityDataBD.longValue();
-				}
-				BigDecimal childIdBD = rs.getBigDecimal(3);
-				Long childId = null;
-				if (childIdBD != null) {
-					childId = childIdBD.longValue();
-				}
-				
-				if (childId != null) {
-					Set<Long> parentSet = nonOwnedParentEdMap.get(childId);
-					if (parentSet == null) {
-						parentSet = new HashSet<Long>();
-						nonOwnedParentEdMap.put(childId, parentSet);
-					}
-					parentSet.add(entityDataId);
-				}
-			}
-    	}
-        finally {
-        	try {
-                if (stmt!=null) stmt.close();
-                if (conn!=null) conn.close();	
-        	}
-        	catch (SQLException e) {
-        		_logger.warn("Ignoring error encountered while closing JDBC connection",e);
-        	}
-        }
-    }
-
-
-    protected void deleteIdSetByJdbc(Connection connection, Set<Long> idSet, String tableName, String identifierColumnName) throws Exception {
-        int batchSize=200;
-        int batchStart=0;
-        Iterator<Long> edIter=idSet.iterator();
-        int deleteCount=0;
-        for (int position=0;position<idSet.size();position++) {
-            if ( (position!=0 && position%batchSize==0) || (position==idSet.size()-1)) {
-                java.sql.Statement statement=connection.createStatement();
-                StringBuffer deleteSqlBuffer=new StringBuffer("DELETE FROM "+tableName+" WHERE "+identifierColumnName+" IN (");
-                if (position==(idSet.size()-1)) {
-                    position++; // to trigger inclusion of all members on last batch
-                }
-                for (int i=batchStart;i<position;i++) {
-                    if (i!=batchStart) {
-                        deleteSqlBuffer.append(", ");
-                    }
-                    deleteSqlBuffer.append(edIter.next());
-                    deleteCount++;
-                }
-                deleteSqlBuffer.append(")");
-                _logger.info("Calling executeUpdate on=" + deleteSqlBuffer.toString());
-                statement.executeUpdate(deleteSqlBuffer.toString());
-                statement.close();
-                batchStart=position;
-            }
-        }
-        if (deleteCount!=idSet.size()) {
-            throw new Exception("Delete count="+deleteCount+" does not match set size="+idSet.size());
-        }
-    }
-
-    protected Set<Long> walkEntityMap(Long startEntityId, Map<Long, Set<Long[]>> treeMap, Set<Long> exclusionList) {
-    	return walkEntityMap(startEntityId, treeMap, exclusionList, new HashSet<Long>());
-    }
-    
-    protected Set<Long> walkEntityMap(Long startEntityId, Map<Long, Set<Long[]>> treeMap, Set<Long> exclusionList, Set<Long> visited) {
-    	if (debugDeletions) _logger.info("walkEntityMap startEntityId="+startEntityId+" exclusionList.size="+exclusionList.size()+" visited.size="+visited.size());
-    	Set<Long> inclusionList = new HashSet<Long>();
-        if (!exclusionList.contains(startEntityId) && !visited.contains(startEntityId)) {
-        	visited.add(startEntityId); // Let's not visit it again since we've seen it already
-        	inclusionList.add(startEntityId);
-            Set<Long[]> childSet = treeMap.get(startEntityId);
-            if (childSet != null) {
-                for (Long[] childInfo : childSet) {
-                    Long childEntityId = childInfo[1];
-                    if (childEntityId != null && !exclusionList.contains(childEntityId)) {
-                        /* note: this excludes the subtree of the excluded node */
-                        if (!inclusionList.contains(childEntityId))
-                            inclusionList.add(childEntityId);
-                        Set<Long> childList = walkEntityMap(childEntityId, treeMap, exclusionList, visited);
-                        for (Long cl : childList) {
-                            if (!inclusionList.contains(cl) && !exclusionList.contains(cl))
-                                inclusionList.add(cl);
-                        }
-                    }
-                }
-            }
-        }
-        return inclusionList;
-    }
-
-    void getEntitySetFromTree(Entity entity, Set<Long> entityIdSet) throws Exception {
-        if (!entityIdSet.contains(entity.getId())) {
-            entityIdSet.add(entity.getId());
-        }
-        for (EntityData ed : entity.getEntityData()) {
-            Entity child=ed.getChildEntity();
-            if (child!=null && !entityIdSet.contains(child.getId())) {
-                entityIdSet.add(child.getId());
-                getEntitySetFromTree(child, entityIdSet);
-            }
-        }
-    }
-
     public void deleteSmallEntityTree(String subjectKey, Entity entity) throws DaoException {
     	deleteSmallEntityTree(subjectKey, entity, false);
     }
@@ -1896,65 +1495,18 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         
         return annotations;
 	}
-	
-    public List<Entity> getPublicOntologies() throws ComputeException {
-
-    	if (_logger.isDebugEnabled()) {
-    		_logger.debug("getPublicOntologies()");
-    	}
-    	
-        EntityType tmpType = getEntityTypeByName(EntityConstants.TYPE_ONTOLOGY_ROOT);
-        EntityAttribute tmpAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_IS_PUBLIC);
-        
-        StringBuffer hql = new StringBuffer("select e from Entity e ");
-        hql.append("join fetch e.entityType ");
-        hql.append("where e.entityType.id=? ");
-        hql.append("and exists (from EntityData as attr where attr.parentEntity = e and attr.entityAttribute.id = ?)");
-        Query query = getCurrentSession().createQuery(hql.toString());
-        query.setLong(0, tmpType.getId());
-        query.setLong(1, tmpAttr.getId());
-        return filterDuplicates(query.list());
-    }
 
     public Entity getErrorOntology() throws ComputeException {
 
-        List<Entity> list = getPublicOntologies();
-        for (Entity tmpEntity : list) {
-            if (tmpEntity.getName().equals("Error Ontology")) {
-                return tmpEntity;
-            }
+        // TODO: this ontology should be owned by the system user
+        List<Entity> list = getEntitiesByNameAndTypeName("group:flylight", "Error Ontology", EntityConstants.TYPE_ONTOLOGY_ROOT);
+        if (list.isEmpty()) {
+            throw new ComputeException("Cannot find Error Ontology");
         }
-        return null;
-    }
-    
-    public List<Entity> getPrivateOntologies(String subjectKey) throws ComputeException {
-
-    	if (_logger.isDebugEnabled()) {
-    		_logger.debug("getAnnotationsByEntityId(subjectKey="+subjectKey+")");
-    	}
-        
-        EntityType tmpType = getEntityTypeByName(EntityConstants.TYPE_ONTOLOGY_ROOT);
-        EntityAttribute tmpAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_IS_PUBLIC);
-
-        StringBuilder hql = new StringBuilder();
-        hql.append("select e from Entity e ");
-        hql.append("left outer join fetch e.entityActorPermissions p ");
-        hql.append("join fetch e.entityType ");
-        hql.append("where e.entityType.id=:entityTypeId ");
-        if (null != subjectKey) {
-            hql.append("and (e.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
+        else if (list.size()>1) {
+            _logger.warn("Found more than one Error Ontology, using the first one, "+list.get(0).getId());
         }
-        hql.append("and not exists (from EntityData as attr where attr.parentEntity = e and attr.entityAttribute.id = :attrName)");
-        Query query = getCurrentSession().createQuery(hql.toString());
-        query.setLong("entityTypeId", tmpType.getId());
-
-        if (null != subjectKey) {
-            List<String> subjectKeyList = getSubjectKeys(subjectKey);
-	        query.setParameterList("subjectKeyList", subjectKeyList);
-        }
-        
-        query.setLong("attrName", tmpAttr.getId());
-        return filterDuplicates(query.list());
+        return list.get(0);
     }
     
     public Entity createEntity(String subjectKey, String entityTypeName, String entityName) throws DaoException {
@@ -1998,10 +1550,9 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         saveOrUpdate(newOntologyRoot);
 
         // Add the type
-        EntityData termData = newData(newOntologyRoot, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE, subjectKey);
-        termData.setValue(Category.class.getSimpleName());
-        saveOrUpdate(termData);
-
+        newOntologyRoot.setValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE, Category.class.getSimpleName());
+        saveOrUpdate(newOntologyRoot);
+        
         return newOntologyRoot;
     }
 
@@ -2045,11 +1596,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 
         // Add the type-specific parameters
         if (type instanceof EnumText) {
-
             EnumText enumText = (EnumText)type;
-
+            Entity valueEnumEntity = getEntityById(enumText.getValueEnumId());
             EntityData lowerData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_ENUMTEXT_ENUMID, subjectKey);
             lowerData.setValue(enumText.getValueEnumId().toString());
+            lowerData.setChildEntity(valueEnumEntity);
             eds.add(lowerData);
         }
         
@@ -2153,6 +1704,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 					Long newEnumId = enumMap.get(oldEnum.getName());
 					if (newEnumId!=null) {
 						oldEnumIdEd.setValue(newEnumId.toString());
+						oldEnumIdEd.setChildEntity(getEntityById(newEnumId));
 						_logger.warn("Updating EnumText "+entity.getName()+" to reference the correct Enum id="+newEnumId);
 						saveOrUpdate(oldEnumIdEd);
 					}

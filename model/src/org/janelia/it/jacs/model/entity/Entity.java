@@ -144,8 +144,7 @@ public class Entity  implements java.io.Serializable, IsSerializable {
                 return ea;
             }
         }
-        System.out.println("\n\n\nCannot find attribute ("+name+") for entityType "+entityType.getName()+"\n\n\n");
-        return null;
+        throw new IllegalStateException("Cannot find attribute ("+name+") for entityType "+entityType.getName());
     }
     
     /**

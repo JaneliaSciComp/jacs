@@ -19,7 +19,7 @@ import com.google.common.collect.Ordering;
 public class EntityUtils {
 	
 	private static final Logger log = LoggerFactory.getLogger(EntityUtils.class);
-	
+		
     public interface SaveUnit {
         public void saveUnit(Object o) throws Exception;
     }
@@ -30,13 +30,16 @@ public class EntityUtils {
     
     public static boolean areLoaded(Collection<EntityData> eds) {
         for (EntityData entityData : eds) {
-            if (!Hibernate.isInitialized(entityData.getChildEntity())) {
-                return false;
+            Entity child = entityData.getChildEntity();
+            if (child!=null) {
+                if (!Hibernate.isInitialized(entityData.getChildEntity())) {
+                    return false;
+                }
             }
         }
         return true;
     }
-    
+
     /**
      * Returns true if the given entity is a common root.
      * @param entity
@@ -44,6 +47,14 @@ public class EntityUtils {
      */
     public static boolean isCommonRoot(Entity entity) {
         return entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null;
+    }
+    /**
+     * Returns true if the given entity is a common root.
+     * @param entity
+     * @return
+     */
+    public static boolean isOntologyRoot(Entity entity) {
+        return entity.getEntityType().getName().equals(EntityConstants.TYPE_ONTOLOGY_ROOT);
     }
     
     /**
@@ -302,6 +313,10 @@ public class EntityUtils {
     	log.debug("    ownerKey: {}",entity.getOwnerKey()==null?null:entity.getOwnerKey());
     	log.debug("    creationDate: {}",entity.getCreationDate());
     	log.debug("    updatedDate: {}",entity.getUpdatedDate());
+    }
+    
+    public static String identify(Entity entity) {
+        return "("+(entity==null?"null entity":entity.getName())+", @"+System.identityHashCode(entity)+")";
     }
     
     /**
@@ -685,8 +700,9 @@ public class EntityUtils {
 				|| EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE.equals(attrName) 
 				|| EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE.equals(attrName)
 				|| EntityConstants.ATTRIBUTE_INPUT_IMAGE.equals(attrName)
-//				|| EntityConstants.ATTRIBUTE_MASK_IMAGE.equals(attrName)
-//				|| EntityConstants.ATTRIBUTE_CHAN_IMAGE.equals(attrName)
+				|| EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_ENUMTEXT_ENUMID.equals(attrName)
+				|| EntityConstants.ATTRIBUTE_MASK_IMAGE.equals(attrName)
+				|| EntityConstants.ATTRIBUTE_CHAN_IMAGE.equals(attrName)
 				) {
 			return true;
 		}
@@ -755,6 +771,7 @@ public class EntityUtils {
 	
 	public static Long getEntityIdFromUniqueId(String uniqueId) {
 		String[] pathParts = uniqueId.split("/");
+		if (pathParts.length<1) return null;
 		String lastPart = pathParts[pathParts.length-1];
 		if (!lastPart.startsWith("e_")) return null;
 		return new Long(lastPart.substring(2));

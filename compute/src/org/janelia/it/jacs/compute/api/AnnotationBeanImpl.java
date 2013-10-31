@@ -197,16 +197,6 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
     }
 
-    public List<Entity> getPublicOntologies() throws ComputeException {
-        try {
-            return _annotationDAO.getPublicOntologies();
-        }
-        catch (Exception e) {
-            _logger.error("Error getting public ontologies",e);
-            throw new ComputeException("Error getting public ontologies",e);
-        }
-    }
-
     public Entity getErrorOntology() throws ComputeException {
         try {
             return _annotationDAO.getErrorOntology();
@@ -216,18 +206,14 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             throw new ComputeException("Error getting error ontology",e);
         }
     }
-    
-    public List<Entity> getPrivateOntologies(String subjectKey) throws ComputeException {
-    	if (subjectKey == null || "".equals(subjectKey)) {
-            return new ArrayList<Entity>();
-    	}
-    	
+
+    public List<Entity> getOntologyRootEntities(String subjectKey) throws ComputeException {
         try {
-            return _annotationDAO.getPrivateOntologies(subjectKey);
+            return _annotationDAO.getEntitiesByTypeName(subjectKey, EntityConstants.TYPE_ONTOLOGY_ROOT);
         }
-        catch (Exception e) {
-            _logger.error("Error getting private ontologies for "+subjectKey,e);
-            throw new ComputeException("Error getting private ontologies for "+subjectKey,e);
+        catch (DaoException e) {
+            _logger.error("Error trying to get ontology root entities for "+subjectKey, e);
+            throw new ComputeException("Error getting ontology root entities", e);
         }
     }
     
@@ -347,15 +333,15 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
     }
     
-    public Entity getCommonRootFolderByName(String subjectKey, String folderName, boolean createIfNecessary) throws ComputeException {
-        try {
-            return _annotationDAO.getCommonRootFolderByName(subjectKey, folderName, createIfNecessary);
-        }
-        catch (DaoException e) {
-            _logger.error("Error trying to get common root called "+folderName, e);
-        }
-        return null;
-    }
+//    public Entity getCommonRootFolderByName(String subjectKey, String folderName, boolean createIfNecessary) throws ComputeException {
+//        try {
+//            return _annotationDAO.getCommonRootFolderByName(subjectKey, folderName, createIfNecessary);
+//        }
+//        catch (DaoException e) {
+//            _logger.error("Error trying to get common root called "+folderName, e);
+//        }
+//        return null;
+//    }
 
     public List<Entity> getAlignmentSpaces(String subjectKey) throws ComputeException {
         try {

@@ -27,7 +27,7 @@ public interface AnnotationBeanRemote {
 
     public Entity createOntologyRoot(String subjectKey, String rootName) throws ComputeException;
     public EntityData createOntologyTerm(String subjectKey, Long ontologyTermParentId, String termName, OntologyElementType type, Integer orderIndex) throws ComputeException;
-    public void removeOntologyTerm(String subjectKey, Long ontologyTermId) throws ComputeException;
+
     public Entity cloneEntityTree(String subjectKey, Long sourceRootId, String targetRootName) throws ComputeException;
     public Entity publishOntology(String subjectKey, Long sourceRootId, String targetRootName) throws ComputeException;
 
@@ -35,10 +35,9 @@ public interface AnnotationBeanRemote {
 	public void removeOntologyAnnotation(String subjectKey, long annotationId) throws ComputeException;
 	public void removeAllOntologyAnnotationsForSession(String subjectKey, long sessionId) throws ComputeException;
 
+	public List<Entity> getOntologyRootEntities(String subjectKey) throws ComputeException;
     public Entity getOntologyTree(String subjectKey, Long id) throws ComputeException;
-    public List<Entity> getPublicOntologies() throws ComputeException;
     public Entity getErrorOntology() throws ComputeException;
-    public List<Entity> getPrivateOntologies(String subjectKey) throws ComputeException;
     
 	public List<Task> getAnnotationSessionTasks(String subjectKey) throws ComputeException;
     public List<Entity> getAnnotationsForEntities(String subjectKey, List<Long> entityIds) throws ComputeException;
@@ -51,7 +50,7 @@ public interface AnnotationBeanRemote {
     public long getNumDescendantsAnnotated(Long entityId) throws ComputeException;
 
     public List<Entity> getCommonRootEntities(String subjectKey) throws ComputeException;
-    public Entity getCommonRootFolderByName(String subjectKey, String folderName, boolean createIfNecessary) throws ComputeException;
+    
     public List<Entity> getAlignmentSpaces(String subjectKey) throws ComputeException;
     public Entity getChildFolderByName(String subjectKey, Long parentId, String folderName, boolean createIfNecessary) throws ComputeException;
     public List<Entity> getEntitiesWithFilePath(String filePath);

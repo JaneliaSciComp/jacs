@@ -1,9 +1,3 @@
-/*
- * Created by IntelliJ IDEA.
- * User: rokickik
- * Date: 6/22/11
- * Time: 6:10 PM
- */
 package org.janelia.it.jacs.model.ontology.types;
 
 import org.janelia.it.jacs.model.entity.Entity;
@@ -33,6 +27,10 @@ public class EnumText extends OntologyElementType {
     	String enumIdStr = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_ENUMTEXT_ENUMID);
     	if (enumIdStr==null) throw new IllegalStateException("EnumText entity has null enum id: "+entity.getId());
     	this.valueEnumId = new Long(enumIdStr);
+    	Entity valueEnum = entity.getChildByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_ENUMTEXT_ENUMID);
+    	if (valueEnum!=null) {
+    	    this.valueEnum = new OntologyElement(entity, valueEnum);
+    	}
     }
     
     public boolean allowsChildren() {
