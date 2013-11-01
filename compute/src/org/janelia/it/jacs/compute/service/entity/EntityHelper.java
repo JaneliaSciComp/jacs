@@ -105,7 +105,7 @@ public class EntityHelper {
      * @throws Exception
      */
     public Entity createOrVerifyRootEntity(String topLevelFolderName, boolean createIfNecessary, boolean loadTree) throws Exception {
-        List<Entity> topLevelFolders = entityBean.getEntitiesWithTag(ownerKey, EntityConstants.ATTRIBUTE_COMMON_ROOT);
+        Set<Entity> topLevelFolders = entityBean.getEntitiesByName(topLevelFolderName);
         Entity topLevelFolder = null;
         if (topLevelFolders != null) {
             // Only accept the current user's top level folder
