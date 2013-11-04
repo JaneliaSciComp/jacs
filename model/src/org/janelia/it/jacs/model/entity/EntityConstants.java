@@ -96,6 +96,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ANNOTATION_ONTOLOGY_ROOT_ID         = "Annotation Ontology Root Id";
     public static final String ATTRIBUTE_ANNOTATION_TARGET_ID                = "Annotation Target Id";
     public static final String ATTRIBUTE_ANNOTATION_SESSION_ID               = "Annotation Session Id";
+    public static final String ATTRIBUTE_ANNOTATION_IS_COMPUTATIONAL         = "Annotation Is Computational";
     public static final String ATTRIBUTE_NUMBER                              = "Number";
     public static final String ATTRIBUTE_NAME                                = "Name";
     public static final String ATTRIBUTE_RESULT                              = "Result";
