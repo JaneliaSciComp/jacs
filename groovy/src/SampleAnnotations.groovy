@@ -59,32 +59,6 @@ for(Entity sample : orderedSamples) {
         file.println(sample.id+"\t"+sample.name+"\t"+data_set+"\t"+counter.numFragments+"\t"+annots.substring(1,annots.length()-1));
     }
 
-//    StringBuilder lsb = new StringBuilder();
-//    Entity supportingData = EntityUtils.getSupportingData(sample)
-//    f.loadChildren(supportingData)
-//    if (supportingData != null) {
-//        for(Entity imageTile : EntityUtils.getChildrenForAttribute(supportingData, EntityConstants.ATTRIBUTE_ENTITY)) {
-//
-//            if (SampleAnnotationsConstants.OUTPUT_HTML) {
-//                lsb.append("&nbsp&nbsp"+imageTile.name+"<br>")
-//            }
-//            else {
-//                file.println "                  "+imageTile.name
-//            }
-//
-//            f.loadChildren(imageTile)
-//            for(Entity lsm : EntityUtils.getChildrenForAttribute(imageTile, EntityConstants.ATTRIBUTE_ENTITY)) {
-//                if (SampleAnnotationsConstants.OUTPUT_HTML) {
-//                    lsb.append("&nbsp&nbsp&nbsp&nbsp"+lsm.name+"<br>")
-//                }
-//                else {
-//                    file.println "                      "+lsm.name
-//                }
-//            }
-//        }
-//    }
-//        file.println("<tr><td></td><td>"+lsb+"</td><td colspan=4></td></tr>")
-
     // free memory
     sample.setEntityData(null)
 }
