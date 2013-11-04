@@ -274,9 +274,7 @@ public class FlyScreenSampleService implements EntityFilter, IService {
     }
 
     protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
-        EntityData ed = parent.addChildEntity(entity, attrName);
-        ed.setOrderIndex(index);
-        entityBean.saveOrUpdateEntityData(ed);
+        entityBean.addEntityToParent(parent, entity, index, attrName);
         logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
         		" as child of "+parent.getEntityType().getName()+"#"+parent.getId());
     }

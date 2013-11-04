@@ -171,10 +171,8 @@ public class FileDiscoveryHelper extends EntityHelper {
     	if (supportingFiles == null) {
         	// Update in-memory model
     		supportingFiles = createSupportingFilesFolder();
-			EntityData ed = entity.addChildEntity(supportingFiles, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
-			ed.setOrderIndex(0);
         	// Update database
-            entityBean.saveOrUpdateEntityData(ed);
+            entityBean.addEntityToParent(entity, supportingFiles, 0, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
     	}
     	return supportingFiles;
 	}

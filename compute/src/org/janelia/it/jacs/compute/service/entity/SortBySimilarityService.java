@@ -128,8 +128,7 @@ public class SortBySimilarityService implements IService {
         		int numUpdated = 0;
             	for(EntityData ed : eds) {
             		if ((ed.getOrderIndex() == null) || (ed.getOrderIndex() != index)) {
-            			ed.setOrderIndex(index);
-        				entityBean.saveOrUpdateEntityData(ed);
+        				entityBean.updateChildIndex(ed, index);
         				numUpdated++;
             		}
             		index++;

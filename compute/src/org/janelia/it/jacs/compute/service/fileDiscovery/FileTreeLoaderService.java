@@ -667,8 +667,8 @@ public class FileTreeLoaderService implements IService {
                         logger.info("doComplete() adding entity as performance proxy");
                         Entity sourceEntity=entityBean.getEntityById(ai.sourceEntityId.toString());
                         logger.info("doComplete() adding entityData to entity of type="+sourceEntity.getEntityType().getName());
-                        EntityData ed=sourceEntity.addChildEntity(pbdResultEntity, EntityConstants.ATTRIBUTE_PERFORMANCE_PROXY_IMAGE);
-                        entityBean.saveOrUpdateEntityData(ed);
+                        entityBean.addEntityToParent(sourceEntity, pbdResultEntity, null, EntityConstants.ATTRIBUTE_PERFORMANCE_PROXY_IMAGE);
+                        
                         // Populate map
                         logger.info("doComplete() populating entityIdToPbdEntity map");
                         sourceEntityIdToPbdEntityMap.put(ai.sourceEntityId, pbdResultEntity);
@@ -702,14 +702,13 @@ public class FileTreeLoaderService implements IService {
                         Entity sourceEntity=entityBean.getEntityById(ai.sourceEntityId.toString());
                         File sourceFile=new File(sourceEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
                         logger.info("Creating entityData DEFAULT_2D_IMAGE for sourceEntity id="+sourceEntity.getId()+" type="+sourceEntity.getEntityType().getName()+" sourceFile="+sourceFile.getAbsolutePath());
-                        EntityData ed=sourceEntity.addChildEntity(mipResultEntity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-                        entityBean.saveOrUpdateEntityData(ed);
+                        entityBean.addEntityToParent(sourceEntity, mipResultEntity, null, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+                        
                         logger.info("Done with entityData save");
                         // Get PBD and add 2D default image for this
                         Entity pbdForMip=sourceEntityIdToPbdEntityMap.get(ai.sourceEntityId);
                         if (pbdForMip!=null) {
-                            EntityData pbdEd=pbdForMip.addChildEntity(mipResultEntity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-                            entityBean.saveOrUpdateEntityData(pbdEd);
+                            entityBean.addEntityToParent(pbdForMip, mipResultEntity, null, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
                         }
                         // Delete extra tif file
                         String pngName=mipResultFile.getName();

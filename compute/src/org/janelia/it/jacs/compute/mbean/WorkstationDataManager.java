@@ -580,8 +580,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             Entity folder = newEntity(folderName, EntityConstants.TYPE_FOLDER, parent.getOwnerKey(), false);
             folder = e.saveOrUpdateEntity(parent.getOwnerKey(), folder);
 
-            EntityData ed = parent.addChildEntity(folder, EntityConstants.ATTRIBUTE_ENTITY);
-            e.saveOrUpdateEntityData(parent.getOwnerKey(), ed);
+            e.addEntityToParent(folder.getOwnerKey(), parent.getId(), folder.getId(), null, EntityConstants.ATTRIBUTE_ENTITY);
         }
         catch (Exception ex) {
             logger.error("Error running addChildFolder", ex);

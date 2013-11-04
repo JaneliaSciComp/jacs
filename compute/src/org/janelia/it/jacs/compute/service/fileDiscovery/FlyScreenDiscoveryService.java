@@ -379,8 +379,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         Collections.sort(dateNumberList);
         for (int i=0;i<dateNumberList.size();i++) {
             EntityData ed=folderMapByDateNumber.get(dateNumberList.get(i));
-            ed.setOrderIndex(i);
-            EJBFactory.getLocalEntityBean().saveOrUpdateEntityData(ed);
+            entityBean.updateChildIndex(ed, i);
         }
     }
 

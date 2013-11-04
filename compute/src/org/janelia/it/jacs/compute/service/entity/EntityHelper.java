@@ -259,11 +259,10 @@ public class EntityHelper {
     	if (DEBUG) return;
     	// Update in-memory model
     	String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-    	EntityData ed = entity.addChildEntity(image, attributeName);
-    	ed.setValue(filepath);
+    	
     	// Update database
-		EntityData savedEd=entityBean.saveOrUpdateEntityData(ed);
-		EntityUtils.replaceEntityData(entity, ed, savedEd);
+    	EntityData savedEd = entityBean.addEntityToParent(entity, image, null, attributeName, filepath);
+		entity.getEntityData().add(savedEd);
     }
 
 	/**
@@ -406,9 +405,7 @@ public class EntityHelper {
     }
 
     public void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
-        EntityData ed = parent.addChildEntity(entity, attrName);
-        ed.setOrderIndex(index);
-        entityBean.saveOrUpdateEntityData(ed);
+        entityBean.addEntityToParent(parent, entity, index, attrName);
         logger.trace("Added "+entity.getName() +" ("+entity.getEntityType().getName()+"#"+entity.getId()+
                 ") as child of "+parent.getName()+" ("+parent.getEntityType().getName()+"#"+parent.getId()+")");
     }

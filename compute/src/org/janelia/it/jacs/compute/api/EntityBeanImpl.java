@@ -129,16 +129,6 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             throw new ComputeException("Error deleting entity data "+ed.getId(),e);
         }
     }
-
-    public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName) throws ComputeException {
-        try {
-            return _annotationDAO.addEntityToParent(parent, entity, index, attrName);
-        } 
-        catch (DaoException e) {
-            _logger.error("Error adding entity (id="+entity.getId()+") to parent "+parent.getId(), e);
-            throw new ComputeException("Error adding entity (id="+entity.getId()+") to parent "+parent.getId(),e);
-        }
-    }
     
     public Entity saveOrUpdateEntity(String subjectKey, Entity entity) throws ComputeException {
         try {
@@ -198,32 +188,63 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         }
     }
 
+    /**
+     * This is a faster, security-free version of the normal addEntityToParent with no value, only exposed to local clients.
+     */
+    public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName) throws ComputeException {
+        try {
+            return _annotationDAO.addEntityToParent(parent, entity, index, attrName);
+        } 
+        catch (DaoException e) {
+            _logger.error("Error adding entity (id="+entity.getId()+") to parent "+parent.getId(), e);
+            throw new ComputeException("Error adding entity (id="+entity.getId()+") to parent "+parent.getId(),e);
+        }
+    }
+
+    /**
+     * This is a faster, security-free version of the normal addEntityToParent with value, only exposed to local clients.
+     */
+    public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName, String value) throws ComputeException {
+        try {
+            return _annotationDAO.addEntityToParent(parent, entity, index, attrName, value);
+        } 
+        catch (DaoException e) {
+            _logger.error("Error adding entity (id="+entity.getId()+") to parent "+parent.getId(), e);
+            throw new ComputeException("Error adding entity (id="+entity.getId()+") to parent "+parent.getId(),e);
+        }
+    }
+    
     public EntityData addEntityToParent(String subjectKey, Long parentId, Long entityId, Integer index, String attrName) throws ComputeException {
+        return addEntityToParent(subjectKey, parentId, entityId, index, attrName, null);
+    }
+
+    public EntityData addEntityToParent(String subjectKey, Long parentId, Long entityId, Integer index, String attrName, String value) throws ComputeException {
         try {
             Entity parent = getEntityById(subjectKey, parentId);
             if (parent==null) {
                 throw new DaoException("Parent entity does not exist "+parent);
             }
-            if (!EntityUtils.hasWriteAccess(parent, _annotationDAO.getSubjectKeys(subjectKey))) {
+            if (subjectKey!=null && !EntityUtils.hasWriteAccess(parent, _annotationDAO.getSubjectKeys(subjectKey))) {
                 throw new ComputeException("Subject "+subjectKey+" cannot add children to "+parentId);
             }
             Entity entity = getEntityById(subjectKey, entityId);
             if (entity==null) {
                 throw new DaoException("Entity does not exist "+entityId);
             }
-            EntityData ed = _annotationDAO.addEntityToParent(parent, entity, index, attrName);
-        	_logger.info(subjectKey+" added entity data "+ed.getId()+" (parent="+parent.getId()+",child="+entity.getId()+")");
-        	
-        	IndexingHelper.updateIndexAddAncestor(entityId, parentId);
-        	
-        	return ed;
+            EntityData ed = _annotationDAO.addEntityToParent(parent, entity, index, attrName, value);
+            
+            _logger.info(subjectKey+" added entity data "+ed.getId()+" (parent="+parent.getId()+",child="+entity.getId()+")");
+            
+            IndexingHelper.updateIndexAddAncestor(entityId, parentId);
+            
+            return ed;
         } 
         catch (DaoException e) {
             _logger.error("Error trying to add entity (id="+entityId+") to parent "+parentId, e);
             throw new ComputeException("Error trying to add entity (id="+entityId+") to parent "+parentId,e);
         }
     }
-    
+
     public void addChildren(String subjectKey, Long parentId, List<Long> childrenIds, String attributeName) throws ComputeException {
         try {
         	Entity parent = _annotationDAO.getEntityById(parentId);
@@ -246,6 +267,66 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         }
     }
 
+    public EntityData updateChildIndex(String subjectKey, EntityData entityData, Integer orderIndex) throws ComputeException {
+         try {
+            Entity parent = entityData.getParentEntity();
+            if (subjectKey!=null && !EntityUtils.hasWriteAccess(parent, _annotationDAO.getSubjectKeys(subjectKey))) {
+                throw new ComputeException("Subject "+subjectKey+" cannot change "+parent.getId());
+            }
+
+            entityData.setOrderIndex(orderIndex);
+            return saveOrUpdateEntityData(entityData);
+         } 
+         catch (Exception e) {
+            _logger.error("Error trying to update order index for "+orderIndex, e);
+            throw new ComputeException("Error trying to update order index for "+orderIndex,e);
+         }
+    }
+    
+    public EntityData setOrUpdateValue(String subjectKey, Long entityId, String attributeName, String value) throws ComputeException {
+         try {
+            Entity entity = getEntityById(subjectKey, entityId);
+            if (entity==null) {
+                throw new Exception("Entity not found: "+entityId);
+            }
+            if (subjectKey!=null && !EntityUtils.hasWriteAccess(entity, _annotationDAO.getSubjectKeys(subjectKey))) {
+                throw new ComputeException("Subject "+subjectKey+" cannot change "+entityId);
+            }
+            
+            int c = 0;
+            for(EntityData entityData : entity.getEntityData()) {
+                if (entityData.getEntityAttribute().getName().equals(attributeName)) {
+                    entityData.setValue(value);
+                    c++;
+                }
+            }
+            
+            if (c>0) {
+                throw new ComputeException("More than one "+attributeName+" value was found on enttiy "+entityId);
+            }
+            
+            if (c==0) {
+                entity.setValueByAttributeName(attributeName, value);
+            }
+            
+            saveOrUpdateEntity(entity);
+            return entity.getEntityDataByAttributeName(attributeName);
+
+        } 
+         catch (Exception e) {
+            _logger.error("Error trying to get delete entity "+entityId, e);
+            throw new ComputeException("Error deleting entity "+entityId,e);
+        }
+    }
+
+    public EntityData updateChildIndex(EntityData entityData, Integer orderIndex) throws ComputeException {
+        return updateChildIndex(null, entityData, orderIndex);
+    }
+    
+    public EntityData setOrUpdateValue(Long entityId, String attributeName, String value) throws ComputeException {
+        return setOrUpdateValue(null, entityId, attributeName, value);
+    }
+        
     public boolean deleteEntityById(Long entityId) throws ComputeException {
     	return deleteEntityById(null, entityId);
     }

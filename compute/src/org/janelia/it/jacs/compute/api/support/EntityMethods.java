@@ -226,13 +226,14 @@ public class EntityMethods {
         if (image == null) return;
         logger.debug("Adding " + attributeName + " (" + image.getName() + ") to " + entity.getName() + " (id="
                 + entity.getId() + ")");
-        // Update in-memory model
         String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        EntityData ed = entity.addChildEntity(image, attributeName);
-        ed.setValue(filepath);
+
         // Update database
-        EntityData savedEd = entityBean.saveOrUpdateEntityData(ownerKey, ed);
-        EntityUtils.replaceEntityData(entity, ed, savedEd);
+        EntityData savedEd = entityBean.addEntityToParent(ownerKey, entity.getId(), image.getId(), null, attributeName);
+        entityBean.setOrUpdateValue(ownerKey, entity.getId(), attributeName, filepath);
+        
+        // Update in-memory model
+        entity.getEntityData().add(savedEd);
     }
 
     /**
@@ -379,9 +380,7 @@ public class EntityMethods {
     }
 
     public void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
-        EntityData ed = parent.addChildEntity(entity, attrName);
-        ed.setOrderIndex(index);
-        entityBean.saveOrUpdateEntityData(ownerKey, ed);
+        entityBean.addEntityToParent(ownerKey, parent.getId(), entity.getId(), index, attrName);
         logger.trace("Added " + entity.getName() + " (" + entity.getEntityType().getName() + "#" + entity.getId()
                 + ") as child of " + parent.getName() + " (" + parent.getEntityType().getName() + "#" + parent.getId()
                 + ")");

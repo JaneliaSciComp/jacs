@@ -286,8 +286,7 @@ public class ScreenSampleLineCoordinationService implements IService {
         folder.setName(childFolderName);
         folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
         folder = entityBean.saveOrUpdateEntity(folder);
-        EntityData ed = parentFolder.addChildEntity(folder, EntityConstants.ATTRIBUTE_ENTITY);
-        entityBean.saveOrUpdateEntityData(ed);
+        entityBean.addEntityToParent(parentFolder, folder, null, EntityConstants.ATTRIBUTE_ENTITY);
         return folder;
     }
 
@@ -305,14 +304,12 @@ public class ScreenSampleLineCoordinationService implements IService {
         }
         flyLine.setEntityType(flyLineType);
         flyLine = entityBean.saveOrUpdateEntity(flyLine);
-        EntityData ed = folder.addChildEntity(flyLine, EntityConstants.ATTRIBUTE_ENTITY);
-        entityBean.saveOrUpdateEntityData(ed);
+        entityBean.addEntityToParent(folder, flyLine, null, EntityConstants.ATTRIBUTE_ENTITY);
         return flyLine;
     }
 
     protected void addScreenSampleToFlyLine(Entity sample, Entity flyLine) throws Exception {
-      EntityData ed = flyLine.addChildEntity(sample, EntityConstants.ATTRIBUTE_ENTITY);
-      entityBean.saveOrUpdateEntityData(ed);
+        entityBean.addEntityToParent(flyLine, sample, null, EntityConstants.ATTRIBUTE_ENTITY);
     }
 
 }

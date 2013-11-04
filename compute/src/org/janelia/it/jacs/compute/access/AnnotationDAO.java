@@ -1,15 +1,43 @@
 package org.janelia.it.jacs.compute.access;
 
-import com.google.common.collect.ImmutableSet;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.log4j.Logger;
-import org.hibernate.*;
+import org.hibernate.Criteria;
+import org.hibernate.HibernateException;
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.hibernate.criterion.Expression;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.service.fly.MaskSampleAnnotationService;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.entity.*;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityActorPermission;
+import org.janelia.it.jacs.model.entity.EntityAttribute;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.entity.EntityStatus;
+import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.ontology.types.Category;
 import org.janelia.it.jacs.model.ontology.types.EnumText;
@@ -28,15 +56,7 @@ import org.janelia.it.jacs.shared.utils.entity.AbstractEntityLoader;
 import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
 import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
+import com.google.common.collect.ImmutableSet;
 
 public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoader {
 	
@@ -46,8 +66,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     private static final Map<String, EntityType> entityByName = Collections.synchronizedMap(new HashMap<String, EntityType>());
     private static final Map<String, EntityAttribute> attrByName = Collections.synchronizedMap(new HashMap<String, EntityAttribute>());
 
-    private boolean debugDeletions = false;
-    
     public AnnotationDAO(Logger logger) {
         super(logger);
     }
@@ -178,15 +196,24 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     	return getEntityById(null, targetId);
     }
 
+    public Set<EntityActorPermission> getFullPermissions(Entity entity) throws DaoException {
+        if (EntityUtils.isInitialized(entity.getEntityActorPermissions())) {
+            return entity.getEntityActorPermissions();
+        }
+        return getFullPermissions(entity.getOwnerKey(), entity.getId());
+    }
+    
     public Set<EntityActorPermission> getFullPermissions(String subjectKey, Long entityId) throws DaoException {
         
         Entity entity = getEntityById(entityId);
         if (entity==null) {
             throw new IllegalArgumentException("Unknown entity: "+entityId);
         }
-        List<String> subjectKeyList = getSubjectKeys(subjectKey);
-        if (!EntityUtils.hasWriteAccess(entity, subjectKeyList)) {
-            throw new DaoException("User "+subjectKey+" does not have the right to view all permissions for "+entity.getId());
+        if (subjectKey!=null) {
+            List<String> subjectKeyList = getSubjectKeys(subjectKey);
+            if (!EntityUtils.hasWriteAccess(entity, subjectKeyList)) {
+                throw new DaoException("User "+subjectKey+" does not have the right to view all permissions for "+entity.getId());
+            }
         }
         
         return entity.getEntityActorPermissions();
@@ -206,11 +233,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     		}	
     	}
     	
-    	return grantPermissions(entity, entity.getOwnerKey(), granteeKey, permissions, recursive);
+    	return grantPermissions(entity, granteeKey, permissions, recursive);
     }
     
-    public EntityActorPermission grantPermissions(final Entity rootEntity, final String rootOwner, 
-    		final String granteeKey, final String permissions, boolean recursive) throws DaoException {
+    public EntityActorPermission grantPermissions(final Entity rootEntity, final String granteeKey, 
+            final String permissions, boolean recursive) throws DaoException {
 
     	Subject subject = getSubjectByNameOrKey(granteeKey);
     	if (subject==null) {
@@ -251,21 +278,32 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     			}
         	});
         	
-        	Entity sharedDataFolder = null;
-        	List<Entity> entities = getUserEntitiesByNameAndTypeName(granteeKey, EntityConstants.NAME_SHARED_DATA, EntityConstants.TYPE_FOLDER);
-        	if (entities != null && !entities.isEmpty()) {
-        		sharedDataFolder = entities.get(0);
+        	// Check if the grantee already has a link to the entity
+        	boolean granteeHasLink = false;
+        	for(Entity parent : getParentEntities(null, rootEntity.getId())) {
+        	    if (EntityUtils.hasReadAccess(parent, getSubjectKeys(granteeKey))) {
+        	        granteeHasLink = true;
+        	        break;
+        	    }
         	}
         	
-        	if (sharedDataFolder==null) {
-        		sharedDataFolder = createEntity(granteeKey, EntityConstants.TYPE_FOLDER, EntityConstants.NAME_SHARED_DATA);
-        		EntityUtils.addAttributeAsTag(sharedDataFolder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
-        		EntityUtils.addAttributeAsTag(sharedDataFolder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
-        		saveOrUpdate(sharedDataFolder);
+        	if (!granteeHasLink) {
+        	    // Grantee has no link, so expose it in the Shared Data folder
+                Entity sharedDataFolder = null;
+                List<Entity> entities = getUserEntitiesByNameAndTypeName(granteeKey, EntityConstants.NAME_SHARED_DATA, EntityConstants.TYPE_FOLDER);
+                if (entities != null && !entities.isEmpty()) {
+                    sharedDataFolder = entities.get(0);
+                }
+                
+                if (sharedDataFolder==null) {
+                    sharedDataFolder = createEntity(granteeKey, EntityConstants.TYPE_FOLDER, EntityConstants.NAME_SHARED_DATA);
+                    EntityUtils.addAttributeAsTag(sharedDataFolder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
+                    EntityUtils.addAttributeAsTag(sharedDataFolder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
+                    saveOrUpdate(sharedDataFolder);
+                }
+                
+                addEntityToParent(sharedDataFolder, rootEntity, sharedDataFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
         	}
-        	
-        	addEntityToParent(sharedDataFolder, rootEntity, sharedDataFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
-        	
     	}
     	catch (Exception e) {
     		throw new DaoException(e);
@@ -805,9 +843,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         return getUserEntitiesWithAttributeValue(subjectKey, null, attrName, attrValue);
     }
     
-    
-
-
     public Collection<Entity> getUserEntitiesByName(String subjectKey, String entityName) throws DaoException {
         try {
             if (_logger.isDebugEnabled()) {
@@ -1518,13 +1553,55 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName) throws DaoException {
-    	if (attrName==null) throw new DaoException("Error adding entity child with null attribute name");
-        EntityData ed = parent.addChildEntity(entity, attrName);
-        ed.setOrderIndex(index);
-        saveOrUpdate(ed);
-        return ed;
+        return addEntityToParent(parent, entity, index, attrName, null);
     }
 
+    public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName, String value) throws DaoException {
+        if (attrName==null) throw new DaoException("Error adding entity child with null attribute name");
+        EntityData ed = parent.addChildEntity(entity, attrName);
+        ed.setOrderIndex(index);
+        if (ed.getValue()!=null) {
+            ed.setValue(value);
+        }
+        saveOrUpdate(ed);
+        propagatePermissions(parent, entity, true);
+        return ed;
+    }
+    
+    public void addChildren(String subjectKey, Long parentId, List<Long> childrenIds, String attributeName) throws DaoException {
+        
+        EntityAttribute attribute = getEntityAttributeByName(attributeName);
+        Date createDate = new Date();
+        
+        Entity parent = new Entity();
+        parent.setId(parentId);
+        
+        for (Long childId : childrenIds) {
+            
+            Entity child = new Entity();
+            child.setId(childId);
+            
+            EntityData ed = new EntityData();
+            ed.setParentEntity(parent);
+            ed.setChildEntity(child);
+            ed.setOwnerKey(subjectKey);
+            ed.setCreationDate(createDate);
+            ed.setUpdatedDate(createDate);
+            
+            if (attribute!=null) ed.setEntityAttribute(attribute);
+            
+            saveOrUpdate(ed);
+
+            propagatePermissions(parent, child, true);
+        }
+    }
+    
+    private void propagatePermissions(Entity parent, Entity child, boolean recursive) throws DaoException {
+        for(EntityActorPermission permission : getFullPermissions(parent)) {
+            grantPermissions(child, permission.getSubjectKey(), permission.getPermissions(), recursive);    
+        }
+    }
+    
     public Entity createDataSet(String subjectKey, String dataSetName) throws ComputeException {
 
         String dataSetIdentifier = EntityUtils.createDenormIdentifierFromName(subjectKey, dataSetName);
@@ -1559,9 +1636,18 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     public EntityData createOntologyTerm(String subjectKey, Long ontologyTermParentId, String termName, OntologyElementType type, Integer orderIndex) throws ComputeException {
 
         Entity parentOntologyElement = getEntityById(ontologyTermParentId);
+
+        // You need write access to the parent ontology to make a new element in this ontology
+        List<String> subjectKeyList = getSubjectKeys(subjectKey);
+        if (!EntityUtils.hasWriteAccess(parentOntologyElement, subjectKeyList)) {
+            throw new ComputeException(subjectKey+" has no write access to ontology term "+ontologyTermParentId);
+        }
+        
+        // The new term will be owned by the ontology owner, even if someone else is creating it
+        String newTermOwner = parentOntologyElement.getOwnerKey();
         
         // Create and save the new entity
-        Entity newOntologyElement = newEntity(EntityConstants.TYPE_ONTOLOGY_ELEMENT, termName, subjectKey);
+        Entity newOntologyElement = newEntity(EntityConstants.TYPE_ONTOLOGY_ELEMENT, termName, newTermOwner);
 
         // If no order index is given then we add in last place
         if (orderIndex == null) {
@@ -1576,7 +1662,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         newOntologyElement.setEntityData(eds);
         
         // Add the type
-        EntityData termData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE, subjectKey);
+        EntityData termData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE, newTermOwner);
         termData.setValue(type.getClass().getSimpleName());
         eds.add(termData);
 
@@ -1585,11 +1671,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 
             Interval interval = (Interval)type;
 
-            EntityData lowerData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER, subjectKey);
+            EntityData lowerData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER, newTermOwner);
             lowerData.setValue(interval.getLowerBound().toString());
             eds.add(lowerData);
 
-            EntityData upperData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER, subjectKey);
+            EntityData upperData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER, newTermOwner);
             upperData.setValue(interval.getUpperBound().toString());
             eds.add(upperData);
         }
@@ -1598,7 +1684,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         if (type instanceof EnumText) {
             EnumText enumText = (EnumText)type;
             Entity valueEnumEntity = getEntityById(enumText.getValueEnumId());
-            EntityData lowerData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_ENUMTEXT_ENUMID, subjectKey);
+            EntityData lowerData = newData(newOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_ENUMTEXT_ENUMID, newTermOwner);
             lowerData.setValue(enumText.getValueEnumId().toString());
             lowerData.setChildEntity(valueEnumEntity);
             eds.add(lowerData);
@@ -1608,11 +1694,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         saveOrUpdate(newOntologyElement);
         
         // Associate the entity to the parent
-        EntityData childData = newData(parentOntologyElement, EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT, subjectKey);
-        childData.setChildEntity(newOntologyElement);
-        childData.setOrderIndex(orderIndex);
-        saveOrUpdate(childData);
-        
+        EntityData childData = addEntityToParent(parentOntologyElement, newOntologyElement, orderIndex, EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT);
+                
         return childData;
     }
     
@@ -1920,41 +2003,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             throw new DaoException(e);
         }
 	}
-	
-	/**
-     * Iterate recursively through all children in the Entity graph in order to preload them.
-     * @param entity
-     * @return
-     */
-    public Entity populateDescendants(String subjectKey, Entity entity) {
-        if (_logger.isDebugEnabled()) {
-            _logger.debug("populateDescendants(subjectKey="+subjectKey+",entity.name="+entity.getName()+")");
-        }
-    	Set<String> subjectKeys = getSubjectKeySet(subjectKey);
-    	return populateDescendants(subjectKeys, entity, new HashSet<Long>(), "");
-    }
-    
-    private Entity populateDescendants(Set<String> subjectKeys, Entity entity, Set<Long> visited, String indent) {
-    	if (_logger.isTraceEnabled()) {
-    		_logger.trace(indent+entity.getName());
-    	}
-    	
-    	if (entity == null) return entity;
-    	
-    	if (subjectKeys!=null && !subjectKeys.contains(entity.getOwnerKey())) return entity;
-    	
-    	if (visited.contains(entity.getId())) return entity;
-    	visited.add(entity.getId());
-
-    	// Populate descendants
-    	for(EntityData ed : entity.getEntityData()) {
-    		Entity child = ed.getChildEntity();
-    		if (child != null) {
-    			populateDescendants(subjectKeys, child, visited, indent+" ");
-    		}
-    	}
-    	return entity;
-    }
 
     /**
      * Iterate recursively through all children in the Entity graph in order to preload them.
@@ -2371,7 +2419,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     	}
     	
     	// This would be the correct thing to do, but it makes this far too slow.
-    	// In practice it's probably not with the current state of the data, but maybe it will be in the future.
+    	// In practice it's probably not needed with the current state of the data, but maybe it will be in the future.
 //    	loadLazyEntity(subjectKey, entity, false);
 //    	for(EntityData ed : new ArrayList<EntityData>(entity.getEntityData())) {
 //    		if (ed.getChildEntity()!=null) {
@@ -2413,32 +2461,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         return new EntityData(null, attribute, parent, null, subjectKey, null, date, date, null);
     }
     
-    
-    public void addChildren(String subjectKey, Long parentId, List<Long> childrenIds, String attributeName) throws DaoException {
-    	
-    	EntityAttribute attribute = getEntityAttributeByName(attributeName);
-    	Date createDate = new Date();
-    	
-    	Entity parent = new Entity();
-    	parent.setId(parentId);
-    	
-        for (Long childId : childrenIds) {
-        	
-        	Entity child = new Entity();
-        	child.setId(childId);
-        	
-        	EntityData ed = new EntityData();
-        	ed.setParentEntity(parent);
-        	ed.setChildEntity(child);
-        	ed.setOwnerKey(subjectKey);
-            ed.setCreationDate(createDate);
-            ed.setUpdatedDate(createDate);
-            
-            if (attribute!=null) ed.setEntityAttribute(attribute);
-            
-            saveOrUpdate(ed);
-        }
-    }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2805,11 +2827,46 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 	@Override
 	public Entity populateChildren(Entity entity) throws Exception {
     	for(EntityData ed : entity.getEntityData()) {
-    		Entity child = ed.getChildEntity();
+    		Entity child = ed.getChildEntity(); // Force Hibernate to load the child entity
     	}
     	return entity;
 	}
 
+    /**
+     * Iterate recursively through all children in the Entity graph in order to preload them.
+     * @param entity
+     * @return
+     */
+    public Entity populateDescendants(String subjectKey, Entity entity) {
+        if (_logger.isDebugEnabled()) {
+            _logger.debug("populateDescendants(subjectKey="+subjectKey+",entity.name="+entity.getName()+")");
+        }
+        Set<String> subjectKeys = getSubjectKeySet(subjectKey);
+        return populateDescendants(subjectKeys, entity, new HashSet<Long>(), "");
+    }
+    
+    private Entity populateDescendants(Set<String> subjectKeys, Entity entity, Set<Long> visited, String indent) {
+        if (_logger.isTraceEnabled()) {
+            _logger.trace(indent+entity.getName());
+        }
+        
+        if (entity == null) return entity;
+        
+        if (subjectKeys!=null && !subjectKeys.contains(entity.getOwnerKey())) return entity;
+        
+        if (visited.contains(entity.getId())) return entity;
+        visited.add(entity.getId());
+
+        // Populate descendants
+        for(EntityData ed : entity.getEntityData()) {
+            Entity child = ed.getChildEntity();
+            if (child != null) {
+                populateDescendants(subjectKeys, child, visited, indent+" ");
+            }
+        }
+        return entity;
+    }
+    
     public void deleteAttribute(String ownerKey, String attributeName) throws DaoException {
         try {
             if (_logger.isDebugEnabled()) {

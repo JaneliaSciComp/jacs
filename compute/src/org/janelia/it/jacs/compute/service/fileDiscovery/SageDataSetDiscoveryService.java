@@ -299,8 +299,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         for(EntityData ed : orderedData) {
             if (ed.getOrderIndex()==null || orderIndex!=ed.getOrderIndex()) {
                 logger.debug("  Updating "+ed.getChildEntity().getName()+" with order index "+orderIndex+" (was "+ed.getOrderIndex()+")");
-                ed.setOrderIndex(orderIndex);
-                entityBean.saveOrUpdateEntityData(ed);
+                entityBean.updateChildIndex(ed, orderIndex);
             }
             orderIndex++;
         }

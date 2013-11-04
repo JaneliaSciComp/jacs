@@ -39,6 +39,9 @@ public interface EntityBeanRemote {
     public EntityData addEntityToParent(String subjectKey, Long parentId, Long entityId, Integer index, String attrName) throws ComputeException;
     public void addChildren(String subjectKey, Long parentId, List<Long> childrenIds, String attributeName) throws ComputeException;
 
+    public EntityData updateChildIndex(String subjectKey, EntityData entityData, Integer orderIndex) throws ComputeException;
+    public EntityData setOrUpdateValue(String subjectKey, Long entityId, String attributeName, String value) throws ComputeException;
+    
     public boolean deleteEntityById(String subjectKey, Long entityId) throws ComputeException;
     public boolean deleteEntityTree(String subjectKey, Long entityId) throws ComputeException;
     public boolean deleteSmallEntityTree(String subjectKey, Long entityId) throws ComputeException;

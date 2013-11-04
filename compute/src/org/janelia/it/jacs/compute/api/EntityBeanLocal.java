@@ -5,6 +5,7 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
 
 import javax.ejb.Local;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,6 +43,10 @@ public interface EntityBeanLocal extends EntityBeanRemote {
 	public Entity saveOrUpdateEntity(Entity entity) throws ComputeException;
     public EntityData saveOrUpdateEntityData(EntityData newData) throws ComputeException;
     public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName) throws ComputeException;
+    public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName, String value) throws ComputeException;
+    
+    public EntityData updateChildIndex(EntityData entityData, Integer orderIndex) throws ComputeException;
+    public EntityData setOrUpdateValue(Long entityId, String attributeName, String value) throws ComputeException;
 
     public boolean deleteEntityById(Long entityId) throws ComputeException;
     public void deleteEntityData(EntityData ed) throws ComputeException;
