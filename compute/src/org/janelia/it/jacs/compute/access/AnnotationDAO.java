@@ -1560,7 +1560,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         if (attrName==null) throw new DaoException("Error adding entity child with null attribute name");
         EntityData ed = parent.addChildEntity(entity, attrName);
         ed.setOrderIndex(index);
-        if (ed.getValue()!=null) {
+        if (value!=null) {
             ed.setValue(value);
         }
         saveOrUpdate(ed);
@@ -1570,13 +1570,25 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     
     public void addChildren(String subjectKey, Long parentId, List<Long> childrenIds, String attributeName) throws DaoException {
         
-        EntityAttribute attribute = getEntityAttributeByName(attributeName);
+        Entity parent = getEntityById(parentId);
+        
+        Set<Long> existingChildrenIds = new HashSet<Long>();
+        for(EntityData entityData : parent.getEntityData()) {
+            if (entityData.getChildEntity()!=null) { 
+                existingChildrenIds.add(entityData.getChildEntity().getId());
+            }
+        }
+        
+        EntityAttribute attribute = parent.getAttributeByName(attributeName);
+        if (attribute==null) {
+            throw new IllegalArgumentException(
+                    "Attribute "+attributeName+" not found for entity type "+parent.getEntityType().getName());
+        }
+            
         Date createDate = new Date();
         
-        Entity parent = new Entity();
-        parent.setId(parentId);
-        
         for (Long childId : childrenIds) {
+            if (existingChildrenIds.contains(childId)) continue;
             
             Entity child = new Entity();
             child.setId(childId);
@@ -1587,8 +1599,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             ed.setOwnerKey(subjectKey);
             ed.setCreationDate(createDate);
             ed.setUpdatedDate(createDate);
-            
-            if (attribute!=null) ed.setEntityAttribute(attribute);
+            ed.setEntityAttribute(attribute);
             
             saveOrUpdate(ed);
 
