@@ -301,8 +301,8 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
                 }
             }
             
-            if (c>0) {
-                throw new ComputeException("More than one "+attributeName+" value was found on enttiy "+entityId);
+            if (c>1) {
+                throw new ComputeException("More than one "+attributeName+" value was found on entity "+entityId);
             }
             
             if (c==0) {
