@@ -220,7 +220,7 @@
         <archive path="/console/lib/Jogl/jogl-all-natives-macosx-universal.jar"/>
         <archive path="/console/lib/Jogl/jogl-all-natives-windows-amd64.jar"/>
         <archive path="/console/lib/Jogl/jogl-all-natives-windows-i586.jar"/>
-        <archive nativelibpaths="/console/lib/Jogl" path="/console/lib/Jogl/jogl.all.jar"/>
+        <archive path="/console/lib/Jogl/jogl-all.jar"/>
     </library>
     <library name="JUnit" systemlibrary="false">
         <archive path="/common/JUnit-Lib-3.8.1/clover.jar"/>
