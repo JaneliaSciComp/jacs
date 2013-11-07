@@ -149,6 +149,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_VISIBILITY                          = "Visibility";      // e.g. "true"
     public static final String ATTRIBUTE_COLOR                               = "Color";           // RGBA hex format, e.g. "ff0000ff"
     public static final String ATTRIBUTE_RENDER_METHOD                       = "Render Method";   // Special overrides to normal rendering.  Ex: Passthrough
+    public static final String ATTRIBUTE_INCLUSION_STATUS                    = "Inclusion Status";// Member of enum AlignmentItem.InclusionStatus' mixed case constants
 
     public static final String ATTRIBUTE_MASK_IMAGE                          = "Mask Image";
     public static final String ATTRIBUTE_CHAN_IMAGE                          = "Chan Image";
