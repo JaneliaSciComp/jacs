@@ -1,6 +1,29 @@
 
 package org.janelia.it.jacs.compute.api;
 
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import javax.naming.Context;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+
 import org.apache.log4j.Logger;
 import org.hibernate.Query;
 import org.hibernate.SQLQuery;
@@ -8,7 +31,7 @@ import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
-import org.janelia.it.jacs.compute.access.UserDAO;
+import org.janelia.it.jacs.compute.access.SubjectDAO;
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 import org.janelia.it.jacs.compute.engine.launcher.ProcessManager;
@@ -18,9 +41,22 @@ import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskMessage;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
-import org.janelia.it.jacs.model.tasks.blast.*;
+import org.janelia.it.jacs.model.tasks.blast.BlastNTask;
+import org.janelia.it.jacs.model.tasks.blast.BlastPTask;
+import org.janelia.it.jacs.model.tasks.blast.BlastTask;
+import org.janelia.it.jacs.model.tasks.blast.BlastXTask;
+import org.janelia.it.jacs.model.tasks.blast.MegablastTask;
+import org.janelia.it.jacs.model.tasks.blast.TBlastNTask;
+import org.janelia.it.jacs.model.tasks.blast.TBlastXTask;
 import org.janelia.it.jacs.model.tasks.utility.ContinuousExecutionTask;
-import org.janelia.it.jacs.model.user_data.*;
+import org.janelia.it.jacs.model.user_data.FastaFileNode;
+import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.model.user_data.Group;
+import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.model.user_data.Subject;
+import org.janelia.it.jacs.model.user_data.SubjectRelationship;
+import org.janelia.it.jacs.model.user_data.User;
+import org.janelia.it.jacs.model.user_data.UserToolEvent;
 import org.janelia.it.jacs.model.user_data.blast.BlastDatabaseFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultNode;
@@ -33,20 +69,6 @@ import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.MailHelper;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
-
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import javax.naming.Context;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * This class implements service calls used by remote clients of Compute server.  It also contains service
@@ -61,7 +83,9 @@ import java.util.regex.Pattern;
 //@Interceptors({UsageInterceptor.class})
 @PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 200, timeout = 10000)
 public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
+    
     private Logger logger = Logger.getLogger(this.getClass());
+    
     public static final String APP_VERSION = "jacs.version";
     public static final String COMPUTE_EJB_PROP = "ComputeEJB.Name";
     public static final String MDB_PROVIDER_URL_PROP = "AsyncMessageInterface.ProviderURL";
@@ -74,7 +98,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
             SystemConfigurationProperties.getString("JacsData.Dir.Archive.Linux");
     
     private ComputeDAO computeDAO = new ComputeDAO(logger);
-    private UserDAO userDAO = new UserDAO(logger);
+    private SubjectDAO subjectDAO = new SubjectDAO(logger);
     
     public ComputeBeanImpl() {
     }
@@ -216,21 +240,21 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     }
     
 	public List<Subject> getSubjects() throws ComputeException {
-        return computeDAO.getSubjects();
+        return subjectDAO.getSubjects();
 	}
 	
     public List<User> getUsers() throws ComputeException {
-        return computeDAO.getUsers();
+        return subjectDAO.getUsers();
     }
 	
 	public List<Group> getGroups() throws ComputeException {
-        return computeDAO.getGroups();
+        return subjectDAO.getGroups();
 	}
     
     public boolean createUser(String newUserName) throws DaoException {
         try {
             logger.info("Creating user " + newUserName);
-            User user = userDAO.createUser(newUserName);
+            User user = subjectDAO.createUser(newUserName);
             String fileNodeStorePath = SystemConfigurationProperties.getString(FILE_STORE_CENTRAL_DIR_PROP);
             File tmpUserDir = FileUtil.ensureDirExists(fileNodeStorePath + File.separator + newUserName);
             if (null!=user && null!=tmpUserDir && tmpUserDir.exists()) {
@@ -265,7 +289,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     public Group createGroup(String userLogin, String groupName) throws DaoException {
         try {
             logger.info("Creating group " + groupName);
-            return userDAO.createGroup(userLogin, groupName);
+            return subjectDAO.createGroup(userLogin, groupName);
         }
         catch (DaoException e) {
             logger.error("Error creating group", e);
@@ -276,7 +300,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     public void removeGroup(String groupName) throws DaoException {
         try {
             logger.info("Removing group " + groupName);
-            userDAO.removeGroup(groupName);
+            subjectDAO.removeGroup(groupName);
         }
         catch (DaoException e) {
             logger.error("Error removing group", e);
@@ -287,7 +311,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     public void addUserToGroup(String userName, String groupName) throws DaoException {
         try {
             logger.info("Adding user "+userName+" to group " + groupName);
-            userDAO.addUserToGroup(userName, groupName);
+            subjectDAO.addUserToGroup(userName, groupName);
         }
         catch (DaoException e) {
             logger.error("Error adding user to group", e);
@@ -298,7 +322,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     public void removeUserFromGroup(String groupUser, String groupName) throws DaoException {
         try {
             logger.info("Removing user "+groupUser+" from group " + groupName);
-            userDAO.removeUserFromGroup(groupUser, groupName);
+            subjectDAO.removeUserFromGroup(groupUser, groupName);
         }
         catch (DaoException e) {
             logger.error("Error removing user from group", e);
@@ -987,10 +1011,6 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     
     public void setParentTaskId(Long parentTaskId, Long childTaskId) throws DaoException {
         computeDAO.setParentTaskId(parentTaskId, childTaskId);
-    }
-
-    public List<User> getAllUsers() {
-        return computeDAO.getAllUsers();
     }
 
     public List<Task> getChildTasksByParentTaskId(long taskId) {

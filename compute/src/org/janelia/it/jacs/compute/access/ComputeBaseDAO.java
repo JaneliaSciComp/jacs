@@ -41,21 +41,33 @@ public class ComputeBaseDAO {
     private final String jdbcUser = SystemConfigurationProperties.getString("batch.jdbc.username", null);
     private final String jdbcPw = SystemConfigurationProperties.getString("batch.jdbc.password", null);
     
-    protected Logger _logger;
+    protected Logger log;
     protected SessionFactory sessionFactory;
     protected Session externalSession;
 
+    public ComputeBaseDAO(Logger logger) {
+        getSessionFactory();
+        log = logger;
+    }
+
+    public ComputeBaseDAO(Session externalSession) {
+        this.externalSession = externalSession;
+    }
+
     public Connection getJdbcConnection() throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getJdbcConnection()");    
+        }
     	try {
     	    Connection connection = null;
             if (!StringUtils.isEmpty(jndiPath)) {
-                _logger.debug("getJdbcConnection() using these parameters: jndiPath="+jndiPath);
+                log.debug("getJdbcConnection() using these parameters: jndiPath="+jndiPath);
                 Context ctx = new InitialContext();
                 DataSource ds = (DataSource) PortableRemoteObject.narrow(ctx.lookup(jndiPath), DataSource.class);
                 connection = ds.getConnection();
             }
             else {
-                _logger.debug("getJdbcConnection() using these parameters: driverClassName="+jdbcDriver+" url="+jdbcUrl+" user="+jdbcUser);
+                log.debug("getJdbcConnection() using these parameters: driverClassName="+jdbcDriver+" url="+jdbcUrl+" user="+jdbcUser);
                 Class.forName(jdbcDriver);
                 connection = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPw);
             }
@@ -65,15 +77,6 @@ public class ComputeBaseDAO {
     	catch (Exception e) {
     		throw new DaoException(e);
     	}
-    }
-
-    public ComputeBaseDAO(Logger logger) {
-        getSessionFactory();
-        _logger = logger;
-    }
-
-    public ComputeBaseDAO(Session externalSession) {
-        this.externalSession = externalSession;
     }
 
     private SessionFactory getSessionFactory() {
@@ -93,40 +96,47 @@ public class ComputeBaseDAO {
     }
 
     public void recordProcessSuccess(ProcessDef processDef, Long processId) {
+        if (log.isTraceEnabled()) {
+            log.trace("recordProcessSuccess(processDef="+processDef+", processId="+processId+")");    
+        }
         try {
-            if (_logger.isInfoEnabled()) {
-                _logger.info("Process: " + processDef.getName() + " Id:" + processId + " completed successfully");
+            if (log.isInfoEnabled()) {
+                log.info("Process: " + processDef.getName() + " Id:" + processId + " completed successfully");
             }
             updateTaskStatus(processId, Event.COMPLETED_EVENT, "Process " + processId + " completed successfully");
         }
         catch (Exception e) {
-            _logger.error("Caught exception updating status of process: " + processDef, e);
+            log.error("Caught exception updating status of process: " + processDef, e);
         }
     }
 
     public void updateTaskStatus(long taskId, String status, String comment) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("updateTaskStatus(taskId="+taskId+", status="+status+", comment="+comment+")");    
+        }
+        
         try {
             Session session = getCurrentSession();
             Task task = (Task) session.load(Task.class, taskId, LockMode.READ);
             if (task.isDone() && !Event.ERROR_EVENT.equals(status)) {
-                _logger.warn("Cannot update task "+task.getObjectId()+" to status \"" + status + "\" as it is already in DONE status.");
+                log.warn("Cannot update task "+task.getObjectId()+" to status \"" + status + "\" as it is already in DONE status.");
                 return;
             }
             
             if (task.getLastEvent().getEventType().equals(status) && task.getLastEvent().getDescription().equals(comment)) {
                 // Compensate for bad error handling in the process framework. Some errors can be logged multiple times,
                 // so this attempts to dedup them so that we keep the database clean.
-                _logger.debug("Cannot update task "+task.getObjectId()+" to status \"" + status + "\" as it is already in that status with the same message.");
+                log.debug("Cannot update task "+task.getObjectId()+" to status \"" + status + "\" as it is already in that status with the same message.");
                 return;
             }
             
-            if (_logger.isDebugEnabled()) {
-                _logger.debug("Retrieved task=" + task.getObjectId().toString() + " from the db.");
+            if (log.isDebugEnabled()) {
+                log.debug("Retrieved task=" + task.getObjectId().toString() + " from the db.");
             }
             Event event = new Event(comment, new Date(), status);
             task.addEvent(event);
-            if (_logger.isInfoEnabled()) {
-                _logger.info("Updating task " + task.getObjectId() + " to status " + status);
+            if (log.isInfoEnabled()) {
+                log.info("Updating task " + task.getObjectId() + " to status " + status);
             }
             session.saveOrUpdate(task);
         }
@@ -136,14 +146,18 @@ public class ComputeBaseDAO {
     }
 
     public void saveTaskMessages(long taskId, Set<TaskMessage> messages) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("saveTaskMessages(taskId="+taskId+", messages.size="+messages+")");    
+        }
+        
         try {
             Session session = getCurrentSession();
             Task task = (Task) session.load(Task.class, taskId, LockMode.READ);
-            if (_logger.isDebugEnabled()) {
-                _logger.debug("Retrieved task=" + task.getObjectId().toString() + " from the db.");
+            if (log.isDebugEnabled()) {
+                log.debug("Retrieved task=" + task.getObjectId().toString() + " from the db.");
             }
-            if (_logger.isInfoEnabled()) {
-                _logger.info("Updating task " + task.getObjectId() + " with " + messages.size() + " messages");
+            if (log.isInfoEnabled()) {
+                log.info("Updating task " + task.getObjectId() + " with " + messages.size() + " messages");
             }
             task.getMessages().addAll(messages);
             session.saveOrUpdate(task);
@@ -154,10 +168,17 @@ public class ComputeBaseDAO {
     }
 
     public Task getTaskById(long taskId) {
+        if (log.isTraceEnabled()) {
+            log.trace("getTaskById(taskId="+taskId+")");    
+        }
         return (Task) getCurrentSession().get(Task.class, taskId);
     }
 
     public List<Task> getMostRecentTasksWithName(String owner, String taskName) {
+        if (log.isTraceEnabled()) {
+            log.trace("getMostRecentTasksWithName(owner="+owner+", taskName="+taskName+")");    
+        }
+        
         String ownerName = owner.contains(":") ? owner.split(":")[1] : owner;
         Session session = getCurrentSession();
         StringBuffer hql = new StringBuffer("select t from Task t ");
@@ -171,11 +192,19 @@ public class ComputeBaseDAO {
     }
     
     public SearchResultNode getSearchTaskResultNode(long searchTaskId) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getSearchTaskResultNode(searchTaskId="+searchTaskId+")");    
+        }
+        
         SearchTask st = (SearchTask) getCurrentSession().get(Task.class, searchTaskId);
         return st.getSearchResultNode();
     }
 
     public Task getTaskWithEventsById(long taskId) {
+        if (log.isTraceEnabled()) {
+            log.trace("getTaskWithEventsById(taskId="+taskId+")");    
+        }
+        
         Task task = null;
         Query query = getCurrentSession().getNamedQuery("findTaskWithEvents");
         query.setParameter("taskId", taskId);
@@ -187,6 +216,10 @@ public class ComputeBaseDAO {
     }
 
     public Task getTaskWithMessages(long taskId) {
+        if (log.isTraceEnabled()) {
+            log.trace("getTaskWithMessages(taskId="+taskId+")");    
+        }
+        
         Task task = null;
         Query query = getCurrentSession().getNamedQuery("findTaskWithMessages");
         query.setParameter("taskId", taskId);
@@ -198,6 +231,10 @@ public class ComputeBaseDAO {
     }
 
     public Task getTaskWithMessagesAndParameters(long taskId) {
+        if (log.isTraceEnabled()) {
+            log.trace("getTaskWithMessagesAndParameters(taskId="+taskId+")");    
+        }
+        
         Task task = null;
         Query query = getCurrentSession().getNamedQuery("findTaskWithMessagesAndParameters");
         query.setParameter("taskId", taskId);
@@ -209,6 +246,10 @@ public class ComputeBaseDAO {
     }
 
     public Task getTaskWithResultsById(long taskId) {
+        if (log.isTraceEnabled()) {
+            log.trace("getTaskWithResultsById(taskId="+taskId+")");    
+        }
+        
         Task task = null;
         Query query = getCurrentSession().getNamedQuery("findTaskWithResults");
         query.setParameter("taskId", taskId);
@@ -220,10 +261,18 @@ public class ComputeBaseDAO {
     }
 
     public Node getNodeById(long nodeId) {
+        if (log.isTraceEnabled()) {
+            log.trace("getNodeById(nodeId="+nodeId+")");    
+        }
+        
         return (Node) getCurrentSession().get(Node.class, nodeId);
     }
 
     public FileNode getFileNodeByPathOverride(String pathOverride) {
+        if (log.isTraceEnabled()) {
+            log.trace("getFileNodeByPathOverride(pathOverride="+pathOverride+")");    
+        }
+        
         Session session = getCurrentSession();
         StringBuffer hql = new StringBuffer("select n from Node n ");
         hql.append("where n.pathOverride = :pathOverride ");
@@ -233,12 +282,20 @@ public class ComputeBaseDAO {
     }
     
     public Node getBlastDatabaseFileNodeByName(String name) {
+        if (log.isTraceEnabled()) {
+            log.trace("getBlastDatabaseFileNodeByName(name="+name+")");    
+        }
+        
         Query query = getCurrentSession().getNamedQuery("findBlastDatabaseNodeByName"); // Accesion is sic
         query.setParameter("name", name); // accesion is sic
         return (Node) query.uniqueResult();
     }
 
     public int bulkUpdateNodePathOverridePrefix(String oldPrefix, String newPrefix) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("bulkUpdateNodePathOverridePrefix(oldPrefix="+oldPrefix+", newPrefix="+newPrefix+")");    
+        }
+        
         try {
             StringBuilder hql = new StringBuilder();
             hql.append("update Node n set n.pathOverride = concat(:newPrefix,substring(n.pathOverride, :prefixOffset)) "); 
@@ -251,7 +308,7 @@ public class ComputeBaseDAO {
             query.setParameter("oldPrefix", oldPrefix+"%");
             
             int rows = query.executeUpdate();
-            _logger.debug("Bulk updated node path override prefix for "+rows+" rows");
+            log.debug("Bulk updated node path override prefix for "+rows+" rows");
             return rows;
         }
         catch (Exception e) {
@@ -267,6 +324,10 @@ public class ComputeBaseDAO {
      * @return FIRST result node of the task
      */
     public Node getResultNodeByTaskId(long taskId) {
+        if (log.isTraceEnabled()) {
+            log.trace("getResultNodeByTaskId(taskId="+taskId+")");    
+        }
+        
         Session session = getCurrentSession();
         Query query = session.createSQLQuery("select node_id from task t, node n where t.task_id=" + taskId + " and t.task_id=n.task_id");
         List results = query.list();
@@ -282,6 +343,10 @@ public class ComputeBaseDAO {
      * Variation of above but returns all nodes associated with task
      */
     public List<Node> getResultNodesByTaskId(long taskId) {
+        if (log.isTraceEnabled()) {
+            log.trace("getResultNodesByTaskId(taskId="+taskId+")");    
+        }
+        
         Session session = getCurrentSession();
         Query query = session.createSQLQuery("select node_id from task t, node n where t.task_id=" + taskId + " and t.task_id=n.task_id");
         List results = query.list();
@@ -299,6 +364,10 @@ public class ComputeBaseDAO {
     // First member string is the event type.
     // Second member string is the description.
     public String[] getTaskStatus(long taskId) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getTaskStatus(taskId="+taskId+")");    
+        }
+        
         try {
             Task task = getTaskById(taskId);
             String[] taskStatusArr = new String[2];
@@ -325,6 +394,10 @@ public class ComputeBaseDAO {
     }
 
     public Event createEvent(Long taskId, String eventType, String description, Date timestamp) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("createEvent(taskId="+taskId+", eventType="+eventType+", description="+description+", timestamp="+timestamp+")");    
+        }
+        
         try {
             Task task = getTaskById(taskId);
             return createEvent(task, eventType, description, timestamp);
@@ -335,6 +408,10 @@ public class ComputeBaseDAO {
     }
 
     public Event createEvent(Task task, String eventType, String description, Date timestamp) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("createEvent(task="+task+", eventType="+eventType+", description="+description+", timestamp="+timestamp+")");    
+        }
+        
         try {
             Session session = getCurrentSession();
             Event event = new Event(description, timestamp, eventType);
@@ -348,6 +425,10 @@ public class ComputeBaseDAO {
     }
 
     public User getUserByNameOrKey(String nameOrKey) {
+        if (log.isTraceEnabled()) {
+            log.trace("getUserByNameOrKey(nameOrKey="+nameOrKey+")");    
+        }
+        
         Session session = getCurrentSession();
         StringBuffer hql = new StringBuffer("select u from User u ");
         hql.append("left outer join fetch u.groupRelationships gr ");
@@ -359,6 +440,10 @@ public class ComputeBaseDAO {
     }
     
     public Group getGroupByNameOrKey(String nameOrKey) {
+        if (log.isTraceEnabled()) {
+            log.trace("getGroupByNameOrKey(nameOrKey="+nameOrKey+")");    
+        }
+        
         Session session = getCurrentSession();
         StringBuffer hql = new StringBuffer("select g from Group g ");
         hql.append("left outer join fetch g.userRelationships ur ");
@@ -370,6 +455,10 @@ public class ComputeBaseDAO {
     }
 
     public Subject getSubjectByNameOrKey(String nameOrKey) {
+        if (log.isTraceEnabled()) {
+            log.trace("getSubjectByNameOrKey(nameOrKey="+nameOrKey+")");    
+        }
+        
         Session session = getCurrentSession();
         StringBuffer hql = new StringBuffer("select s from Subject s ");
         hql.append("where s.name = :name or s.key = :name ");
@@ -378,25 +467,12 @@ public class ComputeBaseDAO {
         return (Subject)query.uniqueResult();
     }
     
-    public List<Subject> getSubjects() {
-        Session session = getCurrentSession();
-        Criteria c = session.createCriteria(Subject.class);
-        return c.list();
-    }
-
-    public List<User> getUsers() {
-        Session session = getCurrentSession();
-        Criteria c = session.createCriteria(User.class);
-        return c.list();
-    }
-
-    public List<Group> getGroups() {
-        Session session = getCurrentSession();
-        Criteria c = session.createCriteria(Group.class);
-        return c.list();
-    }
     
     public List<String> getGroupKeysForUsernameOrSubjectKey(String userKey) {
+        if (log.isTraceEnabled()) {
+            log.trace("getGroupKeysForUsernameOrSubjectKey(userKey="+userKey+")");    
+        }
+        
         StringBuffer hql = new StringBuffer();
         hql.append("select g.key from Group g ");
         hql.append("join g.userRelationships ur ");
@@ -405,15 +481,23 @@ public class ComputeBaseDAO {
         Query query = getCurrentSession().createQuery(hql.toString());
         query.setString("userKey", userKey);
         List<String> list = query.list();
-        _logger.debug("Got group keys for user: "+list);
+        log.debug("Got group keys for user: "+list);
         return list;
     }
     
     public Object genericGet(Class c, Long id) {
+        if (log.isTraceEnabled()) {
+            log.trace("genericGet(c="+c+", id="+id+")");    
+        }
+        
         return getCurrentSession().get(c, id);
     }
 
     public Object genericLoad(Class c, Long id) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("genericLoad(c="+c+", id="+id+")");    
+        }
+    
         try {
             return getCurrentSession().load(c, id);
         }
@@ -423,6 +507,9 @@ public class ComputeBaseDAO {
     }
 
     public void genericSave(Object object) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("genericSave(object="+object+")");    
+        }
         try {
             getCurrentSession().saveOrUpdate(object);
         }
@@ -432,6 +519,9 @@ public class ComputeBaseDAO {
     }
 
     public void genericDelete(Object object) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("genericDelete(object="+object+")");    
+        }
         try {
             getCurrentSession().delete(object);
         }
@@ -441,6 +531,9 @@ public class ComputeBaseDAO {
     }
 
     public Object genericCreateAndReturn(Object object) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("genericCreateAndReturn(object="+object+")");    
+        }
         try {
             getCurrentSession().save(object);
         }
@@ -462,6 +555,9 @@ public class ComputeBaseDAO {
     }
 
     public void saveOrUpdate(Object item) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("saveOrUpdate(item="+item+")");    
+        }
         try {
             getCurrentSession().saveOrUpdate(item);
         }
@@ -471,6 +567,9 @@ public class ComputeBaseDAO {
     }
 
     public Task getTaskForNode(long nodeId) {
+        if (log.isTraceEnabled()) {
+            log.trace("getTaskForNode(nodeId="+nodeId+")");    
+        }
         Node tmpNode = getNodeById(nodeId);
         return tmpNode.getTask();
     }
@@ -486,7 +585,7 @@ public class ComputeBaseDAO {
     }
 
     protected DaoException handleException(Exception e, String actionWhichProducedError) {
-        _logger.error(e);
+        log.error(e);
         return new DaoException(e, actionWhichProducedError);
     }
 
@@ -494,6 +593,10 @@ public class ComputeBaseDAO {
      * Returns all child tasks starting with parent task id
      */
     public List<Task> getChildTasksByParentTaskId(long taskId) {
+        if (log.isTraceEnabled()) {
+            log.trace("getChildTasksByParentTaskId(taskId="+taskId+")");    
+        }
+        
         Session session = getCurrentSession();
         Query query = session.createSQLQuery("select t.task_id from task t where t.parent_task_id=" + taskId + " order by t.task_id");
         List results = query.list();
@@ -507,7 +610,12 @@ public class ComputeBaseDAO {
         return taskList;
     }
 
+    @Deprecated
     protected void createEntityType(String name, Set<String> attributeNameSet) {
+        if (log.isTraceEnabled()) {
+            log.trace("createEntityType(name="+name+", attributeNameSet.size="+attributeNameSet.size()+")");    
+        }
+        
         Session session = getCurrentSession();
 
         Criteria c = session.createCriteria(EntityType.class);
@@ -517,7 +625,7 @@ public class ComputeBaseDAO {
         boolean containsType = false;
         for (EntityType et : entityTypeList) {
             if (et.getName().equals(name)) {
-                _logger.info("Found EntityType name=" + name + " id=" + et.getId());
+                log.info("Found EntityType name=" + name + " id=" + et.getId());
                 entityType = et;
                 containsType = true;
             }
@@ -526,7 +634,7 @@ public class ComputeBaseDAO {
             entityType = new EntityType();
             entityType.setName(name);
             session.saveOrUpdate(entityType);
-            _logger.info("Created EntityType name=" + name + " id=" + entityType.getId());
+            log.info("Created EntityType name=" + name + " id=" + entityType.getId());
         }
         Set<EntityAttribute> currentAttributeSet = entityType.getAttributes();
         if (attributeNameSet != null) {
@@ -536,7 +644,12 @@ public class ComputeBaseDAO {
         session.saveOrUpdate(entityType);
     }
 
+    @Deprecated
     protected void createEntityAttribute(String name) {
+        if (log.isTraceEnabled()) {
+            log.trace("createEntityAttribute(name="+name+")");    
+        }
+        
         try {
             Session session = getCurrentSession();
             Criteria c = session.createCriteria(EntityAttribute.class);
@@ -558,7 +671,12 @@ public class ComputeBaseDAO {
         }
     }
 
+    @Deprecated
     protected Set<EntityAttribute> getEntityAttributesByName(Set<String> names) {
+        if (log.isTraceEnabled()) {
+            log.trace("getEntityAttributesByName(names.size="+names.size()+")");    
+        }
+        
         Session session = getCurrentSession();
 
         Criteria c = session.createCriteria(EntityAttribute.class);

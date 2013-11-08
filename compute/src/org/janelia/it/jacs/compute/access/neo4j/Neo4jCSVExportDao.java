@@ -114,33 +114,33 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
             writeCols(entityNodeCsvWriter, nodeColNames);
             writeCols(entityRelsCsvWriter, "entity_id:long:entity", "entity_id:long:entity", "type:string", "entity_data_id:long", "creation_date:string", "updated_date:string", "owner_key:string", "order_index:long");
             
-            _logger.info("Clearing Neo4j id cache...");
+            log.info("Clearing Neo4j id cache...");
             largeOp.clearCache(LargeOperations.NEO4J_MAP);
 
-            _logger.info("Exporting database into: " + outputDir);
+            log.info("Exporting database into: " + outputDir);
 
             loadSubjects();
-            _logger.info("Completed exporting subjects.");
+            log.info("Completed exporting subjects.");
 
             loadSubjectRelationships();
-            _logger.info("Completed exporting subject relationships.");
+            log.info("Completed exporting subject relationships.");
             
             loadEntities();
-            _logger.info("Completed exporting entities.");
+            log.info("Completed exporting entities.");
             
             loadRelationships();
-            _logger.info("Completed exporting relationships.");
+            log.info("Completed exporting relationships.");
             
             loadPermissions();
-            _logger.info("Completed exporting permissions.");
+            log.info("Completed exporting permissions.");
             
             
-            _logger.info("numNodesExported: "+numNodesExported);
-            _logger.info("numRelationshipsExported: "+numRelationshipsExported);
-            _logger.info("numNodeColNames: "+nodeColNames.size());
-            _logger.info("numRelColNames: 5");
+            log.info("numNodesExported: "+numNodesExported);
+            log.info("numRelationshipsExported: "+numRelationshipsExported);
+            log.info("numNodeColNames: "+nodeColNames.size());
+            log.info("numRelColNames: 5");
             
-            _logger.info("Neo4j CSV export complete.");
+            log.info("Neo4j CSV export complete.");
 
             for(CSVWriter writer : writers) {
                 writer.close();
@@ -154,7 +154,7 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
 
     public void loadSubjects() throws DaoException {
                 
-        _logger.info("Exporting all subjects");
+        log.info("Exporting all subjects");
                 
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -192,14 +192,14 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
                 if (conn!=null) conn.close();
             }
             catch (Exception e) {
-                _logger.warn("Error closing JDBC connection",e);
+                log.warn("Error closing JDBC connection",e);
             }
         }
     }
 
     public void loadSubjectRelationships() throws DaoException {
         
-        _logger.info("Exporting all subject relationships");
+        log.info("Exporting all subject relationships");
         
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -233,14 +233,14 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
                 if (conn!=null) conn.close();
             }
             catch (Exception e) {
-                _logger.warn("Error closing JDBC connection",e);
+                log.warn("Error closing JDBC connection",e);
             }
         }
     }
 
     public void loadEntities() throws DaoException {
                 
-        _logger.info("Exporting all entities and attributes");
+        log.info("Exporting all entities and attributes");
                 
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -299,7 +299,7 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
                 if (conn!=null) conn.close();
             }
             catch (Exception e) {
-                _logger.warn("Error closing JDBC connection",e);
+                log.warn("Error closing JDBC connection",e);
             }
         }
     }
@@ -310,7 +310,7 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
      */
     public void loadRelationships() throws DaoException {
 
-        _logger.info("Exporting all relationships");
+        log.info("Exporting all relationships");
         
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -352,7 +352,7 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
                 if (conn!=null) conn.close();   
             }
             catch (Exception e) {
-                _logger.warn("Error closing JDBC connection",e);
+                log.warn("Error closing JDBC connection",e);
             }
         }
     }
@@ -363,7 +363,7 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
      */
     public void loadPermissions() throws DaoException {
 
-        _logger.info("Exporting all relationships");
+        log.info("Exporting all relationships");
         
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -397,7 +397,7 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
                 if (conn!=null) conn.close();   
             }
             catch (Exception e) {
-                _logger.warn("Error closing JDBC connection",e);
+                log.warn("Error closing JDBC connection",e);
             }
         }
     }
@@ -425,7 +425,7 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
                         loadRelationship(simpleEntity.id, targetId, "ANNOTATION_TARGET", null, simpleEntity.creationDate, simpleEntity.updatedDate, simpleEntity.owner, null);    
                     }
                     catch (NumberFormatException e) {
-                        _logger.warn("Could not parse target id: "+value,e);
+                        log.warn("Could not parse target id: "+value,e);
                     }
                 }
             }
@@ -465,7 +465,7 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
         
         Long subjectId = userIdBySubjectKey.get(subjectKey);
         if (subjectId==null) {
-            _logger.warn("No subject found for id="+subjectId);
+            log.warn("No subject found for id="+subjectId);
             return;
         }
         

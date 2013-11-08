@@ -71,7 +71,7 @@ public class FeatureDAO extends ComputeBaseDAO {
     public Long getNumBlastResultsByTaskOrIDs(Long taskId, Set<Long> blastHitIdSet, boolean includeAllSampleMaterials)
             throws DaoException {
         try {
-            _logger.debug("FeatureDAOImpl.getNumBlastResultsByTaskOrIDs");
+            log.debug("FeatureDAOImpl.getNumBlastResultsByTaskOrIDs");
             // Retrieve the hits from the node, plus the query and subject deflines
             String hitSelectCondition;
             if (blastHitIdSet != null && blastHitIdSet.size() > 0) {
@@ -97,7 +97,7 @@ public class FeatureDAO extends ComputeBaseDAO {
                     "where " + hitSelectCondition + " " +
                     "  and index(subjectDef) = hit.subjectAcc " +
                     "  and index(queryDef) = hit.queryAcc ";
-            _logger.debug("hql=" + hql);
+            log.debug("hql=" + hql);
             // Get the appropriate range of Node's hits, sorted by the specified field
             Query query = getSession().createQuery(hql);
             if (blastHitIdSet != null && blastHitIdSet.size() > 0) {
@@ -110,7 +110,7 @@ public class FeatureDAO extends ComputeBaseDAO {
         }
         catch (Exception e) {
             // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
-            _logger.error(e);
+            log.error(e);
             throw handleException(e, "FeatureDAOImpl.getNumBlastResultsByTaskOrIDs");
         }
     }
@@ -142,7 +142,7 @@ public class FeatureDAO extends ComputeBaseDAO {
                                                      SortArgument[] sortArgs)
             throws DaoException {
         try {
-            _logger.debug("FeatureDAOImpl.getBlastResultsByTaskOrIDs");
+            log.debug("FeatureDAOImpl.getBlastResultsByTaskOrIDs");
             StringBuffer orderByFieldsBuffer = new StringBuffer();
             String rankRestriction = null;
             if (sortArgs != null) {
@@ -243,7 +243,7 @@ public class FeatureDAO extends ComputeBaseDAO {
                     "  and index(queryDef) = hit.queryAcc " +
                     ((rankRestriction != null) ? "and " + rankRestriction : "") +
                     orderByClause;
-            _logger.debug("hql=" + hql);
+            log.debug("hql=" + hql);
             // Get the appropriate range of Node's hits, sorted by the specified field
             Query query = getSession().createQuery(hql);
             if (blastHitIdSet != null && blastHitIdSet.size() > 0) {
@@ -261,19 +261,19 @@ public class FeatureDAO extends ComputeBaseDAO {
                 }
             }
             List<Object[]> results = query.list();
-            _logger.debug("FeatureDAOImpl.getBlastResultsByTaskOrIDs found " +
+            log.debug("FeatureDAOImpl.getBlastResultsByTaskOrIDs found " +
                     ((results == null) ? 0 : results.size()) + " hits");
             return results;
         }
         catch (Exception e) {
             // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
-            _logger.error(e);
+            log.error(e);
             throw handleException(e, "FeatureDAOImpl.getBlastResultsByTaskOrIDs");
         }
     }
 
     public BaseSequenceEntity findBseByAcc(String accesion) throws DaoException {
-        _logger.debug("findBseByAcc() called with accession=" + accesion);
+        log.debug("findBseByAcc() called with accession=" + accesion);
         try {
             Criteria criteria = getSession().createCriteria(BaseSequenceEntity.class);
             Criterion cr = Restrictions.eq("accession", accesion);
@@ -282,16 +282,16 @@ public class FeatureDAO extends ComputeBaseDAO {
 
             List<BaseSequenceEntity> bses = (List<BaseSequenceEntity>) criteria.list();
             if (bses.size() < 1) {
-                _logger.debug("no results - returning null");
+                log.debug("no results - returning null");
                 return null;
             }
             else {
                 BaseSequenceEntity bse = bses.get(0);
                 if (bse == null) {
-                    _logger.debug("null result - returning null");
+                    log.debug("null result - returning null");
                 }
                 else {
-                    _logger.debug("returning bse with accession=" + bse.getAccession());
+                    log.debug("returning bse with accession=" + bse.getAccession());
                 }
                 return bses.get(0);
             }
@@ -313,7 +313,7 @@ public class FeatureDAO extends ComputeBaseDAO {
                 return new ArrayList<BaseSequenceEntity>();
             }
             String hql = "select bse from BaseSequenceEntity bse where bse.accession in (:accessions)";
-            _logger.debug("hql=" + hql);
+            log.debug("hql=" + hql);
             // Get the appropriate range of Node's hits, sorted by the specified field
             Query query = getSession().createQuery(hql);
             query.setParameterList("accessions", accCollection);
@@ -321,7 +321,7 @@ public class FeatureDAO extends ComputeBaseDAO {
         }
         catch (Exception e) {
             // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
-            _logger.error(e);
+            log.error(e);
             throw handleException(e, this.getClass().getName() + " - getSequenceEntitiesByAccessions");
         }
     }
@@ -357,7 +357,7 @@ public class FeatureDAO extends ComputeBaseDAO {
             sql += "and pd.protein_acc in (:clusterMemberAccs) ";
         }
         sql += orderByClause;
-        _logger.info("Retrieve protein cluster data sql: " + sql);
+        log.info("Retrieve protein cluster data sql: " + sql);
         SQLQuery sqlQuery = getSession().createSQLQuery(sql);
         sqlQuery.setString("coreClusterAcc", coreClusterAcc);
         sqlQuery.setString("annotationID", annotationId);
@@ -541,7 +541,7 @@ public class FeatureDAO extends ComputeBaseDAO {
             sql += "and pd.protein_acc in (:clusterMemberAccs) ";
         }
         sql += orderByClause;
-        _logger.info("Retrieve protein cluster data sql: " + sql);
+        log.info("Retrieve protein cluster data sql: " + sql);
         SQLQuery sqlQuery = getSession().createSQLQuery(sql);
         sqlQuery.setString("finalClusterAcc", finalClusterAcc);
         sqlQuery.setString("annotationID", annotationId);
@@ -587,7 +587,7 @@ public class FeatureDAO extends ComputeBaseDAO {
             sql += "and pd.protein_acc in (:clusterMemberAccs) ";
         }
         sql += orderByClause;
-        _logger.info("Retrieve non redundant proteins sql: " + sql);
+        log.info("Retrieve non redundant proteins sql: " + sql);
         SQLQuery sqlQuery = getSession().createSQLQuery(sql);
         sqlQuery.setString("coreClusterAcc", coreClusterAcc);
         if (clusterMemberAccs != null && clusterMemberAccs.size() > 0) {
@@ -646,7 +646,7 @@ public class FeatureDAO extends ComputeBaseDAO {
             sql += "and pd.protein_acc in (:clusterMemberAccs) ";
         }
         sql += orderByClause;
-        _logger.info("Retrieve non redundant proteins sql: " + sql);
+        log.info("Retrieve non redundant proteins sql: " + sql);
         SQLQuery sqlQuery = getSession().createSQLQuery(sql);
         sqlQuery.setString("finalClusterAcc", finalClusterAcc);
         if (clusterMemberAccs != null && clusterMemberAccs.size() > 0) {
@@ -705,7 +705,7 @@ public class FeatureDAO extends ComputeBaseDAO {
             sql += "and pd.protein_acc in (:clusterMemberAccs) ";
         }
         sql += orderByClause;
-        _logger.info("Retrieve protein cluster data sql: " + sql);
+        log.info("Retrieve protein cluster data sql: " + sql);
         SQLQuery sqlQuery = getSession().createSQLQuery(sql);
         sqlQuery.setString("coreClusterAcc", coreClusterAcc);
         if (clusterMemberAccs != null && clusterMemberAccs.size() > 0) {
@@ -763,7 +763,7 @@ public class FeatureDAO extends ComputeBaseDAO {
             sql += "and pd.protein_acc in (:clusterMemberAccs) ";
         }
         sql += orderByClause;
-        _logger.info("Retrieve protein cluster data sql: " + sql);
+        log.info("Retrieve protein cluster data sql: " + sql);
         SQLQuery sqlQuery = getSession().createSQLQuery(sql);
         sqlQuery.setString("finalClusterAcc", finalClusterAcc);
         if (clusterMemberAccs != null && clusterMemberAccs.size() > 0) {
@@ -845,7 +845,7 @@ public class FeatureDAO extends ComputeBaseDAO {
         if (numRows > 0) {
             query.setMaxResults(numRows);
         }
-        _logger.debug("Reads for sample " + sampleAcc + " hql: " + hqlBuffer.toString());
+        log.debug("Reads for sample " + sampleAcc + " hql: " + hqlBuffer.toString());
         return query.list();
     }
 
@@ -858,7 +858,7 @@ public class FeatureDAO extends ComputeBaseDAO {
                 "where library.sampleAcc = :sampleAcc";
         Query query = getSession().createQuery(hql);
         query.setParameter("sampleAcc", sampleAcc);
-        _logger.debug("Count reads for sample " + sampleAcc + " hql: " + hql);
+        log.debug("Count reads for sample " + sampleAcc + " hql: " + hql);
         Long c = (Long) query.uniqueResult();
         return c == null ? 0 : c.intValue();
     }

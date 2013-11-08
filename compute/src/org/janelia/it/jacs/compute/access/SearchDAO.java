@@ -37,10 +37,10 @@ public abstract class SearchDAO extends ComputeBaseDAO {
     protected int countSearchHits(String searchString, String searchCategory, int matchFlags)
             throws DaoException {
         try {
-            _logger.debug("Count search hits for " + searchCategory);
+            log.debug("Count search hits for " + searchCategory);
             String sql = "select count(*) as nhits " +
                     "from " + getSearchQuery();
-            _logger.debug("Count search hits sql: " + sql);
+            log.debug("Count search hits sql: " + sql);
             SQLQuery sqlQuery = getSession().createSQLQuery(sql);
             sqlQuery.addScalar("nhits", Hibernate.LONG);
             setSearchQueryParameters(sqlQuery,
@@ -49,11 +49,11 @@ public abstract class SearchDAO extends ComputeBaseDAO {
                     SearchTask.matchFlagsToString(matchFlags)
             );
             Long countSearchHits = (Long) sqlQuery.uniqueResult();
-            _logger.debug("Number of search hits for " + searchCategory + ": " + countSearchHits.toString());
+            log.debug("Number of search hits for " + searchCategory + ": " + countSearchHits.toString());
             return countSearchHits.intValue();
         }
         catch (Exception e) {
-            _logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw new DaoException(e.getMessage());
         }
     }
@@ -168,7 +168,7 @@ public abstract class SearchDAO extends ComputeBaseDAO {
         }
         catch (Throwable e) {
             // log the error
-            _logger.error(e);
+            log.error(e);
             // rethrow the error
             throw new DaoException(e);
         }

@@ -47,7 +47,7 @@ public class ProteinClusterSearchDAO extends SearchDAO {
                 "from (select hit_id, rank from final_cluster_ts_result where node_id=" + nodeId + " order by rank desc) ts " +
                 "inner join final_cluster_detail fd on fd.final_cluster_id=ts.hit_id";
         sql = addOrderClauseToSql(sql, sortArgs);
-        _logger.info("Executing cluster search sql=" + sql);
+        log.info("Executing cluster search sql=" + sql);
         SQLQuery sqlQuery = getSession().createSQLQuery(sql);
         if (startIndex >= 0) {
             sqlQuery.setFirstResult(startIndex);
@@ -56,7 +56,7 @@ public class ProteinClusterSearchDAO extends SearchDAO {
             sqlQuery.setMaxResults(numRows);
         }
         List<Object[]> results = sqlQuery.list();
-        _logger.info("Cluster search yielded result count=" + results.size());
+        log.info("Cluster search yielded result count=" + results.size());
         List<ClusterResult> clusters = new ArrayList<ClusterResult>();
         for (Object[] res : results) {
             ClusterResult clusterResult = new ClusterResult();
@@ -73,7 +73,7 @@ public class ProteinClusterSearchDAO extends SearchDAO {
             clusterResult.setGoAnnotationDescription(annoList);
             clusters.add(clusterResult);
         }
-        _logger.info("Returning cluster result of size=" + clusters.size());
+        log.info("Returning cluster result of size=" + clusters.size());
         return clusters;
     }
 
@@ -82,7 +82,7 @@ public class ProteinClusterSearchDAO extends SearchDAO {
                 "select cast(count(distinct hit_id) as Integer)" +
                         "from final_cluster_ts_result " +
                         "where node_id=" + nodeId;
-        _logger.info("Executing row count cluster search sql=" + sql);
+        log.info("Executing row count cluster search sql=" + sql);
         SQLQuery sqlQuery = getSession().createSQLQuery(sql);
         return (Integer) sqlQuery.uniqueResult();
     }

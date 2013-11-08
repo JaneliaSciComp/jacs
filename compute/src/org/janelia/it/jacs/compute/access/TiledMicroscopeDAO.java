@@ -29,29 +29,29 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     }
 
     public void createTiledMicroscopeEntityTypes() throws DaoException {
-        _logger.debug("createTiledMicroscopeEntityTypes() - TiledMicroscopeDAO layer");
+        log.debug("createTiledMicroscopeEntityTypes() - TiledMicroscopeDAO layer");
 
         try {
 
-            _logger.debug("Creating attributes");
+            log.debug("Creating attributes");
             createEntityAttribute(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE);
             createEntityAttribute(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE);
             createEntityAttribute(EntityConstants.ATTRIBUTE_ANCHORED_PATH);
             createEntityAttribute(EntityConstants.ATTRIBUTE_PROPERTY);
             createEntityAttribute(EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS);
 
-            _logger.debug("Creating Workspace entity");
+            log.debug("Creating Workspace entity");
             Set<String> workspaceAttributeSet = new HashSet<String>();
             workspaceAttributeSet.add(EntityConstants.ATTRIBUTE_ENTITY);
             workspaceAttributeSet.add(EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS);
             createEntityType(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE, workspaceAttributeSet);
 
-            _logger.debug("Creating Neuron entity");
+            log.debug("Creating Neuron entity");
             Set<String> neuronAttributeSet = new HashSet<String>();
             neuronAttributeSet.add(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE);
             createEntityType(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON, neuronAttributeSet);
 
-            _logger.debug("Creating PropertySet entity");
+            log.debug("Creating PropertySet entity");
             Set<String> propertiesAttributeSet = new HashSet<String>();
             propertiesAttributeSet.add(EntityConstants.ATTRIBUTE_PROPERTY);
             createEntityType(EntityConstants.TYPE_PROPERTY_SET, propertiesAttributeSet);
@@ -62,7 +62,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             throw new DaoException(e);
         }
 
-        _logger.debug("createTiledMicroscopeEntityTypes() - done");
+        log.debug("createTiledMicroscopeEntityTypes() - done");
     }
 
     public TmWorkspace createTiledMicroscopeWorkspace(Long parentId, Long brainSampleId, String name, String ownerKey) throws DaoException {

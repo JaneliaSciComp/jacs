@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml version="1.0" encoding="US-ASCII" standalone="no"?>
 <eclipse-userlibraries version="2">
     <library name="Apache Commons" systemlibrary="false">
         <archive path="/common/Apache-Commons/commons-vfs-1.0.jar"/>
@@ -237,11 +237,11 @@
         <archive path="/common/LOCI/bio-formats.jar"/>
     </library>
     <library name="Logging" systemlibrary="false">
-        <archive path="/common/Logging/slf4j-api-1.6.6.jar"/>
         <archive path="/common/Logging/perf4j-0.9.16-logbackonly.jar"/>
-        <archive path="/common/Logging/logback-core-1.0.7.jar"/>
-        <archive path="/common/Logging/logback-classic-1.0.7.jar"/>
-        <archive path="/common/Logging/logback-access-1.0.7.jar"/>
+        <archive path="/common/Logging/logback-access-1.0.13.jar"/>
+        <archive path="/common/Logging/logback-classic-1.0.13.jar"/>
+        <archive path="/common/Logging/logback-core-1.0.13.jar"/>
+        <archive path="/common/Logging/slf4j-api-1.7.5.jar"/>
     </library>
     <library name="Lucene" systemlibrary="false">
         <archive path="/common/Lucene-2.3.1/lucene-core-2.3.1.jar"/>

@@ -384,7 +384,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             if (subjectKey!=null && !EntityUtils.hasWriteAccess(currEntity, _annotationDAO.getSubjectKeys(subjectKey))) {
                 throw new ComputeException("Subject "+subjectKey+" cannot change "+entityId);
             }
-            _annotationDAO.deleteSmallEntityTree(subjectKey, currEntity, unlinkMultipleParents);
+            _annotationDAO.deleteEntityTree(subjectKey, currEntity, unlinkMultipleParents);
             _logger.info(subjectKey+" deleted small entity tree "+entityId);
             return true;
         }

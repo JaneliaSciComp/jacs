@@ -3,8 +3,18 @@ package org.janelia.it.jacs.compute.access.solr;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -26,7 +36,11 @@ import org.janelia.it.jacs.compute.api.support.SageTerm;
 import org.janelia.it.jacs.compute.api.support.SolrDocTypeEnum;
 import org.janelia.it.jacs.compute.api.support.SolrUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.entity.*;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityActorPermission;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.entity.EntityType;
 
 /**
  * Data access to the SOLR indexes.
@@ -56,11 +70,11 @@ public class SolrDAO extends AnnotationDAO {
     
     /**
      * Create a SolrDAO, specifying if the DAO will be used for building an index. 
-     * @param _logger
+     * @param log
      * @param build
      */
-    public SolrDAO(Logger _logger, boolean useBuildCore, boolean streamingUpdates) {
-        super(_logger);
+    public SolrDAO(Logger log, boolean useBuildCore, boolean streamingUpdates) {
+        super(log);
         this.useBuildCore = useBuildCore;
         this.streamingUpdates = streamingUpdates;
     }
@@ -89,6 +103,9 @@ public class SolrDAO extends AnnotationDAO {
     }
     
     public void indexAllEntities(Map<String, SageTerm> sageVocab) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("indexAllEntities(sageVocab.size="+sageVocab.size()+")");
+        }
     	
     	if (!useBuildCore || !streamingUpdates) {
     		throw new IllegalStateException("indexAllEntities called on SolrDAO which has useBuildCore=false or streamingUpdates=false");
@@ -97,14 +114,14 @@ public class SolrDAO extends AnnotationDAO {
     	this.sageVocab = sageVocab;
     	this.usedSageVocab = new HashSet<SageTerm>();
     	
-    	_logger.info("Building disk-based entity maps");
+    	log.info("Building disk-based entity maps");
     	
     	this.largeOp = new LargeOperations(this);
     	largeOp.buildAncestorMap();
     	largeOp.buildAnnotationMap();
     	largeOp.buildSageImagePropMap();
     	
-    	_logger.info("Getting entities");
+    	log.info("Getting entities");
     	
     	Map<Long,SimpleEntity> entityMap = new HashMap<Long,SimpleEntity>();
         int i = 0;
@@ -130,7 +147,7 @@ public class SolrDAO extends AnnotationDAO {
 	        stmt.setLong(1, annotationType.getId());
 	        
 			rs = stmt.executeQuery();
-	    	_logger.info("    Processing results");
+	    	log.info("    Processing results");
 			while (rs.next()) {
 				Long entityId = rs.getBigDecimal(1).longValue();
 				SimpleEntity entity = entityMap.get(entityId);
@@ -139,11 +156,11 @@ public class SolrDAO extends AnnotationDAO {
 		            	if (i%SOLR_LOADER_BATCH_SIZE==0) {
 		                    List<SolrInputDocument> docs = createEntityDocs(entityMap.values());
 		                    entityMap.clear();
-		            		_logger.info("    Adding "+docs.size()+" docs (i="+i+")");
+		            		log.info("    Adding "+docs.size()+" docs (i="+i+")");
 		            		index(docs);
 		            	}
 	            		if (i%SOLR_LOADER_COMMIT_SIZE==0) {
-	            	    	_logger.info("    Committing SOLR index");
+	            	    	log.info("    Committing SOLR index");
 	            			commit();
 	            		}
 					}
@@ -181,7 +198,7 @@ public class SolrDAO extends AnnotationDAO {
 
         	if (!entityMap.isEmpty()) {
                 List<SolrInputDocument> docs = createEntityDocs(entityMap.values());
-        		_logger.info("    Adding "+docs.size()+" docs (i="+i+")");
+        		log.info("    Adding "+docs.size()+" docs (i="+i+")");
         		index(docs);
         	}
     	}
@@ -195,20 +212,20 @@ public class SolrDAO extends AnnotationDAO {
         		if (conn!=null) conn.close();
         	}
             catch (Throwable e) {
-        		_logger.warn("Error closing JDBC connection. Ignoring error.",e);
+        		log.warn("Error closing JDBC connection. Ignoring error.",e);
             }
         }
 
         try {
-        	_logger.info("Indexing Sage vocabularies");
+        	log.info("Indexing Sage vocabularies");
         	
         	index(createSageDocs(usedSageVocab));
         	
     		commit();
     		optimize();
-        	_logger.info("Completed indexing "+i+" entities");
+        	log.info("Completed indexing "+i+" entities");
             swapBuildCore();
-            _logger.info("Build core swapped to main core. The new index is now live.");
+            log.info("Build core swapped to main core. The new index is now live.");
         }
         catch (Exception e) {
         	throw new DaoException(e);
@@ -216,6 +233,10 @@ public class SolrDAO extends AnnotationDAO {
     }
 
     public void updateIndex(Entity entity) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("updateIndex(entity="+entity+")");
+        }
+        
     	if (entity==null) return;
     	List<Entity> entities = new ArrayList<Entity>();
     	entities.add(entity);
@@ -223,7 +244,10 @@ public class SolrDAO extends AnnotationDAO {
     }
     
     public void updateIndex(List<Entity> entities) throws DaoException {
-    	
+        if (log.isTraceEnabled()) {
+            log.trace("updateIndex(entities.size="+entities.size()+")");
+        }
+        
     	List<Long> entityIds = new ArrayList<Long>();
     	for(Entity entity : entities) {
     		entityIds.add(entity.getId());
@@ -243,7 +267,7 @@ public class SolrDAO extends AnnotationDAO {
 				entityId = new Long(entityIdStr);
 			}
 			catch (NumberFormatException e) {
-				_logger.warn("Cannot parse annotation target id for annotation="+annotationEntity.getId());
+				log.warn("Cannot parse annotation target id for annotation="+annotationEntity.getId());
 			}
 			
 			Set<SimpleAnnotation> annotations = annotationMap.get(entityId);
@@ -275,7 +299,7 @@ public class SolrDAO extends AnnotationDAO {
         	
         	inputDocs.add(inputDoc);
 
-        	_logger.info("Updating index for "+entity.getName()+" (id="+entity.getId()+") ");
+        	log.info("Updating index for "+entity.getName()+" (id="+entity.getId()+") ");
     	}
     
     	// Index the entire batch
@@ -362,7 +386,7 @@ public class SolrDAO extends AnnotationDAO {
         		for(String key : sageProps.keySet()) {
     				SageTerm sageTerm = sageVocab.get(key);
     				if (sageTerm==null) {
-    					_logger.warn("Unrecognized SAGE term: "+key);
+    					log.warn("Unrecognized SAGE term: "+key);
     					continue;
     				}
     				doc.removeField(SolrUtils.getSageFieldName(sageTerm));
@@ -373,7 +397,7 @@ public class SolrDAO extends AnnotationDAO {
     			if (value != null) {
     				SageTerm sageTerm = sageVocab.get(key);
     				if (sageTerm==null) {
-    					_logger.warn("Unrecognized SAGE term: "+key);
+    					log.warn("Unrecognized SAGE term: "+key);
     					continue;
     				}
     				
@@ -472,6 +496,10 @@ public class SolrDAO extends AnnotationDAO {
      * @throws DaoException
      */
     public void commit() throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("commit()");
+        }
+        
     	init();
 		try {
 	    	solr.commit();
@@ -486,9 +514,13 @@ public class SolrDAO extends AnnotationDAO {
      * @throws DaoException
      */
     public void clearIndex() throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("clearIndex()");
+        }
+        
     	init();
 		try {
-        	_logger.info("Clearing SOLR index");
+        	log.info("Clearing SOLR index");
 	    	solr.deleteByQuery("*:*");
 	    	solr.commit();
 		}
@@ -502,9 +534,13 @@ public class SolrDAO extends AnnotationDAO {
      * @throws DaoException
      */
     public void optimize() throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("optimize()");
+        }
+        
     	init();
 		try {
-        	_logger.info("Optimizing SOLR index");
+        	log.info("Optimizing SOLR index");
 	    	solr.optimize();
 		}
 		catch (Exception e) {
@@ -519,9 +555,13 @@ public class SolrDAO extends AnnotationDAO {
      * @throws DaoException
      */
     public QueryResponse search(SolrQuery query) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("search(query="+query.getQuery()+")");
+        }
+        
     	init();
     	try {
-    		_logger.debug("Running SOLR query: "+query);
+    		log.debug("Running SOLR query: "+query);
             return solr.query(query);
     	}
 		catch (Exception e) {
@@ -536,6 +576,10 @@ public class SolrDAO extends AnnotationDAO {
      * @throws DaoException
      */
     public Map<Long,SolrDocument> search(List<Long> entityIds) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("search(entityIds.size="+entityIds.size()+")");
+        }
+        
     	init();
     	Map<Long,SolrDocument> docMap = new HashMap<Long,SolrDocument>();
     	try {
@@ -586,6 +630,10 @@ public class SolrDAO extends AnnotationDAO {
      * @throws DaoException
      */
 	public void addNewAncestor(Long entityId, Long newAncestorId) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("addNewAncestor(entityId="+entityId+", newAncestorId="+newAncestorId+")");
+        }
+        
 		List<Long> entityIds = new ArrayList<Long>();
 		entityIds.add(entityId);
 		addNewAncestor(entityIds, newAncestorId);
@@ -599,11 +647,14 @@ public class SolrDAO extends AnnotationDAO {
      * @throws DaoException
      */
 	public void addNewAncestor(List<Long> entityIds, Long newAncestorId) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("addNewAncestor(entityIds.size="+entityIds.size()+", newAncestorId="+newAncestorId+")");
+        }
     	
 		// Get all Solr documents
     	Map<Long,SolrDocument> solrDocMap = search(entityIds);
 
-    	_logger.info("Adding new ancestor to "+entityIds.size()+" entities. Found "+solrDocMap.size()+" documents.");
+    	log.info("Adding new ancestor to "+entityIds.size()+" entities. Found "+solrDocMap.size()+" documents.");
     	
     	// Create updated Solr documents
     	List<SolrInputDocument> inputDocs = new ArrayList<SolrInputDocument>();
@@ -629,7 +680,7 @@ public class SolrDAO extends AnnotationDAO {
     		inputDoc.addField("ancestor_ids", ancestorIds, 0.2f);
     		
     		inputDocs.add(inputDoc);
-        	_logger.info("Updating index for "+inputDoc.getFieldValue("name")+" (id="+inputDoc.getFieldValue("id")+"), adding ancestor "+newAncestorId);
+        	log.info("Updating index for "+inputDoc.getFieldValue("name")+" (id="+inputDoc.getFieldValue("id")+"), adding ancestor "+newAncestorId);
     	}
     
     	// Index the entire batch

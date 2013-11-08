@@ -63,30 +63,30 @@ public class Neo4jBatchDAO extends AnnotationDAO {
 
     public void loadAllEntities() throws DaoException {
 
-        _logger.info("Clearing Neo4j id cache...");
+        log.info("Clearing Neo4j id cache...");
         largeOp.clearCache(LargeOperations.NEO4J_MAP);
 
-        _logger.info("Loading new database into: " + loadDatabaseDir);
+        log.info("Loading new database into: " + loadDatabaseDir);
 
         this.inserter = BatchInserters.inserter(loadDatabaseDir, fileSystem);
         this.commonRootLabel = DynamicLabel.label(LABEL_COMMON_ROOT);
         this.entityLabel = DynamicLabel.label(LABEL_ENTITY);
 
         loadEntities();
-        _logger.info("Completed loading " + numNodesAdded + " nodes and " + numRelationshipsAdded + " relationships.");
+        log.info("Completed loading " + numNodesAdded + " nodes and " + numRelationshipsAdded + " relationships.");
         
         loadOntologies();
-        _logger.info("Completed loading " + numOntologiesAdded + " ontologies.");
+        log.info("Completed loading " + numOntologiesAdded + " ontologies.");
 
         loadAnnotations();
-        _logger.info("Completed loading " + numAnnotationsAdded + " annotations.");
+        log.info("Completed loading " + numAnnotationsAdded + " annotations.");
 
         inserter.shutdown();
         
         // Add indexes
         // Because inserter.createDeferredSchemaIndex does not work, we need to connect as an embedded database and 
         // then create the indexes.
-        _logger.info("Creating indexes...");
+        log.info("Creating indexes...");
         
         GraphDatabaseService graphDb = new GraphDatabaseFactory().newEmbeddedDatabase(loadDatabaseDir);
         
@@ -105,21 +105,21 @@ public class Neo4jBatchDAO extends AnnotationDAO {
             tx.finish();
         }
         
-        _logger.info("Awaiting index population...");
+        log.info("Awaiting index population...");
         schema.awaitIndexesOnline(24, TimeUnit.HOURS);
 
         graphDb.shutdown();
         
-        _logger.info("Index population complete. Neo4j is ready.");
+        log.info("Index population complete. Neo4j is ready.");
         
     }
     
     private void loadEntities() throws DaoException  {
         List<Entity> roots = getUserEntitiesWithAttributeValue(null, EntityConstants.ATTRIBUTE_COMMON_ROOT, EntityConstants.ATTRIBUTE_COMMON_ROOT);
-        _logger.info("Found "+roots.size()+" common roots");
+        log.info("Found "+roots.size()+" common roots");
 
         for(Entity root : roots) {
-            _logger.info("Loading common root "+root.getName());
+            log.info("Loading common root "+root.getName());
             EntityData rootEd = new EntityData();
             rootEd.setChildEntity(root);
             loadDescendants(null, rootEd);
@@ -179,7 +179,7 @@ public class Neo4jBatchDAO extends AnnotationDAO {
             stmt.setLong(6, annotationType.getId());
             
             rs = stmt.executeQuery();
-            _logger.info("    Processing annotation results");
+            log.info("    Processing annotation results");
             
             int i = 0;
             while (rs.next()) {
@@ -201,7 +201,7 @@ public class Neo4jBatchDAO extends AnnotationDAO {
                     i++;
                 }
                 catch (NumberFormatException e) {
-                    _logger.warn("Cannot parse annotation target id for annotation="+annotationId);
+                    log.warn("Cannot parse annotation target id for annotation="+annotationId);
                 }
             }
         }
@@ -215,7 +215,7 @@ public class Neo4jBatchDAO extends AnnotationDAO {
                 if (conn!=null) conn.close();   
             }
             catch (Exception e) {
-                _logger.warn("Error closing JDBC connection",e);
+                log.warn("Error closing JDBC connection",e);
             }
         }
     }
@@ -260,7 +260,7 @@ public class Neo4jBatchDAO extends AnnotationDAO {
             return neoId;
         }
 
-        _logger.info("loadEntity " + entity.getId() + " (with parentNeoId=" + parentNeoId + ")");
+        log.info("loadEntity " + entity.getId() + " (with parentNeoId=" + parentNeoId + ")");
 
         try {
             Map<String, Object> properties = getEntityProperties(entity);
@@ -305,7 +305,7 @@ public class Neo4jBatchDAO extends AnnotationDAO {
              
         Long targetNeoId = (Long) largeOp.getValue(LargeOperations.NEO4J_MAP, targetId);
 
-        _logger.info("loadAnnotation " + annotationId + " (with targetId=" + targetNeoId + ")");
+        log.info("loadAnnotation " + annotationId + " (with targetId=" + targetNeoId + ")");
         
         Map<String, Object> properties = new HashMap<String, Object>();
         addIfNotNull(properties, "entity_id", annotationId);
@@ -351,7 +351,7 @@ public class Neo4jBatchDAO extends AnnotationDAO {
     }
     
     public void dropDatabase() throws DaoException {
-        _logger.info("Deleting existing database at " + loadDatabaseDir);
+        log.info("Deleting existing database at " + loadDatabaseDir);
         FileUtil.deleteDirectory(loadDatabaseDir);
     }
     

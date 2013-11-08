@@ -40,7 +40,7 @@ public class ProteinSearchDAO extends SearchDAO {
                         "inner join protein_detail pd on pd.protein_id=nt.hit_id";
 
         sql = addOrderClauseToSql(sql, sortArgs);
-        _logger.info("Executing protein search sql=" + sql);
+        log.info("Executing protein search sql=" + sql);
         SQLQuery sqlQuery = getSession().createSQLQuery(sql);
         if (startIndex >= 0) {
             sqlQuery.setFirstResult(startIndex);
@@ -49,7 +49,7 @@ public class ProteinSearchDAO extends SearchDAO {
             sqlQuery.setMaxResults(numRows);
         }
         List<Object[]> results = sqlQuery.list();
-        _logger.info("Protein search yielded result count=" + results.size());
+        log.info("Protein search yielded result count=" + results.size());
         List<ProteinResult> proteins = new ArrayList<ProteinResult>();
         for (Object[] res : results) {
             ProteinResult proteinResult = new ProteinResult();
@@ -71,7 +71,7 @@ public class ProteinSearchDAO extends SearchDAO {
             proteinResult.setRank((Float) res[13]);
             proteins.add(proteinResult);
         }
-        _logger.info("Returning protein result of size=" + proteins.size());
+        log.info("Returning protein result of size=" + proteins.size());
         return proteins;
     }
 
@@ -80,7 +80,7 @@ public class ProteinSearchDAO extends SearchDAO {
                 "select cast(count(1) as Integer)" +
                         "from protein_ts_result " +
                         "where node_id=" + searchId;
-        _logger.info("Executing row count protein search sql=" + sql);
+        log.info("Executing row count protein search sql=" + sql);
         SQLQuery sqlQuery = getSession().createSQLQuery(sql);
         return (Integer) sqlQuery.uniqueResult();
     }

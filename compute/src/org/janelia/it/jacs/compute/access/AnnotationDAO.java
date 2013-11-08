@@ -21,7 +21,6 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
-import org.hibernate.HibernateException;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -36,7 +35,6 @@ import org.janelia.it.jacs.model.entity.EntityActorPermission;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.entity.EntityStatus;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.ontology.types.Category;
@@ -46,7 +44,6 @@ import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
 import org.janelia.it.jacs.model.user_data.Subject;
-import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
 import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
 import org.janelia.it.jacs.shared.annotation.RelativePatternAnnotationDataManager;
@@ -71,82 +68,42 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     private void preloadData() {
+        if (log.isTraceEnabled()) {
+            log.trace("preloadData()");    
+        }
         try {
             if (entityByName.isEmpty()) {
+                log.debug("preloadData(): preloading entity types");   
                 for(EntityType entityType : getAllEntityTypes()) {
                     entityByName.put(entityType.getName(), entityType);
                 }
             }
 
             if (attrByName.isEmpty()) {
+                log.debug("preloadData(): preloading entity attributes"); 
                 for(EntityAttribute entityAttr : getAllEntityAttributes()) {
                     attrByName.put(entityAttr.getName(), entityAttr);
                 }
             }
         }
         catch (Exception e) {
-            _logger.error("Unexpected error occurred while trying preload metamodel", e);
+            log.error("Unexpected error occurred while trying preload metamodel", e);
         }
     }
-
-    public List<User> getAllUsers() throws DaoException {
-        try {
-            Session session = getCurrentSession();
-            StringBuffer hql = new StringBuffer("select u from User u order by u.id");
-            Query query = session.createQuery(hql.toString());
-            return query.list();
-        } catch (Exception e) {
-            throw new DaoException(e);
-        }
-    }
-
-    // This should be more generic!  Pass the Entity class and that should be it
-    public boolean deleteAnnotationSession(String owner, String uniqueIdentifier) throws DaoException {
-        try {
-            Session session = getCurrentSession();
-            Criteria c = session.createCriteria(AnnotationSessionTask.class);
-            c.add(Expression.eq("id", Long.valueOf(uniqueIdentifier)));
-            AnnotationSessionTask tmpAnnotation = (AnnotationSessionTask) c.uniqueResult();
-            if (null == tmpAnnotation) {
-                // This should never happen
-                throw new DaoException("Cannot complete deletion when there are more than one annotation sessions with that identifier.");
-            }
-            if (!tmpAnnotation.getOwner().equals(owner)) {
-                throw new DaoException("Cannot delete the annotation session as the requestor doesn't own the annotation.");
-            }
-            session.delete(tmpAnnotation);
-            _logger.debug("The annotation session has been deleted.");
-            return true;
-        }
-        catch (Exception e) {
-            throw new DaoException(e);
-        }
-    }
-
+    
     public List<Entity> getEntitiesWithFilePath(String filePath) {
-    	if (_logger.isDebugEnabled()) {
-    		_logger.debug("getEntitiesWithFilePath(filePath="+filePath+")");	
+    	if (log.isTraceEnabled()) {
+    		log.trace("getEntitiesWithFilePath(filePath="+filePath+")");	
     	}
         Session session = getCurrentSession();
         StringBuffer hql = new StringBuffer("select clazz.parentEntity from EntityData clazz where value=?");
         Query query = session.createQuery(hql.toString()).setString(0, filePath);
         return filterDuplicates(query.list());
     }
-
-    public EntityType getEntityType(Long entityTypeConstant) {
-        Session session = getCurrentSession();
-        Criteria c = session.createCriteria(EntityType.class);
-        c.add(Expression.eq("id", entityTypeConstant));
-        EntityType entityType = (EntityType) c.uniqueResult();
-        if (null != entityType) {
-            return entityType;
-        }
-        return null;
-    }
     
     public Entity getEntityById(String subjectKey, Long entityId) {
-    	if (_logger.isDebugEnabled()) {
-    		_logger.debug("getEntityById(subjectKey="+subjectKey+", entityId="+entityId+")");
+    	if (log.isTraceEnabled()) {
+    		log.trace("getEntityById(subjectKey="+subjectKey+", entityId="+entityId+")");
     	}
 
         StringBuilder hql = new StringBuilder();
@@ -169,8 +126,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public Entity getEntityByEntityDataId(String subjectKey, Long entityDataId) {
-        if (_logger.isDebugEnabled()) {
-            _logger.debug("getEntityByEntityDataId(subjectKey="+subjectKey+", entityDataId="+entityDataId+")");
+        if (log.isTraceEnabled()) {
+            log.trace("getEntityByEntityDataId(subjectKey="+subjectKey+", entityDataId="+entityDataId+")");
         }
 
         StringBuilder hql = new StringBuilder();
@@ -193,10 +150,16 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public Entity getEntityById(Long targetId) {
+        if (log.isTraceEnabled()) {
+            log.trace("getEntityById(targetId="+targetId+")");    
+        }
     	return getEntityById(null, targetId);
     }
 
     public Set<EntityActorPermission> getFullPermissions(Entity entity) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getFullPermissions(entity="+entity+")");    
+        }
         if (EntityUtils.isInitialized(entity.getEntityActorPermissions())) {
             return entity.getEntityActorPermissions();
         }
@@ -204,7 +167,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public Set<EntityActorPermission> getFullPermissions(String subjectKey, Long entityId) throws DaoException {
-        
+
+        if (log.isTraceEnabled()) {
+            log.trace("getFullPermissions(subjectKey="+subjectKey+", entityId="+entityId+")");    
+        }
         Entity entity = getEntityById(entityId);
         if (entity==null) {
             throw new IllegalArgumentException("Unknown entity: "+entityId);
@@ -221,7 +187,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     
     public EntityActorPermission grantPermissions(String subjectKey, Long entityId, String granteeKey, String permissions, 
     		boolean recursive) throws DaoException {
-    	
+
+        if (log.isTraceEnabled()) {
+            log.trace("grantPermissions(subjectKey="+subjectKey+", entityId="+entityId+", granteeKey="+granteeKey+", permissions="+permissions+", recursive="+recursive+")");    
+        }
     	Entity entity = getEntityById(entityId);
     	if (entity==null) {
     		throw new IllegalArgumentException("Unknown entity: "+entityId);
@@ -239,6 +208,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     public EntityActorPermission grantPermissions(final Entity rootEntity, final String granteeKey, 
             final String permissions, boolean recursive) throws DaoException {
 
+        if (log.isTraceEnabled()) {
+            log.trace("grantPermissions(rootEntity="+rootEntity+", granteeKey="+granteeKey+", permissions="+permissions+", recursive="+recursive+")");    
+        }
+        
     	Subject subject = getSubjectByNameOrKey(granteeKey);
     	if (subject==null) {
     		throw new IllegalArgumentException("Unknown subject: "+granteeKey);
@@ -266,14 +239,14 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 		    			if (!existingPerm.getPermissions().equals(permissions)) {
 		    				existingPerm.setPermissions(permissions);
 		    				saveOrUpdate(existingPerm);
-		    				_logger.info("Updated "+permissions+" permission to "+granteeKey+" for "+entity.getId());
+		    				log.info("Updated "+permissions+" permission to "+granteeKey+" for "+entity.getId());
 		    			}
     		    	}
     		    	else {
 	    		    	EntityActorPermission eap = new EntityActorPermission(entity, granteeKey, permissions);
 	    		    	entity.getEntityActorPermissions().add(eap);
 	    				saveOrUpdate(eap);
-	    				_logger.info("Granted "+permissions+" permission to "+granteeKey+" for "+entity.getId());
+	    				log.info("Granted "+permissions+" permission to "+granteeKey+" for "+entity.getId());
     		    	}
     			}
         	});
@@ -318,7 +291,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public void revokePermissions(String subjectKey, Long entityId, String revokeeKey, boolean recursive) throws DaoException {
-    	
+
+        if (log.isTraceEnabled()) {
+            log.trace("revokePermissions(subjectKey="+subjectKey+", entityId="+entityId+", revokeeKey="+revokeeKey+", recursive="+recursive+")");    
+        }
+        
     	Entity entity = getEntityById(entityId);
     	if (entity==null) {
     		throw new IllegalArgumentException("Unknown entity: "+entityId);
@@ -334,7 +311,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public void revokePermissions(final Entity rootEntity, final String rootOwner, final String revokeeKey, boolean recursive) throws DaoException {
-    	
+
+        if (log.isTraceEnabled()) {
+            log.trace("revokePermissions(rootEntity="+rootEntity+", rootOwner="+rootOwner+", revokeeKey="+revokeeKey+", recursive="+recursive+")");    
+        }
+        
     	Subject subject = getSubjectByNameOrKey(revokeeKey);
     	if (subject==null) {
     		throw new IllegalArgumentException("Unknown subject: "+revokeeKey);
@@ -356,7 +337,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     		    		if (eap.getSubjectKey().equals(revokeeKey)) {
     		    			i.remove();
     		    			genericDelete(eap);
-    		    			_logger.info("Revoked permission to "+revokeeKey+" for "+entity.getId());
+    		    			log.info("Revoked permission to "+revokeeKey+" for "+entity.getId());
     		    			revokedIds.add(eap.getEntity().getId());
     		    		}
     		    	}
@@ -378,7 +359,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         			}
         		}
         		for(EntityData ed : toDelete) {
-        		    _logger.info("Removed "+rootEntity.getId()+" from "+revokeeKey+"'s Shared Data");
+        		    log.info("Removed "+rootEntity.getId()+" from "+revokeeKey+"'s Shared Data");
         			sharedDataFolder.getEntityData().remove(ed);
         			genericDelete(ed);
         		}	
@@ -391,6 +372,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public boolean deleteOntologyTerm(String subjectKey, String ontologyTermId) throws DaoException {
+        
+        if (log.isTraceEnabled()) {
+            log.trace("deleteOntologyTerm(subjectKey="+subjectKey+", ontologyTermId="+ontologyTermId+")");    
+        }
+        
         Session session = getCurrentSession();
         try {
             Criteria c = session.createCriteria(Entity.class);
@@ -404,37 +390,40 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 throw new DaoException("Cannot delete the entity as the requestor doesn't own the item.");
             }
 
-            _logger.info("Will delete tree rooted at Entity "+entity.getName());
+            log.info("Will delete tree rooted at Entity "+entity.getName());
             deleteEntityTree(subjectKey, entity);
             return true;
         }
         catch (Exception e) {
-        	_logger.error("Error deleting ontology term "+ontologyTermId,e);
+        	log.error("Error deleting ontology term "+ontologyTermId,e);
             throw new DaoException(e);
         }
     }
 
-    /**
-     * Delete the given entities and all children entities underneath it. Only deletes entities belonging to the given
-     * owner. 
-     * @param owner The owner to operate as.
-     * @param entity The "root" entity at which to begin recursive deletion.
-     * @throws DaoException
-     */
-    public void deleteEntityTree(String owner, Entity entity) throws DaoException {
-    	deleteSmallEntityTree(owner, entity);
-    }
-
-    public void deleteSmallEntityTree(String subjectKey, Entity entity) throws DaoException {
-    	deleteSmallEntityTree(subjectKey, entity, false);
+    public void deleteEntityTree(String subjectKey, Entity entity) throws DaoException {
+        
+        if (log.isTraceEnabled()) {
+            log.trace("deleteSmallEntityTree(subjectKey="+subjectKey+", entity="+entity+")");    
+        }
+        
+    	deleteEntityTree(subjectKey, entity, false);
     }
     
-    public void deleteSmallEntityTree(String subjectKey, Entity entity, boolean unlinkMultipleParents) throws DaoException {
-    	deleteSmallEntityTree(subjectKey, entity, unlinkMultipleParents, 0, new HashSet<Long>());
+    public void deleteEntityTree(String subjectKey, Entity entity, boolean unlinkMultipleParents) throws DaoException {
+        
+        if (log.isTraceEnabled()) {
+            log.trace("deleteSmallEntityTree(subjectKey="+subjectKey+", entity="+entity+", unlinkMultipleParents="+unlinkMultipleParents+")");    
+        }
+        
+    	deleteEntityTree(subjectKey, entity, unlinkMultipleParents, 0, new HashSet<Long>());
     }
     
-    private void deleteSmallEntityTree(String subjectKey, Entity entity, boolean unlinkMultipleParents, int level, Set<Long> deleted) throws DaoException {
+    private void deleteEntityTree(String subjectKey, Entity entity, boolean unlinkMultipleParents, int level, Set<Long> deleted) throws DaoException {
 
+        if (log.isTraceEnabled()) {
+            log.trace("deleteSmallEntityTree(subjectKey="+subjectKey+", entity="+entity+", unlinkMultipleParents="+unlinkMultipleParents+", level="+level+", deleted.size="+deleted.size()+")");    
+        }
+        
     	StringBuffer indent = new StringBuffer();
 		for (int i = 0; i < level; i++) {
 			indent.append("    ");
@@ -442,14 +431,14 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 
 		// Null check
     	if (entity == null) {
-    		_logger.warn(indent+"Cannot delete null entity");
+    		log.warn(indent+"Cannot delete null entity");
     		return;
     	}
 
-    	_logger.info(indent+"Deleting entity "+entity.getName()+" (id="+entity.getId()+")");
+    	log.info(indent+"Deleting entity "+entity.getName()+" (id="+entity.getId()+")");
     	
     	if (deleted.contains(entity.getId())) {
-    		_logger.warn(indent+"Cannot delete entity which was already deleted");
+    		log.warn(indent+"Cannot delete entity which was already deleted");
     		return;
     	}
         
@@ -457,13 +446,13 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         
 		// Permission check - can't delete entities that we don't have write access to
     	if (!EntityUtils.hasWriteAccess(entity, subjectKeys)) {
-    		_logger.info(indent+"Cannot delete entity because owner ("+entity.getOwnerKey()+") does not match invoker ("+subjectKey+")");
+    		log.info(indent+"Cannot delete entity because owner ("+entity.getOwnerKey()+") does not match invoker ("+subjectKey+")");
     		return;
     	}
 
     	// Common root check - can't delete entities that are held in place by virtue of being common roots
     	if (level>0 && entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT)!=null) {
-    		_logger.info(indent+"Cannot delete "+entity.getName()+" because it is a common root");
+    		log.info(indent+"Cannot delete "+entity.getName()+" because it is a common root");
     		return;
     	}
     	
@@ -478,7 +467,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     	
     	boolean moreThanOneParent = ownedEds.size() > 1;
         if (level>0 && moreThanOneParent && !unlinkMultipleParents) {
-        	_logger.info(indent+"Cannot delete "+entity.getName()+" because more than one parent is pointing to it");
+        	log.info(indent+"Cannot delete "+entity.getName()+" because more than one parent is pointing to it");
         	return;
         }
         
@@ -486,14 +475,14 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         for(EntityData ed : new ArrayList<EntityData>(entity.getEntityData())) {
         	Entity child = ed.getChildEntity();
         	if (child != null) {
-        		deleteSmallEntityTree(subjectKey, child, unlinkMultipleParents, level + 1, deleted);
+        		deleteEntityTree(subjectKey, child, unlinkMultipleParents, level + 1, deleted);
         	}
         	// We have to manually remove the EntityData from its parent, otherwise we get this error: 
         	// "deleted object would be re-saved by cascade (remove deleted object from associations)"
-        	_logger.debug(indent+"Deleting child entity data (id="+ed.getId()+")");
+        	log.debug(indent+"Deleting child entity data (id="+ed.getId()+")");
         	ed.getParentEntity().getEntityData().remove(ed);
         	if (deleted.contains(ed.getId())) {
-        		_logger.debug(indent+"EntityData (id="+ed.getId()+") was already deleted in this session");
+        		log.debug(indent+"EntityData (id="+ed.getId()+") was already deleted in this session");
         		continue;
         	}
     		getCurrentSession().delete(ed);
@@ -503,10 +492,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         // Delete all parent EDs
         for(EntityData ed : eds) {
 			// This ED points to the term to be deleted. We must delete the ED first to avoid violating constraints.
-        	_logger.debug(indent+"Deleting parent entity data (id="+ed.getId()+")");
+        	log.debug(indent+"Deleting parent entity data (id="+ed.getId()+")");
         	ed.getParentEntity().getEntityData().remove(ed);
         	if (deleted.contains(ed.getId())) {
-        		_logger.debug(indent+"EntityData (id="+ed.getId()+") was already deleted in this session");
+        		log.debug(indent+"EntityData (id="+ed.getId()+") was already deleted in this session");
         		continue;
         	}
     		getCurrentSession().delete(ed);
@@ -518,35 +507,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         deleted.add(entity.getId());
     }
     
-    public EntityAttribute fetchEntityAttributeByName(String name) throws DaoException {
-        try {
-            Session session = getCurrentSession();
-            Criteria c = session.createCriteria(EntityAttribute.class);
-            c.add(Expression.eq("name", name));
-            // SHould be using uniqueResult
-            return (EntityAttribute) c.uniqueResult();
-        }
-        catch (Exception e) {
-            throw new DaoException(e);
-        }
-    }
-
-    public EntityType fetchEntityTypeByName(String name) throws DaoException {
-        try {
-            Session session = getCurrentSession();
-            Criteria c = session.createCriteria(EntityType.class);
-            c.add(Expression.eq("name", name));
-            return (EntityType) c.uniqueResult();
-        }
-        catch (Exception e) {
-            throw new DaoException(e);
-        }
-    }
-
     public int bulkUpdateEntityDataValue(String oldValue, String newValue) throws DaoException {
         try {
-            if (_logger.isDebugEnabled()) {
-                _logger.debug("bulkUpdateEntityDataValue(oldValue="+oldValue+",newValue="+newValue+")");  
+            if (log.isTraceEnabled()) {
+                log.trace("bulkUpdateEntityDataValue(oldValue="+oldValue+",newValue="+newValue+")");  
             }
             
             StringBuilder hql = new StringBuilder();
@@ -558,7 +522,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             query.setParameter("oldValue", oldValue);
             
             int rows = query.executeUpdate();
-            _logger.debug("Bulk updated entity data value for "+rows+" rows");
+            log.debug("Bulk updated entity data value for "+rows+" rows");
             return rows;
         }
         catch (Exception e) {
@@ -568,8 +532,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     
     public int bulkUpdateEntityDataPrefix(String oldPrefix, String newPrefix) throws DaoException {
         try {
-            if (_logger.isDebugEnabled()) {
-                _logger.debug("bulkUpdateEntityDataPrefix(oldPrefix="+oldPrefix+",newPrefix="+newPrefix+")");  
+            if (log.isTraceEnabled()) {
+                log.trace("bulkUpdateEntityDataPrefix(oldPrefix="+oldPrefix+",newPrefix="+newPrefix+")");  
             }
             
             StringBuilder hql = new StringBuilder();
@@ -583,7 +547,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             query.setParameter("oldPrefix", oldPrefix+"%");
                         
             int rows = query.executeUpdate();
-            _logger.debug("Bulk updated entity data prefix for "+rows+" rows");
+            log.debug("Bulk updated entity data prefix for "+rows+" rows");
             return rows;
         }
         catch (Exception e) {
@@ -591,30 +555,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
     }
     
-    protected void createEntityStatus(String name) {
-        try {
-            Session session = getCurrentSession();
-            Criteria c = session.createCriteria(EntityStatus.class);
-            List<EntityStatus> entityStatusList = (List<EntityStatus>) c.list();
-
-            boolean containsStatus = false;
-            for (EntityStatus status : entityStatusList) {
-                if (status.getName().equals(name)) {
-                    containsStatus=true;
-                }
-            }
-            if (!containsStatus) {
-                EntityStatus entityStatus = new EntityStatus();
-                entityStatus.setName(name);
-                session.save(entityStatus);
-            }
-        }
-        catch (HibernateException e) {
-            e.printStackTrace();
-        }
-    }
-    
     public EntityType createNewEntityType(String name) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("createNewEntityType(name="+name+")");    
+        }
         EntityType entityType = getEntityTypeByName(name);
     	if (entityType != null) {
     		return entityType;
@@ -623,7 +567,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 	    	entityType = new EntityType();
 	    	entityType.setName(name);
 	        saveOrUpdate(entityType);
-            _logger.info("Created new EntityType '" + name + "'");
+            log.info("Created new EntityType '" + name + "'");
     		entityByName.put(name, entityType);
 	        return entityType;
     	}
@@ -634,6 +578,9 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 
     public EntityAttribute addAttributeToEntityType(EntityType entityType, String attrName) throws DaoException  {
 
+        if (log.isTraceEnabled()) {
+            log.trace("addAttributeToEntityType(entityType="+entityType+",attrName="+attrName+")");    
+        }
         Session session = getCurrentSession();
         EntityAttribute entityAttr = null;
         
@@ -642,7 +589,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 	    	entityAttr.setName(attrName);
 	        session.saveOrUpdate(entityAttr);
     		attrByName.put(attrName, entityAttr);
-            _logger.info("Created new EntityAttribute '" + attrName + "'");
+            log.info("Created new EntityAttribute '" + attrName + "'");
     	}
     	catch (Exception e) {
     		throw new DaoException(e);
@@ -652,6 +599,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public EntityAttribute createNewEntityAttr(String entityTypeName, String attrName) throws ComputeException {
+
+        if (log.isTraceEnabled()) {
+            log.trace("createNewEntityAttr(entityTypeName="+entityTypeName+",attrName="+attrName+")");    
+        }
+        
     	EntityType entityType = getEntityTypeByName(entityTypeName);
     	if (entityType == null) {
     		throw new ComputeException("Entity type '"+entityTypeName+"' does not exist");
@@ -666,6 +618,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public EntityAttribute addAttributeToEntityType(EntityType entityType, EntityAttribute entityAttr) throws DaoException  {
+
+        if (log.isTraceEnabled()) {
+            log.trace("addAttributeToEntityType(entityType="+entityType+",entityAttr="+entityAttr+")");    
+        }
+        
     	try {
     	    Session session = getCurrentSession();
     		Set<EntityAttribute> attrs = entityType.getAttributes();
@@ -676,14 +633,14 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     		
     		for(EntityAttribute currAttr : attrs) {
     		    if (currAttr.getName().equals(entityAttr.getName())) {
-    		        _logger.info("EntityAttribute '" + entityAttr.getName() + "' already exists on EntityType '"+entityType.getName()+"'");
+    		        log.info("EntityAttribute '" + entityAttr.getName() + "' already exists on EntityType '"+entityType.getName()+"'");
     		        return currAttr;
     		    }
     		}
     		
     		attrs.add(entityAttr);
 	        session.saveOrUpdate(entityType);
-            _logger.info("Added EntityAttribute '" + entityAttr.getName() + "' to EntityType '"+entityType.getName()+"'");
+            log.info("Added EntityAttribute '" + entityAttr.getName() + "' to EntityType '"+entityType.getName()+"'");
 	        return entityAttr;
     	}
     	catch (Exception e) {
@@ -692,6 +649,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public List<EntityType> getAllEntityTypes() throws DaoException {
+        
+        if (log.isTraceEnabled()) {
+            log.trace("getAllEntityTypes()");    
+        }
+        
         try {
             StringBuffer hql = new StringBuffer("select et from EntityType et");
             Query query = getCurrentSession().createQuery(hql.toString());
@@ -703,6 +665,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public List<EntityAttribute> getAllEntityAttributes() throws DaoException {
+
+        if (log.isTraceEnabled()) {
+            log.trace("getAllEntityAttributes()");    
+        }
+        
         try {
             StringBuffer hql = new StringBuffer("select ea from EntityAttribute ea");
             Query query = getCurrentSession().createQuery(hql.toString());
@@ -715,11 +682,12 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     
 
     public Collection<Entity> getEntitiesByName(String subjectKey, String entityName) throws DaoException {
+
+        if (log.isTraceEnabled()) {
+            log.trace("getEntitiesByName(subjectKey="+subjectKey+",entityName="+entityName+")");    
+        }
+        
         try {
-            if (_logger.isDebugEnabled()) {
-                _logger.debug("getEntitiesByName(subjectKey="+subjectKey+",entityId="+entityName+")");  
-            }
-            
             StringBuilder hql = new StringBuilder();
             hql.append("select e from Entity e ");
             hql.append("left outer join fetch e.entityActorPermissions p ");
@@ -745,11 +713,12 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     
 
     public List<Entity> getEntitiesByTypeName(String subjectKey, String entityTypeName) throws DaoException {
+        
+        if (log.isTraceEnabled()) {
+            log.trace("getEntitiesByTypeName(subjectKey="+subjectKey+",entityTypeName="+entityTypeName+")");
+        }
+        
         try {
-        	if (_logger.isDebugEnabled()) {
-        		_logger.debug("getEntitiesByTypeName(subjectKey="+subjectKey+",entityTypeName="+entityTypeName+")");
-        	}
-        	
             StringBuilder hql = new StringBuilder(256);
 
             hql.append("select e from Entity e ");
@@ -776,11 +745,12 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 
 
     public List<Entity> getEntitiesByNameAndTypeName(String subjectKey, String entityName, String entityTypeName) throws DaoException {
+        
+        if (log.isTraceEnabled()) {
+            log.trace("getEntitiesByNameAndTypeName(subjectKey="+subjectKey+", entityName="+entityName+", entityTypeName=entityTypeName)");
+        }
+
         try {
-            if (_logger.isDebugEnabled()) {
-                _logger.debug("getEntitiesByNameAndTypeName(subjectKey="+subjectKey+",entityName="+entityName+",entityTypeName=entityTypeName)");
-            }
-            
             StringBuilder hql = new StringBuilder();
             hql.append("select e from Entity e ");
             hql.append("left outer join fetch e.entityActorPermissions p ");
@@ -807,11 +777,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public List<Entity> getEntitiesWithAttributeValue(String subjectKey, String typeName, String attrName, String attrValue) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getEntitiesWithAttributeValue(subjectKey="+subjectKey+", typeName="+typeName+", attrName="+attrName+", attrValue="+attrValue+")");
+        }
+        
         try {
-            if (_logger.isDebugEnabled()) {
-                _logger.debug("getEntitiesWithAttributeValue(subjectKey="+subjectKey+", typeName="+typeName+", attrName="+attrName+", attrValue="+attrValue+")");
-            }
-            
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
             hql.append("left outer join fetch ed.parentEntity.entityActorPermissions p ");
@@ -840,15 +810,18 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public List<Entity> getEntitiesWithAttributeValue(String subjectKey, String attrName, String attrValue) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getEntitiesWithAttributeValue(subjectKey="+subjectKey+", attrName="+attrName+", attrValue="+attrValue+")");
+        }
         return getUserEntitiesWithAttributeValue(subjectKey, null, attrName, attrValue);
     }
     
     public Collection<Entity> getUserEntitiesByName(String subjectKey, String entityName) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getUserEntitiesByName(subjectKey="+subjectKey+", entityName="+entityName+")");  
+        }
+        
         try {
-            if (_logger.isDebugEnabled()) {
-                _logger.debug("getUserEntitiesByName(subjectKey="+subjectKey+",entityId="+entityName+")");  
-            }
-            
             StringBuilder hql = new StringBuilder();
             hql.append("select e from Entity e ");
             hql.append("left outer join fetch e.entityActorPermissions p ");
@@ -872,11 +845,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public List<Entity> getUserEntitiesByTypeName(String subjectKey, String entityTypeName) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getUserEntitiesByTypeName(subjectKey="+subjectKey+", entityTypeName="+entityTypeName+")");
+        }
+        
         try {
-            if (_logger.isDebugEnabled()) {
-                _logger.debug("getUserEntitiesByTypeName(subjectKey="+subjectKey+",entityTypeName="+entityTypeName+")");
-            }
-            
             StringBuilder hql = new StringBuilder(256);
 
             hql.append("select e from Entity e ");
@@ -902,11 +875,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 
 
     public List<Entity> getUserEntitiesByNameAndTypeName(String subjectKey, String entityName, String entityTypeName) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getUserEntitiesByNameAndTypeName(subjectKey="+subjectKey+", entityName="+entityName+", entityTypeName=entityTypeName)");
+        }
+        
         try {
-            if (_logger.isDebugEnabled()) {
-                _logger.debug("getUserEntitiesByNameAndTypeName(subjectKey="+subjectKey+",entityName="+entityName+",entityTypeName=entityTypeName)");
-            }
-            
             StringBuilder hql = new StringBuilder();
             hql.append("select e from Entity e ");
             hql.append("left outer join fetch e.entityActorPermissions p ");
@@ -932,11 +905,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public List<Entity> getUserEntitiesWithAttributeValue(String subjectKey, String typeName, String attrName, String attrValue) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getUserEntitiesWithAttributeValue(subjectKey="+subjectKey+", typeName="+typeName+", attrName="+attrName+", attrValue="+attrValue+")");
+        }
+        
         try {
-            if (_logger.isDebugEnabled()) {
-                _logger.debug("getUserEntitiesWithAttributeValue(subjectKey="+subjectKey+", typeName="+typeName+", attrName="+attrName+", attrValue="+attrValue+")");
-            }
-            
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
             hql.append("join fetch ed.parentEntity.entityType ");
@@ -963,15 +936,18 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public List<Entity> getUserEntitiesWithAttributeValue(String subjectKey, String attrName, String attrValue) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getUserEntitiesWithAttributeValue(subjectKey="+subjectKey+", attrName="+attrName+", attrValue="+attrValue+")");
+        }
         return getUserEntitiesWithAttributeValue(subjectKey, null, attrName, attrValue);
     }
 
     public long getCountUserEntitiesWithAttributeValue(String subjectKey, String typeName, String attrName, String attrValue) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getCountUserEntitiesWithAttributeValue(subjectKey="+subjectKey+", typeName="+typeName+", attrName="+attrName+", attrValue="+attrValue+")");
+        }
+        
         try {
-            if (_logger.isDebugEnabled()) {
-                _logger.debug("getCountUserEntitiesWithAttributeValue(subjectKey="+subjectKey+", typeName="+typeName+", attrName="+attrName+", attrValue="+attrValue+")");
-            }
-            
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select count(ed.parentEntity) from EntityData ed ");
             if (typeName != null) {
@@ -1000,10 +976,17 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public long getCountUserEntitiesWithAttributeValue(String subjectKey, String attrName, String attrValue) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getCountUserEntitiesWithAttributeValue(subjectKey="+subjectKey+", attrName="+attrName+", attrValue="+attrValue+")");
+        }
         return getCountUserEntitiesWithAttributeValue(subjectKey, null, attrName, attrValue);
     }
     
     public boolean deleteEntityById(String subjectKey, Long entityId) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("deleteEntityById(subjectKey="+subjectKey+", entityId="+entityId+")");
+        }
+        
         Session session = null;
         Transaction transaction = null;
         try {
@@ -1012,12 +995,12 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             Set<EntityData> parentEds = getParentEntityDatas(subjectKey, entityId);
             for(EntityData parentEd : parentEds) {
                 session.delete(parentEd);
-            	_logger.debug("The parent entity data with id=" + parentEd.getId() + " has been deleted.");
+            	log.debug("The parent entity data with id=" + parentEd.getId() + " has been deleted.");
             }
             Entity entity = getEntityById(subjectKey, entityId);
             if (entity!=null && (subjectKey==null || entity.getOwnerKey().equals(subjectKey))) {
 	            session.delete(entity);
-	            _logger.debug("The entity with id=" + entityId + " has been deleted.");
+	            log.debug("The entity with id=" + entityId + " has been deleted.");
             }
             else {
             	throw new DaoException("Could not find entity with id="+entityId+" owned by "+subjectKey);
@@ -1032,11 +1015,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public List<Entity> getEntitiesWithTag(String subjectKey, String attrTag) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getEntitiesWithTag(subjectKey="+subjectKey+", attrTag="+attrTag+")");
+        }
+        
         try {
-        	if (_logger.isDebugEnabled()) {
-        		_logger.debug("getCommonRoots(subjectKey="+subjectKey+")");
-        	}
-        	
         	List<String> subjectKeyList = null;
         	
         	EntityAttribute attr = getEntityAttributeByName(attrTag);
@@ -1067,8 +1050,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 
 	public Entity getCommonRootFolderByName(String subjectKey, String folderName, boolean createIfNecessary) throws DaoException {
 
-    	if (_logger.isDebugEnabled()) {
-    		_logger.debug("getCommonRootFolderByName(subjectKey="+subjectKey+",folderName="+folderName+",createIfNecessary="+createIfNecessary+")");
+    	if (log.isTraceEnabled()) {
+    		log.trace("getCommonRootFolderByName(subjectKey="+subjectKey+", folderName="+folderName+", createIfNecessary="+createIfNecessary+")");
     	}
     	
     	Entity folder = null;
@@ -1086,11 +1069,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     	}
     	
         if (createIfNecessary) {
-            _logger.info("Creating new topLevelFolder with name=" + folderName);
+            log.info("Creating new topLevelFolder with name=" + folderName);
             folder = createEntity(subjectKey, EntityConstants.TYPE_FOLDER, folderName);
             EntityUtils.addAttributeAsTag(folder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
             saveOrUpdate(folder);
-            _logger.info("Saved top level folder as " + folder.getId());
+            log.info("Saved top level folder as " + folder.getId());
         }
     	
         return folder;
@@ -1098,8 +1081,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     
     public Entity getChildFolderByName(String subjectKey, Long parentId, String folderName, boolean createIfNecessary) throws DaoException {
 
-    	if (_logger.isDebugEnabled()) {
-    		_logger.debug("getChildFolderByName(subjectKey="+subjectKey+",parentId="+parentId+",folderName="+folderName+",createIfNecessary="+createIfNecessary+")");
+    	if (log.isTraceEnabled()) {
+    		log.trace("getChildFolderByName(subjectKey="+subjectKey+", parentId="+parentId+", folderName="+folderName+", createIfNecessary="+createIfNecessary+")");
     	}
     	
     	Entity parent = getEntityById(subjectKey, parentId);
@@ -1115,7 +1098,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     	
     	Entity folder = null;
         if (createIfNecessary) {
-            _logger.info("Creating new child folder with name=" + folderName);
+            log.info("Creating new child folder with name=" + folderName);
             folder = createEntity(subjectKey, EntityConstants.TYPE_FOLDER, folderName);
             addEntityToParent(parent, folder, parent.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
         }
@@ -1124,11 +1107,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public Set<EntityData> getParentEntityDatas(String subjectKey, Long childEntityId) throws DaoException {
-        try {
-        	if (_logger.isDebugEnabled()) {
-        		_logger.debug("getParentEntityDatas(subjectKey="+childEntityId+", childEntityId="+childEntityId+")");
-        	}
-        	
+        if (log.isTraceEnabled()) {
+            log.trace("getParentEntityDatas(subjectKey="+childEntityId+", childEntityId="+childEntityId+")");
+        }
+        
+        try {	
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed from EntityData ed ");
             hql.append("join fetch ed.entityAttribute ");
@@ -1153,11 +1136,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public Set<Long> getParentIdsForAttribute(String subjectKey, Long childEntityId, String attributeName) throws DaoException {
-        try {
-        	if (_logger.isDebugEnabled()) {
-        		_logger.debug("getParentIdsForAttribute(childEntityId="+childEntityId+",attributeName="+attributeName+")");
-        	}
-        	
+        if (log.isTraceEnabled()) {
+            log.trace("getParentIdsForAttribute(childEntityId="+childEntityId+", attributeName="+attributeName+")");
+        }
+        
+        try {	
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.parentEntity.id from EntityData ed ");
             hql.append("left outer join ed.parentEntity.entityActorPermissions p ");
@@ -1181,8 +1164,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     
     public Set<Entity> getParentEntities(String subjectKey, Long entityId) throws DaoException {
         try {
-        	if (_logger.isDebugEnabled()) {
-        		_logger.debug("getParentEntities(subjectKey="+subjectKey+", entityId="+entityId+")");
+        	if (log.isTraceEnabled()) {
+        		log.trace("getParentEntities(subjectKey="+subjectKey+", entityId="+entityId+")");
         	}
         	
             Session session = getCurrentSession();
@@ -1205,11 +1188,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public Set<Entity> getChildEntities(String subjectKey, Long entityId) throws DaoException {
-        try {
-        	if (_logger.isDebugEnabled()) {
-        		_logger.debug("getChildEntities(subjectKey="+subjectKey+", entityId="+entityId+")");
-        	}
-        	
+        if (log.isTraceEnabled()) {
+            log.trace("getChildEntities(subjectKey="+subjectKey+", entityId="+entityId+")");
+        }
+        
+        try {	
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.childEntity from EntityData ed ");
             hql.append("left outer join fetch ed.childEntity.entityActorPermissions p ");
@@ -1230,10 +1213,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
 	public Map<Long, String> getChildEntityNames(Long entityId) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getChildEntityNames(entityId="+entityId+")");
+        }
+        
         try {
-        	if (_logger.isDebugEnabled()) {
-        		_logger.debug("getChildEntityNames(entityId="+entityId+")");
-        	}
         	Map<Long,String> nameMap = new LinkedHashMap<Long,String>();
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.childEntity.id, ed.childEntity.name from EntityData ed ");
@@ -1251,6 +1235,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 	}
 	
     public List<Task> getAnnotationSessions(String subjectKey) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getAnnotationSessions(subjectKey="+subjectKey+")");
+        }
+        
 		try {
 	        String hql = "select clazz from Task clazz where subclass='" + AnnotationSessionTask.TASK_NAME + "' and clazz.owner='" + subjectKey + "' order by clazz.objectId";
 	        Query query = sessionFactory.getCurrentSession().createQuery(hql);
@@ -1261,11 +1249,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public List<Entity> getAnnotationsForChildren(String subjectKey, Long entityId) throws DaoException {
-        try {
-        	if (_logger.isDebugEnabled()) {
-        		_logger.debug("getAnnotationsForChildren(subjectKey="+subjectKey+",entityId="+entityId+")");
-        	}
-            
+        if (log.isTraceEnabled()) {
+            log.trace("getAnnotationsForChildren(subjectKey="+subjectKey+", entityId="+entityId+")");
+        }
+        
+        try {    
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select distinct targetEd.parentEntity from EntityData targetEd, EntityData childEd ");
             hql.append("join fetch targetEd.parentEntity.entityType ");
@@ -1294,8 +1282,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public List<Entity> getAnnotationsByEntityId(String subjectKey, Long entityId) throws DaoException {
-    	if (_logger.isDebugEnabled()) {
-    		_logger.debug("getAnnotationsByEntityId(subjectKey="+subjectKey+",entityId="+entityId+")");
+    	if (log.isTraceEnabled()) {
+    		log.trace("getAnnotationsByEntityId(subjectKey="+subjectKey+", entityId="+entityId+")");
     	}
     	
     	List<Long> entityIds = new ArrayList<Long>();
@@ -1304,10 +1292,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public List<Entity> getAnnotationsByEntityId(String subjectKey, List<Long> entityIds) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getAnnotationsByEntityId(subjectKey="+subjectKey+",entityIds.size="+entityIds.size()+")");
+        }
+        
         try {
-        	if (_logger.isDebugEnabled()) {
-        		_logger.debug("getAnnotationsByEntityId(subjectKey="+subjectKey+",entityIds="+entityIds+")");
-        	}
         	
         	if (entityIds.isEmpty()) {
         		return new ArrayList<Entity>();
@@ -1346,6 +1335,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 
 	public List<Entity> getAnnotationsForSession(String subjectKey, long sessionId) throws DaoException {
 
+        if (log.isTraceEnabled()) {
+            log.trace("getAnnotationsForSession(subjectKey="+subjectKey+",sessionId="+sessionId+")");
+        }
+        
         Task task = getTaskById(sessionId);
         if (task == null) 
             throw new DaoException("Session not found");
@@ -1380,6 +1373,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 	}
 
     public List<Entity> getEntitiesForAnnotationSession(String subjectKey, long sessionId) throws ComputeException {
+
+        if (log.isTraceEnabled()) {
+            log.trace("getEntitiesForAnnotationSession(subjectKey="+subjectKey+",sessionId="+sessionId+")");
+        }
         
         Task task = getTaskById(sessionId);
         if (task == null) 
@@ -1402,6 +1399,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 	
     public List<Entity> getCategoriesForAnnotationSession(String subjectKey, long sessionId) throws ComputeException {
+
+        if (log.isTraceEnabled()) {
+            log.trace("getCategoriesForAnnotationSession(subjectKey="+subjectKey+",sessionId="+sessionId+")");
+        }
         
         Task task = getTaskById(sessionId);
         if (task == null) 
@@ -1420,7 +1421,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public Set<Long> getCompletedEntityIds(long sessionId) throws ComputeException {
-    
+
+        if (log.isTraceEnabled()) {
+            log.trace("getCompletedEntityIds(sessionId="+sessionId+")");
+        }
+        
         Task task = getTaskById(sessionId);
         if (task == null) 
             throw new DaoException("Session not found");
@@ -1437,7 +1442,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 				completedEntityIds.add(Long.parseLong(id));
 			} 
 			catch (NumberFormatException e) {
-				_logger.warn("Error parsing id in AnnotationSessionTask.PARAM_completedTargets: "+id,e);
+				log.warn("Error parsing id in AnnotationSessionTask.PARAM_completedTargets: "+id,e);
 			}
         }
         
@@ -1451,6 +1456,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
      */
 	private List<Entity> updateAnnotationSession(long sessionId) throws ComputeException {
 
+        if (log.isTraceEnabled()) {
+            log.trace("updateAnnotationSession(sessionId="+sessionId+")");
+        }
+        
 		Task task = getTaskById(sessionId);
         if (task == null) 
             throw new DaoException("Session not found");
@@ -1533,18 +1542,27 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 
     public Entity getErrorOntology() throws ComputeException {
 
+        if (log.isTraceEnabled()) {
+            log.trace("getErrorOntology()");
+        }
+        
         // TODO: this ontology should be owned by the system user
         List<Entity> list = getEntitiesByNameAndTypeName("group:flylight", "Error Ontology", EntityConstants.TYPE_ONTOLOGY_ROOT);
         if (list.isEmpty()) {
             throw new ComputeException("Cannot find Error Ontology");
         }
         else if (list.size()>1) {
-            _logger.warn("Found more than one Error Ontology, using the first one, "+list.get(0).getId());
+            log.warn("Found more than one Error Ontology, using the first one, "+list.get(0).getId());
         }
         return list.get(0);
     }
     
     public Entity createEntity(String subjectKey, String entityTypeName, String entityName) throws DaoException {
+        
+        if (log.isTraceEnabled()) {
+            log.trace("createEntity(subjectKey="+subjectKey+", entityTypeName="+entityTypeName+", entityName="+entityName+")");
+        }
+        
     	if (entityTypeName==null) throw new DaoException("Error creating entity with null type");
         Entity entity = newEntity(entityTypeName, entityName, subjectKey);
         if (entity.getEntityType()==null) throw new DaoException("Error creating entity with unknown entity type: "+entityTypeName);
@@ -1553,10 +1571,18 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("addEntityToParent(parent="+parent+", entity="+entity+", index="+index+", attrName="+attrName+")");
+        }
+        
         return addEntityToParent(parent, entity, index, attrName, null);
     }
 
     public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName, String value) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("addEntityToParent(parent="+parent+", entity="+entity+", index="+index+", attrName="+attrName+", value="+value+")");
+        }
+        
         if (attrName==null) throw new DaoException("Error adding entity child with null attribute name");
         EntityData ed = parent.addChildEntity(entity, attrName);
         ed.setOrderIndex(index);
@@ -1569,6 +1595,9 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public void addChildren(String subjectKey, Long parentId, List<Long> childrenIds, String attributeName) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("addChildren(subjectKey="+subjectKey+", parentId="+parentId+", childrenIds.size="+childrenIds.size()+", attributeName="+attributeName+")");
+        }
         
         Entity parent = getEntityById(parentId);
         
@@ -1608,6 +1637,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     private void propagatePermissions(Entity parent, Entity child, boolean recursive) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("propagatePermissions(parent="+parent+", child="+child+", recursive="+recursive+")");
+        }
+        
         for(EntityActorPermission permission : getFullPermissions(parent)) {
             grantPermissions(child, permission.getSubjectKey(), permission.getPermissions(), recursive);    
         }
@@ -1615,6 +1648,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     
     public Entity createDataSet(String subjectKey, String dataSetName) throws ComputeException {
 
+        if (log.isTraceEnabled()) {
+            log.trace("createDataSet(subjectKey="+subjectKey+", dataSetName="+dataSetName+")");
+        }
+        
         String dataSetIdentifier = EntityUtils.createDenormIdentifierFromName(subjectKey, dataSetName);
         
         if (!getUserEntitiesWithAttributeValue(null, EntityConstants.TYPE_DATA_SET, EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier).isEmpty()) {
@@ -1633,6 +1670,9 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public Entity createOntologyRoot(String subjectKey, String rootName) throws ComputeException {
+        if (log.isTraceEnabled()) {
+            log.trace("createOntologyRoot(subjectKey="+subjectKey+", rootName="+rootName+")");
+        }
         
         Entity newOntologyRoot = newEntity(EntityConstants.TYPE_ONTOLOGY_ROOT, rootName, subjectKey);
         saveOrUpdate(newOntologyRoot);
@@ -1645,7 +1685,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public EntityData createOntologyTerm(String subjectKey, Long ontologyTermParentId, String termName, OntologyElementType type, Integer orderIndex) throws ComputeException {
-
+        if (log.isTraceEnabled()) {
+            log.trace("createOntologyTerm(subjectKey="+subjectKey+", ontologyTermParentId="+ontologyTermParentId+", termName="+termName+", type="+type+", orderIndex="+orderIndex+")");
+        }
+        
         Entity parentOntologyElement = getEntityById(ontologyTermParentId);
 
         // You need write access to the parent ontology to make a new element in this ontology
@@ -1711,7 +1754,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public Entity cloneEntityTree(Long sourceRootId, String targetSubjectKey, String targetRootName) throws ComputeException {
-
+        if (log.isTraceEnabled()) {
+            log.trace("cloneEntityTree(sourceRootId="+sourceRootId+", targetSubjectKey="+targetSubjectKey+", targetRootName="+targetRootName+")");
+        }
+        
     	Entity sourceRoot = getEntityById(sourceRootId);    	
     	if (sourceRoot == null) {
     		throw new DaoException("Cannot find the source root.");
@@ -1723,6 +1769,9 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 
 	// TODO: detect cycles
     private Entity cloneEntityTree(Entity source, String targetSubjectKey, String targetName, boolean isRoot) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("cloneEntityTree(source="+source+", targetSubjectKey="+targetSubjectKey+", targetName="+targetName+", isRoot="+isRoot+")");
+        }
 
         EntityAttribute tmpAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_IS_PUBLIC);
         
@@ -1730,7 +1779,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         Entity newOntologyElement = newEntity(source.getEntityType(), targetName, targetSubjectKey);
         saveOrUpdate(newOntologyElement);
 
-        _logger.info("newOntologyElement.id="+newOntologyElement.getId());
+        log.info("newOntologyElement.id="+newOntologyElement.getId());
         
         // Add the children 
     	for(EntityData ed : source.getEntityData()) {
@@ -1754,6 +1803,9 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public Entity publishOntology(Long sourceRootId, String targetRootName) throws ComputeException {
+        if (log.isTraceEnabled()) {
+            log.trace("publishOntology(sourceRootId="+sourceRootId+", targetRootName="+targetRootName+")");
+        }
 
     	Entity sourceRoot = getEntityById(sourceRootId);    	
     	if (sourceRoot == null) {
@@ -1771,16 +1823,24 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public void fixInternalOntologyConsistency(Long sourceRootId) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("fixInternalOntologyConsistency(sourceRootId="+sourceRootId+")");
+        }
+        
     	Entity ontologyRoot = getEntityById(sourceRootId);
     	ontologyRoot = populateDescendants(ontologyRoot.getOwnerKey(), ontologyRoot);
     	if (ontologyRoot==null) return;
-    	_logger.warn("Fixing internal consistency for ontology "+ontologyRoot.getName()+" (id="+ontologyRoot.getId()+")");
+    	log.warn("Fixing internal consistency for ontology "+ontologyRoot.getName()+" (id="+ontologyRoot.getId()+")");
     	Map<String,Long> enumMap = new HashMap<String,Long>();
     	buildEnumMap(ontologyRoot, enumMap);
     	updateEnumTexts(ontologyRoot, enumMap);
     }
     
     public void buildEnumMap(Entity entity, Map<String,Long> enumMap) {
+        if (log.isTraceEnabled()) {
+            log.trace("buildEnumMap(entity="+entity+", enumMap.size="+enumMap.size()+")");
+        }
+        
 		if ("Enum".equals(entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE))) {
 			enumMap.put(entity.getName(), entity.getId());
 		}
@@ -1790,6 +1850,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public void updateEnumTexts(Entity entity, Map<String,Long> enumMap) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("updateEnumTexts(entity="+entity+", enumMap.size="+enumMap.size()+")");
+        }
+        
 		if ("EnumText".equals(entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE))) {
 			EntityData oldEnumIdEd = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_ENUMTEXT_ENUMID);
 			if (oldEnumIdEd != null && oldEnumIdEd.getValue()!=null) {
@@ -1799,19 +1863,19 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 					if (newEnumId!=null) {
 						oldEnumIdEd.setValue(newEnumId.toString());
 						oldEnumIdEd.setChildEntity(getEntityById(newEnumId));
-						_logger.warn("Updating EnumText "+entity.getName()+" to reference the correct Enum id="+newEnumId);
+						log.warn("Updating EnumText "+entity.getName()+" to reference the correct Enum id="+newEnumId);
 						saveOrUpdate(oldEnumIdEd);
 					}
 					else {
-						_logger.warn("Cannot find enum with name "+oldEnum.getName()+" in ontology");
+						log.warn("Cannot find enum with name "+oldEnum.getName()+" in ontology");
 					}
 				}
 				else {
-					_logger.warn("Cannot find old EnumText entity with id="+oldEnumIdEd.getValue());
+					log.warn("Cannot find old EnumText entity with id="+oldEnumIdEd.getValue());
 				}
 			}
 			else {
-				_logger.warn("EnumText (id="+entity.getId()+") does not reference an Enum");
+				log.warn("EnumText (id="+entity.getId()+") does not reference an Enum");
 			}
 		}
     	for(Entity child : entity.getChildren()) {
@@ -1820,6 +1884,9 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
 	public Entity createOntologyAnnotation(String subjectKey, OntologyAnnotation annotation) throws ComputeException {
+        if (log.isTraceEnabled()) {
+            log.trace("createOntologyAnnotation(subjectKey="+subjectKey+", annotation="+annotation+")");
+        }
 
         try {        	
         	Entity keyEntity = null;
@@ -1911,12 +1978,16 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             return newAnnotation;
         }
         catch (Exception e) {
-            _logger.error("Error creating ontology annotation for subject "+subjectKey,e);
+            log.error("Error creating ontology annotation for subject "+subjectKey,e);
             throw new ComputeException("Error creating ontology annotation for subject "+subjectKey,e);
         }
 	}
 
 	public Long removeOntologyAnnotation(String subjectKey, long annotationId) throws ComputeException {
+        if (log.isTraceEnabled()) {
+            log.trace("removeOntologyAnnotation(subjectKey="+subjectKey+", annotationId="+annotationId+")");
+        }
+        
         Entity entity = getEntityById(subjectKey, annotationId);
         getCurrentSession().delete(entity);	
         
@@ -1935,16 +2006,19 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 	 * @throws DaoException
 	 */
     public List<Entity> removeAllOntologyAnnotationsForSession(String subjectKey, long sessionId) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("removeAllOntologyAnnotationsForSession(subjectKey="+subjectKey+", sessionId="+sessionId+")");
+        }
 
         try {
         	List<Entity> annotations = getAnnotationsForSession(subjectKey, sessionId);
             for(Object o : annotations) {
                 Entity entity = (Entity)o;
                 if (!entity.getOwnerKey().equals(subjectKey)) {
-                	_logger.info("Cannot remove annotation "+entity.getId()+" not owned by "+subjectKey);
+                	log.info("Cannot remove annotation "+entity.getId()+" not owned by "+subjectKey);
                 }
                 else {
-                	_logger.info("Removing annotation "+entity.getId());
+                	log.info("Removing annotation "+entity.getId());
                     getCurrentSession().delete(entity);	
                 }
             }
@@ -1958,6 +2032,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
 	public List<Entity> getEntitiesInList(String subjectKey, String entityIds) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getEntitiesInList(subjectKey="+subjectKey+", entityIds="+entityIds+")");
+        }
+        
 		String[] idStrs = entityIds.split("\\s*,\\s*");
 		List<Long> ids = new ArrayList<Long>();
 		for(String idStr : idStrs) {
@@ -1967,11 +2045,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 	}
 
 	public List<Entity> getEntitiesInList(String subjectKey, List<Long> entityIds) throws DaoException {
-        try {
-        	if (_logger.isDebugEnabled()) {
-        		_logger.debug("getEntitiesInList(entityIds="+entityIds+")");
-        	}
-        	
+        if (log.isTraceEnabled()) {
+            log.trace("getEntitiesInList(subjectKey="+subjectKey+", entityIds.size="+entityIds.size()+")");
+        }
+        
+        try {        	
         	if (entityIds == null || entityIds.isEmpty()) {
         		return new ArrayList<Entity>();
         	}
@@ -2021,6 +2099,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
      * @return
      */
     public Set<Long> getDescendantIds(String subjectKey, Entity entity) {
+        if (log.isTraceEnabled()) {
+            log.trace("getDescendantIds(subjectKey="+subjectKey+", entity="+entity+")");
+        }
+        
         Set<String> subjectKeys = getSubjectKeySet(subjectKey);
         Set<Long> visited = new HashSet<Long>();
         getDescendantIds(subjectKeys, entity, visited);
@@ -2028,8 +2110,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     private void getDescendantIds(Set<String> subjectKeys, Entity entity, Set<Long> visited) {
-        if (_logger.isDebugEnabled()) {
-            _logger.debug("getDescendantIds(subjectKeys="+subjectKeys+",entity.id="+entity.getId()+")");
+        if (log.isTraceEnabled()) {
+            log.trace("getDescendantIds(subjectKeys="+subjectKeys+", entity="+entity+", visited.size="+visited.size()+")");
         }
         
         if (entity == null) return;
@@ -2046,8 +2128,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public Entity getEntityAndChildren(String subjectKey, Long entityId) {
-    	if (_logger.isDebugEnabled()) {
-    		_logger.debug("getEntityAndChildren(entityId="+entityId+")");
+    	if (log.isTraceEnabled()) {
+    		log.trace("getEntityAndChildren(subjectKey="+subjectKey+", entityId="+entityId+")");
     	}
     	Entity parent = getEntityById(subjectKey, entityId);
         if (parent == null)
@@ -2069,15 +2151,17 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
      * @return
      */
     public Entity getAncestorWithType(String subjectKey, Long entityId, String type) throws DaoException {
-
-        if (_logger.isDebugEnabled()) {
-            _logger.debug("getAncestorWithType(entity.getId()="+entityId+",type="+type+")");
+        if (log.isTraceEnabled()) {
+            log.trace("getAncestorWithType(subjectKey="+subjectKey+", entityId="+entityId+", type="+type+")");
         }
         
     	return getAncestorWithType(subjectKey, entityId, type, true);
     }
     
     private Entity getAncestorWithType(String subjectKey, Long entityId, String type, boolean start) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getAncestorWithType(subjectKey="+subjectKey+", entityId="+entityId+", type="+type+", start="+start+")");
+        }
 
         Entity entity = getEntityById(entityId);
         // Do not return the starting node as the ancestor, even if type matches
@@ -2092,9 +2176,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public List<List<Entity>> getEntityPathsToRoots(String subjectKey, Long entityId) throws DaoException {
-
-    	if (_logger.isDebugEnabled()) {
-    		_logger.debug("getEntityPathsToRoots(entity.getId()="+entityId+")");
+    	if (log.isTraceEnabled()) {
+    		log.trace("getEntityPathsToRoots(subjectKey="+subjectKey+", entityId="+entityId+")");
     	}
     	
     	Entity entity = getEntityById(entityId);
@@ -2123,9 +2206,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public List<List<EntityData>> getEntityDataPathsToRoots(String subjectKey, EntityData entityData) throws DaoException {
-    	
-    	if (_logger.isDebugEnabled()) {
-    		_logger.debug("getEntityPathsToRoots(subjectKey="+subjectKey+", entityData.getId()="+entityData.getId()+")");
+    	if (log.isTraceEnabled()) {
+    		log.trace("getEntityPathsToRoots(subjectKey="+subjectKey+", entityData="+entityData+")");
     	}
     	
     	Entity entity = entityData.getParentEntity();
@@ -2152,9 +2234,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public List<Long> getPathToRoot(String subjectKey, Long entityId, Long rootId) throws DaoException {
-
-    	if (_logger.isDebugEnabled()) {
-    		_logger.debug("getPathToRoot(entityId="+entityId+", rootId="+rootId+")");
+    	if (log.isTraceEnabled()) {
+    		log.trace("getPathToRoot(subjectKey="+subjectKey+", entityId="+entityId+", rootId="+rootId+")");
     	}
     	
 		List<Long> ids = new ArrayList<Long>();
@@ -2177,6 +2258,9 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public List<MappedId> getProjectedResults(String subjectKey, List<Long> entityIds, List<String> upProjection, List<String> downProjection) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getProjectedResults(subjectKey="+subjectKey+", entityIds.size="+entityIds.size()+", upProjection.size="+upProjection.size()+", downProjection.size="+downProjection.size()+")");
+        }
     	
     	// TODO: filter results by subjectKey?
     	
@@ -2252,7 +2336,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             
             sql.append("and "+targetIdAlias+" is not null");
             
-            _logger.debug(sql);
+            log.debug(sql);
             
 	        conn = getJdbcConnection();
 	        stmt = conn.prepareStatement(sql.toString());
@@ -2273,7 +2357,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 	            if (conn!=null) conn.close();	
 	    	}
 	    	catch (SQLException e) {
-	    		_logger.warn("Ignoring error encountered while closing JDBC connection",e);
+	    		log.warn("Ignoring error encountered while closing JDBC connection",e);
 	    	}
 	    }
         
@@ -2281,6 +2365,9 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public List<Long> getImageIdsWithName(Connection connection, String subjectKey, String imagePath) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getImageIdsWithName(connection="+connection+", subjectKey="+subjectKey+", imagePath="+imagePath+")");
+        }
     	
     	List<Long> sampleIds = new ArrayList<Long>();
         Connection conn = connection;
@@ -2317,7 +2404,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 	            if (connection==null && conn!=null) conn.close(); 
 	    	}
 	    	catch (SQLException e) {
-	    		_logger.warn("Ignoring error encountered while closing JDBC connection",e);
+	    		log.warn("Ignoring error encountered while closing JDBC connection",e);
 	    	}
 	    }
         
@@ -2325,6 +2412,9 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public List<Long> getOrphanAnnotationIdsMissingTargets(String subjectKey) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getOrphanAnnotationIdsMissingTargets(subjectKey="+subjectKey+")");
+        }
         
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -2366,7 +2456,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 if (conn!=null) conn.close(); 
             }
             catch (SQLException e) {
-                _logger.warn("Ignoring error encountered while closing JDBC connection",e);
+                log.warn("Ignoring error encountered while closing JDBC connection",e);
             }
         }
         
@@ -2374,6 +2464,9 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public void loadLazyEntity(String subjectKey, Entity entity, boolean recurse) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("loadLazyEntity(subjectKey="+subjectKey+", entity="+entity+", recurse="+recurse+")");
+        }
 
         if (!EntityUtils.areLoaded(entity.getEntityData())) {
             EntityUtils.replaceChildNodes(entity, getChildEntities(subjectKey, entity.getId()));
@@ -2389,8 +2482,12 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public Entity annexEntityTree(String subjectKey, Long entityId) throws ComputeException {
+        if (log.isTraceEnabled()) {
+            log.trace("annexEntityTree(subjectKey="+subjectKey+", entityId="+entityId+")");
+        }
+        
     	Entity entity = getEntityById(entityId);
-    	_logger.info(subjectKey+" is annexing entity tree starting at "+entity.getName()+
+    	log.info(subjectKey+" is annexing entity tree starting at "+entity.getName()+
     			" (id="+entity.getId()+") from "+entity.getOwnerKey());
     	annexEntityTree(subjectKey, entity, "  ");	
     	disassociateTreeFromNonOwners(subjectKey, getEntityById(entity.getId()), "  ");
@@ -2398,9 +2495,12 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     private Entity annexEntityTree(String subjectKey, Entity entity, String indent) throws ComputeException {
+        if (log.isTraceEnabled()) {
+            log.trace("annexEntityTree(subjectKey="+subjectKey+", entity="+entity+", indent="+indent+")");
+        }
     	
     	if (!entity.getOwnerKey().equals(subjectKey)) {
-        	_logger.info(indent+"annexing entity "+entity.getName()+" (id="+entity.getId()+")");
+        	log.info(indent+"annexing entity "+entity.getName()+" (id="+entity.getId()+")");
         	entity.setOwnerKey(subjectKey);
         	saveOrUpdate(entity);
     	}
@@ -2421,10 +2521,13 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     private Entity disassociateTreeFromNonOwners(String subjectKey, Entity entity, String indent) throws ComputeException {
+        if (log.isTraceEnabled()) {
+            log.trace("disassociateTreeFromNonOwners(subjectKey="+subjectKey+", entity="+entity+", indent="+indent+")");
+        }
     	
     	for(EntityData parentEd : getParentEntityDatas(subjectKey, entity.getId())) {
     		if (parentEd.getOwnerKey().equals(subjectKey)) continue;
-    		_logger.info(indent+"deleting "+parentEd.getOwnerKey()+"'s link ("+parentEd.getEntityAttribute().getName()+") from entity "+parentEd.getParentEntity().getName()+" to entity "+entity.getName());
+    		log.info(indent+"deleting "+parentEd.getOwnerKey()+"'s link ("+parentEd.getEntityAttribute().getName()+") from entity "+parentEd.getParentEntity().getName()+" to entity "+entity.getName());
     		parentEd.getParentEntity().getEntityData().remove(parentEd);
     		genericDelete(parentEd);
     	}
@@ -2443,31 +2546,49 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     
     
     public EntityType getEntityTypeByName(String entityTypeName) {
+        if (log.isTraceEnabled()) {
+            log.trace("getEntityTypeByName(entityTypeName="+entityTypeName+")");
+        }
     	preloadData();
         return entityByName.get(entityTypeName);	
     }
     
     public EntityAttribute getEntityAttributeByName(String attrName) {
+        if (log.isTraceEnabled()) {
+            log.trace("getEntityAttributeByName(attrName="+attrName+")");
+        }
     	preloadData();
         return attrByName.get(attrName);	
     }
 
     private Entity newEntity(String entityTypeName, String name, String owner) {
+        if (log.isTraceEnabled()) {
+            log.trace("newEntity(entityTypeName="+entityTypeName+", name="+name+", owner="+owner+")");
+        }
         EntityType tmpType = getEntityTypeByName(entityTypeName);
         return newEntity(tmpType, name, owner);
     }
 
     private Entity newEntity(EntityType entityType, String name, String subjectKey) {
+        if (log.isTraceEnabled()) {
+            log.trace("newEntity(subjectKey="+entityType+", name="+name+", subjectKey="+subjectKey+")");
+        }
     	Date date = new Date();
         return new Entity(null, name, subjectKey, null, entityType, date, date, new HashSet<EntityData>());	
     }
     
     private EntityData newData(Entity parent, String attrName, String subjectKey) {
+        if (log.isTraceEnabled()) {
+            log.trace("newData(parent="+parent+", attrName="+attrName+", subjectKey="+subjectKey+")");
+        }
         EntityAttribute attribute = getEntityAttributeByName(attrName);
         return newData(parent, attribute, subjectKey);
     }
     
     private EntityData newData(Entity parent, EntityAttribute attribute, String subjectKey) {
+        if (log.isTraceEnabled()) {
+            log.trace("newData(parent="+parent+", attribute="+attribute+", subjectKey="+subjectKey+")");
+        }
     	Date date = new Date();
         return new EntityData(null, attribute, parent, null, subjectKey, null, date, date, null);
     }
@@ -2476,14 +2597,18 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public Map<Entity, Map<String, Double>> getPatternAnnotationQuantifiers() throws DaoException {
-        _logger.info("getPatternQuantifiersForScreenSample: starting search for entities of type="+EntityConstants.TYPE_SCREEN_SAMPLE);
+        if (log.isTraceEnabled()) {
+            log.trace("getPatternAnnotationQuantifiers()");
+        }
+        
+        log.info("getPatternQuantifiersForScreenSample: starting search for entities of type="+EntityConstants.TYPE_SCREEN_SAMPLE);
         List<Entity> flyScreenSampleEntityList = getUserEntitiesByTypeName(null, EntityConstants.TYPE_SCREEN_SAMPLE);
-        _logger.info("getPatternQuantifiersForScreenSample: found "+flyScreenSampleEntityList.size()+" entities of type="+EntityConstants.TYPE_SCREEN_SAMPLE);
+        log.info("getPatternQuantifiersForScreenSample: found "+flyScreenSampleEntityList.size()+" entities of type="+EntityConstants.TYPE_SCREEN_SAMPLE);
         Map<Entity, Map<String, Double>> entityQuantMap=new HashMap<Entity, Map<String, Double>>();
         long count=0;
         for (Entity screenSample : flyScreenSampleEntityList) {
             // Get the file-path for the quantifier file
-            _logger.info("Exploring screenSample name="+screenSample.getName() + " index="+count+" of "+flyScreenSampleEntityList.size());
+            log.info("Exploring screenSample name="+screenSample.getName() + " index="+count+" of "+flyScreenSampleEntityList.size());
             Set<Entity> children=screenSample.getChildren();
             for (Entity child : children) {
                // _logger.info("Child id="+child.getId()+" type="+child.getEntityType().getName()+" name="+child.getName());
@@ -2499,7 +2624,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                                 //_logger.info("Child3 id="+child3.getId()+" type="+child3.getEntityType().getName()+" name="+child3.getName());
                                 if (child3.getEntityType().getName().equals(EntityConstants.TYPE_TEXT_FILE) && child3.getName().endsWith("quantifiers.txt")) {
                                     String quantifierFilePath=child3.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                                    _logger.info("Quantifier file path="+quantifierFilePath);
+                                    log.info("Quantifier file path="+quantifierFilePath);
                                     File quantFile=new File(quantifierFilePath);
                                     Map<String, Double> quantMap=new HashMap<String, Double>();
                                     try {
@@ -2513,7 +2638,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                                             }
                                         }
                                         br.close();
-                                        _logger.info("Added "+quantMap.size()+" entries");
+                                        log.info("Added "+quantMap.size()+" entries");
                                         entityQuantMap.put(screenSample, quantMap);
                                     } catch (Exception ex) {
                                         throw new DaoException(ex);
@@ -2532,14 +2657,18 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 
 
     public Map<Entity, Map<String, Double>> getMaskQuantifiers(String maskFolderName) throws DaoException {
-        _logger.info("getMaskQuantifiers() folder name=" + maskFolderName + " : starting search for entities of type=" + EntityConstants.TYPE_SCREEN_SAMPLE);
+        if (log.isTraceEnabled()) {
+            log.trace("getMaskQuantifiers(maskFolderName="+maskFolderName+")");
+        }
+        
+        log.info("getMaskQuantifiers() folder name=" + maskFolderName + " : starting search for entities of type=" + EntityConstants.TYPE_SCREEN_SAMPLE);
         List<Entity> flyScreenSampleEntityList = getUserEntitiesByTypeName(null, EntityConstants.TYPE_SCREEN_SAMPLE);
-        _logger.info("getPatternQuantifiersForScreenSample: found " + flyScreenSampleEntityList.size() + " entities of type=" + EntityConstants.TYPE_SCREEN_SAMPLE);
+        log.info("getPatternQuantifiersForScreenSample: found " + flyScreenSampleEntityList.size() + " entities of type=" + EntityConstants.TYPE_SCREEN_SAMPLE);
         Map<Entity, Map<String, Double>> entityQuantMap = new HashMap<Entity, Map<String, Double>>();
         long count = 0;
         for (Entity screenSample : flyScreenSampleEntityList) {
             // Get the file-path for the quantifier file
-            _logger.info("Exploring screenSample name=" + screenSample.getName() + " index=" + count + " of " + flyScreenSampleEntityList.size());
+            log.info("Exploring screenSample name=" + screenSample.getName() + " index=" + count + " of " + flyScreenSampleEntityList.size());
             Set<Entity> topChildren = screenSample.getChildren();
             for (Entity topChild : topChildren) {
                 if (topChild.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) &&
@@ -2558,7 +2687,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                                         //_logger.info("Child3 id="+child3.getId()+" type="+child3.getEntityType().getName()+" name="+child3.getName());
                                         if (child3.getEntityType().getName().equals(EntityConstants.TYPE_TEXT_FILE) && child3.getName().endsWith("quantifiers.txt")) {
                                             String quantifierFilePath = child3.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                                            _logger.info("Quantifier file path=" + quantifierFilePath);
+                                            log.info("Quantifier file path=" + quantifierFilePath);
                                             File quantFile = new File(quantifierFilePath);
                                             Map<String, Double> quantMap = new HashMap<String, Double>();
                                             try {
@@ -2572,7 +2701,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                                                     }
                                                 }
                                                 br.close();
-                                                _logger.info("Added " + quantMap.size() + " entries");
+                                                log.info("Added " + quantMap.size() + " entries");
                                                 entityQuantMap.put(screenSample, quantMap);
                                             }
                                             catch (Exception ex) {
@@ -2594,6 +2723,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 
     // This method returns two objects,  Map<Long, Map<String, String>> sampleInfoMap, Map<Long, List<Double>> quantifierInfoMap
     public Object[] getPatternAnnotationQuantifierMapsFromSummary() throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getPatternAnnotationQuantifierMapsFromSummary()");
+        }
+        
         try {
             //Object[] mapObjects = PatternAnnotationDataManager.loadPatternAnnotationQuantifierSummaryFile();
             //return mapObjects;
@@ -2605,6 +2738,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public Object[] getMaskQuantifierMapsFromSummary(String maskFolderName) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getMaskQuantifierMapsFromSummary(maskFolderName="+maskFolderName+")");
+        }
+        
         try {
             MaskAnnotationDataManager maskManager=new MaskAnnotationDataManager();
             String resourceDirString= SystemConfigurationProperties.getString("FileStore.CentralDir")+
@@ -2622,6 +2759,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public PatternAnnotationDataManager getPatternAnnotationDataManagerByType(String type) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getPatternAnnotationDataManagerByType(type="+type+")");
+        }
+        
         try {
             PatternAnnotationDataManager dataManager=null;
             if (type.equals(RelativePatternAnnotationDataManager.RELATIVE_TYPE)) {
@@ -2638,6 +2779,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public Entity saveBulkEntityTree(Entity root) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("saveBulkEntityTree(root="+root+")");
+        }
+        
     	if (root.getOwnerKey()==null) {
     		throw new IllegalArgumentException("Root entity must specify the owner key");
     	}
@@ -2645,12 +2790,15 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public Entity saveBulkEntityTree(Entity root, String subjectKey) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("saveBulkEntityTree(root="+root+", subjectKey="+subjectKey+")");
+        }
 
     	final int batchSize = 800;	
     	
-    	_logger.info("Saving bulk entity tree rooted at "+root.getName());
+    	log.info("Saving bulk entity tree rooted at "+root.getName());
     	
-        _logger.debug("Using owner key: "+subjectKey);
+        log.debug("Using owner key: "+subjectKey);
         
         java.sql.Date defaultDate = new java.sql.Date(new Date().getTime());
         
@@ -2660,7 +2808,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     	try {
     		List<Entity> entities = new ArrayList<Entity>();
     		int count = getEntitiesInTree(root, entities);
-    		_logger.info("Found "+entities.size()+" entities in tree, and "+count+" objects to be persisted.");
+    		log.info("Found "+entities.size()+" entities in tree, and "+count+" objects to be persisted.");
     		
     		List<Long> ids = TimebasedIdentifierGenerator.generateIdList(count);
     		
@@ -2772,7 +2920,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 	    	
 	    	conn.commit();
 	    	
-	        _logger.info("Saved bulk entity tree with root id="+newEntityId);
+	        log.info("Saved bulk entity tree with root id="+newEntityId);
 	        Entity saved = getEntityById(newEntityId);
 	        if (saved==null) {
 	        	throw new DaoException("Unknown error saving bulk entity tree");
@@ -2789,12 +2937,15 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 if (conn!=null) conn.close();	
         	}
         	catch (SQLException e) {
-        		_logger.warn("Ignoring error encountered while closing JDBC connection",e);
+        		log.warn("Ignoring error encountered while closing JDBC connection",e);
         	}
         }
     }
     
-    protected int getEntitiesInTree(Entity entity, List<Entity> allEntities) throws Exception {
+    private int getEntitiesInTree(Entity entity, List<Entity> allEntities) throws Exception {
+        if (log.isTraceEnabled()) {
+            log.trace("getEntitiesInTree(entity="+entity+", allEntities.size="+allEntities+")");
+        }
 
     	int count = 1;
     	
@@ -2811,14 +2962,22 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public List<String> getSubjectKeys(String subjectKey) {
-    	 List<String> subjectKeyList = new ArrayList<String>();
-    	 if (subjectKey==null || "".equals(subjectKey.trim())) return subjectKeyList;
-    	 subjectKeyList.add(subjectKey);
-    	 subjectKeyList.addAll(getGroupKeysForUsernameOrSubjectKey(subjectKey));
-    	 return subjectKeyList;
+        if (log.isTraceEnabled()) {
+            log.trace("getSubjectKeys(subjectKey=" + subjectKey + ")");
+        }
+        
+        List<String> subjectKeyList = new ArrayList<String>();
+        if (subjectKey == null || "".equals(subjectKey.trim())) return subjectKeyList;
+        subjectKeyList.add(subjectKey);
+        subjectKeyList.addAll(getGroupKeysForUsernameOrSubjectKey(subjectKey));
+        return subjectKeyList;
     }
-    
+
     public Set<String> getSubjectKeySet(String subjectKey) {
+        if (log.isTraceEnabled()) {
+            log.trace("getSubjectKeySet(subjectKey="+subjectKey+")");
+        }
+        
     	Set<String> subjectKeys = null;
     	if (subjectKey!=null) {
     		subjectKeys = new HashSet<String>(getSubjectKeys(subjectKey));
@@ -2826,17 +2985,22 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     	return subjectKeys;
     }
     
-    private List filterDuplicates(List list) {
-        return ImmutableSet.copyOf(list).asList();
-	}
 
 	@Override
 	public Set<EntityData> getParents(Entity entity) throws Exception {
+        if (log.isTraceEnabled()) {
+            log.trace("getParents(entity="+entity+")");
+        }
+        
 		return getParentEntityDatas(null, entity.getId());
 	}
 
 	@Override
 	public Entity populateChildren(Entity entity) throws Exception {
+        if (log.isTraceEnabled()) {
+            log.trace("populateChildren(entity="+entity+")");
+        }
+        
     	for(EntityData ed : entity.getEntityData()) {
     		Entity child = ed.getChildEntity(); // Force Hibernate to load the child entity
     	}
@@ -2849,16 +3013,16 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
      * @return
      */
     public Entity populateDescendants(String subjectKey, Entity entity) {
-        if (_logger.isDebugEnabled()) {
-            _logger.debug("populateDescendants(subjectKey="+subjectKey+",entity.name="+entity.getName()+")");
+        if (log.isTraceEnabled()) {
+            log.trace("populateDescendants(subjectKey="+subjectKey+",entity.name="+entity.getName()+")");
         }
         Set<String> subjectKeys = getSubjectKeySet(subjectKey);
         return populateDescendants(subjectKeys, entity, new HashSet<Long>(), "");
     }
     
     private Entity populateDescendants(Set<String> subjectKeys, Entity entity, Set<Long> visited, String indent) {
-        if (_logger.isTraceEnabled()) {
-            _logger.trace(indent+entity.getName());
+        if (log.isTraceEnabled()) {
+            log.trace("populateDescendants(subjectKey="+subjectKeys+",entity="+entity+",visited.size="+visited.size()+",indent="+indent+")");
         }
         
         if (entity == null) return entity;
@@ -2879,11 +3043,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public void deleteAttribute(String ownerKey, String attributeName) throws DaoException {
-        try {
-            if (_logger.isDebugEnabled()) {
-                _logger.debug("deleteAttribute(attributeName="+attributeName+")");  
-            }
-            
+        if (log.isTraceEnabled()) {
+            log.trace("deleteAttribute(attributeName="+attributeName+")");  
+        }
+        
+        try {    
             EntityAttribute attr = getEntityAttributeByName(attributeName);
             if (attr==null) {
                 throw new Exception("No such attribute: "+attributeName);
@@ -2904,7 +3068,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             }
             
             int rows = query.executeUpdate();
-            _logger.debug("Bulk deleted "+rows+" EntityData rows");
+            log.debug("Bulk deleted "+rows+" EntityData rows");
         }
         catch (Exception e) {
             throw new DaoException(e);
@@ -2912,6 +3076,9 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public Entity createAlignmentBoard(String subjectKey, String alignmentBoardName, String alignmentSpace, String opticalRes, String pixelRes) throws ComputeException {
+        if (log.isTraceEnabled()) {
+            log.trace("createAlignmentBoard(subjectKey="+subjectKey+", alignmentBoardName="+alignmentBoardName+", alignmentSpace="+alignmentSpace+", opticalRes="+opticalRes+", pixelRes="+pixelRes+")");  
+        }
         
         Entity board = newEntity(EntityConstants.TYPE_ALIGNMENT_BOARD, alignmentBoardName, subjectKey);
         board.setValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE, alignmentSpace);
@@ -2929,5 +3096,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         
         return board;
     }
-    
+
+    private List filterDuplicates(List list) {
+        return ImmutableSet.copyOf(list).asList();
+    }
 }

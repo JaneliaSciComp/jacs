@@ -62,7 +62,7 @@ public class MongoDbDAO extends AnnotationDAO {
     	largeOp.buildAnnotationMap();
     	largeOp.buildAncestorMap();
     	
-    	_logger.info("Getting entities");
+    	log.info("Getting entities");
     	
     	Map<Long,SimpleEntity> entityMap = new HashMap<Long,SimpleEntity>();
         int i = 0;
@@ -84,7 +84,7 @@ public class MongoDbDAO extends AnnotationDAO {
 	        stmt.setFetchSize(Integer.MIN_VALUE);
 	        
 			rs = stmt.executeQuery();
-	    	_logger.info("    Processing results");
+	    	log.info("    Processing results");
 			while (rs.next()) {
 				Long entityId = rs.getBigDecimal(1).longValue();
 				SimpleEntity entity = entityMap.get(entityId);
@@ -93,7 +93,7 @@ public class MongoDbDAO extends AnnotationDAO {
 		            	if (i%MONGODB_LOADER_BATCH_SIZE==0) {
 		            		List<DBObject> l = createEntityDocs(entityMap.values());
 		                    entityMap.clear();
-		            		_logger.info("    Inserting "+l.size()+" docs (i="+i+")");
+		            		log.info("    Inserting "+l.size()+" docs (i="+i+")");
 		            		ec.insert(l);
 		            	}
 					}
@@ -131,7 +131,7 @@ public class MongoDbDAO extends AnnotationDAO {
 
         	if (!entityMap.isEmpty()) {
         		List<DBObject> l = createEntityDocs(entityMap.values());
-        		_logger.info("    Inserting "+l.size()+" docs (i="+i+")");
+        		log.info("    Inserting "+l.size()+" docs (i="+i+")");
         		ec.insert(l);
         	}
     	}
@@ -149,9 +149,9 @@ public class MongoDbDAO extends AnnotationDAO {
             }
         }
 
-    	_logger.info("Completed adding "+i+" entities");
+    	log.info("Completed adding "+i+" entities");
 
-    	_logger.info("Creating indexes");
+    	log.info("Creating indexes");
         ec.ensureIndex("name");
         ec.ensureIndex("entity_type");
         ec.ensureIndex("username");
@@ -159,7 +159,7 @@ public class MongoDbDAO extends AnnotationDAO {
         ec.ensureIndex("child_ids");
         ec.ensureIndex("ancestor_ids");
         
-    	_logger.info("Completed data load");
+    	log.info("Completed data load");
     }
 
     protected List<DBObject> createEntityDocs(Collection<SimpleEntity> entities) {
@@ -216,7 +216,7 @@ public class MongoDbDAO extends AnnotationDAO {
     		ancestorSet = (AncestorSet)largeOp.getValue("ancestorMapCache", entity.getId());
     	}
     	else {
-    		_logger.warn("Large operations were not run, so we have no annotations or ancestors.");
+    		log.warn("Large operations were not run, so we have no annotations or ancestors.");
     		// TODO: get these another way
     	}
     	

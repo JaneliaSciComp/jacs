@@ -13,7 +13,7 @@ import javax.naming.NamingException;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
-import org.janelia.it.jacs.compute.access.UserDAO;
+import org.janelia.it.jacs.compute.access.SubjectDAO;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.*;
@@ -358,7 +358,7 @@ public abstract class SeriesLauncher implements ILauncher {
         Task task = ProcessDataHelper.getTask(processData);
         String ownerName = task.getOwner();
         // Check to see if the user wants email
-        Subject tmpUser = new UserDAO(logger).getSubjectByNameOrKey(ownerName);
+        Subject tmpUser = new SubjectDAO(logger).getSubjectByNameOrKey(ownerName);
         if (null == tmpUser) {
             logger.warn("Cannot notify user: " + ownerName + ". User does not exist in the db.");
             return;

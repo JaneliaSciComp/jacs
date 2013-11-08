@@ -40,7 +40,7 @@ public class ExportDAO extends ComputeBaseDAO {
     }
 
     public List<String> getProteinIDsBySearchID(String searchID) throws DaoException {
-        ProteinSearchDAO proteinSearchDAO = new ProteinSearchDAO(_logger);
+        ProteinSearchDAO proteinSearchDAO = new ProteinSearchDAO(log);
         List<String> proteinAccList = new ArrayList<String>();
         List<ProteinResult> list = proteinSearchDAO.getPagedCategoryResultsByNodeId(new Long(searchID),
                 0 /* start */, 0 /* end */, null /* sortArgs */);
@@ -52,7 +52,7 @@ public class ExportDAO extends ComputeBaseDAO {
 
     public List<String> getProteinIDsByClusterAnnotation(String clusterID, String annotationID) throws DaoException {
         List<String> proteinAccList = new ArrayList<String>();
-        FeatureDAO featureDAO = new FeatureDAO(_logger);
+        FeatureDAO featureDAO = new FeatureDAO(log);
         if (determineClusterType(clusterID) == CORE_CLUSTER_TYPE) {
             List<ProteinClusterAnnotationMember> memberList =
                     featureDAO.getPagedMatchingRepsFromCoreClusterWithAnnotation(
@@ -81,7 +81,7 @@ public class ExportDAO extends ComputeBaseDAO {
 
     public List<String> getNonRedundantProteinIDsByClusterID(String clusterID) throws DaoException {
         List<String> proteinAccList = new ArrayList<String>();
-        FeatureDAO featureDAO = new FeatureDAO(_logger);
+        FeatureDAO featureDAO = new FeatureDAO(log);
         if (determineClusterType(clusterID) == CORE_CLUSTER_TYPE) {
             List<ProteinClusterMember> memberList =
                     featureDAO.getPagedNRSeqMembersFromCoreCluster(
@@ -110,7 +110,7 @@ public class ExportDAO extends ComputeBaseDAO {
 
     public List<String> getMemberProteinIDsByClusterID(String clusterID) throws DaoException {
         List<String> proteinAccList = new ArrayList<String>();
-        FeatureDAO featureDAO = new FeatureDAO(_logger);
+        FeatureDAO featureDAO = new FeatureDAO(log);
         if (determineClusterType(clusterID) == CORE_CLUSTER_TYPE) {
             List<ProteinClusterMember> memberList =
                     featureDAO.getPagedSeqMembersFromCoreCluster(
@@ -140,7 +140,7 @@ public class ExportDAO extends ComputeBaseDAO {
     /* this method returns the protein list ordered by rank from lowest to highest, ie, best to worst */
     public List<String> getProteinIDsByBlastTaskID(String blastTaskID) throws DaoException {
         List<String> proteinAccList = new ArrayList<String>();
-        FeatureDAO featureDAO = new FeatureDAO(_logger);
+        FeatureDAO featureDAO = new FeatureDAO(log);
         SortArgument[] sortArgs = new SortArgument[1];
         sortArgs[0] = new SortArgument("rank", SortArgument.SORT_ASC);
         List<Object[]> results = featureDAO.getBlastResultsByTaskOrIDs(
@@ -195,7 +195,7 @@ public class ExportDAO extends ComputeBaseDAO {
                     uniqueCheck.add(acc);
                 }
             }
-            _logger.debug("getProteins: accList size=" + accList.size() + " of which " + uniqueCheck.size() + " are unqiue");
+            log.debug("getProteins: accList size=" + accList.size() + " of which " + uniqueCheck.size() + " are unqiue");
 //            StringBuffer hqlBuffer = new StringBuffer("select p " +
 //                    "from Protein p " +
 //                    "where p.accession in (:accList) ");
@@ -205,7 +205,7 @@ public class ExportDAO extends ComputeBaseDAO {
             Query query = getSession().createQuery(hqlBuffer.toString());
             query.setParameterList("accList", accList);
             List<Peptide> pList = query.list();
-            _logger.debug("getProteins: list returned size=" + pList.size());
+            log.debug("getProteins: list returned size=" + pList.size());
             Map<String, Peptide> pMap = new HashMap<String, Peptide>();
             for (Peptide p : pList) {
                 pMap.put(p.getAccession().trim(), p);
@@ -268,14 +268,14 @@ public class ExportDAO extends ComputeBaseDAO {
                     uniqueCheck.add(acc);
                 }
             }
-            _logger.debug("getBses: accList size=" + accList.size() + " of which " + uniqueCheck.size() + " are unqiue");
+            log.debug("getBses: accList size=" + accList.size() + " of which " + uniqueCheck.size() + " are unqiue");
             StringBuffer hqlBuffer = new StringBuffer("select b " +
                     "from BaseSequenceEntity b " +
                     "where b.accession in (:accList) ");
             Query query = getSession().createQuery(hqlBuffer.toString());
             query.setParameterList("accList", accList);
             List<BaseSequenceEntity> bList = query.list();
-            _logger.debug("getBses: list returned size=" + bList.size());
+            log.debug("getBses: list returned size=" + bList.size());
             Map<String, BaseSequenceEntity> bMap = new HashMap<String, BaseSequenceEntity>();
             for (BaseSequenceEntity b : bList) {
                 bMap.put(b.getAccession().trim(), b);
