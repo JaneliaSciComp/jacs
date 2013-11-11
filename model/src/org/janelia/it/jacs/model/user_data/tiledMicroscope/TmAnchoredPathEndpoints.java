@@ -1,5 +1,10 @@
 package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 
+import com.google.gwt.user.client.rpc.IsSerializable;
+
+import java.io.Serializable;
+
+
 /**
  * this class encapsulates a pair of TmGeoAnnotation IDs, intended to be
  * neighboring, between which we will have a TmAnchoredPath; the
@@ -9,7 +14,7 @@ package org.janelia.it.jacs.model.user_data.tiledMicroscope;
  * Date: 10/23/13
  * Time: 12:52 PM
  */
-public class TmAnchoredPathEndpoints {
+public class TmAnchoredPathEndpoints implements IsSerializable, Serializable {
     private Long annotationID1;
     private Long annotationID2;
 

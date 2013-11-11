@@ -26,7 +26,7 @@ public class TmAnchoredPath implements IsSerializable, Serializable {
 
     // VoxelIndex and Vec3 not available to model, so wing it; these
     //  will be 3-vectors (x, y, z):
-    List<List<Integer>> pointList;
+    List<List<Integer>> pointList = new ArrayList<List<Integer>>();
 
     public TmAnchoredPath(Long id, TmAnchoredPathEndpoints endpoints, List<List<Integer>> pointList) throws Exception{
         this.id = id;
@@ -51,10 +51,10 @@ public class TmAnchoredPath implements IsSerializable, Serializable {
             if (coords.length != 3) {
                 throw new Exception(String.format("couldn't parse coordinates %s", fields[i]));
             }
-            ArrayList<Integer> temp = new ArrayList<Integer>(3);
-            temp.set(0, Integer.parseInt(coords[0]));
-            temp.set(1, Integer.parseInt(coords[1]));
-            temp.set(2, Integer.parseInt(coords[2]));
+            ArrayList<Integer> temp = new ArrayList<Integer>();
+            temp.add(Integer.parseInt(coords[0]));
+            temp.add(Integer.parseInt(coords[1]));
+            temp.add(Integer.parseInt(coords[2]));
             pointList.add(temp);
         }
 
@@ -86,7 +86,11 @@ public class TmAnchoredPath implements IsSerializable, Serializable {
     }
 
     public String toString() {
-        return String.format("<path between %d, %d", endpoints.getAnnotationID1(), endpoints.getAnnotationID2());
+        if (endpoints != null) {
+            return String.format("<path between %d, %d>", endpoints.getAnnotationID1(), endpoints.getAnnotationID2());
+        } else {
+            return "<uninitialized path>";
+        }
     }
 
     public Long getId() {
