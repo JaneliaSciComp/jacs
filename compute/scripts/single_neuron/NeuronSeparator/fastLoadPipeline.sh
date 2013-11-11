@@ -155,7 +155,7 @@ do
     cat $REF_FILE | $NSDIR/v3draw_resample ${MV}000000 2> Reference2_$MV.sizes | $NSDIR/v3draw_hdrgamma 0.20 1.00 0.46 2> Reference2_$MV.colors | $NSDIR/v3draw_to_8bit > Reference2_$MV.v3draw
 
     echo "~ Creating single color files for MV=$MV"
-    cat ConsolidatedSignal2_$MV.v3draw | $NSDIR/v3draw_select_channels 0 > ConsolidatedSignal2Red_$MV.v3draw    
+    cat ConsolidatedSignal2_$MV.v3draw | $NSDIR/v3draw_select_channels 0 > ConsolidatedSignal2Red_$MV.v3draw 
     cat ConsolidatedSignal2_$MV.v3draw | $NSDIR/v3draw_select_channels 1 > ConsolidatedSignal2Green_$MV.v3draw
     cat ConsolidatedSignal2_$MV.v3draw | $NSDIR/v3draw_select_channels 2 > ConsolidatedSignal2Blue_$MV.v3draw
 
@@ -167,11 +167,10 @@ done
 echo "~ Creating final output in: $OUTDIR"
 
 mkdir -p $OUTDIR
-$Vaa3D -cmd image-loader -convert ConsolidatedLabel3.v3draw $OUTDIR/ConsolidatedLabel3.v3dpbd
+#$Vaa3D -cmd image-loader -convert ConsolidatedLabel3.v3draw $OUTDIR/ConsolidatedLabel3.v3dpbd
 #$Vaa3D -cmd image-loader -convert ConsolidatedSignal3.v3draw $OUTDIR/ConsolidatedSignal3.v3dpbd
-$Vaa3D -cmd image-loader -convert ConsolidatedSignal2.v3draw $OUTDIR/ConsolidatedSignal2.v3dpbd
-$Vaa3D -cmd image-loader -convert Reference2.v3draw $OUTDIR/Reference2.v3dpbd
-
+#$Vaa3D -cmd image-loader -convert ConsolidatedSignal2.v3draw $OUTDIR/ConsolidatedSignal2.v3dpbd
+#$Vaa3D -cmd image-loader -convert Reference2.v3draw $OUTDIR/Reference2.v3dpbd
 $Vaa3D -cmd image-loader -convert ConsolidatedSignal2.v3draw $OUTDIR/ConsolidatedSignal2.mp4
 $Vaa3D -cmd image-loader -convert Reference2.v3draw $OUTDIR/Reference2.mp4
 $Vaa3D -cmd image-loader -convert ConsolidatedSignal2Red.v3draw $OUTDIR/ConsolidatedSignal2Red.mp4
@@ -181,11 +180,9 @@ $Vaa3D -cmd image-loader -convert ConsolidatedSignal2Blue.v3draw $OUTDIR/Consoli
 for MV in ${MV_SIZES[@]}
 do
     echo "~ Compressing files for MV=$MV"
-    
-    $Vaa3D -cmd image-loader -convert ConsolidatedLabel2_$MV.v3draw $OUTDIR/ConsolidatedLabel2_$MV.v3dpbd
-    $Vaa3D -cmd image-loader -convert ConsolidatedSignal2_$MV.v3draw $OUTDIR/ConsolidatedSignal2_$MV.v3dpbd
-    $Vaa3D -cmd image-loader -convert Reference2_$MV.v3draw $OUTDIR/Reference2_$MV.v3dpbd
-    
+    #$Vaa3D -cmd image-loader -convert ConsolidatedLabel2_$MV.v3draw $OUTDIR/ConsolidatedLabel2_$MV.v3dpbd
+    #$Vaa3D -cmd image-loader -convert ConsolidatedSignal2_$MV.v3draw $OUTDIR/ConsolidatedSignal2_$MV.v3dpbd
+    #$Vaa3D -cmd image-loader -convert Reference2_$MV.v3draw $OUTDIR/Reference2_$MV.v3dpbd
     $Vaa3D -cmd image-loader -convert ConsolidatedSignal2_$MV.v3draw $OUTDIR/ConsolidatedSignal2_$MV.mp4
     $Vaa3D -cmd image-loader -convert Reference2_$MV.v3draw $OUTDIR/Reference2_$MV.mp4
     $Vaa3D -cmd image-loader -convert ConsolidatedSignal2Red_$MV.v3draw $OUTDIR/ConsolidatedSignal2Red_$MV.mp4
@@ -197,14 +194,14 @@ cp *.metadata $OUTDIR # 10 files
 
 cd $OUTDIR
 #ln -s ../Reference.v3dpbd Reference3.v3dpbd
-ln -s ConsolidatedLabel3.v3dpbd ConsolidatedLabel2.v3dpbd
+#ln -s ConsolidatedLabel3.v3dpbd ConsolidatedLabel2.v3dpbd
 
 echo "~ Removing fastLoad temp files"
 rm -rf $WORKING_DIR
 
-echo "~ Moving large files to archive directory: $OUTDIR_LARGE"
-mkdir -p $OUTDIR_LARGE
-mv $OUTDIR/*.v3dpbd $OUTDIR_LARGE
+#echo "~ Moving large files to archive directory: $OUTDIR_LARGE"
+#mkdir -p $OUTDIR_LARGE
+#mv $OUTDIR/*.v3dpbd $OUTDIR_LARGE
 
 echo "~ Finished with fastLoad pipeline"
 
