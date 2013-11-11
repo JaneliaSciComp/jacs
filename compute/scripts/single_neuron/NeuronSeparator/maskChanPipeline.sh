@@ -50,6 +50,14 @@ if [ ! -f "$SIGNAL_FILE" ]; then
     fi
 fi
 
+if [ ! -f "$REF_FILE" ]; then
+    REF_FILE="$SEPDIR/Reference.v3dpbd"
+    if [ ! -f "$REF_FILE" ]; then
+        echo "Reference file not found: $REF_FILE"
+        exit
+    fi
+fi
+
 OUTDIR=$SEPDIR/archive/maskChan
 export TMPDIR="$SEPDIR"
 WORKING_DIR=`mktemp -d`
