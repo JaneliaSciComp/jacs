@@ -106,7 +106,7 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
 
         // Compartments belong to a compartment set that has characteristics of all contents.
         EntityType compartmentSetEntityType = entityBean.getEntityTypeByName( EntityConstants.TYPE_COMPARTMENT_SET );
-        String compartmentSetName = "Compartment Set " + DEFAULT_ALIGNMENT_SPACE + " " + opticalResolution + " " + pixelResolution;
+        String compartmentSetName = EntityConstants.TYPE_COMPARTMENT_SET + " " + DEFAULT_ALIGNMENT_SPACE + " " + opticalResolution + " " + pixelResolution;
         Entity compartmentSetEntity = createCompartmentSetEntity( compartmentSetEntityType, compartmentSetName, opticalResolution, pixelResolution );
 
         // Add this set as an entity-child of the folder.
