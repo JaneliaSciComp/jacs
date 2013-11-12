@@ -223,7 +223,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     	
     	try {
         	EntityVistationBuilder visitationBuilder = new EntityVistationBuilder(this).startAt(rootEntity);
-    		visitationBuilder = recursive ? visitationBuilder.ancestors() : visitationBuilder.root();
+    		visitationBuilder = recursive ? visitationBuilder.descendants() : visitationBuilder.root();
         	visitationBuilder.run(new EntityVisitor() {
     			@Override
     			public void visit(Entity entity) throws Exception {
@@ -328,7 +328,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     	try {
     	    final Set<Long> revokedIds = new HashSet<Long>();
         	EntityVistationBuilder visitationBuilder = new EntityVistationBuilder(this).startAt(rootEntity);
-    		visitationBuilder = recursive ? visitationBuilder.ancestors() : visitationBuilder.root();
+    		visitationBuilder = recursive ? visitationBuilder.descendants() : visitationBuilder.root();
         	visitationBuilder.run(new EntityVisitor() {
     			@Override
     			public void visit(Entity entity) throws Exception {
@@ -1392,7 +1392,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         else {
         	List<Entity> entities = getEntitiesInList(subjectKey, entityIds);	
         	for(Entity entity : entities) {
-        		populateDescendants(entity.getOwnerKey(), entity);
+        		loadLazyEntity(entity.getOwnerKey(), entity, true);
         	}
         	return filterDuplicates(entities);
         }
@@ -1753,82 +1753,13 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         return childData;
     }
     
-    public Entity cloneEntityTree(Long sourceRootId, String targetSubjectKey, String targetRootName) throws ComputeException {
-        if (log.isTraceEnabled()) {
-            log.trace("cloneEntityTree(sourceRootId="+sourceRootId+", targetSubjectKey="+targetSubjectKey+", targetRootName="+targetRootName+")");
-        }
-        
-    	Entity sourceRoot = getEntityById(sourceRootId);    	
-    	if (sourceRoot == null) {
-    		throw new DaoException("Cannot find the source root.");
-    	}
-    	
-        Entity cloned = cloneEntityTree(sourceRoot, targetSubjectKey, targetRootName, true);
-        return cloned;
-    }
-
-	// TODO: detect cycles
-    private Entity cloneEntityTree(Entity source, String targetSubjectKey, String targetName, boolean isRoot) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("cloneEntityTree(source="+source+", targetSubjectKey="+targetSubjectKey+", targetName="+targetName+", isRoot="+isRoot+")");
-        }
-
-        EntityAttribute tmpAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_IS_PUBLIC);
-        
-        // Create new ontology element
-        Entity newOntologyElement = newEntity(source.getEntityType(), targetName, targetSubjectKey);
-        saveOrUpdate(newOntologyElement);
-
-        log.info("newOntologyElement.id="+newOntologyElement.getId());
-        
-        // Add the children 
-    	for(EntityData ed : source.getEntityData()) {
-
-    		// Never clone "Is Public" attributes. Entities are cloned privately. 
-    		if (ed.getEntityAttribute().getId().equals(tmpAttr.getId())) continue;
-    		
-    		Entity newChildEntity = null;
-    		Entity childEntity = ed.getChildEntity();
-    		if (childEntity != null) {
-    			newChildEntity = cloneEntityTree(childEntity, targetSubjectKey, childEntity.getName(), false);	
-    		}
-    		
-            EntityData newEd = newOntologyElement.addChildEntity(newChildEntity, ed.getEntityAttribute().getName());
-            newEd.setOrderIndex(ed.getOrderIndex());
-            newEd.setValue(ed.getValue());
-            saveOrUpdate(newEd);
-    	}
-
-    	return newOntologyElement;
-    }
-
-    public Entity publishOntology(Long sourceRootId, String targetRootName) throws ComputeException {
-        if (log.isTraceEnabled()) {
-            log.trace("publishOntology(sourceRootId="+sourceRootId+", targetRootName="+targetRootName+")");
-        }
-
-    	Entity sourceRoot = getEntityById(sourceRootId);    	
-    	if (sourceRoot == null) {
-    		throw new DaoException("Cannot find the source root.");
-    	}
-	
-        Entity clonedEntity = cloneEntityTree(sourceRoot, sourceRoot.getOwnerKey(), targetRootName, true);
-
-        // Add the public tag
-        EntityData publicEd = newData(clonedEntity, EntityConstants.ATTRIBUTE_IS_PUBLIC, sourceRoot.getOwnerKey());
-        publicEd.setValue("true");
-        saveOrUpdate(publicEd);
-        
-        return clonedEntity;
-    }
-    
     public void fixInternalOntologyConsistency(Long sourceRootId) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("fixInternalOntologyConsistency(sourceRootId="+sourceRootId+")");
         }
         
     	Entity ontologyRoot = getEntityById(sourceRootId);
-    	ontologyRoot = populateDescendants(ontologyRoot.getOwnerKey(), ontologyRoot);
+    	ontologyRoot = loadLazyEntity(ontologyRoot.getOwnerKey(), ontologyRoot, true);
     	if (ontologyRoot==null) return;
     	log.warn("Fixing internal consistency for ontology "+ontologyRoot.getName()+" (id="+ontologyRoot.getId()+")");
     	Map<String,Long> enumMap = new HashMap<String,Long>();
@@ -2462,24 +2393,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         
         return annotationIds;
     }
-    
-    public void loadLazyEntity(String subjectKey, Entity entity, boolean recurse) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("loadLazyEntity(subjectKey="+subjectKey+", entity="+entity+", recurse="+recurse+")");
-        }
-
-        if (!EntityUtils.areLoaded(entity.getEntityData())) {
-            EntityUtils.replaceChildNodes(entity, getChildEntities(subjectKey, entity.getId()));
-        }
-
-        if (recurse) {
-            for (EntityData ed : entity.getEntityData()) {
-                if (ed.getChildEntity() != null) {
-                    loadLazyEntity(subjectKey, ed.getChildEntity(), true);
-                }
-            }
-        }
-    }
 
     public Entity annexEntityTree(String subjectKey, Long entityId) throws ComputeException {
         if (log.isTraceEnabled()) {
@@ -3007,38 +2920,68 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     	return entity;
 	}
 
-    /**
-     * Iterate recursively through all children in the Entity graph in order to preload them.
-     * @param entity
-     * @return
-     */
-    public Entity populateDescendants(String subjectKey, Entity entity) {
-        if (log.isTraceEnabled()) {
-            log.trace("populateDescendants(subjectKey="+subjectKey+",entity.name="+entity.getName()+")");
-        }
-        Set<String> subjectKeys = getSubjectKeySet(subjectKey);
-        return populateDescendants(subjectKeys, entity, new HashSet<Long>(), "");
-    }
+//    /**
+//     * Iterate recursively through all children in the Entity graph in order to preload them.
+//     * @param entity
+//     * @return
+//     */
+//    public Entity populateDescendants(String subjectKey, Entity entity) {
+//        if (log.isTraceEnabled()) {
+//            log.trace("populateDescendants(subjectKey="+subjectKey+",entity.name="+entity.getName()+")");
+//        }
+//        Set<String> subjectKeys = getSubjectKeySet(subjectKey);
+//        return populateDescendants(subjectKeys, entity, new HashSet<Long>());
+//    }
+//    
+//    private Entity populateDescendants(Set<String> subjectKeys, Entity entity, Set<Long> visited) {
+//        if (log.isTraceEnabled()) {
+//            log.trace("populateDescendants(subjectKey="+subjectKeys+",entity="+entity+",visited.size="+visited.size()+")");
+//        }
+//        
+//        if (entity == null) return entity;
+//        
+//        if (subjectKeys!=null && !subjectKeys.contains(entity.getOwnerKey())) return entity;
+//        
+//        if (visited.contains(entity.getId())) return entity;
+//        visited.add(entity.getId());
+//
+//        // Populate descendants
+//        for(EntityData ed : entity.getEntityData()) {
+//            Entity child = ed.getChildEntity();
+//            if (child != null) {
+//                populateDescendants(subjectKeys, child, visited);
+//            }
+//        }
+//        return entity;
+//    }
     
-    private Entity populateDescendants(Set<String> subjectKeys, Entity entity, Set<Long> visited, String indent) {
+    public Entity loadLazyEntity(String subjectKey, Entity entity, boolean recurse) throws DaoException {
         if (log.isTraceEnabled()) {
-            log.trace("populateDescendants(subjectKey="+subjectKeys+",entity="+entity+",visited.size="+visited.size()+",indent="+indent+")");
+            log.trace("loadLazyEntity(subjectKey="+subjectKey+", entity="+entity+", recurse="+recurse+")");
         }
-        
-        if (entity == null) return entity;
-        
-        if (subjectKeys!=null && !subjectKeys.contains(entity.getOwnerKey())) return entity;
+        return loadLazyEntity(subjectKey, entity, recurse, new HashSet<Long>());
+    }
+
+    public Entity loadLazyEntity(String subjectKey, Entity entity, boolean recurse, Set<Long> visited) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("loadLazyEntity(subjectKey="+subjectKey+", entity="+entity+", recurse="+recurse+", visited.size="+visited.size()+")");
+        }
         
         if (visited.contains(entity.getId())) return entity;
         visited.add(entity.getId());
+        
+        if (!EntityUtils.areLoaded(entity.getEntityData())) {
+            EntityUtils.replaceChildNodes(entity, getChildEntities(subjectKey, entity.getId()));
+        }
 
-        // Populate descendants
-        for(EntityData ed : entity.getEntityData()) {
-            Entity child = ed.getChildEntity();
-            if (child != null) {
-                populateDescendants(subjectKeys, child, visited, indent+" ");
+        if (recurse) {
+            for (EntityData ed : entity.getEntityData()) {
+                if (ed.getChildEntity() != null) {
+                    loadLazyEntity(subjectKey, ed.getChildEntity(), true, visited);
+                }
             }
         }
+        
         return entity;
     }
     

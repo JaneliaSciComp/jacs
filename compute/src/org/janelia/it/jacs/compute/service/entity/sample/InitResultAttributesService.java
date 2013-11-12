@@ -27,7 +27,15 @@ public class InitResultAttributesService extends AbstractEntityService {
     	
     	populateChildren(resultEntity);
     	Entity default3dImage = resultEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+    	
+    	if (default3dImage==null) {
+    	    throw new IllegalStateException("Result entity has no default 3d image: "+resultEntityId);
+    	}
+    	
     	logger.info("Retrieved image: "+default3dImage.getName()+" (id="+default3dImage.getId()+")");
+    	
+    	logger.info("Putting '"+default3dImage.getId()+"' in DEFAULT_IMAGE_ID");
+        processData.putItem("DEFAULT_IMAGE_ID", default3dImage.getId().toString());
     	
         String chanSpec = default3dImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
         if (chanSpec==null) {

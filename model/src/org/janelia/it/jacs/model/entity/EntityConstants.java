@@ -85,7 +85,6 @@ public class EntityConstants {
     public static final String ATTRIBUTE_IS_PROTECTED                        = "Is Protected"; // Protected from deletion/modification by owner
     public static final String ATTRIBUTE_ENTITY                              = "Entity"; // A generic attribute so that a folder can contain any entity
     public static final String ATTRIBUTE_ONTOLOGY_TERM_TYPE                  = "Ontology Term Type";
-    public static final String ATTRIBUTE_IS_PUBLIC                           = "Is Public";
     public static final String ATTRIBUTE_ONTOLOGY_TERM_TYPE_ENUMTEXT_ENUMID  = "Ontology Term Type EnumText Enum Id";
     public static final String ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER   = "Ontology Term Type Interval Lower Bound";
     public static final String ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER   = "Ontology Term Type Interval Upper Bound";
@@ -180,6 +179,11 @@ public class EntityConstants {
     public static final String VALUE_ONTOLOGY_TERM_TYPE_TEXT                = "Text";
     public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM_TEXT           = "EnumText";
 
+    /**
+     * @deprecated Use permissions instead. This will be removed someday.
+     */
+    public static final String ATTRIBUTE_IS_PUBLIC                           = "Is Public";
+    
     /**
      * @deprecated Use TYPE_IMAGE_3D instead. This will be removed someday.
      */

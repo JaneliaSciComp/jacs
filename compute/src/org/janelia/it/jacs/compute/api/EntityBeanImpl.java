@@ -353,29 +353,10 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     }
     
     public boolean deleteEntityTree(String subjectKey, Long entityId) throws ComputeException {
-    	try {
-            Entity currEntity = getEntityById(subjectKey, entityId);
-            if (currEntity==null) {
-                throw new Exception("Entity not found: "+entityId);
-            }
-            if (subjectKey!=null && !EntityUtils.hasWriteAccess(currEntity, _annotationDAO.getSubjectKeys(subjectKey))) {
-                throw new ComputeException("Subject "+subjectKey+" cannot change "+entityId);
-            }
-    		_annotationDAO.deleteEntityTree(subjectKey, currEntity);
-    		_logger.info(subjectKey+" deleted entity tree "+entityId);
-    		return true;
-    	}
-        catch (Exception e) {
-            _logger.error("Error deleting entity tree "+entityId,e);
-            throw new ComputeException("Error deleting entity tree "+entityId,e);
-        }
+    	return deleteEntityTree(subjectKey, entityId, false);
     }
 
-    public boolean deleteSmallEntityTree(String subjectKey, Long entityId) throws ComputeException {
-        return deleteSmallEntityTree(subjectKey, entityId, false);
-    }
-
-    public boolean deleteSmallEntityTree(String subjectKey, Long entityId, boolean unlinkMultipleParents) throws ComputeException {
+    public boolean deleteEntityTree(String subjectKey, Long entityId, boolean unlinkMultipleParents) throws ComputeException {
         try {
             Entity currEntity = getEntityById(subjectKey, entityId);
             if (currEntity==null) {
@@ -385,7 +366,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
                 throw new ComputeException("Subject "+subjectKey+" cannot change "+entityId);
             }
             _annotationDAO.deleteEntityTree(subjectKey, currEntity, unlinkMultipleParents);
-            _logger.info(subjectKey+" deleted small entity tree "+entityId);
+            _logger.info(subjectKey+" deleted entity tree "+entityId);
             return true;
         }
         catch (Exception e) {
@@ -613,15 +594,11 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     }
 
     public Entity getEntityTree(Long entityId) throws ComputeException {
-        // We can use the more efficient populateDescendants instead of loadLazyEntity, because we don't care about
-        // the permissions being loaded, since this method is for local use.
-        return _annotationDAO.populateDescendants(null, getEntityById(null, entityId));
+        return getEntityTree(null, entityId);
     }
 
     public Entity getEntityTree(String subjectKey, Long entityId) throws ComputeException {
         Entity entity = getEntityById(subjectKey, entityId);
-        // We can't use populateDescendants because it doesn't load the permissions. 
-        // TODO: This is a little slow to use for loading an entire tree recursively and should be improved:
     	_annotationDAO.loadLazyEntity(subjectKey, entity, true);    	
     	return entity;
     }

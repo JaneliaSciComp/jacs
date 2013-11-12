@@ -614,7 +614,7 @@ public class PatternAnnotationSampleService  implements IService {
 
         // Now we know the files to delete, so we can delete the folder entity tree
         logger.info("Deleting entity tree for prior pattern annotation folderId="+patternAnnotationFolder.getId());
-        entityBean.deleteSmallEntityTree(task.getOwner(), patternAnnotationFolder.getId());
+        entityBean.deleteEntityTree(task.getOwner(), patternAnnotationFolder.getId());
         logger.info("Finished deleting entity tree");
         // Now we can delete the files and then directories
         for (File fileToDelete : filesToDelete) {

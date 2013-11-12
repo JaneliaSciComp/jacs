@@ -44,8 +44,7 @@ public interface EntityBeanRemote {
     
     public boolean deleteEntityById(String subjectKey, Long entityId) throws ComputeException;
     public boolean deleteEntityTree(String subjectKey, Long entityId) throws ComputeException;
-    public boolean deleteSmallEntityTree(String subjectKey, Long entityId) throws ComputeException;
-    public boolean deleteSmallEntityTree(String subjectKey, Long entityId, boolean unlinkMultipleParents) throws ComputeException;
+    public boolean deleteEntityTree(String subjectKey, Long entityId, boolean unlinkMultipleParents) throws ComputeException;
     public void deleteEntityData(String subjectKey, Long entityDataId) throws ComputeException;
     
     public Entity getEntityById(String subjectKey, Long entityId) throws ComputeException;

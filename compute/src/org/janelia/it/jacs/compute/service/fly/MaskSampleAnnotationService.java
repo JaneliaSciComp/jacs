@@ -534,7 +534,7 @@ public class MaskSampleAnnotationService  implements IService {
 
         // Now we know the files to delete, so we can delete the folder entity tree
         if (DEBUG) logger.info("Deleting entity tree for prior mask annotation folderId="+maskAnnotationFolder.getId());
-        entityBean.deleteSmallEntityTree(ownerKey, maskAnnotationFolder.getId());
+        entityBean.deleteEntityTree(ownerKey, maskAnnotationFolder.getId());
         if (DEBUG) logger.info("Finished deleting entity tree");
         // Now we can delete the files and then directories
         for (File fileToDelete : filesToDelete) {

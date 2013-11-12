@@ -77,46 +77,6 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     		throw new ComputeException("Could not delete ontology term", e);
     	}
     }
-   
-    public Entity cloneEntityTree(String subjectKey, Long sourceRootId, String targetRootName) throws ComputeException {
-        try {
-        	Entity ontologyRoot = _annotationDAO.getEntityById(sourceRootId);
-            if (ontologyRoot==null) {
-                throw new Exception("Ontology not found: "+sourceRootId);
-            }
-        	if (null==ontologyRoot.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PUBLIC)) {
-        		throw new ComputeException("Cannot copy a private ontology:"+ontologyRoot.getId());
-        	}
-            Entity clonedTree = _annotationDAO.cloneEntityTree(sourceRootId, subjectKey, targetRootName);
-            _annotationDAO.fixInternalOntologyConsistency(clonedTree.getId());
-            _logger.info(subjectKey+" cloned ontology tree "+sourceRootId+" as "+targetRootName);
-            return clonedTree;
-        }
-        catch (Exception e) {
-            _logger.error("Error cloning ontology ("+sourceRootId+")",e);
-            throw new ComputeException("Error cloning ontology",e);
-        }
-    }
-
-    public Entity publishOntology(String subjectKey, Long sourceRootId, String targetRootName) throws ComputeException {
-        try {
-        	Entity ontologyRoot = _annotationDAO.getEntityById(sourceRootId);
-            if (ontologyRoot==null) {
-                throw new Exception("Ontology not found: "+sourceRootId);
-            }
-        	if (!subjectKey.equals(ontologyRoot.getOwnerKey())) {
-        		throw new ComputeException(subjectKey+" cannot publish ontology tree "+sourceRootId);
-        	}
-            Entity publishedTree = _annotationDAO.publishOntology(sourceRootId, targetRootName);
-            _logger.info("Subject "+subjectKey+" publishing ontology tree "+sourceRootId+" as "+targetRootName);
-            _annotationDAO.fixInternalOntologyConsistency(publishedTree.getId());
-            return publishedTree;
-        }
-        catch (Exception e) {
-            _logger.error("Error publishing ontology ("+sourceRootId+")",e);
-            throw new ComputeException("Error publishing ontology",e);
-        }
-    }
 
 	public Entity createOntologyAnnotation(String subjectKey, OntologyAnnotation annotation) throws ComputeException {
 
@@ -168,28 +128,14 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
 	}
 	
-    public Entity getOntologyTree(String subjectKey, Long id) throws ComputeException {
-
+	@Deprecated
+	/**
+	 * Use of this method should be replaced with EntityBeanRmote.getEntityTree, it does exactly the same thing.
+	 */
+    public Entity getOntologyTree(String subjectKey, Long entityId) throws ComputeException {
         try {
-            Entity root = _annotationDAO.getEntityById(id);
-            if (root == null) return null;
-            
-            // TODO: use permissions instead of Is Public attribute
-
-            boolean access = false;
-            for(String s : _annotationDAO.getSubjectKeys(subjectKey)) {
-            	if (root.getOwnerKey().equals(s)) {
-            		access = true;
-            	}
-            }
-            
-            if (!access) {
-            	if (root.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PUBLIC) == null) {
-            		throw new DaoException("Subject "+subjectKey+" does not have access to this private ontology");
-            	}
-            }
-            
-            return _annotationDAO.populateDescendants(subjectKey, root);
+            Entity entity = _annotationDAO.getEntityById(subjectKey, entityId);
+            return _annotationDAO.loadLazyEntity(subjectKey, entity, true);
         }
         catch (Exception e) {
             _logger.error("Error getting ontology tree",e);

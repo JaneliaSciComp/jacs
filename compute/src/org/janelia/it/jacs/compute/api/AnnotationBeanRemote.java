@@ -27,10 +27,7 @@ public interface AnnotationBeanRemote {
 
     public Entity createOntologyRoot(String subjectKey, String rootName) throws ComputeException;
     public EntityData createOntologyTerm(String subjectKey, Long ontologyTermParentId, String termName, OntologyElementType type, Integer orderIndex) throws ComputeException;
-
-    public Entity cloneEntityTree(String subjectKey, Long sourceRootId, String targetRootName) throws ComputeException;
-    public Entity publishOntology(String subjectKey, Long sourceRootId, String targetRootName) throws ComputeException;
-
+    
 	public Entity createOntologyAnnotation(String subjectKey, OntologyAnnotation annotation) throws ComputeException;
 	public void removeOntologyAnnotation(String subjectKey, long annotationId) throws ComputeException;
 	public void removeAllOntologyAnnotationsForSession(String subjectKey, long sessionId) throws ComputeException;

@@ -82,8 +82,8 @@ public class EntityVistationBuilder {
 		EntityFilter filter = filters.get(level);
 		EntityFilter nextFilter = filters.size()>level+1 ? filters.get(level+1) : null;
 		
-		if (filter instanceof Ancestors) {
-		    logger.trace(indent+"Process ancestors:");
+		if (filter instanceof Descendants) {
+		    logger.trace(indent+"Process descendants:");
 			runRecursively(entity, visitor, new HashSet<Long>());
 		}
 		else if (filter instanceof Root) {
@@ -150,8 +150,8 @@ public class EntityVistationBuilder {
     	return this;
     }
 
-	public EntityVistationBuilder ancestors() {
-		filters.add(new Ancestors());
+	public EntityVistationBuilder descendants() {
+		filters.add(new Descendants());
 		return this;
 	}
 
@@ -200,7 +200,7 @@ public class EntityVistationBuilder {
         return this;
     }
     
-    private class Ancestors implements EntityFilter {
+    private class Descendants implements EntityFilter {
     }
 
     private class Root implements EntityFilter {

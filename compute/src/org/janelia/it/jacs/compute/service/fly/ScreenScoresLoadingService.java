@@ -370,7 +370,7 @@ public class ScreenScoresLoadingService extends AbstractEntityService {
 			long ontologyId = matching.iterator().next().getId();
 			logger.info("Reusing existing ontology called '"+SCORE_ONTOLOGY_NAME+"' (id="+ontologyId+")");
 			
-			Entity ontologyTree = annotationBean.getOntologyTree(ownerKey, ontologyId);
+			Entity ontologyTree = entityBean.getEntityTree(ownerKey, ontologyId);
 
 			maaIntensityEnum = EntityUtils.findChildWithName(ontologyTree, ScreenScoresLoadingService.MAA_INTENSITY_NAME);
 			maaDistributionEnum = EntityUtils.findChildWithName(ontologyTree, ScreenScoresLoadingService.MAA_DISTRIBUTION_NAME);
