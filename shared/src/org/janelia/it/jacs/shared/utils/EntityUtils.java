@@ -679,13 +679,6 @@ public class EntityUtils {
         }
     }
 
-	public static void replaceEntityData(Entity entity, EntityData ed, EntityData savedEd) {
-		if (!entity.getEntityData().remove(ed)) {
-			throw new IllegalStateException("Entity does not contain EntityData: "+ed.getId());
-		}
-		entity.getEntityData().add(savedEd);
-	}
-
 	/**
 	 * Returns true if the given data should not be directly displayed in the GUI.
 	 * @param entityData
