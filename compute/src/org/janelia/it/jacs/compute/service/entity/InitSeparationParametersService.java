@@ -156,6 +156,12 @@ public class InitSeparationParametersService extends AbstractEntityService {
         
         populateChildren(separation);
         Entity supportingFiles = EntityUtils.getSupportingData(separation);
+        
+        if (supportingFiles==null) {
+            logger.warn("Separation has no supporting files: "+separation.getId());
+            return null;
+        }
+        
         populateChildren(supportingFiles);
         
         Entity prevResultFile = null;

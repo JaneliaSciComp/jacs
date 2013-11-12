@@ -18,6 +18,7 @@
 	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
 	    <operation name="Get Result Attributes" processor="org.janelia.it.jacs.compute.service.entity.sample.InitResultAttributesService">
 			<input name="RESULT_ENTITY_ID"/>
+            <output name="DEFAULT_IMAGE_ID"/>
 			<output name="SIGNAL_CHANNELS"/>
 			<output name="REFERENCE_CHANNEL"/>
 		</operation>
@@ -49,6 +50,7 @@
 			<input name="ROOT_ENTITY_ID" value="$V{RESULT_ENTITY_ID}"/>
 			<input name="SAMPLE_ENTITY_ID"/>
 			<input name="INPUT_FILENAME" value="$V{OUTPUT_FILENAME}"/>
+            <input name="INPUT_IMAGE_ID" value="$V{DEFAULT_IMAGE_ID}"/>
 			<input name="RESULT_ENTITY_NAME" value="Neuron Separation"/>
 			<input name="SIGNAL_CHANNELS"/>
 			<input name="REFERENCE_CHANNEL"/>
