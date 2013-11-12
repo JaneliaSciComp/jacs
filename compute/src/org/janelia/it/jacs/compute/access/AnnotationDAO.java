@@ -2919,41 +2919,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     	}
     	return entity;
 	}
-
-//    /**
-//     * Iterate recursively through all children in the Entity graph in order to preload them.
-//     * @param entity
-//     * @return
-//     */
-//    public Entity populateDescendants(String subjectKey, Entity entity) {
-//        if (log.isTraceEnabled()) {
-//            log.trace("populateDescendants(subjectKey="+subjectKey+",entity.name="+entity.getName()+")");
-//        }
-//        Set<String> subjectKeys = getSubjectKeySet(subjectKey);
-//        return populateDescendants(subjectKeys, entity, new HashSet<Long>());
-//    }
-//    
-//    private Entity populateDescendants(Set<String> subjectKeys, Entity entity, Set<Long> visited) {
-//        if (log.isTraceEnabled()) {
-//            log.trace("populateDescendants(subjectKey="+subjectKeys+",entity="+entity+",visited.size="+visited.size()+")");
-//        }
-//        
-//        if (entity == null) return entity;
-//        
-//        if (subjectKeys!=null && !subjectKeys.contains(entity.getOwnerKey())) return entity;
-//        
-//        if (visited.contains(entity.getId())) return entity;
-//        visited.add(entity.getId());
-//
-//        // Populate descendants
-//        for(EntityData ed : entity.getEntityData()) {
-//            Entity child = ed.getChildEntity();
-//            if (child != null) {
-//                populateDescendants(subjectKeys, child, visited);
-//            }
-//        }
-//        return entity;
-//    }
     
     public Entity loadLazyEntity(String subjectKey, Entity entity, boolean recurse) throws DaoException {
         if (log.isTraceEnabled()) {
