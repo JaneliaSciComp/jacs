@@ -6,10 +6,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -21,6 +18,7 @@ public class TmNeuron implements IsSerializable, Serializable {
 
     Long id;
     String name;
+    Date creationDate;
     Map<Long, TmGeoAnnotation> geoAnnotationMap=new HashMap<Long, TmGeoAnnotation>();
     Map<TmAnchoredPathEndpoints, TmAnchoredPath> anchoredPathMap = new HashMap<TmAnchoredPathEndpoints, TmAnchoredPath>();
     List<TmGeoAnnotation> rootAnnotations=new ArrayList<TmGeoAnnotation>();
@@ -39,6 +37,10 @@ public class TmNeuron implements IsSerializable, Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Date getCreationDate() {
+        return creationDate;
     }
 
     @Override
@@ -63,47 +65,13 @@ public class TmNeuron implements IsSerializable, Serializable {
         this.name=name;
     }
 
-    /*
-    * this method has serious problems and is not currently used; disable so it's
-    * not inadvertantly used before it's fixed
-    * - loop to find key should just ask map for key?
-    * - if not root, annotation never inserted into map!
-    *
-    * also: not updated since change to getRootAnnotation() (to return list)
-    *
-    protected void addGeoAnnotation(TmGeoAnnotation annotation) throws Exception {
-        if (rootAnnotation==null) {
-            if (getGeoAnnotationMap().size()>0) {
-                throw new Exception("Unexpectedly have null rootAnnotation but nonempty annotationMap");
-            }
-            rootAnnotation=annotation;
-            rootAnnotation.setParentId(this.id);
-            geoAnnotationMap.put(rootAnnotation.getId(), rootAnnotation);
-        } else {
-            Long parentId=annotation.getParentId();
-            boolean foundParent=false;
-            for (Long key : geoAnnotationMap.keySet()) {
-                if (key.equals(parentId)) {
-                    TmGeoAnnotation parent=geoAnnotationMap.get(key);
-                    parent.addChild(annotation);
-                    annotation.setParent(parent);
-                    foundParent=true;
-                    break;
-                }
-            }
-            if (!foundParent) {
-                throw new Exception("Could not find parent for annotation Id="+annotation.getId());
-            }
-        }
-    }
-     */
-
     public TmNeuron(Entity entity) throws Exception {
         if (!entity.getEntityType().getName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
             throw new Exception("Entity type must be "+EntityConstants.TYPE_TILE_MICROSCOPE_NEURON);
         }
         this.id=entity.getId();
         this.name=entity.getName();
+        this.creationDate = entity.getCreationDate();
 
         // First step is to create TmGeoAnnotation and TmAnchoredPath objects
         for (EntityData ed : entity.getEntityData()) {
