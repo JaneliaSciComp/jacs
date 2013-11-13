@@ -122,7 +122,7 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
                 nodeColNames.add(attrName);
             }
             writeCols(entityNodeCsvWriter, nodeColNames);
-            writeCols(entityRelsCsvWriter, "entity_id:long:entity", "entity_id:long:entity", "type:string", "entity_data_id:long:entity_data", "creation_date:string", "updated_date:string", "owner_key:string", "order_index:long");
+            writeCols(entityRelsCsvWriter, "entity_id:long:entity", "entity_id:long:entity", "type:string", "entity_data_id:long", "creation_date:string", "updated_date:string", "owner_key:string", "order_index:long");
             
             log.info("Clearing Neo4j id cache...");
             largeOp.clearCache(LargeOperations.NEO4J_MAP);
