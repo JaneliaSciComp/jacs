@@ -373,7 +373,7 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
      */
     public void loadPermissions() throws DaoException {
 
-        log.info("Exporting all permissions");
+        _logger.info("Exporting all permissions");
         
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -485,7 +485,7 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
     private Long getSubjectId(String subjectKey) {
         Long subjectId = userIdBySubjectKey.get(subjectKey);
         if (subjectId==null) {
-            log.warn("No subject found for id="+subjectId);
+            _logger.warn("No subject found for id="+subjectId);
             return null;
         }
         return subjectId;
