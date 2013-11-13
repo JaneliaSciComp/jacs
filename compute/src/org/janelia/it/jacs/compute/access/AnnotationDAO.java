@@ -2932,6 +2932,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             log.trace("loadLazyEntity(subjectKey="+subjectKey+", entity="+entity+", recurse="+recurse+", visited.size="+visited.size()+")");
         }
         
+        if (entity==null) return null;
         if (visited.contains(entity.getId())) return entity;
         visited.add(entity.getId());
         
