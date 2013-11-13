@@ -9,7 +9,7 @@ import com.google.gson.annotations.SerializedName;
 public class QueryDefinition {
 
     @SerializedName("query") private String cypher;
-    @SerializedName("params") private Map<String,Object> params = new HashMap<String,Object>();
+    @SerializedName("params") private Map<String,String> params = new HashMap<String,String>();
 
     public QueryDefinition(String cypher) {
         this.cypher = cypher;
@@ -23,11 +23,11 @@ public class QueryDefinition {
         return cypher;
     }
 
-    public void addParam(String key, Object value) {
+    public void addParam(String key, String value) {
         params.put(key, value);
     }
 
-    public Map<String, Object> getParams() {
+    public Map<String, String> getParams() {
         return params;
     }
 

@@ -36,7 +36,7 @@ public class Neo4jBatchDAO extends AnnotationDAO {
 
     private static final String LABEL_COMMON_ROOT = "CommonRoot";
     private static final String LABEL_ENTITY = "Entity";
-    public static final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+    private static final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
 
     private String loadDatabaseDir = "/home/rokickik/dev/neo4j-community-2.0.0-M03/data/load.db";
     private FileSystemAbstraction fileSystem;

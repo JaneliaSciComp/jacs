@@ -1,11 +1,7 @@
 package org.janelia.it.jacs.compute.access.neo4j;
 
 import java.net.URI;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import javax.ws.rs.core.MediaType;
 
@@ -14,10 +10,6 @@ import org.janelia.it.jacs.compute.access.neo4j.rest.NodeResult;
 import org.janelia.it.jacs.compute.access.neo4j.rest.QueryDefinition;
 import org.janelia.it.jacs.compute.access.neo4j.rest.QueryResults;
 import org.janelia.it.jacs.compute.access.neo4j.rest.RelationshipResult;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityAttribute;
-import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.entity.EntityType;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
@@ -32,13 +24,9 @@ public class Neo4jDAO {
 
     protected static final String SERVER_ROOT_URI = "http://rokicki-ws:7474/db/data";//SystemConfigurationProperties.getString("Neo4j.ServerURL");
 
-    protected Logger _logger;
-    
     private boolean streamJson = true;
     
     public Neo4jDAO(Logger _logger) {
-        
-        this._logger = _logger;
         
         // There is a Java API binding for the REST API, but it has not caught up with the latest Neo4j release 
         // (as of 2.0 milestones): https://github.com/neo4j/java-rest-binding
@@ -46,7 +34,7 @@ public class Neo4jDAO {
 
         WebResource resource = Client.create().resource(SERVER_ROOT_URI);
         ClientResponse response = resource.get(ClientResponse.class);
-        _logger.info(String.format("GET on [%s], status code [%d]", SERVER_ROOT_URI, response.getStatus()));
+        System.out.println(String.format("GET on [%s], status code [%d]", SERVER_ROOT_URI, response.getStatus()));
         response.close();
     }
 
@@ -58,20 +46,18 @@ public class Neo4jDAO {
                 .entity("{}").post(ClientResponse.class);
 
         final URI location = response.getLocation();
-        _logger.info(String.format("POST to [%s], status code [%d], location header [%s]", nodeEntryPointUri,
+        System.out.println(String.format("POST to [%s], status code [%d], location header [%s]", nodeEntryPointUri,
                 response.getStatus(), location.toString()));
         response.close();
 
         return location;
     }
-
-    public QueryResults getCypherResults(String cypherQuery, Class... resultTypes) throws Exception {
-        QueryDefinition query = new QueryDefinition(cypherQuery);
-        return getCypherResults(query, resultTypes);
-    }
     
-    public QueryResults getCypherResults(QueryDefinition query, Class... resultTypes) throws Exception {
+    public QueryResults getCypherResults(String cypherQuery, Class... resultTypes) throws Exception {
+
+        long start = System.currentTimeMillis();
         
+        QueryDefinition query = new QueryDefinition(cypherQuery);
         URI cypherUri = new URI(SERVER_ROOT_URI + "/cypher");
         WebResource resource = Client.create().resource(cypherUri);
         String payload = query.toJson();
@@ -87,112 +73,56 @@ public class Neo4jDAO {
                 .post(ClientResponse.class);
 
         String json = response.getEntity(String.class);
+//        System.out.println( String.format("POST [%s] to [%s], status code [%d], returned data: \n%s",
+//                        payload, cypherUri, response.getStatus(), json));
+//        System.out.println("Got "+json.length() +" bytes, took "+(System.currentTimeMillis()-start)+" ms");
+        
         QueryResults results = QueryResults.fromJson(json, resultTypes);
+//        System.out.println("Read "+gg.getData().size()+" results, took "+(System.currentTimeMillis()-start)+" ms");
         
         response.close();
         return results;
     }
-//
-//    public List<EntityData> getChildNodes(Long entityId) throws Exception {
-//
-//        QueryResults results = getCypherResults(
-//                "start e=node:entity(entity_id=\""+entityId+"\") match e-[r]->child return distinct r, child", 
-//                RelationshipResult.class, NodeResult.class);
-//
-//        List<EntityData> childrenEds = new ArrayList<EntityData>();
-//        
-//        for(List<Object> result : results.getData()) {
-//            
-//            RelationshipResult relation = (RelationshipResult)result.get(0);
-//            NodeResult node = (NodeResult)result.get(1);
-//
-//            childrenEds.add(convertToEntityData(relation, node));
-//        }
-//        
-//        return childrenEds;
-//    }    
-//    public void getCommonRoots(String username) throws Exception {
-//
-//        long start = System.currentTimeMillis();
-//        
-//        QueryResults results = getCypherResults(
-//                "start ref=node:reference(name=\"COMMON_ROOTS\") match ref-->commonRoot-->child where commonRoot.owner_key=\""+username+"\" return distinct commonRoot", 
-//                NodeResult.class);
-//
-//        for(Entity entity : results.getEntityResults()) {
-//            printEntityAndChildren(entity);
-//        }
-//        
-//        _logger.info("Read "+results.getData().size()+" results, took "+(System.currentTimeMillis()-start)+" ms");
-//    }
+    
+    public void cypherQuery1() throws Exception {
 
-//    public void printEntityAndChildren(Entity entity) throws Exception {
-//
-//        long start = System.currentTimeMillis();
-//        
-//        System.out.println("-----------------------------------------");
-//        System.out.println("Id="+entity.getId());
-//        System.out.println("Name="+entity.getName());
-////        System.out.println("Created="+entity.getCreationDate());
-////        System.out.println("Updated="+entity.getUpdatedDate());
-//        System.out.println("EntityType="+entity.getEntityType().getName());
-//        
-//        List<EntityData> childrenEds = getChildNodes(entity.getId());
-//        System.out.println("Children="+childrenEds.size());
-//        
-////        for(EntityData ed : childrenEds) {
-////            System.out.println("    -----------------------------------------");
-////            System.out.println("    Id="+ed.getId());
-////            System.out.println("    Name="+ed.getChildEntity().getName());
-////            System.out.println("    Created="+entity.getCreationDate());
-////            System.out.println("    Updated="+entity.getUpdatedDate());
-////            System.out.println("    EntityAttribute="+ed.getEntityAttribute().getName());    
-////        }
-//        
-////        
-////        QueryResults results = getCypherResults(
-////                "start ref=node:reference(name=\"COMMON_ROOTS\") match ref-->commonRoot-->child where commonRoot.owner_key=\"user:rokickik\" return distinct commonRoot", 
-////                NodeResult.class);
-////
-////        for(List<Object> result : results.getData()) {
-////            StringBuilder sb = new StringBuilder(); 
-////            for (int i=0; i<results.getColumns().size(); i++) {
-////                String colName = results.getColumns().get(i);
-////                Object obj = result.get(i);
-////                if (sb.length()>0) sb.append(", ");
-////                sb.append(colName+"="+obj);
-////            }
-////            _logger.info(sb);
-////        }
-////
-////        _logger.info("Read "+results.getData().size()+" results, took "+(System.currentTimeMillis()-start)+" ms");
-//    }
-//
-//    public void cypherQuery2() throws Exception {
-//
-//        long start = System.currentTimeMillis();
-//        
-//        QueryResults results = getCypherResults(
-//                "start ref=node:reference(name=\"COMMON_ROOTS\") match ref-->commonRoot-->child where commonRoot.owner_key=\"user:nerna\" return commonRoot.name, count(child)", 
-//                String.class, Integer.class);
-//        
-//        for(List<Object> result : results.getData()) {
-//            StringBuilder sb = new StringBuilder(); 
-//            for (int i=0; i<results.getColumns().size(); i++) {
-//                String colName = results.getColumns().get(i);
-//                Object obj = result.get(i);
-//                if (sb.length()>0) sb.append(", ");
-//                sb.append(colName+"="+obj);
-//            }
-//            _logger.info(sb);
-//        }
-//
-//        _logger.info("Read "+results.getData().size()+" results, took "+(System.currentTimeMillis()-start)+" ms");
-//    }
-//    
-//    public static void main(String[] args) throws Exception {
-//        Neo4jDAO dao = new Neo4jDAO(Logger.getLogger(Neo4jDAO.class));
-//        dao.printCommonRoots("user:nerna");
-//    }
+        long start = System.currentTimeMillis();
+        
+        QueryResults results = getCypherResults(
+                "match e:Entity-[r]->child where e.entity_id=1859269906990628962 return r,child", 
+                RelationshipResult.class, NodeResult.class);
+        
+        for(List<Object> result : results.getData()) {
+            System.out.println("RESULT");
+            for (Object n : result) {
+                System.out.println("    "+n);
+            }
+        }
+
+        System.out.println("Read "+results.getData().size()+" results, took "+(System.currentTimeMillis()-start)+" ms");
+    }
+
+    public void cypherQuery2() throws Exception {
+
+        long start = System.currentTimeMillis();
+        
+        QueryResults results = getCypherResults(
+                "match e:CommonRoot-[r:entity]->child where e.owner_key=\"user:nerna\" return e.name,count(r)", 
+                String.class, Integer.class);
+        
+        for(List<Object> result : results.getData()) {
+            System.out.println("RESULT");
+            for (Object n : result) {
+                System.out.println("    "+n);
+            }
+        }
+
+        System.out.println("Read "+results.getData().size()+" results, took "+(System.currentTimeMillis()-start)+" ms");
+    }
+    
+    public static void main(String[] args) throws Exception {
+        Neo4jDAO dao = new Neo4jDAO(Logger.getLogger(Neo4jDAO.class));
+        dao.cypherQuery2();
+    }
     
 }

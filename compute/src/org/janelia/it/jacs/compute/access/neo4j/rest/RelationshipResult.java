@@ -9,26 +9,28 @@ public class RelationshipResult {
     @SerializedName("data") private Map<String,String> propertyMap;
     @SerializedName("type") private String type;
     
-//    @SerializedName("start") private String startUri;
-//    @SerializedName("self") private String selfUri;
-//    @SerializedName("property") private String propertyUri;
-//    @SerializedName("properties") private String propertiesUri;
-//    @SerializedName("end") private String endUri;
+    @SerializedName("start") private String startUri;
+    @SerializedName("self") private String selfUri;
+    @SerializedName("property") private String propertyUri;
+    @SerializedName("properties") private String propertiesUri;
+    @SerializedName("end") private String endUri;
     
     public Map<String, String> getProperties() {
         return propertyMap;
     }
-    
-    public String getType() {
-        return type;
+
+    public String getSelfUri() {
+        return selfUri;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setSelfUri(String selfUri) {
+        this.selfUri = selfUri;
     }
 
     @Override
     public String toString() {
         return "RelationshipResult [type="+type+", propertyMap=" + propertyMap + "]";
     }
+    
+    
 }
