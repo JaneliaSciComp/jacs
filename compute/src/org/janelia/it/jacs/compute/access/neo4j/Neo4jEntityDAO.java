@@ -188,8 +188,10 @@ public class Neo4jEntityDAO extends Neo4jDAO implements AbstractEntityLoader {
             List<String> subjectKeyList = annotationDao.getSubjectKeys(subjectKey);
 
             QueryDefinition query = new QueryDefinition(
-                    "start e=node:entity(name={entityName}) match s-[r:PERMISSION]->e<-[q:PERMISSION]-p where (s.subject_key in [{subjectKeyList}]) return distinct e,q,p");
-                        
+                    "start e=node(*) match e<-[r?:PERMISSION]-s where (e.owner_key! in [{subjectKeyList}] or s.subject_key! in [{subjectKeyList}]) and e.name! = {entityName} return distinct e");
+            
+//            start e=node(*) match e<-[r?:PERMISSION]-s where (e.owner_key! in ["user:rokickik"] or s.subject_key! in ["user:rokickik"]) and e.name! = "Shared Data" return distinct e
+            
             query.addParam("entityName", entityName);
             query.addParam("subjectKeyList", subjectKeyList);
             
