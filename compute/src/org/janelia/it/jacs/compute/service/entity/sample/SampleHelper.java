@@ -924,9 +924,9 @@ public class SampleHelper extends EntityHelper {
         }
         // Check the blocked data folder
         Entity blockedFolder = getBlockedDataFolder();
-        EntityData ed = EntityUtils.findChildEntityDataWithChildId(blockedDataFolder, sample.getId());
+        EntityData blockedEd = EntityUtils.findChildEntityDataWithChildId(blockedFolder, sample.getId());
         if (blocked) {
-            if (ed==null) {
+            if (blockedEd==null) {
                 logger.info("    Adding to blocked data folder");  
                 addToParent(blockedFolder, sample, blockedFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
                 numSamplesMovedToBlockedFolder++;
@@ -936,14 +936,25 @@ public class SampleHelper extends EntityHelper {
             }
         }
         else {
-            if (ed!=null) {
+            if (blockedEd!=null) {
                 logger.info("    Removing from blocked data folder");   
-                blockedFolder.getEntityData().remove(ed);
-                entityBean.deleteEntityData(ed);
+                blockedFolder.getEntityData().remove(blockedEd);
+                entityBean.deleteEntityData(blockedEd);
             }
             else {
                 logger.trace("    Already missing from blocked data folder");
             }
+        }
+        // Check the retired data folder, and remove this sample if it's in there
+        Entity retiredFolder = getRetiredDataFolder();
+        EntityData retiredEd = EntityUtils.findChildEntityDataWithChildId(retiredFolder, sample.getId());
+        if (retiredEd!=null) {
+            logger.info("    Removing from retired data folder");   
+            retiredFolder.getEntityData().remove(retiredEd);
+            entityBean.deleteEntityData(retiredEd);
+        }
+        else {
+            logger.trace("    Already missing from retired data folder");
         }
     }
 
