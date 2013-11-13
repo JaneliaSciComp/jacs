@@ -83,21 +83,25 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
             writeCols(refNodeCsvWriter, "name:string:reference");
             writeCols(refNodeCsvWriter, REFNODE_COMMON_ROOTS);
             writeCols(refNodeCsvWriter, REFNODE_SUBJECTS);
+            
             writeCols(refSubjectCsvWriter, "name:string:reference", "subject_id:long:subject", "type:string");
             writeCols(refEntityCsvWriter, "name:string:reference", "entity_id:long:entity", "type:string");
-            writeCols(subjectNodeCsvWriter, "subject_id:long:subject", "type:string", "subject_key:string:subject", "fullName:string", "email:string");
             writeCols(permissionRelsCsvWriter, "subject_id:long:subject", "entity_id:long:entity", "type:string", "permissions:string");
             writeCols(subjectSubjectRelsCsvWriter, "subject_id:long:subject", "subject_id:long:subject", "type:string");
+            
+            writeCols(subjectNodeCsvWriter, "type:string:nodes", "subject_id:long:subject", "subject_key:string:subject", "full_name:string", "email:string");
+            
             
             this.attrs = getAllEntityAttributes();
             
             List<String> nodeColNames = new ArrayList<String>();
+            nodeColNames.add("type:string:nodes");
             nodeColNames.add("entity_id:long:entity");
             nodeColNames.add("entity_type:string:entity");
-            nodeColNames.add("name:string");
+            nodeColNames.add("name:string:entity");
             nodeColNames.add("creation_date:string");
             nodeColNames.add("updated_date:string");
-            nodeColNames.add("owner_key:string");
+            nodeColNames.add("owner_key:string:entity");
             for(EntityAttribute attr : attrs) {
                 String attrName = getFormattedFieldName(attr.getName());
                 if (attr.getName().equals(EntityConstants.ATTRIBUTE_ENTITY)) {
@@ -112,7 +116,7 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
                 nodeColNames.add(attrName);
             }
             writeCols(entityNodeCsvWriter, nodeColNames);
-            writeCols(entityRelsCsvWriter, "entity_id:long:entity", "entity_id:long:entity", "type:string", "entity_data_id:long", "creation_date:string", "updated_date:string", "owner_key:string", "order_index:long");
+            writeCols(entityRelsCsvWriter, "entity_id:long:entity", "entity_id:long:entity", "type:string:entity_data", "entity_data_id:long:entity_data", "creation_date:string", "updated_date:string", "owner_key:string", "order_index:long");
             
             log.info("Clearing Neo4j id cache...");
             largeOp.clearCache(LargeOperations.NEO4J_MAP);
@@ -363,7 +367,7 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
      */
     public void loadPermissions() throws DaoException {
 
-        log.info("Exporting all relationships");
+        _logger.info("Exporting all permissions");
         
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -403,13 +407,14 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
     }
     
     private void loadSubject(Long subjectId, String type, String subjectKey, String name, String fullName, String email) {
-        writeCols(subjectNodeCsvWriter, subjectId.toString(), getFormattedTypeName(type), subjectKey, name, fullName, email);
+        writeCols(subjectNodeCsvWriter, getFormattedTypeName(type), subjectId.toString(), subjectKey, name, fullName, email);
         numNodesExported++;
     }
     
     private void loadEntity(SimpleEntity simpleEntity) throws Exception {
 
         List<String> values = new ArrayList<String>();
+        values.add("ENTITY");
         values.add(simpleEntity.id.toString());
         values.add(getFormattedTypeName(simpleEntity.entityTypeName));
         values.add(simpleEntity.name);
@@ -435,6 +440,10 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
         }
         
         writeCols(entityNodeCsvWriter, values);
+        
+        // Load a permission that describes the owner of this entity
+        loadPermission(null, simpleEntity.id, simpleEntity.owner, "o");
+        
         numNodesExported++;
         
         if (simpleEntity.attributes.containsKey(EntityConstants.ATTRIBUTE_COMMON_ROOT)) {
@@ -462,17 +471,20 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
     }
 
     private void loadPermission(Long permissionId, Long entityId, String subjectKey, String permissions) throws Exception {
-        
-        Long subjectId = userIdBySubjectKey.get(subjectKey);
-        if (subjectId==null) {
-            log.warn("No subject found for id="+subjectId);
-            return;
-        }
-        
+        Long subjectId = getSubjectId(subjectKey);
         writeCols(permissionRelsCsvWriter, subjectId.toString(), entityId.toString(), "PERMISSION", permissions);
         numRelationshipsExported++;
     }
 
+    private Long getSubjectId(String subjectKey) {
+        Long subjectId = userIdBySubjectKey.get(subjectKey);
+        if (subjectId==null) {
+            _logger.warn("No subject found for id="+subjectId);
+            return null;
+        }
+        return subjectId;
+    }
+    
     private CSVWriter getWriter(String filename) throws IOException {
         FileWriter fileWriter = new FileWriter(new File(outputDir, filename), false);
         CSVWriter writer = new CSVWriter(fileWriter, '\t', CSVWriter.NO_QUOTE_CHARACTER, '\\', "\n");
