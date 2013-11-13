@@ -8,7 +8,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
@@ -29,7 +35,7 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
 
     private static final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
 
-    private String outputDir = "/home/rokickik/dev/neo4j-batch-import/fw";
+    private String outputDir = "/home/rokickik/dev/batch-import/fw";
     
     protected LargeOperations largeOp;
 
@@ -116,7 +122,7 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
                 nodeColNames.add(attrName);
             }
             writeCols(entityNodeCsvWriter, nodeColNames);
-            writeCols(entityRelsCsvWriter, "entity_id:long:entity", "entity_id:long:entity", "type:string:entity_data", "entity_data_id:long:entity_data", "creation_date:string", "updated_date:string", "owner_key:string", "order_index:long");
+            writeCols(entityRelsCsvWriter, "entity_id:long:entity", "entity_id:long:entity", "type:string", "entity_data_id:long:entity_data", "creation_date:string", "updated_date:string", "owner_key:string", "order_index:long");
             
             log.info("Clearing Neo4j id cache...");
             largeOp.clearCache(LargeOperations.NEO4J_MAP);
