@@ -251,25 +251,20 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             Entity sample = samples.get(ed.getChildEntity().getId());
             if (sample==null || !sample.getEntityType().getName().equals(EntityConstants.TYPE_SAMPLE)) continue;
             if (sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISITED)==null) {
-                // Sample was not visited this time around, it should be:
+
                 if (retiredIds.contains(sample.getId())) {
                     logger.info("  Sample was already retired. Removing from data folder: "+sample.getName()+" (id="+sample.getId()+")");    
                     dataSetFolder.getEntityData().remove(ed);
                     entityBean.deleteEntityData(ed);
                 }
                 else {
-                    entityBean.loadLazyEntity(sample, false);
-                    boolean blocked = sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_PROCESSING_BLOCK)!=null;
-                    // Ignore blocked samples, they don't need to be retired
-                    if (!blocked) {
-                        logger.info("  Moving unvisited sample to retired data folder: "+sample.getName()+" (id="+sample.getId()+")");
-                        dataSetFolder.getEntityData().remove(ed);
-                        retiredDataFolder.getEntityData().add(ed);
-                        ed.setParentEntity(retiredDataFolder);
-                        entityBean.saveOrUpdateEntityData(ed);
-                        sample.setName(sample.getName()+"-Retired");
-                        entityBean.saveOrUpdateEntity(sample);
-                    }
+                    logger.info("  Moving unvisited sample to retired data folder: "+sample.getName()+" (id="+sample.getId()+")");
+                    dataSetFolder.getEntityData().remove(ed);
+                    retiredDataFolder.getEntityData().add(ed);
+                    ed.setParentEntity(retiredDataFolder);
+                    entityBean.saveOrUpdateEntityData(ed);
+                    sample.setName(sample.getName()+"-Retired");
+                    entityBean.saveOrUpdateEntity(sample);   
                 }
                 samplesMovedToRetiredFolder++;
             }
