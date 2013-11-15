@@ -396,6 +396,12 @@
                       select-before-update="false">
             </subclass>
 
+            <subclass name="org.janelia.it.jacs.model.user_data.tools.BzipTestResultNode" discriminator-value="BzipTestResultNode"
+                      dynamic-update="true"
+                      dynamic-insert="true"
+                      select-before-update="false">
+            </subclass>
+
             <subclass name="org.janelia.it.jacs.model.user_data.prokAnnotation.ProkAnnotationResultFileNode" discriminator-value="ProkAnnotationResultFileNode"
                       dynamic-update="true"
                       dynamic-insert="true"

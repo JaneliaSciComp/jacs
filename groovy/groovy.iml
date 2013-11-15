@@ -7,9 +7,29 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Solrj" level="project" />
-    <orderEntry type="module" module-name="console" />
     <orderEntry type="library" name="Groovy" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/workstation.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file:///Applications/JaneliaWorkstation.app/Contents/Resources/workstation_lib" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file:///Applications/JaneliaWorkstation.app/Contents/Resources/workstation_lib" />
+        </SOURCES>
+        <jarDirectory url="file:///Applications/JaneliaWorkstation.app/Contents/Resources/workstation_lib" recursive="false" />
+        <jarDirectory url="file:///Applications/JaneliaWorkstation.app/Contents/Resources/workstation_lib" recursive="false" type="SOURCES" />
+      </library>
+    </orderEntry>
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">

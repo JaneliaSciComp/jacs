@@ -317,4 +317,7 @@ public class TimebasedIdentifierGenerator implements IdentifierGenerator {
         return Long.parseLong(uidString, 2);
     }
 
+//    public static void main(String[] args) {
+//        System.out.println(TimebasedIdentifierGenerator.getTimestamp(1940155822617133154l));
+//    }
 }

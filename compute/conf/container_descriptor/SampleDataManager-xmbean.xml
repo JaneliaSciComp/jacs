@@ -317,5 +317,25 @@
             <type>java.lang.String</type>
         </parameter>
     </operation>
-    
+
+    <operation>
+        <description>BZip2 input LSM's defined in an ls'd file</description>
+        <name>bzipLSMCompressionService</name>
+        <parameter>
+            <description>Path to the ls'd file</description>
+            <name>filePath</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>User to run as (e.g. "flylight")</description>
+            <name>owner</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Compression Mode (compress or decompress)</description>
+            <name>compressMode</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+
 </mbean>

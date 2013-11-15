@@ -1,13 +1,8 @@
 package org.janelia.it.jacs.compute.mbean;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.service.entity.FastLoadArtifactService;
 import org.janelia.it.jacs.compute.service.entity.SampleDataCompressionService;
 import org.janelia.it.jacs.compute.service.entity.SampleTrashCompactorService;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -15,10 +10,17 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
+import org.janelia.it.jacs.model.tasks.utility.BZipTestTask;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.StringUtils;
+
+import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class SampleDataManager implements SampleDataManagerMBean {
 
@@ -384,6 +386,30 @@ public class SampleDataManager implements SampleDataManagerMBean {
         } 
         catch (Exception ex) {
             logger.error("Error running pipeline", ex);
+        }
+    }
+
+    /**
+     * Method to point to an ls file and pull out LSM's to be bzip2'd.
+     * Example file exists in /groups/scicomp/jacsData/saffordTest/leetLSMs28days.txt (or older file)
+     *                        /groups/scicomp/jacsData/saffordTest/leetLSMs7days.txt  (or older file)
+     * @param filePath
+     * @param owner
+     * @param compressMode
+     */
+    public void bzipLSMCompressionService(String filePath, String owner, String compressMode) {
+        try {
+            BZipTestTask bzipTask = new BZipTestTask(owner, new ArrayList<Event>(), filePath, compressMode);
+            if (BZipTestTask.MODE_COMPRESS.equals(compressMode) || BZipTestTask.MODE_DECOMPRESS.equals(compressMode)) {
+                bzipTask = (BZipTestTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(bzipTask);
+                EJBFactory.getLocalComputeBean().submitJob("BzipTestService", bzipTask.getObjectId());
+            }
+        }
+        catch (DaoException e) {
+            e.printStackTrace();
+        }
+        catch (RemoteException e) {
+            e.printStackTrace();
         }
     }
 }
