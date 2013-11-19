@@ -488,6 +488,16 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
     }
 
+    public List<Long> getOrphanAnnotationIdsMissingTargets(String subjectKey) throws ComputeException {
+        try {
+            return _annotationDAO.getOrphanAnnotationIdsMissingTargets(subjectKey);
+        }
+        catch (DaoException e) {
+            _logger.error("Error getting orphan annotation ids for: "+subjectKey, e);
+            throw new ComputeException("Error getting orphan annotation ids for:: "+subjectKey,e);
+        }
+    }
+
     public Entity createAlignmentBoard(String subjectKey, String alignmentBoardName, String alignmentSpace, String opticalRes, String pixelRes) throws ComputeException {
         try {
             Entity alignmentBoard = _annotationDAO.createAlignmentBoard(subjectKey, alignmentBoardName, alignmentSpace, opticalRes, pixelRes);
@@ -499,15 +509,14 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             throw new ComputeException("Error creating new alignment board ("+alignmentBoardName+") for subject "+subjectKey,e);
         }
     }
-
-    public List<Long> getOrphanAnnotationIdsMissingTargets(String subjectKey) throws ComputeException {
+    
+    public EntityData addAlignedItem(Entity parentEntity, Entity child, String alignedItemName, boolean visible) throws ComputeException {
         try {
-            return _annotationDAO.getOrphanAnnotationIdsMissingTargets(subjectKey);
+            return _annotationDAO.addAlignedItem(parentEntity, child, alignedItemName, visible);
         }
         catch (DaoException e) {
-            _logger.error("Error getting orphan annotation ids for: "+subjectKey, e);
-            throw new ComputeException("Error getting orphan annotation ids for:: "+subjectKey,e);
+            _logger.error("Error adding aligned item: "+child.getName(), e);
+            throw new ComputeException("Error adding aligned item: "+child.getName(), e);
         }
     }
-    
 }

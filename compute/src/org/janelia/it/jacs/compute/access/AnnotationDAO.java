@@ -2984,7 +2984,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
     }
     
-    public Entity createAlignmentBoard(String subjectKey, String alignmentBoardName, String alignmentSpace, String opticalRes, String pixelRes) throws ComputeException {
+    public Entity createAlignmentBoard(String subjectKey, String alignmentBoardName, String alignmentSpace, String opticalRes, String pixelRes) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("createAlignmentBoard(subjectKey="+subjectKey+", alignmentBoardName="+alignmentBoardName+", alignmentSpace="+alignmentSpace+", opticalRes="+opticalRes+", pixelRes="+pixelRes+")");  
         }
@@ -3006,6 +3006,17 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         return board;
     }
 
+    public EntityData addAlignedItem(Entity parentEntity, Entity child, String alignedItemName, boolean visible) throws DaoException {
+        
+        Entity alignedItemEntity = newEntity(EntityConstants.TYPE_ALIGNED_ITEM, alignedItemName, parentEntity.getOwnerKey());
+        alignedItemEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_VISIBILITY, new Boolean(visible).toString());
+        saveOrUpdate(alignedItemEntity);
+        
+        addEntityToParent(alignedItemEntity, child, alignedItemEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+        
+        return addEntityToParent(parentEntity, alignedItemEntity, parentEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ITEM);
+    }
+    
     private List filterDuplicates(List list) {
         return ImmutableSet.copyOf(list).asList();
     }
