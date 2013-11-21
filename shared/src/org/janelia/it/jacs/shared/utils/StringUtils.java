@@ -1,8 +1,9 @@
 package org.janelia.it.jacs.shared.utils;
 
-import org.apache.log4j.Logger;
-
+import java.util.Arrays;
 import java.util.Collection;
+
+import org.apache.log4j.Logger;
 
 /**
  * Some helpful utilities for strings.
@@ -34,11 +35,19 @@ public class StringUtils {
     	return buf.toString();
     }
 
-	public static String getCommaDelimited(Collection objs, int maxLength) {
+	public static String getCommaDelimited(Object... objArray) {
+		return getCommaDelimited(Arrays.asList(objArray));
+	}
+	
+	public static String getCommaDelimited(Collection<?> objs) {
+		return getCommaDelimited(objs, null);
+	}
+	
+	public static String getCommaDelimited(Collection<?> objs, Integer maxLength) {
 		if (objs==null) return null;
 		StringBuffer buf = new StringBuffer();
 		for(Object obj : objs) {
-			if (buf.length()+3>=maxLength) {
+			if (maxLength!=null && buf.length()+3>=maxLength) {
 				buf.append("...");
 				break;
 			}
