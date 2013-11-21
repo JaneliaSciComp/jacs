@@ -1,7 +1,7 @@
 <!-- 
-	Run a subtask for every sample for a given user.
+	Run a archival subtask for every sample for a given user.
 -->
-<process name="Complete sample processing service" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Complete sample archival service" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	    
         <!-- Import variables from the task -->
@@ -31,12 +31,6 @@
                 <input name="PARAMETER_1_KEY" value="sample entity id"/>
                 <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
             </operation>
-                
-            <!-- Move all generated files to archive
-            <include name="Move sample to archive" process="SyncSampleToArchive">
-                <input name="SAMPLE_ENTITY_ID"/>
-            </include>
-             -->
             
 	    </sequence>
 	    
