@@ -116,6 +116,8 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
         
         // Add additional files to the neuron separation
     	discoverySeparationFiles(separation);
+    	
+    	processData.putItem("SEPARATION_ID", separation.getId().toString());
     }
     
     private Entity createSeparation(String separationDir, Entity parentEntity, String resultEntityName, 

@@ -33,7 +33,10 @@ public class OntologyAnnotation implements java.io.Serializable {
 	
 	@XmlElement
 	private String valueString;
-	
+
+    @XmlElement
+    private Boolean isComputational;
+    
 	@XmlTransient
 	private Entity entity;
 
@@ -89,77 +92,99 @@ public class OntologyAnnotation implements java.io.Serializable {
 			Entity valueEntity = annotation.getChildByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_ENTITY_ID);
 			if (valueEntity!=null) this.valueEntityId = valueEntity.getId();
 		}
+		
+        String isComputationalStr = annotation.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_IS_COMPUTATIONAL);
+        if (!isEmpty(isComputationalStr)) {
+            this.isComputational = Boolean.TRUE;
+        }
     }
 
 	private boolean isEmpty(String s) {
 		return (s == null || "".equals(s));
 	}
 	
-	public Entity getEntity() {
-		return entity;
-	}
-	
 	public String getOwner() {
+		if (entity==null) return null;
 		return entity.getOwnerKey();
 	}
 	
-	public Long getId() {
-		return id;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public Long getSessionId() {
-		return sessionId;
-	}
+    public Long getSessionId() {
+        return sessionId;
+    }
 
-	public void setSessionId(Long sessionId) {
-		this.sessionId = sessionId;
-	}
+    public void setSessionId(Long sessionId) {
+        this.sessionId = sessionId;
+    }
 
-	public Long getTargetEntityId() {
-		return targetEntityId;
-	}
+    public Long getTargetEntityId() {
+        return targetEntityId;
+    }
 
-	public void setTargetEntityId(Long targetEntityId) {
-		this.targetEntityId = targetEntityId;
-	}
+    public void setTargetEntityId(Long targetEntityId) {
+        this.targetEntityId = targetEntityId;
+    }
 
-	public Long getKeyEntityId() {
-		return keyEntityId;
-	}
+    public Long getKeyEntityId() {
+        return keyEntityId;
+    }
 
-	public void setKeyEntityId(Long keyEntityId) {
-		this.keyEntityId = keyEntityId;
-	}
+    public void setKeyEntityId(Long keyEntityId) {
+        this.keyEntityId = keyEntityId;
+    }
 
-	public String getKeyString() {
-		return keyString;
-	}
+    public String getKeyString() {
+        return keyString;
+    }
 
-	public void setKeyString(String keyString) {
-		this.keyString = keyString;
-	}
+    public void setKeyString(String keyString) {
+        this.keyString = keyString;
+    }
 
-	public Long getValueEntityId() {
-		return valueEntityId;
-	}
+    public Long getValueEntityId() {
+        return valueEntityId;
+    }
 
-	public void setValueEntityId(Long valueEntityId) {
-		this.valueEntityId = valueEntityId;
-	}
+    public void setValueEntityId(Long valueEntityId) {
+        this.valueEntityId = valueEntityId;
+    }
 
-	public String getValueString() {
-		return valueString;
-	}
+    public String getValueString() {
+        return valueString;
+    }
 
-	public void setValueString(String valueString) {
-		this.valueString = valueString;
-	}
+    public void setValueString(String valueString) {
+        this.valueString = valueString;
+    }
 
-	@Override
+    public Boolean getIsComputational() {
+        return isComputational;
+    }
+
+    public void setIsComputational(Boolean isComputational) {
+        this.isComputational = isComputational;
+    }
+
+    public Entity getEntity() {
+        return entity;
+    }
+
+    public void setEntity(Entity entity) {
+        this.entity = entity;
+    }
+    
+    public boolean isComputation() {
+        return isComputational==null?false:isComputational;
+    }
+
+    @Override
 	public String toString() {
 		return entity.getName();
 	}

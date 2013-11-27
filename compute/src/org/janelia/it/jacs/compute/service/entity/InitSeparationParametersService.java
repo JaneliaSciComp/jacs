@@ -60,7 +60,9 @@ public class InitSeparationParametersService extends AbstractEntityService {
         
         if (StringUtils.isEmpty(alignedConsolidatedLabelFilepath)) {
             Entity prevResult = findPrevResult(rootEntity, sampleEntity);
+            
             if (prevResult!=null) {
+                data.putItem("PREVIOUS_SEPARATION_ID", prevResult.getId().toString());
                 previousResultFilename = getPrevResultFilename(prevResult);
             }
         }
@@ -75,16 +77,13 @@ public class InitSeparationParametersService extends AbstractEntityService {
         previousResultFilename = checkForArchival(previousResultFilename);
         
         if (inputFilename==null) inputFilename = "";
-        logger.info("Putting '"+inputFilename+"' in INPUT_FILENAME");
-        processData.putItem("INPUT_FILENAME", inputFilename);
+        data.putItem("INPUT_FILENAME", inputFilename);
         
         if (alignedConsolidatedLabelFilepath==null) alignedConsolidatedLabelFilepath = "";
-        logger.info("Putting '"+alignedConsolidatedLabelFilepath+"' in ALIGNED_CONSOLIDATED_LABEL_FILEPATH");
-        processData.putItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH", alignedConsolidatedLabelFilepath);
+        data.putItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH", alignedConsolidatedLabelFilepath);
         
         if (previousResultFilename==null) previousResultFilename = "";
-        logger.info("Putting '"+previousResultFilename+"' in PREVIOUS_RESULT_FILENAME");
-        processData.putItem("PREVIOUS_RESULT_FILENAME", previousResultFilename);
+        data.putItem("PREVIOUS_RESULT_FILENAME", previousResultFilename);
 
         if (!archivedFiles.isEmpty()) {
             logger.info("Putting true in COPY_FROM_ARCHIVE");

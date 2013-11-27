@@ -101,6 +101,14 @@ public class ProcessDataAccessor {
         return value;
     }
 
+    public Boolean getRequiredItemAsBoolean(String key) {
+        final Boolean value = getItemAsBoolean(key);
+        if (value == null) {
+            throw new IllegalArgumentException(key + " must be specified");
+        }
+        return value;
+    }
+    
     public void putItem(String key,
                         Object value) {
 

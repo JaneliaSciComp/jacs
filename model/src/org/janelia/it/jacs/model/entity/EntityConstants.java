@@ -130,6 +130,8 @@ public class EntityConstants {
     public static final String ATTRIBUTE_CELL_COUNT                          = "Cell Count";
     public static final String ATTRIBUTE_PROCESSING_BLOCK                    = "Processing Block";
     public static final String ATTRIBUTE_INPUT_IMAGE                         = "Input Image";
+    public static final String ATTRIBUTE_SOURCE_SEPARATION                   = "Source Separation";
+    public static final String ATTRIBUTE_IS_WARPED_SEPARATION                = "Is Warped Separation";
     
     // Geometric Tree
     //

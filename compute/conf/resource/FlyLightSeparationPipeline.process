@@ -31,6 +31,7 @@
 			<input name="INPUT_FILENAME"/>
 			<input name="ALIGNED_CONSOLIDATED_LABEL_FILEPATH"/>
 			<output name="INPUT_FILENAME"/>
+			<output name="PREVIOUS_SEPARATION_ID"/>
 			<output name="PREVIOUS_RESULT_FILENAME"/>
 			<output name="ALIGNED_CONSOLIDATED_LABEL_FILEPATH"/>
             <output name="COPY_FROM_ARCHIVE"/>
@@ -72,7 +73,22 @@
             <input name="PIXEL_RESOLUTION"/>
             <input name="OBJECTIVE"/>
             <input name="INPUT_IMAGE_ID"/>
+            <output name="SEPARATION_ID"/>
 	    </operation>
+	    
+        
+        <sequence if="ALIGNED_CONSOLIDATED_LABEL_FILEPATH is empty">
+            <sequence if="PREVIOUS_RESULT_FILENAME is not empty">
+            
+                <!-- Migrate existing annotations if this is not a aligned separation -->
+                <operation name="Discover Neuron Separation Results" processor="org.janelia.it.jacs.compute.service.entity.sample.MigrationNeuronAnnotationsService">
+                    <input name="SOURCE_SEPARATION_ID" value="$V{PREVIOUS_SEPARATION_ID}"/>
+                    <input name="TARGET_SEPARATION_ID" value="$V{SEPARATION_ID}"/>
+                </operation>
+                
+            </sequence>
+        </sequence>
+	    
 	    
     </sequence>
     
