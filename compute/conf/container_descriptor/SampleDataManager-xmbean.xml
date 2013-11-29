@@ -299,6 +299,21 @@
     </operation>
     
     <operation>
+        <description>Generate a mapping between two neuron separations</description>
+        <name>runNeuronSeparationMapping</name>
+        <parameter>
+           <description>Entity id of the old separation result (e.g. "1679282451010027618")</description>
+           <name>separationId1</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Entity id of the new separation result (e.g. "1679282451010027618")</description>
+           <name>separationId2</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
         <description>Repair any neuron separations which are incomplete</description>
         <name>runRepairSeparationsPipeline</name>
         <parameter>

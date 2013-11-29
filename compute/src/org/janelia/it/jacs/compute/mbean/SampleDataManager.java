@@ -329,6 +329,25 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
+    public void runNeuronSeparationMapping(String separationId1, String separationId2) {
+        try {
+            String processName = "NeuronSeparationMapping";
+            String displayName = "Standalone Neuron Separation Mapping";
+            Entity result1 = EJBFactory.getLocalEntityBean().getEntityById(separationId1);
+            if (result1==null) throw new IllegalArgumentException("Entity with id "+separationId1+" does not exist");
+            Entity result2 = EJBFactory.getLocalEntityBean().getEntityById(separationId2);
+            if (result2==null) throw new IllegalArgumentException("Entity with id "+separationId2+" does not exist");
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter("separation id 1", separationId1, null));
+            taskParameters.add(new TaskParameter("separation id 2", separationId2, null));
+            String user = result2.getOwnerKey();
+            saveAndRunTask(user, processName, displayName, taskParameters);
+        } 
+        catch (Exception ex) {
+            logger.error("Error running pipeline", ex);
+        }
+    }
+
     public void applyProcessToDataset(String user, String dataSetName, String parentOrChildren, String processName) {
         try {
             if (!StringUtils.isEmpty(dataSetName)) {

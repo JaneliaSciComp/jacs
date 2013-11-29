@@ -7,6 +7,7 @@ import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.service.common.ProcessDataAccessor;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
@@ -26,6 +27,7 @@ public abstract class AbstractEntityGridService extends SubmitDrmaaJobService {
     protected Logger logger;
     protected Task task;
     protected IProcessData processData;
+    protected ProcessDataAccessor data;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
     protected AnnotationBeanLocal annotationBean;
@@ -39,6 +41,7 @@ public abstract class AbstractEntityGridService extends SubmitDrmaaJobService {
             this.logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             this.task = ProcessDataHelper.getTask(processData);
             this.processData = processData;
+            this.data = new ProcessDataAccessor(processData, contextLogger);
             this.entityBean = EJBFactory.getLocalEntityBean();
             this.computeBean = EJBFactory.getLocalComputeBean();
             this.annotationBean = EJBFactory.getLocalAnnotationBean();

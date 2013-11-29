@@ -30,6 +30,10 @@ public class NeuronSeparatorHelper {
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("MipCreator.ScriptPath");
     
+    protected static final String NEURON_MAPPING_SCRIPT = 
+            SystemConfigurationProperties.getString("Executables.ModuleBase") +
+            SystemConfigurationProperties.getString("NeuronMapping.ScriptPath");
+    
 	public static String getNeuronSeparationCommands(int numThreads, boolean isWarped) throws ServiceException {
 	    StringBuilder script = new StringBuilder();
         if (isWarped) {
@@ -41,6 +45,12 @@ public class NeuronSeparatorHelper {
         return script.toString();
 	}
 
+    public static String getNeuronMappingCommands(String outputDir, String inputFile1, String inputFile2) {
+        StringBuilder script = new StringBuilder();
+        script.append("sh "+NEURON_MAPPING_SCRIPT+" \""+outputDir+"\" \""+inputFile1+"\" \""+inputFile2+"\"");
+        return script.toString();
+    }
+    
 	public static String getFastLoadCommands(int numThreads, String inputFile) {
         StringBuilder script = new StringBuilder();
         script.append("export NFE_MAX_THREAD_COUNT="+numThreads+"\n");

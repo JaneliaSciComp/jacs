@@ -76,7 +76,6 @@
             <output name="SEPARATION_ID"/>
 	    </operation>
 	    
-        
         <sequence if="ALIGNED_CONSOLIDATED_LABEL_FILEPATH is empty">
             <sequence if="PREVIOUS_RESULT_FILENAME is not empty">
             
