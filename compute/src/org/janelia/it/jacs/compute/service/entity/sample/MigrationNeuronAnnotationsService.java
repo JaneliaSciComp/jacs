@@ -62,6 +62,11 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
         populateChildren(sourceSeparation);
         populateChildren(targetSeparation);
         
+        Entity supportingFiles = EntityUtils.getSupportingData(targetSeparation);
+        populateChildren(supportingFiles);
+        
+        boolean resultWasMapped = EntityUtils.findChildWithName(supportingFiles, "SeparationResult.nsp")!=null; 
+        
         Entity sourceNeuronCollection = EntityUtils.findChildWithType(sourceSeparation, EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION);
         Entity targetNeuronCollection = EntityUtils.findChildWithType(targetSeparation, EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION);
         
@@ -92,7 +97,7 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
             
         }
         else {
-            Map<Integer,Integer> mapping = getMapping(targetSeparation);
+            Map<Integer,Integer> mapping = getMapping(targetSeparation, resultWasMapped);
             if (mapping==null) {
                 throw new IllegalStateException("Unwarped separation has no mapping file: "+targetSeparation.getId());
             }
@@ -221,8 +226,17 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
     
     /**
      * Returns the mapping for a given separation, as determined by its mapping_issues.txt file.
+     * 
+     * The mapping_issues.txt file is formatted like this:
+     * Previous index # : Unmapped index # : Mapped index #
+     * 
+     * If useMappedIndicies is true, then this method returns this mapping:
+     *     Previous index # -> Mapped index #
+     *     
+     * If useMappedIndicies is false, then this method returns this mapping:
+     *     Previous index # -> Unmapped index #
      */
-    private Map<Integer,Integer> getMapping(Entity separation) {
+    private Map<Integer,Integer> getMapping(Entity separation, boolean useMappedIndicies) {
         String dir = separation.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         File mappingFile = new File(dir,"mapping_issues.txt");
         Scanner scanner = null;
@@ -234,16 +248,18 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
 
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine().trim();
-                Pattern p = Pattern.compile("^Previous index (.*?) : Mapped index (.*?)$");
+                Pattern p = Pattern.compile("^Previous index (.*?) : Unmapped index (.*?) : Mapped index (.*?)$");
                 Matcher m = p.matcher(line);
                 if (m.matches()) {
                     String prevIndex = m.group(1);
-                    String currIndex = m.group(2);
+                    String unmappedIndex = m.group(2);
+                    String mappedIndex = m.group(3);
+                    String newIndex = useMappedIndicies?mappedIndex:unmappedIndex;
                     try {
-                        mapping.put(Integer.parseInt(prevIndex), Integer.parseInt(currIndex));
+                        mapping.put(Integer.parseInt(prevIndex), Integer.parseInt(newIndex));
                     }
                     catch (NumberFormatException e) {
-                        logger.warn("Could not format indexes: "+prevIndex+"->"+currIndex);
+                        logger.warn("Could not format indexes: "+prevIndex+"->"+newIndex);
                     }
                 }
             }
