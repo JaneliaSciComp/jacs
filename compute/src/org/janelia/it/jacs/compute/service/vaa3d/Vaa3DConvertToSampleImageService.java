@@ -100,13 +100,11 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
 
             final Object bulkMergeParamObj = data.getRequiredItem("BULK_MERGE_PARAMETERS");
             if (bulkMergeParamObj instanceof List) {
-                //noinspection unchecked
                 mergedLsmPairs = (List<MergedLsmPair>) bulkMergeParamObj;
             } else {
                 throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS must be an ArrayList<MergedLsmPair>");
             }
 
-            //noinspection unchecked
             List<String> mergeAlgorithms = (List<String>) data.getItem("MERGE_ALGORITHM");
             if (mergeAlgorithms != null && !mergeAlgorithms.isEmpty()) {
                 mergeAlgorithm = mergeAlgorithms.get(0);
@@ -241,7 +239,6 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                     String chanSpec2 = sampleHelper.getLSMChannelSpec(lsm2Entity, refIndex2);
                     contextLogger.info("  Input spec 2: "+chanSpec2);
                     
-
                     unmergedChannelList.addAll(convertChanSpecToList(chanSpec1+chanSpec2));
                     
                     if (MergeAlgorithm.FLYLIGHT_ORDERED.getName().equals(mergeAlgorithm)) {

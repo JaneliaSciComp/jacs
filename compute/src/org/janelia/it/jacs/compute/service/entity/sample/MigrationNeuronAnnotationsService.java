@@ -134,31 +134,35 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
                     throws ComputeException {
 
         Map<Number,Number> sourceNeuronNumByEntityId = getNeuronNumMap(sourceNeuronCollection, false);
-        Map<Number,Number> targetEntityIdByNeuronNum = getNeuronNumMap(sourceNeuronCollection, true);
+        Map<Number,Number> targetEntityIdByNeuronNum = getNeuronNumMap(targetNeuronCollection, true);
         
         Multimap<Long,Entity> sourceAnnotationMap = getAnnotationMap(sourceAnnotations);
         
-        for(Long neuronEntityId : sourceAnnotationMap.keys()) {
+        for(Long neuronEntityId : sourceAnnotationMap.keySet()) {
             Collection<Entity> annotations = sourceAnnotationMap.get(neuronEntityId);
             if (annotations==null) {
                 logger.info("Neuron (id="+neuronEntityId+") has null annotation");
                 continue;
             }
+            logger.info("Neuron (id="+neuronEntityId+") has "+annotations.size()+" annotations");
             Number sourceNumber = sourceNeuronNumByEntityId.get(neuronEntityId);
             if (sourceNumber==null) {
                 logger.info("Neuron (id="+neuronEntityId+") has null number");
                 continue;
             }
+            logger.info("Neuron (id="+neuronEntityId+") is number "+sourceNumber+" in the source separation");
             Integer targetNumber = mapping.get(sourceNumber);
             if (targetNumber==null) {
                 logger.info("Neuron (number="+sourceNumber+") has no mapping in the target separation");
                 continue;
             }
+            logger.info("Neuron (id="+neuronEntityId+") is number "+targetNumber+" in the target separation");
             Long targetEntityId = (Long)targetEntityIdByNeuronNum.get(targetNumber);
             if (targetEntityId==null) {
                 logger.info("Neuron (number="+sourceNumber+") has no entity in the target separation");
                 continue;
             }
+            logger.info("Neuron (id="+neuronEntityId+") is neuron (id="+targetEntityId+") in the target separation");
             migrateAnnotations(annotations, targetEntityId);
         }
     }
@@ -185,6 +189,7 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
         annotation.setEntity(null);
         annotation.setId(null);
         annotation.setIsComputational(true);
+        annotation.setTargetEntityId(targetId);
         annotationBean.createOntologyAnnotation(ownerKey, annotation);
     }
     

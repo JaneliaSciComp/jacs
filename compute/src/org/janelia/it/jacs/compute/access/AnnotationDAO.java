@@ -1903,7 +1903,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             if (annotation.getIsComputational() != null && annotation.getIsComputational()) {
                 EntityData keyEntityData = newData(newAnnotation,
                         EntityConstants.ATTRIBUTE_ANNOTATION_IS_COMPUTATIONAL, subjectKey);
-                keyEntityData.setChildEntity(keyEntity);
                 keyEntityData.setValue(EntityConstants.ATTRIBUTE_ANNOTATION_IS_COMPUTATIONAL);
                 eds.add(keyEntityData);
             }
