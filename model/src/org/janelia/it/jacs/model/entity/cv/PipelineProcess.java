@@ -26,7 +26,8 @@ public enum PipelineProcess implements NamedEnum {
     NernaRightOpticLobe("Aljoscha Right Optic Lobe 63x Pipeline"),
 
     WolfftMCFOCase1("Tanya Central Brain MCFO Case 1 Pipeline"),
-    
+    WolfftMCFOCase1Unaligned("Tanya MCFO Case 1 Unaligned Pipeline"),
+
     YoshiMB63xFlpout1024pxINT("Yoshi MB Flp-out 63x 1024px INTensity Pipeline"),
     YoshiMB63xFlpout512pxINT("Yoshi MB Flp-out 63x 512px INTensity Pipeline"),
     YoshiMB63xFlpout512pxLM("Yoshi MB Flp-out 63x 512px LandMark Pipeline"),
