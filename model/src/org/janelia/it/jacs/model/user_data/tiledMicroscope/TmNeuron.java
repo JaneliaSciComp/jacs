@@ -97,7 +97,7 @@ public class TmNeuron implements IsSerializable, Serializable {
             if (!parentId.equals(this.id)) {
                 TmGeoAnnotation parent = geoAnnotationMap.get(parentId);
                 if (parent==null) {
-                    throw new Exception("Could not find parent for TmGeoAnnotation id="+ga.getId());
+                    throw new Exception(String.format("Could not find parent for TmGeoAnnotation id = %d in neuron id = %d", ga.getId(), id));
                 }
                 parent.addChild(ga);
                 ga.setParent(parent);
@@ -106,7 +106,7 @@ public class TmNeuron implements IsSerializable, Serializable {
         // Last step is check to make sure every non-root annotation has a parent
         for (TmGeoAnnotation ga : geoAnnotationMap.values()) {
             if (ga.getParent()==null && !ga.getParentId().equals(this.id)) {
-                throw new Exception("TmGeoAnnotation unexpectedly does not have a valid parent="+ga.getId());
+                throw new Exception(String.format("TmGeoAnnotation id = %d unexpectedly does not have a valid parent in neuron id = %d", ga.getId(), id));
             }
         }
     }
