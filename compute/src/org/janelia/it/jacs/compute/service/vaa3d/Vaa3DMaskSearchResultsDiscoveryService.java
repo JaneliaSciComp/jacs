@@ -95,7 +95,7 @@ public class Vaa3DMaskSearchResultsDiscoveryService implements IService{
         Entity inputEntity = new Entity();
         inputEntity.setName(tmpFile.getName());
         inputEntity.setOwnerKey(ownerKey);
-        inputEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D));
+        inputEntity.setEntityTypeName(EntityConstants.TYPE_IMAGE_3D);
         inputEntity.setCreationDate(createDate);
         inputEntity.setUpdatedDate(createDate);
         inputEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, inputFilePath);
@@ -110,7 +110,7 @@ public class Vaa3DMaskSearchResultsDiscoveryService implements IService{
         Entity resultsEntity = new Entity();
         resultsEntity.setName(tmpFile.getName());
         resultsEntity.setOwnerKey(ownerKey);
-        resultsEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_TEXT_FILE));
+        resultsEntity.setEntityTypeName(EntityConstants.TYPE_TEXT_FILE);
         resultsEntity.setCreationDate(createDate);
         resultsEntity.setUpdatedDate(createDate);
         resultsEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, resultsFilePath);
@@ -121,8 +121,8 @@ public class Vaa3DMaskSearchResultsDiscoveryService implements IService{
 	
     protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
         entityBean.addEntityToParent(parent, entity, index, attrName);
-        logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
-                " as child of "+parent.getEntityType().getName()+"#"+parent.getId());
+        logger.info("Added "+entity.getEntityTypeName()+"#"+entity.getId()+
+                " as child of "+parent.getEntityTypeName()+"#"+parent.getId());
     }
 
 

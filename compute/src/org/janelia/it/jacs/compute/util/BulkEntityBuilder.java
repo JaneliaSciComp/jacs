@@ -26,11 +26,8 @@ public class BulkEntityBuilder {
     	
     	logger.debug(getIndent()+"adding entity '"+name+"' ("+entityTypeName+")");
     	
-    	EntityType type = new EntityType();
-    	type.setName(entityTypeName);
-    	
     	Entity entity = new Entity();
-    	entity.setEntityType(type);
+    	entity.setEntityTypeName(entityTypeName);
     	entity.setName(name);
     	
     	if (ancestry.isEmpty()) {
@@ -39,10 +36,8 @@ public class BulkEntityBuilder {
     	}
     	else {
     		Entity current = ancestry.peek();
-        	EntityAttribute attr = new EntityAttribute();
-        	attr.setName(EntityConstants.ATTRIBUTE_ENTITY);
     		EntityData ed = new EntityData();
-        	ed.setEntityAttribute(attr);
+        	ed.setEntityAttrName(EntityConstants.ATTRIBUTE_ENTITY);
         	ed.setChildEntity(entity);
         	ed.setOrderIndex(current.getMaxOrderIndex()+1);
         	current.getEntityData().add(ed);
@@ -60,10 +55,8 @@ public class BulkEntityBuilder {
 		
     	logger.debug(getIndent()+"adding attribute '"+value+"' ("+entityAttrName+")");
     	
-    	EntityAttribute attr = new EntityAttribute();
-    	attr.setName(entityAttrName);
     	EntityData ed = new EntityData();
-    	ed.setEntityAttribute(attr);
+    	ed.setEntityAttrName(entityAttrName);
     	ed.setValue(value);
     	current.getEntityData().add(ed);
     	

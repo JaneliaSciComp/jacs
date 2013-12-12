@@ -95,7 +95,7 @@ public class EntityTreeTraversalService implements IService {
 
         boolean found = false;
         List<Entity> items = new ArrayList<Entity>();
-        if (types==null || types.contains(calledEntity.getEntityType().getName())) {
+        if (types==null || types.contains(calledEntity.getEntityTypeName())) {
             items.add(calledEntity);
             found = true;
         }

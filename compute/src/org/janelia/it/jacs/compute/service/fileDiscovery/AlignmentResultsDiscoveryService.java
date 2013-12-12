@@ -33,7 +33,7 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
     @Override
     protected void processFolderForData(Entity alignmentResult) throws Exception {
 
-        if (!alignmentResult.getEntityType().getName().equals(EntityConstants.TYPE_ALIGNMENT_RESULT)) {
+        if (!alignmentResult.getEntityTypeName().equals(EntityConstants.TYPE_ALIGNMENT_RESULT)) {
             throw new IllegalStateException("Expected Alignment Result as input");
         }
 
@@ -64,7 +64,7 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
         
         for(Entity resultItem : supportingFiles.getChildren()) {
             
-            if (resultItem.getEntityType().getName().equals(EntityConstants.TYPE_TEXT_FILE)) {
+            if (resultItem.getEntityTypeName().equals(EntityConstants.TYPE_TEXT_FILE)) {
                 logger.info("Got text file: "+resultItem.getName());    
                 if (resultItem.getName().endsWith(".properties")) {
                     
@@ -144,7 +144,7 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     }
                 }
             }
-            else if (resultItem.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_3D)) {
+            else if (resultItem.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
                 logger.info("Setting channel specification for "+resultItem.getName()+" (id="+resultItem.getId()+") to "+channelSpec);
                 helper.setChannelSpec(resultItem, channelSpec);
                 if (!StringUtils.isEmpty(channelColors)) {

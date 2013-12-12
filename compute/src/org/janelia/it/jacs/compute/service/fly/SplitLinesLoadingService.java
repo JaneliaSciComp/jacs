@@ -37,9 +37,6 @@ public class SplitLinesLoadingService extends AbstractEntityService {
 	
     protected Date createDate;
     
-    protected EntityType flylineType;
-    protected EntityType folderType;
-    
     protected Set<Specimen> representatives = new HashSet<Specimen>();
     protected Map<String, String> robotIds = new HashMap<String,String>();
     protected Map<String, String> splitConstructs = new HashMap<String,String>();
@@ -65,14 +62,7 @@ public class SplitLinesLoadingService extends AbstractEntityService {
     	String splitConstructsFilepath = (String)processData.getItem("SPLIT_CONSTRUCTS_FILEPATH");
     	if (splitConstructsFilepath == null) {
     		throw new IllegalArgumentException("SPLIT_CONSTRUCTS_FILEPATH may not be null");
-    	}
-    	
-    	
-    	// Preload entity types
-    	
-    	flylineType = entityBean.getEntityTypeByName(EntityConstants.TYPE_FLY_LINE);
-    	folderType = entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER);
-    	
+    	}    	
     	
     	// Read the input files
 
@@ -142,10 +132,10 @@ public class SplitLinesLoadingService extends AbstractEntityService {
     		
     		// Add representatives
     		for(EntityData ed : new ArrayList<EntityData>(flyline.getEntityData())) {
-    			if (!ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_ENTITY)) continue;
+    			if (!ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_ENTITY)) continue;
     			Entity screenSample = ed.getChildEntity();
     			if (screenSample==null) continue;
-    			if (!screenSample.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) continue;
+    			if (!screenSample.getEntityTypeName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) continue;
     			if (!representatives.contains(Specimen.createSpecimenFromFullName(screenSample.getName()))) continue;
     			setFlylineRepresentative(flyline, screenSample);
     			break;
@@ -306,7 +296,7 @@ public class SplitLinesLoadingService extends AbstractEntityService {
     			}
     			
     			for(Entity child : flyline.getChildren()) {
-    				if (child.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
+    				if (child.getEntityTypeName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
     					samples.put(child.getName(),child);
     				}
     			}
@@ -396,7 +386,7 @@ public class SplitLinesLoadingService extends AbstractEntityService {
 							logger.info("      "+flyline.getName()+(rep!=null?" -> "+rep.getName():""));
 							
 							for(EntityData ed : flyline.getOrderedEntityData()) {
-								if (ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_ENTITY)) {
+								if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_ENTITY)) {
 									Entity screenSample = ed.getChildEntity();
 									logger.info("        "+screenSample.getName()+(rep!=null&&screenSample.getId().equals(rep.getId())?" (REP)":""));
 								}
@@ -722,8 +712,8 @@ public class SplitLinesLoadingService extends AbstractEntityService {
             // Only accept the current user's top level folder
             for (Entity entity : topLevelFolders) {
                 if (entity.getOwnerKey().equals(ownerKey)
-                        && entity.getEntityType().getName().equals(folderType.getName())
-                        && entity.getAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
+                        && entity.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER)
+                        && entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
                     // This is the folder we want, now load the entire folder hierarchy
                     if (loadTree) {
                         topLevelFolder = entityBean.getEntityTree(entity.getId());
@@ -743,7 +733,7 @@ public class SplitLinesLoadingService extends AbstractEntityService {
             topLevelFolder.setUpdatedDate(createDate);
             topLevelFolder.setOwnerKey(ownerKey);
             topLevelFolder.setName(topLevelFolderName);
-            topLevelFolder.setEntityType(folderType);
+            topLevelFolder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
             EntityUtils.addAttributeAsTag(topLevelFolder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
             topLevelFolder = entityBean.saveOrUpdateEntity(topLevelFolder);
             logger.info("Saved top level folder as " + topLevelFolder.getId());
@@ -757,7 +747,7 @@ public class SplitLinesLoadingService extends AbstractEntityService {
         logger.info("Looking for child entity "+childName+" in parent entity "+parent.getId());
         for (EntityData ed : parent.getEntityData()) {
             Entity child = ed.getChildEntity();
-            if (child != null && child.getEntityType().getName().equals(folderType.getName()) && child.getName().equals(childName)) {
+            if (child != null && child.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER) && child.getName().equals(childName)) {
             	Entity folder = ed.getChildEntity();	
                 logger.info("Found folder with id="+folder.getId());
                 return folder;
@@ -770,7 +760,7 @@ public class SplitLinesLoadingService extends AbstractEntityService {
         child.setUpdatedDate(createDate);
         child.setOwnerKey(ownerKey);
         child.setName(childName);
-        child.setEntityType(folderType);
+        child.setEntityTypeName(EntityConstants.TYPE_FOLDER);
         child = entityBean.saveOrUpdateEntity(child);
         logger.info("Saved child as "+child.getId());
         addToParent(parent, child, parent.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
@@ -784,7 +774,7 @@ public class SplitLinesLoadingService extends AbstractEntityService {
         folder.setUpdatedDate(createDate);
         folder.setOwnerKey(ownerKey);
         folder.setName(name);
-        folder.setEntityType(folderType);
+        folder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
         folder = entityBean.saveOrUpdateEntity(folder);
         logger.info("Saved folder " + name+" as " + folder.getId()+" , will now add as child to parent entity name="+parent.getName()+" parentId="+parent.getId());
         addToParent(parent, folder, null, EntityConstants.ATTRIBUTE_ENTITY);
@@ -794,7 +784,7 @@ public class SplitLinesLoadingService extends AbstractEntityService {
     protected Entity createFlylineEntity(String entityName, String splitPart, String robotId) throws Exception {
         Entity flyline = new Entity();
         flyline.setOwnerKey(ownerKey);
-        flyline.setEntityType(flylineType);
+        flyline.setEntityTypeName(EntityConstants.TYPE_FLY_LINE);
         flyline.setCreationDate(createDate);
         flyline.setUpdatedDate(createDate);
         flyline.setName(entityName);
@@ -812,7 +802,7 @@ public class SplitLinesLoadingService extends AbstractEntityService {
 
     protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
         entityBean.addEntityToParent(parent, entity, index, attrName);
-        logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
-        		" as child of "+parent.getEntityType().getName()+"#"+parent.getId());
+        logger.info("Added "+entity.getEntityTypeName()+"#"+entity.getId()+
+        		" as child of "+parent.getEntityTypeName()+"#"+parent.getId());
     }
 }

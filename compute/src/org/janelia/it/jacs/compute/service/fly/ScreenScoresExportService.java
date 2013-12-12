@@ -277,8 +277,8 @@ public class ScreenScoresExportService extends ScreenScoresLoadingService {
             // Only accept the current user's top level folder
             for (Entity entity : topLevelFolders) {
                 if (entity.getOwnerKey().equals(ownerKey)
-                        && entity.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)
-                        && entity.getAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
+                        && entity.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER)
+                        && entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
                     topLevelFolder = entity;
                     logger.info("Found existing topLevelFolder common root, name=" + topLevelFolder.getName());
                     break;

@@ -107,10 +107,10 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         Map<String,Entity> incompleteScreenSamples=new HashMap<String,Entity>();
         for (EntityData ed : topFolder.getEntityData()) {
             Entity dateFolder = ed.getChildEntity();
-            if (dateFolder != null && dateFolder.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+            if (dateFolder != null && dateFolder.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER)) {
                 for (EntityData d : dateFolder.getEntityData()) {
                     Entity child=d.getChildEntity();
-                    if (child != null && child.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
+                    if (child != null && child.getEntityTypeName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
                         String previousSampleName=child.getName();
                         if (screenSampleIsComplete(child)) {
                             logger.info("Skipping previous complete ScreenSample  name="+previousSampleName);
@@ -131,12 +131,6 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         Long sampleTotal=0L;
         Integer sampleCount=0;
         List<String> sampleIdList=new ArrayList<String>();
-        EntityType screenSampleType= EJBFactory.getLocalEntityBean().getEntityTypeByName(EntityConstants.TYPE_SCREEN_SAMPLE);
-        if (screenSampleType==null) {
-            String errorMsg="EntityType screenSampleType  returned  NULL";
-            logger.error(errorMsg);
-            throw new Exception(errorMsg);
-        }
         for (String key : sampleMap.keySet()) {
             FlyScreenSample screenSample = sampleMap.get(key);
             Entity screenSampleEntity=incompleteScreenSamples.get(key);
@@ -149,7 +143,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
                 screenSampleEntity.setUpdatedDate(createDate);
                 screenSampleEntity.setOwnerKey(ownerKey);
                 screenSampleEntity.setName(key);
-                screenSampleEntity.setEntityType(screenSampleType);
+                screenSampleEntity.setEntityTypeName(EntityConstants.TYPE_SCREEN_SAMPLE);
                 screenSampleEntity = EJBFactory.getLocalEntityBean().saveOrUpdateEntity(screenSampleEntity);
                 logger.info("Created new Screen Sample " + key + " id=" + screenSampleEntity.getId());
                 helper.addToParent(dateFolder, screenSampleEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
@@ -186,7 +180,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
             if (child==null) {
                 logger.info("Skipping null ed entry");
             } else {
-                if (child.getEntityType().getName().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
+                if (child.getEntityTypeName().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
                     String stackPath=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                     File stackFile=new File(stackPath);
                     if (stackFile.exists()) {
@@ -195,12 +189,12 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
                     } else {
                         logger.info("Could not find existing stack="+stackFile.getAbsolutePath()+" hasStack=false");
                     }
-                } else if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) &&
+                } else if (child.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER) &&
                         child.getName().equals(FlyScreenSampleService.SUPPORTING_FILES_FOLDER_NAME)) {
                     for (EntityData ed2 : child.getEntityData()) {
                         Entity child2=ed2.getChildEntity();
                         if (child2!=null) {
-                            if (child2.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_2D) &&
+                            if (child2.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_2D) &&
                                 child2.getName().toLowerCase().endsWith("mip")) {
                                 String mipPath=child2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                                 File mipFile=new File(mipPath);
@@ -211,7 +205,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
                                     logger.info("Could not find existing mip="+mipFile.getAbsolutePath()+" hasMip=false");
                                 }
                             } else {
-                                logger.info("Ignoring child entity of type="+child.getEntityType().getName());
+                                logger.info("Ignoring child entity of type="+child.getEntityTypeName());
                             }
                         }
                     }
@@ -286,7 +280,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         Set<Entity> children = screenSampleEntity.getChildren();
         if (children!=null && children.size()>0) {
             for (Entity child : children)  {
-                if (child.getEntityType().getName().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
+                if (child.getEntityTypeName().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
                     String stackPath=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                     File stackFile=new File(stackPath);
                     logger.info("Found already existing stack="+stackFile.getAbsolutePath());
@@ -301,14 +295,14 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
                         }
                     }
                 } else {
-                    logger.info("Skipping child of type="+child.getEntityType().getName());
+                    logger.info("Skipping child of type="+child.getEntityTypeName());
                 }
             }
         }
         if (alignedStack==null) {
             alignedStack = new Entity();
             alignedStack.setOwnerKey(ownerKey);
-            alignedStack.setEntityType(EJBFactory.getLocalEntityBean().getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK));
+            alignedStack.setEntityTypeName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
             alignedStack.setCreationDate(createDate);
             alignedStack.setUpdatedDate(createDate);
             alignedStack.setName(screenSampleEntity.getName()+" aligned stack");
@@ -341,16 +335,15 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         String monthSection=dateGuid.substring(0,6);
         Set<Entity> children=topFolder.getChildren();
         for (Entity child : children) {
-            if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) &&
+            if (child.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER) &&
                     child.getName().equals(monthSection)) {
                 return child;
             }
         }
         // Assume we don't have a folder for this date yet
         Entity dateFolder = new Entity();
-        EntityType dateFolderType=EJBFactory.getLocalEntityBean().getEntityTypeByName(EntityConstants.TYPE_FOLDER);
         dateFolder.setOwnerKey(ownerKey);
-        dateFolder.setEntityType(dateFolderType);
+        dateFolder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
         dateFolder.setCreationDate(createDate);
         dateFolder.setUpdatedDate(createDate);
         dateFolder.setName(monthSection);
@@ -366,7 +359,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         for (EntityData ed : folderEdSet) {
             Entity folder = ed.getChildEntity();
             if (folder!=null) {
-                if (folder.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+                if (folder.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER)) {
                     Long dateNumber=new Long(folder.getName().trim());
                     folderMapByDateNumber.put(dateNumber, ed);
                 }

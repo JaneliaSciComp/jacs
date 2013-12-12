@@ -57,7 +57,7 @@ public class AddVerifyMoviePostService extends AbstractEntityGridService {
             throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
         }
         
-        if (!EntityConstants.TYPE_SAMPLE.equals(sampleEntity.getEntityType().getName())) {
+        if (!EntityConstants.TYPE_SAMPLE.equals(sampleEntity.getEntityTypeName())) {
             throw new IllegalArgumentException("Entity is not a sample: "+sampleEntityId);
         }
         
@@ -182,7 +182,7 @@ public class AddVerifyMoviePostService extends AbstractEntityGridService {
     public Entity createMovie(String filepath, String name) throws ComputeException {
         Entity entity = new Entity();
         entity.setOwnerKey(ownerKey);
-        entity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_MOVIE));
+        entity.setEntityTypeName(EntityConstants.TYPE_MOVIE);
         Date createDate = new Date();
         entity.setCreationDate(createDate);
         entity.setUpdatedDate(createDate);

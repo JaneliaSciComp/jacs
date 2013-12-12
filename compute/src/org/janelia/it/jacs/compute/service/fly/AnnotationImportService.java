@@ -81,7 +81,7 @@ public class AnnotationImportService extends AbstractEntityService {
     		Collections.sort(annots);
     		annotate(entity, annots);
 
-    		if (EntityConstants.TYPE_SCREEN_SAMPLE.equals(entity.getEntityType().getName())) {
+    		if (EntityConstants.TYPE_SCREEN_SAMPLE.equals(entity.getEntityTypeName())) {
 	    		Set<Long> parentIds = entityBean.getParentIdsForAttribute(entity.getId(), EntityConstants.ATTRIBUTE_REPRESENTATIVE_SAMPLE);
 	    		if (parentIds != null) {
 	    			List<Entity> represented = entityBean.getEntitiesById(new ArrayList<Long>(parentIds));	

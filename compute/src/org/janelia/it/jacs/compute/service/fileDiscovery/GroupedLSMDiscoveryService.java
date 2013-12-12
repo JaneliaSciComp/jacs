@@ -95,7 +95,7 @@ public class GroupedLSMDiscoveryService extends FileDiscoveryService {
     	for(EntityData ed : folder.getEntityData()) {
 			Entity sampleFolder = ed.getChildEntity();
     		if (sampleFolder == null) continue;
-    		if (!EntityConstants.TYPE_SAMPLE.equals(sampleFolder.getEntityType().getName())) continue;
+    		if (!EntityConstants.TYPE_SAMPLE.equals(sampleFolder.getEntityTypeName())) continue;
     		if (sampleFolder.getName().equals(name)) {
     			return sampleFolder;
     		}
@@ -107,7 +107,7 @@ public class GroupedLSMDiscoveryService extends FileDiscoveryService {
 
         Entity sample = new Entity();
         sample.setOwnerKey(ownerKey);
-        sample.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SAMPLE));
+        sample.setEntityTypeName(EntityConstants.TYPE_SAMPLE);
         sample.setCreationDate(createDate);
         sample.setUpdatedDate(createDate);
         sample.setName(name);
@@ -133,7 +133,7 @@ public class GroupedLSMDiscoveryService extends FileDiscoveryService {
     protected Entity createSupportingFilesFolder() throws Exception {
         Entity filesFolder = new Entity();
         filesFolder.setOwnerKey(ownerKey);
-        filesFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
+        filesFolder.setEntityTypeName(EntityConstants.TYPE_SUPPORTING_DATA);
         filesFolder.setCreationDate(createDate);
         filesFolder.setUpdatedDate(createDate);
         filesFolder.setName("Supporting Files");
@@ -145,7 +145,7 @@ public class GroupedLSMDiscoveryService extends FileDiscoveryService {
     private Entity createLsmStackFromFile(File file) throws Exception {
         Entity lsmStack = new Entity();
         lsmStack.setOwnerKey(ownerKey);
-        lsmStack.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK));
+        lsmStack.setEntityTypeName(EntityConstants.TYPE_LSM_STACK);
         lsmStack.setCreationDate(createDate);
         lsmStack.setUpdatedDate(createDate);
         lsmStack.setName(file.getName());

@@ -66,7 +66,7 @@ public class TmNeuron implements IsSerializable, Serializable {
     }
 
     public TmNeuron(Entity entity) throws Exception {
-        if (!entity.getEntityType().getName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
+        if (!entity.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
             throw new Exception("Entity type must be "+EntityConstants.TYPE_TILE_MICROSCOPE_NEURON);
         }
         this.id=entity.getId();
@@ -75,7 +75,7 @@ public class TmNeuron implements IsSerializable, Serializable {
 
         // First step is to create TmGeoAnnotation and TmAnchoredPath objects
         for (EntityData ed : entity.getEntityData()) {
-            String edAttr = ed.getEntityAttribute().getName();
+            String edAttr = ed.getEntityAttrName();
             if (edAttr.equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE) ||
                     edAttr.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
                 TmGeoAnnotation ga = new TmGeoAnnotation(ed.getValue());

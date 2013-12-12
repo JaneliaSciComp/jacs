@@ -94,7 +94,7 @@ public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
         String tmpIndex = getNextAvailableIndex(tmpCuratedNeuronCollection).toString();
         Entity curatedNeuronEntity = new Entity();
         curatedNeuronEntity.setOwnerKey(ownerKey);
-        curatedNeuronEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_CURATED_NEURON));
+        curatedNeuronEntity.setEntityTypeName(EntityConstants.TYPE_CURATED_NEURON);
         curatedNeuronEntity.setCreationDate(createDate);
         curatedNeuronEntity.setUpdatedDate(createDate);
         curatedNeuronEntity.setName("Curated Neuron " + tmpIndex);
@@ -112,7 +112,7 @@ public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
     protected Entity createCuratedNeuronCollection(Entity separationResultEntity) throws Exception {
         Entity curatedNeuronCollectionEntity = new Entity();
         curatedNeuronCollectionEntity.setOwnerKey(separationResultEntity.getOwnerKey());
-        curatedNeuronCollectionEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_CURATED_NEURON_COLLECTION));
+        curatedNeuronCollectionEntity.setEntityTypeName(EntityConstants.TYPE_CURATED_NEURON_COLLECTION);
         curatedNeuronCollectionEntity.setCreationDate(createDate);
         curatedNeuronCollectionEntity.setUpdatedDate(createDate);
         curatedNeuronCollectionEntity.setName("Curated Neurons");
@@ -123,8 +123,8 @@ public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
 
     protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
         entityBean.addEntityToParent(parent, entity, index, attrName);
-        logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
-                " as child of "+parent.getEntityType().getName()+"#"+parent.getId());
+        logger.info("Added "+entity.getEntityTypeName()+"#"+entity.getId()+
+                " as child of "+parent.getEntityTypeName()+"#"+parent.getId());
     }
 
 

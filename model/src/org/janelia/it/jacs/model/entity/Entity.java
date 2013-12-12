@@ -3,6 +3,7 @@ package org.janelia.it.jacs.model.entity;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 import javax.xml.bind.annotation.*;
+
 import java.util.*;
 
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -19,16 +20,16 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     private String ownerKey;
     
     @XmlElement
-    private EntityStatus entityStatus;
-
-    @XmlElement
-    private EntityType entityType;
+    private String entityTypeName;
     
     @XmlTransient
     private Date creationDate;
 
     @XmlTransient
     private Date updatedDate;
+
+    @XmlElement
+    private Integer numChildren;
     
     @XmlElement(name="entityData")
     @XmlElementWrapper(name="entityDataSet")
@@ -44,25 +45,23 @@ public class Entity  implements java.io.Serializable, IsSerializable {
         this.id = id;
     }
 
-    public Entity(Long id, String name, String ownerKey, EntityStatus entityStatus, EntityType entityType, Date creationDate,
+    public Entity(Long id, String name, String ownerKey, String entityTypeName, Date creationDate,
             Date updatedDate, Set<EntityData> entityData) {
         this.id = id;
         this.name = name;
         this.ownerKey = ownerKey;
-        this.entityStatus = entityStatus;
-        this.entityType = entityType;
+        this.entityTypeName = entityTypeName;
         this.creationDate = creationDate;
         this.updatedDate = updatedDate;
         this.entityData = entityData;
     }
     
-    public Entity(Long id, String name, String ownerKey, EntityStatus entityStatus, EntityType entityType, Date creationDate,
+    public Entity(Long id, String name, String ownerKey, String entityTypeName, Date creationDate,
                   Date updatedDate, Set<EntityData> entityData, Set<EntityActorPermission> entityActorPermissions) {
        this.id = id;
        this.name = name;
         this.ownerKey = ownerKey;
-       this.entityStatus = entityStatus;
-       this.entityType = entityType;
+       this.entityTypeName = entityTypeName;
        this.creationDate = creationDate;
        this.updatedDate = updatedDate;
        this.entityData = entityData;
@@ -77,20 +76,14 @@ public class Entity  implements java.io.Serializable, IsSerializable {
         this.id = id;
     }
 
-    public EntityStatus getEntityStatus() {
-        return this.entityStatus;
+    public String getEntityTypeName() {
+        return this.entityTypeName;
     }
     
-    public void setEntityStatus(EntityStatus entityStatus) {
-        this.entityStatus = entityStatus;
-    }
-    public EntityType getEntityType() {
-        return this.entityType;
+    public void setEntityTypeName(String entityTypeName) {
+        this.entityTypeName = entityTypeName;
     }
     
-    public void setEntityType(EntityType entityType) {
-        this.entityType = entityType;
-    }
     public Date getCreationDate() {
         return this.creationDate;
     }
@@ -128,6 +121,14 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     public void setOwnerKey(String ownerKey) {
         this.ownerKey = ownerKey;
     }
+    
+    public Integer getNumChildren() {
+        return numChildren;
+    }
+
+    public void setNumChildren(Integer numChildren) {
+        this.numChildren = numChildren;
+    }
 
     public Set<EntityActorPermission> getEntityActorPermissions() {
         return entityActorPermissions;
@@ -136,16 +137,6 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     public void setEntityActorPermissions(Set<EntityActorPermission> entityActorPermissions) {
         this.entityActorPermissions = entityActorPermissions;
     }
-
-    public EntityAttribute getAttributeByName(String name) {
-        Set<EntityAttribute> attributeSet = entityType.getAttributes();
-        for (EntityAttribute ea : attributeSet) {
-            if (ea.getName().equals(name)) {
-                return ea;
-            }
-        }
-        throw new IllegalStateException("Cannot find attribute ("+name+") for entityType "+entityType.getName());
-    }
     
     /**
      * Returns the set of EntityData objects with the given attribute name.
@@ -153,7 +144,7 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     public EntityData getEntityDataByAttributeName(String attributeName) {
         Set<EntityData> matchingData = new HashSet<EntityData>();
         for (EntityData ed : entityData) {
-            if (ed.getEntityAttribute().getName().matches(attributeName)) {
+            if (ed.getEntityAttrName().matches(attributeName)) {
                 matchingData.add(ed);
             }
         }
@@ -191,19 +182,15 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     public boolean setValueByAttributeName(String attributeName, String value) {
         Set<EntityData> matchingData=new HashSet<EntityData>();
         for (EntityData ed : entityData) {
-            if (ed.getEntityAttribute().getName().matches(attributeName)) {
+            if (ed.getEntityAttrName().matches(attributeName)) {
                 matchingData.add(ed);
             }
         }
         if (matchingData.size()==0) {
             // Ok, we will add this
-            EntityAttribute attribute=getAttributeByName(attributeName);
-            if (attribute==null) {
-                throw new IllegalArgumentException("Entity "+getId()+" with type "+getEntityType().getName()+" does not have attribute: "+attributeName);
-            }
             EntityData ed=new EntityData();
             ed.setParentEntity(this);
-            ed.setEntityAttribute(attribute);
+            ed.setEntityAttrName(attributeName);
             ed.setValue(value);
             ed.setOwnerKey(ownerKey);
             Date createDate = new Date();
@@ -235,8 +222,7 @@ public class Entity  implements java.io.Serializable, IsSerializable {
         Date createDate = new Date();
         ed.setCreationDate(createDate);
         ed.setUpdatedDate(createDate);
-        EntityAttribute attribute=getAttributeByName(attributeName);
-        if (attribute!=null) ed.setEntityAttribute(attribute);
+        ed.setEntityAttrName(attributeName);
         this.entityData.add(ed);
         return ed;
     }
@@ -247,7 +233,7 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     public List<EntityData> getList(String attributeName) {
         List<EntityData> matchingData = new ArrayList<EntityData>();
         for (EntityData ed : getOrderedEntityData()) {
-            if (ed.getEntityAttribute().getName().matches(attributeName)) {
+            if (ed.getEntityAttrName().matches(attributeName)) {
                 matchingData.add(ed);
             }
         }

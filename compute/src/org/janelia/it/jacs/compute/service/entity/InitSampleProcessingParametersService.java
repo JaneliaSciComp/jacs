@@ -120,7 +120,7 @@ public class InitSampleProcessingParametersService extends AbstractEntityService
             Entity first = null;
             for(EntityData ed : tileEntity.getOrderedEntityData()) {
                 Entity lsmStack = ed.getChildEntity();
-                if (lsmStack != null && lsmStack.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK)) {
+                if (lsmStack != null && lsmStack.getEntityTypeName().equals(EntityConstants.TYPE_LSM_STACK)) {
                     String filepath = lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                     if (first!=null) {
                         lsmFilepath2 = filepath;

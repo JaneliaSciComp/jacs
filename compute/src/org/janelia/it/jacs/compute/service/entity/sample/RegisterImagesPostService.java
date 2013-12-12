@@ -34,7 +34,7 @@ public class RegisterImagesPostService extends AbstractEntityService {
             throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
         }
         
-        if (!EntityConstants.TYPE_SAMPLE.equals(sampleEntity.getEntityType().getName())) {
+        if (!EntityConstants.TYPE_SAMPLE.equals(sampleEntity.getEntityTypeName())) {
             throw new IllegalArgumentException("Entity is not a sample: "+sampleEntityId);
         }
         
@@ -69,7 +69,7 @@ public class RegisterImagesPostService extends AbstractEntityService {
     	for(Entity pipelineRun : runs) {
     	    populateChildren(pipelineRun);
     		for(EntityData pred : pipelineRun.getOrderedEntityData()) {
-    			if (!pred.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_RESULT)) {
+    			if (!pred.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_RESULT)) {
     				continue;
     			}
     			Entity result = pred.getChildEntity();

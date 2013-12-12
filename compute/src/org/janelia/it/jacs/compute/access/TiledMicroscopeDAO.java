@@ -69,7 +69,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         try {
             // Validate sample
             Entity brainSampleEntity = annotationDAO.getEntityById(brainSampleId);
-            if (!brainSampleEntity.getEntityType().getName().equals(EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE)) {
+            if (!brainSampleEntity.getEntityTypeName().equals(EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE)) {
                 throw new Exception("Tiled Microscope Workspace must be created with valid 3D Tile Microscope Sample Id");
             }
             Entity workspace=new Entity();
@@ -81,8 +81,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 throw new Exception("Owner Key="+ownerKey+" is not valid");
             }
             workspace.setOwnerKey(ownerKey);
-            EntityType tiledMicroscopeWorkspaceType=annotationDAO.getEntityTypeByName(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE);
-            workspace.setEntityType(tiledMicroscopeWorkspaceType);
+            workspace.setEntityTypeName(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE);
             annotationDAO.saveOrUpdate(workspace);
             // create preferences
             TmPreferences preferences=createTiledMicroscopePreferences(workspace.getId());
@@ -95,8 +94,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             sampleEd.setOwnerKey(workspace.getOwnerKey());
             sampleEd.setCreationDate(new Date());
             sampleEd.setUpdatedDate(new Date());
-            EntityAttribute sampleAttr = annotationDAO.getEntityAttributeByName(EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS);
-            sampleEd.setEntityAttribute(sampleAttr);
+            sampleEd.setEntityAttrName(EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS);
             // need this?
             // sampleEd.setOrderIndex(0);
             sampleEd.setParentEntity(workspace);
@@ -118,7 +116,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     public TmNeuron createTiledMicroscopeNeuron(Long workspaceId, String name) throws DaoException {
         try {
             Entity workspace = annotationDAO.getEntityById(workspaceId);
-            if (!workspace.getEntityType().getName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
+            if (!workspace.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
                 throw new Exception("Tiled Neuron must be created with valid Workspace Id");
             }
             Entity neuron=new Entity();
@@ -126,8 +124,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             neuron.setUpdatedDate(new Date());
             neuron.setName(name);
             neuron.setOwnerKey(workspace.getOwnerKey());
-            EntityType neuronType = annotationDAO.getEntityTypeByName(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON);
-            neuron.setEntityType(neuronType);
+            neuron.setEntityTypeName(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON);
             annotationDAO.saveOrUpdate(neuron);
             // old
             // EntityData ed = workspace.addChildEntity(neuron, EntityConstants.ATTRIBUTE_ENTITY);
@@ -146,7 +143,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     protected TmPreferences createTiledMicroscopePreferences(Long workspaceId) throws DaoException {
         try {
             Entity workspace = annotationDAO.getEntityById(workspaceId);
-            if (!workspace.getEntityType().getName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
+            if (!workspace.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
                 throw new Exception("Tiled Neuron must be created with valid Workspace Id");
             }
             Entity preferences=new Entity();
@@ -154,8 +151,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             preferences.setCreationDate(new Date());
             preferences.setUpdatedDate(new Date());
             preferences.setOwnerKey(workspace.getOwnerKey());
-            EntityType propertyType = annotationDAO.getEntityTypeByName(EntityConstants.TYPE_PROPERTY_SET);
-            preferences.setEntityType(propertyType);
+            preferences.setEntityTypeName(EntityConstants.TYPE_PROPERTY_SET);
             annotationDAO.saveOrUpdate(preferences);
             EntityData ed = workspace.addChildEntity(preferences, EntityConstants.ATTRIBUTE_ENTITY);
             annotationDAO.saveOrUpdate(ed);
@@ -187,7 +183,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
             // to do real work, though, we need the entity:
             Entity neuronEntity = annotationDAO.getEntityById(neuronID);
-            if (!neuronEntity.getEntityType().getName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
+            if (!neuronEntity.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
                 throw new Exception("Id is not valid TmNeuron type="+neuronID);
             }
 
@@ -195,8 +191,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             pathData.setOwnerKey(neuronEntity.getOwnerKey());
             pathData.setCreationDate(new Date());
             pathData.setUpdatedDate(new Date());
-            EntityAttribute pathAttribute = annotationDAO.getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANCHORED_PATH);
-            pathData.setEntityAttribute(pathAttribute);
+            pathData.setEntityAttrName(EntityConstants.ATTRIBUTE_ANCHORED_PATH);
             pathData.setOrderIndex(0);
             pathData.setParentEntity(neuronEntity);
             // perhaps not entirely kosher to use this temp value, but it works
@@ -209,7 +204,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             boolean valueStringUpdated=false;
             String valueString=null;
             for (EntityData ed: neuronEntity.getEntityData()) {
-                if (ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_ANCHORED_PATH)) {
+                if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_ANCHORED_PATH)) {
                     if (ed.getValue().equals(TMP_GEO_VALUE)) {
                         valueString=TmAnchoredPath.toStringFromArguments(ed.getId(), annotationID1, annotationID2, pointlist);
                         ed.setValue(valueString);
@@ -234,7 +229,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         try {
             // Retrieve neuron
             Entity neuron=annotationDAO.getEntityById(neuronId);
-            if (!neuron.getEntityType().getName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
+            if (!neuron.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
                 throw new Exception("Id is not valid TmNeuron type="+neuronId);
             }
             // Check if root; if not, find its parent
@@ -245,8 +240,8 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 // Validate
                 boolean foundParent=false;
                 for (EntityData ed : neuron.getEntityData()) {
-                    if (ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE) ||
-                            ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
+                    if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE) ||
+                            ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
                         String value=ed.getValue();
                         // note: really ought to unify this parsing with the parsing of EntityData in TmNeuron
                         String[] vArr=value.split(":");
@@ -264,16 +259,14 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             geoEd.setOwnerKey(neuron.getOwnerKey());
             geoEd.setCreationDate(new Date());
             geoEd.setUpdatedDate(new Date());
-            EntityAttribute geoAttr;
             Long parentId=0L;
             if (isRoot) {
                 parentId = neuron.getId();
-                geoAttr=annotationDAO.getEntityAttributeByName(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE);
+                geoEd.setEntityAttrName(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE);
             } else {
                 parentId=parentAnnotationId;
-                geoAttr=annotationDAO.getEntityAttributeByName(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE);
+                geoEd.setEntityAttrName(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE);
             }
-            geoEd.setEntityAttribute(geoAttr);
             geoEd.setOrderIndex(0);
             geoEd.setParentEntity(neuron);
             geoEd.setValue(TMP_GEO_VALUE);
@@ -285,7 +278,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             String valueString=null;
             for (EntityData ed : neuron.getEntityData()) {
                 if (isRoot) {
-                    if (ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
+                    if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
                         if (ed.getValue().equals(TMP_GEO_VALUE)) {
                             valueString=TmGeoAnnotation.toStringFromArguments(ed.getId(), parentId, index, x, y, z, comment);
                             ed.setValue(valueString);
@@ -294,7 +287,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                         }
                     }
                 } else {
-                    if (ed.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE)) {
+                    if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE)) {
                         if (ed.getValue().equals(TMP_GEO_VALUE)) {
                             valueString=TmGeoAnnotation.toStringFromArguments(ed.getId(), parentId, index, x, y, z, comment);
                             ed.setValue(valueString);
@@ -373,8 +366,8 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
 
         // if the annotation is a root annotation, change its attribute:
-        if (ed.getEntityAttribute().equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
-            ed.setEntityAttribute(annotationDAO.getEntityAttributeByName(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE));
+        if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
+            ed.setEntityAttrName(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE);
         }
 
         // change the parent ID and save
@@ -390,21 +383,18 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         try {
             // Validate sample
             Entity brainSampleEntity = annotationDAO.getEntityById(brainSampleId);
-            if (!brainSampleEntity.getEntityType().getName().equals(EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE)) {
+            if (!brainSampleEntity.getEntityTypeName().equals(EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE)) {
                 throw new Exception("Workspaces must be parented with valid 3D Tile Microscope Sample Id");
             }
             List<TmWorkspaceDescriptor> descriptorList=new ArrayList<TmWorkspaceDescriptor>();
-            EntityType tiledMicroscopeWorkspaceType=annotationDAO.getEntityTypeByName(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE);
-            EntityType neuronType=annotationDAO.getEntityTypeByName(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON);
             for (Entity possibleWorkspace : brainSampleEntity.getChildren()) {
-                if (possibleWorkspace.getEntityType().getName().equals(tiledMicroscopeWorkspaceType.getName())) {
+                if (possibleWorkspace.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
                     if (possibleWorkspace.getOwnerKey().equals(ownerKey)) {
                         Long wId=possibleWorkspace.getId();
                         String wName=possibleWorkspace.getName();
                         int neuronCount=0;
                         for (EntityData ed : possibleWorkspace.getEntityData()) {
-                            String edName=ed.getEntityAttribute().getName();
-                            if (edName.equals(neuronType)) {
+                            if (ed.getEntityAttrName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
                                 neuronCount++;
                             }
                         }
@@ -426,22 +416,19 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         try {
             // Validate sample
             Entity workspaceEntity = annotationDAO.getEntityById(workspaceId);
-            if (!workspaceEntity.getEntityType().getName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
+            if (!workspaceEntity.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
                 throw new Exception("Neurons must be parented with valid Workspace Id");
             }
             List<TmNeuronDescriptor> descriptorList=new ArrayList<TmNeuronDescriptor>();
-            EntityType neuronType=annotationDAO.getEntityTypeByName(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON);
-            EntityAttribute geoRoot=annotationDAO.getEntityAttributeByName(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE);
-            EntityAttribute geoTree=annotationDAO.getEntityAttributeByName(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE);
             for (Entity possibleNeuron : workspaceEntity.getChildren()) {
-                if (possibleNeuron.getEntityType().getName().equals(neuronType.getName())) {
+                if (possibleNeuron.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
                     if (possibleNeuron.getOwnerKey().equals(ownerKey)) {
                         Long nId=possibleNeuron.getId();
                         String nName=possibleNeuron.getName();
                         int annoCount=0;
                         for (EntityData ed : possibleNeuron.getEntityData()) {
-                            String edName=ed.getEntityAttribute().getName();
-                            if (edName.equals(geoRoot) || edName.equals(geoTree)) {
+                            String edName=ed.getEntityAttrName();
+                            if (edName.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE) || edName.equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE)) {
                                 annoCount++;
                             }
                         }
@@ -462,11 +449,11 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     public void removeWorkspacePreference(Long workspaceId, String key) throws DaoException {
         try {
             Entity workspaceEntity = annotationDAO.getEntityById(workspaceId);
-            if (!workspaceEntity.getEntityType().getName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
+            if (!workspaceEntity.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
                 throw new Exception("Neurons must be parented with valid Workspace Id");
             }
             for (Entity e : workspaceEntity.getChildren()) {
-                if (e.getEntityType().getName().equals(EntityConstants.TYPE_PROPERTY_SET)) {
+                if (e.getEntityTypeName().equals(EntityConstants.TYPE_PROPERTY_SET)) {
                     Set<EntityData> edToRemove=new HashSet<EntityData>();
                     for (EntityData ed : e.getEntityData()) {
                         String pString=ed.getValue();
@@ -490,12 +477,12 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     public void createOrUpdateWorkspacePreference(Long workspaceId, String key, String value) throws DaoException {
         try {
             Entity workspaceEntity = annotationDAO.getEntityById(workspaceId);
-            if (!workspaceEntity.getEntityType().getName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
+            if (!workspaceEntity.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
                 throw new Exception("Neurons must be parented with valid Workspace Id");
             }
-            EntityAttribute propertyAttribute=annotationDAO.getEntityAttributeByName(EntityConstants.ATTRIBUTE_PROPERTY);
+            String propertyAttrName=EntityConstants.ATTRIBUTE_PROPERTY;
             for (Entity e : workspaceEntity.getChildren()) {
-                if (e.getEntityType().getName().equals(EntityConstants.TYPE_PROPERTY_SET)) {
+                if (e.getEntityTypeName().equals(EntityConstants.TYPE_PROPERTY_SET)) {
                     EntityData edToUpdate=null;
                     for (EntityData ed : e.getEntityData()) {
                         String pString=ed.getValue();
@@ -506,7 +493,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                         }
                     }
                     if (edToUpdate==null) {
-                        EntityData ed=new EntityData(null, propertyAttribute, e, null, e.getOwnerKey(), key+"="+value, new Date(), null, 0);
+                        EntityData ed=new EntityData(null, propertyAttrName, e, null, e.getOwnerKey(), key+"="+value, new Date(), null, 0);
                         annotationDAO.genericSave(ed);
                         e.getEntityData().add(ed);
                     } else {
@@ -525,7 +512,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     protected void generalTreeDelete(String ownerKey, Long entityId, String type) throws DaoException {
         try {
             Entity entity = annotationDAO.getEntityById(entityId);
-            if (!entity.getEntityType().getName().equals(type)) {
+            if (!entity.getEntityTypeName().equals(type)) {
                 throw new Exception("Neurons must be parented with valid Workspace Id");
             }
             if (entity.getOwnerKey().equals(ownerKey)) {

@@ -21,7 +21,7 @@ public class EntityTypeNameTrigger extends EntityTrigger {
 
     public TriggerResponse evaluate(Entity parent, Entity entity, int level) {
         TriggerResponse response = new TriggerResponse();
-        if (entity.getEntityType().getName().equals(entityTypeName) && entity.getName().equals(entityName)) {
+        if (entity.getEntityTypeName().equals(entityTypeName) && entity.getName().equals(entityName)) {
             response.continueSearch = false;
             response.performAction = true;
         } else {

@@ -92,24 +92,19 @@ public class LargeOperations {
 	        sql.append("left outer join entityData aedt on a.id=aedt.parent_entity_id ");
 	        sql.append("left outer join entityData aedk on a.id=aedk.parent_entity_id ");
 	        sql.append("left outer join entityData aedv on a.id=aedv.parent_entity_id ");
-	        sql.append("where a.entity_type_id = ? ");
-	        sql.append("and aedt.entity_att_id = ? ");
-	        sql.append("and aedk.entity_att_id = ? ");
-	        sql.append("and aedv.entity_att_id = ? ");
+	        sql.append("where a.entity_type = ? ");
+	        sql.append("and aedt.entity_att = ? ");
+	        sql.append("and aedk.entity_att = ? ");
+	        sql.append("and aedv.entity_att = ? ");
 	        sql.append("order by a.owner_key, aedt.value");
-
-	        EntityType annotationType = annotationDAO.getEntityTypeByName(EntityConstants.TYPE_ANNOTATION);
-	        EntityAttribute targetAttr = annotationDAO.getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
-	        EntityAttribute keyAttr = annotationDAO.getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_TERM);
-	        EntityAttribute valueAttr = annotationDAO.getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM);
 
 	        stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 	        stmt.setFetchSize(Integer.MIN_VALUE);
 	        
-	        stmt.setLong(1, annotationType.getId());
-	        stmt.setLong(2, targetAttr.getId());
-	        stmt.setLong(3, keyAttr.getId());
-	        stmt.setLong(4, valueAttr.getId());
+	        stmt.setString(1, EntityConstants.TYPE_ANNOTATION);
+	        stmt.setString(2, EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
+	        stmt.setString(3, EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_TERM);
+	        stmt.setString(4, EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM);
 	        
 			rs = stmt.executeQuery();
 			logger.info("    Processing results");

@@ -43,7 +43,7 @@ public class LsmEntityToFilepathService implements IService {
         	boolean gotFirst = false;
         	for(EntityData ed : lsmPairEntity.getOrderedEntityData()) {
         		Entity lsmStack = ed.getChildEntity();
-        		if (lsmStack != null && lsmStack.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK)) {
+        		if (lsmStack != null && lsmStack.getEntityTypeName().equals(EntityConstants.TYPE_LSM_STACK)) {
         			String filepath = lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         			if (gotFirst) {
                     	processData.putItem("LSM_FILENAME_2", filepath);	

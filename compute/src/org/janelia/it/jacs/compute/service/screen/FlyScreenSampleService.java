@@ -226,7 +226,7 @@ public class FlyScreenSampleService implements EntityFilter, IService {
                 //child=EJBFactory.getLocalAnnotationBean().getEntityById(childId.toString());
                 String message = "For screenSampleEntity id="+screenSampleEntity.getId() + " considering child name="+child.getName()+" id="+child.getId();
                 logger.info(message);
-                if (child.getEntityType().getName().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
+                if (child.getEntityTypeName().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
                     String stackPath=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                     File stackFile=new File(stackPath);
                     if (stackFile.exists()) {
@@ -239,7 +239,7 @@ public class FlyScreenSampleService implements EntityFilter, IService {
     }
 
      protected Entity getStackEntityFromScreenSample(Entity screenSampleEntity) {
-        if (screenSampleEntity.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
+        if (screenSampleEntity.getEntityTypeName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
             List<Entity> stackEntities = EntityUtils.getChildrenOfType(screenSampleEntity, EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
             if (stackEntities.size()>0) {
                 return stackEntities.get(0);
@@ -249,7 +249,7 @@ public class FlyScreenSampleService implements EntityFilter, IService {
     }
 
     protected Entity getMipEntityFromScreenSample(Entity screenSampleEntity) {
-        if (screenSampleEntity.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
+        if (screenSampleEntity.getEntityTypeName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
             List<Entity> mipEntities = EntityUtils.getChildrenOfType(screenSampleEntity, EntityConstants.TYPE_IMAGE_2D);
             for (Entity mip : mipEntities) {
                 if (mip.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH).endsWith(".png")) {
@@ -264,7 +264,7 @@ public class FlyScreenSampleService implements EntityFilter, IService {
     protected Entity createMipEntity(File pngFile, String name) throws Exception {
         Entity mipEntity = new Entity();
         mipEntity.setOwnerKey(ownerKey);
-        mipEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D));
+        mipEntity.setEntityTypeName(EntityConstants.TYPE_IMAGE_2D);
         mipEntity.setCreationDate(createDate);
         mipEntity.setUpdatedDate(createDate);
         mipEntity.setName(name);
@@ -275,15 +275,15 @@ public class FlyScreenSampleService implements EntityFilter, IService {
 
     protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
         entityBean.addEntityToParent(parent, entity, index, attrName);
-        logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
-        		" as child of "+parent.getEntityType().getName()+"#"+parent.getId());
+        logger.info("Added "+entity.getEntityTypeName()+"#"+entity.getId()+
+        		" as child of "+parent.getEntityTypeName()+"#"+parent.getId());
     }
 
     protected Entity verifyOrAddChildFolderToEntity(Entity parent, String name, String directoryPath) throws Exception {
         for (EntityData ed : parent.getEntityData()) {
             Entity child=ed.getChildEntity();
             if (child!=null) {
-                if (child.getName().equals(name) && child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+                if (child.getName().equals(name) && child.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER)) {
                     return child;
                 }
             }
@@ -294,7 +294,7 @@ public class FlyScreenSampleService implements EntityFilter, IService {
         folder.setUpdatedDate(createDate);
         folder.setOwnerKey(ownerKey);
         folder.setName(name);
-        folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+        folder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
         if (directoryPath!=null) {
             folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, directoryPath);
         }

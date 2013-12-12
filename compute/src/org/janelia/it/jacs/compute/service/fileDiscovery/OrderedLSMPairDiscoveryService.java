@@ -106,14 +106,14 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
     	for(EntityData ed : folder.getEntityData()) {
 			Entity sampleFolder = ed.getChildEntity();
     		if (sampleFolder == null) continue;
-    		if (!EntityConstants.TYPE_SAMPLE.equals(sampleFolder.getEntityType().getName())) continue;
+    		if (!EntityConstants.TYPE_SAMPLE.equals(sampleFolder.getEntityTypeName())) continue;
 
             Entity supportingFiles = EntityUtils.getSupportingData(sampleFolder);
         	
 	    	for(EntityData sed : supportingFiles.getEntityData()) {
     			Entity lsmStackPair = sed.getChildEntity();
 	    		if (lsmStackPair == null) continue;
-	    		if (!EntityConstants.TYPE_IMAGE_TILE.equals(lsmStackPair.getEntityType().getName())) continue;
+	    		if (!EntityConstants.TYPE_IMAGE_TILE.equals(lsmStackPair.getEntityTypeName())) continue;
 
 				boolean found1 = false;
 				boolean found2 = false;
@@ -121,7 +121,7 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
     	    	for(EntityData led : lsmStackPair.getEntityData()) {
     				Entity lsmStack = led.getChildEntity();
     	    		if (lsmStack == null) continue;
-    	    		if (!EntityConstants.TYPE_LSM_STACK.equals(lsmStack.getEntityType().getName())) continue;
+    	    		if (!EntityConstants.TYPE_LSM_STACK.equals(lsmStack.getEntityTypeName())) continue;
     	    		
 	    			if (lsmPair.lsmFile1.getName().equals(lsmStack.getName())) {
 	    				lsmPair.lsmEntity1 = lsmStack;
@@ -250,7 +250,7 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
 		
         Entity sample = new Entity();
         sample.setOwnerKey(ownerKey);
-        sample.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SAMPLE));
+        sample.setEntityTypeName(EntityConstants.TYPE_SAMPLE);
         sample.setCreationDate(createDate);
         sample.setUpdatedDate(createDate);
         sample.setName(lsmPair.name);
@@ -267,7 +267,7 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
     	
     	Entity imageTile = new Entity();
         imageTile.setOwnerKey(ownerKey);
-        imageTile.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_TILE));
+        imageTile.setEntityTypeName(EntityConstants.TYPE_IMAGE_TILE);
         imageTile.setCreationDate(createDate);
         imageTile.setUpdatedDate(createDate);
         imageTile.setName("Tile 1");
@@ -283,7 +283,7 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
     protected Entity createSupportingFilesFolder() throws Exception {
         Entity filesFolder = new Entity();
         filesFolder.setOwnerKey(ownerKey);
-        filesFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
+        filesFolder.setEntityTypeName(EntityConstants.TYPE_SUPPORTING_DATA);
         filesFolder.setCreationDate(createDate);
         filesFolder.setUpdatedDate(createDate);
         filesFolder.setName("Supporting Files");
@@ -295,7 +295,7 @@ public class OrderedLSMPairDiscoveryService extends FileDiscoveryService {
     private Entity createLsmStackFromFile(File file) throws Exception {
         Entity lsmStack = new Entity();
         lsmStack.setOwnerKey(ownerKey);
-        lsmStack.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK));
+        lsmStack.setEntityTypeName(EntityConstants.TYPE_LSM_STACK);
         lsmStack.setCreationDate(createDate);
         lsmStack.setUpdatedDate(createDate);
         lsmStack.setName(file.getName());

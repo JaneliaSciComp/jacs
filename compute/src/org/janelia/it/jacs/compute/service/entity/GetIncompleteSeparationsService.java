@@ -44,7 +44,7 @@ public class GetIncompleteSeparationsService extends AbstractEntityService {
             
         	boolean isAligned = false;
         	for(Entity parent : entityBean.getParentEntities(separation.getId())) {
-        	    if (parent.getEntityType().getName().equals(EntityConstants.TYPE_ALIGNMENT_RESULT)) {
+        	    if (parent.getEntityTypeName().equals(EntityConstants.TYPE_ALIGNMENT_RESULT)) {
         	        isAligned = true;
         	        break;
         	    }

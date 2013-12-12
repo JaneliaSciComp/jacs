@@ -20,9 +20,9 @@ public class EntityMapStep implements Serializable {
 
 	public EntityMapStep(EntityData entityData, boolean up) {
 		Entity parent = up ? entityData.getParentEntity() : entityData.getChildEntity();
-		this.attributeName = entityData.getEntityAttribute().getName();
+		this.attributeName = entityData.getEntityAttrName();
 		this.entityName = parent.getName();
-		this.entityType = parent.getEntityType().getName();
+		this.entityType = parent.getEntityTypeName();
 		this.up = up;
 	}
 

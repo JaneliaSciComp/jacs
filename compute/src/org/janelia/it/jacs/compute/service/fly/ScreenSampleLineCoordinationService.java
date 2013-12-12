@@ -150,9 +150,9 @@ public class ScreenSampleLineCoordinationService implements IService {
         List<Entity> entityList = new ArrayList<Entity>();
         Set<Entity> childList = entityBean.getChildEntities(folder.getId());
         for (Entity child : childList) {
-            if (child != null && child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+            if (child != null && child.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER)) {
                 entityList.addAll(getRecursiveEntitiesFromFolderByType(child, typeName));
-            } else if (child != null && child.getEntityType().getName().equals(typeName)) {
+            } else if (child != null && child.getEntityTypeName().equals(typeName)) {
                 entityList.add(child);
             }
         }
@@ -190,7 +190,7 @@ public class ScreenSampleLineCoordinationService implements IService {
             if (pwChildren!=null) {
                 for (Entity pwChild : pwChildren) {
                     if (pwChild!=null) {
-                        if (pwChild.getEntityType().getName().equals(EntityConstants.TYPE_FLY_LINE)) {
+                        if (pwChild.getEntityTypeName().equals(EntityConstants.TYPE_FLY_LINE)) {
                             if (pwChild.getName().equals(lineName)) {
                                 flyLineEntity=pwChild;
                                 break;
@@ -210,7 +210,7 @@ public class ScreenSampleLineCoordinationService implements IService {
             if (flyLineChildren!=null) {
                 for (Entity flyChild : flyLineChildren) {
                     if (flyChild!=null) {
-                        if (flyChild.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
+                        if (flyChild.getEntityTypeName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
                             if (flyChild.getName().equals(sample.getName())) {
                                 foundSample=true;
                             }
@@ -258,17 +258,17 @@ public class ScreenSampleLineCoordinationService implements IService {
         logger.info("Populating Folder Maps");
         Set<Entity> topChildren = entityBean.getChildEntities(screenPatternTopLevelFolder.getId());
         for (Entity child : topChildren) {
-            if (child!=null && child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+            if (child!=null && child.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER)) {
                 logger.info("Found plate-level folder name="+child.getName());
                 flyLineFolderByPlateMap.put(child.getName(), child);
                 Set<Entity> plateChildren = entityBean.getChildEntities(child.getId());
                 for (Entity plateChild : plateChildren) {
-                    if (plateChild!=null && plateChild.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+                    if (plateChild!=null && plateChild.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER)) {
                         logger.info("Found line-level folder name="+plateChild.getName());
                         flyLineFolderByPWMap.put(plateChild.getName(), plateChild);
                     } else {
                         if (plateChild!=null) {
-                            logger.info("Unknown child is of type="+plateChild.getEntityType().getName());
+                            logger.info("Unknown child is of type="+plateChild.getEntityTypeName());
                         }
                     }
                 }
@@ -277,32 +277,28 @@ public class ScreenSampleLineCoordinationService implements IService {
     }
 
     protected Entity addSubFolder(Entity parentFolder, String childFolderName) throws Exception {
-        if (!parentFolder.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER))
-            throw new Exception("A folder entity is required rather than type=" + parentFolder.getEntityType().getName());
+        if (!parentFolder.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER))
+            throw new Exception("A folder entity is required rather than type=" + parentFolder.getEntityTypeName());
         Entity folder = new Entity();
         folder.setCreationDate(createDate);
         folder.setUpdatedDate(createDate);
         folder.setOwnerKey(ownerKey);
         folder.setName(childFolderName);
-        folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+        folder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
         folder = entityBean.saveOrUpdateEntity(folder);
         entityBean.addEntityToParent(parentFolder, folder, null, EntityConstants.ATTRIBUTE_ENTITY);
         return folder;
     }
 
     protected Entity createFlyLineAndAddToFolder(String lineName, Entity folder) throws Exception {
-        if (!folder.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER))
-            throw new Exception("A folder entity is required rather than type=" + folder.getEntityType().getName());
+        if (!folder.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER))
+            throw new Exception("A folder entity is required rather than type=" + folder.getEntityTypeName());
         Entity flyLine = new Entity();
         flyLine.setCreationDate(createDate);
         flyLine.setUpdatedDate(createDate);
         flyLine.setOwnerKey(ownerKey);
         flyLine.setName(lineName);
-        EntityType flyLineType=entityBean.getEntityTypeByName(EntityConstants.TYPE_FLY_LINE);
-        if (flyLineType==null) {
-            throw new Exception("Could not find EntityType for name="+EntityConstants.TYPE_FLY_LINE);
-        }
-        flyLine.setEntityType(flyLineType);
+        flyLine.setEntityTypeName(EntityConstants.TYPE_FLY_LINE);
         flyLine = entityBean.saveOrUpdateEntity(flyLine);
         entityBean.addEntityToParent(folder, flyLine, null, EntityConstants.ATTRIBUTE_ENTITY);
         return flyLine;

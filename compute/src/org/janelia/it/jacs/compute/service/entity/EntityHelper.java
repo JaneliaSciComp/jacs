@@ -88,7 +88,7 @@ public class EntityHelper {
             folder.setUpdatedDate(createDate);
             folder.setOwnerKey(ownerKey);
             folder.setName(childName);
-            folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+            folder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
             folder = entityBean.saveOrUpdateEntity(folder);
             addToParent(parentFolder, folder, null, EntityConstants.ATTRIBUTE_ENTITY);
         }
@@ -111,8 +111,8 @@ public class EntityHelper {
             // Only accept the current user's top level folder
             for (Entity entity : topLevelFolders) {
                 if (entity.getOwnerKey().equals(ownerKey)
-                        && entity.getEntityType().getName().equals(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER).getName())
-                        && entity.getAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
+                        && entity.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER)
+                        && entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
                     // This is the folder we want, now load the entire folder hierarchy
                     if (loadTree) {
                         topLevelFolder = entityBean.getEntityTree(entity.getId());
@@ -134,7 +134,7 @@ public class EntityHelper {
                 topLevelFolder.setUpdatedDate(createDate);
                 topLevelFolder.setOwnerKey(ownerKey);
                 topLevelFolder.setName(topLevelFolderName);
-                topLevelFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+                topLevelFolder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
                 EntityUtils.addAttributeAsTag(topLevelFolder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
                 topLevelFolder = entityBean.saveOrUpdateEntity(topLevelFolder);
                 logger.info("Saved top level folder as " + topLevelFolder.getId());
@@ -276,7 +276,7 @@ public class EntityHelper {
         
         Set<EntityData> toDelete = new HashSet<EntityData>();
         for(EntityData ed : entity.getEntityData()) {
-        	if (ed.getEntityAttribute().getName().equals(attributeName)) {
+        	if (ed.getEntityAttrName().equals(attributeName)) {
         		toDelete.add(ed);
         	}
         }
@@ -336,7 +336,7 @@ public class EntityHelper {
 		
         Entity entity = new Entity();
         entity.setOwnerKey(ownerKey);
-        entity.setEntityType(entityBean.getEntityTypeByName(entityTypeName));
+        entity.setEntityTypeName(entityTypeName);
         Date createDate = new Date();
         entity.setCreationDate(createDate);
         entity.setUpdatedDate(createDate);
@@ -406,8 +406,8 @@ public class EntityHelper {
 
     public void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
         entityBean.addEntityToParent(parent, entity, index, attrName);
-        logger.trace("Added "+entity.getName() +" ("+entity.getEntityType().getName()+"#"+entity.getId()+
-                ") as child of "+parent.getName()+" ("+parent.getEntityType().getName()+"#"+parent.getId()+")");
+        logger.trace("Added "+entity.getName() +" ("+entity.getEntityTypeName()+"#"+entity.getId()+
+                ") as child of "+parent.getName()+" ("+parent.getEntityTypeName()+"#"+parent.getId()+")");
     }
 
     public Entity getRequiredSampleEntity(String key,
@@ -417,11 +417,7 @@ public class EntityHelper {
             throw new IllegalArgumentException("Entity not found for " + key + " " + sampleEntityId);
         }
 
-        final EntityType sampleEntityType = sampleEntity.getEntityType();
-        String sampleEntityTypeName = null;
-        if (sampleEntityType != null) {
-            sampleEntityTypeName = sampleEntityType.getName();
-        }
+        final String sampleEntityTypeName = sampleEntity.getEntityTypeName();
         if (! EntityConstants.TYPE_SAMPLE.equals(sampleEntityTypeName)) {
             throw new IllegalArgumentException(key + " " + sampleEntityId + " has entity type " +
                     sampleEntityTypeName + " which is not a sample");

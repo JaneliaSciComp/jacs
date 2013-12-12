@@ -1,15 +1,14 @@
 <?xml version="1.0"?>
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
 "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
-<!-- Generated May 26, 2011 10:42:24 AM by Hibernate Tools 3.2.1.GA -->
 <hibernate-mapping package="org.janelia.it.jacs.model.entity">
     <class name="EntityData" table="entityData" >
         <id name="id" column="id" type="java.lang.Long">
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
         </id>
-        <many-to-one name="entityAttribute" class="EntityAttribute" cascade="none" fetch="join" not-null="true" lazy="false">
-            <column name="entity_att_id" length="60" />
-        </many-to-one>
+        <property name="entityAttrName" type="string" not-null="true">
+            <column name="entity_att" length="60" />
+        </property>
         <many-to-one name="parentEntity" class="Entity" cascade="none" fetch="select" lazy="proxy">
             <column name="parent_entity_id" length="60" />
         </many-to-one>

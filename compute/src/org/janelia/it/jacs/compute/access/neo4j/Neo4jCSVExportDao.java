@@ -249,11 +249,9 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
             conn = getJdbcConnection();
             
             StringBuffer sql = new StringBuffer();
-            sql.append("select e.id, e.name, e.creation_date, e.updated_date, et.name, e.owner_key, ea.name, ed.value ");
+            sql.append("select e.id, e.name, e.creation_date, e.updated_date, e.entity_type, e.owner_key, ed.entity_att, ed.value ");
             sql.append("from entity e ");
-            sql.append("join entityType et on e.entity_type_id = et.id ");
             sql.append("left outer join entityData ed on e.id=ed.parent_entity_id and ed.value is not null ");
-            sql.append("left outer join entityAttribute ea on ed.entity_att_id = ea.id ");
 //            sql.append("where e.owner_key = 'user:asoy' ");
             
             stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);

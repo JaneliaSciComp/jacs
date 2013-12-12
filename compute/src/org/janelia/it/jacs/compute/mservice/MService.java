@@ -104,7 +104,7 @@ public class MService {
         EntityTrigger trigger = triggerList.get(triggerLevel);
         parent = getEntityBean().getEntityAndChildren(parent.getId());
         Set<Entity> children = parent.getChildren();
-        logger.info("level=" + parentLevel + " : name=" + parent.getName() + " type=" + parent.getEntityType().getName() + " triggerLevel=" + triggerLevel+" children="+children.size());
+        logger.info("level=" + parentLevel + " : name=" + parent.getName() + " type=" + parent.getEntityTypeName() + " triggerLevel=" + triggerLevel+" children="+children.size());
         long childIndex=0;
         for (Entity child : children) {
             logger.info("Child "+childIndex + " name="+child.getName()+" id="+child.getId());

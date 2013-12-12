@@ -153,30 +153,23 @@ public class Neo4jBatchDAO extends AnnotationDAO {
 
             sql.append("select a.id, a.creation_date, a.updated_date, a.name, a.owner_key, aedt.value, aedk.value, aedv.value, aedkid.child_entity_id, aedvid.child_entity_id ");
             sql.append("from entity a ");
-            sql.append("left outer join entityData aedt on a.id=aedt.parent_entity_id and aedt.entity_att_id = ? ");
-            sql.append("left outer join entityData aedk on a.id=aedk.parent_entity_id and aedk.entity_att_id = ? ");
-            sql.append("left outer join entityData aedv on a.id=aedv.parent_entity_id and aedv.entity_att_id = ? ");
-            sql.append("left outer join entityData aedkid on a.id=aedkid.parent_entity_id and aedkid.entity_att_id = ? ");
-            sql.append("left outer join entityData aedvid on a.id=aedvid.parent_entity_id and aedvid.entity_att_id = ? ");
-            sql.append("where a.entity_type_id = ? ");
+            sql.append("left outer join entityData aedt on a.id=aedt.parent_entity_id and aedt.entity_att = ? ");
+            sql.append("left outer join entityData aedk on a.id=aedk.parent_entity_id and aedk.entity_att = ? ");
+            sql.append("left outer join entityData aedv on a.id=aedv.parent_entity_id and aedv.entity_att = ? ");
+            sql.append("left outer join entityData aedkid on a.id=aedkid.parent_entity_id and aedkid.entity_att = ? ");
+            sql.append("left outer join entityData aedvid on a.id=aedvid.parent_entity_id and aedvid.entity_att = ? ");
+            sql.append("where a.entity_type = ? ");
             sql.append("order by a.owner_key, aedt.value ");
-
-            EntityType annotationType = getEntityTypeByName(EntityConstants.TYPE_ANNOTATION);
-            EntityAttribute targetAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
-            EntityAttribute keyAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_TERM);
-            EntityAttribute valueAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM);
-            EntityAttribute keyIdAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
-            EntityAttribute valueIdAttr = getEntityAttributeByName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_ENTITY_ID);
             
             stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
             stmt.setFetchSize(Integer.MIN_VALUE);
             
-            stmt.setLong(1, targetAttr.getId());
-            stmt.setLong(2, keyAttr.getId());
-            stmt.setLong(3, valueAttr.getId());
-            stmt.setLong(4, keyIdAttr.getId());
-            stmt.setLong(5, valueIdAttr.getId());
-            stmt.setLong(6, annotationType.getId());
+            stmt.setString(1, EntityConstants.TYPE_ANNOTATION);
+            stmt.setString(2, EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
+            stmt.setString(3, EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_TERM);
+            stmt.setString(4, EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM);
+            stmt.setString(5, EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
+            stmt.setString(6, EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_ENTITY_ID);
             
             rs = stmt.executeQuery();
             log.info("    Processing annotation results");
@@ -267,7 +260,7 @@ public class Neo4jBatchDAO extends AnnotationDAO {
             neoId = inserter.createNode(properties);
             numNodesAdded++;
             
-            Label entityTypeLabel = DynamicLabel.label(getFormattedLabelName(entity.getEntityType().getName()));
+            Label entityTypeLabel = DynamicLabel.label(getFormattedLabelName(entity.getEntityTypeName()));
 
             if (parentNeoId != null) {
                 inserter.setNodeLabels(neoId, entityLabel, entityTypeLabel);
@@ -287,10 +280,10 @@ public class Neo4jBatchDAO extends AnnotationDAO {
     }
     
     private void loadRelationship(Long parentNeoId, Long childNeoId, EntityData ed) {
-        RelationshipType childRel = DynamicRelationshipType.withName(getFormattedFieldName(ed.getEntityAttribute().getName()));
+        RelationshipType childRel = DynamicRelationshipType.withName(getFormattedFieldName(ed.getEntityAttrName()));
         Map<String, Object> properties = new HashMap<String, Object>();
         addIfNotNull(properties, "entity_data_id", ed.getId());
-        addIfNotNull(properties, "type", ed.getEntityAttribute().getName());
+        addIfNotNull(properties, "type", ed.getEntityAttrName());
         addIfNotNull(properties, "creation_date", getFormattedDateTime(ed.getCreationDate()));
         addIfNotNull(properties, "updated_date", getFormattedDateTime(ed.getUpdatedDate()));
         addIfNotNull(properties, "order_index", ed.getOrderIndex());
@@ -338,13 +331,13 @@ public class Neo4jBatchDAO extends AnnotationDAO {
         Map<String, Object> properties = new HashMap<String, Object>();
         addIfNotNull(properties, "entity_id", entity.getId());
         addIfNotNull(properties, "name", entity.getName());
-        addIfNotNull(properties, "type", entity.getEntityType().getName());
+        addIfNotNull(properties, "type", entity.getEntityTypeName());
         addIfNotNull(properties, "creation_date", getFormattedDateTime(entity.getCreationDate()));
         addIfNotNull(properties, "updated_date", getFormattedDateTime(entity.getUpdatedDate()));
         addIfNotNull(properties, "owner_key", entity.getOwnerKey());
         for (EntityData childEd : entity.getEntityData()) {
             if (childEd.getValue() != null) {
-                addIfNotNull(properties, getFormattedFieldName(childEd.getEntityAttribute().getName()), childEd.getValue());
+                addIfNotNull(properties, getFormattedFieldName(childEd.getEntityAttrName()), childEd.getValue());
             }
         }
         return properties;

@@ -44,7 +44,7 @@ public class PurgeAndBlockSampleService extends AbstractEntityService {
             removeLargeImageFiles(child, visited);
         }
         
-        String entityType = entity.getEntityType().getName();
+        String entityType = entity.getEntityTypeName();
         
         if (entityType.equals(EntityConstants.TYPE_IMAGE_3D) 
                 || entityType.equals(EntityConstants.TYPE_MOVIE)

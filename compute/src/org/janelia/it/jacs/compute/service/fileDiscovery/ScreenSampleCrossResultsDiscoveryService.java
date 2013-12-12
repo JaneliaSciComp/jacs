@@ -9,7 +9,6 @@ import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.service.vaa3d.CombinedFile;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityType;
 
 /**
  * File discovery service for sample crossing results.
@@ -71,25 +70,5 @@ public class ScreenSampleCrossResultsDiscoveryService extends AbstractEntityServ
 	        	throw new Exception("Error processing cross results for id="+parentId, e);
 	        }
         }
-    }
-
-    protected Entity createFileEntity(EntityType type, File file, String entityName) throws Exception {
-        Entity entity = new Entity();
-        entity.setOwnerKey(ownerKey);
-        entity.setCreationDate(createDate);
-        entity.setUpdatedDate(createDate);
-        entity.setEntityType(type);
-        entity.setName(entityName);
-        entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
-
-        if (type.getName().equals(EntityConstants.TYPE_IMAGE_2D) || type.getName().equals(EntityConstants.TYPE_IMAGE_3D)) {
-        	String filename = file.getName();
-        	String fileFormat = filename.substring(filename.lastIndexOf('.')+1);
-        	entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, fileFormat);
-        }
-        
-        entity = entityBean.saveOrUpdateEntity(entity);
-        logger.info("Saved "+type.getName()+" as "+entity.getId());
-        return entity;
     }
 }

@@ -176,7 +176,7 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
         Set<Entity> children = topLevelFolder.getChildren();
         if (children != null && children.size() > 0) {
             for (Entity child : topLevelFolder.getChildren()) {
-                if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+                if (child.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER)) {
                     subfolderMap.put(child.getName(), child);
                 }
             }
@@ -367,7 +367,7 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
     protected Entity getSubFolderByName(Entity parentEntity, String folderName) {
         for (EntityData ed : parentEntity.getEntityData()) {
             Entity child=ed.getChildEntity();
-            if (child!=null && child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) & child.getName().equals(folderName)) {
+            if (child!=null && child.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER) & child.getName().equals(folderName)) {
                 return child;
             }
         }
@@ -380,7 +380,7 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
         folder.setUpdatedDate(createDate);
         folder.setOwnerKey(ownerKey);
         folder.setName(name);
-        folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+        folder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
         if (directoryPath!=null) {
             folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, directoryPath);
         }
@@ -392,14 +392,14 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
 
     protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
         entityBean.addEntityToParent(parent, entity, index, EntityConstants.ATTRIBUTE_ENTITY);
-        logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
-                " as child of "+parent.getEntityType().getName()+"#"+parent.getId());
+        logger.info("Added "+entity.getEntityTypeName()+"#"+entity.getId()+
+                " as child of "+parent.getEntityTypeName()+"#"+parent.getId());
     }
 
     protected Entity createMipEntity(File pngFile, String name) throws Exception {
         Entity mipEntity = new Entity();
         mipEntity.setOwnerKey(ownerKey);
-        mipEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D));
+        mipEntity.setEntityTypeName(EntityConstants.TYPE_IMAGE_2D);
         mipEntity.setCreationDate(createDate);
         mipEntity.setUpdatedDate(createDate);
         mipEntity.setName(name);
@@ -412,7 +412,7 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
         Entity stack = new Entity();
         String mipFilePath=mipEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         stack.setOwnerKey(ownerKey);
-        stack.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D));
+        stack.setEntityTypeName(EntityConstants.TYPE_IMAGE_3D);
         stack.setCreationDate(createDate);
         stack.setUpdatedDate(createDate);
         stack.setName(entityName);

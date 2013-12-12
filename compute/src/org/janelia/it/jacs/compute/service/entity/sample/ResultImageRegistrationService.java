@@ -331,7 +331,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	
 	private void findImages(Entity entity) throws Exception {
 		
-		String entityType = entity.getEntityType().getName();
+		String entityType = entity.getEntityTypeName();
 		if (entityType.equals(EntityConstants.TYPE_IMAGE_2D)) {
 			String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
 			Pattern p = Pattern.compile("^(.*?)_(\\w+)\\.(\\w+?)$");

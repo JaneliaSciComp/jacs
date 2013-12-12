@@ -180,7 +180,7 @@ public class PatternAnnotationSampleService  implements IService {
         for (String flyLineEntityId : flyLineIdList) {
             Entity flyLineEntity=entityBean.getEntityTree(new Long(flyLineEntityId.trim()));
             for (EntityData ed : flyLineEntity.getEntityData()) {
-                if (ed.getChildEntity().getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
+                if (ed.getChildEntity().getEntityTypeName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
                     sampleList.add(ed.getChildEntity());
                 }
             }
@@ -247,7 +247,7 @@ public class PatternAnnotationSampleService  implements IService {
             for (EntityData ed : sample.getEntityData()) {
                 Entity child=ed.getChildEntity();
                 if (child!=null) {
-                    if (child.getEntityType().getName().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
+                    if (child.getEntityTypeName().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
                         logger.info("Found Aligned Brain Stack child");
                         stackFile=new File(child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
                         QmScore=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE);
@@ -360,7 +360,7 @@ public class PatternAnnotationSampleService  implements IService {
         for (EntityData ed : sample.getEntityData()) {
             Entity child=ed.getChildEntity();
             if (child!=null) {
-                if (child.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_2D) && child.getName().toLowerCase().contains("mip")) {
+                if (child.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_2D) && child.getName().toLowerCase().contains("mip")) {
                     File mipFile=new File(child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
                     logger.info("getOrUpdateSampleResultDir() - found mip="+mipFile.getAbsolutePath());
                     nodeDir=mipFile.getParentFile();
@@ -369,7 +369,7 @@ public class PatternAnnotationSampleService  implements IService {
                         nodeDir=nodeDir.getParentFile();
                     }
                     logger.info("getOrUpdateSampleResultDir() - based on mip, assuming nodeDir="+nodeDir.getAbsolutePath()+" nodeId="+nodeDir.getName());
-                } else if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) && child.getName().equals(SUPPORTING_FILE_SUBFOLDER_NAME)) {
+                } else if (child.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER) && child.getName().equals(SUPPORTING_FILE_SUBFOLDER_NAME)) {
                     // We can use this folder for the nodeId anchor
                     String supportingFolderPath=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                     if (supportingFolderPath!=null) {
@@ -430,7 +430,7 @@ public class PatternAnnotationSampleService  implements IService {
         for (EntityData ed : sample.getEntityData()) {
             Entity child=ed.getChildEntity();
             if (child!=null) {
-                if (child.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_2D)) {
+                if (child.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_2D)) {
                     String childPath=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                     File childFile=new File(childPath);
                     if (childPath.equals(sampleDefault2DImagePath)) {
@@ -441,9 +441,9 @@ public class PatternAnnotationSampleService  implements IService {
                         rawMipEd=ed;
                         rawMipFile=childFile;
                     }
-                } else if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) && child.getName().equals(FlyScreenSampleService.SUPPORTING_FILES_FOLDER_NAME)) {
+                } else if (child.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER) && child.getName().equals(FlyScreenSampleService.SUPPORTING_FILES_FOLDER_NAME)) {
                     supportingFolder=child;
-                } else if (child.getEntityType().getName().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
+                } else if (child.getEntityTypeName().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
                     screenStack=child;
                 }
             }
@@ -493,7 +493,7 @@ public class PatternAnnotationSampleService  implements IService {
                 for (EntityData ed : supportingFolder.getEntityData()) {
                     Entity child=ed.getChildEntity();
                     if (child!=null) {
-                        if (child.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_2D)) {
+                        if (child.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_2D)) {
                             String childPath=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                             File childFile=new File(childPath);
                             if (childFile.getName().equals("AlignedStackMIP.png")) {
@@ -652,7 +652,7 @@ public class PatternAnnotationSampleService  implements IService {
         folder.setUpdatedDate(createDate);
         folder.setOwnerKey(ownerKey);
         folder.setName(name);
-        folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+        folder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
         if (directoryPath!=null) {
             folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, directoryPath);
         }
@@ -668,7 +668,7 @@ public class PatternAnnotationSampleService  implements IService {
         for (EntityData ed : screenSample.getEntityData()) {
             Entity child=ed.getChildEntity();
             if (child!=null) {
-                if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) && child.getName().equals(PATTERN_ANNOTATION_FOLDER_NAME)) {
+                if (child.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER) && child.getName().equals(PATTERN_ANNOTATION_FOLDER_NAME)) {
                     patternAnnotationFolderList.add(child);
                 }
             }
@@ -688,8 +688,8 @@ public class PatternAnnotationSampleService  implements IService {
 
     protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
         entityBean.addEntityToParent(parent, entity, index, EntityConstants.ATTRIBUTE_ENTITY);
-        logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
-                " as child of "+parent.getEntityType().getName()+"#"+parent.getId());
+        logger.info("Added "+entity.getEntityTypeName()+"#"+entity.getId()+
+                " as child of "+parent.getEntityTypeName()+"#"+parent.getId());
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -769,7 +769,7 @@ public class PatternAnnotationSampleService  implements IService {
     protected Entity getSubFolderByName(Entity parentEntity, String folderName) {
         for (EntityData ed : parentEntity.getEntityData()) {
             Entity child=ed.getChildEntity();
-            if (child!=null && child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) & child.getName().equals(folderName)) {
+            if (child!=null && child.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER) & child.getName().equals(folderName)) {
                 return child;
             }
         }
@@ -921,7 +921,7 @@ public class PatternAnnotationSampleService  implements IService {
     protected Entity createSupportingEntity(File supportingFile, String name) throws Exception {
         Entity supportingEntity = new Entity();
         supportingEntity.setOwnerKey(ownerKey);
-        supportingEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_TEXT_FILE));
+        supportingEntity.setEntityTypeName(EntityConstants.TYPE_TEXT_FILE);
         supportingEntity.setCreationDate(createDate);
         supportingEntity.setUpdatedDate(createDate);
         supportingEntity.setName(name);
@@ -933,7 +933,7 @@ public class PatternAnnotationSampleService  implements IService {
     protected Entity createMipEntity(File pngFile, String name) throws Exception {
         Entity mipEntity = new Entity();
         mipEntity.setOwnerKey(ownerKey);
-        mipEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D));
+        mipEntity.setEntityTypeName(EntityConstants.TYPE_IMAGE_2D);
         mipEntity.setCreationDate(createDate);
         mipEntity.setUpdatedDate(createDate);
         mipEntity.setName(name);
@@ -947,7 +947,7 @@ public class PatternAnnotationSampleService  implements IService {
         Entity stack = new Entity();
         String mipFilePath=mipEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         stack.setOwnerKey(ownerKey);
-        stack.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK));
+        stack.setEntityTypeName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
         stack.setCreationDate(createDate);
         stack.setUpdatedDate(createDate);
         stack.setName(entityName);

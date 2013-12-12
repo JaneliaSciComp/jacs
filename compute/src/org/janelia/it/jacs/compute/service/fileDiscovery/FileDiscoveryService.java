@@ -161,7 +161,7 @@ public class FileDiscoveryService implements IService {
         for (EntityData ed : parentFolder.getEntityData()) {
             Entity child = ed.getChildEntity();
         	
-            if (child != null && child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+            if (child != null && child.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER)) {
                 String folderPath = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                 if (folderPath == null) {
                     logger.warn("Unexpectedly could not find attribute '"+EntityConstants.ATTRIBUTE_FILE_PATH+"' for entity id="+child.getId());
@@ -184,7 +184,7 @@ public class FileDiscoveryService implements IService {
             folder.setUpdatedDate(createDate);
             folder.setOwnerKey(ownerKey);
             folder.setName(dir.getName());
-            folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+            folder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
             folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, dir.getAbsolutePath());
             folder = entityBean.saveOrUpdateEntity(folder);
             logger.info("Saved folder as "+folder.getId());

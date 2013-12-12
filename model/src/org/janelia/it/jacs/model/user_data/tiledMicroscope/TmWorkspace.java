@@ -90,7 +90,7 @@ public class TmWorkspace implements IsSerializable, Serializable {
     // retrieved from the database.
 
     public TmWorkspace(Entity entity) throws Exception {
-        if (entity.getEntityType()==null || !entity.getEntityType().getName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
+        if (entity.getEntityTypeName()==null || !entity.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
             throw new Exception("Entity type must be="+EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE);
         }
         this.id=entity.getId();
@@ -98,10 +98,10 @@ public class TmWorkspace implements IsSerializable, Serializable {
         this.ownerKey=entity.getOwnerKey();
         this.neuronList = new ArrayList<TmNeuron>();
         for (Entity child : entity.getChildren()) {
-            if (child.getEntityType().getName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
+            if (child.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
                 TmNeuron neuron=new TmNeuron(child);
                 neuronList.add(neuron);
-            } else if (child.getEntityType().getName().equals(EntityConstants.TYPE_PROPERTY_SET)) {
+            } else if (child.getEntityTypeName().equals(EntityConstants.TYPE_PROPERTY_SET)) {
                 preferences=new TmPreferences(child);
             }
         }

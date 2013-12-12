@@ -32,8 +32,8 @@ public class EntityDataRetriever extends LuceneDataRetrieverBase {
         while (rs.next()) {
             Document doc = new Document();
             doc.add(new Field("id", getStringFromResult(rs, 1), Field.Store.YES, Field.Index.NO));
-            doc.add(new Field("entity_type_id", getStringFromResult(rs,2), Field.Store.NO, Field.Index.TOKENIZED));
-            doc.add(new Field("user_id", getStringFromResult(rs,3), Field.Store.YES, Field.Index.TOKENIZED));
+            doc.add(new Field("entity_type", getStringFromResult(rs,2), Field.Store.NO, Field.Index.TOKENIZED));
+            doc.add(new Field("owner_key", getStringFromResult(rs,3), Field.Store.YES, Field.Index.TOKENIZED));
             doc.add(new Field("name", getStringFromResult(rs, 4), Field.Store.YES, Field.Index.TOKENIZED));
             docList.add(doc);
         }
@@ -48,8 +48,8 @@ public class EntityDataRetriever extends LuceneDataRetrieverBase {
                 String[] split = scanner.nextLine().split("\t");
                 Document doc = new Document();
                 doc.add(new Field("id", split[0], Field.Store.YES, Field.Index.NO));
-                doc.add(new Field("entity_type_id", split[1], Field.Store.YES, Field.Index.TOKENIZED));
-                doc.add(new Field("user_id", split[2], Field.Store.YES, Field.Index.TOKENIZED));
+                doc.add(new Field("entity_type", split[1], Field.Store.YES, Field.Index.TOKENIZED));
+                doc.add(new Field("owner_key", split[2], Field.Store.YES, Field.Index.TOKENIZED));
                 doc.add(new Field("name", split[3], Field.Store.YES, Field.Index.TOKENIZED));
                 writer.addDocument(doc);
                 totalRecordsProcessed++;

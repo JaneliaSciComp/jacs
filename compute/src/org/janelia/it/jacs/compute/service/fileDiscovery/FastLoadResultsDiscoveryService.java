@@ -55,7 +55,7 @@ public class FastLoadResultsDiscoveryService extends AbstractEntityService {
 	
 	protected void processSeparation(Entity entity) throws Exception {
 
-    	if (!entity.getEntityType().getName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
+    	if (!entity.getEntityTypeName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
     		logger.info("Not a neuron separation result: "+entity.getId());
     		return;
     	}

@@ -364,7 +364,7 @@ public class SampleHelper extends EntityHelper {
         Date createDate = new Date();
         Entity sample = new Entity();
         sample.setOwnerKey(ownerKey);
-        sample.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SAMPLE));
+        sample.setEntityTypeName(EntityConstants.TYPE_SAMPLE);
         sample.setCreationDate(createDate);
         sample.setUpdatedDate(createDate);
         sample.setName(name);
@@ -432,7 +432,7 @@ public class SampleHelper extends EntityHelper {
         
         // Find out which attributes a Sample can support. We only want to set those. 
         Set<String> attrs = new HashSet<String>();
-        for(EntityAttribute attr : sample.getEntityType().getAttributes()) {
+        for(EntityAttribute attr : entityBean.getEntityTypeByName(EntityConstants.TYPE_SAMPLE).getAttributes()) {
             attrs.add(attr.getName());
         }
         
@@ -514,7 +514,7 @@ public class SampleHelper extends EntityHelper {
         EntityData imageTileEd = null;
         for (EntityData ed : supportingFiles.getEntityData()) {
             Entity child = ed.getChildEntity();
-            if (child!=null && child.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_TILE)) {
+            if (child!=null && child.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_TILE)) {
                 if (child.getName().equals(tileGroup.getTag())) {
                     String area = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
                     if (area==null || area.equals(tileGroup.getAnatomicalArea())) {
@@ -608,7 +608,7 @@ public class SampleHelper extends EntityHelper {
         Date createDate = new Date();
         Entity filesFolder = new Entity();
         filesFolder.setOwnerKey(ownerKey);
-        filesFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
+        filesFolder.setEntityTypeName(EntityConstants.TYPE_SUPPORTING_DATA);
         filesFolder.setCreationDate(createDate);
         filesFolder.setUpdatedDate(createDate);
         filesFolder.setName("Supporting Files");
@@ -627,7 +627,7 @@ public class SampleHelper extends EntityHelper {
         Date createDate = new Date();
         Entity imageTile = new Entity();
         imageTile.setOwnerKey(ownerKey);
-        imageTile.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_TILE));
+        imageTile.setEntityTypeName(EntityConstants.TYPE_IMAGE_TILE);
         imageTile.setCreationDate(createDate);
         imageTile.setUpdatedDate(createDate);
         imageTile.setName(tileGroup.getTag());
@@ -667,7 +667,7 @@ public class SampleHelper extends EntityHelper {
         Date createDate = new Date();
         Entity lsmStack = new Entity();
         lsmStack.setOwnerKey(ownerKey);
-        lsmStack.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK));
+        lsmStack.setEntityTypeName(EntityConstants.TYPE_LSM_STACK);
         lsmStack.setCreationDate(createDate);
         lsmStack.setUpdatedDate(createDate);
         lsmStack.setName(image.getFile().getName());
@@ -694,7 +694,7 @@ public class SampleHelper extends EntityHelper {
         
         // Find out which attributes a Sample can support. We only want to set those. 
         Set<String> attrs = new HashSet<String>();
-        for(EntityAttribute attr : lsmStack.getEntityType().getAttributes()) {
+        for(EntityAttribute attr : entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK).getAttributes()) {
             attrs.add(attr.getName());
         }
         

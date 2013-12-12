@@ -27,7 +27,7 @@ public class GetSampleDataSetsService extends AbstractEntityService {
     		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
     	}
     	
-    	if (!EntityConstants.TYPE_SAMPLE.equals(sampleEntity.getEntityType().getName())) {
+    	if (!EntityConstants.TYPE_SAMPLE.equals(sampleEntity.getEntityTypeName())) {
     		throw new IllegalArgumentException("Entity is not a sample: "+sampleEntityId);
     	}
     	

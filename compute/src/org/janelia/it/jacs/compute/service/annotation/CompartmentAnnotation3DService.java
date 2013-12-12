@@ -256,7 +256,7 @@ public class CompartmentAnnotation3DService extends AbstractEntityService {
         Set<Entity> returnSet=new HashSet<Entity>();
         Set<Entity> children=parent.getChildren();
         for (Entity child : children) {
-            if (child.getEntityType().getName().equals(matchString)) {
+            if (child.getEntityTypeName().equals(matchString)) {
                 logger.info("Found entity matching type="+matchString);
                 returnSet.add(child);
             }
@@ -491,7 +491,7 @@ public class CompartmentAnnotation3DService extends AbstractEntityService {
     protected Entity getSubFolderByName(Entity parentEntity, String folderName) {
         for (EntityData ed : parentEntity.getEntityData()) {
             Entity child=ed.getChildEntity();
-            if (child!=null && child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) & child.getName().equals(folderName)) {
+            if (child!=null && child.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER) & child.getName().equals(folderName)) {
                 return child;
             }
         }
@@ -566,7 +566,7 @@ public class CompartmentAnnotation3DService extends AbstractEntityService {
     protected Entity createMipEntity(File pngFile, String name) throws Exception {
         Entity mipEntity = new Entity();
         mipEntity.setOwnerKey(ownerKey);
-        mipEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D));
+        mipEntity.setEntityTypeName(EntityConstants.TYPE_IMAGE_2D);
         mipEntity.setCreationDate(createDate);
         mipEntity.setUpdatedDate(createDate);
         mipEntity.setName(name);
@@ -578,15 +578,15 @@ public class CompartmentAnnotation3DService extends AbstractEntityService {
 
     protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
         entityBean.addEntityToParent(parent, entity, index, attrName);
-        logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
-                " as child of "+parent.getEntityType().getName()+"#"+parent.getId());
+        logger.info("Added "+entity.getEntityTypeName()+"#"+entity.getId()+
+                " as child of "+parent.getEntityTypeName()+"#"+parent.getId());
     }
 
     protected Entity createStackEntity(File file, String entityName, Entity mipEntity) throws Exception {
         Entity stack = new Entity();
         String mipFilePath=mipEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         stack.setOwnerKey(ownerKey);
-        stack.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK));
+        stack.setEntityTypeName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
         stack.setCreationDate(createDate);
         stack.setUpdatedDate(createDate);
         stack.setName(entityName);
@@ -600,7 +600,7 @@ public class CompartmentAnnotation3DService extends AbstractEntityService {
     protected Entity createSupportingEntity(File supportingFile, String name) throws Exception {
         Entity supportingEntity = new Entity();
         supportingEntity.setOwnerKey(ownerKey);
-        supportingEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_TEXT_FILE));
+        supportingEntity.setEntityTypeName(EntityConstants.TYPE_TEXT_FILE);
         supportingEntity.setCreationDate(createDate);
         supportingEntity.setUpdatedDate(createDate);
         supportingEntity.setName(name);
@@ -634,7 +634,7 @@ public class CompartmentAnnotation3DService extends AbstractEntityService {
         folder.setUpdatedDate(createDate);
         folder.setOwnerKey(ownerKey);
         folder.setName(name);
-        folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+        folder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
         if (directoryPath!=null) {
             folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, directoryPath);
         }

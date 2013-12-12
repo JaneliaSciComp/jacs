@@ -35,7 +35,7 @@ public class DataSetTest extends TestCase {
                 			  ownerKey,
                               sageSync));
 
-        Entity entity = new Entity(null, name, ownerKey, null, null, null, null,
+        Entity entity = new Entity(null, name, ownerKey, null, null, null,
                                    entityDataSet);
 
         DataSet dataSet = new DataSet(entity);
@@ -75,18 +75,8 @@ public class DataSetTest extends TestCase {
         return new EntityAttribute(null, name, null, null, null);
     }
 
-    private EntityData getEntityData(String name,
-                                     String ownerKey,
-                                     String value) {
-        return new EntityData(null,
-                getEntityAttribute(name),
-                null,
-                null,
-                ownerKey,
-                value,
-                null,
-                null,
-                null);
+    private EntityData getEntityData(String attrName, String ownerKey, String value) {
+        return new EntityData(null, attrName, null, null, ownerKey, value, null, null, null);
     }
 
 }

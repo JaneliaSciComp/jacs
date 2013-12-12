@@ -43,8 +43,6 @@ public class ScreenScoresLoadingService extends AbstractEntityService {
     protected Date createDate;
 	protected FileDiscoveryHelper helper;
     
-    protected EntityType folderType;
-    
     // The raw data
     protected Set<String> compartments = new LinkedHashSet<String>();
     
@@ -66,7 +64,6 @@ public class ScreenScoresLoadingService extends AbstractEntityService {
     	
         createDate = new Date();
         helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
-        folderType = entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER);
         
         String acceptsFilepath = (String)processData.getItem("ACCEPTS_FILE_PATH");
     	if (acceptsFilepath == null) {
@@ -539,8 +536,8 @@ public class ScreenScoresLoadingService extends AbstractEntityService {
             // Only accept the current user's top level folder
             for (Entity entity : topLevelFolders) {
                 if (entity.getOwnerKey().equals(ownerKey)
-                        && entity.getEntityType().getName().equals(folderType.getName())
-                        && entity.getAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
+                        && entity.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER)
+                        && entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
                     // This is the folder we want, now load the entire folder hierarchy
                     if (loadTree) {
                         topLevelFolder = entityBean.getEntityTree(entity.getId());
@@ -560,7 +557,7 @@ public class ScreenScoresLoadingService extends AbstractEntityService {
             topLevelFolder.setUpdatedDate(createDate);
             topLevelFolder.setOwnerKey(ownerKey);
             topLevelFolder.setName(topLevelFolderName);
-            topLevelFolder.setEntityType(folderType);
+            topLevelFolder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
             EntityUtils.addAttributeAsTag(topLevelFolder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
             topLevelFolder = entityBean.saveOrUpdateEntity(topLevelFolder);
             logger.info("Saved top level folder as " + topLevelFolder.getId());
@@ -574,7 +571,7 @@ public class ScreenScoresLoadingService extends AbstractEntityService {
         logger.info("Looking for child entity "+childName+" in parent entity "+parent.getId());
         for (EntityData ed : parent.getEntityData()) {
             Entity child = ed.getChildEntity();
-            if (child != null && child.getEntityType().getName().equals(folderType.getName()) && child.getName().equals(childName)) {
+            if (child != null && child.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER) && child.getName().equals(childName)) {
             	Entity folder = ed.getChildEntity();	
                 logger.info("Found folder with id="+folder.getId());
                 return folder;
@@ -587,7 +584,7 @@ public class ScreenScoresLoadingService extends AbstractEntityService {
         child.setUpdatedDate(createDate);
         child.setOwnerKey(ownerKey);
         child.setName(childName);
-        child.setEntityType(folderType);
+        child.setEntityTypeName(EntityConstants.TYPE_FOLDER);
         child = entityBean.saveOrUpdateEntity(child);
         logger.info("Saved child as "+child.getId());
         addToParent(parent, child, parent.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
@@ -597,7 +594,7 @@ public class ScreenScoresLoadingService extends AbstractEntityService {
 
     protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
         entityBean.addEntityToParent(parent, entity, index, EntityConstants.ATTRIBUTE_ENTITY);
-        logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
-        		" as child of "+parent.getEntityType().getName()+"#"+parent.getId());
+        logger.info("Added "+entity.getEntityTypeName()+"#"+entity.getId()+
+        		" as child of "+parent.getEntityTypeName()+"#"+parent.getId());
     }
 }

@@ -57,7 +57,7 @@ public class InitSampleAttributesService extends AbstractEntityService {
                 String area = null;
                 for(EntityData ed : tileEntity.getOrderedEntityData()) {
                     Entity lsmStack = ed.getChildEntity();
-                    if (lsmStack != null && lsmStack.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK)) {
+                    if (lsmStack != null && lsmStack.getEntityTypeName().equals(EntityConstants.TYPE_LSM_STACK)) {
                         String lsmArea = lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
                         if (lsmArea==null) lsmArea = "";
                         if (area == null) {

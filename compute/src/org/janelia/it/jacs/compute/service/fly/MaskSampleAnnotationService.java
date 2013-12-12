@@ -230,7 +230,7 @@ public class MaskSampleAnnotationService  implements IService {
             Entity flyLineEntity=entityBean.getEntityById(flyLineEntityId.trim());
             Set<Entity> flyLineChildren=entityBean.getChildEntities(new Long(flyLineEntityId));
             for (Entity flyLineChild : flyLineChildren) {
-                if (flyLineChild.getEntityType().getName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
+                if (flyLineChild.getEntityTypeName().equals(EntityConstants.TYPE_SCREEN_SAMPLE)) {
                     sampleList.add(flyLineChild);
                 }
             }
@@ -324,7 +324,7 @@ public class MaskSampleAnnotationService  implements IService {
             for (EntityData ed : sample.getEntityData()) {
                 Entity child=ed.getChildEntity();
                 if (child!=null) {
-                    if (child.getEntityType().getName().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
+                    if (child.getEntityTypeName().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
                         if (DEBUG) logger.info("Found Aligned Brain Stack child");
                         stackFile=new File(child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
                         QmScore=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE);
@@ -581,7 +581,7 @@ public class MaskSampleAnnotationService  implements IService {
         folder.setUpdatedDate(createDate);
         folder.setOwnerKey(ownerKey);
         folder.setName(name);
-        folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+        folder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
         if (directoryPath!=null) {
             folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, directoryPath);
         }
@@ -593,8 +593,8 @@ public class MaskSampleAnnotationService  implements IService {
 
     protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
         entityBean.addEntityToParent(parent, entity, index, attrName);
-        if (DEBUG) logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
-                " as child of "+parent.getEntityType().getName()+"#"+parent.getId());
+        if (DEBUG) logger.info("Added "+entity.getEntityTypeName()+"#"+entity.getId()+
+                " as child of "+parent.getEntityTypeName()+"#"+parent.getId());
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -674,7 +674,7 @@ public class MaskSampleAnnotationService  implements IService {
     protected Entity getSubFolderByNameWithoutSession(Entity parentEntity, String folderName) throws ComputeException {
         Set<Entity> children = entityBean.getChildEntities(parentEntity.getId());
         for (Entity child : children) {
-            if (child != null && child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) & child.getName().equals(folderName)) {
+            if (child != null && child.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER) & child.getName().equals(folderName)) {
                 return child;
             }
         }
@@ -684,7 +684,7 @@ public class MaskSampleAnnotationService  implements IService {
     protected Entity getSubFolderByName(Entity parentEntity, String folderName) {
         for (EntityData ed : parentEntity.getEntityData()) {
             Entity child=ed.getChildEntity();
-            if (child!=null && child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) & child.getName().equals(folderName)) {
+            if (child!=null && child.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER) & child.getName().equals(folderName)) {
                 return child;
             }
         }
@@ -831,7 +831,7 @@ public class MaskSampleAnnotationService  implements IService {
     protected Entity createSupportingEntity(File supportingFile, String name) throws Exception {
         Entity supportingEntity = new Entity();
         supportingEntity.setOwnerKey(ownerKey);
-        supportingEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_TEXT_FILE));
+        supportingEntity.setEntityTypeName(EntityConstants.TYPE_TEXT_FILE);
         supportingEntity.setCreationDate(createDate);
         supportingEntity.setUpdatedDate(createDate);
         supportingEntity.setName(name);
@@ -843,7 +843,7 @@ public class MaskSampleAnnotationService  implements IService {
     protected Entity createMipEntity(File pngFile, String name) throws Exception {
         Entity mipEntity = new Entity();
         mipEntity.setOwnerKey(ownerKey);
-        mipEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D));
+        mipEntity.setEntityTypeName(EntityConstants.TYPE_IMAGE_2D);
         mipEntity.setCreationDate(createDate);
         mipEntity.setUpdatedDate(createDate);
         mipEntity.setName(name);
@@ -856,7 +856,7 @@ public class MaskSampleAnnotationService  implements IService {
         Entity stack = new Entity();
         String mipFilePath=mipEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         stack.setOwnerKey(ownerKey);
-        stack.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK));
+        stack.setEntityTypeName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
         stack.setCreationDate(createDate);
         stack.setUpdatedDate(createDate);
         stack.setName(entityName);

@@ -52,7 +52,7 @@ public class AnnotationTreeRoot {
 		                for (EntityData ed : entity.getEntityData()) {
                 	        	Entity child = ed.getChildEntity();
                         		if (child!=null) {
-                                		if (child.getName().equals("Whole Brain") && (type==null||type.equals(child.getEntityType().getName()))) {
+                                		if (child.getName().equals("Whole Brain") && (type==null||type.equals(child.getEntityTypeName()))) {
 							System.out.println("Entity Data: "+ed.getValue());
                                 		}
                         		}

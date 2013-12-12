@@ -35,12 +35,12 @@ public class ReuseSampleProcessingResultService extends AbstractEntityService {
         Entity latestSp = null;
         
         for(Entity pipelineRun : sampleEntity.getOrderedChildren()) {
-            if (pipelineRun.getEntityType().getName().equals(EntityConstants.TYPE_PIPELINE_RUN)) {
+            if (pipelineRun.getEntityTypeName().equals(EntityConstants.TYPE_PIPELINE_RUN)) {
                 if (pipelineRun.getId().toString().equals(pipelineRunId)) {
                     myPipelineRun = pipelineRun;
                 }
                 for(Entity sp : pipelineRun.getChildren()) {
-                    if (sp.getEntityType().getName().equals(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)) {
+                    if (sp.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)) {
                         String spArea = sp.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
                         if (spArea==null) spArea = "";
                         if (sampleArea!=null && !sampleArea.getName().equals(spArea)) {

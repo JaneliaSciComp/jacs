@@ -249,7 +249,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         List<EntityData> dataSetEds = new ArrayList<EntityData>(dataSetFolder.getEntityData());
         for(EntityData ed : dataSetEds) {
             Entity sample = samples.get(ed.getChildEntity().getId());
-            if (sample==null || !sample.getEntityType().getName().equals(EntityConstants.TYPE_SAMPLE)) continue;
+            if (sample==null || !sample.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE)) continue;
             if (sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISITED)==null) {
                 // Sample was not visited this time around, it should be:
                 if (retiredIds.contains(sample.getId())) {

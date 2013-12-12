@@ -54,7 +54,7 @@ public class EntityUtils {
      * @return
      */
     public static boolean isOntologyRoot(Entity entity) {
-        return entity.getEntityType().getName().equals(EntityConstants.TYPE_ONTOLOGY_ROOT);
+        return entity.getEntityTypeName().equals(EntityConstants.TYPE_ONTOLOGY_ROOT);
     }
     
     /**
@@ -168,16 +168,9 @@ public class EntityUtils {
 //		        .compare(entity1.getCreationDate(), entity2.getCreationDate(), Ordering.natural().nullsFirst())
 //		        .compare(entity1.getUpdatedDate(), entity2.getUpdatedDate(), Ordering.natural().nullsFirst())
 	        	.compare(entity1.getOwnerKey(), entity2.getOwnerKey(), Ordering.natural().nullsFirst())
-	        	.compare(entity1.getName(), entity2.getName(), Ordering.natural().nullsFirst());
-        
-    	if (entity1.getEntityType()!=null || entity2.getEntityType()!=null) {
-        	if (entity1.getEntityType()==null||entity2.getEntityType()==null) {
-        		log.debug("Entity areEqual? entity types differ");
-        		return false;
-        	}
-    		chain = chain.compare(entity1.getEntityType().getName(), entity2.getEntityType().getName(), Ordering.natural().nullsFirst());
-    	}
-    
+	        	.compare(entity1.getName(), entity2.getName(), Ordering.natural().nullsFirst())
+	        	.compare(entity1.getEntityTypeName(), entity2.getEntityTypeName(), Ordering.natural().nullsFirst());
+    	
     	if (chain.result()!=0) {
     		log.debug("Entity areEqual? false");
 	    	debug(entity1);
@@ -208,7 +201,7 @@ public class EntityUtils {
 		for(EntityData ed1 : edMap1.values()) {
 		    EntityData ed2 = edMap2.get(ed1.getId());
 		    if (!areEqual(ed1,ed2)) {
-		        log.debug("Entity 2 does not have the same "+ed1.getEntityAttribute().getName());
+		        log.debug("Entity 2 does not have the same "+ed1.getEntityAttrName());
 		        return false;
 		    }
 		}
@@ -216,7 +209,7 @@ public class EntityUtils {
         for(EntityData ed2 : edMap2.values()) {
             EntityData ed1 = edMap1.get(ed2.getId());
             if (!areEqual(ed1,ed2)) {
-                log.debug("Entity 1 does not have the same "+ed2.getEntityAttribute().getName());
+                log.debug("Entity 1 does not have the same "+ed2.getEntityAttrName());
                 return false;
             }
         }
@@ -277,7 +270,7 @@ public class EntityUtils {
         }
         
 	    int c = chain.compare(ed1.getParentEntity().getId(), ed2.getParentEntity().getId(), Ordering.natural().nullsFirst())
-	            .compare(ed1.getEntityAttribute().getName(), ed2.getEntityAttribute().getName(), Ordering.natural().nullsFirst())
+	            .compare(ed1.getEntityAttrName(), ed2.getEntityAttrName(), Ordering.natural().nullsFirst())
 	            // date comparison is disabled because sometimes the milliseconds are truncated for unknown reasons
 //	            .compare(ed1.getCreationDate(), ed2.getCreationDate(), Ordering.natural().nullsFirst())
 //	            .compare(ed1.getUpdatedDate(), ed2.getUpdatedDate(), Ordering.natural().nullsFirst())
@@ -296,7 +289,7 @@ public class EntityUtils {
     public static void debug(EntityData ed) {
     	if (!log.isDebugEnabled()) return;
     	log.debug("EntityData(id={})",ed.getId());
-    	log.debug("    entityAttribute: {}",ed.getEntityAttribute()==null?null:ed.getEntityAttribute().getName());
+    	log.debug("    entityAttribute: {}",ed.getEntityAttrName());
     	log.debug("    value: {}",ed.getValue());
     	log.debug("    ownerKey: {}",ed.getOwnerKey());
     	log.debug("    orderIndex: {}",ed.getOrderIndex());
@@ -308,7 +301,7 @@ public class EntityUtils {
     public static void debug(Entity entity) {    		
     	if (!log.isDebugEnabled()) return;
     	log.debug("Entity(id={})",entity.getId());
-    	log.debug("    entityType: {}",entity.getEntityType()==null?null:entity.getEntityType().getName());
+    	log.debug("    entityType: {}",entity.getEntityTypeName());
     	log.debug("    name: {}",entity.getName());
     	log.debug("    ownerKey: {}",entity.getOwnerKey()==null?null:entity.getOwnerKey());
     	log.debug("    creationDate: {}",entity.getCreationDate());
@@ -368,9 +361,9 @@ public class EntityUtils {
 			entity.setName(newEntity.getName());
 	    	entity.setUpdatedDate(newEntity.getUpdatedDate());
 			entity.setCreationDate(newEntity.getCreationDate());
-			entity.setEntityStatus(newEntity.getEntityStatus());
-			entity.setEntityType(newEntity.getEntityType());
+			entity.setEntityTypeName(newEntity.getEntityTypeName());
 			entity.setOwnerKey(newEntity.getOwnerKey());
+			entity.setNumChildren(newEntity.getNumChildren());
 			entity.setEntityData(newEntity.getEntityData());
     	}
     }
@@ -390,7 +383,7 @@ public class EntityUtils {
     
     public static String getImageFilePath(Entity entity, String imageRole) {
 
-     	String type = entity.getEntityType().getName();
+     	String type = entity.getEntityTypeName();
     	String path = null;
 
 		if (path == null) {
@@ -481,7 +474,7 @@ public class EntityUtils {
         for (EntityData ed : entity.getEntityData()) {
             Entity child = ed.getChildEntity();
             if (child!=null) {
-                if ((childName==null||child.getName().equals(childName)) && (type==null||type.equals(child.getEntityType().getName()))) {
+                if ((childName==null||child.getName().equals(childName)) && (type==null||type.equals(child.getEntityTypeName()))) {
                     return child;
                 }
             }
@@ -501,7 +494,7 @@ public class EntityUtils {
 		for (EntityData ed : entity.getEntityData()) {
 			Entity child = ed.getChildEntity();
 			if (child!=null) {
-				if ((childName==null||child.getName().equals(childName)) && (type==null||type.equals(child.getEntityType().getName()))) {
+				if ((childName==null||child.getName().equals(childName)) && (type==null||type.equals(child.getEntityTypeName()))) {
 					return ed;
 				}
 			}
@@ -545,7 +538,7 @@ public class EntityUtils {
     public static List<EntityData> getOrderedEntityDataForAttribute(Entity entity, String attrName) {
         List<EntityData> items = new ArrayList<EntityData>();
         for (EntityData entityData : entity.getOrderedEntityData()) {
-            if (attrName==null || attrName.equals(entityData.getEntityAttribute().getName())) {
+            if (attrName==null || attrName.equals(entityData.getEntityAttrName())) {
                 items.add(entityData);
             }
         }
@@ -579,7 +572,7 @@ public class EntityUtils {
 
     	boolean found = false;
         List<Entity> items = new ArrayList<Entity>();
-        if (typeName==null || typeName.equals(entity.getEntityType().getName())) {
+        if (typeName==null || typeName.equals(entity.getEntityTypeName())) {
             items.add(entity);
             found = true;
         }
@@ -601,7 +594,7 @@ public class EntityUtils {
         for (EntityData entityData : entity.getOrderedEntityData()) {
             Entity child = entityData.getChildEntity();
             if (child != null) {
-                if (typeName==null || typeName.equals(child.getEntityType().getName())) {
+                if (typeName==null || typeName.equals(child.getEntityTypeName())) {
                     items.add(child);
                 }
             }
@@ -612,7 +605,7 @@ public class EntityUtils {
     public static List<Entity> getChildrenForAttribute(Entity entity, String attrName) {
         List<Entity> items = new ArrayList<Entity>();
         for (EntityData entityData : entity.getOrderedEntityData()) {
-            if (attrName==null || attrName.equals(entityData.getEntityAttribute().getName())) {
+            if (attrName==null || attrName.equals(entityData.getEntityAttrName())) {
                 Entity child = entityData.getChildEntity();
                 if (child != null) {
                     items.add(child);
@@ -631,7 +624,7 @@ public class EntityUtils {
     	List<Entity> children = entity.getOrderedChildren();
     	Collections.reverse(children);
     	for(Entity child : children) {
-    		if (!child.getEntityType().getName().equals(entityTypeName)) continue;
+    		if (!child.getEntityTypeName().equals(entityTypeName)) continue;
 	    	return child;
     	}
     	return null;
@@ -639,8 +632,6 @@ public class EntityUtils {
     
     public static boolean addAttributeAsTag(Entity entity, String attributeName) {
         Set<EntityData> data=entity.getEntityData();
-        EntityAttribute attribute = entity.getAttributeByName(attributeName);
-        if (attribute==null) return false;
         
         if (attributeName.equals(entity.getValueByAttributeName(attributeName))) {
             return true;
@@ -648,29 +639,29 @@ public class EntityUtils {
 
         EntityData tag = new EntityData();
         tag.setParentEntity(entity);
-        tag.setEntityAttribute(attribute);
+        tag.setEntityAttrName(attributeName);
         tag.setOwnerKey(entity.getOwnerKey());
         Date createDate = new Date();
         tag.setCreationDate(createDate);
         tag.setUpdatedDate(createDate);
-        tag.setValue(attribute.getName());
+        tag.setValue(attributeName);
         data.add(tag);
 
         return true;
     }
 
     
-    public static void replaceAllAttributeTypesInEntityTree(Entity topEntity, EntityAttribute previousEa, EntityAttribute newEa, SaveUnit su) throws Exception {
+    public static void replaceAllAttributeTypesInEntityTree(Entity topEntity, String previousEa, String newEa, SaveUnit su) throws Exception {
         log.debug("replaceAllAttributeTypesInEntityTree id="+topEntity.getId());
         Set<EntityData> edSet=topEntity.getEntityData();
         log.debug("Found "+edSet.size()+" entity-data");
         for (EntityData ed : edSet) {
-            if (ed.getEntityAttribute().getName().equals(previousEa.getName())) {
-                log.debug("Changing value to "+newEa.getName());
-                ed.setEntityAttribute(newEa);
+            if (ed.getEntityAttrName().equals(previousEa)) {
+                log.debug("Changing value to "+newEa);
+                ed.setEntityAttrName(newEa);
                 su.saveUnit(ed);
             } else {
-                log.debug("Skipping attribute="+ed.getEntityAttribute().getName());
+                log.debug("Skipping attribute="+ed.getEntityAttrName());
             }
             Entity child=ed.getChildEntity();
             if (child!=null) {
@@ -685,8 +676,8 @@ public class EntityUtils {
 	 * @return
 	 */
 	public static boolean isHidden(EntityData entityData) {
-		if (entityData==null || entityData.getEntityAttribute()==null) return true;
-		String attrName = entityData.getEntityAttribute().getName();
+		if (entityData==null || entityData.getEntityAttrName()==null) return true;
+		String attrName = entityData.getEntityAttrName();
 		if (EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE.equals(attrName) 
 				|| EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE.equals(attrName) 
 				|| EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE.equals(attrName) 
@@ -708,7 +699,7 @@ public class EntityUtils {
 	 * @return
 	 */
 	public static boolean hasImageRole(EntityData entityData) {
-		String attrName = entityData.getEntityAttribute().getName();
+		String attrName = entityData.getEntityAttrName();
 		return (attrName.equals(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE) || 
 				attrName.equals(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE) || 
 				attrName.equals(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE));

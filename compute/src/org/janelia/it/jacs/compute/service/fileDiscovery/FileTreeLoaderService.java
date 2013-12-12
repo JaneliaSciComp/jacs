@@ -271,7 +271,7 @@ public class FileTreeLoaderService implements IService {
 
     protected Entity verifyOrCreateVirtualSubFolder(Entity parentFolder, String subFolderName) throws Exception {
        for (Entity child : parentFolder.getChildren()) {
-           if (child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER) &&
+           if (child.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER) &&
                    child.getName().equals(subFolderName)) {
                return child;
            }
@@ -409,7 +409,7 @@ public class FileTreeLoaderService implements IService {
         for (EntityData ed : parentFolder.getEntityData()) {
             Entity child = ed.getChildEntity();
 
-            if (child != null && child.getEntityType().getName().equals(EntityConstants.TYPE_FOLDER)) {
+            if (child != null && child.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER)) {
                 String folderPath = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                 if (folderPath == null) {
                     logger.warn("Unexpectedly could not find attribute '"+EntityConstants.ATTRIBUTE_FILE_PATH+"' for entity id="+child.getId());
@@ -432,7 +432,7 @@ public class FileTreeLoaderService implements IService {
             folder.setUpdatedDate(createDate);
             folder.setOwnerKey(ownerKey);
             folder.setName(dir.getName());
-            folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+            folder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
             folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, dir.getAbsolutePath());
             folder = entityBean.saveOrUpdateEntity(folder);
             logger.info("Saved folder as "+folder.getId());
@@ -465,8 +465,8 @@ public class FileTreeLoaderService implements IService {
 
         if (!alreadyExists) {
             // Assume the entity needs to be created
-            EntityType entityType=helper.getEntityTypeForFile(f);
-            fileEntity=createEntityForFile(f, entityType);
+            String entityTypeName = helper.getEntityTypeForFile(f);
+            fileEntity=createEntityForFile(f, entityTypeName);
             helper.addToParent(folder, fileEntity, index, EntityConstants.ATTRIBUTE_ENTITY);
         }
 
@@ -495,13 +495,13 @@ public class FileTreeLoaderService implements IService {
         return !f.getName().toLowerCase().endsWith(".tif") || f.length() >= pbdThreshold;
     }
 
-    protected Entity createEntityForFile(File f, EntityType entityType) throws Exception {
+    protected Entity createEntityForFile(File f, String entityTypeName) throws Exception {
         Entity fileEntity=new Entity();
         fileEntity.setCreationDate(createDate);
         fileEntity.setUpdatedDate(createDate);
         fileEntity.setOwnerKey(ownerKey);
         fileEntity.setName(f.getName());
-        fileEntity.setEntityType(entityType);
+        fileEntity.setEntityTypeName(entityTypeName);
         fileEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, f.getAbsolutePath());
         fileEntity = entityBean.saveOrUpdateEntity(fileEntity);
         logger.info("Saved file "+f.getAbsolutePath()+" as entity="+fileEntity.getId());
@@ -639,7 +639,6 @@ public class FileTreeLoaderService implements IService {
         Map<Long, Entity> sourceEntityIdToPbdEntityMap=new HashMap<Long, Entity>();
 
         // Handle PBDs
-        EntityType pbdResultEntityType=entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
         List<Long> pbdGroupKeyList=new ArrayList<Long>(pbdGroupMap.keySet());
         Collections.sort(pbdGroupKeyList);
         logger.info("doComplete() pbdGroupKeyList has "+pbdGroupKeyList.size()+" entries");
@@ -658,7 +657,7 @@ public class FileTreeLoaderService implements IService {
                     } else {
                         // First, create the pbdResultEntity and place it in the supporting files folder
                         logger.info("doComplete() creating pbdResultEntity");
-                        Entity pbdResultEntity=createEntityForFile(pbdResultFile, pbdResultEntityType);
+                        Entity pbdResultEntity=createEntityForFile(pbdResultFile, EntityConstants.TYPE_IMAGE_3D);
                         pbdResultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_ARTIFACT_SOURCE_ID, ai.sourceEntityId.toString());
                         logger.info("doComplete() saving pbdResultEntity");
                         entityBean.saveOrUpdateEntity(pbdResultEntity);
@@ -666,7 +665,7 @@ public class FileTreeLoaderService implements IService {
                         // Second, add this entity as the proxy attribute of the source Entity
                         logger.info("doComplete() adding entity as performance proxy");
                         Entity sourceEntity=entityBean.getEntityById(ai.sourceEntityId.toString());
-                        logger.info("doComplete() adding entityData to entity of type="+sourceEntity.getEntityType().getName());
+                        logger.info("doComplete() adding entityData to entity of type="+sourceEntity.getEntityTypeName());
                         entityBean.addEntityToParent(sourceEntity, pbdResultEntity, null, EntityConstants.ATTRIBUTE_PERFORMANCE_PROXY_IMAGE);
                         
                         // Populate map
@@ -679,7 +678,6 @@ public class FileTreeLoaderService implements IService {
         logger.info("doComplete() finished PBD section, beginning MIP section");
 
         // Handle MIPs
-        EntityType mipResultEntityType=entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
         List<Long> mipGroupKeyList=new ArrayList<Long>(mipGroupMap.keySet());
         Collections.sort(mipGroupKeyList);
         for (Long mipGroupKey : mipGroupKeyList) {
@@ -694,14 +692,14 @@ public class FileTreeLoaderService implements IService {
                         logger.error("Could not find expected mip result file="+mipResultFile.getAbsolutePath()+" for sourceEntityId="+ai.sourceEntityId);
                     } else {
                         // Create the mip entity
-                    	Entity mipResultEntity=createEntityForFile(mipResultFile, mipResultEntityType);
+                    	Entity mipResultEntity=createEntityForFile(mipResultFile, EntityConstants.TYPE_IMAGE_2D);
                         mipResultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_ARTIFACT_SOURCE_ID, ai.sourceEntityId.toString());
                         entityBean.saveOrUpdateEntity(mipResultEntity);
 //                        helper.addToParent(supportingFilesFolder, mipResultEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
                         // Add as default 2D image
                         Entity sourceEntity=entityBean.getEntityById(ai.sourceEntityId.toString());
                         File sourceFile=new File(sourceEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-                        logger.info("Creating entityData DEFAULT_2D_IMAGE for sourceEntity id="+sourceEntity.getId()+" type="+sourceEntity.getEntityType().getName()+" sourceFile="+sourceFile.getAbsolutePath());
+                        logger.info("Creating entityData DEFAULT_2D_IMAGE for sourceEntity id="+sourceEntity.getId()+" type="+sourceEntity.getEntityTypeName()+" sourceFile="+sourceFile.getAbsolutePath());
                         entityBean.addEntityToParent(sourceEntity, mipResultEntity, null, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
                         
                         logger.info("Done with entityData save");

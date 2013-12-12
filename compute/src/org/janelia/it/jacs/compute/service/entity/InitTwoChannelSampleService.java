@@ -42,7 +42,7 @@ public class InitTwoChannelSampleService implements IService {
         	
         	Entity merged = null;
         	for(Entity child : supportingFiles.getChildren()) {
-        		if (child.getName().startsWith("merged-") && child.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_3D)) {
+        		if (child.getName().startsWith("merged-") && child.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
         			merged = child;
         			break;
         		}

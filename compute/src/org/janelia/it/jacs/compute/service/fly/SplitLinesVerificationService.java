@@ -25,7 +25,7 @@ public class SplitLinesVerificationService extends AbstractEntityService {
 	
     protected Date createDate;
     
-    protected EntityType flylineType;
+    
     protected EntityType folderType;
     
     protected Map<String, String> robotIds = new HashMap<String,String>();
@@ -34,11 +34,6 @@ public class SplitLinesVerificationService extends AbstractEntityService {
 	
         createDate = new Date();
         
-    	// Preload entity types
-    	
-    	flylineType = entityBean.getEntityTypeByName(EntityConstants.TYPE_FLY_LINE);
-    	folderType = entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER);
-    	
     	// Get data from FlyBoy
     	
     	FlyBoyDAO flyboyDAO = new FlyBoyDAO(logger);

@@ -12,7 +12,7 @@ public class EntityConstants {
     public static final String STATUS_DEPRECATED                     = "Deprecated";
     public static final String STATUS_VALID                          = "Valid";
 
-    // Common Entity Names
+    // Singleton Entity Names
     public static final String NAME_SHARED_DATA                      = "Shared Data";
     public static final String NAME_SPLIT_PICKING                    = "Split Picking";
     public static final String NAME_DATA_SETS                        = "Data Sets";
@@ -20,53 +20,61 @@ public class EntityConstants {
     public static final String NAME_RETIRED_DATA                     = "Retired Data";
     public static final String NAME_BLOCKED_DATA                     = "Blocked Data";
     
-    // Entity Types
+    // Common Types
     public static final String TYPE_ANNOTATION                       = "Annotation";
-    public static final String TYPE_LSM_STACK                        = "LSM Stack";
+    public static final String TYPE_FOLDER                           = "Folder";
+    public static final String TYPE_FILE                             = "File";
+    public static final String TYPE_TEXT_FILE                        = "Text File";
     public static final String TYPE_ONTOLOGY_ROOT                    = "Ontology Root";
     public static final String TYPE_ONTOLOGY_ELEMENT                 = "Ontology Element";
-    public static final String TYPE_FOLDER                           = "Folder";
-    public static final String TYPE_SUPPORTING_DATA                  = "Supporting Data";
-    public static final String TYPE_SAMPLE                           = "Sample";
-    public static final String TYPE_SCREEN_SAMPLE                    = "Screen Sample";
-    public static final String TYPE_SCREEN_SAMPLE_CROSS              = "Screen Sample Cross";
-    public static final String TYPE_FLY_LINE                         = "Fly Line";
-    public static final String TYPE_IMAGE_TILE                       = "Image Tile";
-    public static final String TYPE_NEURON_SEPARATOR_PIPELINE_RESULT = "Neuron Separator Pipeline Result";
-    public static final String TYPE_MYERS_NEURON_SEPARATION_FILE     = "Myers Neuron Separation File";
-    public static final String TYPE_SAMPLE_PROCESSING_RESULT         = "Sample Processing Result";
-    public static final String TYPE_ALIGNMENT_RESULT                 = "Alignment Result";
+    
+    // Imaging Types
     public static final String TYPE_IMAGE_2D                         = "Image 2D";
     public static final String TYPE_IMAGE_3D                         = "Image 3D";
     public static final String TYPE_MOVIE                            = "Movie";
-    public static final String TYPE_NEURON_FRAGMENT                  = "Neuron Fragment";
-    public static final String TYPE_NEURON_FRAGMENT_COLLECTION       = "Neuron Fragment Collection";
     public static final String TYPE_COMPARTMENT_SET                  = "Compartment Set";
     public static final String TYPE_COMPARTMENT                      = "Compartment";
-    public static final String TYPE_ALIGNED_BRAIN_STACK              = "Aligned Brain Stack";
-    public static final String TYPE_TEXT_FILE                        = "Text File";
-    public static final String TYPE_SWC_FILE                         = "SWC File";
-    public static final String TYPE_V3D_ANO_FILE                     = "Vaa3d ANO File";
-    public static final String TYPE_FILE                             = "File";
-    public static final String TYPE_CURATED_NEURON                   = "Curated Neuron";
-    public static final String TYPE_CURATED_NEURON_COLLECTION        = "Curated Neuron Collection";
-    public static final String TYPE_PIPELINE_RUN                     = "Pipeline Run";
+    
+    // Single Neuron Imaging Types
     public static final String TYPE_ERROR                            = "Error";
     public static final String TYPE_PROCESSING_BLOCK                 = "Processing Block";
     public static final String TYPE_DATA_SET                         = "Data Set";
+    public static final String TYPE_SAMPLE                           = "Sample";
+    public static final String TYPE_SUPPORTING_DATA                  = "Supporting Data";
+    public static final String TYPE_LSM_STACK                        = "LSM Stack";
+    public static final String TYPE_IMAGE_TILE                       = "Image Tile";
+    public static final String TYPE_PIPELINE_RUN                     = "Pipeline Run";
+    public static final String TYPE_SAMPLE_PROCESSING_RESULT         = "Sample Processing Result";
+    public static final String TYPE_ALIGNMENT_RESULT                 = "Alignment Result";
+    public static final String TYPE_NEURON_SEPARATOR_PIPELINE_RESULT = "Neuron Separator Pipeline Result";
+    public static final String TYPE_MYERS_NEURON_SEPARATION_FILE     = "Myers Neuron Separation File";
+    public static final String TYPE_NEURON_FRAGMENT                  = "Neuron Fragment";
+    public static final String TYPE_NEURON_FRAGMENT_COLLECTION       = "Neuron Fragment Collection";
+    public static final String TYPE_CURATED_NEURON                   = "Curated Neuron";
+    public static final String TYPE_CURATED_NEURON_COLLECTION        = "Curated Neuron Collection";
+    public static final String TYPE_CELL_COUNTING_RESULT             = "Cell Counting Result";
+    
+    // Screen Imaging Types
+    public static final String TYPE_FLY_LINE                         = "Fly Line";
+    public static final String TYPE_SCREEN_SAMPLE                    = "Screen Sample";
+    public static final String TYPE_SCREEN_SAMPLE_CROSS              = "Screen Sample Cross";
+    public static final String TYPE_ALIGNED_BRAIN_STACK              = "Aligned Brain Stack";
+    public static final String TYPE_SWC_FILE                         = "SWC File";
+    public static final String TYPE_V3D_ANO_FILE                     = "Vaa3d ANO File";
+    
+    // Alignment Board Types
     public static final String TYPE_ALIGNMENT_BOARD                  = "Alignment Board";
     public static final String TYPE_ALIGNMENT_SPACE                  = "Alignment Space";
-    public static final String TYPE_MASK_SET                         = "Mask Set";
-    public static final String TYPE_MASK                             = "Mask";
     public static final String TYPE_ALIGNED_ITEM                     = "Aligned Item";
     public static final String TYPE_DEFORMATION_MATRIX               = "Deformation Matrix";
+    
+    // Tile Microscope 
     public static final String TYPE_3D_TILE_MICROSCOPE_SAMPLE        = "3D Tile Microscope Sample";
     public static final String TYPE_TILE_MICROSCOPE_WORKSPACE        = "Tile Microscope Workspace";
     public static final String TYPE_TILE_MICROSCOPE_NEURON           = "Tile Microscope Neuron";
     public static final String TYPE_PROPERTY_SET                     = "Property Set";
-    public static final String TYPE_CELL_COUNTING_RESULT             = "Cell Counting Result";
+    
     // Entity Data Attributes
-
     public static final String ATTRIBUTE_LINE                                = "Line";
     public static final String ATTRIBUTE_SLIDE_CODE                          = "Slide Code";
     public static final String ATTRIBUTE_AGE                                 = "Age";
@@ -181,6 +189,17 @@ public class EntityConstants {
     public static final String VALUE_ONTOLOGY_TERM_TYPE_TEXT                = "Text";
     public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM_TEXT           = "EnumText";
 
+
+    /**
+     * @deprecated Not used. This will be removed someday.
+     */
+    public static final String TYPE_MASK_SET                         = "Mask Set";
+
+    /**
+     * @deprecated Not used. This will be removed someday.
+     */
+    public static final String TYPE_MASK                             = "Mask";
+    
     /**
      * @deprecated Use permissions instead. This will be removed someday.
      */

@@ -211,7 +211,7 @@ public class EntityVistationBuilder {
     		super(parameter);
     	}
     	public boolean allow(EntityData ed) {
-    		return (ed.getChildEntity()!=null && ed.getChildEntity().getEntityType().getName().equals(parameter));
+    		return (ed.getChildEntity()!=null && ed.getChildEntity().getEntityTypeName().equals(parameter));
     	}
     }
     
@@ -220,7 +220,7 @@ public class EntityVistationBuilder {
     		super(parameter);
     	}
     	public boolean allow(EntityData ed) {
-    		return (ed.getChildEntity()!=null && ed.getEntityAttribute().getName().equals(parameter));
+    		return (ed.getChildEntity()!=null && ed.getEntityAttrName().equals(parameter));
     	}
     }
 
@@ -238,7 +238,7 @@ public class EntityVistationBuilder {
     		super(parameter);
     	}
     	public boolean allow(EntityData ed) {
-    		return (ed.getChildEntity()!=null && ed.getChildEntity().getEntityType().getName().equals(parameter));
+    		return (ed.getChildEntity()!=null && ed.getChildEntity().getEntityTypeName().equals(parameter));
     	}
     }
 
@@ -247,7 +247,7 @@ public class EntityVistationBuilder {
     		super(parameter);
     	}
     	public boolean allow(EntityData ed) {
-    		return (ed.getChildEntity()!=null && ed.getEntityAttribute().getName().equals(parameter));
+    		return (ed.getChildEntity()!=null && ed.getEntityAttrName().equals(parameter));
     	}
     }
     

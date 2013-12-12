@@ -33,7 +33,7 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
     @Override
     protected void processFolderForData(Entity sampleProcessingResult) throws Exception {
 
-        if (!sampleProcessingResult.getEntityType().getName().equals(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)) {
+        if (!sampleProcessingResult.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)) {
             throw new IllegalStateException("Expected Sample Processing Result as input");
         }
 
@@ -84,7 +84,7 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
             else if (resultItem.getName().endsWith(".tc")) {
                 pixelRes = getStitchedDimensions(resultItem.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
             }
-            else if (resultItem.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_3D)) {
+            else if (resultItem.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
                 if (stitchedFilename.equals(resultItem.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH))) {
                     if (image3d!=null) {
                         logger.warn("More than one 3d image result detected for sample processing "+sampleProcessingResult.getId());
@@ -125,7 +125,7 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
             
             for(EntityData ed : tileEntity.getOrderedEntityData()) {
                 Entity lsmStack = ed.getChildEntity();
-                if (lsmStack != null && lsmStack.getEntityType().getName().equals(EntityConstants.TYPE_LSM_STACK)) {
+                if (lsmStack != null && lsmStack.getEntityTypeName().equals(EntityConstants.TYPE_LSM_STACK)) {
                     
                     // Don't trust entities in ProcessData, fetch a fresh copy
                     lsmStack = entityBean.getEntityById(lsmStack.getId());

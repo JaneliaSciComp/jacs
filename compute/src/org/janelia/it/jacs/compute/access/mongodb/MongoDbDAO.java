@@ -73,11 +73,9 @@ public class MongoDbDAO extends AnnotationDAO {
 	        conn = getJdbcConnection();
 	        
 	        StringBuffer sql = new StringBuffer();
-	        sql.append("select e.id, e.name, e.creation_date, e.updated_date, et.name, e.owner_key, ea.name, ed.value, ed.child_entity_id, p.subject_key ");
+	        sql.append("select e.id, e.name, e.creation_date, e.updated_date, e.entity_type, e.owner_key, ed.entity_att, ed.value, ed.child_entity_id, p.subject_key ");
 	        sql.append("from entity e ");
-	        sql.append("join entityType et on e.entity_type_id = et.id ");
 	        sql.append("left outer join entityData ed on e.id=ed.parent_entity_id ");
-	        sql.append("left outer join entityAttribute ea on ed.entity_att_id = ea.id ");
 	        sql.append("left outer join entity_actor_permission p on p.entity_id = e.id ");
 	        
 	        stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
@@ -190,7 +188,7 @@ public class MongoDbDAO extends AnnotationDAO {
     	Set<Long> childrenIds = new HashSet<Long>();
     	for(EntityData ed : entity.getEntityData()) {
     		if (ed.getValue()!=null) {
-    			String attr = (ed.getEntityAttribute().getName());
+    			String attr = (ed.getEntityAttrName());
     			simpleEntity.getAttributes().add(new KeyValuePair(attr, ed.getValue()));
     		}
     		else if (ed.getChildEntity()!=null) {

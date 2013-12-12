@@ -159,7 +159,7 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
     
     protected void discoverySeparationFiles(Entity separation) throws Exception {
 
-    	if (!separation.getEntityType().getName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
+    	if (!separation.getEntityTypeName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
     		throw new IllegalStateException("Expected Neuron Separation Result as input");
     	}
 
@@ -174,8 +174,6 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
         Entity supportingFiles = helper.getOrCreateSupportingFilesFolder(separation);
         Entity fragmentsFolder = getOrCreateFragmentsFolder(separation);
         
-        EntityType fragmentType = entityBean.getEntityTypeByName(EntityConstants.TYPE_NEURON_FRAGMENT);
-
         Entity referenceVolume = null;
         Entity signalVolume = null;
         Entity labelVolume = null;
@@ -304,7 +302,7 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
             logger.trace("Processing neuron #"+index+" with MIP "+fragmentMIP.getName());
             
             if (index==null) continue;
-            Entity fragmentEntity = getOrCreateFragmentEntity(fragmentsFolder, fragmentType, index, fragmentMIP);
+            Entity fragmentEntity = getOrCreateFragmentEntity(fragmentsFolder, index, fragmentMIP);
             
             Entity maskEntity = maskEntities.get(index);
             if (maskEntity!=null) {
@@ -385,7 +383,7 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
     private Entity createFragmentCollection() throws Exception {
         Entity fragmentsEntity = new Entity();
         fragmentsEntity.setOwnerKey(ownerKey);
-        fragmentsEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION));
+        fragmentsEntity.setEntityTypeName(EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION);
         fragmentsEntity.setCreationDate(createDate);
         fragmentsEntity.setUpdatedDate(createDate);
         fragmentsEntity.setName("Neuron Fragments");
@@ -394,22 +392,22 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
         return fragmentsEntity;
     }
 
-	private Entity getOrCreateFragmentEntity(Entity fragmentsFolder, EntityType fragmentType, Integer index, Entity fragmentMIP) throws Exception {
+	private Entity getOrCreateFragmentEntity(Entity fragmentsFolder, Integer index, Entity fragmentMIP) throws Exception {
 		for(Entity fragment : fragmentsFolder.getChildren()) {
 			if (index.toString().equals(fragment.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER))) {
 				return fragment;
 			}
 		}
-        Entity fragmentEntity = createFragmentEntity(fragmentType, index);
+        Entity fragmentEntity = createFragmentEntity(index);
         helper.setDefault2dImage(fragmentEntity, fragmentMIP);
         helper.addToParent(fragmentsFolder, fragmentEntity, index, EntityConstants.ATTRIBUTE_ENTITY);
         return fragmentEntity;
 	}
 	
-    private Entity createFragmentEntity(EntityType fragmentType, Integer index) throws Exception {
+    private Entity createFragmentEntity(Integer index) throws Exception {
         Entity fragmentEntity = new Entity();
         fragmentEntity.setOwnerKey(ownerKey);
-        fragmentEntity.setEntityType(fragmentType);
+        fragmentEntity.setEntityTypeName(EntityConstants.TYPE_NEURON_FRAGMENT);
         fragmentEntity.setCreationDate(createDate);
         fragmentEntity.setUpdatedDate(createDate);
         fragmentEntity.setName("Neuron Fragment "+index);
@@ -424,7 +422,7 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
 		for(EntityData ed : parent.getOrderedEntityData()) {
 			Entity existingChild = ed.getChildEntity();
 			if (existingChild!=null) {
-				if (ed.getEntityAttribute().getName().equals(entityAttrName) && existingChild.getId().equals(child.getId())) {
+				if (ed.getEntityAttrName().equals(entityAttrName) && existingChild.getId().equals(child.getId())) {
 					return; // already an entity child
 				}
 			}

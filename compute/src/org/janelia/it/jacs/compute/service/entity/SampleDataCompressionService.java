@@ -171,7 +171,7 @@ public class SampleDataCompressionService implements IService {
         	logger.info("Finding V3DRAW files belonging to "+ownerKey);
         	
     		for(Entity entity : entityBean.getUserEntitiesWithAttributeValue(ownerKey, EntityConstants.ATTRIBUTE_FILE_PATH, "%v3draw")) {
-    			if (!entity.getEntityType().getName().equals(EntityConstants.TYPE_IMAGE_3D)) {
+    			if (!entity.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
     				logger.warn("Ignoring entity with v3draw filepath that is not an Image 3D: "+entity.getId());
     				continue;
     			}

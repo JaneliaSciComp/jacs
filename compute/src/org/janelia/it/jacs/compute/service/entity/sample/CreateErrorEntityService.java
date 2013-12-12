@@ -33,8 +33,8 @@ public class CreateErrorEntityService extends AbstractEntityService {
     	Exception exception = (Exception)processData.getItem(IProcessData.PROCESSING_EXCEPTION);
 
     	Date date = new Date();
-    	Entity error = new Entity(null, "Error", rootEntity.getOwnerKey(), null, 
-    			entityBean.getEntityTypeByName(EntityConstants.TYPE_ERROR), date, date, new HashSet<EntityData>());	
+    	Entity error = new Entity(null, "Error", rootEntity.getOwnerKey(),  
+    			EntityConstants.TYPE_ERROR, date, date, new HashSet<EntityData>());	
     	error.setValueByAttributeName(EntityConstants.ATTRIBUTE_MESSAGE, ExceptionUtils.getStackTrace(exception));
     	entityBean.saveOrUpdateEntity(error);
 

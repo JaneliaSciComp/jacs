@@ -116,7 +116,7 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
 
                 logger.info("    Check result "+result.getName()+" (id="+result.getId()+")");
                 
-                if (result.getEntityType().getName().equals(resultType)) {
+                if (result.getEntityTypeName().equals(resultType)) {
                     if (anatomicalArea==null || anatomicalArea.equalsIgnoreCase(result.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA))) {
                         entityLoader.populateChildren(result);
                         if (EntityUtils.findChildWithType(result, EntityConstants.TYPE_ERROR) == null) {

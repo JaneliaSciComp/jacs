@@ -169,7 +169,7 @@ public class MergedFileDiscoveryService extends FileDiscoveryService {
     protected Entity createSample(String name) throws Exception {
         Entity sample = new Entity();
         sample.setOwnerKey(ownerKey);
-        sample.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SAMPLE));
+        sample.setEntityTypeName(EntityConstants.TYPE_SAMPLE);
         sample.setCreationDate(createDate);
         sample.setUpdatedDate(createDate);
         sample.setName(name);
@@ -181,7 +181,7 @@ public class MergedFileDiscoveryService extends FileDiscoveryService {
     protected Entity createSupportingFilesFolder() throws Exception {
         Entity filesFolder = new Entity();
         filesFolder.setOwnerKey(ownerKey);
-        filesFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
+        filesFolder.setEntityTypeName(EntityConstants.TYPE_SUPPORTING_DATA);
         filesFolder.setCreationDate(createDate);
         filesFolder.setUpdatedDate(createDate);
         filesFolder.setName("Supporting Files");
@@ -193,7 +193,7 @@ public class MergedFileDiscoveryService extends FileDiscoveryService {
     private Entity createImageFromFile(File file) throws Exception {
         Entity imageEntity = new Entity();
         imageEntity.setOwnerKey(ownerKey);
-        imageEntity.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D));
+        imageEntity.setEntityTypeName(EntityConstants.TYPE_IMAGE_3D);
         imageEntity.setCreationDate(createDate);
         imageEntity.setUpdatedDate(createDate);
         imageEntity.setName(file.getName());
@@ -207,7 +207,7 @@ public class MergedFileDiscoveryService extends FileDiscoveryService {
 
     public void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
         entityBean.addEntityToParent(parent, entity, index, attrName);
-        logger.info("Added "+entity.getEntityType().getName()+"#"+entity.getId()+
-        		" as child of "+parent.getEntityType().getName()+"#"+parent.getId());
+        logger.info("Added "+entity.getEntityTypeName()+"#"+entity.getId()+
+        		" as child of "+parent.getEntityTypeName()+"#"+parent.getId());
     }
 }

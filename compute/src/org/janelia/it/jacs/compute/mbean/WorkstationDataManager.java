@@ -291,6 +291,10 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
+    /**
+     * @Deprecated this method creates ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH attributes, which are deprecated.
+     */
+    @Deprecated
     public void performScreenPipelineSurgery(String username) {
         try {
             final EntityBeanLocal entityBean = EJBFactory.getLocalEntityBean();
@@ -306,10 +310,8 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
                 Entity topEntity=entities.iterator().next();
                 logger.info("Found top-level entity name="+topEntity.getName()+" , now changing attributes");
                 Entity screenTree=entityBean.getEntityTree(topEntity.getId());
-                EntityAttribute pEa=entityBean.getEntityAttributeByName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-                EntityAttribute nEa=entityBean.getEntityAttributeByName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
 
-                EntityUtils.replaceAllAttributeTypesInEntityTree(screenTree, pEa, nEa, new EntityUtils.SaveUnit() {
+                EntityUtils.replaceAllAttributeTypesInEntityTree(screenTree, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, new EntityUtils.SaveUnit() {
                     public void saveUnit(Object o) throws Exception {
                         EntityData ed=(EntityData)o;
                         logger.info("Saving attribute change for ed="+ed.getId());
@@ -506,8 +508,8 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     private void printAnnotations(FileWriter tmpWriter, String tmpOwner, long entityId) throws ComputeException, IOException {
         List<Entity> tmpAnnotationList = EJBFactory.getRemoteAnnotationBean().getAnnotationsForChildren(tmpOwner, entityId);
         for (Entity entity : tmpAnnotationList) {
-            System.out.println("\t\t- "+entity.getName()+"\t"+entity.getEntityType().getName());
-            tmpWriter.write("\t\t- "+entity.getName()+"\t"+entity.getEntityType().getName()+"\n");
+            System.out.println("\t\t- "+entity.getName()+"\t"+entity.getEntityTypeName());
+            tmpWriter.write("\t\t- "+entity.getName()+"\t"+entity.getEntityTypeName()+"\n");
         }
     }
 
@@ -564,7 +566,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         entity.setOwnerKey(ownerKey);
         entity.setCreationDate(createDate);
         entity.setUpdatedDate(createDate);
-        entity.setEntityType(EJBFactory.getRemoteEntityBean().getEntityTypeByName(entityTypeName));
+        entity.setEntityTypeName(entityTypeName);
         if (isCommonRoot) {
             entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT, "Common Root");
         }

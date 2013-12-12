@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
 "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
-<!-- Generated May 26, 2011 10:42:24 AM by Hibernate Tools 3.2.1.GA -->
 <hibernate-mapping package="org.janelia.it.jacs.model.entity">
     <class name="Entity" table="entity">
         <id name="id" column="id" type="java.lang.Long">
@@ -13,17 +12,17 @@
         <property name="ownerKey" type="string">
             <column name="owner_key" length="64" />
         </property>
-        <many-to-one name="entityStatus" class="EntityStatus" lazy="false">
-            <column name="status" length="60" />
-        </many-to-one>
-        <many-to-one name="entityType" class="EntityType" fetch="join" lazy="false">
-            <column name="entity_type_id" not-null="true" />
-        </many-to-one>
+        <property name="entityTypeName" type="string">
+            <column name="entity_type" not-null="true" />
+        </property>
         <property name="creationDate" type="timestamp">
             <column name="creation_date" length="19" />
         </property>
         <property name="updatedDate" type="timestamp">
             <column name="updated_date" length="19" />
+        </property>
+        <property name="numChildren" type="java.lang.Integer">
+            <column name="num_children" length="11" />
         </property>
         <set name="entityData" cascade="all,delete-orphan" inverse="true" lazy="false" table="entityData">
             <key column="parent_entity_id" not-null="true"/>

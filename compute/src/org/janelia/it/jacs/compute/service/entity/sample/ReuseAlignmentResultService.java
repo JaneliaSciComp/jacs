@@ -36,12 +36,12 @@ public class ReuseAlignmentResultService extends AbstractEntityService {
         Entity latestAr = null;
         
         for(Entity pipelineRun : sampleEntity.getOrderedChildren()) {
-            if (pipelineRun.getEntityType().getName().equals(EntityConstants.TYPE_PIPELINE_RUN)) {
+            if (pipelineRun.getEntityTypeName().equals(EntityConstants.TYPE_PIPELINE_RUN)) {
                 if (pipelineRun.getId().toString().equals(pipelineRunId)) {
                     myPipelineRun = pipelineRun;
                 }
                 for(Entity ar : pipelineRun.getChildren()) {
-                    if (ar.getEntityType().getName().equals(EntityConstants.TYPE_ALIGNMENT_RESULT)) {
+                    if (ar.getEntityTypeName().equals(EntityConstants.TYPE_ALIGNMENT_RESULT)) {
                         if (paa.getResultName().equals(ar.getName())) {
                             latestAr = ar;
                         }

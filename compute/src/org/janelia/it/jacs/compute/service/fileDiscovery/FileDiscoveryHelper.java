@@ -89,7 +89,7 @@ public class FileDiscoveryHelper extends EntityHelper {
     }
 
     public Entity createResultItemForFile(File resultFile) throws Exception {
-        EntityType type = getEntityTypeForFile(resultFile);
+        String type = getEntityTypeForFile(resultFile);
         if (type==null) {
             logger.warn("Could not determine type of file: "+resultFile.getAbsolutePath());
             return null;
@@ -97,18 +97,18 @@ public class FileDiscoveryHelper extends EntityHelper {
         return createResultItem(type, resultFile);
     }
     
-    public Entity createResultItem(EntityType type, File file) throws Exception {
+    public Entity createResultItem(String entityTypeName, File file) throws Exception {
         
         Entity entity = new Entity();
         entity.setOwnerKey(ownerKey);
         Date createDate = new Date();
         entity.setCreationDate(createDate);
         entity.setUpdatedDate(createDate);
-        entity.setEntityType(type);
+        entity.setEntityTypeName(entityTypeName);
         entity.setName(file.getName());
         entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath());
         
-        if (type.getName().equals(EntityConstants.TYPE_IMAGE_2D)) {
+        if (entityTypeName.equals(EntityConstants.TYPE_IMAGE_2D)) {
             String filename = file.getName();
             String fileFormat = filename.substring(filename.lastIndexOf('.')+1);
             entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, fileFormat);
@@ -135,7 +135,7 @@ public class FileDiscoveryHelper extends EntityHelper {
 
     public void addFilesToFolder(Entity filesFolder, List<File> files) throws Exception {
         for (File resultFile : files) {
-            EntityType type = getEntityTypeForFile(resultFile);
+            String type = getEntityTypeForFile(resultFile);
             if (type==null) {
                 logger.warn("Could not determine type of file: "+resultFile.getAbsolutePath());
                 return;
@@ -144,8 +144,8 @@ public class FileDiscoveryHelper extends EntityHelper {
         }
     }
     
-    public Entity addResultItem(Entity resultEntity, EntityType type, File file) throws Exception {
-        Entity entity = createResultItem(type, file);
+    public Entity addResultItem(Entity resultEntity, String entityTypeName, File file) throws Exception {
+        Entity entity = createResultItem(entityTypeName, file);
         addToParent(resultEntity, entity, resultEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
         return entity;
     }
@@ -185,7 +185,7 @@ public class FileDiscoveryHelper extends EntityHelper {
 	public Entity createSupportingFilesFolder() throws ComputeException {
         Entity filesFolder = new Entity();
         filesFolder.setOwnerKey(ownerKey);
-        filesFolder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_SUPPORTING_DATA));
+        filesFolder.setEntityTypeName(EntityConstants.TYPE_SUPPORTING_DATA);
         Date createDate = new Date();
         filesFolder.setCreationDate(createDate);
         filesFolder.setUpdatedDate(createDate);
@@ -196,15 +196,11 @@ public class FileDiscoveryHelper extends EntityHelper {
     	// Return the new object so that we can update in-memory model
         return filesFolder;
     }
-
-    protected Entity createFileEntity(String path, String name, String resultEntityType) throws Exception {
-    	return createFileEntity(path, name, entityBean.getEntityTypeByName(resultEntityType));
-    }
     
-    protected Entity createFileEntity(String path, String name, EntityType resultEntityType) throws Exception {
+    protected Entity createFileEntity(String path, String name, String resultEntityType) throws Exception {
         Entity resultEntity = new Entity();
         resultEntity.setOwnerKey(ownerKey);
-        resultEntity.setEntityType(resultEntityType);
+        resultEntity.setEntityTypeName(resultEntityType);
         Date createDate = new Date();
         resultEntity.setCreationDate(createDate);
         resultEntity.setUpdatedDate(createDate);
@@ -225,7 +221,7 @@ public class FileDiscoveryHelper extends EntityHelper {
         folder.setUpdatedDate(createDate);
         folder.setOwnerKey(ownerKey);
         folder.setName(name);
-        folder.setEntityType(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+        folder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
         if (isCommonRoot) {
         	EntityUtils.addAttributeAsTag(folder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
         }
@@ -244,8 +240,8 @@ public class FileDiscoveryHelper extends EntityHelper {
             // Only accept the current user's top level folder
             for (Entity entity : topLevelFolders) {
                 if (entity.getOwnerKey().equals(ownerKey)
-                        && entity.getEntityType().getName().equals(entityBean.getEntityTypeByName(EntityConstants.TYPE_FOLDER).getName())
-                        && entity.getAttributeByName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
+                        && entity.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER)
+                        && entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
                     // This is the folder we want, now load the entire folder hierarchy
                     if (loadTree) {
                         topLevelFolder = entityBean.getEntityTree(entity.getId());
@@ -301,66 +297,66 @@ public class FileDiscoveryHelper extends EntityHelper {
         return folder;
     }
 
-    public EntityType getEntityTypeForFile(File file) throws Exception {
+    public String getEntityTypeForFile(File file) throws Exception {
         String filenameLowerCase = file.getName().toLowerCase();
         if (filenameLowerCase.endsWith(".lsm")) {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_LSM_STACK);
+            return EntityConstants.TYPE_LSM_STACK;
         } 
         else if (filenameLowerCase.endsWith(".tif")||filenameLowerCase.endsWith(".tiff")) {
             if (file.length()>=FILE_3D_SIZE_THRESHOLD) {
-                return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+                return EntityConstants.TYPE_IMAGE_3D;
             } 
             else {
-                return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
+                return EntityConstants.TYPE_IMAGE_2D;
             }
         } 
         else if (filenameLowerCase.endsWith(".swc")) {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_SWC_FILE);
+            return EntityConstants.TYPE_SWC_FILE;
         } 
         else if (filenameLowerCase.endsWith(".ano")) {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_V3D_ANO_FILE);
+            return EntityConstants.TYPE_V3D_ANO_FILE;
         } 
         else if (filenameLowerCase.endsWith(".png")||filenameLowerCase.endsWith(".jpg")
                 ||filenameLowerCase.endsWith(".gif")||filenameLowerCase.endsWith(".jpeg")
                 ||filenameLowerCase.endsWith(".bmp")) {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_2D);
+            return EntityConstants.TYPE_IMAGE_2D;
         } 
         else if (filenameLowerCase.endsWith(".raw")) {
             if (filenameLowerCase.contains(".local.")) {
-                return entityBean.getEntityTypeByName(EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
+                return EntityConstants.TYPE_ALIGNED_BRAIN_STACK;
             } 
             else {
-                return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+                return EntityConstants.TYPE_IMAGE_3D;
             }
         } 
         else if (filenameLowerCase.endsWith(".v3draw")
         		||filenameLowerCase.endsWith(".vaa3draw")
         		||filenameLowerCase.endsWith(".pbd")
         		||filenameLowerCase.endsWith(".v3dpbd")) {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+            return EntityConstants.TYPE_IMAGE_3D;
         }
         else if (filenameLowerCase.endsWith(".nsp")) {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_MYERS_NEURON_SEPARATION_FILE);
+            return EntityConstants.TYPE_MYERS_NEURON_SEPARATION_FILE;
         }
         else if (filenameLowerCase.endsWith(".mp4")
                 ||filenameLowerCase.endsWith(".mov")) {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_MOVIE);
+            return EntityConstants.TYPE_MOVIE;
         }
         else if (filenameLowerCase.endsWith(".metadata")
                 ||filenameLowerCase.endsWith(".properties")
         		||filenameLowerCase.endsWith(".csv")
         		||filenameLowerCase.endsWith(".json")
         		||filenameLowerCase.endsWith(".txt")) {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_TEXT_FILE);
+            return EntityConstants.TYPE_TEXT_FILE;
         }
         else if (filenameLowerCase.endsWith(".mask")) {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+            return EntityConstants.TYPE_IMAGE_3D;
         }
         else if (filenameLowerCase.endsWith(".chan")) {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_IMAGE_3D);
+            return EntityConstants.TYPE_IMAGE_3D;
         }
         else {
-            return entityBean.getEntityTypeByName(EntityConstants.TYPE_FILE);
+            return EntityConstants.TYPE_FILE;
         }
     }
 	

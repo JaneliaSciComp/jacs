@@ -120,7 +120,7 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
 //    	    fixShortcutImages(pipelineRun);
     	    
     		for(EntityData pred : pipelineRun.getOrderedEntityData()) {
-    			if (!pred.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_RESULT)) {
+    			if (!pred.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_RESULT)) {
     				continue;
     			}
     			Entity result = pred.getChildEntity();
@@ -165,7 +165,7 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
 //    		printImages("      ",pipelineRun);
 //    		
 //    		for(EntityData pred : pipelineRun.getOrderedEntityData()) {
-//    			if (!pred.getEntityAttribute().getName().equals(EntityConstants.ATTRIBUTE_RESULT)) {
+//    			if (!pred.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_RESULT)) {
 //    				continue;
 //    			}
 //    			Entity result = pred.getChildEntity();
