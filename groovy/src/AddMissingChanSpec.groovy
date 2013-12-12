@@ -27,7 +27,7 @@ class AddMissingChanSpecScript {
     def walkTree(Entity entity) {
         f.loadChildren(entity)
         for(Entity child : entity.children) {
-            def type = child.entityType.name
+            def type = child.entityTypeName
             if (type.equals("Sample")) {
                 processSample(child)
             }

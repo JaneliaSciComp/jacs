@@ -34,10 +34,10 @@ for(Entity sp : sps) {
 	
 	for(Entity file : sd.children) {
 		if (file.name.startsWith("stitched-")) {
-			if (file.entityType.name == TYPE_IMAGE_3D) {
+			if (file.entityTypeName == TYPE_IMAGE_3D) {
 				foundStitched = true
 			}
-			else if (file.entityType.name == TYPE_IMAGE_2D) {
+			else if (file.entityTypeName == TYPE_IMAGE_2D) {
 				stitchedMips.add(file)
 			}
 		}

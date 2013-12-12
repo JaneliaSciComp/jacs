@@ -24,7 +24,7 @@ def ensureCorrespondingCentralBrainSampleExists(sample, folder) {
 	centralName = sample.name+"_Central_Brain_Tiles";
 	println "Ensure that central brain sample "+centralName+" exists in " +folder.name
 	
-	newSample = folder.children.find({ it.entityType.name=="Sample" && it.name==centralName })
+	newSample = folder.children.find({ it.entityTypeName=="Sample" && it.name==centralName })
 	if (newSample!=null) return newSample
 	
 	newSample = f.createSample(centralName, "CENTRAL_BRAIN")

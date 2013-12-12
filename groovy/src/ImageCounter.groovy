@@ -31,7 +31,7 @@ def countDescendants(Entity entity, Set<Long> visited) {
 		return 0;
 	}
 		
-	if (entity.entityType.name.equals(TYPE_ALIGNED_BRAIN_STACK)) {
+	if (entity.entityTypeName.equals(TYPE_ALIGNED_BRAIN_STACK)) {
 		return 1;
 	}
 	

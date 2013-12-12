@@ -176,7 +176,7 @@ class AnnotationMigrationScript {
 
                     resultSeps.add(s)
 
-                    if (result.entityType.name==EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT) {
+                    if (result.entityTypeName==EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT) {
                         lastUnalignedSep = s
                         if (lastUnalignedSepForRun!=null) {
                             // Migrate between unaligned separations of multiple runs
@@ -198,7 +198,7 @@ class AnnotationMigrationScript {
                     }
                 }
 
-                if (result.entityType.name==EntityConstants.TYPE_ALIGNMENT_RESULT) {
+                if (result.entityTypeName==EntityConstants.TYPE_ALIGNMENT_RESULT) {
                     if (lastUnalignedSep!=null) {
                         for(Separation als : resultSeps) {
                             // Migrate between unaligned and aligned separations in the same run

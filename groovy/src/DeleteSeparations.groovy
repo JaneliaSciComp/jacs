@@ -36,14 +36,14 @@ def walkEntity(Entity entity) {
 	f.loadChildren(entity)
 	for (Entity child : entity.children) {
 		
-		if (child.entityType.name == TYPE_NEURON_SEPARATOR_PIPELINE_RESULT) {
+		if (child.entityTypeName == TYPE_NEURON_SEPARATOR_PIPELINE_RESULT) {
 			separations.add(child)
 		}
-		else if (child.entityType.name == TYPE_FOLDER) {
+		else if (child.entityTypeName == TYPE_FOLDER) {
 			println child.name
 			walkEntity(child)
 		}
-		else if (child.entityType.name == TYPE_SAMPLE) {
+		else if (child.entityTypeName == TYPE_SAMPLE) {
 			numSamples++
 			walkEntity(child)
 		}

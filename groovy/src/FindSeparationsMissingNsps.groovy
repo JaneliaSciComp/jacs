@@ -1,14 +1,8 @@
-import org.janelia.it.FlyWorkstation.api.facade.concrete_facade.ejb.EJBEntityLoader
 import org.janelia.it.jacs.model.entity.Entity
 import org.janelia.it.jacs.model.entity.EntityConstants
-import org.janelia.it.jacs.model.entity.EntityType
 import org.janelia.it.jacs.shared.utils.EntityUtils
-import org.janelia.it.jacs.shared.utils.StringUtils
-import org.janelia.it.jacs.shared.utils.entity.EntityVisitor
-import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder
 
 import static org.janelia.it.jacs.model.entity.EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT
-import static org.janelia.it.jacs.model.entity.EntityConstants.TYPE_SAMPLE
 
 boolean DEBUG = false
 
@@ -26,8 +20,6 @@ subjectKeys.add("user:nerna")
 //subjectKeys.add("user:nerna")
 //subjectKeys.add("user:taes")
 //subjectKeys.add("group:heberleinlab")
-
-EntityType myersType = f.e.getEntityTypeByName(EntityConstants.TYPE_MYERS_NEURON_SEPARATION_FILE)
 
 println "Found users with data sets: "+subjectKeys
 for(String subjectKey : subjectKeys) {
@@ -48,7 +40,7 @@ for(String subjectKey : subjectKeys) {
                 if (image.name.endsWith(".nsp")) {
                     found = true;
                     if (!DEBUG) {
-                        image.setEntityType(myersType)
+                        image.setEntityTypeName(EntityConstants.TYPE_MYERS_NEURON_SEPARATION_FILE)
                         f.save(image)
                     }
                 }

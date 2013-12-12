@@ -92,7 +92,7 @@ class JacsUtils {
         topLevelFolder.setUpdatedDate(createDate);
         topLevelFolder.setOwnerKey(subject.key);
         topLevelFolder.setName(topLevelFolderName);
-        topLevelFolder.setEntityType(e.getEntityTypeByName(EntityConstants.TYPE_FOLDER));
+        topLevelFolder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
         EntityUtils.addAttributeAsTag(topLevelFolder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
         if (persist) {
             topLevelFolder = e.saveOrUpdateEntity(subject.key, topLevelFolder);
@@ -101,7 +101,7 @@ class JacsUtils {
     }
 
 	def verifyOrCreateChildFolder(parentFolder, childName) {
-		def folder = parentFolder.children.find({ it.entityType.name==TYPE_FOLDER && it.name==childName })
+		def folder = parentFolder.children.find({ it.entityTypeName==TYPE_FOLDER && it.name==childName })
 		if (folder == null) {
 			folder = newEntity(childName, TYPE_FOLDER)
 			folder = save(folder)
@@ -132,7 +132,7 @@ class JacsUtils {
 		entity.ownerKey = subject.key
 		entity.creationDate = createDate
 		entity.updatedDate = createDate
-		entity.entityType = e.getEntityTypeByName(entityTypeName)
+		entity.entityTypeName = entityTypeName
 		return entity
 	}
 	
@@ -144,7 +144,7 @@ class JacsUtils {
 		EntityData ed = parent.addChildEntity(entity, attrName)
 		ed.orderIndex = index
 		save(ed)
-        if (ed.id) println "Added "+entity.entityType.name+"#"+entity.id+" as child of "+parent.entityType.name+"#"+parent.id;
+        if (ed.id) println "Added "+entity.entityTypeName+"#"+entity.id+" as child of "+parent.entityTypeName+"#"+parent.id;
 		return ed
 	}
 

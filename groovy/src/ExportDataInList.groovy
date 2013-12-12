@@ -42,10 +42,10 @@ lines.each {
             
             f.loadChildren(result)
             for (Entity run : result.children) {
-                if (run.entityType.name == TYPE_PIPELINE_RUN) {
+                if (run.entityTypeName == TYPE_PIPELINE_RUN) {
                     f.loadChildren(run)
                     for (Entity entity : run.children) {
-                        if (entity.entityType.name == TYPE_SAMPLE_PROCESSING_RESULT) {
+                        if (entity.entityTypeName == TYPE_SAMPLE_PROCESSING_RESULT) {
                             stitched = entity.getValueByAttributeName(ATTRIBUTE_DEFAULT_3D_IMAGE);
                         }   
                     }
