@@ -129,8 +129,11 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             EntityType neuronType = annotationDAO.getEntityTypeByName(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON);
             neuron.setEntityType(neuronType);
             annotationDAO.saveOrUpdate(neuron);
-            EntityData ed = workspace.addChildEntity(neuron, EntityConstants.ATTRIBUTE_ENTITY);
-            annotationDAO.saveOrUpdate(ed);
+            // old
+            // EntityData ed = workspace.addChildEntity(neuron, EntityConstants.ATTRIBUTE_ENTITY);
+            // annotationDAO.saveOrUpdate(ed);
+            // Konrad said use annDAO instead so permissions are properly carried over:
+            annotationDAO.addEntityToParent(workspace, neuron, 1, EntityConstants.ATTRIBUTE_ENTITY);
             annotationDAO.saveOrUpdate(workspace);
             TmNeuron tmNeuron=new TmNeuron(neuron);
             return tmNeuron;
