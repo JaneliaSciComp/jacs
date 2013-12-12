@@ -24,7 +24,7 @@ import java.util.Set;
 
 public class SampleDataManager implements SampleDataManagerMBean {
 
-    private static final Logger logger = Logger.getLogger(SampleDataManager.class);
+    private static final Logger log = Logger.getLogger(SampleDataManager.class);
 
     private void saveAndRunTask(String user, String processName, String displayName) throws Exception {
         HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
@@ -48,19 +48,19 @@ public class SampleDataManager implements SampleDataManagerMBean {
     
     public void runAllSampleMaintenancePipelines() {
         try {
-            logger.info("Building list of users with samples...");
+            log.info("Building list of users with samples...");
             Set<String> subjectKeys = new HashSet<String>();
             for(Entity sample : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_SAMPLE)) {
                 subjectKeys.add(sample.getOwnerKey());
             }
-            logger.info("Found users with samples: "+subjectKeys);
+            log.info("Found users with samples: "+subjectKeys);
             for(String subjectKey : subjectKeys) {
-                logger.info("Queuing maintenance pipelines for "+subjectKey);
+                log.info("Queuing maintenance pipelines for "+subjectKey);
                 runUserSampleMaintenancePipelines(subjectKey);
             }
         } 
         catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
+            log.error("Error running pipeline", ex);
         }
     }
 
@@ -71,7 +71,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             saveAndRunTask(user, processName, displayName);
         } 
         catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
+            log.error("Error running pipeline", ex);
         }
     }
 
@@ -84,7 +84,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             saveAndRunTask(user, processName, displayName, taskParameters);
         } 
         catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
+            log.error("Error running pipeline", ex);
         }
     }
     
@@ -97,7 +97,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             saveAndRunTask(user, processName, displayName, taskParameters);
         } 
         catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
+            log.error("Error running pipeline", ex);
         }
     }
     
@@ -110,7 +110,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             saveAndRunTask(user, processName, displayName, taskParameters);
         } 
         catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
+            log.error("Error running pipeline", ex);
         }
     }
 
@@ -126,7 +126,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             saveAndRunTask(user, processName, displayName, taskParameters);
         } 
         catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
+            log.error("Error running pipeline", ex);
         }
     }
     
@@ -142,7 +142,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             saveAndRunTask(user, processName, displayName, taskParameters);
         } 
         catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
+            log.error("Error running pipeline", ex);
         }
     }
 
@@ -153,7 +153,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             saveAndRunTask(user, processName, displayName);
         } 
         catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
+            log.error("Error running pipeline", ex);
         }
     }
 
@@ -168,7 +168,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             EJBFactory.getLocalComputeBean().submitJob("SyncSampleToArchive", task.getObjectId());
         } 
         catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
+            log.error("Error running pipeline", ex);
         }
     }
     
@@ -179,26 +179,49 @@ public class SampleDataManager implements SampleDataManagerMBean {
             saveAndRunTask(user, processName, displayName);
         } 
         catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
+            log.error("Error running pipeline", ex);
         }
     }
     
     // -----------------------------------------------------------------------------------------------------
     // Generic confocal image processing pipelines
     // -----------------------------------------------------------------------------------------------------
-
-    public String runAllDataSetPipelines(String runMode, Boolean reuseProcessing, Boolean reuseAlignment, Boolean force) {
+    
+    public void cancelAllIncompleteDataSetPipelineTasks() {
         try {
-            logger.info("Building list of users with data sets...");
+            log.info("Building list of users with data sets...");
             Set<String> subjectKeys = new HashSet<String>();
             for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
                 subjectKeys.add(dataSet.getOwnerKey());
             }
-            logger.info("Found users with data sets: "+subjectKeys);
+            String processName = "GSPS_UserDataSetPipelines";
+            log.info("Cancelling incomplete "+processName+" tasks");
+            for(String subjectKey : subjectKeys) {
+                log.info("  Checking tasks for user "+subjectKey);
+                int c = EJBFactory.getLocalComputeBean().cancelIncompleteTasksWithName(subjectKey, processName);
+                if (c>0) {
+                    log.info("  Canceled "+c+" incomplete tasks");
+                }
+            }
+            log.info("Completed cancelAllIncompleteDataSetPipelineTasks");
+        } 
+        catch (Exception ex) {
+            log.error("Error clearing data set pipeline tasks", ex);
+        }
+    }
+    
+    public String runAllDataSetPipelines(String runMode, Boolean reuseProcessing, Boolean reuseAlignment, Boolean force) {
+        try {
+            log.info("Building list of users with data sets...");
+            Set<String> subjectKeys = new HashSet<String>();
+            for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
+                subjectKeys.add(dataSet.getOwnerKey());
+            }
+            log.info("Found users with data sets: "+subjectKeys);
             
             StringBuilder sb = new StringBuilder();
             for(String subjectKey : subjectKeys) {
-                logger.info("Queuing data set pipelines for "+subjectKey);
+                log.info("Queuing data set pipelines for "+subjectKey);
                 String ret = runUserDataSetPipelines(subjectKey, null, runMode, reuseProcessing, reuseAlignment, force);
                 if (sb.length()>0) sb.append(",\n");
                 sb.append(subjectKey+": "+ret+"");
@@ -206,7 +229,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             return sb.toString();
         } 
         catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
+            log.error("Error running pipeline", ex);
             return "Error: "+ex.getMessage();
         }
     }
@@ -225,9 +248,9 @@ public class SampleDataManager implements SampleDataManagerMBean {
             if (!force) {
 		        Task task = EJBFactory.getLocalComputeBean().getMostRecentTaskWithNameAndParameters(user, processName, taskParameters);
 		        if (task!=null) {
-		        	logger.info("Checking most recent similar task: "+task.getObjectId());
+		        	log.info("Checking most recent similar task: "+task.getObjectId());
 		            if (!task.isDone()) {
-		            	logger.info("Pipeline is still running (last event: "+task.getLastEvent().getEventType()+"). Skipping run.");
+		            	log.info("Pipeline is still running (last event: "+task.getLastEvent().getEventType()+"). Skipping run.");
 		                return "Error: pipeline is already running";
 		            }
 		            List<Task> childTasks = EJBFactory.getLocalComputeBean().getChildTasksByParentTaskId(task.getObjectId());
@@ -239,7 +262,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
 		                }
 		            }
 		            if (!allDone) {
-		            	logger.info("One of the subtasks is not done, skipping run.");
+		            	log.info("One of the subtasks is not done, skipping run.");
 		                return "Error: pipeline subtasks are still running";
 		            }
 		        }
@@ -248,7 +271,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             return "Success";
         } 
         catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
+            log.error("Error running pipeline", ex);
             return "Error: "+ex.getMessage();
         }
     }
@@ -260,20 +283,20 @@ public class SampleDataManager implements SampleDataManagerMBean {
             EJBFactory.getLocalEntityBean().loadLazyEntity(entity, false);
             for(Entity child : entity.getOrderedChildren()) {
                 if (EntityConstants.TYPE_FOLDER.equals(child.getEntityType().getName())) {
-                    logger.info("runSampleFolder - Running folder: "+child.getName()+" (id="+child.getId()+")");
+                    log.info("runSampleFolder - Running folder: "+child.getName()+" (id="+child.getId()+")");
                     runSampleFolder(child.getId().toString(), reuseProcessing, reuseAlignment);
                 }
                 else if (EntityConstants.TYPE_SAMPLE.equals(child.getEntityType().getName())) {
-                    logger.info("runSampleFolder - Running sample: "+child.getName()+" (id="+child.getId()+")");
+                    log.info("runSampleFolder - Running sample: "+child.getName()+" (id="+child.getId()+")");
                     runSamplePipelines(child.getId().toString(), reuseProcessing, reuseAlignment);  
                     Thread.sleep(1000); // Sleep so that the logs are a little cleaner
                 }
                 else {
-                    logger.info("runSampleFolder - Ignoring child which is not a folder or sample: "+child.getName()+" (id="+child.getId()+")");
+                    log.info("runSampleFolder - Ignoring child which is not a folder or sample: "+child.getName()+" (id="+child.getId()+")");
                 }
             }
         } catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
+            log.error("Error running pipeline", ex);
         }
     }
 
@@ -291,7 +314,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             saveAndRunTask(user, processName, displayName, taskParameters);
         } 
         catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
+            log.error("Error running pipeline", ex);
         }
     }
     
@@ -309,7 +332,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             saveAndRunTask(user, processName, displayName, taskParameters);
         } 
         catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
+            log.error("Error running pipeline", ex);
         }
     }
     
@@ -325,7 +348,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             saveAndRunTask(user, processName, displayName, taskParameters);
         } 
         catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
+            log.error("Error running pipeline", ex);
         }
     }
 
@@ -344,7 +367,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             saveAndRunTask(user, processName, displayName, taskParameters);
         } 
         catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
+            log.error("Error running pipeline", ex);
         }
     }
 
@@ -367,7 +390,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             saveAndRunTask(user, parentProcessName, displayName, taskParameters);
         } 
         catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
+            log.error("Error running pipeline", ex);
         }
     }
     
@@ -382,7 +405,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             saveAndRunTask(user, processName, displayName, taskParameters);
         } 
         catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
+            log.error("Error running pipeline", ex);
         }
     }
 
@@ -393,7 +416,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             saveAndRunTask(user, processName, displayName);
         } 
         catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
+            log.error("Error running pipeline", ex);
         }
     }
 
@@ -404,7 +427,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             saveAndRunTask(user, processName, displayName);
         } 
         catch (Exception ex) {
-            logger.error("Error running pipeline", ex);
+            log.error("Error running pipeline", ex);
         }
     }
 

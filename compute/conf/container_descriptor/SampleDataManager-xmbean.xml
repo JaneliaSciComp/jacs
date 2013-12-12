@@ -120,6 +120,11 @@
             <type>java.lang.String</type>
         </parameter>
     </operation>
+     
+    <operation>
+        <description>Cancel all incomplete tasks for all users with data set pipelines</description>
+        <name>cancelAllIncompleteDataSetPipelineTasks</name>
+    </operation>
     
     <operation>
         <description>Run all pipelines for all Data Sets for all users</description>

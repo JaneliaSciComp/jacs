@@ -55,4 +55,6 @@ public interface ComputeBeanLocal extends ComputeBeanRemote {
     public int moveFileNodesToArchive(String filepath) throws ComputeException;
     
     public Task getMostRecentTaskWithNameAndParameters(String owner, String taskName, HashSet<TaskParameter> taskParameters);
+
+    public int cancelIncompleteTasksWithName(String owner, String name) throws ComputeException;
 }

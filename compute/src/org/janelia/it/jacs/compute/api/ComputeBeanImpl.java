@@ -402,6 +402,15 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return matchingTask;
     }
     
+    public int cancelIncompleteTasksWithName(String owner, String name) throws ComputeException {
+        try {
+            return computeDAO.cancelIncompleteTasksWithName(owner, name);
+        }
+        catch (DaoException e) {
+            throw new ServiceException(e);
+        }
+    }
+    
     private boolean areEqual(Set<TaskParameter> taskParameters1, Set<TaskParameter> taskParameters2) {
     	if (taskParameters1.size()!=taskParameters2.size()) return false;
     	Map<String, String> taskParameterMap1 = asMap(taskParameters1);
@@ -1116,17 +1125,18 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     }
     
     public void cancelTaskById(Long taskId) throws Exception {
+        Task t = computeDAO.getTaskById(taskId);
+        if (t==null) {
+            throw new IllegalArgumentException("No such task: "+taskId);
+        }
+        computeDAO.cancelTaskById(t);
+    }
+    
+    public void cancelTaskTreeById(Long taskId) throws Exception {
         // First get entire task tree with this task as parent task
         List<Long> taskList = getTaskTreeIdList(taskId);
         for (Long tid : taskList) {
-            Task t = computeDAO.getTaskById(tid);
-            if (t.getLastEvent()==null || t.getLastEvent().getEventType()==null || !t.getLastEvent().getEventType().equals(Event.CANCELED_EVENT)) {
-                Event event = new Event();
-                event.setEventType(Event.CANCELED_EVENT);
-                event.setTimestamp(new Date());
-                t.addEvent(event);
-                computeDAO.saveOrUpdate(t);
-            }
+            cancelTaskById(tid);
         }
     }
 

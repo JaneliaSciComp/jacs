@@ -190,6 +190,51 @@ public class ComputeBaseDAO {
         query.setString("name", taskName);
         return (List<Task>)query.list();
     }
+
+    public int cancelIncompleteTasksWithName(String owner, String taskName) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getIncompleteTasks(owner="+owner+", taskName="+taskName+")");    
+        }
+        
+        String ownerName = owner.contains(":") ? owner.split(":")[1] : owner;
+        Session session = getCurrentSession();
+        StringBuffer hql = new StringBuffer("select t from Task t ");
+        hql.append("inner join fetch t.events ");
+        hql.append("where t.owner = :owner ");
+        hql.append("and t.taskName = :name ");
+        hql.append("order by t.objectId desc");
+        Query query = session.createQuery(hql.toString());
+        query.setString("owner", ownerName);
+        query.setString("name", taskName);
+        
+        int c = 0;
+        for(Task task : (List<Task>)query.list()) {
+            if (!task.isDone()) {
+                c++;
+                cancelTaskById(task);
+            }
+            for(Task subtask : getChildTasksByParentTaskId(task.getObjectId())) {
+                if (!subtask.isDone()) {
+                    cancelTaskById(task);
+                }
+            }
+        }
+        
+        return c;
+    }
+    
+    public void cancelTaskById(Task task) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("cancelTaskById(task.objectId="+task.getObjectId()+")");    
+        }
+        if (task.getLastEvent()==null || task.getLastEvent().getEventType()==null || !task.getLastEvent().getEventType().equals(Event.CANCELED_EVENT)) {
+            Event event = new Event();
+            event.setEventType(Event.CANCELED_EVENT);
+            event.setTimestamp(new Date());
+            task.addEvent(event);
+            saveOrUpdate(task);
+        }
+    }
     
     public SearchResultNode getSearchTaskResultNode(long searchTaskId) throws DaoException {
         if (log.isTraceEnabled()) {
@@ -481,7 +526,6 @@ public class ComputeBaseDAO {
         Query query = getCurrentSession().createQuery(hql.toString());
         query.setString("userKey", userKey);
         List<String> list = query.list();
-        log.debug("Got group keys for user: "+list);
         return list;
     }
     
