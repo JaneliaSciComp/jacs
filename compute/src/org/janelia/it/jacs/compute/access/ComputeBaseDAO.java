@@ -528,6 +528,22 @@ public class ComputeBaseDAO {
         List<String> list = query.list();
         return list;
     }
+
+    public List<String> getSubjectKeys(String subjectKey) {
+        List<String> subjectKeyList = new ArrayList<String>();
+        if (subjectKey == null || "".equals(subjectKey.trim())) return subjectKeyList;
+        subjectKeyList.add(subjectKey);
+        subjectKeyList.addAll(getGroupKeysForUsernameOrSubjectKey(subjectKey));
+        return subjectKeyList;
+    }
+
+    public Set<String> getSubjectKeySet(String subjectKey) {
+        Set<String> subjectKeys = null;
+        if (subjectKey!=null) {
+            subjectKeys = new HashSet<String>(getSubjectKeys(subjectKey));
+        }
+        return subjectKeys;
+    }
     
     public Object genericGet(Class c, Long id) {
         if (log.isTraceEnabled()) {
