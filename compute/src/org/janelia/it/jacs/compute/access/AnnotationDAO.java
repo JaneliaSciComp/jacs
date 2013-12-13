@@ -3004,6 +3004,9 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             log.trace("incrementChildCount(entityId="+entityId+", count="+count+")");    
         }
         Entity entity = getEntityById(entityId);
+        if (entity==null) {
+            throw new IllegalArgumentException("No such entity: "+entityId);
+        }
         entity.setNumChildren(entity.getNumChildren()+count);
         saveOrUpdate(entity);
     }
@@ -3013,6 +3016,9 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             log.trace("decrementChildCount(entityId="+entityId+")");    
         }
         Entity entity = getEntityById(entityId);
+        if (entity==null) {
+            throw new IllegalArgumentException("No such entity: "+entityId);
+        }
         int newNum = entity.getNumChildren()-1;
         if (newNum<0) {
             log.warn("Cannot decrement child count below zero on "+entityId);
