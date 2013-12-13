@@ -57,7 +57,8 @@ public class Vaa3dMaskSearchService extends SubmitDrmaaJobService {
         script.append("read INPUT_FILE\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix());
         script.append("\n");
-        script.append(Vaa3DHelper.getFormattedMaskSearchCommand(SystemConfigurationProperties.getString("FileStore.CentralDir")+"/system/MaskSearch/All.pindex",
+        script.append(Vaa3DHelper.getFormattedMaskSearchCommand(SystemConfigurationProperties.getString("FileStore.CentralDir")+
+                SystemConfigurationProperties.getString("MaskSearch.Index.fly_whole_20x"),
                 task.getParameter(MaskSearchTask.PARAM_queryChannel),
                 task.getParameter(MaskSearchTask.PARAM_matrix),
                 task.getParameter(MaskSearchTask.PARAM_maxHits),
