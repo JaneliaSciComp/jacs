@@ -517,23 +517,6 @@ public class EntityUtils {
     	if (ed==null) return null;
     	return ed.getChildEntity();
     }
-    
-    public static EntityData removeChild(Entity entity, Entity child) {
-		EntityData toDelete = null;
-		for(EntityData ed : entity.getEntityData()) {
-			if (ed.getChildEntity() != null && ed.getChildEntity().getId().equals(child.getId())) {
-				toDelete = ed;
-			}
-		}
-		if (toDelete == null) {
-			System.out.println("Could not find EntityData to delete for "+child.getName());
-			return null;
-		}
-		else {
-			entity.getEntityData().remove(toDelete);
-			return toDelete;
-		}
-    }
 
     public static List<EntityData> getOrderedEntityDataForAttribute(Entity entity, String attrName) {
         List<EntityData> items = new ArrayList<EntityData>();
