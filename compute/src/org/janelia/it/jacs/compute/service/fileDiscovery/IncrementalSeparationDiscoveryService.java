@@ -18,7 +18,6 @@ import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
@@ -64,11 +63,11 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
         helper.addFileExclusion("core.*");
     	helper.addFileExclusion("*.sh");
 
-        Entity separation = (Entity)processData.getItem("SEPARATION");
+        Entity separation = (Entity)data.getItem("SEPARATION");
         if (separation==null) {
-        	String separationId = (String)processData.getItem("SEPARATION_ID");
+        	Long separationId = data.getItemAsLong("SEPARATION_ID");
         	if (separationId!=null) {
-        		separation = entityBean.getEntityTree(Long.parseLong(separationId));
+        		separation = entityBean.getEntityTree(separationId);
         		if (separation==null) {
         		    logger.error("Separation "+separationId+" no longer exists. There is nothing to do.");
         		    return;
@@ -79,23 +78,25 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
         if (separation==null) {
         	// A new neuron separation discovery
 
-            String rootEntityId = (String)processData.getItem("ROOT_ENTITY_ID");
-        	if (rootEntityId==null) {
-        		throw new IllegalArgumentException("ROOT_ENTITY_ID may not be null");
-        	}
-        	Entity parentEntity = entityBean.getEntityTree(Long.parseLong(rootEntityId));
+            Long rootEntityId = data.getRequiredItemAsLong("ROOT_ENTITY_ID");
+        	Entity parentEntity = entityBean.getEntityTree(rootEntityId);
         	
-        	String inputImageId = (String)processData.getItem("INPUT_IMAGE_ID");
-        	if (inputImageId==null) {
-        		throw new IllegalArgumentException("INPUT_IMAGE_ID may not be null");
-        	}
-        	Entity inputEntity = entityBean.getEntityTree(Long.parseLong(inputImageId));
+        	Long inputImageId = data.getRequiredItemAsLong("INPUT_IMAGE_ID");
+        	Entity inputEntity = entityBean.getEntityTree(inputImageId);
         	
-        	FileNode resultFileNode = (FileNode)processData.getItem("ROOT_FILE_NODE");
+        	FileNode resultFileNode = (FileNode)data.getItem("ROOT_FILE_NODE");
 
-        	String objective = (String)processData.getItem("OBJECTIVE");
-        	String opticalRes = (String)processData.getItem("OPTICAL_RESOLUTION");
-        	String pixelRes = (String)processData.getItem("PIXEL_RESOLUTION");
+        	String objective = data.getItemAsString("OBJECTIVE");
+        	String opticalRes = data.getItemAsString("OPTICAL_RESOLUTION");
+        	String pixelRes = data.getItemAsString("PIXEL_RESOLUTION");
+        	
+        	Long sourceSeparationId = data.getItemAsLong("SOURCE_SEPARATION_ID");
+        	Entity sourceSeparation = null;
+        	if (sourceSeparationId!=null) {
+        	    sourceSeparation = entityBean.getEntityById(sourceSeparationId);
+        	}
+        	
+        	boolean isWarped = !StringUtils.isEmpty(data.getItemAsString("ALIGNED_CONSOLIDATED_LABEL_FILEPATH"));
         	
     	    String resultEntityName = (String)processData.getItem("RESULT_ENTITY_NAME");
             if (StringUtils.isEmpty(resultEntityName)) {
@@ -106,7 +107,8 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
         		resultEntityName += " "+objective;
         	}
         	
-    		separation = createSeparation(resultFileNode.getDirectoryPath(), parentEntity, resultEntityName, objective, opticalRes, pixelRes, inputEntity);	
+    		separation = createSeparation(resultFileNode.getDirectoryPath(), parentEntity, resultEntityName, 
+    		        objective, opticalRes, pixelRes, inputEntity, sourceSeparation, isWarped);	
         }
         else {
         	// Find existing result items in the neuron separation
@@ -121,7 +123,8 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
     }
     
     private Entity createSeparation(String separationDir, Entity parentEntity, String resultEntityName, 
-    		String objective, String opticalRes, String pixelRes, Entity inputEntity) throws Exception {
+    		String objective, String opticalRes, String pixelRes, Entity inputEntity, Entity sourceSeparation, 
+    		boolean isWarped) throws Exception {
         
         Entity separation = helper.createFileEntity(separationDir, resultEntityName, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
         helper.addToParent(parentEntity, separation, parentEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_RESULT);
@@ -150,6 +153,20 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
         }
         else {
             logger.info("No objective defined for separation "+separation.getId());
+        }
+        
+        if (sourceSeparation!=null) {
+            helper.addToParent(separation, sourceSeparation, null, EntityConstants.ATTRIBUTE_SOURCE_SEPARATION);
+            logger.info("Set source separation to "+sourceSeparation.getId()+" on "+separation.getId());
+        }
+        else {
+            logger.info("No source defined for separation "+separation.getId());
+            logger.info("Marking "+separation.getId()+" as a warped separation");
+        }
+        
+        if (isWarped) {
+            EntityUtils.addAttributeAsTag(separation, EntityConstants.ATTRIBUTE_IS_WARPED_SEPARATION);
+            entityBean.saveOrUpdateEntity(separation);
         }
         
         helper.addToParent(separation, inputEntity, null, EntityConstants.ATTRIBUTE_INPUT_IMAGE);

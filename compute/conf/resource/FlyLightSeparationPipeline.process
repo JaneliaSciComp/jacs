@@ -73,6 +73,8 @@
             <input name="PIXEL_RESOLUTION"/>
             <input name="OBJECTIVE"/>
             <input name="INPUT_IMAGE_ID"/>
+            <input name="SOURCE_SEPARATION_ID" value="$V{PREVIOUS_SEPARATION_ID}"/>
+            <input name="ALIGNED_CONSOLIDATED_LABEL_FILEPATH"/>
             <output name="SEPARATION_ID"/>
 	    </operation>
 	    
