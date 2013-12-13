@@ -1,30 +1,13 @@
 package org.janelia.it.jacs.compute;
 
-import org.janelia.it.jacs.compute.api.*;
-import org.janelia.it.jacs.compute.mbean.*;
-import org.janelia.it.jacs.compute.api.EJBFactory;
-import java.util.*;
-import javax.naming.*;
-import java.rmi.RemoteException;
-import org.janelia.it.jacs.compute.api.support.EntityMapStep;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityAttribute;
-import org.janelia.it.jacs.compute.api.*;
-import org.apache.solr.client.solrj.*;
-import org.apache.solr.common.SolrDocument;
-import org.apache.solr.common.SolrDocumentList;
-import org.janelia.it.jacs.compute.access.solr.SolrDAO;
-import org.janelia.it.jacs.compute.api.support.*;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityAttribute;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.user_data.FileNode;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
-import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
-import org.junit.*;
-import static org.junit.Assert.*;
+import org.janelia.it.jacs.compute.api.EntityBeanRemote;
+import org.junit.Test;
+import org.junit.Assert;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import java.util.Hashtable;
 
 /****
 	author:	Anitha Parvatham
@@ -57,7 +40,7 @@ public class EntityAttributesTest {
 		EntityBeanRemote eobj = (EntityBeanRemote) context.lookup("compute/EntityEJB/remote");
 		System.out.println("\n Entity Attributes Returned:"+eobj.getEntityAttributes().size());
 		//assertEquals(46,eobj.getEntityAttributes().size());
-		assertNotNull(eobj.getEntityAttributes().size());
+		Assert.assertNotNull(eobj.getEntityAttributes().size());
 
                 /**String[] expectedArray = {"File Path", "Ontology Element", "Common Root", "Entity", "Annotation Ontology Key Entity Id", "Annotation Ontology Value Entity Id", "Annotation Ontology Key Term", "Annotation Ontology Value Term", "Annotation Ontology Root Id", "Ontology Term Type", "Ontology Term Type Interval Lower Bound", "Ontology Term Type Interval Upper Bound", "Is Public", "Annotation Target Id", "Annotation Session Id", "Number", "Supporting Files", "Neuron Fragments", "Result", "LSM Stack 1", "LSM Stack 2", "Default 2D Image File Path", "Image Format", "Tiling Pattern", "Merged Stack", "Is Zipped", "Alignment Inconsistency Score", "Alignment Model Violation Score", "Default 2D Image", "Signal MIP Image", "Reference MIP Image", "Ontology Term Type EnumText Enum Id", "Performance Proxy Image", "Artifact Source Entity Id", "Result Node Id", "Default 3D Image", "Representative Sample", "Split Part", "Original Fly Line", "balanced Fly Line", "Robot Id", "Reference Channel", "Signal Channels", "Alignment Types", "Cross Label", "Channel Specification"};
 

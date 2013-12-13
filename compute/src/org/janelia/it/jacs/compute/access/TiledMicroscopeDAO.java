@@ -140,6 +140,53 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
+    public TmSample createTiledMicroscopeSample(Long sampleId, String name) throws DaoException {
+        try {
+//            // Two main areas for data
+//            String[] rootPaths = new String[]{"/groups/mousebrainmicro/mousebrainmicro/render"};
+//            // Parameters
+//            String subjectKey = "user:"+user;
+//
+//            // Main script
+//            Set<Entity> folders = e.getEntitiesByName(subjectKey, destinationFolderName);
+//            Entity folder;
+//            if (folders!=null && folders.size()>0) {
+//                folder = folders.iterator().next();
+//            }
+//            else {
+//                folder = newEntity(destinationFolderName, EntityConstants.TYPE_FOLDER, subjectKey, true);
+//                folder = e.saveOrUpdateEntity(subjectKey, folder);
+//            }
+//
+//            // Loop through the main areas and pull out the data directories.  Create entities for them if necessary
+//            for (String rootPath : rootPaths) {
+//                File[] rootPathDataDirs = (new File(rootPath)).listFiles(new FileFilter() {
+//                    @Override
+//                    public boolean accept(File file) {
+//                        return file.isDirectory();
+//                    }
+//                });
+//                for (File tmpData : rootPathDataDirs) {
+//                    // If they exist do nothing
+//                    Set<Entity> testFolders = e.getEntitiesByName(subjectKey, tmpData.getName());
+//                    if (null!=testFolders && testFolders.size()>0) continue;
+//                    // else add in the new data
+//                    Entity sample = newEntity(tmpData.getName(), EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE, subjectKey, false);
+//                    sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, tmpData.getAbsolutePath());
+//                    sample = e.saveOrUpdateEntity(subjectKey, sample);
+//                    System.out.println("Saved sample as "+sample.getId());
+//                    e.addEntityToParent(subjectKey, folder.getId(), sample.getId(), folder.getMaxOrderIndex() + 1, EntityConstants.ATTRIBUTE_ENTITY);
+//                }
+//            }
+//            return new TmSample(sam)
+            return null;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+    }
+
     protected TmPreferences createTiledMicroscopePreferences(Long workspaceId) throws DaoException {
         try {
             Entity workspace = annotationDAO.getEntityById(workspaceId);

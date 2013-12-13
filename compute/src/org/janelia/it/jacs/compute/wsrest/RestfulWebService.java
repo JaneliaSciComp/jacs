@@ -9,14 +9,12 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.utility.LsTestTask;
+import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
 import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
 import org.jboss.resteasy.annotations.providers.jaxb.Wrapped;
 import org.jboss.resteasy.spi.NotFoundException;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
@@ -129,6 +127,35 @@ public class RestfulWebService {
         }
         catch (Exception e) {
             logger.error("runLsTest: failed execution", e);
+        }
+        return null;
+    }
+
+    /**
+     * http://saffordt-ws1:8180/rest-v1/sageLoader?owner=system&item=20121219%2FFLFL_20121221182844754_29687.lsm&configPath=%2Fgroups%2Fscicomp%2Finformatics%2Fdata%2Fflylightflip_light_imagery-config.xml&grammarPath=%2Fusr%2Flocal%2Fpipeline%2Fgrammar%2Fflylightflip.gra&lab=flylight&debug=yes&lock=
+     */
+    @POST
+    @Path("sageLoader")
+    public Response runSageLoader(
+            @QueryParam("owner")String owner,
+            @QueryParam("item")String item,
+            @QueryParam("configPath")String configPath,
+            @QueryParam("grammarPath")String grammarPath,
+            @QueryParam("lab")String lab,
+            @QueryParam("debug")String debug,
+            @QueryParam("lock")String lock)
+    {
+        logger.info("Heard call for SageLoader API");
+        try {
+            SageLoaderTask task = new SageLoaderTask(owner, new ArrayList<Event>(), item, configPath,grammarPath,lab,
+                    debug, lock);
+            task = (SageLoaderTask)EJBFactory.getRemoteComputeBean().saveOrUpdateTask(task);
+            logger.info("Running SageLoader task "+task.getObjectId()+" for item="+item);
+            EJBFactory.getRemoteComputeBean().submitJob("SageLoader", task.getObjectId());
+            logger.info("Done runSageLoader call ("+owner+","+item+")");
+        }
+        catch (Exception e) {
+            logger.error("runSageLoader: failed execution", e);
         }
         return null;
     }

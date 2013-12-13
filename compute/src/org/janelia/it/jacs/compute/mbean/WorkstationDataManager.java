@@ -1,19 +1,5 @@
 package org.janelia.it.jacs.compute.mbean;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.Set;
-import java.util.TreeMap;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -44,6 +30,9 @@ import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+
+import java.io.*;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -514,6 +503,10 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     }
 
     @Override
+    /**
+     * Marked for death
+     * @deprecated
+     */
     public void create3DTileMicroscopeSamples(String user, String destinationFolderName) {
         try {
             // Two main areas for data

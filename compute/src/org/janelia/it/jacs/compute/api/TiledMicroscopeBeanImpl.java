@@ -42,8 +42,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
 
     public TmWorkspace createTiledMicroscopeWorkspace(Long parentId, Long brainSampleId, String name, String ownerKey) throws ComputeException {
         try {
-            TmWorkspace workspace = _tiledMicroscopeDAO.createTiledMicroscopeWorkspace(parentId, brainSampleId, name, ownerKey);
-            return workspace;
+            return _tiledMicroscopeDAO.createTiledMicroscopeWorkspace(parentId, brainSampleId, name, ownerKey);
         } catch (Exception e) {
             String errorString="Error calling createTiledMicroscopeWorkspace in DAO layer: " + e.getMessage();
             _logger.error(errorString);
@@ -53,10 +52,20 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
 
     public TmNeuron createTiledMicroscopeNeuron(Long workspaceId, String name) throws ComputeException {
         try {
-            TmNeuron neuron = _tiledMicroscopeDAO.createTiledMicroscopeNeuron(workspaceId, name);
-            return neuron;
+            return _tiledMicroscopeDAO.createTiledMicroscopeNeuron(workspaceId, name);
         } catch (Exception e) {
             String errorString="Error calling createTiledMicroscopeNeuron in DAO layer: " + e.getMessage();
+            _logger.error(errorString);
+            throw new ComputeException(errorString);
+        }
+    }
+
+    public TmSample createTiledMicroscopeSample(Long sampleId, String name) throws ComputeException {
+        try {
+            return _tiledMicroscopeDAO.createTiledMicroscopeSample(sampleId, name);
+        }
+        catch (Exception e) {
+            String errorString="Error calling createTiledMicroscopeSample in DAO layer: " + e.getMessage();
             _logger.error(errorString);
             throw new ComputeException(errorString);
         }
@@ -65,8 +74,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
     public TmGeoAnnotation addGeometricAnnotation(Long neuronId, Long parentAnnotationId, int index,
                                                   double x, double y, double z, String comment) throws ComputeException {
         try {
-            TmGeoAnnotation geo = _tiledMicroscopeDAO.addGeometricAnnotation(neuronId, parentAnnotationId, index, x, y, z, comment);
-            return geo;
+            return _tiledMicroscopeDAO.addGeometricAnnotation(neuronId, parentAnnotationId, index, x, y, z, comment);
         } catch (Exception e) {
             String errorString="Error calling addGeometricAnnotation in DAO layer: " + e.getMessage();
             _logger.error(errorString);
@@ -98,8 +106,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
 
     public List<TmWorkspaceDescriptor> getWorkspacesForBrainSample(Long brainSampleId, String ownerKey) throws ComputeException {
         try {
-            List<TmWorkspaceDescriptor> list = _tiledMicroscopeDAO.getWorkspacesForBrainSample(brainSampleId, ownerKey);
-            return list;
+            return _tiledMicroscopeDAO.getWorkspacesForBrainSample(brainSampleId, ownerKey);
         } catch (Exception e) {
             String errorString="Error calling getWorkspacesForBrainSample in DAO layer: " + e.getMessage();
             _logger.error(errorString);
@@ -109,8 +116,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
 
     public List<TmNeuronDescriptor> getNeuronsForWorkspace(Long workspaceId, String ownerKey) throws ComputeException {
         try {
-            List<TmNeuronDescriptor> list = getNeuronsForWorkspace(workspaceId, ownerKey);
-            return list;
+            return getNeuronsForWorkspace(workspaceId, ownerKey);
         } catch (Exception e) {
             String errorString="Error calling getNeuronsForWorkspace in DAO layer: " + e.getMessage();
             _logger.error(errorString);
@@ -170,8 +176,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
 
     public TmWorkspace loadWorkspace(Long workspaceId) throws ComputeException {
         try {
-            TmWorkspace workspace = _tiledMicroscopeDAO.loadWorkspace(workspaceId);
-            return workspace;
+            return _tiledMicroscopeDAO.loadWorkspace(workspaceId);
         } catch (Exception e) {
             String errorString="Error calling loadWorkspace in DAO layer: " + e.getMessage();
             _logger.error(errorString);
@@ -181,8 +186,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
 
     public TmNeuron loadNeuron(Long neuronId) throws ComputeException {
         try {
-            TmNeuron neuron = _tiledMicroscopeDAO.loadNeuron(neuronId);
-            return neuron;
+            return _tiledMicroscopeDAO.loadNeuron(neuronId);
         } catch (Exception e) {
             String errorString="Error calling loadNeuron in DAO layer: " + e.getMessage();
             _logger.error(errorString);
@@ -193,9 +197,8 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
     public TmAnchoredPath addAnchoredPath(Long neuronID, Long annotationID1, Long annotationID2,
         List<List<Integer>> pointlist) throws ComputeException {
         try {
-            TmAnchoredPath anchoredPath = _tiledMicroscopeDAO.addAnchoredPath(neuronID,
+            return _tiledMicroscopeDAO.addAnchoredPath(neuronID,
                     annotationID1, annotationID2, pointlist);
-            return anchoredPath;
         } catch (Exception e) {
             String errorString="Error calling addAnchoredPath in DAO layer: " + e.getMessage();
             _logger.error(errorString);

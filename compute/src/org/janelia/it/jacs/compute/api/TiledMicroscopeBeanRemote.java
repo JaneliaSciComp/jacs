@@ -19,6 +19,7 @@ public interface TiledMicroscopeBeanRemote {
     public TmWorkspace createTiledMicroscopeWorkspace(Long parentId, Long brainSampleId, String name, String ownerKey) throws ComputeException;
 
     public TmNeuron createTiledMicroscopeNeuron(Long workspaceId, String name) throws ComputeException;
+    public TmSample createTiledMicroscopeSample(Long sampleId, String name) throws ComputeException;
 
     public TmGeoAnnotation addGeometricAnnotation(Long neuronId, Long parentAnnotationId, int index,
                                                   double x, double y, double z, String comment) throws ComputeException;

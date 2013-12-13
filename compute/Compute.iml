@@ -47,7 +47,6 @@
     </orderEntry>
     <orderEntry type="module" module-name="Shared" />
     <orderEntry type="module" module-name="Model" />
-    <orderEntry type="library" name="JUnit" level="project" />
     <orderEntry type="library" name="JBoss" level="project" />
     <orderEntry type="library" name="Lucene" level="project" />
     <orderEntry type="library" name="Hibernate" level="project" />
@@ -102,6 +101,15 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/opencsv-2.3.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/junit-4.10.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

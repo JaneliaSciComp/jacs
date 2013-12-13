@@ -288,6 +288,10 @@
               discriminator-value="lsTestTask">
     </subclass>
 
+    <subclass name="org.janelia.it.jacs.model.tasks.utility.SageLoaderTask" extends="org.janelia.it.jacs.model.tasks.Task"
+              discriminator-value="sageLoaderTask">
+    </subclass>
+
     <subclass name="org.janelia.it.jacs.model.tasks.utility.BZipTestTask" extends="org.janelia.it.jacs.model.tasks.Task"
               discriminator-value="bzipTestTask">
     </subclass>

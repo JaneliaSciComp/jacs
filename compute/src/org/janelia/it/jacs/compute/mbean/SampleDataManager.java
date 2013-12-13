@@ -12,6 +12,7 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.utility.BZipTestTask;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
+import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.StringUtils;
@@ -452,6 +453,28 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
         catch (RemoteException e) {
             e.printStackTrace();
+        }
+    }
+
+    public void runSageLoader(
+            String owner,
+            String item,
+            String configPath,
+            String grammarPath,
+            String lab,
+            String debug,
+            String lock)
+    {
+        log.info("Heard call for SageLoader API");
+        try {
+            SageLoaderTask task = new SageLoaderTask(owner, new ArrayList<Event>(), item, configPath,grammarPath,lab,
+                    debug, lock);
+            task = (SageLoaderTask)EJBFactory.getRemoteComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getRemoteComputeBean().submitJob("SageLoader", task.getObjectId());
+            log.info("Done runSageLoader call ("+owner+","+item+")");
+        }
+        catch (Exception e) {
+            log.error("runSageLoader: failed execution", e);
         }
     }
 }

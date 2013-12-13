@@ -92,7 +92,7 @@
     </operation>
     
     <operation>
-        <description>Register all images for a user's samples</description>
+        <description>Register all images for a user's samples. Set/Correct all Default images as defined by Data Set</description>
         <name>runSampleImageRegistration</name>
         <parameter>
             <description>User to run as (e.g. "flylight")</description>
