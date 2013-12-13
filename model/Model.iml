@@ -34,6 +34,7 @@
     <orderEntry type="library" name="Apache Commons" level="project" />
     <orderEntry type="library" name="Logging" level="project" />
     <orderEntry type="library" name="GWT-Serializable" level="project" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">
