@@ -1014,9 +1014,15 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         // We have to manually remove the EntityData from its parent, otherwise we get this error: 
         // "deleted object would be re-saved by cascade (remove deleted object from associations)"
         boolean hasChild = entityData.getChildEntity()!=null;
-        entityData.getParentEntity().getEntityData().remove(entityData);
+        Entity parent = entityData.getParentEntity();
+        if (parent!=null) {
+            parent.getEntityData().remove(entityData);
+        }
+        entityData.setParentEntity(null);
         genericDelete(entityData);
-        if (hasChild) decrementChildCount(entityData.getParentEntity().getId());
+        if (parent!=null) {
+            if (hasChild) decrementChildCount(parent.getId());
+        }
     }
     
     public List<Entity> getEntitiesWithTag(String subjectKey, String attrTag) throws DaoException {
@@ -3009,10 +3015,12 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         Entity entity = getEntityById(entityId);
         int newNum = entity.getNumChildren()-1;
         if (newNum<0) {
-            throw new IllegalStateException("Cannot decrement child count below zero");
+            log.warn("Cannot decrement child count below zero on "+entityId);
         }
-        entity.setNumChildren(newNum);
-        saveOrUpdate(entity);
+        else {
+            entity.setNumChildren(newNum);
+            saveOrUpdate(entity);   
+        }
     }
     
     private List filterDuplicates(List list) {

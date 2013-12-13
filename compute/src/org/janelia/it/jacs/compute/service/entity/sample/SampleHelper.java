@@ -913,7 +913,6 @@ public class SampleHelper extends EntityHelper {
                 else {
                     if (ed!=null) {
                         logger.info("    Removing from data set folder: "+dataSetFolder.getName()+" (id="+dataSetFolder.getId()+")");   
-                        dataSetFolder.getEntityData().remove(ed);
                         entityBean.deleteEntityData(ed);
                     }
                     else {
@@ -937,8 +936,7 @@ public class SampleHelper extends EntityHelper {
         }
         else {
             if (blockedEd!=null) {
-                logger.info("    Removing from blocked data folder");   
-                blockedFolder.getEntityData().remove(blockedEd);
+                logger.info("    Removing from blocked data folder");
                 entityBean.deleteEntityData(blockedEd);
             }
             else {
@@ -949,8 +947,7 @@ public class SampleHelper extends EntityHelper {
         Entity retiredFolder = getRetiredDataFolder();
         EntityData retiredEd = EntityUtils.findChildEntityDataWithChildId(retiredFolder, sample.getId());
         if (retiredEd!=null) {
-            logger.info("    Removing from retired data folder");   
-            retiredFolder.getEntityData().remove(retiredEd);
+            logger.info("    Removing from retired data folder");
             entityBean.deleteEntityData(retiredEd);
         }
         else {

@@ -138,7 +138,6 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                         EntityData alignedNeuronMaskEd = resultItemMap.get(neuronMasksFilename);
                         Entity alignedNeuronMask = alignedNeuronMaskEd.getChildEntity();
                         helper.addImage(stackEntity, EntityConstants.ATTRIBUTE_ALIGNED_CONSOLIDATED_LABEL, alignedNeuronMask);   
-                        supportingFiles.getEntityData().remove(alignedNeuronMaskEd);
                         entityBean.deleteEntityData(alignedNeuronMaskEd);
                         hasWarpedSeparation = true;
                     }

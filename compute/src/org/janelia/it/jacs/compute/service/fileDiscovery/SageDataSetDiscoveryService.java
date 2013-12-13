@@ -253,8 +253,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             if (sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISITED)==null) {
                 // Sample was not visited this time around, it should be:
                 if (retiredIds.contains(sample.getId())) {
-                    logger.info("  Sample was already retired. Removing from data folder: "+sample.getName()+" (id="+sample.getId()+")");    
-                    dataSetFolder.getEntityData().remove(ed);
+                    logger.info("  Sample was already retired. Removing from data folder: "+sample.getName()+" (id="+sample.getId()+")");   
                     entityBean.deleteEntityData(ed);
                 }
                 else {

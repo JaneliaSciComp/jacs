@@ -125,7 +125,6 @@ public class SplitLinesLoadingService extends AbstractEntityService {
     		if (reps.size()>1) {
     			logger.warn("    "+flyline+" has >1 representative samples so we're deleting them all. A single correct representative will be added later.");
     			for (EntityData ed : new ArrayList<EntityData>(reps)) {
-    				flyline.getEntityData().remove(ed); // Need to remove it from the object as well, since we'll be saving it later
     				entityBean.deleteEntityData(ed);
     			}
     		}
