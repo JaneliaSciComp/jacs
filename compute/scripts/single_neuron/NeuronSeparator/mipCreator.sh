@@ -11,7 +11,7 @@ NETPBM_PATH="$DIR/../../../netpbm-redhat/"
 NETPBM_BIN="$NETPBM_PATH/bin"
 Vaa3D="$DIR/../../../vaa3d-redhat/vaa3d"
 NSDIR="$DIR/../../../neusep-redhat"
-MAGICK="$DIR/../../../ImageMagick-6.7.3-2/bin"
+
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$NETPBM_PATH/lib"
 
 ##################

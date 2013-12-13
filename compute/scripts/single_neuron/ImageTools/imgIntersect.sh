@@ -10,7 +10,10 @@ DIR=$(cd "$(dirname "$0")"; pwd)
 ####
 
 Vaa3D="$DIR/../../../vaa3d-redhat/vaa3d"
-MAGICK="$DIR/../../../ImageMagick-6.7.3-2/bin"
+MAGICK="$DIR/../../../ImageMagick-6.7.3-2"
+TIFF="/groups/scicomp/jacsData/install/tiff"
+
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$MAGICK/lib:$TIFF/lib"
 
 export TMPDIR=""
 
@@ -72,7 +75,7 @@ $Vaa3D -x imath -f intersection -o "$OUTPUT" -p "#s $INPUT1 #t $INPUT2 #m $METHO
 
 OUTPUT_MIP="$WORKING_DIR/out.png"
 $Vaa3D -cmd image-loader -mip "$OUTPUT" "$WORKING_DIR/out.tif"
-$MAGICK/convert "$WORKING_DIR/out.tif" "$OUTPUT_MIP"
+$MAGICK/bin/convert "$WORKING_DIR/out.tif" "$OUTPUT_MIP"
 
 EXT=${FINAL_OUTPUT##*.}
 if [ "$EXT" == "v3dpbd" ]

@@ -20,8 +20,11 @@ local f="$1"
 
 Vaa3D="$DIR/../Toolkits/Vaa3D/vaa3d"
 BRAINALIGNER="$DIR/../Toolkits/JBA/brainaligner"
-MAGICK="$DIR/../../../ImageMagick-6.7.3-2/bin"
 ANTS="$DIR/../Toolkits/ANTS/ANTS"
+MAGICK="$DIR/../../../ImageMagick-6.7.3-2"
+TIFF="/groups/scicomp/jacsData/install/tiff"
+
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$MAGICK/lib:$TIFF/lib"
 
 ##################
 # inputs
@@ -246,9 +249,9 @@ $Vaa3D -x ireg -f iContrastEnhancer -i $MIP1 -o $MIP1 -p "#m 5"
 $Vaa3D -x ireg -f iContrastEnhancer -i $MIP2 -o $MIP2 -p "#m 5"
 $Vaa3D -x ireg -f iContrastEnhancer -i $MIP3 -o $MIP3 -p "#m 5"
 
-$MAGICK/convert -flip $MIP1 $PNG_MIP1
-$MAGICK/convert -flip $MIP2 $PNG_MIP2
-$MAGICK/convert -flip $MIP3 $PNG_MIP3
+$MAGICK/bin/convert -flip $MIP1 $PNG_MIP1
+$MAGICK/bin/convert -flip $MIP2 $PNG_MIP2
+$MAGICK/bin/convert -flip $MIP3 $PNG_MIP3
 
 EXT=${FINAL_OUTPUT##*.}
 if [ "$EXT" == "v3dpbd" ]
