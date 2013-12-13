@@ -385,7 +385,6 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
                     break;
                 }
             }
-            //_annotationDAO.getCurrentSession().evict(currEntity);
             deleteEntityData(toDelete);
             _logger.info(subjectKey+" deleted entity data "+entityDataId);
         }

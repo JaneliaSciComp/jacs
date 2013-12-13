@@ -169,9 +169,7 @@ public class FileDiscoveryHelper extends EntityHelper {
 	public Entity getOrCreateSupportingFilesFolder(Entity entity) throws ComputeException {
         Entity supportingFiles = EntityUtils.getSupportingData(entity);
     	if (supportingFiles == null) {
-        	// Update in-memory model
     		supportingFiles = createSupportingFilesFolder();
-        	// Update database
             entityBean.addEntityToParent(entity, supportingFiles, 0, EntityConstants.ATTRIBUTE_SUPPORTING_FILES);
     	}
     	return supportingFiles;
@@ -190,10 +188,8 @@ public class FileDiscoveryHelper extends EntityHelper {
         filesFolder.setCreationDate(createDate);
         filesFolder.setUpdatedDate(createDate);
         filesFolder.setName("Supporting Files");
-    	// Update database
         filesFolder = entityBean.saveOrUpdateEntity(filesFolder);
         logger.info("Saved supporting files folder as "+filesFolder.getId());
-    	// Return the new object so that we can update in-memory model
         return filesFolder;
     }
     

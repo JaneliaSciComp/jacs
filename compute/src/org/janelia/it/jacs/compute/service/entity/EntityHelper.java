@@ -257,12 +257,8 @@ public class EntityHelper {
 		if (image==null) return;
         logger.debug("Adding "+attributeName+" ("+image.getName()+") to "+entity.getName()+" (id="+entity.getId()+")");
     	if (DEBUG) return;
-    	// Update in-memory model
     	String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-    	
-    	// Update database
-    	EntityData savedEd = entityBean.addEntityToParent(entity, image, null, attributeName, filepath);
-		entity.getEntityData().add(savedEd);
+    	entityBean.addEntityToParent(entity, image, null, attributeName, filepath);
     }
 
 	/**
@@ -282,10 +278,6 @@ public class EntityHelper {
         }
         
         for (EntityData ed : toDelete) {
-            // Update in-memory model
-            entity.getEntityData().remove(ed);
-            ed.setParentEntity(null);
-        	// Update database
             entityBean.deleteEntityData(ed);
         }
     }
@@ -348,10 +340,8 @@ public class EntityHelper {
     	String fileFormat = filename.substring(filename.lastIndexOf('.')+1);
     	entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, fileFormat);
         
-    	// Update database
         if (!DEBUG) entity = entityBean.saveOrUpdateEntity(entity);
         logger.debug("Saved new "+entityTypeName+" as "+entity.getId());
-    	// Return the new object so that we can update in-memory model
         return entity;
     }
 

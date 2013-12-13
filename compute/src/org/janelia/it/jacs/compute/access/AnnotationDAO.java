@@ -1011,17 +1011,18 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         if (log.isTraceEnabled()) {
             log.trace("deleteEntityData(entityData.id="+entityData.getId()+")");
         }
-        // We have to manually remove the EntityData from its parent, otherwise we get this error: 
-        // "deleted object would be re-saved by cascade (remove deleted object from associations)"
         boolean hasChild = entityData.getChildEntity()!=null;
         Entity parent = entityData.getParentEntity();
         if (parent!=null) {
+            // We have to manually remove the EntityData from its parent, otherwise we get this error: 
+            // "deleted object would be re-saved by cascade (remove deleted object from associations)"
             parent.getEntityData().remove(entityData);
         }
-        entityData.setParentEntity(null);
         genericDelete(entityData);
         if (parent!=null) {
-            if (hasChild) decrementChildCount(parent.getId());
+            if (hasChild) {
+                decrementChildCount(parent, 1);
+            }
         }
     }
     
@@ -1600,7 +1601,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         saveOrUpdate(ed);
         propagatePermissions(parent, entity, true);
-        incrementChildCount(parent.getId());
+        incrementChildCount(parent, 1);
         return ed;
     }
 
@@ -1639,7 +1640,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             propagatePermissions(parent, child, true);
         }
         
-        incrementChildCount(parent.getId(), childrenIds.size());
+        incrementChildCount(parent, childrenIds.size());
     }
     
     private void propagatePermissions(Entity parent, Entity child, boolean recursive) throws DaoException {
@@ -2994,34 +2995,22 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         entityData.setUpdatedDate(new Date());
         saveOrUpdate(entityData);
     }
-    
-    private void incrementChildCount(long entityId) throws DaoException {
-        incrementChildCount(entityId, 1);
-    }
-    
-    private void incrementChildCount(long entityId, int count) throws DaoException {
+        
+    private void incrementChildCount(Entity entity, int count) throws DaoException {
         if (log.isTraceEnabled()) {
-            log.trace("incrementChildCount(entityId="+entityId+", count="+count+")");    
-        }
-        Entity entity = getEntityById(entityId);
-        if (entity==null) {
-            throw new IllegalArgumentException("No such entity: "+entityId);
+            log.trace("incrementChildCount(entity.id="+entity.getId()+", count="+count+")");    
         }
         entity.setNumChildren(entity.getNumChildren()+count);
         saveOrUpdate(entity);
     }
     
-    private void decrementChildCount(long entityId) throws DaoException {
+    private void decrementChildCount(Entity entity, int count) throws DaoException {
         if (log.isTraceEnabled()) {
-            log.trace("decrementChildCount(entityId="+entityId+")");    
-        }
-        Entity entity = getEntityById(entityId);
-        if (entity==null) {
-            throw new IllegalArgumentException("No such entity: "+entityId);
+            log.trace("decrementChildCount(entity.id="+entity.getId()+")");    
         }
         int newNum = entity.getNumChildren()-1;
         if (newNum<0) {
-            log.warn("Cannot decrement child count below zero on "+entityId);
+            log.warn("Cannot decrement child count below zero on "+entity.getId());
         }
         else {
             entity.setNumChildren(newNum);

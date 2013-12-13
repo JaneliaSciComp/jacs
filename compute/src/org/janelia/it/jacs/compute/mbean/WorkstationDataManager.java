@@ -569,7 +569,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     public void addChildFolder(String parentId, String folderName) {
         
         try {
-            EntityBeanRemote e = EJBFactory.getRemoteEntityBean();
+            EntityBeanLocal e = EJBFactory.getLocalEntityBean();
             Entity parent = e.getEntityById(null, Long.parseLong(parentId));
             
             Entity folder = newEntity(folderName, EntityConstants.TYPE_FOLDER, parent.getOwnerKey(), false);
