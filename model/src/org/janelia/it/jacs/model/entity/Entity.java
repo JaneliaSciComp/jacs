@@ -29,7 +29,7 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     private Date updatedDate;
 
     @XmlElement
-    private Integer numChildren;
+    private Integer numChildren = 0;
     
     @XmlElement(name="entityData")
     @XmlElementWrapper(name="entityDataSet")

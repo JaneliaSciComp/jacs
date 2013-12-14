@@ -1,4 +1,4 @@
-package org.janelia.it.FlyWorkstation.model.entity;
+package org.janelia.it.jacs.model.entity;
 
 import java.security.AccessControlException;
 import java.util.Date;

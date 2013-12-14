@@ -37,7 +37,7 @@
 
         <map
             name="preferenceMap" table="subject_preference_map" 
-            lazy="false" inverse="false" cascade="all" sort="unsorted">
+            lazy="true" inverse="false" cascade="all" sort="unsorted">
             <key column="user_id"/>
             <index column="category_and_name" type="string"/>
             <composite-element class="org.janelia.it.jacs.model.user_data.prefs.SubjectPreference">

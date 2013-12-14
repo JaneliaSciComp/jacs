@@ -231,6 +231,14 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return subject;
     }
     
+    public Subject getSubjectWithPreferences(String nameOrKey) throws ComputeException {
+        Subject subject = getSubjectByNameOrKey(nameOrKey);
+        if (subject==null) return null;
+        // Eager load preferences
+        subject.getPreferenceMap().size(); 
+        return subject;
+    }
+    
     public User getUserByNameOrKey(String name) throws ComputeException {
         return computeDAO.getUserByNameOrKey(name);
     }

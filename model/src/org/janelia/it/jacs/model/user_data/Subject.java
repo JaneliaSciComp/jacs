@@ -24,8 +24,8 @@ public class Subject implements java.io.Serializable, IsSerializable {
 
     private Set<Node> nodes = new HashSet<Node>(0);
     private Set<Task> tasks = new HashSet<Task>(0);
-    private Map<String, SubjectPreference> preferenceMap = new HashMap<String, SubjectPreference>(0);
-    private Map<String, Map<String, SubjectPreference>> categoryMap = new HashMap<String, Map<String, SubjectPreference>>(0);
+    private Map<String, SubjectPreference> preferenceMap = new HashMap<String, SubjectPreference>();
+    private Map<String, Map<String, SubjectPreference>> categoryMap;
     
     public Subject() {
     }
@@ -35,6 +35,7 @@ public class Subject implements java.io.Serializable, IsSerializable {
 		this.fullName = fullName;
 		this.key = key;
 	}
+	
 	public Long getId() {
 		return id;
 	}
@@ -98,35 +99,8 @@ public class Subject implements java.io.Serializable, IsSerializable {
         }
     }
 
-    private Map getCategoryMap() {
-        return categoryMap;
-    }
-
-    /**
-     * Creates a map of preferences by category name
-     */
-    private synchronized void buildCategoryMap() {
-        for (String s : preferenceMap.keySet()) {
-            addPreferenceToCategoryMap(preferenceMap.get(s));
-        }
-    }
-
-    private synchronized void addPreferenceToCategoryMap(SubjectPreference pref) {
-        Map<String, SubjectPreference> catPrefs = getCategoryPreferences(pref.getCategory()); // creates new Map if not found
-        catPrefs.put(pref.getName(), pref);
-        categoryMap.put(pref.getCategory(), catPrefs);
-    }
-
-    public synchronized Map<String, SubjectPreference> getCategoryPreferences(String category) {
-        if (getCategoryMap().containsKey(category))
-            return categoryMap.get(category);
-        else
-            return new HashMap<String, SubjectPreference>();
-    }
-
     public synchronized void setPreferenceMap(Map<String, SubjectPreference> preferenceMap) {
         this.preferenceMap = preferenceMap;
-        buildCategoryMap();
     }
 
     public Map<String, SubjectPreference> getPreferenceMap() {
@@ -141,7 +115,7 @@ public class Subject implements java.io.Serializable, IsSerializable {
      * @return - the matching SubjectPreference object
      */
     public synchronized SubjectPreference getPreference(String category, String name) {
-        return preferenceMap.get(getPrefKey(category, name));
+        return getPreferenceMap().get(getPrefKey(category, name));
     }
 
     private String getPrefKey(String category, String name) {
@@ -158,7 +132,33 @@ public class Subject implements java.io.Serializable, IsSerializable {
      * @param pref desired user preference to update
      */
     public synchronized void setPreference(SubjectPreference pref) {
-        preferenceMap.put(getPrefKey(pref.getCategory(), pref.getName()), pref);  // Hibernate will update database
+        getPreferenceMap().put(getPrefKey(pref.getCategory(), pref.getName()), pref);  // Hibernate will update database
         addPreferenceToCategoryMap(pref); // Add/update the preference in the appropriate category
+    }
+    
+    public synchronized Map<String, SubjectPreference> getCategoryPreferences(String category) {
+        if (categoryMap==null) {
+            buildCategoryMap();
+        }
+        if (categoryMap.containsKey(category))
+            return categoryMap.get(category);
+        else
+            return new HashMap<String, SubjectPreference>();
+    }
+
+    private synchronized void buildCategoryMap() {
+        this.categoryMap = new HashMap<String, Map<String, SubjectPreference>>();
+        for (String s : getPreferenceMap().keySet()) {
+            addPreferenceToCategoryMap(getPreferenceMap().get(s));
+        }
+    }
+
+    private synchronized void addPreferenceToCategoryMap(SubjectPreference pref) {
+        if (categoryMap==null) {
+            buildCategoryMap();
+        }
+        Map<String, SubjectPreference> catPrefs = getCategoryPreferences(pref.getCategory()); // creates new Map if not found
+        catPrefs.put(pref.getName(), pref);
+        categoryMap.put(pref.getCategory(), catPrefs);
     }
 }

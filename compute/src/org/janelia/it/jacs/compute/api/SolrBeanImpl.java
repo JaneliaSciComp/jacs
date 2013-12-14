@@ -43,7 +43,7 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
 
     public static final String SOLR_EJB_PROP = "SolrEJB.Name";
     
-    private static final Logger _logger = Logger.getLogger(SolrBeanImpl.class);
+    private static final Logger log = Logger.getLogger(SolrBeanImpl.class);
 
     private void updateIndex(Long entityId) {
     	IndexingHelper.updateIndex(entityId);
@@ -51,31 +51,31 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
 
     public void indexAllEntities(boolean clearIndex) throws ComputeException {
 
-    	_logger.info("Getting FlyLight vocabularies from SAGE web service...");
+    	log.info("Getting FlyLight vocabularies from SAGE web service...");
     	Map<String, SageTerm> sageVocab = null;
     	try {
-    		sageVocab = new SageDAO(_logger).getFlylightImageVocabulary();	
+    		sageVocab = new SageDAO(log).getFlylightImageVocabulary();	
     	}
     	catch (DaoException e) {
-    		_logger.error("Error retrieving FlyLight vocabularies",e);
+    		log.error("Error retrieving FlyLight vocabularies",e);
     	}
-    	_logger.info("Got "+sageVocab.size()+" vocabulary terms from SAGE web service");
+    	log.info("Got "+sageVocab.size()+" vocabulary terms from SAGE web service");
     	
     	try {
-    		SolrDAO solrDAO = new SolrDAO(_logger, true, true);
+    		SolrDAO solrDAO = new SolrDAO(log, true, true);
     		if (clearIndex) {
     			solrDAO.clearIndex();
     		}
     		solrDAO.indexAllEntities(sageVocab);
     	}
     	catch (DaoException e) {
-            _logger.error("Error indexing all entities",e);
+            log.error("Error indexing all entities",e);
     		throw new ComputeException("Error indexing all entities",e);
     	}
     }
 
     public void indexAllEntitiesInTree(Long entityId) throws ComputeException {
-    	AnnotationDAO _annotationDAO = new AnnotationDAO(_logger);
+    	AnnotationDAO _annotationDAO = new AnnotationDAO(log);
     	Entity root = _annotationDAO.getEntityById(entityId);
     	indexAllEntitiesInTree(root, new HashSet<Long>());
     }
@@ -99,14 +99,14 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     // TODO: move this to its own bean, or rename this one
     public void mongoAllEntities(boolean clearDb) throws ComputeException {
     	try {
-    		MongoDbDAO mongodbDAO = new MongoDbDAO(_logger);
+    		MongoDbDAO mongodbDAO = new MongoDbDAO(log);
     		if (clearDb) {
     			mongodbDAO.dropDatabase();
     		}
     		mongodbDAO.loadAllEntities();
     	}
     	catch (DaoException e) {
-            _logger.error("Error indexing all entities",e);
+            log.error("Error indexing all entities",e);
     		throw new ComputeException("Error indexing all entities",e);
     	}
     }
@@ -115,20 +115,20 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     public void neo4jAllEntities(boolean clearDb) throws ComputeException {
     	try {
 //    		Neo4jBatchDAO neo4jDAO = new Neo4jBatchDAO(_logger);
-    		Neo4jCSVExportDao neo4jDAO = new Neo4jCSVExportDao(_logger);
+    		Neo4jCSVExportDao neo4jDAO = new Neo4jCSVExportDao(log);
     		if (clearDb) {
     			neo4jDAO.dropDatabase();
     		}
     		neo4jDAO.loadAllEntities();
     	}
     	catch (DaoException e) {
-            _logger.error("Error indexing all entities",e);
+            log.error("Error indexing all entities",e);
     		throw new ComputeException("Error indexing all entities",e);
     	}
     }
     
 	public SolrResults search(String subjectKey, SolrQuery query, boolean mapToEntities) throws ComputeException {
-		SolrDAO solrDAO = new SolrDAO(_logger, false, false);
+		SolrDAO solrDAO = new SolrDAO(log, false, false);
 		
 		QueryResponse response = solrDAO.search(query);
 		List<Entity> resultList = null;
@@ -146,7 +146,7 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
 	    			}
 	    		} 
 	    		catch (NumberFormatException e) {
-	    			_logger.warn("Error parsing id from index: "+idStr);
+	    			log.warn("Error parsing id from index: "+idStr);
 	    			continue;
 	    		}
 	    	}
@@ -157,7 +157,7 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
 	}
     
     public Map<String, SageTerm> getFlyLightVocabulary() throws ComputeException {
-    	SolrDAO solrDAO = new SolrDAO(_logger, false, false);
+    	SolrDAO solrDAO = new SolrDAO(log, false, false);
 		Map<String, SageTerm> vocab = new HashMap<String, SageTerm>();
 		
 		SolrQuery query = new SolrQuery("doc_type:"+SolrDocTypeEnum.SAGE_TERM);

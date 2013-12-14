@@ -17,6 +17,7 @@ import org.janelia.it.jacs.model.user_data.tools.GenericServiceDefinitionNode;
 import org.janelia.it.jacs.shared.utils.ControlledVocabElement;
 
 import javax.ejb.Remote;
+
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.Date;
@@ -49,6 +50,7 @@ public interface ComputeBeanRemote {
     public void setTaskNote(long taskId, String note) throws DaoException;
     public void addTaskNote(long taskId, String note) throws DaoException;
     public Subject getSubjectByNameOrKey(String name) throws ComputeException;
+    public Subject getSubjectWithPreferences(String nameOrKey) throws ComputeException;
     public User getUserByNameOrKey(String name) throws ComputeException;
     public Group getGroupByNameOrKey(String name) throws ComputeException;
     public List<Subject> getSubjects() throws ComputeException;

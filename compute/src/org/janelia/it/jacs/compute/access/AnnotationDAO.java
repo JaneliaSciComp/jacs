@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.access;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -53,7 +54,9 @@ import org.janelia.it.jacs.shared.utils.entity.AbstractEntityLoader;
 import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
 import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimap;
 
 public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoader {
 	
@@ -82,7 +85,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                     entityByName.put(entityType.getName(), entityType);
                 }
             }
-
+            
             if (attrByName.isEmpty()) {
                 log.debug("preloadData(): preloading entity attributes"); 
                 for(EntityAttribute entityAttr : getAllEntityAttributes()) {
@@ -102,9 +105,9 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         
         try {
-            StringBuffer hql = new StringBuffer("select et from EntityType et");
-            Query query = getCurrentSession().createQuery(hql.toString());
-            return query.list();
+            // We have to use the Criteria API here, because the HQL API ignores join fetching 
+            // for many-to-many associations
+            return getCurrentSession().createCriteria(EntityType.class).list();
         }
         catch (Exception e) {
             throw new DaoException(e);
@@ -118,9 +121,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         
         try {
-            StringBuffer hql = new StringBuffer("select ea from EntityAttribute ea");
-            Query query = getCurrentSession().createQuery(hql.toString());
-            return query.list();
+            return getCurrentSession().createCriteria(EntityAttribute.class).list();
         }
         catch (Exception e) {
             throw new DaoException(e);
@@ -474,7 +475,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             query.setParameterList("subjectKeyList", subjectKeyList);
         }
 
-        return (Entity)query.uniqueResult();
+        return filter((Entity)query.uniqueResult());
     }
 
     public Entity getEntityByEntityDataId(String subjectKey, Long entityDataId) {
@@ -498,7 +499,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             query.setParameterList("subjectKeyList", subjectKeyList);
         }
 
-        return (Entity)query.uniqueResult();
+        return filter((Entity)query.uniqueResult());
     }
 
     public Entity getEntityById(Long targetId) {
@@ -531,7 +532,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 query.setParameterList("subjectKeyList", subjectKeyList);
             }
             
-            return filterDuplicates(query.list());
+            return filter(query.list());
         }
         catch (Exception e) {
             throw new DaoException(e);
@@ -563,7 +564,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 query.setParameterList("subjectKeyList", subjectKeyList);
             }
 
-            return filterDuplicates(query.list());
+            return filter(query.list());
         }
         catch (Exception e) {
             throw new DaoException(e);
@@ -596,7 +597,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 query.setParameterList("subjectKeyList", subjectKeyList);
             }
             
-            return filterDuplicates(query.list());
+            return filter(query.list());
         }
         catch (Exception e) {
             throw handleException(e, "getUserEntitiesByNameAndTypeName");
@@ -630,7 +631,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 List<String> subjectKeyList = getSubjectKeys(subjectKey);
                 query.setParameterList("subjectKeyList", subjectKeyList);
             }
-            return filterDuplicates(query.list());
+            return filter(query.list());
         } catch (Exception e) {
             throw new DaoException(e);
         }
@@ -664,7 +665,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 query.setParameter("subjectKey", subjectKey);
             }
             
-            return filterDuplicates(query.list());
+            return filter(query.list());
         }
         catch (Exception e) {
             throw new DaoException(e);
@@ -693,13 +694,12 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 query.setParameter("subjectKey", subjectKey);
             }
 
-            return filterDuplicates(query.list());
+            return filter(query.list());
         }
         catch (Exception e) {
             throw new DaoException(e);
         }
     }
-
 
     public List<Entity> getUserEntitiesByNameAndTypeName(String subjectKey, String entityName, String entityTypeName) throws DaoException {
         if (log.isTraceEnabled()) {
@@ -724,7 +724,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 query.setParameter("subjectKey", subjectKey);
             }
             
-            return filterDuplicates(query.list());
+            return filter(query.list());
         }
         catch (Exception e) {
             throw new DaoException(e);
@@ -756,7 +756,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             if (null != subjectKey) {
                 query.setString("subjectKey", subjectKey);
             }
-            return filterDuplicates(query.list());
+            return filter(query.list());
         } catch (Exception e) {
             throw new DaoException(e);
         }
@@ -832,7 +832,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 query.setParameterList("subjectKeyList", subjectKeyList);
             }
             
-            return filterDuplicates(query.list());
+            return filter(query.list());
             
         } catch (Exception e) {
             throw new DaoException(e);
@@ -856,7 +856,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         
         if (folder!=null) {
-            return folder;
+            return filter(folder);
         }
         
         if (createIfNecessary) {
@@ -867,7 +867,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             log.info("Saved top level folder as " + folder.getId());
         }
         
-        return folder;
+        return filter(folder);
     }
 
     public List<Entity> getEntitiesInList(String subjectKey, String entityIds) throws DaoException {
@@ -924,7 +924,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 }
             }
             
-            return sortedList;
+            return filter(sortedList);
         }
         catch (Exception e) {
             throw new DaoException(e);
@@ -957,7 +957,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         Session session = getCurrentSession();
         StringBuffer hql = new StringBuffer("select clazz.parentEntity from EntityData clazz where value=?");
         Query query = session.createQuery(hql.toString()).setString(0, filePath);
-        return filterDuplicates(query.list());
+        return filter(query.list());
     }
     
     /**
@@ -1377,33 +1377,123 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 List<String> subjectKeyList = getSubjectKeys(subjectKey);
                 query.setParameterList("subjectKeyList", subjectKeyList);
             }
-            return new HashSet(query.list());
+            return new HashSet(filter(query.list()));
         } 
         catch (Exception e) {
             throw new DaoException(e);
         }
     }
-    
+
     public Set<Entity> getChildEntities(String subjectKey, Long entityId) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("getChildEntities(subjectKey="+subjectKey+", entityId="+entityId+")");
         }
+        List<String> subjectKeyList = subjectKey==null?null:getSubjectKeys(subjectKey);
+        return getChildEntities(subjectKeyList, entityId);
+    }
+    
+    public Set<Entity> getChildEntities(List<String> subjectKeyList, Long entityId) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getChildEntities(subjectKeyList="+subjectKeyList+", entityId="+entityId+")");
+        }
         
         try {   
             Session session = getCurrentSession();
+            
             StringBuffer hql = new StringBuffer("select ed.childEntity from EntityData ed ");
             hql.append("join ed.childEntity ");
             hql.append("left outer join fetch ed.childEntity.entityActorPermissions p ");
             hql.append("where ed.parentEntity.id=? ");
-            if (null != subjectKey) {
+            if (subjectKeyList != null) {
                 hql.append("and (ed.childEntity.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
             }
             Query query = session.createQuery(hql.toString()).setLong(0, entityId);
-            if (null != subjectKey) {
-                List<String> subjectKeyList = getSubjectKeys(subjectKey);
+            if (subjectKeyList != null) {
                 query.setParameterList("subjectKeyList", subjectKeyList);
             }
-            return new HashSet(query.list());
+
+            List<Entity> childEntities = filter(query.list(), false);
+
+            // These HQL statements should work, but they just return the EntityData id, and then lazy load during 
+            // iteration, which is definitely not what we want. So we have to do things manually with JDBC below.  
+            
+            //hql = new StringBuffer("select ced from EntityData ed ");
+            //hql.append("inner join ed.childEntity ce ");
+            //hql.append("inner join ce.entityData ced ");
+            //hql.append("where ed.parentEntity.id=? ");
+
+            //hql = new StringBuffer("select ced from EntityData ced ");
+            //hql.append("inner join ced.parentEntity pe, ");
+            //hql.append("EntityData ed ");
+            //hql.append("where ed.childEntity=pe ");
+            //hql.append("and ed.parentEntity.id=? ");
+
+            // Bypassing Hibernate is not ideal, but the huge performance gain justifies it. 
+            
+            Multimap<Long,EntityData> edMap = HashMultimap.<Long,EntityData>create();
+            Connection conn = null;
+            PreparedStatement stmt = null;
+            ResultSet rs = null;
+            try {
+                conn = getJdbcConnection();
+
+                StringBuffer sql = new StringBuffer("select ced.id, ced.parent_entity_id, ced.child_entity_id, ");
+                sql.append("ced.entity_att, ced.owner_key, ced.value, ced.creation_date, ced.updated_date, ced.orderIndex ");
+                sql.append("from entityData ced  ");
+                sql.append("inner join entity e on ced.parent_entity_id=e.id ");
+                sql.append("inner join entityData ed on ed.child_entity_id=e.id  ");
+                sql.append("and ed.parent_entity_id=? ");
+
+                stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                stmt.setFetchSize(Integer.MIN_VALUE);
+                
+                stmt.setLong(1, entityId);
+                
+                rs = stmt.executeQuery();
+                while (rs.next()) {
+                    Long id = rs.getBigDecimal(1).longValue();
+                    
+                    BigDecimal parentEntityBI = rs.getBigDecimal(2);
+                    Long parentEntityId = parentEntityBI==null?null:parentEntityBI.longValue();
+                    
+                    BigDecimal childEntityBI = rs.getBigDecimal(3);
+                    Long childEntityId = childEntityBI==null?null:childEntityBI.longValue();
+                    
+                    String entityAttrName = rs.getString(4);
+                    String ownerKey = rs.getString(5);
+                    String value = rs.getString(6);
+                    java.util.Date creationDate = rs.getTimestamp(7);
+                    java.util.Date updatedDate = rs.getTimestamp(8);
+                    Integer orderIndex = rs.getInt(9);
+                    
+                    Entity parentEntity = parentEntityId==null?null:new Entity(parentEntityId);
+                    Entity childEntity = childEntityId==null?null:new Entity(childEntityId);
+                    
+                    EntityData ed = new EntityData(id, entityAttrName, parentEntity, childEntity, ownerKey, value, creationDate, updatedDate, orderIndex);
+                    edMap.put(ed.getParentEntity().getId(), ed);
+                }
+            }
+            catch (SQLException e) {
+                throw new DaoException(e);
+            }
+            finally {
+                try {
+                    if (rs!=null) rs.close();
+                    if (stmt!=null) stmt.close();
+                    if (conn!=null) conn.close();   
+                }
+                catch (Exception e) {
+                    log.warn("Error closing JDBC connection",e);
+                }
+            }
+            
+            for(Entity entity : childEntities) {
+                // We have to evict the entity so that Hibernate does not try to manage our lazy EntityData collection
+                session.evict(entity);
+                entity.setEntityData(new HashSet<EntityData>(edMap.get(entity.getId())));
+            }
+            
+            return new HashSet(childEntities);
         } 
         catch (Exception e) {
             throw new DaoException(e);
@@ -1454,12 +1544,13 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         if (log.isTraceEnabled()) {
             log.trace("loadLazyEntity(subjectKey="+subjectKey+", entity="+entity+", recurse="+recurse+")");
         }
-        return loadLazyEntity(subjectKey, entity, recurse, new HashSet<Long>());
+        List<String> subjectKeyList = subjectKey==null?null:getSubjectKeys(subjectKey);
+        return loadLazyEntity(subjectKeyList, entity, recurse, new HashSet<Long>());
     }
 
-    public Entity loadLazyEntity(String subjectKey, Entity entity, boolean recurse, Set<Long> visited) throws DaoException {
+    public Entity loadLazyEntity(List<String> subjectKeyList, Entity entity, boolean recurse, Set<Long> visited) throws DaoException {
         if (log.isTraceEnabled()) {
-            log.trace("loadLazyEntity(subjectKey="+subjectKey+", entity="+entity+", recurse="+recurse+", visited.size="+visited.size()+")");
+            log.trace("loadLazyEntity(subjectKeyList="+subjectKeyList+", entity="+entity+", recurse="+recurse+", visited.size="+visited.size()+")");
         }
         
         if (entity==null) return null;
@@ -1467,13 +1558,13 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         visited.add(entity.getId());
         
         if (!EntityUtils.areLoaded(entity.getEntityData())) {
-            EntityUtils.replaceChildNodes(entity, getChildEntities(subjectKey, entity.getId()));
+            EntityUtils.replaceChildNodes(entity, getChildEntities(subjectKeyList, entity.getId()));
         }
 
         if (recurse) {
             for (EntityData ed : entity.getEntityData()) {
                 if (ed.getChildEntity() != null) {
-                    loadLazyEntity(subjectKey, ed.getChildEntity(), true, visited);
+                    loadLazyEntity(subjectKeyList, ed.getChildEntity(), true, visited);
                 }
             }
         }
@@ -1569,9 +1660,14 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     
     private void incrementChildCount(Entity entity, int count) throws DaoException {
         if (log.isTraceEnabled()) {
-            log.trace("incrementChildCount(entity.id="+entity.getId()+", count="+count+")");    
+            log.trace("incrementChildCount(entity="+entity+", count="+count+")");    
         }
-        entity.setNumChildren(entity.getNumChildren()+count);
+        if (entity.getNumChildren()==null) {
+            entity.setNumChildren(count);
+        }
+        else {
+            entity.setNumChildren(entity.getNumChildren()+count);    
+        }
         saveOrUpdate(entity);
     }
     
@@ -2438,7 +2534,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 	            query.setParameterList("subjectKeyList", subjectKeyList);
             }
             
-            return filterDuplicates(query.list());
+            return filter(query.list());
         } 
         catch (Exception e) {
             throw new DaoException(e);
@@ -2452,7 +2548,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     	
     	List<Long> entityIds = new ArrayList<Long>();
     	entityIds.add(entityId);
-    	return filterDuplicates(getAnnotationsByEntityId(subjectKey, entityIds));
+    	return filter(getAnnotationsByEntityId(subjectKey, entityIds));
     }
     
     public List<Entity> getAnnotationsByEntityId(String subjectKey, List<Long> entityIds) throws DaoException {
@@ -2490,7 +2586,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 	            query.setParameterList("subjectKeyList", subjectKeyList);
             }
             
-            return filterDuplicates(query.list());
+            return filter(query.list());
         } 
         catch (Exception e) {
             throw new DaoException(e);
@@ -2596,7 +2692,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 	            query.setParameterList("subjectKeyList", subjectKeyList);
             }
             // TODO: check userLogin if the session is private
-            return filterDuplicates(query.list());
+            return filter(query.list());
         }
         catch (Exception e) {
             throw new DaoException(e);
@@ -2625,7 +2721,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         	for(Entity entity : entities) {
         		loadLazyEntity(entity.getOwnerKey(), entity, true);
         	}
-        	return filterDuplicates(entities);
+        	return filter(entities);
         }
     }
 	
@@ -2647,7 +2743,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         	return new ArrayList<Entity>();
         }
         else {
-        	return filterDuplicates(getEntitiesInList(subjectKey, entityIds));	
+        	return filter(getEntitiesInList(subjectKey, entityIds));	
         }
     }
 
@@ -3057,8 +3153,28 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         return addEntityToParent(parentEntity, alignedItemEntity, parentEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ITEM);
     }
 
+    private Entity filter(Object obj) {
+        return filter(obj, true);
+    }
+
+    private Entity filter(Object obj, boolean loadEntityData) {
+        Entity entity = (Entity)obj;
+        entity.getEntityData().size();
+        return entity;
+    }
     
-    private List filterDuplicates(List list) {
-        return ImmutableSet.copyOf(list).asList();
+    private List filter(List list) {
+        return filter(list, true);
+    }
+    
+    private List filter(List list, boolean loadEntityData) {
+        List filtered = ImmutableSet.copyOf(list).asList();
+        if (loadEntityData) {
+            for(Object obj : filtered) {
+                Entity entity = (Entity)obj;
+                entity.getEntityData().size(); 
+            }
+        }
+        return filtered;
     }
 }

@@ -55,19 +55,20 @@ public class ComputeBaseDAO {
     }
 
     public Connection getJdbcConnection() throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("getJdbcConnection()");    
-        }
     	try {
     	    Connection connection = null;
             if (!StringUtils.isEmpty(jndiPath)) {
-                log.debug("getJdbcConnection() using these parameters: jndiPath="+jndiPath);
+                if (log.isTraceEnabled()) {
+                    log.trace("getJdbcConnection() using these parameters: jndiPath="+jndiPath);
+                }
                 Context ctx = new InitialContext();
                 DataSource ds = (DataSource) PortableRemoteObject.narrow(ctx.lookup(jndiPath), DataSource.class);
                 connection = ds.getConnection();
             }
             else {
-                log.debug("getJdbcConnection() using these parameters: driverClassName="+jdbcDriver+" url="+jdbcUrl+" user="+jdbcUser);
+                if (log.isTraceEnabled()) {
+                    log.trace("getJdbcConnection() using these parameters: driverClassName="+jdbcDriver+" url="+jdbcUrl+" user="+jdbcUser);
+                }
                 Class.forName(jdbcDriver);
                 connection = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPw);
             }

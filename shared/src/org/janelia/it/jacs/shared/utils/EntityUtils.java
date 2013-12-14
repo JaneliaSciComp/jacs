@@ -1,9 +1,22 @@
 package org.janelia.it.jacs.shared.utils;
 
-import java.util.*;
+import java.security.AccessControlException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.hibernate.Hibernate;
-import org.janelia.it.jacs.model.entity.*;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityActorPermission;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.user_data.Group;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,14 +38,29 @@ public class EntityUtils {
     }
 
     public static boolean isInitialized(Object obj) {
-    	return Hibernate.isInitialized(obj);
+        if (!Hibernate.isInitialized(obj)) {
+            return false;
+        }
+        if (obj instanceof Entity) {
+            Entity entity = (Entity)obj;
+            try {
+                if (entity.getName()==null) {
+                    return false;
+                }   
+            }
+            catch (AccessControlException e) {
+                // This is a forbidden entity
+                return true;
+            }
+        }
+    	return true;
     }
     
     public static boolean areLoaded(Collection<EntityData> eds) {
         for (EntityData entityData : eds) {
             Entity child = entityData.getChildEntity();
             if (child!=null) {
-                if (!Hibernate.isInitialized(entityData.getChildEntity())) {
+                if (!isInitialized(entityData.getChildEntity())) {
                     return false;
                 }
             }
