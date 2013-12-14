@@ -545,21 +545,20 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
             contextLogger.info("Populating maps for tile: "+tile.getName());
             
             for(Entity image : EntityUtils.getChildrenOfType(tile, EntityConstants.TYPE_LSM_STACK)) {
-                contextLogger.info("Populating maps for image: "+image.getName());
-                
                 // Don't trust entities in ProcessData, fetch a fresh copy
                 Entity lsmStack = entityBean.getEntityById(image.getId());
-
+                
                 // The actual filename of the LSM we're dealing with is not compressed
                 String lsmFilename = lsmStack.getName().replaceAll("\\.bz2$", "").replaceAll("\\.gz$", "");
                 
+                contextLogger.info("Populating maps for image: "+lsmFilename);
                 lsmEntityMap.put(lsmFilename, lsmStack);
                 
                 File jsonFile = new File(metadataFileNode.getDirectoryPath(), lsmFilename+".json");
                 try {
                     LSMMetadata metadata = LSMMetadata.fromFile(jsonFile);
                     contextLogger.info("Parsed metadata from: "+jsonFile);
-                    lsmMetadataMap.put(lsmStack.getName(), metadata);
+                    lsmMetadataMap.put(lsmFilename, metadata);
                 }
                 catch (Exception e) {
                     throw new Exception("Error parsing LSM metadata file: "+jsonFile,e);
