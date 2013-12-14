@@ -551,7 +551,10 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                 Entity lsmStack = entityBean.getEntityById(image.getId());
                 
                 lsmEntityMap.put(lsmStack.getName(), lsmStack);
-                File jsonFile = new File(metadataFileNode.getDirectoryPath(), lsmStack.getName()+".json");
+                
+                String lsmFilename = lsmStack.getName().replaceAll("\\.bz2$", "");
+                
+                File jsonFile = new File(metadataFileNode.getDirectoryPath(), lsmFilename+".json");
                 try {
                     LSMMetadata metadata = LSMMetadata.fromFile(jsonFile);
                     contextLogger.info("Parsed metadata from: "+jsonFile);

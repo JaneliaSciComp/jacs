@@ -13,7 +13,8 @@ import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 import org.janelia.it.jacs.model.user_data.FileNode;
 
 /**
- * Copy archived LSMs over to a temporary directory in high performance storage.
+ * Determine paths of archived LSMs and their temporary location in high performance storage.
+ * If the LSMs are compressed using bzip2 or gzip, then they will be decompressed. 
  *   
  * Input variables:
  *   BULK_MERGE_PARAMETERS - LSM paths
@@ -27,6 +28,9 @@ import org.janelia.it.jacs.model.user_data.FileNode;
  */
 public class GetLsmFilePathsService implements IService {
 
+    private static final String EXTENSION_BZIP2 = ".bz2";
+    private static final String EXTENSION_GZIP = ".gz";
+    
 	protected Logger logger = Logger.getLogger(GetLsmFilePathsService.class);
 	
 	public void execute(IProcessData processData) throws ServiceException {
@@ -81,6 +85,12 @@ public class GetLsmFilePathsService implements IService {
 		if (sourceFile==null) return null;
     	File file = new File(sourceFile);
     	String targetFile = targetFileNode.getFilePath(file.getName());
+    	if (targetFile.endsWith(EXTENSION_BZIP2)) {
+    	    return targetFile.substring(0, targetFile.length()-EXTENSION_BZIP2.length());
+    	}
+        if (targetFile.endsWith(EXTENSION_GZIP)) {
+            return targetFile.substring(0, targetFile.length()-EXTENSION_GZIP.length());
+        }
     	return targetFile;
 	}
 }
