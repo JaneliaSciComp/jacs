@@ -1414,9 +1414,19 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 
             List<Entity> childEntities = filter(query.list(), false);
 
-            // These HQL statements should work, but they just return the EntityData id, and then lazy load during 
-            // iteration, which is definitely not what we want. So we have to do things manually with JDBC below.  
+            if (subjectKeyList==null) {
+                // Case 1: This method is being called locally, and we know that because it's bypassing authorization.
+                // In this case, we want to load the EntityDatas normally, using filter. This is because the SQL hack 
+                // below creates an object model that is detached from Hibernate.
+                return new HashSet(filter(childEntities));
+            }
             
+            // Case2: This method is being called remotely, and we know that because it's using authorization. 
+            // In this case we can use a trick to load the EntityDatas in a single query, rather than one by one. 
+            
+            // Note: Either of the HQL statements below _should_ work, but for whatever broken Hibernate reasoning, 
+            // they just return the EntityData id, and then lazy load during iteration, which doesn't gain us anything.
+
             //hql = new StringBuffer("select ced from EntityData ed ");
             //hql.append("inner join ed.childEntity ce ");
             //hql.append("inner join ce.entityData ced ");
@@ -1428,7 +1438,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             //hql.append("where ed.childEntity=pe ");
             //hql.append("and ed.parentEntity.id=? ");
 
-            // Bypassing Hibernate is not ideal, but the huge performance gain justifies it. 
+            // Therefore, we need to use JDBC. Bypassing Hibernate is not ideal, but the huge performance gain justifies it. 
             
             Multimap<Long,EntityData> edMap = HashMultimap.<Long,EntityData>create();
             Connection conn = null;
