@@ -7,6 +7,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
+import org.janelia.it.jacs.compute.util.ArchiveUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -130,11 +131,13 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
                     // Don't trust entities in ProcessData, fetch a fresh copy
                     lsmStack = entityBean.getEntityById(lsmStack.getId());
                     
-                    logger.info("Processing metadata for LSM: "+lsmStack.getName());
+                    String lsmFilename = ArchiveUtils.getDecompressedFilepath(lsmStack.getName());
                     
-                    Entity jsonEntity = jsonEntityMap.get(lsmStack.getName());
+                    logger.info("Processing metadata for LSM: "+lsmFilename);
+                    
+                    Entity jsonEntity = jsonEntityMap.get(lsmFilename);
                     if (jsonEntity==null) {
-                        logger.warn("  No JSON metadata file found for LSM: "+lsmStack.getName());
+                        logger.warn("  No JSON metadata file found for LSM: "+lsmFilename);
                         continue;
                     }
 

@@ -10,6 +10,7 @@ import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
+import org.janelia.it.jacs.compute.util.ArchiveUtils;
 import org.janelia.it.jacs.model.user_data.FileNode;
 
 /**
@@ -27,9 +28,6 @@ import org.janelia.it.jacs.model.user_data.FileNode;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class GetLsmFilePathsService implements IService {
-
-    private static final String EXTENSION_BZIP2 = ".bz2";
-    private static final String EXTENSION_GZIP = ".gz";
     
 	protected Logger logger = Logger.getLogger(GetLsmFilePathsService.class);
 	
@@ -85,12 +83,6 @@ public class GetLsmFilePathsService implements IService {
 		if (sourceFile==null) return null;
     	File file = new File(sourceFile);
     	String targetFile = targetFileNode.getFilePath(file.getName());
-    	if (targetFile.endsWith(EXTENSION_BZIP2)) {
-    	    return targetFile.substring(0, targetFile.length()-EXTENSION_BZIP2.length());
-    	}
-        if (targetFile.endsWith(EXTENSION_GZIP)) {
-            return targetFile.substring(0, targetFile.length()-EXTENSION_GZIP.length());
-        }
-    	return targetFile;
+    	return ArchiveUtils.getDecompressedFilepath(targetFile);
 	}
 }

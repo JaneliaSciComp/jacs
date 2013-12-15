@@ -14,6 +14,7 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
+import org.janelia.it.jacs.compute.util.ArchiveUtils;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -549,7 +550,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                 Entity lsmStack = entityBean.getEntityById(image.getId());
                 
                 // The actual filename of the LSM we're dealing with is not compressed
-                String lsmFilename = lsmStack.getName().replaceAll("\\.bz2$", "").replaceAll("\\.gz$", "");
+                String lsmFilename = ArchiveUtils.getDecompressedFilepath(lsmStack.getName());
                 
                 contextLogger.info("Populating maps for image: "+lsmFilename);
                 lsmEntityMap.put(lsmFilename, lsmStack);
