@@ -1447,7 +1447,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             try {
                 conn = getJdbcConnection();
 
-                StringBuffer sql = new StringBuffer("select ced.id, ced.parent_entity_id, ced.child_entity_id, ");
+                StringBuffer sql = new StringBuffer("select distinct ced.id, ced.parent_entity_id, ced.child_entity_id, ");
                 sql.append("ced.entity_att, ced.owner_key, ced.value, ced.creation_date, ced.updated_date, ced.orderIndex ");
                 sql.append("from entityData ced  ");
                 sql.append("inner join entity e on ced.parent_entity_id=e.id ");
@@ -1591,8 +1591,16 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         if (log.isTraceEnabled()) {
             log.trace("saveOrUpdateEntity(entity.id="+entity.getId()+")");    
         }
+        // Count the number of children. We can't just use entity.getChildren().size() because the same child may 
+        // have multiple roles (e.g referenced by multiple EntityDatas). 
+        int numChildren = 0;
+        for(EntityData ed : entity.getEntityData()) {
+            if (ed.getChildEntity()!=null) {
+                numChildren++;
+            }
+        }
+        entity.setNumChildren(numChildren);
         entity.setUpdatedDate(new Date());
-        entity.setNumChildren(entity.getChildren().size());
         saveOrUpdate(entity);
     }
 
