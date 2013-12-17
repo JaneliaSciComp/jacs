@@ -403,6 +403,18 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             throw new DaoException("input neuron doesn't contain annotation " + newParentAnnotationID);
         }
 
+        // is it already the parent?
+        if (annotation.getParentId().equals(newParentAnnotationID)) {
+            return;
+        }
+
+        // do NOT create cycles! new parent cannot be in original annotation's subtree:
+        for (TmGeoAnnotation testAnnotation: annotation.getSubTreeList()) {
+            if (newParentAnnotationID.equals(testAnnotation.getId())) {
+                return;
+            }
+        }
+
         // if annotation is a root annotation, change its attribute and save
         EntityData ed;
         try {
