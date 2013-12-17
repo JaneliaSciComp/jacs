@@ -3176,8 +3176,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     private Entity filter(Object obj, boolean loadEntityData) {
+        if (obj==null) return null;
         Entity entity = (Entity)obj;
-        entity.getEntityData().size();
+        if (loadEntityData && entity.getEntityData()!=null) {
+            entity.getEntityData().size(); // load entity data
+        }
         return entity;
     }
     
@@ -3189,8 +3192,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         List filtered = ImmutableSet.copyOf(list).asList();
         if (loadEntityData) {
             for(Object obj : filtered) {
-                Entity entity = (Entity)obj;
-                entity.getEntityData().size(); 
+                filter(obj, true);
             }
         }
         return filtered;
