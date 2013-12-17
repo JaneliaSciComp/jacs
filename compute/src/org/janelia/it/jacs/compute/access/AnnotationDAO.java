@@ -75,9 +75,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     /******************************************************************************************************************/
     
     private void preloadData() {
-        if (log.isTraceEnabled()) {
-            log.trace("preloadData()");    
-        }
         try {
             if (entityByName.isEmpty()) {
                 log.debug("preloadData(): preloading entity types");   
@@ -129,17 +126,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public EntityType getEntityTypeByName(String entityTypeName) {
-        if (log.isTraceEnabled()) {
-            log.trace("getEntityTypeByName(entityTypeName="+entityTypeName+")");
-        }
         preloadData();
         return entityByName.get(entityTypeName);    
     }
     
     public EntityAttribute getEntityAttributeByName(String attrName) {
-        if (log.isTraceEnabled()) {
-            log.trace("getEntityAttributeByName(attrName="+attrName+")");
-        }
         preloadData();
         return attrByName.get(attrName);    
     }
@@ -1678,7 +1669,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     
     private void incrementChildCount(Entity entity, int count) throws DaoException {
         if (log.isTraceEnabled()) {
-            log.trace("incrementChildCount(entity="+entity+", count="+count+")");    
+            log.trace("incrementChildCount(entity="+entity+"; numChildren="+entity.getNumChildren()+", count="+count+")");    
         }
         if (entity.getNumChildren()==null) {
             entity.setNumChildren(count);
@@ -1691,7 +1682,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     
     private void decrementChildCount(Entity entity, int count) throws DaoException {
         if (log.isTraceEnabled()) {
-            log.trace("decrementChildCount(entity.id="+entity.getId()+")");    
+            log.trace("decrementChildCount(entity="+entity+"; numChildren="+entity.getNumChildren()+", count="+count+")");    
         }
         int newNum = entity.getNumChildren()-1;
         if (newNum<0) {

@@ -63,8 +63,6 @@ public class ReuseSampleProcessingResultService extends AbstractEntityService {
                 entityBean.addEntityToParent(ownerKey, myPipelineRun.getId(), latestSp.getId(), myPipelineRun.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_RESULT);        
                 entityBean.saveOrUpdateEntity(myPipelineRun);
                 logger.info("Reusing sample processing result "+latestSp.getId()+" for "+sampleArea.getName()+" area in new pipeline run "+pipelineRunId);
-                processData.putItem("RESULT_ENTITY", latestSp);
-                logger.info("Putting '"+latestSp+"' in RESULT_ENTITY");
                 processData.putItem("RESULT_ENTITY_ID", latestSp.getId().toString());
                 logger.info("Putting '"+latestSp.getId()+"' in RESULT_ENTITY_ID");
                 processData.putItem("STITCHED_FILENAME", stitchedFilename);    

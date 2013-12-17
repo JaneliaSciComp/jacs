@@ -117,7 +117,6 @@
                     <input name="SAMPLE_ENTITY_ID"/>
                     <input name="PIPELINE_RUN_ENTITY_ID"/>
                     <input name="SAMPLE_AREA"/>
-                    <output name="RESULT_ENTITY"/>
                     <output name="STITCHED_FILENAME"/>
                     <output name="RUN_PROCESSING"/>
                     <output name="RESULT_ENTITY_ID"/>
@@ -129,7 +128,7 @@
                     <!-- Set the result for this sample area -->
                     <operation name="Set Sample Processing Results" processor="org.janelia.it.jacs.compute.service.entity.sample.SetSampleProcessingAreaService">
                         <input name="SAMPLE_AREA"/>
-                        <input name="RESULT_ENTITY"/>
+                        <input name="RESULT_ENTITY_ID"/>
                     </operation>
                     
                     <!-- Register MIP images -->
@@ -332,7 +331,6 @@
         			<input name="LSM_CHANNEL_MAPPING"/>
         			<input name="STITCHED_FILENAME"/>
         			<output name="RESULT_ENTITY_ID"/>
-        			<output name="RESULT_ENTITY"/>
         	    </operation>
             	    
         	    <!-- Register MIP images -->
@@ -345,7 +343,7 @@
                 <!-- Set the result for this sample area -->
                 <operation name="Set Sample Processing Results" processor="org.janelia.it.jacs.compute.service.entity.sample.SetSampleProcessingAreaService">
                     <input name="SAMPLE_AREA"/>
-                    <input name="RESULT_ENTITY"/>
+                    <input name="RESULT_ENTITY_ID"/>
                 </operation>
                 
         		<!-- Run analyses on unaligned results, if there are signal channels to analyze -->

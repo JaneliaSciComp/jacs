@@ -13,14 +13,12 @@ public class SetSampleProcessingAreaService extends AbstractEntityService {
 	
     public void execute() throws Exception {
 
-        AnatomicalArea sampleArea = (AnatomicalArea)processData.getItem("SAMPLE_AREA");
-        if (sampleArea==null) {
-            throw new IllegalArgumentException("SAMPLE_AREA may not be null");
-        }
+        AnatomicalArea sampleArea = (AnatomicalArea)data.getRequiredItem("SAMPLE_AREA");
         
-        Entity resultEntity = (Entity)processData.getItem("RESULT_ENTITY");
+        Long resultEntityId = data.getRequiredItemAsLong("RESULT_ENTITY_ID");
+        Entity resultEntity = entityBean.getEntityById(resultEntityId);
         if (resultEntity==null) {
-            throw new IllegalArgumentException("RESULT_ENTITY may not be null");
+            throw new IllegalArgumentException("Result entity does not exist: "+resultEntityId);
         }
         
         sampleArea.setSampleProcessingResultId(resultEntity.getId());
