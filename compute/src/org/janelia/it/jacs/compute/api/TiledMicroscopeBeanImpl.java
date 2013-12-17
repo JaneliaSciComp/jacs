@@ -93,6 +93,16 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    public void rerootNeurite(TmNeuron neuron, TmGeoAnnotation newRoot) throws ComputeException {
+        try {
+            _tiledMicroscopeDAO.rerootNeurite(neuron, newRoot);
+        } catch (Exception e) {
+            String errorString="Error calling rerootNeurite in DAO layer: " + e.getMessage();
+            _logger.error(errorString);
+            throw new ComputeException(errorString);
+        }
+    }
+
     public void updateGeometricAnnotation(TmGeoAnnotation geoAnnotation,
                                           int index, double x, double y, double z, String comment) throws ComputeException {
         try {

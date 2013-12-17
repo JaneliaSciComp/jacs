@@ -438,6 +438,69 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
     }
 
+    /**
+     * @param neuron = neuron containing annotation
+     * @param newRoot = annotation to make root in neurite within neuron
+     */
+    public void rerootNeurite(TmNeuron neuron, TmGeoAnnotation newRoot) throws DaoException {
+        if (newRoot == null || neuron == null) {
+            return;
+        }
+
+        if (!neuron.getGeoAnnotationMap().containsKey(newRoot.getId())) {
+            throw new DaoException(String.format("input neuron %d doesn't contain new root annotation %d",
+                    neuron.getId(), newRoot.getId()));
+        }
+
+        // is it already a root?
+        if (newRoot.getParent() == null) {
+            return;
+        }
+
+        // from input, follow parents up to current root, keeping them all
+        List<TmGeoAnnotation> parentList = new ArrayList<TmGeoAnnotation>();
+        TmGeoAnnotation testAnnotation = newRoot;
+        while (testAnnotation.getParent() != null) {
+            parentList.add(testAnnotation);
+            testAnnotation = testAnnotation.getParent();
+        }
+        TmGeoAnnotation oldRoot = testAnnotation;
+        parentList.add(testAnnotation);
+
+        try {
+            // change new root to GEO_ROOT entity data type; reset its parent
+            //  to the neuron (as one does for a root)
+            EntityData ed = (EntityData) computeDAO.genericLoad(EntityData.class, newRoot.getId());
+            ed.setEntityAttrName(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE);
+            String valueString = TmGeoAnnotation.toStringFromArguments(newRoot.getId(), neuron.getId(),
+                    newRoot.getIndex(), newRoot.getX(), newRoot.getY(), newRoot.getZ(), newRoot.getComment());
+            ed.setValue(valueString);
+            annotationDAO.saveOrUpdate(ed);
+
+            // reparent intervening annotations; skip the first item, which is the
+            //  new root (which we've already dealt with)
+            for (int i=1; i<parentList.size(); i++) {
+                // change the parent ID and save
+                TmGeoAnnotation ann = parentList.get(i);
+                Long newParentAnnotationID = parentList.get(i - 1).getId();
+                ed = (EntityData) computeDAO.genericLoad(EntityData.class, ann.getId());
+                valueString = TmGeoAnnotation.toStringFromArguments(ann.getId(), newParentAnnotationID,
+                    ann.getIndex(), ann.getX(), ann.getY(), ann.getZ(), ann.getComment());
+                ed.setValue(valueString);
+                annotationDAO.saveOrUpdate(ed);
+            }
+
+            // change old root to GEO_TREE entity data type
+            ed=(EntityData) computeDAO.genericLoad(EntityData.class, oldRoot.getId());
+            ed.setEntityAttrName(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE);
+            annotationDAO.saveOrUpdate(ed);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+    }
+
     public List<TmWorkspaceDescriptor> getWorkspacesForBrainSample(Long brainSampleId, String ownerKey) throws DaoException {
         try {
             // Validate sample
