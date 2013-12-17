@@ -698,6 +698,7 @@ public class EntityUtils {
 				|| EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_ENUMTEXT_ENUMID.equals(attrName)
 				|| EntityConstants.ATTRIBUTE_MASK_IMAGE.equals(attrName)
 				|| EntityConstants.ATTRIBUTE_CHAN_IMAGE.equals(attrName)
+				|| EntityConstants.ATTRIBUTE_SOURCE_SEPARATION.equals(attrName)
 				) {
 			return true;
 		}
