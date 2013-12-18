@@ -1137,51 +1137,52 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             if (entityCommaList.length()>0) entityCommaList.append(",");
             entityCommaList.append(id);
         }
+
+        StringBuffer sql = new StringBuffer();
+        
+        int i = 1;
+        String prevTable = "i";
+        String prevFk = "id";
+        String targetIdAlias = "i.id";
+        
+        for(String attr : upProjection) {
+            sql.append("join entityData ed"+i+" on ed"+i+".child_entity_id = "+prevTable+"."+prevFk+" \n"); 
+            sql.append("join entity e"+i+" on ed"+i+".parent_entity_id = e"+i+".id \n");
+            prevTable = "ed"+i;
+            prevFk = "parent_entity_id";
+            targetIdAlias = prevTable+".parent_entity_id";
+            i++;
+        }
+        
+        for(String attr : downProjection) {
+            sql.append("join entityData ed"+i+" on ed"+i+".parent_entity_id = "+prevTable+"."+prevFk+" \n");    
+            sql.append("join entity e"+i+" on ed"+i+".child_entity_id = e"+i+".id \n");
+            prevTable = "ed"+i;
+            prevFk = "child_entity_id";
+            targetIdAlias = prevTable+".child_entity_id";
+            i++;
+        }
+        
+        sql.insert(0, "select distinct i.id,"+targetIdAlias+" from entity i \n");
+        sql.append("where i.id in ("+entityCommaList+") \n");
+        
+        i = 1;
+        
+        for(String type : upProjection) {
+            sql.append("and e"+i+".entity_type = '"+type+"' \n"); 
+            i++;
+        }
+
+        for(String type : downProjection) {
+            sql.append("and e"+i+".entity_type = '"+type+"' \n"); 
+            i++;
+        }
+        
+        sql.append("and "+targetIdAlias+" is not null");
         
         Connection conn = null;
         PreparedStatement stmt = null;
         try {
-            StringBuffer sql = new StringBuffer();
-            
-            int i = 1;
-            String prevTable = "i";
-            String prevFk = "id";
-            String targetIdAlias = "i.id";
-            
-            for(String attr : upProjection) {
-                sql.append("join entityData ed"+i+" on ed"+i+".child_entity_id = "+prevTable+"."+prevFk+" \n"); 
-                sql.append("join entity e"+i+" on ed"+i+".parent_entity_id = e"+i+".id \n");
-                prevTable = "ed"+i;
-                prevFk = "parent_entity_id";
-                targetIdAlias = prevTable+".parent_entity_id";
-                i++;
-            }
-            
-            for(String attr : downProjection) {
-                sql.append("join entityData ed"+i+" on ed"+i+".parent_entity_id = "+prevTable+"."+prevFk+" \n");    
-                sql.append("join entity e"+i+" on ed"+i+".child_entity_id = e"+i+".id \n");
-                prevTable = "ed"+i;
-                prevFk = "child_entity_id";
-                targetIdAlias = prevTable+".child_entity_id";
-                i++;
-            }
-            
-            sql.insert(0, "select distinct i.id,"+targetIdAlias+" from entity i \n");
-            sql.append("where i.id in ("+entityCommaList+") \n");
-            
-            i = 1;
-            
-            for(String type : upProjection) {
-                sql.append("and e"+i+".entity_type = "+type+" \n"); 
-                i++;
-            }
-
-            for(String type : downProjection) {
-                sql.append("and e"+i+".entity_type = "+type+" \n"); 
-                i++;
-            }
-            
-            sql.append("and "+targetIdAlias+" is not null");
             
             log.debug(sql);
             
@@ -1196,6 +1197,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             }
         }
         catch (SQLException e) {
+            log.error("Error executing SQL: ["+sql+"]");
             throw new DaoException(e);
         }
         finally {
