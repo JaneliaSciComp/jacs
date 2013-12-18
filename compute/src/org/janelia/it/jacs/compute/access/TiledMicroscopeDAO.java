@@ -32,33 +32,22 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         log.debug("createTiledMicroscopeEntityTypes() - TiledMicroscopeDAO layer");
 
         try {
-
-            log.debug("Creating attributes");
-            createEntityAttribute(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE);
-            createEntityAttribute(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE);
-            createEntityAttribute(EntityConstants.ATTRIBUTE_ANCHORED_PATH);
-            createEntityAttribute(EntityConstants.ATTRIBUTE_PROPERTY);
-            createEntityAttribute(EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS);
-
             log.debug("Creating Workspace entity");
-            Set<String> workspaceAttributeSet = new HashSet<String>();
-            workspaceAttributeSet.add(EntityConstants.ATTRIBUTE_ENTITY);
-            workspaceAttributeSet.add(EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS);
-            createEntityType(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE, workspaceAttributeSet);
+            annotationDAO.createNewEntityType(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE);
+            annotationDAO.createNewEntityAttr(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE, EntityConstants.ATTRIBUTE_ENTITY);
+            annotationDAO.createNewEntityAttr(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE, EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS);
 
             log.debug("Creating Neuron entity");
-            Set<String> neuronAttributeSet = new HashSet<String>();
-            neuronAttributeSet.add(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE);
-            createEntityType(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON, neuronAttributeSet);
-
+            annotationDAO.createNewEntityType(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON);
+            annotationDAO.createNewEntityAttr(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON, EntityConstants.ATTRIBUTE_ANCHORED_PATH);
+            annotationDAO.createNewEntityAttr(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON, EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE);
+            annotationDAO.createNewEntityAttr(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON, EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE);
+            
             log.debug("Creating PropertySet entity");
-            Set<String> propertiesAttributeSet = new HashSet<String>();
-            propertiesAttributeSet.add(EntityConstants.ATTRIBUTE_PROPERTY);
-            createEntityType(EntityConstants.TYPE_PROPERTY_SET, propertiesAttributeSet);
-
+            annotationDAO.createNewEntityType(EntityConstants.TYPE_PROPERTY_SET);
+            annotationDAO.createNewEntityAttr(EntityConstants.TYPE_PROPERTY_SET, EntityConstants.ATTRIBUTE_PROPERTY);
         }
         catch (Exception e) {
-            e.printStackTrace();
             throw new DaoException(e);
         }
 
