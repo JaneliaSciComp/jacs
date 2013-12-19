@@ -16,10 +16,10 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     @XmlElement
     private String name;
     
-    @XmlElement
+    @XmlElement(name="user")
     private String ownerKey;
     
-    @XmlElement
+    @XmlElement(name="entityType")
     private String entityTypeName;
     
     @XmlTransient
@@ -28,7 +28,6 @@ public class Entity  implements java.io.Serializable, IsSerializable {
     @XmlTransient
     private Date updatedDate;
 
-    @XmlElement
     private Integer numChildren = 0;
     
     @XmlElement(name="entityData")

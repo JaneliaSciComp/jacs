@@ -19,7 +19,7 @@ public class EntityData implements java.io.Serializable, IsSerializable {
 	@XmlAttribute(name="guid")
     private Long id;
 
-	@XmlElement
+	@XmlElement(name="entityAttribute")
     private String entityAttrName;
 	
     @XmlTransient
@@ -28,9 +28,12 @@ public class EntityData implements java.io.Serializable, IsSerializable {
 	@XmlElement
     private Entity childEntity;
 
-	@XmlElement
+    @XmlElement(name="user")
     private String ownerKey;
 
+    @XmlElement(name="entityStatus")
+    private String entityStatus = "";
+    
 	@XmlElement
     private String value;
 	
