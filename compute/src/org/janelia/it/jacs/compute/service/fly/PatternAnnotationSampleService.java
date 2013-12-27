@@ -1,12 +1,5 @@
 package org.janelia.it.jacs.compute.service.fly;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -30,6 +23,13 @@ import org.janelia.it.jacs.model.user_data.entity.PatternAnnotationResultNode;
 import org.janelia.it.jacs.model.user_data.entity.ScreenSampleResultNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * Created by IntelliJ IDEA.
  * User: murphys
@@ -52,7 +52,8 @@ public class PatternAnnotationSampleService  implements IService {
     final public String MODE_SETUP="SETUP";
     final public String MODE_COMPLETE="COMPLETE";
 
-    protected String patternAnnotationResourceDir=SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationResourceDir");
+    protected String patternAnnotationResourceDir=SystemConfigurationProperties.getString("FileStore.CentralDir.Archived")+
+                SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationResourceDir");
     protected String patternChannel=SystemConfigurationProperties.getString("FlyScreen.AlignedStackPatternChannel");
 
     protected EntityBeanLocal entityBean;

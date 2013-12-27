@@ -1,13 +1,12 @@
 package org.janelia.it.jacs.shared.annotation;
 
-import java.io.*;
-import java.util.*;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
+
+import java.io.*;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -55,7 +54,8 @@ public class RelativePatternAnnotationDataManager extends PatternAnnotationDataM
     }
 
     private static File getPatternAnnotationSummaryFile() {
-        String resourceDirString= SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationResourceDir");
+        String resourceDirString=SystemConfigurationProperties.getString("FileStore.CentralDir.Archived")+
+                        "/system"+SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationResourceDir");
         String quantifierSummaryFilename=SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationQuantifierSummaryFile");
         File patternAnnotationSummaryFile=new File(resourceDirString, quantifierSummaryFilename);
         return patternAnnotationSummaryFile;

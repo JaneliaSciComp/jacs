@@ -1,38 +1,28 @@
 package org.janelia.it.jacs.compute.service.annotation;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.api.EntityBeanLocal;
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
-import org.janelia.it.jacs.compute.service.screen.FlyScreenSampleService;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.annotation.CompartmentAnnotation3DTask;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.NamedFileNode;
 import org.janelia.it.jacs.model.user_data.entity.PatternAnnotationResultNode;
-import org.janelia.it.jacs.model.user_data.entity.ScreenSampleResultNode;
-import org.janelia.it.jacs.shared.utils.FileUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.math.BigInteger;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 /**
@@ -69,7 +59,8 @@ public class CompartmentAnnotation3DService extends AbstractEntityService {
     protected Date createDate;
 
 
-    protected String compartmentAnnotationResourceDir=SystemConfigurationProperties.getString("CompartmentAnnotation.ResourceDir");
+    protected String compartmentAnnotationResourceDir=SystemConfigurationProperties.getString("FileStore.CentralDir.Archived")+
+            SystemConfigurationProperties.getString("CompartmentAnnotation.ResourceDir");
 
 
     public void execute() throws Exception {

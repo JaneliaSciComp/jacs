@@ -36,11 +36,14 @@ public class FuhuiPatternAnnotationDataManager extends PatternAnnotationDataMana
         DataDescriptor probabilityDescriptor = new DataDescriptor(PROBABILITY_DATA, 0.0f, 1.0f, DataDescriptor.Type.CONTINUOUS);
         descriptorList.add(categoryDescriptor);
         descriptorList.add(probabilityDescriptor);
-        String categoryFilename=SystemConfigurationProperties.getString("FlyScreen.FuhuiCategoryPatternAnnotationQuantifierSummaryFile");
+        String categoryFilename=SystemConfigurationProperties.getString("FileStore.CentralDir.Archived")+
+                    SystemConfigurationProperties.getString("FlyScreen.FuhuiCategoryPatternAnnotationQuantifierSummaryFile");
         categorySummaryFile=new File(categoryFilename);
-        String probabilityFilename=SystemConfigurationProperties.getString("FlyScreen.FuhuiProbabilityPatternAnnotationQuantifierSummaryFile");
+        String probabilityFilename=SystemConfigurationProperties.getString("FileStore.CentralDir.Archived")+
+                    SystemConfigurationProperties.getString("FlyScreen.FuhuiProbabilityPatternAnnotationQuantifierSummaryFile");
         probabilitySummaryFile=new File(probabilityFilename);
-        String sampleIdFilename=SystemConfigurationProperties.getString("FlyScreen.FuhuiSampleIdList");
+        String sampleIdFilename=SystemConfigurationProperties.getString("FileStore.CentralDir.Archived")+
+                    SystemConfigurationProperties.getString("FlyScreen.FuhuiSampleIdList");
         sampleIdFile=new File(sampleIdFilename);
     }
 
