@@ -117,7 +117,7 @@ public class SampleCleaningService extends AbstractEntityService {
     	for(Entity entity : toDelete) {
     		long numFound = annotationBean.getNumDescendantsAnnotated(entity.getId());
     		if (numFound>0) {
-            	logger.info("    Rejecting candidate "+entity.getId()+" because it and its ancestors have "+numFound+" annotations");
+            	logger.info("    Rejecting candidate "+entity.getId()+" because it and its descendants have "+numFound+" annotations");
             	continue;
     		}
     		toReallyDelete.add(entity);
