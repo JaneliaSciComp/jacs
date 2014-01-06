@@ -5,7 +5,9 @@
       <configuration>
         <datasource-map>
           <unit-entry name="scripts/dma/hibernate.cfg.xml" />
+          <unit-entry name="sessionFactory" value="c3p0DataSource" />
         </datasource-map>
+        <naming-strategy-map />
         <deploymentDescriptor name="hibernate.cfg.xml" url="file://$MODULE_DIR$/scripts/dma/hibernate.cfg.xml" />
       </configuration>
     </facet>
