@@ -35,7 +35,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="Model" />
-    <orderEntry type="library" name="JUnit" level="project" />
+    <orderEntry type="library" name="JUnit-3.8" level="project" />
     <orderEntry type="library" name="Lucene" level="project" />
     <orderEntry type="library" name="Hibernate" level="project" />
     <orderEntry type="library" name="Apache Commons" level="project" />
