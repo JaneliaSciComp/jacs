@@ -82,7 +82,12 @@ class JacsUtils {
     }
 
     def getRootEntity(String ownerKey, String topLevelFolderName) {
-        return a.getCommonRootFolderByName(ownerKey, topLevelFolderName, false);
+        for(Entity commonRoot : a.getCommonRootEntities(ownerKey)) {
+            if (commonRoot.name.equals(topLevelFolderName)) {
+                return commonRoot;
+            }
+        }
+        return null;
     }
 
     def createRootEntity(String topLevelFolderName) {
