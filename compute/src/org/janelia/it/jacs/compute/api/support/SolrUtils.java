@@ -4,6 +4,8 @@ package org.janelia.it.jacs.compute.api.support;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.janelia.it.jacs.shared.utils.StringUtils;
+
 /**
  * Utilities used by the server, which are likewise useful in the client.
  * 
@@ -39,6 +41,16 @@ public class SolrUtils {
 	 */
     public static String getDynamicFieldName(String name) {
     	return getFormattedName(name)+"_txt";
+    }
+    /**
+     * Get the SOLR field name from an attribute name. For example, "Tiling Pattern" -> "tiling_pattern_txt"
+     * @param name
+     * @return
+     */
+    public static String getAttributeNameFromSolrFieldName(String solrFieldName) {
+        if (solrFieldName==null) return null;
+        String name = solrFieldName.replaceFirst("_txt", "");
+        return StringUtils.underscoreToTitleCase(name);
     }
     
     /**
