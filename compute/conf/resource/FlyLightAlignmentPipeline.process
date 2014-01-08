@@ -32,6 +32,7 @@
                 <operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
                     <input name="RESULT_ENTITY_ID"/>
                     <input name="DEFAULT_IMAGE_FILENAME" value="$V{ALIGNED_FILENAME}"/>
+                    <input name="PIPELINE_RUN_ENTITY_ID"/>
                 </operation>
         
             </sequence>
@@ -121,6 +122,7 @@
     		<operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
     			<input name="RESULT_ENTITY_ID"/>
     			<input name="DEFAULT_IMAGE_FILENAME" value="$V{ALIGNED_FILENAME}"/>
+                <input name="PIPELINE_RUN_ENTITY_ID"/>
     	    </operation>
     	    
     	    <!-- Run analyses on aligned results, if there are signal channels to analyze -->

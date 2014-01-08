@@ -131,22 +131,6 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
     
-    public void runResultImageRegistration(String resultId) {
-        try {
-            String processName = "ResultImageRegistration";
-            String displayName = "Result Image Registration";
-            Entity result = EJBFactory.getLocalEntityBean().getEntityById(resultId);
-            if (result==null) throw new IllegalArgumentException("Entity with id "+resultId+" does not exist");
-            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-            taskParameters.add(new TaskParameter("result entity id", resultId, null)); 
-            String user = result.getOwnerKey();
-            saveAndRunTask(user, processName, displayName, taskParameters);
-        } 
-        catch (Exception ex) {
-            log.error("Error running pipeline", ex);
-        }
-    }
-
     public void runSampleImageRegistration(String user) {
         try {
             String processName = "SampleImageRegistration";

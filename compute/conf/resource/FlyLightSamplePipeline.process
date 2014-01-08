@@ -69,6 +69,12 @@
             <output name="REUSE_ALIGNMENT"/>
 	    </operation>
 
+        <!-- Set our status -->
+        <operation name="Set Status" processor="org.janelia.it.jacs.compute.service.entity.SetEntityStatusService">
+            <input name="ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
+            <input name="STATUS" value="Processing"/>
+        </operation>
+        
         <!-- By default, skip alignment if any lamina tiles are present. -->
         <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
             <input name="SKIP_ALIGNMENT_TILE_FILTER"/>
@@ -135,6 +141,7 @@
                     <operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
                         <input name="RESULT_ENTITY_ID"/>
                         <input name="DEFAULT_IMAGE_FILENAME" value="$V{STITCHED_FILENAME}"/>
+                        <input name="PIPELINE_RUN_ENTITY_ID"/>
                     </operation>
                     
                 </sequence>
@@ -338,6 +345,7 @@
         			<input name="RESULT_ENTITY_ID"/>
         			<input name="DEFAULT_IMAGE_FILENAME" value="$V{STITCHED_FILENAME}"/>
         			<output name="DEFAULT_IMAGE_ID"/>
+        			<input name="PIPELINE_RUN_ENTITY_ID"/>
         	    </operation>
     		
                 <!-- Set the result for this sample area -->
@@ -433,8 +441,20 @@
             <input name="SAMPLE_ENTITY_ID"/>
         </include>
         
+        <!-- Set our status -->
+        <operation name="Set Status" processor="org.janelia.it.jacs.compute.service.entity.SetEntityStatusService">
+            <input name="ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
+            <input name="STATUS" value="Complete"/>
+        </operation>
+        
 	    <exceptionHandler>
 	    
+            <!-- Set our status -->
+            <operation name="Set Status" processor="org.janelia.it.jacs.compute.service.entity.SetEntityStatusService">
+                <input name="ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
+                <input name="STATUS" value="Error"/>
+            </operation>
+            
 		    <!-- Log the exception into the Pipeline Run -->
 			<operation name="Handle exceptions" processor="org.janelia.it.jacs.compute.service.entity.sample.CreateErrorEntityService">
 				<input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>

@@ -164,6 +164,7 @@
                 <input name="PIPELINE_RUN_ENTITY_ID"/>
                 <input name="RESULT_ENTITY_ID"/>
                 <input name="DEFAULT_IMAGE_FILENAME" value="$V{STACK_FILENAME}"/>
+                <input name="PIPELINE_RUN_ENTITY_ID"/>
             </operation>
 
             <!-- Run analyses on unaligned results -->
@@ -223,6 +224,7 @@
                             <input name="PIPELINE_RUN_ENTITY_ID"/>
                             <input name="RESULT_ENTITY_ID"/>
                             <input name="DEFAULT_IMAGE_FILENAME" value="$V{RAW_RESULT_FILE}"/>
+                            <input name="PIPELINE_RUN_ENTITY_ID"/>
                         </operation>
                     </sequence>
                 </sequence>

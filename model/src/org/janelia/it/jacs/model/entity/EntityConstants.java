@@ -8,6 +8,8 @@ package org.janelia.it.jacs.model.entity;
  */
 public class EntityConstants {
 
+    public static final String VALUE_MARKED                          = "Marked for Rerun";
+    
     // Entity Status
     public static final String STATUS_DEPRECATED                     = "Deprecated";
     public static final String STATUS_VALID                          = "Valid";
@@ -75,6 +77,7 @@ public class EntityConstants {
     public static final String TYPE_PROPERTY_SET                     = "Property Set";
     
     // Entity Data Attributes
+    public static final String ATTRIBUTE_STATUS                              = "Status";
     public static final String ATTRIBUTE_LINE                                = "Line";
     public static final String ATTRIBUTE_SLIDE_CODE                          = "Slide Code";
     public static final String ATTRIBUTE_AGE                                 = "Age";
@@ -188,7 +191,6 @@ public class EntityConstants {
     public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM                = "Enum";
     public static final String VALUE_ONTOLOGY_TERM_TYPE_TEXT                = "Text";
     public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM_TEXT           = "EnumText";
-
 
     /**
      * @deprecated Not used. This will be removed someday.

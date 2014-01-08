@@ -14,7 +14,6 @@ public interface SampleDataManagerMBean {
     public void runSampleTrashCompactor(String user, Boolean testRun); 
     public void runSampleDataCompression(String user, Boolean testRun);
     public void runSingleSampleDataCompression(String sampleId);
-    public void runResultImageRegistration(String resultId);
     public void runSampleImageRegistration(String user);
     public void runSingleSampleArchival(String sampleEntityId);  
     public void runCompleteSampleArchival(String user); 

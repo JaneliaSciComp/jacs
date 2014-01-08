@@ -8,6 +8,7 @@ import java.util.Set;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
@@ -16,7 +17,8 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  *   RUN_MODE (Mode to use for including entities)
  *     NONE - Don't run any samples.
  *     NEW - Include Samples which have no Pipeline Runs. 
- *     INCOMPLETE - Include Samples which have no Pipeline Runs, and Samples which have errors in their latest Pipeline Runs.
+ *     ERROR - Include Samples which have errors in their latest Pipeline Runs.
+ *     MARKED - Include Samples which have been Marked for Rerun by their owner.
  *     ALL - Include every Sample.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
@@ -24,16 +26,17 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
 public class SampleTraversalService extends AbstractEntityService {
 
 	public static final String RUN_MODE_NONE = "NONE";
-	public static final String RUN_MODE_NEW = "NEW";
-	public static final String RUN_MODE_INCOMPLETE = "INCOMPLETE";
 	public static final String RUN_MODE_ALL = "ALL";
+	public static final String RUN_MODE_NEW = "NEW";
+	public static final String RUN_MODE_ERROR = "ERROR";
+	public static final String RUN_MODE_MARKED = "MARKED";
 
     protected boolean includeParentSamples = false;
     protected boolean includeChildSamples = true;
-    protected boolean includeAllSamples;
-    protected boolean includeNewSamples;
-    protected boolean includeErrorSamples;
-   
+    protected boolean includeAllSamples = false;
+    protected boolean includeNewSamples = false;
+    protected boolean includeErrorSamples = false;
+    protected boolean includeMarkedSamples = false;
 
     public void execute() throws Exception {
     	
@@ -71,68 +74,73 @@ public class SampleTraversalService extends AbstractEntityService {
         else {
             throw new IllegalArgumentException("Unrecognized value for PARENT_OR_CHILDREN:"+parentOrChildren);
         }
+
+        List<Object> outObjects = new ArrayList<Object>();
         
         String dataSetName = (String) processData.getItem("DATA_SET_NAME");
         logger.info("    dataSetName="+dataSetName);
         
-        String runMode = (String)processData.getItem("RUN_MODE");
-        logger.info("    runMode="+runMode);
+        String runModeList = (String)processData.getItem("RUN_MODE");
+        logger.info("    runMode="+runModeList);
         
-        if (RUN_MODE_NEW.equals(runMode)) {
-            includeNewSamples = true;
-        } 
-        else if (RUN_MODE_INCOMPLETE.equals(runMode)) {
-        	includeNewSamples = true;
-            includeErrorSamples = true;
-        }
-        else if (RUN_MODE_ALL.equals(runMode)) {
-            includeAllSamples = true;
-        }
-        else if (RUN_MODE_NONE.equals(runMode)) {
-            // No samples will be selected
-        }
-        else {
-            throw new IllegalStateException("Illegal mode: "+runMode);    
-        }
-        
-        List<Object> outObjects = new ArrayList<Object>();
-        
-        if (!RUN_MODE_NONE.equals(runMode)) {
+        for(String runMode : Task.listOfStringsFromCsvString(runModeList)) {
+            if (RUN_MODE_NEW.equals(runMode)) {
+                includeNewSamples = true;
+            } 
+            else if (RUN_MODE_ERROR.equals(runMode)) {
+                includeErrorSamples = true;
+            }
+            else if (RUN_MODE_MARKED.equals(runMode)) {
+                includeMarkedSamples = true;
+            }
+            else if (RUN_MODE_ALL.equals(runMode)) {
+                includeAllSamples = true;
+            }
+            else if (RUN_MODE_NONE.equals(runMode)) {
+                // No samples will be selected
 
-            List<Entity> entities;
-            if (dataSetName == null) {
-                entities = entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_SAMPLE);
+                logger.info("Putting empty list ids in "+outvar);
+                processData.putItem(outvar, outObjects);
+                return;
+            }
+            else {
+                throw new IllegalStateException("Illegal mode: "+runMode);    
+            }
+        }
+    
+        List<Entity> entities;
+        if (dataSetName == null) {
+            entities = entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_SAMPLE);
+        } 
+        else {
+            List<Entity> dataSets = entityBean.getUserEntitiesByNameAndTypeName(ownerKey, dataSetName, EntityConstants.TYPE_DATA_SET);
+            if (dataSets.size() == 1) {
+                Entity dataSetEntity = dataSets.get(0);
+                String dataSetIdentifier = dataSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+                entities = entityBean.getUserEntitiesWithAttributeValueAndTypeName(ownerKey,
+                        EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier,
+                        EntityConstants.TYPE_SAMPLE);
             } 
             else {
-                List<Entity> dataSets = entityBean.getUserEntitiesByNameAndTypeName(ownerKey, dataSetName, EntityConstants.TYPE_DATA_SET);
-                if (dataSets.size() == 1) {
-                    Entity dataSetEntity = dataSets.get(0);
-                    String dataSetIdentifier = dataSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-                    entities = entityBean.getUserEntitiesWithAttributeValueAndTypeName(ownerKey,
-                            EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier,
-                            EntityConstants.TYPE_SAMPLE);
-                } 
-                else {
-                    throw new IllegalArgumentException("found " + dataSets.size() + " entities for " + ownerKey
-                            + " data set '" + dataSetName + "' when only one is expected");
-                }
-
+                throw new IllegalArgumentException("found " + dataSets.size() + " entities for " + ownerKey
+                        + " data set '" + dataSetName + "' when only one is expected");
             }
 
-			logger.info("Found " + entities.size() + " Samples. Filtering with rules:");
-			logger.info("    includeNewSamples="+includeNewSamples);
-			logger.info("    includeErrorSamples="+includeErrorSamples);
-			logger.info("    includeAllSamples="+includeAllSamples);
-			logger.info("    includeChildSamples="+includeChildSamples);
-			logger.info("    includeParentSamples="+includeParentSamples);
-			
-	    	for(Entity entity : entities) {
-	    	    List<Entity> included = getIncludedSamples(entity);
-	    		for(Entity sample : included) {
-	    			outObjects.add(outputObjects ? sample : sample.getId().toString());	
-	    		}
-	    	}
         }
+
+		logger.info("Found " + entities.size() + " Samples. Filtering with rules:");
+		logger.info("    includeNewSamples="+includeNewSamples);
+		logger.info("    includeErrorSamples="+includeErrorSamples);
+		logger.info("    includeAllSamples="+includeAllSamples);
+		logger.info("    includeChildSamples="+includeChildSamples);
+		logger.info("    includeParentSamples="+includeParentSamples);
+		
+    	for(Entity entity : entities) {
+    	    List<Entity> included = getIncludedSamples(entity);
+    		for(Entity sample : included) {
+    			outObjects.add(outputObjects ? sample : sample.getId().toString());	
+    		}
+    	}
 
 		logger.info("Putting "+outObjects.size()+" ids in "+outvar);
     	processData.putItem(outvar, outObjects);
@@ -175,8 +183,8 @@ public class SampleTraversalService extends AbstractEntityService {
                 }
             }
             
-            if (includeParentSamples && !childrenIncluded.isEmpty()) {
-                // The parent sample should be included if any of the children samples are included
+            if (includeParentSamples && (!childrenIncluded.isEmpty() || isMarked(sample))) {
+                // The parent sample should be included if any of the children samples are included, or if it's marked
                 included.add(sample);
                 logger.info("Included "+sample+" (parent sample)");
             }
@@ -202,8 +210,18 @@ public class SampleTraversalService extends AbstractEntityService {
         return included;
     }
     
+    private boolean isMarked(Entity sample) {
+        String status = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
+        return (status != null && EntityConstants.VALUE_MARKED.equals(status));
+    }
+    
     private boolean includeSample(Entity sample) throws Exception {
 
+        // Marking overrides a block, so we check it first
+        if (includeMarkedSamples && isMarked(sample)) {
+            return true;
+        }
+        
         if (sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_PROCESSING_BLOCK)!=null) return false;
         
         if (includeAllSamples) {
@@ -216,6 +234,7 @@ public class SampleTraversalService extends AbstractEntityService {
                 return true;
             }
         }
+        
         if (includeErrorSamples) {
             Entity pipelineRun = EntityUtils.getLatestChildOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
             if (pipelineRun!=null) {

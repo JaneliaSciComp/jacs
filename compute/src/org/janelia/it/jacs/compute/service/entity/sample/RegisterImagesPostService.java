@@ -75,7 +75,7 @@ public class RegisterImagesPostService extends AbstractEntityService {
     			Entity result = pred.getChildEntity();
 
     			logger.info("  Processing result: "+result.getName()+" (id="+result.getId()+")");
-                resultImageRegService.execute(processData, result, null);
+                resultImageRegService.execute(processData, pipelineRun, result, null);
     		}
     	}
     }

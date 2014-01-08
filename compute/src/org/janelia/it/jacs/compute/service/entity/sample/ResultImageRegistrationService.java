@@ -28,6 +28,8 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  * 
  * Parameters:
  *   RESULT_ENTITY_ID - the id of the root entity to look for 2d images within
+ *   PIPELINE_RUN_ENTITY_ID - the id of the pipeline run entity to register with 
+ *                            (needed because a result may be reused across multiple pipeline runs)
  *   DEFAULT_IMAGE_FILENAME - the file to use as the "Default 2D Image" for the root entity
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
@@ -40,22 +42,24 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	
 	public void execute() throws Exception {
 
-        String defaultImageFilename = (String)processData.getItem("DEFAULT_IMAGE_FILENAME");
+        String defaultImageFilename = data.getItemAsString("DEFAULT_IMAGE_FILENAME");
     	
-    	String resultEntityId = (String)processData.getItem("RESULT_ENTITY_ID");
-    	if (StringUtils.isEmpty(resultEntityId)) {
-    		throw new IllegalArgumentException("RESULT_ENTITY_ID may not be null");
-    	}
-    	
-    	Entity resultEntity = entityBean.getEntityTree(new Long(resultEntityId));
+    	Long resultEntityId = data.getRequiredItemAsLong("RESULT_ENTITY_ID");
+    	Entity resultEntity = entityBean.getEntityTree(resultEntityId);
     	if (resultEntity == null) {
     		throw new IllegalArgumentException("Entity not found with id="+resultEntityId);
     	}
-    	
-    	registerImages(resultEntity, defaultImageFilename);
+
+        Long pipelineRunEntityId = data.getRequiredItemAsLong("PIPELINE_RUN_ENTITY_ID");
+        Entity pipelineRunEntity = entityBean.getEntityTree(pipelineRunEntityId);
+        if (pipelineRunEntity == null) {
+            throw new IllegalArgumentException("Entity not found with id="+resultEntityId);
+        }
+
+    	registerImages(pipelineRunEntity, resultEntity, defaultImageFilename);
     }
 
-	public void execute(IProcessData processData, Entity resultEntity, String defaultImageFilename) throws Exception {
+	public void execute(IProcessData processData, Entity pipelineRunEntity, Entity resultEntity, String defaultImageFilename) throws Exception {
 
         this.logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         this.task = ProcessDataHelper.getTask(processData);
@@ -69,14 +73,13 @@ public class ResultImageRegistrationService extends AbstractEntityService {
         this.entityHelper = new EntityHelper(entityBean, computeBean, ownerKey, logger);
         this.entityLoader = new EntityBeanEntityLoader(entityBean);
         
-    	registerImages(resultEntity, defaultImageFilename);
+    	registerImages(pipelineRunEntity, resultEntity, defaultImageFilename);
     }
 	
-	private void registerImages(Entity resultEntity, String defaultImageFilename) throws Exception {
+	private void registerImages(Entity pipelineRunEntity, Entity resultEntity, String defaultImageFilename) throws Exception {
 
 	    populateChildren(resultEntity);
 	    
-	    Entity pipelineRunEntity = entityBean.getAncestorWithType(resultEntity, EntityConstants.TYPE_PIPELINE_RUN);
 	    Entity sampleEntity = entityBean.getAncestorWithType(resultEntity, EntityConstants.TYPE_SAMPLE);
 
         Entity default3dImage = null;
