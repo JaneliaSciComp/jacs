@@ -4,11 +4,7 @@ import java.util.Date;
 
 import com.google.common.collect.Multimap;
 
-public interface Relationship {
-
-    public Long getGuid();
-
-    public void setGuid(Long guid);
+public interface Relationship  extends Identifiable {
 
     public String getType();
 

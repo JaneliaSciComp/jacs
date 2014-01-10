@@ -2,7 +2,6 @@ package org.janelia.it.jacs.model.domain.impl.metamodel;
 
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.janelia.it.jacs.model.domain.interfaces.metamodel.DomainObject;
@@ -10,107 +9,124 @@ import org.janelia.it.jacs.model.domain.interfaces.metamodel.Permission;
 import org.janelia.it.jacs.model.domain.interfaces.metamodel.Relationship;
 import org.janelia.it.jacs.model.domain.interfaces.metamodel.RelationshipLoader;
 
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
-public class AbstractDomainObject implements DomainObject {
+/**
+ * A stub specifying an entity by id, but without its metadata.
+ * All methods except getGuid and setGuid throw UnsupportedOperationException.
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
+public class EntityDomainObjectStub implements DomainObject {
 
     private Long guid;
-    private String name;
-    private String ownerKey;
-    private String entityTypeName;
-    private Date creationDate;
-    private Date updatedDate;
-    private Multimap<String,String> attributes = HashMultimap.<String,String>create();
-    private Set<Permission> permissions = new HashSet<Permission>();
-    private Set<Relationship> relationships = new HashSet<Relationship>();
-    private boolean relationshipsAreInitialized = false;
     
+    public EntityDomainObjectStub(Long entityId) {
+        setGuid(entityId);
+    }
+
     @Override
     public Long getGuid() {
         return guid;
     }
+
     @Override
     public void setGuid(Long guid) {
         this.guid = guid;
     }
+
     @Override
     public String getName() {
-        return name;
+        throw new UnsupportedOperationException();
     }
+
     @Override
     public void setName(String name) {
-        this.name = name;
+        throw new UnsupportedOperationException();
     }
+
     @Override
     public String getOwnerKey() {
-        return ownerKey;
+        throw new UnsupportedOperationException();
     }
+
     @Override
     public void setOwnerKey(String ownerKey) {
-        this.ownerKey = ownerKey;
+        throw new UnsupportedOperationException();
     }
+
     @Override
     public String getEntityTypeName() {
-        return entityTypeName;
+        throw new UnsupportedOperationException();
     }
+
     @Override
     public void setEntityTypeName(String entityTypeName) {
-        this.entityTypeName = entityTypeName;
+        throw new UnsupportedOperationException();
     }
+
     @Override
     public Date getCreationDate() {
-        return creationDate;
+        throw new UnsupportedOperationException();
     }
+
     @Override
     public void setCreationDate(Date creationDate) {
-        this.creationDate = creationDate;
+        throw new UnsupportedOperationException();
     }
+
     @Override
     public Date getUpdatedDate() {
-        return updatedDate;
+        throw new UnsupportedOperationException();
     }
+
     @Override
     public void setUpdatedDate(Date updatedDate) {
-        this.updatedDate = updatedDate;
+        throw new UnsupportedOperationException();
     }
+
     @Override
     public Multimap<String, String> getAttributes() {
-        return attributes;
+        throw new UnsupportedOperationException();
     }
-    @Override
-    public Set<Permission> getPermissions() {
-        return permissions;
-    }
-    @Override
-    public Set<Relationship> getRelationships() {
-        return relationships;
-    }
-    @Override
-    public int getNumRelationships() {
-        return relationships.size();
-    }
-    @Override
-    public boolean relationshipsAreInitialized() {
-        return relationshipsAreInitialized;
-    }
-    @Override
-    public void setRelationshipsAreInitialized(boolean relationshipsAreInitialized) {
-        this.relationshipsAreInitialized = relationshipsAreInitialized;
-    }
+
     @Override
     public String getAttributeValue(String key) {
-        Collection<String> values = getAttributes().get(key);
-        if (values==null) return null;
-        if (values.size()>1) throw new IllegalArgumentException("Attribute is multivalued: "+key);
-        return values.iterator().next();
+        throw new UnsupportedOperationException();
     }
+
     @Override
     public Collection<String> getAttributeValues(String key) {
-        return getAttributes().get(key);   
+        throw new UnsupportedOperationException();
     }
+
+    @Override
+    public Set<Permission> getPermissions() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Set<Relationship> getRelationships() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int getNumRelationships() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean relationshipsAreInitialized() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setRelationshipsAreInitialized(boolean relationshipsAreInitialized) {
+        throw new UnsupportedOperationException();
+    }
+
     @Override
     public void loadRelationships(RelationshipLoader loader) {
-        loader.loadRelationships(this);
+        throw new UnsupportedOperationException();
     }
 }

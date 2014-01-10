@@ -1,7 +1,7 @@
 package org.janelia.it.jacs.model.domain.interfaces.metamodel;
 
-public interface Permission {
-
+public interface Permission extends Identifiable {
+    
     public String getSubjectKey();
 
     public void setSubjectKey(String subjectKey);

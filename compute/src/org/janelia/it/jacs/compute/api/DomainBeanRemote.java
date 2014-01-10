@@ -36,7 +36,7 @@ public interface DomainBeanRemote {
     public Collection<DomainObject> getIncomingRelatedObjects(Access access, Long objGuid) throws ComputeException;
     public Collection<DomainObject> getOutgoingRelatedObjects(Access access, Long objGuid) throws ComputeException;
    
-    public Collection<DomainObject> getDomainObjectsBy(Access access, List<Long> objGuid) throws ComputeException;
+    public Collection<DomainObject> getDomainObjects(Access access, List<Long> objGuid) throws ComputeException;
     public Collection<DomainObject> getDomainObjectsByName(Access access, String name) throws ComputeException;
     public Collection<DomainObject> getDomainObjectsByTypeName(Access access, String typeName) throws ComputeException;
     public Collection<DomainObject> getDomainObjectsByNameAndTypeName(Access access, String name, String typeName) throws ComputeException;
@@ -60,12 +60,11 @@ public interface DomainBeanRemote {
     public Permission updatePermission(Access access, Permission permission) throws ComputeException;
     
     public DomainObject setOrUpdateObjectAttrValue(Access access, Long objGuid, String attributeName, String value) throws ComputeException;
-    public DomainObject setOrUpdateRelAttrValue(Access access, Long objGuid, String attributeName, String value) throws ComputeException;
     public Relationship setOrUpdateChildIndex(Access access, Long relGuid, Integer orderIndex) throws ComputeException;
     
     public Set<Permission> getFullPermissions(Access access, Long objGuid) throws ComputeException;
     public Permission grantPermissions(Access access, Long objGuid, String granteeKey, String permissions, boolean recursive) throws ComputeException;
-    public void revokePermissions(Access access, Long objGuid, String granteeKey,  boolean recursive) throws ComputeException;
+    public void revokePermissions(Access access, Long objGuid, String revokeeKey, boolean recursive) throws ComputeException;
     
     // DELETE
     

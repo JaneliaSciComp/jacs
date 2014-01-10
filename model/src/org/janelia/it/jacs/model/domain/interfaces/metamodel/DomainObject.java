@@ -6,11 +6,7 @@ import java.util.Set;
 
 import com.google.common.collect.Multimap;
 
-public interface DomainObject {
-
-    public Long getGuid();
-
-    public void setGuid(Long guid);
+public interface DomainObject extends Identifiable {
 
     public String getName();
 
@@ -46,5 +42,7 @@ public interface DomainObject {
     
     public boolean relationshipsAreInitialized();
     
+    public void setRelationshipsAreInitialized(boolean relationshipsAreInitialized);
+
     public void loadRelationships(RelationshipLoader loader);
 }

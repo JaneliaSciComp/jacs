@@ -11,6 +11,14 @@ public class EntityPermission extends AbstractPermission {
         setSubjectKey(eap.getSubjectKey());
         this.rights = eap.getPermissions();
     }
+    
+    public EntityPermission(String subjectKey, boolean isOwner, boolean canRead, boolean canWrite) {
+        setSubjectKey(subjectKey);
+        String owner = isOwner?"o":"";
+        String read = canRead?"r":"";
+        String write = canWrite?"w":"";
+        this.rights = owner+read+write;
+    }
 
     public String getRights() {
         return rights;

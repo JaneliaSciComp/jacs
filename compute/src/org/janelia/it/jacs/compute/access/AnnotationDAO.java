@@ -1906,6 +1906,23 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     /******************************************************************************************************************/
     /** ENTITY PERMISSIONS */
     /******************************************************************************************************************/
+
+    public EntityActorPermission getEntityActorPermission(Long eapId) {
+        if (log.isTraceEnabled()) {
+            log.trace("getEntityActorPermission(eapId="+eapId+")");
+        }
+
+        StringBuilder hql = new StringBuilder();
+        hql.append("select eap from EntityActorPermission eap ");
+        hql.append("left outer join fetch eap.entity p ");
+        hql.append("where eap.id = :eapId ");
+        
+        final Session currentSession = getCurrentSession();
+        Query query = currentSession.createQuery(hql.toString());
+        query.setParameter("eapId", eapId);
+
+        return (EntityActorPermission)query.uniqueResult();
+    }
     
     public Set<EntityActorPermission> getFullPermissions(Entity entity) throws DaoException {
         if (log.isTraceEnabled()) {
