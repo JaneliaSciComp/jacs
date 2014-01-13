@@ -15,16 +15,16 @@ import com.google.common.collect.Multimap;
 
 public class AbstractDomainObject implements DomainObject {
 
-    private Long guid;
-    private String name;
-    private String ownerKey;
-    private String entityTypeName;
-    private Date creationDate;
-    private Date updatedDate;
-    private Multimap<String,String> attributes = HashMultimap.<String,String>create();
-    private Set<Permission> permissions = new HashSet<Permission>();
-    private Set<Relationship> relationships = new HashSet<Relationship>();
-    private boolean relationshipsAreInitialized = false;
+    protected Long guid;
+    protected String name;
+    protected String ownerKey;
+    protected String typeName;
+    protected Date creationDate;
+    protected Date updatedDate;
+    protected Multimap<String,String> attributes = HashMultimap.<String,String>create();
+    protected Set<Permission> permissions = new HashSet<Permission>();
+    protected Set<Relationship> relationships = new HashSet<Relationship>();
+    protected boolean relationshipsAreInitialized = false;
     
     @Override
     public Long getGuid() {
@@ -51,12 +51,12 @@ public class AbstractDomainObject implements DomainObject {
         this.ownerKey = ownerKey;
     }
     @Override
-    public String getEntityTypeName() {
-        return entityTypeName;
+    public String getTypeName() {
+        return typeName;
     }
     @Override
-    public void setEntityTypeName(String entityTypeName) {
-        this.entityTypeName = entityTypeName;
+    public void setTypeName(String typeName) {
+        this.typeName = typeName;
     }
     @Override
     public Date getCreationDate() {
@@ -93,10 +93,6 @@ public class AbstractDomainObject implements DomainObject {
     @Override
     public boolean relationshipsAreInitialized() {
         return relationshipsAreInitialized;
-    }
-    @Override
-    public void setRelationshipsAreInitialized(boolean relationshipsAreInitialized) {
-        this.relationshipsAreInitialized = relationshipsAreInitialized;
     }
     @Override
     public String getAttributeValue(String key) {

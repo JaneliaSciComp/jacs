@@ -14,7 +14,7 @@
   <class id="2" language="java" name="org.janelia.it.jacs.model.domain.impl.metamodel.AbstractPermission" 
     project="model" file="/model/src/org/janelia/it/jacs/model/domain/impl/metamodel/AbstractPermission.java" 
     binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="1091" y="652"/>    
+    <position height="-1" width="-1" x="1091" y="794"/>    
     <display autosize="true" stereotype="true" package="false" initial-value="false" signature="true" accessors="true" 
       visibility="true">      
       <attributes public="true" package="true" protected="true" private="true" static="false"/>      
@@ -34,7 +34,7 @@
   <class id="4" language="java" name="org.janelia.it.jacs.model.domain.impl.entity.metamodel.EntityRelationship" 
     project="model" file="/model/src/org/janelia/it/jacs/model/domain/impl/entity/metamodel/EntityRelationship.java" 
     binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="161" y="910"/>    
+    <position height="-1" width="-1" x="157" y="1007"/>    
     <display autosize="true" stereotype="true" package="false" initial-value="false" signature="true" accessors="true" 
       visibility="true">      
       <attributes public="false" package="false" protected="false" private="false" static="false"/>      
@@ -64,7 +64,7 @@
   <interface id="7" language="java" name="org.janelia.it.jacs.model.domain.interfaces.imaging.Neuron" project="model" 
     file="/model/src/org/janelia/it/jacs/model/domain/interfaces/imaging/Neuron.java" binary="false" 
     corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="517" y="813"/>    
+    <position height="-1" width="-1" x="417" y="668"/>    
     <display autosize="true" stereotype="true" package="false" initial-value="false" signature="true" accessors="true" 
       visibility="true">      
       <attributes public="false" package="false" protected="false" private="false" static="false"/>      
@@ -74,7 +74,7 @@
   <class id="8" language="java" name="org.janelia.it.jacs.model.domain.impl.entity.metamodel.EntityPermission" 
     project="model" file="/model/src/org/janelia/it/jacs/model/domain/impl/entity/metamodel/EntityPermission.java" 
     binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="1091" y="795"/>    
+    <position height="-1" width="-1" x="1085" y="997"/>    
     <display autosize="true" stereotype="true" package="false" initial-value="false" signature="true" accessors="true" 
       visibility="true">      
       <attributes public="true" package="true" protected="true" private="true" static="false"/>      
@@ -84,27 +84,27 @@
   <class id="9" language="java" name="org.janelia.it.jacs.model.domain.impl.metamodel.AbstractRelationship" 
     project="model" file="/model/src/org/janelia/it/jacs/model/domain/impl/metamodel/AbstractRelationship.java" 
     binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="163" y="726"/>    
+    <position height="-1" width="-1" x="142" y="799"/>    
     <display autosize="true" stereotype="true" package="false" initial-value="false" signature="true" accessors="true" 
       visibility="true">      
-      <attributes public="true" package="true" protected="true" private="true" static="false"/>      
+      <attributes public="true" package="true" protected="false" private="false" static="false"/>      
       <operations public="false" package="false" protected="false" private="false" static="false"/>    
     </display>  
   </class>  
   <class id="10" language="java" name="org.janelia.it.jacs.model.domain.impl.metamodel.AbstractDomainObject" 
     project="model" file="/model/src/org/janelia/it/jacs/model/domain/impl/metamodel/AbstractDomainObject.java" 
     binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="848" y="718"/>    
+    <position height="-1" width="-1" x="696" y="785"/>    
     <display autosize="true" stereotype="true" package="false" initial-value="false" signature="true" accessors="true" 
       visibility="true">      
-      <attributes public="true" package="true" protected="true" private="true" static="false"/>      
+      <attributes public="true" package="true" protected="false" private="false" static="false"/>      
       <operations public="false" package="false" protected="false" private="false" static="false"/>    
     </display>  
   </class>  
   <interface id="11" language="java" name="org.janelia.it.jacs.model.domain.interfaces.imaging.Sample" project="model" 
     file="/model/src/org/janelia/it/jacs/model/domain/interfaces/imaging/Sample.java" binary="false" 
     corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="370" y="813"/>    
+    <position height="-1" width="-1" x="283" y="668"/>    
     <display autosize="true" stereotype="true" package="false" initial-value="false" signature="true" accessors="true" 
       visibility="true">      
       <attributes public="false" package="false" protected="false" private="false" static="false"/>      
@@ -114,7 +114,7 @@
   <class id="12" language="java" name="org.janelia.it.jacs.model.domain.impl.entity.metamodel.EntityDomainObject" 
     project="model" file="/model/src/org/janelia/it/jacs/model/domain/impl/entity/metamodel/EntityDomainObject.java" 
     binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="847" y="905"/>    
+    <position height="-1" width="-1" x="849" y="945"/>    
     <display autosize="true" stereotype="true" package="false" initial-value="false" signature="true" accessors="true" 
       visibility="true">      
       <attributes public="false" package="false" protected="false" private="false" static="false"/>      
@@ -144,7 +144,7 @@
   <interface id="15" language="java" name="org.janelia.it.jacs.model.domain.interfaces.common.Folder" project="model" 
     file="/model/src/org/janelia/it/jacs/model/domain/interfaces/common/Folder.java" binary="false" 
     corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="658" y="811"/>    
+    <position height="-1" width="-1" x="555" y="666"/>    
     <display autosize="true" stereotype="true" package="false" initial-value="false" signature="true" accessors="true" 
       visibility="true">      
       <attributes public="false" package="false" protected="false" private="false" static="false"/>      
@@ -164,7 +164,7 @@
   <class id="17" language="java" name="org.janelia.it.jacs.model.domain.impl.metamodel.EntityDomainObjectStub" 
     project="model" file="/model/src/org/janelia/it/jacs/model/domain/impl/metamodel/EntityDomainObjectStub.java" 
     binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="848" y="512"/>    
+    <position height="-1" width="-1" x="889" y="786"/>    
     <display autosize="true" stereotype="true" package="false" initial-value="false" signature="true" accessors="true" 
       visibility="true">      
       <attributes public="false" package="false" protected="false" private="false" static="false"/>      

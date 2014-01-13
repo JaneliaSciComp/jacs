@@ -43,7 +43,7 @@ public class EntityDomainObjectFactory implements DomainObjectFactory<Entity,Ent
      */
     public synchronized DomainObject getDomainObject(Entity entity) {
      
-        DomainObject domainObj = getDomainObjectFromEntity(entity);
+        EntityDomainObject domainObj = getDomainObjectFromEntity(entity);
         
         if (domainObj!=null) {
             domainObj.setRelationshipsAreInitialized(true);
@@ -120,7 +120,7 @@ public class EntityDomainObjectFactory implements DomainObjectFactory<Entity,Ent
         return new EntityPermission(eap);
     }
     
-    private DomainObject getDomainObjectFromEntity(Entity entity) {
+    private EntityDomainObject getDomainObjectFromEntity(Entity entity) {
         String type = entity.getEntityTypeName();
         if (EntityConstants.TYPE_FOLDER.equalsIgnoreCase(type)) {
             return new EntityFolder(entity);

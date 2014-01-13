@@ -10,14 +10,14 @@ import com.google.common.collect.Multimap;
 
 public class AbstractRelationship implements Relationship {
     
-    private Long guid;
-    private String type;
-    private Integer orderIndex;
-    private Date creationDate;
-    private Date updatedDate;
-    private Multimap<String,String> attributes = HashMultimap.<String,String>create();
-    private DomainObject source;
-    private DomainObject target;
+    protected Long guid;
+    protected String type;
+    protected Integer orderIndex;
+    protected Date creationDate;
+    protected Date updatedDate;
+    protected Multimap<String,String> attributes = HashMultimap.<String,String>create();
+    protected DomainObject source;
+    protected DomainObject target;
     
     @Override
     public Long getGuid() {

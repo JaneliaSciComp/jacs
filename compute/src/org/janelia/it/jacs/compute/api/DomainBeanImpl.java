@@ -74,7 +74,7 @@ public class DomainBeanImpl implements DomainBeanLocal, DomainBeanRemote {
                 updatedDate = now;
             }
             
-            Entity entity = new Entity(null, domainObject.getName(), subjectKey, domainObject.getEntityTypeName(), creationDate, updatedDate, new HashSet<EntityData>());
+            Entity entity = new Entity(null, domainObject.getName(), subjectKey, domainObject.getTypeName(), creationDate, updatedDate, new HashSet<EntityData>());
             for(String key : domainObject.getAttributes().keySet()) {
                 entity.setValueByAttributeName(key, domainObject.getAttributeValue(key));
             }
@@ -450,7 +450,7 @@ public class DomainBeanImpl implements DomainBeanLocal, DomainBeanRemote {
             entity.setName(domainObject.getName());
             entity.setCreationDate(domainObject.getCreationDate());
             entity.setUpdatedDate(domainObject.getUpdatedDate());
-            entity.setEntityTypeName(domainObject.getEntityTypeName());
+            entity.setEntityTypeName(domainObject.getTypeName());
             entity.setOwnerKey(domainObject.getOwnerKey());
             entity.setNumChildren(domainObject.getNumRelationships());
             

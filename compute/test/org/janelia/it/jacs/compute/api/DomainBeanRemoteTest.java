@@ -41,7 +41,7 @@ public class DomainBeanRemoteTest extends RemoteEJBTest {
         Assert.assertFalse(results.isEmpty());
         for(DomainObject obj : results) {
             Assert.assertNotNull(obj.getGuid());
-            Assert.assertNotNull(obj.getEntityTypeName());
+            Assert.assertNotNull(obj.getTypeName());
             Assert.assertNotNull(obj.getOwnerKey());
             Assert.assertNotNull(obj.getCreationDate());
             Assert.assertNotNull(obj.getUpdatedDate());
@@ -65,7 +65,7 @@ public class DomainBeanRemoteTest extends RemoteEJBTest {
         Assert.assertNotNull(domainObject.getGuid());
         Assert.assertEquals(domainObject.getName(), name);
         Assert.assertEquals(domainObject.getOwnerKey(), SUBJECT_KEY);
-        Assert.assertEquals(domainObject.getEntityTypeName(), entityTypeName);
+        Assert.assertEquals(domainObject.getTypeName(), entityTypeName);
         Assert.assertEquals(domainObject.getCreationDate(), domainObject.getUpdatedDate());
         
         createdEntities.add(domainObject.getGuid());
@@ -106,12 +106,12 @@ public class DomainBeanRemoteTest extends RemoteEJBTest {
         
         Assert.assertEquals(rel.getSource().getName(), name);
         Assert.assertEquals(rel.getSource().getOwnerKey(), SUBJECT_KEY);
-        Assert.assertEquals(rel.getSource().getEntityTypeName(), entityTypeName);
+        Assert.assertEquals(rel.getSource().getTypeName(), entityTypeName);
         Assert.assertEquals(rel.getSource().getGuid(), sameRel.getSource().getGuid());
         
         Assert.assertEquals(rel.getTarget().getName(), name2);
         Assert.assertEquals(rel.getTarget().getOwnerKey(), SUBJECT_KEY);
-        Assert.assertEquals(rel.getTarget().getEntityTypeName(), entityTypeName2);
+        Assert.assertEquals(rel.getTarget().getTypeName(), entityTypeName2);
         Assert.assertEquals(rel.getTarget().getGuid(), sameRel.getTarget().getGuid());
         
         d.deleteDomainObjectTree(a, targetObject.getGuid());

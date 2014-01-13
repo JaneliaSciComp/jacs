@@ -16,9 +16,9 @@ public interface DomainObject extends Identifiable {
 
     public void setOwnerKey(String ownerKey);
 
-    public String getEntityTypeName();
+    public String getTypeName();
 
-    public void setEntityTypeName(String entityTypeName);
+    public void setTypeName(String typeName);
 
     public Date getCreationDate();
 
@@ -41,8 +41,6 @@ public interface DomainObject extends Identifiable {
     public int getNumRelationships();
     
     public boolean relationshipsAreInitialized();
-    
-    public void setRelationshipsAreInitialized(boolean relationshipsAreInitialized);
 
     public void loadRelationships(RelationshipLoader loader);
 }

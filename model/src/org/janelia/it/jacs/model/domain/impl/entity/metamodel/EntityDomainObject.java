@@ -1,32 +1,22 @@
 package org.janelia.it.jacs.model.domain.impl.entity.metamodel;
 
-import java.util.Date;
-
 import org.janelia.it.jacs.model.domain.impl.metamodel.AbstractDomainObject;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
 
 public class EntityDomainObject extends AbstractDomainObject {
 
-    public EntityDomainObject(String name, String ownerKey, String entityTypeName) {
+    public EntityDomainObject(String name, String ownerKey, String typeName) {
         setName(name);
         setOwnerKey(ownerKey);
-        setEntityTypeName(entityTypeName);
-    }
-    
-    public EntityDomainObject(String name, String ownerKey, String entityTypeName, Date creationDate, Date updatedDate) {
-        setName(name);
-        setOwnerKey(ownerKey);
-        setEntityTypeName(entityTypeName);
-        setCreationDate(creationDate);
-        setUpdatedDate(updatedDate);
+        setTypeName(typeName);
     }
     
     public EntityDomainObject(Entity entity) {
         setGuid(entity.getId());
         setCreationDate(entity.getCreationDate());
         setUpdatedDate(entity.getUpdatedDate());
-        setEntityTypeName(entity.getEntityTypeName());
+        setTypeName(entity.getEntityTypeName());
         setName(entity.getName());
         setOwnerKey(entity.getOwnerKey());
         setRelationshipsAreInitialized(false);
@@ -36,5 +26,9 @@ public class EntityDomainObject extends AbstractDomainObject {
                 getAttributes().put(ed.getEntityAttrName(), value);
             }
         }
+    }
+
+    public void setRelationshipsAreInitialized(boolean relationshipsAreInitialized) {
+        this.relationshipsAreInitialized = relationshipsAreInitialized;
     }
 }

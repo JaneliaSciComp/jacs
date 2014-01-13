@@ -56,12 +56,12 @@ public class EntityDomainObjectStub implements DomainObject {
     }
 
     @Override
-    public String getEntityTypeName() {
+    public String getTypeName() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void setEntityTypeName(String entityTypeName) {
+    public void setTypeName(String entityTypeName) {
         throw new UnsupportedOperationException();
     }
 
@@ -117,11 +117,6 @@ public class EntityDomainObjectStub implements DomainObject {
 
     @Override
     public boolean relationshipsAreInitialized() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setRelationshipsAreInitialized(boolean relationshipsAreInitialized) {
         throw new UnsupportedOperationException();
     }
 
