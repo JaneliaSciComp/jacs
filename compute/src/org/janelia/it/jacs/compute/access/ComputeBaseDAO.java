@@ -45,9 +45,9 @@ public class ComputeBaseDAO {
     protected SessionFactory sessionFactory;
     protected Session externalSession;
 
-    public ComputeBaseDAO(Logger logger) {
+    public ComputeBaseDAO(Logger log) {
         getSessionFactory();
-        log = logger;
+        this.log = log;
     }
 
     public ComputeBaseDAO(Session externalSession) {
@@ -90,10 +90,6 @@ public class ComputeBaseDAO {
         catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public void setSessionFactory(SessionFactory sessionFactory) {
-        this.sessionFactory = sessionFactory;
     }
 
     public void recordProcessSuccess(ProcessDef processDef, Long processId) {

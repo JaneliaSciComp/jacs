@@ -440,25 +440,39 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    public void runSageLoader(
-            String owner,
-            String item,
-            String configPath,
-            String grammarPath,
-            String lab,
-            String debug,
-            String lock)
-    {
+    public void runSageLoader(String owner, String item, String configPath, String grammarPath, String lab,
+            String debug, String lock) {
         log.info("Heard call for SageLoader API");
         try {
-            SageLoaderTask task = new SageLoaderTask(owner, new ArrayList<Event>(), item, configPath,grammarPath,lab,
+            SageLoaderTask task = new SageLoaderTask(owner, new ArrayList<Event>(), item, configPath, grammarPath, lab,
                     debug, lock);
-            task = (SageLoaderTask)EJBFactory.getRemoteComputeBean().saveOrUpdateTask(task);
+            task = (SageLoaderTask) EJBFactory.getRemoteComputeBean().saveOrUpdateTask(task);
             EJBFactory.getRemoteComputeBean().submitJob("SageLoader", task.getObjectId());
-            log.info("Done runSageLoader call ("+owner+","+item+")");
+            log.info("Done runSageLoader call (" + owner + "," + item + ")");
         }
         catch (Exception e) {
             log.error("runSageLoader: failed execution", e);
+        }
+    }
+
+    public void runSageArtifactExport(String dataSetIdentifiers) {
+        try {
+            String user = null;
+            for(String dsi : Task.listOfStringsFromCsvString(dataSetIdentifiers)) {
+                String u = dsi.substring(0, dsi.indexOf('_'));
+                if (user!=null & !u.equals(user)) {
+                    throw new IllegalArgumentException("All given data sets must be owned by the same user");
+                }
+                user = u;
+            }
+            String processName = "SageArtifactExport";
+            String displayName = "Sage Artifact Export";
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter("data set identifiers", dataSetIdentifiers, null)); 
+            saveAndRunTask(user, processName, displayName, taskParameters);
+        } 
+        catch (Exception ex) {
+            log.error("Error running sage artifact export", ex);
         }
     }
 }

@@ -1,6 +1,22 @@
 
 package org.janelia.it.jacs.compute.access;
 
+import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.rmi.PortableRemoteObject;
+import javax.sql.DataSource;
+
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -9,21 +25,17 @@ import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.api.support.SageTerm;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.sage.CvTerm;
+import org.janelia.it.jacs.model.sage.Image;
+import org.janelia.it.jacs.model.sage.Line;
+import org.janelia.it.jacs.model.sage.SecondaryImage;
 import org.janelia.it.jacs.shared.utils.StringUtils;
-
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.rmi.PortableRemoteObject;
-import javax.sql.DataSource;
-import java.io.InputStream;
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Simple JDBC access to the Sage database.
@@ -32,24 +44,26 @@ import java.util.Map;
  */
 public class SageDAO {
 
-    protected Logger _logger;
-
     private final String jndiPath = SystemConfigurationProperties.getString("sage.jdbc.jndiName", null);
     private final String jdbcDriver = SystemConfigurationProperties.getString("sage.jdbc.driverClassName", null);
     private final String jdbcUrl = SystemConfigurationProperties.getString("sage.jdbc.url", null);
     private final String jdbcUser = SystemConfigurationProperties.getString("sage.jdbc.username", null);
     private final String jdbcPw = SystemConfigurationProperties.getString("sage.jdbc.password", null);
 
+    protected Logger log;
+    protected SessionFactory sessionFactory;
+    protected Session externalSession;
+    
     public Connection getJdbcConnection() throws DaoException {
         Connection connection;
         try {
             if (!StringUtils.isEmpty(jndiPath)) {
-                _logger.debug("getJdbcConnection() using these parameters: jndiPath="+jndiPath);
+                log.debug("getJdbcConnection() using these parameters: jndiPath="+jndiPath);
                 Context ctx = new InitialContext();
                 DataSource ds = (DataSource) PortableRemoteObject.narrow(ctx.lookup(jndiPath), DataSource.class);
                 connection = ds.getConnection();
             } else {
-                _logger.debug("getJdbcConnection() using these parameters: driverClassName="+jdbcDriver+" url="+jdbcUrl+" user="+jdbcUser);
+                log.debug("getJdbcConnection() using these parameters: driverClassName="+jdbcDriver+" url="+jdbcUrl+" user="+jdbcUser);
                 Class.forName(jdbcDriver);
                 connection = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPw);
             }
@@ -60,8 +74,34 @@ public class SageDAO {
         return connection;
     }
 
-    public SageDAO(Logger logger) {
-        _logger = logger;
+    public SageDAO(Logger log) {
+        getSessionFactory();
+        this.log = log;
+    }
+
+    private SessionFactory getSessionFactory() {
+        try {
+            if (sessionFactory==null) {
+                sessionFactory = (SessionFactory) new InitialContext().lookup("java:/hibernate/SageSessionFactory");
+            }
+            return sessionFactory;
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Session getCurrentSession() {
+        if (externalSession == null) {
+            return getSessionFactory().getCurrentSession();
+        }
+        else {
+            return externalSession;
+        }
+    }
+
+    public Session getSession() {
+        return getCurrentSession();
     }
 
     /**
@@ -86,7 +126,7 @@ public class SageDAO {
             resultSet = pStatement.executeQuery();
 
         } catch (SQLException e) {
-            ResultSetIterator.close(resultSet, pStatement, connection, _logger);
+            ResultSetIterator.close(resultSet, pStatement, connection, log);
             throw new DaoException("Error querying SAGE", e);
         }
 
@@ -114,7 +154,7 @@ public class SageDAO {
             resultSet = pStatement.executeQuery();
 
         } catch (SQLException e) {
-            ResultSetIterator.close(resultSet, pStatement, connection, _logger);
+            ResultSetIterator.close(resultSet, pStatement, connection, log);
             throw new DaoException("Error querying SAGE", e);
         }
 
@@ -145,7 +185,7 @@ public class SageDAO {
             resultSet = pStatement.executeQuery();
 
         } catch (SQLException e) {
-            ResultSetIterator.close(resultSet, pStatement, connection, _logger);
+            ResultSetIterator.close(resultSet, pStatement, connection, log);
             throw new DaoException("Error querying SAGE", e);
         }
 
@@ -181,12 +221,12 @@ public class SageDAO {
                     Node definitionNode = termElement.selectSingleNode("definition");
 
                     if (nameNode==null) {
-                        _logger.warn("Term with no name encountered in "+getUrl);
+                        log.warn("Term with no name encountered in "+getUrl);
                         continue;
                     }
 
                     if (dataTypeNode==null) {
-                        _logger.warn("Term with no type (name="+nameNode.getText()+") encountered in "+getUrl);
+                        log.warn("Term with no type (name="+nameNode.getText()+") encountered in "+getUrl);
                         continue;
                     }
 
@@ -198,7 +238,7 @@ public class SageDAO {
                     map.put(st.getName(),st);
                 }
                 else {
-                    _logger.warn("Expecting <term>, got "+o);
+                    log.warn("Expecting <term>, got "+o);
                 }
             }
 
@@ -210,6 +250,256 @@ public class SageDAO {
         return map;
     }
 
+    public CvTerm getCvTermByName(String name) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getLineIdByName(name="+name+")");    
+        }
+        
+        Session session = getCurrentSession();
+        StringBuffer hql = new StringBuffer("select term from CvTerm term ");
+        hql.append("where term.name = :name ");
+        Query query = session.createQuery(hql.toString());
+        query.setString("name", name);
+        return (CvTerm)query.uniqueResult();
+    }
+    
+    public Line getLineByName(String name) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getLineIdByName(name="+name+")");    
+        }
+        
+        Session session = getCurrentSession();
+        StringBuffer hql = new StringBuffer("select line from Line line ");
+        hql.append("where line.name = :name ");
+        Query query = session.createQuery(hql.toString());
+        query.setString("name", name);
+        return (Line)query.uniqueResult();
+        
+//        Long lineId = null;
+//        Connection connection = null;
+//        PreparedStatement statement = null;
+//        ResultSet resultSet = null;
+//        
+//        try {
+//            connection = getJdbcConnection();
+//            statement = connection.prepareStatement(SELECT_LINE_BY_NAME_SQL);
+//            statement.setString(1, name);
+//            resultSet = statement.executeQuery();
+//            while (resultSet.next()) {
+//                lineId = resultSet.getLong("id");
+//            }
+//        }
+//        catch (Exception e) {
+//            throw new DaoException("Error querying SAGE for line by name", e);
+//        }
+//        finally {
+//            try {    
+//                if (resultSet != null) statement.close();
+//                if (statement != null) statement.close();
+//                if (connection != null)  connection.close();
+//            }
+//            catch (SQLException e) {
+//                log.error("Failed to close JDBC", e);
+//            }
+//        }
+//        
+//        return lineId;
+    }
+
+    public List<Image> getImages(List<Integer> ids) {
+        if (log.isTraceEnabled()) {
+            log.trace("getImages(getImages.size="+ids.size()+")");    
+        }
+        if (ids.isEmpty()) return new ArrayList<Image>();
+        Session session = getCurrentSession();
+        StringBuffer hql = new StringBuffer("select image from Image image ");
+        hql.append("where image.id in (:ids) ");
+        Query query = session.createQuery(hql.toString());
+        query.setParameterList("ids", ids);
+        return (List<Image>)query.list();
+    }
+    
+    public Image saveImage(Image image) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("saveImage(image.name="+image.getName()+")");    
+        }
+        
+        try {
+            getCurrentSession().saveOrUpdate(image);
+        } 
+        catch (Exception e) {
+            throw new DaoException("Error creating new primary image in SAGE", e);
+        }
+        return image;
+//        
+//        Long imageId = null;
+//        Connection connection = null;
+//        PreparedStatement statement = null;
+//        ResultSet resultSet = null;
+//        
+//        try {
+//            connection = getJdbcConnection();
+//            
+//            statement = connection.prepareStatement(INSERT_PRIMARY_IMAGE_SQL);
+//            statement.setString(1, name);
+//            statement.setString(2, path);
+//            statement.setString(3, url);
+//            statement.setLong(4, sourceId);
+//            statement.setLong(5, familyId);
+//            statement.setLong(6, lineId);
+//            statement.setBoolean(7, representative);
+//            statement.setBoolean(8, display);
+//            statement.execute();
+//            statement.close();
+//            statement = null;
+//            
+//            statement = connection.prepareStatement(SELECT_PRIMARY_IMAGE_BY_NAME_AND_FAMILY_SQL);
+//            statement.setString(1, name);
+//            statement.setLong(2, familyId);
+//            resultSet = statement.executeQuery();
+//            while (resultSet.next()) {
+//                imageId = resultSet.getLong("id");
+//            }
+//            
+//            resultSet.close();
+//            statement.close();
+//            resultSet = null;
+//            statement = null;
+//            
+//            log.info("Created "+imageId);
+//            
+//            if (copyConsensusProperties) {
+//                
+//                Map<Long,Object> finalProperties = new HashMap<Long,Object>();
+//    
+//                StringBuilder placeholders = new StringBuilder();
+//                for(Long sageId : sourceSageImageIds) {
+//                    if (placeholders.length()>0) placeholders.append(",");
+//                    placeholders.append("?");
+//                }
+//                
+//                statement = connection.prepareStatement(CONSENSUS_IMAGE_PROPERTY_SQL.replace("?", placeholders));
+//                statement.setFetchSize(Integer.MIN_VALUE);
+//                
+//                int i = 1;
+//                for(Long sageId : sourceSageImageIds) {
+//                    statement.setLong(i++, sageId);
+//                }
+//                
+//                Long currTypeId = null;
+//                String currValue = null;
+//                
+//                resultSet = statement.executeQuery();
+//                while (resultSet.next()) {
+//                    Long typeId = resultSet.getLong("type_id");
+//                    String value = resultSet.getString("value");
+//                    
+//                    if (!typeId.equals(currTypeId)) {
+//                        if (currTypeId!=null && value!=null) {
+//                            finalProperties.put(currTypeId, currValue);
+//                        }
+//                    }
+//                    else if (!value.equals(currValue)) {
+//                        value = null;
+//                    }
+//                    
+//                    currTypeId = typeId; 
+//                    currValue = value;
+//                }
+//                
+//                statement.close();
+//                statement = null;
+//               
+//                finalProperties.putAll(imageProperties);
+//                
+//                for(Long typeId : finalProperties.keySet()) {
+//                    Object value = finalProperties.get(typeId);
+//                    if (value==null) continue;
+//                    statement = connection.prepareStatement(INSERT_IMAGE_PROPERTY_SQL);
+//                    statement.setLong(1, imageId);
+//                    statement.setLong(2, typeId);
+//                    statement.setString(3, value.toString());
+//                    statement.execute();
+//                    statement.close();
+//                    statement = null;
+//                    log.info("    Set "+typeId+" = "+value);
+//                }
+//            }
+//        } 
+//        catch (Exception e) {
+//            throw new DaoException("Error creating new primary image in SAGE", e);
+//        }
+//        finally {
+//            try {    
+//                if (statement != null) statement.close();
+//                if (connection != null)  connection.close();
+//            }
+//            catch (SQLException e) {
+//                log.error("Failed to close JDBC", e);
+//            }
+//        }
+//        
+//        return imageId;
+    }
+    
+    public SecondaryImage saveSecondaryImage(SecondaryImage secondaryImage) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("saveSecondaryImage(secondaryImage.name="+secondaryImage.getName()+")");    
+        }
+        
+        try {
+            getCurrentSession().saveOrUpdate(secondaryImage);
+        } 
+        catch (Exception e) {
+            throw new DaoException("Error creating new primary image in SAGE", e);
+        }
+        return secondaryImage;
+        
+//        Long imageId = null;
+//        Connection connection = null;
+//        PreparedStatement statement = null;
+//        ResultSet resultSet = null;
+//        
+//        try {
+//            connection = getJdbcConnection();
+//
+//            statement = connection.prepareStatement(INSERT_SECONDARY_IMAGE_SQL);
+//            statement.setString(1, name);
+//            statement.setLong(2, primaryImageId);
+//            statement.setLong(3, productId);
+//            statement.setString(4, path);
+//            statement.setString(5, url);
+//            statement.execute();
+//            statement.close();
+//            statement = null;
+//            
+//            statement = connection.prepareStatement(SELECT_SECONDARY_IMAGE_BY_IMAGE_AND_PRODUCT_SQL);
+//            statement.setLong(1, primaryImageId);
+//            statement.setLong(2, productId);
+//            resultSet = statement.executeQuery();
+//            while (resultSet.next()) {
+//                imageId = resultSet.getLong("id");
+//            }
+//            
+//            log.info("Created "+imageId);
+//        } 
+//        catch (Exception e) {
+//            throw new DaoException("Error creating new secondary image in SAGE", e);
+//        }
+//        finally {
+//            try {    
+//                if (statement != null) statement.close();
+//                if (connection != null)  connection.close();
+//            }
+//            catch (SQLException e) {
+//                log.error("Failed to close JDBC", e);
+//            }
+//        }
+//        
+//        return imageId;
+    }
+    
+    
     /**
      * @return map of static terms which are not part of any vocabulary.
      */
@@ -263,11 +553,11 @@ public class SageDAO {
                 list.add(resultSet.getString(1));
             }
         } finally {
-            ResultSetIterator.close(resultSet, pStatement, null, _logger);
+            ResultSetIterator.close(resultSet, pStatement, null, log);
         }
 
-        if (_logger.isDebugEnabled()) {
-            _logger.debug("getImagePropertyTypes: returning " + list);
+        if (log.isDebugEnabled()) {
+            log.debug("getImagePropertyTypes: returning " + list);
         }
 
         return list;
@@ -294,8 +584,8 @@ public class SageDAO {
 
         sql.append(ALL_IMAGE_PROPERTY_SQL_2);
 
-        if (_logger.isDebugEnabled()) {
-            _logger.debug("buildImagePropertySql: returning \"" + sql + "\"");
+        if (log.isDebugEnabled()) {
+            log.debug("buildImagePropertySql: returning \"" + sql + "\"");
         }
 
         return sql.toString();
@@ -345,4 +635,26 @@ public class SageDAO {
             ") image_vw on (ip1.image_id = image_vw.id) " +
             "group by image_vw.id ";// +
             //"order by slide_code, image_vw.capture_date";
+    
+//    private static final String SELECT_LINE_BY_NAME_SQL = 
+//            "select * from line where name =?";
+//    
+//    private static final String INSERT_PRIMARY_IMAGE_SQL = 
+//            "insert into image (name, url, path, source_id, family_id, line_id, representative, display) values (?, ?, ?, ?, ?, ?, ?, ?)";
+//
+//    private static final String SELECT_PRIMARY_IMAGE_BY_NAME_AND_FAMILY_SQL = 
+//            "select * from image where name=? and family_id=?";
+//    
+//    private static final String INSERT_SECONDARY_IMAGE_SQL = 
+//            "insert into image (name, image_id, product_id, path, url) values (?, ?, ?, ?, ?)";
+//    
+//    private static final String SELECT_SECONDARY_IMAGE_BY_IMAGE_AND_PRODUCT_SQL = 
+//            "select * from image where image_id=? and product_id=?";
+//    
+//    private static final String INSERT_IMAGE_PROPERTY_SQL = 
+//            "insert into image_property (image_id, type_id, value) values (?, ?, ?)";
+// 
+//    private static final String CONSENSUS_IMAGE_PROPERTY_SQL = 
+//            "select * from image_property where image_id in (?) order by type_id";
+    
 }

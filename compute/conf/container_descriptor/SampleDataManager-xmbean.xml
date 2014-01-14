@@ -347,5 +347,15 @@
             <type>java.lang.String</type>
         </parameter>
     </operation>
+    
+    <operation>
+        <description>Export all artifacts from a set of data sets to SAGE</description>
+        <name>runSageArtifactExport</name>
+        <parameter>
+            <description>Identifiers of data sets to export (e.g. "asoy_mb_polarity_63x_case_1,asoy_mb_polarity_63x_case_2")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
 
 </mbean>
