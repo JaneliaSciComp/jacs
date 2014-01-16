@@ -31,7 +31,7 @@ public class Image implements java.io.Serializable {
     }
 
     public Image(CvTerm family, Line line, CvTerm source, String name, String url, String path, boolean representative,
-            boolean display, Date createDate) {
+            boolean display, String createdBy, Date createDate) {
         this.family = family;
         this.line = line;
         this.source = source;
@@ -40,6 +40,7 @@ public class Image implements java.io.Serializable {
         this.path = path;
         this.representative = representative;
         this.display = display;
+        this.createdBy = createdBy;
         this.createDate = createDate;
     }
 
@@ -181,5 +182,4 @@ public class Image implements java.io.Serializable {
     public void setSecondaryImages(Set<SecondaryImage> secondaryImages) {
         this.secondaryImages = secondaryImages;
     }
-
 }

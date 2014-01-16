@@ -135,7 +135,9 @@ public class EntityVistationBuilder {
     	
     	visited.add(entity.getId());
     	visitor.visit(entity);
-    	
+
+        loader.populateChildren(entity);
+        
 		for(EntityData ed : entity.getEntityData()) {
 			visitor.visit(ed);
 			if (ed.getChildEntity()!=null) {
