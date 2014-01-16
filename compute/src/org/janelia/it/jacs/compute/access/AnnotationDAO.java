@@ -1407,12 +1407,12 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 
             List<Entity> childEntities = filter(query.list(), false);
 
-            if (subjectKeyList==null) {
-                // Case 1: This method is being called locally, and we know that because it's bypassing authorization.
-                // In this case, we want to load the EntityDatas normally, using filter. This is because the SQL hack 
-                // below creates an object model that is detached from Hibernate.
-                return new HashSet(filter(childEntities));
-            }
+//            if (subjectKeyList==null) {
+//                // Case 1: This method is being called locally, and we know that because it's bypassing authorization.
+//                // In this case, we want to load the EntityDatas normally, using filter. This is because the SQL hack 
+//                // below creates an object model that is detached from Hibernate.
+//                return new HashSet(filter(childEntities));
+//            }
             
             // Case2: This method is being called remotely, and we know that because it's using authorization. 
             // In this case we can use a trick to load the EntityDatas in a single query, rather than one by one. 
@@ -1536,10 +1536,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         if (log.isTraceEnabled()) {
             log.trace("populateChildren(entity="+entity+")");
         }
-        
-        for(EntityData ed : entity.getEntityData()) {
-            Entity child = ed.getChildEntity(); // Force Hibernate to load the child entity
-        }
+
+        EntityUtils.replaceChildNodes(entity, getChildEntities((String)null, entity.getId()));
         return entity;
     }
     
@@ -1627,7 +1625,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         saveOrUpdate(ed);
         propagatePermissions(parent, entity, true);
-        incrementChildCount(parent, 1);
+        updateChildCount(parent);
         return ed;
     }
 
@@ -1662,38 +1660,23 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             ed.setEntityAttrName(attributeName);
             
             saveOrUpdate(ed);
+            parent.getEntityData().add(ed);
 
             propagatePermissions(parent, child, true);
         }
         
-        incrementChildCount(parent, childrenIds.size());
+        updateChildCount(parent);
     }
     
-    private void incrementChildCount(Entity entity, int count) throws DaoException {
+    private void updateChildCount(Entity entity) throws DaoException {
         if (log.isTraceEnabled()) {
-            log.trace("incrementChildCount(entity="+entity+"; numChildren="+entity.getNumChildren()+", count="+count+")");    
+            log.trace("updateChildCount(entity="+entity+")");    
         }
-        if (entity.getNumChildren()==null) {
-            entity.setNumChildren(count);
-        }
-        else {
-            entity.setNumChildren(entity.getNumChildren()+count);    
+        int numChildren = entity.getChildren().size();
+        if (entity.getNumChildren()!=numChildren) {
+            entity.setNumChildren(numChildren);
         }
         saveOrUpdate(entity);
-    }
-    
-    private void decrementChildCount(Entity entity, int count) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("decrementChildCount(entity="+entity+"; numChildren="+entity.getNumChildren()+", count="+count+")");    
-        }
-        int newNum = entity.getNumChildren()-1;
-        if (newNum<0) {
-            log.warn("Cannot decrement child count below zero on "+entity.getId());
-        }
-        else {
-            entity.setNumChildren(newNum);
-            saveOrUpdate(entity);   
-        }
     }
     
     public int bulkUpdateEntityDataValue(String oldValue, String newValue) throws DaoException {
@@ -1795,7 +1778,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         genericDelete(entityData);
         if (parent!=null) {
             if (hasChild) {
-                decrementChildCount(parent, 1);
+                updateChildCount(parent);
             }
         }
     }
@@ -1970,7 +1953,12 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             }   
         }
         
-        return grantPermissions(entity, granteeKey, permissions, recursive);
+        long start = System.currentTimeMillis();
+        EntityActorPermission perm = grantPermissions(entity, granteeKey, permissions, recursive);
+        long stop = System.currentTimeMillis();
+        log.info("grantPermissions took "+(stop-start)+" ms");
+        
+        return perm;
     }
     
     public EntityActorPermission grantPermissions(final Entity rootEntity, final String granteeKey, 
@@ -2084,8 +2072,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 throw new DaoException("User "+subjectKey+" does not have the right to grant access to "+entity.getId());
             }   
         }
-        
+
+        long start = System.currentTimeMillis();
         revokePermissions(entity, entity.getOwnerKey(), revokeeKey, recursive);
+        long stop = System.currentTimeMillis();
+        log.info("revokePermissions took "+(stop-start)+" ms");
     }
     
     public void revokePermissions(final Entity rootEntity, final String rootOwner, final String revokeeKey, boolean recursive) throws DaoException {
