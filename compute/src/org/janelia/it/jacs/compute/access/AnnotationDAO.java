@@ -1407,12 +1407,12 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 
             List<Entity> childEntities = filter(query.list(), false);
 
-//            if (subjectKeyList==null) {
-//                // Case 1: This method is being called locally, and we know that because it's bypassing authorization.
-//                // In this case, we want to load the EntityDatas normally, using filter. This is because the SQL hack 
-//                // below creates an object model that is detached from Hibernate.
-//                return new HashSet(filter(childEntities));
-//            }
+            if (subjectKeyList==null) {
+                // Case 1: This method is being called locally, and we know that because it's bypassing authorization.
+                // In this case, we want to load the EntityDatas normally, using filter. This is because the SQL hack 
+                // below creates an object model that is detached from Hibernate.
+                return new HashSet(filter(childEntities));
+            }
             
             // Case2: This method is being called remotely, and we know that because it's using authorization. 
             // In this case we can use a trick to load the EntityDatas in a single query, rather than one by one. 
