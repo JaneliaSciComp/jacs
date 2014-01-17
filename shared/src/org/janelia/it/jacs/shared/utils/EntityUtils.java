@@ -705,6 +705,7 @@ public class EntityUtils {
 				|| EntityConstants.ATTRIBUTE_MASK_IMAGE.equals(attrName)
 				|| EntityConstants.ATTRIBUTE_CHAN_IMAGE.equals(attrName)
 				|| EntityConstants.ATTRIBUTE_SOURCE_SEPARATION.equals(attrName)
+				|| EntityConstants.ATTRIBUTE_REPRESENTATIVE_SAMPLE.equals(attrName)
 				) {
 			return true;
 		}
