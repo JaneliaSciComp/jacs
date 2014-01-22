@@ -12,21 +12,32 @@ public class KeyValuePair implements Serializable {
 	private String key;
 	private String value;
 	private Long childId;
+	private Long edId;
 	
-	public KeyValuePair(String key, String value, Long childId) {
-		this.key = key;
-		this.value = value;
-		this.childId = childId;
-	}
-
+    public KeyValuePair(String key, String value, Long childId, Long edId) {
+        this.key = key;
+        this.value = value;
+        this.childId = childId;
+        this.edId = edId;
+    }
+    
 	public KeyValuePair(String key, String value) {
 		this(key, value, null);
 	}
+
+    public KeyValuePair(String key, String value, Long childId) {
+        this(key, value, childId, null);
+    }
+
 	
 	public KeyValuePair(String key, Long childId) {
-		this(key, null, childId);
+		this(key, null, childId, null);
 	}
-	
+
+    public KeyValuePair(String key, Long childId, Long edId) {
+        this(key, null, childId, edId);
+    }
+    
 	public String getKey() {
 		return key;
 	}
@@ -39,7 +50,11 @@ public class KeyValuePair implements Serializable {
 		return childId;
 	}
 
-	@Override
+	public Long getEdId() {
+        return edId;
+    }
+
+    @Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;

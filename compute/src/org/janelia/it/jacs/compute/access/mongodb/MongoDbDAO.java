@@ -6,7 +6,13 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
@@ -17,11 +23,16 @@ import org.janelia.it.jacs.compute.access.solr.KeyValuePair;
 import org.janelia.it.jacs.compute.access.solr.SimpleAnnotation;
 import org.janelia.it.jacs.compute.access.solr.SimpleEntity;
 import org.janelia.it.jacs.compute.api.support.SolrUtils;
+import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityData;
 
-import com.mongodb.*;
+import com.mongodb.BasicDBObject;
+import com.mongodb.BasicDBObjectBuilder;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
+import com.mongodb.MongoClient;
 
 /**
  * Data access to the MongoDB data store.
@@ -36,9 +47,10 @@ public class MongoDbDAO extends AnnotationDAO {
 	protected static final String MONGO_DATABASE = SystemConfigurationProperties.getString("MongoDB.Database");
 
 	protected LargeOperations largeOp;
-	protected Mongo m;
+	protected MongoClient m;
 	protected DB db;
 	protected DBCollection ec;
+	protected DBCollection dc;
 	
     public MongoDbDAO(Logger _logger) {
     	super(_logger);
@@ -47,9 +59,10 @@ public class MongoDbDAO extends AnnotationDAO {
     private void init() throws DaoException {
     	if (m!=null) return;
         try {
-        	m = new Mongo(MONGO_SERVER_URL);
+        	m = new MongoClient(MONGO_SERVER_URL);
         	db = m.getDB(MONGO_DATABASE);
         	ec =  db.getCollection("entity");
+        	dc =  db.getCollection("edge");
         }
 		catch (UnknownHostException e) {
 			throw new RuntimeException("Unknown host given in MongoDB.ServerURL value in system properties: "+MONGO_SERVER_URL);
@@ -65,6 +78,7 @@ public class MongoDbDAO extends AnnotationDAO {
     	log.info("Getting entities");
     	
     	Map<Long,SimpleEntity> entityMap = new HashMap<Long,SimpleEntity>();
+    	
         int i = 0;
     	Connection conn = null;
     	PreparedStatement stmt = null;
@@ -73,7 +87,7 @@ public class MongoDbDAO extends AnnotationDAO {
 	        conn = getJdbcConnection();
 	        
 	        StringBuffer sql = new StringBuffer();
-	        sql.append("select e.id, e.name, e.creation_date, e.updated_date, e.entity_type, e.owner_key, ed.entity_att, ed.value, ed.child_entity_id, p.subject_key ");
+	        sql.append("select e.id, e.name, e.creation_date, e.updated_date, e.entity_type, e.owner_key, ed.entity_att, ed.value, ed.id, ed.child_entity_id, p.subject_key ");
 	        sql.append("from entity e ");
 	        sql.append("left outer join entityData ed on e.id=ed.parent_entity_id ");
 	        sql.append("left outer join entity_actor_permission p on p.entity_id = e.id ");
@@ -90,9 +104,11 @@ public class MongoDbDAO extends AnnotationDAO {
 					if (i>0) {
 		            	if (i%MONGODB_LOADER_BATCH_SIZE==0) {
 		            		List<DBObject> l = createEntityDocs(entityMap.values());
+		            		List<DBObject> l2 = createEdgeDocs(entityMap.values());
 		                    entityMap.clear();
-		            		log.info("    Inserting "+l.size()+" docs (i="+i+")");
+		            		log.info("    Inserting "+l.size()+" entity docs and "+l2.size()+" edge docs (i="+i+")");
 		            		ec.insert(l);
+		            		dc.insert(l2);
 		            	}
 					}
 					
@@ -109,13 +125,15 @@ public class MongoDbDAO extends AnnotationDAO {
 
 				String key = rs.getString(7);
 				String value = rs.getString(8);
-				BigDecimal childIdBD = rs.getBigDecimal(9);
-				String subjectKey = rs.getString(10);
+				BigDecimal edIdBD = rs.getBigDecimal(9);
+				BigDecimal childIdBD = rs.getBigDecimal(10);
+				String subjectKey = rs.getString(11);
 
 				if (childIdBD != null) {
 					Long childId = childIdBD.longValue();
+					Long edId = edIdBD.longValue();
 					entity.getChildIds().add(childId);
-					entity.getAttributes().add(new KeyValuePair(key, value, childId));
+					entity.getAttributes().add(new KeyValuePair(key, value, childId, edId));
 				}
 				else if (key!=null && value!=null) {
 					entity.getAttributes().add(new KeyValuePair(key, value));
@@ -150,12 +168,14 @@ public class MongoDbDAO extends AnnotationDAO {
     	log.info("Completed adding "+i+" entities");
 
     	log.info("Creating indexes");
+    	
         ec.ensureIndex("name");
-        ec.ensureIndex("entity_type");
+        ec.ensureIndex("type");
+        ec.ensureIndex("subjects");
         ec.ensureIndex("username");
-//        ec.ensureIndex("attributes");
-        ec.ensureIndex("child_ids");
-        ec.ensureIndex("ancestor_ids");
+        ec.ensureIndex("children");
+        ec.ensureIndex("ancestors");
+        ec.ensureIndex("priors");
         
     	log.info("Completed data load");
     }
@@ -163,7 +183,19 @@ public class MongoDbDAO extends AnnotationDAO {
     protected List<DBObject> createEntityDocs(Collection<SimpleEntity> entities) {
         List<DBObject> docs = new ArrayList<DBObject>();
         for(SimpleEntity se : entities) {
-        	docs.add(createDoc(se));
+        	docs.add(createEntityDoc(se));
+        }
+        return docs;
+    }
+
+    protected List<DBObject> createEdgeDocs(Collection<SimpleEntity> entities) {
+        List<DBObject> docs = new ArrayList<DBObject>();
+        for(SimpleEntity se : entities) {
+            for(KeyValuePair pair : se.getAttributes()) {
+                if (pair.getEdId()!=null) {
+                    docs.add(createEdgeDoc(pair.getEdId(), se.getId(), pair.getChildId(), pair.getKey()));
+                }
+            }
         }
         return docs;
     }
@@ -174,38 +206,11 @@ public class MongoDbDAO extends AnnotationDAO {
 	    	db.dropDatabase();
 		}
 		catch (Exception e) {
-			throw new DaoException("Error clearing index with SOLR",e);
+			throw new DaoException("Error clearing index with MongoDB",e);
 		}
     }
 
-    protected SimpleEntity simpleEntityFromEntity(Entity entity) {
-    	SimpleEntity simpleEntity = new SimpleEntity();
-    	simpleEntity.setId(entity.getId());
-    	simpleEntity.setName(entity.getName());
-    	simpleEntity.setCreationDate(entity.getCreationDate());
-    	simpleEntity.setUpdatedDate(entity.getUpdatedDate());
-    	
-    	Set<Long> childrenIds = new HashSet<Long>();
-    	for(EntityData ed : entity.getEntityData()) {
-    		if (ed.getValue()!=null) {
-    			String attr = (ed.getEntityAttrName());
-    			simpleEntity.getAttributes().add(new KeyValuePair(attr, ed.getValue()));
-    		}
-    		else if (ed.getChildEntity()!=null) {
-    			childrenIds.add(ed.getChildEntity().getId());
-    			simpleEntity.getChildIds().add(ed.getChildEntity().getId());
-    		}
-    	}
-    	
-    	return simpleEntity;
-    }
-    
-    protected DBObject createDoc(Entity entity) {
-    	SimpleEntity simpleEntity = simpleEntityFromEntity(entity);
-    	return createDoc(simpleEntity);
-    }
-
-    protected DBObject createDoc(SimpleEntity entity) {
+    protected DBObject createEntityDoc(SimpleEntity entity) {
 
     	Set<SimpleAnnotation> annotations = null;
     	AncestorSet ancestorSet = null;
@@ -220,43 +225,70 @@ public class MongoDbDAO extends AnnotationDAO {
     	
     	BasicDBObjectBuilder builder = BasicDBObjectBuilder.start();
 		builder.add("_id", entity.getId());
-    	builder.add("name", entity.getName());
+		builder.add("type", entity.getEntityTypeName());
+		builder.add("name", entity.getName());
     	builder.add("creation_date", entity.getCreationDate());
     	builder.add("updated_date", entity.getUpdatedDate());
-    	builder.add("entity_type", entity.getEntityTypeName());
-    
-    	Map<String,List<Map<String,Object>>> attrs = new HashMap<String,List<Map<String,Object>>>();
+    	
+    	Map<String,String> attrs = new HashMap<String,String>();
 
     	for(KeyValuePair kv : entity.getAttributes()) {
     		String key = SolrUtils.getFormattedName(kv.getKey());
-    		Map<String,Object> value = new HashMap<String,Object>();
-    		if (kv.getValue()!=null) value.put("value", kv.getValue());
-    		if (kv.getChildId()!=null) value.put("child_id", kv.getChildId());
-    		List<Map<String,Object>> values = attrs.get(key);
-    		if (values==null) {
-    			values = new ArrayList<Map<String,Object>>();
-    			attrs.put(key, values);
+    		if (kv.getValue()!=null) {
+    		    attrs.put(key, kv.getValue());
     		}
-    		values.add(value);
     	}
     	
+    	Set<String> subjectKeys = new HashSet<String>();
+    	subjectKeys.add(entity.getOwnerName());
+    	subjectKeys.addAll(entity.getSubjectKeys());
+    	
     	builder.add("attributes", attrs);
-    	builder.add("child_ids", entity.getChildIds());
-    	builder.add("subject_keys", entity.getSubjectKeys());
+    	builder.add("children", entity.getChildIds());
+    	builder.add("subjects", subjectKeys);
     			
     	if (ancestorSet!=null) {
-    		builder.add("ancestor_ids", ancestorSet.getAncestors());
+    		builder.add("ancestors", ancestorSet.getAncestors());
     	}
     	
     	if (annotations != null) {
-	    	List<String> annots = new ArrayList<String>();
+	    	List<Map<String,Object>> annots = new ArrayList<Map<String,Object>>();
 	    	for(SimpleAnnotation annotation : annotations) {
-				annots.add(annotation.getTag());
+	    	    Map<String,Object> annotMap = new HashMap<String,Object>();
+	    	    annotMap.put("subject",annotation.getOwner());
+	    	    annotMap.put("key",annotation.getValue());
+	    	    annotMap.put("value",annotation.getKey());
+	    	    annotMap.put("tag",annotation.getTag());
+				annots.add(annotMap);
 	    	}
 	    	builder.add("annotations", annots);
     	}
     	
     	return builder.get();
+    }
+    
+    protected DBObject createEdgeDoc(Long edgeId, Long sourceEntityId, Long targetEntityId, String type) {
+        
+        if (edgeId==null) {
+            edgeId = (Long)TimebasedIdentifierGenerator.generate(1);
+        }
+        
+        List<Long> priors = new ArrayList<Long>();
+        priors.add(edgeId);
+        
+        BasicDBObjectBuilder builder = BasicDBObjectBuilder.start();
+        builder.add("_id", edgeId);
+        builder.add("type", type);
+        builder.add("entry_edge", edgeId);
+        builder.add("direct_edge", edgeId);
+        builder.add("exit_edge", edgeId);
+        builder.add("source", sourceEntityId);
+        builder.add("target", targetEntityId);
+        builder.add("hops", edgeId);
+        builder.add("priors", priors);
+        builder.add("graph_space", "model");
+        
+        return builder.get();
     }
 
     public DBCursor search(BasicDBObject query) throws DaoException {
