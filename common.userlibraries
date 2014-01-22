@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="US-ASCII" standalone="no"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <eclipse-userlibraries version="2">
     <library name="Apache Commons" systemlibrary="false">
         <archive path="/common/Apache-Commons/commons-vfs-1.0.jar"/>
@@ -223,8 +223,8 @@
         <archive path="/console/lib/Jogl/jogl-all.jar"/>
     </library>
     <library name="JUnit" systemlibrary="false">
-        <archive path="/common/JUnit-Lib-3.8.1/clover.jar"/>
-        <archive path="/common/JUnit-Lib-3.8.1/junit.jar"/>
+        <archive path="/common/JUnit-Lib-4.11/junit-4.11.jar"/>
+        <archive path="/common/JUnit-Lib-4.11/hamcrest-core-1.3.jar"/>
     </library>
     <library name="LOCI" systemlibrary="false">
         <archive path="/common/LOCI/scifio.jar"/>
@@ -250,7 +250,7 @@
         <archive path="/common/LZ4/lz4-1.1.1.jar"/>
     </library>
     <library name="MongoDB" systemlibrary="false">
-        <archive path="/common/MongoDB/mongo-2.7.3.jar"/>
+        <archive path="/common/MongoDB/mongo-java-driver-2.11.3.jar" source="/common/MongoDB/mongo-java-driver-2.11.3-sources.jar"/>
     </library>
     <library name="MySQL" systemlibrary="false">
         <archive path="/common/MySQL/mysql-connector-java-5.1.22-bin.jar"/>
