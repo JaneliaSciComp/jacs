@@ -55,7 +55,7 @@ public class RelativePatternAnnotationDataManager extends PatternAnnotationDataM
 
     private static File getPatternAnnotationSummaryFile() {
         String resourceDirString=SystemConfigurationProperties.getString("FileStore.CentralDir.Archived")+
-                        "/system"+SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationResourceDir");
+                SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationResourceDir");
         String quantifierSummaryFilename=SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationQuantifierSummaryFile");
         File patternAnnotationSummaryFile=new File(resourceDirString, quantifierSummaryFilename);
         return patternAnnotationSummaryFile;
