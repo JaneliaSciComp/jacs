@@ -26,6 +26,7 @@ import org.janelia.it.jacs.compute.api.support.SolrUtils;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 
+import com.google.common.util.concurrent.RateLimiter;
 import com.mongodb.BasicDBObject;
 import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DB;
@@ -33,6 +34,7 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
+import com.mongodb.WriteConcern;
 
 /**
  * Data access to the MongoDB data store.
@@ -41,7 +43,8 @@ import com.mongodb.MongoClient;
  */
 public class MongoDbDAO extends AnnotationDAO {
 
-    protected final static int MONGODB_LOADER_BATCH_SIZE = 50000;
+    protected final static int MONGODB_LOADER_BATCH_SIZE = 20000;
+    protected final static int MONGODB_INSERTS_PER_SECOND = 5000;
 	
 	protected static final String MONGO_SERVER_URL = SystemConfigurationProperties.getString("MongoDB.ServerURL");
 	protected static final String MONGO_DATABASE = SystemConfigurationProperties.getString("MongoDB.Database");
@@ -60,6 +63,7 @@ public class MongoDbDAO extends AnnotationDAO {
     	if (m!=null) return;
         try {
         	m = new MongoClient(MONGO_SERVER_URL);
+        	m.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
         	db = m.getDB(MONGO_DATABASE);
         	ec =  db.getCollection("entity");
         	dc =  db.getCollection("edge");
@@ -78,6 +82,7 @@ public class MongoDbDAO extends AnnotationDAO {
     	log.info("Getting entities");
     	
     	Map<Long,SimpleEntity> entityMap = new HashMap<Long,SimpleEntity>();
+    	final RateLimiter rateLimiter = RateLimiter.create(MONGODB_INSERTS_PER_SECOND); // only allow 10000 inserts per second 
     	
         int i = 0;
     	Connection conn = null;
@@ -107,8 +112,10 @@ public class MongoDbDAO extends AnnotationDAO {
 		            		List<DBObject> l2 = createEdgeDocs(entityMap.values());
 		                    entityMap.clear();
 		            		log.info("    Inserting "+l.size()+" entity docs and "+l2.size()+" edge docs (i="+i+")");
+		            		rateLimiter.acquire(l.size());
 		            		ec.insert(l);
-		            		dc.insert(l2);
+		            		rateLimiter.acquire(l2.size());
+		            		dc.insert(l2);		            		
 		            	}
 					}
 					
