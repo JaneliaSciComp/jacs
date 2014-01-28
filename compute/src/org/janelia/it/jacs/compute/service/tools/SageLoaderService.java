@@ -170,7 +170,7 @@ public class SageLoaderService extends SubmitDrmaaJobService {
     @Override
     public void postProcess() throws MissingDataException {
         try {
-            // reload task from database
+            // reload task from database to avoid Hibernate errors on save
             task = computeDAO.getTaskById(task.getObjectId());
 
             final File outputFile = getFile(getSGEOutputDirectory(), "Output");
@@ -179,8 +179,10 @@ public class SageLoaderService extends SubmitDrmaaJobService {
             addFileMessage("Error", errorFile);
 
             SageLoaderTask sageLoaderTask = (SageLoaderTask) task;
+            // if the item being loaded is an lsm,
+            // verify that the sageLoader script actually found the image
             if (sageLoaderTask.getItem().endsWith(".lsm")) {
-                checkLinesFound(outputFile);
+                checkImagesFound(outputFile);
             }
 
             computeDAO.saveOrUpdate(task);
@@ -206,22 +208,30 @@ public class SageLoaderService extends SubmitDrmaaJobService {
         return new File(directory, getGridServicePrefixName() + name + ".1");
     }
 
-    private void checkLinesFound(File file) {
+    /**
+     * The sageLoader script was originally designed to run in batch mode,
+     * so an invalid item name does not explicitly create an error.
+     * This method checks that an image was in fact found for the specified item
+     * and adds an error event to this task if an image was not found.
+     *
+     * @param  sageLoaderStdOutFile  standard output from sageLoader script.
+     */
+    private void checkImagesFound(File sageLoaderStdOutFile) {
 
-        int linesFound = 0;
+        int imagesFound = 0;
 
-        if (file.exists()) {
-            final long size = file.length();
+        if (sageLoaderStdOutFile.exists()) {
+            final long size = sageLoaderStdOutFile.length();
             if (size > 0) {
-                linesFound = getLinesFound(file);
+                imagesFound = getImagesFound(sageLoaderStdOutFile);
             }
         }
 
-        if (linesFound == 0) {
+        if (imagesFound == 0) {
             final Event lastEvent = task.getLastEvent();
-            final String errorMessage = "no Lines Found in " + file.getAbsolutePath();
+            final String errorMessage = "no Images Found in " + sageLoaderStdOutFile.getAbsolutePath();
             if (! Event.ERROR_EVENT.equals(lastEvent.getEventType())) {
-                logger.info("checkLinesFound: " + errorMessage);
+                logger.info("checkImagesFound: " + errorMessage);
                 final Event invalidOutput = new Event(errorMessage, new Date(), Event.ERROR_EVENT);
                 task.addEvent(invalidOutput);
             }
@@ -229,8 +239,8 @@ public class SageLoaderService extends SubmitDrmaaJobService {
 
     }
 
-    private int getLinesFound(File file) {
-        int linesFound = 0;
+    private int getImagesFound(File file) {
+        int imagesFound = 0;
 
         BufferedReader br = null;
         try {
@@ -238,10 +248,10 @@ public class SageLoaderService extends SubmitDrmaaJobService {
             String currentLine;
             Matcher m;
             while ((currentLine = br.readLine()) != null) {
-                m = LINES_FOUND.matcher(currentLine);
+                m = IMAGES_FOUND.matcher(currentLine);
                 if (m.matches()) {
                     if (m.groupCount() == 1) {
-                        linesFound = Integer.parseInt(m.group(1));
+                        imagesFound = Integer.parseInt(m.group(1));
                     }
                     break;
                 }
@@ -258,10 +268,10 @@ public class SageLoaderService extends SubmitDrmaaJobService {
             }
         }
 
-        logger.info("getLinesFound: returning " + linesFound + " for " + file.getAbsolutePath());
+        logger.info("getImagesFound: returning " + imagesFound + " for " + file.getAbsolutePath());
 
-        return linesFound;
+        return imagesFound;
     }
 
-    private static final Pattern LINES_FOUND = Pattern.compile("Lines found:(?:\\W)*([\\d])*");
+    private static final Pattern IMAGES_FOUND = Pattern.compile("Images found:(?:\\W)*([\\d])*");
 }
