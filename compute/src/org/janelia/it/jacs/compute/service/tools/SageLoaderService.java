@@ -2,25 +2,26 @@
 package org.janelia.it.jacs.compute.service.tools;
 
 import org.janelia.it.jacs.compute.access.ComputeDAO;
+import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.tools.SageLoaderResultNode;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.shared.utils.FileUtil;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 import java.io.*;
+import java.util.Date;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ekelsey
- * Date: Aug 26, 2010
- * Time: 3:31:05 PM
- */
 public class SageLoaderService extends SubmitDrmaaJobService {
 
     protected String getGridServicePrefixName() {
@@ -44,45 +45,78 @@ public class SageLoaderService extends SubmitDrmaaJobService {
     private void createShellScript(FileWriter writer)
             throws IOException, ParameterException {
         try {
-            SageLoaderTask sageLoaderTask = (SageLoaderTask)task;
-            String perlModulePath = SystemConfigurationProperties.getString("Sage.Perllib");
-            String perlBinPath = SystemConfigurationProperties.getString("Perl.Path");
-            String cmdPrefix = "export PATH=$PATH:" + perlModulePath + ";export PERL5LIB=$PERL5LIB:" + perlModulePath + ";";
+            SageLoaderTask sageLoaderTask = (SageLoaderTask) task;
+            final String perlModulePath = SystemConfigurationProperties.getString("Sage.Perllib");
+            final String perlBinPath = SystemConfigurationProperties.getString("Perl.Path");
+            final String cmdPrefix =
+                    "export PATH=$PATH:" + perlModulePath + ";export PERL5LIB=$PERL5LIB:" + perlModulePath + ";";
 
             StringBuilder script = new StringBuilder();
             script.append("whoami").append("\n");
             script.append(cmdPrefix).append("\n");
             script.append(perlBinPath).append(" ");
-            script.append(SystemConfigurationProperties.getString("Executables.ModuleBase")).append(SystemConfigurationProperties.getString("Sage.loader.Cmd"));
-            script.append(" ").append("-").append(SageLoaderTask.PARAM_ITEM).append(" ").append(task.getParameter(SageLoaderTask.PARAM_ITEM)).
-            append(" ").append("-").append(SageLoaderTask.PARAM_CONFIG).append(" ").append(task.getParameter(SageLoaderTask.PARAM_CONFIG)).
-            append(" ").append("-").append(SageLoaderTask.PARAM_GRAMMAR).append(" ").append(task.getParameter(SageLoaderTask.PARAM_GRAMMAR)).
-            append(" ").append("-").append(SageLoaderTask.PARAM_LAB).append(" ").append(task.getParameter(SageLoaderTask.PARAM_LAB)).
-            append(" ").append("-user jacs");
+            script.append(SystemConfigurationProperties.getString("Executables.ModuleBase"));
+            script.append(SystemConfigurationProperties.getString("Sage.loader.Cmd"));
 
-            if (null!=task.getParameter(SageLoaderTask.PARAM_DEBUG)){
-                script.append(" ").append("-").append(SageLoaderTask.PARAM_DEBUG);
+            final String sageWriteEnvironment = SystemConfigurationProperties.getString("Sage.write.environment");
+            if ("production".equals(sageWriteEnvironment)) {
+                logger.info("createShellScript: running against production SAGE environment");
+            } else {
+                logger.info("createShellScript: running against development SAGE environment");
+                script.append(" -development");
             }
-            if (null!=task.getParameter(SageLoaderTask.PARAM_LOCK) && !"".equals(task.getParameter(SageLoaderTask.PARAM_LOCK))){
-                script.append(" ").append("-").append(SageLoaderTask.PARAM_LOCK).append(" ").append(task.getParameter(SageLoaderTask.PARAM_LOCK));
-            }
+
+            script.append(" -user jacs");
+            appendTaskParameters(sageLoaderTask, script);
             script.append("\n");
+
             writer.write(script.toString());
-            File configFile = new File(getSGEConfigurationDirectory(), getConfigPrefix()+1);
-            FileOutputStream fos = new FileOutputStream(configFile);
-            PrintWriter configWriter = new PrintWriter(fos);
+
+            final File configFile = new File(getSGEConfigurationDirectory(), getConfigPrefix()+1);
+            FileOutputStream fos = null;
             try {
-                // Write the full path file name of the file to compress or decompress
+                fos = new FileOutputStream(configFile);
+                final PrintWriter configWriter = new PrintWriter(fos);
                 configWriter.println("\n");
-            }
-            finally {
-                configWriter.close();
+            } finally {
+                close(configFile.getAbsolutePath(), fos);
             }
 
-        }
-        catch (Exception e) {
-            logger.error(e, e);
+        } catch (Exception e) {
+            logger.error("failed to create shell script", e);
             throw new IOException(e);
+        }
+    }
+
+    private void appendTaskParameters(SageLoaderTask sageLoaderTask,
+                                      StringBuilder script) {
+        String value;
+        for (String name : sageLoaderTask.getScriptArgumentNames()) {
+            value = sageLoaderTask.getParameter(name);
+            if (! StringUtils.isEmpty(value)) {
+                script.append(" -").append(name).append(' ');
+                if (value.contains(" ")) {
+                    script.append(" \"").append(value).append("\"");
+                } else {
+                    script.append(value);
+                }
+            }
+        }
+        for (String name : sageLoaderTask.getScriptFlagNames()) {
+            if (sageLoaderTask.hasParameter(name)) {
+                script.append(" -").append(name);
+            }
+        }
+    }
+
+    private void close(String name,
+                       Closeable closeable) {
+        if (closeable != null) {
+            try {
+                closeable.close();
+            } catch (IOException e) {
+                logger.warn("failed to close " + name, e);
+            }
         }
     }
 
@@ -133,5 +167,101 @@ public class SageLoaderService extends SubmitDrmaaJobService {
         return "-l archive=true";
     }
 
+    @Override
+    public void postProcess() throws MissingDataException {
+        try {
+            // reload task from database
+            task = computeDAO.getTaskById(task.getObjectId());
 
+            final File outputFile = getFile(getSGEOutputDirectory(), "Output");
+            final File errorFile = getFile(getSGEErrorDirectory(), "Error");
+            addFileMessage("Output", outputFile);
+            addFileMessage("Error", errorFile);
+
+            SageLoaderTask sageLoaderTask = (SageLoaderTask) task;
+            if (sageLoaderTask.getItem().endsWith(".lsm")) {
+                checkLinesFound(outputFile);
+            }
+
+            computeDAO.saveOrUpdate(task);
+            logger.info("postProcess: saved output messages for " + task);
+        } catch (DaoException e) {
+            logger.error("failed to save output messages for " + task, e);
+        }
+    }
+
+    private void addFileMessage(String context,
+                                File file) {
+        if (file.exists()) {
+            final long size = file.length();
+            if (size > 0) {
+                task.addMessage(context + " file: " + file.getAbsolutePath());
+            }
+        }
+    }
+
+    private File getFile(String directoryName,
+                         String name) {
+        final File directory = new File(directoryName);
+        return new File(directory, getGridServicePrefixName() + name + ".1");
+    }
+
+    private void checkLinesFound(File file) {
+
+        int linesFound = 0;
+
+        if (file.exists()) {
+            final long size = file.length();
+            if (size > 0) {
+                linesFound = getLinesFound(file);
+            }
+        }
+
+        if (linesFound == 0) {
+            final Event lastEvent = task.getLastEvent();
+            final String errorMessage = "no Lines Found in " + file.getAbsolutePath();
+            if (! Event.ERROR_EVENT.equals(lastEvent.getEventType())) {
+                logger.info("checkLinesFound: " + errorMessage);
+                final Event invalidOutput = new Event(errorMessage, new Date(), Event.ERROR_EVENT);
+                task.addEvent(invalidOutput);
+            }
+        }
+
+    }
+
+    private int getLinesFound(File file) {
+        int linesFound = 0;
+
+        BufferedReader br = null;
+        try {
+            br = new BufferedReader(new FileReader(file));
+            String currentLine;
+            Matcher m;
+            while ((currentLine = br.readLine()) != null) {
+                m = LINES_FOUND.matcher(currentLine);
+                if (m.matches()) {
+                    if (m.groupCount() == 1) {
+                        linesFound = Integer.parseInt(m.group(1));
+                    }
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            logger.error("failed to parse " + file.getAbsolutePath(), e);
+        } finally {
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    logger.error("failed to close " + file.getAbsolutePath(), e);
+                }
+            }
+        }
+
+        logger.info("getLinesFound: returning " + linesFound + " for " + file.getAbsolutePath());
+
+        return linesFound;
+    }
+
+    private static final Pattern LINES_FOUND = Pattern.compile("Lines found:(?:\\W)*([\\d])*");
 }

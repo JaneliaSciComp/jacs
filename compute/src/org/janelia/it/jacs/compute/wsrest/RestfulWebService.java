@@ -2,20 +2,26 @@ package org.janelia.it.jacs.compute.wsrest;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
+import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanRemote;
 import org.janelia.it.jacs.model.entity.DataSet;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.model.status.CurrentTaskStatus;
+import org.janelia.it.jacs.model.status.RestfulWebServiceFailure;
 import org.janelia.it.jacs.model.tasks.Event;
-import org.janelia.it.jacs.model.tasks.utility.LsTestTask;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
 import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
 import org.jboss.resteasy.annotations.providers.jaxb.Wrapped;
+import org.jboss.resteasy.spi.Failure;
 import org.jboss.resteasy.spi.NotFoundException;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -111,53 +117,175 @@ public class RestfulWebService {
     }
 
     /**
-     */
-    @GET
-    @Path("lsTest")
-    public Response runLsTest(
-            @QueryParam("owner")String owner,
-            @QueryParam("path")String path)
-    {
-        logger.info("Heard call for lsTest API");
-        try {
-            LsTestTask task = new LsTestTask(owner, new ArrayList<Event>(), path);
-            task = (LsTestTask)EJBFactory.getRemoteComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getRemoteComputeBean().submitJob("LsTestService", task.getObjectId());
-            logger.info("Done lsTest call ("+owner+", "+path+")");
-        }
-        catch (Exception e) {
-            logger.error("runLsTest: failed execution", e);
-        }
-        return null;
-    }
-
-    /**
-     * http://saffordt-ws1:8180/rest-v1/sageLoader?owner=system&item=20121219%2FFLFL_20121221182844754_29687.lsm&configPath=%2Fgroups%2Fscicomp%2Finformatics%2Fdata%2Fflylightflip_light_imagery-config.xml&grammarPath=%2Fusr%2Flocal%2Fpipeline%2Fgrammar%2Fflylightflip.gra&lab=flylight&debug=yes&lock=
+     * Runs the Informatics sageLoader script.
+     *
+     * Sample POST request URL:
+     *
+     *   http://saffordt-ws1:8180/rest-v1/sageLoader?
+     *       owner=system&
+     *       item=20121219%2FFLFL_20121221182844754_29687.lsm&
+     *       config=%2Fgroups%2Fscicomp%2Finformatics%2Fdata%2Fflylightflip_light_imagery-config.xml&
+     *       grammar=%2Fusr%2Flocal%2Fpipeline%2Fgrammar%2Fflylightflip.gra&
+     *       lab=flylight&
+     *       debug=yes
+     *
+     * @param  owner        id of the person or system submitting this request.
+     *
+     * @param  item         the normalized (forward slash) relative path of the item to load
+     *                      (e.g. 20121219/FLFL_20121221182844754_29687.lsm).
+     *
+     * @param  configPath   the normalized (forward slash) absolute path of the loader configuration file
+     *                      (e.g. /groups/scicomp/informatics/data/flylightflip_light_imagery-config.xml).
+     *
+     * @param  grammarPath  the normalized (forward slash) absolute path of the loader grammar file
+     *                      (e.g. /usr/local/pipeline/grammar/flylightflip.gra).
+     *
+     * @param  lab          name of the lab that owns the item being loaded
+     *                      (e.g. flylight or rubin).
+     *
+     * @param  debug        optional flag indicating that debug information should be printed to stdout.
+     *
+     * @param  lockPath     optional lock file path.
+     *                      If specified, subsequent requests with the same lock file path will be blocked
+     *                      (on the cluster) for up to 60 seconds.
+     *                      If lock is not released within 60 seconds, job will fail.
+     *                      Lock file must be on network filesystem to work as it will be accessed from
+     *                      different cluster nodes.
+     *
+     * @param  uriInfo      URI information for the current request.
+     *
+     * @return HTTP accepted (202) status with task current status information that includes
+     *         link to check for status later.
+     *
+     * @throws Failure
+     *   if any failures occur during processing.
      */
     @POST
+    @Produces("application/xml")
+    @Formatted
     @Path("sageLoader")
     public Response runSageLoader(
             @QueryParam("owner")String owner,
             @QueryParam("item")String item,
-            @QueryParam("configPath")String configPath,
-            @QueryParam("grammarPath")String grammarPath,
+            @QueryParam("config")String configPath,
+            @QueryParam("grammar")String grammarPath,
             @QueryParam("lab")String lab,
             @QueryParam("debug")String debug,
-            @QueryParam("lock")String lock)
-    {
-        logger.info("Heard call for SageLoader API");
+            @QueryParam("lock")String lockPath,
+            @Context UriInfo uriInfo) {
+
+        final String context = "runSageLoader: ";
+
+        logger.info(context +"entry, owner=" + owner +
+                    ", item=" + item +
+                    ", configPath=" + configPath +
+                    ", grammarPath=" + grammarPath +
+                    ", lab=" + lab +
+                    ", debug=" + debug +
+                    ", lockPath=" + lockPath);
+
+        Response response = null;
+        SageLoaderTask task = null;
+        Long taskId;
+
         try {
-            SageLoaderTask task = new SageLoaderTask(owner, new ArrayList<Event>(), item, configPath,grammarPath,lab,
-                    debug, lock);
-            task = (SageLoaderTask)EJBFactory.getRemoteComputeBean().saveOrUpdateTask(task);
-            logger.info("Running SageLoader task "+task.getObjectId()+" for item="+item);
-            EJBFactory.getRemoteComputeBean().submitJob("SageLoader", task.getObjectId());
-            logger.info("Done runSageLoader call ("+owner+","+item+")");
+
+            if (owner == null) {
+                throw new IllegalArgumentException("owner parameter is not defined");
+            }
+
+            task = new SageLoaderTask(owner,
+                                      new ArrayList<Event>(),
+                                      item,
+                                      configPath,
+                                      grammarPath,
+                                      lab,
+                                      debug,
+                                      lockPath);
+        } catch (Exception e) {
+            response = getErrorResponse(context, Response.Status.BAD_REQUEST, e.getMessage(), e);
         }
-        catch (Exception e) {
-            logger.error("runSageLoader: failed execution", e);
+
+        if (task != null) {
+            try {
+                final ComputeBeanRemote remoteComputeBean = EJBFactory.getRemoteComputeBean();
+                task = (SageLoaderTask) remoteComputeBean.saveOrUpdateTask(task);
+                taskId = task.getObjectId();
+                logger.info(context + "task " + taskId + " saved for item " + item);
+
+                remoteComputeBean.submitJob("SageLoader", task.getObjectId());
+                logger.info(context + "submitted job for task " + taskId);
+
+                response = getCurrentTaskStatus(taskId, uriInfo);
+                final Object taskStatusEntity = response.getEntity();
+
+                if (taskStatusEntity instanceof CurrentTaskStatus) {
+                    response = Response.status(Response.Status.ACCEPTED).entity(taskStatusEntity).build();
+                }
+                // else simply return error response from getCurrentTaskStatus
+
+            } catch (Exception e) {
+                response = getErrorResponse(context,
+                                            Response.Status.INTERNAL_SERVER_ERROR,
+                                            "failed to run sageLoader for " + item,
+                                            e);
+            }
         }
-        return null;
+
+        logger.info(context + "exit, returning " + getResponseString(response));
+
+        return response;
+    }
+
+    /**
+     * @param  taskId   identifies the task to check.
+     *
+     * @param  uriInfo  URI information for the current request.
+     *
+     * @return current status information for the specified task.
+     *
+     * @throws Failure
+     *   if the specified task cannot be found or any other failures occur during retrieval.
+     */
+    @GET
+    @Path("task/{taskId}/currentStatus")
+    @Produces("application/xml")
+    @Formatted
+    public Response getCurrentTaskStatus(@PathParam("taskId") Long taskId,
+                                         @Context UriInfo uriInfo) {
+
+        final String context = "getCurrentTaskStatus: ";
+
+        logger.info(context + "entry, taskId=" + taskId);
+
+        Response response;
+
+        try {
+            final ComputeBeanRemote remoteComputeBean = EJBFactory.getRemoteComputeBean();
+            final Task task = remoteComputeBean.getTaskById(taskId);
+
+            if (task == null) {
+                response = getErrorResponse(context,
+                                            Response.Status.NOT_FOUND,
+                                            "task " + taskId + " does not exist",
+                                            null);
+            } else {
+                final CurrentTaskStatus currentTaskStatus = new CurrentTaskStatus(task);
+                final String href = getNormalizedBaseUrlString(uriInfo) + "task/" + taskId + "/currentStatus";
+                currentTaskStatus.setHref(href);
+                response = Response.status(Response.Status.OK).entity(currentTaskStatus).build();
+            }
+
+        } catch (Exception e) {
+            response = getErrorResponse(context,
+                                        Response.Status.INTERNAL_SERVER_ERROR,
+                                        "failed to retrieve status for task " + taskId,
+                                        e);
+        }
+
+        logger.info(context + "exit, returning " + getResponseString(response));
+
+        return response;
     }
 
     /**
@@ -224,5 +352,24 @@ public class RestfulWebService {
         return dataSetList;
     }
 
+    private String getNormalizedBaseUrlString(UriInfo uriInfo) {
+        StringBuilder sb = new StringBuilder(uriInfo.getBaseUri().toString());
+        if (sb.charAt(sb.length() - 1) != '/') {
+            sb.append('/');
+        }
+        return sb.toString();
+    }
 
+    private Response getErrorResponse(String context,
+                                      Response.Status status,
+                                      String errorMessage,
+                                      Exception e)  {
+        final RestfulWebServiceFailure failure = new RestfulWebServiceFailure(errorMessage, e);
+        logger.error(context + errorMessage, e);
+        return Response.status(status).entity(failure).build();
+    }
+
+    private String getResponseString(Response response) {
+        return response.getStatus() + ": " + response.getEntity();
+    }
 }
