@@ -346,6 +346,10 @@ public class EntityUtils {
         return "("+(entity==null?"null entity":entity.getName())+", @"+System.identityHashCode(entity)+")";
     }
     
+    public static String identify(EntityData entityData) {
+        return "("+(entityData==null?"null entityData":entityData.getId())+", @"+System.identityHashCode(entityData)+")";
+    }
+    
     /**
      * Update the entity and its attributes.
      * @param entity

@@ -1582,25 +1582,19 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         if (log.isTraceEnabled()) {
             log.trace("saveOrUpdateEntity(entity.id="+entity.getId()+")");    
         }
-        // Count the number of children. We can't just use entity.getChildren().size() because the same child may 
-        // have multiple roles (e.g referenced by multiple EntityDatas). 
-        int numChildren = 0;
-        for(EntityData ed : entity.getEntityData()) {
-            if (ed.getChildEntity()!=null) {
-                numChildren++;
-            }
-        }
-        entity.setNumChildren(numChildren);
         entity.setUpdatedDate(new Date());
-        saveOrUpdate(entity);
+        if (!updateChildCount(entity)) {
+            saveOrUpdate(entity);    
+        }
     }
 
-    public void saveOrUpdateEntityData(EntityData entityData) throws ComputeException {
+    public void saveOrUpdateEntityData(EntityData entityData) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("saveOrUpdateEntityData(entityData.id="+entityData.getId()+")");    
         }
         entityData.setUpdatedDate(new Date());
         saveOrUpdate(entityData);
+        updateChildCount(entityData.getParentEntity());
     }
 
 
@@ -1668,15 +1662,25 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         updateChildCount(parent);
     }
     
-    private void updateChildCount(Entity entity) throws DaoException {
+    private boolean updateChildCount(Entity entity) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("updateChildCount(entity="+entity+")");    
         }
-        int numChildren = entity.getChildren().size();
+        // Count the number of children. We can't just use entity.getChildren().size() because the same child may 
+        // have multiple roles (e.g referenced by multiple EntityDatas). 
+        int numChildren = 0;
+        for(EntityData ed : entity.getEntityData()) {
+            if (ed.getChildEntity()!=null) {
+                numChildren++;
+            }
+        }
         if (entity.getNumChildren()!=numChildren) {
             entity.setNumChildren(numChildren);
+            saveOrUpdate(entity);
+            return true;
         }
-        saveOrUpdate(entity);
+        
+        return false;
     }
     
     public int bulkUpdateEntityDataValue(String oldValue, String newValue) throws DaoException {
@@ -1776,10 +1780,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             parent.getEntityData().remove(entityData);
         }
         genericDelete(entityData);
-        if (parent!=null) {
-            if (hasChild) {
-                updateChildCount(parent);
-            }
+        if (parent!=null && hasChild) {
+            updateChildCount(parent);
         }
     }
 

@@ -1,6 +1,15 @@
 
 package org.janelia.it.jacs.compute.api;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
@@ -14,16 +23,6 @@ import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
-
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Implementation of queries against the entity model. 
@@ -106,7 +105,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             throw new ComputeException("Error trying to save or update Entity",e);
         }
     }
-
+    
     public EntityData saveOrUpdateEntityData(EntityData newData) throws ComputeException {
         try {
         	checkAttributeTypes(newData);
@@ -139,6 +138,26 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         catch (DaoException e) {
             _logger.error("Error saving entity with name: "+entity.getName(),e);
             throw new ComputeException("Error saving entity with name: "+entity.getName(),e);
+        }
+    }
+
+    public Entity saveOrUpdateEntityDatas(String subjectKey, Entity entity) throws ComputeException {
+        try {
+            if (!EntityUtils.hasWriteAccess(entity, _annotationDAO.getSubjectKeys(subjectKey))) {
+                throw new ComputeException("Subject "+subjectKey+" cannot change "+entity.getId());
+            }
+            int n = 0;
+            for(EntityData ed : entity.getEntityData()) {
+                _annotationDAO.saveOrUpdateEntityData(ed);
+                n++;
+            }
+            _logger.info(subjectKey+" updated "+n+" entity datas on entity "+entity.getId());
+            updateIndex(entity);
+            return entity;
+        } 
+        catch (DaoException e) {
+            _logger.error("Error trying to save or update Entity Datas");
+            throw new ComputeException("Error trying to save or update Entity Datas",e);
         }
     }
 
@@ -260,7 +279,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             throw new ComputeException("Error trying to add children to parent "+parentId, e);
         }
     }
-
+    
     public EntityData updateChildIndex(String subjectKey, EntityData entityData, Integer orderIndex) throws ComputeException {
          try {
             Entity parent = entityData.getParentEntity();
@@ -276,7 +295,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             throw new ComputeException("Error trying to update order index for "+orderIndex,e);
          }
     }
-    
+
     public EntityData setOrUpdateValue(String subjectKey, Long entityId, String attributeName, String value) throws ComputeException {
          try {
             Entity entity = getEntityById(subjectKey, entityId);

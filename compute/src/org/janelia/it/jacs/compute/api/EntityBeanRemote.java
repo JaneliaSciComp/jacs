@@ -35,6 +35,7 @@ public interface EntityBeanRemote {
     
 	public Entity saveOrUpdateEntity(String subjectKey, Entity entity) throws ComputeException;
     public EntityData saveOrUpdateEntityData(String subjectKey, EntityData newData) throws ComputeException;
+    public Entity saveOrUpdateEntityDatas(String subjectKey, Entity entity) throws ComputeException;
     public Entity createEntity(String subjectKey, String entityTypeName, String entityName) throws ComputeException;
     public EntityData addEntityToParent(String subjectKey, Long parentId, Long entityId, Integer index, String attrName) throws ComputeException;
     public void addChildren(String subjectKey, Long parentId, List<Long> childrenIds, String attributeName) throws ComputeException;
