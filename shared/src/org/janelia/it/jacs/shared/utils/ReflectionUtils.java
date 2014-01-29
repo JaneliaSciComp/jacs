@@ -3,7 +3,7 @@ package org.janelia.it.jacs.shared.utils;
 import java.lang.reflect.Field;
 
 /**
- * Helper methods for dealing with refleciton. 
+ * Helper methods for dealing with reflection.
  * 
  * @author <a href="mailto:rokickik@mail.nih.gov">Konrad Rokicki</a>
  */
@@ -22,7 +22,7 @@ public class ReflectionUtils {
             return getField(obj, fieldName).get(obj);  
         }
         catch (IllegalAccessException e) {
-            // shouldnt happen since getField sets the field accessible
+            // shouldn't happen since getField sets the field accessible
             throw new RuntimeException("Field cannot be accessed",e);
         }
     }
@@ -37,7 +37,7 @@ public class ReflectionUtils {
             getField(obj, fieldName).set(obj, value);    
         }
         catch (IllegalAccessException e) {
-            // shouldnt happen since getField sets the field accessible
+            // shouldn't happen since getField sets the field accessible
             throw new RuntimeException("Field cannot be accessed",e);
         }
     }
