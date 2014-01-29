@@ -13,6 +13,7 @@ import org.janelia.it.jacs.model.status.RestfulWebServiceFailure;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
+import org.janelia.it.jacs.model.user_data.User;
 import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
 import org.jboss.resteasy.annotations.providers.jaxb.Wrapped;
 import org.jboss.resteasy.spi.Failure;
@@ -134,6 +135,11 @@ public class RestfulWebService {
      * @param  item         the normalized (forward slash) relative path of the item to load
      *                      (e.g. 20121219/FLFL_20121221182844754_29687.lsm).
      *
+     * @param  line         optional line for the item (e.g. GMR_10A01_AE_01).
+     *                      This is only used in for testing in development environments
+     *                      to work around the hard-coded production SAGE database connection
+     *                      in the informatics get_sage_line_name script which is used by many grammars.
+     *
      * @param  configPath   the normalized (forward slash) absolute path of the loader configuration file
      *                      (e.g. /groups/scicomp/informatics/data/flylightflip_light_imagery-config.xml).
      *
@@ -167,6 +173,7 @@ public class RestfulWebService {
     public Response runSageLoader(
             @QueryParam("owner")String owner,
             @QueryParam("item")String item,
+            @QueryParam("line")String line,
             @QueryParam("config")String configPath,
             @QueryParam("grammar")String grammarPath,
             @QueryParam("lab")String lab,
@@ -178,58 +185,58 @@ public class RestfulWebService {
 
         logger.info(context +"entry, owner=" + owner +
                     ", item=" + item +
+                    ", line=" + line +
                     ", configPath=" + configPath +
                     ", grammarPath=" + grammarPath +
                     ", lab=" + lab +
                     ", debug=" + debug +
                     ", lockPath=" + lockPath);
 
-        Response response = null;
-        SageLoaderTask task = null;
-        Long taskId;
-
+        Response response;
         try {
+            final ComputeBeanRemote remoteComputeBean = EJBFactory.getRemoteComputeBean();
 
             if (owner == null) {
                 throw new IllegalArgumentException("owner parameter is not defined");
-            }
-
-            task = new SageLoaderTask(owner,
-                                      new ArrayList<Event>(),
-                                      item,
-                                      configPath,
-                                      grammarPath,
-                                      lab,
-                                      debug,
-                                      lockPath);
-        } catch (Exception e) {
-            response = getErrorResponse(context, Response.Status.BAD_REQUEST, e.getMessage(), e);
-        }
-
-        if (task != null) {
-            try {
-                final ComputeBeanRemote remoteComputeBean = EJBFactory.getRemoteComputeBean();
-                task = (SageLoaderTask) remoteComputeBean.saveOrUpdateTask(task);
-                taskId = task.getObjectId();
-                logger.info(context + "task " + taskId + " saved for item " + item);
-
-                remoteComputeBean.submitJob("SageLoader", task.getObjectId());
-                logger.info(context + "submitted job for task " + taskId);
-
-                response = getCurrentTaskStatus(taskId, uriInfo);
-                final Object taskStatusEntity = response.getEntity();
-
-                if (taskStatusEntity instanceof CurrentTaskStatus) {
-                    response = Response.status(Response.Status.ACCEPTED).entity(taskStatusEntity).build();
+            } else {
+                final User user = remoteComputeBean.getUserByNameOrKey(owner);
+                if (user == null) {
+                    throw new IllegalArgumentException("invalid owner parameter '" + owner + "' specified");
                 }
-                // else simply return error response from getCurrentTaskStatus
-
-            } catch (Exception e) {
-                response = getErrorResponse(context,
-                                            Response.Status.INTERNAL_SERVER_ERROR,
-                                            "failed to run sageLoader for " + item,
-                                            e);
             }
+
+            SageLoaderTask task = new SageLoaderTask(owner,
+                                                     new ArrayList<Event>(),
+                                                     item,
+                                                     line,
+                                                     configPath,
+                                                     grammarPath,
+                                                     lab,
+                                                     debug,
+                                                     lockPath);
+
+            task = (SageLoaderTask) remoteComputeBean.saveOrUpdateTask(task);
+            final Long taskId = task.getObjectId();
+            logger.info(context + "task " + taskId + " saved for item " + item);
+
+            remoteComputeBean.submitJob("SageLoader", task.getObjectId());
+            logger.info(context + "submitted job for task " + taskId);
+
+            response = getCurrentTaskStatus(taskId, uriInfo);
+            final Object taskStatusEntity = response.getEntity();
+
+            if (taskStatusEntity instanceof CurrentTaskStatus) {
+                response = Response.status(Response.Status.ACCEPTED).entity(taskStatusEntity).build();
+            }
+            // else simply return error response from getCurrentTaskStatus
+
+        } catch (IllegalArgumentException e) {
+            response = getErrorResponse(context, Response.Status.BAD_REQUEST, e.getMessage(), e);
+        } catch (Exception e) {
+            response = getErrorResponse(context,
+                                        Response.Status.INTERNAL_SERVER_ERROR,
+                                        "failed to run sageLoader for " + item,
+                                        e);
         }
 
         logger.info(context + "exit, returning " + getResponseString(response));

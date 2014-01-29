@@ -13,16 +13,15 @@ import java.util.HashSet;
 import java.util.List;
 
 /**
- * This action can work against directories or single files passed as source
- * Created by IntelliJ IDEA.
- * User: tsafford
- * Date: Oct 3, 2008
- * Time: 10:08:35 AM
+ * Task for launching informatics sageLoader.pl script.
+ *
+ * @author Todd Safford
  */
 public class SageLoaderTask extends Task {
 
     private static final String DISPLAY_NAME = "Sage Loader Task";
     private static final String PARAM_ITEM = "item";
+    private static final String PARAM_LINE = "line";
     private static final String PARAM_CONFIG = "config";
     private static final String PARAM_GRAMMAR = "grammar";
     private static final String PARAM_LAB = "lab";
@@ -30,7 +29,7 @@ public class SageLoaderTask extends Task {
     private static final String PARAM_LOCK = "lock";
 
     private static final String[] SCRIPT_ARGUMENT_NAMES = {
-            PARAM_ITEM, PARAM_CONFIG, PARAM_GRAMMAR, PARAM_LAB, PARAM_LOCK
+            PARAM_ITEM, PARAM_LINE, PARAM_CONFIG, PARAM_GRAMMAR, PARAM_LAB, PARAM_LOCK
     };
     private static final String[] SCRIPT_FLAG_NAMES = { PARAM_DEBUG };
 
@@ -42,6 +41,7 @@ public class SageLoaderTask extends Task {
     public SageLoaderTask(String owner,
                           List<Event> events,
                           String item,
+                          String line,
                           String configPath,
                           String grammarPath,
                           String lab,
@@ -50,6 +50,7 @@ public class SageLoaderTask extends Task {
         super(new HashSet<Node>(), owner, events, new HashSet<TaskParameter>());
         this.taskName = DISPLAY_NAME;
         setItem(item);
+        setOptionalParameter(PARAM_LINE, line);
         setPathParameter(PARAM_CONFIG, configPath, true);
         setPathParameter(PARAM_GRAMMAR, grammarPath, true);
         setRequiredParameter(PARAM_LAB, lab);

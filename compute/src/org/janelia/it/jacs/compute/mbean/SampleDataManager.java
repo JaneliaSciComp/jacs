@@ -209,7 +209,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
                 log.info("Queuing data set pipelines for "+subjectKey);
                 String ret = runUserDataSetPipelines(subjectKey, null, runMode, reuseProcessing, reuseAlignment, force);
                 if (sb.length()>0) sb.append(",\n");
-                sb.append(subjectKey+": "+ret+"");
+                sb.append(subjectKey).append(": ").append(ret);
             }
             return sb.toString();
         } 
@@ -420,9 +420,6 @@ public class SampleDataManager implements SampleDataManagerMBean {
      * Method to point to an ls file and pull out LSM's to be bzip2'd.
      * Example file exists in /groups/scicomp/jacsData/saffordTest/leetLSMs28days.txt (or older file)
      *                        /groups/scicomp/jacsData/saffordTest/leetLSMs7days.txt  (or older file)
-     * @param filePath
-     * @param owner
-     * @param compressMode
      */
     public void bzipLSMCompressionService(String filePath, String owner, String compressMode) {
         try {
@@ -444,8 +441,16 @@ public class SampleDataManager implements SampleDataManagerMBean {
             String debug, String lock) {
         log.info("Heard call for SageLoader API");
         try {
-            SageLoaderTask task = new SageLoaderTask(owner, new ArrayList<Event>(), item, configPath, grammarPath, lab,
-                    debug, lock);
+            final String line = null; // line parameter only needed for development environment testing
+            SageLoaderTask task = new SageLoaderTask(owner,
+                                                     new ArrayList<Event>(),
+                                                     item,
+                                                     line,
+                                                     configPath,
+                                                     grammarPath,
+                                                     lab,
+                                                     debug,
+                                                     lock);
             task = (SageLoaderTask) EJBFactory.getRemoteComputeBean().saveOrUpdateTask(task);
             EJBFactory.getRemoteComputeBean().submitJob("SageLoader", task.getObjectId());
             log.info("Done runSageLoader call (" + owner + "," + item + ")");
