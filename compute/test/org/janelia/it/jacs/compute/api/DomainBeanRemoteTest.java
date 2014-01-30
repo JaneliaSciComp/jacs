@@ -124,6 +124,19 @@ public class DomainBeanRemoteTest extends RemoteEJBTest {
 
         d.deleteDomainObjectTree(a, sourceObject.getGuid());
     }
+
+    @Test
+    public void testAlignmentSpaceConstraint() throws Exception {
+        Access access = new Access(SUBJECT_KEY, Access.AccessPattern.ALL_ACCESSIBLE_OBJECTS);
+        List<Long> rawIds = new ArrayList<Long>();
+        rawIds.add( 1874671791058714722L ); // Should be in
+        rawIds.add( 1874750665205481570L ); // Should be out
+        List<Long> constrainedIds = this.d.getEntityIdsInAlignmentSpace( access, "0.62x0.62x0.62", "1024x512x218", rawIds );
+        Assert.assertTrue(
+                "Filtering failed.  Expected one, exact, ID value.  Not found.",
+                constrainedIds.size() == 1 && constrainedIds.contains(1874671791058714722L)
+        );
+    }
     
     private DomainObject createDomainObject(String name, String entityTypeName) throws ComputeException {
         DomainObject domainObject = new EntityDomainObject(name, SUBJECT_KEY, entityTypeName);

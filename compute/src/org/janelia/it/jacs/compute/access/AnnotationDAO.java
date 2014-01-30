@@ -57,6 +57,7 @@ import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
+import org.omg.CORBA.DATA_CONVERSION;
 
 public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoader {
 	
@@ -1211,6 +1212,67 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         
         return list;
+    }
+
+    public List<Long> getEntityIdsInAlignmentSpace( String opticalRes, String pixelRes, List<Long> rawIds ) throws DaoException {
+        if ( log.isTraceEnabled()) {
+            log.trace("getEntityIdsInAlignmentSpace("+opticalRes+", "+pixelRes+", rawIds["+rawIds.size()+"])");
+        }
+
+        List<Long> rtnVal = new ArrayList<Long>();
+        if ( rawIds == null  ||  rawIds.size() == 0 ) {
+            return rtnVal;
+        }
+
+        if ( opticalRes == null  ||  pixelRes == null ) {
+            throw new DaoException("Must provide both non-null optical resolution and non-null pixel resolution.");
+        }
+
+        String queryStrFormat = "select nf.id from entity nf \n" +
+                "join entityData nfcEd on nfcEd.child_entity_id=nf.id \n" +
+                "join entityData nsEd on nsEd.child_entity_id=nfcEd.parent_entity_id \n" +
+                "join entity ns on nsEd.parent_entity_id=ns.id \n" +
+                "join entityData nsOpticalRes on nsOpticalRes.parent_entity_id=ns.id and nsOpticalRes.entity_att='Optical Resolution' \n" +
+                "join entityData nsPixelRes on nsPixelRes.parent_entity_id=ns.id and nsPixelRes.entity_att='Pixel Resolution' \n" +
+                "where nf.id in (%s) \n" +
+                "and nsOpticalRes.value='%s'\n" +
+                "and nsPixelRes.value='%s'";
+
+        StringBuilder idsBuilder = new StringBuilder();
+        for ( Long rawId: rawIds ) {
+            if ( idsBuilder.length() > 0 ) {
+                idsBuilder.append( ',' );
+            }
+            idsBuilder.append(rawId);
+        }
+        String query = String.format( queryStrFormat, idsBuilder.toString(), opticalRes, pixelRes );
+        log.info("Querying with " + query);
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        try {
+            conn = getJdbcConnection();
+            stmt = conn.prepareStatement( query );
+
+            ResultSet rs = stmt.executeQuery();
+            while ( rs.next() ) {
+                rtnVal.add(rs.getLong(1));
+            }
+         } catch (SQLException sqle) {
+            throw new DaoException( sqle );
+        } finally {
+            try {
+                if ( stmt != null ) {
+                    stmt.close();
+                }
+                if ( conn != null ) {
+                    conn.close();
+                }
+            } catch ( SQLException sqlInnerE ) {
+                log.warn( "Ignoring error during JDBC stmt/conn closure.", sqlInnerE );
+            }
+        }
+
+        return rtnVal;
     }
     
     public List<Long> getImageIdsWithName(Connection connection, String subjectKey, String imagePath) throws DaoException {
