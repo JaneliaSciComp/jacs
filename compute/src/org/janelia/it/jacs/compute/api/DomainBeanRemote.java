@@ -51,7 +51,6 @@ public interface DomainBeanRemote {
     public DomainObject getAncestorWithType(Access access, Long objGuid, String typeName) throws ComputeException;
     public List<List<Relationship>> getPathsToRoots(Access access, Long objGuid) throws ComputeException;
     public List<MappedId> getProjectedResults(Access access, List<Long> objGuids, List<String> upMapping, List<String> downMapping) throws ComputeException;
-    public List<Long> getEntityIdsInAlignmentSpace(Access access, String opticalRes, String pixelRes, List<Long> guids) throws ComputeException;
     public Map<Long,String> getChildDomainObjectNames(Access access, Long objGuid) throws ComputeException;
     
     // UPDATE

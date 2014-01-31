@@ -45,6 +45,7 @@ public interface AnnotationBeanRemote {
     public List<Entity> getCategoriesForAnnotationSession(String subjectKey, long sessionId) throws ComputeException;
     public Set<Long> getCompletedEntityIds(long sessionId) throws ComputeException;
     public long getNumDescendantsAnnotated(Long entityId) throws ComputeException;
+    public List<Long> getEntityIdsInAlignmentSpace(String opticalRes, String pixelRes, List<Long> guids) throws ComputeException;
 
     public List<Entity> getCommonRootEntities(String subjectKey) throws ComputeException;
     

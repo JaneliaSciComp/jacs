@@ -429,20 +429,6 @@ public class DomainBeanImpl implements DomainBeanLocal, DomainBeanRemote {
         }
     }
 
-    @Override
-    public List<Long> getEntityIdsInAlignmentSpace(Access access, String opticalRes, String pixelRes, List<Long> guids) throws ComputeException {
-        try {
-            if ( access.getAccessPattern().equals(AccessPattern.OWNED_OBJECTS_ONLY)) {
-                throw new IllegalArgumentException("This method does not support the OWNED_OBJECTS_ONLY access pattern");
-            }
-            return _annotationDAO.getEntityIdsInAlignmentSpace( opticalRes, pixelRes, guids);
-
-        } catch ( DaoException daoe ) {
-            _logger.error("Error getting applicable subset of entity ids for an alignment space.");
-            throw new ComputeException("Error paring down entity ids for list", daoe);
-        }
-    }
-    
     public Map<Long,String> getChildDomainObjectNames(Access access, Long objGuid) throws ComputeException {
         String subjectKey = access.getSubjectKey();
         try {
