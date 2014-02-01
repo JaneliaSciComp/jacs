@@ -78,9 +78,24 @@ public class GraphBeanRemoteTest extends RemoteEJBTest {
 
         String name = "TEST_FOLDER";
         EntityNode sourceObject = createEntityNode(name, Folder.class);
+        Assert.assertNotNull(sourceObject.getId());
+        Assert.assertEquals(sourceObject.getName(), name);
+        Assert.assertEquals(sourceObject.getOwnerKey(), SUBJECT_KEY);
+        Assert.assertTrue(sourceObject.isThisInit());
+        Assert.assertTrue(sourceObject.isRelsInit());
+        Assert.assertTrue(sourceObject instanceof Folder);
+        Folder folder = (Folder)sourceObject;
+        Assert.assertFalse(folder.isCommonRoot());
+        Assert.assertFalse(folder.isProtected());
         
         String name2 = "TEST_IMAGE";
         EntityNode targetObject = createEntityNode(name2, Image3d.class);
+        Assert.assertNotNull(targetObject.getId());
+        Assert.assertEquals(targetObject.getName(), name2);
+        Assert.assertEquals(targetObject.getOwnerKey(), SUBJECT_KEY);
+        Assert.assertTrue(targetObject.isThisInit());
+        Assert.assertTrue(targetObject.isRelsInit());
+        Assert.assertTrue(targetObject instanceof Image3d);
         
         Integer orderIndex = 5;
         String relType = EntityConstants.ATTRIBUTE_ENTITY;

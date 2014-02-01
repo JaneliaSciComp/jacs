@@ -38,6 +38,10 @@ public class ReflectionHelper {
     public static Collection<Method> getMethods(Object obj, String methodName) {
         return ReflectionUtils.getAllMethods(obj.getClass(), ReflectionUtils.withName(methodName));
     }
+
+    public static List<Field> getFields(Object obj) {
+        return new ArrayList<Field>(ReflectionUtils.getAllFields(obj.getClass()));
+    }
     
     public static Field getField(Object obj, Class<? extends Annotation> annotationClass) throws NoSuchFieldException {
         Field matchedField = null;
@@ -48,13 +52,6 @@ public class ReflectionHelper {
             matchedField = field;
         }
         if (matchedField==null) {
-//            for(Field field : ReflectionUtils.getAllFields(obj.getClass())) {
-//                log.info(obj.getClass()+"."+field.getName());
-//                for (Annotation annotation : field.getAnnotations()) {
-//                    log.info("    "+annotation.getClass().getName()+" "+annotation.toString());
-//                }
-//            }
-            
             throw new NoSuchFieldException("Field with annotation "+annotationClass.getName()+" does not exist on "+obj.getClass().getName());
         }
         return matchedField;

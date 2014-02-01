@@ -3,7 +3,6 @@ package org.janelia.it.jacs.model.graph.entity.support;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -25,6 +24,7 @@ import org.janelia.it.jacs.model.graph.annotations.GraphRelationship;
 import org.janelia.it.jacs.model.graph.annotations.NodeInitFlag;
 import org.janelia.it.jacs.model.graph.annotations.Permissions;
 import org.janelia.it.jacs.model.graph.annotations.RelatedTo;
+import org.janelia.it.jacs.model.graph.annotations.RelatedToVia;
 import org.janelia.it.jacs.model.graph.annotations.RelationshipInitFlag;
 import org.janelia.it.jacs.model.graph.annotations.RelationshipType;
 import org.janelia.it.jacs.model.graph.annotations.StartNode;
@@ -34,6 +34,8 @@ import org.reflections.Reflections;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 
 /**
  * A factory which uses the Entity/EntityData model to instantiate graph objects in a domain model, and vice-versa.
@@ -127,38 +129,57 @@ public class EntityGraphObjectFactory {
                 }
             }
             
-            // Set relationships
-            for(Field field : ReflectionHelper.getFields(nodeObject, RelatedTo.class)) {
-                
-                RelatedTo relatedTo = field.getAnnotation(RelatedTo.class);
-                
-                List<Object> filteredList = new ArrayList<Object>();
-                for(Object object : relationshipList) {
-                    boolean match = true;
-                    
-                    if (relatedTo.relationType()!=null) {
-                        Field relationTypeField = ReflectionHelper.getField(object, RelationshipType.class);
-                        String relType = ReflectionHelper.getFieldValue(object, relationTypeField).toString();
-                        if (!relatedTo.relationType().equals(relType)) {
-                            match = false;
-                        }
-                    }
+            Multimap<Field,Object> filteredMap = HashMultimap.<Field,Object>create();
 
-                    if (relatedTo.targetNodeType()!=null) {
-                        Field endNodeField = ReflectionHelper.getField(object, EndNode.class);
-                        Object targetNodeObject = ReflectionHelper.getFieldValue(object, endNodeField);
-                        GraphNode graphNodeAnnotation = targetNodeObject.getClass().getAnnotation(GraphNode.class);
-                        if (!relatedTo.targetNodeType().equals(graphNodeAnnotation.type())) {
-                            match = false;
+            for(Object relObject : relationshipList) {
+
+                Field endNodeField = ReflectionHelper.getField(relObject, EndNode.class);
+                Object targetNodeObject = ReflectionHelper.getFieldValue(relObject, endNodeField);
+                
+                Field relationTypeField = ReflectionHelper.getField(relObject, RelationshipType.class);
+                String relType = ReflectionHelper.getFieldValue(relObject, relationTypeField).toString();
+                
+                // Go through each field and see if it wants this relationship
+                for(Field field : ReflectionHelper.getFields(nodeObject.getClass())) {
+
+                    RelatedTo relatedTo = field.getAnnotation(RelatedTo.class);
+                    RelatedToVia relatedToVia = field.getAnnotation(RelatedToVia.class);
+                    
+                    if (relatedTo!=null) {
+                        boolean match = true;
+                        if (relatedTo.relationType()!=null) {
+                            if (!relatedTo.relationType().equals(relType)) {
+                                match = false;
+                            }
+                        }
+                        if (relatedTo.targetNodeType()!=null) {
+                            GraphNode graphNodeAnnotation = targetNodeObject.getClass().getAnnotation(GraphNode.class);
+                            if (!relatedTo.targetNodeType().equals(graphNodeAnnotation.type())) {
+                                match = false;
+                            }
+                        }
+                        if (match) {
+                            filteredMap.put(field, targetNodeObject);
                         }
                     }
-                    
-                    if (match) {
-                        filteredList.add(object);
+                    else if (relatedToVia!=null) {
+                        boolean match = true;
+                        if (relatedToVia.relationType()!=null) {
+                            if (!relatedToVia.relationType().equals(relType)) {
+                                match = false;
+                            }
+                        }
+                        if (match) {
+                            filteredMap.put(field, relObject);
+                        }
                     }
-                }
-                
+                }   
+            }
+            
+            for (Field field : filteredMap.keys()) {
+                List<Object> filteredList = new ArrayList<Object>(filteredMap.get(field)); 
                 if (Collection.class.isAssignableFrom(field.getType())) {
+                    log.info("  * Setting single relation "+nodeObject.getClass().getName()+"."+field.getName()); 
                     ReflectionHelper.setFieldValue(nodeObject, field, filteredList);
                 }
                 else {
@@ -166,10 +187,97 @@ public class EntityGraphObjectFactory {
                         if (filteredList.size()>1) {
                             log.warn("More than one matching relationship for "+nodeObject.getClass().getName()+"."+field.getName());
                         }
+                        log.info("  * Setting collection of relations "+nodeObject.getClass().getName()+"."+field.getName()); 
                         ReflectionHelper.setFieldValue(nodeObject, field, filteredList.get(0));
                     }
                 }
             }
+            
+//            // Set relatedTo relationships
+//            for(Field field : ReflectionHelper.getFields(nodeObject, RelatedTo.class)) {
+//                
+//                RelatedTo relatedTo = field.getAnnotation(RelatedTo.class);
+//                
+//                List<Object> filteredList = new ArrayList<Object>();
+//                for(Object object : relationshipList) {
+//                    boolean match = true;
+//                    Field endNodeField = ReflectionHelper.getField(object, EndNode.class);
+//                    Object targetNodeObject = ReflectionHelper.getFieldValue(object, endNodeField);
+//                    
+//                    if (relatedTo.relationType()!=null) {
+//                        Field relationTypeField = ReflectionHelper.getField(object, RelationshipType.class);
+//                        String relType = ReflectionHelper.getFieldValue(object, relationTypeField).toString();
+//                        if (!relatedTo.relationType().equals(relType)) {
+//                            match = false;
+//                        }
+//                    }
+//
+//                    if (relatedTo.targetNodeType()!=null) {
+//                        GraphNode graphNodeAnnotation = targetNodeObject.getClass().getAnnotation(GraphNode.class);
+//                        if (!relatedTo.targetNodeType().equals(graphNodeAnnotation.type())) {
+//                            match = false;
+//                        }
+//                    }
+//                    
+//                    if (match) {
+//                        filteredList.add(targetNodeObject);
+//                    }
+//                }
+//                
+//                if (Collection.class.isAssignableFrom(field.getType())) {
+//                    log.info("  * Setting single relatedTo "+nodeObject.getClass().getName()+"."+field.getName()); 
+//                    ReflectionHelper.setFieldValue(nodeObject, field, filteredList);
+//                }
+//                else {
+//                    if (!filteredList.isEmpty()) {
+//                        if (filteredList.size()>1) {
+//                            log.warn("More than one matching relationship for "+nodeObject.getClass().getName()+"."+field.getName());
+//                        }
+//                        log.info("  * Setting collection relatedTo "+nodeObject.getClass().getName()+"."+field.getName()); 
+//                        ReflectionHelper.setFieldValue(nodeObject, field, filteredList.get(0));
+//                    }
+//                }
+//            }
+//
+//            // Set relatedToVia relationships
+//            for(Field field : ReflectionHelper.getFields(nodeObject, RelatedToVia.class)) {
+//                
+//                RelatedToVia relatedToVia = field.getAnnotation(RelatedToVia.class);
+//                
+//                List<Object> filteredList = new ArrayList<Object>();
+//                for(Object object : relationshipList) {
+//                    boolean match = true;
+//                    
+//                    if (relatedToVia.relationType()!=null) {
+//                        Field relationTypeField = ReflectionHelper.getField(object, RelationshipType.class);
+//                        String relType = ReflectionHelper.getFieldValue(object, relationTypeField).toString();
+//                        if (!relatedToVia.relationType().equals(relType)) {
+//                            match = false;
+//                        }
+//                    }
+//                    
+//                    if (match) {
+//                        filteredList.add(object);
+//                    }
+//                }
+//                
+//                if (Collection.class.isAssignableFrom(field.getType())) {
+//                    log.info("  * Setting single relatedToVia "+nodeObject.getClass().getName()+"."+field.getName()); 
+//                    ReflectionHelper.setFieldValue(nodeObject, field, filteredList);
+//                }
+//                else {
+//                    if (!filteredList.isEmpty()) {
+//                        if (filteredList.size()>1) {
+//                            log.warn("More than one matching relationship for "+nodeObject.getClass().getName()+"."+field.getName());
+//                        }
+//                        log.info("  * Setting collection relatedToVia "+nodeObject.getClass().getName()+"."+field.getName()); 
+//                        ReflectionHelper.setFieldValue(nodeObject, field, filteredList.get(0));
+//                    }
+//                }
+//            }
+//            
+            
+            
         }
         
         return nodeObject;
@@ -243,14 +351,6 @@ public class EntityGraphObjectFactory {
             }
         }
 
-        for(Method m : ReflectionHelper.getMethods(sourceObject, "getValueByAttributeName")) {
-            StringBuilder sb = new StringBuilder();
-            for(Class<?> type : m.getParameterTypes()) {
-                sb.append(type+",");
-            }
-            log.info("  ----> "+m.getReturnType()+" "+m.getName()+"("+sb+") "+m.getClass().getName()+" in "+m.getDeclaringClass().getName());
-        }
-
         // Copy attributes
         if (sourceObject instanceof Entity) {
             Entity entity = (Entity)sourceObject;
@@ -295,7 +395,10 @@ public class EntityGraphObjectFactory {
                 ReflectionHelper.setFieldValue(obj, field, value);
             }
             else {
-                // True if the field is not null, and we already checked for null earlier
+                if ("false".equalsIgnoreCase(value.toString())) {
+                    ReflectionHelper.setFieldValue(obj, field, false);
+                }
+                // It's not null, and not any version of "false", so we assume it's true, kind of like JavaScript!
                 ReflectionHelper.setFieldValue(obj, field, true);
             }
         }
