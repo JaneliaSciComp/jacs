@@ -31,6 +31,7 @@ import org.janelia.it.jacs.model.graph.entity.EntityNode;
 import org.janelia.it.jacs.model.graph.entity.EntityPermission;
 import org.janelia.it.jacs.model.graph.entity.EntityRelationship;
 import org.janelia.it.jacs.model.graph.entity.support.EntityGraphObjectFactory;
+import org.janelia.it.jacs.model.graph.entity.support.GraphObjectHelper;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
@@ -46,14 +47,17 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 @PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 500, timeout = 10000)
 public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
 	
-    private static final Logger _logger = Logger.getLogger(GraphBeanImpl.class);
-    private final AnnotationDAO _annotationDAO = new AnnotationDAO(_logger);
-    private final EntityGraphObjectFactory factory = new EntityGraphObjectFactory();
+    private static final Logger log = Logger.getLogger(GraphBeanImpl.class);
+    private final AnnotationDAO _annotationDAO = new AnnotationDAO(log);
     
     private void updateIndex(Entity entity) {
     	IndexingHelper.updateIndex(entity.getId());
     }
    
+    private EntityGraphObjectFactory getObjectFactory() {
+        return new EntityGraphObjectFactory();
+    }
+    
     @Override
     public EntityNode createEntityNode(Access access, EntityNode entityNode) throws ComputeException {
         try {
@@ -75,21 +79,21 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
                 updatedDate = now;
             }
             
-            String entityType = factory.getEntityType(entityNode);
+            String entityType = GraphObjectHelper.getEntityType(entityNode);
             Entity entity = new Entity(null, entityNode.getName(), subjectKey, entityType, creationDate, updatedDate, new HashSet<EntityData>());
-            Map<String,String> attrMap = factory.getAttributes(entityNode);
+            Map<String,String> attrMap = GraphObjectHelper.getAttributes(entityNode);
             for(String key : attrMap.keySet()) {
                 entity.setValueByAttributeName(key, attrMap.get(key));
             }
             
             _annotationDAO.saveOrUpdate(entity);
             
-            _logger.info(subjectKey+" created entity "+entity.getId());
+            log.info(subjectKey+" created entity "+entity.getId());
             updateIndex(entity);
-            return (EntityNode)factory.getNodeInstance(entity);
+            return (EntityNode)getObjectFactory().getNodeInstance(entity);
         } 
         catch (Exception e) {
-            _logger.error("Error creating domain object",e);
+            log.error("Error creating domain object",e);
             throw new ComputeException("Error creating domain object",e);
         }
     }
@@ -118,14 +122,14 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             
             EntityData ed = _annotationDAO.addEntityToParent(source, target, index, relType, value);
             
-            _logger.info(subjectKey+" added entity data "+ed.getId()+" (parent="+source.getId()+",child="+target.getId()+")");
+            log.info(subjectKey+" added entity data "+ed.getId()+" (parent="+source.getId()+",child="+target.getId()+")");
             
             IndexingHelper.updateIndexAddAncestor(targetObjGuid, sourceObjGuid);
             
-            return (EntityRelationship)factory.getRelationshipInstance(ed);
+            return (EntityRelationship)getObjectFactory().getRelationshipInstance(ed);
         } 
         catch (Exception e) {
-            _logger.error("Error creating relationship from "+sourceObjGuid+" to "+targetObjGuid, e);
+            log.error("Error creating relationship from "+sourceObjGuid+" to "+targetObjGuid, e);
             throw new ComputeException("Error creating relationship from "+sourceObjGuid+" to "+targetObjGuid,e);
         }
     }
@@ -145,14 +149,14 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             checkEntityTypeSupportsAttribute(parent.getEntityTypeName(), relType);
             
             _annotationDAO.addChildren(subjectKey, sourceObjGuid, targetObjGuids, relType);
-            _logger.info("Subject "+subjectKey+" added "+targetObjGuids.size()+" children to parent "+sourceObjGuid);
+            log.info("Subject "+subjectKey+" added "+targetObjGuids.size()+" children to parent "+sourceObjGuid);
             
             for(Long childId : targetObjGuids) {
                 IndexingHelper.updateIndexAddAncestor(childId, sourceObjGuid);
             }
         } 
         catch (Exception e) {
-            _logger.error("Error creating relationships to parent "+sourceObjGuid, e);
+            log.error("Error creating relationships to parent "+sourceObjGuid, e);
             throw new ComputeException("Error creating relationships to parent "+sourceObjGuid, e);
         }
     }
@@ -168,7 +172,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             return null;
         }
         catch (Exception e) {
-            _logger.error("Error getting domain object "+objGuid,e);
+            log.error("Error getting domain object "+objGuid,e);
             throw new ComputeException("Error getting domain object "+objGuid,e);
         }
     }
@@ -186,7 +190,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             return null;
         }
         catch (Exception e) {
-            _logger.error("Error getting domain object "+objGuid,e);
+            log.error("Error getting domain object "+objGuid,e);
             throw new ComputeException("Error getting domain object "+objGuid,e);
         }
     }
@@ -202,7 +206,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             return null;
         }
         catch (Exception e) {
-            _logger.error("Error getting domain object "+objGuid,e);
+            log.error("Error getting domain object "+objGuid,e);
             throw new ComputeException("Error getting domain object "+objGuid,e);
         }
     }
@@ -218,7 +222,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             return null;
         } 
         catch (Exception e) {
-            _logger.error("Error getting incoming related objects for domain object "+objGuid, e);
+            log.error("Error getting incoming related objects for domain object "+objGuid, e);
             throw new ComputeException("Error getting incoming related objects for domain object "+objGuid,e);
         }
     }
@@ -234,7 +238,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             return null;
         } 
         catch (Exception e) {
-            _logger.error("Error getting outgoing related objects for domain object "+objGuid, e);
+            log.error("Error getting outgoing related objects for domain object "+objGuid, e);
             throw new ComputeException("Error getting outgoing related objects for domain object "+objGuid,e);
         }
     }
@@ -250,7 +254,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             return null;
         }
         catch (Exception e) {
-            _logger.error("Error getting domain objects in list", e);
+            log.error("Error getting domain objects in list", e);
             throw new ComputeException("Error getting domain objects in list",e);
         }
     }
@@ -266,7 +270,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             return null;
         }
         catch (Exception e) {
-            _logger.error("Error trying to get the domain objects with name "+name+" for user "+subjectKey, e);
+            log.error("Error trying to get the domain objects with name "+name+" for user "+subjectKey, e);
             throw new ComputeException("Error trying to get the domain objects with name "+name+" for user "+subjectKey,e);
         }
     }
@@ -282,7 +286,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             return null;
         }
         catch (Exception e) {
-            _logger.error("Error trying to get the domain objects with type "+typeName+" for user "+subjectKey, e);
+            log.error("Error trying to get the domain objects with type "+typeName+" for user "+subjectKey, e);
             throw new ComputeException("Error trying to get the domain objects with type "+typeName+" for user "+subjectKey,e);
         }
     }
@@ -298,7 +302,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             return null;
         }
         catch (Exception e) {
-            _logger.error("Error trying to get the domain objects with name "+name+" and type "+typeName+" for user "+subjectKey, e);
+            log.error("Error trying to get the domain objects with name "+name+" and type "+typeName+" for user "+subjectKey, e);
             throw new ComputeException("Error trying to get the domain objects with name "+name+" and type "+typeName+" for user "+subjectKey,e);
         }
     }
@@ -314,7 +318,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             return null;
         }
         catch (Exception e) {
-            _logger.error("Error getting domain objects with "+attrName+" like "+attrValue+" for "+subjectKey, e);
+            log.error("Error getting domain objects with "+attrName+" like "+attrValue+" for "+subjectKey, e);
             throw new ComputeException("Error getting domain objects with "+attrName+" like "+attrValue+" for "+subjectKey,e);
         }
     }
@@ -330,7 +334,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             return null;
         }
         catch (Exception e) {
-            _logger.error("Error getting domain objects with type "+typeName+" and "+attrName+" like "+attrValue+" for "+subjectKey, e);
+            log.error("Error getting domain objects with type "+typeName+" and "+attrName+" like "+attrValue+" for "+subjectKey, e);
             throw new ComputeException("Error getting domain objects with type "+typeName+" and "+attrName+" like "+attrValue+" for "+subjectKey,e);
         }
     }
@@ -346,7 +350,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             return null;
         }
         catch (Exception e) {
-            _logger.error("Error getting domain objects with tag "+attrTag+" for "+subjectKey, e);
+            log.error("Error getting domain objects with tag "+attrTag+" for "+subjectKey, e);
             throw new ComputeException("Error getting domain objects with tag "+attrTag+" for "+subjectKey,e);
         }
     }
@@ -362,7 +366,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             return null;
         }
         catch (Exception e) {
-            _logger.error("Error getting incoming relationships for domain object "+targetObjGuid+" for "+subjectKey, e);
+            log.error("Error getting incoming relationships for domain object "+targetObjGuid+" for "+subjectKey, e);
             throw new ComputeException("Error getting incoming relationships for domain object "+targetObjGuid+" for "+subjectKey,e);
         }
     }
@@ -378,7 +382,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             return null;
         }
         catch (Exception e) {
-            _logger.error("Error getting incoming relationships for domain object "+targetObjGuid+" for "+subjectKey, e);
+            log.error("Error getting incoming relationships for domain object "+targetObjGuid+" for "+subjectKey, e);
             throw new ComputeException("Error getting incoming relationships for domain object "+targetObjGuid+" for "+subjectKey,e);
         }
     }
@@ -388,13 +392,13 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
         String subjectKey = access.getSubjectKey();
         try {
             switch (access.getAccessPattern()) {
-            case ALL_ACCESSIBLE_OBJECTS: _logger.warn("getCountEntityNodesWithAttributeValue does not support ALL_ACCESSIBLE_OBJECTS access pattern. Falling back to OWNED_OBJECTS_ONLY."); 
+            case ALL_ACCESSIBLE_OBJECTS: log.warn("getCountEntityNodesWithAttributeValue does not support ALL_ACCESSIBLE_OBJECTS access pattern. Falling back to OWNED_OBJECTS_ONLY."); 
             case OWNED_OBJECTS_ONLY: 
             }
             return _annotationDAO.getCountUserEntitiesWithAttributeValue(subjectKey, attrName, attrValue);
         }
         catch (Exception e) {
-            _logger.error("Error counting domain objects with attribute "+attrName+" value "+attrValue+" for "+subjectKey, e);
+            log.error("Error counting domain objects with attribute "+attrName+" value "+attrValue+" for "+subjectKey, e);
             throw new ComputeException("Error counting domain objects with attribute "+attrName+" value "+attrValue+" for "+subjectKey,e);
         }
     }
@@ -410,7 +414,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             return null;
         }
         catch (Exception e) {
-            _logger.error("Error getting ancestors of type "+typeName+" for domain object "+objGuid+" for "+subjectKey, e);
+            log.error("Error getting ancestors of type "+typeName+" for domain object "+objGuid+" for "+subjectKey, e);
             throw new ComputeException("Error getting ancestors of type "+typeName+" for domain object "+objGuid+" for "+subjectKey,e);
         }
     }
@@ -432,7 +436,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             return paths;
         }
         catch (Exception e) {
-            _logger.error("Error getting paths to root for domain object "+objGuid+" for "+subjectKey, e);
+            log.error("Error getting paths to root for domain object "+objGuid+" for "+subjectKey, e);
             throw new ComputeException("Error getting paths to root for domain object "+objGuid+" for "+subjectKey,e);
         }
     }
@@ -447,7 +451,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             return _annotationDAO.getProjectedResults(subjectKey, objGuids, upMapping, downMapping);
         } 
         catch (Exception e) {
-            _logger.error("Error getting projected results for "+subjectKey, e);
+            log.error("Error getting projected results for "+subjectKey, e);
             throw new ComputeException("Error getting projected results for "+subjectKey, e);
         }
     }
@@ -463,7 +467,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             return _annotationDAO.getChildEntityNames(objGuid);
         } 
         catch (Exception e) {
-            _logger.error("Error getting projected results for "+subjectKey, e);
+            log.error("Error getting projected results for "+subjectKey, e);
             throw new ComputeException("Error getting projected results for "+subjectKey, e);
         }
     }
@@ -475,13 +479,13 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             entity.setName(entityNode.getName());
             entity.setCreationDate(entityNode.getCreationDate());
             entity.setUpdatedDate(entityNode.getUpdatedDate());
-            entity.setEntityTypeName(factory.getEntityType(entityNode));
+            entity.setEntityTypeName(GraphObjectHelper.getEntityType(entityNode));
             entity.setOwnerKey(entityNode.getOwnerKey());
             if (entityNode.isRelsInit()) {
                 entity.setNumChildren(entityNode.getRelationships().size());
             }
             
-            Map<String,String> attrMap = factory.getAttributes(entityNode);
+            Map<String,String> attrMap = GraphObjectHelper.getAttributes(entityNode);
             for(Entry<String,String> entry : attrMap.entrySet()) {
                 entity.setValueByAttributeName(entry.getKey(), entry.getValue());
             }
@@ -504,7 +508,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             return convert(entity);
         } 
         catch (Exception e) {
-            _logger.error("Error updating domain object");
+            log.error("Error updating domain object");
             throw new ComputeException("Error updating domain object",e);
         }
     }
@@ -528,7 +532,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             return convert(entityData);
         } 
         catch (Exception e) {
-            _logger.error("Error updating relationship");
+            log.error("Error updating relationship");
             throw new ComputeException("Error updating relationship",e);
         }
     }
@@ -562,11 +566,11 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             }
             
             _annotationDAO.saveOrUpdateEntity(entity);
-            return (EntityNode)factory.getNodeInstance(entity);
+            return (EntityNode)getObjectFactory().getNodeInstance(entity);
 
         } 
          catch (Exception e) {
-            _logger.error("Error trying to get delete entity "+objGuid, e);
+            log.error("Error trying to get delete entity "+objGuid, e);
             throw new ComputeException("Error deleting entity "+objGuid,e);
         }    
     }
@@ -592,10 +596,10 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             if (entityData.getParentEntity()!=null) {
                 updateIndex(entityData.getParentEntity());
             }
-            return (EntityRelationship)factory.getRelationshipInstance(entityData);
+            return (EntityRelationship)getObjectFactory().getRelationshipInstance(entityData);
          } 
          catch (Exception e) {
-            _logger.error("Error trying to update order index for "+orderIndex, e);
+            log.error("Error trying to update order index for "+orderIndex, e);
             throw new ComputeException("Error trying to update order index for "+orderIndex,e);
          }
     }
@@ -612,10 +616,10 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
                 }   
             }
             _annotationDAO.saveOrUpdate(eap);
-            return (EntityPermission)factory.getPermissionInstance(eap);
+            return (EntityPermission)getObjectFactory().getPermissionInstance(eap);
         }
         catch (Exception e) {
-            _logger.error("Error saving permission", e);
+            log.error("Error saving permission", e);
             throw new ComputeException("Error saving permission",e);
         }
     }
@@ -626,12 +630,12 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             Set<EntityPermission> permissions = new HashSet<EntityPermission>();
             String subjectKey = access.getSubjectKey();
             for(EntityActorPermission eap : _annotationDAO.getFullPermissions(subjectKey, objGuid)) {
-                permissions.add((EntityPermission)factory.getPermissionInstance(eap));
+                permissions.add((EntityPermission)getObjectFactory().getPermissionInstance(eap));
             }
             return permissions;
         } 
         catch (Exception e) {
-            _logger.error("Error getting full permissions for "+objGuid, e);
+            log.error("Error getting full permissions for "+objGuid, e);
             throw new ComputeException("Error getting full permissions for "+objGuid, e);
         }
     }
@@ -640,10 +644,10 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
     public EntityPermission grantPermissions(Access access, Long objGuid, String granteeKey, String permissions, boolean recursive) throws ComputeException {
         try {
             String subjectKey = access.getSubjectKey();
-            return (EntityPermission)factory.getPermissionInstance(_annotationDAO.grantPermissions(subjectKey, objGuid, granteeKey, permissions, recursive));
+            return (EntityPermission)getObjectFactory().getPermissionInstance(_annotationDAO.grantPermissions(subjectKey, objGuid, granteeKey, permissions, recursive));
         }
         catch (Exception e) {
-            _logger.error("Error granting "+permissions+" permission for "+objGuid+" to "+granteeKey, e);
+            log.error("Error granting "+permissions+" permission for "+objGuid+" to "+granteeKey, e);
             throw new ComputeException("Error granting permission",e);
         }
     }
@@ -655,7 +659,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             _annotationDAO.revokePermissions(subjectKey, objGuid, revokeeKey, recursive);
         }
         catch (Exception e) {
-            _logger.error("Error revoking permission for "+objGuid+" to "+revokeeKey, e);
+            log.error("Error revoking permission for "+objGuid+" to "+revokeeKey, e);
             throw new ComputeException("Error revoking permission",e);
         }
     }
@@ -677,11 +681,11 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
                 throw new ComputeException("Subject "+subjectKey+" cannot change "+objGuid);
             }
             _annotationDAO.deleteEntityTree(subjectKey, currEntity, unlinkMultipleIncomingRelations);
-            _logger.info(subjectKey+" deleted entity tree "+objGuid);
+            log.info(subjectKey+" deleted entity tree "+objGuid);
             return true;
         }
         catch (Exception e) {
-            _logger.error("Error deleting domain object tree "+objGuid,e);
+            log.error("Error deleting domain object tree "+objGuid,e);
             throw new ComputeException("Error deleting domain object tree "+objGuid,e);
         }
     }
@@ -699,10 +703,10 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             }
             EntityData toDelete = getEntityData(currEntity, relGuid);
             _annotationDAO.deleteEntityData(toDelete);
-            _logger.info(subjectKey+" deleted entity data "+relGuid);
+            log.info(subjectKey+" deleted entity data "+relGuid);
         }
         catch (Exception e) {
-            _logger.error("Unexpected error while trying to delete relationship "+relGuid, e);
+            log.error("Unexpected error while trying to delete relationship "+relGuid, e);
             throw new ComputeException("Unexpected error while trying to delete relationship "+relGuid,e);
         }
     }
@@ -715,7 +719,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             loadRelationships(entityNode, recurse, new HashSet<Long>());
         } 
         catch (Exception e) {
-            _logger.error("Error loading relationships for "+entityNode.getId(), e);
+            log.error("Error loading relationships for "+entityNode.getId(), e);
             throw new ComputeException("Error loading relationships for "+entityNode.getId(), e);
         }
     }
@@ -753,7 +757,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             }
         }
         catch (Exception e) {
-            _logger.error("Error loading relationships for "+entityNode.getId(), e);
+            log.error("Error loading relationships for "+entityNode.getId(), e);
             throw new ComputeException("Error loading relationships for "+entityNode.getId(), e);
         }
     }
@@ -764,7 +768,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             return _annotationDAO.bulkUpdateEntityDataValue(oldValue, newValue);
         }
         catch (Exception e) {
-            _logger.error("Error bulk updating attribute values", e);
+            log.error("Error bulk updating attribute values", e);
             throw new ComputeException("Error bulk updating attribute values",e);
         }
     }
@@ -775,7 +779,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             return _annotationDAO.bulkUpdateEntityDataPrefix(oldPrefix, newPrefix);
         }
         catch (Exception e) {
-            _logger.error("Error bulk updating attribute values", e);
+            log.error("Error bulk updating attribute values", e);
             throw new ComputeException("Error bulk updating attribute values",e);
         }
     }
@@ -787,7 +791,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             return convert(_annotationDAO.annexEntityTree(subjectKey, objGuid));
         } 
         catch (Exception e) {
-            _logger.error("Error annexing domain object "+objGuid+" for "+subjectKey, e);
+            log.error("Error annexing domain object "+objGuid+" for "+subjectKey, e);
             throw new ComputeException("Error annexing domain object "+objGuid+" for "+subjectKey, e);
         }
     }
@@ -829,26 +833,28 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
     }
     
     private List<EntityNode> convertEntities(Collection<Entity> entities) throws Exception {
+        EntityGraphObjectFactory factory = getObjectFactory();
         List<EntityNode> domainObjs = new ArrayList<EntityNode>();
         for(Entity entity : entities) {
-            domainObjs.add(convert(entity));
+            domainObjs.add((EntityNode)factory.getNodeInstance(entity));
         }
         return domainObjs;
     }
 
     private List<EntityRelationship> convertEntityDatas(Collection<EntityData> eds) throws Exception {
+        EntityGraphObjectFactory factory = getObjectFactory();
         List<EntityRelationship> domainObjs = new ArrayList<EntityRelationship>();
         for(EntityData ed : eds) {
-            domainObjs.add(convert(ed));
+            domainObjs.add((EntityRelationship)factory.getRelationshipInstance(ed));
         }
         return domainObjs;
     }
     
     private EntityNode convert(Entity entity) throws Exception {
-        return (EntityNode)factory.getNodeInstance(entity);
+        return (EntityNode)getObjectFactory().getNodeInstance(entity);
     }
 
     private EntityRelationship convert(EntityData entityData) throws Exception  {
-        return (EntityRelationship)factory.getRelationshipInstance(entityData);
+        return (EntityRelationship)getObjectFactory().getRelationshipInstance(entityData);
     }
 }

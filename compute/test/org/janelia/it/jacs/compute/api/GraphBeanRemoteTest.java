@@ -47,10 +47,11 @@ public class GraphBeanRemoteTest extends RemoteEJBTest {
             Assert.assertNotNull(obj.getUpdatedDate());
             Assert.assertTrue(obj instanceof Folder);
             Folder folder = (Folder)obj;
+            Assert.assertTrue(folder.isThisInit());
+            Assert.assertTrue(folder.isRelsInit());
             Assert.assertTrue(folder.isCommonRoot());
             Assert.assertTrue(folder.isProtected());
-            Assert.assertFalse(obj.isRelsInit());
-            Assert.assertFalse(obj.getPermissions().isEmpty());
+            Assert.assertNotNull(obj.getPermissions());
             for(EntityPermission p : obj.getPermissions()) {
                 Assert.assertNotNull(p.getSubjectKey());
             }
@@ -69,7 +70,6 @@ public class GraphBeanRemoteTest extends RemoteEJBTest {
         Assert.assertTrue(entityNode instanceof Folder);
         Assert.assertEquals(entityNode.getCreationDate(), entityNode.getUpdatedDate());
         
-        createdEntities.add(entityNode.getId());
         d.deleteEntityNodeTree(a, entityNode.getId());
     }
 
@@ -112,6 +112,7 @@ public class GraphBeanRemoteTest extends RemoteEJBTest {
         // Ensure that everything is actually saved in the database
         EntityNode sourceObject2 = d.getEntityNodeAndChildren(a, sourceObject.getId());
         Assert.assertTrue(sourceObject2.isRelsInit());
+        Assert.assertNotNull(sourceObject2.getRelationships());
         Assert.assertEquals(sourceObject2.getRelationships().size(), 1);
         EntityRelationship sameRel = sourceObject2.getRelationships().iterator().next();
         Assert.assertEquals(rel.getId(), sameRel.getId());
@@ -134,6 +135,7 @@ public class GraphBeanRemoteTest extends RemoteEJBTest {
         sourceObject2 = d.getEntityNodeAndChildren(a, sourceObject.getId());
         Assert.assertNotNull(sourceObject2);
         Assert.assertTrue(sourceObject2.isRelsInit());
+        Assert.assertNotNull(sourceObject2.getRelationships());
         Assert.assertTrue(sourceObject2.getRelationships().isEmpty());
 
         d.deleteEntityNodeTree(a, sourceObject.getId());
