@@ -271,6 +271,9 @@
         <archive path="/common/Neo4j/scala-library-2.10.0.jar"/>
         <archive path="/common/Neo4j/server-api-2.0.0-M03.jar"/>
     </library>
+    <library name="Reflections" systemlibrary="false">
+        <archive path="/common/Reflections/reflections-0.9.9-RC1.jar"/>
+    </library>
     <library name="SAAJ" systemlibrary="false">
         <archive path="/common/SAAJ/saaj-impl-1.3.2.jar"/>
     </library>
