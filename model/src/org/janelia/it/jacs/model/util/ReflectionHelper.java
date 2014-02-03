@@ -23,6 +23,28 @@ public class ReflectionHelper {
 
     private static final Class[] EMPTY_ARGS_TYPES = {};
     private static final Object[] EMPTY_ARGS_VALUES = {};
+
+    public static Object getMandatoryFieldValue(Object obj, Class<? extends Annotation> annotationClass) throws NoSuchFieldException {
+        try {
+            Field idField = ReflectionHelper.getField(obj, annotationClass);
+            return ReflectionHelper.getFieldValue(obj, idField);
+        }
+        catch (NoSuchFieldException e) {
+            throw new IllegalStateException(obj.getClass().getName()+" has no field with @"+
+                    annotationClass.getSimpleName()+" annotation");
+        }
+    }
+
+    public static void setMandatoryFieldValue(Object obj, Class<? extends Annotation> annotationClass, Object value) {
+        try {
+            Field field = ReflectionHelper.getField(obj, annotationClass);
+            ReflectionHelper.setFieldValue(obj, field, value);
+        }
+        catch (NoSuchFieldException e) {
+            throw new IllegalStateException(obj.getClass().getName()+" has no field with @"+
+                    annotationClass.getSimpleName()+" annotation");
+        }
+    }
     
     public static Method getMethod(Object obj, String methodName) {
         Method matchedMethod = null;

@@ -31,7 +31,7 @@ import org.janelia.it.jacs.model.graph.entity.EntityNode;
 import org.janelia.it.jacs.model.graph.entity.EntityPermission;
 import org.janelia.it.jacs.model.graph.entity.EntityRelationship;
 import org.janelia.it.jacs.model.graph.entity.support.EntityGraphObjectFactory;
-import org.janelia.it.jacs.model.graph.entity.support.GraphObjectHelper;
+import org.janelia.it.jacs.model.graph.entity.support.GraphHelper;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
@@ -79,9 +79,9 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
                 updatedDate = now;
             }
             
-            String entityType = GraphObjectHelper.getEntityType(entityNode);
+            String entityType = GraphHelper.getEntityType(entityNode);
             Entity entity = new Entity(null, entityNode.getName(), subjectKey, entityType, creationDate, updatedDate, new HashSet<EntityData>());
-            Map<String,String> attrMap = GraphObjectHelper.getAttributes(entityNode);
+            Map<String,String> attrMap = GraphHelper.getAttributes(entityNode);
             for(String key : attrMap.keySet()) {
                 entity.setValueByAttributeName(key, attrMap.get(key));
             }
@@ -479,13 +479,13 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             entity.setName(entityNode.getName());
             entity.setCreationDate(entityNode.getCreationDate());
             entity.setUpdatedDate(entityNode.getUpdatedDate());
-            entity.setEntityTypeName(GraphObjectHelper.getEntityType(entityNode));
+            entity.setEntityTypeName(GraphHelper.getEntityType(entityNode));
             entity.setOwnerKey(entityNode.getOwnerKey());
             if (entityNode.isRelsInit()) {
                 entity.setNumChildren(entityNode.getRelationships().size());
             }
             
-            Map<String,String> attrMap = GraphObjectHelper.getAttributes(entityNode);
+            Map<String,String> attrMap = GraphHelper.getAttributes(entityNode);
             for(Entry<String,String> entry : attrMap.entrySet()) {
                 entity.setValueByAttributeName(entry.getKey(), entry.getValue());
             }

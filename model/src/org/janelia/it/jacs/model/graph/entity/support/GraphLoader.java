@@ -2,12 +2,17 @@ package org.janelia.it.jacs.model.graph.entity.support;
 
 import org.janelia.it.jacs.model.graph.entity.EntityNode;
 
+/**
+ * Interface for loading lazy graph nodes and relationships. 
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 public interface GraphLoader {
 
-    public void loadNode(EntityNode node);
+    public EntityNode loadNode(EntityNode node) throws Exception;
     
-    public void loadRelationships(EntityNode node);
+    public EntityNode loadRelationships(EntityNode node) throws Exception;
     
-    public void loadRelatedNodes(EntityNode node);
+    public EntityNode loadRelatedNodes(EntityNode node) throws Exception;
     
 }

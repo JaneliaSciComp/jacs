@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.janelia.it.jacs.model.graph.annotations.GraphAttribute;
+import org.janelia.it.jacs.model.graph.annotations.GraphId;
 import org.janelia.it.jacs.model.graph.annotations.GraphNode;
 import org.janelia.it.jacs.model.graph.entity.EntityNode;
 import org.janelia.it.jacs.model.util.ReflectionHelper;
@@ -14,8 +15,12 @@ import org.janelia.it.jacs.model.util.ReflectionHelper;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class GraphObjectHelper {
+public class GraphHelper {
 
+    public static Long getGraphId(Object graphObject) throws Exception {
+        return (Long)ReflectionHelper.getMandatoryFieldValue(graphObject, GraphId.class);
+    }
+    
     public static String getEntityType(EntityNode entityNode) {
         GraphNode entityNodeAnnotation = entityNode.getClass().getAnnotation(GraphNode.class);
         return entityNodeAnnotation.type();

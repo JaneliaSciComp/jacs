@@ -28,7 +28,6 @@ import org.janelia.it.jacs.model.graph.annotations.RelatedToVia;
 import org.janelia.it.jacs.model.graph.annotations.RelationshipInitFlag;
 import org.janelia.it.jacs.model.graph.annotations.RelationshipType;
 import org.janelia.it.jacs.model.graph.annotations.StartNode;
-import org.janelia.it.jacs.model.graph.entity.EntityRelationship;
 import org.janelia.it.jacs.model.util.ReflectionHelper;
 import org.reflections.Reflections;
 
@@ -92,26 +91,17 @@ public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,Entit
             }
         }   
     }
+    
+    public Object initNodeInstance(Object nodeObject, Entity entity) throws Exception {
 
-    /**
-     * Given an entity, create a node instance of the appropriate type. If the entity has initialized children, this
-     * method will recurse appropriately, building an entire subgraph if necessary. It avoids infinite loops by caching 
-     * all the nodes it creates.  
-     * @param entity
-     * @return
-     * @throws Exception
-     */
-    @Override
-    public Object getNodeInstance(Entity entity) throws Exception {
+        if (!Hibernate.isInitialized(entity)) {
+            return nodeObject;
+        }
         
-        Object nodeObject = nodeCache.getIfPresent(entity.getId());
-        if (nodeObject!=null) return nodeObject;
+        if ((Boolean)ReflectionHelper.getMandatoryFieldValue(nodeObject, RelationshipInitFlag.class)) {
+            return nodeObject;
+        }
         
-        nodeObject = instantiateMappedClass(nodeClasses, entity.getEntityTypeName());
-        log.info("Instantiated "+nodeObject.getClass().getName()+" for entity "+entity.getId());
-        copyAnnotatedFields(entity, nodeObject);
-        nodeCache.put(entity.getId(), nodeObject);
-
         // Copy permissions
         
         if (Hibernate.isInitialized(entity.getEntityActorPermissions())) {
@@ -147,9 +137,9 @@ public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,Entit
             Multimap<Field,Object> filteredMap = HashMultimap.<Field,Object>create();
             for(Object relObject : relationshipList) {
 
-                Object relId = getMandatoryFieldValue(relObject, GraphId.class);
-                Object relType = getMandatoryFieldValue(relObject, RelationshipType.class);
-                Object targetNodeObject = getMandatoryFieldValue(relObject, EndNode.class);
+                Object relId = ReflectionHelper.getMandatoryFieldValue(relObject, GraphId.class);
+                Object relType = ReflectionHelper.getMandatoryFieldValue(relObject, RelationshipType.class);
+                Object targetNodeObject = ReflectionHelper.getMandatoryFieldValue(relObject, EndNode.class);
                 
                 if (targetNodeObject==null) {
                     throw new IllegalStateException("Relationship has no target: "+relId);
@@ -229,10 +219,39 @@ public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,Entit
             }
             
             // All relationships were initialized
-            setMandatoryFieldValue(nodeObject, RelationshipInitFlag.class, Boolean.TRUE);
+            ReflectionHelper.setMandatoryFieldValue(nodeObject, RelationshipInitFlag.class, Boolean.TRUE);
         }
         
         return nodeObject;
+    }
+    
+    /**
+     * Given an entity, create a node instance of the appropriate type. If the entity has initialized children, this
+     * method will recurse appropriately, building an entire subgraph if necessary. It avoids infinite loops by caching 
+     * all the nodes it creates.  
+     * @param entity
+     * @return
+     * @throws Exception
+     */
+    @Override
+    public Object getNodeInstance(Entity entity) throws Exception {
+        
+        Object nodeObject = nodeCache.getIfPresent(entity.getId());
+        if (nodeObject!=null) return nodeObject;
+
+        if (!Hibernate.isInitialized(entity)) {
+            nodeObject = instantiateMappedClass(nodeClasses, "");
+            log.info("Instantiated "+nodeObject.getClass().getName()+" for entity "+entity.getId());
+            copyIdField(entity, nodeObject);
+            return nodeObject;
+        }
+        else {
+            nodeObject = instantiateMappedClass(nodeClasses, entity.getEntityTypeName());
+            log.info("Instantiated "+nodeObject.getClass().getName()+" for entity "+entity.getId());
+            copyAnnotatedFields(entity, nodeObject);
+            nodeCache.put(entity.getId(), nodeObject);
+            return initNodeInstance(nodeObject, entity);
+        }        
     }
     
     @Override
@@ -293,9 +312,8 @@ public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,Entit
         
         return permObject;
     }
-    
-    private void copyAnnotatedFields(Object sourceObject, Object graphObject) throws Exception {
 
+    private void copyIdField(Object sourceObject, Object graphObject) throws Exception {
         // Copy id
         for(Field field : ReflectionHelper.getFields(graphObject, GraphId.class)) {
             Object idValue = ReflectionHelper.getUsingGetter(sourceObject, "id");        
@@ -306,6 +324,11 @@ public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,Entit
                 ReflectionHelper.setFieldValue(graphObject, field, idValue);    
             }
         }
+    }
+    
+    private void copyAnnotatedFields(Object sourceObject, Object graphObject) throws Exception {
+
+        copyIdField(sourceObject, graphObject);
         
         if (!Hibernate.isInitialized(sourceObject)) {
             log.info("  * Will not copy from uninitialized object "+sourceObject);
@@ -330,7 +353,7 @@ public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,Entit
                     log.info("  * Setting "+graphObject.getClass().getName()+"."+field.getName()+" = "+value);
                     setFieldValueWithTypeCoercion(graphObject, field, value);
                 }
-                setMandatoryFieldValue(graphObject, NodeInitFlag.class, Boolean.TRUE);
+                ReflectionHelper.setMandatoryFieldValue(graphObject, NodeInitFlag.class, Boolean.TRUE);
             }
             else {
                 log.info("  * Will not copy uninitialized attributes from entity "+sourceObject);
@@ -338,27 +361,6 @@ public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,Entit
         }
     }
 
-    private Object getMandatoryFieldValue(Object obj, Class<? extends Annotation> annotationClass) throws NoSuchFieldException {
-        try {
-            Field idField = ReflectionHelper.getField(obj, annotationClass);
-            return ReflectionHelper.getFieldValue(obj, idField);
-        }
-        catch (NoSuchFieldException e) {
-            throw new IllegalStateException(obj.getClass().getName()+" has no field with @"+
-                    annotationClass.getSimpleName()+" annotation");
-        }
-    }
-
-    private void setMandatoryFieldValue(Object obj, Class<? extends Annotation> annotationClass, Object value) {
-        try {
-            Field field = ReflectionHelper.getField(obj, annotationClass);
-            ReflectionHelper.setFieldValue(obj, field, value);
-        }
-        catch (NoSuchFieldException e) {
-            throw new IllegalStateException(obj.getClass().getName()+" has no field with @"+
-                    annotationClass.getSimpleName()+" annotation");
-        }
-    }
     private void setFieldValueWithTypeCoercion(Object obj, Field field, Object value) {
         if (value==null) {
             ReflectionHelper.setFieldValue(obj, field, value);

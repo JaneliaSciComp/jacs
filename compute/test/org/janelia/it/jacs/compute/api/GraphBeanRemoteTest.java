@@ -55,6 +55,12 @@ public class GraphBeanRemoteTest extends RemoteEJBTest {
             for(EntityPermission p : obj.getPermissions()) {
                 Assert.assertNotNull(p.getSubjectKey());
             }
+            for(EntityRelationship rel : obj.getRelationships()) {
+                Assert.assertNotNull(rel.getId());
+                Assert.assertFalse(rel.getTargetNode().isThisInit());
+                Assert.assertFalse(rel.getTargetNode().isRelsInit());
+                Assert.assertNull(rel.getTargetNode().getName());
+            }
         }
     }
 
