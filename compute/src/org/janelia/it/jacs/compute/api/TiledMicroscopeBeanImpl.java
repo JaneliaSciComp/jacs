@@ -60,9 +60,9 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
-    public TmSample createTiledMicroscopeSample(Long sampleId, String name) throws ComputeException {
+    public TmSample createTiledMicroscopeSample(String user, String sampleName, String pathToRenderFolder) throws ComputeException {
         try {
-            return _tiledMicroscopeDAO.createTiledMicroscopeSample(sampleId, name);
+            return _tiledMicroscopeDAO.createTiledMicroscopeSample(user, sampleName, pathToRenderFolder);
         }
         catch (Exception e) {
             String errorString="Error calling createTiledMicroscopeSample in DAO layer: " + e.getMessage();

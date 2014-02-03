@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.access;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
@@ -129,51 +130,45 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
-    public TmSample createTiledMicroscopeSample(Long sampleId, String name) throws DaoException {
+    public TmSample createTiledMicroscopeSample(String user, String sampleName, String pathToRenderFolder) throws DaoException {
         try {
-//            // Two main areas for data
-//            String[] rootPaths = new String[]{"/groups/mousebrainmicro/mousebrainmicro/render"};
-//            // Parameters
-//            String subjectKey = "user:"+user;
-//
-//            // Main script
-//            Set<Entity> folders = e.getEntitiesByName(subjectKey, destinationFolderName);
-//            Entity folder;
-//            if (folders!=null && folders.size()>0) {
-//                folder = folders.iterator().next();
-//            }
-//            else {
-//                folder = newEntity(destinationFolderName, EntityConstants.TYPE_FOLDER, subjectKey, true);
-//                folder = e.saveOrUpdateEntity(subjectKey, folder);
-//            }
-//
-//            // Loop through the main areas and pull out the data directories.  Create entities for them if necessary
-//            for (String rootPath : rootPaths) {
-//                File[] rootPathDataDirs = (new File(rootPath)).listFiles(new FileFilter() {
-//                    @Override
-//                    public boolean accept(File file) {
-//                        return file.isDirectory();
-//                    }
-//                });
-//                for (File tmpData : rootPathDataDirs) {
-//                    // If they exist do nothing
-//                    Set<Entity> testFolders = e.getEntitiesByName(subjectKey, tmpData.getName());
-//                    if (null!=testFolders && testFolders.size()>0) continue;
-//                    // else add in the new data
-//                    Entity sample = newEntity(tmpData.getName(), EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE, subjectKey, false);
-//                    sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, tmpData.getAbsolutePath());
-//                    sample = e.saveOrUpdateEntity(subjectKey, sample);
-//                    System.out.println("Saved sample as "+sample.getId());
-//                    e.addEntityToParent(subjectKey, folder.getId(), sample.getId(), folder.getMaxOrderIndex() + 1, EntityConstants.ATTRIBUTE_ENTITY);
-//                }
-//            }
-//            return new TmSample(sam)
-            return null;
+            String subjectKey = "user:"+user;
+            String folderName = "3D Tile Microscope Samples";
+            Collection<Entity> folders = annotationDAO.getEntitiesByName(subjectKey, folderName);
+            Entity folder;
+            if (folders!=null && folders.size()>0) {
+                folder = folders.iterator().next();
+            }
+            else {
+                folder = newEntity(folderName, EntityConstants.TYPE_FOLDER, subjectKey, true);
+                annotationDAO.saveOrUpdateEntity(folder);
+            }
+
+            Entity sample = newEntity(sampleName, EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE, subjectKey, false);
+            sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, pathToRenderFolder);
+            annotationDAO.saveOrUpdateEntity(sample);
+            log.debug("Saved sample as " + sample.getId());
+            annotationDAO.addEntityToParent(folder, sample, folder.getMaxOrderIndex() + 1, EntityConstants.ATTRIBUTE_ENTITY);
+            return new TmSample(sample);
         }
         catch (Exception e) {
             e.printStackTrace();
             throw new DaoException(e);
         }
+    }
+
+    private Entity newEntity(String name, String entityTypeName, String ownerKey, boolean isCommonRoot) throws ComputeException {
+        Date createDate = new Date();
+        Entity entity = new Entity();
+        entity.setName(name);
+        entity.setOwnerKey(ownerKey);
+        entity.setCreationDate(createDate);
+        entity.setUpdatedDate(createDate);
+        entity.setEntityTypeName(entityTypeName);
+        if (isCommonRoot) {
+            entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT, "Common Root");
+        }
+        return entity;
     }
 
     protected TmPreferences createTiledMicroscopePreferences(Long workspaceId) throws DaoException {
