@@ -156,7 +156,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             return entity;
         } 
         catch (DaoException e) {
-            _logger.error("Error trying to save or update Entity Datas");
+            _logger.error("Error trying to save or update Entity Datas",e);
             throw new ComputeException("Error trying to save or update Entity Datas",e);
         }
     }

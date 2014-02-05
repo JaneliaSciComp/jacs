@@ -1644,9 +1644,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             log.trace("saveOrUpdateEntity(entity.id="+entity.getId()+")");    
         }
         entity.setUpdatedDate(new Date());
-        if (!updateChildCount(entity)) {
-            saveOrUpdate(entity);    
-        }
+        saveOrUpdate(entity);
+        updateChildCount(entity);
     }
 
     public void saveOrUpdateEntityData(EntityData entityData) throws DaoException {
@@ -1723,25 +1722,38 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         updateChildCount(parent);
     }
     
-    private boolean updateChildCount(Entity entity) throws DaoException {
+    private void updateChildCount(Entity entity) throws DaoException {
         if (log.isTraceEnabled()) {
-            log.trace("updateChildCount(entity="+entity+")");    
+            log.trace("updateChildCount(entity.id="+entity.getId()+")");    
         }
-        // Count the number of children. We can't just use entity.getChildren().size() because the same child may 
-        // have multiple roles (e.g referenced by multiple EntityDatas). 
-        int numChildren = 0;
-        for(EntityData ed : entity.getEntityData()) {
-            if (ed.getChildEntity()!=null) {
-                numChildren++;
+
+        try {   
+            Session session = getCurrentSession();
+            
+            // We need to pull the count back so that we can update the in-memory model
+            StringBuffer hql = new StringBuffer("select count(*) from EntityData ed ");
+            hql.append("where ed.parentEntity.id=? ");
+            hql.append("and ed.childEntity is not null ");
+            Query query = session.createQuery(hql.toString()).setLong(0, entity.getId());
+            Long count = (Long)query.uniqueResult();
+            Integer intCount = count.intValue();
+            
+            // Update the database
+            hql = new StringBuffer("update Entity set numChildren = :numChildren where id = :entityId");
+            query = session.createQuery(hql.toString());
+            query.setParameter("numChildren", intCount);
+            query.setParameter("entityId", entity.getId());
+            int rows = query.executeUpdate();
+            if (rows!=1) {
+                log.warn("Updating numChildren to "+intCount+" for entity "+entity.getId()+" failed. "+rows+" rows were updated.");
             }
+            
+            // Update in-memory model
+            entity.setNumChildren(intCount);
         }
-        if (entity.getNumChildren()!=numChildren) {
-            entity.setNumChildren(numChildren);
-            saveOrUpdate(entity);
-            return true;
+        catch (Exception e) {
+            throw new DaoException(e);
         }
-        
-        return false;
     }
     
     public int bulkUpdateEntityDataValue(String oldValue, String newValue) throws DaoException {
