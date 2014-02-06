@@ -9,7 +9,12 @@
       </configuration>
     </facet>
     <facet type="Spring" name="Spring">
-      <configuration />
+      <configuration>
+        <fileset id="fileset" name="Spring Application Context" removed="false">
+          <file>file://$MODULE_DIR$/conf/drmaa/drmaaSubmitterApp.xml</file>
+          <file>file://$MODULE_DIR$/conf/neo4j-beans.xml</file>
+        </fileset>
+      </configuration>
     </facet>
     <facet type="web" name="Web">
       <configuration>
