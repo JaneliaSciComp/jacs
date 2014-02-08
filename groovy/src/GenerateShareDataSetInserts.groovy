@@ -4,10 +4,10 @@ import org.apache.solr.common.SolrDocument
 import org.apache.solr.common.SolrDocumentList
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
 
-def folderId = 1938712577584398434L
+def folderId = 1943163501170130951L
 def idGen = new TimebasedIdentifierGenerator();
 
-def file = new PrintWriter("insert_perms.sql")
+def file = new PrintWriter("insert_perms_tanya_seeligj.sql")
 
 f = new JacsUtils("user:rokickik", false)
 
@@ -34,7 +34,7 @@ while (true) {
         SolrDocument doc = (SolrDocument)it;
         def entityId = it.getFieldValue("id")
         def newId = newIds.get(newIdIndex++)
-        sql = "insert into entity_actor_permission values ("+newId+","+entityId+",'user:dionneh','r');";
+        sql = "insert into entity_actor_permission values ("+newId+","+entityId+",'user:seeligj','r');";
         file.println(sql)
     }
     
