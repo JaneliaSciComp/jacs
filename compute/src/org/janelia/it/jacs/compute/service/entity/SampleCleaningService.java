@@ -54,37 +54,37 @@ public class SampleCleaningService extends AbstractEntityService {
     	List<Entity> runs = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
     	if (runs.isEmpty()) return;
     	
-    	// Group by anatomical area
-    	Map<String,List<Entity>> areaRunMap = new HashMap<String,List<Entity>>();
+    	// Group by pipeline process
+    	Map<String,List<Entity>> processRunMap = new HashMap<String,List<Entity>>();
 
         for(Entity pipelineRun : runs) {
-            String area = pipelineRun.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
-            if (area == null) area = "";
-            List<Entity> areaRuns = areaRunMap.get(area);
+            String process = pipelineRun.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);
+            if (process == null) process = "";
+            List<Entity> areaRuns = processRunMap.get(process);
             if (areaRuns == null) {
                 areaRuns = new ArrayList<Entity>();
-                areaRunMap.put(area,areaRuns);
+                processRunMap.put(process,areaRuns);
             }
             areaRuns.add(pipelineRun);
         }
     	
-        for(String area : areaRunMap.keySet()) {
-            List<Entity> areaRuns = areaRunMap.get(area);
-            if (areaRuns.isEmpty()) continue;
+        for(String process : processRunMap.keySet()) {
+            List<Entity> processRuns = processRunMap.get(process);
+            if (processRuns.isEmpty()) continue;
             
-            logger.info("  Processing pipeline runs for area: "+area);
+            logger.info("  Processing pipeline runs for process: "+process);
             
             // Remove latest run, we don't want to touch it
-            Entity lastRun = areaRuns.remove(areaRuns.size()-1);
+            Entity lastRun = processRuns.remove(processRuns.size()-1);
             populateChildren(lastRun);
 
             if (EntityUtils.getLatestChildOfType(lastRun, EntityConstants.TYPE_ERROR)!=null) {
                 logger.info("    Keeping last error run: "+lastRun.getId());
                 // Last run had an error, let's keep that, but still try to find a good run to keep
-                Collections.reverse(areaRuns);
+                Collections.reverse(processRuns);
                 Integer keeper = null;
                 int curr = 0;
-                for(Entity pipelineRun : areaRuns) {
+                for(Entity pipelineRun : processRuns) {
                     populateChildren(pipelineRun);
                     if (EntityUtils.getLatestChildOfType(pipelineRun, EntityConstants.TYPE_ERROR)!=null) {
                         keeper = curr;
@@ -93,7 +93,7 @@ public class SampleCleaningService extends AbstractEntityService {
                     curr++;   
                 }
                 if (keeper!=null) {
-                    Entity lastGoodRun = areaRuns.remove(keeper.intValue());
+                    Entity lastGoodRun = processRuns.remove(keeper.intValue());
                     logger.info("    Keeping last good run: "+lastGoodRun.getId());
                     
                 }
@@ -106,7 +106,7 @@ public class SampleCleaningService extends AbstractEntityService {
             }
             
             // Clean up everything else
-            deleteUnannotated(areaRuns);
+            deleteUnannotated(processRuns);
         }
     	
     }
