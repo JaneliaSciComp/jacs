@@ -38,7 +38,8 @@ public enum PipelineProcess implements NamedEnum {
     YoshiMBPolarityCase2("Yoshi MB Polarity Case 2 Pipeline"),
     YoshiMBPolarityCase3("Yoshi MB Polarity Case 3 Pipeline"),
     YoshiMBPolarityCase4("Yoshi MB Polarity Case 4 Pipeline"),
-    YoshiMBSplitMCFOCase1("Yoshi MB Split MCFO Case 1 Pipeline");
+    YoshiMBSplitMCFOCase1("Yoshi MB Split MCFO Case 1 Pipeline"),
+    YoshiNormalization("Yoshi Normalization Pipeline");
 
     private String name;
 

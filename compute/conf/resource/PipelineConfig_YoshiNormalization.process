@@ -1,0 +1,12 @@
+<process name="Yoshi Normalization Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+	<sequence>
+    
+        <include name="Pipeline" process="FijiMacroPipeline">
+            <input name="PIPELINE_PROCESS" value="YoshiNormalization"/>
+            <input name="PIPELINE_NAME" value="Yoshi Normalization Pipeline"/>
+            <input name="MACRO_NAME" value="20x_MIP_StackAvi"/>
+            <input name="MACRO_CLASS" value="org.janelia.it.jacs.compute.service.image.RunFiji20xBrainVNCMacro"/>
+        </include>
+        
+    </sequence>
+</process>
