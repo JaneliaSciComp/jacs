@@ -273,25 +273,25 @@ public class BlastGridContinuousMergeSort {
     private static IBlastOutputFormatTask createParameterBlastTask(IBlastOutputFormatTask blastTask) {
         IBlastOutputFormatTask pt;
         if (blastTask instanceof BlastPTask) {
-            pt = new BlastPTask();
+            pt = (IBlastOutputFormatTask)new BlastPTask();
         }
         else if (blastTask instanceof BlastXTask) {
-            pt = new BlastXTask();
+            pt = (IBlastOutputFormatTask)new BlastXTask();
         }
         else if (blastTask instanceof MegablastTask) {
-            pt = new MegablastTask();
+            pt = (IBlastOutputFormatTask)new MegablastTask();
         }
         else if (blastTask instanceof TBlastNTask) {
-            pt = new TBlastNTask();
+            pt = (IBlastOutputFormatTask)new TBlastNTask();
         }
         else if (blastTask instanceof TBlastXTask) {
-            pt = new TBlastXTask();
+            pt = (IBlastOutputFormatTask)new TBlastXTask();
         }
         else if (blastTask instanceof ReversePsiBlastTask) {
-            pt = new ReversePsiBlastTask();
+            pt = (IBlastOutputFormatTask)new ReversePsiBlastTask();
         }
         else {
-            pt = new BlastNTask();
+            pt = (IBlastOutputFormatTask)new BlastNTask();
         }
         Set<String> parameterKeySet = blastTask.getParameterKeySet();
         for (String k : parameterKeySet) {

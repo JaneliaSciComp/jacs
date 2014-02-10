@@ -23,6 +23,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.janelia.it.jacs.model.tasks.blast.IBlastOutputFormatTask;
 
 /**
  * Created by IntelliJ IDEA.
@@ -61,7 +62,7 @@ public class PersistFinalXMLResultsGridService extends SubmitDrmaaJobService {
         addBlastFormats(blastTask.getParameter(BlastTask.PARAM_formatTypesCsv));
         for (File dir : blastDestOutputDirs) {
             try {
-                BlastGridContinuousMergeSort.copyBlastTaskToDir(blastTask, dir);
+                BlastGridContinuousMergeSort.copyBlastTaskToDir((IBlastOutputFormatTask)blastTask, dir);
             }
             catch (Exception e) {
                 throw new MissingDataException(e.getMessage());
