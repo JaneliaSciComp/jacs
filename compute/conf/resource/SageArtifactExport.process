@@ -2,18 +2,36 @@
 
     <sequence name="Main">
 
-        <input name="DATA_SET_IDENTIFIERS"/>
-        
-        <!-- Import variables from the task if any were not passed in as input parameters above -->
-        <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
-            <input name="DATA_SET_IDENTIFIERS"/>
-            <input name="TASK_PARAMETER_1" value="data set identifiers"/>
-            <input name="PROCESS_VARIABLE_1" value="DATA_SET_IDENTIFIERS"/>
-            <output name="DATA_SET_IDENTIFIERS"/>
-        </operation>
-
         <operation name="Sage Artifact Export" processor="org.janelia.it.jacs.compute.service.entity.SageArtifactExportService">
-            <input name="DATA_SET_IDENTIFIERS"/>
+            <input name="MODE" value="GET_SAMPLES_NEEDING_ARTIFACTS"/>
+            <output name="SAMPLE_20X_ID"/>
+            <output name="SAMPLE_63X_ID"/>
+        </operation>
+        
+        <!-- Process each 20x sample -->
+        <sequence forEach="SAMPLE_20X_ID">
+            
+            <!-- Spawn a new task to process the Sample -->
+            <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
+                <input name="PROCESS_DEF_NAME" value="PipelineConfig_YoshiNormalization"/>
+                <input name="DISPLAY_NAME" value="Yoshi Normalization"/>
+                <input name="PARAMETER_1_KEY" value="sample entity id"/>
+                <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_20X_ID}"/>
+            </operation>
+            
+        </sequence>
+
+        <!-- Process each 63x sample -->
+        <sequence forEach="SAMPLE_63X_ID">
+            
+        </sequence>
+        
+        <!-- Wait for subtasks to finish -->
+        <operation name="Wait for Subtasks" processor="org.janelia.it.jacs.compute.service.common.WaitForSubTasksService">
+        </operation>
+        
+        <operation name="Sage Artifact Export" processor="org.janelia.it.jacs.compute.service.entity.SageArtifactExportService">
+            <input name="MODE" value="EXPORT_TO_SAGE"/>
         </operation>
             
     </sequence>

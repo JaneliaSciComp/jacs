@@ -13,6 +13,7 @@ import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Run a Fiji macro and add the resulting files to the entity model.
@@ -38,8 +39,6 @@ public abstract class RunFijiMacroService extends AbstractEntityGridService {
     protected void init(IProcessData processData) throws Exception {
     	super.init(processData);
 
-    	this.outputFilePrefix = "out";
-    	
     	this.macroName = data.getRequiredItemAsString("MACRO_NAME");
         String sampleEntityId = data.getRequiredItemAsString("SAMPLE_ENTITY_ID");
         
@@ -51,8 +50,6 @@ public abstract class RunFijiMacroService extends AbstractEntityGridService {
         if (!EntityConstants.TYPE_SAMPLE.equals(sampleEntity.getEntityTypeName())) {
             throw new IllegalArgumentException("Entity is not a sample: "+sampleEntityId);
         }
-        
-        logger.info("Retrieved sample: "+sampleEntity.getName()+" (id="+sampleEntityId+")");
 
         String pipelineRunEntityId = data.getRequiredItemAsString("PIPELINE_RUN_ENTITY_ID");
         pipelineRun = entityBean.getEntityById(pipelineRunEntityId);
@@ -60,6 +57,9 @@ public abstract class RunFijiMacroService extends AbstractEntityGridService {
             throw new IllegalArgumentException("Pipeline run entity not found with id="+pipelineRunEntityId);
         }
         
+        this.outputFilePrefix = sampleEntity.getName();
+        
+        logger.info("Running Fiji macro "+macroName+" for sample "+sampleEntity.getName()+" (id="+sampleEntityId+")");
     }
 
     @Override
@@ -79,8 +79,8 @@ public abstract class RunFijiMacroService extends AbstractEntityGridService {
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix()).append("\n");
         
         script.append("cd "+resultFileNode.getDirectoryPath());
+        script.append("\n");
         script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroFile+" "+getMacroParameter(sampleEntity,outputFilePrefix));
-
         script.append("\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix());
         script.append("\n");
@@ -130,6 +130,15 @@ public abstract class RunFijiMacroService extends AbstractEntityGridService {
 
         try {
             helper.addFilesInDirToFolder(pipelineRun, outputDir);    
+            
+            String defaultImageName = outputFilePrefix+"_Brain_MIP.png";
+            Entity default2dImage = EntityUtils.findChildWithName(pipelineRun, defaultImageName);
+            if (default2dImage!=null) {
+                entityHelper.setDefault2dImage(pipelineRun, default2dImage);    
+            }
+            else {
+                logger.warn("Could not find default image: "+defaultImageName);
+            }
         }
         catch (Exception e) {
             throw new MissingDataException("Error discoverying files in "+outputDir,e);

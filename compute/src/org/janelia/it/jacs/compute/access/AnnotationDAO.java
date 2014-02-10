@@ -2792,7 +2792,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             throw new DaoException(e);
         }
 	}
-
+    
     public List<Entity> getEntitiesForAnnotationSession(String subjectKey, long sessionId) throws ComputeException {
 
         if (log.isTraceEnabled()) {

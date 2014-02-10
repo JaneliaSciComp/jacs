@@ -3,24 +3,20 @@ package org.janelia.it.jacs.compute.service.entity;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.cv.Objective;
 import org.janelia.it.jacs.model.sage.CvTerm;
 import org.janelia.it.jacs.model.sage.Image;
 import org.janelia.it.jacs.model.sage.ImageProperty;
 import org.janelia.it.jacs.model.sage.Line;
 import org.janelia.it.jacs.model.sage.SecondaryImage;
-import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
-import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
 import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 
@@ -32,15 +28,17 @@ import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 public class SageArtifactExportService extends AbstractEntityService {
 
     private static final String WEBDAV_PREFIX = "http://jacs-webdav.int.janelia.org/WebDAV";
-    
     private static final String NO_CONSENSUS = "No Consensus";
     private static final String CREATED_BY = "Janelia Workstation";
     private static final String PUBLISHED_TO = "MBEW";
+    private static final String ARTIFACT_PIPELINE_RUN_PREFIX = "MBEW Pipeline";
+    private static final String ANNOTATION_EXPORT_20X = "Publish20xToMBEW";
+    private static final String ANNOTATION_EXPORT_63X = "Publish63xToMBEW";
     
+    private String mode;
     private SageDAO sage;
     private Map<String,Line> lines = new HashMap<String,Line>();
     private Map<String,List<Integer>> sourceSageImageIdsByArea;
-    private Set<String> dataSets;
     private Date createDate;
     
     private CvTerm productMip;
@@ -55,19 +53,97 @@ public class SageArtifactExportService extends AbstractEntityService {
     
     public void execute() throws Exception {
         
-        String dataSetIdentifierList = (String)processData.getItem("DATA_SET_IDENTIFIERS");
-        if (StringUtils.isEmpty(dataSetIdentifierList)) {
-            throw new IllegalArgumentException("DATA_SET_IDENTIFIERS may not be null");
-        }
+        this.mode = data.getRequiredItemAsString("MODE");
         
-        this.dataSets = new HashSet<String>();
-        for(String ds : Task.listOfStringsFromCsvString(dataSetIdentifierList)) {
-            dataSets.add(ds);
+        if ("GET_SAMPLES_NEEDING_ARTIFACTS".equals(mode)) {
+            List<Entity> samples20x = getAnnotatedSamples(ANNOTATION_EXPORT_20X);
+            List<Long> sampleIds20x = getSampleIdsNeedingArtifacts(samples20x);
+            data.putItem("SAMPLE_20X_ID", sampleIds20x);
+            List<Entity> samples63x = getAnnotatedSamples(ANNOTATION_EXPORT_63X);
+            List<Long> sampleIds63x = getSampleIdsNeedingArtifacts(samples63x);
+            data.putItem("SAMPLE_60X_ID", sampleIds63x);
         }
+        else if ("EXPORT_TO_SAGE".equals(mode)) {
+            List<Entity> samples = getAnnotatedSamples(ANNOTATION_EXPORT_20X);
+            samples.addAll(getAnnotatedSamples(ANNOTATION_EXPORT_63X));
+            exportSamples(samples);
+        } 
+    }
+    
+    private List<Entity> getAnnotatedSamples(String annotationTerm) throws Exception {
+        
+        logger.warn("Finding samples annotated with '"+annotationTerm+"'...");
+        
+        List<Entity> samples = new ArrayList<Entity>();
+        for(Entity sample : annotationBean.getEntitiesAnnotatedWithTerm(ownerKey, annotationTerm)) {
+            if (!sample.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE)) {
+                logger.warn("Entity annotated with '"+annotationTerm+"' is not a sample: "+sample.getId());
+                continue;
+            }
+            if (ANNOTATION_EXPORT_20X.equals(annotationTerm)) {
+                Entity os = getObjectiveSample(sample, Objective.OBJECTIVE_20X);
+                if (os==null) {
+                    logger.warn("Entity annotated with '"+annotationTerm+"' does not have a 20x sample: "+sample.getId());
+                }
+                else {
+                    logger.info("Annotated sample will be exported: "+os.getName());
+                    samples.add(os);    
+                }
+            }
+            else if (ANNOTATION_EXPORT_63X.equals(annotationTerm)) {
+                Entity os = getObjectiveSample(sample, Objective.OBJECTIVE_63X);
+                if (os==null) {
+                    logger.warn("Entity annotated with '"+annotationTerm+"' does not have a 63x sample: "+sample.getId());
+                }
+                else {
+                    logger.info("Annotated sample will be exported: "+os.getName());
+                    samples.add(os);    
+                }
+            }   
+        }
+        return samples;
+    }
+    
+    private Entity getObjectiveSample(Entity sample, Objective objective) throws Exception {
+        String sampleObjective = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
+        if (objective.getName().equals(sampleObjective)) {
+            return sample;
+        }
+        entityLoader.populateChildren(sample);
+        for(Entity child : sample.getChildren()) {
+            String childObjective = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
+            if (objective.getName().equals(childObjective)) {
+                return child;
+            }    
+        }
+        return null;
+    }
+    
+    private List<Long> getSampleIdsNeedingArtifacts(List<Entity> samples) throws Exception {
+        List<Long> sampleIds = new ArrayList<Long>();
+        for(Entity sample : samples) {
+            if (getArtifactRun(sample)==null) {
+                logger.info("Sample needs MBEW artifact generation "+sample.getName());
+                sampleIds.add(sample.getId());
+            }
+        }
+        return sampleIds;
+    }
+    
+    private Entity getArtifactRun(Entity sample) throws Exception {
+        entityLoader.populateChildren(sample);
+        for(Entity child : sample.getChildren()) {
+            if (child.getEntityTypeName().equals(EntityConstants.TYPE_PIPELINE_RUN) && child.getName().startsWith(ARTIFACT_PIPELINE_RUN_PREFIX)) {
+                return child;
+            }
+        }
+        return null;
+    }
+        
+    private void exportSamples(List<Entity> samples) throws Exception {
         
         this.sage = new SageDAO(logger);
         this.createDate = new Date();
-        
         this.productMip = getCvTermByName("product","projection_all");
         this.productTranslation = getCvTermByName("product","translation");
         this.productTranslationReference = getCvTermByName("product","translation_reference");
@@ -84,45 +160,16 @@ public class SageArtifactExportService extends AbstractEntityService {
             sage.removeImage(image);
         }
         
-        String[] lines = {"MB010B","MB011A","MB011B","MB011C","MB012B","MB013B","MB014B","MB052B"};
-        
-        for(String line : lines) {
-            line = "GMR_"+line;
-            for(Entity entity : entityBean.getEntitiesWithAttributeValue(EntityConstants.ATTRIBUTE_LINE, line)) {
-                if (entity.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE) && !entity.getName().contains("~")) {
-                    processSample(entity);
-                }
-            }
-            
-        }
-        
-//        Entity sample = entityBean.getEntityById(1844663952051535970L);
-//        processSample(sample);
-        
-//        for(Entity sample : entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_SAMPLE)) {
-//            processSample(sample);
-//            sample.setEntityData(null); // free memory
-//        }
-    }
-    
-    private void processSample(Entity sample) throws Exception {
-        String dataSetIdentifier = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-        if (dataSetIdentifier==null || !dataSets.contains(dataSetIdentifier)) return;
-
-        populateChildren(sample);
-        List<Entity> childSamples = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_SAMPLE);
-        if (childSamples.isEmpty()) {
-            exportArtifactForSample(sample);
-        }
-        else {
-            for(Entity childSample : childSamples) {
-                exportArtifactForSample(childSample);
-            }
+        for(Entity sample : samples) {
+            exportSample(sample);
+            sample.setEntityData(null); // free memory
         }
     }
     
-    private void exportArtifactForSample(Entity sample) throws Exception {
+    private void exportSample(Entity sample) throws Exception {
 
+        logger.info("Exporting "+sample.getName());
+        
         // Find fly line
         
         String lineName = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_LINE);
@@ -155,47 +202,66 @@ public class SageArtifactExportService extends AbstractEntityService {
         });
         
         // Collect artifacts for export
-
-        Entity image3d = sample.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-        
-        if (image3d==null) {
-            logger.error("  Sample has no 3d image");
+        Entity artifactRun = getArtifactRun(sample);
+        if (artifactRun==null) {
+            logger.error("  Sample has no MBEW artifacts to export");
             return;
         }
-        
-        populateChildren(image3d);
-        Entity image2d = image3d.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-        Entity movie = image3d.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE);
-        
-        // Export to SAGE
-        
-        if (image2d==null) {
-            logger.error("  Sample has no 3d image");
-            return;
-        }
-        
-        if (movie==null) {
-            logger.warn("  Sample has no movie");
-        }
+        entityLoader.populateChildren(artifactRun);
 
-        List<Integer> sourceSageImageIds = sourceSageImageIdsByArea.get("Brain");
+        exportArtifactsForArea(sample, artifactRun, "Brain", line);
+        exportArtifactsForArea(sample, artifactRun, "VNC", line); 
+    }
+    
+    private void exportArtifactsForArea(Entity sample, Entity artifactRun, String area, Line line) throws Exception {
+
+        List<Integer> sourceSageImageIds = sourceSageImageIdsByArea.get(area);
         if (sourceSageImageIds==null) {
-            logger.warn("No Brain area found, trying empty string in set: "+sourceSageImageIdsByArea.keySet());
-            sourceSageImageIds = sourceSageImageIdsByArea.get("");
+            if ("Brain".equals(area)) {
+                sourceSageImageIds = sourceSageImageIdsByArea.get("");
+                if (sourceSageImageIds==null) {
+                    logger.warn("No source images found for Brain in "+sample.getName());   
+                }
+            }
+            else {
+                // This sample has no VNC
+                return;    
+            }
         }
-        if (sourceSageImageIds==null) {
-            logger.warn("No empty string found, trying random value in set: "+sourceSageImageIdsByArea.keySet());
-            sourceSageImageIds = sourceSageImageIdsByArea.values().iterator().next();
-        }
-        logger.info("Exporting "+sample.getName()+", sources:"+sourceSageImageIds.size()+", primary:"+image3d+" secondary:"+image2d);
         
-        Image image = exportPrimaryImage(image3d, line, sourceSageImageIds);
-        exportSecondaryImage(image2d, productMip, image);
-        if (movie!=null) {
-            exportSecondaryImage(movie, productTranslation, image);
+        Image sourceImage = null;
+        if (sourceSageImageIds.size()==1) {
+            sourceImage = sage.getImages(sourceSageImageIds).get(0);
         }
-//        exportSecondaryImage(image2d, productTranslationReference, image);
+        else {
+            Entity image3d = EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean))
+                .startAt(sample)
+                .childOfType(EntityConstants.TYPE_PIPELINE_RUN)
+                .childrenOfType(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)
+                .withAttribute(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA, area)
+                .childrenOfAttr(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE)
+                .getLast();
+            sourceImage = exportPrimaryImage(image3d, line, sourceSageImageIds);
+        }
         
+        for(Entity child : artifactRun.getChildren()) {
+            String name = child.getName();
+            if (name.endsWith(area+".avi")) {
+                exportSecondaryImage(child, productTranslationReference, sourceImage);
+                
+            }
+            else if (name.endsWith(area+"_MIP.png")) {
+                exportSecondaryImage(child, productMip, sourceImage);
+                
+            }
+            else if (name.endsWith(area+"_Signal.avi")) {
+                exportSecondaryImage(child, productTranslation, sourceImage);
+                
+            }
+            else if (name.endsWith(area+"_MIP_Signal.png")) {
+                // Ignored
+            }
+        }
     }
     
     private Image exportPrimaryImage(Entity entity, Line line, List<Integer> sourceSageImageIds) throws Exception {

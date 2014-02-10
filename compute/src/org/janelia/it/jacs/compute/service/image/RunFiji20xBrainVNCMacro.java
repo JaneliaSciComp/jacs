@@ -89,7 +89,7 @@ public class RunFiji20xBrainVNCMacro extends RunFijiMacroService {
     private void registerLsmAttributes(final Entity sampleEntity, final Entity lsm) throws Exception {
 
         EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sampleEntity)
-                .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN).last()
+                .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN)
                 .childrenOfType(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)
                 .childrenOfType(EntityConstants.TYPE_SUPPORTING_DATA).first()
                 .childrenOfType(EntityConstants.TYPE_TEXT_FILE)
@@ -107,7 +107,7 @@ public class RunFiji20xBrainVNCMacro extends RunFijiMacroService {
         
         String area = lsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
         if (!"Brain".equalsIgnoreCase(area) && !"VNC".equalsIgnoreCase(area)) {
-            // Skip junk like VNC-verify and error areas
+            // Skip junk like VNC-verify and incorrectly annotated areas
             return;
         }
 
@@ -149,7 +149,7 @@ public class RunFiji20xBrainVNCMacro extends RunFijiMacroService {
         Integer gain = Math.round(gainFloat);
         
         if (this.power!=null) {
-            if (this.power!=power) {
+            if (!this.power.equals(power)) {
                 logger.warn("Inconsistent power: "+this.power+"!="+power);
             }
         }
@@ -158,7 +158,7 @@ public class RunFiji20xBrainVNCMacro extends RunFijiMacroService {
         }
 
         if (this.gain!=null) {
-            if (this.gain!=gain) {
+            if (!this.gain.equals(gain)) {
                 logger.warn("Inconsistent gain: "+this.gain+"!="+gain);
             }
         }

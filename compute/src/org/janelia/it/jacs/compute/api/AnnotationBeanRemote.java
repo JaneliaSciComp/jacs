@@ -41,6 +41,7 @@ public interface AnnotationBeanRemote {
     public List<Entity> getAnnotationsForChildren(String subjectKey, long entityId) throws ComputeException;
     public List<Entity> getAnnotationsForEntity(String subjectKey, long entityId) throws ComputeException;
     public List<Entity> getAnnotationsForSession(String subjectKey, long sessionId) throws ComputeException;
+    public List<Entity> getEntitiesAnnotatedWithTerm(String subjectKey, String annotationName) throws ComputeException;
     public List<Entity> getEntitiesForAnnotationSession(String subjectKey, long sessionId) throws ComputeException;
     public List<Entity> getCategoriesForAnnotationSession(String subjectKey, long sessionId) throws ComputeException;
     public Set<Long> getCompletedEntityIds(long sessionId) throws ComputeException;

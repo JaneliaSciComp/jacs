@@ -8,6 +8,9 @@ package org.janelia.it.jacs.model.entity;
  */
 public class EntityConstants {
 
+    public static final String VALUE_PROCESSING                      = "Processing";
+    public static final String VALUE_COMPLETE                        = "Complete";
+    public static final String VALUE_ERROR                           = "Error";
     public static final String VALUE_MARKED                          = "Marked for Rerun";
     
     // Entity Status

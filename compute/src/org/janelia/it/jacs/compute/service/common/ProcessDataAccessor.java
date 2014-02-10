@@ -1,10 +1,11 @@
 package org.janelia.it.jacs.compute.service.common;
 
+import java.util.Collection;
+import java.util.List;
+
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.StringUtils;
-
-import java.util.List;
 
 /**
  * Utility to retrieve and store process data items with contextual logging.
@@ -119,7 +120,12 @@ public class ProcessDataAccessor {
                 sb.append('\'');
                 sb.append(value);
                 sb.append('\'');
-            } else {
+            }
+            else if (Collection.class.isAssignableFrom(value.getClass())) {
+                sb.append(((Collection)value).size());
+                sb.append(" items");
+            }
+            else {
                 sb.append(value);
             }
             sb.append(" in ");
