@@ -30,7 +30,8 @@ public class SetSampleStatusService extends AbstractEntityService {
             if (status.equals(EntityConstants.VALUE_COMPLETE)) {
                 entityLoader.populateChildren(parentSample);
                 for(Entity childSample : EntityUtils.getChildrenOfType(parentSample, EntityConstants.TYPE_SAMPLE)) {
-                    if (!EntityConstants.VALUE_COMPLETE.equals(childSample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS))) {
+                    String childStatus = childSample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
+                    if (childStatus!=null && !EntityConstants.VALUE_COMPLETE.equals(childStatus)) {
                         // All child samples are not finished, so the parent cannot be finished
                         return;
                     }
