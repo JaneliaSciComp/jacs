@@ -13,7 +13,7 @@
             
             <!-- Spawn a new task to process the Sample -->
             <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
-                <input name="PROCESS_DEF_NAME" value="PipelineConfig_YoshiNormalization"/>
+                <input name="PROCESS_DEF_NAME" value="PipelineConfig_YoshiNormalization20x"/>
                 <input name="DISPLAY_NAME" value="Yoshi Normalization"/>
                 <input name="PARAMETER_1_KEY" value="sample entity id"/>
                 <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_20X_ID}"/>
