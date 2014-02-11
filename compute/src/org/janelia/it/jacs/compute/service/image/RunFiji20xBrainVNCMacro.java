@@ -150,7 +150,10 @@ public class RunFiji20xBrainVNCMacro extends RunFijiMacroService {
         
         if (this.power!=null) {
             if (!this.power.equals(power)) {
-                logger.warn("Inconsistent power: "+this.power+"!="+power);
+                logger.warn("Inconsistent power ("+this.power+"!="+power+") for "+sampleEntity.getName());
+                if ("Brain".equalsIgnoreCase(area)) {
+                    this.power = power;
+                }
             }
         }
         else {
@@ -159,7 +162,10 @@ public class RunFiji20xBrainVNCMacro extends RunFijiMacroService {
 
         if (this.gain!=null) {
             if (!this.gain.equals(gain)) {
-                logger.warn("Inconsistent gain: "+this.gain+"!="+gain);
+                logger.warn("Inconsistent gain ("+this.gain+"!="+gain+") for "+sampleEntity.getName());
+                if ("Brain".equalsIgnoreCase(area)) {
+                    this.gain = gain;
+                }
             }
         }
         else {
