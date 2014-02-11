@@ -12,12 +12,15 @@ public class Folder extends EntityNode {
 
     @GraphAttribute(EntityConstants.ATTRIBUTE_COMMON_ROOT)
     private Boolean isCommonRoot;
+    
+    @RelatedTo(relationType=EntityConstants.ATTRIBUTE_ENTITY)
+    private List<EntityNode> children;
 
     @GraphAttribute(EntityConstants.ATTRIBUTE_IS_PROTECTED)
     private Boolean isProtected;
     
-    @RelatedTo(relationType=EntityConstants.ATTRIBUTE_ENTITY)
-    private List<EntityNode> children;
+    @GraphAttribute(EntityConstants.ATTRIBUTE_SEARCH_TASK_ID)
+    private Long searchTaskId;
 
     public boolean isCommonRoot() {
         return isCommonRoot!=null && isCommonRoot;
@@ -26,7 +29,7 @@ public class Folder extends EntityNode {
     public boolean isProtected() {
         return isProtected!=null && isProtected;
     }
-    
+
     /* EVERYTHING BELOW IS AUTO GENERATED */
     
     public Boolean getIsCommonRoot() {
@@ -37,6 +40,14 @@ public class Folder extends EntityNode {
         this.isCommonRoot = isCommonRoot;
     }
 
+    public List<EntityNode> getChildren() {
+        return children;
+    }
+
+    public void setChildren(List<EntityNode> children) {
+        this.children = children;
+    }
+
     public Boolean getIsProtected() {
         return isProtected;
     }
@@ -45,11 +56,11 @@ public class Folder extends EntityNode {
         this.isProtected = isProtected;
     }
 
-    public List<EntityNode> getChildren() {
-        return children;
+    public Long getSearchTaskId() {
+        return searchTaskId;
     }
 
-    public void setChildren(List<EntityNode> children) {
-        this.children = children;
+    public void setSearchTaskId(Long searchTaskId) {
+        this.searchTaskId = searchTaskId;
     }
 }

@@ -3,6 +3,7 @@ package org.janelia.it.jacs.model.graph.entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.graph.annotations.GraphAttribute;
 import org.janelia.it.jacs.model.graph.annotations.GraphNode;
+import org.janelia.it.jacs.model.graph.annotations.RelatedTo;
 
 @GraphNode(type=EntityConstants.TYPE_LSM_STACK)
 public class LsmStack extends EntityNode {
@@ -22,6 +23,9 @@ public class LsmStack extends EntityNode {
     @GraphAttribute(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION)
     private String chanSpec;
 
+    @GraphAttribute(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)
+    private String default2dImageFilepath;
+    
     @GraphAttribute(EntityConstants.ATTRIBUTE_EFFECTOR)
     private String effector;
 
@@ -33,9 +37,12 @@ public class LsmStack extends EntityNode {
     
     @GraphAttribute(EntityConstants.ATTRIBUTE_LINE)
     private String line;
-
+    
     @GraphAttribute(EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL)
     private String mountingProtocol;
+    
+    @GraphAttribute(EntityConstants.ATTRIBUTE_NUM_CHANNELS)
+    private Integer numChannels;
 
     @GraphAttribute(EntityConstants.ATTRIBUTE_OBJECTIVE)
     private String objective;
@@ -43,6 +50,9 @@ public class LsmStack extends EntityNode {
     @GraphAttribute(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)
     private String opticalResolution;
 
+    @RelatedTo(relationType=EntityConstants.ATTRIBUTE_PERFORMANCE_PROXY_IMAGE)
+    private Image3d performanceProxyImage;
+    
     @GraphAttribute(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)
     private String pixelResolution;
     
@@ -53,7 +63,7 @@ public class LsmStack extends EntityNode {
     private String slideCode;
 
     /* EVERYTHING BELOW IS AUTO GENERATED */
-    
+
     public String getAge() {
         return age;
     }
@@ -92,6 +102,14 @@ public class LsmStack extends EntityNode {
 
     public void setChanSpec(String chanSpec) {
         this.chanSpec = chanSpec;
+    }
+
+    public String getDefault2dImageFilepath() {
+        return default2dImageFilepath;
+    }
+
+    public void setDefault2dImageFilepath(String default2dImageFilepath) {
+        this.default2dImageFilepath = default2dImageFilepath;
     }
 
     public String getEffector() {
@@ -134,6 +152,14 @@ public class LsmStack extends EntityNode {
         this.mountingProtocol = mountingProtocol;
     }
 
+    public Integer getNumChannels() {
+        return numChannels;
+    }
+
+    public void setNumChannels(Integer numChannels) {
+        this.numChannels = numChannels;
+    }
+
     public String getObjective() {
         return objective;
     }
@@ -148,6 +174,14 @@ public class LsmStack extends EntityNode {
 
     public void setOpticalResolution(String opticalResolution) {
         this.opticalResolution = opticalResolution;
+    }
+
+    public Image3d getPerformanceProxyImage() {
+        return performanceProxyImage;
+    }
+
+    public void setPerformanceProxyImage(Image3d performanceProxyImage) {
+        this.performanceProxyImage = performanceProxyImage;
     }
 
     public String getPixelResolution() {
@@ -173,5 +207,4 @@ public class LsmStack extends EntityNode {
     public void setSlideCode(String slideCode) {
         this.slideCode = slideCode;
     }
-
 }

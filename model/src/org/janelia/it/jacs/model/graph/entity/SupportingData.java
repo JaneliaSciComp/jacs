@@ -9,16 +9,16 @@ import org.janelia.it.jacs.model.graph.annotations.RelatedTo;
 @GraphNode(type=EntityConstants.TYPE_SUPPORTING_DATA)
 public class SupportingData extends EntityNode {
 
-    @RelatedTo(targetNodeType=EntityConstants.TYPE_IMAGE_TILE)
-    private List<ImageTile> tiles;
-
-    /* EVERYTHING BELOW IS AUTO GENERATED */
+    @RelatedTo(relationType=EntityConstants.ATTRIBUTE_ENTITY)
+    private List<EntityNode> entities;
     
-    public List<ImageTile> getTiles() {
-        return tiles;
+    /* EVERYTHING BELOW IS AUTO GENERATED */    
+
+    public List<EntityNode> getEntities() {
+        return entities;
     }
 
-    public void setTiles(List<ImageTile> tiles) {
-        this.tiles = tiles;
+    public void setEntities(List<EntityNode> entities) {
+        this.entities = entities;
     }
 }

@@ -120,6 +120,5 @@ public class Sample extends Renderable {
 
     public void setSupportingFiles(SupportingData supportingFiles) {
         this.supportingFiles = supportingFiles;
-    }
-    
+    }   
 }
