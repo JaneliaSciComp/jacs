@@ -28,6 +28,7 @@ import org.janelia.it.jacs.model.graph.annotations.RelatedToVia;
 import org.janelia.it.jacs.model.graph.annotations.RelationshipInitFlag;
 import org.janelia.it.jacs.model.graph.annotations.RelationshipType;
 import org.janelia.it.jacs.model.graph.annotations.StartNode;
+import org.janelia.it.jacs.model.graph.entity.EntityNode;
 import org.janelia.it.jacs.model.util.ReflectionHelper;
 import org.reflections.Reflections;
 
@@ -143,6 +144,11 @@ public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,Entit
                 
                 if (targetNodeObject==null) {
                     throw new IllegalStateException("Relationship has no target: "+relId);
+                }
+                
+                if (targetNodeObject.getClass().getName().equals(EntityNode.class.getName())) {
+                    log.info("  Relationship (id="+relId+") target object is generic, so fields will not be initialized");
+                    continue;
                 }
                 
                 // Go through each field and see if it wants this relationship
@@ -394,6 +400,12 @@ public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,Entit
                 // It's not null, and not any version of "false", so we assume it's true, kind of like JavaScript!
                 ReflectionHelper.setFieldValue(obj, field, true);
             }
+        }
+        else if (targetType.isAssignableFrom(String.class)) {
+            ReflectionHelper.setFieldValue(obj, field, value.toString());
+        }
+        else {
+            throw new IllegalStateException("@GraphAttribute annotation does not support fields of type "+targetType.getName());
         }
     }
     

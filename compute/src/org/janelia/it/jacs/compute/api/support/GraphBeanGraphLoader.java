@@ -1,19 +1,16 @@
 package org.janelia.it.jacs.compute.api.support;
 
-import java.util.Set;
-
 import org.janelia.it.jacs.compute.api.GraphBeanRemote;
-import org.janelia.it.jacs.compute.api.support.Access.AccessPattern;
-import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.graph.entity.EntityNode;
-import org.janelia.it.jacs.model.graph.entity.support.GraphLoader;
+import org.janelia.it.jacs.model.graph.entity.support.AbstractGraphLoader;
 
-public class GraphBeanGraphLoader implements GraphLoader {
+public class GraphBeanGraphLoader extends AbstractGraphLoader {
 
     private String subjectKey;
     private GraphBeanRemote graphBean;
     
     public GraphBeanGraphLoader(String subjectKey, GraphBeanRemote graphBean) {
+        super(subjectKey);
         this.subjectKey = subjectKey;
         this.graphBean = graphBean;
     }
@@ -28,6 +25,8 @@ public class GraphBeanGraphLoader implements GraphLoader {
 
     @Override
     public EntityNode loadRelationships(EntityNode node) throws Exception {
+        
+        
 //        Entity entity = _annotationDAO.getEntityById(null, node.getId());
 //        getObjectFactory().initNodeInstance(node, entity);
         return node;
