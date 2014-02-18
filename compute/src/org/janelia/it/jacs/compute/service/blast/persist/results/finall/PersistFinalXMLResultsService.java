@@ -22,6 +22,7 @@ import org.janelia.it.jacs.shared.utils.FileUtil;
 import java.io.*;
 import java.math.BigInteger;
 import java.util.List;
+import org.janelia.it.jacs.model.tasks.blast.IBlastOutputFormatTask;
 
 /**
  * This service persists the final blast results to the file system.
@@ -154,7 +155,7 @@ public class PersistFinalXMLResultsService implements IService {
     }
 
     private BlastOutputType getBlastOutput(ParsedBlastResultCollection parsedBlastCollection, BlastXMLWriter blastXMLWriter) throws Exception {
-        blastXMLWriter.setBlastDataSources(parsedBlastCollection, blastTask);
+        blastXMLWriter.setBlastDataSources(parsedBlastCollection, (IBlastOutputFormatTask)blastTask);
         return blastXMLWriter.getBlastOutput();
     }
 
