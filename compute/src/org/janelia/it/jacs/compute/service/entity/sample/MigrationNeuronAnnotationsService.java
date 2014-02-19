@@ -80,7 +80,7 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
         }
         
         if (sourceAnnotations.isEmpty()) {
-            logger.warn("Source separation ("+sourceSeparation.getId()+") has no neuron annotations to migrate");
+            logger.info("Source separation ("+sourceSeparation.getId()+") has no neuron annotations to migrate");
             return;
         }
 

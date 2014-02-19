@@ -186,6 +186,11 @@ public class OntologyAnnotation implements java.io.Serializable {
 
     @Override
 	public String toString() {
-		return entity.getName();
+        if (entity!=null) {
+            return entity.getName();
+        }
+        else {
+            return "UnpersistedAnnotation["+keyString+"="+valueString+"]";
+        }
 	}
 }

@@ -35,6 +35,7 @@
         <path id="compile.classpath.additional">
             <fileset dir="${basedir}/../common/GWT-Serializable/" includes="**/*.jar"/>
             <fileset dir="${common.dir}/Guava" includes="**/*.jar"/>
+            <fileset dir="${common.dir}/Reflections" includes="**/*.jar"/>
             <fileset dir="${common.dir}/Spring" includes="hibernate3.jar"/>
             <fileset dir="${common.dir}/Spring" includes="log4j-1.2.14.jar"/>
         </path>

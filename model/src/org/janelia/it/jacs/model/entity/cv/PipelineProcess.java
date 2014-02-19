@@ -24,6 +24,7 @@ public enum PipelineProcess implements NamedEnum {
     NernaMCFOCase1("Aljoscha MCFO Case 1 Pipeline"),
     NernaMCFOCase1Without20xMerge("Aljoscha MCFO Case 1 Without 20x Merge Pipeline"),
     NernaRightOpticLobe("Aljoscha Right Optic Lobe 63x Pipeline"),
+    NernaPolarityCase3("Aljoscha Polarity Case 3 Pipeline"),
 
     WolfftMCFOCase1("Tanya Central Brain MCFO Case 1 Pipeline"),
     WolfftMCFOCase1Unaligned("Tanya MCFO Case 1 Unaligned Pipeline"),
@@ -38,7 +39,8 @@ public enum PipelineProcess implements NamedEnum {
     YoshiMBPolarityCase2("Yoshi MB Polarity Case 2 Pipeline"),
     YoshiMBPolarityCase3("Yoshi MB Polarity Case 3 Pipeline"),
     YoshiMBPolarityCase4("Yoshi MB Polarity Case 4 Pipeline"),
-    YoshiMBSplitMCFOCase1("Yoshi MB Split MCFO Case 1 Pipeline");
+    YoshiMBSplitMCFOCase1("Yoshi MB Split MCFO Case 1 Pipeline"),
+    YoshiNormalization20x("Yoshi 20x Normalization Pipeline");
 
     private String name;
 

@@ -36,7 +36,8 @@ public class EntityVistationBuilder {
 	private List<EntityFilter> filters = new ArrayList<EntityFilter>();
 	private AbstractEntityLoader loader;
 	private boolean visitRootOwnerOwnedEntitiesOnly = true;
-	
+	List<Entity> visited = new ArrayList<Entity>();
+    
 	public static EntityVistationBuilder create(AbstractEntityLoader loader) {
 	    return new EntityVistationBuilder(loader);
 	}
@@ -146,6 +147,26 @@ public class EntityVistationBuilder {
 		}
     	
 	}
+	
+	public List<Entity> getAll() throws Exception {
+	    visited.clear();
+	    run(new EntityVisitor() {
+            public void visit(Entity entity) throws Exception {
+                visited.add(entity);
+            }
+	    });
+	    return visited;
+	}
+
+    public Entity getFirst() throws Exception {
+        List<Entity> all = getAll();
+        return all.get(0);
+    }
+    
+	public Entity getLast() throws Exception {
+	    List<Entity> all = getAll();
+	    return all.get(all.size()-1);
+	}
 
     public EntityVistationBuilder startAt(Entity entity) {
     	this.root = entity;
@@ -199,6 +220,11 @@ public class EntityVistationBuilder {
     
     public EntityVistationBuilder last() {
         filters.add(new LastEntityFilter());
+        return this;
+    }
+
+    public EntityVistationBuilder withAttribute(String attrName, String attrValue) {
+        filters.add(new AttributeFilter(attrName, attrValue));
         return this;
     }
     
@@ -285,6 +311,28 @@ public class EntityVistationBuilder {
             List<EntityData> orderedData = sort(entityData);
             List<EntityData> filtered = new ArrayList<EntityData>();
             filtered.add(orderedData.get(orderedData.size()-1));
+            return filtered;
+        }
+    }
+
+    private class AttributeFilter implements SameLevelFilter {
+        private String attrName;
+        private String attrValue;
+        public AttributeFilter(String attrName, String attrValue) {
+            this.attrName = attrName;
+            this.attrValue = attrValue;
+        }
+        public List<EntityData> getFiltered(List<EntityData> entityData) {
+            if (entityData.isEmpty()) return entityData;
+            List<EntityData> filtered = new ArrayList<EntityData>();
+            for(EntityData ed : sort(entityData)) {
+                Entity child = ed.getChildEntity();
+                if (child!=null) {
+                    if (attrValue.equals(child.getValueByAttributeName(attrName))) {
+                        filtered.add(ed);        
+                    }
+                }
+            }
             return filtered;
         }
     }

@@ -460,21 +460,11 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    public void runSageArtifactExport(String dataSetIdentifiers) {
+    public void runSageArtifactExport(String user) {
         try {
-            String user = null;
-            for(String dsi : Task.listOfStringsFromCsvString(dataSetIdentifiers)) {
-                String u = dsi.substring(0, dsi.indexOf('_'));
-                if (user!=null & !u.equals(user)) {
-                    throw new IllegalArgumentException("All given data sets must be owned by the same user");
-                }
-                user = u;
-            }
             String processName = "SageArtifactExport";
             String displayName = "Sage Artifact Export";
-            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-            taskParameters.add(new TaskParameter("data set identifiers", dataSetIdentifiers, null)); 
-            saveAndRunTask(user, processName, displayName, taskParameters);
+            saveAndRunTask(user, processName, displayName);
         } 
         catch (Exception ex) {
             log.error("Error running sage artifact export", ex);

@@ -169,7 +169,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
         catch (Exception e) {
             _logger.error("Unexpected error occurred while trying to get annotations for entities "+username, e);
-            throw new ComputeException("Coud not get annotations for entities ",e);
+            throw new ComputeException("Could not get annotations for entities ",e);
         }
     }
 
@@ -179,7 +179,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
         catch (Exception e) {
             _logger.error("Unexpected error occurred while trying to get annotations for child of "+username, e);
-            throw new ComputeException("Coud not get annotations for entities ",e);
+            throw new ComputeException("Could not get annotations for entities ",e);
         }
     }
     
@@ -189,7 +189,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
         catch (Exception e) {
             _logger.error("Unexpected error occurred while trying to get annotations for "+subjectKey, e);
-            throw new ComputeException("Coud not get annotations for entities ",e);
+            throw new ComputeException("Could not get annotations for entities ",e);
         }
     }
 
@@ -205,7 +205,22 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
         catch (Exception e) {
             _logger.error("Unexpected error occurred while trying to get annotations in session "+sessionId, e);
-            throw new ComputeException("Coud not get annotations in session",e);
+            throw new ComputeException("Could not get annotations in session",e);
+        }
+    }
+    
+    public List<Entity> getEntitiesAnnotatedWithTerm(String subjectKey, String annotationName) throws ComputeException {
+        try {
+            List<Long> entityIds = new ArrayList<Long>();
+            for(Entity annotation : _annotationDAO.getEntitiesByNameAndTypeName(subjectKey, annotationName, EntityConstants.TYPE_ANNOTATION)) {
+                String target = annotation.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
+                entityIds.add(new Long(target));
+            }
+            return _annotationDAO.getEntitiesInList(subjectKey, entityIds);
+        }
+        catch (Exception e) {
+            _logger.error("Unexpected error occurred while trying to entities annotated with "+annotationName, e);
+            throw new ComputeException("Unexpected error occurred while trying to entities annotated with "+annotationName,e);
         }
     }
     
@@ -215,7 +230,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
         catch (Exception e) {
             _logger.error("Unexpected error occurred while trying to get entities in session "+sessionId, e);
-            throw new ComputeException("Coud not get entities in session",e);
+            throw new ComputeException("Unexpected error occurred while trying to get entities in session "+sessionId,e);
         }
     }
     
@@ -225,7 +240,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
         catch (Exception e) {
             _logger.error("Unexpected error occurred while trying to get categories in session "+sessionId, e);
-            throw new ComputeException("Coud not get categories in session",e);
+            throw new ComputeException("Could not get categories in session",e);
         }
     }
 
@@ -235,7 +250,7 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
         catch (Exception e) {
             _logger.error("Unexpected error occurred while trying to get completed entity ids in session "+sessionId, e);
-            throw new ComputeException("Coud not get completed entities",e);
+            throw new ComputeException("Could not get completed entities",e);
         }
     }
 
@@ -250,7 +265,18 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
 	    	throw new ComputeException("Error getting number of annotations: "+entityId, e);
 	    }
     }
-    
+
+    @Override
+    public List<Long> getEntityIdsInAlignmentSpace(String opticalRes, String pixelRes, List<Long> guids) throws ComputeException {
+        try {
+            return _annotationDAO.getEntityIdsInAlignmentSpace( opticalRes, pixelRes, guids);
+
+        } catch ( DaoException daoe ) {
+            _logger.error("Error getting applicable subset of entity ids for an alignment space.");
+            throw new ComputeException("Error paring down entity ids for list", daoe);
+        }
+    }
+
     public List<Entity> getCommonRootEntities(String subjectKey) throws ComputeException {
         try {
             List<Entity> entities = _annotationDAO.getEntitiesWithTag(subjectKey, EntityConstants.ATTRIBUTE_COMMON_ROOT);

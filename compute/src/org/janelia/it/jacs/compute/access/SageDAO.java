@@ -290,38 +290,32 @@ public class SageDAO {
         Query query = session.createQuery(hql.toString());
         query.setString("name", name);
         return (Line)query.uniqueResult();
-        
-//        Long lineId = null;
-//        Connection connection = null;
-//        PreparedStatement statement = null;
-//        ResultSet resultSet = null;
-//        
-//        try {
-//            connection = getJdbcConnection();
-//            statement = connection.prepareStatement(SELECT_LINE_BY_NAME_SQL);
-//            statement.setString(1, name);
-//            resultSet = statement.executeQuery();
-//            while (resultSet.next()) {
-//                lineId = resultSet.getLong("id");
-//            }
-//        }
-//        catch (Exception e) {
-//            throw new DaoException("Error querying SAGE for line by name", e);
-//        }
-//        finally {
-//            try {    
-//                if (resultSet != null) statement.close();
-//                if (statement != null) statement.close();
-//                if (connection != null)  connection.close();
-//            }
-//            catch (SQLException e) {
-//                log.error("Failed to close JDBC", e);
-//            }
-//        }
-//        
-//        return lineId;
     }
 
+    public Image getImageByName(String imageName) {
+        if (log.isTraceEnabled()) {
+            log.trace("getImageByName(imageName="+imageName+")");    
+        }
+        Session session = getCurrentSession();
+        StringBuffer hql = new StringBuffer("select image from Image image ");
+        hql.append("where image.name = :name ");
+        Query query = session.createQuery(hql.toString());
+        query.setString("name", imageName);
+        return (Image)query.uniqueResult();
+    }
+
+    public SecondaryImage getSecondaryImageByName(String imageName) {
+        if (log.isTraceEnabled()) {
+            log.trace("getSecondaryImageByName(imageName="+imageName+")");    
+        }
+        Session session = getCurrentSession();
+        StringBuffer hql = new StringBuffer("select image from SecondaryImage image ");
+        hql.append("where image.name = :name ");
+        Query query = session.createQuery(hql.toString());
+        query.setString("name", imageName);
+        return (SecondaryImage)query.uniqueResult();
+    }
+    
     public List<Image> getImagesByCreator(String createdBy) {
         if (log.isTraceEnabled()) {
             log.trace("getImagesByCreator(createdBy="+createdBy+")");    
@@ -539,26 +533,5 @@ public class SageDAO {
             ") image_vw on (ip1.image_id = image_vw.id) " +
             "group by image_vw.id ";// +
             //"order by slide_code, image_vw.capture_date";
-    
-//    private static final String SELECT_LINE_BY_NAME_SQL = 
-//            "select * from line where name =?";
-//    
-//    private static final String INSERT_PRIMARY_IMAGE_SQL = 
-//            "insert into image (name, url, path, source_id, family_id, line_id, representative, display) values (?, ?, ?, ?, ?, ?, ?, ?)";
-//
-//    private static final String SELECT_PRIMARY_IMAGE_BY_NAME_AND_FAMILY_SQL = 
-//            "select * from image where name=? and family_id=?";
-//    
-//    private static final String INSERT_SECONDARY_IMAGE_SQL = 
-//            "insert into image (name, image_id, product_id, path, url) values (?, ?, ?, ?, ?)";
-//    
-//    private static final String SELECT_SECONDARY_IMAGE_BY_IMAGE_AND_PRODUCT_SQL = 
-//            "select * from image where image_id=? and product_id=?";
-//    
-//    private static final String INSERT_IMAGE_PROPERTY_SQL = 
-//            "insert into image_property (image_id, type_id, value) values (?, ?, ?)";
-// 
-//    private static final String CONSENSUS_IMAGE_PROPERTY_SQL = 
-//            "select * from image_property where image_id in (?) order by type_id";
     
 }

@@ -1212,6 +1212,67 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         
         return list;
     }
+
+    public List<Long> getEntityIdsInAlignmentSpace( String opticalRes, String pixelRes, List<Long> rawIds ) throws DaoException {
+        if ( log.isTraceEnabled()) {
+            log.trace("getEntityIdsInAlignmentSpace("+opticalRes+", "+pixelRes+", rawIds["+rawIds.size()+"])");
+        }
+
+        List<Long> rtnVal = new ArrayList<Long>();
+        if ( rawIds == null  ||  rawIds.size() == 0 ) {
+            return rtnVal;
+        }
+
+        if ( opticalRes == null  ||  pixelRes == null ) {
+            throw new DaoException("Must provide both non-null optical resolution and non-null pixel resolution.");
+        }
+
+        String queryStrFormat = "select nf.id from entity nf \n" +
+                "join entityData nfcEd on nfcEd.child_entity_id=nf.id \n" +
+                "join entityData nsEd on nsEd.child_entity_id=nfcEd.parent_entity_id \n" +
+                "join entity ns on nsEd.parent_entity_id=ns.id \n" +
+                "join entityData nsOpticalRes on nsOpticalRes.parent_entity_id=ns.id and nsOpticalRes.entity_att='Optical Resolution' \n" +
+                "join entityData nsPixelRes on nsPixelRes.parent_entity_id=ns.id and nsPixelRes.entity_att='Pixel Resolution' \n" +
+                "where nf.id in (%s) \n" +
+                "and nsOpticalRes.value='%s'\n" +
+                "and nsPixelRes.value='%s'";
+
+        StringBuilder idsBuilder = new StringBuilder();
+        for ( Long rawId: rawIds ) {
+            if ( idsBuilder.length() > 0 ) {
+                idsBuilder.append( ',' );
+            }
+            idsBuilder.append(rawId);
+        }
+        String query = String.format( queryStrFormat, idsBuilder.toString(), opticalRes, pixelRes );
+        log.info("Querying with " + query);
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        try {
+            conn = getJdbcConnection();
+            stmt = conn.prepareStatement( query );
+
+            ResultSet rs = stmt.executeQuery();
+            while ( rs.next() ) {
+                rtnVal.add(rs.getLong(1));
+            }
+         } catch (SQLException sqle) {
+            throw new DaoException( sqle );
+        } finally {
+            try {
+                if ( stmt != null ) {
+                    stmt.close();
+                }
+                if ( conn != null ) {
+                    conn.close();
+                }
+            } catch ( SQLException sqlInnerE ) {
+                log.warn( "Ignoring error during JDBC stmt/conn closure.", sqlInnerE );
+            }
+        }
+
+        return rtnVal;
+    }
     
     public List<Long> getImageIdsWithName(Connection connection, String subjectKey, String imagePath) throws DaoException {
         if (log.isTraceEnabled()) {
@@ -1583,9 +1644,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             log.trace("saveOrUpdateEntity(entity.id="+entity.getId()+")");    
         }
         entity.setUpdatedDate(new Date());
-        if (!updateChildCount(entity)) {
-            saveOrUpdate(entity);    
-        }
+        saveOrUpdate(entity);
+        updateChildCount(entity);
     }
 
     public void saveOrUpdateEntityData(EntityData entityData) throws DaoException {
@@ -1662,25 +1722,38 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         updateChildCount(parent);
     }
     
-    private boolean updateChildCount(Entity entity) throws DaoException {
+    private void updateChildCount(Entity entity) throws DaoException {
         if (log.isTraceEnabled()) {
-            log.trace("updateChildCount(entity="+entity+")");    
+            log.trace("updateChildCount(entity.id="+entity.getId()+")");    
         }
-        // Count the number of children. We can't just use entity.getChildren().size() because the same child may 
-        // have multiple roles (e.g referenced by multiple EntityDatas). 
-        int numChildren = 0;
-        for(EntityData ed : entity.getEntityData()) {
-            if (ed.getChildEntity()!=null) {
-                numChildren++;
+
+        try {   
+            Session session = getCurrentSession();
+            
+            // We need to pull the count back so that we can update the in-memory model
+            StringBuffer hql = new StringBuffer("select count(*) from EntityData ed ");
+            hql.append("where ed.parentEntity.id=? ");
+            hql.append("and ed.childEntity is not null ");
+            Query query = session.createQuery(hql.toString()).setLong(0, entity.getId());
+            Long count = (Long)query.uniqueResult();
+            Integer intCount = count.intValue();
+            
+            // Update the database
+            hql = new StringBuffer("update Entity set numChildren = :numChildren where id = :entityId");
+            query = session.createQuery(hql.toString());
+            query.setParameter("numChildren", intCount);
+            query.setParameter("entityId", entity.getId());
+            int rows = query.executeUpdate();
+            if (rows!=1) {
+                log.warn("Updating numChildren to "+intCount+" for entity "+entity.getId()+" failed. "+rows+" rows were updated.");
             }
+            
+            // Update in-memory model
+            entity.setNumChildren(intCount);
         }
-        if (entity.getNumChildren()!=numChildren) {
-            entity.setNumChildren(numChildren);
-            saveOrUpdate(entity);
-            return true;
+        catch (Exception e) {
+            throw new DaoException(e);
         }
-        
-        return false;
     }
     
     public int bulkUpdateEntityDataValue(String oldValue, String newValue) throws DaoException {
@@ -2719,7 +2792,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             throw new DaoException(e);
         }
 	}
-
+    
     public List<Entity> getEntitiesForAnnotationSession(String subjectKey, long sessionId) throws ComputeException {
 
         if (log.isTraceEnabled()) {

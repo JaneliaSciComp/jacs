@@ -333,6 +333,10 @@ public class LSMMetadata {
         @SerializedName("DETCHANNEL_ENTRY_SPI_WAVELENGTH_END") private String wavelengthEnd;
         @SerializedName("DETCHANNEL_SPI_WAVELENGTH_START2") private String wavelengthStart2;
         @SerializedName("DETCHANNEL_SPI_WAVELENGTH_END2") private String wavelengthEnd2;
+        @SerializedName("DETCHANNEL_ENTRY_DETECTOR_GAIN") private String detectorGain;
+        @SerializedName("DETCHANNEL_ENTRY_DETECTOR_GAIN_BC1") private String detectorGainBc1;
+        @SerializedName("DETCHANNEL_ENTRY_DETECTOR_GAIN_BC2") private String detectorGainBc2;
+        @SerializedName("DETCHANNEL_ENTRY_DETECTOR_GAIN_LAST") private String detectorGainLast;
         public String getAmplifierName() {
             return amplifierName;
         }
@@ -371,6 +375,18 @@ public class LSMMetadata {
         }
         public String getWavelengthEnd2() {
             return wavelengthEnd2;
+        }
+        public String getDetectorGain() {
+            return detectorGain;
+        }
+        public String getDetectorGainBc1() {
+            return detectorGainBc1;
+        }
+        public String getDetectorGainBc2() {
+            return detectorGainBc2;
+        }
+        public String getDetectorGainLast() {
+            return detectorGainLast;
         }
     }
     

@@ -8,6 +8,9 @@ package org.janelia.it.jacs.model.entity;
  */
 public class EntityConstants {
 
+    public static final String VALUE_PROCESSING                      = "Processing";
+    public static final String VALUE_COMPLETE                        = "Complete";
+    public static final String VALUE_ERROR                           = "Error";
     public static final String VALUE_MARKED                          = "Marked for Rerun";
     
     // Entity Status
@@ -134,7 +137,6 @@ public class EntityConstants {
     public static final String ATTRIBUTE_VISITED                             = "Visited"; // A tag that marks an entity as having been visited by some pipeline process 
     public static final String ATTRIBUTE_CHANNEL_DYE_NAMES                   = "Channel Dye Names"; // e.g. "Alexa Fluor 488,Alexa Fluor 633,DY-547"
     public static final String ATTRIBUTE_CHANNEL_COLORS                      = "Channel Colors"; // e.g. "#7e5200,#ff00ff,#00ff00"
-    public static final String ATTRIBUTE_METADATA_FILE                       = "Metadata File";
     public static final String ATTRIBUTE_SEARCH_TASK_ID                      = "Search Task Id"; // Id of the search task that created this folder and results
     public static final String ATTRIBUTE_PROPERTY                            = "Property"; // has string "<property>=<value>"
     public static final String ATTRIBUTE_WORKSPACE_SAMPLE_IDS                = "Workspace Sample Ids";
@@ -192,6 +194,11 @@ public class EntityConstants {
     public static final String VALUE_ONTOLOGY_TERM_TYPE_TEXT                = "Text";
     public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM_TEXT           = "EnumText";
 
+    /**
+     * @deprecated Not used. This will be removed someday.
+     */
+    public static final String ATTRIBUTE_METADATA_FILE                       = "Metadata File";
+    
     /**
      * @deprecated Not used. This will be removed someday.
      */
