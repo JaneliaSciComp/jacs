@@ -1,1 +1,0 @@
-These directories contain files which are deployed with the Janelia Workstation for each platform.
