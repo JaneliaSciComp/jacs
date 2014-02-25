@@ -168,5 +168,5 @@
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/xmlbeans-2.3.0.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/XmlSchema-1.4.3.jar"/>
 	<classpathentry kind="lib" path="/Users/rokickik/dev/FlySuiteProd/xuggle-xuggler-5.4.jar"/>
-	<classpathentry kind="output" path="bin"/>
+	<classpathentry kind="output" path="build"/>
 </classpath>
