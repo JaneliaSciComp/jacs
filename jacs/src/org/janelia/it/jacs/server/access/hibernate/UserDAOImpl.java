@@ -9,6 +9,8 @@ import org.hibernate.criterion.Expression;
 import org.hibernate.criterion.Projections;
 import org.janelia.it.jacs.model.common.SortArgument;
 import org.janelia.it.jacs.model.common.UserDataVO;
+import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.server.access.UserDAO;
 import org.springframework.dao.DataAccessException;
@@ -34,12 +36,18 @@ public class UserDAOImpl extends DaoBaseImpl implements UserDAO {
     public User getUserByName(String requestingUser) throws DaoException {
         List result;
         try {
-            DetachedCriteria criteria = DetachedCriteria.forClass(User.class);
-            criteria.add(Expression.eq("name", requestingUser));
-            result = getHibernateTemplate().findByCriteria(criteria);
+            String hql = "select clazz from Subject clazz where name='" + requestingUser + "'";
+            Query query = getSession().createQuery(hql);
+
+//            DetachedCriteria criteria = DetachedCriteria.forClass(User.class);
+//            criteria.add(Expression.eq("name", requestingUser));
+//            result = getHibernateTemplate().findByCriteria(criteria);
+            result = query.list();
             if (result.size() == 0) {
                 return null;
             }
+            ((Subject)result.get(0)).getPreferenceMap().size();
+
             if (result.size() > 1) {
                 throw new Exception("Expecting at most one User by name " + requestingUser);
             }
