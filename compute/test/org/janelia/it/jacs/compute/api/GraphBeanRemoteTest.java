@@ -1,16 +1,26 @@
 package org.janelia.it.jacs.compute.api;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+
+import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.support.Access;
+import org.janelia.it.jacs.compute.api.support.GraphBeanGraphLoader;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.graph.entity.*;
+import org.janelia.it.jacs.model.graph.entity.EntityNode;
+import org.janelia.it.jacs.model.graph.entity.EntityPermission;
+import org.janelia.it.jacs.model.graph.entity.EntityRelationship;
+import org.janelia.it.jacs.model.graph.entity.Folder;
+import org.janelia.it.jacs.model.graph.entity.Image3d;
+import org.janelia.it.jacs.model.graph.entity.PipelineRun;
+import org.janelia.it.jacs.model.graph.entity.Sample;
+import org.janelia.it.jacs.model.graph.entity.support.EntityGraphUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * Test the DomainBeanRemote remote EJB interface.
@@ -19,6 +29,8 @@ import java.util.List;
  */
 public class GraphBeanRemoteTest extends RemoteEJBTest {
 
+    private static final Logger log = Logger.getLogger(GraphBeanRemoteTest.class);
+    
     private static final String SUBJECT_KEY = "user:rokickik";
     private static final String TEST_SAMPLE_NAME = "GMR_57C10_AD_01-20120206_3_E1-Left_Optic_Lobe";
     
@@ -31,6 +43,22 @@ public class GraphBeanRemoteTest extends RemoteEJBTest {
     public void init() throws Exception {
         this.d = (GraphBeanRemote) context.lookup("compute/GraphEJB/remote");
         this.a = new Access(SUBJECT_KEY, Access.AccessPattern.ALL_ACCESSIBLE_OBJECTS);
+    }
+    
+    @After
+    public void cleanup() {
+    	// Clean up any entity that was created but not deleted by a test
+        for(Iterator<Long> i=createdEntities.iterator(); i.hasNext(); ) {
+        	Long entityId = i.next();
+            try {
+            	if (d.getEntityNode(a, entityId)!=null) {
+            		d.deleteEntityNodeTree(a, entityId);	
+            	}
+            }
+            catch (Exception e) {
+                log.warn("Problem cleaning up created entity "+entityId,e);
+            }
+        }
     }
     
     @Test
@@ -147,7 +175,8 @@ public class GraphBeanRemoteTest extends RemoteEJBTest {
     @Test
     public void testTreeBrowsing() throws Exception {
 
-        Access aa = new Access(null, Access.AccessPattern.ALL_ACCESSIBLE_OBJECTS);
+    	String user = "user:nerna";
+        Access aa = new Access(user, Access.AccessPattern.ALL_ACCESSIBLE_OBJECTS);
         
         Collection<EntityNode> results = d.getEntityNodesByName(aa, TEST_SAMPLE_NAME);
         Assert.assertFalse(results.isEmpty());
@@ -161,10 +190,52 @@ public class GraphBeanRemoteTest extends RemoteEJBTest {
         Assert.assertEquals("63x",sample.getObjective());
         Assert.assertEquals("20120206_3_E1",sample.getSlideCode());
         Assert.assertEquals("OPTIC_TILE",sample.getTilingPattern());
+
+        Assert.assertTrue(sample.isRelsInit());
+        Assert.assertTrue(sample.isThisInit());
+        Assert.assertNotNull(sample.getPermissions());
+        Assert.assertTrue(sample.getRelationships().size()>1);
+        Assert.assertFalse(EntityGraphUtils.areRelatedNodesLoaded(sample));
         
+        for(EntityRelationship rel : sample.getRelationships()) {
+        	Assert.assertNotNull(rel.getId());
+        	Assert.assertNotNull(rel.getType());
+        	Assert.assertNotNull(rel.getOwnerKey());
+        	Assert.assertNotNull(rel.getCreationDate());
+        	Assert.assertNotNull(rel.getUpdatedDate());
+
+        	EntityNode node = rel.getTargetNode();
+        	Assert.assertNotNull(node);
+        	Assert.assertNotNull(node.getId());
+            Assert.assertFalse(node.isThisInit());
+            Assert.assertFalse(node.isRelsInit());
+        }
         
+        GraphBeanGraphLoader loader = new GraphBeanGraphLoader(aa, d);
+        loader.loadRelatedNodes(sample);
         
+        Assert.assertTrue(EntityGraphUtils.areRelatedNodesLoaded(sample));
+
+        for(EntityRelationship rel : sample.getRelationships()) {
         
+        	EntityNode relNode = rel.getTargetNode();
+            Assert.assertTrue("Related node not loaded after explicit load: "+relNode.getId(), relNode.isThisInit());
+            Assert.assertFalse("Related node is not typed after explicit load: "+relNode.getId(), relNode.getClass().getName().equals("EntityNode"));
+            Assert.assertTrue(relNode.isRelsInit());
+        	Assert.assertNotNull(relNode.getName());
+        	Assert.assertNotNull(relNode.getOwnerKey());
+        	Assert.assertNotNull(relNode.getPermissions());
+            Assert.assertNotNull(relNode.getPermissions());
+        }
+        
+        Assert.assertTrue(sample.getPipelineRuns().size()>1);
+        for(PipelineRun pipelineRun : sample.getPipelineRuns()) {
+        	Assert.assertNotNull(pipelineRun.getName());
+        	Assert.assertTrue(pipelineRun.getResults().isEmpty()); // Not yet loaded
+
+            loader.loadRelatedNodes(pipelineRun);
+        	Assert.assertFalse(pipelineRun.getResults().isEmpty()); // Should now be loaded   
+        }
     }
     
     private EntityNode createEntityNode(String name, Class<?> entityType) throws Exception {
@@ -174,18 +245,6 @@ public class GraphBeanRemoteTest extends RemoteEJBTest {
         entityNode = d.createEntityNode(a, entityNode);
         createdEntities.add(entityNode.getId());
         return entityNode;
-    }
-    
-    @After
-    public void cleanup() {
-        for(Long entityId : createdEntities) {
-            try {
-                d.deleteEntityNodeTree(a, entityId);    
-            }
-            catch (Exception e) {
-                // This is expected. Each test case should clean up all the entities it creates, so this should fail.
-            }
-        }
     }
     
 }

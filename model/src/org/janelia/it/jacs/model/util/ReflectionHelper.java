@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.model.graph.entity.support.EntityGraphObjectFactory;
 import org.reflections.ReflectionUtils;
 
 /**
@@ -19,22 +18,49 @@ import org.reflections.ReflectionUtils;
  */
 public class ReflectionHelper {
 
-    private static final Logger log = Logger.getLogger(EntityGraphObjectFactory.class);
+    private static final Logger log = Logger.getLogger(ReflectionHelper.class);
 
     private static final Class[] EMPTY_ARGS_TYPES = {};
     private static final Object[] EMPTY_ARGS_VALUES = {};
 
-    public static Object getMandatoryFieldValue(Object obj, Class<? extends Annotation> annotationClass) throws NoSuchFieldException {
+    public static Boolean getMandatoryBooleanValue(Object obj, Class<? extends Annotation> annotationClass) {
+    	return (Boolean)getMandatoryFieldValue(obj, annotationClass);
+    }
+    
+    public static String getMandatoryStringValue(Object obj, Class<? extends Annotation> annotationClass) {
+    	return (String)getMandatoryFieldValue(obj, annotationClass);
+    }
+
+    public static Integer getMandatoryIntegerValue(Object obj, Class<? extends Annotation> annotationClass) {
+    	return (Integer)getMandatoryFieldValue(obj, annotationClass);
+    }
+    
+    /**
+     * Get the value of a field with the given annotation. Exactly one field with the given annotation must exist
+     * on the object or an IllegalStateException will be thrown. Note that the field may still be null, it just needs
+     * to exist.
+     * @param obj
+     * @param annotationClass
+     * @return
+     */
+    public static Object getMandatoryFieldValue(Object obj, Class<? extends Annotation> annotationClass) {
         try {
             Field idField = ReflectionHelper.getField(obj, annotationClass);
             return ReflectionHelper.getFieldValue(obj, idField);
         }
         catch (NoSuchFieldException e) {
             throw new IllegalStateException(obj.getClass().getName()+" has no field with @"+
-                    annotationClass.getSimpleName()+" annotation");
+                    annotationClass.getSimpleName()+" annotation", e);
         }
     }
 
+    /**
+     * Set the value of a field with the given annotation. Exactly one field with the given annotation must exist
+     * on the object or an IllegalStateException will be thrown.
+     * @param obj
+     * @param annotationClass
+     * @return
+     */
     public static void setMandatoryFieldValue(Object obj, Class<? extends Annotation> annotationClass, Object value) {
         try {
             Field field = ReflectionHelper.getField(obj, annotationClass);
@@ -42,7 +68,7 @@ public class ReflectionHelper {
         }
         catch (NoSuchFieldException e) {
             throw new IllegalStateException(obj.getClass().getName()+" has no field with @"+
-                    annotationClass.getSimpleName()+" annotation");
+                    annotationClass.getSimpleName()+" annotation", e);
         }
     }
     
