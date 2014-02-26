@@ -7,6 +7,8 @@ import org.janelia.it.jacs.model.graph.annotations.GraphNode;
 @GraphNode(type=EntityConstants.TYPE_MOVIE)
 public class Movie {
     
+	private static final long serialVersionUID = 1L;
+	
     @GraphAttribute(EntityConstants.ATTRIBUTE_FILE_PATH)
     private String filepath;
 

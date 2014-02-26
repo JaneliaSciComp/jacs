@@ -20,13 +20,18 @@ import org.janelia.it.jacs.model.graph.annotations.RelationshipInitFlag;
  */
 @GraphNode
 public class EntityNode implements Serializable {
-
+	
+	private static final long serialVersionUID = 1L;
+	
     @GraphId
     private Long id;
 
     @GraphProperty("name")
     private String name;
 
+    @GraphProperty("entityTypeName")
+    private String type;
+    
     @GraphProperty("ownerKey")
     private String ownerKey;
 
@@ -68,8 +73,16 @@ public class EntityNode implements Serializable {
     public void setName(String name) {
         this.name = name;
     }
+    
+    public String getType() {
+		return type;
+	}
 
-    public String getOwnerKey() {
+	public void setType(String type) {
+		this.type = type;
+	}
+
+	public String getOwnerKey() {
         return ownerKey;
     }
 

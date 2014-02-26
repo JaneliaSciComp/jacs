@@ -7,6 +7,8 @@ import org.janelia.it.jacs.model.graph.annotations.RelatedTo;
 @GraphNode(type=EntityConstants.TYPE_FILE)
 public class File extends EntityNode {
 
+	private static final long serialVersionUID = 1L;
+	
     @RelatedTo(relationType=EntityConstants.ATTRIBUTE_FILE_PATH)
     private String filepath;
     

@@ -10,6 +10,8 @@ import org.janelia.it.jacs.model.graph.annotations.RelatedTo;
 @GraphNode(type=EntityConstants.TYPE_IMAGE_TILE)
 public class ImageTile extends Renderable {
 
+	private static final long serialVersionUID = 1L;
+	
     @GraphAttribute(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA)
     private String anatomicalArea;
 

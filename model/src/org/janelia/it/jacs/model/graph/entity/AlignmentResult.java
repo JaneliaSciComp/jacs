@@ -8,6 +8,8 @@ import org.janelia.it.jacs.model.graph.annotations.RelatedTo;
 @GraphNode(type=EntityConstants.TYPE_ALIGNMENT_RESULT)
 public class AlignmentResult extends Result {
 
+	private static final long serialVersionUID = 1L;
+	
     @GraphAttribute(EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE)
     private String alignmentSpace;
 

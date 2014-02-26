@@ -7,6 +7,8 @@ import org.janelia.it.jacs.model.graph.annotations.RelatedTo;
 @GraphNode(type=EntityConstants.TYPE_ERROR)
 public class Error extends EntityNode {
 
+	private static final long serialVersionUID = 1L;
+	
     @RelatedTo(relationType=EntityConstants.ATTRIBUTE_MESSAGE)
     private String message;
     

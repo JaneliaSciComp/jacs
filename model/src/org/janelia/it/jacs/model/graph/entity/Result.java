@@ -6,6 +6,8 @@ import org.janelia.it.jacs.model.graph.annotations.RelatedTo;
 
 public abstract class Result extends Renderable {
 
+	private static final long serialVersionUID = 1L;
+	
     @GraphAttribute(EntityConstants.ATTRIBUTE_FILE_PATH)
     private String filepath;
     

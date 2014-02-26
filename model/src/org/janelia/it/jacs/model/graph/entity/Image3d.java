@@ -8,6 +8,8 @@ import org.janelia.it.jacs.model.graph.annotations.RelatedTo;
 @GraphNode(type=EntityConstants.TYPE_IMAGE_3D)
 public class Image3d extends Renderable {
 
+	private static final long serialVersionUID = 1L;
+	
     @RelatedTo(relationType=EntityConstants.ATTRIBUTE_ALIGNED_CONSOLIDATED_LABEL)
     private Image3d alignedConsolidatedLabel;
 

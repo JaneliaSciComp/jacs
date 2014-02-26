@@ -9,6 +9,8 @@ import org.janelia.it.jacs.model.graph.annotations.GraphProperty;
 @GraphPermission
 public class EntityPermission implements Serializable {
 
+	private static final long serialVersionUID = 1L;
+	
     @GraphId
     private Long id;
     

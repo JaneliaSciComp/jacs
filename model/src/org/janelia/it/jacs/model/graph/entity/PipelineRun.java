@@ -10,11 +10,13 @@ import org.janelia.it.jacs.model.graph.annotations.RelatedTo;
 @GraphNode(type=EntityConstants.TYPE_PIPELINE_RUN)
 public class PipelineRun extends Renderable {
 
+	private static final long serialVersionUID = 1L;
+	
     @GraphAttribute(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS)
     private String pipelineProcess;
     
     @RelatedTo(relationType=EntityConstants.ATTRIBUTE_RESULT)
-    private List<Result> pipelineRuns;
+    private List<Result> results;
 
     /* EVERYTHING BELOW IS AUTO GENERATED */
     
@@ -26,11 +28,12 @@ public class PipelineRun extends Renderable {
         this.pipelineProcess = pipelineProcess;
     }
 
-    public List<Result> getPipelineRuns() {
-        return pipelineRuns;
-    }
+	public List<Result> getResults() {
+		return results;
+	}
 
-    public void setPipelineRuns(List<Result> pipelineRuns) {
-        this.pipelineRuns = pipelineRuns;
-    }
+	public void setResults(List<Result> results) {
+		this.results = results;
+	}
+
 }
