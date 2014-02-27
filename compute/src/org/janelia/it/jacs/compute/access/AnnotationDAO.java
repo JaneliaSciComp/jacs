@@ -1013,20 +1013,26 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             log.trace("getAncestorWithType(subjectKey="+subjectKey+", entityId="+entityId+", type="+type+")");
         }
         
-        return getAncestorWithType(subjectKey, entityId, type, true);
+        return getAncestorWithType(subjectKey, entityId, type, true, new HashSet<Long>());
     }
     
-    private Entity getAncestorWithType(String subjectKey, Long entityId, String type, boolean start) throws DaoException {
+    private Entity getAncestorWithType(String subjectKey, Long entityId, String type, boolean start, Set<Long> visited) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("getAncestorWithType(subjectKey="+subjectKey+", entityId="+entityId+", type="+type+", start="+start+")");
         }
 
+        if (visited.contains(entityId)) {
+        	log.warn("getAncestorWithType detected recursive loop at "+entityId+". Aborting search.");
+        	return null;
+        }
+        visited.add(entityId);
+        
         Entity entity = getEntityById(entityId);
         // Do not return the starting node as the ancestor, even if type matches
         if (!start && entity.getEntityTypeName().equals(type)) return entity;
         
         for(Entity parent : getParentEntities(subjectKey, entityId)) {
-            Entity ancestor = getAncestorWithType(subjectKey, parent.getId(), type, false);
+            Entity ancestor = getAncestorWithType(subjectKey, parent.getId(), type, false, visited);
             if (ancestor != null) return ancestor;
         }
         
@@ -1670,7 +1676,9 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         if (log.isTraceEnabled()) {
             log.trace("addEntityToParent(parent="+parent+", entity="+entity+", index="+index+", attrName="+attrName+", value="+value+")");
         }
-        
+        if (parent.getId().equals(entity.getId())) {
+        	throw new IllegalArgumentException("Cannot add entity to itself: "+parent.getName());
+        }
         if (attrName==null) throw new DaoException("Error adding entity child with null attribute name");
         EntityData ed = parent.addChildEntity(entity, attrName);
         ed.setOrderIndex(index);
@@ -1701,6 +1709,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         
         for (Long childId : childrenIds) {
             if (existingChildrenIds.contains(childId)) continue;
+            if (childId.equals(parentId)) continue;
             
             Entity child = new Entity();
             child.setId(childId);
