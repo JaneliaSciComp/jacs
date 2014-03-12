@@ -334,9 +334,9 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
                                String borderValue, String correctionFile, String microscopeSettingsFile){
         try {
             SingleTicTask task = new SingleTicTask(new HashSet<Node>(), user, new ArrayList<Event>(), new HashSet<TaskParameter>());
-            task.setParameter(SingleTicTask.PARAM_inputFilePrefix, "/groups/scicomp/jacsData/saffordTest/tic/StackSeries20Copy.tif");
-            task.setParameter(SingleTicTask.PARAM_transformationFile, "/groups/scicomp/jacsData/saffordTest/tic/PSF3stack.mat");
-            task.setParameter(SingleTicTask.PARAM_intensityCorrectionFactorFile, "/groups/scicomp/jacsData/saffordTest/tic/kpos-int-cor.mat");
+            task.setParameter(SingleTicTask.PARAM_inputFilePrefix, "/groups/jacs/jacsShare/saffordTest/tic/StackSeries20Copy.tif");
+            task.setParameter(SingleTicTask.PARAM_transformationFile, "/groups/jacs/jacsShare/saffordTest/tic/PSF3stack.mat");
+            task.setParameter(SingleTicTask.PARAM_intensityCorrectionFactorFile, "/groups/jacs/jacsShare/saffordTest/tic/kpos-int-cor.mat");
             task.setJobName("Transcription Imaging Consortium Pipeline Task");
             task = (SingleTicTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
             EJBFactory.getLocalComputeBean().submitJob("TranscriptionImagingConsortium", task.getObjectId());
@@ -432,8 +432,8 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     public void runDataDeDuplication() {
         FileWriter writer;
         try {
-            writer = new FileWriter(new File("/groups/scicomp/jacsData/saffordTest/OutputTanyaDuplicates.txt"));
-            Scanner scanner = new Scanner(new File("/groups/scicomp/jacsData/saffordTest/TanyaDuplicates.csv"));
+            writer = new FileWriter(new File("/groups/jacs/jacsShare/saffordTest/OutputTanyaDuplicates.txt"));
+            Scanner scanner = new Scanner(new File("/groups/jacs/jacsShare/saffordTest/TanyaDuplicates.csv"));
             TreeMap<Integer,ArrayList<SampleRun>> systemMap = new TreeMap<Integer, ArrayList<SampleRun>>();
             TreeMap<Integer,ArrayList<SampleRun>> wolfftMap = new TreeMap<Integer, ArrayList<SampleRun>>();
             while (scanner.hasNextLine()) {

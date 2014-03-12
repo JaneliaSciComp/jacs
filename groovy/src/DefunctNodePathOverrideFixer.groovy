@@ -7,7 +7,7 @@ String appendee = ".bz2"
 
 final JacsUtils f = new JacsUtils(ownerKey, false)
 
-Scanner scanner = new Scanner(new File("/groups/scicomp/jacsData/saffordTest/defunctNode.server.log"));
+Scanner scanner = new Scanner(new File("/groups/jacs/jacsShare/saffordTest/defunctNode.server.log"));
 while (scanner.hasNextLine()) {
     String tmpLine = scanner.nextLine();
     if (tmpLine.contains("cannot be deleted:")) {
