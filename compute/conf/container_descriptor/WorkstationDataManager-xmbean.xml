@@ -458,4 +458,10 @@
         </parameter>
     </operation>
     
+    <operation>
+        <description>Run some canned benchmarks</description>
+        <name>runBenchmarks</name>
+    </operation>
+    
+    
 </mbean>

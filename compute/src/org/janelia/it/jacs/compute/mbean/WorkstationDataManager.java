@@ -1,6 +1,21 @@
 package org.janelia.it.jacs.compute.mbean;
 
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.Set;
+import java.util.TreeMap;
+
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
@@ -30,8 +45,7 @@ import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
-import java.io.*;
-import java.util.*;
+import com.google.common.base.Stopwatch;
 
 /**
  * Created by IntelliJ IDEA.
@@ -579,5 +593,46 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         catch (Exception ex) {
             logger.error("Error running addChildFolder", ex);
         }
+    }
+    
+    public void runBenchmarks() {
+        try {
+            EntityBeanLocal e = EJBFactory.getLocalEntityBean();
+            AnnotationBeanLocal a = EJBFactory.getLocalAnnotationBean();
+
+            long start = System.currentTimeMillis();
+            int commonRootCount = a.getCommonRootEntities("group:leetlab").size();
+            logger.info("getCommonRootEntities('group:leetlab') took "+(System.currentTimeMillis()-start)+" ms and returned "+commonRootCount);
+            
+            start = System.currentTimeMillis();
+            e.grantPermissions("group:leetlab", 1759767174932594786L, "user:rokickik", "r", true);
+            logger.info("grantPermissions('TZL_stg14-Hey01328_Y1') took "+(System.currentTimeMillis()-start)+" ms");
+            
+            start = System.currentTimeMillis();
+            e.revokePermissions("group:leetlab", 1759767174932594786L, "user:rokickik", true);
+            logger.info("revokePermissions('TZL_stg14-Hey01328_Y1') took "+(System.currentTimeMillis()-start)+" ms");
+
+            start = System.currentTimeMillis();
+            int num = countTree(1803555221738094690L); // Count the number of items in the "Pan Lineage 40x" tree
+            logger.info("countTree('Pan Lineage 40x') took "+(System.currentTimeMillis()-start)+" ms and returned "+num);
+            
+            start = System.currentTimeMillis();
+            e.grantPermissions("group:leetlab", 1759767174932594787L, "user:rokickik", "r", true);
+            logger.info("grantPermissions('TZL_stg14-Hey01328_Y2') took "+(System.currentTimeMillis()-start)+" ms");
+            
+        }
+        catch (Exception ex) {
+            logger.error("Error running runBenchmarks", ex);
+        }
+    }
+    
+    private int countTree(Long entityId) throws Exception {
+        EntityBeanLocal e = EJBFactory.getLocalEntityBean();
+        Entity entity = e.getEntityById(entityId);
+        int i = 1;
+        for(Entity child : entity.getChildren()) {
+            i += countTree(child.getId());
+        }
+        return i;
     }
 }
