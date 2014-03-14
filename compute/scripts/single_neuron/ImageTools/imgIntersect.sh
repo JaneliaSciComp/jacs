@@ -11,7 +11,7 @@ DIR=$(cd "$(dirname "$0")"; pwd)
 
 Vaa3D="$DIR/../../../vaa3d-redhat/vaa3d"
 MAGICK="$DIR/../../../ImageMagick-6.7.3-2"
-TIFF="/groups/jacs/jacsShare/JaneliaWorkstationStaging/Builds/install/tiff"
+TIFF="/groups/scicomp/jacsData/servers/jacs/executables/install/tiff"
 
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$MAGICK/lib:$TIFF/lib"
 
