@@ -62,6 +62,9 @@ public class SampleArchiveService extends AbstractEntityService {
             addSampleFiles(sampleEntityId);
             logger.info("Putting "+originalPaths.size()+" paths in ORIGINAL_FILE_PATHS");
         }
+        else {
+            logger.info("Processing and storage locations are the same.  Nothing to archive.");
+        }
         processData.putItem("ORIGINAL_FILE_PATHS", new ArrayList<String>(originalPaths));
         processData.putItem("RUN_ARCHIVAL", new Boolean(!originalPaths.isEmpty()));
     }
