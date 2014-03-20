@@ -1,0 +1,9 @@
+<process name="FlyLight Projection With Channel Spec Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+    <sequence>
+    
+        <include name="Pipeline" process="FlyLightProjectionPipeline">
+            <input name="PIPELINE_PROCESS" value="FlyLightProjectionPipeline"/>
+        </include>
+        
+    </sequence>
+</process>
