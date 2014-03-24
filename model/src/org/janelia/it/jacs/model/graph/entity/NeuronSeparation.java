@@ -10,6 +10,8 @@ import org.janelia.it.jacs.model.graph.annotations.RelatedTo;
 @GraphNode(type=EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)
 public class NeuronSeparation extends Result {
 
+	private static final long serialVersionUID = 1L;
+	
     @RelatedTo(relationType=EntityConstants.ATTRIBUTE_INPUT_IMAGE)
     private Image3d inputImage;
 

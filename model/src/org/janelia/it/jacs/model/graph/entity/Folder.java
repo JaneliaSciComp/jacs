@@ -10,6 +10,8 @@ import org.janelia.it.jacs.model.graph.annotations.RelatedTo;
 @GraphNode(type=EntityConstants.TYPE_FOLDER)
 public class Folder extends EntityNode {
 
+	private static final long serialVersionUID = 1L;
+	
     @GraphAttribute(EntityConstants.ATTRIBUTE_COMMON_ROOT)
     private Boolean isCommonRoot;
     

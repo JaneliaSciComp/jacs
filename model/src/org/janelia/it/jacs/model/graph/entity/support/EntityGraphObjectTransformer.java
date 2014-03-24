@@ -4,7 +4,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,29 +22,26 @@ import org.janelia.it.jacs.model.graph.annotations.GraphProperty;
 import org.janelia.it.jacs.model.graph.annotations.GraphRelationship;
 import org.janelia.it.jacs.model.graph.annotations.NodeInitFlag;
 import org.janelia.it.jacs.model.graph.annotations.Permissions;
-import org.janelia.it.jacs.model.graph.annotations.RelatedTo;
-import org.janelia.it.jacs.model.graph.annotations.RelatedToVia;
 import org.janelia.it.jacs.model.graph.annotations.RelationshipInitFlag;
-import org.janelia.it.jacs.model.graph.annotations.RelationshipType;
 import org.janelia.it.jacs.model.graph.annotations.StartNode;
-import org.janelia.it.jacs.model.graph.entity.EntityNode;
+import org.janelia.it.jacs.model.graph.support.GraphObjectTransformer;
+import org.janelia.it.jacs.model.graph.support.GraphUtils;
 import org.janelia.it.jacs.model.util.ReflectionHelper;
 import org.reflections.Reflections;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 
 /**
  * A factory which uses the Entity/EntityData model to instantiate graph objects in a domain model, and vice-versa.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,EntityData,EntityActorPermission> {
+public class EntityGraphObjectTransformer implements GraphObjectTransformer<Entity,EntityData,EntityActorPermission> {
 
-    private static final Logger log = Logger.getLogger(EntityGraphObjectFactory.class);
+    private static final Logger log = Logger.getLogger(EntityGraphObjectTransformer.class);
 
+    // TODO: this should be parameterized in a properties file
     private static final String GRAPH_OBJECT_PACKAGE_NAME = "org.janelia.it.jacs.model.graph.entity";
     
     private static Reflections reflections;
@@ -64,7 +60,7 @@ public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,Entit
     private Cache<Long,Object> relationshipCache;
     private Cache<Long,Object> permissionCache;
     
-    public EntityGraphObjectFactory() {
+    public EntityGraphObjectTransformer() {
         this.nodeCache = CacheBuilder.newBuilder().maximumSize(10000).softValues().build();
         this.relationshipCache = CacheBuilder.newBuilder().maximumSize(10000).softValues().build();
         this.permissionCache = CacheBuilder.newBuilder().maximumSize(10000).softValues().build();
@@ -96,10 +92,7 @@ public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,Entit
     public Object initNodeInstance(Object nodeObject, Entity entity) throws Exception {
 
         if (!Hibernate.isInitialized(entity)) {
-            return nodeObject;
-        }
-        
-        if ((Boolean)ReflectionHelper.getMandatoryFieldValue(nodeObject, RelationshipInitFlag.class)) {
+            log.warn("  Cannot init node instance when entity has not been initialized: "+entity.getId());
             return nodeObject;
         }
         
@@ -107,7 +100,7 @@ public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,Entit
         
         if (Hibernate.isInitialized(entity.getEntityActorPermissions())) {
 
-            //log.info("  Adding permissions for entity "+entity.getId());
+            log.debug("  Adding permissions for entity "+entity.getId());
             
             List<Object> permissionList = new ArrayList<Object>();
             for(EntityActorPermission eap : entity.getEntityActorPermissions()) {
@@ -120,13 +113,17 @@ public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,Entit
             }
         }
         
-        // Copy relationships
+        if ((Boolean)ReflectionHelper.getMandatoryFieldValue(nodeObject, RelationshipInitFlag.class)) {
+            log.warn("  Cannot init relationships because they have already been initialized: "+entity.getId());
+            return nodeObject;
+        }
         
+        // Copy relationships
         if (Hibernate.isInitialized(entity.getEntityData())) {
+
+            log.debug("  Adding relationships for entity "+entity.getId());
             
-            //log.info("  Adding relationships for entity "+entity.getId());
-            
-            List<Object> relationshipList = new ArrayList<Object>();
+        	List<Object> relationshipList = new ArrayList<Object>();
             for(EntityData ed : entity.getEntityData()) {
                 Entity childEntity = ed.getChildEntity();
                 if (childEntity!=null) {
@@ -135,101 +132,12 @@ public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,Entit
                 }
             }
             
-            Multimap<Field,Object> filteredMap = HashMultimap.<Field,Object>create();
-            for(Object relObject : relationshipList) {
-
-                Object relId = ReflectionHelper.getMandatoryFieldValue(relObject, GraphId.class);
-                Object relType = ReflectionHelper.getMandatoryFieldValue(relObject, RelationshipType.class);
-                Object targetNodeObject = ReflectionHelper.getMandatoryFieldValue(relObject, EndNode.class);
-                
-                if (targetNodeObject==null) {
-                    throw new IllegalStateException("Relationship has no target: "+relId);
-                }
-                
-                if (targetNodeObject.getClass().getName().equals(EntityNode.class.getName())) {
-                    log.info("  Relationship (id="+relId+") target object is generic, so fields will not be initialized");
-                    continue;
-                }
-                
-                // Go through each field and see if it wants this relationship
-                for(Field field : ReflectionHelper.getFields(nodeObject)) {
-
-                    RelatedTo relatedTo = field.getAnnotation(RelatedTo.class);
-                    RelatedToVia relatedToVia = field.getAnnotation(RelatedToVia.class);
-                    
-                    if (relatedTo!=null) {
-                        boolean match = true;
-                        if (match && !"".equals(relatedTo.relationType())) {
-                            if (!relatedTo.relationType().equals(relType)) {
-                                //log.info("    Relationship types dont match: "+relatedTo.relationType()+"!="+relType);
-                                match = false;
-                            }
-                        }
-                        if (match && !"".equals(relatedTo.targetNodeType())) {
-                            GraphNode graphNodeAnnotation = targetNodeObject.getClass().getAnnotation(GraphNode.class);
-                            if (!relatedTo.targetNodeType().equals(graphNodeAnnotation.type())) {
-                                //log.info("    Related node types dont match: "+relatedTo.targetNodeType()+"!="+graphNodeAnnotation.type());
-                                match = false;
-                            }
-                        }
-                        if (match) {
-                            //log.info("      Will add relationship to "+field.getName());
-                            filteredMap.put(field, targetNodeObject);
-                        }
-                    }
-                    else if (relatedToVia!=null) {
-                        boolean match = true;
-                        if (match &&  !"".equals(relatedToVia.relationType())) {
-                            if (!relatedToVia.relationType().equals(relType)) {
-                                //log.info("    Relationship types dont match: "+relatedToVia.relationType()+"!="+relType);
-                                match = false;
-                            }
-                        }
-                        if (match) {
-                            //log.info("      Will add relationship to "+field.getName());
-                            filteredMap.put(field, relObject);
-                        }
-                    }
-                }   
-            }
-            
-            for (Field field : filteredMap.keys()) {
-                //log.info("    For field "+field.getName());
-                List<Object> filteredList = new ArrayList<Object>(filteredMap.get(field)); 
-                if (Collection.class.isAssignableFrom(field.getType())) {
-                    log.info("  * Setting "+nodeObject.getClass().getName()+"."+field.getName()+" = "+filteredList.size()+" items"); 
-                    ReflectionHelper.setFieldValue(nodeObject, field, filteredList);
-                }
-                else {
-                    if (filteredList.size()>1) {
-                        log.warn("More than one matching relationship for "+nodeObject.getClass().getName()+"."+field.getName());
-                    }
-                    Object relatedItem = filteredList.get(0);
-                    log.info("  * Setting "+nodeObject.getClass().getName()+"."+field.getName()+" = "+relatedItem); 
-                    ReflectionHelper.setFieldValue(nodeObject, field, relatedItem);
-                }
-            }
-            
-            // Initialize relationship collections which were not touched above, so that nothing is null.
-            for(Field field : ReflectionHelper.getFields(nodeObject)) {
-                RelatedTo relatedTo = field.getAnnotation(RelatedTo.class);
-                RelatedToVia relatedToVia = field.getAnnotation(RelatedToVia.class);
-                if (relatedTo!=null || relatedToVia!=null) {
-                    if (ReflectionHelper.getFieldValue(nodeObject, field)==null) {
-                        if (Collection.class.isAssignableFrom(field.getType())) {
-                            log.info("  * Setting "+nodeObject.getClass().getName()+"."+field.getName()+" = empty list"); 
-                            ReflectionHelper.setFieldValue(nodeObject, field, new ArrayList<Object>());
-                        }
-                    }
-                }
-            }
-            
-            // All relationships were initialized
-            ReflectionHelper.setMandatoryFieldValue(nodeObject, RelationshipInitFlag.class, Boolean.TRUE);
+        	GraphUtils.initRelationships(nodeObject, relationshipList);
         }
         
         return nodeObject;
     }
+    
     
     /**
      * Given an entity, create a node instance of the appropriate type. If the entity has initialized children, this
@@ -243,17 +151,20 @@ public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,Entit
     public Object getNodeInstance(Entity entity) throws Exception {
         
         Object nodeObject = nodeCache.getIfPresent(entity.getId());
-        if (nodeObject!=null) return nodeObject;
+        if (nodeObject!=null) {
+        	// TODO: Does this cached object need to be updated with the latest data from the entity?
+        	return nodeObject;
+        }
 
-        if (!Hibernate.isInitialized(entity)) {
+        if (!Hibernate.isInitialized(entity) || entity.getEntityTypeName()==null) {
             nodeObject = instantiateMappedClass(nodeClasses, "");
-            log.info("Instantiated "+nodeObject.getClass().getName()+" for entity "+entity.getId());
+            log.debug("Instantiated default class "+nodeObject.getClass().getName()+" for uninitialized entity "+entity.getId());
             copyIdField(entity, nodeObject);
             return nodeObject;
         }
         else {
             nodeObject = instantiateMappedClass(nodeClasses, entity.getEntityTypeName());
-            log.info("Instantiated "+nodeObject.getClass().getName()+" for entity "+entity.getId());
+            log.debug("Instantiated "+nodeObject.getClass().getName()+" for entity "+entity.getId()+" with type "+entity.getEntityTypeName());
             copyAnnotatedFields(entity, nodeObject);
             nodeCache.put(entity.getId(), nodeObject);
             return initNodeInstance(nodeObject, entity);
@@ -267,7 +178,7 @@ public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,Entit
         if (relObject!=null) return relObject;
         
         relObject = instantiateMappedClass(relationshipClasses, entityData.getEntityAttrName());
-        log.info("Instantiated "+relObject.getClass().getName()+" for entityData "+entityData.getId());
+        log.debug("Instantiated "+relObject.getClass().getName()+" for entityData "+entityData.getId());
         copyAnnotatedFields(entityData, relObject);
         relationshipCache.put(entityData.getId(), relObject);
 
@@ -277,7 +188,7 @@ public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,Entit
         if (endNodeField!=null) {
             if (entityData.getChildEntity()!=null) {
                 Object endNodeObject = getNodeInstance(entityData.getChildEntity());
-                log.info("  * Setting end node to "+entityData.getChildEntity().getId());
+                log.trace("  * Setting end node to "+entityData.getChildEntity().getId());
                 ReflectionHelper.setFieldValue(relObject, endNodeField, endNodeObject);
             }
             else {
@@ -292,7 +203,7 @@ public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,Entit
         if (startNodeField!=null) {
             if (entityData.getParentEntity()!=null) {
                 Object startNodeObject = getNodeInstance(entityData.getParentEntity());
-                log.info("  * Setting start node to "+entityData.getParentEntity().getId());
+                log.trace("  * Setting start node to "+entityData.getParentEntity().getId());
                 ReflectionHelper.setFieldValue(relObject, startNodeField, startNodeObject);
             }
             else {
@@ -312,7 +223,7 @@ public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,Entit
         if (permObject!=null) return permObject;
         
         permObject = instantiateMappedClass(permissionClasses, null);
-        log.info("Instantiated "+permObject.getClass().getName()+" for permission "+eap.getId());
+        log.debug("Instantiated "+permObject.getClass().getName()+" for permission "+eap.getId());
         copyAnnotatedFields(eap, permObject);
         permissionCache.put(eap.getId(), permObject);
         
@@ -337,7 +248,7 @@ public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,Entit
         copyIdField(sourceObject, graphObject);
         
         if (!Hibernate.isInitialized(sourceObject)) {
-            log.info("  * Will not copy from uninitialized object "+sourceObject);
+            log.warn("  * Will not copy from uninitialized object "+sourceObject);
             return;
         }
         
@@ -345,7 +256,7 @@ public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,Entit
         for(Field field : ReflectionHelper.getFields(graphObject, GraphProperty.class)) {
             String fieldName = field.getAnnotation(GraphProperty.class).value();
             Object value = ReflectionHelper.getUsingGetter(sourceObject, fieldName);
-            log.info("  * Setting "+graphObject.getClass().getName()+"."+field.getName()+" = "+value); 
+            log.debug("  * Setting "+graphObject.getClass().getName()+"."+field.getName()+" = "+value); 
             ReflectionHelper.setFieldValue(graphObject, field, value);
         }
 
@@ -356,13 +267,13 @@ public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,Entit
                 for(Field field : ReflectionHelper.getFields(graphObject, GraphAttribute.class)) {
                     String attributeName = field.getAnnotation(GraphAttribute.class).value();
                     Object value = entity.getValueByAttributeName(attributeName);
-                    log.info("  * Setting "+graphObject.getClass().getName()+"."+field.getName()+" = "+value);
+                    log.debug("  * Setting "+graphObject.getClass().getName()+"."+field.getName()+" = "+value);
                     setFieldValueWithTypeCoercion(graphObject, field, value);
                 }
                 ReflectionHelper.setMandatoryFieldValue(graphObject, NodeInitFlag.class, Boolean.TRUE);
             }
             else {
-                log.info("  * Will not copy uninitialized attributes from entity "+sourceObject);
+                log.debug("  * Will not copy uninitialized attributes from entity "+sourceObject);
             }
         }
     }
@@ -426,5 +337,20 @@ public class EntityGraphObjectFactory implements GraphObjectFactory<Entity,Entit
         catch (Exception e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    public Entity getNativeNode(Object node) throws Exception {
+    	// TODO: implement
+    	return null;
+    }
+    
+    public EntityData getNativeRelationship(Object node) throws Exception {
+    	// TODO: implement
+    	return null;
+    }
+    
+    public EntityActorPermission getNativePermission(Object node) throws Exception {
+    	// TODO: implement
+    	return null;
     }
 }

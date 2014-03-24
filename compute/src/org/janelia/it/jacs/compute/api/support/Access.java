@@ -9,6 +9,8 @@ import java.io.Serializable;
  */
 public class Access implements Serializable {
 
+	private static final long serialVersionUID = 1L;
+	
     public enum AccessPattern {
         OWNED_OBJECTS_ONLY,
         ALL_ACCESSIBLE_OBJECTS

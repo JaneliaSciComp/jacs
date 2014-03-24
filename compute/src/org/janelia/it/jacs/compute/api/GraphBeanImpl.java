@@ -30,8 +30,8 @@ import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.graph.entity.EntityNode;
 import org.janelia.it.jacs.model.graph.entity.EntityPermission;
 import org.janelia.it.jacs.model.graph.entity.EntityRelationship;
-import org.janelia.it.jacs.model.graph.entity.support.EntityGraphObjectFactory;
-import org.janelia.it.jacs.model.graph.entity.support.GraphHelper;
+import org.janelia.it.jacs.model.graph.entity.support.EntityGraphObjectTransformer;
+import org.janelia.it.jacs.model.graph.support.GraphUtils;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
@@ -54,8 +54,8 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
     	IndexingHelper.updateIndex(entity.getId());
     }
    
-    private EntityGraphObjectFactory getObjectFactory() {
-        return new EntityGraphObjectFactory();
+    private EntityGraphObjectTransformer getObjectFactory() {
+        return new EntityGraphObjectTransformer();
     }
     
     @Override
@@ -79,9 +79,9 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
                 updatedDate = now;
             }
             
-            String entityType = GraphHelper.getEntityType(entityNode);
+            String entityType = GraphUtils.getEntityType(entityNode);
             Entity entity = new Entity(null, entityNode.getName(), subjectKey, entityType, creationDate, updatedDate, new HashSet<EntityData>());
-            Map<String,String> attrMap = GraphHelper.getAttributes(entityNode);
+            Map<String,String> attrMap = GraphUtils.getAttributes(entityNode);
             for(String key : attrMap.keySet()) {
                 entity.setValueByAttributeName(key, attrMap.get(key));
             }
@@ -479,13 +479,13 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
             entity.setName(entityNode.getName());
             entity.setCreationDate(entityNode.getCreationDate());
             entity.setUpdatedDate(entityNode.getUpdatedDate());
-            entity.setEntityTypeName(GraphHelper.getEntityType(entityNode));
+            entity.setEntityTypeName(GraphUtils.getEntityType(entityNode));
             entity.setOwnerKey(entityNode.getOwnerKey());
             if (entityNode.isRelsInit()) {
                 entity.setNumChildren(entityNode.getRelationships().size());
             }
             
-            Map<String,String> attrMap = GraphHelper.getAttributes(entityNode);
+            Map<String,String> attrMap = GraphUtils.getAttributes(entityNode);
             for(Entry<String,String> entry : attrMap.entrySet()) {
                 entity.setValueByAttributeName(entry.getKey(), entry.getValue());
             }
@@ -833,7 +833,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
     }
     
     private List<EntityNode> convertEntities(Collection<Entity> entities) throws Exception {
-        EntityGraphObjectFactory factory = getObjectFactory();
+        EntityGraphObjectTransformer factory = getObjectFactory();
         List<EntityNode> domainObjs = new ArrayList<EntityNode>();
         for(Entity entity : entities) {
             domainObjs.add((EntityNode)factory.getNodeInstance(entity));
@@ -842,7 +842,7 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
     }
 
     private List<EntityRelationship> convertEntityDatas(Collection<EntityData> eds) throws Exception {
-        EntityGraphObjectFactory factory = getObjectFactory();
+        EntityGraphObjectTransformer factory = getObjectFactory();
         List<EntityRelationship> domainObjs = new ArrayList<EntityRelationship>();
         for(EntityData ed : eds) {
             domainObjs.add((EntityRelationship)factory.getRelationshipInstance(ed));
@@ -851,10 +851,12 @@ public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
     }
     
     private EntityNode convert(Entity entity) throws Exception {
+    	if (entity==null) return null;
         return (EntityNode)getObjectFactory().getNodeInstance(entity);
     }
 
     private EntityRelationship convert(EntityData entityData) throws Exception  {
+    	if (entityData==null) return null;
         return (EntityRelationship)getObjectFactory().getRelationshipInstance(entityData);
     }
 }

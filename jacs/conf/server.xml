@@ -133,11 +133,11 @@
           <!--debug="99"/>-->
 
 	<Realm className="org.apache.catalina.realm.JNDIRealm" debug="99"
-       connectionURL="ldap://ldap.int.janelia.org:389"
+       connectionURL="ldap://ldap-vip1.int.janelia.org:389"
        userSearch="uid={0}"
-       userBase="ou=People,dc=janelia,dc=org"
+       userBase="ou=People,dc=hhmi,dc=org"
        userSubtree="true"
-       roleBase="ou=Groups,dc=janelia,dc=org"
+       roleBase="ou=Groups,dc=hhmi,dc=org"
        roleName="cn"
        roleSearch="memberUid={1}"
        roleSubtree="false"

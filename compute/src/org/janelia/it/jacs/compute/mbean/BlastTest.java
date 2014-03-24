@@ -421,7 +421,7 @@ public class BlastTest implements BlastTestMBean {
                 FileWriter writer = new FileWriter(jobFile);
                 writer.write("touch " + jobFile.getAbsolutePath() + ".start");
                 writer.write("\n");
-                writer.write("time /groups/scicomp/jacsData/servers/jacs-data/executables/blast-2.2.15/bin/blastall ");
+                writer.write("time /groups/jacs/jacsHosts/servers/jacs-data/executables/blast-2.2.15/bin/blastall ");
                 String[] args = new String[8];
                 args[0] = "-p";
                 args[1] = "blastn";
@@ -439,7 +439,7 @@ public class BlastTest implements BlastTestMBean {
                 writer.write("\n");
                 writer.close();
                 jt.setArgs(Arrays.asList(jobFile.getAbsolutePath()));
-                String equivCmd = "/groups/scicomp/jacsData/servers/jacs-data/executables/blast-2.2.15/bin/blastall -p blastn -i " + queryFile.getAbsolutePath() + " -d " + dbFile.getAbsolutePath() + " -o " + outputPrefixPath + "_" + i;
+                String equivCmd = "/groups/jacs/jacsHosts/servers/jacs-data/executables/blast-2.2.15/bin/blastall -p blastn -i " + queryFile.getAbsolutePath() + " -d " + dbFile.getAbsolutePath() + " -o " + outputPrefixPath + "_" + i;
                 logger.info("Using equivalent command=" + equivCmd);
                 jt.setWorkingDirectory(dbFile.getParentFile().getAbsolutePath());
                 jt.setErrorPath(":" + outputFile.getAbsolutePath() + ".err");

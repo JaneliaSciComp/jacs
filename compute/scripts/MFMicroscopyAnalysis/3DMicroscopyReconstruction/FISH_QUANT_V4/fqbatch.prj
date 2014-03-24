@@ -8,8 +8,8 @@
          <component_name>fqbatch</component_name>
          <default_class>Main function</default_class>
       </wrapper>
-      <intermediate_dir>/groups/scicomp/jacsData/JinWorkSpace</intermediate_dir>
-      <output_dir>/groups/scicomp/jacsData/JinWorkSpace</output_dir>
+      <intermediate_dir>/groups/jacs/jacsShare/JinWorkSpace</intermediate_dir>
+      <output_dir>/groups/jacs/jacsShare/JinWorkSpace</output_dir>
       <link>exe</link>
       <MCR_runtime_options/>
       <generate_code_only>false</generate_code_only>
@@ -68,9 +68,9 @@
       <Directory>$(PROJECTDIR)/Toolbox_Piotr/matlab</Directory>
       <Directory>$(PROJECTDIR)/java</Directory>
       <Directory>$(PROJECTDIR)/toolbox</Directory>
-      <Directory>/groups/scicomp/jacsData/JinWorkSpace/Heatmap/SVN</Directory>
+      <Directory>/groups/jacs/jacsShare/JinWorkSpace/Heatmap/SVN</Directory>
       <Directory>/home/liujin/Fiji.app/scripts</Directory>
-      <Directory>/groups/scicomp/jacsData/JinWorkSpace/Heatmap</Directory>
+      <Directory>/groups/jacs/jacsShare/JinWorkSpace/Heatmap</Directory>
       <Directory>/home/liujin/v3d_matlab_io_basicdatatype</Directory>
       <Directory>$(MATLABROOT)/toolbox/matlab/general</Directory>
       <Directory>$(MATLABROOT)/toolbox/matlab/ops</Directory>

@@ -18,6 +18,8 @@ import org.janelia.it.jacs.model.graph.annotations.StartNode;
 @GraphRelationship
 public class EntityRelationship implements Serializable {
 
+	private static final long serialVersionUID = 1L;
+	
     @GraphId
     private Long id;
     

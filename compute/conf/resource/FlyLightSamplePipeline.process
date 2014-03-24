@@ -458,6 +458,7 @@
 		    <!-- Log the exception into the Pipeline Run -->
 			<operation name="Handle exceptions" processor="org.janelia.it.jacs.compute.service.entity.sample.CreateErrorEntityService">
 				<input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
+				<input name="RESULT_FILE_NODE"/>
 				<input name="PROCESSING_EXCEPTION"/>
 		    </operation>
 		

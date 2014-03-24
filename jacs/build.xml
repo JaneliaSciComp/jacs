@@ -865,7 +865,7 @@
             <echo message="Shutting down Tomcat..." />
             <exec executable="${ssh}" description="Shutting down Tomcat"
                   outputproperty="exec.output">
-                <arg line="${ssh.common.params} /groups/scicomp/jacsData/bin/stoptomcat.sh ${tomcat.home}"/>
+                <arg line="${ssh.common.params} /groups/jacs/jacsHosts/bin/stoptomcat.sh ${tomcat.home}"/>
             </exec>
             <echo message="Done : ${exec.output}"  />
         </sequential>
@@ -890,10 +890,10 @@
         </exec>
 
          <!--restart tomcat -->
-        <echo message="Starting Tomcat (/groups/scicomp/jacsData/bin/starttomcat.sh ${tomcat.home})" />
+        <echo message="Starting Tomcat (/groups/jacs/jacsHosts/bin/starttomcat.sh ${tomcat.home})" />
         <exec executable="${ssh}" description="Starting Tomcat"
               outputproperty="exec.output">
-            <arg line="${ssh.common.params} /groups/scicomp/jacsData/bin/starttomcat.sh ${tomcat.home}"/>
+            <arg line="${ssh.common.params} /groups/jacs/jacsHosts/bin/starttomcat.sh ${tomcat.home}"/>
         </exec>
 
          <!-- remove temp files 

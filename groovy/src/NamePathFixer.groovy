@@ -7,7 +7,7 @@ String appendee = ".bz2"
 
 final JacsUtils f = new JacsUtils(ownerKey, false)
 
-Scanner scanner = new Scanner(new File("/groups/scicomp/jacsData/saffordTest/leetLSMs28days.txt"));
+Scanner scanner = new Scanner(new File("/groups/jacs/jacsShare/saffordTest/leetLSMs28days.txt"));
 while (scanner.hasNextLine()) {
     String tmpLine = scanner.nextLine();
     tmpLine = tmpLine.substring(tmpLine.indexOf("/")).trim();

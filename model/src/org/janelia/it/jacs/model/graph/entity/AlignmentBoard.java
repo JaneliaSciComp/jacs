@@ -10,6 +10,8 @@ import org.janelia.it.jacs.model.graph.annotations.RelatedTo;
 @GraphNode(type=EntityConstants.TYPE_ALIGNMENT_BOARD)
 public class AlignmentBoard extends EntityNode {
 
+	private static final long serialVersionUID = 1L;
+	
     @GraphAttribute(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)
     private String opticalResolution;
     

@@ -6,6 +6,8 @@ import org.janelia.it.jacs.model.graph.annotations.GraphNode;
 @GraphNode(type=EntityConstants.TYPE_NEURON_FRAGMENT)
 public class NeuronFragment extends EntityNode {
 
+	private static final long serialVersionUID = 1L;
+	
     @GraphAttribute(EntityConstants.ATTRIBUTE_NUMBER)
     private Integer number;
 

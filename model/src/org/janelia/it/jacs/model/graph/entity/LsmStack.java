@@ -8,6 +8,8 @@ import org.janelia.it.jacs.model.graph.annotations.RelatedTo;
 @GraphNode(type=EntityConstants.TYPE_LSM_STACK)
 public class LsmStack extends EntityNode {
 
+	private static final long serialVersionUID = 1L;
+	
     @GraphAttribute(EntityConstants.ATTRIBUTE_AGE)
     private String age;
 

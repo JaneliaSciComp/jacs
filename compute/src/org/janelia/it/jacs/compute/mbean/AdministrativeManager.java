@@ -190,7 +190,7 @@ public class AdministrativeManager implements AdministrativeManagerMBean {
 
     public void trashUnknownNodesForUser() {
         try {
-            Scanner scanner = new Scanner(new File("/groups/scicomp/jacsData/saffordTest/tanyaTest/nodes.txt"));
+            Scanner scanner = new Scanner(new File("/groups/jacs/jacsShare/saffordTest/tanyaTest/nodes.txt"));
             int good=0, bad=0;
             while (scanner.hasNextLine()) {
                 String[] nodeIds = scanner.nextLine().split(",");

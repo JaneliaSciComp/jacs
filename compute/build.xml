@@ -484,10 +484,10 @@
 
          <!--stop jboss server and give it time to shutdown-->
         <sequential >
-            <echo message="Shutting down JBoss...(/groups/scicomp/jacsData/bin/stopjboss.sh ${jboss.home} ${FromPropFile.computeserver.ejb.service})" />
+            <echo message="Shutting down JBoss...(/groups/jacs/jacsHosts/bin/stopjboss.sh ${jboss.home} ${FromPropFile.computeserver.ejb.service})" />
             <exec executable="${ssh}" description="Shutting down Jboss"
                   outputproperty="exec.output" errorproperty="exec.error">
-                <arg line="${ssh.common.params} /groups/scicomp/jacsData/bin/stopjboss.sh ${jboss.home} ${FromPropFile.computeserver.ejb.service}"/>
+                <arg line="${ssh.common.params} /groups/jacs/jacsHosts/bin/stopjboss.sh ${jboss.home} ${FromPropFile.computeserver.ejb.service}"/>
             </exec>
             <echo message="Done : ${exec.output}"  />
             <echo message="Done : ${exec.error}"  />
@@ -529,9 +529,9 @@
 
          <!--restart JBoss -->
         <echo message="Starting JBoss" />
-        <exec executable="${ssh}" description="Starting Jboss (/groups/scicomp/jacsData/bin/startjboss.sh ${jboss.home} default)"
+        <exec executable="${ssh}" description="Starting Jboss (/groups/jacs/jacsHosts/bin/startjboss.sh ${jboss.home} default)"
               outputproperty="exec.output" errorproperty="exec.error">
-            <arg line="${ssh.common.params} /groups/scicomp/jacsData/bin/startjboss.sh ${jboss.home} default"/>
+            <arg line="${ssh.common.params} /groups/jacs/jacsHosts/bin/startjboss.sh ${jboss.home} default"/>
         </exec>
         <echo message="Done : ${exec.output}"  />
         <echo message="Done : ${exec.error}"  />
