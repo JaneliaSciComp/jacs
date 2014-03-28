@@ -1,9 +1,5 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.launcher.archive.ArchiveAccessHelper;
@@ -14,6 +10,10 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
 import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Move large Sample files to archive to save space.
@@ -56,8 +56,15 @@ public class SampleArchiveService extends AbstractEntityService {
     
     private void doCreateArchiveList() throws Exception {
         logger.info("Finding files to archive...");
-        addSampleFiles(sampleEntityId);
-        logger.info("Putting "+originalPaths.size()+" paths in ORIGINAL_FILE_PATHS");
+        // Short-circuit the case where the FileStore and Archive are one and the same location
+        if (!SystemConfigurationProperties.getString("FileStore.CentralDir").
+                equals(SystemConfigurationProperties.getString("FileStore.CentralDir.Archived"))) {
+            addSampleFiles(sampleEntityId);
+            logger.info("Putting "+originalPaths.size()+" paths in ORIGINAL_FILE_PATHS");
+        }
+        else {
+            logger.info("Processing and storage locations are the same.  Nothing to archive.");
+        }
         processData.putItem("ORIGINAL_FILE_PATHS", new ArrayList<String>(originalPaths));
         processData.putItem("RUN_ARCHIVAL", new Boolean(!originalPaths.isEmpty()));
     }

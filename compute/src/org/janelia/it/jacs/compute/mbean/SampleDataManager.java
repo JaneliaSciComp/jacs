@@ -418,8 +418,8 @@ public class SampleDataManager implements SampleDataManagerMBean {
 
     /**
      * Method to point to an ls file and pull out LSM's to be bzip2'd.
-     * Example file exists in /groups/scicomp/jacsData/saffordTest/leetLSMs28days.txt (or older file)
-     *                        /groups/scicomp/jacsData/saffordTest/leetLSMs7days.txt  (or older file)
+     * Example file exists in /groups/jacs/jacsShare/saffordTest/leetLSMs28days.txt (or older file)
+     *                        /groups/jacs/jacsShare/saffordTest/leetLSMs7days.txt  (or older file)
      */
     public void bzipLSMCompressionService(String filePath, String owner, String compressMode) {
         try {

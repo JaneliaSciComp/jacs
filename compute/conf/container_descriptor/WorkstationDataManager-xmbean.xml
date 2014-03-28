@@ -20,7 +20,7 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>Path to annotations file which annotates fly specimens with a list of annotations (e.g. "/groups/scicomp/jacsData/SplitPicking/annotations.txt")</description>
+           <description>Path to annotations file which annotates fly specimens with a list of annotations (e.g. "/groups/jacs/jacsShare/PipelineInputFiles/SplitPicking/annotations.txt")</description>
            <name>annotationsPath</name>
            <type>java.lang.String</type>
         </parameter>
@@ -40,12 +40,12 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>Full path of accepts file to read from (e.g. "/groups/scicomp/jacsData/PipelineInputFiles/ScreenEvaluation/finalAccepts.txt")</description>
+           <description>Full path of accepts file to read from (e.g. "/groups/jacs/jacsShare/PipelineInputFiles/ScreenEvaluation/finalAccepts.txt")</description>
            <name>acceptsPath</name>
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>Full path of file to write to (e.g. "/groups/scicomp/jacsData/PipelineInputFiles/ScreenEvaluation/loaded.txt")</description>
+           <description>Full path of file to write to (e.g. "/groups/jacs/jacsShare/PipelineInputFiles/ScreenEvaluation/loaded.txt")</description>
            <name>loadedFile</name>
            <type>java.lang.String</type>
         </parameter>
@@ -60,7 +60,7 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>Full path for the output file (e.g. "/groups/scicomp/jacsData/rokickiTest/scoreExport.txt")</description>
+           <description>Full path for the output file (e.g. "/groups/jacs/jacsShare/rokickiTest/scoreExport.txt")</description>
            <name>outputFilepath</name>
            <type>java.lang.String</type>
         </parameter>
@@ -80,12 +80,12 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>Path to representatives file which picks a representative specimen for each flyline (e.g. "/groups/scicomp/jacsData/SplitPicking/representatives.txt")</description>
+           <description>Path to representatives file which picks a representative specimen for each flyline (e.g. "/groups/jacs/jacsShare/PipelineInputFiles/SplitPicking/representatives.txt")</description>
            <name>representativesPath</name>
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>Path to split constructs file which annotates flylines with an AD or DBD designation (e.g. "/groups/scicomp/jacsData/SplitPicking/splitReps.txt")</description>
+           <description>Path to split constructs file which annotates flylines with an AD or DBD designation (e.g. "/groups/jacs/jacsShare/PipelineInputFiles/SplitPicking/splitReps.txt")</description>
            <name>splitConstructsPath</name>
            <type>java.lang.String</type>
         </parameter>
@@ -262,7 +262,7 @@
             <type>java.lang.String</type>
         </parameter>
         <parameter>
-            <description>Directory path of compartment mask-channel files to import (e.g. /groups/scicomp/jacsData/filestore/MaskResources/Compartment/A_DIRECTORY_CONTAINING_MASK_CHAN_DATA).</description>
+            <description>Directory path of compartment mask-channel files to import (e.g. /nobackup/jacs/jacsData/filestore/MaskResources/Compartment/A_DIRECTORY_CONTAINING_MASK_CHAN_DATA).</description>
             <name>maskChanPath</name>
             <type>java.lang.String</type>
         </parameter>
@@ -457,5 +457,11 @@
             <type>java.lang.String</type>
         </parameter>
     </operation>
+    
+    <operation>
+        <description>Run some canned benchmarks</description>
+        <name>runBenchmarks</name>
+    </operation>
+    
     
 </mbean>

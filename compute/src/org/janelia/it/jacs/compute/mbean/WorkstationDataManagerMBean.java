@@ -55,4 +55,6 @@ public interface WorkstationDataManagerMBean {
     public void create3DTileMicroscopeSamples(String user, String destinationFolderName);
     
     public void addChildFolder(String parentId, String folderName);
+    
+    public void runBenchmarks();
 }

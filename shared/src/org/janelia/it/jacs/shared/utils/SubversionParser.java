@@ -61,7 +61,7 @@ public class SubversionParser {
             extensionList.add(".groovy");
 
 
-            File rootDir = new File("/groups/scicomp/jacsData/svnTest");
+            File rootDir = new File("/groups/jacs/jacsShare/svnTest");
             File[] projectDirs = rootDir.listFiles(new FileFilter() {
                 @Override
                 public boolean accept(File file) {
@@ -137,11 +137,11 @@ public class SubversionParser {
 
 //    public static void main(String[] args) {
 //        try {
-//            Scanner scanner = new Scanner(new File("/groups/scicomp/jacsData/svnTest/svnList.txt"));
+//            Scanner scanner = new Scanner(new File("/groups/jacs/jacsShare/svnTest/svnList.txt"));
 //            while (scanner.hasNextLine()) {
 //                String[] pieces = scanner.nextLine().split(" ");
 //                String svnTarget = "svn co https://subversion.int.janelia.org/ScientificComputing/Projects/"+pieces[0]+
-//                        " /groups/scicomp/jacsData/svnTest/"+pieces[1];
+//                        " /groups/jacs/jacsShare/svnTest/"+pieces[1];
 //                Runtime.getRuntime().exec(svnTarget);
 //            }
 //        }
