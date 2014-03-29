@@ -41,10 +41,10 @@ class JacsUtils {
 		// This initializes the EJBFactory
 		SessionMgr.getSessionMgr();
         SessionMgr.getSessionMgr().loginSubject();
-		
+
 		this.e = EJBFactory.getRemoteEntityBean()
 		this.a = EJBFactory.getRemoteAnnotationBean()
-		this.c = EJBFactory.getRemoteComputeBean(true)
+		this.c = EJBFactory.getRemoteComputeBean(false)
 		this.s = EJBFactory.getRemoteSolrBean()
 		this.subject = c.getSubjectByNameOrKey(subjectNameOrKey)
 		this.createDate = new Date()
