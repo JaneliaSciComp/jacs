@@ -18,6 +18,7 @@ public class SlideImage {
     private String imagePath;
     private String tileType;
     private String line;
+    private String crossBarcode;
     private String channelSpec;
     private String channels;
     private String objective;
@@ -36,7 +37,11 @@ public class SlideImage {
         properties.put(EntityConstants.ATTRIBUTE_SLIDE_CODE, slideCode);
         properties.put(EntityConstants.ATTRIBUTE_FILE_PATH, imagePath);
         properties.put(EntityConstants.ATTRIBUTE_LINE, line);
-        
+
+        if (crossBarcode != null) {
+            properties.put(EntityConstants.ATTRIBUTE_CROSS_BARCODE, crossBarcode);
+        }
+
         if (channelSpec!=null) {
             properties.put(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec);
         }
@@ -110,6 +115,12 @@ public class SlideImage {
     }
     public void setLine(String line) {
         this.line = line;
+    }
+    public String getCrossBarcode() {
+        return crossBarcode;
+    }
+    public void setCrossBarcode(String crossBarcode) {
+        this.crossBarcode = crossBarcode;
     }
     public String getChannelSpec() {
         return channelSpec;
