@@ -39,6 +39,7 @@ public class SampleHelper extends EntityHelper {
     private Entity retiredDataFolder;
     private Entity blockedDataFolder;
     private List<Entity> dataSets;
+    private String dataSetNameFilter;
     private Map<String,Entity> dataSetFolderByIdentifier = new HashMap<String,Entity>();
     private Map<String,Entity> dataSetEntityByIdentifier = new HashMap<String,Entity>();
     private Set<Long> samplesToAnnex = new HashSet<Long>();
@@ -81,6 +82,10 @@ public class SampleHelper extends EntityHelper {
             throw new IllegalStateException("Could not set visited flag for "+entity.getName());
         }
         return entityBean.saveOrUpdateEntity(entity);
+    }
+
+    public void setDataSetNameFilter(String dataSetNameFilter) {
+        this.dataSetNameFilter = dataSetNameFilter;
     }
 
     /**
@@ -1029,19 +1034,31 @@ public class SampleHelper extends EntityHelper {
         this.dataSetFolderByIdentifier = new HashMap<String,Entity>();
         this.dataSetEntityByIdentifier = new HashMap<String,Entity>();
         this.dataSets = entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_DATA_SET);
+
+        if (dataSetNameFilter != null) {
+            List<Entity> filteredDataSets = new ArrayList<Entity>();
+            for (Entity dataSet : dataSets) {
+                if (dataSetNameFilter.equals(dataSet.getName())) {
+                    filteredDataSets.add(dataSet);
+                    break;
+                }
+            }
+            dataSets = filteredDataSets;
+        }
+
         if (dataSets.isEmpty()) {
             logger.info("No data sets found for user: "+ownerKey);
             return;
-        }        
+        }
 
         logger.info("Preloading data sets...");
         entityLoader.populateChildren(getTopLevelDataSetFolder());
         for(Entity dataSet : dataSets) {
-            
+
             // Cache the data set
             String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
             dataSetEntityByIdentifier.put(dataSetIdentifier, dataSet);
-            
+
             // Cache the folder
             Entity dataSetFolder = EntityUtils.findChildWithName(getTopLevelDataSetFolder(), dataSet.getName());
             if (dataSetFolder!=null) {
@@ -1051,7 +1068,7 @@ public class SampleHelper extends EntityHelper {
             }
         }
     }
-    
+
     private void loadTopLevelFolder() throws Exception {
         if (topLevelFolder!=null) return;
         logger.info("Getting data set folder...");

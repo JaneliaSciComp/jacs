@@ -12,7 +12,7 @@ DIR=$(cd "$(dirname "$0")"; pwd)
 Vaa3D="$DIR/../Toolkits/Vaa3D/vaa3d"
 BRAINALIGNER="$DIR/../Toolkits/JBA/brainaligner"
 MAGICK="$DIR/../../../ImageMagick-6.7.3-2"
-TIFF="/groups/jacs/jacsShare/JaneliaWorkstationStaging/Builds/install/tiff"
+TIFF="/groups/jacs/jacsHosts/servers/jacs/executables/tiff"
 
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$MAGICK/lib:$TIFF/lib"
 

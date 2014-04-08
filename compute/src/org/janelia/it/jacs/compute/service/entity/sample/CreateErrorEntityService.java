@@ -1,7 +1,5 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import java.io.File;
-
 import org.hibernate.exception.ExceptionUtils;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
@@ -11,6 +9,8 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.StringUtils;
+
+import java.io.File;
 
 /**
  * Creates an error entity based on the given exception, and adds it to the root entity.
@@ -32,11 +32,13 @@ public class CreateErrorEntityService extends AbstractEntityService {
 
     	File outputDir = null;
         FileNode resultFileNode = (FileNode)processData.getItem("RESULT_FILE_NODE");
+        String username = ownerKey.split(":")[1];
+
         if (resultFileNode!=null) {
             outputDir = new File(resultFileNode.getDirectoryPath());
         }
         else {
-            File userFilestore = new File(SystemConfigurationProperties.getString(CENTRAL_DIR_PROP) + File.separator + ownerKey + File.separator);
+            File userFilestore = new File(SystemConfigurationProperties.getString(CENTRAL_DIR_PROP) + File.separator + username + File.separator);
             outputDir = new File(userFilestore, ERRORS_DIR_NAME);
             outputDir.mkdirs();
             logger.warn("No RESULT_FILE_NODE is specified, saving error message to general Errors folder: "+outputDir);

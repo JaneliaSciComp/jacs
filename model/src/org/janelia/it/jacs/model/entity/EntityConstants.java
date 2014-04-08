@@ -82,6 +82,7 @@ public class EntityConstants {
     // Entity Data Attributes
     public static final String ATTRIBUTE_STATUS                              = "Status";
     public static final String ATTRIBUTE_LINE                                = "Line";
+    public static final String ATTRIBUTE_CROSS_BARCODE                       = "Cross Barcode";
     public static final String ATTRIBUTE_SLIDE_CODE                          = "Slide Code";
     public static final String ATTRIBUTE_AGE                                 = "Age";
     public static final String ATTRIBUTE_EFFECTOR                            = "Effector";
