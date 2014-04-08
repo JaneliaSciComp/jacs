@@ -12,7 +12,6 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.cv.Objective;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -49,25 +48,13 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         
         // Clear "visited" flags on all our Samples
         sampleHelper.clearVisited();
+        sampleHelper.setDataSetNameFilter(dataSetName);
         
         Entity topLevelFolder = sampleHelper.getTopLevelDataSetFolder();
 		logger.info("Will put discovered entities into top level entity "+topLevelFolder.getName()+", id="+topLevelFolder.getId());
 
-        Collection<Entity> nameFilteredDataSets;
-        if (dataSetName == null) {
-            nameFilteredDataSets = sampleHelper.getDataSets();
-        } else {
-            nameFilteredDataSets = new ArrayList<Entity>();
-            for (Entity dataSet : sampleHelper.getDataSets()) {
-                if (dataSetName.equals(dataSet.getName())) {
-                    nameFilteredDataSets.add(dataSet);
-                    break;
-                }
-            }
-        }
-
     	logger.info("Processing data sets...");
-        for(Entity dataSet : nameFilteredDataSets) {
+        for(Entity dataSet : sampleHelper.getDataSets()) {
             if (dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_SYNC)==null) {
                 logger.info("Skipping non-SAGE data set: "+dataSet.getName());
             }
@@ -139,6 +126,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		slideImage.setImagePath((String)row.get("path"));
 		slideImage.setTileType((String)row.get("tile"));
 		slideImage.setLine((String)row.get("line"));
+        slideImage.setCrossBarcode((String)row.get("cross_barcode"));
 		slideImage.setChannelSpec((String)row.get("channel_spec"));
 		slideImage.setGender((String)row.get("gender"));
 		slideImage.setArea((String)row.get("area"));

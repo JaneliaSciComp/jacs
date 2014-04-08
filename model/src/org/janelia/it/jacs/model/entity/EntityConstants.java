@@ -8,6 +8,13 @@ package org.janelia.it.jacs.model.entity;
  */
 public class EntityConstants {
 
+    public static final String VALUE_SC_GUID                         = "GUID";
+    public static final String VALUE_SC_NAME                         = "Name";
+    public static final String VALUE_SC_DATE_CREATED                 = "Date Created";
+    public static final String VALUE_SC_DATE_UPDATED                 = "Date Updated";
+    public static final String VALUE_SC_SORT_ORDER_ASC               = "Ascending";
+    public static final String VALUE_SC_SORT_ORDER_DESC              = "Descending";
+    
     public static final String VALUE_PROCESSING                      = "Processing";
     public static final String VALUE_COMPLETE                        = "Complete";
     public static final String VALUE_ERROR                           = "Error";
@@ -82,6 +89,7 @@ public class EntityConstants {
     // Entity Data Attributes
     public static final String ATTRIBUTE_STATUS                              = "Status";
     public static final String ATTRIBUTE_LINE                                = "Line";
+    public static final String ATTRIBUTE_CROSS_BARCODE                       = "Cross Barcode";
     public static final String ATTRIBUTE_SLIDE_CODE                          = "Slide Code";
     public static final String ATTRIBUTE_AGE                                 = "Age";
     public static final String ATTRIBUTE_EFFECTOR                            = "Effector";
@@ -145,6 +153,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_INPUT_IMAGE                         = "Input Image";
     public static final String ATTRIBUTE_SOURCE_SEPARATION                   = "Source Separation";
     public static final String ATTRIBUTE_IS_WARPED_SEPARATION                = "Is Warped Separation";
+    public static final String ATTRIBUTE_SORT_CRITERIA                       = "Sort Criteria";
     
     // Geometric Tree
     //

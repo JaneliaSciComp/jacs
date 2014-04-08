@@ -494,7 +494,7 @@ public class SageDAO {
             "channel_spec.value channel_spec, gender.value gender, age.value age, effector.value effector, " +
             "area.value area, channels.value channels, mounting_protocol.value mounting_protocol, objective.value objective, " +
             "voxel_size_x.value voxel_size_x, voxel_size_y.value voxel_size_y, voxel_size_z.value voxel_size_z, " +
-            "dimension_x.value dimension_x, dimension_y.value dimension_y, dimension_z.value dimension_z " +
+            "dimension_x.value dimension_x, dimension_y.value dimension_y, dimension_z.value dimension_z, cross_barcode.value cross_barcode " +
             "from image i " +
             "join line line on i.line_id = line.id " +
             "join image_property_vw slide_code on i.id = slide_code.image_id and slide_code.type = 'slide_code' " +
@@ -514,6 +514,7 @@ public class SageDAO {
             "left outer join image_property_vw dimension_x on i.id = dimension_x.image_id and dimension_x.type = 'dimension_x' " +
             "left outer join image_property_vw dimension_y on i.id = dimension_y.image_id and dimension_y.type = 'dimension_y' " +
             "left outer join image_property_vw dimension_z on i.id = dimension_z.image_id and dimension_z.type = 'dimension_z' " +
+            "left outer join image_property_vw cross_barcode on i.id = cross_barcode.image_id and cross_barcode.type = 'cross_barcode' " +
             "where i.display=true and i.path is not null " +
             "and data_set.value=? " +
             "order by slide_code.value, i.path";
