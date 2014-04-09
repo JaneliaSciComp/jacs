@@ -1,14 +1,14 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import java.io.File;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.FileUtil;
+
+import java.io.File;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Purge large files owned by the given sample and block further processing on it.
@@ -16,9 +16,6 @@ import org.janelia.it.jacs.shared.utils.FileUtil;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class PurgeAndBlockSampleService extends AbstractEntityService {
-
-    public transient static final String CENTRAL_DIR_PROP = "FileStore.CentralDir";
-    public transient static final String CENTRAL_ARCHIVE_DIR_PROP = "FileStore.CentralDir.Archived";
 
     protected static final String JACS_DATA_DIR =
         SystemConfigurationProperties.getString("JacsData.Dir.Linux");
