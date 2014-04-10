@@ -14,6 +14,8 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  */
 public class ProcessDataAccessor {
 
+    private static final int MAX_STRING_LENGTH = 1000;
+    
     private ContextLogger contextLogger;
     private IProcessData processData;
 
@@ -31,8 +33,12 @@ public class ProcessDataAccessor {
             sb.append(key);
             sb.append(" value of ");
             if (value instanceof String) {
+                String v = (String)value;
+                if (v.length()>MAX_STRING_LENGTH) {
+                    v = v.substring(0, MAX_STRING_LENGTH)+"...";
+                }
                 sb.append('\'');
-                sb.append(value);
+                sb.append(v);
                 sb.append('\'');
             } else {
                 sb.append(value);

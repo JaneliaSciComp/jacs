@@ -1,14 +1,17 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.FileUtil;
-
-import java.io.File;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Purge large files owned by the given sample and block further processing on it.
@@ -25,11 +28,22 @@ public class PurgeAndBlockSampleService extends AbstractEntityService {
     
     public void execute() throws Exception {
         SampleHelper sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
-        Entity sampleEntity = entityHelper.getRequiredSampleEntity(data);
-        sampleEntity = sampleHelper.blockSampleProcessing(sampleEntity.getId());
-        sampleHelper.putInCorrectDataSetFolder(sampleEntity);
-        entityBean.loadLazyEntity(sampleEntity, true);
-        removeLargeImageFiles(sampleEntity, new HashSet<Long>());
+
+        final String sampleEntityIdStr = data.getRequiredItemAsString("SAMPLE_ENTITY_ID");
+        
+        List<Entity> samples = new ArrayList<Entity>();
+        for(String oneSampleEntityIdStr : Task.listOfStringsFromCsvString(sampleEntityIdStr)) {
+            final Entity sampleEntity = entityBean.getEntityById(oneSampleEntityIdStr);
+            samples.add(sampleEntity);
+        }
+        
+        for(Entity sample : samples) {
+            sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_BLOCKED);
+            entityBean.saveOrUpdateEntity(ownerKey, sample);
+            sampleHelper.putInCorrectDataSetFolder(sample);
+            entityBean.loadLazyEntity(sample, true);
+            removeLargeImageFiles(sample, new HashSet<Long>());
+        }
     }
     
     private void removeLargeImageFiles(Entity entity, Set<Long> visited) throws Exception {
@@ -68,7 +82,7 @@ public class PurgeAndBlockSampleService extends AbstractEntityService {
         
         File file = new File(filepath);
         try {
-            logger.info("Removing: "+file.getName());
+            logger.trace("Removing: "+file.getName());
             if (FileUtil.deletePath(filepath)) {
                 throw new Exception("Unknown error attempting to delete path");
             }

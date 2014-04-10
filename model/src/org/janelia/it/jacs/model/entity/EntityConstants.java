@@ -19,6 +19,7 @@ public class EntityConstants {
     public static final String VALUE_COMPLETE                        = "Complete";
     public static final String VALUE_ERROR                           = "Error";
     public static final String VALUE_MARKED                          = "Marked for Rerun";
+    public static final String VALUE_BLOCKED                         = "Blocked";
     
     // Entity Status
     public static final String STATUS_DEPRECATED                     = "Deprecated";
@@ -49,7 +50,6 @@ public class EntityConstants {
     
     // Single Neuron Imaging Types
     public static final String TYPE_ERROR                            = "Error";
-    public static final String TYPE_PROCESSING_BLOCK                 = "Processing Block";
     public static final String TYPE_DATA_SET                         = "Data Set";
     public static final String TYPE_SAMPLE                           = "Sample";
     public static final String TYPE_SUPPORTING_DATA                  = "Supporting Data";
@@ -149,7 +149,6 @@ public class EntityConstants {
     public static final String ATTRIBUTE_PROPERTY                            = "Property"; // has string "<property>=<value>"
     public static final String ATTRIBUTE_WORKSPACE_SAMPLE_IDS                = "Workspace Sample Ids";
     public static final String ATTRIBUTE_CELL_COUNT                          = "Cell Count";
-    public static final String ATTRIBUTE_PROCESSING_BLOCK                    = "Processing Block";
     public static final String ATTRIBUTE_INPUT_IMAGE                         = "Input Image";
     public static final String ATTRIBUTE_SOURCE_SEPARATION                   = "Source Separation";
     public static final String ATTRIBUTE_IS_WARPED_SEPARATION                = "Is Warped Separation";
@@ -203,6 +202,16 @@ public class EntityConstants {
     public static final String VALUE_ONTOLOGY_TERM_TYPE_TEXT                = "Text";
     public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM_TEXT           = "EnumText";
 
+    /**
+     * @deprecated Not used, replaced with a Sample Status value. This will be removed someday.
+     */
+    public static final String TYPE_PROCESSING_BLOCK                 = "Processing Block";
+    
+    /**
+     * @deprecated Not used, replaced with a Sample Status value. This will be removed someday.
+     */
+    public static final String ATTRIBUTE_PROCESSING_BLOCK                    = "Processing Block";
+    
     /**
      * @deprecated Not used. This will be removed someday.
      */

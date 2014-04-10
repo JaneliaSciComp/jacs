@@ -886,8 +886,9 @@ public class SampleHelper extends EntityHelper {
         loadDataSets();
         
         String sampleDataSetIdentifier = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+        String sampleStatus = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
         
-        boolean blocked = sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_PROCESSING_BLOCK)!=null;
+        boolean blocked = EntityConstants.VALUE_BLOCKED.equals(sampleStatus);
         if (blocked) {
             logger.info("  Ensuring blocked sample "+sample.getName()+" is in Blocked Data folder");   
         }
@@ -1105,19 +1106,5 @@ public class SampleHelper extends EntityHelper {
 
     public void setResetSampleNames(boolean resetSampleNames) {
         this.resetSampleNames = resetSampleNames;
-    }
-    
-    public Entity blockSampleProcessing(Long sampleId) throws ComputeException {
-        try {
-            Entity sample = entityBean.getEntityById(sampleId);
-            Entity block = entityBean.createEntity(sample.getOwnerKey(), EntityConstants.TYPE_PROCESSING_BLOCK, "Processing Block");
-            block.setValueByAttributeName(EntityConstants.ATTRIBUTE_MESSAGE, "Further processing is blocked for this sample");
-            entityBean.saveOrUpdateEntity(block);
-            addToParent(sample, block, sample.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_PROCESSING_BLOCK);    
-            return sample;
-        }
-        catch (Exception e) {
-            throw new ComputeException("Error blocking sample from processing",e);
-        }
     }
 }

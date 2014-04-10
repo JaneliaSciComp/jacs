@@ -151,7 +151,7 @@ public class SampleTraversalService extends AbstractEntityService {
         List<Entity> included = new ArrayList<Entity>();
 
         // Ignore blocked samples
-        if (sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_PROCESSING_BLOCK)!=null) {
+        if (isBlocked(sample)) {
             logger.info("Excluded "+sample+" (blocked)");
             return included;
         }
@@ -215,14 +215,20 @@ public class SampleTraversalService extends AbstractEntityService {
         return (status != null && EntityConstants.VALUE_MARKED.equals(status));
     }
     
+    private boolean isBlocked(Entity sample) {
+        String status = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
+        return (status != null && EntityConstants.VALUE_BLOCKED.equals(status));
+    }
+    
     private boolean includeSample(Entity sample) throws Exception {
 
-        // Marking overrides a block, so we check it first
+        if (isBlocked(sample)) {
+            return false;
+        }
+        
         if (includeMarkedSamples && isMarked(sample)) {
             return true;
         }
-        
-        if (sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_PROCESSING_BLOCK)!=null) return false;
         
         if (includeAllSamples) {
             return true;
