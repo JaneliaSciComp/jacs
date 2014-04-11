@@ -2246,7 +2246,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             entity.setOwnerKey(subjectKey);
             saveOrUpdate(entity);
         }
-        loadLazyEntity(subjectKey, entity, false);
         for(EntityData ed : new ArrayList<EntityData>(entity.getEntityData())) {
             if (!ed.getOwnerKey().equals(entity.getOwnerKey())) {
                 ed.setOwnerKey(subjectKey);

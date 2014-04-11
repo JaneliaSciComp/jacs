@@ -313,12 +313,12 @@ public class SampleHelper extends EntityHelper {
                 // Need to annex the sample if possible
                 if ("group:flylight".equals(ownerKey)) {
                     // FlyLight cannot steal samples from others
-                    logger.warn("  Found matching sample, but it is not owned by us or FlyLight, so we can't use it.");
+                    logger.warn("  Found matching sample, but FlyLight cannot steal data from others.");
                     matchedSample = null;
                 } 
                 else {
                     // Annex it later, so we don't hold the connection open for too long
-                    logger.warn("  Found matching sample, owned by FlyLight. We will annex it later.");
+                    logger.warn("  Found matching sample owned by "+matchedSample.getOwnerKey()+". We will annex it later.");
                     samplesToAnnex.add(matchedSample.getId());
                 }
             }
