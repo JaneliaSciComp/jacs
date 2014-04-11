@@ -29,9 +29,6 @@ public class Sample extends Renderable {
         
     @GraphAttribute(EntityConstants.ATTRIBUTE_OBJECTIVE)
     private String objective;
-
-    @GraphAttribute(EntityConstants.ATTRIBUTE_PROCESSING_BLOCK)
-    private EntityNode processingBlock;
     
     @GraphAttribute(EntityConstants.ATTRIBUTE_SLIDE_CODE)
     private String slideCode;
@@ -99,14 +96,6 @@ public class Sample extends Renderable {
 
     public void setObjective(String objective) {
         this.objective = objective;
-    }
-
-    public EntityNode getProcessingBlock() {
-        return processingBlock;
-    }
-
-    public void setProcessingBlock(EntityNode processingBlock) {
-        this.processingBlock = processingBlock;
     }
 
     public String getSlideCode() {

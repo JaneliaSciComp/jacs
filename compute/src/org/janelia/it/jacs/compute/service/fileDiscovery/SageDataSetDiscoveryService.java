@@ -246,7 +246,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
                 }
                 else {
                     entityBean.loadLazyEntity(sample, false);
-                    boolean blocked = sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_PROCESSING_BLOCK)!=null;
+                    boolean blocked = EntityConstants.VALUE_BLOCKED.equals(sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS));
                     // Ignore blocked samples, they don't need to be retired
                     if (!blocked) {
                         logger.info("  Moving unvisited sample to retired data folder: "+sample.getName()+" (id="+sample.getId()+")");
