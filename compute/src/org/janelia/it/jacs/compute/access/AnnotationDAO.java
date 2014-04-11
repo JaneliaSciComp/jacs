@@ -451,8 +451,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
 
         StringBuilder hql = new StringBuilder();
-        hql.append("select e from Entity e ");
-        hql.append("left outer join fetch e.entityActorPermissions p ");
+        hql.append("select distinct e from Entity e ");
+        hql.append("left outer join e.entityActorPermissions p ");
         hql.append("where e.id = :entityId ");
         if (null != subjectKey) {
             hql.append("and (e.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
@@ -508,7 +508,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         
         try {
             StringBuilder hql = new StringBuilder();
-            hql.append("select e from Entity e ");
+            hql.append("select distinct e from Entity e ");
             hql.append("left outer join fetch e.entityActorPermissions p ");
             hql.append("where e.name = :entityName ");
             if (subjectKey!=null) {
@@ -1995,9 +1995,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         if (log.isTraceEnabled()) {
             log.trace("getFullPermissions(entity="+entity+")");    
         }
-        if (EntityUtils.isInitialized(entity.getEntityActorPermissions())) {
-            return entity.getEntityActorPermissions();
-        }
         return getFullPermissions(entity.getOwnerKey(), entity.getId());
     }
     
@@ -2010,12 +2007,13 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         if (entity==null) {
             throw new IllegalArgumentException("Unknown entity: "+entityId);
         }
-        if (subjectKey!=null) {
-            List<String> subjectKeyList = getSubjectKeys(subjectKey);
-            if (!EntityUtils.hasWriteAccess(entity, subjectKeyList)) {
-                throw new DaoException("User "+subjectKey+" does not have the right to view all permissions for "+entity.getId());
-            }
-        }
+        // TODO: revisit this later
+//        if (subjectKey!=null) {
+//            List<String> subjectKeyList = getSubjectKeys(subjectKey);
+//            if (!EntityUtils.hasWriteAccess(entity, subjectKeyList)) {
+//                throw new DaoException("User "+subjectKey+" does not have the right to view all permissions for "+entity.getId());
+//            }
+//        }
         
         return entity.getEntityActorPermissions();
     }
@@ -2058,7 +2056,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         
         if (rootEntity.getOwnerKey().equals(granteeKey)) {
-            throw new IllegalArgumentException("Subject already has owner permission");
+            return null;
         }
         
         try {
@@ -2137,6 +2135,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         
         for(EntityActorPermission permission : getFullPermissions(parent)) {
             grantPermissions(child, permission.getSubjectKey(), permission.getPermissions(), recursive);    
+        }
+        
+        if (!parent.getOwnerKey().equals(child.getOwnerKey())) {
+            grantPermissions(child, parent.getOwnerKey(), "rw", false);
         }
     }
     
@@ -3265,6 +3267,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         if (loadEntityData && entity.getEntityData()!=null) {
             entity.getEntityData().size(); // load entity data
         }
+        entity.getEntityActorPermissions().size(); // ensure permissions are loaded
         return entity;
     }
     
