@@ -17,6 +17,7 @@ import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.mongodb.MongoDbDAO;
+import org.janelia.it.jacs.compute.access.mongodb.MongoDbDomainDAO;
 import org.janelia.it.jacs.compute.access.neo4j.Neo4jBatchDAO;
 import org.janelia.it.jacs.compute.access.neo4j.Neo4jCSVExportDao;
 import org.janelia.it.jacs.compute.access.solr.SolrDAO;
@@ -106,9 +107,24 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     		mongodbDAO.loadAllEntities();
     	}
     	catch (DaoException e) {
-            log.error("Error indexing all entities",e);
-    		throw new ComputeException("Error indexing all entities",e);
+            log.error("Error loading into MongoDB",e);
+    		throw new ComputeException("Error loading into MongoDB",e);
     	}
+    }
+    
+    // TODO: move this to its own bean, or rename this one
+    public void mongoAllDomainObjects(boolean clearDb) throws ComputeException {
+        try {
+            MongoDbDomainDAO mongodbDAO = new MongoDbDomainDAO(log);
+            if (clearDb) {
+                mongodbDAO.dropDatabase();
+            }
+            mongodbDAO.loadAllEntities("group:heberleinlab");
+        }
+        catch (DaoException e) {
+            log.error("Error loading into MongoDB",e);
+            throw new ComputeException("Error loading into MongoDB",e);
+        }
     }
 
     // TODO: move this to its own bean, or rename this one
