@@ -55,4 +55,6 @@ public interface EntityBeanLocal extends EntityBeanRemote {
     
     public void loadLazyEntity(Entity entity, boolean recurse) throws ComputeException;
     public Entity saveBulkEntityTree(Entity root) throws ComputeException;
+    
+    public List<Long> getOrphanEntityIds(String subjectKey) throws ComputeException;
 }

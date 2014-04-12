@@ -2285,6 +2285,73 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         
         return entity;
     }
+
+    public List<Long> getOrphanEntityIds(String subjectKey) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getOrphanEntityIds(subjectKey="+subjectKey+")");
+        }
+        
+        // These types are ok being orphans
+        String[] orphanTypes = {
+                EntityConstants.TYPE_ANNOTATION, 
+                EntityConstants.TYPE_ONTOLOGY_ROOT, 
+                EntityConstants.TYPE_FOLDER, 
+                EntityConstants.TYPE_DATA_SET,
+                EntityConstants.TYPE_COMPARTMENT_SET, 
+                EntityConstants.TYPE_ALIGNMENT_SPACE, 
+        };
+
+        StringBuffer typeCommaList = new StringBuffer();
+        for(String orphanType : orphanTypes) {
+            if (typeCommaList.length()>0) typeCommaList.append(",");
+            typeCommaList.append("'");
+            typeCommaList.append(orphanType);
+            typeCommaList.append("'");
+        }
+        
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        
+        List<Long> entityIds = new ArrayList<Long>();
+        
+        try {
+            StringBuffer sql = new StringBuffer("select e.id from entity e "
+                    + "left outer join entityData ed on e.id=ed.child_entity_id "
+                    + "where ed.id is null "
+                    + "and e.entity_type not in ("+typeCommaList+") ");
+            
+            if (subjectKey!=null) {
+                sql.append("and e.owner_key = ? ");    
+            }
+            
+            sql.append("order by e.entity_type, e.id ");
+
+            conn = getJdbcConnection();
+            stmt = conn.prepareStatement(sql.toString());
+            if (subjectKey!=null) {
+                stmt.setString(1, subjectKey);
+            }
+            
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                entityIds.add(rs.getBigDecimal(1).longValue());
+            }
+        }
+        catch (SQLException e) {
+            throw new DaoException(e);
+        }
+        finally {
+            try {
+                if (stmt!=null) stmt.close();
+                if (conn!=null) conn.close(); 
+            }
+            catch (SQLException e) {
+                log.warn("Ignoring error encountered while closing JDBC connection",e);
+            }
+        }
+        
+        return entityIds;
+    }
     
     /******************************************************************************************************************/
     /** ONTOLOGIES */

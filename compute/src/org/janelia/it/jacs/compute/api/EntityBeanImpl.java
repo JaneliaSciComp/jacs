@@ -823,6 +823,16 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         	throw new ComputeException("Error saving permission",e);
         }
     }
+
+    public List<Long> getOrphanEntityIds(String subjectKey) throws ComputeException {
+        try {
+            return _annotationDAO.getOrphanEntityIds(subjectKey);
+        }
+        catch (DaoException e) {
+            _logger.error("Error getting orphan entity ids for "+subjectKey, e);
+            throw new ComputeException("Error getting orphan entity ids for "+subjectKey,e);
+        }
+    }
     
     private void checkAttributeTypes(Entity... entities) {
         for(Entity entity : entities) {
