@@ -2781,7 +2781,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             sql.append("where a.entity_type = ? ");
             sql.append("and target.id is null ");
             if (subjectKey!=null) {
-                sql.append("and a.ownerKey = ? ");
+                sql.append("and a.owner_key = ? ");
             }
             
             conn = getJdbcConnection();
