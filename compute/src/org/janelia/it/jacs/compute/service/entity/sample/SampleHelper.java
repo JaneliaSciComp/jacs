@@ -131,25 +131,6 @@ public class SampleHelper extends EntityHelper {
             // There is more than one objective. Create a parent Sample, and then a SubSample for each objective.
             sample = getOrCreateSample(slideCode, dataSet, null, null, tileGroupList, null);
             
-            String childObjective = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
-            
-            if (childObjective!=null) {
-                logger.info("  Converting existing "+childObjective+" sample into a child sample: "+sample.getId());
-                
-                Entity childSample = sample;
-                // This is an objective-specific sample which was defined in the past. 
-                // Convert it into a child sample, and create a new parent. 
-                childSample.setName(childSample.getName()+"~"+childObjective);
-                entityBean.saveOrUpdateEntity(sample);
-                
-                // temporarily clear the data set so that the sample is removed from data set folders
-                childSample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, null);
-                putInCorrectDataSetFolder(childSample);
-                
-                // Create a new parent
-                sample = getOrCreateSample(slideCode, dataSet, null, null, tileGroupList, null);
-            }
-            
             synchronizeTiles(sample, tileGroupList, false);
             
             List<String> objectives = new ArrayList<String>(objectiveGroups.keySet());
@@ -172,7 +153,20 @@ public class SampleHelper extends EntityHelper {
             logger.info("  Sample has "+sampleNumSignals+" signal channels, and thus specification '"+sampleChannelSpec+"'");
             
             // Find the sample, if it exists, or create a new one.
+            int prevNumSamplesUpdated = numSamplesUpdated;
             sample = getOrCreateSample(slideCode, dataSet, sampleChannelSpec, objective, tileGroupList, parentSample);
+            
+            if (parentSample!=null && prevNumSamplesUpdated != numSamplesUpdated) {
+                // Updated an existing sub-sample, make sure it's converted fully 
+                EntityData dsiEd = sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+                if (dsiEd!=null) {
+                    logger.info("  Converting existing sample into a sub-sample: "+sample.getId());
+                    entityBean.deleteEntityData(dsiEd);
+                    // Now remove the sub-sample from the data set folder
+                    putInCorrectDataSetFolder(sample);
+                }
+            }
+            
             synchronizeTiles(sample, tileGroupList, true);
             
             // Ensure the sample is a child of something
@@ -319,12 +313,12 @@ public class SampleHelper extends EntityHelper {
                 // Need to annex the sample if possible
                 if ("group:flylight".equals(ownerKey)) {
                     // FlyLight cannot steal samples from others
-                    logger.warn("  Found matching sample, but it is not owned by us or FlyLight, so we can't use it.");
+                    logger.warn("  Found matching sample, but FlyLight cannot steal data from others.");
                     matchedSample = null;
                 } 
                 else {
                     // Annex it later, so we don't hold the connection open for too long
-                    logger.warn("  Found matching sample, owned by FlyLight. We will annex it later.");
+                    logger.warn("  Found matching sample owned by "+matchedSample.getOwnerKey()+". We will annex it later.");
                     samplesToAnnex.add(matchedSample.getId());
                 }
             }
@@ -886,8 +880,9 @@ public class SampleHelper extends EntityHelper {
         loadDataSets();
         
         String sampleDataSetIdentifier = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+        String sampleStatus = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
         
-        boolean blocked = sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_PROCESSING_BLOCK)!=null;
+        boolean blocked = EntityConstants.VALUE_BLOCKED.equals(sampleStatus);
         if (blocked) {
             logger.info("  Ensuring blocked sample "+sample.getName()+" is in Blocked Data folder");   
         }
@@ -1105,19 +1100,5 @@ public class SampleHelper extends EntityHelper {
 
     public void setResetSampleNames(boolean resetSampleNames) {
         this.resetSampleNames = resetSampleNames;
-    }
-    
-    public Entity blockSampleProcessing(Long sampleId) throws ComputeException {
-        try {
-            Entity sample = entityBean.getEntityById(sampleId);
-            Entity block = entityBean.createEntity(sample.getOwnerKey(), EntityConstants.TYPE_PROCESSING_BLOCK, "Processing Block");
-            block.setValueByAttributeName(EntityConstants.ATTRIBUTE_MESSAGE, "Further processing is blocked for this sample");
-            entityBean.saveOrUpdateEntity(block);
-            addToParent(sample, block, sample.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_PROCESSING_BLOCK);    
-            return sample;
-        }
-        catch (Exception e) {
-            throw new ComputeException("Error blocking sample from processing",e);
-        }
     }
 }

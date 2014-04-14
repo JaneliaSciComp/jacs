@@ -12,7 +12,7 @@
     </constructor>
 
     <operation>
-        <description>Run routine maintenance tasks on all Samples for all users</description>
+        <description>Run routine maintenance tasks on all Samples for all users: Clean old results (keep last error, last good run), sync file share to db, compress v3draw files</description>
         <name>runAllSampleMaintenancePipelines</name>
     </operation>
     

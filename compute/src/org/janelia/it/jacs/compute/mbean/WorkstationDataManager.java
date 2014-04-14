@@ -7,6 +7,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +21,9 @@ import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.api.EntityBeanRemote;
+import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.service.entity.OrphanAnnotationCheckerService;
+import org.janelia.it.jacs.compute.service.entity.OrphanEntityCheckerService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FlyScreenDiscoveryService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.SampleRun;
 import org.janelia.it.jacs.compute.service.fly.MaskGuideService;
@@ -42,10 +45,9 @@ import org.janelia.it.jacs.model.tasks.neuron.NeuronMergeTask;
 import org.janelia.it.jacs.model.tasks.tic.SingleTicTask;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
-
-import com.google.common.base.Stopwatch;
 
 /**
  * Created by IntelliJ IDEA.
@@ -196,11 +198,41 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
+    public void runOrphanCheckerServices(Boolean deleteOrphans) {
+        try {
+            logger.info("Building list of users with samples...");
+            Set<String> subjectKeys = new HashSet<String>();
+            for(Entity sample : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_SAMPLE)) {
+                subjectKeys.add(sample.getOwnerKey());
+            }
+            logger.info("Found users with samples: "+subjectKeys);
+            for(String subjectKey : subjectKeys) {
+                runOrphanEntityCheckerService(subjectKey, deleteOrphans);
+                runOrphanAnnotationCheckerService(subjectKey, deleteOrphans, deleteOrphans);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
+    public void runOrphanEntityCheckerService(String user, Boolean deleteOrphanTrees) {
+        try {
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter(OrphanEntityCheckerService.PARAM_deleteOrphanEntityTrees, Boolean.toString(deleteOrphanTrees), null));
+            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(),
+                    taskParameters, "orphanEntityChecker", "Orphan Entity Checker");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("OrphanEntityChecker", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
     public void runOrphanAnnotationCheckerService(String user, Boolean deleteAnnotationsMissingTargets, Boolean deleteAnnotationsMissingTerms) {
         try {
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-            taskParameters.add(new TaskParameter(OrphanAnnotationCheckerService.PARAM_removeAnnotationsMissingTargets, Boolean.toString(deleteAnnotationsMissingTargets), null));
-            taskParameters.add(new TaskParameter(OrphanAnnotationCheckerService.PARAM_removeAnnotationsMissingTerms, Boolean.toString(deleteAnnotationsMissingTerms), null));
+            taskParameters.add(new TaskParameter(OrphanAnnotationCheckerService.PARAM_deleteAnnotationsMissingTargets, Boolean.toString(deleteAnnotationsMissingTargets), null));
+            taskParameters.add(new TaskParameter(OrphanAnnotationCheckerService.PARAM_deleteAnnotationsMissingTerms, Boolean.toString(deleteAnnotationsMissingTerms), null));
             Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(),
                     taskParameters, "orphanAnnotationChecker", "Orphan Annotation Checker");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
@@ -616,9 +648,46 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             int num = countTree(1803555221738094690L); // Count the number of items in the "Pan Lineage 40x" tree
             logger.info("countTree('Pan Lineage 40x') took "+(System.currentTimeMillis()-start)+" ms and returned "+num);
             
+            logger.info("getProjectedResults(Sample->LSM Stack) ...");
+            
+            Long retiredDataId = 1870629090470396002L;
+            String subjectKey = "group:heberleinlab";
+            
             start = System.currentTimeMillis();
-            e.grantPermissions("group:leetlab", 1759767174932594787L, "user:rokickik", "r", true);
-            logger.info("grantPermissions('TZL_stg14-Hey01328_Y2') took "+(System.currentTimeMillis()-start)+" ms");
+            Map<Long,Entity> entityMap = new HashMap<Long,Entity>();
+            List<Long> entityIds = new ArrayList<Long>();
+            for(Entity child : e.getChildEntities("group:heberleinlab", retiredDataId)) {
+                entityIds.add(child.getId());
+                entityMap.put(child.getId(), child);
+            }
+            logger.info("1) getting original entity set ("+entityIds.size()+" ids) took "+(System.currentTimeMillis()-start)+" ms");
+            
+            start = System.currentTimeMillis();
+            List<String> upMapping = new ArrayList<String>();
+            List<String> downMapping = new ArrayList<String>();
+            downMapping.add("Supporting Data");
+            downMapping.add("Image Tile");
+            downMapping.add("LSM Stack");
+            List<MappedId> mappings = e.getProjectedResults(subjectKey, entityIds, upMapping, downMapping);
+            logger.info("2) mapping "+entityIds.size()+" ids took "+(System.currentTimeMillis()-start)+" ms");
+
+            start = System.currentTimeMillis();
+            int i = 0;
+            for(MappedId mappedId : mappings) {
+                Entity original = entityMap.get(mappedId.getOriginalId());
+                Entity mapped = e.getEntityById(subjectKey, mappedId.getMappedId());
+                logger.info(original.getName()+" -> "+mapped.getName());
+                i++;
+            }
+            logger.info("3) retrieval "+i+" ids took "+(System.currentTimeMillis()-start)+" ms");
+            
+            start = System.currentTimeMillis();
+            int count = countTree(retiredDataId);
+            logger.info("4) count entity tree returned "+count+" and took "+(System.currentTimeMillis()-start)+" ms");
+            
+//            start = System.currentTimeMillis();
+//            e.deleteEntityTree(subjectKey, retiredDataId);
+//            logger.info("5) deletion of entity tree took "+(System.currentTimeMillis()-start)+" ms");
             
         }
         catch (Exception ex) {

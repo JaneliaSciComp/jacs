@@ -2,6 +2,8 @@ package org.janelia.it.jacs.compute.service.entity;
 
 import java.util.List;
 
+import org.janelia.it.jacs.model.entity.Entity;
+
 /**
  * Find annotations with missing targets or ontology terms.
  *   
@@ -9,33 +11,36 @@ import java.util.List;
  */
 public class OrphanAnnotationCheckerService extends AbstractEntityService {
 
-    public transient static final String PARAM_removeAnnotationsMissingTargets = "remove annotations missing targets";
-    public transient static final String PARAM_removeAnnotationsMissingTerms = "remove annotations missing terms";
+    public transient static final String PARAM_deleteAnnotationsMissingTargets = "remove annotations missing targets";
+    public transient static final String PARAM_deleteAnnotationsMissingTerms = "remove annotations missing terms";
     
     private boolean deleteAnnotationsMissingTargets = false;
     private boolean deleteAnnotationsMissingTerms = false;
     
     public void execute() throws Exception {
 
-        deleteAnnotationsMissingTargets = Boolean.parseBoolean(task.getParameter(PARAM_removeAnnotationsMissingTargets));
-        deleteAnnotationsMissingTerms = Boolean.parseBoolean(task.getParameter(PARAM_removeAnnotationsMissingTerms));
+        deleteAnnotationsMissingTargets = Boolean.parseBoolean(task.getParameter(PARAM_deleteAnnotationsMissingTargets));
+        deleteAnnotationsMissingTerms = Boolean.parseBoolean(task.getParameter(PARAM_deleteAnnotationsMissingTerms));
 
-        logger.info("Checking annotations for "+ownerKey);
+        logger.info("Finding orphan annotations for "+ownerKey);
         logger.info("    deleteAnnotationsMissingTargets="+deleteAnnotationsMissingTargets);
         logger.info("    deleteAnnotationsMissingTerms="+deleteAnnotationsMissingTerms+" (this feature is not implemented at this time)");
     
-        logger.info("Finding orphan annotations missing targets");
-        List<Long> annotationIds = annotationBean.getOrphanAnnotationIdsMissingTargets(null);
-        logger.info("Found "+annotationIds.size()+" annotations");
+        List<Long> annotationIds = annotationBean.getOrphanAnnotationIdsMissingTargets(ownerKey);
+        logger.info("Found "+annotationIds.size()+" orphan annotations");
         
         int numDeleted = 0;
         
         if (deleteAnnotationsMissingTargets) {
-            logger.info("Deleting "+annotationIds.size()+" annotations");
             for(Long id : annotationIds) {
-                logger.info("Deleting "+id);
             	entityBean.deleteEntityById(id);
             	numDeleted++;
+            }
+        }
+        else {
+            logger.info("Orphan annotations:");
+            for(Entity entity : entityBean.getEntitiesById(annotationIds)) {
+                logger.info(entity.getEntityTypeName()+" - "+entity.getName()+" (id="+entity.getId()+")");
             }
         }
         
