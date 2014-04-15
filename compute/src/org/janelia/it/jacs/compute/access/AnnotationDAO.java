@@ -1711,8 +1711,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             if (existingChildrenIds.contains(childId)) continue;
             if (childId.equals(parentId)) continue;
             
-            Entity child = new Entity();
-            child.setId(childId);
+            Entity child = getEntityById(childId);
             
             EntityData ed = new EntityData();
             ed.setParentEntity(parent);
