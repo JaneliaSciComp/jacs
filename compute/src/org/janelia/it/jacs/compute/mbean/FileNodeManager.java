@@ -108,6 +108,7 @@ public class FileNodeManager implements FileNodeManagerMBean {
             bdfn.setPartitionCount(new Integer("" + pf.getNumPartitions()));
             bdfn.setLength(pf.getNumResidues());
             EJBFactory.getRemoteComputeBean().saveOrUpdateNode(bdfn);
+            logger.debug("Done - createBlastableDatabase");
         }
         catch (Throwable t) {
             t.printStackTrace();

@@ -138,9 +138,9 @@ public class CreateBlastDBService implements IService {
                             + " -description \"" + bdfn.getName() + "\"";
                     SystemCall system = new SystemCall( logger );
                     if ( residueType.equals("peptide") ) {
-                        buildCmd = buildCmd .concat(" -parameters format_aa_into_aa");
+                        buildCmd = buildCmd.concat(" -parameters format_aa_into_aa");
                     } else {
-                        buildCmd = buildCmd .concat(" -parameters format_nt_into_nt_and_aa");
+                        buildCmd = buildCmd.concat(" -parameters format_nt_into_nt_and_aa");
                     }
                     system.emulateCommandLine( buildCmd + " > " + bdfn.getDirectoryPath() + "/tera_formatdb.log", true );
 /*
