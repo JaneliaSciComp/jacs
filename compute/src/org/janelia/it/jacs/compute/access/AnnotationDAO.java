@@ -1707,11 +1707,14 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                     
         Date createDate = new Date();
         
+        List<Entity> childEntities = getEntitiesInList(subjectKey, childrenIds);
+        Map<Long,Entity> childMap = EntityUtils.getEntityMap(childEntities);
+        
         for (Long childId : childrenIds) {
             if (existingChildrenIds.contains(childId)) continue;
             if (childId.equals(parentId)) continue;
             
-            Entity child = getEntityById(childId);
+            Entity child = childMap.get(childId);
             
             EntityData ed = new EntityData();
             ed.setParentEntity(parent);
