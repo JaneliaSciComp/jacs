@@ -49,8 +49,6 @@ import java.util.regex.Pattern;
  */
 public abstract class SubmitDrmaaJobService implements SubmitJobService {
 
-	protected static final Boolean USE_R620_NODES = SystemConfigurationProperties.getBoolean("Grid.UseR620Nodes");
-	
     protected Logger logger;
     protected ContextLogger contextLogger;
 
@@ -255,9 +253,9 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         else {
         	int mem = getRequiredMemoryInGB();
         	int slots = getRequiredSlots();
-        	this.gridResourceSpec = new GridResourceSpec(USE_R620_NODES, mem, slots, isExclusive());
+        	this.gridResourceSpec = new GridResourceSpec(mem, slots, isExclusive());
         	String ns = gridResourceSpec.getNativeSpec();
-        	if (!USE_R620_NODES && isShortJob()) {
+        	if (isShortJob()) {
         		ns += " -l short=true -now n";
         	}
         	String ans = getAdditionalNativeSpecification();
