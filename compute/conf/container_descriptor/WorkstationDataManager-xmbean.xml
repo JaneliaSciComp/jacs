@@ -132,6 +132,31 @@
     </operation>
     
     <operation>
+        <description>Run all orphan checker services for all subjects</description>
+        <name>runOrphanCheckerServices</name>
+        <parameter>
+           <description>Should we delete the orphans that we find?</description>
+           <name>deleteOrphans</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+    </operation>
+    
+    <operation>
+        <description>Check for orphan annotations, and possibly delete them.</description>
+        <name>runOrphanEntityCheckerService</name>
+        <parameter>
+           <description>User to run as (e.g. "flylight")</description>
+           <name>user</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Should we delete orphaned entity trees?</description>
+           <name>deleteOrphanTrees</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
+    </operation>
+    
+    <operation>
         <description>Check for orphan annotations, and possibly delete them.</description>
         <name>runOrphanAnnotationCheckerService</name>
         <parameter>

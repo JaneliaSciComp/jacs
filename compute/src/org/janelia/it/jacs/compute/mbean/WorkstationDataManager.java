@@ -23,6 +23,7 @@ import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.api.EntityBeanRemote;
 import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.service.entity.OrphanAnnotationCheckerService;
+import org.janelia.it.jacs.compute.service.entity.OrphanEntityCheckerService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FlyScreenDiscoveryService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.SampleRun;
 import org.janelia.it.jacs.compute.service.fly.MaskGuideService;
@@ -44,9 +45,9 @@ import org.janelia.it.jacs.model.tasks.neuron.NeuronMergeTask;
 import org.janelia.it.jacs.model.tasks.tic.SingleTicTask;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
-import org.springframework.util.StopWatch;
 
 /**
  * Created by IntelliJ IDEA.
@@ -197,11 +198,41 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
+    public void runOrphanCheckerServices(Boolean deleteOrphans) {
+        try {
+            logger.info("Building list of users with samples...");
+            Set<String> subjectKeys = new HashSet<String>();
+            for(Entity sample : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_SAMPLE)) {
+                subjectKeys.add(sample.getOwnerKey());
+            }
+            logger.info("Found users with samples: "+subjectKeys);
+            for(String subjectKey : subjectKeys) {
+                runOrphanEntityCheckerService(subjectKey, deleteOrphans);
+                runOrphanAnnotationCheckerService(subjectKey, deleteOrphans, deleteOrphans);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
+    public void runOrphanEntityCheckerService(String user, Boolean deleteOrphanTrees) {
+        try {
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter(OrphanEntityCheckerService.PARAM_deleteOrphanEntityTrees, Boolean.toString(deleteOrphanTrees), null));
+            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(),
+                    taskParameters, "orphanEntityChecker", "Orphan Entity Checker");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("OrphanEntityChecker", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
     public void runOrphanAnnotationCheckerService(String user, Boolean deleteAnnotationsMissingTargets, Boolean deleteAnnotationsMissingTerms) {
         try {
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-            taskParameters.add(new TaskParameter(OrphanAnnotationCheckerService.PARAM_removeAnnotationsMissingTargets, Boolean.toString(deleteAnnotationsMissingTargets), null));
-            taskParameters.add(new TaskParameter(OrphanAnnotationCheckerService.PARAM_removeAnnotationsMissingTerms, Boolean.toString(deleteAnnotationsMissingTerms), null));
+            taskParameters.add(new TaskParameter(OrphanAnnotationCheckerService.PARAM_deleteAnnotationsMissingTargets, Boolean.toString(deleteAnnotationsMissingTargets), null));
+            taskParameters.add(new TaskParameter(OrphanAnnotationCheckerService.PARAM_deleteAnnotationsMissingTerms, Boolean.toString(deleteAnnotationsMissingTerms), null));
             Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(),
                     taskParameters, "orphanAnnotationChecker", "Orphan Annotation Checker");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);

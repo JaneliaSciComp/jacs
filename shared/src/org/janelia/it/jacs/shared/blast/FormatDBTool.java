@@ -2,7 +2,6 @@
 package org.janelia.it.jacs.shared.blast;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.shared.utils.SystemCall;
 
 import java.io.File;
@@ -27,62 +26,62 @@ public class FormatDBTool {
     protected String _partitionPrefix;
     private Logger logger;
 
-    public static void main(String[] args) {
-        Properties prop = new Properties();
-        prop.setProperty(FormatDBTool.FORMATDB_PATH_PROP,
-                SystemConfigurationProperties.getString("Executables.ModuleBase")+
-                    SystemConfigurationProperties.getString(FormatDBTool.FORMATDB_PATH_PROP));
-        prop.setProperty(SystemCall.SCRATCH_DIR_PROP,
-                SystemConfigurationProperties.getString(SystemCall.SCRATCH_DIR_PROP));
-        prop.setProperty(SystemCall.SHELL_PATH_PROP,
-                SystemConfigurationProperties.getString(SystemCall.SHELL_PATH_PROP));
-        prop.setProperty(SystemCall.STREAM_DIRECTOR_PROP,
-                SystemConfigurationProperties.getString(SystemCall.STREAM_DIRECTOR_PROP));
-        // NOTE: Might need to make the partition prefix a formal switch
-        // I'm not aware of anyone who runs this from main.
-        FormatDBTool fdb = new FormatDBTool(prop, Logger.getLogger(FormatDBTool.class), "p_");
-        boolean formatProteins = false;
-        String input = null;
-        for (int i = 0; i < args.length;) {
-            if (args[i].equals("-p")) {
-                formatProteins = true;
-                i++;
-            }
-            else if (args[i].equals("-i")) {
-                input = args[i + 1];
-                i += 2;
-            }
-            else {
-                i++;
-            }
-        }
-        if (input == null) {
-            usage();
-        }
-        try {
-            File inputFile = new File(input);
-            if (inputFile.isDirectory()) {
-                if (formatProteins) {
-                    fdb.formatProteinDir(inputFile);
-                }
-                else {
-                    fdb.formatNucleotideDir(inputFile);
-                }
-            }
-            else if (inputFile.isFile()) {
-                if (formatProteins) {
-                    fdb.formatProteinFile(inputFile);
-                }
-                else {
-                    fdb.formatNucleotideFile(inputFile);
-                }
-            }
-        }
-        catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
+//    public static void main(String[] args) {
+//        Properties prop = new Properties();
+//        prop.setProperty(FormatDBTool.FORMATDB_PATH_PROP,
+//                SystemConfigurationProperties.getString("Executables.ModuleBase")+
+//                    SystemConfigurationProperties.getString(FormatDBTool.FORMATDB_PATH_PROP));
+//        prop.setProperty(SystemCall.SCRATCH_DIR_PROP,
+//                SystemConfigurationProperties.getString(SystemCall.SCRATCH_DIR_PROP));
+//        prop.setProperty(SystemCall.SHELL_PATH_PROP,
+//                SystemConfigurationProperties.getString(SystemCall.SHELL_PATH_PROP));
+//        prop.setProperty(SystemCall.STREAM_DIRECTOR_PROP,
+//                SystemConfigurationProperties.getString(SystemCall.STREAM_DIRECTOR_PROP));
+//        // NOTE: Might need to make the partition prefix a formal switch
+//        // I'm not aware of anyone who runs this from main.
+//        FormatDBTool fdb = new FormatDBTool(prop, Logger.getLogger(FormatDBTool.class), "p_");
+//        boolean formatProteins = false;
+//        String input = null;
+//        for (int i = 0; i < args.length;) {
+//            if (args[i].equals("-p")) {
+//                formatProteins = true;
+//                i++;
+//            }
+//            else if (args[i].equals("-i")) {
+//                input = args[i + 1];
+//                i += 2;
+//            }
+//            else {
+//                i++;
+//            }
+//        }
+//        if (input == null) {
+//            usage();
+//        }
+//        try {
+//            File inputFile = new File(input);
+//            if (inputFile.isDirectory()) {
+//                if (formatProteins) {
+//                    fdb.formatProteinDir(inputFile);
+//                }
+//                else {
+//                    fdb.formatNucleotideDir(inputFile);
+//                }
+//            }
+//            else if (inputFile.isFile()) {
+//                if (formatProteins) {
+//                    fdb.formatProteinFile(inputFile);
+//                }
+//                else {
+//                    fdb.formatNucleotideFile(inputFile);
+//                }
+//            }
+//        }
+//        catch (Exception ex) {
+//            ex.printStackTrace();
+//        }
+//    }
+//
     private static void usage() {
         System.err.println("usage: [-p] -i <source file/dir> ");
         System.exit(1);
@@ -91,7 +90,7 @@ public class FormatDBTool {
     public FormatDBTool(Properties props, Logger logger, String partitionPrefix) {
         if (props != null) {
             properties = props;
-            String formatDBPathString = SystemConfigurationProperties.getString("Executables.ModuleBase")+props.getProperty(FORMATDB_PATH_PROP);
+            String formatDBPathString = props.getProperty(FORMATDB_PATH_PROP);
             if (formatDBPathString != null) formatDBPath = formatDBPathString;
         }
         this.logger = logger;

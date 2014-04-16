@@ -24,6 +24,8 @@ public interface WorkstationDataManagerMBean {
 	public void runSolrTreeIndexing(Long rootId);
 
 	// System Administration Pipelines
+	public void runOrphanCheckerServices(Boolean deleteOrphans);
+	public void runOrphanEntityCheckerService(String user, Boolean deleteOrphanTrees);
 	public void runOrphanAnnotationCheckerService(String user, Boolean deleteAnnotationsMissingTargets, Boolean deleteAnnotationsMissingTerms);
 	public void runUpgradeData();
     public void runUpgradeUserData(String user);

@@ -485,6 +485,49 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
+    /**
+     * split a neurite into two
+     *
+     * @param neuron = neuron containing the neurite
+     * @param newRoot = annotation within neurite that will become root of new neurite,
+     *                taking all its descendants with it
+     * @throws DaoException
+     */
+    public void splitNeurite(TmNeuron neuron, TmGeoAnnotation newRoot) throws DaoException {
+        if (newRoot == null || neuron == null) {
+            return;
+        }
+
+        if (!neuron.getGeoAnnotationMap().containsKey(newRoot.getId())) {
+            throw new DaoException(String.format("input neuron %d doesn't contain new root annotation %d",
+                    neuron.getId(), newRoot.getId()));
+        }
+
+        // is it already a root?  then you can't split it (should have been 
+        //  checked before it gets here)
+        if (newRoot.getParent() == null) {
+            return;
+        }
+
+        // turns out this is an easy, one step operation; all we need to do is
+        //  change the annotation's parent to the neuron entity, and change
+        //  its type to GEO_ROOT from GEO_TREE
+        try {
+            // change new root to GEO_ROOT entity data type; reset its parent
+            //  to the neuron (as one does for a root)
+            EntityData ed = (EntityData) computeDAO.genericLoad(EntityData.class, newRoot.getId());
+            ed.setEntityAttrName(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE);
+            String valueString = TmGeoAnnotation.toStringFromArguments(newRoot.getId(), neuron.getId(),
+                    newRoot.getIndex(), newRoot.getX(), newRoot.getY(), newRoot.getZ(), newRoot.getComment());
+            ed.setValue(valueString);
+            annotationDAO.saveOrUpdate(ed);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+
+    }
+
     public List<TmWorkspaceDescriptor> getWorkspacesForBrainSample(Long brainSampleId, String ownerKey) throws DaoException {
         try {
             // Validate sample
