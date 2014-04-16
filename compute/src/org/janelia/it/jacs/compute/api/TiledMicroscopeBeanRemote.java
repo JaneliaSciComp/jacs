@@ -29,6 +29,8 @@ public interface TiledMicroscopeBeanRemote {
 
     public void rerootNeurite(TmNeuron neuron, TmGeoAnnotation newRoot) throws ComputeException;
 
+    public void splitNeurite(TmNeuron neuron, TmGeoAnnotation newRoot) throws ComputeException;
+
     public void updateGeometricAnnotation(TmGeoAnnotation geoAnnotation,
                                           int index, double x, double y, double z, String comment) throws ComputeException;
 
