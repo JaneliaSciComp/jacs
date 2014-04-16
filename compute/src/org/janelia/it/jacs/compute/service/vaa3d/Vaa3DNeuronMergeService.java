@@ -1,9 +1,5 @@
 package org.janelia.it.jacs.compute.service.vaa3d;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.util.ArrayList;
-
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
@@ -15,6 +11,10 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.neuron.NeuronMergeTask;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.util.ArrayList;
+
 /**
  * Merge neuron fragments.
  * Parameters:
@@ -25,6 +25,9 @@ public class Vaa3DNeuronMergeService extends SubmitDrmaaJobService {
 
     protected static final String CONVERT_BASE_CMD = SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("ImageMagick.Bin.Path")+"/convert";
+
+    protected static final String CONVERT_LIB_DIR = SystemConfigurationProperties.getString("Executables.ModuleBase") +
+            SystemConfigurationProperties.getString("ImageMagick.Lib.Path");
 
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
     private static final String CONFIG_PREFIX = "neuMergeConfiguration.";
@@ -88,6 +91,7 @@ public class Vaa3DNeuronMergeService extends SubmitDrmaaJobService {
                 commaSeparatedFragmentList, newOutputMIPPath, newOutputStackPath));
         script.append("\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix());
+        script.append("export LD_LIBRARY_PATH="+CONVERT_LIB_DIR+"\n");
         script.append(CONVERT_BASE_CMD).append(" -flip ").append(newOutputMIPPath).append(" ").append(finalOutputMIPPath).append(" \n");
         script.append("rm -f ").append(newOutputMIPPath).append("\n");
         writer.write(script.toString());
