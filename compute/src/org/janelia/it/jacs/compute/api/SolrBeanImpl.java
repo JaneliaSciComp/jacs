@@ -119,7 +119,7 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
             if (clearDb) {
                 mongodbDAO.dropDatabase();
             }
-            mongodbDAO.loadAllEntities("group:heberleinlab");
+            mongodbDAO.loadAllEntities();
         }
         catch (DaoException e) {
             log.error("Error loading into MongoDB",e);
