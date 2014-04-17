@@ -75,7 +75,6 @@ public class SageDAO {
     }
 
     public SageDAO(Logger log) {
-        getSessionFactory();
         this.log = log;
     }
 
@@ -126,6 +125,7 @@ public class SageDAO {
             resultSet = pStatement.executeQuery();
 
         } catch (SQLException e) {
+            //noinspection ConstantConditions
             ResultSetIterator.close(resultSet, pStatement, connection, log);
             throw new DaoException("Error querying SAGE", e);
         }
@@ -154,6 +154,7 @@ public class SageDAO {
             resultSet = pStatement.executeQuery();
 
         } catch (SQLException e) {
+            //noinspection ConstantConditions
             ResultSetIterator.close(resultSet, pStatement, connection, log);
             throw new DaoException("Error querying SAGE", e);
         }
@@ -185,6 +186,7 @@ public class SageDAO {
             resultSet = pStatement.executeQuery();
 
         } catch (SQLException e) {
+            //noinspection ConstantConditions
             ResultSetIterator.close(resultSet, pStatement, connection, log);
             throw new DaoException("Error querying SAGE", e);
         }
@@ -256,38 +258,22 @@ public class SageDAO {
         }
         
         Session session = getCurrentSession();
-        StringBuffer hql = new StringBuffer("select term from CvTerm term ");
-        hql.append("join term.cv cv ");
-        hql.append("where cv.name = :cvName ");
-        hql.append("and term.name = :termName ");
-        Query query = session.createQuery(hql.toString());
+        Query query = session.createQuery("select term from CvTerm term " +
+                                          "join term.cv cv " +
+                                          "where cv.name = :cvName " +
+                                          "and term.name = :termName ");
         query.setString("cvName", cvName);
         query.setString("termName", termName);
         return (CvTerm)query.uniqueResult();
     }
-    
-    public CvTerm getCvTermByName(String name) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("getLineIdByName(name="+name+")");    
-        }
-        
-        Session session = getCurrentSession();
-        StringBuffer hql = new StringBuffer("select term from CvTerm term ");
-        hql.append("where term.name = :name ");
-        Query query = session.createQuery(hql.toString());
-        query.setString("name", name);
-        return (CvTerm)query.uniqueResult();
-    }
-    
+
     public Line getLineByName(String name) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("getLineIdByName(name="+name+")");    
         }
         
         Session session = getCurrentSession();
-        StringBuffer hql = new StringBuffer("select line from Line line ");
-        hql.append("where line.name = :name ");
-        Query query = session.createQuery(hql.toString());
+        Query query = session.createQuery("select line from Line line where line.name = :name ");
         query.setString("name", name);
         return (Line)query.uniqueResult();
     }
@@ -297,9 +283,7 @@ public class SageDAO {
             log.trace("getImageByName(imageName="+imageName+")");    
         }
         Session session = getCurrentSession();
-        StringBuffer hql = new StringBuffer("select image from Image image ");
-        hql.append("where image.name = :name ");
-        Query query = session.createQuery(hql.toString());
+        Query query = session.createQuery("select image from Image image where image.name = :name ");
         query.setString("name", imageName);
         return (Image)query.uniqueResult();
     }
@@ -309,52 +293,36 @@ public class SageDAO {
             log.trace("getSecondaryImageByName(imageName="+imageName+")");    
         }
         Session session = getCurrentSession();
-        StringBuffer hql = new StringBuffer("select image from SecondaryImage image ");
-        hql.append("where image.name = :name ");
-        Query query = session.createQuery(hql.toString());
+        Query query = session.createQuery("select image from SecondaryImage image where image.name = :name ");
         query.setString("name", imageName);
         return (SecondaryImage)query.uniqueResult();
     }
-    
-    public List<Image> getImagesByCreator(String createdBy) {
-        if (log.isTraceEnabled()) {
-            log.trace("getImagesByCreator(createdBy="+createdBy+")");    
-        }
-        Session session = getCurrentSession();
-        StringBuffer hql = new StringBuffer("select image from Image image ");
-        hql.append("where image.createdBy = :createdBy ");
-        Query query = session.createQuery(hql.toString());
-        query.setString("createdBy", createdBy);
-        return (List<Image>)query.list();
-    }
-    
-    public List<Image> getImagesByProperty(CvTerm term, String value) {
-        if (log.isTraceEnabled()) {
-            log.trace("getImagesByProperty(term="+term.getName()+", value="+value+")");    
-        }
-        Session session = getCurrentSession();
-        StringBuffer hql = new StringBuffer("select image from Image image ");
-        hql.append("join image.imageProperties props ");
-        hql.append("join props.type term ");
-        hql.append("where term.id = :termId ");
-        hql.append("and props.value like :value ");
-        Query query = session.createQuery(hql.toString());
-        query.setInteger("termId", term.getId());
-        query.setString("value", value);
-        return (List<Image>)query.list();
-    }
-    
+
+//    public List<Image> getImagesByProperty(CvTerm term, String value) {
+//        if (log.isTraceEnabled()) {
+//            log.trace("getImagesByProperty(term="+term.getName()+", value="+value+")");
+//        }
+//        Session session = getCurrentSession();
+//        Query query = session.createQuery("select image from Image image " +
+//                                          "join image.imageProperties props " +
+//                                          "join props.type term " +
+//                                          "where term.id = :termId and props.value like :value ");
+//        query.setInteger("termId", term.getId());
+//        query.setString("value", value);
+//        //noinspection unchecked
+//        return (List<Image>)query.list();
+//    }
+
     public List<Image> getImages(List<Integer> ids) {
         if (log.isTraceEnabled()) {
             log.trace("getImages(ids.size="+ids.size()+")");    
         }
         if (ids.isEmpty()) return new ArrayList<Image>();
         Session session = getCurrentSession();
-        StringBuffer hql = new StringBuffer("select image from Image image ");
-        hql.append("where image.id in (:ids) ");
-        Query query = session.createQuery(hql.toString());
+        Query query = session.createQuery("select image from Image image where image.id in (:ids) ");
         query.setParameterList("ids", ids);
-        return (List<Image>)query.list();
+        //noinspection unchecked
+        return (List<Image>) query.list();
     }
     
     public Image saveImage(Image image) throws DaoException {
@@ -383,19 +351,6 @@ public class SageDAO {
             throw new DaoException("Error creating new primary image in SAGE", e);
         }
         return secondaryImage;
-    }
-    
-    public void removeImage(Image image) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("removeImage(image.name="+image.getName()+")");    
-        }
-        
-        try {
-            getCurrentSession().delete(image);
-        } 
-        catch (Exception e) {
-            throw new DaoException("Error deleting primary image in SAGE", e);
-        }
     }
     
     /**
