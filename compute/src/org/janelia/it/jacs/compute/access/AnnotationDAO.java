@@ -1097,6 +1097,20 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         return paths;
     }
     
+    public List<Entity> getCommonRootsWithAncestor(String subjectKey, Long entityId) throws DaoException {
+        List<Entity> commonRoots = new ArrayList<Entity>();
+        for(Entity parent : getParentEntities(subjectKey, entityId)) {
+            if (EntityUtils.isCommonRoot(parent)) {
+                commonRoots.add(parent);
+            }
+            else {
+                commonRoots.addAll(getCommonRootsWithAncestor(subjectKey, parent.getId()));
+            }
+        }
+        
+        return commonRoots;
+    }
+    
     public List<Long> getPathToRoot(String subjectKey, Long entityId, Long rootId) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("getPathToRoot(subjectKey="+subjectKey+", entityId="+entityId+", rootId="+rootId+")");
@@ -2092,13 +2106,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             });
             
             // Check if the grantee already has a link to the entity
-            boolean granteeHasLink = false;
-            for(Entity parent : getParentEntities(null, rootEntity.getId())) {
-                if (EntityUtils.hasReadAccess(parent, getSubjectKeys(granteeKey))) {
-                    granteeHasLink = true;
-                    break;
-                }
-            }
+            boolean granteeHasLink = !getCommonRootsWithAncestor(granteeKey, rootEntity.getId()).isEmpty();
             
             if (!granteeHasLink) {
                 // Grantee has no link, so expose it in the Shared Data folder
