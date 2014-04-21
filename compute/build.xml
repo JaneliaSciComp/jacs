@@ -353,15 +353,16 @@
 			<pathelement location="${common.module}/build/jars/jacs-shared.jar"/>
             <fileset dir="${basedir}/../common" includes="**/*.jar"/>
         </path>
-        <path id="test.run.classpath.additional"> <!-- Add jars needed to run tests -->
+
+        <!-- additional classes needed to compile and/or run tests -->
+        <path id="test.classpath.additional">
+            <pathelement path="${model.module}/build/test/classes"/> <!-- shared test classes -->
             <pathelement location="${compute.module}/scripts/blast/"/>
             <fileset file="${compute.module}/scripts/blast/blast.parameters"/>
-            <pathelement location="/conf/jacs.properties" />
-            <pathelement location="${model.module}/build/jars/jacs-model.jar"/>
-            <pathelement location="${common.module}/build/jars/jacs-shared.jar"/>
-            <fileset dir="${basedir}/../common" includes="**/*.jar"/>
+            <pathelement location="${shared.module}/conf" />
         </path>
-	</target>
+
+    </target>
 
     <!-- deploys to app server area -->
     <target name="windows-deploy-[your-server]-dev" depends="setup" description="Deploy ear and jars to development server">

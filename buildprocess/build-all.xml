@@ -37,14 +37,10 @@
         </subant>
     </target>
 
-	<!-- Clean-all: runs 'clean' on all sub-modules -->
-	<target name="clean-all" description="Runs 'clean' on all sub-modules">
-		<iterate-modules target="clean"/>
-	</target>
-
-    <!-- Clean-tests: runs 'clean-reports' on all sub-modules -->
-    <target name="clean-all-reports" description="Runs 'clean-reports all sub-modules">
-        <iterate-modules target="clean-reports"/>
+    <target name="clean-all"
+            description="runs 'clean' on all sub-modules and removes aggregate test summary reports"
+            depends="clean">
+        <iterate-modules target="clean"/>
     </target>
 
     <!-- Deploy-all: runs 'deploy' on all sub-modules -->
@@ -52,38 +48,43 @@
         <iterate-modules target="deploy"/>
     </target>
 
-	<!-- Test-all: runs 'run-tests' on all sub-modules and generates an aggregate report -->
-    <target name="test-all" depends="clean-reports, make-reports-dir" description="Runs 'run-tests' on all sub-modules">
-		<subant target="run-tests" verbose="true">
-			<!-- Override modules so they won't fail if a test fails/errors.  We'll do that at the end of all the modules -->
-			<property name="fail.build.on.test.failure" value="false"/>
-			<property name="fail.build.on.test.error" value="false"/>
+    <target name="build-all-and-run-all-fast-tests"
+            description="Runs 'run-fast-tests' on all sub-modules and generates an aggregate report"
+            depends="setup, build-all, run-all-fast-tests"/>
 
-			<!--<fileset dir="${project.root}" includes="*/build.xml"/>-->
-			<filelist dir="${project.root}">
-                <!-- Works -->
-                <file name="shared/build.xml"/>
+    <target name="run-all-fast-tests"
+            description="Runs 'run-fast-tests' on all sub-modules and generates an aggregate report"
+            depends="setup, make-reports-dir">
+
+        <subant target="run-fast-tests" verbose="true">
+
+            <filelist dir="${project.root}">
+                <!-- This order satisfies dependecies -->
                 <file name="model/build.xml"/>
+                <file name="shared/build.xml"/>
                 <file name="compute/build.xml"/>
+                <file name="console/build.xml"/>
 
                 <!-- Needs work -->
                 <!--<file name="jacs/build.xml"/>-->
-			</filelist>
-		</subant>
+            </filelist>
+        </subant>
 
-		<!-- Aggregate all the tests into a summary report - ${project.root}/index.html -->
-		<junitreport todir="${test.reports.dir}">
-			<fileset dir="${project.root}">
-				<include name="*/build/test/reports/*.xml"/>
-			</fileset>
-			<report format="frames" todir="${test.reports.dir}"/>
-		</junitreport>
+        <!-- Aggregate all the tests into a summary report - ${project.root}/index.html -->
+        <junitreport todir="${test.reports.dir}">
+            <fileset dir="${project.root}">
+                <include name="*/build/test/reports/TEST-*.xml"/>
+            </fileset>
+            <report format="frames" todir="${test.reports.dir}" styledir="${basedir}/../buildprocess/junit/junitreport-styledir"/>
+        </junitreport>
 
-		 <!-- Now fail if any module's tests produced errors or failures -->
-		<property name="fail.build.on.test.failure" value="true"/>
-		<property name="fail.build.on.test.error" value="true"/>
-		<!--<antcall target="fail-build-if-test-problems"/>-->
-        <!-- TODO: still doesn't work.  Perhaps test.error/test.failure aren't carried to this point? -->
-		<!--<fail-build-if-test-problems-macrodef failBuildOnTestError="true" failBuildOnTestFailure="true"/>-->
-	</target>
+
+        <echo>view summary test results at file://${test.reports.dir}/index.html</echo>
+
+        <!-- TODO: remove these fail lines if they are not needed for Hudson -->
+        <!--<fail message="test failure detected, check test results" if="test.failure" />-->
+        <!--<fail message="test error detected, check test results" if="test.error" />-->
+
+    </target>
+
 </project>

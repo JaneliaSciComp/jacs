@@ -23,117 +23,92 @@
   -->
 
 <project name="build-module-test">
+
     <!-- Import all the generic module targets -->
     <import file="../buildprocess/build-module.xml"/>
 
-    <!-- Have to explicitly define junit task -->
-    <!--<taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">-->
-		<!--<classpath>-->
-			<!--<pathelement location="${basedir}/../common/lib/junit.jar"/>-->
-			<!--<pathelement location="${ant.home}/lib/ant-junit.jar"/>-->
-		<!--</classpath>-->
-	<!--</taskdef>-->
+    <target name="make-test-classes-dir">
+        <mkdir dir="${build.test.classes.dir}"/>
+    </target>
 
-    <!-- Runs all tests (i.e. "test/**/*Test.java" in a module).  Reports are outputted to build/reports. -->
-	<!-- Note: You have to add junit.jar (can be found in common module's lib dir) to your $ANT_HOME/lib, -->
-	<!-- and have the optional ant jar (ant-junit.jar) in $ANT_HOME/lib -->
-	<target name="run-tests" depends="compile, compile-tests, clean-reports, make-reports-dir" if="test.src.dir.exists">
-        <!-- place jacs.properties file into jar for successfuly and noiseless inclusion
-             into test classpath
-        -->
-        <jar destfile="${build.jars.dir}/vcis_properties.jar">
-            <fileset file="${shared.module}/conf/jacs.properties"/>
-        </jar>
+    <target name="make-reports-dir">
+        <mkdir dir="${test.reports.dir}"/>
+    </target>
 
-		<!-- Aggregate the final classpath -->
-        <path id="test.run.classpath.final">
-			<path refid="test.run.classpath.additional"/>
-			<!-- set by the calling module -->
-			<fileset dir="${lib.dir}" includes="*.jar"/>
-            <!--<fileset dir="${common.module}/JAXB-2.1.5/" includes="*.jar"/>-->
-            <fileset dir="${common.module}/Spring/" includes="*.jar"/>
-            <fileset dir="${common.dir}/JUnit-Lib-3.8.1" includes="*.jar"/>
-            <!-- new jar file based jacs.properties file classpath add -->
-            <fileset file="${build.jars.dir}/vcis_properties.jar"/>
-            <!-- old add of jacs.properties file to classpath
-                 this causes a ton of JAXBContext exception messages to appear
-                 and also doesn't seem to actually make the props file available
-            <pathelement location="${shared.module}/conf/"/>
-            <fileset file="${shared.module}/conf/jacs.properties"/>
-            -->
-			<!-- dependant jars -->
-			<pathelement location="${build.classes.dir}"/>
-            <!-- local src classes -->
-			<pathelement location="${build.test.classes.dir}"/>
-			<!-- local test classes -->
-		</path>
+    <target name="compile-tests"
+            depends="setup, compile, make-test-classes-dir"
+            if="test.src.dir.exists">
 
-        <!-- default log4j config location if not already set -->
-        <property name="test.log4j.config" value="${basedir}/../buildprocess/config/log4j-test.properties"/>
-		<!-- run -->
-		<junit printsummary="yes" showoutput="yes" haltonfailure="no"
-			   errorproperty="test.error" failureproperty="test.failure">
-            <jvmarg value="-Djava.endorsed.dirs=C:\\dev\\Camera\\common\\JAXB-2.1.5"/>
-            <classpath refid="test.run.classpath.final"/>
-            <sysproperty key="java.endorsed.dirs" value="${common.dir}/JAXB-2.1.5"/>
-            <sysproperty key="shared.testfiles.root" value="${shared.testfiles.root}"/>          
-            <sysproperty key="log4j.configuration" value="file:${test.log4j.config}" />
-            <formatter type="xml"/>
-			<batchtest fork="no" todir="${test.reports.dir}">
-				<fileset dir="${test.src.dir}">
-					<include name="**/*TestSuite.java"/>
-					<exclude name="**/AllTests.java"/>
-				</fileset>
-			</batchtest>
-		</junit>
+        <!-- Aggregate the final classpath -->
+        <path id="test.compile.classpath.final">
+            <fileset dir="${common.dir}/JUnit-Lib-4.11">
+                <include name="*.jar"/>
+                <exclude name="*-src.jar"/>
+            </fileset>
+            <path refid="compile.classpath.final"/>      <!-- set by the calling module -->
+            <path refid="test.classpath.additional"/>    <!-- set by the calling module -->
+            <pathelement location="${build.classes.dir}"/>
+        </path>
 
-		<!-- Generate report -->
-		<antcall target="report"/>
+        <!-- Compile -->
+        <javac srcdir="${test.src.dir}" destdir="${build.test.classes.dir}"
+               includeantruntime="false"
+               debug="${compile.debug}" optimize="${compile.optimize}" deprecation="${compile.deprecation}">
+            <classpath refid="test.compile.classpath.final"/>
+        </javac>
 
-		<!-- Fail if a test failure or error occurred (and caller signalled to do so) -->
-		<!--<antcall target="fail-build-if-test-problems"/>-->
-		<!--<fail-build-if-test-problems-macrodef failBuildOnTestError="${fail.build.on.test.error}"-->
-											  <!--failBuildOnTestFailure="${fail.build.on.test.failure}"/>-->
-	</target>
-
-	<target name="compile-tests" depends="setup, make-lib-dir, make-test-classes-dir, compile" if="test.src.dir.exists">
-		<!-- Aggregate the final classpath -->
-		<path id="test.compile.classpath.final">
-			<path refid="compile.classpath.additional"/>   <!-- set by the calling module -->
-			<fileset dir="${lib.dir}" includes="*.jar"/>   <!-- dependant jars -->
-            <fileset dir="${common.module}/Spring/" includes="*.jar"/>
-            <fileset dir="${common.dir}/JUnit-Lib-3.8.1" includes="*.jar"/>   <!-- dependant jars -->
-			<pathelement location="${build.classes.dir}"/> <!-- model classes -->
-			<!--<pathelement location="${basedir}/../common/build/test/classes"/> --> <!-- base test classes -->
-		</path>
-		<!-- Compile -->
-		<javac srcdir="${test.src.dir}" destdir="${build.test.classes.dir}"
-			   debug="${compile.debug}" optimize="${compile.optimize}" deprecation="${compile.deprecation}">
-			<classpath refid="test.compile.classpath.final"/>
-		</javac>
-
-        <copy todir="${build.test.classes.dir}" >
-            <fileset file="${test.src.dir}/resources/jndi.properties"/>
+        <copy todir="${build.test.classes.dir}" failonerror="false">
+            <fileset file="${test.resources.dir}/jndi.properties"/>
         </copy>
 
-	</target>
+    </target>
 
-	<target name="make-test-classes-dir">
-		<mkdir dir="${build.test.classes.dir}"/>
-	</target>
+    <target name="run-fast-tests"
+            depends="setup, compile-tests, clean-reports, make-reports-dir"
+            if="test.src.dir.exists"
+            description="Runs all fast tests in a module.  Reports are output to build/reports.">
 
-	<target name="make-reports-dir">
-		<mkdir dir="${test.reports.dir}"/>
-	</target>
+        <!-- aggregate the final classpath -->
+        <path id="test.run.classpath.final">
+            <path refid="test.compile.classpath.final"/>
+            <fileset dir="${lib.dir}" includes="*.jar"/>
+            <pathelement location="${build.classes.dir}"/>
+            <pathelement location="${build.test.classes.dir}"/>
+            <pathelement location="${test.resources.dir}"/>
+        </path>
 
-	<!-- Generates summary report after tests are run - ${test.reports.dir}/index.html -->
-	<target name="report">
-		<junitreport todir="${test.reports.dir}">
-			<fileset dir="${test.reports.dir}">
-				<include name="*.xml"/>
-			</fileset>
-			<report format="frames" todir="${test.reports.dir}"/>
-		</junitreport>
-	</target>
+        <!-- run the tests -->
+        <!-- NOTE: fork option is needed to set the run directory up one level ...
+                   which is needed to get simple-jndi configuration to work -->
+        <junit printsummary="on" showoutput="on"
+               fork="on" forkmode="once" dir="${basedir}/.."
+               haltonfailure="off"
+               errorproperty="test.error" failureproperty="test.failure">
+            <classpath refid="test.run.classpath.final"/>
+            <sysproperty key="java.endorsed.dirs" value="${common.dir}/JAXB-2.1.5"/>
+            <sysproperty key="shared.testfiles.root" value="${shared.testfiles.root}"/>
+            <formatter type="xml"/>
+            <batchtest fork="on" todir="${test.reports.dir}" >
+                <fileset dir="${test.src.dir}">
+                    <include name="**/*FastTestsSuite.java"/>
+                </fileset>
+            </batchtest>
+        </junit>
+
+        <!-- generate junitreport -->
+        <antcall target="report"/>
+
+    </target>
+
+    <target name="report"
+            description="genrates summary report of junit test results">
+        <junitreport todir="${test.reports.dir}">
+            <fileset dir="${test.reports.dir}">
+                <include name="TEST-*.xml"/>
+            </fileset>
+            <report format="frames" todir="${test.reports.dir}" styledir="${basedir}/../buildprocess/junit/junitreport-styledir"/>
+        </junitreport>
+        <echo>view ${ant.project.name} module test results at file://${test.reports.dir}/index.html</echo>
+    </target>
 
 </project>

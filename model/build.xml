@@ -40,10 +40,10 @@
             <fileset dir="${common.dir}/Spring" includes="log4j-1.2.14.jar"/>
         </path>
 
-        <path id="test.run.classpath.additional"> <!-- Add additional jars needed to run tests -->
-            <fileset dir="${gwt.home}" includes="**/*.jar"/>
-            <fileset dir="${common.dir}/Spring" includes="hibernate3.jar"/>
+        <!-- additional classes needed to compile and/or run tests -->
+        <path id="test.classpath.additional">
         </path>
+
     </target>
 
     <!-- Add the source code to the jar (for GWT). Note that the generic jar target is called first -->
@@ -62,6 +62,7 @@
             </fileset>
         </jar>
     </target>
+
     <!-- Define the set of targets that should be run to completely build this module. -->
     <target name="build" depends="jar"/>
 

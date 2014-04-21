@@ -41,9 +41,8 @@
 		<!-- unit test stuff -->
 		<property name="build.test.classes.dir" value="${build.dir}/test/classes"/>
 		<property name="test.src.dir" value="${basedir}/test"/>
+        <property name="test.resources.dir" value="${test.src.dir}/resources"/>
 		<property name="test.reports.dir" value="${build.dir}/test/reports"/>
-		<property name="fail.build.on.test.failure" value="true"/>
-		<property name="fail.build.on.test.error"   value="true"/>
 
 		<!-- Common compilation settings -->
 		<property name="compile.classpath" value=" "/>
@@ -83,12 +82,28 @@
 
     </target>
 
-	<!-- Sets properties noting whether some resources exist -->
-	<target name="set-conditions">
-		<available property="lib.dir.exists"      value="true" file="${lib.dir}"      type="dir"/>
-		<available property="src.dir.exists"      value="true" file="${src.dir}"      type="dir"/>
-		<available property="test.src.dir.exists" value="true" file="${test.src.dir}" type="dir"/>
-        <available property="build.dir.exists"    value="true" file="${build.dir}"    type="dir"/>
+    <macrodef name="echo-directory-condition">
+        <attribute name="directoryPropertyName"/>
+        <sequential>
+            <echo message="${ant.project.name} module @{directoryPropertyName} is ${@{directoryPropertyName}} (exists = ${@{directoryPropertyName}.exists})" />
+        </sequential>
+    </macrodef>
+
+    <!-- Sets properties noting whether some resources exist -->
+    <target name="set-conditions">
+        <available property="lib.dir.exists"          value="true" file="${lib.dir}"      type="dir"/>
+        <available property="src.dir.exists"          value="true" file="${src.dir}"      type="dir"/>
+        <available property="test.src.dir.exists"     value="true" file="${test.src.dir}" type="dir"/>
+        <available property="build.dir.exists"        value="true" file="${build.dir}"    type="dir"/>
+        <available property="test.reports.dir.exists" value="true" file="${test.reports.dir}" type="dir"/>
+
+        <!-- uncomment for debug -->
+        <!--<echo-directory-condition directoryPropertyName="lib.dir" />-->
+        <!--<echo-directory-condition directoryPropertyName="src.dir" />-->
+        <!--<echo-directory-condition directoryPropertyName="test.src.dir" />-->
+        <!--<echo-directory-condition directoryPropertyName="build.dir" />-->
+        <!--<echo-directory-condition directoryPropertyName="test.reports.dir" />-->
+
     </target>
 
 </project>
