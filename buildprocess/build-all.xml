@@ -48,9 +48,9 @@
         <iterate-modules target="deploy"/>
     </target>
 
-    <target name="build-all-and-run-all-fast-tests"
+    <target name="clean-build-and-run-all-fast-tests"
             description="Runs 'run-fast-tests' on all sub-modules and generates an aggregate report"
-            depends="setup, build-all, run-all-fast-tests"/>
+            depends="setup, clean-all, build-all, run-all-fast-tests"/>
 
     <target name="run-all-fast-tests"
             description="Runs 'run-fast-tests' on all sub-modules and generates an aggregate report"
