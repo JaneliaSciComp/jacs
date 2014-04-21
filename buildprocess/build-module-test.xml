@@ -98,6 +98,9 @@
         <!-- generate junitreport -->
         <antcall target="report"/>
 
+        <fail message="${ant.project.name} module test failure detected, check results" if="test.failure" />
+        <fail message="${ant.project.name} module test error detected, check results" if="test.error" />
+
     </target>
 
     <target name="report"

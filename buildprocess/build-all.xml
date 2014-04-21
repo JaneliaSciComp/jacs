@@ -56,7 +56,7 @@
             description="Runs 'run-fast-tests' on all sub-modules and generates an aggregate report"
             depends="setup, make-reports-dir">
 
-        <subant target="run-fast-tests" verbose="true">
+        <subant target="run-fast-tests" verbose="true" failonerror="true">
 
             <filelist dir="${project.root}">
                 <!-- This order satisfies dependecies -->
@@ -80,10 +80,6 @@
 
 
         <echo>view summary test results at file://${test.reports.dir}/index.html</echo>
-
-        <!-- TODO: remove these fail lines if they are not needed for Hudson -->
-        <!--<fail message="test failure detected, check test results" if="test.failure" />-->
-        <!--<fail message="test error detected, check test results" if="test.error" />-->
 
     </target>
 
