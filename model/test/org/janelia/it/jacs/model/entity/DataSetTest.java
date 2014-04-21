@@ -57,7 +57,7 @@ public class DataSetTest {
 
         final String xml =
                 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
-                "TESTFAILURE<dataSet>\n" +
+                "<dataSet>\n" +
                 "    <dataSetIdentifier>" + dataSetIdentifier + "</dataSetIdentifier>\n" +
                 "    <name>" + name + "</name>\n" +
                 "    <sageSync>" + sageSync + "</sageSync>\n" +
