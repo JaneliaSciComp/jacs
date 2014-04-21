@@ -6,6 +6,14 @@ public class ObjectiveSample {
     
     private List<SampleTile> tiles;
     private List<SamplePipelineRun> pipelineRuns;
+
+    public SamplePipelineRun getLatestRun() {
+        if (pipelineRuns==null) return null;
+        if (pipelineRuns.isEmpty()) return null;
+        return pipelineRuns.get(pipelineRuns.size()-1);
+    }
+
+    /* EVERYTHING BELOW IS AUTO-GENERATED */
     
     public List<SampleTile> getTiles() {
         return tiles;

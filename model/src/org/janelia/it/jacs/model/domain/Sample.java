@@ -7,7 +7,7 @@ import java.util.Map;
 
 import org.jongo.marshall.jackson.oid.Id;
 
-public class Sample {
+public class Sample implements DomainObject {
 
     @Id
     private Long id;
@@ -39,21 +39,45 @@ public class Sample {
     public void setName(String name) {
         this.name = name;
     }
+    /* (non-Javadoc)
+     * @see org.janelia.it.jacs.model.domain.RequiresAuthorization#getOwnerKey()
+     */
+    @Override
     public String getOwnerKey() {
         return ownerKey;
     }
+    /* (non-Javadoc)
+     * @see org.janelia.it.jacs.model.domain.RequiresAuthorization#setOwnerKey(java.lang.String)
+     */
+    @Override
     public void setOwnerKey(String ownerKey) {
         this.ownerKey = ownerKey;
     }
+    /* (non-Javadoc)
+     * @see org.janelia.it.jacs.model.domain.RequiresAuthorization#getReaders()
+     */
+    @Override
     public List<String> getReaders() {
         return readers;
     }
+    /* (non-Javadoc)
+     * @see org.janelia.it.jacs.model.domain.RequiresAuthorization#setReaders(java.util.List)
+     */
+    @Override
     public void setReaders(List<String> readers) {
         this.readers = readers;
     }
+    /* (non-Javadoc)
+     * @see org.janelia.it.jacs.model.domain.RequiresAuthorization#getWriters()
+     */
+    @Override
     public List<String> getWriters() {
         return writers;
     }
+    /* (non-Javadoc)
+     * @see org.janelia.it.jacs.model.domain.RequiresAuthorization#setWriters(java.util.List)
+     */
+    @Override
     public void setWriters(List<String> writers) {
         this.writers = writers;
     }

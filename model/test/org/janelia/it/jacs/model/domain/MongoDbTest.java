@@ -21,6 +21,7 @@ public class MongoDbTest {
     protected static DB db;
     protected static MongoCollection  folderCollection;
     protected static MongoCollection  sampleCollection;
+    protected static MongoCollection  neuronFragmentCollection;
     protected static Jongo jongo;
     
     @BeforeClass
@@ -36,6 +37,7 @@ public class MongoDbTest {
                         .build());
             folderCollection = jongo.getCollection("folder").withWriteConcern(WriteConcern.UNACKNOWLEDGED);
             sampleCollection = jongo.getCollection("sample").withWriteConcern(WriteConcern.UNACKNOWLEDGED);
+            neuronFragmentCollection = jongo.getCollection("neuronFragment").withWriteConcern(WriteConcern.UNACKNOWLEDGED);
         }
         catch (UnknownHostException e) {
             throw new RuntimeException("Unknown host given in MongoDB.ServerURL value in system properties: "+MONGO_SERVER_URL);

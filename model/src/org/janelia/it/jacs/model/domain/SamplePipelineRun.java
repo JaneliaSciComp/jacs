@@ -1,12 +1,13 @@
 package org.janelia.it.jacs.model.domain;
 
-import java.util.Date;
 
 public class SamplePipelineRun extends PipelineResult {
 
     private String name;
     private String pipelineProcess;
-
+    
+    /* EVERYTHING BELOW IS AUTO-GENERATED */
+    
     public String getName() {
         return name;
     }
