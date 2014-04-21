@@ -6,8 +6,10 @@ public class SampleTile {
     
     private String name;
     private String anatomicalArea;
-    private List<LSMImage> lsms;
+    private List<Long> lsmIds;
 
+    /* EVERYTHING BELOW IS AUTO-GENERATED */
+    
     public String getName() {
         return name;
     }
@@ -24,12 +26,12 @@ public class SampleTile {
         this.anatomicalArea = anatomicalArea;
     }
 
-    public List<LSMImage> getLsms() {
-        return lsms;
+    public List<Long> getLsmIds() {
+        return lsmIds;
     }
 
-    public void setLsms(List<LSMImage> lsms) {
-        this.lsms = lsms;
+    public void setLsmIds(List<Long> lsms) {
+        this.lsmIds = lsms;
     }
     
     

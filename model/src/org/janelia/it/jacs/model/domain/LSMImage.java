@@ -1,15 +1,27 @@
 package org.janelia.it.jacs.model.domain;
 
+import java.util.List;
 
-public class LSMImage {
+import org.jongo.marshall.jackson.oid.Id;
 
+
+public class LSMImage implements DomainObject, HasMips {
+
+    @Id
+    private Long id;
+    private Long sampleId;
+    private String ownerKey;
+    private List<String> readers;
+    private List<String> writers;
     private String age;
     private String anatomicalArea;
     private String channelColors;
     private String channelDyeNames;
     private String chanSpec;
-    private String filepath;
-    private String mipFilepath;
+    private String filename;
+    private String lsmFilepath;
+    private String signalMipFilepath;
+    private String referenceMipFilepath;
     private String effector;
     private String gender;
     private String line;
@@ -20,6 +32,39 @@ public class LSMImage {
     private String pixelResolution;
     private Integer sageId;
     private String slideCode;
+
+    /* EVERYTHING BELOW IS AUTO-GENERATED */
+    
+    public Long getId() {
+        return id;
+    }
+    public void setId(Long id) {
+        this.id = id;
+    }
+    public Long getSampleId() {
+        return sampleId;
+    }
+    public void setSampleId(Long sampleId) {
+        this.sampleId = sampleId;
+    }
+    public String getOwnerKey() {
+        return ownerKey;
+    }
+    public void setOwnerKey(String ownerKey) {
+        this.ownerKey = ownerKey;
+    }
+    public List<String> getReaders() {
+        return readers;
+    }
+    public void setReaders(List<String> readers) {
+        this.readers = readers;
+    }
+    public List<String> getWriters() {
+        return writers;
+    }
+    public void setWriters(List<String> writers) {
+        this.writers = writers;
+    }
     public String getAge() {
         return age;
     }
@@ -50,17 +95,31 @@ public class LSMImage {
     public void setChanSpec(String chanSpec) {
         this.chanSpec = chanSpec;
     }
-    public String getFilepath() {
-        return filepath;
+    public String getFilename() {
+        return filename;
     }
-    public void setFilepath(String filepath) {
-        this.filepath = filepath;
+    public void setFilename(String filename) {
+        this.filename = filename;
     }
-    public String getMipFilepath() {
-        return mipFilepath;
+    public String getLsmFilepath() {
+        return lsmFilepath;
     }
-    public void setMipFilepath(String mipFilepath) {
-        this.mipFilepath = mipFilepath;
+    public void setLsmFilepath(String lsmFilepath) {
+        this.lsmFilepath = lsmFilepath;
+    }
+    @Override
+    public String getSignalMipFilepath() {
+        return signalMipFilepath;
+    }
+    public void setSignalMipFilepath(String signalMipFilepath) {
+        this.signalMipFilepath = signalMipFilepath;
+    }
+    @Override
+    public String getReferenceMipFilepath() {
+        return referenceMipFilepath;
+    }
+    public void setReferenceMipFilepath(String referenceMipFilepath) {
+        this.referenceMipFilepath = referenceMipFilepath;
     }
     public String getEffector() {
         return effector;
@@ -122,5 +181,6 @@ public class LSMImage {
     public void setSlideCode(String slideCode) {
         this.slideCode = slideCode;
     }
+    
     
 }

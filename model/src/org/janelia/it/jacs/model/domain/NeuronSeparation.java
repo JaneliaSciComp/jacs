@@ -4,36 +4,15 @@ import java.util.List;
 
 public class NeuronSeparation extends PipelineResult {
 
-    String consolidatedSignalFile;
-    String consolidatedLabelFile;
-    String referenceFile;
-    List<NeuronFragment> neuronFragments;
+    List<Long> neuronFragmentIds;
+
+    /* EVERYTHING BELOW IS AUTO-GENERATED */
     
-    public String getConsolidatedSignalFile() {
-        return consolidatedSignalFile;
+    public void setNeuronFragmentIds(List<Long> neuronFragmentIds) {
+        this.neuronFragmentIds = neuronFragmentIds;
     }
-    public void setConsolidatedSignalFile(String consolidatedSignalFile) {
-        this.consolidatedSignalFile = consolidatedSignalFile;
+    public List<Long> getNeuronFragmentIds() {
+        return neuronFragmentIds;
     }
-    public String getConsolidatedLabelFile() {
-        return consolidatedLabelFile;
-    }
-    public void setConsolidatedLabelFile(String consolidatedLabelFile) {
-        this.consolidatedLabelFile = consolidatedLabelFile;
-    }
-    public String getReferenceFile() {
-        return referenceFile;
-    }
-    public void setReferenceFile(String referenceFile) {
-        this.referenceFile = referenceFile;
-    }
-    public List<NeuronFragment> getNeuronFragments() {
-        return neuronFragments;
-    }
-    public void setNeuronFragments(List<NeuronFragment> neuronFragments) {
-        this.neuronFragments = neuronFragments;
-    }
-    
-    
     
 }
