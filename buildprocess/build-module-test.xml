@@ -82,8 +82,8 @@
                    which is needed to get simple-jndi configuration to work -->
         <junit printsummary="on" showoutput="on"
                fork="on" forkmode="once" dir="${basedir}/.."
-               haltonfailure="off"
-               errorproperty="test.error" failureproperty="test.failure">
+               haltonfailure="off" errorproperty="test.error" failureproperty="test.failure"
+               maxmemory="768m">
             <classpath refid="test.run.classpath.final"/>
             <sysproperty key="java.endorsed.dirs" value="${common.dir}/JAXB-2.1.5"/>
             <sysproperty key="shared.testfiles.root" value="${shared.testfiles.root}"/>
