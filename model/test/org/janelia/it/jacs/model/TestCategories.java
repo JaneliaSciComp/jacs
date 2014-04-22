@@ -28,4 +28,15 @@ public interface TestCategories {
 
     /** Marks tests used to verify performance requirements. */
     public interface PerformanceTests extends SlowTests {}
+
+    /**
+     * Marks tests that are not ready for inclusion in any continuous integration process.
+     * Allows these tests to be easily excluded from automated runs.
+     */
+    public interface PrototypeTests {}
+
+    /**
+     * Marks tests that require manual interaction with a user interface.
+     */
+    public interface InteractiveTests {}
 }
