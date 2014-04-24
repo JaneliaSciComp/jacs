@@ -10,15 +10,9 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.cv.Objective;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Discovers images in SAGE which are part of data sets defined in the workstation, and creates or updates Samples 
@@ -222,7 +216,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 
         // Make sure to fetch fresh samples, so that we have the latest visited flags
         Map<Long, Entity> samples = new HashMap<Long, Entity>();
-        for(Entity entity : entityBean.getChildEntities(dataSetFolder.getId())) {
+        for(Entity entity : EntityUtils.getChildrenOfType(dataSetFolder, EntityConstants.TYPE_SAMPLE)) {
             samples.put(entity.getId(), entity);
         }
         
@@ -236,7 +230,10 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         
         List<EntityData> dataSetEds = new ArrayList<EntityData>(dataSetFolder.getEntityData());
         for(EntityData ed : dataSetEds) {
-            Entity sample = samples.get(ed.getChildEntity().getId());
+            Entity tmpChildEntity = ed.getChildEntity();
+            // Ignore Data Set attributes that have no child target entity
+            if (null==tmpChildEntity||null==tmpChildEntity.getId()) continue;
+            Entity sample = samples.get(tmpChildEntity.getId());
             if (sample==null || !sample.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE)) continue;
             if (sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISITED)==null) {
                 // Sample was not visited this time around, it should be:
