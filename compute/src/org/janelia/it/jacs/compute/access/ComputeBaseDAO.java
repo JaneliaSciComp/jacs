@@ -607,6 +607,16 @@ public class ComputeBaseDAO {
             return externalSession;
     }
 
+    public Session openNewExternalSession() {
+        externalSession = getSessionFactory().openSession();
+        return externalSession;
+    }
+    
+    public void closeExternalSession() {
+        if (externalSession!=null) externalSession.close();
+        externalSession = null;
+    }
+    
     public Session getSession() {
         return getCurrentSession();
     }

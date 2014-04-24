@@ -2,11 +2,13 @@ package org.janelia.it.jacs.model.domain;
 
 import java.util.List;
 
-public class SampleTile {
+public class SampleTile implements HasMips {
     
     private String name;
     private String anatomicalArea;
-    private List<Long> lsmIds;
+    private List<Reference> lsmReferences;
+    private String signalMipFilepath;
+    private String referenceMipFilepath;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     
@@ -26,13 +28,27 @@ public class SampleTile {
         this.anatomicalArea = anatomicalArea;
     }
 
-    public List<Long> getLsmIds() {
-        return lsmIds;
+    public List<Reference> getLsmReferences() {
+        return lsmReferences;
     }
 
-    public void setLsmIds(List<Long> lsms) {
-        this.lsmIds = lsms;
+    public void setLsmReferences(List<Reference> lsmReferences) {
+        this.lsmReferences = lsmReferences;
     }
-    
-    
+
+    public String getSignalMipFilepath() {
+        return signalMipFilepath;
+    }
+
+    public void setSignalMipFilepath(String signalMipFilepath) {
+        this.signalMipFilepath = signalMipFilepath;
+    }
+
+    public String getReferenceMipFilepath() {
+        return referenceMipFilepath;
+    }
+
+    public void setReferenceMipFilepath(String referenceMipFilepath) {
+        this.referenceMipFilepath = referenceMipFilepath;
+    }
 }

@@ -1,7 +1,6 @@
 package org.janelia.it.jacs.model.domain;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,7 +24,7 @@ public class Sample implements DomainObject {
     private String slideCode;
     private String status;
     private String visited;
-    private Map<String,ObjectiveSample> objectives = new HashMap<String,ObjectiveSample>();
+    private Map<String,ObjectiveSample> objectives;
     
     public Long getId() {
         return id;

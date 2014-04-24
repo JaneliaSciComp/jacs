@@ -3,7 +3,6 @@ package org.janelia.it.jacs.model.domain;
 
 public class SampleAlignmentResult extends PipelineResult implements HasMips {
 
-    private String name;
     private String stackFilepath;
     private String verifyMovieFilepath;
     private String signalMipFilepath;
@@ -17,14 +16,6 @@ public class SampleAlignmentResult extends PipelineResult implements HasMips {
     private String objective;
     
     /* EVERYTHING BELOW IS AUTO-GENERATED */
-    
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
     
     public String getStackFilepath() {
         return stackFilepath;

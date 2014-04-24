@@ -9,6 +9,7 @@ public class NeuronFragment implements DomainObject, HasMips, HasMaskChan, HasFi
     @Id
     private Long id;
     private Long sampleId;
+    private Long separationId;
     private String ownerKey;
     private List<String> readers;
     private List<String> writers;
@@ -19,20 +20,8 @@ public class NeuronFragment implements DomainObject, HasMips, HasMaskChan, HasFi
     private String maskFilepath;
     private String chanFilepath;
 
-    @Override
-    public String getFilepath() {
-        return getSeparationFilepath();
-    }
-
-    public String getSeparationFilepath() {
-        return filepath;
-    }
-    public void setSeparationFilepath(String separationFilepath) {
-        this.filepath = separationFilepath;
-    }
-
     /* EVERYTHING BELOW IS AUTO-GENERATED */
-    
+
     public Long getId() {
         return id;
     }
@@ -44,6 +33,12 @@ public class NeuronFragment implements DomainObject, HasMips, HasMaskChan, HasFi
     }
     public void setSampleId(Long sampleId) {
         this.sampleId = sampleId;
+    }
+    public Long getSeparationId() {
+        return separationId;
+    }
+    public void setSeparationId(Long separationId) {
+        this.separationId = separationId;
     }
     public String getOwnerKey() {
         return ownerKey;
@@ -68,6 +63,13 @@ public class NeuronFragment implements DomainObject, HasMips, HasMaskChan, HasFi
     }
     public void setNumber(Integer number) {
         this.number = number;
+    }
+    @Override
+    public String getFilepath() {
+        return filepath;
+    }
+    public void setFilepath(String filepath) {
+        this.filepath = filepath;
     }
     public String getReferenceMipFilepath() {
         return referenceMipFilepath;
