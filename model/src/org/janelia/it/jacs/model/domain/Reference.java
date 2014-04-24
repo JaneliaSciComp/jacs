@@ -2,21 +2,28 @@ package org.janelia.it.jacs.model.domain;
 
 public class Reference {
     
-    private String type;
-    private Long id;
+    private String targetType;
+    private Long targetId;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
+
+    public Reference() {
+    }
+    public Reference(String targetType, Long targetId) {
+        this.targetType = targetType;
+        this.targetId = targetId;
+    }
     
-    public String getType() {
-        return type;
+    public String getTargetType() {
+        return targetType;
     }
-    public void setType(String type) {
-        this.type = type;
+    public void setTargetType(String type) {
+        this.targetType = type;
     }
-    public Long getId() {
-        return id;
+    public Long getTargetId() {
+        return targetId;
     }
-    public void setId(Long id) {
-        this.id = id;
+    public void setTargetId(Long id) {
+        this.targetId = id;
     }   
 }

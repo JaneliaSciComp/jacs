@@ -1,18 +1,20 @@
 package org.janelia.it.jacs.model.domain;
 
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
 public class NeuronSeparation extends PipelineResult {
 
-    List<Long> neuronFragmentIds;
-
+    @JsonUnwrapped
+    private ReverseReference fragments;
+    
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     
-    public void setNeuronFragmentIds(List<Long> neuronFragmentIds) {
-        this.neuronFragmentIds = neuronFragmentIds;
+    public ReverseReference getFragmentsReference() {
+        return fragments;
     }
-    public List<Long> getNeuronFragmentIds() {
-        return neuronFragmentIds;
+
+    public void setFragmentsReference(ReverseReference fragmentsReference) {
+        this.fragments = fragmentsReference;
     }
     
 }
