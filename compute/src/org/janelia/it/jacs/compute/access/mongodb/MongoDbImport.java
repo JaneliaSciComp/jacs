@@ -4,10 +4,12 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.hibernate.FlushMode;
@@ -46,7 +48,6 @@ import org.jongo.Jongo;
 import org.jongo.MongoCollection;
 import org.jongo.marshall.jackson.JacksonMapper;
 
-import com.fasterxml.jackson.databind.MapperFeature;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
@@ -56,7 +57,7 @@ import com.mongodb.WriteConcern;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class MongoDbDomainDAO extends AnnotationDAO {
+public class MongoDbImport extends AnnotationDAO {
 	
 	protected static final String MONGO_SERVER_URL = SystemConfigurationProperties.getString("MongoDB.ServerURL");
 	protected static final String MONGO_DATABASE = SystemConfigurationProperties.getString("MongoDB.Database");
@@ -72,7 +73,7 @@ public class MongoDbDomainDAO extends AnnotationDAO {
     protected MongoCollection ontologyCollection;
     protected Map<Long,Long> ontologyTermIdToOntologyId = new HashMap<Long,Long>();
     
-    public MongoDbDomainDAO(Logger log) {
+    public MongoDbImport(Logger log) {
     	super(log);
     }
     
@@ -83,15 +84,13 @@ public class MongoDbDomainDAO extends AnnotationDAO {
         	DB db = m.getDB(MONGO_DATABASE);
         	jongo = new Jongo(db, 
         	        new JacksonMapper.Builder()
-        	            .enable(MapperFeature.AUTO_DETECT_GETTERS)
-                        .enable(MapperFeature.AUTO_DETECT_SETTERS)
         	            .build());
-        	folderCollection = jongo.getCollection("folder").withWriteConcern(WriteConcern.UNACKNOWLEDGED);
-        	sampleCollection = jongo.getCollection("sample").withWriteConcern(WriteConcern.UNACKNOWLEDGED);
-            lsmCollection = jongo.getCollection("lsm").withWriteConcern(WriteConcern.UNACKNOWLEDGED);
-        	fragmentCollection = jongo.getCollection("fragment").withWriteConcern(WriteConcern.UNACKNOWLEDGED);
-        	annotationCollection = jongo.getCollection("annotation").withWriteConcern(WriteConcern.UNACKNOWLEDGED);
-        	ontologyCollection = jongo.getCollection("ontology").withWriteConcern(WriteConcern.UNACKNOWLEDGED);
+        	folderCollection = jongo.getCollection("folder");
+        	sampleCollection = jongo.getCollection("sample");
+            lsmCollection = jongo.getCollection("lsm");
+        	fragmentCollection = jongo.getCollection("fragment");
+        	annotationCollection = jongo.getCollection("annotation");
+        	ontologyCollection = jongo.getCollection("ontology");
         }
 		catch (UnknownHostException e) {
 			throw new RuntimeException("Unknown host given in MongoDB.ServerURL value in system properties: "+MONGO_SERVER_URL);
@@ -104,16 +103,15 @@ public class MongoDbDomainDAO extends AnnotationDAO {
         
         long startAll = System.currentTimeMillis(); 
 
+        log.info("Adding folders");
+        Deque<Entity> rootFolders = new LinkedList<Entity>(getEntitiesWithTag(null, EntityConstants.ATTRIBUTE_COMMON_ROOT));
+        loadRootFolders(rootFolders);
+
         log.info("Adding ontologies");
         Deque<Entity> ontologyRoots = new LinkedList<Entity>(getEntitiesByTypeName(null, EntityConstants.TYPE_ONTOLOGY_ROOT));
         loadOntologies(ontologyRoots);
         
-        log.info("Mapped "+ontologyTermIdToOntologyId.size()+" terms to ontologies");
-        
-    	log.info("Adding samples");
-    	
 //    	int SAMPLES_PER_DATA_SET = 4;
-    	// Try some samples from each data set
 //    	for(Entity dataSet : getEntitiesByTypeName(subjectKey, EntityConstants.TYPE_DATA_SET)) {
 //    	    String dataSetId = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
 //    	    List<Entity> samples = getUserEntitiesWithAttributeValue(dataSet.getOwnerKey(), EntityConstants.TYPE_SAMPLE, EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetId);
@@ -130,6 +128,7 @@ public class MongoDbDomainDAO extends AnnotationDAO {
 //            }
 //    	}
 
+        log.info("Adding samples");
         SubjectDAO subjectDao = new SubjectDAO(log);
         for (Subject subject : subjectDao.getSubjects()) {
             String subjectKey = subject.getKey();
@@ -140,10 +139,6 @@ public class MongoDbDomainDAO extends AnnotationDAO {
                 log.error("Error loading samples for " + subjectKey, e);
             }
         }
-
-        log.info("Adding folders");
-        Deque<Entity> rootFolders = new LinkedList<Entity>(getEntitiesWithTag(null, EntityConstants.ATTRIBUTE_COMMON_ROOT));
-        loadRootFolders(rootFolders);
         
         log.info("Creating indexes");
 
@@ -154,23 +149,28 @@ public class MongoDbDomainDAO extends AnnotationDAO {
 
         ensureDomainIndexes(folderCollection);
         folderCollection.ensureIndex("{name:1}");
-
+        folderCollection.ensureIndex("{root:1}");
+        
         ensureDomainIndexes(fragmentCollection);
-        fragmentCollection.ensureIndex("{sampleId:1}");
         fragmentCollection.ensureIndex("{separationId:1}");
+        fragmentCollection.ensureIndex("{sampleId:1}");
+        fragmentCollection.ensureIndex("{sampleId:1,writers:1}");
+        fragmentCollection.ensureIndex("{sampleId:1,readers:1}");
         
         ensureDomainIndexes(lsmCollection);
-        lsmCollection.ensureIndex("{sampleId:1}");
         lsmCollection.ensureIndex("{sageId:1}");
         lsmCollection.ensureIndex("{slideCode:1}");
         lsmCollection.ensureIndex("{filepath:1}");
+        lsmCollection.ensureIndex("{sampleId:1}");
+        lsmCollection.ensureIndex("{sampleId:1,writers:1}");
+        lsmCollection.ensureIndex("{sampleId:1,readers:1}");
         
         ensureDomainIndexes(annotationCollection);
-        lsmCollection.ensureIndex("{targetId:1}");
-        lsmCollection.ensureIndex("{text:1}");
+        annotationCollection.ensureIndex("{targetId:1}");
+        annotationCollection.ensureIndex("{text:1}");
         
         ensureDomainIndexes(ontologyCollection);
-        lsmCollection.ensureIndex("{name:1}");
+        ontologyCollection.ensureIndex("{name:1}");
         
         log.info("Loading MongoDB took "+(System.currentTimeMillis()-startAll)+" ms");
     }
@@ -186,6 +186,8 @@ public class MongoDbDomainDAO extends AnnotationDAO {
         mc.ensureIndex("{ownerKey:1}");
         mc.ensureIndex("{readers:1}");
         mc.ensureIndex("{writers:1}");
+        mc.ensureIndex("{_id:1,readers:1}");
+        mc.ensureIndex("{_id:1,writers:1}");
     }
 
     private int loadOntologies(Deque<Entity> ontologyRoots) {
@@ -370,20 +372,16 @@ public class MongoDbDomainDAO extends AnnotationDAO {
                 long start = System.currentTimeMillis();
 
                 session = openNewExternalSession();
-                List<Folder> folders = getFolders(folderEntity);
-                folderCollection.insert(folders.toArray());
+                List<Folder> folders = getFolders(folderEntity, new HashSet<Long>());
+                if (!folders.isEmpty()) {
+                    folderCollection.insert(folders.toArray());
+                }
 
                 // Free memory by releasing the reference to this entire entity tree
                 i.remove(); 
                 resetSession();
 
-                if (folderEntity!=null) {
-                    log.info("  Loading "+folderEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
-                }
-                else {
-                    log.info("  Failure loading "+folderEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
-                }
-                
+                log.info("  Loading "+folders.size()+" folders under "+folderEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
             }
             catch (Throwable e) {
                 log.error("Error loading folder "+folderEntity.getId(),e);
@@ -398,9 +396,13 @@ public class MongoDbDomainDAO extends AnnotationDAO {
         return c;
     }
     
-    private List<Folder> getFolders(Entity folderEntity) throws Exception {
+    private List<Folder> getFolders(Entity folderEntity, Set<Long> visited) throws Exception {
         
         List<Folder> folders = new ArrayList<Folder>();
+        if (visited.contains(folderEntity.getId())) {
+            return folders;
+        }
+        visited.add(folderEntity.getId());
         
         Folder folder = new Folder();
         folder.setId(folderEntity.getId());
@@ -409,18 +411,16 @@ public class MongoDbDomainDAO extends AnnotationDAO {
         folder.setCreationDate(folderEntity.getCreationDate());
         folder.setReaders(getSubjectKeysWithPermission(folderEntity, "r"));
         folder.setWriters(getSubjectKeysWithPermission(folderEntity, "w"));
-
+        folder.setRoot(EntityUtils.isCommonRoot(folderEntity));
         List<Reference> references = new ArrayList<Reference>();
         
         for(Entity childEntity : folderEntity.getOrderedChildren()) {
             if (childEntity.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER)) {
-                folders.addAll(getFolders(childEntity));
+                folders.addAll(getFolders(childEntity, visited));
             }
             String type = getCollectionName(childEntity.getEntityTypeName());
-            if (type!=null) {
-                Reference ref = new Reference(getCollectionName(childEntity.getEntityTypeName()),childEntity.getId());
-                references.add(ref);
-            }
+            Reference ref = new Reference(type,childEntity.getId());
+            references.add(ref);
         }
         
         if (!references.isEmpty()) {
@@ -847,7 +847,10 @@ public class MongoDbDomainDAO extends AnnotationDAO {
         else if (EntityConstants.TYPE_LSM_STACK.equals(entityType)) {
             return "lsm";
         }
-        return null;
+        else if (EntityConstants.TYPE_ONTOLOGY_ROOT.equals(entityType)) {
+            return "ontology";
+        }
+        return "unknown";
     }
     
     /**
