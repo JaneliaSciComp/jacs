@@ -2,14 +2,22 @@ import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.SolrQuery.ORDER
 import org.apache.solr.common.SolrDocument
 import org.apache.solr.common.SolrDocumentList
-import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
+import org.janelia.it.jacs.model.TimebasedIdentifierGenerator
 
-def folderId = 1943163501170130951L
+// Add the target folderId, custom PrintWriter file for the SQL, whether to include the parent folder, and the target entity_actor_permission values below
+// What folder's items are we sharing?
+def folderId = 1977054414774468615L
+// Where should we write the SQL strings to?
+def file = new PrintWriter("insert_perms_nerna_mcfocase1_flylight_technical.sql")
+// Should the parent folder get the permissions so the new children get the same sharing?
+def extendPermissionsToParentFolder = true;
+// Who are we sharing the items with?
+def targetEntityActor = "group:flylighttechnical";
+// What privs are they getting?
+def permissions = "r";
+
 def idGen = new TimebasedIdentifierGenerator();
-
-def file = new PrintWriter("insert_perms_tanya_seeligj.sql")
-
-f = new JacsUtils("user:rokickik", false)
+f = new JacsUtils("user:saffordt", false)
 
 int ROWS = 50000
 int page = 0
@@ -21,20 +29,27 @@ query.setSortField("_docid_", ORDER.asc)
 query.setFields("id")
 
 long start = System.currentTimeMillis()
-
+// moved this out but needs to be tested.  The parent code below was accidentally in the loop, originally.
+def newIds = idGen.generateIdList(1)
+def newIdIndex = 0
+if (extendPermissionsToParentFolder) {
+    sql = "insert into entity_actor_permission values ("+(newIds.get(newIdIndex))+","+folderId+",'"+
+            targetEntityActor+"','"+permissions+"');";
+    file.println(sql)
+}
 while (true) {
-    
     query.setStart(page*ROWS)
     SolrDocumentList results = f.s.search(null, query, false).response.results
     
-    def newIds = idGen.generateIdList(results.size())
-    def newIdIndex = 0
-    
+    newIds = idGen.generateIdList(results.size()+1)
+    newIdIndex = 0
     results.each {
         SolrDocument doc = (SolrDocument)it;
         def entityId = it.getFieldValue("id")
         def newId = newIds.get(newIdIndex++)
-        sql = "insert into entity_actor_permission values ("+newId+","+entityId+",'user:seeligj','r');";
+//      Change the target for the permissions below - user/group and r or rw
+        sql = "insert into entity_actor_permission values ("+newId+","+entityId+",'"+
+                targetEntityActor+"','"+permissions+"');";
         file.println(sql)
     }
     

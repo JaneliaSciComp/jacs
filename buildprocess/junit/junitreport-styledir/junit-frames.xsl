@@ -32,7 +32,7 @@
 
     -->
     <xsl:param name="output.dir" select="'.'"/>
-    <xsl:param name="TITLE">Unit Test Results</xsl:param>
+    <xsl:param name="TITLE">Janelia Workstation Unit Test Results</xsl:param>
 
 
     <xsl:template match="testsuites">
@@ -846,10 +846,10 @@
                 <a name="{@name}"/>
                 <xsl:choose>
                     <xsl:when test="boolean($show.class)">
-                        <a href="{concat($class.href, '#', @name)}"><xsl:value-of select="@name"/></a>
+                        <a href="{concat($class.href, '#', @classname)}"><xsl:value-of select="@classname"/></a>
                     </xsl:when>
                     <xsl:otherwise>
-                        <xsl:value-of select="@name"/>
+                        <xsl:value-of select="@classname"/>: <xsl:value-of select="@name"/>
                     </xsl:otherwise>
                 </xsl:choose>
             </td>

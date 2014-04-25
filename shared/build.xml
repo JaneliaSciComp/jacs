@@ -59,20 +59,13 @@
             <pathelement location="${common.module}/Spring/dom4j-1.6.1.jar"/>
             <fileset dir="${common.dir}/Hibernate-3.2" includes="hibernate3.jar"/>
         </path>
-        <path id="test.run.classpath.additional">
-            <fileset dir="${model.module}/build/jars/" includes="jacs-model.jar"/>
-            <!-- pathelement location="${model.module}/build/jars/"/ -->
-            <!-- <fileset file="${shared.module}/test/applicationContext-test.xml"/> -->
-            <!-- pathelement location="${shared.module}/test/"/ -->
-            <!--<fileset dir="${shared.module}/testfiles/" includes="**/*.*"/>-->
-            <fileset dir="${common.module}/Hibernate-3.2/" includes="*.jar"/>
-            <fileset file="${common.module}/MySQL/mysql-connector-java-5.1.15-bin.jar"/>
-            <!--<fileset file="${common.module}/PostgreSQL-8.1/jdbc/postgresql-8.1-404.jdbc3.jar"/>-->
-            <!--<pathelement location="${common.module}/JBoss-Server-4.2.3.GA/log4j.jar"/>-->
 
-            <fileset dir="${common.module}/JAXB-2.1.5/" includes="*.jar"/>
-        </path><!-- Add jars needed to run tests -->
-	</target>
+        <!-- additional classes needed to compile and/or run tests -->
+        <path id="test.classpath.additional">
+            <pathelement path="${model.module}/build/test/classes"/> <!-- shared test classes -->
+        </path>
+
+    </target>
 
     <target name="clean-blastxmlparser-jaxb" if="blastxmlparser.jaxb.exists">
        <delete includeemptydirs="true" verbose="true" failonerror="false">
@@ -92,7 +85,7 @@
         </delete>
     </target>
 
-    <target name="clean" depends="clean-build" description="cleans build artifacts from this module" >
+    <target name="clean" depends="build-module-clean.clean" description="cleans build artifacts from this module" >
 		<available property="blastxmlparser.jaxb.exists" value="true" file="${jaxb.src.dir}/org/janelia/it/jacs/shared/blastxmlparser/jaxb" type="dir"/>
 		<available property="migs.jaxb.exists" value="true" file="${jaxb.src.dir}/org/janelia/it/jacs/shared/migs/jaxb" type="dir"/>
 		<available property="gcdml.jaxb.exists" value="true" file="${jaxb.src.dir}/org/janelia/it/jacs/shared/gcdml/jaxb" type="dir"/>

@@ -1,40 +1,33 @@
 package org.janelia.it.jacs.compute.access;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.api.support.SageTerm;
+import org.janelia.it.jacs.model.TestCategories;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.util.Map;
+
+import static org.junit.Assert.*;
 
 /**
  * Tests the {@link SageDAO} class.
  *
  * @author Eric Trautman
  */
-public class SageDAOTest extends TestCase {
+public class SageDAOTest {
 
     private SageDAO sageDao;
 
-    public SageDAOTest(String testName) {
-        super(testName);
-    }
-
-    public static Test suite() {
-        return new TestSuite(SageDAOTest.class);
-    }
-
-    @Override
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         sageDao = new SageDAO(LOG);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-    }
-
+    @Test
+    @Category(TestCategories.FastIntegrationTests.class)
     public void testGetFlylightImageVocabulary() throws Exception {
         final Map<String, SageTerm> map = sageDao.getFlylightImageVocabulary();
         final String[] expectedKeys = { "id", "name", "path", "line", "data_set",
@@ -44,6 +37,8 @@ public class SageDAOTest extends TestCase {
         }
     }
 
+    @Test
+    @Category(TestCategories.SlowIntegrationTests.class)
     public void testGetImagesByFamily() throws Exception {
 
         ResultSetIterator iterator = null;
@@ -58,6 +53,8 @@ public class SageDAOTest extends TestCase {
 
     }
 
+    @Test
+    @Category(TestCategories.SlowIntegrationTests.class)
     public void testGetImagesByDataSet() throws Exception {
         ResultSetIterator iterator = null;
         try {
@@ -70,6 +67,8 @@ public class SageDAOTest extends TestCase {
         }
     }
 
+    @Test
+    @Category(TestCategories.SlowIntegrationTests.class)
     public void testGetAllImagePropertiesByDataSet() throws Exception {
         ResultSetIterator iterator = null;
         try {
@@ -82,6 +81,8 @@ public class SageDAOTest extends TestCase {
         }
     }
 
+    @Test
+    @Category(TestCategories.FastIntegrationTests.class)
     public void testGetAllImagePropertiesForEmptyDataSet() throws Exception {
         ResultSetIterator iterator = null;
         try {
