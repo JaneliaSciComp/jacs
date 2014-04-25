@@ -15,6 +15,7 @@ public class Folder implements DomainObject, HasFilepath {
     private List<String> writers;
     private Date creationDate;
     private Date updatedDate;
+    private boolean root;
     private String filepath;
     private List<Reference> references;
 
@@ -58,6 +59,12 @@ public class Folder implements DomainObject, HasFilepath {
     }
     public Date getUpdatedDate() {
         return updatedDate;
+    }
+    public boolean isRoot() {
+        return root;
+    }
+    public void setRoot(boolean root) {
+        this.root = root;
     }
     @Override
     public String getFilepath() {
