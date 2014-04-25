@@ -1,9 +1,10 @@
 
 package org.janelia.it.jacs.model.entity;
 
-import junit.framework.Assert;
-import junit.framework.TestCase;
-import org.janelia.it.jacs.model.user_data.User;
+import org.janelia.it.jacs.model.TestCategories;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
@@ -16,8 +17,10 @@ import java.util.Set;
  *
  * @author Eric Trautman
  */
-public class DataSetTest extends TestCase {
+@Category(TestCategories.FastTests.class)
+public class DataSetTest {
 
+    @Test
     public void testModel() throws Exception {
 
         final String name = "Pan Lineage 40x";
@@ -28,11 +31,11 @@ public class DataSetTest extends TestCase {
         Set<EntityData> entityDataSet = new HashSet<EntityData>();
         entityDataSet.add(
                 getEntityData(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER,
-                		      ownerKey,
+                              ownerKey,
                               dataSetIdentifier));
         entityDataSet.add(
                 getEntityData(EntityConstants.ATTRIBUTE_SAGE_SYNC,
-                			  ownerKey,
+                              ownerKey,
                               sageSync));
 
         Entity entity = new Entity(null, name, ownerKey, null, null, null,
@@ -40,16 +43,12 @@ public class DataSetTest extends TestCase {
 
         DataSet dataSet = new DataSet(entity);
 
-        Assert.assertEquals("entity name not preserved",
-                            name, dataSet.getName());
-        Assert.assertEquals("entity userLogin not preserved",
-        					ownerKey, dataSet.getUser());
+        Assert.assertEquals("entity name not preserved", name, dataSet.getName());
+        Assert.assertEquals("entity userLogin not preserved", ownerKey, dataSet.getUser());
         Assert.assertEquals("entity dataSetIdentifier not preserved",
                             dataSetIdentifier, dataSet.getDataSetIdentifier());
-        Assert.assertEquals("entity sageSync not preserved",
-                sageSync, dataSet.getSageSync());
-        Assert.assertTrue("hasSageSync should return true",
-                dataSet.hasSageSync());
+        Assert.assertEquals("entity sageSync not preserved", sageSync, dataSet.getSageSync());
+        Assert.assertTrue("hasSageSync should return true", dataSet.hasSageSync());
 
         JAXBContext ctx = JAXBContext.newInstance(DataSet.class);
         Marshaller m = ctx.createMarshaller();
@@ -59,20 +58,16 @@ public class DataSetTest extends TestCase {
         final String xml =
                 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
                 "<dataSet>\n" +
-                "    <dataSetIdentifier>leetlab_pan_lineage_40x</dataSetIdentifier>\n" +
-                "    <name>Pan Lineage 40x</name>\n" +
-                "    <sageSync>SAGE Sync</sageSync>\n" +
-                "    <user>leetlab</user>\n" +
+                "    <dataSetIdentifier>" + dataSetIdentifier + "</dataSetIdentifier>\n" +
+                "    <name>" + name + "</name>\n" +
+                "    <sageSync>" + sageSync + "</sageSync>\n" +
+                "    <user>" + ownerKey + "</user>\n" +
                 "</dataSet>\n";
 
         m.marshal(dataSet, writer);
         final StringBuffer sb = writer.getBuffer();
         Assert.assertEquals("JAXB marshalled xml does not match",
                             xml, sb.toString());
-    }
-
-    private EntityAttribute getEntityAttribute(String name) {
-        return new EntityAttribute(null, name, null, null, null);
     }
 
     private EntityData getEntityData(String attrName, String ownerKey, String value) {

@@ -1,8 +1,10 @@
 
 package org.janelia.it.jacs.model.entity;
 
-import junit.framework.Assert;
-import junit.framework.TestCase;
+import org.janelia.it.jacs.model.TestCategories;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
@@ -15,8 +17,10 @@ import java.io.StringWriter;
  *
  * @author Eric Trautman
  */
-public class EntityTypeTest extends TestCase {
+@Category(TestCategories.FastTests.class)
+public class EntityTypeTest {
 
+    @Test
     public void testJAXB() throws Exception {
         JAXBContext ctx = JAXBContext.newInstance(EntityType.class);
         Unmarshaller unm = ctx.createUnmarshaller();
@@ -33,12 +37,10 @@ public class EntityTypeTest extends TestCase {
             m.marshal(entityType, writer);
             StringBuffer sb = writer.getBuffer();
             String marshalledXml = sb.toString();
-            Assert.assertEquals("input and output xml do not match",
-                    xml, marshalledXml);
+            Assert.assertEquals("input and output xml do not match", xml, marshalledXml);
         } else {
-            Assert.fail("returned an object of type " +
-                        o.getClass().getName() + " instead of type " +
-                        EntityType.class.getName());
+            Assert.fail("returned an object of type " + o.getClass().getName() +
+                        " instead of type " + EntityType.class.getName());
         }
 
     }

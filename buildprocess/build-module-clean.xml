@@ -24,22 +24,28 @@
 
 <project name="build-module-clean">
 
-    <!-- Import all the generic module targets -->
     <import file="../buildprocess/build-module-init.xml"/>
 
-	<!-- Whacks the build directory -->
-	<target name="clean-build" depends="setup" if="build.dir.exists">
-		<delete includeemptydirs="true" verbose="true" failonerror="false">
-			<fileset dir="${build.dir}" includes="**"/>
-		</delete>
-	</target>
+    <target name="clean"
+            description="removes all build artifacts (including test reports) for this module"
+            depends="setup"
+            if="build.dir.exists">
 
-	<!-- Cleans up all built stuff -->
-	<target name="clean" depends="clean-build" description="cleans build artifacts from this module"/>
+        <delete includeemptydirs="true" verbose="true" quiet="true">
+            <fileset dir="${build.dir}" includes="**"/>
+        </delete>
 
-	<target name="clean-reports" depends="setup">
-		<delete includeemptydirs="true" verbose="true" failonerror="false">
-			<fileset dir="${test.reports.dir}" includes="**"/>
-		</delete>
-	</target>
+    </target>
+
+    <target name="clean-reports"
+            description="removes test report artifacts from this module"
+            depends="setup"
+            if="test.reports.dir.exists">
+
+        <delete includeemptydirs="true" verbose="true" quiet="true">
+            <fileset dir="${test.reports.dir}" includes="**"/>
+        </delete>
+
+    </target>
+
 </project>

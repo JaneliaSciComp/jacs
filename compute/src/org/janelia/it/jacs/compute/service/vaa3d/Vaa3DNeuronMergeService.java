@@ -45,10 +45,11 @@ public class Vaa3DNeuronMergeService extends SubmitDrmaaJobService {
     @Override
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
         EntityBeanLocal entityBean = EJBFactory.getLocalEntityBean();
-        ArrayList<String> tmpFragmentNumberList = new ArrayList<String>();
+        ArrayList<Integer> tmpFragmentNumberList = new ArrayList<Integer>();
         String commaSeparatedFragmentIdList=task.getParameter(NeuronMergeTask.PARAM_commaSeparatedNeuronFragmentList);
         for (String tmpFragmentOid : Task.listOfStringsFromCsvString(commaSeparatedFragmentIdList)) {
-            tmpFragmentNumberList.add(entityBean.getEntityById(tmpFragmentOid).getValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER));
+            // TAS 4/17/2014 At some point the neuron-fragment-editor vaa3d plug-in was off by one.  Adding 1 to the values going into the fragment list
+            tmpFragmentNumberList.add(Integer.valueOf(entityBean.getEntityById(tmpFragmentOid).getValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER))+1);
         }
         String commaSeparatedFragmentList = Task.csvStringFromCollection(tmpFragmentNumberList);
         Entity separationEntity = entityBean.getEntityById(task.getParameter(NeuronMergeTask.PARAM_separationEntityId));

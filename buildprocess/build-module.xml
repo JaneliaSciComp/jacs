@@ -37,6 +37,4 @@ run unless imported into another ant project build file.
 
     <import file="build-module-test.xml"/>
 
-	<import file="build-module-fail.xml"/>
-
 </project>
