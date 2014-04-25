@@ -77,11 +77,11 @@
             <pathelement location="${common.module}/GWT/${gwt.dev.jar.name}" />  <!-- includes apache commons stuff -->
         </path>
 
-        <!--<property name="compile.excludes" value="**/client/**/*.java" />-->
-        <!-- Additional jars needed to run tests -->
-        <path id="test.run.classpath.additional">
+        <!-- additional classes needed to compile and/or run tests -->
+        <path id="test.classpath.additional">
+            <pathelement path="${model.module}/build/test/classes"/> <!-- shared test classes -->
             <pathelement path="${src.dir}" />
-            <fileset dir="${compute.module}/build/jars/" includes="compute-client.jar"/> 
+            <fileset dir="${compute.module}/build/jars/" includes="compute-client.jar"/>
             <fileset dir="${shared.module}/build/jars/" includes="*.jar"/>
             <fileset dir="${shared.module}/testfiles/" includes="**/*.*"/>
             <fileset dir="${model.module}/build/jars/" includes="jacs-model.jar" />
