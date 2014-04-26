@@ -18,36 +18,88 @@ import org.janelia.it.jacs.shared.utils.EntityUtils
 
 import static org.janelia.it.jacs.model.entity.EntityConstants.*
 
-
+// Globals
 subject = "group:leetlab"
 data_set_folder = "Central Brain 40x"
 f = new JacsUtils(subject, false)
 e = f.e
 c = f.c
 
-pipelineProcess = "PipelineConfig_LeetWholeBrain40x512pxINT"
+login()
 
 int numSamples = 0
 int numSamplesReprocessed = 0
 
-Entity folder = e.getUserEntitiesByNameAndTypeName("user:leey10", "Align", TYPE_FOLDER)[0]
+Entity folder = e.getUserEntitiesByNameAndTypeName(subject, data_set_folder, TYPE_FOLDER)[0]
 f.loadChildren(folder)
 
 for (Entity sample : EntityUtils.getChildrenOfType(folder, TYPE_SAMPLE)) {
 
-    println "Reprocess "+sample.name
-    HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-    taskParameters.add(new TaskParameter("sample entity id", sample.id.toString(), null));
-    taskParameters.add(new TaskParameter("reuse processing", "false", null));
-    taskParameters.add(new TaskParameter("reuse alignment", "false", null));
-    Task task = new GenericTask(new HashSet<Node>(), subject, new ArrayList<Event>(),
-            taskParameters, "sampleAllPipelines", "Sample All Pipelines");
-    task = c.saveOrUpdateTask(task);
-    c.submitJob(pipelineProcess, task.getObjectId());
-    numSamplesReprocessed++;
+    boolean reprocess = false;
+    String standardPath = ""
+
+    f.loadChildren(sample)
+    Entity latestRun = EntityUtils.getLatestChildOfType(sample, TYPE_PIPELINE_RUN)
+
+    if (latestRun!=null) {
+        f.loadChildren(latestRun)
+        Entity alignment = EntityUtils.getLatestChildOfType(latestRun, TYPE_ALIGNMENT_RESULT)
+        if (alignment!=null) {
+            standardPath = alignment.getValueByAttributeName(ATTRIBUTE_FILE_PATH)
+            WebDavClient client = SessionMgr.getSessionMgr().getWebDavClient()
+            URL remoteDirUrl = client.getWebDavUrl(standardPath)
+            URL remoteFileUrl = new URL(remoteDirUrl.toString()+"/sge_config/alignCmd.sh")
+
+            InputStream input = remoteFileUrl.openStream()
+            try {
+                if (IOUtils.toString(input).contains("imprv")) {
+                    reprocess = true;
+                }
+            }
+            finally {
+              IOUtils.closeQuietly(input);
+            }
+        }
+    }
+
+    println sample.name+"\t"+standardPath+"\t"+reprocess
+
+    if (reprocess) {
+//        println "Reprocess "+sample.name
+//        HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+//        taskParameters.add(new TaskParameter("sample entity id", sample.id.toString(), null));
+//        taskParameters.add(new TaskParameter("reuse processing", "false", null));
+//        Task task = new GenericTask(new HashSet<Node>(), subject, new ArrayList<Event>(),
+//                taskParameters, "sampleAllPipelines", "Sample All Pipelines");
+//        task = c.saveOrUpdateTask(task);
+//        c.submitJob("GSPS_CompleteSamplePipeline", task.getObjectId());
+        numSamplesReprocessed++;
+    }
+
     sample.setEntityData(null)
     numSamples++;
 }
 
 println "Num samples processed: "+numSamples
 println "Num samples reprocessed: "+numSamplesReprocessed
+
+
+// Need this in order to use WebDAV
+def login() {
+    try {
+           // This try block is copied from ConsoleApp. We may want to consolidate these in the future.
+           ConsoleProperties.load();
+           FacadeManager.registerFacade(FacadeManager.getEJBProtocolString(), EJBFacadeManager.class, "JACS EJB Facade Manager");
+           final SessionMgr sessionMgr = SessionMgr.getSessionMgr();
+           sessionMgr.registerExceptionHandler(new UserNotificationExceptionHandler());
+           sessionMgr.registerExceptionHandler(new ExitHandler());
+           sessionMgr.registerPreferenceInterface(ApplicationSettingsPanel.class, ApplicationSettingsPanel.class);
+           sessionMgr.registerPreferenceInterface(DataSourceSettingsPanel.class, DataSourceSettingsPanel.class);
+           sessionMgr.registerPreferenceInterface(ViewerSettingsPanel.class, ViewerSettingsPanel.class);
+           SessionMgr.getSessionMgr().loginSubject();
+    }
+    catch (Exception e) {
+           SessionMgr.getSessionMgr().handleException(e);
+           SessionMgr.getSessionMgr().systemExit();
+    }
+}
