@@ -509,7 +509,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         try {
             StringBuilder hql = new StringBuilder();
             hql.append("select distinct e from Entity e ");
-            hql.append("left outer join fetch e.entityActorPermissions p ");
+            hql.append("left outer join e.entityActorPermissions p ");
             hql.append("where e.name = :entityName ");
             if (subjectKey!=null) {
                 hql.append("and (e.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
@@ -541,7 +541,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             StringBuilder hql = new StringBuilder(256);
 
             hql.append("select e from Entity e ");
-            hql.append("left outer join fetch e.entityActorPermissions p ");
+            hql.append("left outer join e.entityActorPermissions p ");
             hql.append("where e.entityTypeName = :entityTypeName ");
             if (null != subjectKey) {
             	hql.append("and (e.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
@@ -572,7 +572,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         try {
             StringBuilder hql = new StringBuilder();
             hql.append("select e from Entity e ");
-            hql.append("left outer join fetch e.entityActorPermissions p ");
+            hql.append("left outer join e.entityActorPermissions p ");
             hql.append("where e.name = :entityName ");
             hql.append("and e.entityTypeName=:entityTypeName ");
             if (null != subjectKey) {
@@ -643,7 +643,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         try {
             StringBuilder hql = new StringBuilder();
             hql.append("select e from Entity e ");
-            hql.append("left outer join fetch e.entityActorPermissions p ");
+            hql.append("left outer join e.entityActorPermissions p ");
             hql.append("where e.name = :entityName ");
             if (subjectKey!=null) {
                 hql.append("and e.ownerKey = :subjectKey ");
@@ -672,7 +672,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             StringBuilder hql = new StringBuilder(256);
 
             hql.append("select e from Entity e ");
-            hql.append("left outer join fetch e.entityActorPermissions p ");
+            hql.append("left outer join e.entityActorPermissions p ");
             hql.append("where e.entityTypeName = :entityTypeName ");
             if (subjectKey!=null) {
                 hql.append("and e.ownerKey = :subjectKey ");
@@ -700,7 +700,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         try {
             StringBuilder hql = new StringBuilder();
             hql.append("select e from Entity e ");
-            hql.append("left outer join fetch e.entityActorPermissions p ");
+            hql.append("left outer join e.entityActorPermissions p ");
             hql.append("where e.name = :entityName ");
             hql.append("and e.entityTypeName=:entityTypeName ");
             if (null != subjectKey) {
@@ -809,7 +809,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             Session session = getCurrentSession();
             StringBuilder hql = new StringBuilder();
             hql.append("select e from Entity e ");
-            hql.append("left outer join fetch e.entityActorPermissions p ");
+            hql.append("left outer join e.entityActorPermissions p ");
             hql.append("join e.entityData as ed ");
             hql.append("where ed.entityAttrName = :attrName ");
             if (null != subjectKey) {
@@ -885,7 +885,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             }
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select e from Entity e ");
-            hql.append("left outer join fetch e.entityActorPermissions p ");
+            hql.append("left outer join e.entityActorPermissions p ");
             hql.append("where e.id in (:ids) ");
             if (null != subjectKey) {
                 hql.append("and (e.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
@@ -1700,7 +1700,20 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             ed.setValue(value);
         }
         saveOrUpdate(ed);
-        propagatePermissions(parent, entity, true);
+
+        Set<String> subjectKeys = getSubjectKeySet(parent.getOwnerKey());
+        boolean grantOwnerPermissions = !subjectKeys.contains(entity.getOwnerKey());
+
+        if (grantOwnerPermissions) {
+            for(EntityActorPermission permission : entity.getEntityActorPermissions()) {
+                if (subjectKeys.contains(permission.getSubjectKey())) {
+                    grantOwnerPermissions = false;
+                    break;
+                }
+            }
+        }
+        
+        propagatePermissions(parent, entity, true, grantOwnerPermissions);
         updateChildCount(parent);
         return ed;
     }
@@ -1724,6 +1737,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         List<Entity> childEntities = getEntitiesInList(subjectKey, childrenIds);
         Map<Long,Entity> childMap = EntityUtils.getEntityMap(childEntities);
         
+        Set<String> subjectKeys = getSubjectKeySet(parent.getOwnerKey());
+        
         for (Long childId : childrenIds) {
             if (existingChildrenIds.contains(childId)) continue;
             if (childId.equals(parentId)) continue;
@@ -1741,7 +1756,17 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             saveOrUpdate(ed);
             parent.getEntityData().add(ed);
 
-            propagatePermissions(parent, child, true);
+            boolean grantOwnerPermissions = !subjectKeys.contains(child.getOwnerKey());
+            if (grantOwnerPermissions) {
+                for(EntityActorPermission permission : child.getEntityActorPermissions()) {
+                    if (subjectKeys.contains(permission.getSubjectKey())) {
+                        grantOwnerPermissions = false;
+                        break;
+                    }
+                }
+            }
+            
+            propagatePermissions(parent, child, true, grantOwnerPermissions);
         }
         
         updateChildCount(parent);
@@ -2138,17 +2163,21 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         return null;
     }
 
-    private void propagatePermissions(Entity parent, Entity child, boolean recursive) throws DaoException {
+    private void propagatePermissions(Entity parent, Entity child, boolean recursive, boolean grantOwnerPermissions) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("propagatePermissions(parent="+parent+", child="+child+", recursive="+recursive+")");
         }
         
         for(EntityActorPermission permission : getFullPermissions(parent)) {
+            if (permission==null) {
+                log.warn("Entity "+parent.getId()+" has a null permission");
+                continue;
+            }
             grantPermissions(child, permission.getSubjectKey(), permission.getPermissions(), recursive);    
         }
         
-        if (!parent.getOwnerKey().equals(child.getOwnerKey())) {
-            grantPermissions(child, parent.getOwnerKey(), "rw", false);
+        if (grantOwnerPermissions) {
+            grantPermissions(child, parent.getOwnerKey(), "r", false);
         }
     }
     

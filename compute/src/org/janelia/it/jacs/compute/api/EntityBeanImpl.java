@@ -229,14 +229,14 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         try {
             Entity parent = getEntityById(subjectKey, parentId);
             if (parent==null) {
-                throw new DaoException("Parent entity does not exist "+parent);
+                throw new DaoException("Parent entity does not exist: "+parentId);
             }
             if (subjectKey!=null && !EntityUtils.hasWriteAccess(parent, _annotationDAO.getSubjectKeys(subjectKey))) {
                 throw new ComputeException("Subject "+subjectKey+" cannot add children to "+parentId);
             }
             Entity entity = getEntityById(subjectKey, entityId);
             if (entity==null) {
-                throw new DaoException("Entity does not exist "+entityId);
+                throw new DaoException("Entity does not exist: "+entityId);
             }
             
             checkEntityTypeSupportsAttribute(parent.getEntityTypeName(), attrName);
