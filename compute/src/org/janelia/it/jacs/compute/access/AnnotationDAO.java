@@ -1022,7 +1022,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
 
         if (visited.contains(entityId)) {
-        	log.warn("getAncestorWithType detected recursive loop at "+entityId+". Aborting search.");
+            // We've already been here, don't need to search it again
         	return null;
         }
         visited.add(entityId);

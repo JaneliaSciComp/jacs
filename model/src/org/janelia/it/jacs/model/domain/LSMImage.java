@@ -1,11 +1,12 @@
 package org.janelia.it.jacs.model.domain;
 
 import java.util.List;
+import java.util.Map;
 
 import org.jongo.marshall.jackson.oid.Id;
 
 
-public class LSMImage implements DomainObject, HasMips {
+public class LSMImage implements DomainObject, HasImages {
 
     @Id
     private Long id;
@@ -18,10 +19,7 @@ public class LSMImage implements DomainObject, HasMips {
     private String channelColors;
     private String channelDyeNames;
     private String chanSpec;
-    private String filename;
     private String lsmFilepath;
-    private String signalMipFilepath;
-    private String referenceMipFilepath;
     private String effector;
     private String gender;
     private String line;
@@ -32,6 +30,7 @@ public class LSMImage implements DomainObject, HasMips {
     private String pixelResolution;
     private Integer sageId;
     private String slideCode;
+    private Map<ImageType,String> images;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     
@@ -95,31 +94,11 @@ public class LSMImage implements DomainObject, HasMips {
     public void setChanSpec(String chanSpec) {
         this.chanSpec = chanSpec;
     }
-    public String getFilename() {
-        return filename;
-    }
-    public void setFilename(String filename) {
-        this.filename = filename;
-    }
     public String getLsmFilepath() {
         return lsmFilepath;
     }
     public void setLsmFilepath(String lsmFilepath) {
         this.lsmFilepath = lsmFilepath;
-    }
-    @Override
-    public String getSignalMipFilepath() {
-        return signalMipFilepath;
-    }
-    public void setSignalMipFilepath(String signalMipFilepath) {
-        this.signalMipFilepath = signalMipFilepath;
-    }
-    @Override
-    public String getReferenceMipFilepath() {
-        return referenceMipFilepath;
-    }
-    public void setReferenceMipFilepath(String referenceMipFilepath) {
-        this.referenceMipFilepath = referenceMipFilepath;
     }
     public String getEffector() {
         return effector;
@@ -180,6 +159,12 @@ public class LSMImage implements DomainObject, HasMips {
     }
     public void setSlideCode(String slideCode) {
         this.slideCode = slideCode;
+    }
+    public Map<ImageType, String> getImages() {
+        return images;
+    }
+    public void setImages(Map<ImageType, String> images) {
+        this.images = images;
     }
     
     

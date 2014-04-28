@@ -1,7 +1,11 @@
 package org.janelia.it.jacs.compute.access.mongodb;
 
 import java.net.UnknownHostException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,10 +25,12 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.domain.Annotation;
 import org.janelia.it.jacs.model.domain.Folder;
 import org.janelia.it.jacs.model.domain.HasFilepath;
+import org.janelia.it.jacs.model.domain.ImageType;
 import org.janelia.it.jacs.model.domain.LSMImage;
 import org.janelia.it.jacs.model.domain.NeuronFragment;
 import org.janelia.it.jacs.model.domain.NeuronSeparation;
 import org.janelia.it.jacs.model.domain.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.PatternMask;
 import org.janelia.it.jacs.model.domain.PipelineResult;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
@@ -33,6 +39,7 @@ import org.janelia.it.jacs.model.domain.SampleAlignmentResult;
 import org.janelia.it.jacs.model.domain.SamplePipelineRun;
 import org.janelia.it.jacs.model.domain.SampleProcessingResult;
 import org.janelia.it.jacs.model.domain.SampleTile;
+import org.janelia.it.jacs.model.domain.ScreenSample;
 import org.janelia.it.jacs.model.domain.ontology.EnumText;
 import org.janelia.it.jacs.model.domain.ontology.Interval;
 import org.janelia.it.jacs.model.domain.ontology.Ontology;
@@ -61,12 +68,14 @@ public class MongoDbImport extends AnnotationDAO {
 	
 	protected static final String MONGO_SERVER_URL = SystemConfigurationProperties.getString("MongoDB.ServerURL");
 	protected static final String MONGO_DATABASE = SystemConfigurationProperties.getString("MongoDB.Database");
-
 	protected static final String ONTOLOGY_TERM_TYPES_PACKAGE = "org.janelia.it.jacs.model.domain.ontology";
+	protected static final int ANNOTATION_BATCH_SIZE = 1000;
 	
     protected Jongo jongo;
 	protected MongoCollection folderCollection;
 	protected MongoCollection sampleCollection;
+    protected MongoCollection screenSampleCollection;
+    protected MongoCollection patternMaskCollection;
     protected MongoCollection lsmCollection;
     protected MongoCollection fragmentCollection;
     protected MongoCollection annotationCollection;
@@ -87,6 +96,8 @@ public class MongoDbImport extends AnnotationDAO {
         	            .build());
         	folderCollection = jongo.getCollection("folder");
         	sampleCollection = jongo.getCollection("sample");
+            screenSampleCollection = jongo.getCollection("screenSample");
+            patternMaskCollection = jongo.getCollection("patternMask");
             lsmCollection = jongo.getCollection("lsm");
         	fragmentCollection = jongo.getCollection("fragment");
         	annotationCollection = jongo.getCollection("annotation");
@@ -103,54 +114,35 @@ public class MongoDbImport extends AnnotationDAO {
         
         long startAll = System.currentTimeMillis(); 
 
-        log.info("Adding folders");
-        Deque<Entity> rootFolders = new LinkedList<Entity>(getEntitiesWithTag(null, EntityConstants.ATTRIBUTE_COMMON_ROOT));
-        loadRootFolders(rootFolders);
-
-        log.info("Adding ontologies");
-        Deque<Entity> ontologyRoots = new LinkedList<Entity>(getEntitiesByTypeName(null, EntityConstants.TYPE_ONTOLOGY_ROOT));
-        loadOntologies(ontologyRoots);
+        log.info("Adding screen data");
+        loadScreenData();
         
-//    	int SAMPLES_PER_DATA_SET = 4;
-//    	for(Entity dataSet : getEntitiesByTypeName(subjectKey, EntityConstants.TYPE_DATA_SET)) {
-//    	    String dataSetId = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-//    	    List<Entity> samples = getUserEntitiesWithAttributeValue(dataSet.getOwnerKey(), EntityConstants.TYPE_SAMPLE, EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetId);
-//    	    List<Entity> shuffled = new ArrayList<Entity>(samples);
-//            Collections.shuffle(shuffled);
-//            int loaded = 0;
-//            int i = 0;
-//            while (loaded<SAMPLES_PER_DATA_SET) {
-//                int last = i+10;
-//                if (last>shuffled.size()-1) last=shuffled.size()-1;
-//                if (last<=i) break;
-//                loaded += loadSamples(shuffled.subList(i, last));
-//                i = last;
-//            }
-//    	}
+        log.info("Adding folders");
+        loadFolders();
 
         log.info("Adding samples");
-        SubjectDAO subjectDao = new SubjectDAO(log);
-        for (Subject subject : subjectDao.getSubjects()) {
-            String subjectKey = subject.getKey();
-            try {
-                loadSamples(subjectKey);
-            }
-            catch (Exception e) {
-                log.error("Error loading samples for " + subjectKey, e);
-            }
-        }
+        loadSamples();
+
+        log.info("Adding ontologies");
+        loadOntologies(); // must come before loadAnnotations to populate the term maps
+        
+        log.info("Adding annotations");
+        loadAnnotations();
         
         log.info("Creating indexes");
 
+        ensureDomainIndexes(folderCollection);
+        folderCollection.ensureIndex("{name:1}");
+        folderCollection.ensureIndex("{root:1}");
+
+        ensureDomainIndexes(ontologyCollection);
+        ontologyCollection.ensureIndex("{name:1}");
+        
         ensureDomainIndexes(sampleCollection);
         sampleCollection.ensureIndex("{name:1}");
         sampleCollection.ensureIndex("{dataSet:1}");
         sampleCollection.ensureIndex("{line:1}");
 
-        ensureDomainIndexes(folderCollection);
-        folderCollection.ensureIndex("{name:1}");
-        folderCollection.ensureIndex("{root:1}");
-        
         ensureDomainIndexes(fragmentCollection);
         fragmentCollection.ensureIndex("{separationId:1}");
         fragmentCollection.ensureIndex("{sampleId:1}");
@@ -165,16 +157,21 @@ public class MongoDbImport extends AnnotationDAO {
         lsmCollection.ensureIndex("{sampleId:1,writers:1}");
         lsmCollection.ensureIndex("{sampleId:1,readers:1}");
         
+        ensureDomainIndexes(screenSampleCollection);
+        screenSampleCollection.ensureIndex("{flyLine:1}");
+        
+        ensureDomainIndexes(patternMaskCollection);
+        patternMaskCollection.ensureIndex("{screenSampleId:1}");
+        patternMaskCollection.ensureIndex("{screenSampleId:1,writers:1}");
+        patternMaskCollection.ensureIndex("{screenSampleId:1,readers:1}");
+        
         ensureDomainIndexes(annotationCollection);
         annotationCollection.ensureIndex("{targetId:1}");
         annotationCollection.ensureIndex("{text:1}");
         
-        ensureDomainIndexes(ontologyCollection);
-        ontologyCollection.ensureIndex("{name:1}");
-        
         log.info("Loading MongoDB took "+(System.currentTimeMillis()-startAll)+" ms");
     }
-    
+
     private void resetSession() {
         long start = System.currentTimeMillis();
         getSession().flush();
@@ -189,6 +186,11 @@ public class MongoDbImport extends AnnotationDAO {
         mc.ensureIndex("{_id:1,readers:1}");
         mc.ensureIndex("{_id:1,writers:1}");
     }
+    
+    private void loadOntologies() throws DaoException {
+        Deque<Entity> ontologyRoots = new LinkedList<Entity>(getEntitiesByTypeName(null, EntityConstants.TYPE_ONTOLOGY_ROOT));
+        loadOntologies(ontologyRoots);
+    }
 
     private int loadOntologies(Deque<Entity> ontologyRoots) {
 
@@ -196,7 +198,7 @@ public class MongoDbImport extends AnnotationDAO {
         for(Iterator<Entity> i = ontologyRoots.iterator(); i.hasNext(); ) {
             Entity ontologyRootEntity = i.next();
 
-            // Skip these ontologies
+            // Skip these unused/large ontologies
             if (ontologyRootEntity.getName().equals("Fly anatomy") 
                     || ontologyRootEntity.getName().equals("Fly Taxonomy") 
                     || ontologyRootEntity.getName().equals("CARO") 
@@ -320,9 +322,23 @@ public class MongoDbImport extends AnnotationDAO {
         log.info("Got "+samples.size()+" samples for "+subjectKey);
         resetSession();
         loadSamples(samples);
-        log.info("Loading "+samples.size()+" samples for "+subjectKey+" took "+(System.currentTimeMillis()-start)+" ms");
+        log.info("Loading " + samples.size() + " samples for " + subjectKey + " took "
+                + (System.currentTimeMillis() - start) + " ms");
     }
 
+    private void loadSamples() {
+        SubjectDAO subjectDao = new SubjectDAO(log);
+        for (Subject subject : subjectDao.getSubjects()) {
+            String subjectKey = subject.getKey();
+            try {
+                loadSamples(subjectKey);
+            }
+            catch (Exception e) {
+                log.error("Error loading samples for " + subjectKey, e);
+            }
+        }
+    }
+    
     private int loadSamples(Deque<Entity> samples) {
 
         int c = 0;
@@ -359,6 +375,61 @@ public class MongoDbImport extends AnnotationDAO {
         }
         
         return c;
+    }
+
+    private void loadScreenData() throws DaoException {
+
+        Deque<Entity> flyLines = new LinkedList<Entity>(getEntitiesByTypeName(null, EntityConstants.TYPE_FLY_LINE));
+
+        for(Iterator<Entity> i = flyLines.iterator(); i.hasNext(); ) {
+            Entity flyLine = i.next();
+            try {
+                long start = System.currentTimeMillis();
+                populateChildren(flyLine);
+                Deque<Entity> screenSamples = new LinkedList<Entity>(EntityUtils.getChildrenOfType(flyLine, EntityConstants.TYPE_SCREEN_SAMPLE));
+                loadScreenSamples(flyLine, screenSamples);
+                // Free memory 
+                i.remove();
+                resetSession();
+                log.info("  Loading "+flyLine.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+            }
+            catch (Exception e) {
+                log.error("Error loading screen samples for fly line " + flyLine.getName(), e);
+            }
+        }
+    }
+    
+    private int loadScreenSamples(Entity flyLineEntity, Deque<Entity> samples) {
+
+        int c = 0;
+        for(Iterator<Entity> i = samples.iterator(); i.hasNext(); ) {
+            Entity screenSampleEntity = i.next();
+            
+            try {
+                long start = System.currentTimeMillis();
+                ScreenSample screenSample = getScreenSampleObject(flyLineEntity, screenSampleEntity);
+                if (screenSample!=null) {
+                    screenSampleCollection.insert(screenSample);
+                }
+                if (screenSample!=null) {
+                    log.info("  Loading "+screenSampleEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+                }
+                else {
+                    log.info("  Failure loading "+screenSampleEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+                }
+            }
+            catch (Throwable e) {
+                log.error("Error loading screen sample "+screenSampleEntity.getId(),e);
+            }
+            c++;
+        }
+        
+        return c;
+    }
+    
+    private void loadFolders() throws DaoException {
+        Deque<Entity> rootFolders = new LinkedList<Entity>(getEntitiesWithTag(null, EntityConstants.ATTRIBUTE_COMMON_ROOT));
+        loadRootFolders(rootFolders);
     }
     
     private int loadRootFolders(Deque<Entity> rootFolders) {
@@ -429,8 +500,6 @@ public class MongoDbImport extends AnnotationDAO {
         
         folders.add(folder);
         
-        addAnnotations(folderEntity);
-        
         return folders;
     }
     
@@ -499,8 +568,6 @@ public class MongoDbImport extends AnnotationDAO {
         
         sample.setObjectives(objectiveSamples);
         
-        addAnnotations(sampleEntity);
-        
         return sample;
     }
 
@@ -528,7 +595,6 @@ public class MongoDbImport extends AnnotationDAO {
                 LSMImage lsmImage = getLSMImage(parentSampleEntity, lsmEntity);
                 lsmImages.add(lsmImage);
                 lsmReferences.add(new Reference("lsm",lsmImage.getId()));
-                addAnnotations(lsmEntity);
             }
 
             lsmCollection.insert(lsmImages.toArray());
@@ -644,11 +710,15 @@ public class MongoDbImport extends AnnotationDAO {
         }
         Entity stackEntity = resultEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
         if (stackEntity!=null) {
-            result.setStackFilepath(getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+            
             result.setImageSize(cleanRes(stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
             result.setOpticalResolution(cleanRes(stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
-            result.setReferenceMipFilepath(getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE)));
-            result.setSignalMipFilepath(getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE)));
+            
+            Map<ImageType,String> images = new HashMap<ImageType,String>();
+            images.put(ImageType.Stack,getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+            images.put(ImageType.ReferenceMip,getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE)));
+            images.put(ImageType.SignalMip,getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE)));
+            result.setImages(images);
         }
         else {
             log.warn("  Sample processing result has no stack: "+resultEntity.getId());
@@ -664,15 +734,19 @@ public class MongoDbImport extends AnnotationDAO {
         result.setChannelColors(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS));
         result.setChanSpec(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION));
         result.setFilepath(alignmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-        result.setStackFilepath(getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
         result.setImageSize(cleanRes(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
-        if (movieEntity!=null) {
-            result.setVerifyMovieFilepath(movieEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-        }
         result.setObjective(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE));
         result.setOpticalResolution(cleanRes(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
-        result.setReferenceMipFilepath(getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE)));
-        result.setSignalMipFilepath(getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE)));
+
+        Map<ImageType,String> images = new HashMap<ImageType,String>();
+        images.put(ImageType.Stack,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+        images.put(ImageType.ReferenceMip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE)));
+        images.put(ImageType.SignalMip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE)));
+        if (movieEntity!=null) {
+            images.put(ImageType.AlignVerifyMovie,getRelativeFilename(result,movieEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+        }
+        result.setImages(images);
+        
         return result;
     }
 
@@ -690,12 +764,9 @@ public class MongoDbImport extends AnnotationDAO {
         lsm.setChannelDyeNames(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES));
         lsm.setChanSpec(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION));
         lsm.setEffector(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR));
-        lsm.setFilename(lsmEntity.getName());
         lsm.setLsmFilepath(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         lsm.setGender(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_GENDER));
         lsm.setLine(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_LINE));
-        lsm.setSignalMipFilepath(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE));
-        lsm.setReferenceMipFilepath(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE));
         lsm.setMountingProtocol(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL));
         String numChannels = lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS);
         if (numChannels!=null) {
@@ -709,8 +780,12 @@ public class MongoDbImport extends AnnotationDAO {
             lsm.setSageId(Integer.parseInt(sageId));
         }
         lsm.setSlideCode(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SLIDE_CODE));
-        
-        addAnnotations(lsmEntity);
+
+        Map<ImageType,String> images = new HashMap<ImageType,String>();
+        images.put(ImageType.Stack,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+        images.put(ImageType.ReferenceMip,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE));
+        images.put(ImageType.SignalMip,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE));
+        lsm.setImages(images);
         
         return lsm;
     }
@@ -740,8 +815,6 @@ public class MongoDbImport extends AnnotationDAO {
         neuronSeparation.setFilepath(separationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         neuronSeparation.setFragmentsReference(fragmentsReference);
         
-        addAnnotationsForChildren(separationEntity, EntityConstants.TYPE_NEURON_FRAGMENT);
-        
         return neuronSeparation;
     }
     
@@ -758,63 +831,257 @@ public class MongoDbImport extends AnnotationDAO {
         }
         neuronFragment.setSeparationId(separationEntity.getId());
         neuronFragment.setFilepath(separationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-        neuronFragment.setMaskFilepath(getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE)));
-        neuronFragment.setChanFilepath(getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE)));
-        neuronFragment.setSignalMipFilepath(getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)));
+        
+        Map<ImageType,String> images = new HashMap<ImageType,String>();
+        images.put(ImageType.Mip,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)));
+        images.put(ImageType.MaskFile,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE)));
+        images.put(ImageType.ChanFile,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE)));
+        neuronFragment.setImages(images);
         
         return neuronFragment;
     }
 
-    private void addAnnotationsForChildren(Entity entity, String childrenType) throws Exception {
-        List<Annotation> annotations = new ArrayList<Annotation>();
-        for(Entity annotationEntity : getAnnotationsForChildren(null, entity.getId())) {
-            Annotation annotation = getAnnotation(childrenType, annotationEntity);
-            if (annotation!=null) annotations.add(annotation);    
+    private ScreenSample getScreenSampleObject(Entity flyLineEntity, Entity screenSampleEntity) throws Exception {
+        
+        if (screenSampleEntity.getEntityData()==null) {
+            log.warn("  Cannot process screen sample with null entityData: "+screenSampleEntity.getId());
+            return null;
         }
-        if (!annotations.isEmpty()) {
-            annotationCollection.insert(annotations.toArray());
+        
+        populateChildren(screenSampleEntity);
+        
+        ScreenSample screenSample = new ScreenSample();
+                
+        screenSample.setId(screenSampleEntity.getId());
+        screenSample.setOwnerKey(screenSampleEntity.getOwnerKey());
+        screenSample.setReaders(getSubjectKeysWithPermission(screenSampleEntity, "r"));
+        screenSample.setWriters(getSubjectKeysWithPermission(screenSampleEntity, "w"));
+        screenSample.setCreationDate(screenSampleEntity.getCreationDate());
+        screenSample.setUpdatedDate(screenSampleEntity.getUpdatedDate());
+        screenSample.setName(screenSampleEntity.getName());
+        screenSample.setFlyLine(flyLineEntity.getName());
+        
+        List<PatternMask> masks = new ArrayList<PatternMask>();
+        
+        Entity patternAnnotationEntity = EntityUtils.findChildWithNameAndType(screenSampleEntity, "Pattern Annotation", EntityConstants.TYPE_FOLDER);
+        if (patternAnnotationEntity==null) {
+            log.warn("Cannot process screen sample with no pattern annotation folder: "+screenSampleEntity.getId());
+            return null;
+        }
+        
+        String paFilepath = patternAnnotationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        screenSample.setFilepath(paFilepath.replaceFirst("patternAnnotation", ""));
+        
+        addMasks(screenSample, patternAnnotationEntity, masks);
+
+        Entity maskAnnotationEntity = EntityUtils.findChildWithNameAndType(screenSampleEntity, "Mask Annotation", EntityConstants.TYPE_FOLDER);
+        if (maskAnnotationEntity!=null) {
+            populateChildren(maskAnnotationEntity);
+            for(Entity maskUpdateEntity : EntityUtils.getChildrenOfType(maskAnnotationEntity, EntityConstants.TYPE_FOLDER)) {
+                addMasks(screenSample, maskUpdateEntity, masks);   
+            }            
+        }
+        
+        patternMaskCollection.insert(masks.toArray());
+
+        Map<ImageType,String> images = new HashMap<ImageType,String>();
+        images.put(ImageType.HeatmapMip,getRelativeFilename(screenSample,screenSampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
+        Entity alignedStack = EntityUtils.findChildWithType(screenSampleEntity, EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
+        if (alignedStack!=null) {
+            images.put(ImageType.Stack,getRelativeFilename(screenSample,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+            images.put(ImageType.Mip,getRelativeFilename(screenSample,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
+        }
+        screenSample.setImages(images);
+        
+        ReverseReference masksRef = new ReverseReference();
+        masksRef.setCount(new Long(masks.size()));
+        masksRef.setReferringType("patternMask");
+        masksRef.setReferenceAttr("screenSampleId");
+        masksRef.setReferenceId(screenSample.getId());
+        screenSample.setMasks(masksRef);
+        
+        return screenSample;
+    }
+
+    private void addMasks(ScreenSample screenSample, Entity patternMaskFolderEntity, List<PatternMask> masks) throws Exception {
+
+        populateChildren(patternMaskFolderEntity);
+        
+        Map<Long,Integer> intensityMap = new HashMap<Long,Integer>();
+        Map<Long,Integer> distributionMap = new HashMap<Long,Integer>();
+        for(Entity annotation : getAnnotationsForChildren(patternMaskFolderEntity.getOwnerKey(), patternMaskFolderEntity.getId())) {
+            String value = annotation.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM);
+            if (value.length()!=2) continue;
+            String targetIdStr = annotation.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
+            if (targetIdStr==null) continue;
+            Long targetId = Long.parseLong(targetIdStr);
+            if (value.startsWith("i")) {
+                Integer intensity = Integer.parseInt(value.substring(1));
+                intensityMap.put(targetId, intensity);
+            }
+            else if (value.startsWith("d")) {
+                Integer distribution = Integer.parseInt(value.substring(1));
+                distributionMap.put(targetId, distribution);
+            }
+        }
+        
+        String maskSetName = patternMaskFolderEntity.getName().replaceAll("\\s+", "");
+        
+        for(Entity maskEntity : EntityUtils.getChildrenOfType(patternMaskFolderEntity, EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
+            if (maskEntity.getName().equals("Heatmap")) continue;
+            PatternMask mask = getPatternMaskObject(screenSample, maskEntity, maskSetName, intensityMap.get(maskEntity.getId()), distributionMap.get(maskEntity.getId()));
+            masks.add(mask);
+        }
+
+        Entity normalizedEntity = EntityUtils.findChildWithNameAndType(patternMaskFolderEntity, "normalized", EntityConstants.TYPE_FOLDER);
+        if (normalizedEntity!=null) {
+            addMasks(screenSample, normalizedEntity, masks);
         }
     }
     
-    private void addAnnotations(Entity entity) throws Exception {
-        List<Annotation> annotations = new ArrayList<Annotation>();
-        for(Entity annotationEntity : getAnnotationsByEntityId(null, entity.getId())) {
-            annotations.add(getAnnotation(entity.getEntityTypeName(), annotationEntity));    
+    private PatternMask getPatternMaskObject(ScreenSample screenSample, Entity maskEntity, String maskSetName, Integer intensity, Integer distribution) throws Exception {
+        PatternMask mask = new PatternMask();
+        mask.setId(maskEntity.getId());
+        mask.setScreenSampleId(screenSample.getId());
+        mask.setOwnerKey(maskEntity.getOwnerKey());
+        mask.setReaders(getSubjectKeysWithPermission(maskEntity, "r"));
+        mask.setWriters(getSubjectKeysWithPermission(maskEntity, "w"));
+        mask.setCreationDate(maskEntity.getCreationDate());
+        mask.setUpdatedDate(maskEntity.getUpdatedDate());
+        mask.setName(maskEntity.getName());
+        mask.setFilepath(screenSample.getFilepath());
+        mask.setMaskSetName(maskSetName);
+        mask.setIntensityScore(intensity);
+        mask.setDistributionScore(distribution);
+
+        Map<ImageType,String> images = new HashMap<ImageType,String>();
+        images.put(ImageType.Stack,getRelativeFilename(mask,maskEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+        images.put(ImageType.HeatmapMip,getRelativeFilename(mask,maskEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
+        mask.setImages(images);
+        return mask;
+    }
+    
+    private void loadAnnotations() {
+
+        long start = System.currentTimeMillis();
+        List<Annotation> queue = new LinkedList<Annotation>();
+        
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = getJdbcConnection();
+            
+            StringBuilder sql = new StringBuilder();
+            sql.append("select a.id, a.name, a.owner_key, a.creation_date, target.id, target.entity_type, ");
+            sql.append("  ked.child_entity_id keyId, ved.child_entity_id valueId ");
+            sql.append("from entity a ");
+            sql.append("join entityData ted on ted.parent_entity_id=a.id and ted.entity_att=? ");
+            sql.append("join entity target on ted.value=target.id "); 
+            sql.append("left outer join entityData ked on ked.parent_entity_id=a.id and ked.entity_att=? ");
+            sql.append("left outer join entityData ved on ved.parent_entity_id=a.id and ved.entity_att=? ");
+            sql.append("where a.entity_type=? ");
+            sql.append("and a.owner_key not in ('user:jenetta','group:flylight') ");
+            
+            stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+            stmt.setFetchSize(Integer.MIN_VALUE);
+            
+            stmt.setString(1, EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
+            stmt.setString(2, EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
+            stmt.setString(3, EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_ENTITY_ID);
+            stmt.setString(4, EntityConstants.TYPE_ANNOTATION);
+            
+            rs = stmt.executeQuery();
+            int i = 0;
+            while (rs.next()) {
+                Long annotationId = rs.getBigDecimal(1).longValue();
+                String annotationName = rs.getString(2);
+                String owner = rs.getString(3);
+                Date creationDate = rs.getTimestamp(4);
+                Long targetId = rs.getBigDecimal(5).longValue();
+                String targetType = rs.getString(6);
+                String keyIdStr = rs.getString(7);
+                String valueIdStr = rs.getString(8);
+                
+                Long keyId = null;
+                if (!StringUtils.isEmpty(keyIdStr)) {
+                    try {
+                        keyId = new Long(keyIdStr);
+                    }
+                    catch (NumberFormatException e) {
+                        log.warn("Cannot parse annotation key id for annotation="+annotationId);
+                    }
+                }
+                
+                Long valueId = null;
+                if (!StringUtils.isEmpty(valueIdStr)) {
+                    try {
+                        valueId = new Long(valueIdStr);
+                    }
+                    catch (NumberFormatException e) {
+                        log.warn("Cannot parse annotation value id for annotation="+annotationId);
+                    }
+                }
+                
+                Annotation annotation = getAnnotation(annotationId, annotationName, owner, creationDate, targetId, targetType, keyId, valueId);
+                queue.add(annotation);
+                
+                if (queue.size()>ANNOTATION_BATCH_SIZE) {
+                    annotationCollection.insert(queue.toArray());
+                    queue.clear();
+                }
+                
+                i++;
+            }
+            
+            if (!queue.isEmpty()) {
+                annotationCollection.insert(queue.toArray());
+            }
+            
+            log.info("  Loading "+i+" annotations took "+(System.currentTimeMillis()-start)+" ms");
         }
-        if (!annotations.isEmpty()) {
-            annotationCollection.insert(annotations.toArray());
+        catch (Exception e) {
+            log.error("Error loading annotations",e);
+        }
+        finally {
+            try {
+                if (rs!=null) rs.close();
+                if (stmt!=null) stmt.close();
+                if (conn!=null) conn.close();   
+            }
+            catch (Exception e) {
+                log.warn("Error closing JDBC connection",e);
+            }
         }
     }
     
-    private Annotation getAnnotation(String targetEntityType, Entity annotationEntity) throws Exception {
+    private Annotation getAnnotation(Long annotationId, String annotationName, String owner, Date creationDate,
+            Long targetId, String targetType, Long keyId, Long valueId) {
+        
         Annotation annotation = new Annotation();
                 
-        annotation.setId(annotationEntity.getId());
-        annotation.setOwnerKey(annotationEntity.getOwnerKey());
-        annotation.setCreationDate(annotationEntity.getCreationDate());
-        annotation.setText(annotationEntity.getName());
+        annotation.setId(annotationId);
         
-        String targetIdStr = annotationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
-        if (targetIdStr==null) return null;
-        Long targetId = Long.parseLong(targetIdStr);
+        annotation.setOwnerKey(owner);
+        annotation.setText(annotationName);
+        annotation.setCreationDate(creationDate);
         
-        String keyId = annotationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
         if (keyId!=null) {
             OntologyTermReference keyTerm = new OntologyTermReference();
-            keyTerm.setOntologyTermId(Long.parseLong(keyId));
+            keyTerm.setOntologyTermId(keyId);
             keyTerm.setOntologyId(ontologyTermIdToOntologyId.get(keyId));
             annotation.setKeyTerm(keyTerm);
         }
 
-        String valueId = annotationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_ENTITY_ID);
         if (valueId!=null) {
             OntologyTermReference valueTerm = new OntologyTermReference();
-            valueTerm.setOntologyTermId(Long.parseLong(valueId));
+            valueTerm.setOntologyTermId(valueId);
             valueTerm.setOntologyId(ontologyTermIdToOntologyId.get(valueId));
             annotation.setKeyTerm(valueTerm);
         }
         
-        Reference target = new Reference(getCollectionName(targetEntityType), targetId);
+        Reference target = new Reference(getCollectionName(targetType), targetId);
         annotation.setTarget(target);
         
         return annotation;
@@ -850,6 +1117,12 @@ public class MongoDbImport extends AnnotationDAO {
         else if (EntityConstants.TYPE_ONTOLOGY_ROOT.equals(entityType)) {
             return "ontology";
         }
+        else if (EntityConstants.TYPE_SCREEN_SAMPLE.equals(entityType)) {
+            return "screenSample";
+        }
+        else if (EntityConstants.TYPE_ALIGNED_BRAIN_STACK.equals(entityType)) {
+            return "patternMask";
+        }
         return "unknown";
     }
     
@@ -866,9 +1139,9 @@ public class MongoDbImport extends AnnotationDAO {
     private String getRelativeFilename(HasFilepath result, String filepath) {
         if (filepath==null) return null;
         String parentFilepath = result.getFilepath();
+        if (parentFilepath==null) throw new IllegalArgumentException("Result "+filepath+" has null parent filepath");
         String prefix = parentFilepath.endsWith("/") ? parentFilepath : parentFilepath+"/";
         if (!filepath.startsWith(prefix)) {
-            //log.trace("File "+filepath+" is not relative to prefix "+prefix);
             return filepath;
         }
         return filepath.replaceFirst(prefix, "");

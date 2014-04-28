@@ -1,42 +1,39 @@
 package org.janelia.it.jacs.model.domain;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 import org.jongo.marshall.jackson.oid.Id;
 
-public class NeuronFragment implements DomainObject, HasImages, HasFilepath {
+public class ScreenSample implements DomainObject, HasImages, HasFilepath {
 
     @Id
     private Long id;
-    private Long sampleId;
-    private Long separationId;
+    private String name;
     private String ownerKey;
     private List<String> readers;
     private List<String> writers;
-    private Integer number;
+    private Date creationDate;
+    private Date updatedDate;
+    private String flyLine;
     private String filepath;
     private Map<ImageType,String> images;
+    private ReverseReference masks;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
-
+    
     public Long getId() {
         return id;
     }
     public void setId(Long id) {
         this.id = id;
     }
-    public Long getSampleId() {
-        return sampleId;
+    public String getName() {
+        return name;
     }
-    public void setSampleId(Long sampleId) {
-        this.sampleId = sampleId;
-    }
-    public Long getSeparationId() {
-        return separationId;
-    }
-    public void setSeparationId(Long separationId) {
-        this.separationId = separationId;
+    public void setName(String name) {
+        this.name = name;
     }
     public String getOwnerKey() {
         return ownerKey;
@@ -56,11 +53,17 @@ public class NeuronFragment implements DomainObject, HasImages, HasFilepath {
     public void setWriters(List<String> writers) {
         this.writers = writers;
     }
-    public Integer getNumber() {
-        return number;
+    public Date getCreationDate() {
+        return creationDate;
     }
-    public void setNumber(Integer number) {
-        this.number = number;
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
+    }
+    public Date getUpdatedDate() {
+        return updatedDate;
+    }
+    public void setUpdatedDate(Date updatedDate) {
+        this.updatedDate = updatedDate;
     }
     public String getFilepath() {
         return filepath;
@@ -74,5 +77,16 @@ public class NeuronFragment implements DomainObject, HasImages, HasFilepath {
     public void setImages(Map<ImageType, String> images) {
         this.images = images;
     }
-    
+    public String getFlyLine() {
+        return flyLine;
+    }
+    public void setFlyLine(String flyLine) {
+        this.flyLine = flyLine;
+    }
+    public ReverseReference getMasks() {
+        return masks;
+    }
+    public void setMasks(ReverseReference masks) {
+        this.masks = masks;
+    }
 }
