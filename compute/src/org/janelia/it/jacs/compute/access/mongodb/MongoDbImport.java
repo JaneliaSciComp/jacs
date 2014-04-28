@@ -40,6 +40,7 @@ import org.janelia.it.jacs.model.domain.SamplePipelineRun;
 import org.janelia.it.jacs.model.domain.SampleProcessingResult;
 import org.janelia.it.jacs.model.domain.SampleTile;
 import org.janelia.it.jacs.model.domain.ScreenSample;
+import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.ontology.EnumText;
 import org.janelia.it.jacs.model.domain.ontology.Interval;
 import org.janelia.it.jacs.model.domain.ontology.Ontology;
@@ -48,7 +49,6 @@ import org.janelia.it.jacs.model.domain.ontology.OntologyTermReference;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityActorPermission;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.jongo.Jongo;
@@ -71,7 +71,9 @@ public class MongoDbImport extends AnnotationDAO {
 	protected static final String ONTOLOGY_TERM_TYPES_PACKAGE = "org.janelia.it.jacs.model.domain.ontology";
 	protected static final int ANNOTATION_BATCH_SIZE = 1000;
 	
+	protected SubjectDAO subjectDao;
     protected Jongo jongo;
+    protected MongoCollection subjectCollection;
 	protected MongoCollection folderCollection;
 	protected MongoCollection sampleCollection;
     protected MongoCollection screenSampleCollection;
@@ -88,12 +90,14 @@ public class MongoDbImport extends AnnotationDAO {
     
     private void init() throws DaoException {
         try {
+            subjectDao = new SubjectDAO(log);
             MongoClient m = new MongoClient(MONGO_SERVER_URL);
         	m.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
         	DB db = m.getDB(MONGO_DATABASE);
         	jongo = new Jongo(db, 
         	        new JacksonMapper.Builder()
         	            .build());
+            subjectCollection = jongo.getCollection("subject");
         	folderCollection = jongo.getCollection("folder");
         	sampleCollection = jongo.getCollection("sample");
             screenSampleCollection = jongo.getCollection("screenSample");
@@ -114,6 +118,9 @@ public class MongoDbImport extends AnnotationDAO {
         
         long startAll = System.currentTimeMillis(); 
 
+        log.info("Adding subjects");
+        loadSubjects();
+        
         log.info("Adding screen data");
         loadScreenData();
         
@@ -185,6 +192,20 @@ public class MongoDbImport extends AnnotationDAO {
         mc.ensureIndex("{writers:1}");
         mc.ensureIndex("{_id:1,readers:1}");
         mc.ensureIndex("{_id:1,writers:1}");
+    }
+    
+    private void loadSubjects() {
+
+        for (org.janelia.it.jacs.model.user_data.Subject subject : subjectDao.getSubjects()) {
+            Subject newSubject = new Subject();
+            newSubject.setId(subject.getId());
+            newSubject.setKey(subject.getKey());
+            newSubject.setName(subject.getName());
+            newSubject.setEmail(subject.getEmail());
+            newSubject.setFullName(subject.getFullName());
+            newSubject.setGroups(new HashSet<String>(getGroupKeysForUsernameOrSubjectKey(subject.getKey())));
+            subjectCollection.insert(newSubject);
+        }
     }
     
     private void loadOntologies() throws DaoException {
@@ -316,19 +337,8 @@ public class MongoDbImport extends AnnotationDAO {
         return null;
     }
 
-    private void loadSamples(String subjectKey) throws Exception {
-        long start = System.currentTimeMillis();
-        Deque<Entity> samples = new LinkedList<Entity>(getUserEntitiesByTypeName(subjectKey, EntityConstants.TYPE_SAMPLE));
-        log.info("Got "+samples.size()+" samples for "+subjectKey);
-        resetSession();
-        loadSamples(samples);
-        log.info("Loading " + samples.size() + " samples for " + subjectKey + " took "
-                + (System.currentTimeMillis() - start) + " ms");
-    }
-
     private void loadSamples() {
-        SubjectDAO subjectDao = new SubjectDAO(log);
-        for (Subject subject : subjectDao.getSubjects()) {
+        for (org.janelia.it.jacs.model.user_data.Subject subject : subjectDao.getSubjects()) {
             String subjectKey = subject.getKey();
             try {
                 loadSamples(subjectKey);
@@ -337,6 +347,16 @@ public class MongoDbImport extends AnnotationDAO {
                 log.error("Error loading samples for " + subjectKey, e);
             }
         }
+    }
+
+    private void loadSamples(String subjectKey) throws Exception {
+        long start = System.currentTimeMillis();
+        Deque<Entity> samples = new LinkedList<Entity>(getUserEntitiesByTypeName(subjectKey, EntityConstants.TYPE_SAMPLE));
+        log.info("Got "+samples.size()+" samples for "+subjectKey);
+        resetSession();
+        loadSamples(samples);
+        log.info("Loading " + samples.size() + " samples for " + subjectKey + " took "
+                + (System.currentTimeMillis() - start) + " ms");
     }
     
     private int loadSamples(Deque<Entity> samples) {
@@ -1087,8 +1107,8 @@ public class MongoDbImport extends AnnotationDAO {
         return annotation;
     }
     
-    private List<String> getSubjectKeysWithPermission(Entity entity, String rights) {
-        List<String> subjectKeys = new ArrayList<String>();
+    private Set<String> getSubjectKeysWithPermission(Entity entity, String rights) {
+        Set<String> subjectKeys = new HashSet<String>();
         subjectKeys.add(entity.getOwnerKey()); // owner has all permissions
         for(EntityActorPermission permission : entity.getEntityActorPermissions()) {
             if (permission.getPermissions().contains(rights)) {

@@ -1,8 +1,8 @@
 package org.janelia.it.jacs.model.domain;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.jongo.marshall.jackson.oid.Id;
 
@@ -13,8 +13,8 @@ public class PatternMask implements DomainObject, HasImages, HasFilepath {
     private Long screenSampleId;
     private String name;
     private String ownerKey;
-    private List<String> readers;
-    private List<String> writers;
+    private Set<String> readers;
+    private Set<String> writers;
     private Date creationDate;
     private Date updatedDate;
     private String filepath;
@@ -50,16 +50,16 @@ public class PatternMask implements DomainObject, HasImages, HasFilepath {
     public void setOwnerKey(String ownerKey) {
         this.ownerKey = ownerKey;
     }
-    public List<String> getReaders() {
+    public Set<String> getReaders() {
         return readers;
     }
-    public void setReaders(List<String> readers) {
+    public void setReaders(Set<String> readers) {
         this.readers = readers;
     }
-    public List<String> getWriters() {
+    public Set<String> getWriters() {
         return writers;
     }
-    public void setWriters(List<String> writers) {
+    public void setWriters(Set<String> writers) {
         this.writers = writers;
     }
     public Date getCreationDate() {

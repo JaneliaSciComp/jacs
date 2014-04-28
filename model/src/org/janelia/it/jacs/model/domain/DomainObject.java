@@ -1,6 +1,6 @@
 package org.janelia.it.jacs.model.domain;
 
-import java.util.List;
+import java.util.Set;
 
 public interface DomainObject {
 
@@ -12,12 +12,12 @@ public interface DomainObject {
 
     public abstract void setOwnerKey(String ownerKey);
 
-    public abstract List<String> getReaders();
+    public abstract Set<String> getReaders();
 
-    public abstract void setReaders(List<String> readers);
+    public abstract void setReaders(Set<String> readers);
 
-    public abstract List<String> getWriters();
+    public abstract Set<String> getWriters();
 
-    public abstract void setWriters(List<String> writers);
+    public abstract void setWriters(Set<String> writers);
 
 }

@@ -1,8 +1,8 @@
 package org.janelia.it.jacs.model.domain;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.jongo.marshall.jackson.oid.Id;
 
@@ -12,8 +12,8 @@ public class Sample implements DomainObject {
     private Long id;
     private String name;
     private String ownerKey;
-    private List<String> readers;
-    private List<String> writers;
+    private Set<String> readers;
+    private Set<String> writers;
     private Date creationDate;
     private Date updatedDate;
     private String age;
@@ -25,6 +25,8 @@ public class Sample implements DomainObject {
     private String status;
     private String visited;
     private Map<String,ObjectiveSample> objectives;
+    
+    /* EVERYTHING BELOW IS AUTO-GENERATED */
     
     public Long getId() {
         return id;
@@ -38,46 +40,22 @@ public class Sample implements DomainObject {
     public void setName(String name) {
         this.name = name;
     }
-    /* (non-Javadoc)
-     * @see org.janelia.it.jacs.model.domain.RequiresAuthorization#getOwnerKey()
-     */
-    @Override
     public String getOwnerKey() {
         return ownerKey;
     }
-    /* (non-Javadoc)
-     * @see org.janelia.it.jacs.model.domain.RequiresAuthorization#setOwnerKey(java.lang.String)
-     */
-    @Override
     public void setOwnerKey(String ownerKey) {
         this.ownerKey = ownerKey;
     }
-    /* (non-Javadoc)
-     * @see org.janelia.it.jacs.model.domain.RequiresAuthorization#getReaders()
-     */
-    @Override
-    public List<String> getReaders() {
+    public Set<String> getReaders() {
         return readers;
     }
-    /* (non-Javadoc)
-     * @see org.janelia.it.jacs.model.domain.RequiresAuthorization#setReaders(java.util.List)
-     */
-    @Override
-    public void setReaders(List<String> readers) {
+    public void setReaders(Set<String> readers) {
         this.readers = readers;
     }
-    /* (non-Javadoc)
-     * @see org.janelia.it.jacs.model.domain.RequiresAuthorization#getWriters()
-     */
-    @Override
-    public List<String> getWriters() {
+    public Set<String> getWriters() {
         return writers;
     }
-    /* (non-Javadoc)
-     * @see org.janelia.it.jacs.model.domain.RequiresAuthorization#setWriters(java.util.List)
-     */
-    @Override
-    public void setWriters(List<String> writers) {
+    public void setWriters(Set<String> writers) {
         this.writers = writers;
     }
     public Date getCreationDate() {
