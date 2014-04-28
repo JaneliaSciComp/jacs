@@ -23,6 +23,7 @@ import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.mongodb.MongoDbImport;
+import org.janelia.it.jacs.compute.access.mongodb.MongoDbPermissionRefresh;
 import org.janelia.it.jacs.compute.access.neo4j.Neo4jCSVExportDao;
 import org.janelia.it.jacs.compute.access.solr.SolrDAO;
 import org.janelia.it.jacs.compute.api.support.SageTerm;
@@ -104,11 +105,14 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     // TODO: move this to its own bean, or rename this one
     public void mongoAllDomainObjects(boolean clearDb) throws ComputeException {
         try {
-            MongoDbImport mongodbDAO = new MongoDbImport(log);
+            MongoDbImport mongoDbImport = new MongoDbImport(log);
             if (clearDb) {
-                mongodbDAO.dropDatabase();
+                mongoDbImport.dropDatabase();
             }
-            mongodbDAO.loadAllEntities();
+            mongoDbImport.loadAllEntities();
+            
+            MongoDbPermissionRefresh refresh = new MongoDbPermissionRefresh(log);
+            refresh.refreshPermissions();
         }
         catch (DaoException e) {
             log.error("Error loading into MongoDB",e);
