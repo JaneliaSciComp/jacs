@@ -62,7 +62,7 @@ public class PurgeAndBlockSampleService extends AbstractEntityService {
                 || entityType.equals(EntityConstants.TYPE_FILE)) {
             String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
             deletePath(filepath);
-            entityBean.deleteEntityTree(ownerKey, entity.getId());
+            entityBean.deleteEntityTreeById(ownerKey, entity.getId());
         }
         else if (entityType.equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
             String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);

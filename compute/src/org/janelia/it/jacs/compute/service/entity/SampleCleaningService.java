@@ -129,7 +129,7 @@ public class SampleCleaningService extends AbstractEntityService {
     	if (!isDebug) {
     		int c = 0;
     		for(Entity child : toReallyDelete) {
-    			entityBean.deleteEntityTree(ownerKey, child.getId());
+    			entityBean.deleteEntityTreeById(ownerKey, child.getId());
     			c++;
     			numRunsDeleted++;
     		}

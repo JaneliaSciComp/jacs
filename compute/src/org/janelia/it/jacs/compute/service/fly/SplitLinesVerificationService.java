@@ -95,7 +95,7 @@ public class SplitLinesVerificationService extends AbstractEntityService {
         // Delete unwanted lines
         if (!DEBUG) {
             for (Long entityId : toDelete) {
-            	entityBean.deleteEntityTree(ownerKey, entityId);
+            	entityBean.deleteEntityTreeById(ownerKey, entityId);
             }
         }
 

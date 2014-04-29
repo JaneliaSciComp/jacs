@@ -47,7 +47,7 @@ for(Entity sp : sps) {
 		println sp.id+" has orphan MIPs: "
 		for(Entity mip : stitchedMips) {
 			println "    "+mip.getValueByAttributeName(ATTRIBUTE_FILE_PATH)
-			e.deleteEntityTree(mip.user.userLogin, mip.id)
+			e.deleteEntityTreeById(mip.user.userLogin, mip.id)
 			numDeleted++
 		}
 	}

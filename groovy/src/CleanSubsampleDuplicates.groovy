@@ -63,7 +63,7 @@ println ""
 println "DELETING SAMPLES:"
 for(Long sampleId : treesToDelete) {
     println "Delete "+sampleId
-    if (!DEBUG) f.e.deleteEntityTree(ownerKey, sampleId)
+    if (!DEBUG) f.e.deleteEntityTreeById(ownerKey, sampleId)
 }
 
 println "Done"

@@ -478,7 +478,7 @@ public class SampleHelper extends EntityHelper {
         for(Entity imageTile : EntityUtils.getChildrenOfType(supportingFolder, EntityConstants.TYPE_IMAGE_TILE)) {
             if (!tileNameSet.contains(imageTile.getName())) {
                 logger.info("  Removing superfluous image tile: "+imageTile.getName());
-                entityBean.deleteEntityTree(imageTile.getOwnerKey(), imageTile.getId());
+                entityBean.deleteEntityTreeById(imageTile.getOwnerKey(), imageTile.getId());
             }
         }
     }
@@ -530,7 +530,7 @@ public class SampleHelper extends EntityHelper {
             imageTile = imageTileEd.getChildEntity();
             if (!existingTileMatches(imageTile, tileGroup)) {
                 logger.info("  Tile '"+imageTile.getName()+"' (id="+imageTileEd.getId()+") has changed, will delete and recreate it.");
-                entityBean.deleteEntityTree(imageTile.getOwnerKey(), imageTile.getId());
+                entityBean.deleteEntityTreeById(imageTile.getOwnerKey(), imageTile.getId());
                 imageTile = null;
             }
             else {

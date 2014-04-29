@@ -44,8 +44,16 @@ public interface EntityBeanRemote {
     public EntityData setOrUpdateValue(String subjectKey, Long entityId, String attributeName, String value) throws ComputeException;
     
     public boolean deleteEntityById(String subjectKey, Long entityId) throws ComputeException;
+    
+    /** @deprecated use deleteEntityTreeById */
+    @Deprecated
     public boolean deleteEntityTree(String subjectKey, Long entityId) throws ComputeException;
+    /** @deprecated use deleteEntityTreeById */
+    @Deprecated
     public boolean deleteEntityTree(String subjectKey, Long entityId, boolean unlinkMultipleParents) throws ComputeException;
+    
+    public boolean deleteEntityTreeById(String subjectKey, Long entityId) throws ComputeException;
+    public boolean deleteEntityTreeById(String subjectKey, Long entityId, boolean unlinkMultipleParents) throws ComputeException;
     public void deleteEntityData(String subjectKey, Long entityDataId) throws ComputeException;
     
     public Entity getEntityById(String subjectKey, Long entityId) throws ComputeException;

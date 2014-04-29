@@ -137,7 +137,7 @@ for(String slideCode : slideCodeToSampleDeletionCandidates.keySet()) {
         def dataSet = sample.getValueByAttributeName(ATTRIBUTE_DATA_SET_IDENTIFIER)
         def visited = "Visited".equals(sample.getValueByAttributeName(ATTRIBUTE_VISITED))
         println slideCode+" ("+annotationCountMap.get(sample.id)+") "+sample.id+" "+sample.name+" "
-        if (!DEBUG) f.e.deleteEntityTree(sample.ownerKey, sample.id)
+        if (!DEBUG) f.e.deleteEntityTreeById(sample.ownerKey, sample.id)
     }
 }
 

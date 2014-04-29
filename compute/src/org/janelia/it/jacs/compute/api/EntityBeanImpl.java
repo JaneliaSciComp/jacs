@@ -364,12 +364,24 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             throw new ComputeException("Error deleting entity "+entityId,e);
         }
     }
-    
+
+    /** @deprecated use deleteEntityTreeById */
+    @Deprecated
     public boolean deleteEntityTree(String subjectKey, Long entityId) throws ComputeException {
-    	return deleteEntityTree(subjectKey, entityId, false);
+        throw new UnsupportedOperationException("This client version is no longer supported. Please restart the workstation client to upgrade to the latest version.");
     }
 
+    /** @deprecated use deleteEntityTreeById */
+    @Deprecated
     public boolean deleteEntityTree(String subjectKey, Long entityId, boolean unlinkMultipleParents) throws ComputeException {
+        throw new UnsupportedOperationException("This client version is no longer supported. Please restart the workstation client to upgrade to the latest version.");
+    }
+    
+    public boolean deleteEntityTreeById(String subjectKey, Long entityId) throws ComputeException {
+        return deleteEntityTreeById(subjectKey, entityId, false);
+    }
+
+    public boolean deleteEntityTreeById(String subjectKey, Long entityId, boolean unlinkMultipleParents) throws ComputeException {
         try {
             Entity currEntity = getEntityById(subjectKey, entityId);
             if (currEntity==null) {
