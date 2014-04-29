@@ -1966,14 +1966,21 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         
         // Multiple parent check - can't delete entities that we have references to elsewhere
         Set<EntityData> eds = getParentEntityDatas(null, entity.getId());
-        Set<EntityData> ownedEds = new HashSet<EntityData>();
+        Set<EntityData> respectedEds = new HashSet<EntityData>();
         for(EntityData ed : eds) {
-            if (EntityUtils.isOwner(ed.getParentEntity(), subjectKeys)) {
-                ownedEds.add(ed);
+            if (!EntityUtils.isOwner(entity, subjectKeys)) {
+                // If we don't own the current entity, then all references to it are respected
+                respectedEds.add(ed);
+            }
+            else {
+                // If we own the current entity, then we only care about our own references
+                if (EntityUtils.isOwner(ed.getParentEntity(), subjectKeys)) {
+                    respectedEds.add(ed);
+                }
             }
         }
         
-        boolean moreThanOneParent = ownedEds.size() > 1;
+        boolean moreThanOneParent = respectedEds.size() > 1;
         if (level>0 && moreThanOneParent && !unlinkMultipleParents) {
             log.info(indent+"Cannot delete "+entity.getName()+" because more than one parent is pointing to it");
             return;
