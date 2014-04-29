@@ -1954,7 +1954,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         
         // Permission check - can't delete entities that we don't have write access to
         if (!EntityUtils.hasWriteAccess(entity, subjectKeys)) {
-            log.info(indent+"Cannot delete entity because owner ("+entity.getOwnerKey()+") does not match invoker ("+subjectKey+")");
+            log.info(indent+"Cannot delete entity because user ("+subjectKey+") does not have write access");
             return;
         }
 
