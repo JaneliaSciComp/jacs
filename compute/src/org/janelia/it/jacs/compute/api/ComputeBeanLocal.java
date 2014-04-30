@@ -50,8 +50,6 @@ public interface ComputeBeanLocal extends ComputeBeanRemote {
 
     public boolean createUser(String newUserName) throws DaoException;
     
-    public User createUser(String newUserName, String newFullName) throws ComputeException;
-    
     public int moveFileNodesToArchive(String filepath) throws ComputeException;
     
     public Task getMostRecentTaskWithNameAndParameters(String owner, String taskName, HashSet<TaskParameter> taskParameters);
