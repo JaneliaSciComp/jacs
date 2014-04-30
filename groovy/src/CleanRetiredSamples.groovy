@@ -38,7 +38,7 @@ println "Processed "+numProcessed+" samples. Found "+toDelete.size()+" candidate
 if (!DEBUG) {
     println "DELETING SAMPLES:"
     for(Entity sample in toDelete) {
-        f.e.deleteEntityTree(sample.ownerKey, sample.id)
+        f.e.deleteEntityTreeById(sample.ownerKey, sample.id)
     }
 }
 

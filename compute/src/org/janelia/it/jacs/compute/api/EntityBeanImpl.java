@@ -229,14 +229,14 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         try {
             Entity parent = getEntityById(subjectKey, parentId);
             if (parent==null) {
-                throw new DaoException("Parent entity does not exist "+parent);
+                throw new DaoException("Parent entity does not exist: "+parentId);
             }
             if (subjectKey!=null && !EntityUtils.hasWriteAccess(parent, _annotationDAO.getSubjectKeys(subjectKey))) {
                 throw new ComputeException("Subject "+subjectKey+" cannot add children to "+parentId);
             }
             Entity entity = getEntityById(subjectKey, entityId);
             if (entity==null) {
-                throw new DaoException("Entity does not exist "+entityId);
+                throw new DaoException("Entity does not exist: "+entityId);
             }
             
             checkEntityTypeSupportsAttribute(parent.getEntityTypeName(), attrName);
@@ -364,12 +364,24 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             throw new ComputeException("Error deleting entity "+entityId,e);
         }
     }
-    
+
+    /** @deprecated use deleteEntityTreeById */
+    @Deprecated
     public boolean deleteEntityTree(String subjectKey, Long entityId) throws ComputeException {
-    	return deleteEntityTree(subjectKey, entityId, false);
+        throw new UnsupportedOperationException("This client version is no longer supported. Please restart the workstation client to upgrade to the latest version.");
     }
 
+    /** @deprecated use deleteEntityTreeById */
+    @Deprecated
     public boolean deleteEntityTree(String subjectKey, Long entityId, boolean unlinkMultipleParents) throws ComputeException {
+        throw new UnsupportedOperationException("This client version is no longer supported. Please restart the workstation client to upgrade to the latest version.");
+    }
+    
+    public boolean deleteEntityTreeById(String subjectKey, Long entityId) throws ComputeException {
+        return deleteEntityTreeById(subjectKey, entityId, false);
+    }
+
+    public boolean deleteEntityTreeById(String subjectKey, Long entityId, boolean unlinkMultipleParents) throws ComputeException {
         try {
             Entity currEntity = getEntityById(subjectKey, entityId);
             if (currEntity==null) {

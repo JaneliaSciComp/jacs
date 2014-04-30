@@ -65,7 +65,7 @@ if (SampleReportConstants.CREATE_FOLDERS) {
 	rootFolder = f.getRootEntity(SampleReportConstants.OUTPUT_ROOT_NAME)
     if (rootFolder!=null) {
         println "Deleting root folder "+SampleReportConstants.OUTPUT_ROOT_NAME+". This may take a while!"
-        f.deleteEntityTree(rootFolder.id)
+        f.deleteEntityTreeById(rootFolder.id)
     }
 	rootFolder = f.createRootEntity(SampleReportConstants.OUTPUT_ROOT_NAME)
 }

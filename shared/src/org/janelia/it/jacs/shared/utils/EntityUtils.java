@@ -134,10 +134,7 @@ public class EntityUtils {
         
         // User or any of their groups grant read access
         if  (subjectKeys.contains(ownerKey)) return true;
-        
-        // User is part of admin group
-        if  (subjectKeys.contains("group:admin")) return true;
-        
+                
         // Check explicit permission grants
         for(EntityActorPermission eap : entity.getEntityActorPermissions()) {
             if (subjectKeys.contains(eap.getSubjectKey())) {
@@ -165,9 +162,6 @@ public class EntityUtils {
         // Only being the owner grants write access
         if (isOwner(entity, subjectKeys)) return true;
 
-        // User is part of admin group
-        if  (subjectKeys.contains("group:admin")) return true;
-        
         // Check explicit permission grants
         for(EntityActorPermission eap : entity.getEntityActorPermissions()) {
             if (subjectKeys.contains(eap.getSubjectKey())) {

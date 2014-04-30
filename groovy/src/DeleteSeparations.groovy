@@ -77,7 +77,7 @@ def process(Entity sample, List<Entity> separations) {
 	else {
 		
 		for(Entity sep : separations) {
-			e.deleteEntityTree(sep.user.userLogin, sep.id)
+			e.deleteEntityTreeById(sep.user.userLogin, sep.id)
 			println "    Deleted neuron Separation "+sep.id
 			numSeparationsDeleted++
 		}

@@ -686,7 +686,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             logger.info("4) count entity tree returned "+count+" and took "+(System.currentTimeMillis()-start)+" ms");
             
 //            start = System.currentTimeMillis();
-//            e.deleteEntityTree(subjectKey, retiredDataId);
+//            e.deleteEntityTreeById(subjectKey, retiredDataId);
 //            logger.info("5) deletion of entity tree took "+(System.currentTimeMillis()-start)+" ms");
             
         }

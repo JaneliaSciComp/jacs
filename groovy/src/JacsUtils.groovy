@@ -66,7 +66,7 @@ class JacsUtils {
 
     def deleteEntityTree(Long entityId) {
         if (persist) {
-            e.deleteEntityTree(subject.key, entityId)
+            e.deleteEntityTreeById(subject.key, entityId)
             println "Deleted entity tree with id "+entityId
         }
     }

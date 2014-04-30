@@ -74,7 +74,7 @@ public class FastLoadResultsDiscoveryService extends AbstractEntityService {
     		// Delete existing fast load results, if any 
     		Entity fastLoadFolder = EntityUtils.findChildWithName(filesFolder, "Fast Load");
     		if (fastLoadFolder!=null) {
-    			entityBean.deleteEntityTree(ownerKey, fastLoadFolder.getId());
+    			entityBean.deleteEntityTreeById(ownerKey, fastLoadFolder.getId());
     		}
     		
     		fastLoadFolder = helper.createOrVerifyFolderEntity(filesFolder, "Fast Load", fastloadDir, 0);

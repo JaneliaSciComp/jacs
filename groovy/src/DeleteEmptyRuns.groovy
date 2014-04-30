@@ -20,7 +20,7 @@ for(Entity run : e.getUserEntitiesByTypeName(username, TYPE_PIPELINE_RUN)) {
     f.loadChildren(run)
     numProcessed++;
     if (run.children.isEmpty()) {
-        e.deleteEntityTree(username, run.id)
+        e.deleteEntityTreeById(username, run.id)
         numDeleted++;
     }
 }

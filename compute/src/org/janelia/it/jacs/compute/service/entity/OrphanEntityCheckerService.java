@@ -29,7 +29,7 @@ public class OrphanEntityCheckerService extends AbstractEntityService {
         
         if (deleteOrphanEntityTrees) {
             for(Long id : entityIds) {
-                entityBean.deleteEntityTree(ownerKey, id);
+                entityBean.deleteEntityTreeById(ownerKey, id);
                 numDeleted++;
             }
         }

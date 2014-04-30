@@ -102,7 +102,7 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
     	logger.info("  Removing unreferenced sample entirely: "+sample.getId());
     	
     	if (!isDebug) {
-    		entityBean.deleteEntityTree(sample.getOwnerKey(), sample.getId(), true);
+    		entityBean.deleteEntityTreeById(sample.getOwnerKey(), sample.getId(), true);
     	}
         
     	return true;

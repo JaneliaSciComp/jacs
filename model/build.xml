@@ -62,6 +62,7 @@
             </fileset>
         </jar>
     </target>
+
     <!-- Define the set of targets that should be run to completely build this module. -->
     <target name="build" depends="jar"/>
 
