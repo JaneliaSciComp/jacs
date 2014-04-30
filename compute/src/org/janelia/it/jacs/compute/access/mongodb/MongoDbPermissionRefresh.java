@@ -1,30 +1,16 @@
 package org.janelia.it.jacs.compute.access.mongodb;
 
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.domain.Annotation;
 import org.janelia.it.jacs.model.domain.DomainObject;
-import org.janelia.it.jacs.model.domain.Folder;
-import org.janelia.it.jacs.model.domain.LSMImage;
-import org.janelia.it.jacs.model.domain.NeuronFragment;
-import org.janelia.it.jacs.model.domain.PatternMask;
-import org.janelia.it.jacs.model.domain.Sample;
-import org.janelia.it.jacs.model.domain.ScreenSample;
 import org.janelia.it.jacs.model.domain.Subject;
-import org.janelia.it.jacs.model.domain.ontology.Ontology;
-import org.jongo.Jongo;
 import org.jongo.MongoCollection;
-import org.jongo.marshall.jackson.JacksonMapper;
 
-import com.mongodb.DB;
-import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
-import com.mongodb.WriteResult;
 
 /**
  * Data access to the MongoDB data store.
@@ -35,46 +21,33 @@ public class MongoDbPermissionRefresh {
     
 	protected static final String MONGO_SERVER_URL = SystemConfigurationProperties.getString("MongoDB.ServerURL");
 	protected static final String MONGO_DATABASE = SystemConfigurationProperties.getString("MongoDB.Database");
-	protected static final String[] domainTypes = {"folder","sample","screenSample","patternMask","lsm","fragment","annotation","aontology"};
-	protected static final Class[] domainClasses = {Folder.class,Sample.class,ScreenSample.class,PatternMask.class,LSMImage.class,NeuronFragment.class,Annotation.class,Ontology.class};
 	
     protected Logger log;
-    protected Jongo jongo;
+    protected DomainDAO domainDao;
     
-    public MongoDbPermissionRefresh(Logger log) {
+    public MongoDbPermissionRefresh(Logger log) throws DaoException {
         this.log = log;
-    }
-    
-    private void init() throws DaoException {
-        try {
-            MongoClient m = new MongoClient(MONGO_SERVER_URL);
-        	m.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
-        	DB db = m.getDB(MONGO_DATABASE);
-        	jongo = new Jongo(db, 
-        	        new JacksonMapper.Builder()
-        	            .build());
-        }
-		catch (UnknownHostException e) {
-			throw new RuntimeException("Unknown host given in MongoDB.ServerURL value in system properties: "+MONGO_SERVER_URL);
-		}
+        this.domainDao = new DomainDAO(MONGO_SERVER_URL);
+        domainDao.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
     }
 
     public void refreshPermissions() throws DaoException {
-        
+
+        long start = System.currentTimeMillis();
         log.info("Refreshing denormalized permissions");
         
         Map<String,Subject> subjectMap = new HashMap<String,Subject>();
-        for(Subject subject : jongo.getCollection("subject").find().as(Subject.class)) {
+        for(Subject subject : domainDao.getCollection("subject").find().as(Subject.class)) {
             subjectMap.put(subject.getKey(), subject);
         }
         
-        for(int i=0; i<domainTypes.length; i++) {
-            String domainType = domainTypes[i];
-            Class domainClass = domainClasses[i];
+        Map<String,Class<? extends DomainObject>> domainClassMap = domainDao.getDomainClassMap();
+        for(String domainType : domainClassMap.keySet()) {
+            Class domainClass = domainClassMap.get(domainType);
             
             log.info("Refreshing denormalized permissions for "+domainType);
             
-            MongoCollection collection = jongo.getCollection(domainType);
+            MongoCollection collection = domainDao.getCollection(domainType);
 
             for(Object obj : collection.find().as(domainClass)) {
                 DomainObject domainObject = (DomainObject)obj;
@@ -86,5 +59,6 @@ public class MongoDbPermissionRefresh {
                 }
             }
         }
+        log.info("Refreshing permissions took "+(System.currentTimeMillis()-start) + " ms");
     }
 }

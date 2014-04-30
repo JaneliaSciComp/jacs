@@ -15,6 +15,7 @@ import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.Sample;
 import org.janelia.it.jacs.model.domain.SamplePipelineRun;
 import org.janelia.it.jacs.model.domain.SampleTile;
+import org.janelia.it.jacs.model.domain.Subject;
 import org.junit.Test;
 
 public class SampleTest extends MongoDbTest {
@@ -115,8 +116,13 @@ public class SampleTest extends MongoDbTest {
 //    }
     
     
-    
     @Test
+    public void testSubjects() {
+        for(Subject subject : dao.getCollection("subject").find().as(Subject.class)) {
+            System.out.println(subject.getKey());
+        }
+        
+    }
     public void runBenchmarks() throws Exception {
 
         long start = System.currentTimeMillis();

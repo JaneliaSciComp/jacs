@@ -84,8 +84,9 @@ public class MongoDbImport extends AnnotationDAO {
     protected MongoCollection ontologyCollection;
     protected Map<Long,Long> ontologyTermIdToOntologyId = new HashMap<Long,Long>();
     
-    public MongoDbImport(Logger log) {
+    public MongoDbImport(Logger log) throws DaoException {
     	super(log);
+        init();
     }
     
     private void init() throws DaoException {
@@ -1168,7 +1169,6 @@ public class MongoDbImport extends AnnotationDAO {
     }
     
     public void dropDatabase() throws DaoException {
-    	init();
 		try {
 		    jongo.getDatabase().dropDatabase();
 		}
