@@ -11,6 +11,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.domain.Annotation;
 import org.janelia.it.jacs.model.domain.DomainObject;
+import org.janelia.it.jacs.model.domain.FlyLine;
 import org.janelia.it.jacs.model.domain.Folder;
 import org.janelia.it.jacs.model.domain.LSMImage;
 import org.janelia.it.jacs.model.domain.NeuronFragment;
@@ -19,6 +20,8 @@ import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
 import org.janelia.it.jacs.model.domain.Sample;
 import org.janelia.it.jacs.model.domain.ScreenSample;
+import org.janelia.it.jacs.model.domain.TreeNode;
+import org.janelia.it.jacs.model.domain.Workspace;
 import org.janelia.it.jacs.model.domain.ontology.Ontology;
 import org.jongo.Jongo;
 import org.jongo.MongoCollection;
@@ -37,16 +40,19 @@ public class DomainDAO {
 
     private static final Logger log = Logger.getLogger(DomainDAO.class);
     
-    public static final String[] domainTypes = {"folder","sample","screenSample","patternMask","lsm","fragment","annotation","aontology"};
-    public static final Class<?>[] domainClasses = {Folder.class,Sample.class,ScreenSample.class,PatternMask.class,LSMImage.class,NeuronFragment.class,Annotation.class,Ontology.class};
+    public static final String[] domainTypes = {"workspace","sample","screenSample","patternMask","flyLine","lsm","fragment","annotation","ontology"};
+    public static final Class<?>[] domainClasses = {TreeNode.class,Sample.class,ScreenSample.class,PatternMask.class,FlyLine.class,LSMImage.class,NeuronFragment.class,Annotation.class,Ontology.class};
     
-    protected static final String MONGO_DATABASE = "jacs";
+    public static final String MONGO_DATABASE = "jacs";
 
     protected MongoClient m;
     protected DB db;
     protected Jongo jongo;
-    protected MongoCollection folderCollection;
+    protected MongoCollection subjectCollection;
+    protected MongoCollection workspaceCollection;
     protected MongoCollection sampleCollection;
+    protected MongoCollection screenSampleCollection;
+    protected MongoCollection patternMaskCollection;
     protected MongoCollection lsmCollection;
     protected MongoCollection fragmentCollection;
     protected MongoCollection annotationCollection;
@@ -64,8 +70,11 @@ public class DomainDAO {
                         .enable(MapperFeature.AUTO_DETECT_GETTERS)
                         .enable(MapperFeature.AUTO_DETECT_SETTERS)
                         .build());
-            folderCollection = jongo.getCollection("folder");
+            subjectCollection = jongo.getCollection("subject");
+            workspaceCollection = jongo.getCollection("workspace");
             sampleCollection = jongo.getCollection("sample");
+            screenSampleCollection = jongo.getCollection("screenSample");
+            patternMaskCollection = jongo.getCollection("patternMask");
             lsmCollection = jongo.getCollection("lsm");
             fragmentCollection = jongo.getCollection("fragment");
             annotationCollection = jongo.getCollection("annotation");
@@ -81,6 +90,10 @@ public class DomainDAO {
         catch (UnknownHostException e) {
             throw new RuntimeException("Unknown host: "+serverUrl);
         }
+    }
+    
+    public Jongo getJongo() {
+        return jongo;
     }
     
     public void setWriteConcern(WriteConcern writeConcern) {
@@ -106,23 +119,17 @@ public class DomainDAO {
         }
         return list;
     }
-
-    public List<Ontology> getOntologies(String subjectKey) {
-        return toList(ontologyCollection.find("{readers:#}",subjectKey).as(Ontology.class));
-    }
-    
-    public List<Folder> getRootFolders(String subjectKey) {
-        return toList(folderCollection.find("{root:true,readers:#}",subjectKey).as(Folder.class));
-    }
     
     public List<DomainObject> getDomainObjects(String subjectKey, List<Reference> references) {
+
+        List<DomainObject> domainObjects = new ArrayList<DomainObject>();
+        if (references==null || references.isEmpty()) return domainObjects;
         
         Multimap<String,Long> referenceMap = LinkedHashMultimap.<String,Long>create();
         for(Reference reference : references) {
             referenceMap.put(reference.getTargetType(), reference.getTargetId());
         }
         
-        List<DomainObject> domainObjects = new ArrayList<DomainObject>();
         for(String type : referenceMap.keySet()) {
             domainObjects.addAll(getDomainObjects(subjectKey, type, referenceMap.get(type)));
         }
@@ -144,23 +151,50 @@ public class DomainDAO {
         return list;
     }
     
-    @Deprecated
-    public Folder getFolderById(String subjectKey, Long id) {
-        return folderCollection.findOne("{_id:#,readers:#}",id,subjectKey).as(Folder.class);
+    public Collection<Workspace> getWorkspaces(String subjectKey) {
+        System.out.println(Workspace.class.getName());
+        return toList(workspaceCollection.find("{class:#,ownerKey:#}",Workspace.class.getName(),subjectKey).as(Workspace.class));
     }
 
-    @Deprecated
-    public Sample getSampleById(String subjectKey, Long id) {
-        return sampleCollection.findOne("{_id:#,readers:#}", id, subjectKey).as(Sample.class);
+    public Collection<Ontology> getOntologies(String subjectKey) {
+        return toList(ontologyCollection.find("{readers:#}",subjectKey).as(Ontology.class));
     }
-
+    
     @Deprecated
-    public List<Sample> getSamplesByIds(String subjectKey, List<Long> ids) {
-        return toList(sampleCollection.find("{_id:{$in:#},readers:#}", ids, subjectKey).as(Sample.class));
+    public List<Folder> getRootFolders(String subjectKey) {
+        return toList(workspaceCollection.find("{root:true,readers:#}",subjectKey).as(Folder.class));
     }
-
+    
     public List<LSMImage> getLsmsBySampleId(String subjectKey, Long id) {
         return toList(lsmCollection.find("{sampleId:#,readers:#}",id, subjectKey).as(LSMImage.class));
+    }
+    
+    public List<NeuronFragment> getNeuronFragmentsBySampleId(String subjectKey, Long sampleIdd) {
+        return toList(fragmentCollection.find("{sampleId:#,readers:#}",sampleIdd,subjectKey).as(NeuronFragment.class));
+    }
+    
+    public List<NeuronFragment> getNeuronFragmentsBySeparationId(String subjectKey, Long separationId) {
+        return toList(fragmentCollection.find("{separationId:#,readers:#}",separationId,subjectKey).as(NeuronFragment.class));
+    }
+    
+    public List<Annotation> getAnnotations(String subjectKey, Long targetId) {
+        return toList(annotationCollection.find("{targetId:#,readers:#}",targetId,subjectKey).as(Annotation.class));
+    }
+    
+    public List<Annotation> getAnnotations(String subjectKey, Collection<Long> targetIds) {
+        return toList(annotationCollection.find("{targetId:{$in:#},readers:#}",targetIds,subjectKey).as(Annotation.class));
+    }
+    
+    public List<ScreenSample> getScreenSamples(String subjectKey) {
+        return toList(screenSampleCollection.find("{readers:#}",subjectKey).as(ScreenSample.class));
+    }
+    
+    public List<PatternMask> getPatternMasks(String subjectKey, Long screenSampleId) {
+        return toList(patternMaskCollection.find("{screenSampleId:#,readers:#}",screenSampleId,subjectKey).as(PatternMask.class));
+    }
+   
+    public Folder getFolderById(String subjectKey, Long id) {
+        return workspaceCollection.findOne("{_id:#,readers:#}",id,subjectKey).as(Folder.class);
     }
     
     public void changePermissions(String subjectKey, String type, Long id, String granteeKey, String rights, boolean grant) throws Exception {
@@ -175,12 +209,25 @@ public class DomainDAO {
         MongoCollection collection = getCollection(type);
         
         WriteResult wr = collection.update("{_id:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#}}",granteeKey);
-        log.debug("  updated "+wr.getN()+" "+type);
+//        log.debug("  updated "+wr.getN()+" "+type);
         
-        if (wr.getN()!=ids.size()) {
-            // TODO: check this for real. 
-            //System.out.println("WARN: Changing permissions on "+ids.size()+" items only affected "+wr.getN());
-        }
+//        
+//        if (wr.getN()!=ids.size()) { 
+//            
+//            Set<Long> idSet = new HashSet<Long>(ids);
+//            Set<Long> returnSet = new HashSet<Long>();
+//            
+//            int i = 0;
+//            for(Object o : collection.find("{_id:{$in:#}}",ids).as(getObjectClass(type))) {
+//                Sample s = (Sample)o;
+//                returnSet.add(s.getId());
+//            }
+//
+//            log.warn("WARN: Changing permissions on "+ids.size()+" items only affected "+wr.getN()+" Got: "+i);
+//            idSet.removeAll(returnSet);
+//            
+//            log.warn(idSet);
+//        }
         
         if ("folder".equals(type)) {
             for(Long id : ids) {
@@ -192,7 +239,7 @@ public class DomainDAO {
                 }
                 
                 Multimap<String,Long> groupedIds = HashMultimap.<String,Long>create();
-                for(Reference ref : folder.getReferences()) {
+                for(Reference ref : folder.getChildren()) {
                     groupedIds.put(ref.getTargetType(), ref.getTargetId());
                 }
                 

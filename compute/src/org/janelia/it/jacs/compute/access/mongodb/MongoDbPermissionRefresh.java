@@ -1,16 +1,19 @@
 package org.janelia.it.jacs.compute.access.mongodb;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
-import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.jongo.MongoCollection;
 
 import com.mongodb.WriteConcern;
+import com.mongodb.WriteResult;
 
 /**
  * Data access to the MongoDB data store.
@@ -18,16 +21,15 @@ import com.mongodb.WriteConcern;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class MongoDbPermissionRefresh {
+
+    protected static final String MONGO_SERVER_URL = "rokicki-ws";
     
-	protected static final String MONGO_SERVER_URL = SystemConfigurationProperties.getString("MongoDB.ServerURL");
-	protected static final String MONGO_DATABASE = SystemConfigurationProperties.getString("MongoDB.Database");
+    private static final Logger log = Logger.getLogger(MongoDbPermissionRefresh.class);
 	
-    protected Logger log;
     protected DomainDAO domainDao;
     
-    public MongoDbPermissionRefresh(Logger log) throws DaoException {
-        this.log = log;
-        this.domainDao = new DomainDAO(MONGO_SERVER_URL);
+    public MongoDbPermissionRefresh(String serverUrl) throws DaoException {
+        this.domainDao = new DomainDAO(serverUrl);
         domainDao.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
     }
 
@@ -44,21 +46,35 @@ public class MongoDbPermissionRefresh {
         Map<String,Class<? extends DomainObject>> domainClassMap = domainDao.getDomainClassMap();
         for(String domainType : domainClassMap.keySet()) {
             Class domainClass = domainClassMap.get(domainType);
-            
+                        
             log.info("Refreshing denormalized permissions for "+domainType);
             
             MongoCollection collection = domainDao.getCollection(domainType);
-
-            for(Object obj : collection.find().as(domainClass)) {
+            
+            Iterable iterable = collection.find().as(domainClass);
+            if (iterable==null) {
+                log.info("Could not iterate collection "+domainType+" as "+domainClass);
+                continue;
+            }
+            for(Object obj : iterable) {
                 DomainObject domainObject = (DomainObject)obj;
                 Subject owner = subjectMap.get(domainObject.getOwnerKey());
-                collection.update("{id:#}",domainObject.getId()).with("{$addToSet:{readers:#},$addToSet:{writers:#}}",owner,owner);
                 
+                Set<String> readers = new HashSet<String>();
+                readers.add(owner.getKey());
                 for(String groupKey : owner.getGroups()) {
-                    collection.update("{id:#}",domainObject.getId()).with("{$addToSet:{readers:#}}",groupKey);
-                }
+                    readers.add(groupKey);
+                }   
+                collection.update("{_id:#}",domainObject.getId()).with("{$addToSet:{readers:{$each:#}}}",readers);
+                collection.update("{_id:#}",domainObject.getId()).with("{$addToSet:{writers:#}}",owner.getKey());
+                
             }
         }
         log.info("Refreshing permissions took "+(System.currentTimeMillis()-start) + " ms");
+    }
+    
+    public static void main(String[] args) throws Exception {
+        MongoDbPermissionRefresh refresh = new MongoDbPermissionRefresh(MONGO_SERVER_URL);
+        refresh.refreshPermissions();
     }
 }

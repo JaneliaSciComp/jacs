@@ -30,6 +30,7 @@ import org.janelia.it.jacs.compute.api.support.SageTerm;
 import org.janelia.it.jacs.compute.api.support.SolrDocTypeEnum;
 import org.janelia.it.jacs.compute.api.support.SolrResults;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.jboss.annotation.ejb.PoolClass;
@@ -105,13 +106,15 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     // TODO: move this to its own bean, or rename this one
     public void mongoAllDomainObjects(boolean clearDb) throws ComputeException {
         try {
-            MongoDbImport mongoDbImport = new MongoDbImport(log);
+            String serverUrl = SystemConfigurationProperties.getString("MongoDB.ServerURL");
+            
+            MongoDbImport mongoDbImport = new MongoDbImport(serverUrl);
             if (clearDb) {
                 mongoDbImport.dropDatabase();
             }
             mongoDbImport.loadAllEntities();
             
-            MongoDbPermissionRefresh refresh = new MongoDbPermissionRefresh(log);
+            MongoDbPermissionRefresh refresh = new MongoDbPermissionRefresh(serverUrl);
             refresh.refreshPermissions();
         }
         catch (DaoException e) {

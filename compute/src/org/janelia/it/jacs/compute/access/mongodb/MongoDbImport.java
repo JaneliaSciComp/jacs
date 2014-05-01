@@ -5,6 +5,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Deque;
 import java.util.HashMap;
@@ -21,12 +23,15 @@ import org.hibernate.Session;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SubjectDAO;
-import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
 import org.janelia.it.jacs.model.domain.Annotation;
+import org.janelia.it.jacs.model.domain.FlyLine;
 import org.janelia.it.jacs.model.domain.Folder;
 import org.janelia.it.jacs.model.domain.HasFilepath;
 import org.janelia.it.jacs.model.domain.ImageType;
 import org.janelia.it.jacs.model.domain.LSMImage;
+import org.janelia.it.jacs.model.domain.MaterializedView;
 import org.janelia.it.jacs.model.domain.NeuronFragment;
 import org.janelia.it.jacs.model.domain.NeuronSeparation;
 import org.janelia.it.jacs.model.domain.ObjectiveSample;
@@ -41,6 +46,8 @@ import org.janelia.it.jacs.model.domain.SampleProcessingResult;
 import org.janelia.it.jacs.model.domain.SampleTile;
 import org.janelia.it.jacs.model.domain.ScreenSample;
 import org.janelia.it.jacs.model.domain.Subject;
+import org.janelia.it.jacs.model.domain.TreeNode;
+import org.janelia.it.jacs.model.domain.Workspace;
 import org.janelia.it.jacs.model.domain.ontology.EnumText;
 import org.janelia.it.jacs.model.domain.ontology.Interval;
 import org.janelia.it.jacs.model.domain.ontology.Ontology;
@@ -55,6 +62,7 @@ import org.jongo.Jongo;
 import org.jongo.MongoCollection;
 import org.jongo.marshall.jackson.JacksonMapper;
 
+import com.google.common.collect.ComparisonChain;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
@@ -65,51 +73,49 @@ import com.mongodb.WriteConcern;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class MongoDbImport extends AnnotationDAO {
-	
-	protected static final String MONGO_SERVER_URL = SystemConfigurationProperties.getString("MongoDB.ServerURL");
-	protected static final String MONGO_DATABASE = SystemConfigurationProperties.getString("MongoDB.Database");
+
+    private static final Logger logger = Logger.getLogger(MongoDbPermissionRefresh.class);
+    
 	protected static final String ONTOLOGY_TERM_TYPES_PACKAGE = "org.janelia.it.jacs.model.domain.ontology";
 	protected static final int ANNOTATION_BATCH_SIZE = 1000;
 	
 	protected SubjectDAO subjectDao;
     protected Jongo jongo;
     protected MongoCollection subjectCollection;
-	protected MongoCollection folderCollection;
+    protected MongoCollection workspaceCollection;
 	protected MongoCollection sampleCollection;
     protected MongoCollection screenSampleCollection;
     protected MongoCollection patternMaskCollection;
+    protected MongoCollection flyLineCollection;
     protected MongoCollection lsmCollection;
     protected MongoCollection fragmentCollection;
     protected MongoCollection annotationCollection;
     protected MongoCollection ontologyCollection;
     protected Map<Long,Long> ontologyTermIdToOntologyId = new HashMap<Long,Long>();
     
-    public MongoDbImport(Logger log) throws DaoException {
-    	super(log);
-        init();
-    }
-    
-    private void init() throws DaoException {
+    public MongoDbImport(String serverUrl) throws DaoException {
+        super(logger);
         try {
             subjectDao = new SubjectDAO(log);
-            MongoClient m = new MongoClient(MONGO_SERVER_URL);
+            MongoClient m = new MongoClient(serverUrl);
         	m.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
-        	DB db = m.getDB(MONGO_DATABASE);
+        	DB db = m.getDB(DomainDAO.MONGO_DATABASE);
         	jongo = new Jongo(db, 
         	        new JacksonMapper.Builder()
         	            .build());
             subjectCollection = jongo.getCollection("subject");
-        	folderCollection = jongo.getCollection("folder");
+            workspaceCollection = jongo.getCollection("workspace");
         	sampleCollection = jongo.getCollection("sample");
             screenSampleCollection = jongo.getCollection("screenSample");
             patternMaskCollection = jongo.getCollection("patternMask");
+            flyLineCollection = jongo.getCollection("flyLine");
             lsmCollection = jongo.getCollection("lsm");
         	fragmentCollection = jongo.getCollection("fragment");
         	annotationCollection = jongo.getCollection("annotation");
         	ontologyCollection = jongo.getCollection("ontology");
         }
 		catch (UnknownHostException e) {
-			throw new RuntimeException("Unknown host given in MongoDB.ServerURL value in system properties: "+MONGO_SERVER_URL);
+			throw new RuntimeException("Unknown host given in MongoDB.ServerURL value in system properties: "+serverUrl);
 		}
     }
 
@@ -122,15 +128,18 @@ public class MongoDbImport extends AnnotationDAO {
         log.info("Adding subjects");
         loadSubjects();
         
-        log.info("Adding screen data");
-        loadScreenData();
-        
         log.info("Adding folders");
-        loadFolders();
+        loadWorkspaces();
 
+        log.info("Adding fly lines");
+        loadFlyLines();
+        
         log.info("Adding samples");
         loadSamples();
 
+        log.info("Adding screen data");
+        loadScreenData();
+        
         log.info("Adding ontologies");
         loadOntologies(); // must come before loadAnnotations to populate the term maps
         
@@ -139,9 +148,11 @@ public class MongoDbImport extends AnnotationDAO {
         
         log.info("Creating indexes");
 
-        ensureDomainIndexes(folderCollection);
-        folderCollection.ensureIndex("{name:1}");
-        folderCollection.ensureIndex("{root:1}");
+        ensureDomainIndexes(workspaceCollection);
+        workspaceCollection.ensureIndex("{name:1}");
+        workspaceCollection.ensureIndex("{class:1}");
+        workspaceCollection.ensureIndex("{class:1,writers:1}");
+        workspaceCollection.ensureIndex("{class:1,readers:1}");
 
         ensureDomainIndexes(ontologyCollection);
         ontologyCollection.ensureIndex("{name:1}");
@@ -164,6 +175,9 @@ public class MongoDbImport extends AnnotationDAO {
         lsmCollection.ensureIndex("{sampleId:1}");
         lsmCollection.ensureIndex("{sampleId:1,writers:1}");
         lsmCollection.ensureIndex("{sampleId:1,readers:1}");
+
+        ensureDomainIndexes(flyLineCollection);
+        screenSampleCollection.ensureIndex("{robotId:1}");
         
         ensureDomainIndexes(screenSampleCollection);
         screenSampleCollection.ensureIndex("{flyLine:1}");
@@ -195,8 +209,10 @@ public class MongoDbImport extends AnnotationDAO {
         mc.ensureIndex("{_id:1,writers:1}");
     }
     
+    
+    /* SUBJECT */
+    
     private void loadSubjects() {
-
         for (org.janelia.it.jacs.model.user_data.Subject subject : subjectDao.getSubjects()) {
             Subject newSubject = new Subject();
             newSubject.setId(subject.getId());
@@ -208,6 +224,150 @@ public class MongoDbImport extends AnnotationDAO {
             subjectCollection.insert(newSubject);
         }
     }
+    
+    
+    /* WORKSPACES */
+    
+    private void loadWorkspaces() throws DaoException {
+        Set<Long> visited = new HashSet<Long>();
+        for (org.janelia.it.jacs.model.user_data.Subject subject : subjectDao.getSubjects()) {
+            String subjectKey = subject.getKey();
+            try {
+                loadWorkspace(subjectKey, visited);
+            }
+            catch (Exception e) {
+                log.error("Error loading workspace for " + subjectKey, e);
+            }
+        }
+    }
+
+    public List<Entity> getCommonRootEntities(String subjectKey) throws Exception {
+        List<Entity> entities = getEntitiesWithTag(subjectKey, EntityConstants.ATTRIBUTE_COMMON_ROOT);
+        List<String> subjectKeyList = getSubjectKeys(subjectKey);
+        // We only consider common roots that the user owns, or one of their groups owns. Other common roots
+        // which the user has access to through an ACL are already referenced in the Shared Data folder.
+        // The reason this is a post-processing step, is because we want an accurate ACL on the object from the 
+        // outer fetch join. 
+        List<Entity> commonRoots = new ArrayList<Entity>();
+        if (null != subjectKey) {
+            for (Entity commonRoot : entities) {
+                if (subjectKeyList.contains(commonRoot.getOwnerKey())) {
+                    commonRoots.add(commonRoot);
+                }
+            }
+        }
+        else {
+            commonRoots.addAll(entities);
+        }
+        return commonRoots;
+    }
+    
+    private void loadWorkspace(String subjectKey, Set<Long> visited) throws Exception {
+
+        long start = System.currentTimeMillis();
+
+        log.info("Loading workspace for "+subjectKey);
+        
+        LinkedList<Entity> rootFolders = new LinkedList<Entity>(getCommonRootEntities(subjectKey));
+        Collections.sort(rootFolders, new EntityRootComparator(subjectKey));
+        List<Reference> children = loadRootFolders(rootFolders, visited);
+        
+        Long id = (Long)TimebasedIdentifierGenerator.generate(1L);
+        
+        Date now = new Date();
+        Workspace workspace = new Workspace();
+        workspace.setId(id);
+        workspace.setOwnerKey(subjectKey);
+        workspace.setCreationDate(now);
+        workspace.setUpdatedDate(now);
+        workspace.setName("Default Workspace");
+        workspace.setChildren(children);
+        workspaceCollection.insert(workspace);
+        
+        log.info("Loading workspace for "+subjectKey+" took "+(System.currentTimeMillis()-start)+" ms");
+    }
+    
+    private List<Reference> loadRootFolders(Deque<Entity> rootFolders, Set<Long> visited) {
+
+        List<Reference> roots = new ArrayList<Reference>();
+        
+        for(Iterator<Entity> i = rootFolders.iterator(); i.hasNext(); ) {
+            Entity folderEntity = i.next();
+            
+            Session session = null;
+            try {
+                long start = System.currentTimeMillis();
+                
+                session = openNewExternalSession();
+                Long nodeId = loadFolderHierarchy(folderEntity, visited);
+
+                if (nodeId!=null) {
+                    Reference root = new Reference("workspace",nodeId);
+                    roots.add(root);
+                }
+                
+                // Free memory by releasing the reference to this entire entity tree
+                i.remove(); 
+                resetSession();
+
+                log.info("  Loading "+folderEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+            }
+            catch (Throwable e) {
+                log.error("Error loading folder "+folderEntity.getId(),e);
+            }
+            finally {
+                if (session==null) closeExternalSession();
+            }
+        }
+        
+        return roots;
+    }
+    
+    private Long loadFolderHierarchy(Entity folderEntity, Set<Long> visited) throws Exception {
+
+        if (visited.contains(folderEntity.getId())) {
+            return folderEntity.getId();
+        }
+        visited.add(folderEntity.getId());
+        
+        TreeNode node = null;
+        if (folderEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PROTECTED)!=null || folderEntity.getOwnerKey().equals("group:flylight")) {
+            node = new MaterializedView();
+        }
+        else {
+            node = new Folder();
+            ((Folder)node).setFilepath(folderEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+        }
+        
+        node.setId(folderEntity.getId());
+        node.setOwnerKey(folderEntity.getOwnerKey());
+        node.setName(folderEntity.getName());
+        node.setCreationDate(folderEntity.getCreationDate());
+        node.setUpdatedDate(folderEntity.getUpdatedDate());
+        node.setReaders(getSubjectKeysWithPermission(folderEntity, "r"));
+        node.setWriters(getSubjectKeysWithPermission(folderEntity, "w"));
+        
+        List<Reference> children = new ArrayList<Reference>();
+        for(Entity childEntity : folderEntity.getOrderedChildren()) {
+            String childType = childEntity.getEntityTypeName();
+            if (childType.equals(EntityConstants.TYPE_FOLDER)) {
+                loadFolderHierarchy(childEntity, visited);
+            }
+            String type = getCollectionName(childEntity.getEntityTypeName());
+            Reference ref = new Reference(type,childEntity.getId());
+            children.add(ref);
+        }
+        
+        if (!children.isEmpty()) {
+            node.setChildren(children);
+        }
+
+        workspaceCollection.insert(node);
+        return node.getId();
+    }
+    
+
+    /* ONTOLOGIES */
     
     private void loadOntologies() throws DaoException {
         Deque<Entity> ontologyRoots = new LinkedList<Entity>(getEntitiesByTypeName(null, EntityConstants.TYPE_ONTOLOGY_ROOT));
@@ -286,7 +446,7 @@ public class MongoDbImport extends AnnotationDAO {
         }
         else {
             String typeName = ontologyTermEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE);
-            ontologyTerm = createTypeByName(typeName);   
+            ontologyTerm = createOntologyTypeByName(typeName);   
         }
         
         ontologyTerm.setId(ontologyTermEntity.getId());
@@ -327,7 +487,7 @@ public class MongoDbImport extends AnnotationDAO {
         return ontologyTerm;
     }
     
-    private OntologyTerm createTypeByName(String className) {
+    private OntologyTerm createOntologyTypeByName(String className) {
         try {
             if (className==null) return new Ontology();
             return (OntologyTerm)Class.forName(ONTOLOGY_TERM_TYPES_PACKAGE+"."+className).newInstance();
@@ -338,6 +498,9 @@ public class MongoDbImport extends AnnotationDAO {
         return null;
     }
 
+
+    /* SAMPLES */
+    
     private void loadSamples() {
         for (org.janelia.it.jacs.model.user_data.Subject subject : subjectDao.getSubjects()) {
             String subjectKey = subject.getKey();
@@ -398,132 +561,6 @@ public class MongoDbImport extends AnnotationDAO {
         return c;
     }
 
-    private void loadScreenData() throws DaoException {
-
-        Deque<Entity> flyLines = new LinkedList<Entity>(getEntitiesByTypeName(null, EntityConstants.TYPE_FLY_LINE));
-
-        for(Iterator<Entity> i = flyLines.iterator(); i.hasNext(); ) {
-            Entity flyLine = i.next();
-            try {
-                long start = System.currentTimeMillis();
-                populateChildren(flyLine);
-                Deque<Entity> screenSamples = new LinkedList<Entity>(EntityUtils.getChildrenOfType(flyLine, EntityConstants.TYPE_SCREEN_SAMPLE));
-                loadScreenSamples(flyLine, screenSamples);
-                // Free memory 
-                i.remove();
-                resetSession();
-                log.info("  Loading "+flyLine.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
-            }
-            catch (Exception e) {
-                log.error("Error loading screen samples for fly line " + flyLine.getName(), e);
-            }
-        }
-    }
-    
-    private int loadScreenSamples(Entity flyLineEntity, Deque<Entity> samples) {
-
-        int c = 0;
-        for(Iterator<Entity> i = samples.iterator(); i.hasNext(); ) {
-            Entity screenSampleEntity = i.next();
-            
-            try {
-                long start = System.currentTimeMillis();
-                ScreenSample screenSample = getScreenSampleObject(flyLineEntity, screenSampleEntity);
-                if (screenSample!=null) {
-                    screenSampleCollection.insert(screenSample);
-                }
-                if (screenSample!=null) {
-                    log.info("  Loading "+screenSampleEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
-                }
-                else {
-                    log.info("  Failure loading "+screenSampleEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
-                }
-            }
-            catch (Throwable e) {
-                log.error("Error loading screen sample "+screenSampleEntity.getId(),e);
-            }
-            c++;
-        }
-        
-        return c;
-    }
-    
-    private void loadFolders() throws DaoException {
-        Deque<Entity> rootFolders = new LinkedList<Entity>(getEntitiesWithTag(null, EntityConstants.ATTRIBUTE_COMMON_ROOT));
-        loadRootFolders(rootFolders);
-    }
-    
-    private int loadRootFolders(Deque<Entity> rootFolders) {
-
-        int c = 0;
-        for(Iterator<Entity> i = rootFolders.iterator(); i.hasNext(); ) {
-            Entity folderEntity = i.next();
-            
-            Session session = null;
-            try {
-                long start = System.currentTimeMillis();
-
-                session = openNewExternalSession();
-                List<Folder> folders = getFolders(folderEntity, new HashSet<Long>());
-                if (!folders.isEmpty()) {
-                    folderCollection.insert(folders.toArray());
-                }
-
-                // Free memory by releasing the reference to this entire entity tree
-                i.remove(); 
-                resetSession();
-
-                log.info("  Loading "+folders.size()+" folders under "+folderEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
-            }
-            catch (Throwable e) {
-                log.error("Error loading folder "+folderEntity.getId(),e);
-            }
-            finally {
-                if (session==null) closeExternalSession();
-            }
-            
-            c++;
-        }
-        
-        return c;
-    }
-    
-    private List<Folder> getFolders(Entity folderEntity, Set<Long> visited) throws Exception {
-        
-        List<Folder> folders = new ArrayList<Folder>();
-        if (visited.contains(folderEntity.getId())) {
-            return folders;
-        }
-        visited.add(folderEntity.getId());
-        
-        Folder folder = new Folder();
-        folder.setId(folderEntity.getId());
-        folder.setOwnerKey(folderEntity.getOwnerKey());
-        folder.setName(folderEntity.getName());
-        folder.setCreationDate(folderEntity.getCreationDate());
-        folder.setReaders(getSubjectKeysWithPermission(folderEntity, "r"));
-        folder.setWriters(getSubjectKeysWithPermission(folderEntity, "w"));
-        folder.setRoot(EntityUtils.isCommonRoot(folderEntity));
-        List<Reference> references = new ArrayList<Reference>();
-        
-        for(Entity childEntity : folderEntity.getOrderedChildren()) {
-            if (childEntity.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER)) {
-                folders.addAll(getFolders(childEntity, visited));
-            }
-            String type = getCollectionName(childEntity.getEntityTypeName());
-            Reference ref = new Reference(type,childEntity.getId());
-            references.add(ref);
-        }
-        
-        if (!references.isEmpty()) {
-            folder.setReferences(references);
-        }
-        
-        folders.add(folder);
-        
-        return folders;
-    }
-    
     private Sample getSampleObject(Entity sampleEntity) throws Exception {
         
         if (sampleEntity.getName().contains("~")) {
@@ -584,10 +621,10 @@ public class MongoDbImport extends AnnotationDAO {
         
         if (objectiveSamples.isEmpty()) {
             log.warn("  Sample has no objectives: "+sampleEntity.getId());
-            return null;
         }
-        
-        sample.setObjectives(objectiveSamples);
+        else {
+            sample.setObjectives(objectiveSamples);    
+        }
         
         return sample;
     }
@@ -736,9 +773,9 @@ public class MongoDbImport extends AnnotationDAO {
             result.setOpticalResolution(cleanRes(stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
             
             Map<ImageType,String> images = new HashMap<ImageType,String>();
-            images.put(ImageType.Stack,getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
-            images.put(ImageType.ReferenceMip,getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE)));
-            images.put(ImageType.SignalMip,getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE)));
+            addImage(images,ImageType.Stack,getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+            addImage(images,ImageType.ReferenceMip,getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE)));
+            addImage(images,ImageType.SignalMip,getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE)));
             result.setImages(images);
         }
         else {
@@ -760,11 +797,11 @@ public class MongoDbImport extends AnnotationDAO {
         result.setOpticalResolution(cleanRes(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
 
         Map<ImageType,String> images = new HashMap<ImageType,String>();
-        images.put(ImageType.Stack,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
-        images.put(ImageType.ReferenceMip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE)));
-        images.put(ImageType.SignalMip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE)));
+        addImage(images,ImageType.Stack,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+        addImage(images,ImageType.ReferenceMip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE)));
+        addImage(images,ImageType.SignalMip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE)));
         if (movieEntity!=null) {
-            images.put(ImageType.AlignVerifyMovie,getRelativeFilename(result,movieEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+            addImage(images,ImageType.AlignVerifyMovie,getRelativeFilename(result,movieEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
         }
         result.setImages(images);
         
@@ -803,14 +840,14 @@ public class MongoDbImport extends AnnotationDAO {
         lsm.setSlideCode(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SLIDE_CODE));
 
         Map<ImageType,String> images = new HashMap<ImageType,String>();
-        images.put(ImageType.Stack,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-        images.put(ImageType.ReferenceMip,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE));
-        images.put(ImageType.SignalMip,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE));
+        addImage(images,ImageType.Stack,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+        addImage(images,ImageType.ReferenceMip,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE));
+        addImage(images,ImageType.SignalMip,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE));
         lsm.setImages(images);
         
         return lsm;
     }
-
+    
     private NeuronSeparation getNeuronSeparation(Entity sampleEntity, Entity separationEntity) throws Exception {
         populateChildren(separationEntity);
         
@@ -854,14 +891,146 @@ public class MongoDbImport extends AnnotationDAO {
         neuronFragment.setFilepath(separationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         
         Map<ImageType,String> images = new HashMap<ImageType,String>();
-        images.put(ImageType.Mip,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)));
-        images.put(ImageType.MaskFile,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE)));
-        images.put(ImageType.ChanFile,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE)));
+        addImage(images,ImageType.Mip,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)));
+        addImage(images,ImageType.MaskFile,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE)));
+        addImage(images,ImageType.ChanFile,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE)));
+        
         neuronFragment.setImages(images);
         
         return neuronFragment;
     }
+    
 
+    /* FLY LINES */
+    
+
+    private void loadFlyLines() throws DaoException {
+        long start = System.currentTimeMillis();
+        Deque<Entity> lines = new LinkedList<Entity>(getEntitiesByTypeName(null, EntityConstants.TYPE_FLY_LINE));
+        resetSession();
+        loadFlyLines(lines);
+        log.info("Loading " + lines.size() + " samples took " + (System.currentTimeMillis() - start) + " ms");
+    }
+    
+    private void loadFlyLines(Deque<Entity> flyLines) {
+
+        for(Iterator<Entity> i = flyLines.iterator(); i.hasNext(); ) {
+            Entity flyLineEntity = i.next();
+            // Skip these samples
+            if (flyLineEntity.getName().contains("~")) continue;
+            if (EntityConstants.VALUE_ERROR.equals(flyLineEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS))) {
+                continue;
+            }
+            
+            try {
+                long start = System.currentTimeMillis();
+                FlyLine flyLine = getFlyLineObject(flyLineEntity);
+                if (flyLine!=null) {
+                    flyLineCollection.insert(flyLine);
+                }
+                
+                // Free memory by releasing the reference to this entire entity tree
+                i.remove();
+                resetSession();
+
+                if (flyLine!=null) {
+                    log.info("  Loading "+flyLineEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+                }
+                else {
+                    log.info("  Failure loading "+flyLineEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+                }
+            }
+            catch (Throwable e) {
+                log.error("Error loading fly line "+flyLineEntity.getId(),e);
+            }
+        }
+    }
+
+    private FlyLine getFlyLineObject(Entity flyLineEntity) {
+        FlyLine flyline = new FlyLine();
+        flyline.setId(flyLineEntity.getId());
+        flyline.setName(flyLineEntity.getName());
+        flyline.setOwnerKey(flyLineEntity.getOwnerKey());
+        flyline.setReaders(getSubjectKeysWithPermission(flyLineEntity, "r"));
+        flyline.setWriters(getSubjectKeysWithPermission(flyLineEntity, "w"));
+        flyline.setSplitPart(flyLineEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SPLIT_PART));
+        
+        String robotId = flyLineEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ROBOT_ID);
+        if (robotId!=null) {
+            flyline.setRobotId(Integer.parseInt(robotId));
+        }
+        
+        Entity balanced = flyLineEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_BALANCED_FLYLINE);
+        if (balanced!=null) {
+            flyline.setBalancedLineId(balanced.getId());
+        }
+
+        Entity original = flyLineEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_ORIGINAL_FLYLINE);
+        if (original!=null) {
+            flyline.setOriginalLineId(original.getId());
+        }
+
+        Entity representative = flyLineEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_REPRESENTATIVE_SAMPLE);
+        if (representative!=null) {
+            flyline.setRepresentativeId(representative.getId());
+        }
+        
+        return flyline;
+    }
+    
+    
+    /* SCREEN SAMPLES */
+    
+    private void loadScreenData() throws DaoException {
+
+        Deque<Entity> flyLines = new LinkedList<Entity>(getEntitiesByTypeName(null, EntityConstants.TYPE_FLY_LINE));
+
+        for(Iterator<Entity> i = flyLines.iterator(); i.hasNext(); ) {
+            Entity flyLine = i.next();
+            try {
+                long start = System.currentTimeMillis();
+                populateChildren(flyLine);
+                Deque<Entity> screenSamples = new LinkedList<Entity>(EntityUtils.getChildrenOfType(flyLine, EntityConstants.TYPE_SCREEN_SAMPLE));
+                loadScreenSamples(flyLine, screenSamples);
+                // Free memory 
+                i.remove();
+                resetSession();
+                log.info("  Loading "+flyLine.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+            }
+            catch (Exception e) {
+                log.error("Error loading screen samples for fly line " + flyLine.getName(), e);
+            }
+        }
+    }
+    
+    private int loadScreenSamples(Entity flyLineEntity, Deque<Entity> samples) {
+
+        int c = 0;
+        for(Iterator<Entity> i = samples.iterator(); i.hasNext(); ) {
+            Entity screenSampleEntity = i.next();
+            
+            try {
+                long start = System.currentTimeMillis();
+                ScreenSample screenSample = getScreenSampleObject(flyLineEntity, screenSampleEntity);
+                if (screenSample!=null) {
+                    screenSampleCollection.insert(screenSample);
+                }
+                if (screenSample!=null) {
+                    log.info("  Loading "+screenSampleEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+                }
+                else {
+                    log.info("  Failure loading "+screenSampleEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+                }
+            }
+            catch (Throwable e) {
+                log.error("Error loading screen sample "+screenSampleEntity.getId(),e);
+            }
+            c++;
+        }
+        
+        return c;
+    }
+    
     private ScreenSample getScreenSampleObject(Entity flyLineEntity, Entity screenSampleEntity) throws Exception {
         
         if (screenSampleEntity.getEntityData()==null) {
@@ -906,11 +1075,11 @@ public class MongoDbImport extends AnnotationDAO {
         patternMaskCollection.insert(masks.toArray());
 
         Map<ImageType,String> images = new HashMap<ImageType,String>();
-        images.put(ImageType.HeatmapMip,getRelativeFilename(screenSample,screenSampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
+        addImage(images,ImageType.HeatmapMip,getRelativeFilename(screenSample,screenSampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
         Entity alignedStack = EntityUtils.findChildWithType(screenSampleEntity, EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
         if (alignedStack!=null) {
-            images.put(ImageType.Stack,getRelativeFilename(screenSample,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
-            images.put(ImageType.Mip,getRelativeFilename(screenSample,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
+            addImage(images,ImageType.Stack,getRelativeFilename(screenSample,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+            addImage(images,ImageType.Mip,getRelativeFilename(screenSample,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
         }
         screenSample.setImages(images);
         
@@ -976,11 +1145,14 @@ public class MongoDbImport extends AnnotationDAO {
         mask.setDistributionScore(distribution);
 
         Map<ImageType,String> images = new HashMap<ImageType,String>();
-        images.put(ImageType.Stack,getRelativeFilename(mask,maskEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
-        images.put(ImageType.HeatmapMip,getRelativeFilename(mask,maskEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
+        addImage(images,ImageType.Stack,getRelativeFilename(mask,maskEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+        addImage(images,ImageType.HeatmapMip,getRelativeFilename(mask,maskEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
         mask.setImages(images);
         return mask;
     }
+    
+    
+    /* ANNOTATIONS */
     
     private void loadAnnotations() {
 
@@ -1108,6 +1280,9 @@ public class MongoDbImport extends AnnotationDAO {
         return annotation;
     }
     
+    
+    /* UTILITY METHODS */
+    
     private Set<String> getSubjectKeysWithPermission(Entity entity, String rights) {
         Set<String> subjectKeys = new HashSet<String>();
         subjectKeys.add(entity.getOwnerKey()); // owner has all permissions
@@ -1119,6 +1294,11 @@ public class MongoDbImport extends AnnotationDAO {
         return subjectKeys;
     }
 
+    private void addImage(Map<ImageType,String> images, ImageType key, String value) {
+        if (value==null) return;
+        images.put(key, value);
+    }
+
     private String getCollectionName(String entityType) {
         if (EntityConstants.TYPE_SAMPLE.equals(entityType)) {
             return "sample";
@@ -1127,7 +1307,7 @@ public class MongoDbImport extends AnnotationDAO {
             return "fragment";
         }
         else if (EntityConstants.TYPE_FOLDER.equals(entityType)) {
-            return "folder";
+            return "workspace";
         }
         else if (EntityConstants.TYPE_ANNOTATION.equals(entityType)) {
             return "annotation";
@@ -1143,6 +1323,9 @@ public class MongoDbImport extends AnnotationDAO {
         }
         else if (EntityConstants.TYPE_ALIGNED_BRAIN_STACK.equals(entityType)) {
             return "patternMask";
+        }
+        else if (EntityConstants.TYPE_FLY_LINE.equals(entityType)) {
+            return "flyLine";
         }
         return "unknown";
     }
@@ -1176,4 +1359,20 @@ public class MongoDbImport extends AnnotationDAO {
 			throw new DaoException("Error clearing index with MongoDB",e);
 		}
     }
+    
+    private class EntityRootComparator implements Comparator<Entity> {
+        private String owner;
+        public EntityRootComparator(String owner) {
+            this.owner = owner;
+        }
+        public int compare(Entity o1, Entity o2) {
+            return ComparisonChain.start()
+                .compareTrueFirst(o1.getOwnerKey().equals(owner), o2.getOwnerKey().equals(owner))
+                .compare(o1.getOwnerKey(), o2.getOwnerKey())
+                .compareTrueFirst(EntityUtils.isProtected(o1), EntityUtils.isProtected(o2))
+                .compareTrueFirst(o1.getName().equals(EntityConstants.NAME_DATA_SETS), o2.getName().equals(EntityConstants.NAME_DATA_SETS))
+                .compareTrueFirst(o1.getName().equals(EntityConstants.NAME_SHARED_DATA), o2.getName().equals(EntityConstants.NAME_SHARED_DATA))
+                .compare(o1.getId(), o2.getId()).result();
+        }
+    };
 }

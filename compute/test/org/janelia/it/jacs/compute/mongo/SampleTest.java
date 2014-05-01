@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Folder;
 import org.janelia.it.jacs.model.domain.ImageType;
 import org.janelia.it.jacs.model.domain.LSMImage;
@@ -16,7 +17,10 @@ import org.janelia.it.jacs.model.domain.Sample;
 import org.janelia.it.jacs.model.domain.SamplePipelineRun;
 import org.janelia.it.jacs.model.domain.SampleTile;
 import org.janelia.it.jacs.model.domain.Subject;
+import org.janelia.it.jacs.model.domain.TreeNode;
+import org.janelia.it.jacs.model.domain.Workspace;
 import org.junit.Test;
+import org.springframework.util.Assert;
 
 public class SampleTest extends MongoDbTest {
     
@@ -115,14 +119,31 @@ public class SampleTest extends MongoDbTest {
 //        }
 //    }
     
-    
+
     @Test
+    public void test() {
+
+        String subjectKey = "user:riddifordl";
+        for(Workspace workspace : dao.getWorkspaces(subjectKey)) {
+            System.out.println("Found workspace "+workspace.getName()+" for "+workspace.getOwnerKey());
+            for(DomainObject obj : dao.getDomainObjects(subjectKey, workspace.getChildren())) {
+                TreeNode node = (TreeNode)obj;
+                System.out.println("    "+node.getClass().getSimpleName()+"#"+node.getName());
+                for(DomainObject child : dao.getDomainObjects(subjectKey, node.getChildren())) {
+                    System.out.println("        "+child.getClass().getSimpleName()+"#"+child.getId());
+                }
+            }
+        }
+    }
+    
     public void testSubjects() {
         for(Subject subject : dao.getCollection("subject").find().as(Subject.class)) {
-            System.out.println(subject.getKey());
+            Assert.notNull(subject.getId());
+            Assert.notNull(subject.getKey());
         }
-        
     }
+    
+//    @Test
     public void runBenchmarks() throws Exception {
 
         long start = System.currentTimeMillis();
@@ -153,20 +174,17 @@ public class SampleTest extends MongoDbTest {
         start = System.currentTimeMillis();
         Folder retiredDataFolder = dao.getFolderById(subjectKey, retiredDataId);
         Map<Long,Sample> sampleMap = new HashMap<Long,Sample>();
-        List<Long> sampleIds = new ArrayList<Long>();
-        for(Reference ref : retiredDataFolder.getReferences()) {
-            sampleIds.add(ref.getTargetId());
-        }
-
-        for(Sample sample : dao.getSamplesByIds(subjectKey, sampleIds)) {
+        
+        for(DomainObject obj : dao.getDomainObjects(subjectKey, retiredDataFolder.getChildren())) {
+            Sample sample = (Sample)obj;
             sampleMap.put(sample.getId(), sample);
         }
         
-        System.out.println("1) getting original entity set ("+sampleIds.size()+" ids) took "+(System.currentTimeMillis()-start)+" ms");
+        System.out.println("1) getting original entity set ("+sampleMap.size()+" ids) took "+(System.currentTimeMillis()-start)+" ms");
         
         start = System.currentTimeMillis();
         int mappedLsms = 0;
-        for(Long sampleId : sampleIds) {
+        for(Long sampleId : sampleMap.keySet()) {
             Sample sample = sampleMap.get(sampleId);
             
             Map<Long,LSMImage> lsmMap = new HashMap<Long,LSMImage>();
@@ -208,11 +226,12 @@ public class SampleTest extends MongoDbTest {
 
         Folder folder = dao.getFolderById(subjectKey, folderId);
         List<Long> sampleIds = new ArrayList<Long>();
-        for(Reference ref : folder.getReferences()) {
+        for(Reference ref : folder.getChildren()) {
             sampleIds.add(ref.getTargetId());
         }
         int c = 1;
-        for(Sample sample : dao.getSamplesByIds(subjectKey, sampleIds)) {
+        for(DomainObject obj : dao.getDomainObjects(subjectKey, folder.getChildren())) {
+            Sample sample = (Sample)obj;
             for(String objective : sample.getObjectives().keySet()) {
                 ObjectiveSample osample = sample.getObjectives().get(objective);
                 for(SampleTile tile : osample.getTiles()) {
