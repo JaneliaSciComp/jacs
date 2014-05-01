@@ -30,7 +30,7 @@ public class MongoDbLoadService implements IService {
             task = ProcessDataHelper.getTask(processData);
             solrBean = EJBFactory.getLocalSolrBean();
             cleardb = Boolean.parseBoolean(task.getParameter(PARAM_clearDb));
-            solrBean.mongoAllEntities(cleardb);
+            solrBean.mongoAllDomainObjects(cleardb);
     	}
         catch (Exception e) {
         	if (e instanceof ServiceException) {
