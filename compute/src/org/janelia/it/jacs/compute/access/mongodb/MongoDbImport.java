@@ -23,7 +23,6 @@ import org.hibernate.Session;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SubjectDAO;
-import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
 import org.janelia.it.jacs.model.domain.Annotation;
 import org.janelia.it.jacs.model.domain.FlyLine;

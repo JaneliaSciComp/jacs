@@ -1,6 +1,5 @@
 package org.janelia.it.jacs.compute.access.mongodb;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -13,7 +12,6 @@ import org.janelia.it.jacs.model.domain.Subject;
 import org.jongo.MongoCollection;
 
 import com.mongodb.WriteConcern;
-import com.mongodb.WriteResult;
 
 /**
  * Data access to the MongoDB data store.

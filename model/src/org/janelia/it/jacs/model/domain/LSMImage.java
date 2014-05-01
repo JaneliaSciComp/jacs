@@ -5,7 +5,6 @@ import java.util.Set;
 
 import org.jongo.marshall.jackson.oid.Id;
 
-
 public class LSMImage implements DomainObject, HasImages {
 
     @Id

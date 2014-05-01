@@ -2,7 +2,6 @@ package org.janelia.it.jacs.model.domain;
 
 import java.util.Map;
 
-
 public class SampleAlignmentResult extends PipelineResult implements HasImages {
 
     private String imageSize;

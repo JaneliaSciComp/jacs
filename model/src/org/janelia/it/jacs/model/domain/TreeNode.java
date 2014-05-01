@@ -71,6 +71,4 @@ public class TreeNode implements DomainObject {
     public void setChildren(List<Reference> children) {
         this.children = children;
     }
-    
-    
 }

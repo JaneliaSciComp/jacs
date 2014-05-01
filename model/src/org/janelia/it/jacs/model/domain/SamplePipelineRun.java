@@ -1,6 +1,5 @@
 package org.janelia.it.jacs.model.domain;
 
-
 public class SamplePipelineRun extends PipelineResult {
 
     private String name;
