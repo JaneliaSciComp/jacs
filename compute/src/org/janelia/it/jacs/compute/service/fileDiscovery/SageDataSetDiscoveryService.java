@@ -216,8 +216,10 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 
         // Make sure to fetch fresh samples, so that we have the latest visited flags
         Map<Long, Entity> samples = new HashMap<Long, Entity>();
-        for(Entity entity : EntityUtils.getChildrenOfType(dataSetFolder, EntityConstants.TYPE_SAMPLE)) {
-            samples.put(entity.getId(), entity);
+        for(Entity entity : entityBean.getChildEntities(dataSetFolder.getId())) {
+            if (entity.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE)) {
+                samples.put(entity.getId(), entity);    
+            }   
         }
         
         Set<Long> retiredIds = new HashSet<Long>();

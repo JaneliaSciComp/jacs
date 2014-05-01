@@ -92,18 +92,21 @@ public class SubjectDAO extends ComputeBaseDAO {
         }
     }
 
-    public Group getGroupByNameOrKey(String name) {
+    public Group getGroupByNameOrKey(String nameOrKey) {
         if (log.isTraceEnabled()) {
-            log.trace("getGroupByNameOrKey(name="+name+")");    
+            log.trace("getGroupByNameOrKey(nameOrKey="+nameOrKey+")");    
         }
+        
         Session session = getCurrentSession();
-        Criteria c = session.createCriteria(Group.class);
-        c.add(Expression.eq("name", name));
-        List l = c.list();
-        if (l.size() == 0) return null;
-        return (Group) l.get(0);
+        StringBuffer hql = new StringBuffer("select g from Group g ");
+        hql.append("left outer join fetch g.userRelationships ur ");
+        hql.append("left outer join fetch ur.user ");
+        hql.append("where g.name = :name or g.key = :name ");
+        Query query = session.createQuery(hql.toString());
+        query.setString("name", nameOrKey);
+        return (Group)query.uniqueResult();
     }
-
+    
     public Group createGroup(String groupOwner, String groupName) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("createGroup(groupOwner="+groupOwner+", groupName="+groupName+")");    

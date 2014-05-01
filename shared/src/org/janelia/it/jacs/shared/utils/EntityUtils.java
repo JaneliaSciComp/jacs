@@ -114,6 +114,7 @@ public class EntityUtils {
      * @return
      */
     public static boolean isOwner(Entity entity, List<String> subjectKeys) {
+        if (subjectKeys.isEmpty()) throw new IllegalArgumentException("subjectKeys list is empty");
         if (entity==null) throw new IllegalArgumentException("Entity is null");
         if (entity.getOwnerKey()==null) throw new IllegalArgumentException("Entity's owner is null");
         return entity.getOwnerKey().equals(subjectKeys.get(0));

@@ -1,7 +1,13 @@
 
 package org.janelia.it.jacs.compute.api;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -16,14 +22,15 @@ import org.apache.solr.common.SolrDocumentList;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
-import org.janelia.it.jacs.compute.access.mongodb.MongoDbDAO;
-import org.janelia.it.jacs.compute.access.neo4j.Neo4jBatchDAO;
+import org.janelia.it.jacs.compute.access.mongodb.MongoDbImport;
+import org.janelia.it.jacs.compute.access.mongodb.MongoDbPermissionRefresh;
 import org.janelia.it.jacs.compute.access.neo4j.Neo4jCSVExportDao;
 import org.janelia.it.jacs.compute.access.solr.SolrDAO;
 import org.janelia.it.jacs.compute.api.support.SageTerm;
 import org.janelia.it.jacs.compute.api.support.SolrDocTypeEnum;
 import org.janelia.it.jacs.compute.api.support.SolrResults;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.jboss.annotation.ejb.PoolClass;
@@ -97,18 +104,23 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     }
     
     // TODO: move this to its own bean, or rename this one
-    public void mongoAllEntities(boolean clearDb) throws ComputeException {
-    	try {
-    		MongoDbDAO mongodbDAO = new MongoDbDAO(log);
-    		if (clearDb) {
-    			mongodbDAO.dropDatabase();
-    		}
-    		mongodbDAO.loadAllEntities();
-    	}
-    	catch (DaoException e) {
-            log.error("Error indexing all entities",e);
-    		throw new ComputeException("Error indexing all entities",e);
-    	}
+    public void mongoAllDomainObjects(boolean clearDb) throws ComputeException {
+        try {
+            String serverUrl = SystemConfigurationProperties.getString("MongoDB.ServerURL");
+            
+            MongoDbImport mongoDbImport = new MongoDbImport(serverUrl);
+            if (clearDb) {
+                mongoDbImport.dropDatabase();
+            }
+            mongoDbImport.loadAllEntities();
+            
+            MongoDbPermissionRefresh refresh = new MongoDbPermissionRefresh(serverUrl);
+            refresh.refreshPermissions();
+        }
+        catch (DaoException e) {
+            log.error("Error loading into MongoDB",e);
+            throw new ComputeException("Error loading into MongoDB",e);
+        }
     }
 
     // TODO: move this to its own bean, or rename this one

@@ -122,7 +122,8 @@ public interface ComputeBeanRemote {
     public List<Task> getUserTasksByType(String simpleName, String userName) throws RemoteException;
     public List<Event> getEventsForTask(long taskId) throws DaoException;
     public ControlledVocabElement[] getControlledVocab(Long objectId, int vocabIndex) throws ServiceException;
-	
+    
+    public User createUser(String newUserName, String newFullName) throws ComputeException;
 	public Group createGroup(String groupOwner, String groupName) throws DaoException;
 	public void addUserToGroup(String groupUser, String groupName) throws DaoException;
     public void removeGroup(String groupName) throws DaoException;
