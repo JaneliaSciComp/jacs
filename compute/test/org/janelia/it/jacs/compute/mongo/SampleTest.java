@@ -123,6 +123,11 @@ public class SampleTest extends MongoDbTest {
     @Test
     public void test() {
 
+        dao.getCollection("workspace").update("{_id:#}",1877462913636106329L).with("{$addToSet:{readers:#,writers:#}}","TESTER","TESTER");
+        
+    }
+    
+    public void test2() {
         String subjectKey = "user:riddifordl";
         for(Workspace workspace : dao.getWorkspaces(subjectKey)) {
             System.out.println("Found workspace "+workspace.getName()+" for "+workspace.getOwnerKey());

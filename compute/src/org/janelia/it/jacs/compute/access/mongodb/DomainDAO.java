@@ -34,17 +34,19 @@ import com.google.common.collect.Multimap;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
-import com.mongodb.WriteResult;
 
+/**
+ * THe main domain-object DAO for the JACS system. 
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 public class DomainDAO {
 
     private static final Logger log = Logger.getLogger(DomainDAO.class);
-    
-    public static final String[] domainTypes = {"workspace","sample","screenSample","patternMask","flyLine","lsm","fragment","annotation","ontology"};
-    public static final Class<?>[] domainClasses = {TreeNode.class,Sample.class,ScreenSample.class,PatternMask.class,FlyLine.class,LSMImage.class,NeuronFragment.class,Annotation.class,Ontology.class};
-    
-    public static final String MONGO_DATABASE = "jacs";
 
+    private static final String[] domainTypes = {"treeNode","sample","screenSample","patternMask","flyLine","lsm","fragment","annotation","ontology"};
+    private static final Class<?>[] domainClasses = {TreeNode.class,Sample.class,ScreenSample.class,PatternMask.class,FlyLine.class,LSMImage.class,NeuronFragment.class,Annotation.class,Ontology.class};
+    
     protected MongoClient m;
     protected DB db;
     protected Jongo jongo;
@@ -60,35 +62,29 @@ public class DomainDAO {
     
     protected Map<String,Class<? extends DomainObject>> domainClassMap;
     
-    public DomainDAO(String serverUrl) {
-        try {
-            m = new MongoClient(serverUrl);
-            m.setWriteConcern(WriteConcern.JOURNALED);
-            db = m.getDB(MONGO_DATABASE);
-            jongo = new Jongo(db, 
-                    new JacksonMapper.Builder()
-                        .enable(MapperFeature.AUTO_DETECT_GETTERS)
-                        .enable(MapperFeature.AUTO_DETECT_SETTERS)
-                        .build());
-            subjectCollection = jongo.getCollection("subject");
-            workspaceCollection = jongo.getCollection("workspace");
-            sampleCollection = jongo.getCollection("sample");
-            screenSampleCollection = jongo.getCollection("screenSample");
-            patternMaskCollection = jongo.getCollection("patternMask");
-            lsmCollection = jongo.getCollection("lsm");
-            fragmentCollection = jongo.getCollection("fragment");
-            annotationCollection = jongo.getCollection("annotation");
-            ontologyCollection = jongo.getCollection("ontology");
-            
-            domainClassMap = new HashMap<String,Class<? extends DomainObject>>();
-            for(int i=0; i<DomainDAO.domainTypes.length; i++) {
-                String domainType = DomainDAO.domainTypes[i];
-                Class<? extends DomainObject> domainClass = (Class<? extends DomainObject>)DomainDAO.domainClasses[i];
-                domainClassMap.put(domainType, domainClass);
-            }
-        }
-        catch (UnknownHostException e) {
-            throw new RuntimeException("Unknown host: "+serverUrl);
+    public DomainDAO(String serverUrl, String databaseName) throws UnknownHostException {
+        m = new MongoClient(serverUrl);
+        m.setWriteConcern(WriteConcern.JOURNALED);
+        db = m.getDB(databaseName);
+        jongo = new Jongo(db, 
+                new JacksonMapper.Builder()
+                    .enable(MapperFeature.AUTO_DETECT_GETTERS)
+                    .enable(MapperFeature.AUTO_DETECT_SETTERS)
+                    .build());
+        subjectCollection = jongo.getCollection("subject");
+        workspaceCollection = jongo.getCollection("workspace");
+        sampleCollection = jongo.getCollection("sample");
+        screenSampleCollection = jongo.getCollection("screenSample");
+        patternMaskCollection = jongo.getCollection("patternMask");
+        lsmCollection = jongo.getCollection("lsm");
+        fragmentCollection = jongo.getCollection("fragment");
+        annotationCollection = jongo.getCollection("annotation");
+        ontologyCollection = jongo.getCollection("ontology");
+        domainClassMap = new HashMap<String,Class<? extends DomainObject>>();
+        for(int i=0; i<DomainDAO.domainTypes.length; i++) {
+            String domainType = DomainDAO.domainTypes[i];
+            Class<? extends DomainObject> domainClass = (Class<? extends DomainObject>)DomainDAO.domainClasses[i];
+            domainClassMap.put(domainType, domainClass);
         }
     }
     
@@ -138,12 +134,12 @@ public class DomainDAO {
     }
 
     public List<DomainObject> getDomainObjects(String subjectKey, String type, Collection<Long> ids) {
-        return toList(getCollection(type).find("{_id:{$in:#},readers:#}", ids, subjectKey).as(getObjectClass(type)));
+        return toList(getCollection(type).find("{_id:{$in:#},_readers:#}", ids, subjectKey).as(getObjectClass(type)));
     }
 
     public List<DomainObject> getDomainObjects(String subjectKey, ReverseReference reverseRef) {
         String type = reverseRef.getReferringType();
-        List<DomainObject> list = toList(getCollection(type).find("{"+reverseRef.getReferenceAttr()+":#,readers:#}", reverseRef.getReferenceId(), subjectKey).as(getObjectClass(type)));
+        List<DomainObject> list = toList(getCollection(type).find("{"+reverseRef.getReferenceAttr()+":#,_readers:#}", reverseRef.getReferenceId(), subjectKey).as(getObjectClass(type)));
         if (list.size()!=reverseRef.getCount()) {
             log.warn("Reverse reference ("+reverseRef.getReferringType()+":"+reverseRef.getReferenceAttr()+":"+reverseRef.getReferenceId()+
                     ") denormalized count ("+reverseRef.getCount()+") does not match actual count ("+list.size()+")");
@@ -157,44 +153,44 @@ public class DomainDAO {
     }
 
     public Collection<Ontology> getOntologies(String subjectKey) {
-        return toList(ontologyCollection.find("{readers:#}",subjectKey).as(Ontology.class));
+        return toList(ontologyCollection.find("{_readers:#}",subjectKey).as(Ontology.class));
     }
     
     @Deprecated
     public List<Folder> getRootFolders(String subjectKey) {
-        return toList(workspaceCollection.find("{root:true,readers:#}",subjectKey).as(Folder.class));
+        return toList(workspaceCollection.find("{root:true,_readers:#}",subjectKey).as(Folder.class));
     }
     
     public List<LSMImage> getLsmsBySampleId(String subjectKey, Long id) {
-        return toList(lsmCollection.find("{sampleId:#,readers:#}",id, subjectKey).as(LSMImage.class));
+        return toList(lsmCollection.find("{sampleId:#,_readers:#}",id, subjectKey).as(LSMImage.class));
     }
     
     public List<NeuronFragment> getNeuronFragmentsBySampleId(String subjectKey, Long sampleIdd) {
-        return toList(fragmentCollection.find("{sampleId:#,readers:#}",sampleIdd,subjectKey).as(NeuronFragment.class));
+        return toList(fragmentCollection.find("{sampleId:#,_readers:#}",sampleIdd,subjectKey).as(NeuronFragment.class));
     }
     
     public List<NeuronFragment> getNeuronFragmentsBySeparationId(String subjectKey, Long separationId) {
-        return toList(fragmentCollection.find("{separationId:#,readers:#}",separationId,subjectKey).as(NeuronFragment.class));
+        return toList(fragmentCollection.find("{separationId:#,_readers:#}",separationId,subjectKey).as(NeuronFragment.class));
     }
     
     public List<Annotation> getAnnotations(String subjectKey, Long targetId) {
-        return toList(annotationCollection.find("{targetId:#,readers:#}",targetId,subjectKey).as(Annotation.class));
+        return toList(annotationCollection.find("{targetId:#,_readers:#}",targetId,subjectKey).as(Annotation.class));
     }
     
     public List<Annotation> getAnnotations(String subjectKey, Collection<Long> targetIds) {
-        return toList(annotationCollection.find("{targetId:{$in:#},readers:#}",targetIds,subjectKey).as(Annotation.class));
+        return toList(annotationCollection.find("{targetId:{$in:#},_readers:#}",targetIds,subjectKey).as(Annotation.class));
     }
     
     public List<ScreenSample> getScreenSamples(String subjectKey) {
-        return toList(screenSampleCollection.find("{readers:#}",subjectKey).as(ScreenSample.class));
+        return toList(screenSampleCollection.find("{_readers:#}",subjectKey).as(ScreenSample.class));
     }
     
     public List<PatternMask> getPatternMasks(String subjectKey, Long screenSampleId) {
-        return toList(patternMaskCollection.find("{screenSampleId:#,readers:#}",screenSampleId,subjectKey).as(PatternMask.class));
+        return toList(patternMaskCollection.find("{screenSampleId:#,_readers:#}",screenSampleId,subjectKey).as(PatternMask.class));
     }
    
     public Folder getFolderById(String subjectKey, Long id) {
-        return workspaceCollection.findOne("{_id:#,readers:#}",id,subjectKey).as(Folder.class);
+        return workspaceCollection.findOne("{_id:#,_readers:#}",id,subjectKey).as(Folder.class);
     }
     
     public void changePermissions(String subjectKey, String type, Long id, String granteeKey, String rights, boolean grant) throws Exception {
@@ -206,9 +202,11 @@ public class DomainDAO {
     public void changePermissions(String subjectKey, String type, Collection<Long> ids, String granteeKey, String rights, boolean grant) throws Exception {
         String op = grant ? "addToSet" : "pull";
         String attr = rights.equals("w") ? "writers" : "readers";
+        String _attr = rights.equals("w") ? "_writers" : "_readers";
         MongoCollection collection = getCollection(type);
         
-        WriteResult wr = collection.update("{_id:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#}}",granteeKey);
+        collection.update("{_id:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#,"+_attr+":#}}",granteeKey,granteeKey);
+        
 //        log.debug("  updated "+wr.getN()+" "+type);
         
 //        
@@ -229,17 +227,17 @@ public class DomainDAO {
 //            log.warn(idSet);
 //        }
         
-        if ("folder".equals(type)) {
+        if ("treeNode".equals(type)) {
             for(Long id : ids) {
             
-                Folder folder = collection.findOne("{_id:#,readers:#}",id,subjectKey).as(Folder.class);
+                TreeNode node = collection.findOne("{_id:#,readers:#}",id,subjectKey).as(TreeNode.class);
     
-                if (folder==null) {
+                if (node==null) {
                     throw new IllegalArgumentException("Could not find folder with id="+id);
                 }
                 
                 Multimap<String,Long> groupedIds = HashMultimap.<String,Long>create();
-                for(Reference ref : folder.getChildren()) {
+                for(Reference ref : node.getChildren()) {
                     groupedIds.put(ref.getTargetType(), ref.getTargetId());
                 }
                 
@@ -250,10 +248,8 @@ public class DomainDAO {
             }
         }
         else if ("sample".equals(type)) {
-            WriteResult wr1 = fragmentCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$addToSet:{"+attr+":#}}",granteeKey);
-            log.debug("  updated "+wr1.getN()+" fragment");
-            WriteResult wr2 = lsmCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$addToSet:{"+attr+":#}}",granteeKey);
-            log.debug("  updated "+wr2.getN()+" lsm");
+            fragmentCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$addToSet:{"+attr+":#,"+_attr+":#}}}",granteeKey,granteeKey);
+            lsmCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$addToSet:{"+attr+":#,"+_attr+":#}}}",granteeKey,granteeKey);
         }
     }
     
