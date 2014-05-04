@@ -218,6 +218,8 @@ public class MongoDbImport extends AnnotationDAO {
         Workspace workspace = new Workspace();
         workspace.setId(id);
         workspace.setOwnerKey(subjectKey);
+        workspace.setReaders(getDefaultSubjectKeys(subjectKey));
+        workspace.setWriters(getDefaultSubjectKeys(subjectKey));
         workspace.setCreationDate(now);
         workspace.setUpdatedDate(now);
         workspace.setName("Default Workspace");
@@ -281,11 +283,11 @@ public class MongoDbImport extends AnnotationDAO {
         
         node.setId(folderEntity.getId());
         node.setOwnerKey(folderEntity.getOwnerKey());
+        node.setReaders(getSubjectKeysWithPermission(folderEntity, "r"));
+        node.setWriters(getSubjectKeysWithPermission(folderEntity, "w"));
         node.setName(folderEntity.getName());
         node.setCreationDate(folderEntity.getCreationDate());
         node.setUpdatedDate(folderEntity.getUpdatedDate());
-        node.setReaders(getSubjectKeysWithPermission(folderEntity, "r"));
-        node.setWriters(getSubjectKeysWithPermission(folderEntity, "w"));
         
         List<Reference> children = new ArrayList<Reference>();
         for(Entity childEntity : folderEntity.getOrderedChildren()) {
@@ -1189,14 +1191,14 @@ public class MongoDbImport extends AnnotationDAO {
         }
     }
     
-    private Annotation getAnnotation(Long annotationId, String annotationName, String owner, Date creationDate,
+    private Annotation getAnnotation(Long annotationId, String annotationName, String ownerKey, Date creationDate,
             Long targetId, String targetType, Long keyId, Long valueId) {
         
         Annotation annotation = new Annotation();
-                
         annotation.setId(annotationId);
-        
-        annotation.setOwnerKey(owner);
+        annotation.setOwnerKey(ownerKey);
+        annotation.setReaders(getDefaultSubjectKeys(ownerKey));
+        annotation.setWriters(getDefaultSubjectKeys(ownerKey));
         annotation.setText(annotationName);
         annotation.setCreationDate(creationDate);
         
@@ -1222,6 +1224,12 @@ public class MongoDbImport extends AnnotationDAO {
     
     
     /* UTILITY METHODS */
+
+    private Set<String> getDefaultSubjectKeys(String subjectKey) {
+        Set<String> subjectKeys = new HashSet<String>();
+        subjectKeys.add(subjectKey); // owner has all permissions
+        return subjectKeys;
+    }
     
     private Set<String> getSubjectKeysWithPermission(Entity entity, String rights) {
         Set<String> subjectKeys = new HashSet<String>();

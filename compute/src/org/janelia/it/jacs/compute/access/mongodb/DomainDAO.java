@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.domain.Annotation;
@@ -20,6 +21,7 @@ import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
 import org.janelia.it.jacs.model.domain.Sample;
 import org.janelia.it.jacs.model.domain.ScreenSample;
+import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.TreeNode;
 import org.janelia.it.jacs.model.domain.Workspace;
 import org.janelia.it.jacs.model.domain.ontology.Ontology;
@@ -51,7 +53,7 @@ public class DomainDAO {
     protected DB db;
     protected Jongo jongo;
     protected MongoCollection subjectCollection;
-    protected MongoCollection workspaceCollection;
+    protected MongoCollection treeNodeCollection;
     protected MongoCollection sampleCollection;
     protected MongoCollection screenSampleCollection;
     protected MongoCollection patternMaskCollection;
@@ -72,7 +74,7 @@ public class DomainDAO {
                     .enable(MapperFeature.AUTO_DETECT_SETTERS)
                     .build());
         subjectCollection = jongo.getCollection("subject");
-        workspaceCollection = jongo.getCollection("workspace");
+        treeNodeCollection = jongo.getCollection("treeNode");
         sampleCollection = jongo.getCollection("sample");
         screenSampleCollection = jongo.getCollection("screenSample");
         patternMaskCollection = jongo.getCollection("patternMask");
@@ -134,12 +136,14 @@ public class DomainDAO {
     }
 
     public List<DomainObject> getDomainObjects(String subjectKey, String type, Collection<Long> ids) {
-        return toList(getCollection(type).find("{_id:{$in:#},_readers:#}", ids, subjectKey).as(getObjectClass(type)));
+        Set<String> subjects = getSubjectSet(subjectKey);
+        return toList(getCollection(type).find("{_id:{$in:#},readers:{$in:#}}", ids, subjects).as(getObjectClass(type)));
     }
 
     public List<DomainObject> getDomainObjects(String subjectKey, ReverseReference reverseRef) {
+        Set<String> subjects = getSubjectSet(subjectKey);
         String type = reverseRef.getReferringType();
-        List<DomainObject> list = toList(getCollection(type).find("{"+reverseRef.getReferenceAttr()+":#,_readers:#}", reverseRef.getReferenceId(), subjectKey).as(getObjectClass(type)));
+        List<DomainObject> list = toList(getCollection(type).find("{"+reverseRef.getReferenceAttr()+":#,readers:{$in:#}}", reverseRef.getReferenceId(), subjects).as(getObjectClass(type)));
         if (list.size()!=reverseRef.getCount()) {
             log.warn("Reverse reference ("+reverseRef.getReferringType()+":"+reverseRef.getReferenceAttr()+":"+reverseRef.getReferenceId()+
                     ") denormalized count ("+reverseRef.getCount()+") does not match actual count ("+list.size()+")");
@@ -148,49 +152,61 @@ public class DomainDAO {
     }
     
     public Collection<Workspace> getWorkspaces(String subjectKey) {
-        System.out.println(Workspace.class.getName());
-        return toList(workspaceCollection.find("{class:#,ownerKey:#}",Workspace.class.getName(),subjectKey).as(Workspace.class));
+        Set<String> subjects = getSubjectSet(subjectKey);
+        return toList(treeNodeCollection.find("{class:#,readers:{$in:#}}",Workspace.class.getName(),subjects).as(Workspace.class));
     }
 
     public Collection<Ontology> getOntologies(String subjectKey) {
-        return toList(ontologyCollection.find("{_readers:#}",subjectKey).as(Ontology.class));
+        Set<String> subjects = getSubjectSet(subjectKey);
+        return toList(ontologyCollection.find("{readers:{$in:#}}",subjects).as(Ontology.class));
     }
-    
-    @Deprecated
-    public List<Folder> getRootFolders(String subjectKey) {
-        return toList(workspaceCollection.find("{root:true,_readers:#}",subjectKey).as(Folder.class));
-    }
-    
+        
     public List<LSMImage> getLsmsBySampleId(String subjectKey, Long id) {
-        return toList(lsmCollection.find("{sampleId:#,_readers:#}",id, subjectKey).as(LSMImage.class));
+        Set<String> subjects = getSubjectSet(subjectKey);
+        return toList(lsmCollection.find("{sampleId:#,readers:{$in:#}}",id, subjects).as(LSMImage.class));
     }
     
     public List<NeuronFragment> getNeuronFragmentsBySampleId(String subjectKey, Long sampleIdd) {
-        return toList(fragmentCollection.find("{sampleId:#,_readers:#}",sampleIdd,subjectKey).as(NeuronFragment.class));
+        Set<String> subjects = getSubjectSet(subjectKey);
+        return toList(fragmentCollection.find("{sampleId:#,readers:{$in:#}}",sampleIdd,subjects).as(NeuronFragment.class));
     }
     
     public List<NeuronFragment> getNeuronFragmentsBySeparationId(String subjectKey, Long separationId) {
-        return toList(fragmentCollection.find("{separationId:#,_readers:#}",separationId,subjectKey).as(NeuronFragment.class));
+        Set<String> subjects = getSubjectSet(subjectKey);
+        return toList(fragmentCollection.find("{separationId:#,readers:{$in:#}}",separationId,subjects).as(NeuronFragment.class));
     }
     
     public List<Annotation> getAnnotations(String subjectKey, Long targetId) {
-        return toList(annotationCollection.find("{targetId:#,_readers:#}",targetId,subjectKey).as(Annotation.class));
+        Set<String> subjects = getSubjectSet(subjectKey);
+        return toList(annotationCollection.find("{targetId:#,readers:{$in:#}}",targetId,subjects).as(Annotation.class));
     }
     
     public List<Annotation> getAnnotations(String subjectKey, Collection<Long> targetIds) {
-        return toList(annotationCollection.find("{targetId:{$in:#},_readers:#}",targetIds,subjectKey).as(Annotation.class));
+        Set<String> subjects = getSubjectSet(subjectKey);
+        return toList(annotationCollection.find("{targetId:{$in:#},readers:{$in:#}}",targetIds,subjects).as(Annotation.class));
     }
     
     public List<ScreenSample> getScreenSamples(String subjectKey) {
-        return toList(screenSampleCollection.find("{_readers:#}",subjectKey).as(ScreenSample.class));
+        Set<String> subjects = getSubjectSet(subjectKey);
+        return toList(screenSampleCollection.find("{readers:{$in:#}}",subjectKey,subjects).as(ScreenSample.class));
     }
     
     public List<PatternMask> getPatternMasks(String subjectKey, Long screenSampleId) {
-        return toList(patternMaskCollection.find("{screenSampleId:#,_readers:#}",screenSampleId,subjectKey).as(PatternMask.class));
+        Set<String> subjects = getSubjectSet(subjectKey);
+        return toList(patternMaskCollection.find("{screenSampleId:#,readers:{$in:#}}",screenSampleId,subjects).as(PatternMask.class));
     }
    
     public Folder getFolderById(String subjectKey, Long id) {
-        return workspaceCollection.findOne("{_id:#,_readers:#}",id,subjectKey).as(Folder.class);
+        Set<String> subjects = getSubjectSet(subjectKey);
+        return treeNodeCollection.findOne("{_id:#,readers:{$in:#}}",id,subjects).as(Folder.class);
+    }
+
+    private Set<String> getSubjectSet(String subjectKey) {
+        Subject subject = subjectCollection.findOne("{key:#}",subjectKey).projection("{_id:0,groups:1}").as(Subject.class);
+        if (subject==null) throw new IllegalArgumentException("No such subject: "+subjectKey);
+        Set<String> groups = subject.getGroups();
+        groups.add(subjectKey);
+        return groups;
     }
     
     public void changePermissions(String subjectKey, String type, Long id, String granteeKey, String rights, boolean grant) throws Exception {
@@ -202,10 +218,9 @@ public class DomainDAO {
     public void changePermissions(String subjectKey, String type, Collection<Long> ids, String granteeKey, String rights, boolean grant) throws Exception {
         String op = grant ? "addToSet" : "pull";
         String attr = rights.equals("w") ? "writers" : "readers";
-        String _attr = rights.equals("w") ? "_writers" : "_readers";
         MongoCollection collection = getCollection(type);
         
-        collection.update("{_id:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#,"+_attr+":#}}",granteeKey,granteeKey);
+        collection.update("{_id:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#,_"+attr+":#}}",granteeKey,granteeKey);
         
 //        log.debug("  updated "+wr.getN()+" "+type);
         
@@ -230,7 +245,7 @@ public class DomainDAO {
         if ("treeNode".equals(type)) {
             for(Long id : ids) {
             
-                TreeNode node = collection.findOne("{_id:#,readers:#}",id,subjectKey).as(TreeNode.class);
+                TreeNode node = collection.findOne("{_id:#,writers:#}",id,subjectKey).projection("{_id:0,class:1,children:1}").as(TreeNode.class);
     
                 if (node==null) {
                     throw new IllegalArgumentException("Could not find folder with id="+id);
@@ -248,8 +263,11 @@ public class DomainDAO {
             }
         }
         else if ("sample".equals(type)) {
-            fragmentCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$addToSet:{"+attr+":#,"+_attr+":#}}}",granteeKey,granteeKey);
-            lsmCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$addToSet:{"+attr+":#,"+_attr+":#}}}",granteeKey,granteeKey);
+            fragmentCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#,_"+attr+":#}}}",granteeKey,granteeKey);
+            lsmCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#,_"+attr+":#}}}",granteeKey,granteeKey);
+        }
+        else if ("screenSample".equals(type)) {
+            patternMaskCollection.update("{screenSampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#,_"+attr+":#}}}",granteeKey,granteeKey);
         }
     }
     

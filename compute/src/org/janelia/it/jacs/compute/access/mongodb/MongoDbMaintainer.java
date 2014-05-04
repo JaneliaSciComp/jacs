@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.access.mongodb;
 
 import java.net.UnknownHostException;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -61,18 +62,8 @@ public class MongoDbMaintainer {
             for(Object obj : iterable) {
                 DomainObject domainObject = (DomainObject)obj;
                 String ownerKey = domainObject.getOwnerKey();
-                Set<String> readers = domainObject.getReaders();
-                Set<String> writers = domainObject.getWriters();
-                readers.add(ownerKey);
-                if (ownerKey.startsWith("group:")) {
-                    // Everyone in the group has read access
-                    for(String subjectKey : groupMap.get(ownerKey)) {
-                        readers.add(subjectKey);    
-                    }
-                }
-                
-                collection.update("{_id:#}",domainObject.getId()).with("{_readers:#}",readers);
-                collection.update("{_id:#}",domainObject.getId()).with("{_writers:#}",writers);
+                if (ownerKey==null) continue;
+                collection.update("{_id:#}",domainObject.getId()).with("{$addToSet:{readers:#,writers:#}}",ownerKey,ownerKey);
                 
             }
         }
@@ -88,8 +79,8 @@ public class MongoDbMaintainer {
         ensureDomainIndexes(treeNodeCollection);
         treeNodeCollection.ensureIndex("{name:1}");
         treeNodeCollection.ensureIndex("{class:1}");
-        treeNodeCollection.ensureIndex("{class:1,_writers:1}");
-        treeNodeCollection.ensureIndex("{class:1,_readers:1}");
+        treeNodeCollection.ensureIndex("{class:1,writers:1}");
+        treeNodeCollection.ensureIndex("{class:1,readers:1}");
 
         MongoCollection ontologyCollection = domainDao.getCollection("ontology");
         ensureDomainIndexes(ontologyCollection);
@@ -105,8 +96,8 @@ public class MongoDbMaintainer {
         ensureDomainIndexes(fragmentCollection);
         fragmentCollection.ensureIndex("{separationId:1}");
         fragmentCollection.ensureIndex("{sampleId:1}");
-        fragmentCollection.ensureIndex("{sampleId:1,_writers:1}");
-        fragmentCollection.ensureIndex("{sampleId:1,_readers:1}");
+        fragmentCollection.ensureIndex("{sampleId:1,writers:1}");
+        fragmentCollection.ensureIndex("{sampleId:1,readers:1}");
 
         MongoCollection lsmCollection = domainDao.getCollection("lsm");
         ensureDomainIndexes(lsmCollection);
@@ -114,8 +105,8 @@ public class MongoDbMaintainer {
         lsmCollection.ensureIndex("{slideCode:1}");
         lsmCollection.ensureIndex("{filepath:1}");
         lsmCollection.ensureIndex("{sampleId:1}");
-        lsmCollection.ensureIndex("{sampleId:1,_writers:1}");
-        lsmCollection.ensureIndex("{sampleId:1,_readers:1}");
+        lsmCollection.ensureIndex("{sampleId:1,writers:1}");
+        lsmCollection.ensureIndex("{sampleId:1,readers:1}");
 
         MongoCollection flyLineCollection = domainDao.getCollection("flyLine");
         ensureDomainIndexes(flyLineCollection);
@@ -128,14 +119,14 @@ public class MongoDbMaintainer {
         MongoCollection patternMaskCollection = domainDao.getCollection("patternMask");
         ensureDomainIndexes(patternMaskCollection);
         patternMaskCollection.ensureIndex("{screenSampleId:1}");
-        patternMaskCollection.ensureIndex("{screenSampleId:1,_writers:1}");
-        patternMaskCollection.ensureIndex("{screenSampleId:1,_readers:1}");
+        patternMaskCollection.ensureIndex("{screenSampleId:1,writers:1}");
+        patternMaskCollection.ensureIndex("{screenSampleId:1,readers:1}");
 
         MongoCollection annotationCollection = domainDao.getCollection("annotation");
         ensureDomainIndexes(annotationCollection);
         annotationCollection.ensureIndex("{targetId:1}");
-        annotationCollection.ensureIndex("{targetId:1,_writers:1}");
-        annotationCollection.ensureIndex("{targetId:1,_readers:1}");
+        annotationCollection.ensureIndex("{targetId:1,writers:1}");
+        annotationCollection.ensureIndex("{targetId:1,readers:1}");
         annotationCollection.ensureIndex("{text:1}");
         
         log.info("Indexing MongoDB took "+(System.currentTimeMillis()-start)+" ms");
@@ -143,10 +134,10 @@ public class MongoDbMaintainer {
 
     private void ensureDomainIndexes(MongoCollection mc) {
         mc.ensureIndex("{ownerKey:1}");
-        mc.ensureIndex("{_writers:1}");
-        mc.ensureIndex("{_readers:1}");
-        mc.ensureIndex("{_id:1,_writers:1}");
-        mc.ensureIndex("{_id:1,_readers:1}");
+        mc.ensureIndex("{writers:1}");
+        mc.ensureIndex("{readers:1}");
+        mc.ensureIndex("{_id:1,writers:1}");
+        mc.ensureIndex("{_id:1,readers:1}");
     }
     
     /**
@@ -155,5 +146,6 @@ public class MongoDbMaintainer {
     public static void main(String[] args) throws Exception {
         MongoDbMaintainer refresh = new MongoDbMaintainer("rokicki-ws", "jacs");
         refresh.refreshPermissions();
+        refresh.ensureIndexes();
     }
 }

@@ -120,10 +120,14 @@ public class SampleTest extends MongoDbTest {
 //    }
     
 
-    @Test
+    //@Test
     public void test() {
 
-        dao.getCollection("workspace").update("{_id:#}",1877462913636106329L).with("{$addToSet:{readers:#,writers:#}}","TESTER","TESTER");
+        for(Workspace workspace : dao.getCollection("treeNode").find("{class:#,ownerKey:#}",Workspace.class.getName(),"user:saffordt").projection("{class:1,name:1}").as(Workspace.class)) {
+            
+            System.out.println(workspace.getName());
+            System.out.println(workspace.getOwnerKey());
+        }
         
     }
     
@@ -148,13 +152,18 @@ public class SampleTest extends MongoDbTest {
         }
     }
     
-//    @Test
+    @Test
     public void runBenchmarks() throws Exception {
 
         long start = System.currentTimeMillis();
 
-        List<Folder> roots = dao.getRootFolders("group:leetlab");
-        System.out.println("getCommonRootEntities('group:leetlab') took "+(System.currentTimeMillis()-start)+" ms and returned "+roots.size());
+        int roots = 0;
+        String subjectKey = "group:leetlab";
+        for(Workspace workspace : dao.getWorkspaces(subjectKey)) {
+            System.out.println("Got workspace: "+workspace.getName()+" for "+workspace.getOwnerKey());
+            roots += dao.getDomainObjects(subjectKey, workspace.getChildren()).size();
+        }
+        System.out.println("getCommonRootEntities('group:leetlab') took "+(System.currentTimeMillis()-start)+" ms and returned "+roots);
         
         start = System.currentTimeMillis();
         dao.changePermissions("group:leetlab","sample",1759767174932594786L,"user:rokickik","r",true);
@@ -174,7 +183,7 @@ public class SampleTest extends MongoDbTest {
         System.out.println("getProjectedResults(Sample->LSM Stack) ...");
         
         Long retiredDataId = 1870629090470396002L;
-        String subjectKey = "group:heberleinlab";
+        subjectKey = "group:heberleinlab";
 
         start = System.currentTimeMillis();
         Folder retiredDataFolder = dao.getFolderById(subjectKey, retiredDataId);
@@ -228,13 +237,13 @@ public class SampleTest extends MongoDbTest {
     }
     
     private int count(String subjectKey, Long folderId) {
-
+        int c = 1;
         Folder folder = dao.getFolderById(subjectKey, folderId);
         List<Long> sampleIds = new ArrayList<Long>();
+        if (folder.getChildren()==null) return c;
         for(Reference ref : folder.getChildren()) {
             sampleIds.add(ref.getTargetId());
         }
-        int c = 1;
         for(DomainObject obj : dao.getDomainObjects(subjectKey, folder.getChildren())) {
             Sample sample = (Sample)obj;
             for(String objective : sample.getObjectives().keySet()) {
