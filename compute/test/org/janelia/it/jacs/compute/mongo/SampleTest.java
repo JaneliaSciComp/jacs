@@ -9,6 +9,7 @@ import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Folder;
 import org.janelia.it.jacs.model.domain.ImageType;
 import org.janelia.it.jacs.model.domain.LSMImage;
+import org.janelia.it.jacs.model.domain.MaterializedView;
 import org.janelia.it.jacs.model.domain.NeuronSeparation;
 import org.janelia.it.jacs.model.domain.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.PipelineResult;
@@ -123,12 +124,23 @@ public class SampleTest extends MongoDbTest {
     //@Test
     public void test() {
 
-        for(Workspace workspace : dao.getCollection("treeNode").find("{class:#,ownerKey:#}",Workspace.class.getName(),"user:saffordt").projection("{class:1,name:1}").as(Workspace.class)) {
+//        for(Workspace workspace : dao.getCollection("treeNode").find("{class:#,ownerKey:#}",Workspace.class.getName(),"user:saffordt").projection("{class:1,name:1}").as(Workspace.class)) {
+//            
+//            System.out.println(workspace.getName());
+//            System.out.println(workspace.getOwnerKey());
+//        }
+
+        int roots = 0;
+        String subjectKey = "group:leetlab";
+        for(Workspace workspace : dao.getWorkspaces(subjectKey)) {
+            System.out.println("Got workspace: "+workspace.getName()+" for "+workspace.getOwnerKey());
             
-            System.out.println(workspace.getName());
-            System.out.println(workspace.getOwnerKey());
+            for(DomainObject obj : dao.getDomainObjects(subjectKey, workspace.getChildren())) {
+                TreeNode node = (TreeNode)obj;
+                System.out.println(node.getId()+" "+node.getName()+" ("+node.getOwnerKey()+") - "+node.getNumChildren());
+                
+            }
         }
-        
     }
     
     public void test2() {
@@ -167,7 +179,6 @@ public class SampleTest extends MongoDbTest {
         
         start = System.currentTimeMillis();
         dao.changePermissions("group:leetlab","sample",1759767174932594786L,"user:rokickik","r",true);
-        //sampleCollection.update("{_id:1759767174932594786,writers:'group:leetlab'}").with("{$addToSet:{readers:#}}","user:rokickik");
         System.out.println("grantPermissions('TZL_stg14-Hey01328_Y1') took "+(System.currentTimeMillis()-start)+" ms");
         
         start = System.currentTimeMillis();
@@ -186,7 +197,7 @@ public class SampleTest extends MongoDbTest {
         subjectKey = "group:heberleinlab";
 
         start = System.currentTimeMillis();
-        Folder retiredDataFolder = dao.getFolderById(subjectKey, retiredDataId);
+        TreeNode retiredDataFolder = dao.getTreeNodeById(subjectKey, retiredDataId);
         Map<Long,Sample> sampleMap = new HashMap<Long,Sample>();
         
         for(DomainObject obj : dao.getDomainObjects(subjectKey, retiredDataFolder.getChildren())) {
@@ -228,23 +239,23 @@ public class SampleTest extends MongoDbTest {
         System.out.println("4) count entity tree returned "+count+" and took "+(System.currentTimeMillis()-start)+" ms");
         
         start = System.currentTimeMillis();
-        dao.changePermissions("user:nerna","folder",1938712577584398434L,"user:rokickik","r",true);
+        dao.changePermissions("user:nerna","treeNode",1938712577584398434L,"user:rokickik","r",true);
         System.out.println("Grant on VT MCFO Case 1 and took "+(System.currentTimeMillis()-start)+" ms");
         
         start = System.currentTimeMillis();
-        dao.changePermissions("user:nerna","folder",1938712577584398434L,"user:rokickik","r",false);
+        dao.changePermissions("user:nerna","treeNode",1938712577584398434L,"user:rokickik","r",false);
         System.out.println("Revoke on VT MCFO Case 1 and took "+(System.currentTimeMillis()-start)+" ms");
     }
     
-    private int count(String subjectKey, Long folderId) {
+    private int count(String subjectKey, Long nodeId) {
         int c = 1;
-        Folder folder = dao.getFolderById(subjectKey, folderId);
+        TreeNode treeNode = dao.getTreeNodeById(subjectKey, nodeId);
         List<Long> sampleIds = new ArrayList<Long>();
-        if (folder.getChildren()==null) return c;
-        for(Reference ref : folder.getChildren()) {
+        if (treeNode.getChildren()==null) return c;
+        for(Reference ref : treeNode.getChildren()) {
             sampleIds.add(ref.getTargetId());
         }
-        for(DomainObject obj : dao.getDomainObjects(subjectKey, folder.getChildren())) {
+        for(DomainObject obj : dao.getDomainObjects(subjectKey, treeNode.getChildren())) {
             Sample sample = (Sample)obj;
             for(String objective : sample.getObjectives().keySet()) {
                 ObjectiveSample osample = sample.getObjectives().get(objective);

@@ -13,7 +13,6 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.domain.Annotation;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.FlyLine;
-import org.janelia.it.jacs.model.domain.Folder;
 import org.janelia.it.jacs.model.domain.LSMImage;
 import org.janelia.it.jacs.model.domain.NeuronFragment;
 import org.janelia.it.jacs.model.domain.PatternMask;
@@ -30,12 +29,13 @@ import org.jongo.MongoCollection;
 import org.jongo.marshall.jackson.JacksonMapper;
 
 import com.fasterxml.jackson.databind.MapperFeature;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
+import com.mongodb.WriteResult;
 
 /**
  * THe main domain-object DAO for the JACS system. 
@@ -67,6 +67,7 @@ public class DomainDAO {
     public DomainDAO(String serverUrl, String databaseName) throws UnknownHostException {
         m = new MongoClient(serverUrl);
         m.setWriteConcern(WriteConcern.JOURNALED);
+        //m.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
         db = m.getDB(databaseName);
         jongo = new Jongo(db, 
                 new JacksonMapper.Builder()
@@ -103,6 +104,7 @@ public class DomainDAO {
     }
 
     public MongoCollection getCollection(String type) {
+        
         return jongo.getCollection(type);
     }
     
@@ -110,9 +112,32 @@ public class DomainDAO {
         return domainClassMap.get(type);
     }
     
+    /**
+     * Create a list of the result set in iteration order.
+     */
     private <T> List<T> toList(Iterable<? extends T> iterable) {
         List<T> list = new ArrayList<T>();
         for(T item : iterable) {
+            list.add(item);
+        }
+        return list;
+    }
+
+    /**
+     * Create a list of the result set in the order of the given id list.
+     */
+    private List<DomainObject> toList(Iterable<? extends DomainObject> iterable, Collection<Long> ids) {
+        List<DomainObject> list = new ArrayList<DomainObject>(ids.size());
+        Map<Long,DomainObject> map = new HashMap<Long,DomainObject>(ids.size());
+        
+        for(DomainObject item : iterable) {
+            map.put(item.getId(), item);
+        }
+        for(Long id : ids) {
+            DomainObject item = map.get(id);
+            if  (item==null) {
+                log.warn("Item with id "+id+" was not found");
+            }
             list.add(item);
         }
         return list;
@@ -123,7 +148,7 @@ public class DomainDAO {
         List<DomainObject> domainObjects = new ArrayList<DomainObject>();
         if (references==null || references.isEmpty()) return domainObjects;
         
-        Multimap<String,Long> referenceMap = LinkedHashMultimap.<String,Long>create();
+        Multimap<String,Long> referenceMap = ArrayListMultimap.<String,Long>create();
         for(Reference reference : references) {
             referenceMap.put(reference.getTargetType(), reference.getTargetId());
         }
@@ -136,8 +161,10 @@ public class DomainDAO {
     }
 
     public List<DomainObject> getDomainObjects(String subjectKey, String type, Collection<Long> ids) {
+        // TODO: remove this after the next db load fixes it
+        if ("workspace".equals(type)) type = "treeNode";
         Set<String> subjects = getSubjectSet(subjectKey);
-        return toList(getCollection(type).find("{_id:{$in:#},readers:{$in:#}}", ids, subjects).as(getObjectClass(type)));
+        return toList(getCollection(type).find("{_id:{$in:#},readers:{$in:#}}", ids, subjects).as(getObjectClass(type)), ids);
     }
 
     public List<DomainObject> getDomainObjects(String subjectKey, ReverseReference reverseRef) {
@@ -196,9 +223,9 @@ public class DomainDAO {
         return toList(patternMaskCollection.find("{screenSampleId:#,readers:{$in:#}}",screenSampleId,subjects).as(PatternMask.class));
     }
    
-    public Folder getFolderById(String subjectKey, Long id) {
+    public TreeNode getTreeNodeById(String subjectKey, Long id) {
         Set<String> subjects = getSubjectSet(subjectKey);
-        return treeNodeCollection.findOne("{_id:#,readers:{$in:#}}",id,subjects).as(Folder.class);
+        return treeNodeCollection.findOne("{_id:#,readers:{$in:#}}",id,subjects).as(TreeNode.class);
     }
 
     private Set<String> getSubjectSet(String subjectKey) {
@@ -219,8 +246,12 @@ public class DomainDAO {
         String op = grant ? "addToSet" : "pull";
         String attr = rights.equals("w") ? "writers" : "readers";
         MongoCollection collection = getCollection(type);
+
+        String logIds = ids.size()<6 ? ""+ids : ids.size()+" ids"; 
         
-        collection.update("{_id:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#,_"+attr+":#}}",granteeKey,granteeKey);
+        log.info("Changing permissions on all "+type+" documents with ids: "+logIds);
+        WriteResult wr = collection.update("{_id:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#}}",granteeKey);
+        log.info("Changed permissions on "+wr.getN()+" documents");
         
 //        log.debug("  updated "+wr.getN()+" "+type);
         
@@ -241,6 +272,21 @@ public class DomainDAO {
 //            
 //            log.warn(idSet);
 //        }
+        
+//        Grant on VT MCFO Case 1 and took 147653 ms
+//        Revoke on VT MCFO Case 1 and took 149949 ms
+        
+//        Grant on VT MCFO Case 1 and took 142196 ms
+//        Revoke on VT MCFO Case 1 and took 149955 ms
+
+//        No writers check:
+//        Grant on VT MCFO Case 1 and took 145893 ms
+//        Revoke on VT MCFO Case 1 and took 146716 ms
+        
+//        Unacknowledged, with writers check:
+//        Grant on VT MCFO Case 1 and took 147216 ms
+//        Revoke on VT MCFO Case 1 and took 152989 ms
+        
         
         if ("treeNode".equals(type)) {
             for(Long id : ids) {
@@ -263,11 +309,15 @@ public class DomainDAO {
             }
         }
         else if ("sample".equals(type)) {
-            fragmentCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#,_"+attr+":#}}}",granteeKey,granteeKey);
-            lsmCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#,_"+attr+":#}}}",granteeKey,granteeKey);
+            log.info("Changing permissions on all fragments and lsms associated with samples: "+logIds);
+            WriteResult wr1 = fragmentCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#}}",granteeKey);
+            log.info("Updated permissions on "+wr1.getN()+" fragments");
+            WriteResult wr2 = lsmCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#}}",granteeKey);
+            log.info("Updated permissions on "+wr2.getN()+" lsms");
         }
         else if ("screenSample".equals(type)) {
-            patternMaskCollection.update("{screenSampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#,_"+attr+":#}}}",granteeKey,granteeKey);
+            log.info("Changing permissions on all patternMasks associated with screenSamples: "+logIds);
+            patternMaskCollection.update("{screenSampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#}}}",granteeKey);
         }
     }
     

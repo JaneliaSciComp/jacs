@@ -1255,7 +1255,7 @@ public class MongoDbImport extends AnnotationDAO {
             return "fragment";
         }
         else if (EntityConstants.TYPE_FOLDER.equals(entityType)) {
-            return "workspace";
+            return "treeNode";
         }
         else if (EntityConstants.TYPE_ANNOTATION.equals(entityType)) {
             return "annotation";

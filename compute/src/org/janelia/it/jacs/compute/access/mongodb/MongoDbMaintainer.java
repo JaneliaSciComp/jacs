@@ -91,7 +91,7 @@ public class MongoDbMaintainer {
         sampleCollection.ensureIndex("{name:1}");
         sampleCollection.ensureIndex("{dataSet:1}");
         sampleCollection.ensureIndex("{line:1}");
-
+        
         MongoCollection fragmentCollection = domainDao.getCollection("fragment");
         ensureDomainIndexes(fragmentCollection);
         fragmentCollection.ensureIndex("{separationId:1}");
