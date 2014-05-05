@@ -12,30 +12,13 @@ import org.janelia.it.jacs.model.domain.Workspace;
 import org.junit.Test;
 import org.springframework.util.Assert;
 
+/**
+ * Unit tests for workspaces, folders, and views.
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 public class WorkspaceTest extends MongoDbTest {
     
-    //@Test
-    public void test() {
-
-//        for(Workspace workspace : dao.getCollection("treeNode").find("{class:#,ownerKey:#}",Workspace.class.getName(),"user:saffordt").projection("{class:1,name:1}").as(Workspace.class)) {
-//            
-//            System.out.println(workspace.getName());
-//            System.out.println(workspace.getOwnerKey());
-//        }
-
-        int roots = 0;
-        String subjectKey = "group:leetlab";
-        for(Workspace workspace : dao.getWorkspaces(subjectKey)) {
-            System.out.println("Got workspace: "+workspace.getName()+" for "+workspace.getOwnerKey());
-            
-            for(DomainObject obj : dao.getDomainObjects(subjectKey, workspace.getChildren())) {
-                TreeNode node = (TreeNode)obj;
-                System.out.println(node.getId()+" "+node.getName()+" ("+node.getOwnerKey()+") - "+node.getNumChildren());
-                
-            }
-        }
-    }
-
     @Test
     public void testSubjects() {
         for(Subject subject : dao.getCollection("subject").find().as(Subject.class)) {

@@ -471,11 +471,8 @@ public class MongoDbImport extends AnnotationDAO {
         int c = 0;
         for(Iterator<Entity> i = samples.iterator(); i.hasNext(); ) {
             Entity sampleEntity = i.next();
-            // Skip these samples
+            // Skip sub-samples
             if (sampleEntity.getName().contains("~")) continue;
-            if (EntityConstants.VALUE_ERROR.equals(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS))) {
-                continue;
-            }
             
             try {
                 long start = System.currentTimeMillis();
