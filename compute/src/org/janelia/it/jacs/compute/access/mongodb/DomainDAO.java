@@ -38,7 +38,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 
 /**
- * THe main domain-object DAO for the JACS system. 
+ * The main domain-object DAO for the JACS system.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -48,6 +48,8 @@ public class DomainDAO {
 
     private static final String[] domainTypes = {"treeNode","sample","screenSample","patternMask","flyLine","lsm","fragment","annotation","ontology"};
     private static final Class<?>[] domainClasses = {TreeNode.class,Sample.class,ScreenSample.class,PatternMask.class,FlyLine.class,LSMImage.class,NeuronFragment.class,Annotation.class,Ontology.class};
+
+    private Map<String,Class<? extends DomainObject>> domainClassMap;
     
     protected MongoClient m;
     protected DB db;
@@ -61,8 +63,6 @@ public class DomainDAO {
     protected MongoCollection fragmentCollection;
     protected MongoCollection annotationCollection;
     protected MongoCollection ontologyCollection;
-    
-    protected Map<String,Class<? extends DomainObject>> domainClassMap;
     
     public DomainDAO(String serverUrl, String databaseName) throws UnknownHostException {
         m = new MongoClient(serverUrl);
@@ -111,6 +111,17 @@ public class DomainDAO {
     public Class<? extends DomainObject> getObjectClass(String type) {
         return domainClassMap.get(type);
     }
+
+    /** 
+     * Return the set of subjectKeys which are readable by the given subject. This includes the subject itself, and all of the groups it is part of. 
+     */
+    private Set<String> getSubjectSet(String subjectKey) {
+        Subject subject = subjectCollection.findOne("{key:#}",subjectKey).projection("{_id:0,groups:1}").as(Subject.class);
+        if (subject==null) throw new IllegalArgumentException("No such subject: "+subjectKey);
+        Set<String> groups = subject.getGroups();
+        groups.add(subjectKey);
+        return groups;
+    }
     
     /**
      * Create a list of the result set in iteration order.
@@ -143,6 +154,9 @@ public class DomainDAO {
         return list;
     }
     
+    /**
+     * Get the domain objects referenced by the given list of References.
+     */
     public List<DomainObject> getDomainObjects(String subjectKey, List<Reference> references) {
 
         List<DomainObject> domainObjects = new ArrayList<DomainObject>();
@@ -160,6 +174,9 @@ public class DomainDAO {
         return domainObjects;
     }
 
+    /**
+     * Get the domain objects of the given type and ids.
+     */
     public List<DomainObject> getDomainObjects(String subjectKey, String type, Collection<Long> ids) {
         // TODO: remove this after the next db load fixes it
         if ("workspace".equals(type)) type = "treeNode";
@@ -193,9 +210,9 @@ public class DomainDAO {
         return toList(lsmCollection.find("{sampleId:#,readers:{$in:#}}",id, subjects).as(LSMImage.class));
     }
     
-    public List<NeuronFragment> getNeuronFragmentsBySampleId(String subjectKey, Long sampleIdd) {
+    public List<NeuronFragment> getNeuronFragmentsBySampleId(String subjectKey, Long sampleId) {
         Set<String> subjects = getSubjectSet(subjectKey);
-        return toList(fragmentCollection.find("{sampleId:#,readers:{$in:#}}",sampleIdd,subjects).as(NeuronFragment.class));
+        return toList(fragmentCollection.find("{sampleId:#,readers:{$in:#}}",sampleId,subjects).as(NeuronFragment.class));
     }
     
     public List<NeuronFragment> getNeuronFragmentsBySeparationId(String subjectKey, Long separationId) {
@@ -226,14 +243,6 @@ public class DomainDAO {
     public TreeNode getTreeNodeById(String subjectKey, Long id) {
         Set<String> subjects = getSubjectSet(subjectKey);
         return treeNodeCollection.findOne("{_id:#,readers:{$in:#}}",id,subjects).as(TreeNode.class);
-    }
-
-    private Set<String> getSubjectSet(String subjectKey) {
-        Subject subject = subjectCollection.findOne("{key:#}",subjectKey).projection("{_id:0,groups:1}").as(Subject.class);
-        if (subject==null) throw new IllegalArgumentException("No such subject: "+subjectKey);
-        Set<String> groups = subject.getGroups();
-        groups.add(subjectKey);
-        return groups;
     }
     
     public void changePermissions(String subjectKey, String type, Long id, String granteeKey, String rights, boolean grant) throws Exception {

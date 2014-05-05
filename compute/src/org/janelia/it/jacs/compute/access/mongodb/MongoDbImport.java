@@ -35,6 +35,7 @@ import org.janelia.it.jacs.model.domain.NeuronFragment;
 import org.janelia.it.jacs.model.domain.NeuronSeparation;
 import org.janelia.it.jacs.model.domain.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.PatternMask;
+import org.janelia.it.jacs.model.domain.PipelineError;
 import org.janelia.it.jacs.model.domain.PipelineResult;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
@@ -611,7 +612,7 @@ public class MongoDbImport extends AnnotationDAO {
         List<SamplePipelineRun> runs = new ArrayList<SamplePipelineRun>();
         for(Entity runEntity : EntityUtils.getChildrenOfType(sampleEntity, EntityConstants.TYPE_PIPELINE_RUN)) {
             populateChildren(runEntity);
-
+            
             List<PipelineResult> results = new ArrayList<PipelineResult>();
             
             for(Entity resultEntity : EntityUtils.getChildrenForAttribute(runEntity, EntityConstants.ATTRIBUTE_RESULT)) {
@@ -689,9 +690,18 @@ public class MongoDbImport extends AnnotationDAO {
             run.setName(runEntity.getName());
             run.setCreationDate(runEntity.getCreationDate());
             run.setPipelineProcess(runEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS));
+            
+            Entity errorEntity = EntityUtils.findChildWithType(runEntity, EntityConstants.TYPE_ERROR);
+            if (errorEntity!=null) {
+                PipelineError error = new PipelineError();
+                error.setFilepath(errorEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+                run.setError(error);
+            }
+
             if (!results.isEmpty()) {
                 run.setResults(results);
             }
+            
             runs.add(run);
         }
 
