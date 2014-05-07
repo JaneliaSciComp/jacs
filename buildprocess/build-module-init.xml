@@ -27,28 +27,28 @@
     <target name="setup" depends="set-common-properties, set-conditions" unless="build.dir">
     </target>
 
-	<!-- Sets properties (duh). Can be overriden or extended by each module -->
-	<target name="set-common-properties">
-		<!-- Directories common to all modules -->
-		<property name="build.dir" value="${basedir}/build"/>
-		<property name="build.classes.dir" value="${build.dir}/classes"/>
-		<property name="build.jars.dir" value="${build.dir}/jars"/>
-		<property name="lib.dir" value="${basedir}/lib"/>
-		<property name="src.dir" value="${basedir}/src"/>
-		<property name="conf.dir" value="${basedir}/conf"/>
+    <!-- Sets properties (duh). Can be overriden or extended by each module -->
+    <target name="set-common-properties">
+        <!-- Directories common to all modules -->
+        <property name="build.dir" value="${basedir}/build"/>
+        <property name="build.classes.dir" value="${build.dir}/classes"/>
+        <property name="build.jars.dir" value="${build.dir}/jars"/>
+        <property name="lib.dir" value="${basedir}/lib"/>
+        <property name="src.dir" value="${basedir}/src"/>
+        <property name="conf.dir" value="${basedir}/conf"/>
         <property name="common.dir" value="${basedir}/../common"/>
 
-		<!-- unit test stuff -->
-		<property name="build.test.classes.dir" value="${build.dir}/test/classes"/>
-		<property name="test.src.dir" value="${basedir}/test"/>
+        <!-- unit test stuff -->
+        <property name="build.test.classes.dir" value="${build.dir}/test/classes"/>
+        <property name="test.src.dir" value="${basedir}/test"/>
         <property name="test.resources.dir" value="${test.src.dir}/resources"/>
-		<property name="test.reports.dir" value="${build.dir}/test/reports"/>
+        <property name="test.reports.dir" value="${build.dir}/test/reports"/>
 
-		<!-- Common compilation settings -->
-		<property name="compile.classpath" value=" "/>
-		<property name="compile.debug" value="on"/>
-		<property name="compile.optimize" value="off"/>
-		<property name="compile.deprecation" value="on"/>
+        <!-- Common compilation settings -->
+        <property name="compile.classpath" value=" "/>
+        <property name="compile.debug" value="on"/>
+        <property name="compile.optimize" value="off"/>
+        <property name="compile.deprecation" value="on"/>
 
         <!-- References to other modules -->
         <property name="common.module" value="${basedir}/../common" />
@@ -71,9 +71,9 @@
         </taskdef>
 
         <!--<taskdef resource="net/sf/antcontrib/antcontrib.properties">-->
-          <!--<classpath>-->
-            <!--<pathelement location="${lib.dir}/ant-contrib-0.3.jar"/>-->
-          <!--</classpath>-->
+        <!--<classpath>-->
+        <!--<pathelement location="${lib.dir}/ant-contrib-0.3.jar"/>-->
+        <!--</classpath>-->
         <!--</taskdef>-->
 
         <taskdef resource="com/orangevolt/tools/ant/taskdefs.properties">
