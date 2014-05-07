@@ -63,7 +63,7 @@
                 <file name="model/build.xml"/>
                 <file name="shared/build.xml"/>
                 <file name="compute/build.xml"/>
-                <file name="console/build.xml"/>
+                <file name="ConsoleApplication/ConsoleModule/ant-build/build.xml"/>
 
                 <!-- Needs work -->
                 <!--<file name="jacs/build.xml"/>-->
