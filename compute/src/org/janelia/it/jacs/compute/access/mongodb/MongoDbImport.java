@@ -35,6 +35,7 @@ import org.janelia.it.jacs.model.domain.NeuronFragment;
 import org.janelia.it.jacs.model.domain.NeuronSeparation;
 import org.janelia.it.jacs.model.domain.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.PatternMask;
+import org.janelia.it.jacs.model.domain.PipelineError;
 import org.janelia.it.jacs.model.domain.PipelineResult;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
@@ -73,7 +74,7 @@ import com.mongodb.WriteConcern;
  */
 public class MongoDbImport extends AnnotationDAO {
 
-    private static final Logger logger = Logger.getLogger(MongoDbPermissionRefresh.class);
+    private static final Logger logger = Logger.getLogger(MongoDbMaintainer.class);
     
 	protected static final String ONTOLOGY_TERM_TYPES_PACKAGE = "org.janelia.it.jacs.model.domain.ontology";
 	protected static final int ANNOTATION_BATCH_SIZE = 1000;
@@ -81,7 +82,7 @@ public class MongoDbImport extends AnnotationDAO {
 	protected SubjectDAO subjectDao;
     protected Jongo jongo;
     protected MongoCollection subjectCollection;
-    protected MongoCollection workspaceCollection;
+    protected MongoCollection treeNodeCollection;
 	protected MongoCollection sampleCollection;
     protected MongoCollection screenSampleCollection;
     protected MongoCollection patternMaskCollection;
@@ -92,30 +93,25 @@ public class MongoDbImport extends AnnotationDAO {
     protected MongoCollection ontologyCollection;
     protected Map<Long,Long> ontologyTermIdToOntologyId = new HashMap<Long,Long>();
     
-    public MongoDbImport(String serverUrl) throws DaoException {
+    public MongoDbImport(String serverUrl, String databaseName) throws UnknownHostException {
         super(logger);
-        try {
-            subjectDao = new SubjectDAO(log);
-            MongoClient m = new MongoClient(serverUrl);
-        	m.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
-        	DB db = m.getDB(DomainDAO.MONGO_DATABASE);
-        	jongo = new Jongo(db, 
-        	        new JacksonMapper.Builder()
-        	            .build());
-            subjectCollection = jongo.getCollection("subject");
-            workspaceCollection = jongo.getCollection("workspace");
-        	sampleCollection = jongo.getCollection("sample");
-            screenSampleCollection = jongo.getCollection("screenSample");
-            patternMaskCollection = jongo.getCollection("patternMask");
-            flyLineCollection = jongo.getCollection("flyLine");
-            lsmCollection = jongo.getCollection("lsm");
-        	fragmentCollection = jongo.getCollection("fragment");
-        	annotationCollection = jongo.getCollection("annotation");
-        	ontologyCollection = jongo.getCollection("ontology");
-        }
-		catch (UnknownHostException e) {
-			throw new RuntimeException("Unknown host given in MongoDB.ServerURL value in system properties: "+serverUrl);
-		}
+        subjectDao = new SubjectDAO(log);
+        MongoClient m = new MongoClient(serverUrl);
+    	m.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
+    	DB db = m.getDB(databaseName);
+    	jongo = new Jongo(db, 
+    	        new JacksonMapper.Builder()
+    	            .build());
+        subjectCollection = jongo.getCollection("subject");
+        treeNodeCollection = jongo.getCollection("treeNode");
+    	sampleCollection = jongo.getCollection("sample");
+        screenSampleCollection = jongo.getCollection("screenSample");
+        patternMaskCollection = jongo.getCollection("patternMask");
+        flyLineCollection = jongo.getCollection("flyLine");
+        lsmCollection = jongo.getCollection("lsm");
+    	fragmentCollection = jongo.getCollection("fragment");
+    	annotationCollection = jongo.getCollection("annotation");
+    	ontologyCollection = jongo.getCollection("ontology");
     }
 
     public void loadAllEntities() throws DaoException {
@@ -145,51 +141,6 @@ public class MongoDbImport extends AnnotationDAO {
         log.info("Adding annotations");
         loadAnnotations();
         
-        log.info("Creating indexes");
-
-        ensureDomainIndexes(workspaceCollection);
-        workspaceCollection.ensureIndex("{name:1}");
-        workspaceCollection.ensureIndex("{class:1}");
-        workspaceCollection.ensureIndex("{class:1,writers:1}");
-        workspaceCollection.ensureIndex("{class:1,readers:1}");
-
-        ensureDomainIndexes(ontologyCollection);
-        ontologyCollection.ensureIndex("{name:1}");
-        
-        ensureDomainIndexes(sampleCollection);
-        sampleCollection.ensureIndex("{name:1}");
-        sampleCollection.ensureIndex("{dataSet:1}");
-        sampleCollection.ensureIndex("{line:1}");
-
-        ensureDomainIndexes(fragmentCollection);
-        fragmentCollection.ensureIndex("{separationId:1}");
-        fragmentCollection.ensureIndex("{sampleId:1}");
-        fragmentCollection.ensureIndex("{sampleId:1,writers:1}");
-        fragmentCollection.ensureIndex("{sampleId:1,readers:1}");
-        
-        ensureDomainIndexes(lsmCollection);
-        lsmCollection.ensureIndex("{sageId:1}");
-        lsmCollection.ensureIndex("{slideCode:1}");
-        lsmCollection.ensureIndex("{filepath:1}");
-        lsmCollection.ensureIndex("{sampleId:1}");
-        lsmCollection.ensureIndex("{sampleId:1,writers:1}");
-        lsmCollection.ensureIndex("{sampleId:1,readers:1}");
-
-        ensureDomainIndexes(flyLineCollection);
-        screenSampleCollection.ensureIndex("{robotId:1}");
-        
-        ensureDomainIndexes(screenSampleCollection);
-        screenSampleCollection.ensureIndex("{flyLine:1}");
-        
-        ensureDomainIndexes(patternMaskCollection);
-        patternMaskCollection.ensureIndex("{screenSampleId:1}");
-        patternMaskCollection.ensureIndex("{screenSampleId:1,writers:1}");
-        patternMaskCollection.ensureIndex("{screenSampleId:1,readers:1}");
-        
-        ensureDomainIndexes(annotationCollection);
-        annotationCollection.ensureIndex("{targetId:1}");
-        annotationCollection.ensureIndex("{text:1}");
-        
         log.info("Loading MongoDB took "+(System.currentTimeMillis()-startAll)+" ms");
     }
 
@@ -199,15 +150,6 @@ public class MongoDbImport extends AnnotationDAO {
         getSession().clear();
         log.trace("Flushing and clearing the session took "+(System.currentTimeMillis()-start)+" ms");
     }
-
-    private void ensureDomainIndexes(MongoCollection mc) {
-        mc.ensureIndex("{ownerKey:1}");
-        mc.ensureIndex("{readers:1}");
-        mc.ensureIndex("{writers:1}");
-        mc.ensureIndex("{_id:1,readers:1}");
-        mc.ensureIndex("{_id:1,writers:1}");
-    }
-    
     
     /* SUBJECT */
     
@@ -225,7 +167,7 @@ public class MongoDbImport extends AnnotationDAO {
     }
     
     
-    /* WORKSPACES */
+    /* TREE NODES (WORKSPACES, FOLDERS, VIEWS) */
     
     private void loadWorkspaces() throws DaoException {
         Set<Long> visited = new HashSet<Long>();
@@ -277,11 +219,13 @@ public class MongoDbImport extends AnnotationDAO {
         Workspace workspace = new Workspace();
         workspace.setId(id);
         workspace.setOwnerKey(subjectKey);
+        workspace.setReaders(getDefaultSubjectKeys(subjectKey));
+        workspace.setWriters(getDefaultSubjectKeys(subjectKey));
         workspace.setCreationDate(now);
         workspace.setUpdatedDate(now);
         workspace.setName("Default Workspace");
         workspace.setChildren(children);
-        workspaceCollection.insert(workspace);
+        treeNodeCollection.insert(workspace);
         
         log.info("Loading workspace for "+subjectKey+" took "+(System.currentTimeMillis()-start)+" ms");
     }
@@ -340,11 +284,11 @@ public class MongoDbImport extends AnnotationDAO {
         
         node.setId(folderEntity.getId());
         node.setOwnerKey(folderEntity.getOwnerKey());
+        node.setReaders(getSubjectKeysWithPermission(folderEntity, "r"));
+        node.setWriters(getSubjectKeysWithPermission(folderEntity, "w"));
         node.setName(folderEntity.getName());
         node.setCreationDate(folderEntity.getCreationDate());
         node.setUpdatedDate(folderEntity.getUpdatedDate());
-        node.setReaders(getSubjectKeysWithPermission(folderEntity, "r"));
-        node.setWriters(getSubjectKeysWithPermission(folderEntity, "w"));
         
         List<Reference> children = new ArrayList<Reference>();
         for(Entity childEntity : folderEntity.getOrderedChildren()) {
@@ -361,7 +305,7 @@ public class MongoDbImport extends AnnotationDAO {
             node.setChildren(children);
         }
 
-        workspaceCollection.insert(node);
+        treeNodeCollection.insert(node);
         return node.getId();
     }
     
@@ -527,11 +471,8 @@ public class MongoDbImport extends AnnotationDAO {
         int c = 0;
         for(Iterator<Entity> i = samples.iterator(); i.hasNext(); ) {
             Entity sampleEntity = i.next();
-            // Skip these samples
+            // Skip sub-samples
             if (sampleEntity.getName().contains("~")) continue;
-            if (EntityConstants.VALUE_ERROR.equals(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS))) {
-                continue;
-            }
             
             try {
                 long start = System.currentTimeMillis();
@@ -668,7 +609,7 @@ public class MongoDbImport extends AnnotationDAO {
         List<SamplePipelineRun> runs = new ArrayList<SamplePipelineRun>();
         for(Entity runEntity : EntityUtils.getChildrenOfType(sampleEntity, EntityConstants.TYPE_PIPELINE_RUN)) {
             populateChildren(runEntity);
-
+            
             List<PipelineResult> results = new ArrayList<PipelineResult>();
             
             for(Entity resultEntity : EntityUtils.getChildrenForAttribute(runEntity, EntityConstants.ATTRIBUTE_RESULT)) {
@@ -746,9 +687,18 @@ public class MongoDbImport extends AnnotationDAO {
             run.setName(runEntity.getName());
             run.setCreationDate(runEntity.getCreationDate());
             run.setPipelineProcess(runEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS));
+            
+            Entity errorEntity = EntityUtils.findChildWithType(runEntity, EntityConstants.TYPE_ERROR);
+            if (errorEntity!=null) {
+                PipelineError error = new PipelineError();
+                error.setFilepath(errorEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+                run.setError(error);
+            }
+
             if (!results.isEmpty()) {
                 run.setResults(results);
             }
+            
             runs.add(run);
         }
 
@@ -1248,14 +1198,14 @@ public class MongoDbImport extends AnnotationDAO {
         }
     }
     
-    private Annotation getAnnotation(Long annotationId, String annotationName, String owner, Date creationDate,
+    private Annotation getAnnotation(Long annotationId, String annotationName, String ownerKey, Date creationDate,
             Long targetId, String targetType, Long keyId, Long valueId) {
         
         Annotation annotation = new Annotation();
-                
         annotation.setId(annotationId);
-        
-        annotation.setOwnerKey(owner);
+        annotation.setOwnerKey(ownerKey);
+        annotation.setReaders(getDefaultSubjectKeys(ownerKey));
+        annotation.setWriters(getDefaultSubjectKeys(ownerKey));
         annotation.setText(annotationName);
         annotation.setCreationDate(creationDate);
         
@@ -1281,6 +1231,12 @@ public class MongoDbImport extends AnnotationDAO {
     
     
     /* UTILITY METHODS */
+
+    private Set<String> getDefaultSubjectKeys(String subjectKey) {
+        Set<String> subjectKeys = new HashSet<String>();
+        subjectKeys.add(subjectKey); // owner has all permissions
+        return subjectKeys;
+    }
     
     private Set<String> getSubjectKeysWithPermission(Entity entity, String rights) {
         Set<String> subjectKeys = new HashSet<String>();
@@ -1306,7 +1262,7 @@ public class MongoDbImport extends AnnotationDAO {
             return "fragment";
         }
         else if (EntityConstants.TYPE_FOLDER.equals(entityType)) {
-            return "workspace";
+            return "treeNode";
         }
         else if (EntityConstants.TYPE_ANNOTATION.equals(entityType)) {
             return "annotation";

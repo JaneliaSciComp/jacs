@@ -11,7 +11,12 @@ public class PipelineResult implements HasFilepath {
     private String filepath;
     private Date creationDate;
     private List<PipelineResult> results;
+    private PipelineError error;
 
+    public boolean hasError() {
+        return error!=null;
+    }
+    
     private PipelineResult getLatestResultOfType(Class<? extends PipelineResult> type) {
         if (results==null) return null;
         for(int i=results.size()-1; i>=0; i--) {
@@ -56,4 +61,11 @@ public class PipelineResult implements HasFilepath {
     public void setResults(List<PipelineResult> results) {
         this.results = results;
     }
+    public PipelineError getError() {
+        return error;
+    }
+    public void setError(PipelineError error) {
+        this.error = error;
+    }
+    
 }

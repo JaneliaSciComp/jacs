@@ -21,6 +21,10 @@ public class TreeNode implements DomainObject {
     private Date updatedDate;
     private List<Reference> children;
 
+    public int getNumChildren() {
+        return children==null? 0 : children.size();
+    }
+    
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     
     public Long getId() {
