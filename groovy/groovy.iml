@@ -17,19 +17,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="file:///Applications/JaneliaWorkstation.app/Contents/Resources/workstation_lib" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="file:///Applications/JaneliaWorkstation.app/Contents/Resources/workstation_lib" />
-        </SOURCES>
-        <jarDirectory url="file:///Applications/JaneliaWorkstation.app/Contents/Resources/workstation_lib" recursive="false" />
-        <jarDirectory url="file:///Applications/JaneliaWorkstation.app/Contents/Resources/workstation_lib" recursive="false" type="SOURCES" />
-      </library>
-    </orderEntry>
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">
