@@ -10,16 +10,16 @@
 	<macrodef name="iterate-modules">
 		<attribute name="target"/>
 		<sequential>
-			<subant target="@{target}">
+		<subant target="@{target}">
                 <filelist dir="${project.root}">
                     <!-- This order satisfies dependecies -->
                     <file name="model/build.xml"/>
                     <file name="shared/build.xml"/>
                     <file name="compute/build.xml"/>
-                    <file name="console/build.xml"/>
+                    <file name="ConsoleApplication/build-runner.xml"/>
                     <file name="jacs/build.xml"/>
                 </filelist>
-			</subant>
+		</subant>
 		</sequential>
 	</macrodef>
 
@@ -31,8 +31,8 @@
                 <file name="model/build.xml"/>
                 <file name="shared/build.xml"/>
                 <file name="compute/build.xml"/>
-                <file name="console/build.xml"/>
                 <file name="jacs/build.xml"/>
+                <file name="ConsoleApplication/build-runner.xml"/>
             </filelist>
         </subant>
     </target>
@@ -63,8 +63,6 @@
                 <file name="model/build.xml"/>
                 <file name="shared/build.xml"/>
                 <file name="compute/build.xml"/>
-                <file name="console/build.xml"/>
-
                 <!-- Needs work -->
                 <!--<file name="jacs/build.xml"/>-->
             </filelist>
