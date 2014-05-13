@@ -1,6 +1,8 @@
 
 package org.janelia.it.jacs.compute.api;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -331,6 +333,17 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             throw new ComputeException("Error deleting entity "+entityId,e);
         }
     }
+    
+    public Collection<EntityData> setOrUpdateValues(String subjectKey, Collection<Long> entityIds, String attributeName, String value) throws ComputeException {
+        // This will cut out a lot of round-tripping between the client and
+        // middleware.  It will not cut down on middleware-to-database traffic.
+        Collection<EntityData> returnList = new ArrayList<EntityData>();
+        for ( Long entityId: entityIds ) {
+            returnList.add( setOrUpdateValue( subjectKey, entityId, attributeName, value ) );
+        }
+        return returnList;
+    }
+
 
     public EntityData updateChildIndex(EntityData entityData, Integer orderIndex) throws ComputeException {
         return updateChildIndex(null, entityData, orderIndex);
