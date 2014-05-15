@@ -1,6 +1,7 @@
 
 package org.janelia.it.jacs.compute.api;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -42,6 +43,7 @@ public interface EntityBeanRemote {
 
     public EntityData updateChildIndex(String subjectKey, EntityData entityData, Integer orderIndex) throws ComputeException;
     public EntityData setOrUpdateValue(String subjectKey, Long entityId, String attributeName, String value) throws ComputeException;
+    public Collection<EntityData> setOrUpdateValues(String subjectKey, Collection<Long> entityIds, String attributeName, String value) throws ComputeException;
     
     public boolean deleteEntityById(String subjectKey, Long entityId) throws ComputeException;
     
