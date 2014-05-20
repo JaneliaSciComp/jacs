@@ -381,10 +381,10 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
         // verify that both annotations are in the input neuron
         if (!neuron.getGeoAnnotationMap().containsKey(annotation.getId())) {
-            throw new DaoException("input neuron doesn't contain annotation " + annotation.getId());
+            throw new DaoException("input neuron doesn't contain child annotation " + annotation.getId());
         }
         if (!neuron.getGeoAnnotationMap().containsKey(newParentAnnotationID)) {
-            throw new DaoException("input neuron doesn't contain annotation " + newParentAnnotationID);
+            throw new DaoException("input neuron doesn't contain new parent annotation " + newParentAnnotationID);
         }
 
         // is it already the parent?
@@ -521,6 +521,50 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                     newRoot.getIndex(), newRoot.getX(), newRoot.getY(), newRoot.getZ(), newRoot.getComment());
             ed.setValue(valueString);
             annotationDAO.saveOrUpdate(ed);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+
+    }
+
+    /**
+     * move the neurite containing the input annotation to the specified neuron
+     *
+     * @throws DaoException
+     */
+    public void moveNeurite(TmGeoAnnotation annotation, TmNeuron newNeuron) throws DaoException {
+
+        // already in the neuron?  we're done
+        EntityData annotationED = (EntityData) computeDAO.genericLoad(EntityData.class, annotation.getId());
+        Entity oldNeuronEntity = annotationED.getParentEntity();
+        if (oldNeuronEntity.getId().equals(newNeuron.getId())) {
+            return;
+        }
+
+        // find root annotation of neurite
+        TmGeoAnnotation rootAnnotation = annotation;
+        while (rootAnnotation.getParent() != null) {
+            rootAnnotation = rootAnnotation.getParent();
+        }
+
+        try {
+            // move each annotation's entity data to a new entity (the new neuron)
+            Entity newNeuronEntity = annotationDAO.getEntityById(newNeuron.getId());
+            for (TmGeoAnnotation ann : rootAnnotation.getSubTreeList()) {
+                EntityData ed = (EntityData) computeDAO.genericLoad(EntityData.class, ann.getId());
+                ed.setParentEntity(newNeuronEntity);
+                annotationDAO.saveOrUpdate(ed);
+            }
+
+            // if it's the root, also change its parent annotation to the new neuron
+            if (rootAnnotation.getId().equals(rootAnnotation.getId())) {
+                EntityData ed = (EntityData) computeDAO.genericLoad(EntityData.class, rootAnnotation.getId());
+                String valueString = TmGeoAnnotation.toStringFromArguments(rootAnnotation.getId(), newNeuron.getId(),
+                        rootAnnotation.getIndex(), rootAnnotation.getX(), rootAnnotation.getY(), rootAnnotation.getZ(), rootAnnotation.getComment());
+                ed.setValue(valueString);
+                annotationDAO.saveOrUpdate(ed);
+            }
         } catch (Exception e) {
             e.printStackTrace();
             throw new DaoException(e);

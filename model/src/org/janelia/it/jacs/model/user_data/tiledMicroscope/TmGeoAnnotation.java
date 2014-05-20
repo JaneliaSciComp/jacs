@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.model.user_data.tiledMicroscope;
+    package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
