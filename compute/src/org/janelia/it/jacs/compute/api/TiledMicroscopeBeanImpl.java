@@ -113,6 +113,26 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    public void moveNeurite(TmGeoAnnotation annotation, TmNeuron newNeuron) throws ComputeException {
+        try {
+            _tiledMicroscopeDAO.moveNeurite(annotation, newNeuron);
+        } catch (Exception e) {
+            String errorString="Error calling moveNeurite in DAO layer: " + e.getMessage();
+            _logger.error(errorString);
+            throw new ComputeException(errorString);
+        }
+    }
+
+    public void mergeNeurite(TmGeoAnnotation sourceAnnotation, TmGeoAnnotation targetAnnotation) throws ComputeException {
+        try {
+            _tiledMicroscopeDAO.mergeNeurite(sourceAnnotation, targetAnnotation);
+        } catch (Exception e) {
+            String errorString="Error calling mergeNeurite in DAO layer: " + e.getMessage();
+            _logger.error(errorString);
+            throw new ComputeException(errorString);
+        }
+    }
+
     public void updateGeometricAnnotation(TmGeoAnnotation geoAnnotation,
                                           int index, double x, double y, double z, String comment) throws ComputeException {
         try {
