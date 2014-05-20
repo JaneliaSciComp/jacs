@@ -572,15 +572,6 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
     }
 
-    /**
-     * merge the two neurites from which the two input neurites come; first input annotation
-     * become root, blah blah
-     */
-    public void mergeNeurite(TmGeoAnnotation sourceAnnotation, TmGeoAnnotation targetAnnotation) throws DaoException {
-
-    }
-
-
     public List<TmWorkspaceDescriptor> getWorkspacesForBrainSample(Long brainSampleId, String ownerKey) throws DaoException {
         try {
             // Validate sample
