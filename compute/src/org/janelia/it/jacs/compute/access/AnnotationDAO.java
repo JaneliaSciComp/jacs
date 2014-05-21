@@ -1627,17 +1627,19 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             log.trace("loadLazyEntity(subjectKey="+subjectKey+", entity="+entity+", recurse="+recurse+")");
         }
         List<String> subjectKeyList = subjectKey==null?null:getSubjectKeys(subjectKey);
-        return loadLazyEntity(subjectKeyList, entity, recurse, new HashSet<Long>());
+        return loadLazyEntity(subjectKeyList, entity, recurse, new HashMap<Long,Entity>());
     }
 
-    public Entity loadLazyEntity(List<String> subjectKeyList, Entity entity, boolean recurse, Set<Long> visited) throws DaoException {
+    public Entity loadLazyEntity(List<String> subjectKeyList, Entity entity, boolean recurse, Map<Long,Entity> visited) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("loadLazyEntity(subjectKeyList="+subjectKeyList+", entity="+entity+", recurse="+recurse+", visited.size="+visited.size()+")");
         }
         
         if (entity==null) return null;
-        if (visited.contains(entity.getId())) return entity;
-        visited.add(entity.getId());
+        if (visited.containsKey(entity.getId())) {
+        	return visited.get(entity.getId());
+        }
+        visited.put(entity.getId(), entity);
         
         if (!EntityUtils.areLoaded(entity.getEntityData())) {
             EntityUtils.replaceChildNodes(entity, getChildEntities(subjectKeyList, entity.getId()));
@@ -1646,7 +1648,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         if (recurse) {
             for (EntityData ed : entity.getEntityData()) {
                 if (ed.getChildEntity() != null) {
-                    loadLazyEntity(subjectKeyList, ed.getChildEntity(), true, visited);
+                    Entity loadedEntity = loadLazyEntity(subjectKeyList, ed.getChildEntity(), true, visited);
+                    ed.setChildEntity(loadedEntity);
                 }
             }
         }
