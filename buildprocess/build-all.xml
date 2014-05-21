@@ -32,7 +32,7 @@
                 <file name="shared/build.xml"/>
                 <file name="compute/build.xml"/>
                 <file name="jacs/build.xml"/>
-                <file name="ConsoleApplication/build-runner.xml"/>
+                <!--<file name="ConsoleApplication/build-runner.xml"/>-->
             </filelist>
         </subant>
     </target>
