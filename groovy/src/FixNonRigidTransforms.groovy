@@ -1,14 +1,14 @@
 import static org.janelia.it.jacs.model.entity.EntityConstants.*
 
-import org.janelia.it.FlyWorkstation.api.facade.concrete_facade.ejb.EJBFacadeManager
-import org.janelia.it.FlyWorkstation.api.facade.facade_mgr.FacadeManager
-import org.janelia.it.FlyWorkstation.gui.framework.exception_handlers.ExitHandler
-import org.janelia.it.FlyWorkstation.gui.framework.exception_handlers.UserNotificationExceptionHandler
-import org.janelia.it.FlyWorkstation.gui.framework.session_mgr.SessionMgr
-import org.janelia.it.FlyWorkstation.gui.util.panels.ApplicationSettingsPanel
-import org.janelia.it.FlyWorkstation.gui.util.panels.DataSourceSettingsPanel
-import org.janelia.it.FlyWorkstation.gui.util.panels.ViewerSettingsPanel
-import org.janelia.it.FlyWorkstation.shared.util.ConsoleProperties
+import org.janelia.it.workstation.api.facade.concrete_facade.ejb.EJBFacadeManager
+import org.janelia.it.workstation.api.facade.facade_mgr.FacadeManager
+import org.janelia.it.workstation.gui.framework.exception_handlers.ExitHandler
+import org.janelia.it.workstation.gui.framework.exception_handlers.UserNotificationExceptionHandler
+import org.janelia.it.workstation.gui.framework.session_mgr.SessionMgr
+import org.janelia.it.workstation.gui.util.panels.ApplicationSettingsPanel
+import org.janelia.it.workstation.gui.util.panels.DataSourceSettingsPanel
+import org.janelia.it.workstation.gui.util.panels.ViewerSettingsPanel
+import org.janelia.it.workstation.shared.util.ConsoleProperties
 import org.janelia.it.jacs.model.entity.Entity
 import org.janelia.it.jacs.model.entity.EntityConstants
 import org.janelia.it.jacs.shared.utils.EntityUtils
