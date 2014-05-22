@@ -2,7 +2,7 @@ import org.janelia.it.jacs.model.entity.Entity
 import org.janelia.it.jacs.model.entity.EntityConstants
 import org.janelia.it.jacs.shared.utils.entity.EntityVisitor
 import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder
-import org.janelia.it.FlyWorkstation.api.facade.concrete_facade.ejb.EJBEntityLoader
+import org.janelia.it.workstation.api.facade.concrete_facade.ejb.EJBEntityLoader
 
 import static org.janelia.it.jacs.model.entity.EntityConstants.TYPE_SAMPLE
 

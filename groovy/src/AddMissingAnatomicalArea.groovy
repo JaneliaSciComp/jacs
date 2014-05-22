@@ -1,4 +1,4 @@
-import org.janelia.it.FlyWorkstation.api.facade.concrete_facade.ejb.EJBEntityLoader
+import org.janelia.it.workstation.api.facade.concrete_facade.ejb.EJBEntityLoader
 import org.janelia.it.jacs.model.entity.Entity
 import org.janelia.it.jacs.model.entity.EntityConstants
 import org.janelia.it.jacs.shared.utils.EntityUtils

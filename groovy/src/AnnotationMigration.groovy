@@ -1,8 +1,8 @@
 import com.google.common.collect.Iterables
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.common.SolrDocumentList
-import org.janelia.it.FlyWorkstation.gui.framework.session_mgr.SessionMgr
-import org.janelia.it.FlyWorkstation.shared.util.WorkstationFile
+import org.janelia.it.workstation.gui.framework.session_mgr.SessionMgr
+import org.janelia.it.workstation.shared.util.WorkstationFile
 import org.janelia.it.jacs.model.entity.Entity
 import org.janelia.it.jacs.model.entity.EntityConstants
 import org.janelia.it.jacs.shared.utils.EntityUtils

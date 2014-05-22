@@ -3,10 +3,10 @@ import org.janelia.it.jacs.model.entity.EntityConstants
 import static org.janelia.it.jacs.model.entity.EntityConstants.*
 
 import org.apache.log4j.Logger
-import org.janelia.it.FlyWorkstation.api.facade.concrete_facade.ejb.EJBFacadeManager
-import org.janelia.it.FlyWorkstation.api.facade.concrete_facade.ejb.EJBFactory
-import org.janelia.it.FlyWorkstation.api.facade.facade_mgr.FacadeManager
-import org.janelia.it.FlyWorkstation.gui.framework.session_mgr.SessionMgr
+import org.janelia.it.workstation.api.facade.concrete_facade.ejb.EJBFacadeManager
+import org.janelia.it.workstation.api.facade.concrete_facade.ejb.EJBFactory
+import org.janelia.it.workstation.api.facade.facade_mgr.FacadeManager
+import org.janelia.it.workstation.gui.framework.session_mgr.SessionMgr
 import org.janelia.it.jacs.compute.api.AnnotationBeanRemote
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote
 import org.janelia.it.jacs.compute.api.EntityBeanRemote

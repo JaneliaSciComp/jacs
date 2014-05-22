@@ -1,6 +1,6 @@
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.common.SolrDocumentList
-import org.janelia.it.FlyWorkstation.api.entity_model.management.*
+import org.janelia.it.workstation.api.entity_model.management.*
 import org.janelia.it.jacs.model.entity.Entity
 import org.janelia.it.jacs.model.entity.EntityConstants
 import org.janelia.it.jacs.model.entity.EntityData

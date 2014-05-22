@@ -1,5 +1,5 @@
-import org.janelia.it.FlyWorkstation.api.entity_model.management.ModelMgr
-import org.janelia.it.FlyWorkstation.gui.framework.session_mgr.SessionMgr
+import org.janelia.it.workstation.api.entity_model.management.ModelMgr
+import org.janelia.it.workstation.gui.framework.session_mgr.SessionMgr
 import org.janelia.it.jacs.model.entity.Entity
 // Globals
 subject = "user:wum10"
