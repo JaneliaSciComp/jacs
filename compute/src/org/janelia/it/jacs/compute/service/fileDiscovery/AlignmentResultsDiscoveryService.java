@@ -98,12 +98,15 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     String scoreNcc = properties.getProperty("alignment.quality.score.ncc");
                     String scoreQi = properties.getProperty("alignment.quality.score.qi");
 
+                    String score1MinusQi = null;
                     Double score1MinusQiCombined = null;
+                    List<String> inconsistencyScoreStrs = new ArrayList<String>();
                     List<Double> inconsistencyScores = new ArrayList<Double>();
                     if (!StringUtils.isEmpty(scoreQi)) {
                         for(String qiScore : Task.listOfStringsFromCsvString(scoreQi)) {
                             try {
                                 double score = 1 - Double.parseDouble(qiScore);
+                                inconsistencyScoreStrs.add(dfScore.format(score));
                                 inconsistencyScores.add(score);
                             }
                             catch (NumberFormatException e) {
@@ -122,6 +125,7 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                         else {
                         	logger.warn("Unsupported number of inconsistency scores: ["+scoreQi+"]");
                         }
+                        score1MinusQi = Task.csvStringFromCollection(inconsistencyScoreStrs);
                     }
 
                     helper.setAlignmentSpace(stackEntity, alignmentSpace);
@@ -131,6 +135,7 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     helper.setObjective(stackEntity, objective);
                     helper.setNccScore(stackEntity, scoreNcc);
                     helper.setQiScore(stackEntity, dfScore.format(score1MinusQiCombined));
+                    helper.setQiScores(stackEntity, dfScore.format(score1MinusQi));
                     
                     if ("true".equals(properties.getProperty("default"))) {
                         defaultAlignmentSpace = alignmentSpace;
