@@ -377,6 +377,10 @@ public class EntityHelper {
         setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE, value);
     }
     
+    public void setQiScores(Entity entity, String value) throws Exception {
+        setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORES, value);
+    }
+    
     public void setQmScore(Entity entity, String value) throws Exception {
         setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE, value);
     }
