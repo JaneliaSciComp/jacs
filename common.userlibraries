@@ -73,6 +73,172 @@
         <archive path="/common/Axis2-1.5.5/xmlbeans-2.3.0.jar"/>
         <archive path="/common/Axis2-1.5.5/XmlSchema-1.4.3.jar"/>
     </library>
+    <library name="ConsoleApplicationCluster" systemlibrary="false">
+        <archive path="/ConsoleApplication/build/cluster/modules/org-janalia-it-jacs-shared.jar"/>
+        <archive path="/ConsoleApplication/build/cluster/modules/org-janelia-it-workstation-gui-alignment_board.jar"/>
+        <archive path="/ConsoleApplication/build/cluster/modules/org-janelia-it-workstation-nb_action.jar"/>
+        <archive path="/ConsoleApplication/build/cluster/modules/org-janelia-it-workstation.jar"/>
+    </library>
+    <library name="ConsoleWrapper" systemlibrary="false">
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/activation-1.1.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/antlr-2.7.7.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/apache-solr-solrj-3.5.0.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/asm.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axiom-api-1.2.11.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axiom-dom-1.2.11.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axiom-impl-1.2.11.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-adb-1.5.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-adb-codegen-1.5.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-ant-plugin-1.5.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-clustering-1.5.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-codegen-1.5.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-corba-1.5.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-fastinfoset-1.5.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-java2wsdl-1.5.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-jaxbri-1.5.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-jaxws-1.5.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-jibx-1.5.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-json-1.5.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-kernel-1.5.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-metadata-1.5.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-mtompolicy-1.5.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-saaj-1.5.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-soapmonitor-servlet-1.5.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-spring-1.5.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-transport-http-1.5.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-transport-local-1.5.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-xmlbeans-1.5.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/bcel-5.1.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/bio-formats.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/cglib-2.1.3.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-codec-1.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-fileupload-1.2.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-httpclient-3.1.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-io-1.4.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-logging-1.1.1.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/compute-drmaa.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/compute-test.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/de-javasoft-synthetica-netbeans.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/ehcache-core-2.5.1.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/forms-1.2.1.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/geronimo-annotation_1.0_spec-1.1.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/geronimo-jaxws_2.1_spec-1.0.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/geronimo-jta_1.1_spec-1.1.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/geronimo-saaj_1.3_spec-1.0.1.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/geronimo-stax-api_1.0_spec-1.0.1.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/geronimo-ws-metadata_2.0_spec-1.1.2.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/gluegen-rt-natives-linux-amd64.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/gluegen-rt-natives-linux-i586.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/gluegen-rt-natives-macosx-universal.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/gluegen-rt-natives-windows-amd64.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/gluegen-rt-natives-windows-i586.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/gluegen-rt.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/groovy-all-1.8.6.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/gson-2.2.2.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/guava-13.0.1.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/gwt-serializable.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/hibernate-annotations.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/hibernate-entitymanager.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/hibernate3.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/httpcore-4.0.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/ij-1.48c.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jackrabbit-webdav-2.5.2.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jai_codec.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jai_core.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jalopy-1.5rc3.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/javassist.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jaxb-api-2.1.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jaxb-impl-2.1.7.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jaxb-xjc-2.1.7.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jaxen-1.1.1.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jbossall-client.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jdatepicker-1.3.2.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jettison-1.0-RC2.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jetty-continuation-8.1.8.v20121106.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jetty-http-8.1.8.v20121106.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jetty-io-8.1.8.v20121106.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jetty-server-8.1.8.v20121106.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jetty-servlet-8.1.8.v20121106.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jetty-util-8.1.8.v20121106.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jibx-bind-1.2.1.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jibx-run-1.2.1.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jktx-1.6.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jna.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jogl-all-natives-linux-amd64.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jogl-all-natives-linux-i586.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jogl-all-natives-macosx-universal.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jogl-all-natives-windows-amd64.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jogl-all-natives-windows-i586.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jogl-all.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/juli-6.0.16.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jython.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jywidgets.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/loci_plugins.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/loci-common.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/log4j-1.2.15.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/logback-access-1.0.13.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/logback-classic-1.0.13.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/logback-core-1.0.13.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/lz4-1.1.1-sources.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/lz4-1.1.1.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/mac_widgets-0.9.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/MagicApplet.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/mail-1.4.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/metakit.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/mex-1.5.5-impl.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/miglayout-4.0-swing.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/neethi-2.0.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/ome_plugins.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/ome-io.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/ome-xml.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/org-netbeans-swing-outline.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/owlapi-bin.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/pal-optimization.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/perf4j-0.9.16-logbackonly.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/platform.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/regexp-1.2.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/saaj-impl-1.3.2.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/scifio.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/servlet-api-3.0.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/Simple_Neurite_Tracer-2.0.2-SNAPSHOT.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/slf4j-api-1.7.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/snappy-java-1.0.5-M3.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/swingx-1.6.5.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/swingx-all-1.6.3.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/synthetica.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaAddonsWithThemes.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaAluOxide.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaBlackEye.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaBlackMoon.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaBlackStar.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaBlueIce.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaBlueLight.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaBlueMoon.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaBlueSteel.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaClassy.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaGreenDream.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaMauveMetallic.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaOrangeMetallic.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaSilverMoon.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaSimple2D.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaSkyMetallic.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaWhiteVision.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/tribes-6.0.16.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/vecmath.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/VIB-lib-2.0.0-SNAPSHOT.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/vlcj-1.3.0-b1.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/woden-api-1.0M8.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/woden-impl-dom-1.0M8.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/wsdl4j-1.6.2.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/wstx-asl-3.2.7.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/wstx-asl-3.2.9.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/xalan-2.7.0.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/xercesImpl-2.8.1.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/xml-resolver-1.2.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/xmlbeans-2.3.0.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/XmlSchema-1.4.3.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/xuggle-xuggler-5.4.jar"/>
+    </library>
     <library name="Ehcache" systemlibrary="false">
         <archive path="/common/ehcache/ehcache-core-2.5.1.jar"/>
     </library>
@@ -103,7 +269,6 @@
         <archive path="/common/Hibernate-3.2/antlr-2.7.6.jar"/>
         <archive path="/common/Hibernate-3.2/asm.jar"/>
         <archive path="/common/Hibernate-3.2/cglib-2.1.3.jar"/>
-        <archive path="/common/Hibernate-3.2/commons-logging-1.0.4.jar"/>
         <archive path="/common/Hibernate-3.2/hibernate3.jar"/>
     </library>
     <library name="JAXB" systemlibrary="false">
@@ -208,20 +373,6 @@
     <library name="JKtx" systemlibrary="false">
         <archive path="/common/JKtx/jktx-1.6.jar"/>
     </library>
-    <library name="Jogl" systemlibrary="false">
-        <archive path="/console/lib/Jogl/gluegen-rt-natives-linux-amd64.jar"/>
-        <archive path="/console/lib/Jogl/gluegen-rt-natives-linux-i586.jar"/>
-        <archive path="/console/lib/Jogl/gluegen-rt-natives-macosx-universal.jar"/>
-        <archive path="/console/lib/Jogl/gluegen-rt-natives-windows-amd64.jar"/>
-        <archive path="/console/lib/Jogl/gluegen-rt-natives-windows-i586.jar"/>
-        <archive path="/console/lib/Jogl/gluegen-rt.jar"/>
-        <archive path="/console/lib/Jogl/jogl-all-natives-linux-amd64.jar"/>
-        <archive path="/console/lib/Jogl/jogl-all-natives-linux-i586.jar"/>
-        <archive path="/console/lib/Jogl/jogl-all-natives-macosx-universal.jar"/>
-        <archive path="/console/lib/Jogl/jogl-all-natives-windows-amd64.jar"/>
-        <archive path="/console/lib/Jogl/jogl-all-natives-windows-i586.jar"/>
-        <archive path="/console/lib/Jogl/jogl-all.jar"/>
-    </library>
     <library name="JUnit" systemlibrary="false">
         <archive path="/common/JUnit-Lib-4.11/junit-4.11.jar"/>
         <archive path="/common/JUnit-Lib-4.11/hamcrest-core-1.3.jar"/>
@@ -277,6 +428,83 @@
         <archive path="/common/Neo4j/scala-library-2.10.0.jar"/>
         <archive path="/common/Neo4j/server-api-2.0.0-M03.jar"/>
     </library>
+    <library name="NetBeansRCP" systemlibrary="false">
+        <archive path="/ConsoleApplication/platform/core/core.jar"/>
+        <archive path="/ConsoleApplication/platform/core/org-openide-filesystems.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-jdesktop-layout.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-api-annotations-common.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-api-progress.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-api-search.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-api-visual.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-core-execution.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-core-io-ui.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-core-multitabs.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-core-multiview.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-core-nativeaccess.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-core-netigso.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-core-network.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-core-osgi.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-core-output2.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-core-ui.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-core-windows.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-core.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-lib-uihandler.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-libs-felix.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-libs-jna-platform.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-libs-jna.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-libs-jsr223.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-libs-junit4.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-libs-osgi.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-libs-testng.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-applemenu.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-autoupdate-cli.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-autoupdate-services.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-autoupdate-ui.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-core-kit.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-editor-mimelookup-impl.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-editor-mimelookup.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-favorites.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-javahelp.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-keyring-fallback.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-keyring-impl.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-keyring.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-masterfs-linux.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-masterfs-macosx.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-masterfs-solaris.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-masterfs-windows.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-masterfs.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-netbinox.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-options-api.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-options-keymap.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-print.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-progress-ui.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-queries.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-sampler.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-sendopts.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-settings.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-spi-actions.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-modules-uihandler.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-spi-quicksearch.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-swing-outline.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-swing-plaf.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-netbeans-swing-tabcontrol.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-openide-actions.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-openide-awt.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-openide-compat.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-openide-dialogs.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-openide-execution.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-openide-explorer.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-openide-io.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-openide-loaders.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-openide-nodes.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-openide-options.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-openide-text.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-openide-util-enumerations.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-openide-windows.jar"/>
+        <archive path="/ConsoleApplication/platform/lib/org-openide-modules.jar"/>
+        <archive path="/ConsoleApplication/platform/lib/org-openide-util-lookup.jar"/>
+        <archive path="/ConsoleApplication/platform/lib/org-openide-util.jar"/>
+    </library>
     <library name="Reflections" systemlibrary="false">
         <archive path="/common/Reflections/reflections-0.9.9-RC1.jar"/>
     </library>
@@ -286,6 +514,11 @@
     <library name="Scripting" systemlibrary="false">
         <archive path="/common/Scripting/groovy-all-1.8.6.jar"/>
         <archive path="/common/Scripting/jython.jar"/>
+    </library>
+    <library name="SharedModelWrapper" systemlibrary="false">
+        <archive path="/compute/build/jars/compute-client.jar"/>
+        <archive path="/shared/build/jars/jacs-shared.jar"/>
+        <archive path="/model/build/jars/jacs-model.jar"/>
     </library>
     <library name="SimpleNeuriteTracer" systemlibrary="false">
         <archive path="/common/Simple-Neurite-Tracer/ij-1.48c.jar"/>
