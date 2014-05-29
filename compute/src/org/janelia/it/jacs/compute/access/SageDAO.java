@@ -29,7 +29,7 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
-import org.janelia.it.jacs.compute.api.support.SageTerm;
+import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.sage.CvTerm;
 import org.janelia.it.jacs.model.sage.Image;
