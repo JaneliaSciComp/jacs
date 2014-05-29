@@ -1,11 +1,13 @@
 package org.janelia.it.jacs.compute.api.support;
 
-import java.util.*;
-
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.ORDER;
 import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.shared.solr.SolrDocTypeEnum;
+import org.janelia.it.jacs.shared.solr.SolrUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
+
+import java.util.*;
 
 /**
  * A helper class for clients building SOLR queries against the Entity model.
@@ -131,7 +133,7 @@ public class SolrQueryBuilder {
     		qs.append(" AND (ancestor_ids:"+rootId+")");
     	}
     	
-    	qs.append(" +doc_type:"+SolrDocTypeEnum.ENTITY.toString());
+    	qs.append(" +doc_type:"+ SolrDocTypeEnum.ENTITY.toString());
     	
     	qs.append(" -entity_type:Ontology*");
 

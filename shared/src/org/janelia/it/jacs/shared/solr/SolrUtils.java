@@ -1,10 +1,10 @@
-package org.janelia.it.jacs.compute.api.support;
+package org.janelia.it.jacs.shared.solr;
 
+
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
-import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * Utilities used by the server, which are likewise useful in the client.

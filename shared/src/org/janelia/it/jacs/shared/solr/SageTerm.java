@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.api.support;
+package org.janelia.it.jacs.shared.solr;
 
 import java.io.Serializable;
 

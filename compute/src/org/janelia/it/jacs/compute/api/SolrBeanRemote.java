@@ -6,8 +6,8 @@ import java.util.Map;
 import javax.ejb.Remote;
 
 import org.apache.solr.client.solrj.SolrQuery;
-import org.janelia.it.jacs.compute.api.support.SageTerm;
-import org.janelia.it.jacs.compute.api.support.SolrResults;
+import org.janelia.it.jacs.shared.solr.SageTerm;
+import org.janelia.it.jacs.shared.solr.SolrResults;
 
 /**
  * A remote interface to querying the SOLR index server.

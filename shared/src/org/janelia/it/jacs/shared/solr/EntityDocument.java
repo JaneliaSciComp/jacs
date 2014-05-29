@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.api.support;
+package org.janelia.it.jacs.shared.solr;
 
 import org.apache.solr.common.SolrDocument;
 import org.janelia.it.jacs.model.entity.Entity;
