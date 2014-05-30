@@ -11,6 +11,7 @@ import org.janelia.it.jacs.web.gwt.common.client.security.NotLoggedInException;
 import org.janelia.it.jacs.web.gwt.common.server.JcviGWTSpringController;
 import org.janelia.it.jacs.web.gwt.download.client.DownloadMetaDataService;
 import org.janelia.it.jacs.web.gwt.download.client.model.Project;
+import org.janelia.it.jacs.web.gwt.download.client.model.ProjectImpl;
 import org.janelia.it.jacs.web.gwt.download.client.model.Publication;
 import org.janelia.it.jacs.web.gwt.download.client.samples.SampleItemComparator;
 import org.janelia.it.jacs.web.security.JacsSecurityUtils;
@@ -67,7 +68,7 @@ public class DownloadMetaDataServiceImpl extends JcviGWTSpringController impleme
         return returnMap;
     }
 
-    public void saveOrUpdateProject(org.janelia.it.jacs.web.gwt.download.client.model.ProjectImpl project) {
+    public void saveOrUpdateProject(ProjectImpl project) {
 
         if (publicationHelper == null) {
             logger.error("No model helper: Cannot save or update Project.");
@@ -142,7 +143,7 @@ public class DownloadMetaDataServiceImpl extends JcviGWTSpringController impleme
         return returnList;
     }
 
-    public Boolean checkFileLocation(String fileLocation) throws org.janelia.it.jacs.web.gwt.common.client.security.NotLoggedInException {
+    public Boolean checkFileLocation(String fileLocation) throws NotLoggedInException {
         if (!JacsSecurityUtils.isAuthenticated(getThreadLocalRequest())) {
             logger.debug("checkFileLocation() - denying un-authenticated user");
             throw new NotLoggedInException("You must be logged in to download this file.");

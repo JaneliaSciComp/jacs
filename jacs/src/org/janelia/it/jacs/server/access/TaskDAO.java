@@ -7,6 +7,7 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultNode;
 import org.janelia.it.jacs.server.access.hibernate.DaoException;
 import org.janelia.it.jacs.shared.tasks.BlastJobInfo;
+import org.janelia.it.jacs.shared.tasks.JobInfo;
 import org.janelia.it.jacs.shared.tasks.RnaSeqJobInfo;
 import org.janelia.it.jacs.shared.tasks.SearchJobInfo;
 import org.springframework.dao.DataAccessException;
@@ -40,7 +41,7 @@ public interface TaskDAO extends DAO {
     public <T extends Task> List<T> findSpecificTasksByIdRange(Class<T> cl, Long startId, Long endId, boolean includeSystem) throws DataAccessException, DaoException;
 
     // Biz API methods
-    org.janelia.it.jacs.shared.tasks.JobInfo getJobStatusByJobId(Long taskId) throws Exception;
+    JobInfo getJobStatusByJobId(Long taskId) throws Exception;
 
     public List<BlastJobInfo> getPagedBlastJobsForUserLogin(String classname,
                                                             String userLogin,

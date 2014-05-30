@@ -11,6 +11,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 import org.gwtwidgets.client.style.Color;
 import org.gwtwidgets.client.wrap.JsGraphicsPanel;
+import org.janelia.it.jacs.shared.tasks.RecruitableJobInfo;
 import org.janelia.it.jacs.web.gwt.common.client.panel.DraggableTitledBox;
 import org.janelia.it.jacs.web.gwt.common.client.service.log.Logger;
 import org.janelia.it.jacs.web.gwt.common.client.util.HtmlUtils;
@@ -110,15 +111,15 @@ public class FrvOverviewPanel extends DraggableTitledBox implements IsJobSettabl
      * Update the overview image with the 0,0,0 tile for the specified job (using a timer so the page has a chance
      * to display first, or the initial image won't come up.
      */
-    public void setJob(org.janelia.it.jacs.shared.tasks.RecruitableJobInfo job) {
+    public void setJob(RecruitableJobInfo job) {
         _image.setVisible(false);
         new OverviewImageTimer(job).schedule(1000);
     }
 
     public class OverviewImageTimer extends Timer {
-        private org.janelia.it.jacs.shared.tasks.RecruitableJobInfo _job;
+        private RecruitableJobInfo _job;
 
-        public OverviewImageTimer(org.janelia.it.jacs.shared.tasks.RecruitableJobInfo job) {
+        public OverviewImageTimer(RecruitableJobInfo job) {
             _job = job;
         }
 
@@ -130,7 +131,7 @@ public class FrvOverviewPanel extends DraggableTitledBox implements IsJobSettabl
         }
     }
 
-    private void setImage(org.janelia.it.jacs.shared.tasks.RecruitableJobInfo job) {
+    private void setImage(RecruitableJobInfo job) {
         if (job != null)
             _image.setUrl(FrvImagePanel.getTileUrl(0, 0, 0, job));
         _image.setVisible(true);

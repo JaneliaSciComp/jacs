@@ -5,6 +5,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 import com.google.gwt.user.client.ui.HTMLTable;
 import com.google.gwt.user.client.ui.Widget;
+import org.janelia.it.jacs.shared.tasks.JobInfo;
+import org.janelia.it.jacs.shared.tasks.RecruitableJobInfo;
 import org.janelia.it.jacs.web.gwt.common.client.jobs.JobSelectionListener;
 import org.janelia.it.jacs.web.gwt.common.client.popup.launcher.PopupAtRelativePixelLauncher;
 import org.janelia.it.jacs.web.gwt.common.client.ui.PulldownPopup;
@@ -18,7 +20,7 @@ import org.janelia.it.jacs.web.gwt.frv.client.popups.QuerySequenceChooserPopup;
  * @author Michael Press
  */
 abstract class FrvControlsPanelBaseTab implements FrvControlsPanelTab {
-    protected org.janelia.it.jacs.shared.tasks.RecruitableJobInfo _job;
+    protected RecruitableJobInfo _job;
     private QuerySequenceChooserPopup _queryChooserPopup;
     private JobSelectionListener _jobSelectionListener;
     protected static RecruitmentServiceAsync _recruitmentService = (RecruitmentServiceAsync) GWT.create(RecruitmentService.class);
@@ -39,12 +41,12 @@ abstract class FrvControlsPanelBaseTab implements FrvControlsPanelTab {
         return _jobSelectionListener;
     }
 
-    public org.janelia.it.jacs.shared.tasks.JobInfo getJob() {
+    public JobInfo getJob() {
         return _job;
     }
 
-    public void setJob(org.janelia.it.jacs.shared.tasks.JobInfo job) {
-        _job = (org.janelia.it.jacs.shared.tasks.RecruitableJobInfo) job;
+    public void setJob(JobInfo job) {
+        _job = (RecruitableJobInfo) job;
     }
 
     /*
@@ -64,7 +66,7 @@ abstract class FrvControlsPanelBaseTab implements FrvControlsPanelTab {
         return widget;
     }
 
-    protected String getConcatenatedSubjectNames(org.janelia.it.jacs.shared.tasks.JobInfo job) {
+    protected String getConcatenatedSubjectNames(JobInfo job) {
         StringBuffer buf = new StringBuffer();
         buf.append("&bull;&nbsp;").append(job.getSubjectName()).append("<br/>");
         return buf.toString();

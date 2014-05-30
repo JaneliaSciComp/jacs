@@ -2,6 +2,7 @@
 package org.janelia.it.jacs.compute.service.export;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
@@ -45,7 +46,7 @@ public class FileExportService implements IService {
     }
 
     private void createResultNodeForExportTask(ExportTask task) throws Exception {
-        org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
+        ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
         logger.info("task owner=" + task.getOwner());
         if (task.getOwner() == null) {
             logger.info("user is null");

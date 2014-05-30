@@ -22,7 +22,7 @@ public class AdvancedSortPopup extends ModalPopupPanel {
     private SortableColumn[] allSortableColumns;
     private SortableColumn[] sortColumns;
     private SortChoiceElement[] sortChoices;
-    private org.janelia.it.jacs.web.gwt.common.client.ui.table.advancedsort.AdvancedSortListener sortListener;
+    private AdvancedSortListener sortListener;
 
     private class SortColumnsListBox extends ListBox {
         private int columnSortArgIndex;
@@ -233,7 +233,7 @@ public class AdvancedSortPopup extends ModalPopupPanel {
 
     public AdvancedSortPopup(SortableColumn[] allSortableColumns,
                              SortableColumn[] sortColumns,
-                             org.janelia.it.jacs.web.gwt.common.client.ui.table.advancedsort.AdvancedSortListener sortListener,
+                             AdvancedSortListener sortListener,
                              boolean realizeNow) {
         super("Advanced Sort", realizeNow);
         this.allSortableColumns = allSortableColumns;

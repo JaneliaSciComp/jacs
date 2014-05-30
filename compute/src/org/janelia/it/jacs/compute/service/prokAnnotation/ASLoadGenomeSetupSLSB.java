@@ -6,6 +6,7 @@ import org.janelia.it.jacs.compute.engine.service.BaseServiceSLSB;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
+import org.jboss.ejb3.StrictMaxPool;
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -20,7 +21,7 @@ import javax.ejb.TransactionAttributeType;
 @Stateless
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(3600)
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 5, timeout = 10000)
+@PoolClass(value = StrictMaxPool.class, maxSize = 5, timeout = 10000)
 public class ASLoadGenomeSetupSLSB extends BaseServiceSLSB {
     public IService getService(IProcessData
             processData) {

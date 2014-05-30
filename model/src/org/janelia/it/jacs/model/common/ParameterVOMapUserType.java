@@ -307,15 +307,15 @@ public class ParameterVOMapUserType extends HashMap<String, ParameterVO> impleme
         return x.hashCode();
     }
 
-    public Serializable disassemble(Object object) throws org.hibernate.HibernateException {
+    public Serializable disassemble(Object object) throws HibernateException {
         return (Serializable) object;
     }
 
-    public Object assemble(Serializable serializable, Object object) throws org.hibernate.HibernateException {
+    public Object assemble(Serializable serializable, Object object) throws HibernateException {
         return serializable;
     }
 
-    public Object replace(Object object, Object object1, Object object2) throws org.hibernate.HibernateException {
+    public Object replace(Object object, Object object1, Object object2) throws HibernateException {
         return object;
     }
 

@@ -9,6 +9,7 @@ import org.janelia.it.jacs.model.user_data.Node;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -16,7 +17,7 @@ import java.io.IOException;
  * Date: Mar 28, 2007
  * Time: 10:36:29 AM
  */
-public class ExportFileNode extends FileNode implements java.io.Serializable, IsSerializable {
+public class ExportFileNode extends FileNode implements Serializable, IsSerializable {
 
     public static final String SUB_DIRECTORY = "Export";
     public static final String EXTERNAL_LINK_FILE = "_external_link_.txt";

@@ -6,6 +6,8 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import org.janelia.it.jacs.shared.tasks.JobInfo;
+import org.janelia.it.jacs.shared.tasks.RecruitableJobInfo;
 import org.janelia.it.jacs.web.gwt.common.client.jobs.JobSelectionListener;
 import org.janelia.it.jacs.web.gwt.common.client.service.StatusService;
 import org.janelia.it.jacs.web.gwt.common.client.service.StatusServiceAsync;
@@ -54,7 +56,7 @@ public class FrvPanel extends VerticalPanel {
                 }
                 else {
                     _logger.info("Got default FRV task");
-                    setJob((org.janelia.it.jacs.shared.tasks.RecruitableJobInfo) object);
+                    setJob((RecruitableJobInfo) object);
                 }
             }
         });
@@ -75,7 +77,7 @@ public class FrvPanel extends VerticalPanel {
                 }
                 else {
                     _logger.info("Got user FRV task");
-                    setJob((org.janelia.it.jacs.shared.tasks.RecruitableJobInfo) object);
+                    setJob((RecruitableJobInfo) object);
                 }
             }
 
@@ -86,11 +88,11 @@ public class FrvPanel extends VerticalPanel {
         });
     }
 
-    public void setJob(org.janelia.it.jacs.shared.tasks.RecruitableJobInfo job) {
+    public void setJob(RecruitableJobInfo job) {
         setJob(job, null);
     }
 
-    public void setJob(org.janelia.it.jacs.shared.tasks.RecruitableJobInfo job, ActionLink link) {
+    public void setJob(RecruitableJobInfo job, ActionLink link) {
         realize(link);
         // Notify each panel to show its info for the new job
         _frvControlsPanel.setJob(job);
@@ -139,8 +141,8 @@ public class FrvPanel extends VerticalPanel {
      * user using the panel's controls.  We'll just re-init each panel with the new job
      */
     public class JobChangedListener implements JobSelectionListener {
-        public void onSelect(org.janelia.it.jacs.shared.tasks.JobInfo job) {
-            setJob((org.janelia.it.jacs.shared.tasks.RecruitableJobInfo) job);
+        public void onSelect(JobInfo job) {
+            setJob((RecruitableJobInfo) job);
         }
 
         /**

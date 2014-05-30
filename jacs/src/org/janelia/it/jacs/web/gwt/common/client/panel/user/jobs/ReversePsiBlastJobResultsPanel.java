@@ -21,6 +21,7 @@ import org.janelia.it.jacs.web.gwt.common.client.jobs.AsyncExportTaskController;
 import org.janelia.it.jacs.web.gwt.common.client.jobs.JobSelectionListener;
 import org.janelia.it.jacs.web.gwt.common.client.jobs.JobStatusListener;
 import org.janelia.it.jacs.web.gwt.common.client.popup.jobs.BlastJobParamHelper;
+import org.janelia.it.jacs.web.gwt.common.client.popup.jobs.JobParameterPopup;
 import org.janelia.it.jacs.web.gwt.common.client.popup.launcher.PopupCenteredLauncher;
 import org.janelia.it.jacs.web.gwt.common.client.service.log.Logger;
 import org.janelia.it.jacs.web.gwt.common.client.ui.imagebundles.ImageBundleFactory;
@@ -466,7 +467,7 @@ public class ReversePsiBlastJobResultsPanel extends GeneralJobResultsPanel {
             public void execute() {
                 _logger.debug("Displaying parameters for job=" + blastJob.getJobname() + " with parameter popup");
                 Map<String, String> blastPopupParamMap = BlastJobParamHelper.createBlastPopupParamMap(blastJob);
-                _paramPopup = new org.janelia.it.jacs.web.gwt.common.client.popup.jobs.JobParameterPopup(
+                _paramPopup = new JobParameterPopup(
                         blastJob.getJobname(),
                         new FormattedDateTime(blastJob.getSubmitted().getTime()).toString(),
                         blastPopupParamMap, false);

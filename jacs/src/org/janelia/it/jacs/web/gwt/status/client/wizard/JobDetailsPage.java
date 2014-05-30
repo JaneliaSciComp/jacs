@@ -268,7 +268,7 @@ public class JobDetailsPage extends JobResultsWizardPage {
             }
 
             public void onSuccess(Object object) {
-                getData().setJob((org.janelia.it.jacs.shared.tasks.BlastJobInfo) object);
+                getData().setJob((BlastJobInfo) object);
                 setupPanels();
             }
         });

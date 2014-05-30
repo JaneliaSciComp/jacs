@@ -1,13 +1,15 @@
 
 package org.janelia.it.jacs.web.security.tomcat;
 
+import java.security.Principal;
+
 /**
  * Created by IntelliJ IDEA.
  * User: lkagan
  * Date: Oct 4, 2006
  * Time: 6:53:03 PM
  */
-public class JacsPrincipal implements java.security.Principal {
+public class JacsPrincipal implements Principal {
     String m_Name = new String("");
 
     public JacsPrincipal(String name) {

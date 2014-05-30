@@ -39,6 +39,8 @@ import org.janelia.it.jacs.web.gwt.common.client.ui.table.paging.PagedDataRetrie
 import org.janelia.it.jacs.web.gwt.common.client.ui.table.paging.RemotePagingPanel;
 import org.janelia.it.jacs.web.gwt.common.client.ui.table.paging.RemotingPaginator;
 import org.janelia.it.jacs.web.gwt.common.client.util.HtmlUtils;
+import org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuBar;
+import org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuItem;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -537,10 +539,10 @@ public class UserNodeManagementPanel extends VerticalPanel {
     }
 
     private Widget createUserNodeInfoWidget(final UserDataNodeVO node, final Widget widget) {
-        org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuBar menu = new org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuBar();
+        MenuBar menu = new MenuBar();
         menu.setAutoOpen(false);
 
-        org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuBar dropDown = new org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuBar(true);
+        MenuBar dropDown = new MenuBar(true);
 
         dropDown.addItem("Show Node details", true, new Command() {
             public void execute() {
@@ -551,8 +553,8 @@ public class UserNodeManagementPanel extends VerticalPanel {
             }
         });
 
-        org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuItem nodeDetailsMenuItem =
-                new org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuItem("Details&nbsp;" +
+        MenuItem nodeDetailsMenuItem =
+                new MenuItem("Details&nbsp;" +
                         ImageBundleFactory.getControlImageBundle().getArrowDownEnabledImage().getHTML(),
                         /* asHTML*/ true, dropDown);
         nodeDetailsMenuItem.setStyleName("topLevelMenuItem");

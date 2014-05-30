@@ -15,6 +15,7 @@ import org.janelia.it.jacs.shared.lucene.LuceneDataFactory;
 import org.janelia.it.jacs.shared.lucene.searchers.LuceneSearcher;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
+import org.jboss.ejb3.StrictMaxPool;
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -32,7 +33,7 @@ import java.util.List;
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
 //@Interceptors({UsageInterceptor.class})
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 100, timeout = 10000)
+@PoolClass(value = StrictMaxPool.class, maxSize = 100, timeout = 10000)
 public class SearchBeanImpl implements SearchBeanLocal, SearchBeanRemote {
     private Logger _logger = Logger.getLogger(this.getClass());
     public static final String SEARCH_EJB_PROP = "SearchEJB.Name";

@@ -6,13 +6,15 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 
+import java.io.Serializable;
+
 /**
  * Created by IntelliJ IDEA.
  * User: tsafford
  * Date: Mar 28, 2007
  * Time: 10:36:29 AM
  */
-public class ProkAnnotationResultFileNode extends FileNode implements java.io.Serializable, IsSerializable {
+public class ProkAnnotationResultFileNode extends FileNode implements Serializable, IsSerializable {
 
     public static final String SUB_DIRECTORY = "ProkAnnotation";
 

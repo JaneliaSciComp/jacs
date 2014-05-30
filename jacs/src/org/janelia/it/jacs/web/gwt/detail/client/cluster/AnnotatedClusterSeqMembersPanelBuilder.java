@@ -47,7 +47,7 @@ public class AnnotatedClusterSeqMembersPanelBuilder extends BaseClusterMemberEnt
 
     private static final int EVIDENCE_COLUMN_LENGTH = 20;
 
-    private org.janelia.it.jacs.web.gwt.detail.client.peptide.PeptideTableBuilder _tableBuilder;
+    private PeptideTableBuilder _tableBuilder;
 
     private class AnnotatedClusterSeqMembersRetriever implements PagedDataRetriever {
         private AnnotatedClusterSeqMembersRetriever() {

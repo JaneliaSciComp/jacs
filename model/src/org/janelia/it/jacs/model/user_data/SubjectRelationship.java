@@ -5,8 +5,10 @@ import javax.xml.bind.annotation.XmlAccessorType;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
+import java.io.Serializable;
+
 @XmlAccessorType(XmlAccessType.NONE)
-public class SubjectRelationship implements java.io.Serializable, IsSerializable {
+public class SubjectRelationship implements Serializable, IsSerializable {
 	
 	public static final String TYPE_GROUP_OWNER = "owner";
 	public static final String TYPE_GROUP_ADMIN = "admin";

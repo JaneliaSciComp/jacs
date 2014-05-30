@@ -65,7 +65,7 @@ public class DataServiceImpl extends JcviGWTSpringController implements DataServ
         this.dataSetAPI = dataSetAPI;
     }
 
-    public void setUserAPI(org.janelia.it.jacs.server.api.UserAPI userAPI) {
+    public void setUserAPI(UserAPI userAPI) {
         this.userAPI = userAPI;
     }
 

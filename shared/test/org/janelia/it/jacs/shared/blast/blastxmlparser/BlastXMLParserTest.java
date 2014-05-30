@@ -10,6 +10,7 @@ import org.janelia.it.jacs.shared.blast.ParsedBlastHSP;
 import org.janelia.it.jacs.shared.blast.ParsedBlastResult;
 import org.janelia.it.jacs.shared.blast.ParsedBlastResultCollection;
 
+import javax.xml.bind.JAXBException;
 import java.io.*;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -122,7 +123,7 @@ public class BlastXMLParserTest extends TestCase {
             logger.info("\n");
             logger.info("Done.");
         }
-        catch (javax.xml.bind.JAXBException e) {
+        catch (JAXBException e) {
             fail("Failed on "+programName+": "+e.getMessage());
         }
         catch (FileNotFoundException e) {
@@ -138,7 +139,7 @@ public class BlastXMLParserTest extends TestCase {
     }
 
 
-    public void writeToFile(ParsedBlastResultCollection pbrCollection, File outputFile) throws java.io.IOException {
+    public void writeToFile(ParsedBlastResultCollection pbrCollection, File outputFile) throws IOException {
         PrintStream ostream = new PrintStream(
                 new BufferedOutputStream(
                         new FileOutputStream(outputFile)), true);
@@ -153,7 +154,7 @@ public class BlastXMLParserTest extends TestCase {
     }
 
 
-        private Integer countMatches(Reader theReader, String patString) throws java.io.IOException{
+        private Integer countMatches(Reader theReader, String patString) throws IOException{
         // Returns string that matched if input string matches pattern
 
         BufferedReader bfrdr = new BufferedReader(theReader);
@@ -172,7 +173,7 @@ public class BlastXMLParserTest extends TestCase {
         return count;
     }
 
-    private Integer countUnique(Reader theReader, String patString) throws java.io.IOException{
+    private Integer countUnique(Reader theReader, String patString) throws IOException{
         // Returns string that matched if input string matches pattern
 
         BufferedReader bfrdr = new BufferedReader(theReader);
@@ -192,7 +193,7 @@ public class BlastXMLParserTest extends TestCase {
         return matchSet.size();
     }
 
-    private Float extractSum(Reader theReader, String patString) throws java.io.IOException{
+    private Float extractSum(Reader theReader, String patString) throws IOException{
         // Returns string that matched if input string matches pattern
 
         BufferedReader bfrdr = new BufferedReader(theReader);

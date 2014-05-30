@@ -1,6 +1,7 @@
 
 package org.janelia.it.jacs.web.gwt.detail.client.peptide;
 
+import org.janelia.it.jacs.web.gwt.common.client.ui.table.AbstractTableBuilder;
 import org.janelia.it.jacs.web.gwt.common.client.ui.table.SortableTable;
 import org.janelia.it.jacs.web.gwt.common.client.ui.table.TableCell;
 import org.janelia.it.jacs.web.gwt.common.client.ui.table.TableRow;
@@ -26,7 +27,7 @@ import java.util.List;
  *
  * @author Michael Press
  */
-public class PeptideTableBuilder extends org.janelia.it.jacs.web.gwt.common.client.ui.table.AbstractTableBuilder {
+public class PeptideTableBuilder extends AbstractTableBuilder {
     private static final String PROTEIN_ACC_HEADING = "Protein Accession";
     private static final String PROTEIN_FUNCTION_HEADING = "Protein Function";
     private static final String GENE_SYMBOL_HEADING = "Gene Symbol";

@@ -8,6 +8,8 @@
 
 package org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime;
 
+import com.sun.msv.grammar.Grammar;
+
 import javax.xml.bind.JAXBException;
 
 /**
@@ -70,7 +72,7 @@ public interface GrammarInfo {
      * Gets the MSV AGM which can be used to validate XML during
      * marshalling/unmarshalling.
      */
-    com.sun.msv.grammar.Grammar getGrammar() throws JAXBException;
+    Grammar getGrammar() throws JAXBException;
 
 
     XMLSerializable castToXMLSerializable(Object o);

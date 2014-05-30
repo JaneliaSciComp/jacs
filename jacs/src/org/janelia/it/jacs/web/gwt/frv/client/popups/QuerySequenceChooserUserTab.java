@@ -5,6 +5,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import org.janelia.it.jacs.model.common.SortArgument;
+import org.janelia.it.jacs.shared.tasks.RecruitableJobInfo;
 import org.janelia.it.jacs.web.gwt.common.client.jobs.JobSelectionListener;
 import org.janelia.it.jacs.web.gwt.common.client.service.log.Logger;
 import org.janelia.it.jacs.web.gwt.common.client.ui.table.paging.DataRetrievedListener;
@@ -77,7 +78,7 @@ public class QuerySequenceChooserUserTab extends QuerySequenceChooserBaseTab {
             }
 
             public void onSuccess(Object object) {
-                org.janelia.it.jacs.shared.tasks.RecruitableJobInfo[] jobs = (org.janelia.it.jacs.shared.tasks.RecruitableJobInfo[]) object;
+                RecruitableJobInfo[] jobs = (RecruitableJobInfo[]) object;
                 if (jobs == null || jobs.length == 0) {
                     _logger.debug("Got 0 system jobs");
                     listener.onNoData();

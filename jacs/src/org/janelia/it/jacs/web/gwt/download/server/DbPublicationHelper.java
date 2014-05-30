@@ -4,6 +4,8 @@ package org.janelia.it.jacs.web.gwt.download.server;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.download.Author;
 import org.janelia.it.jacs.model.download.DataFile;
+import org.janelia.it.jacs.model.download.HierarchyNode;
+import org.janelia.it.jacs.model.metadata.BioMaterial;
 import org.janelia.it.jacs.model.metadata.GeoPoint;
 import org.janelia.it.jacs.model.metadata.Sample;
 import org.janelia.it.jacs.server.access.DownloadDAO;
@@ -12,7 +14,9 @@ import org.janelia.it.jacs.web.gwt.common.client.model.download.DownloadableData
 import org.janelia.it.jacs.web.gwt.common.client.model.download.DownloadableDataNodeImpl;
 import org.janelia.it.jacs.web.gwt.common.client.model.metadata.Site;
 import org.janelia.it.jacs.web.gwt.download.client.model.Project;
+import org.janelia.it.jacs.web.gwt.download.client.model.ProjectImpl;
 import org.janelia.it.jacs.web.gwt.download.client.model.Publication;
+import org.janelia.it.jacs.web.gwt.download.client.model.PublicationImpl;
 
 import java.io.File;
 import java.util.*;
@@ -73,7 +77,7 @@ public class DbPublicationHelper implements PublicationHelper {
      *
      * @return projectname vs project object.
      */
-    public Map<String, org.janelia.it.jacs.web.gwt.download.client.model.Project> getSymbolToProjectMapping() {
+    public Map<String, Project> getSymbolToProjectMapping() {
         if (_projectSymbolVsProject == null) {
             populateProjects();
         }
@@ -92,7 +96,7 @@ public class DbPublicationHelper implements PublicationHelper {
         return _publicationAccessionVsPublication;
     }
 
-    public void saveOrUpdateProject(org.janelia.it.jacs.web.gwt.download.client.model.ProjectImpl gwtProject) {
+    public void saveOrUpdateProject(ProjectImpl gwtProject) {
 
         org.janelia.it.jacs.model.download.Project modelProject;
 
@@ -137,11 +141,11 @@ public class DbPublicationHelper implements PublicationHelper {
      * @param projectName which to return?
      * @return the project.
      */
-    public org.janelia.it.jacs.web.gwt.download.client.model.Project getProjectByName(String projectName) {
+    public Project getProjectByName(String projectName) {
         if (_projectSymbolVsProject == null) {
             populateProjects();
         }
-        org.janelia.it.jacs.web.gwt.download.client.model.Project result = null;
+        Project result = null;
         for (Object o : _projectSymbolVsProject.values()) {
             Project project =
                     (Project) o;
@@ -159,15 +163,15 @@ public class DbPublicationHelper implements PublicationHelper {
      * @param projectSymbol which to return?
      * @return the project.
      */
-    public org.janelia.it.jacs.web.gwt.download.client.model.Project getProjectBySymbol(String projectSymbol) {
+    public Project getProjectBySymbol(String projectSymbol) {
         if (_projectSymbolVsProject == null) {
             populateProjects();
         }
         return _projectSymbolVsProject.get(projectSymbol);
     }
 
-    public org.janelia.it.jacs.web.gwt.download.client.model.Publication getPublicationByAccession(String publicationAccession) {
-        org.janelia.it.jacs.web.gwt.download.client.model.Publication gwtPub = null;
+    public Publication getPublicationByAccession(String publicationAccession) {
+        Publication gwtPub = null;
         if (_publicationAccessionVsPublication.size() > 0) {
             gwtPub = _publicationAccessionVsPublication.get(publicationAccession);
         }
@@ -300,8 +304,8 @@ public class DbPublicationHelper implements PublicationHelper {
         for (int i = 0; projects != null && i < projects.size(); i++) {
             org.janelia.it.jacs.model.download.Project nextModel = projects.get(i);
             String projectSymbol = nextModel.getSymbol();
-            org.janelia.it.jacs.web.gwt.download.client.model.ProjectImpl nextProject =
-                    new org.janelia.it.jacs.web.gwt.download.client.model.ProjectImpl();
+            ProjectImpl nextProject =
+                    new ProjectImpl();
             nextProject.setProjectSymbol(projectSymbol);
             nextProject.setProjectName(nextModel.getName());
             nextProject.setDescription(nextModel.getDescription());
@@ -338,7 +342,7 @@ public class DbPublicationHelper implements PublicationHelper {
 
         for (org.janelia.it.jacs.model.download.Publication modelPub : publications) {
             String publicationAccession = modelPub.getPublicationAccession();
-            org.janelia.it.jacs.web.gwt.download.client.model.Publication gwtPub =
+            Publication gwtPub =
                     createPublicationFromModel(modelPub);
             accessionVsPublication.put(publicationAccession, gwtPub);
         }
@@ -363,7 +367,7 @@ public class DbPublicationHelper implements PublicationHelper {
             if (modelPub == null) {
                 continue;
             }
-            org.janelia.it.jacs.web.gwt.download.client.model.Publication gwtPub = createPublicationFromModel(modelPub);
+            Publication gwtPub = createPublicationFromModel(modelPub);
             returnList.add(gwtPub);
         }
         return returnList;
@@ -375,12 +379,12 @@ public class DbPublicationHelper implements PublicationHelper {
      * @param modelPub
      * @return GWT-compatible publication.
      */
-    private org.janelia.it.jacs.web.gwt.download.client.model.Publication createPublicationFromModel(org.janelia.it.jacs.model.download.Publication modelPub) {
+    private Publication createPublicationFromModel(org.janelia.it.jacs.model.download.Publication modelPub) {
         if (modelPub == null) {
             return null;
         }
-        org.janelia.it.jacs.web.gwt.download.client.model.PublicationImpl gwtPub =
-                new org.janelia.it.jacs.web.gwt.download.client.model.PublicationImpl();
+        PublicationImpl gwtPub =
+                new PublicationImpl();
         gwtPub.setAccessionNumber(modelPub.getPublicationAccession());
         gwtPub.setAbstract(modelPub.getAbstractOfPublication());
         gwtPub.setTitle(modelPub.getTitle());
@@ -408,11 +412,11 @@ public class DbPublicationHelper implements PublicationHelper {
      * @param authorSet Author objects.
      * @return list of strings.
      */
-    private List<Author> createAuthorList(List<org.janelia.it.jacs.model.download.Author> authorSet) {
+    private List<Author> createAuthorList(List<Author> authorSet) {
         ArrayList<Author> returnList = new ArrayList<Author>();
 
         //TODO consider abandoning the GWT-exchange models and using internal model objs.
-        for (org.janelia.it.jacs.model.download.Author modelAuthor : authorSet) {
+        for (Author modelAuthor : authorSet) {
             returnList.add(modelAuthor);
         }
 
@@ -426,11 +430,11 @@ public class DbPublicationHelper implements PublicationHelper {
      * @param hierarchyNodeSet from db.
      * @return for GWT.
      */
-    private List<DownloadableDataNodeImpl> createDataFiles(List<org.janelia.it.jacs.model.download.HierarchyNode> hierarchyNodeSet) {
+    private List<DownloadableDataNodeImpl> createDataFiles(List<HierarchyNode> hierarchyNodeSet) {
         ArrayList<DownloadableDataNodeImpl> returnList = new ArrayList<DownloadableDataNodeImpl>();
 
         // First treat the sub-hierarchy-nodes, which represent directories.
-        for (org.janelia.it.jacs.model.download.HierarchyNode modelNode :
+        for (HierarchyNode modelNode :
                 hierarchyNodeSet) {
 
             DownloadableDataNodeImpl gwtParentLevel = convertHierarchyNodeFromModel(modelNode);
@@ -472,7 +476,7 @@ public class DbPublicationHelper implements PublicationHelper {
      * @param modelNode whence info comes.
      * @return where it goes.
      */
-    private DownloadableDataNodeImpl convertHierarchyNodeFromModel(org.janelia.it.jacs.model.download.HierarchyNode modelNode) {
+    private DownloadableDataNodeImpl convertHierarchyNodeFromModel(HierarchyNode modelNode) {
         DownloadableDataNodeImpl gwtParentLevel = new DownloadableDataNodeImpl();
         gwtParentLevel.setText(modelNode.getName());
         String[] pAttributeNames = new String[]{DESCRIPTIVE_TEXT};
@@ -489,7 +493,7 @@ public class DbPublicationHelper implements PublicationHelper {
      * @param modelDataFile where info comes from
      * @return where info goes
      */
-    private DownloadableDataNodeImpl convertDataFileFromModel(org.janelia.it.jacs.model.download.DataFile modelDataFile) {
+    private DownloadableDataNodeImpl convertDataFileFromModel(DataFile modelDataFile) {
 
         DownloadableDataNodeImpl gwtDataFile = new DownloadableDataNodeImpl();
         gwtDataFile.setInfoLocation(modelDataFile.getInfoLocation());
@@ -525,7 +529,7 @@ public class DbPublicationHelper implements PublicationHelper {
         Set<Site> sites = new HashSet<Site>();
         if (siteIter.hasNext()) {
             while (siteIter.hasNext())
-                sites.add(getSiteFromModelSite((org.janelia.it.jacs.model.metadata.BioMaterial) siteIter.next()));
+                sites.add(getSiteFromModelSite((BioMaterial) siteIter.next()));
         }
         else {
             sites.add(getSiteFromModelSite(null));
@@ -562,14 +566,14 @@ public class DbPublicationHelper implements PublicationHelper {
             Set sites = ((Sample) iter.next()).getBioMaterials();
             if (sites != null && sites.size() > 0) {
                 Iterator siteIter = sites.iterator();
-                site = getSiteFromModelSite((org.janelia.it.jacs.model.metadata.BioMaterial) siteIter.next());
+                site = getSiteFromModelSite((BioMaterial) siteIter.next());
             }
         }
 
         return site;
     }
 
-    private Site getSiteFromModelSite(org.janelia.it.jacs.model.metadata.BioMaterial modelSite) {
+    private Site getSiteFromModelSite(BioMaterial modelSite) {
         Site site = new Site();
         site.setSiteId(modelSite.getMaterialAcc());
         site.setBiomass(modelSite.getObservationAsString("biomass"));

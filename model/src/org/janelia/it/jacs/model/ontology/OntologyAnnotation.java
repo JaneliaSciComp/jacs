@@ -4,6 +4,7 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 
 import javax.xml.bind.annotation.*;
+import java.io.Serializable;
 
 /**
  * Annotation of an Entity with an Ontology term and possible value.
@@ -11,7 +12,7 @@ import javax.xml.bind.annotation.*;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class OntologyAnnotation implements java.io.Serializable {
+public class OntologyAnnotation implements Serializable {
 
 	@XmlAttribute
 	private Long id;

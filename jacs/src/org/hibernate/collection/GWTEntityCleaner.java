@@ -4,6 +4,7 @@ package org.hibernate.collection;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.hibernate.LazyInitializationException;
 import org.hibernate.Session;
 import org.hibernate.proxy.HibernateProxy;
 import org.janelia.it.jacs.model.common.ParameterVOMapUserType;
@@ -253,7 +254,7 @@ public class GWTEntityCleaner {
             logger.error("Caught NoSuchMethodException in getObjectProperties():", e);
             throw new RuntimeException(e);
         }
-        catch (org.hibernate.LazyInitializationException e) {
+        catch (LazyInitializationException e) {
             // Make sure there are no getters for lazy objects within other getters in the
             // entity in question e.g. getSeqText() calls getBioSequence() within it
             logger.error(e);

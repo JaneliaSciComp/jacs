@@ -35,6 +35,7 @@ import org.janelia.it.jacs.model.graph.support.GraphUtils;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
+import org.jboss.ejb3.StrictMaxPool;
 
 /**
  * Implementation of local and remote graph beans.
@@ -44,7 +45,7 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 @Stateless(name = "GraphEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 500, timeout = 10000)
+@PoolClass(value = StrictMaxPool.class, maxSize = 500, timeout = 10000)
 public class GraphBeanImpl implements GraphBeanLocal, GraphBeanRemote {
 	
     private static final Logger log = Logger.getLogger(GraphBeanImpl.class);

@@ -15,9 +15,9 @@ public class EditJobNamePopup extends ModalPopupPanel {
 
     private JobInfo jobStatus;
     private TextBox jobNameText;
-    private org.janelia.it.jacs.web.gwt.common.client.popup.jobs.EditJobNameListener jobNameReplacer;
+    private EditJobNameListener jobNameReplacer;
 
-    public EditJobNamePopup(JobInfo jobStatus, org.janelia.it.jacs.web.gwt.common.client.popup.jobs.EditJobNameListener jobNameReplacer, boolean realizeNow) {
+    public EditJobNamePopup(JobInfo jobStatus, EditJobNameListener jobNameReplacer, boolean realizeNow) {
         super("Edit Job Name", realizeNow);
         this.jobStatus = jobStatus;
         this.jobNameReplacer = jobNameReplacer;

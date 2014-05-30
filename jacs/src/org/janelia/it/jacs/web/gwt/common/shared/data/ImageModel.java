@@ -54,7 +54,7 @@ public class ImageModel implements Serializable, IsSerializable {
         this.groupedImageAreas = groupedImageAreas;
     }
 
-    public void addImageAreaGroup(org.janelia.it.jacs.web.gwt.common.shared.data.ImageAreaGroupModel imageAreaGroup) {
+    public void addImageAreaGroup(ImageAreaGroupModel imageAreaGroup) {
         groupedImageAreas.add(imageAreaGroup);
     }
 
@@ -66,7 +66,7 @@ public class ImageModel implements Serializable, IsSerializable {
         this.imageAreas = imageAreas;
     }
 
-    public void addImageArea(org.janelia.it.jacs.web.gwt.common.shared.data.ImageAreaModel imageArea) {
+    public void addImageArea(ImageAreaModel imageArea) {
         imageAreas.add(imageArea);
     }
 

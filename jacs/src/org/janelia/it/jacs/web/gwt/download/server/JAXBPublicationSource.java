@@ -97,7 +97,7 @@ public class JAXBPublicationSource extends AbstractPublicationSource {
 
         for (int i = 0; i < members.size(); i++) {
             Object nextMember = members.get(i);
-            if (nextMember instanceof org.janelia.it.jacs.server.jaxb.reference_record.File) {
+            if (nextMember instanceof File) {
                 log.error("Encountered file member at top level");
             }
             else if (nextMember instanceof Subdir) {

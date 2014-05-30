@@ -8,6 +8,7 @@ import javax.jms.MessageListener;
 
 import org.jboss.annotation.ejb.Depends;
 import org.jboss.annotation.ejb.PoolClass;
+import org.jboss.ejb3.StrictMaxPool;
 
 /**
  * An MBD for handling reindexing requests asynchronously.
@@ -23,7 +24,7 @@ import org.jboss.annotation.ejb.PoolClass;
         @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 10, timeout = 10000)
+@PoolClass(value = StrictMaxPool.class, maxSize = 10, timeout = 10000)
 @Depends ({"jboss:custom=IndexingManager"})
 public class IndexingMDB implements MessageListener {
 	

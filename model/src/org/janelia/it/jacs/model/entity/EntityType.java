@@ -8,6 +8,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlValue;
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -15,7 +16,7 @@ import java.util.*;
  */
 @XmlAccessorType(XmlAccessType.NONE)
 @XmlRootElement
-public class EntityType  implements java.io.Serializable, IsSerializable {
+public class EntityType  implements Serializable, IsSerializable {
 	
     private Long id;
     private Long sequence;

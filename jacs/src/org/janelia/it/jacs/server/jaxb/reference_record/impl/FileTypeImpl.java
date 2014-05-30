@@ -9,20 +9,45 @@
 
 package org.janelia.it.jacs.server.jaxb.reference_record.impl;
 
-public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_record.FileType, com.sun.xml.bind.JAXBObject, org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.UnmarshallableObject, org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.XMLSerializable, org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.ValidatableObject {
+import com.sun.msv.grammar.Grammar;
+import com.sun.msv.verifier.DocumentDeclaration;
+import com.sun.msv.verifier.regexp.REDocumentDeclaration;
+import com.sun.xml.bind.JAXBObject;
+import com.sun.xml.bind.WhiteSpaceProcessor;
+import com.sun.xml.bind.validator.SchemaDeserializer;
+import org.janelia.it.jacs.server.jaxb.reference_record.FileType;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.AbstractUnmarshallingEventHandlerImpl;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.UnmarshallableObject;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.UnmarshallingContext;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.UnmarshallingEventHandler;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.Util;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.ValidatableObject;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.XMLSerializable;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.XMLSerializer;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+
+import javax.xml.bind.DatatypeConverter;
+import java.lang.Class;
+import java.lang.Exception;
+import java.lang.Object;
+import java.lang.RuntimeException;
+import java.lang.String;
+
+public class FileTypeImpl implements FileType, JAXBObject, UnmarshallableObject, XMLSerializable, ValidatableObject {
 
     protected boolean has_Tar;
     protected int _Tar;
-    protected java.lang.String _Description;
+    protected String _Description;
     protected boolean has_Size;
     protected long _Size;
-    protected java.lang.String _Path;
-    protected java.lang.String _InfoPath;
-    public final static java.lang.Class version = (org.janelia.it.jacs.server.jaxb.reference_record.impl.JAXBVersion.class);
-    private static com.sun.msv.grammar.Grammar schemaFragment;
+    protected String _Path;
+    protected String _InfoPath;
+    public final static Class version = (JAXBVersion.class);
+    private static Grammar schemaFragment;
 
-    private final static java.lang.Class PRIMARY_INTERFACE_CLASS() {
-        return (org.janelia.it.jacs.server.jaxb.reference_record.FileType.class);
+    private final static Class PRIMARY_INTERFACE_CLASS() {
+        return (FileType.class);
     }
 
     public int getTar() {
@@ -34,11 +59,11 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
         has_Tar = true;
     }
 
-    public java.lang.String getDescription() {
+    public String getDescription() {
         return _Description;
     }
 
-    public void setDescription(java.lang.String value) {
+    public void setDescription(String value) {
         _Description = value;
     }
 
@@ -51,91 +76,91 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
         has_Size = true;
     }
 
-    public java.lang.String getPath() {
+    public String getPath() {
         return _Path;
     }
 
-    public void setPath(java.lang.String value) {
+    public void setPath(String value) {
         _Path = value;
     }
 
-    public java.lang.String getInfoPath() {
+    public String getInfoPath() {
         return _InfoPath;
     }
 
-    public void setInfoPath(java.lang.String value) {
+    public void setInfoPath(String value) {
         _InfoPath = value;
     }
 
-    public org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.UnmarshallingEventHandler createUnmarshaller(org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.UnmarshallingContext context) {
-        return new org.janelia.it.jacs.server.jaxb.reference_record.impl.FileTypeImpl.Unmarshaller(context);
+    public UnmarshallingEventHandler createUnmarshaller(UnmarshallingContext context) {
+        return new FileTypeImpl.Unmarshaller(context);
     }
 
-    public void serializeBody(org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.XMLSerializer context)
-            throws org.xml.sax.SAXException {
+    public void serializeBody(XMLSerializer context)
+            throws SAXException {
     }
 
-    public void serializeAttributes(org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.XMLSerializer context)
-            throws org.xml.sax.SAXException {
+    public void serializeAttributes(XMLSerializer context)
+            throws SAXException {
         context.startAttribute("", "description");
         try {
-            context.text(((java.lang.String) _Description), "Description");
+            context.text(((String) _Description), "Description");
         }
-        catch (java.lang.Exception e) {
-            org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.Util.handlePrintConversionException(this, e, context);
+        catch (Exception e) {
+            Util.handlePrintConversionException(this, e, context);
         }
         context.endAttribute();
         if (_InfoPath != null) {
             context.startAttribute("", "info_path");
             try {
-                context.text(((java.lang.String) _InfoPath), "InfoPath");
+                context.text(((String) _InfoPath), "InfoPath");
             }
-            catch (java.lang.Exception e) {
-                org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.Util.handlePrintConversionException(this, e, context);
+            catch (Exception e) {
+                Util.handlePrintConversionException(this, e, context);
             }
             context.endAttribute();
         }
         context.startAttribute("", "path");
         try {
-            context.text(((java.lang.String) _Path), "Path");
+            context.text(((String) _Path), "Path");
         }
-        catch (java.lang.Exception e) {
-            org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.Util.handlePrintConversionException(this, e, context);
+        catch (Exception e) {
+            Util.handlePrintConversionException(this, e, context);
         }
         context.endAttribute();
         if (has_Size) {
             context.startAttribute("", "size");
             try {
-                context.text(javax.xml.bind.DatatypeConverter.printLong(((long) _Size)), "Size");
+                context.text(DatatypeConverter.printLong(((long) _Size)), "Size");
             }
-            catch (java.lang.Exception e) {
-                org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.Util.handlePrintConversionException(this, e, context);
+            catch (Exception e) {
+                Util.handlePrintConversionException(this, e, context);
             }
             context.endAttribute();
         }
         if (has_Tar) {
             context.startAttribute("", "tar");
             try {
-                context.text(javax.xml.bind.DatatypeConverter.printInt(((int) _Tar)), "Tar");
+                context.text(DatatypeConverter.printInt(((int) _Tar)), "Tar");
             }
-            catch (java.lang.Exception e) {
-                org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.Util.handlePrintConversionException(this, e, context);
+            catch (Exception e) {
+                Util.handlePrintConversionException(this, e, context);
             }
             context.endAttribute();
         }
     }
 
-    public void serializeURIs(org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.XMLSerializer context)
-            throws org.xml.sax.SAXException {
+    public void serializeURIs(XMLSerializer context)
+            throws SAXException {
     }
 
-    public java.lang.Class getPrimaryInterface() {
-        return (org.janelia.it.jacs.server.jaxb.reference_record.FileType.class);
+    public Class getPrimaryInterface() {
+        return (FileType.class);
     }
 
-    public com.sun.msv.verifier.DocumentDeclaration createRawValidator() {
+    public DocumentDeclaration createRawValidator() {
         if (schemaFragment == null) {
-            schemaFragment = com.sun.xml.bind.validator.SchemaDeserializer.deserialize((
+            schemaFragment = SchemaDeserializer.deserialize((
                     "\u00ac\u00ed\u0000\u0005sr\u0000\u001fcom.sun.msv.grammar.SequenceExp\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0002\u0000\u0000xr\u0000\u001dcom.su"
                             + "n.msv.grammar.BinaryExp\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0002\u0000\u0002L\u0000\u0004exp1t\u0000 Lcom/sun/msv/gra"
                             + "mmar/Expression;L\u0000\u0004exp2q\u0000~\u0000\u0002xr\u0000\u001ecom.sun.msv.grammar.Expressi"
@@ -201,28 +226,28 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
                             + "tt\u0000$Lcom/sun/msv/grammar/ExpressionPool;xp\u0000\u0000\u0000\u0007\u0001pq\u0000~\u0000\u0007q\u0000~\u0000\u0006q\u0000"
                             + "~\u0000\u0005q\u0000~\u0000@q\u0000~\u0000\bq\u0000~\u0000&q\u0000~\u0000ex"));
         }
-        return new com.sun.msv.verifier.regexp.REDocumentDeclaration(schemaFragment);
+        return new REDocumentDeclaration(schemaFragment);
     }
 
     public class Unmarshaller
-            extends org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.AbstractUnmarshallingEventHandlerImpl {
+            extends AbstractUnmarshallingEventHandlerImpl {
 
 
-        public Unmarshaller(org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.UnmarshallingContext context) {
+        public Unmarshaller(UnmarshallingContext context) {
             super(context, "----------------");
         }
 
-        protected Unmarshaller(org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.UnmarshallingContext context, int startState) {
+        protected Unmarshaller(UnmarshallingContext context, int startState) {
             this(context);
             state = startState;
         }
 
-        public java.lang.Object owner() {
-            return org.janelia.it.jacs.server.jaxb.reference_record.impl.FileTypeImpl.this;
+        public Object owner() {
+            return FileTypeImpl.this;
         }
 
-        public void enterElement(java.lang.String ___uri, java.lang.String ___local, java.lang.String ___qname, org.xml.sax.Attributes __atts)
-                throws org.xml.sax.SAXException {
+        public void enterElement(String ___uri, String ___local, String ___qname, Attributes __atts)
+                throws SAXException {
             int attIdx;
             outer:
             while (true) {
@@ -230,7 +255,7 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
                     case 9:
                         attIdx = context.getAttribute("", "size");
                         if (attIdx >= 0) {
-                            final java.lang.String v = context.eatAttribute(attIdx);
+                            final String v = context.eatAttribute(attIdx);
                             state = 12;
                             eatText1(v);
                             continue outer;
@@ -240,7 +265,7 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
                     case 12:
                         attIdx = context.getAttribute("", "tar");
                         if (attIdx >= 0) {
-                            final java.lang.String v = context.eatAttribute(attIdx);
+                            final String v = context.eatAttribute(attIdx);
                             state = 15;
                             eatText2(v);
                             continue outer;
@@ -253,7 +278,7 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
                     case 0:
                         attIdx = context.getAttribute("", "description");
                         if (attIdx >= 0) {
-                            final java.lang.String v = context.eatAttribute(attIdx);
+                            final String v = context.eatAttribute(attIdx);
                             state = 3;
                             eatText3(v);
                             continue outer;
@@ -262,7 +287,7 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
                     case 3:
                         attIdx = context.getAttribute("", "info_path");
                         if (attIdx >= 0) {
-                            final java.lang.String v = context.eatAttribute(attIdx);
+                            final String v = context.eatAttribute(attIdx);
                             state = 6;
                             eatText4(v);
                             continue outer;
@@ -272,7 +297,7 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
                     case 6:
                         attIdx = context.getAttribute("", "path");
                         if (attIdx >= 0) {
-                            final java.lang.String v = context.eatAttribute(attIdx);
+                            final String v = context.eatAttribute(attIdx);
                             state = 9;
                             eatText5(v);
                             continue outer;
@@ -284,60 +309,60 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
             }
         }
 
-        private void eatText1(final java.lang.String value)
-                throws org.xml.sax.SAXException {
+        private void eatText1(final String value)
+                throws SAXException {
             try {
-                _Size = javax.xml.bind.DatatypeConverter.parseLong(com.sun.xml.bind.WhiteSpaceProcessor.collapse(value));
+                _Size = DatatypeConverter.parseLong(WhiteSpaceProcessor.collapse(value));
                 has_Size = true;
             }
-            catch (java.lang.Exception e) {
+            catch (Exception e) {
                 handleParseConversionException(e);
             }
         }
 
-        private void eatText2(final java.lang.String value)
-                throws org.xml.sax.SAXException {
+        private void eatText2(final String value)
+                throws SAXException {
             try {
-                _Tar = javax.xml.bind.DatatypeConverter.parseInt(com.sun.xml.bind.WhiteSpaceProcessor.collapse(value));
+                _Tar = DatatypeConverter.parseInt(WhiteSpaceProcessor.collapse(value));
                 has_Tar = true;
             }
-            catch (java.lang.Exception e) {
+            catch (Exception e) {
                 handleParseConversionException(e);
             }
         }
 
-        private void eatText3(final java.lang.String value)
-                throws org.xml.sax.SAXException {
+        private void eatText3(final String value)
+                throws SAXException {
             try {
                 _Description = value;
             }
-            catch (java.lang.Exception e) {
+            catch (Exception e) {
                 handleParseConversionException(e);
             }
         }
 
-        private void eatText4(final java.lang.String value)
-                throws org.xml.sax.SAXException {
+        private void eatText4(final String value)
+                throws SAXException {
             try {
                 _InfoPath = value;
             }
-            catch (java.lang.Exception e) {
+            catch (Exception e) {
                 handleParseConversionException(e);
             }
         }
 
-        private void eatText5(final java.lang.String value)
-                throws org.xml.sax.SAXException {
+        private void eatText5(final String value)
+                throws SAXException {
             try {
                 _Path = value;
             }
-            catch (java.lang.Exception e) {
+            catch (Exception e) {
                 handleParseConversionException(e);
             }
         }
 
-        public void leaveElement(java.lang.String ___uri, java.lang.String ___local, java.lang.String ___qname)
-                throws org.xml.sax.SAXException {
+        public void leaveElement(String ___uri, String ___local, String ___qname)
+                throws SAXException {
             int attIdx;
             outer:
             while (true) {
@@ -345,7 +370,7 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
                     case 9:
                         attIdx = context.getAttribute("", "size");
                         if (attIdx >= 0) {
-                            final java.lang.String v = context.eatAttribute(attIdx);
+                            final String v = context.eatAttribute(attIdx);
                             state = 12;
                             eatText1(v);
                             continue outer;
@@ -355,7 +380,7 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
                     case 12:
                         attIdx = context.getAttribute("", "tar");
                         if (attIdx >= 0) {
-                            final java.lang.String v = context.eatAttribute(attIdx);
+                            final String v = context.eatAttribute(attIdx);
                             state = 15;
                             eatText2(v);
                             continue outer;
@@ -368,7 +393,7 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
                     case 0:
                         attIdx = context.getAttribute("", "description");
                         if (attIdx >= 0) {
-                            final java.lang.String v = context.eatAttribute(attIdx);
+                            final String v = context.eatAttribute(attIdx);
                             state = 3;
                             eatText3(v);
                             continue outer;
@@ -377,7 +402,7 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
                     case 3:
                         attIdx = context.getAttribute("", "info_path");
                         if (attIdx >= 0) {
-                            final java.lang.String v = context.eatAttribute(attIdx);
+                            final String v = context.eatAttribute(attIdx);
                             state = 6;
                             eatText4(v);
                             continue outer;
@@ -387,7 +412,7 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
                     case 6:
                         attIdx = context.getAttribute("", "path");
                         if (attIdx >= 0) {
-                            final java.lang.String v = context.eatAttribute(attIdx);
+                            final String v = context.eatAttribute(attIdx);
                             state = 9;
                             eatText5(v);
                             continue outer;
@@ -399,8 +424,8 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
             }
         }
 
-        public void enterAttribute(java.lang.String ___uri, java.lang.String ___local, java.lang.String ___qname)
-                throws org.xml.sax.SAXException {
+        public void enterAttribute(String ___uri, String ___local, String ___qname)
+                throws SAXException {
             int attIdx;
             outer:
             while (true) {
@@ -447,8 +472,8 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
             }
         }
 
-        public void leaveAttribute(java.lang.String ___uri, java.lang.String ___local, java.lang.String ___qname)
-                throws org.xml.sax.SAXException {
+        public void leaveAttribute(String ___uri, String ___local, String ___qname)
+                throws SAXException {
             int attIdx;
             outer:
             while (true) {
@@ -468,7 +493,7 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
                     case 9:
                         attIdx = context.getAttribute("", "size");
                         if (attIdx >= 0) {
-                            final java.lang.String v = context.eatAttribute(attIdx);
+                            final String v = context.eatAttribute(attIdx);
                             state = 12;
                             eatText1(v);
                             continue outer;
@@ -478,7 +503,7 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
                     case 12:
                         attIdx = context.getAttribute("", "tar");
                         if (attIdx >= 0) {
-                            final java.lang.String v = context.eatAttribute(attIdx);
+                            final String v = context.eatAttribute(attIdx);
                             state = 15;
                             eatText2(v);
                             continue outer;
@@ -503,7 +528,7 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
                     case 0:
                         attIdx = context.getAttribute("", "description");
                         if (attIdx >= 0) {
-                            final java.lang.String v = context.eatAttribute(attIdx);
+                            final String v = context.eatAttribute(attIdx);
                             state = 3;
                             eatText3(v);
                             continue outer;
@@ -512,7 +537,7 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
                     case 3:
                         attIdx = context.getAttribute("", "info_path");
                         if (attIdx >= 0) {
-                            final java.lang.String v = context.eatAttribute(attIdx);
+                            final String v = context.eatAttribute(attIdx);
                             state = 6;
                             eatText4(v);
                             continue outer;
@@ -528,7 +553,7 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
                     case 6:
                         attIdx = context.getAttribute("", "path");
                         if (attIdx >= 0) {
-                            final java.lang.String v = context.eatAttribute(attIdx);
+                            final String v = context.eatAttribute(attIdx);
                             state = 9;
                             eatText5(v);
                             continue outer;
@@ -540,8 +565,8 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
             }
         }
 
-        public void handleText(final java.lang.String value)
-                throws org.xml.sax.SAXException {
+        public void handleText(final String value)
+                throws SAXException {
             int attIdx;
             outer:
             while (true) {
@@ -554,7 +579,7 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
                         case 9:
                             attIdx = context.getAttribute("", "size");
                             if (attIdx >= 0) {
-                                final java.lang.String v = context.eatAttribute(attIdx);
+                                final String v = context.eatAttribute(attIdx);
                                 state = 12;
                                 eatText1(v);
                                 continue outer;
@@ -568,7 +593,7 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
                         case 12:
                             attIdx = context.getAttribute("", "tar");
                             if (attIdx >= 0) {
-                                final java.lang.String v = context.eatAttribute(attIdx);
+                                final String v = context.eatAttribute(attIdx);
                                 state = 15;
                                 eatText2(v);
                                 continue outer;
@@ -593,7 +618,7 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
                         case 0:
                             attIdx = context.getAttribute("", "description");
                             if (attIdx >= 0) {
-                                final java.lang.String v = context.eatAttribute(attIdx);
+                                final String v = context.eatAttribute(attIdx);
                                 state = 3;
                                 eatText3(v);
                                 continue outer;
@@ -602,7 +627,7 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
                         case 3:
                             attIdx = context.getAttribute("", "info_path");
                             if (attIdx >= 0) {
-                                final java.lang.String v = context.eatAttribute(attIdx);
+                                final String v = context.eatAttribute(attIdx);
                                 state = 6;
                                 eatText4(v);
                                 continue outer;
@@ -612,7 +637,7 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
                         case 6:
                             attIdx = context.getAttribute("", "path");
                             if (attIdx >= 0) {
-                                final java.lang.String v = context.eatAttribute(attIdx);
+                                final String v = context.eatAttribute(attIdx);
                                 state = 9;
                                 eatText5(v);
                                 continue outer;
@@ -620,7 +645,7 @@ public class FileTypeImpl implements org.janelia.it.jacs.server.jaxb.reference_r
                             break;
                     }
                 }
-                catch (java.lang.RuntimeException e) {
+                catch (RuntimeException e) {
                     handleUnexpectedTextException(value, e);
                 }
                 break;

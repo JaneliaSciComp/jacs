@@ -5,6 +5,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import org.janelia.it.jacs.web.gwt.common.client.jobs.JobSubmissionListener;
 import org.janelia.it.jacs.web.gwt.common.client.panel.TitledBox;
 import org.janelia.it.jacs.web.gwt.common.client.service.DataService;
 import org.janelia.it.jacs.web.gwt.common.client.service.DataServiceAsync;
@@ -27,7 +28,7 @@ public class IntersiteComparisonToolPanel extends Composite {
         ((ServiceDefTarget) _dataservice).setServiceEntryPoint("data.srv");
     }
 
-    public IntersiteComparisonToolPanel(String title, String taskId, org.janelia.it.jacs.web.gwt.common.client.jobs.JobSubmissionListener listener) {
+    public IntersiteComparisonToolPanel(String title, String taskId, JobSubmissionListener listener) {
         init(title, taskId);
     }
 

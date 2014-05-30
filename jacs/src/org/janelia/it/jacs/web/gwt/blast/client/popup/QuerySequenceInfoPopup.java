@@ -4,6 +4,7 @@ package org.janelia.it.jacs.web.gwt.blast.client.popup;
 import com.google.gwt.user.client.ui.FlexTable;
 import org.janelia.it.jacs.model.common.UserDataNodeVO;
 import org.janelia.it.jacs.web.gwt.common.client.Constants;
+import org.janelia.it.jacs.web.gwt.common.client.popup.BaseInfoPopup;
 import org.janelia.it.jacs.web.gwt.common.client.ui.table.comparables.FormattedDateTime;
 import org.janelia.it.jacs.web.gwt.common.client.util.BlastData;
 import org.janelia.it.jacs.web.gwt.common.client.util.NumberUtils;
@@ -12,7 +13,7 @@ import org.janelia.it.jacs.web.gwt.common.client.util.StringUtils;
 /**
  * @author Michael Press
  */
-public class QuerySequenceInfoPopup extends org.janelia.it.jacs.web.gwt.common.client.popup.BaseInfoPopup {
+public class QuerySequenceInfoPopup extends BaseInfoPopup {
     private BlastData _blastData;
 
     public QuerySequenceInfoPopup(BlastData blastData) {

@@ -38,6 +38,7 @@ import org.janelia.it.jacs.shared.node.FastaUtil;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
+import org.jboss.ejb3.StrictMaxPool;
 
 import javax.ejb.Remote;
 import javax.ejb.Stateless;
@@ -66,7 +67,7 @@ import java.util.List;
 @Stateless(name = "ComputeWS")
 @Remote(ComputeWS.class)
 @TransactionTimeout(432000)
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 100, timeout = 10000)
+@PoolClass(value = StrictMaxPool.class, maxSize = 100, timeout = 10000)
 public class ComputeWSBean extends BaseWSBean {
 
     // These methods allow someone running an external pipeline to bin their work into a common area

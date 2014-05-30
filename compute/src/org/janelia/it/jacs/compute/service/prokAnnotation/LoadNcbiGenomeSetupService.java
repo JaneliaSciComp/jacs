@@ -227,7 +227,7 @@ public class LoadNcbiGenomeSetupService implements IService {
     }
 
     private String waitAndVerifyCompletion(Long taskId) throws Exception {
-        org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
+        ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
         String[] statusTypeAndValue = computeBean.getTaskStatus(taskId);
         while (!Task.isDone(statusTypeAndValue[0])) {
             Thread.sleep(5000);

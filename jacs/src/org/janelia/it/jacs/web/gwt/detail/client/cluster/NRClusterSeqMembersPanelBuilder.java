@@ -40,7 +40,7 @@ public class NRClusterSeqMembersPanelBuilder extends BaseClusterMemberEntitiesPa
 
     private static final String NR_PROTEIN_ACC_HEADING = "NR Accession";
 
-    private org.janelia.it.jacs.web.gwt.detail.client.peptide.PeptideTableBuilder _tableBuilder;
+    private PeptideTableBuilder _tableBuilder;
 
     private class NRClusterSeqMembersRetriever implements PagedDataRetriever {
         private NRClusterSeqMembersRetriever() {

@@ -128,7 +128,7 @@ public class TaskDAOImplTest extends JacswebTestCase {
                     new SortArgument[] {
                             new SortArgument(BlastJobInfo.SORT_BY_NUM_HITS, SortArgument.SORT_ASC),
                             new SortArgument(BlastJobInfo.SORT_BY_QUERY_SEQ, SortArgument.SORT_DESC),
-                            new SortArgument(org.janelia.it.jacs.shared.tasks.BlastJobInfo.SORT_BY_SUBJECT_DB, SortArgument.SORT_ASC),
+                            new SortArgument(BlastJobInfo.SORT_BY_SUBJECT_DB, SortArgument.SORT_ASC),
                             new SortArgument(BlastJobInfo.SORT_BY_JOB_NAME, SortArgument.SORT_DESC)
                     },
                     false);
@@ -189,7 +189,7 @@ public class TaskDAOImplTest extends JacswebTestCase {
         }
     }
 
-    private void assertStatusInfo(org.janelia.it.jacs.shared.tasks.BlastJobInfo jobInfo, String jobId) {
+    private void assertStatusInfo(BlastJobInfo jobInfo, String jobId) {
         assertNotNull(jobInfo);
         if (jobId != null)
             assertEquals(jobInfo.getJobId(), jobId);

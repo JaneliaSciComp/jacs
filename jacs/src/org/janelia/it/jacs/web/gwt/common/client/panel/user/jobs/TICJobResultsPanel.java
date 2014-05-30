@@ -6,6 +6,7 @@ import com.google.gwt.user.client.ui.Widget;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.shared.tasks.JobInfo;
 import org.janelia.it.jacs.web.gwt.common.client.jobs.JobSelectionListener;
+import org.janelia.it.jacs.web.gwt.common.client.popup.jobs.JobParameterPopup;
 import org.janelia.it.jacs.web.gwt.common.client.popup.launcher.PopupCenteredLauncher;
 import org.janelia.it.jacs.web.gwt.common.client.ui.imagebundles.ImageBundleFactory;
 import org.janelia.it.jacs.web.gwt.common.client.ui.table.comparables.FormattedDateTime;
@@ -34,7 +35,7 @@ public class TICJobResultsPanel extends GeneralJobResultsPanel {
 
         MenuItem paramItem = new MenuItem("Show Parameters", true, new Command() {
             public void execute() {
-                _paramPopup = new org.janelia.it.jacs.web.gwt.common.client.popup.jobs.JobParameterPopup(
+                _paramPopup = new JobParameterPopup(
                         job.getJobname(),
                         new FormattedDateTime(job.getSubmitted().getTime()).toString(),
                         job.getParamMap(), false);

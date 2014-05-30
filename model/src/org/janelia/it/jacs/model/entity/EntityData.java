@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.model.entity;
 
 
+import java.io.Serializable;
 import java.util.Date;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -14,7 +15,7 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name="EntityData")
-public class EntityData implements java.io.Serializable, IsSerializable {
+public class EntityData implements Serializable, IsSerializable {
 	
 	@XmlAttribute(name="guid")
     private Long id;

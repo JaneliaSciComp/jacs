@@ -9,31 +9,53 @@
 
 package org.janelia.it.jacs.server.jaxb.reference_record.impl;
 
+import com.sun.msv.grammar.Grammar;
+import com.sun.msv.verifier.DocumentDeclaration;
+import com.sun.msv.verifier.regexp.REDocumentDeclaration;
+import com.sun.xml.bind.JAXBObject;
+import com.sun.xml.bind.RIElement;
+import com.sun.xml.bind.validator.SchemaDeserializer;
+import org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecord;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.AbstractUnmarshallingEventHandlerImpl;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.UnmarshallableObject;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.UnmarshallingContext;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.UnmarshallingEventHandler;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.ValidatableObject;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.XMLSerializable;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.XMLSerializer;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+
+import java.lang.Class;
+import java.lang.Object;
+import java.lang.RuntimeException;
+import java.lang.String;
+
 public class ReferenceRecordImpl
-        extends org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl
-        implements org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecord, com.sun.xml.bind.RIElement, com.sun.xml.bind.JAXBObject, org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.UnmarshallableObject, org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.XMLSerializable, org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.ValidatableObject {
+        extends ReferenceRecordTypeImpl
+        implements ReferenceRecord, RIElement, JAXBObject, UnmarshallableObject, XMLSerializable, ValidatableObject {
 
-    public final static java.lang.Class version = (org.janelia.it.jacs.server.jaxb.reference_record.impl.JAXBVersion.class);
-    private static com.sun.msv.grammar.Grammar schemaFragment;
+    public final static Class version = (JAXBVersion.class);
+    private static Grammar schemaFragment;
 
-    private final static java.lang.Class PRIMARY_INTERFACE_CLASS() {
-        return (org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecord.class);
+    private final static Class PRIMARY_INTERFACE_CLASS() {
+        return (ReferenceRecord.class);
     }
 
-    public java.lang.String ____jaxb_ri____getNamespaceURI() {
+    public String ____jaxb_ri____getNamespaceURI() {
         return "";
     }
 
-    public java.lang.String ____jaxb_ri____getLocalName() {
+    public String ____jaxb_ri____getLocalName() {
         return "reference_record";
     }
 
-    public org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.UnmarshallingEventHandler createUnmarshaller(org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.UnmarshallingContext context) {
-        return new org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordImpl.Unmarshaller(context);
+    public UnmarshallingEventHandler createUnmarshaller(UnmarshallingContext context) {
+        return new ReferenceRecordImpl.Unmarshaller(context);
     }
 
-    public void serializeBody(org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.XMLSerializer context)
-            throws org.xml.sax.SAXException {
+    public void serializeBody(XMLSerializer context)
+            throws SAXException {
         context.startElement("", "reference_record");
         super.serializeURIs(context);
         context.endNamespaceDecls();
@@ -43,21 +65,21 @@ public class ReferenceRecordImpl
         context.endElement();
     }
 
-    public void serializeAttributes(org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.XMLSerializer context)
-            throws org.xml.sax.SAXException {
+    public void serializeAttributes(XMLSerializer context)
+            throws SAXException {
     }
 
-    public void serializeURIs(org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.XMLSerializer context)
-            throws org.xml.sax.SAXException {
+    public void serializeURIs(XMLSerializer context)
+            throws SAXException {
     }
 
-    public java.lang.Class getPrimaryInterface() {
-        return (org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecord.class);
+    public Class getPrimaryInterface() {
+        return (ReferenceRecord.class);
     }
 
-    public com.sun.msv.verifier.DocumentDeclaration createRawValidator() {
+    public DocumentDeclaration createRawValidator() {
         if (schemaFragment == null) {
-            schemaFragment = com.sun.xml.bind.validator.SchemaDeserializer.deserialize((
+            schemaFragment = SchemaDeserializer.deserialize((
                     "\u00ac\u00ed\u0000\u0005sr\u0000\'com.sun.msv.grammar.trex.ElementPattern\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0002\u0000\u0001L\u0000"
                             + "\tnameClasst\u0000\u001fLcom/sun/msv/grammar/NameClass;xr\u0000\u001ecom.sun.msv."
                             + "grammar.ElementExp\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0002\u0000\u0002Z\u0000\u001aignoreUndeclaredAttributesL\u0000"
@@ -130,35 +152,35 @@ public class ReferenceRecordImpl
                             + ")q\u0000~\u0000Oq\u0000~\u0000[q\u0000~\u0000aq\u0000~\u0000gq\u0000~\u0000sq\u0000~\u0000~q\u0000~\u0000\u0086q\u0000~\u0000\u008bq\u0000~\u0000\u0092q\u0000~\u0000\u0097q\u0000~\u0000\u009bq\u0000~\u0000"
                             + "\u0010x"));
         }
-        return new com.sun.msv.verifier.regexp.REDocumentDeclaration(schemaFragment);
+        return new REDocumentDeclaration(schemaFragment);
     }
 
     public class Unmarshaller
-            extends org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.AbstractUnmarshallingEventHandlerImpl {
+            extends AbstractUnmarshallingEventHandlerImpl {
 
 
-        public Unmarshaller(org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.UnmarshallingContext context) {
+        public Unmarshaller(UnmarshallingContext context) {
             super(context, "----");
         }
 
-        protected Unmarshaller(org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.UnmarshallingContext context, int startState) {
+        protected Unmarshaller(UnmarshallingContext context, int startState) {
             this(context);
             state = startState;
         }
 
-        public java.lang.Object owner() {
-            return org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordImpl.this;
+        public Object owner() {
+            return ReferenceRecordImpl.this;
         }
 
-        public void enterElement(java.lang.String ___uri, java.lang.String ___local, java.lang.String ___qname, org.xml.sax.Attributes __atts)
-                throws org.xml.sax.SAXException {
+        public void enterElement(String ___uri, String ___local, String ___qname, Attributes __atts)
+                throws SAXException {
             int attIdx;
             outer:
             while (true) {
                 switch (state) {
                     case 1:
                         if (("title" == ___local) && ("" == ___uri)) {
-                            spawnHandlerFromEnterElement((((org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl) org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordImpl.this).new Unmarshaller(context)), 2, ___uri, ___local, ___qname, __atts);
+                            spawnHandlerFromEnterElement((((ReferenceRecordTypeImpl) ReferenceRecordImpl.this).new Unmarshaller(context)), 2, ___uri, ___local, ___qname, __atts);
                             return;
                         }
                         break;
@@ -178,8 +200,8 @@ public class ReferenceRecordImpl
             }
         }
 
-        public void leaveElement(java.lang.String ___uri, java.lang.String ___local, java.lang.String ___qname)
-                throws org.xml.sax.SAXException {
+        public void leaveElement(String ___uri, String ___local, String ___qname)
+                throws SAXException {
             int attIdx;
             outer:
             while (true) {
@@ -200,8 +222,8 @@ public class ReferenceRecordImpl
             }
         }
 
-        public void enterAttribute(java.lang.String ___uri, java.lang.String ___local, java.lang.String ___qname)
-                throws org.xml.sax.SAXException {
+        public void enterAttribute(String ___uri, String ___local, String ___qname)
+                throws SAXException {
             int attIdx;
             outer:
             while (true) {
@@ -215,8 +237,8 @@ public class ReferenceRecordImpl
             }
         }
 
-        public void leaveAttribute(java.lang.String ___uri, java.lang.String ___local, java.lang.String ___qname)
-                throws org.xml.sax.SAXException {
+        public void leaveAttribute(String ___uri, String ___local, String ___qname)
+                throws SAXException {
             int attIdx;
             outer:
             while (true) {
@@ -230,8 +252,8 @@ public class ReferenceRecordImpl
             }
         }
 
-        public void handleText(final java.lang.String value)
-                throws org.xml.sax.SAXException {
+        public void handleText(final String value)
+                throws SAXException {
             int attIdx;
             outer:
             while (true) {
@@ -242,7 +264,7 @@ public class ReferenceRecordImpl
                             return;
                     }
                 }
-                catch (java.lang.RuntimeException e) {
+                catch (RuntimeException e) {
                     handleUnexpectedTextException(value, e);
                 }
                 break;

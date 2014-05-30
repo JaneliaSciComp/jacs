@@ -2,6 +2,7 @@
 package org.janelia.it.jacs.web.gwt.frv.client.panels.tabs;
 
 import com.google.gwt.user.client.ui.Widget;
+import org.janelia.it.jacs.shared.tasks.JobInfo;
 import org.janelia.it.jacs.web.gwt.common.client.jobs.JobSelectionListener;
 
 /**
@@ -12,7 +13,7 @@ public interface FrvControlsPanelTab {
 
     public String getTabLabel();
 
-    public void setJob(org.janelia.it.jacs.shared.tasks.JobInfo job);
+    public void setJob(JobInfo job);
 
     public void setRecruitableJobSelectionListener(JobSelectionListener listener);
 

@@ -4,11 +4,12 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 
 import javax.xml.bind.annotation.*;
 
+import java.io.Serializable;
 import java.util.*;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name="Entity")
-public class Entity  implements java.io.Serializable, IsSerializable {
+public class Entity  implements Serializable, IsSerializable {
     
     @XmlAttribute(name="guid")
     private Long id;

@@ -8,6 +8,7 @@ import java.rmi.RemoteException;
 import java.util.*;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
@@ -63,7 +64,7 @@ public class FrvRecruitFromStatisticsService implements IService {
             // generateSampleInfoFile();
 
             // Now run the pipeline
-            org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
+            ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
             HashMap<String, GenbankFileInfo> genbankFiles = RecruitmentDataHelper.getGenbankFileMap();
             HashMap<String, String> recruitingSetofGbksAndTaskMap = new HashMap<String, String>();
             Subject tmpUser = computeBean.getSubjectByNameOrKey(task.getOwner());

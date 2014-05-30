@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 
 /**
  * Created by IntelliJ IDEA.
@@ -142,7 +143,7 @@ public class FastaFile extends File {
                                     fastaBuffer.position(fastaBuffer.position() - 1);
                                     // display some stats
                                     long currentTime = System.currentTimeMillis();
-                                    System.out.println(new java.util.Date() + " Partition " + targetCount + " containing " +
+                                    System.out.println(new Date() + " Partition " + targetCount + " containing " +
                                             currentEntriesCount + " sequences and " + currentBasesCount + " residues ends at " +
                                             (fastaFileReadOffset - fastaBuffer.remaining()) + " and was created in " +
                                             (currentTime - prevTime) + " ms");
@@ -184,7 +185,7 @@ public class FastaFile extends File {
                 // write the last partition
                 if (partitionStartOffset < fastaFileSize) {
                     long currentTime = System.currentTimeMillis();
-                    System.out.println(new java.util.Date() + " Partition " + targetCount + " containing " +
+                    System.out.println(new Date() + " Partition " + targetCount + " containing " +
                             currentEntriesCount + " sequences and " + currentBasesCount + " residues ends at " +
                             (fastaFileSize) + " and was created in " +
                             (currentTime - prevTime) + " ms");

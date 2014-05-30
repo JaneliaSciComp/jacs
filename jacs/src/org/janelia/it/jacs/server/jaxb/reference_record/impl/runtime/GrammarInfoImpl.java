@@ -8,6 +8,8 @@
 
 package org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime;
 
+import com.sun.msv.grammar.Grammar;
+import com.sun.xml.bind.GrammarImpl;
 import com.sun.xml.bind.Messages;
 
 import javax.xml.bind.JAXBException;
@@ -128,7 +130,7 @@ public class GrammarInfoImpl implements GrammarInfo {
      * Gets the MSV AGM which can be used to validate XML during
      * marshalling/unmarshalling.
      */
-    public final com.sun.msv.grammar.Grammar getGrammar() throws JAXBException {
+    public final Grammar getGrammar() throws JAXBException {
         try {
             InputStream is = objectFactoryClass.getResourceAsStream("bgm.ser");
 
@@ -143,10 +145,10 @@ public class GrammarInfoImpl implements GrammarInfo {
 
             // deserialize the bgm
             ObjectInputStream ois = new ObjectInputStream(is);
-            com.sun.xml.bind.GrammarImpl g = (com.sun.xml.bind.GrammarImpl) ois.readObject();
+            GrammarImpl g = (GrammarImpl) ois.readObject();
             ois.close();
 
-            g.connect(new com.sun.msv.grammar.Grammar[]{g});    // connect to itself
+            g.connect(new Grammar[]{g});    // connect to itself
 
             return g;
         }

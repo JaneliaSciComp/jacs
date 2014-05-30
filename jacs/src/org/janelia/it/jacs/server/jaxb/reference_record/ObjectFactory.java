@@ -10,6 +10,26 @@
 package org.janelia.it.jacs.server.jaxb.reference_record;
 
 
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.FileImpl;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.FileTypeImpl;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.JAXBVersion;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordImpl;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.SubdirImpl;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.SubdirTypeImpl;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.TextTypeImpl;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.DefaultJAXBContextImpl;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.GrammarInfo;
+import org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.GrammarInfoImpl;
+
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.PropertyException;
+import javax.xml.namespace.QName;
+import java.lang.Class;
+import java.lang.Object;
+import java.lang.String;
+import java.util.HashMap;
+
 /**
  * This object contains factory methods for each
  * Java content interface and Java element interface
@@ -24,30 +44,30 @@ package org.janelia.it.jacs.server.jaxb.reference_record;
  * provided in this class.
  */
 public class ObjectFactory
-        extends org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.DefaultJAXBContextImpl {
+        extends DefaultJAXBContextImpl {
 
-    private static java.util.HashMap defaultImplementations = new java.util.HashMap(19, 0.75F);
-    private static java.util.HashMap rootTagMap = new java.util.HashMap();
-    public final static org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.GrammarInfo grammarInfo = new org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime.GrammarInfoImpl(rootTagMap, defaultImplementations, (org.janelia.it.jacs.server.jaxb.reference_record.ObjectFactory.class));
-    public final static java.lang.Class version = (org.janelia.it.jacs.server.jaxb.reference_record.impl.JAXBVersion.class);
+    private static HashMap defaultImplementations = new HashMap(19, 0.75F);
+    private static HashMap rootTagMap = new HashMap();
+    public final static GrammarInfo grammarInfo = new GrammarInfoImpl(rootTagMap, defaultImplementations, (ObjectFactory.class));
+    public final static Class version = (JAXBVersion.class);
 
     static {
-        defaultImplementations.put((org.janelia.it.jacs.server.jaxb.reference_record.Subdir.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.SubdirImpl");
-        defaultImplementations.put((org.janelia.it.jacs.server.jaxb.reference_record.SubdirType.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.SubdirTypeImpl");
-        defaultImplementations.put((org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl");
-        defaultImplementations.put((org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.PublicationType.DateType.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl$PublicationTypeImpl$DateTypeImpl");
-        defaultImplementations.put((org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.PublicationType.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl$PublicationTypeImpl");
-        defaultImplementations.put((org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.PublicationType.JournalType.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl$PublicationTypeImpl$JournalTypeImpl");
-        defaultImplementations.put((org.janelia.it.jacs.server.jaxb.reference_record.File.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.FileImpl");
-        defaultImplementations.put((org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.DataType.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl$DataTypeImpl");
-        defaultImplementations.put((org.janelia.it.jacs.server.jaxb.reference_record.FileType.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.FileTypeImpl");
-        defaultImplementations.put((org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.AuthorsType.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl$AuthorsTypeImpl");
-        defaultImplementations.put((org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecord.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordImpl");
-        defaultImplementations.put((org.janelia.it.jacs.server.jaxb.reference_record.TextType.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.TextTypeImpl");
-        defaultImplementations.put((org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.CombinedDataType.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl$CombinedDataTypeImpl");
-        rootTagMap.put(new javax.xml.namespace.QName("", "subdir"), (org.janelia.it.jacs.server.jaxb.reference_record.Subdir.class));
-        rootTagMap.put(new javax.xml.namespace.QName("", "file"), (org.janelia.it.jacs.server.jaxb.reference_record.File.class));
-        rootTagMap.put(new javax.xml.namespace.QName("", "reference_record"), (org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecord.class));
+        defaultImplementations.put((Subdir.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.SubdirImpl");
+        defaultImplementations.put((SubdirType.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.SubdirTypeImpl");
+        defaultImplementations.put((ReferenceRecordType.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl");
+        defaultImplementations.put((ReferenceRecordType.PublicationType.DateType.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl$PublicationTypeImpl$DateTypeImpl");
+        defaultImplementations.put((ReferenceRecordType.PublicationType.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl$PublicationTypeImpl");
+        defaultImplementations.put((ReferenceRecordType.PublicationType.JournalType.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl$PublicationTypeImpl$JournalTypeImpl");
+        defaultImplementations.put((File.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.FileImpl");
+        defaultImplementations.put((ReferenceRecordType.DataType.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl$DataTypeImpl");
+        defaultImplementations.put((FileType.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.FileTypeImpl");
+        defaultImplementations.put((ReferenceRecordType.AuthorsType.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl$AuthorsTypeImpl");
+        defaultImplementations.put((ReferenceRecord.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordImpl");
+        defaultImplementations.put((TextType.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.TextTypeImpl");
+        defaultImplementations.put((ReferenceRecordType.CombinedDataType.class), "org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl$CombinedDataTypeImpl");
+        rootTagMap.put(new QName("", "subdir"), (Subdir.class));
+        rootTagMap.put(new QName("", "file"), (File.class));
+        rootTagMap.put(new QName("", "reference_record"), (ReferenceRecord.class));
     }
 
     /**
@@ -64,8 +84,8 @@ public class ObjectFactory
      * @return a new instance
      * @throws JAXBException if an error occurs
      */
-    public java.lang.Object newInstance(java.lang.Class javaContentInterface)
-            throws javax.xml.bind.JAXBException {
+    public Object newInstance(Class javaContentInterface)
+            throws JAXBException {
         return super.newInstance(javaContentInterface);
     }
 
@@ -79,8 +99,8 @@ public class ObjectFactory
      * @return the value of the requested property
      * @throws PropertyException when there is an error retrieving the given property or value
      */
-    public java.lang.Object getProperty(java.lang.String name)
-            throws javax.xml.bind.PropertyException {
+    public Object getProperty(String name)
+            throws PropertyException {
         return super.getProperty(name);
     }
 
@@ -94,8 +114,8 @@ public class ObjectFactory
      * @param name  the name of the property to retrieve
      * @throws PropertyException when there is an error processing the given property or value
      */
-    public void setProperty(java.lang.String name, java.lang.Object value)
-            throws javax.xml.bind.PropertyException {
+    public void setProperty(String name, Object value)
+            throws PropertyException {
         super.setProperty(name, value);
     }
 
@@ -104,9 +124,9 @@ public class ObjectFactory
      *
      * @throws JAXBException if an error occurs
      */
-    public org.janelia.it.jacs.server.jaxb.reference_record.Subdir createSubdir()
-            throws javax.xml.bind.JAXBException {
-        return new org.janelia.it.jacs.server.jaxb.reference_record.impl.SubdirImpl();
+    public Subdir createSubdir()
+            throws JAXBException {
+        return new SubdirImpl();
     }
 
     /**
@@ -114,9 +134,9 @@ public class ObjectFactory
      *
      * @throws JAXBException if an error occurs
      */
-    public org.janelia.it.jacs.server.jaxb.reference_record.SubdirType createSubdirType()
-            throws javax.xml.bind.JAXBException {
-        return new org.janelia.it.jacs.server.jaxb.reference_record.impl.SubdirTypeImpl();
+    public SubdirType createSubdirType()
+            throws JAXBException {
+        return new SubdirTypeImpl();
     }
 
     /**
@@ -124,9 +144,9 @@ public class ObjectFactory
      *
      * @throws JAXBException if an error occurs
      */
-    public org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType createReferenceRecordType()
-            throws javax.xml.bind.JAXBException {
-        return new org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl();
+    public ReferenceRecordType createReferenceRecordType()
+            throws JAXBException {
+        return new ReferenceRecordTypeImpl();
     }
 
     /**
@@ -134,9 +154,9 @@ public class ObjectFactory
      *
      * @throws JAXBException if an error occurs
      */
-    public org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.PublicationType.DateType createReferenceRecordTypePublicationTypeDateType()
-            throws javax.xml.bind.JAXBException {
-        return new org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl.PublicationTypeImpl.DateTypeImpl();
+    public ReferenceRecordType.PublicationType.DateType createReferenceRecordTypePublicationTypeDateType()
+            throws JAXBException {
+        return new ReferenceRecordTypeImpl.PublicationTypeImpl.DateTypeImpl();
     }
 
     /**
@@ -144,9 +164,9 @@ public class ObjectFactory
      *
      * @throws JAXBException if an error occurs
      */
-    public org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.PublicationType createReferenceRecordTypePublicationType()
-            throws javax.xml.bind.JAXBException {
-        return new org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl.PublicationTypeImpl();
+    public ReferenceRecordType.PublicationType createReferenceRecordTypePublicationType()
+            throws JAXBException {
+        return new ReferenceRecordTypeImpl.PublicationTypeImpl();
     }
 
     /**
@@ -154,9 +174,9 @@ public class ObjectFactory
      *
      * @throws JAXBException if an error occurs
      */
-    public org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.PublicationType.JournalType createReferenceRecordTypePublicationTypeJournalType()
-            throws javax.xml.bind.JAXBException {
-        return new org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl.PublicationTypeImpl.JournalTypeImpl();
+    public ReferenceRecordType.PublicationType.JournalType createReferenceRecordTypePublicationTypeJournalType()
+            throws JAXBException {
+        return new ReferenceRecordTypeImpl.PublicationTypeImpl.JournalTypeImpl();
     }
 
     /**
@@ -164,9 +184,9 @@ public class ObjectFactory
      *
      * @throws JAXBException if an error occurs
      */
-    public org.janelia.it.jacs.server.jaxb.reference_record.File createFile()
-            throws javax.xml.bind.JAXBException {
-        return new org.janelia.it.jacs.server.jaxb.reference_record.impl.FileImpl();
+    public File createFile()
+            throws JAXBException {
+        return new FileImpl();
     }
 
     /**
@@ -174,9 +194,9 @@ public class ObjectFactory
      *
      * @throws JAXBException if an error occurs
      */
-    public org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.DataType createReferenceRecordTypeDataType()
-            throws javax.xml.bind.JAXBException {
-        return new org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl.DataTypeImpl();
+    public ReferenceRecordType.DataType createReferenceRecordTypeDataType()
+            throws JAXBException {
+        return new ReferenceRecordTypeImpl.DataTypeImpl();
     }
 
     /**
@@ -184,9 +204,9 @@ public class ObjectFactory
      *
      * @throws JAXBException if an error occurs
      */
-    public org.janelia.it.jacs.server.jaxb.reference_record.FileType createFileType()
-            throws javax.xml.bind.JAXBException {
-        return new org.janelia.it.jacs.server.jaxb.reference_record.impl.FileTypeImpl();
+    public FileType createFileType()
+            throws JAXBException {
+        return new FileTypeImpl();
     }
 
     /**
@@ -194,9 +214,9 @@ public class ObjectFactory
      *
      * @throws JAXBException if an error occurs
      */
-    public org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.AuthorsType createReferenceRecordTypeAuthorsType()
-            throws javax.xml.bind.JAXBException {
-        return new org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl.AuthorsTypeImpl();
+    public ReferenceRecordType.AuthorsType createReferenceRecordTypeAuthorsType()
+            throws JAXBException {
+        return new ReferenceRecordTypeImpl.AuthorsTypeImpl();
     }
 
     /**
@@ -204,9 +224,9 @@ public class ObjectFactory
      *
      * @throws JAXBException if an error occurs
      */
-    public org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecord createReferenceRecord()
-            throws javax.xml.bind.JAXBException {
-        return new org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordImpl();
+    public ReferenceRecord createReferenceRecord()
+            throws JAXBException {
+        return new ReferenceRecordImpl();
     }
 
     /**
@@ -214,9 +234,9 @@ public class ObjectFactory
      *
      * @throws JAXBException if an error occurs
      */
-    public org.janelia.it.jacs.server.jaxb.reference_record.TextType createTextType()
-            throws javax.xml.bind.JAXBException {
-        return new org.janelia.it.jacs.server.jaxb.reference_record.impl.TextTypeImpl();
+    public TextType createTextType()
+            throws JAXBException {
+        return new TextTypeImpl();
     }
 
     /**
@@ -224,9 +244,9 @@ public class ObjectFactory
      *
      * @throws JAXBException if an error occurs
      */
-    public org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.CombinedDataType createReferenceRecordTypeCombinedDataType()
-            throws javax.xml.bind.JAXBException {
-        return new org.janelia.it.jacs.server.jaxb.reference_record.impl.ReferenceRecordTypeImpl.CombinedDataTypeImpl();
+    public ReferenceRecordType.CombinedDataType createReferenceRecordTypeCombinedDataType()
+            throws JAXBException {
+        return new ReferenceRecordTypeImpl.CombinedDataTypeImpl();
     }
 
 }

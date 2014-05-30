@@ -1,6 +1,7 @@
 
 package org.janelia.it.jacs.server.ie;
 
+import org.apache.log4j.Logger;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -44,7 +45,7 @@ public class ProjectExporter {
         }
     }
 
-    private static final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(FileUtil.class.getName());
+    private static final Logger logger = Logger.getLogger(FileUtil.class.getName());
 
     public static void main(String[] args) {
         ProjectExporter projectExporter = new ProjectExporter();

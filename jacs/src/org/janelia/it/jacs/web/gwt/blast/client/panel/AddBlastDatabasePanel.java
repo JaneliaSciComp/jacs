@@ -8,6 +8,7 @@ import com.google.gwt.user.client.ui.*;
 import org.janelia.it.jacs.model.common.UserDataNodeVO;
 import org.janelia.it.jacs.model.tasks.blast.CreateBlastDatabaseTask;
 import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.shared.tasks.JobInfo;
 import org.janelia.it.jacs.web.gwt.common.client.jobs.JobStatusListener;
 import org.janelia.it.jacs.web.gwt.common.client.jobs.JobStatusTimer;
 import org.janelia.it.jacs.web.gwt.common.client.jobs.JobSubmissionListener;
@@ -178,12 +179,12 @@ public class AddBlastDatabasePanel extends VerticalPanel {
      */
     private void createUpdateBlastNodesTimer(final String jobNumber) {
         new JobStatusTimer(jobNumber, new JobStatusListener() {
-            public void onJobRunning(org.janelia.it.jacs.shared.tasks.JobInfo ignore) {
+            public void onJobRunning(JobInfo ignore) {
                 // ignore, timer still running
             }
 
             // timer cancels itself
-            public void onJobFinished(org.janelia.it.jacs.shared.tasks.JobInfo newJobInfo) {
+            public void onJobFinished(JobInfo newJobInfo) {
                 _logger.debug("Create DB task " + newJobInfo.getJobId() + " completed, status = " + newJobInfo.getStatus());
                 _listener.onSuccess(newJobInfo.getJobId());
             }

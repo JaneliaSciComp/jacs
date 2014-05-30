@@ -4,6 +4,7 @@ package org.janelia.it.jacs.web.gwt.blast.client.wizard;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
+import org.janelia.it.jacs.shared.tasks.JobInfo;
 import org.janelia.it.jacs.web.gwt.blast.client.submit.SubmitBlastJob;
 import org.janelia.it.jacs.web.gwt.common.client.Constants;
 import org.janelia.it.jacs.web.gwt.common.client.jobs.JobStatusListener;
@@ -106,12 +107,12 @@ public class SubmitJobWaitPage extends BlastWizardPage {
      */
     private void createJobStatusTimer(final String jobNumber) {
         new JobStatusTimer(jobNumber, new JobStatusListener() {
-            public void onJobRunning(org.janelia.it.jacs.shared.tasks.JobInfo ignore) {
+            public void onJobRunning(JobInfo ignore) {
                 // ignore, timer still running
             }
 
             // timer cancels itself
-            public void onJobFinished(org.janelia.it.jacs.shared.tasks.JobInfo newJobInfo) {
+            public void onJobFinished(JobInfo newJobInfo) {
                 _logger.debug("Job " + newJobInfo.getJobId() + " completed, status = " + newJobInfo.getStatus());
                 Window.open("/jacs/gwt/Status/Status.htm", "_self", "");
             }

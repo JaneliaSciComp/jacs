@@ -4,6 +4,7 @@ package org.janelia.it.jacs.model.status;
 import com.google.gwt.user.client.rpc.IsSerializable;
 import org.apache.log4j.Logger;
 
+import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.util.Date;
 import java.util.Map;
@@ -14,7 +15,7 @@ import java.util.Map;
  * Date: Jul 21, 2008
  * Time: 2:32:41 PM
  */
-public class GridJobStatus implements java.io.Serializable, IsSerializable {
+public class GridJobStatus implements Serializable, IsSerializable {
     private transient Logger logger = Logger.getLogger(this.getClass());
 
     public enum JobState {

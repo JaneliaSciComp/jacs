@@ -10,6 +10,7 @@ import org.janelia.it.jacs.compute.engine.launcher.ProcessLauncher;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
+import org.jboss.ejb3.StrictMaxPool;
 
 import javax.ejb.EJBException;
 import javax.ejb.Stateless;
@@ -29,7 +30,7 @@ import javax.ejb.TransactionAttributeType;
 @Stateless
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 60, timeout = 10000)
+@PoolClass(value = StrictMaxPool.class, maxSize = 60, timeout = 10000)
 public class ProcessLauncherSLSB extends SeriesLauncherSLSB {
 
     protected ILauncher getLauncher() {

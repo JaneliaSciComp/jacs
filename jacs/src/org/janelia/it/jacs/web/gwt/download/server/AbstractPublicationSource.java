@@ -7,6 +7,7 @@ import org.janelia.it.jacs.web.gwt.common.client.model.download.DownloadableData
 
 import java.io.File;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -75,7 +76,7 @@ public abstract class AbstractPublicationSource implements PublicationSource {
         long returnValue = 0L;
         try {
             URL url = new URL(location);
-            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             // NOTE: this does not get a long worth of data--just an int.
             //  An int is not sufficient for most downloads, but may be okay
             //  for just PDFs.  However, if this "getContentLength()" is

@@ -41,7 +41,7 @@ public class NCBILoadGenomePopup extends ModalPopupPanel {
     private String _localGenomeDirectoryName;
     private SybaseInfoPanel _sybaseInfoPanel;
     private LoadingLabel _statusMessage = new LoadingLabel();
-    private org.janelia.it.jacs.web.gwt.common.client.jobs.JobSubmissionListener _listener;
+    private JobSubmissionListener _listener;
 
     public NCBILoadGenomePopup(String localGenomeDirectoryName, boolean useBulkLoad, JobSubmissionListener listener) {
         super("Load Data From NCBI", false);

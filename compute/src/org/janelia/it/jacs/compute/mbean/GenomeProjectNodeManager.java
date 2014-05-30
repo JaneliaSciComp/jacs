@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.mbean;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Event;
@@ -197,7 +198,7 @@ public class GenomeProjectNodeManager implements GenomeProjectNodeManagerMBean {
     }
 
     private String waitAndVerifyCompletion(Long taskId) throws Exception {
-        org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
+        ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
         String[] statusTypeAndValue = computeBean.getTaskStatus(taskId);
         while (!Task.isDone(statusTypeAndValue[0])) {
             Thread.sleep(5000);

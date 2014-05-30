@@ -8,6 +8,9 @@
 
 package org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime;
 
+import com.sun.msv.grammar.Expression;
+import com.sun.msv.grammar.ExpressionPool;
+import com.sun.msv.grammar.Grammar;
 import com.sun.xml.bind.GrammarImpl;
 import com.sun.xml.bind.Messages;
 import com.sun.xml.bind.ProxyGroup;
@@ -214,11 +217,11 @@ class GrammarInfoFacade implements GrammarInfo {
         return null;
     }
 
-    private com.sun.msv.grammar.Grammar bgm = null;
+    private Grammar bgm = null;
 
-    public com.sun.msv.grammar.Grammar getGrammar() throws JAXBException {
+    public Grammar getGrammar() throws JAXBException {
         if (bgm == null) {
-            com.sun.msv.grammar.Grammar[] grammars = new com.sun.msv.grammar.Grammar[grammarInfos.length];
+            Grammar[] grammars = new Grammar[grammarInfos.length];
 
             // load al the grammars individually
             for (int i = 0; i < grammarInfos.length; i++)
@@ -231,7 +234,7 @@ class GrammarInfoFacade implements GrammarInfo {
 
             // take union of them
             for (int i = 0; i < grammarInfos.length; i++) {
-                com.sun.msv.grammar.Grammar n = grammars[i];
+                Grammar n = grammars[i];
                 if (bgm == null) bgm = n;
                 else bgm = union(bgm, n);
             }
@@ -243,18 +246,18 @@ class GrammarInfoFacade implements GrammarInfo {
     /**
      * Computes the union of two grammars.
      */
-    private com.sun.msv.grammar.Grammar union(com.sun.msv.grammar.Grammar g1, com.sun.msv.grammar.Grammar g2) {
+    private Grammar union(Grammar g1, Grammar g2) {
         // either g1.getPool() or g2.getPool() is OK.
         // this is just a metter of performance problem.
-        final com.sun.msv.grammar.ExpressionPool pool = g1.getPool();
-        final com.sun.msv.grammar.Expression top = pool.createChoice(g1.getTopLevel(), g2.getTopLevel());
+        final ExpressionPool pool = g1.getPool();
+        final Expression top = pool.createChoice(g1.getTopLevel(), g2.getTopLevel());
 
-        return new com.sun.msv.grammar.Grammar() {
-            public com.sun.msv.grammar.ExpressionPool getPool() {
+        return new Grammar() {
+            public ExpressionPool getPool() {
                 return pool;
             }
 
-            public com.sun.msv.grammar.Expression getTopLevel() {
+            public Expression getTopLevel() {
                 return top;
             }
         };
