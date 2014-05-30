@@ -467,7 +467,18 @@ public class SampleDataManager implements SampleDataManagerMBean {
             saveAndRunTask(user, processName, displayName);
         } 
         catch (Exception ex) {
-            log.error("Error running sage artifact export", ex);
+            log.error("Error running SAGE Artifact Export", ex);
+        }
+    }
+    
+    public void runSageQiScoreSync() {
+        try {
+            String processName = "SageQiScoreSync";
+            String displayName = "Sage Qi Score Sync";
+            saveAndRunTask("system", processName, displayName);
+        } 
+        catch (Exception ex) {
+            log.error("Error running SAGE Qi Score Sync", ex);
         }
     }
 }

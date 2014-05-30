@@ -8,6 +8,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +35,7 @@ import org.janelia.it.jacs.compute.api.support.SageTerm;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.sage.CvTerm;
 import org.janelia.it.jacs.model.sage.Image;
+import org.janelia.it.jacs.model.sage.ImageProperty;
 import org.janelia.it.jacs.model.sage.Line;
 import org.janelia.it.jacs.model.sage.SecondaryImage;
 import org.janelia.it.jacs.shared.utils.StringUtils;
@@ -125,7 +128,6 @@ public class SageDAO {
             resultSet = pStatement.executeQuery();
 
         } catch (SQLException e) {
-            //noinspection ConstantConditions
             ResultSetIterator.close(resultSet, pStatement, connection, log);
             throw new DaoException("Error querying SAGE", e);
         }
@@ -154,7 +156,6 @@ public class SageDAO {
             resultSet = pStatement.executeQuery();
 
         } catch (SQLException e) {
-            //noinspection ConstantConditions
             ResultSetIterator.close(resultSet, pStatement, connection, log);
             throw new DaoException("Error querying SAGE", e);
         }
@@ -186,7 +187,6 @@ public class SageDAO {
             resultSet = pStatement.executeQuery();
 
         } catch (SQLException e) {
-            //noinspection ConstantConditions
             ResultSetIterator.close(resultSet, pStatement, connection, log);
             throw new DaoException("Error querying SAGE", e);
         }
@@ -313,7 +313,18 @@ public class SageDAO {
 //        return (List<Image>)query.list();
 //    }
 
-    public List<Image> getImages(List<Integer> ids) {
+    public Image getImage(Integer id) {
+        if (log.isTraceEnabled()) {
+            log.trace("getImages(id="+id+")");    
+        }
+        Session session = getCurrentSession();
+        Query query = session.createQuery("select image from Image image where image.id = :ids ");
+        query.setInteger("id", id);
+        return (Image)query.uniqueResult();
+    }
+    
+    @SuppressWarnings("unchecked")
+	public List<Image> getImages(Collection<Integer> ids) {
         if (log.isTraceEnabled()) {
             log.trace("getImages(ids.size="+ids.size()+")");    
         }
@@ -321,10 +332,45 @@ public class SageDAO {
         Session session = getCurrentSession();
         Query query = session.createQuery("select image from Image image where image.id in (:ids) ");
         query.setParameterList("ids", ids);
-        //noinspection unchecked
         return (List<Image>) query.list();
     }
-    
+
+    public ImageProperty saveImageProperty(ImageProperty imageProperty) throws DaoException {
+    	if (imageProperty.getImage()==null) {
+    		throw new DaoException("Image property is not associated with an image");
+    	}
+    	if (imageProperty.getType()==null) {
+    		throw new DaoException("Image property has no type");
+    	}
+        if (log.isTraceEnabled()) {
+            log.trace("saveImageProperty(image.id="+imageProperty.getImage().getId()+", type.name="+imageProperty.getType().getName()+")");    
+        }
+        
+        try {
+            getCurrentSession().saveOrUpdate(imageProperty);
+        } 
+        catch (Exception e) {
+            throw new DaoException("Error saving image property in SAGE", e);
+        }
+        return imageProperty;
+    }
+
+	public ImageProperty setImageProperty(Image image, CvTerm type, String value) throws Exception {
+    	for(ImageProperty property : image.getImageProperties()) {
+    		if (property.getType().equals(type) && !property.getValue().equals(value)) {
+    			// Update existing property value
+    			log.debug("Overwriting existing "+type.getName()+" value ("+property.getValue()+") with new value ("+value+") for image "+image.getId()+")");
+    			property.setValue(value);
+    			return saveImageProperty(property);
+    		}
+    	}
+    	// Set new property
+        ImageProperty prop = new ImageProperty(type, image, value, new Date());
+        image.getImageProperties().add(prop);
+        saveImageProperty(prop);
+        return prop;
+    }
+	
     public Image saveImage(Image image) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("saveImage(image.name="+image.getName()+")");    
@@ -334,7 +380,7 @@ public class SageDAO {
             getCurrentSession().saveOrUpdate(image);
         } 
         catch (Exception e) {
-            throw new DaoException("Error creating new primary image in SAGE", e);
+            throw new DaoException("Error saving primary image in SAGE", e);
         }
         return image;
     }
@@ -348,7 +394,7 @@ public class SageDAO {
             getCurrentSession().saveOrUpdate(secondaryImage);
         } 
         catch (Exception e) {
-            throw new DaoException("Error creating new primary image in SAGE", e);
+            throw new DaoException("Error saving secondary image in SAGE", e);
         }
         return secondaryImage;
     }
@@ -487,7 +533,7 @@ public class SageDAO {
             "  inner join image_property_vw ip3 on (ip3.image_id=i.id and ip3.type='slide_code' and ip3.value is not null)" +
             "  where i.display=true and i.path is not null" +
             ") image_vw on (ip1.image_id = image_vw.id) " +
-            "group by image_vw.id ";// +
-            //"order by slide_code, image_vw.capture_date";
+            "group by image_vw.id ";
+
     
 }
