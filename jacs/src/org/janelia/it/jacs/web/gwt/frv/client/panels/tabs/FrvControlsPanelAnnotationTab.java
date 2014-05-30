@@ -2,6 +2,7 @@
 package org.janelia.it.jacs.web.gwt.frv.client.panels.tabs;
 
 import com.google.gwt.user.client.ui.*;
+import org.janelia.it.jacs.shared.tasks.JobInfo;
 import org.janelia.it.jacs.shared.tasks.RecruitableJobInfo;
 import org.janelia.it.jacs.web.gwt.common.client.jobs.JobSelectionListener;
 import org.janelia.it.jacs.web.gwt.common.client.ui.link.ActionLink;
@@ -19,9 +20,9 @@ public class FrvControlsPanelAnnotationTab extends FrvControlsPanelBaseTab {
         super(jobSelectionListener);
     }
 
-    public void setJob(org.janelia.it.jacs.shared.tasks.JobInfo job) {
+    public void setJob(JobInfo job) {
         super.setJob(job);
-        RecruitableJobInfo systemJob = (org.janelia.it.jacs.shared.tasks.RecruitableJobInfo) job;
+        RecruitableJobInfo systemJob = (RecruitableJobInfo) job;
         searchBox = new TextBox();
         searchBox.setVisibleLength(40);
         String tmpAnnotString = systemJob.getAnnotationFilterString();

@@ -29,7 +29,7 @@ public class ImageAreaGroupModel implements Serializable, IsSerializable {
         this.groupedAreas = groupedAreas;
     }
 
-    public void addImageArea(org.janelia.it.jacs.web.gwt.common.shared.data.ImageAreaModel imageArea) {
+    public void addImageArea(ImageAreaModel imageArea) {
         groupedAreas.add(imageArea);
     }
 

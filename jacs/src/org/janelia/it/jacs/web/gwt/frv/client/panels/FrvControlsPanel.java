@@ -9,6 +9,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.Widget;
 import org.janelia.it.jacs.model.user_data.User;
+import org.janelia.it.jacs.shared.tasks.JobInfo;
 import org.janelia.it.jacs.shared.tasks.RecruitableJobInfo;
 import org.janelia.it.jacs.web.gwt.common.client.jobs.JobSelectionListener;
 import org.janelia.it.jacs.web.gwt.common.client.jobs.JobStatusListener;
@@ -119,7 +120,7 @@ public class FrvControlsPanel extends TitledBox implements IsJobSettable {
         setActiveState(false);
     }
 
-    protected Widget getSubjectDbWidget(org.janelia.it.jacs.shared.tasks.RecruitableJobInfo job) {
+    protected Widget getSubjectDbWidget(RecruitableJobInfo job) {
         if (job == null || job.getSubjectName() != null)
             return HtmlUtils.getHtml("&nbsp;", "text");
         else
@@ -208,12 +209,12 @@ public class FrvControlsPanel extends TitledBox implements IsJobSettable {
      */
     private void createJobStatusTimer(final String jobNumber) {
         new JobStatusTimer(jobNumber, 2000, new JobStatusListener() {
-            public void onJobRunning(org.janelia.it.jacs.shared.tasks.JobInfo ignore) {
+            public void onJobRunning(JobInfo ignore) {
                 // ignore, timer still running
             }
 
             // timer cancels itself
-            public void onJobFinished(org.janelia.it.jacs.shared.tasks.JobInfo newJobInfo) {
+            public void onJobFinished(JobInfo newJobInfo) {
                 _logger.debug("Job " + newJobInfo.getJobId() + " completed, status = " + newJobInfo.getStatus());
                 setActiveState(false);
                 listener.onSelect(newJobInfo);

@@ -10,6 +10,7 @@ import org.janelia.it.jacs.compute.engine.launcher.ejb.SequenceLauncherSLSB;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
+import org.jboss.ejb3.StrictMaxPool;
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -21,7 +22,7 @@ import javax.ejb.TransactionAttributeType;
 @Stateless
 @TransactionAttribute(value = TransactionAttributeType.MANDATORY)
 @TransactionTimeout(432000)
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 10, timeout = 10000)
+@PoolClass(value = StrictMaxPool.class, maxSize = 10, timeout = 10000)
 public class MetaGenoOrfLauncherSLSB extends SequenceLauncherSLSB {
 
     /**

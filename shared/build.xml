@@ -165,31 +165,31 @@
         <delete dir="${build.unzipped.dir}"/>
     </target>
 
-    <target name="jar-util-code" depends="compile">
-        <delete file="${build.jars.dir}/${util.jar.name}" />
+    <!--<target name="jar-util-code" depends="compile">-->
+        <!--<delete file="${build.jars.dir}/${util.jar.name}" />-->
         <!-- unjar dependencies -->
-        <mkdir dir="${build.unzipped.dir}" />
-        <unjar src="${common.dir}/Spring/log4j-1.2.14.jar" dest="${build.unzipped.dir}" overwrite="true"/>
-        <unjar src="${common.dir}/Hibernate-3.2/hibernate3.jar" dest="${build.unzipped.dir}" overwrite="true"/>
-        <unjar src="${model.module}/build/jars/jacs-model.jar" dest="${build.unzipped.dir}" overwrite="true"/>
-        <copy file="/conf/jacs.properties" todir="${build.unzipped.dir}" overwrite="true" />
-        <copy file="${basedir}/../shared/util-conf/log4j.properties" todir="${build.unzipped.dir}" overwrite="true" />
+        <!--<mkdir dir="${build.unzipped.dir}" />-->
+        <!--<unjar src="${common.dir}/Spring/log4j-1.2.14.jar" dest="${build.unzipped.dir}" overwrite="true"/>-->
+        <!--<unjar src="${common.dir}/Hibernate-3.2/hibernate3.jar" dest="${build.unzipped.dir}" overwrite="true"/>-->
+        <!--<unjar src="${model.module}/build/jars/jacs-model.jar" dest="${build.unzipped.dir}" overwrite="true"/>-->
+        <!--<copy file="/conf/jacs.properties" todir="${build.unzipped.dir}" overwrite="true" />-->
+        <!--<copy file="${basedir}/../shared/util-conf/log4j.properties" todir="${build.unzipped.dir}" overwrite="true" />-->
 
-        <jar destfile="${build.jars.dir}/${util.jar.name}">
-            <fileset dir="${build.classes.dir}">
-              <include name="org/janelia/it/jacs/shared/utils/**"/>
-            </fileset>
-            <fileset dir="${build.unzipped.dir}">
-              <include name="com/**"/>
-              <include name="javax/**"/>
-              <include name="jp/**"/>
-              <include name="org/**"/>
-              <include  name="*.properties"/>
-            </fileset>
-        </jar>
+        <!--<jar destfile="${build.jars.dir}/${util.jar.name}">-->
+            <!--<fileset dir="${build.classes.dir}">-->
+              <!--<include name="org/janelia/it/jacs/shared/utils/**"/>-->
+            <!--</fileset>-->
+            <!--<fileset dir="${build.unzipped.dir}">-->
+              <!--<include name="com/**"/>-->
+              <!--<include name="javax/**"/>-->
+              <!--<include name="jp/**"/>-->
+              <!--<include name="org/**"/>-->
+              <!--<include  name="*.properties"/>-->
+            <!--</fileset>-->
+        <!--</jar>-->
         <!-- delete temp files -->
-        <delete dir="${build.unzipped.dir}"/>
-    </target>
+        <!--<delete dir="${build.unzipped.dir}"/>-->
+    <!--</target>-->
 
 
     <target name="buildMinusGridJar" depends="setup,jaxb-code-generate,jar"/>

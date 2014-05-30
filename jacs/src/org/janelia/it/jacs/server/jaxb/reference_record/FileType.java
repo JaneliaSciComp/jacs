@@ -10,6 +10,8 @@
 package org.janelia.it.jacs.server.jaxb.reference_record;
 
 
+import java.lang.String;
+
 /**
  * Java content class for anonymous complex type.
  * <p>The following schema fragment specifies the expected content contained within this java content object. (defined at file:/C:/current_projects/cvsfiles/Camera/shared/schema/reference_record.xsd line 97)
@@ -45,17 +47,17 @@ public interface FileType {
      * Gets the value of the description property.
      *
      * @return possible object is
-     *         {@link java.lang.String}
+     *         {@link String}
      */
-    java.lang.String getDescription();
+    String getDescription();
 
     /**
      * Sets the value of the description property.
      *
      * @param value allowed object is
-     *              {@link java.lang.String}
+     *              {@link String}
      */
-    void setDescription(java.lang.String value);
+    void setDescription(String value);
 
     /**
      * Gets the value of the size property.
@@ -71,32 +73,32 @@ public interface FileType {
      * Gets the value of the path property.
      *
      * @return possible object is
-     *         {@link java.lang.String}
+     *         {@link String}
      */
-    java.lang.String getPath();
+    String getPath();
 
     /**
      * Sets the value of the path property.
      *
      * @param value allowed object is
-     *              {@link java.lang.String}
+     *              {@link String}
      */
-    void setPath(java.lang.String value);
+    void setPath(String value);
 
     /**
      * Gets the value of the infoPath property.
      *
      * @return possible object is
-     *         {@link java.lang.String}
+     *         {@link String}
      */
-    java.lang.String getInfoPath();
+    String getInfoPath();
 
     /**
      * Sets the value of the infoPath property.
      *
      * @param value allowed object is
-     *              {@link java.lang.String}
+     *              {@link String}
      */
-    void setInfoPath(java.lang.String value);
+    void setInfoPath(String value);
 
 }

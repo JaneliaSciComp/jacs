@@ -14,6 +14,7 @@ import org.janelia.it.jacs.shared.tasks.JobInfo;
 import org.janelia.it.jacs.web.gwt.common.client.effect.SafeEffect;
 import org.janelia.it.jacs.web.gwt.common.client.jobs.JobSelectionListener;
 import org.janelia.it.jacs.web.gwt.common.client.jobs.JobStatusListener;
+import org.janelia.it.jacs.web.gwt.common.client.popup.jobs.JobParameterPopup;
 import org.janelia.it.jacs.web.gwt.common.client.popup.launcher.PopupCenteredLauncher;
 import org.janelia.it.jacs.web.gwt.common.client.service.log.Logger;
 import org.janelia.it.jacs.web.gwt.common.client.ui.imagebundles.ImageBundleFactory;
@@ -271,7 +272,7 @@ public class ProkPipelineJobResultsPanel extends GeneralJobResultsPanel {
 
         MenuItem paramItem = new MenuItem("Show Parameters", true, new Command() {
             public void execute() {
-                _paramPopup = new org.janelia.it.jacs.web.gwt.common.client.popup.jobs.JobParameterPopup(
+                _paramPopup = new JobParameterPopup(
                         job.getJobname(),
                         new FormattedDateTime(job.getSubmitted().getTime()).toString(),
                         job.getParamMap(), false);

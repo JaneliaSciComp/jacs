@@ -8,6 +8,7 @@ import org.janelia.it.jacs.shared.blast.blastxmlparser.jaxb.*;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.File;
 import java.util.*;
@@ -43,7 +44,7 @@ public class BlastXMLParser {
         jaxbContext = JAXBContext.newInstance("org.janelia.it.jacs.shared.blast.blastxmlparser.jaxb");
     }
 
-    public void loadXML(File blastResultFile) throws javax.xml.bind.JAXBException {
+    public void loadXML(File blastResultFile) throws JAXBException {
         if (blastResultFile.length() > 0) {
             //Unmarshaller unmarshaller = jbObjectFactory.createUnmarshaller();
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();

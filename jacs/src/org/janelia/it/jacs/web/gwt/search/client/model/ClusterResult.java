@@ -20,7 +20,7 @@ public class ClusterResult extends CategoryResult {
     private String geneSymbols;
     private String proteinFunctions;
     private List<AnnotationDescription> ecAnnotationDescription;
-    private List<org.janelia.it.jacs.model.genomics.AnnotationDescription> goAnnotationDescription;
+    private List<AnnotationDescription> goAnnotationDescription;
     private Float rank;
 
     public Integer getNumProteins() {

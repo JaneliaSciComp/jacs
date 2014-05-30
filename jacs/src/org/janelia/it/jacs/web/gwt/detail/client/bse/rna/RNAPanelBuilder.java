@@ -26,7 +26,7 @@ public class RNAPanelBuilder extends BSEntityPanelBuilder {
      */
     protected void retrieveAndPopulatePanelData() {
         logger.info("RNAPanelBuilder retrieve and populate data");
-        RNAPanel rnaPanel = (org.janelia.it.jacs.web.gwt.detail.client.bse.rna.RNAPanel) getSubPanel();
+        RNAPanel rnaPanel = (RNAPanel) getSubPanel();
         RNADnaDataRetriever rnaDnaDataRetriever = new RNADnaDataRetriever(rnaPanel, getBaseEntityService());
         rnaDnaDataRetriever.retrieveData();
     }

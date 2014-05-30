@@ -6,6 +6,8 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.blast.Blastable;
 
+import java.io.Serializable;
+
 //import org.apache.log4j.*;
 
 
@@ -15,7 +17,7 @@ import org.janelia.it.jacs.model.user_data.blast.Blastable;
  * Date: Nov 14, 2006
  * Time: 1:13:37 PM
  */
-public class FastaFileNode extends FileNode implements java.io.Serializable, IsSerializable, Blastable {
+public class FastaFileNode extends FileNode implements Serializable, IsSerializable, Blastable {
 
     static Logger logger = Logger.getLogger(FastaFileNode.class.getName());
 

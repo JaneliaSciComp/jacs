@@ -21,6 +21,8 @@ import org.janelia.it.jacs.web.gwt.common.client.ui.imagebundles.ImageBundleFact
 import org.janelia.it.jacs.web.gwt.common.client.ui.link.ActionLink;
 import org.janelia.it.jacs.web.gwt.common.client.util.HtmlUtils;
 import org.janelia.it.jacs.web.gwt.common.client.util.TableUtils;
+import org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuBar;
+import org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuItem;
 import org.janelia.it.jacs.web.gwt.frv.client.Frv;
 import org.janelia.it.jacs.web.gwt.frv.client.FrvBounds;
 import org.janelia.it.jacs.web.gwt.frv.client.FrvBoundsChangedListener;
@@ -48,7 +50,7 @@ public class FrvRegionExportPopup extends BasePopupPanel {
     public static final int MIN = 0;
     public static final int MAX = 1;
 
-    public FrvRegionExportPopup(org.janelia.it.jacs.shared.tasks.RecruitableJobInfo job, FrvBoundsChangedListener listener, MapWidget map) {
+    public FrvRegionExportPopup(RecruitableJobInfo job, FrvBoundsChangedListener listener, MapWidget map) {
         super("Export Selected Sequences", /*realizeNow*/ false, /*autohide*/ false);
         _job = job;
         _listener = listener;
@@ -524,10 +526,10 @@ public class FrvRegionExportPopup extends BasePopupPanel {
 
 
     private Widget createFrvRegionExportWidget() {
-        org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuBar menu = new org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuBar();
+        MenuBar menu = new MenuBar();
         menu.setAutoOpen(false);
 
-        org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuBar dropDown = new org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuBar(true);
+        MenuBar dropDown = new MenuBar(true);
 
         dropDown.addItem("Export Reads as FASTA", true, new Command() {
             public void execute() {
@@ -592,7 +594,7 @@ public class FrvRegionExportPopup extends BasePopupPanel {
             }
         });
 
-        org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuItem export = new org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuItem("Export&nbsp;" + ImageBundleFactory.getControlImageBundle().getArrowDownEnabledImage().getHTML(),
+        MenuItem export = new MenuItem("Export&nbsp;" + ImageBundleFactory.getControlImageBundle().getArrowDownEnabledImage().getHTML(),
                 /* asHTML*/ true, dropDown);
         export.setStyleName("topLevelMenuItem");
         menu.addItem(export);

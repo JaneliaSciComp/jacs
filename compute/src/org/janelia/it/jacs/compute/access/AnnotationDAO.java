@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -374,14 +375,14 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                     }
                     
                     if (ed.getOrderIndex()==null) {
-                        stmtEd.setNull(8, java.sql.Types.INTEGER);  
+                        stmtEd.setNull(8, Types.INTEGER);
                     }
                     else {
                         stmtEd.setObject(8, ed.getOrderIndex());    
                     }
 
                     if (ed.getChildEntity()==null) {
-                        stmtEd.setNull(9, java.sql.Types.BIGINT);   
+                        stmtEd.setNull(9, Types.BIGINT);
                     }
                     else {
                         stmtEd.setObject(9, ed.getChildEntity().getId());   
@@ -1546,8 +1547,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                     String entityAttrName = rs.getString(4);
                     String ownerKey = rs.getString(5);
                     String value = rs.getString(6);
-                    java.util.Date creationDate = rs.getTimestamp(7);
-                    java.util.Date updatedDate = rs.getTimestamp(8);
+                    Date creationDate = rs.getTimestamp(7);
+                    Date updatedDate = rs.getTimestamp(8);
                     Integer orderIndex = rs.getInt(9);
                     
                     Entity parentEntity = parentEntityId==null?null:new Entity(parentEntityId);

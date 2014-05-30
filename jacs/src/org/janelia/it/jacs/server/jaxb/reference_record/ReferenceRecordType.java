@@ -10,6 +10,9 @@
 package org.janelia.it.jacs.server.jaxb.reference_record;
 
 
+import java.lang.String;
+import java.util.List;
+
 /**
  * Java content class for anonymous complex type.
  * <p>The following schema fragment specifies the expected content contained within this java content object. (defined at file:/C:/current_projects/cvsfiles/Camera/shared/schema/reference_record.xsd line 18)
@@ -105,145 +108,145 @@ public interface ReferenceRecordType {
      * Gets the value of the combinedData property.
      *
      * @return possible object is
-     *         {@link org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.CombinedDataType}
+     *         {@link ReferenceRecordType.CombinedDataType}
      */
-    org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.CombinedDataType getCombinedData();
+    ReferenceRecordType.CombinedDataType getCombinedData();
 
     /**
      * Sets the value of the combinedData property.
      *
      * @param value allowed object is
-     *              {@link org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.CombinedDataType}
+     *              {@link ReferenceRecordType.CombinedDataType}
      */
-    void setCombinedData(org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.CombinedDataType value);
+    void setCombinedData(ReferenceRecordType.CombinedDataType value);
 
     /**
      * Gets the value of the data property.
      *
      * @return possible object is
-     *         {@link org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.DataType}
+     *         {@link ReferenceRecordType.DataType}
      */
-    org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.DataType getData();
+    ReferenceRecordType.DataType getData();
 
     /**
      * Sets the value of the data property.
      *
      * @param value allowed object is
-     *              {@link org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.DataType}
+     *              {@link ReferenceRecordType.DataType}
      */
-    void setData(org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.DataType value);
+    void setData(ReferenceRecordType.DataType value);
 
     /**
      * Gets the value of the summary property.
      *
      * @return possible object is
-     *         {@link java.lang.String}
+     *         {@link String}
      */
-    java.lang.String getSummary();
+    String getSummary();
 
     /**
      * Sets the value of the summary property.
      *
      * @param value allowed object is
-     *              {@link java.lang.String}
+     *              {@link String}
      */
-    void setSummary(java.lang.String value);
+    void setSummary(String value);
 
     /**
      * Gets the value of the publication property.
      *
      * @return possible object is
-     *         {@link org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.PublicationType}
+     *         {@link ReferenceRecordType.PublicationType}
      */
-    org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.PublicationType getPublication();
+    ReferenceRecordType.PublicationType getPublication();
 
     /**
      * Sets the value of the publication property.
      *
      * @param value allowed object is
-     *              {@link org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.PublicationType}
+     *              {@link ReferenceRecordType.PublicationType}
      */
-    void setPublication(org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.PublicationType value);
+    void setPublication(ReferenceRecordType.PublicationType value);
 
     /**
      * Gets the value of the authors property.
      *
      * @return possible object is
-     *         {@link org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.AuthorsType}
+     *         {@link ReferenceRecordType.AuthorsType}
      */
-    org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.AuthorsType getAuthors();
+    ReferenceRecordType.AuthorsType getAuthors();
 
     /**
      * Sets the value of the authors property.
      *
      * @param value allowed object is
-     *              {@link org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.AuthorsType}
+     *              {@link ReferenceRecordType.AuthorsType}
      */
-    void setAuthors(org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.AuthorsType value);
+    void setAuthors(ReferenceRecordType.AuthorsType value);
 
     /**
      * Gets the value of the fullText property.
      *
      * @return possible object is
-     *         {@link org.janelia.it.jacs.server.jaxb.reference_record.TextType}
+     *         {@link TextType}
      */
-    org.janelia.it.jacs.server.jaxb.reference_record.TextType getFullText();
+    TextType getFullText();
 
     /**
      * Sets the value of the fullText property.
      *
      * @param value allowed object is
-     *              {@link org.janelia.it.jacs.server.jaxb.reference_record.TextType}
+     *              {@link TextType}
      */
-    void setFullText(org.janelia.it.jacs.server.jaxb.reference_record.TextType value);
+    void setFullText(TextType value);
 
     /**
      * Gets the value of the title property.
      *
      * @return possible object is
-     *         {@link java.lang.String}
+     *         {@link String}
      */
-    java.lang.String getTitle();
+    String getTitle();
 
     /**
      * Sets the value of the title property.
      *
      * @param value allowed object is
-     *              {@link java.lang.String}
+     *              {@link String}
      */
-    void setTitle(java.lang.String value);
+    void setTitle(String value);
 
     /**
      * Gets the value of the abstract property.
      *
      * @return possible object is
-     *         {@link java.lang.String}
+     *         {@link String}
      */
-    java.lang.String getAbstract();
+    String getAbstract();
 
     /**
      * Sets the value of the abstract property.
      *
      * @param value allowed object is
-     *              {@link java.lang.String}
+     *              {@link String}
      */
-    void setAbstract(java.lang.String value);
+    void setAbstract(String value);
 
     /**
      * Gets the value of the supplementalText property.
      *
      * @return possible object is
-     *         {@link org.janelia.it.jacs.server.jaxb.reference_record.TextType}
+     *         {@link TextType}
      */
-    org.janelia.it.jacs.server.jaxb.reference_record.TextType getSupplementalText();
+    TextType getSupplementalText();
 
     /**
      * Sets the value of the supplementalText property.
      *
      * @param value allowed object is
-     *              {@link org.janelia.it.jacs.server.jaxb.reference_record.TextType}
+     *              {@link TextType}
      */
-    void setSupplementalText(org.janelia.it.jacs.server.jaxb.reference_record.TextType value);
+    void setSupplementalText(TextType value);
 
 
     /**
@@ -283,9 +286,9 @@ public interface ReferenceRecordType {
          * <p/>
          * <p/>
          * Objects of the following type(s) are allowed in the list
-         * {@link java.lang.String}
+         * {@link String}
          */
-        java.util.List getName();
+        List getName();
 
     }
 
@@ -313,19 +316,19 @@ public interface ReferenceRecordType {
          * Gets the value of the file property.
          *
          * @return possible object is
-         *         {@link org.janelia.it.jacs.server.jaxb.reference_record.FileType}
+         *         {@link FileType}
          *         {@link org.janelia.it.jacs.server.jaxb.reference_record.File}
          */
-        org.janelia.it.jacs.server.jaxb.reference_record.FileType getFile();
+        FileType getFile();
 
         /**
          * Sets the value of the file property.
          *
          * @param value allowed object is
-         *              {@link org.janelia.it.jacs.server.jaxb.reference_record.FileType}
+         *              {@link FileType}
          *              {@link org.janelia.it.jacs.server.jaxb.reference_record.File}
          */
-        void setFile(org.janelia.it.jacs.server.jaxb.reference_record.FileType value);
+        void setFile(FileType value);
 
     }
 
@@ -355,17 +358,17 @@ public interface ReferenceRecordType {
          * Gets the value of the pathPrefix property.
          *
          * @return possible object is
-         *         {@link java.lang.String}
+         *         {@link String}
          */
-        java.lang.String getPathPrefix();
+        String getPathPrefix();
 
         /**
          * Sets the value of the pathPrefix property.
          *
          * @param value allowed object is
-         *              {@link java.lang.String}
+         *              {@link String}
          */
-        void setPathPrefix(java.lang.String value);
+        void setPathPrefix(String value);
 
         /**
          * Gets the value of the SubdirOrFile property.
@@ -388,7 +391,7 @@ public interface ReferenceRecordType {
          * {@link org.janelia.it.jacs.server.jaxb.reference_record.Subdir}
          * {@link org.janelia.it.jacs.server.jaxb.reference_record.File}
          */
-        java.util.List getSubdirOrFile();
+        List getSubdirOrFile();
 
     }
 
@@ -438,33 +441,33 @@ public interface ReferenceRecordType {
          * Gets the value of the journal property.
          *
          * @return possible object is
-         *         {@link org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.PublicationType.JournalType}
+         *         {@link ReferenceRecordType.PublicationType.JournalType}
          */
-        org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.PublicationType.JournalType getJournal();
+        ReferenceRecordType.PublicationType.JournalType getJournal();
 
         /**
          * Sets the value of the journal property.
          *
          * @param value allowed object is
-         *              {@link org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.PublicationType.JournalType}
+         *              {@link ReferenceRecordType.PublicationType.JournalType}
          */
-        void setJournal(org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.PublicationType.JournalType value);
+        void setJournal(ReferenceRecordType.PublicationType.JournalType value);
 
         /**
          * Gets the value of the date property.
          *
          * @return possible object is
-         *         {@link org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.PublicationType.DateType}
+         *         {@link ReferenceRecordType.PublicationType.DateType}
          */
-        org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.PublicationType.DateType getDate();
+        ReferenceRecordType.PublicationType.DateType getDate();
 
         /**
          * Sets the value of the date property.
          *
          * @param value allowed object is
-         *              {@link org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.PublicationType.DateType}
+         *              {@link ReferenceRecordType.PublicationType.DateType}
          */
-        void setDate(org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType.PublicationType.DateType value);
+        void setDate(ReferenceRecordType.PublicationType.DateType value);
 
 
         /**
@@ -490,49 +493,49 @@ public interface ReferenceRecordType {
              * Gets the value of the day property.
              *
              * @return possible object is
-             *         {@link java.lang.String}
+             *         {@link String}
              */
-            java.lang.String getDay();
+            String getDay();
 
             /**
              * Sets the value of the day property.
              *
              * @param value allowed object is
-             *              {@link java.lang.String}
+             *              {@link String}
              */
-            void setDay(java.lang.String value);
+            void setDay(String value);
 
             /**
              * Gets the value of the year property.
              *
              * @return possible object is
-             *         {@link java.lang.String}
+             *         {@link String}
              */
-            java.lang.String getYear();
+            String getYear();
 
             /**
              * Sets the value of the year property.
              *
              * @param value allowed object is
-             *              {@link java.lang.String}
+             *              {@link String}
              */
-            void setYear(java.lang.String value);
+            void setYear(String value);
 
             /**
              * Gets the value of the month property.
              *
              * @return possible object is
-             *         {@link java.lang.String}
+             *         {@link String}
              */
-            java.lang.String getMonth();
+            String getMonth();
 
             /**
              * Sets the value of the month property.
              *
              * @param value allowed object is
-             *              {@link java.lang.String}
+             *              {@link String}
              */
-            void setMonth(java.lang.String value);
+            void setMonth(String value);
 
         }
 
@@ -561,65 +564,65 @@ public interface ReferenceRecordType {
              * Gets the value of the issue property.
              *
              * @return possible object is
-             *         {@link java.lang.String}
+             *         {@link String}
              */
-            java.lang.String getIssue();
+            String getIssue();
 
             /**
              * Sets the value of the issue property.
              *
              * @param value allowed object is
-             *              {@link java.lang.String}
+             *              {@link String}
              */
-            void setIssue(java.lang.String value);
+            void setIssue(String value);
 
             /**
              * Gets the value of the volume property.
              *
              * @return possible object is
-             *         {@link java.lang.String}
+             *         {@link String}
              */
-            java.lang.String getVolume();
+            String getVolume();
 
             /**
              * Sets the value of the volume property.
              *
              * @param value allowed object is
-             *              {@link java.lang.String}
+             *              {@link String}
              */
-            void setVolume(java.lang.String value);
+            void setVolume(String value);
 
             /**
              * Gets the value of the name property.
              *
              * @return possible object is
-             *         {@link java.lang.String}
+             *         {@link String}
              */
-            java.lang.String getName();
+            String getName();
 
             /**
              * Sets the value of the name property.
              *
              * @param value allowed object is
-             *              {@link java.lang.String}
+             *              {@link String}
              */
-            void setName(java.lang.String value);
+            void setName(String value);
 
             /**
              * Gets the value of the page property.
              *
              * @return possible object is
-             *         {@link java.lang.String}
+             *         {@link String}
              */
-            java.lang.String getPage();
+            String getPage();
 
             /**
              * Sets the value of the page property.
              *
              * @param value allowed object is
-             *              {@link java.lang.String}
+             *              {@link String}
              */
-            void setPage(java.lang.String value);
+            void setPage(String value);
 
         }
 

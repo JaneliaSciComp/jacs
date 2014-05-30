@@ -14,6 +14,7 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.jboss.annotation.ejb.Depends;
 import org.jboss.annotation.ejb.PoolClass;
+import org.jboss.ejb3.StrictMaxPool;
 
 /**
  * An MBD for handling archive requests asynchronously.
@@ -29,7 +30,7 @@ import org.jboss.annotation.ejb.PoolClass;
         @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 1, timeout = 10000)
+@PoolClass(value = StrictMaxPool.class, maxSize = 1, timeout = 10000)
 public class ArchiveAccessMDB extends SeriesLauncherMDB {
 
     private static Logger logger = Logger.getLogger(ArchiveAccessMDB.class);

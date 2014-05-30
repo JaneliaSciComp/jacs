@@ -117,7 +117,7 @@ public class BlastableNodePanel extends Composite {
         }
         setPanel.setWidth("100%");
         setPanel.addTabListener(new TabListener() {
-            public boolean onBeforeTabSelected(com.google.gwt.user.client.ui.SourcesTabEvents sourcesTabEvents, int index) {
+            public boolean onBeforeTabSelected(SourcesTabEvents sourcesTabEvents, int index) {
                 if ((tableMap.get(setNames[index])).getNumDataRows() == 0) {
                     (tableMap.get(setNames[index])).setWidth("100%");
                     (tableMap.get(setNames[index])).setLoading();
@@ -125,7 +125,7 @@ public class BlastableNodePanel extends Composite {
                 return true;
             }
 
-            public void onTabSelected(com.google.gwt.user.client.ui.SourcesTabEvents sourcesTabEvents, final int index) {
+            public void onTabSelected(SourcesTabEvents sourcesTabEvents, final int index) {
                 DeferredCommand.addCommand(new Command() {
                     public void execute() {
                         if ((tableMap.get(setNames[index])).getNumDataRows() == 0)

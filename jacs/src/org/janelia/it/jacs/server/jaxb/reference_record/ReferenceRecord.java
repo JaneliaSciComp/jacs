@@ -10,6 +10,8 @@
 package org.janelia.it.jacs.server.jaxb.reference_record;
 
 
+import javax.xml.bind.Element;
+
 /**
  * Java content class for reference_record element declaration.
  * <p>The following schema fragment specifies the expected content contained within this java content object. (defined at file:/C:/current_projects/cvsfiles/Camera/shared/schema/reference_record.xsd line 17)
@@ -101,7 +103,7 @@ package org.janelia.it.jacs.server.jaxb.reference_record;
  * </pre>
  */
 public interface ReferenceRecord
-        extends javax.xml.bind.Element, org.janelia.it.jacs.server.jaxb.reference_record.ReferenceRecordType {
+        extends Element, ReferenceRecordType {
 
 
 }

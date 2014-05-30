@@ -203,7 +203,7 @@ public class FrvImagePanel extends TitledBox implements IsJobSettable {
 //        return link;
 //    }
 
-    public void setJob(org.janelia.it.jacs.shared.tasks.RecruitableJobInfo job) {
+    public void setJob(RecruitableJobInfo job) {
         _logger.debug("setJob()");
         _job = job;
         if (_job != null) {
@@ -673,7 +673,7 @@ public class FrvImagePanel extends TitledBox implements IsJobSettable {
         return getTileUrl(x, y, zoom, _job);
     }
 
-    public static String getTileUrl(int x, int y, int zoom, org.janelia.it.jacs.shared.tasks.RecruitableJobInfo job) {
+    public static String getTileUrl(int x, int y, int zoom, RecruitableJobInfo job) {
         return getTileUrl(x, y, zoom, job.getRecruitmentResultsFileNodeId(), job.getUsername());
     }
 

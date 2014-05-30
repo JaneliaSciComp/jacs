@@ -4,6 +4,7 @@ package org.janelia.it.jacs.web.gwt.download.server;
 import org.janelia.it.jacs.web.gwt.common.client.model.download.DownloadableDataNode;
 import org.janelia.it.jacs.web.gwt.common.client.model.metadata.Sample;
 import org.janelia.it.jacs.web.gwt.download.client.model.Project;
+import org.janelia.it.jacs.web.gwt.download.client.model.ProjectImpl;
 import org.janelia.it.jacs.web.gwt.download.client.model.Publication;
 
 import java.util.List;
@@ -24,7 +25,7 @@ public interface PublicationHelper {
 
     Map<String, Publication> getAccessionToPublicationMapping();
 
-    void saveOrUpdateProject(org.janelia.it.jacs.web.gwt.download.client.model.ProjectImpl project);
+    void saveOrUpdateProject(ProjectImpl project);
 
     Project getProjectByName(String projectName);
 

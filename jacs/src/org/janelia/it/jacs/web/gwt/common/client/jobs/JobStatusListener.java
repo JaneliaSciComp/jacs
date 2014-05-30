@@ -1,13 +1,15 @@
 
 package org.janelia.it.jacs.web.gwt.common.client.jobs;
 
+import org.janelia.it.jacs.shared.tasks.JobInfo;
+
 /**
  * @author Michael Press
  */
 public interface JobStatusListener {
-    public void onJobRunning(org.janelia.it.jacs.shared.tasks.JobInfo status);
+    public void onJobRunning(JobInfo status);
 
-    public void onJobFinished(org.janelia.it.jacs.shared.tasks.JobInfo status); // could be success or failure
+    public void onJobFinished(JobInfo status); // could be success or failure
 
     public void onCommunicationError();
 }

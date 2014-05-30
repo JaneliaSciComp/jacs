@@ -1,10 +1,11 @@
 package org.janelia.it.jacs.model.entity;
 
 import javax.xml.bind.annotation.*;
+import java.io.Serializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name="EntityRoleActor")
-public class EntityActorPermission implements java.io.Serializable {
+public class EntityActorPermission implements Serializable {
 	
 	@XmlAttribute(name="guid")
     private Long id;

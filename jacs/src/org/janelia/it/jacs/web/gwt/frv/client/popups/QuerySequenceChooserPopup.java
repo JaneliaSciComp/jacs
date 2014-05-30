@@ -42,7 +42,7 @@ public class QuerySequenceChooserPopup extends BasePopupPanel {
     public static final Integer TAB_USER = 1;
     public static final Integer TAB_SEQUENCE = 2;
 
-    private org.janelia.it.jacs.shared.tasks.RecruitableJobInfo _job;
+    private RecruitableJobInfo _job;
     private JobSelectionListener _jobSelectionListener;
     private QuerySequenceChooserSystemTab _systemTab;
     private QuerySequenceChooserLoadDataTab _loadDataTab;
@@ -114,7 +114,7 @@ public class QuerySequenceChooserPopup extends BasePopupPanel {
         public void onSelect(JobInfo job) {
             // This is a little weak
             if (!TAB_SEQUENCE.equals(tabPanel.getTabBar().getSelectedTab())) {
-                _job = (org.janelia.it.jacs.shared.tasks.RecruitableJobInfo) job;
+                _job = (RecruitableJobInfo) job;
             }
             _applyButton.setEnabled(true);
         }

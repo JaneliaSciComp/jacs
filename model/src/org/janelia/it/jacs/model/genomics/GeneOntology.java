@@ -4,6 +4,7 @@ package org.janelia.it.jacs.model.genomics;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 import java.io.Serializable;
+import java.lang.String;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -159,7 +160,7 @@ public class GeneOntology implements Serializable, IsSerializable {
         return subsetList;
     }
 
-    public Map<java.lang.String, java.lang.String> getRelatedGOIdMap() {
+    public Map<String, String> getRelatedGOIdMap() {
         if (relatedGOIdMap == null) {
             relatedGOIdMap = new HashMap<String, String>();
             for (String relString : Arrays.asList(relatedGOIds, "\n")) {

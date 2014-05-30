@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.launcher.eukAnnotation;
 
 import org.janelia.it.jacs.compute.engine.launcher.ejb.SeriesLauncherMDB;
 import org.jboss.annotation.ejb.PoolClass;
+import org.jboss.ejb3.StrictMaxPool;
 
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.MessageDriven;
@@ -23,7 +24,7 @@ import javax.ejb.MessageDriven;
     @ActivationConfigProperty(propertyName="transactionTimeout", propertyValue="432000"),
     @ActivationConfigProperty(propertyName="DLQMaxResent", propertyValue="0")
 })
-@PoolClass(value=org.jboss.ejb3.StrictMaxPool.class, maxSize=5, timeout=10000)
+@PoolClass(value=StrictMaxPool.class, maxSize=5, timeout=10000)
 public class EAPLauncherMDB extends SeriesLauncherMDB {
 
 }

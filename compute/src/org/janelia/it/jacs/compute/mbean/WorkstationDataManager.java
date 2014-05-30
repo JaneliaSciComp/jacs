@@ -177,7 +177,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
 
     public void runNeuronMergeTest(String taskOwner, String separationEntityId, String commaSeparatedNeuronFragmentList) {
         try {
-            NeuronMergeTask task = new NeuronMergeTask(new HashSet<Node>(), taskOwner, new ArrayList<org.janelia.it.jacs.model.tasks.Event>(), new HashSet<TaskParameter>());
+            NeuronMergeTask task = new NeuronMergeTask(new HashSet<Node>(), taskOwner, new ArrayList<Event>(), new HashSet<TaskParameter>());
             task.setJobName("Neuron Merge Task");
             task.setParameter(NeuronMergeTask.PARAM_separationEntityId, separationEntityId);
             task.setParameter(NeuronMergeTask.PARAM_commaSeparatedNeuronFragmentList, commaSeparatedNeuronFragmentList);

@@ -633,7 +633,7 @@ public class BlastHitsPanel extends TitledBox {
     /**
      * Called when the user selected a job to display.
      */
-    public void setJob(org.janelia.it.jacs.shared.tasks.BlastJobInfo job) {
+    public void setJob(BlastJobInfo job) {
         if (_logger.isDebugEnabled()) _logger.debug("BlastHitsPanel.setJob() " + job.getJobId());
 
         _job = job;

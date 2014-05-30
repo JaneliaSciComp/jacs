@@ -25,7 +25,7 @@ public class InspectPanel extends Composite {
 
     private RoundedButton _inspectData;
     private TitledBox _mainPanel;
-    private org.janelia.it.jacs.web.gwt.common.client.jobs.JobSubmissionListener _listener;
+    private JobSubmissionListener _listener;
     private static DataServiceAsync _dataservice = (DataServiceAsync) GWT.create(DataService.class);
 
     static {

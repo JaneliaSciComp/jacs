@@ -1,6 +1,8 @@
 package org.janelia.it.jacs.shared.utils;
 
-public class ControlledVocabElement implements java.io.Serializable
+import java.io.Serializable;
+
+public class ControlledVocabElement implements Serializable
 {
     public String value;
 

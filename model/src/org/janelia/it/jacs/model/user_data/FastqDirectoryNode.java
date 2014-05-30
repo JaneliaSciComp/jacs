@@ -5,6 +5,8 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.tasks.Task;
 
+import java.io.Serializable;
+
 /**
  * Created by IntelliJ IDEA.
  * User: smurphy
@@ -31,7 +33,7 @@ import org.janelia.it.jacs.model.tasks.Task;
  * <p/>
  * Note that this convention is *required* for tools such as tophat.
  */
-public class FastqDirectoryNode extends FileNode implements java.io.Serializable, IsSerializable {
+public class FastqDirectoryNode extends FileNode implements Serializable, IsSerializable {
 
     static Logger logger = Logger.getLogger(FastqDirectoryNode.class.getName());
 

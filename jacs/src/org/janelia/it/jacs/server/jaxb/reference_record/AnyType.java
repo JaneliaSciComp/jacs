@@ -10,6 +10,8 @@
 package org.janelia.it.jacs.server.jaxb.reference_record;
 
 
+import java.util.List;
+
 /**
  * Java content class for anyType complex type.
  * <p>The following schema fragment specifies the expected content contained within this java content object. (defined at  line unknown)
@@ -50,6 +52,6 @@ public interface AnyType {
      * {@link java.lang.String}
      * {@link java.lang.Object}
      */
-    java.util.List getContent();
+    List getContent();
 
 }

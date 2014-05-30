@@ -9,8 +9,10 @@
 
 package org.janelia.it.jacs.server.jaxb.reference_record.impl;
 
+import java.lang.String;
+
 public class JAXBVersion {
 
-    public final static java.lang.String version = "1.0.6";
+    public final static String version = "1.0.6";
 
 }

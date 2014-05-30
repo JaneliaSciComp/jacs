@@ -7,6 +7,7 @@ import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.export.ExportFileNode;
 import org.janelia.it.jacs.server.access.FileNodeDAO;
 import org.janelia.it.jacs.server.access.hibernate.DaoException;
+import org.janelia.it.jacs.server.access.hibernate.FileNodeDAOImpl;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.Controller;
@@ -595,7 +596,7 @@ public class FileDeliveryController implements Controller {
         return returnName;
     }
 
-    public void setFileNodeDAO(org.janelia.it.jacs.server.access.hibernate.FileNodeDAOImpl fileNodeDAO) {
+    public void setFileNodeDAO(FileNodeDAOImpl fileNodeDAO) {
         this.fileNodeDAO = fileNodeDAO;
     }
 
@@ -607,7 +608,7 @@ public class FileDeliveryController implements Controller {
         this._filestoreFtpLinkTargetLocation = filestoreFtpLinkTargetLocation;
     }
 
-    public void setComputeServerBean(org.janelia.it.jacs.compute.api.ComputeBeanRemote computeServerBean) {
+    public void setComputeServerBean(ComputeBeanRemote computeServerBean) {
         this.computeBean = computeServerBean;
     }
 }

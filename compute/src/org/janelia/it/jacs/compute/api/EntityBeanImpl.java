@@ -25,6 +25,7 @@ import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
+import org.jboss.ejb3.StrictMaxPool;
 
 /**
  * Implementation of queries against the entity model. 
@@ -35,7 +36,7 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
 //@Interceptors({UsageInterceptor.class})
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 500, timeout = 10000)
+@PoolClass(value = StrictMaxPool.class, maxSize = 500, timeout = 10000)
 public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
 	
     private static final Logger _logger = Logger.getLogger(EntityBeanImpl.class);

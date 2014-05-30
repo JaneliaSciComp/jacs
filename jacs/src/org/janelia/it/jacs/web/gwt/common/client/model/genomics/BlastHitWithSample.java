@@ -45,7 +45,7 @@ public class BlastHitWithSample extends BlastHit {
         this.sample = sample;
     }
 
-    public org.janelia.it.jacs.web.gwt.common.client.model.metadata.Sample getSample() {
+    public Sample getSample() {
         return sample;
     }
 
@@ -65,7 +65,7 @@ public class BlastHitWithSample extends BlastHit {
         this.clearRangeEnd = clearRangeEnd;
     }
 
-    public void setSample(org.janelia.it.jacs.web.gwt.common.client.model.metadata.Sample sample) {
+    public void setSample(Sample sample) {
         this.sample = sample;
     }
 

@@ -2,6 +2,7 @@
 package org.janelia.it.jacs.web.gwt.admin.editproject.server;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.model.download.Project;
 import org.janelia.it.jacs.server.access.DownloadDAO;
 import org.janelia.it.jacs.server.access.hibernate.DaoException;
 import org.janelia.it.jacs.server.access.hibernate.DownloadDAOImpl;
@@ -36,7 +37,7 @@ public class ProjectServiceImpl extends JcviGWTSpringController implements Proje
     public String getProjectName() {
 
         String projectName = null;
-        List<org.janelia.it.jacs.model.download.Project> projects;
+        List<Project> projects;
 
         try {
 

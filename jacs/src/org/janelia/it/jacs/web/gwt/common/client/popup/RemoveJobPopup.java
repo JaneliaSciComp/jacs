@@ -14,7 +14,7 @@ import org.janelia.it.jacs.web.gwt.common.client.util.HtmlUtils;
  */
 public class RemoveJobPopup extends ModalPopupPanel {
 
-    private org.janelia.it.jacs.shared.tasks.JobInfo jobStatus;
+    private JobInfo jobStatus;
     private RemoveJobListener jobRemover;
 
     public RemoveJobPopup(JobInfo jobStatus, RemoveJobListener jobRemover, boolean realizeNow) {
