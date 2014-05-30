@@ -2,7 +2,7 @@ package org.janelia.it.jacs.compute.access;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
-import org.janelia.it.jacs.compute.api.support.SageTerm;
+import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.model.TestCategories;
 import org.junit.Before;
 import org.junit.Test;

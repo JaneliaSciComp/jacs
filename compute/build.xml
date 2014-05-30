@@ -69,7 +69,6 @@
 		<path id="compute.classpath">
             <fileset dir="${basedir}/lib" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/Apache-Commons" includes="**/*.jar"/>
-			<fileset dir="${common.dir}/Solrj" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/ehcache" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/MongoDB" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/Neo4j" includes="**/*.jar"/>

@@ -16,14 +16,14 @@ import org.apache.solr.common.params.CoreAdminParams;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.large.LargeOperations;
-import org.janelia.it.jacs.compute.api.support.SageTerm;
-import org.janelia.it.jacs.compute.api.support.SolrDocTypeEnum;
-import org.janelia.it.jacs.compute.api.support.SolrUtils;
+import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityActorPermission;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.shared.solr.SolrDocTypeEnum;
+import org.janelia.it.jacs.shared.solr.SolrUtils;
 
 import java.io.IOException;
 import java.math.BigDecimal;

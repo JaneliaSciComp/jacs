@@ -56,6 +56,7 @@
         	<fileset dir="${common.module}/Apache-Commons/" includes="*.jar"/>
         	<fileset dir="${common.module}/Guava/" includes="*.jar"/>
         	<fileset dir="${common.module}/Logging/" includes="*.jar"/>
+            <fileset dir="${common.module}/Solrj/" includes="*.jar"/>
             <pathelement location="${common.module}/Spring/dom4j-1.6.1.jar"/>
             <fileset dir="${common.dir}/Hibernate-3.2" includes="hibernate3.jar"/>
         </path>
