@@ -97,8 +97,10 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     String objective = properties.getProperty("alignment.objective");
                     String scoreNcc = properties.getProperty("alignment.quality.score.ncc");
                     String scoreQi = properties.getProperty("alignment.quality.score.qi");
-
-                    String score1MinusQi = null;
+                    String scoreJbaQi = properties.getProperty("alignment.quality.score.jbaqi");
+                    String scoreJbaQm = properties.getProperty("alignment.quality.score.jbaqm");
+                    
+                    String score1MinusQiCsv = null;
                     Double score1MinusQiCombined = null;
                     List<String> inconsistencyScoreStrs = new ArrayList<String>();
                     List<Double> inconsistencyScores = new ArrayList<Double>();
@@ -125,17 +127,28 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                         else {
                         	logger.warn("Unsupported number of inconsistency scores: ["+scoreQi+"]");
                         }
-                        score1MinusQi = Task.csvStringFromCollection(inconsistencyScoreStrs);
+                        score1MinusQiCsv = Task.csvStringFromCollection(inconsistencyScoreStrs);
                     }
+                    
+                    Double jbaQiDbl = Double.parseDouble(scoreJbaQi); 
+                    Double computedQiDbl = score1MinusQiCombined;
 
+                    if (jbaQiDbl!=computedQiDbl) {
+                    	logger.info(jbaQiDbl+"!="+computedQiDbl);
+                        if (jbaQiDbl-computedQiDbl>0.01) {
+                        	logger.info("!! "+jbaQiDbl+" not even close to "+computedQiDbl);	
+                        }	
+                    }
+                    
                     helper.setAlignmentSpace(stackEntity, alignmentSpace);
                     helper.setOpticalResolution(stackEntity, opticalRes);
                     helper.setPixelResolution(stackEntity, pixelRes);
                     helper.setBoundingBox(stackEntity, boundingBox);
                     helper.setObjective(stackEntity, objective);
                     helper.setNccScore(stackEntity, scoreNcc);
-                    helper.setQiScore(stackEntity, dfScore.format(score1MinusQiCombined));
-                    helper.setQiScores(stackEntity, dfScore.format(score1MinusQi));
+                    helper.setQiScores(stackEntity, score1MinusQiCsv);
+                    helper.setQiScore(stackEntity, scoreJbaQi);
+                    helper.setQmScore(stackEntity, scoreJbaQm);
                     
                     if ("true".equals(properties.getProperty("default"))) {
                         defaultAlignmentSpace = alignmentSpace;

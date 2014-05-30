@@ -27,9 +27,9 @@ public class SageQiScoreSyncService extends AbstractEntityService {
 
 	private static final boolean DEBUG = true;
 	private static final int BATCH_SIZE = 1000;
-    private static final String BRAIN_AREA = "Brain";
-    private static final String QI_SCORE = "qi";
-    private static final String QM_SCORE = "qm";
+    private static final String ANATOMICAL_AREA = "Brain";
+    private static final String QI_SCORE_TERM_NAME = "qi";
+    private static final String QM_SCORE_TERM_NAME = "qm";
     
     private SageDAO sage;
     private CvTerm qiScoreTerm;
@@ -41,35 +41,37 @@ public class SageQiScoreSyncService extends AbstractEntityService {
     private Map<String,Integer> numUpdated = new HashMap<String,Integer>();
     private Map<String,Integer> numInserted = new HashMap<String,Integer>();
     
+    /**
+     * Process all alignments.
+     */
     public void execute() throws Exception {
         
         this.sage = new SageDAO(logger);
-        this.qiScoreTerm = getCvTermByName("light_imagery",QI_SCORE);
-        this.qmScoreTerm = getCvTermByName("light_imagery",QM_SCORE);
+        this.qiScoreTerm = getCvTermByName("light_imagery",QI_SCORE_TERM_NAME);
+        this.qmScoreTerm = getCvTermByName("light_imagery",QM_SCORE_TERM_NAME);
+
+        Long alignmentId = data.getItemAsLong("ALIGNMENT_ID");
+        if (alignmentId!=null) {
+        	processAlignment(alignmentId);
+        }
+        else {
+        	processAllAlignments();
+        }
+        
+        logger.info("Completed Qi Score Synchronization"+(alignmentId==null?"":" for "+alignmentId));
+        for(String term : Ordering.natural().sortedCopy(numUpdated.keySet())) {
+        	logger.info("  Property "+term);
+	        logger.info("    Num updated: "+numUpdated.get(term));
+	        logger.info("    Num inserted: "+numInserted.get(term));
+        }
+    }
+    
+    private void processAllAlignments() throws Exception {
 
 		logger.info("Synchronizing all JBA Alignments to SAGE by loading their Qi/Qm scores");
 		
         for(Entity jbaAlignment : entityBean.getEntitiesByName("JBA Alignment")) {
-        	        	
-        	populateChildren(jbaAlignment);
-        	Entity alignedImage = jbaAlignment.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-        	
-        	String qiScore = alignedImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
-        	if (qiScore==null) {
-        		logger.warn("JBA Alignment has no Qi score: "+jbaAlignment.getId());
-        	}
-        	else {
-	        	qiScoreBatch.put(jbaAlignment.getId(), qiScore);
-        	}
-        	
-        	String qmScore = alignedImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE);
-        	if (qmScore==null) {
-        		logger.debug("JBA Alignment has no Qm score: "+jbaAlignment.getId());
-        	}
-        	else {
-	        	qmScoreBatch.put(jbaAlignment.getId(), qiScore);
-        	}
-        	
+        	addQiQmScores(jbaAlignment);
         	jbaAlignment.setEntityData(null);
         	
         	if (qiScoreBatch.size()>=BATCH_SIZE) {
@@ -78,15 +80,26 @@ public class SageQiScoreSyncService extends AbstractEntityService {
                 qmScoreBatch.clear();
         	}        	
         }
-        
         processQiScoreBatch();
-        
-        logger.info("Completed Qi Score Synchronization");
-        for(String term : Ordering.natural().sortedCopy(numUpdated.keySet())) {
-        	logger.info("  Property "+term);
-	        logger.info("    Num updated: "+numUpdated.get(term));
-	        logger.info("    Num inserted: "+numInserted.get(term));
-        }
+    }
+
+    public void processAlignment(Long alignmentId) throws Exception {
+    	Entity alignment = entityBean.getEntityById(alignmentId);
+    	addQiQmScores(alignment);
+        processQiScoreBatch();
+    }
+    
+    private void addQiQmScores(Entity alignment) throws Exception {
+    	populateChildren(alignment);
+    	Entity alignedImage = alignment.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+    	String qiScore = alignedImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
+    	if (qiScore!=null) {
+        	qiScoreBatch.put(alignment.getId(), qiScore);
+    	}
+    	String qmScore = alignedImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE);
+    	if (qmScore!=null) {
+        	qmScoreBatch.put(alignment.getId(), qiScore);
+    	}
     }
     
     private void processQiScoreBatch() throws Exception {
@@ -152,7 +165,7 @@ public class SageQiScoreSyncService extends AbstractEntityService {
         Map<Long,Integer> lsmIdToSageId = new HashMap<Long,Integer>();
         
         for(Entity lsm : entityBean.getEntitiesById(new ArrayList<Long>(lsmIds))) {
-            if (BRAIN_AREA.equals(lsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA))) {
+            if (ANATOMICAL_AREA.equals(lsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA))) {
 	        	String sageIdStr = lsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_ID);
 	        	if (sageIdStr==null) {
 	        		logger.warn("LSM has no SAGE identifier: "+lsm.getId());
@@ -172,7 +185,7 @@ public class SageQiScoreSyncService extends AbstractEntityService {
     }
 
 
-	public ImageProperty setImageProperty(Image image, CvTerm type, String value) throws Exception {
+	private ImageProperty setImageProperty(Image image, CvTerm type, String value) throws Exception {
     	for(ImageProperty property : image.getImageProperties()) {
     		if (property.getType().equals(type) && !property.getValue().equals(value)) {
     			// Update existing property value
