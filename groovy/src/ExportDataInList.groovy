@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.apache.solr.client.solrj.SolrQuery;
 import org.janelia.it.jacs.compute.api.SolrBeanRemote;
-import org.janelia.it.jacs.compute.api.support.SolrResults;
+import org.janelia.it.jacs.shared.solr.SolrResults;
 import org.janelia.it.jacs.model.entity.Entity;
 
 import com.google.common.base.Charsets;
