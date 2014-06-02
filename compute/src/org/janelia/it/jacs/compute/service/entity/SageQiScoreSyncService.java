@@ -92,13 +92,17 @@ public class SageQiScoreSyncService extends AbstractEntityService {
     private void addQiQmScores(Entity alignment) throws Exception {
     	populateChildren(alignment);
     	Entity alignedImage = alignment.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+    	if (alignedImage==null) {
+    		logger.warn("Alignment has no default 3d image: "+alignment.getId());
+    		return;
+    	}
     	String qiScore = alignedImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
     	if (qiScore!=null) {
         	qiScoreBatch.put(alignment.getId(), qiScore);
     	}
     	String qmScore = alignedImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE);
     	if (qmScore!=null) {
-        	qmScoreBatch.put(alignment.getId(), qiScore);
+        	qmScoreBatch.put(alignment.getId(), qmScore);
     	}
     }
     
