@@ -23,6 +23,7 @@ public class LSMImage implements DomainObject, HasImages {
     private String gender;
     private String line;
     private String mountingProtocol;
+    private String tissueOrientation;
     private Integer numChannels;
     private String objective;
     private String opticalResolution;
@@ -122,6 +123,12 @@ public class LSMImage implements DomainObject, HasImages {
     }
     public void setMountingProtocol(String mountingProtocol) {
         this.mountingProtocol = mountingProtocol;
+    }
+    public String getTissueOrientation() {
+        return tissueOrientation;
+    }
+    public void setTissueOrientation(String tissueOrientation) {
+        this.tissueOrientation = tissueOrientation;
     }
     public Integer getNumChannels() {
         return numChannels;

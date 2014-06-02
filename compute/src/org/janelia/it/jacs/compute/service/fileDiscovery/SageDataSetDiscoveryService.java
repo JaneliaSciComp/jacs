@@ -132,6 +132,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		slideImage.setAge((String)row.get("age"));
 		slideImage.setChannels((String)row.get("channels"));
 		slideImage.setMountingProtocol((String)row.get("mounting_protocol"));
+        slideImage.setTissueOrientation((String)row.get("tissue_orientation"));
 		slideImage.setEffector((String)row.get("effector"));
 		String objectiveStr = (String)row.get("objective");
 		if (objectiveStr!=null) {

@@ -29,6 +29,7 @@ public class SlideImage {
     private String age;
     private String effector;
     private String mountingProtocol;
+    private String tissueOrientation;
     private File file;
 	
     public Map<String,String> getProperties() {
@@ -81,7 +82,11 @@ public class SlideImage {
         if (mountingProtocol!=null) {
             properties.put(EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL, mountingProtocol);
         }
-        
+
+        if (tissueOrientation!=null) {
+            properties.put(EntityConstants.ATTRIBUTE_TISSUE_ORIENTATION, tissueOrientation);
+        }
+
         return properties;
     }
     
@@ -181,6 +186,12 @@ public class SlideImage {
     }
     public void setMountingProtocol(String mountingProtocol) {
         this.mountingProtocol = mountingProtocol;
+    }
+    public String getTissueOrientation() {
+        return tissueOrientation;
+    }
+    public void setTissueOrientation(String tissueOrientation) {
+        this.tissueOrientation = tissueOrientation;
     }
     public File getFile() {
         return file;

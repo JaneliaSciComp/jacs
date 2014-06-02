@@ -42,7 +42,10 @@ public class LsmStack extends EntityNode {
     
     @GraphAttribute(EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL)
     private String mountingProtocol;
-    
+
+    @GraphAttribute(EntityConstants.ATTRIBUTE_TISSUE_ORIENTATION)
+    private String tissueOrientation;
+
     @GraphAttribute(EntityConstants.ATTRIBUTE_NUM_CHANNELS)
     private Integer numChannels;
 
@@ -152,6 +155,14 @@ public class LsmStack extends EntityNode {
 
     public void setMountingProtocol(String mountingProtocol) {
         this.mountingProtocol = mountingProtocol;
+    }
+
+    public String getTissueOrientation() {
+        return tissueOrientation;
+    }
+
+    public void setTissueOrientation(String tissueOrientation) {
+        this.tissueOrientation = tissueOrientation;
     }
 
     public Integer getNumChannels() {

@@ -493,7 +493,7 @@ public class SageDAO {
     private static final String CORE_IMAGE_PROPERTY_SQL =
             "select i.id id, slide_code.value slide_code, i.path path, tile.value tile, line.name line, " +
             "channel_spec.value channel_spec, gender.value gender, age.value age, effector.value effector, " +
-            "area.value area, channels.value channels, mounting_protocol.value mounting_protocol, objective.value objective, " +
+            "area.value area, channels.value channels, mounting_protocol.value mounting_protocol, tissue_orientation.value tissue_orientation, objective.value objective, " +
             "voxel_size_x.value voxel_size_x, voxel_size_y.value voxel_size_y, voxel_size_z.value voxel_size_z, " +
             "dimension_x.value dimension_x, dimension_y.value dimension_y, dimension_z.value dimension_z, cross_barcode.value cross_barcode " +
             "from image i " +
@@ -508,6 +508,7 @@ public class SageDAO {
             "left outer join image_property_vw area on i.id = area.image_id and area.type = 'area' " +
             "left outer join image_property_vw channels on i.id = channels.image_id and channels.type = 'channels' " +
             "left outer join image_property_vw mounting_protocol on i.id = mounting_protocol.image_id and mounting_protocol.type = 'mounting_protocol' " +
+            "left outer join image_property_vw tissue_orientation on i.id = tissue_orientation.image_id and tissue_orientation.type = 'tissue_orientation' " +
             "left outer join image_property_vw objective on i.id = objective.image_id and objective.type = 'objective' " +
             "left outer join image_property_vw voxel_size_x on i.id = voxel_size_x.image_id and voxel_size_x.type = 'voxel_size_x' " +
             "left outer join image_property_vw voxel_size_y on i.id = voxel_size_y.image_id and voxel_size_y.type = 'voxel_size_y' " +
