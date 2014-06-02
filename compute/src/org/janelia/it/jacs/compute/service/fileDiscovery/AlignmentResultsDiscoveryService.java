@@ -101,43 +101,18 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     String scoreJbaQm = properties.getProperty("alignment.quality.score.jbaqm");
                     
                     String score1MinusQiCsv = null;
-                    Double score1MinusQiCombined = null;
                     List<String> inconsistencyScoreStrs = new ArrayList<String>();
-                    List<Double> inconsistencyScores = new ArrayList<Double>();
                     if (!StringUtils.isEmpty(scoreQi)) {
                         for(String qiScore : Task.listOfStringsFromCsvString(scoreQi)) {
                             try {
                                 double score = 1 - Double.parseDouble(qiScore);
                                 inconsistencyScoreStrs.add(dfScore.format(score));
-                                inconsistencyScores.add(score);
                             }
                             catch (NumberFormatException e) {
                                 logger.error("Error parsing double: "+e);
                             }
                         }
-                        if (inconsistencyScores.size()==3) {
-                        	double q1 = inconsistencyScores.get(0);
-                        	double q2 = inconsistencyScores.get(1);
-                        	double q3 = inconsistencyScores.get(2);
-                        	score1MinusQiCombined = q1 * 0.288 + q2 * 0.462 + q3 * 0.25;
-                        }
-                        else if (inconsistencyScores.size()==1) {
-                        	score1MinusQiCombined = inconsistencyScores.get(0);
-                        }
-                        else {
-                        	logger.warn("Unsupported number of inconsistency scores: ["+scoreQi+"]");
-                        }
                         score1MinusQiCsv = Task.csvStringFromCollection(inconsistencyScoreStrs);
-                    }
-                    
-                    Double jbaQiDbl = Double.parseDouble(scoreJbaQi); 
-                    Double computedQiDbl = score1MinusQiCombined;
-
-                    if (jbaQiDbl!=computedQiDbl) {
-                    	logger.info(jbaQiDbl+"!="+computedQiDbl);
-                        if (jbaQiDbl-computedQiDbl>0.01) {
-                        	logger.info("!! "+jbaQiDbl+" not even close to "+computedQiDbl);	
-                        }	
                     }
                     
                     helper.setAlignmentSpace(stackEntity, alignmentSpace);
