@@ -10,7 +10,6 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.cv.Objective;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 import java.util.*;
 
@@ -107,9 +106,15 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 			}
     	}
         finally {
-        	if (iterator!=null) {
-        	    iterator.close();
-        	}
+            if (iterator!=null) {
+                try {
+                    iterator.close();
+                }
+                catch (Exception e) {
+                    logger.error("processSageDataSet - Unable to close ResultSetIterator for data set "+dataSet.getName()+
+                            "\n"+e.getMessage()+"\n. Continuing...");
+                }
+            }
         }
     }
     
