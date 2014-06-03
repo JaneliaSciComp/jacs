@@ -98,7 +98,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     
     public Entity saveOrUpdateEntity(Entity entity) throws ComputeException {
         try {
-        	checkAttributeTypes(entity);
+        	_annotationDAO.checkAttributeTypes(entity);
             _annotationDAO.saveOrUpdateEntity(entity);
             updateIndex(entity);
             return entity;
@@ -111,7 +111,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     
     public EntityData saveOrUpdateEntityData(EntityData newData) throws ComputeException {
         try {
-        	checkAttributeTypes(newData);
+        	_annotationDAO.checkAttributeTypes(newData);
             _annotationDAO.saveOrUpdateEntityData(newData);
             if (newData.getParentEntity()!=null) {
             	updateIndex(newData.getParentEntity());
@@ -201,7 +201,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
      */
     public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName) throws ComputeException {
         try {
-            checkEntityTypeSupportsAttribute(parent.getEntityTypeName(), attrName);
+        	_annotationDAO.checkEntityTypeSupportsAttribute(parent.getEntityTypeName(), attrName);
             return _annotationDAO.addEntityToParent(parent, entity, index, attrName);
         } 
         catch (DaoException e) {
@@ -215,7 +215,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
      */
     public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName, String value) throws ComputeException {
         try {
-            checkEntityTypeSupportsAttribute(parent.getEntityTypeName(), attrName);
+        	_annotationDAO.checkEntityTypeSupportsAttribute(parent.getEntityTypeName(), attrName);
             return _annotationDAO.addEntityToParent(parent, entity, index, attrName, value);
         } 
         catch (DaoException e) {
@@ -242,7 +242,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
                 throw new DaoException("Entity does not exist: "+entityId);
             }
             
-            checkEntityTypeSupportsAttribute(parent.getEntityTypeName(), attrName);
+            _annotationDAO.checkEntityTypeSupportsAttribute(parent.getEntityTypeName(), attrName);
             
             EntityData ed = _annotationDAO.addEntityToParent(parent, entity, index, attrName, value);
             
@@ -268,7 +268,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
                 throw new ComputeException("Subject "+subjectKey+" cannot add children to "+parent.getId());
             }
             
-            checkEntityTypeSupportsAttribute(parent.getEntityTypeName(), attrName);
+            _annotationDAO.checkEntityTypeSupportsAttribute(parent.getEntityTypeName(), attrName);
             
         	_annotationDAO.addChildren(subjectKey, parentId, childrenIds, attrName);
         	_logger.info("Subject "+subjectKey+" added "+childrenIds.size()+" children to parent "+parentId);
@@ -330,8 +330,8 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
 
         } 
          catch (Exception e) {
-            _logger.error("Error trying to get delete entity "+entityId, e);
-            throw new ComputeException("Error deleting entity "+entityId,e);
+            _logger.error("Error trying to set or update value on "+entityId, e);
+            throw new ComputeException("Error trying to set or update value on "+entityId,e);
         }
     }
     
@@ -858,30 +858,5 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             _logger.error("Error getting orphan entity ids for "+subjectKey, e);
             throw new ComputeException("Error getting orphan entity ids for "+subjectKey,e);
         }
-    }
-    
-    private void checkAttributeTypes(Entity... entities) {
-        for(Entity entity : entities) {
-            for(EntityData ed : entity.getEntityData()) {
-                checkEntityTypeSupportsAttribute(entity.getEntityTypeName(), ed.getEntityAttrName());
-            }
-        }
-    }
-
-    private void checkAttributeTypes(EntityData... entityDatas) {
-        for(EntityData ed : entityDatas) {
-            checkEntityTypeSupportsAttribute(ed.getParentEntity().getEntityTypeName(), ed.getEntityAttrName());
-        }
-    }
-    
-    private void checkEntityTypeSupportsAttribute(String entityTypeName, String attrName) {
-        EntityType entityType = _annotationDAO.getEntityTypeByName(entityTypeName);
-        for(EntityAttribute attr : entityType.getAttributes()) {
-            if (attr.getName().equals(attrName)) {
-                return;
-            }
-        }
-        
-        throw new IllegalStateException("Entity type "+entityTypeName+" does not support attribute "+attrName);
     }
 }
