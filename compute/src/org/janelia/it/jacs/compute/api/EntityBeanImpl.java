@@ -883,13 +883,13 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
 		return workspaces.get(0);
     }
 
-	public void addRootToWorkspace(String subjectKey, Long workspaceId, Long entityId) throws ComputeException {
+	public EntityData addRootToWorkspace(String subjectKey, Long workspaceId, Long entityId) throws ComputeException {
 		Entity workspace = _annotationDAO.getEntityById(workspaceId);
 		Entity entity = _annotationDAO.getEntityById(entityId);
-		addRootToWorkspace(subjectKey, workspace, entity);
+		return addRootToWorkspace(subjectKey, workspace, entity);
 	}
 	
-	public Entity createFolderInWorkspace(String subjectKey, Long workspaceId, String entityName) throws ComputeException {
+	public EntityData createFolderInWorkspace(String subjectKey, Long workspaceId, String entityName) throws ComputeException {
         Entity entity = _annotationDAO.createEntity(subjectKey, EntityConstants.TYPE_FOLDER, entityName);
         EntityUtils.addAttributeAsTag(entity, EntityConstants.ATTRIBUTE_COMMON_ROOT);
         _annotationDAO.saveOrUpdate(entity);
@@ -897,11 +897,10 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
 		if (workspace==null) {
 			throw new ComputeException("No such workspace with id "+workspaceId);
 		}
-		addRootToWorkspace(subjectKey, workspace, entity);
-        return entity;
+		return addRootToWorkspace(subjectKey, workspace, entity);
 	}
 	
-	private void addRootToWorkspace(String subjectKey, Entity workspace, Entity entity) throws ComputeException {
+	private EntityData addRootToWorkspace(String subjectKey, Entity workspace, Entity entity) throws ComputeException {
 		try {
 			// Find the appropriate place to insert this root, and renumber everything while we're at it.
 			Integer insertionIndex = null;
@@ -925,7 +924,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
 				// No non-owned entities, so add it to the end
 				insertionIndex = index;
 			}
-			_annotationDAO.addEntityToParent(workspace, entity, insertionIndex, EntityConstants.ATTRIBUTE_ENTITY);
+			return _annotationDAO.addEntityToParent(workspace, entity, insertionIndex, EntityConstants.ATTRIBUTE_ENTITY);
 		} 
 		catch (DaoException e) {
 			_logger.error("Error adding entity to workspace",e);

@@ -127,7 +127,8 @@ public class EntityHelper {
             if (createIfNecessary) {
                 logger.info("Creating new topLevelFolder with name=" + topLevelFolderName);
                 Entity workspace = entityBean.getDefaultWorkspace(ownerKey);
-                topLevelFolder = entityBean.createFolderInWorkspace(ownerKey, workspace.getId(), topLevelFolderName);
+                EntityData ed = entityBean.createFolderInWorkspace(ownerKey, workspace.getId(), topLevelFolderName);
+                topLevelFolder = ed.getChildEntity();
                 logger.info("Saved top level folder as " + topLevelFolder.getId());
             } else {
                 throw new Exception("Could not find top-level folder by name=" + topLevelFolderName);

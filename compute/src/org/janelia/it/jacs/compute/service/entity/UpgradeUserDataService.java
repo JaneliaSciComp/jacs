@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.service.entity;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -7,6 +8,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 import com.google.common.collect.ComparisonChain;
@@ -27,12 +29,13 @@ public class UpgradeUserDataService extends AbstractEntityService {
         logger.info("Updating data model for "+ownerKey+" to latest version: "+serverVersion);
 
         createWorkspaceIfNecessary();
+        groupSearchResultsIfNecessary();
     }
 
     private void createWorkspaceIfNecessary() throws Exception {
 
     	if (!entityBean.getEntitiesByTypeName(ownerKey, EntityConstants.TYPE_WORKSPACE).isEmpty()) {
-    		logger.info("User "+ownerKey+" already has at least one workspace");
+    		logger.info("User "+ownerKey+" already has at least one workspace, skipping creation step.");
     		return;
     	}
     	
@@ -47,6 +50,54 @@ public class UpgradeUserDataService extends AbstractEntityService {
         }
         
         log.info("Created workspace (id="+newRoot.getId()+") for "+ownerKey+" with "+(index+1)+" top-level roots");
+    }
+
+    private void groupSearchResultsIfNecessary() throws Exception {
+
+        Entity topLevelFolder = entityHelper.createOrVerifyRootEntity(EntityConstants.NAME_SEARCH_RESULTS, true, false);
+        if (topLevelFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PROTECTED)==null) {
+            EntityUtils.addAttributeAsTag(topLevelFolder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
+            entityBean.saveOrUpdateEntity(topLevelFolder);
+        }
+        
+        populateChildren(topLevelFolder);
+        
+        if (!topLevelFolder.getChildren().isEmpty()) {
+        	log.info("User "+ownerKey+"'s search results folder already has children, skipping search result grouping step.");
+        	return;
+        }
+        
+        List<EntityData> toMove = new ArrayList<EntityData>();
+        
+    	Entity workspace = entityBean.getDefaultWorkspace(ownerKey);
+        populateChildren(workspace);
+    	for(EntityData ed : workspace.getOrderedEntityData()) {
+    		Entity child = ed.getChildEntity();
+    		if (child==null) continue;
+    		if (child.getName().startsWith("Search Results #")) {
+    			workspace.getEntityData().remove(ed);
+    			toMove.add(ed);
+    		}
+    	}
+    	
+    	log.info("Moving "+toMove.size()+" result folders into search results folder");
+    	
+    	// Move search result folders into 
+    	int index = 0;
+    	for(EntityData ed : toMove) {
+    		ed.setOrderIndex(index++);
+			ed.setParentEntity(topLevelFolder);
+    		topLevelFolder.getEntityData().add(ed);
+    		entityBean.saveOrUpdateEntityData(ed);
+    	}
+
+    	// Renumber the remaining workspace children
+    	index = 0;
+    	for(EntityData ed : workspace.getOrderedEntityData()) {
+    		ed.setOrderIndex(index++);
+    		entityBean.saveOrUpdateEntityData(ed);
+    	}
+    	
     }
     
     public class EntityRootComparator implements Comparator<Entity> {
