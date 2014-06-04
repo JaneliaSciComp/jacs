@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.api;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,7 @@ import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityActorPermission;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
+import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
@@ -98,7 +100,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     
     public Entity saveOrUpdateEntity(Entity entity) throws ComputeException {
         try {
-        	checkAttributeTypes(entity);
+        	_annotationDAO.checkAttributeTypes(entity);
             _annotationDAO.saveOrUpdateEntity(entity);
             updateIndex(entity);
             return entity;
@@ -111,7 +113,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     
     public EntityData saveOrUpdateEntityData(EntityData newData) throws ComputeException {
         try {
-        	checkAttributeTypes(newData);
+        	_annotationDAO.checkAttributeTypes(newData);
             _annotationDAO.saveOrUpdateEntityData(newData);
             if (newData.getParentEntity()!=null) {
             	updateIndex(newData.getParentEntity());
@@ -201,7 +203,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
      */
     public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName) throws ComputeException {
         try {
-            checkEntityTypeSupportsAttribute(parent.getEntityTypeName(), attrName);
+        	_annotationDAO.checkEntityTypeSupportsAttribute(parent.getEntityTypeName(), attrName);
             return _annotationDAO.addEntityToParent(parent, entity, index, attrName);
         } 
         catch (DaoException e) {
@@ -215,7 +217,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
      */
     public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName, String value) throws ComputeException {
         try {
-            checkEntityTypeSupportsAttribute(parent.getEntityTypeName(), attrName);
+        	_annotationDAO.checkEntityTypeSupportsAttribute(parent.getEntityTypeName(), attrName);
             return _annotationDAO.addEntityToParent(parent, entity, index, attrName, value);
         } 
         catch (DaoException e) {
@@ -242,7 +244,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
                 throw new DaoException("Entity does not exist: "+entityId);
             }
             
-            checkEntityTypeSupportsAttribute(parent.getEntityTypeName(), attrName);
+            _annotationDAO.checkEntityTypeSupportsAttribute(parent.getEntityTypeName(), attrName);
             
             EntityData ed = _annotationDAO.addEntityToParent(parent, entity, index, attrName, value);
             
@@ -268,7 +270,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
                 throw new ComputeException("Subject "+subjectKey+" cannot add children to "+parent.getId());
             }
             
-            checkEntityTypeSupportsAttribute(parent.getEntityTypeName(), attrName);
+            _annotationDAO.checkEntityTypeSupportsAttribute(parent.getEntityTypeName(), attrName);
             
         	_annotationDAO.addChildren(subjectKey, parentId, childrenIds, attrName);
         	_logger.info("Subject "+subjectKey+" added "+childrenIds.size()+" children to parent "+parentId);
@@ -330,8 +332,8 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
 
         } 
          catch (Exception e) {
-            _logger.error("Error trying to get delete entity "+entityId, e);
-            throw new ComputeException("Error deleting entity "+entityId,e);
+            _logger.error("Error trying to set or update value on "+entityId, e);
+            throw new ComputeException("Error trying to set or update value on "+entityId,e);
         }
     }
     
@@ -859,29 +861,74 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             throw new ComputeException("Error getting orphan entity ids for "+subjectKey,e);
         }
     }
-    
-    private void checkAttributeTypes(Entity... entities) {
-        for(Entity entity : entities) {
-            for(EntityData ed : entity.getEntityData()) {
-                checkEntityTypeSupportsAttribute(entity.getEntityTypeName(), ed.getEntityAttrName());
-            }
+
+    public List<Entity> getWorkspaces(String subjectKey) throws ComputeException {
+        try {
+            return _annotationDAO.getEntitiesByTypeName(subjectKey, EntityConstants.TYPE_WORKSPACE);
+        }
+        catch (DaoException e) {
+            _logger.error("Error trying to get workspaces for "+subjectKey, e);
+	    	throw new ComputeException("Error getting workspaces", e);
         }
     }
 
-    private void checkAttributeTypes(EntityData... entityDatas) {
-        for(EntityData ed : entityDatas) {
-            checkEntityTypeSupportsAttribute(ed.getParentEntity().getEntityTypeName(), ed.getEntityAttrName());
-        }
+    public Entity getDefaultWorkspace(String subjectKey) throws ComputeException {
+		List<Entity> workspaces = _annotationDAO.getEntitiesByNameAndTypeName(subjectKey, EntityConstants.NAME_DEFAULT_WORKSPACE, EntityConstants.TYPE_WORKSPACE);
+		if (workspaces.size()>1) {
+			throw new ComputeException("More than one default workspace exists for "+subjectKey);
+		}
+		else if (workspaces.isEmpty()) {
+			throw new ComputeException("No default workspace exists for "+subjectKey);
+		}
+		return workspaces.get(0);
     }
-    
-    private void checkEntityTypeSupportsAttribute(String entityTypeName, String attrName) {
-        EntityType entityType = _annotationDAO.getEntityTypeByName(entityTypeName);
-        for(EntityAttribute attr : entityType.getAttributes()) {
-            if (attr.getName().equals(attrName)) {
-                return;
-            }
-        }
-        
-        throw new IllegalStateException("Entity type "+entityTypeName+" does not support attribute "+attrName);
-    }
+
+	public EntityData addRootToWorkspace(String subjectKey, Long workspaceId, Long entityId) throws ComputeException {
+		Entity workspace = _annotationDAO.getEntityById(workspaceId);
+		Entity entity = _annotationDAO.getEntityById(entityId);
+		return addRootToWorkspace(subjectKey, workspace, entity);
+	}
+	
+	public EntityData createFolderInWorkspace(String subjectKey, Long workspaceId, String entityName) throws ComputeException {
+        Entity entity = _annotationDAO.createEntity(subjectKey, EntityConstants.TYPE_FOLDER, entityName);
+        EntityUtils.addAttributeAsTag(entity, EntityConstants.ATTRIBUTE_COMMON_ROOT);
+        _annotationDAO.saveOrUpdate(entity);
+		Entity workspace = _annotationDAO.getEntityById(workspaceId);
+		if (workspace==null) {
+			throw new ComputeException("No such workspace with id "+workspaceId);
+		}
+		return addRootToWorkspace(subjectKey, workspace, entity);
+	}
+	
+	private EntityData addRootToWorkspace(String subjectKey, Entity workspace, Entity entity) throws ComputeException {
+		try {
+			// Find the appropriate place to insert this root, and renumber everything while we're at it.
+			Integer insertionIndex = null;
+			int index = 0;
+			for(EntityData ed : workspace.getOrderedEntityData()) {
+				if (ed.getChildEntity()==null) continue;
+				String childOwner = ed.getChildEntity().getOwnerKey();
+				if (insertionIndex==null && !subjectKey.equals(childOwner)) {
+					// Insert the root before the first un-owned entity
+					insertionIndex = index;
+					index++;
+				}
+				if (ed.getOrderIndex()!=index) {
+					ed.setOrderIndex(index);
+			        ed.setUpdatedDate(new Date());
+					_annotationDAO.saveOrUpdate(ed);
+				}
+				index++;
+			}
+			if (insertionIndex==null) {
+				// No non-owned entities, so add it to the end
+				insertionIndex = index;
+			}
+			return _annotationDAO.addEntityToParent(workspace, entity, insertionIndex, EntityConstants.ATTRIBUTE_ENTITY);
+		} 
+		catch (DaoException e) {
+			_logger.error("Error adding entity to workspace",e);
+			throw new ComputeException("Error adding entity to workspace", e);
+		}
+	}
 }

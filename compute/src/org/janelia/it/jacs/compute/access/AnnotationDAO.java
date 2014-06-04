@@ -1705,6 +1705,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         saveOrUpdate(ed);
 
+        promoteToCommonRootIfWorkspaceChild(parent, entity);
+        
         Set<String> subjectKeys = getSubjectKeySet(parent.getOwnerKey());
         boolean grantOwnerPermissions = !subjectKeys.contains(entity.getOwnerKey());
 
@@ -1747,11 +1749,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             if (existingChildrenIds.contains(childId)) continue;
             if (childId.equals(parentId)) continue;
             
-            Entity child = childMap.get(childId);
+            Entity entity = childMap.get(childId);
             
             EntityData ed = new EntityData();
             ed.setParentEntity(parent);
-            ed.setChildEntity(child);
+            ed.setChildEntity(entity);
             ed.setOwnerKey(subjectKey);
             ed.setCreationDate(createDate);
             ed.setUpdatedDate(createDate);
@@ -1760,9 +1762,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             saveOrUpdate(ed);
             parent.getEntityData().add(ed);
 
-            boolean grantOwnerPermissions = !subjectKeys.contains(child.getOwnerKey());
+            promoteToCommonRootIfWorkspaceChild(parent, entity);
+            
+            boolean grantOwnerPermissions = !subjectKeys.contains(entity.getOwnerKey());
             if (grantOwnerPermissions) {
-                for(EntityActorPermission permission : child.getEntityActorPermissions()) {
+                for(EntityActorPermission permission : entity.getEntityActorPermissions()) {
                     if (subjectKeys.contains(permission.getSubjectKey())) {
                         grantOwnerPermissions = false;
                         break;
@@ -1770,10 +1774,24 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 }
             }
             
-            propagatePermissions(parent, child, true, grantOwnerPermissions);
+            propagatePermissions(parent, entity, true, grantOwnerPermissions);
         }
         
         updateChildCount(parent);
+    }
+    
+    private void promoteToCommonRootIfWorkspaceChild(Entity parent, Entity entity) throws DaoException {
+        if (parent.getEntityTypeName().equals(EntityConstants.TYPE_WORKSPACE)) {
+        	// Making something a child of a workspace makes it a common root
+        	if (entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT)==null) {
+        		if (isEntityTypeSupportsAttribute(parent.getEntityTypeName(), EntityConstants.ATTRIBUTE_COMMON_ROOT)) {
+	        		EntityData crEd = newData(parent, EntityConstants.ATTRIBUTE_COMMON_ROOT, entity.getOwnerKey());
+	        		crEd.setValue(EntityConstants.ATTRIBUTE_COMMON_ROOT);
+	        		entity.getEntityData().add(crEd);
+	            	saveOrUpdate(crEd);
+        		}
+        	}
+        }
     }
     
     private void updateChildCount(Entity entity) throws DaoException {
@@ -3374,6 +3392,39 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         return addEntityToParent(parentEntity, alignedItemEntity, parentEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ITEM);
     }
 
+    /******************************************************************************************************************/
+    /** UTILITY */
+    /******************************************************************************************************************/
+    
+    public void checkAttributeTypes(Entity... entities) {
+        for(Entity entity : entities) {
+            for(EntityData ed : entity.getEntityData()) {
+                checkEntityTypeSupportsAttribute(entity.getEntityTypeName(), ed.getEntityAttrName());
+            }
+        }
+    }
+
+    public void checkAttributeTypes(EntityData... entityDatas) {
+        for(EntityData ed : entityDatas) {
+            checkEntityTypeSupportsAttribute(ed.getParentEntity().getEntityTypeName(), ed.getEntityAttrName());
+        }
+    }
+    
+    public void checkEntityTypeSupportsAttribute(String entityTypeName, String attrName) {
+        if (isEntityTypeSupportsAttribute(entityTypeName, attrName)) return;
+        throw new IllegalStateException("Entity type "+entityTypeName+" does not support attribute "+attrName);
+    }
+
+    public boolean isEntityTypeSupportsAttribute(String entityTypeName, String attrName) {
+        EntityType entityType = getEntityTypeByName(entityTypeName);
+        for(EntityAttribute attr : entityType.getAttributes()) {
+            if (attr.getName().equals(attrName)) {
+                return true;
+            }
+        }
+        return false; 
+    }
+    
     private Entity filter(Object obj) {
         return filter(obj, true);
     }

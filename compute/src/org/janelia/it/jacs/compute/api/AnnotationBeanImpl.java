@@ -272,12 +272,13 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         try {
             return _annotationDAO.getEntityIdsInAlignmentSpace( opticalRes, pixelRes, guids);
 
-        } catch ( DaoException daoe ) {
+        } 
+        catch ( DaoException daoe ) {
             _logger.error("Error getting applicable subset of entity ids for an alignment space.");
             throw new ComputeException("Error paring down entity ids for list", daoe);
         }
-    }
-
+	}
+	
     public List<Entity> getCommonRootEntities(String subjectKey) throws ComputeException {
         try {
             List<Entity> entities = _annotationDAO.getEntitiesWithTag(subjectKey, EntityConstants.ATTRIBUTE_COMMON_ROOT);

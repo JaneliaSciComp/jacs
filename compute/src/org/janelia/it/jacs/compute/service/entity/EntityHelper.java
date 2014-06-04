@@ -3,7 +3,6 @@ package org.janelia.it.jacs.compute.service.entity;
 import java.io.File;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -16,7 +15,6 @@ import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
@@ -128,15 +126,9 @@ public class EntityHelper {
         if (topLevelFolder == null) {
             if (createIfNecessary) {
                 logger.info("Creating new topLevelFolder with name=" + topLevelFolderName);
-                Date createDate = new Date();
-                topLevelFolder = new Entity();
-                topLevelFolder.setCreationDate(createDate);
-                topLevelFolder.setUpdatedDate(createDate);
-                topLevelFolder.setOwnerKey(ownerKey);
-                topLevelFolder.setName(topLevelFolderName);
-                topLevelFolder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
-                EntityUtils.addAttributeAsTag(topLevelFolder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
-                topLevelFolder = entityBean.saveOrUpdateEntity(topLevelFolder);
+                Entity workspace = entityBean.getDefaultWorkspace(ownerKey);
+                EntityData ed = entityBean.createFolderInWorkspace(ownerKey, workspace.getId(), topLevelFolderName);
+                topLevelFolder = ed.getChildEntity();
                 logger.info("Saved top level folder as " + topLevelFolder.getId());
             } else {
                 throw new Exception("Could not find top-level folder by name=" + topLevelFolderName);
