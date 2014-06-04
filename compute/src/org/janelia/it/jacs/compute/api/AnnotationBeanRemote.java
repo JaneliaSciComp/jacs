@@ -48,11 +48,6 @@ public interface AnnotationBeanRemote {
     public long getNumDescendantsAnnotated(Long entityId) throws ComputeException;
     public List<Long> getEntityIdsInAlignmentSpace(String opticalRes, String pixelRes, List<Long> guids) throws ComputeException;
 
-    public List<Entity> getWorkspaces(String subjectKey) throws ComputeException;
-    public Entity getDefaultWorkspace(String subjectKey) throws ComputeException;
-    public void addRootToWorkspace(String subjectKey, Long workspaceId, Long entityId) throws ComputeException;
-    public Entity createFolderInWorkspace(String subjectKey, Long workspaceId, String entityName) throws ComputeException;
-    
     /**
      * @deprecated use getWorkspaces to get the real roots
      */

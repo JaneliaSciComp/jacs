@@ -91,4 +91,10 @@ public interface EntityBeanRemote {
     public EntityActorPermission grantPermissions(String subjectKey, Long entityId, String granteeKey, String permissions, boolean recursive) throws ComputeException;
     public void revokePermissions(String subjectKey, Long entityId, String granteeKey,  boolean recursive) throws ComputeException;
     public EntityActorPermission saveOrUpdatePermission(String subjectKey, EntityActorPermission eap) throws ComputeException;
+
+    public List<Entity> getWorkspaces(String subjectKey) throws ComputeException;
+    public Entity getDefaultWorkspace(String subjectKey) throws ComputeException;
+    public void addRootToWorkspace(String subjectKey, Long workspaceId, Long entityId) throws ComputeException;
+    public Entity createFolderInWorkspace(String subjectKey, Long workspaceId, String entityName) throws ComputeException;
+    
 }
