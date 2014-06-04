@@ -94,6 +94,7 @@ public class UpgradeUserDataService extends AbstractEntityService {
     	// Renumber the remaining workspace children
     	index = 0;
     	for(EntityData ed : workspace.getOrderedEntityData()) {
+    		if (ed.getChildEntity()==null) continue;
     		ed.setOrderIndex(index++);
     		entityBean.saveOrUpdateEntityData(ed);
     	}
