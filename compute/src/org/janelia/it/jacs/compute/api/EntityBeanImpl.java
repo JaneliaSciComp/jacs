@@ -864,7 +864,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
 
     public List<Entity> getWorkspaces(String subjectKey) throws ComputeException {
         try {
-            return _annotationDAO.getEntitiesByTypeName(subjectKey, EntityConstants.TYPE_WORKSPACE);
+            return _annotationDAO.getUserEntitiesByTypeName(subjectKey, EntityConstants.TYPE_WORKSPACE);
         }
         catch (DaoException e) {
             _logger.error("Error trying to get workspaces for "+subjectKey, e);
@@ -873,7 +873,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     }
 
     public Entity getDefaultWorkspace(String subjectKey) throws ComputeException {
-		List<Entity> workspaces = _annotationDAO.getEntitiesByNameAndTypeName(subjectKey, EntityConstants.NAME_DEFAULT_WORKSPACE, EntityConstants.TYPE_WORKSPACE);
+		List<Entity> workspaces = _annotationDAO.getUserEntitiesByNameAndTypeName(subjectKey, EntityConstants.NAME_DEFAULT_WORKSPACE, EntityConstants.TYPE_WORKSPACE);
 		if (workspaces.size()>1) {
 			throw new ComputeException("More than one default workspace exists for "+subjectKey);
 		}

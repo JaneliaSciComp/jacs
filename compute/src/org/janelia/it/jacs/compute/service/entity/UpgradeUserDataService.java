@@ -34,9 +34,11 @@ public class UpgradeUserDataService extends AbstractEntityService {
 
     private void createWorkspaceIfNecessary() throws Exception {
 
-    	if (!entityBean.getEntitiesByTypeName(ownerKey, EntityConstants.TYPE_WORKSPACE).isEmpty()) {
-    		logger.info("User "+ownerKey+" already has at least one workspace, skipping creation step.");
-    		return;
+    	for(Entity workspace : entityBean.getEntitiesByTypeName(ownerKey, EntityConstants.TYPE_WORKSPACE)) {
+    		if (workspace.getOwnerKey().equals(ownerKey)) {
+        		logger.info("User "+ownerKey+" already has at least one workspace, skipping creation step.");
+        		return;
+    		}
     	}
     	
         List<Entity> roots = annotationBean.getCommonRootEntities(ownerKey);
