@@ -33,6 +33,7 @@ public class EntityConstants {
     public static final String NAME_ALIGNMENT_BOARDS                 = "Alignment Boards";
     public static final String NAME_RETIRED_DATA                     = "Retired Data";
     public static final String NAME_BLOCKED_DATA                     = "Blocked Data";
+    public static final String NAME_SEARCH_RESULTS                   = "Search Results";
     
     // Common Types
     public static final String TYPE_ANNOTATION                       = "Annotation";

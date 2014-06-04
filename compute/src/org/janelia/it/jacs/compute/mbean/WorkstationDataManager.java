@@ -602,8 +602,8 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         entity.setEntityTypeName(entityTypeName);
         if (isCommonRoot) {
             entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT, "Common Root");
-            Entity workspace = EJBFactory.getLocalAnnotationBean().getDefaultWorkspace(ownerKey);
-            EJBFactory.getLocalAnnotationBean().addRootToWorkspace(ownerKey, workspace.getId(), entity.getId());
+            Entity workspace = EJBFactory.getLocalEntityBean().getDefaultWorkspace(ownerKey);
+            EJBFactory.getLocalEntityBean().addRootToWorkspace(ownerKey, workspace.getId(), entity.getId());
         }
         return entity;
     }
