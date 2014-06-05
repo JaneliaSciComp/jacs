@@ -514,6 +514,18 @@ public class EntityUtils {
         }
         return null;
     }
+
+    public static Entity findChildWithNameAndTypeAndOwner(Entity entity, String childName, String type, String owner) {
+        for (EntityData ed : entity.getEntityData()) {
+            Entity child = ed.getChildEntity();
+            if (child!=null) {
+                if ((childName==null||child.getName().equals(childName)) && (type==null||type.equals(child.getEntityTypeName())) && (owner==null||owner.equals(child.getOwnerKey()))) {
+                    return child;
+                }
+            }
+        }
+        return null;
+    }
     
     public static EntityData findChildEntityDataWithName(Entity entity, String childName) {
 		return findChildEntityDataWithNameAndType(entity, childName, null);
