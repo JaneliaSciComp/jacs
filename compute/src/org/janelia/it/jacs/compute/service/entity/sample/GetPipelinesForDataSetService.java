@@ -18,25 +18,23 @@ public class GetPipelinesForDataSetService extends AbstractEntityService {
 
     public void execute() throws Exception {
         
-    	String dataSetIdentifier = (String)processData.getItem("DATA_SET_IDENTIFIER");
-    	if (StringUtils.isEmpty(dataSetIdentifier)) {
-    		throw new IllegalArgumentException("DATA_SET_IDENTIFIER may not be null");
-    	}
-    	
-    	Entity dataSet = annotationBean.getUserDataSetByIdentifier(dataSetIdentifier);
-    	
-    	if (dataSet==null) {
-    		throw new IllegalArgumentException("Data does not exist with identifier: "+dataSetIdentifier);
-    	}
-    	else {
-    		List<String> processNames = new ArrayList<String>();
-        	String pipelineProcess = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);
-    		for(String process : Task.listOfStringsFromCsvString(pipelineProcess)) {
-    			if (StringUtils.isEmpty(process)) continue;
-    			processNames.add("PipelineConfig_"+process);
-    		}
-    		logger.info("Putting "+processNames+" in PIPELINE_PROCESS_NAME");
-        	processData.putItem("PIPELINE_PROCESS_NAME", processNames);	
-    	}
+        String dataSetIdentifier = data.getRequiredItemAsString("DATA_SET_IDENTIFIER");
+
+        Entity dataSet = annotationBean.getUserDataSetByIdentifier(dataSetIdentifier);
+
+        if (dataSet==null) {
+            throw new IllegalArgumentException("Data does not exist with identifier: "+dataSetIdentifier);
+        }
+        else {
+            List<String> processNames = new ArrayList<>();
+            String pipelineProcess = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);
+            contextLogger.info("data set pipeline process list is: " + pipelineProcess);
+            for(String process : Task.listOfStringsFromCsvString(pipelineProcess)) {
+                if (! StringUtils.isEmpty(process)) {
+                    processNames.add("PipelineConfig_" + process);
+                }
+            }
+            data.putItem("PIPELINE_PROCESS_NAME", processNames);
+        }
     }
 }

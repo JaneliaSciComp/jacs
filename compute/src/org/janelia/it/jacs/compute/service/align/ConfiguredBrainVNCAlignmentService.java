@@ -21,11 +21,9 @@ public class ConfiguredBrainVNCAlignmentService extends ConfiguredAlignmentServi
         super.populateInputVariables(processData);
         
         try {
-            List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>)processData.getItem("SAMPLE_AREAS");
-            if (sampleAreas==null) {
-                throw new IllegalArgumentException("Input parameter SAMPLE_AREAS may not be null");
-            }
-            
+            @SuppressWarnings("unchecked")
+            List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>) data.getRequiredItem("SAMPLE_AREAS");
+
             for(AnatomicalArea anatomicalArea : sampleAreas) {
                 String areaName = anatomicalArea.getName();
                 Entity result = entityBean.getEntityById(anatomicalArea.getSampleProcessingResultId());

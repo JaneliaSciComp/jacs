@@ -61,6 +61,24 @@ public class ContextLogger {
     }
 
     /**
+     * Logs the specified error message with the current context appended.
+     *
+     * @param  msg  detail message to log.
+     */
+    public void error(String msg) {
+        logger.error(msg + logContext);
+    }
+
+    /**
+     * Logs the specified warn message with the current context appended.
+     *
+     * @param  msg  detail message to log.
+     */
+    public void warn(String msg) {
+        logger.warn(msg + logContext);
+    }
+
+    /**
      * Logs the specified info message with the current context appended.
      *
      * @param  msg  detail message to log.
