@@ -32,6 +32,7 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
 
 	protected String scriptFile;
 	protected String mountingProtocol;
+    protected String tissueOrientation;
 	
     @Override
     protected void init(IProcessData processData) throws Exception {
@@ -46,6 +47,7 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
             Entity supportingData = EntityUtils.getSupportingData(sampleEntity);
             if (supportingData!=null) {
                 this.mountingProtocol = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL, alignedArea);
+                this.tissueOrientation = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_TISSUE_ORIENTATION, alignedArea);
             }
         } 
         catch (Exception e) {
@@ -84,6 +86,9 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
         cmd.append(" -k " + TOOLKITS_DIR);
         if (mountingProtocol!=null) {
             cmd.append(" -m '\"" + mountingProtocol+"\"'");
+        }
+        if ("face_down".equals(tissueOrientation)) {
+            cmd.append(" -z zflip");
         }
         if (input1!=null) {
             cmd.append(" -i " + getInputParameter(input1));
@@ -129,24 +134,24 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
     				return name.endsWith(".properties");
     			}
     		});
-    		
+
         	if (propertiesFiles==null) {
         	    throw new MissingDataException("Output directory missing for alignment: "+outputDir);
         	}
-        	
+
         	List<String> filenames = new ArrayList<String>();
         	String defaultFilename = null;
-        	
+
         	for(File propertiesFile : propertiesFiles) {
         	    Properties properties = new Properties();
         	    properties.load(new FileReader(propertiesFile));
-        		
+
         	    String filename = properties.getProperty("alignment.stack.filename");
         	    File file = new File(outputDir, filename);
         	    if (!file.exists()) {
         	        throw new MissingDataException("File does not exist: "+file);
         	    }
-        	    
+
         	    filenames.add(file.getCanonicalPath());
         	    if ("true".equals(properties.getProperty("default"))) {
         	        defaultFilename = file.getCanonicalPath();
