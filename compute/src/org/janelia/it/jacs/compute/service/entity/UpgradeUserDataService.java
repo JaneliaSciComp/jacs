@@ -77,6 +77,15 @@ public class UpgradeUserDataService extends AbstractEntityService {
     		Entity child = ed.getChildEntity();
     		if (child==null) continue;
     		if (child.getName().startsWith("Search Results #")) {
+    			
+    			// The search result folders are no longer common roots
+    			EntityData commonRootEd = child.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT);
+    			if (commonRootEd!=null) {
+    				child.getEntityData().remove(commonRootEd);
+    				entityBean.deleteEntityData(commonRootEd);
+    			}
+    			
+    			// Remove them from the workspace as well, and prepare to add them to the search results folder
     			workspace.getEntityData().remove(ed);
     			toMove.add(ed);
     		}
