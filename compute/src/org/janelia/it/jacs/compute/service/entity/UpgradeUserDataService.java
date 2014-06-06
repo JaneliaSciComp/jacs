@@ -28,10 +28,22 @@ public class UpgradeUserDataService extends AbstractEntityService {
         final String serverVersion = computeBean.getAppVersion();
         logger.info("Updating data model for "+ownerKey+" to latest version: "+serverVersion);
 
+        createWorkspaceType();
         createWorkspaceIfNecessary();
         groupSearchResultsIfNecessary();
     }
 
+    private void createWorkspaceType() throws Exception {
+    	
+    	if (entityBean.getEntityTypeByName(EntityConstants.TYPE_WORKSPACE)!=null) {
+    		return;
+    	}
+    	
+		logger.info("Creating Workspace entity type.");
+		entityBean.createNewEntityType(EntityConstants.TYPE_WORKSPACE);
+		entityBean.createNewEntityAttr(EntityConstants.TYPE_WORKSPACE, EntityConstants.ATTRIBUTE_ENTITY);
+    }
+    
     private void createWorkspaceIfNecessary() throws Exception {
 
     	for(Entity workspace : entityBean.getEntitiesByTypeName(ownerKey, EntityConstants.TYPE_WORKSPACE)) {

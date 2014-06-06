@@ -67,7 +67,7 @@ public class EntityUtils {
         }
         return true;
     }
-
+    
     /**
      * Returns true if the given entity is a common root.
      * @param entity
