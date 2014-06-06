@@ -34,9 +34,11 @@ public class UpgradeUserDataService extends AbstractEntityService {
 
     private void createWorkspaceIfNecessary() throws Exception {
 
-    	if (!entityBean.getEntitiesByTypeName(ownerKey, EntityConstants.TYPE_WORKSPACE).isEmpty()) {
-    		logger.info("User "+ownerKey+" already has at least one workspace, skipping creation step.");
-    		return;
+    	for(Entity workspace : entityBean.getEntitiesByTypeName(ownerKey, EntityConstants.TYPE_WORKSPACE)) {
+    		if (workspace.getOwnerKey().equals(ownerKey)) {
+        		logger.info("User "+ownerKey+" already has at least one workspace, skipping creation step.");
+        		return;
+    		}
     	}
     	
         List<Entity> roots = annotationBean.getCommonRootEntities(ownerKey);
@@ -75,6 +77,15 @@ public class UpgradeUserDataService extends AbstractEntityService {
     		Entity child = ed.getChildEntity();
     		if (child==null) continue;
     		if (child.getName().startsWith("Search Results #")) {
+    			
+    			// The search result folders are no longer common roots
+    			EntityData commonRootEd = child.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT);
+    			if (commonRootEd!=null) {
+    				child.getEntityData().remove(commonRootEd);
+    				entityBean.deleteEntityData(commonRootEd);
+    			}
+    			
+    			// Remove them from the workspace as well, and prepare to add them to the search results folder
     			workspace.getEntityData().remove(ed);
     			toMove.add(ed);
     		}
